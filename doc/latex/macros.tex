@@ -15,6 +15,7 @@
 %   Mark Trew, 8 June 2001. Made all macro arguments raised to a power
 %     protected by {}, e.g. replaced #2^ with {#2}^.
 %   Chris Bradley, 22 Feb 2011. Added svg figure support. 
+%   Chris Bradley, 6 August 2014, Differential geometry support.
 
 
 %
@@ -25,6 +26,7 @@
 \usepackage{amssymb}
 \usepackage{calc}
 \usepackage{epsfig} %package for eps figures
+\usepackage{eufrak} %For math Fraktur fonts
 \usepackage{ifthen}
 \usepackage{xspace}
 \usepackage{url}
@@ -38,17 +40,16 @@
 \renewcommand{\url}     {\begingroup \urlstyle{sf}\Url}
 
 
-
-
 %
-% Software
+% Software and systmes
 %
 \newcommand{\OpenCMISS} {\textsf{OpenCMISS}\xspace}
 \newcommand{\CMISS} {\textsf{CMISS}\xspace}
 \newcommand{\CM}    {\textsf{CM}\xspace}       %note upper case to distinguish from centimeters
 \newcommand{\CMGUI} {\textsf{CMGUI}\xspace}
 \newcommand{\UNEMAP}{\textsf{UnEmap}\xspace}
-
+\newcommand{\FieldML}{\textsf{FieldML}\xspace}
+\newcommand{\CellML}{\textsf{CellML}\xspace}
 
 %
 % New commands
@@ -67,9 +68,12 @@
 %
 % Figures etc.
 %
-\newcommand{\pdftexfigure}[4]{ %
+\newcommand{\pdftexfigure}[5]{ %
   \begin{figure}[htbp] \centering %
-    \def\svgwidth{\columnwidth} %
+   \ifthenelse{\equal{#5}{}}{ %
+      \def\svgwidth{\columnwidth}}{ %
+      \def\svgscale{#5} %
+    } %
     \input{#1} %
     \ifthenelse{\equal{#2}{}}{ %
       \caption{#3}}{ %
@@ -78,8 +82,8 @@
     \label{#4} %
   \end{figure} %
   } % pdftex figure i.e. inkscape svgs
-    % e.g. \pdftexfigure{figure}{short caption}{long caption}{label}
-    % or \pdftexfigure{figure}{}{caption}{label}
+    % e.g. \pdftexfigure{figure}{short caption}{long caption}{label}{scale}
+    % or \pdftexfigure{figure}{}{caption}{label}{}
 
 \newcommand{\epstexfigure}[5]{ %
   \begin{figure}[htbp] \centering %
@@ -98,8 +102,12 @@
   % e.g. \epstexfigure{figure}{short caption}{long caption}{label}{scale}
   % or \epstexfigure{figure}{}{caption}{label}{}
   
-\newcommand{\pstexfigure}[4]{ %
+\newcommand{\pstexfigure}[5]{ %
   \begin{figure}[htbp] \centering %
+    \ifthenelse{\equal{#5}{}}{ %
+      \def\svgwidth{\columnwidth}}{ %
+      \def\svgscale{#5} %
+    } %
     \input{#1} %
     \ifthenelse{\equal{#2}{}}{ %
       \caption{#3}}{ %
@@ -107,9 +115,9 @@
       } %
     \label{#4} %
   \end{figure} %
-  } % pstex figure i.e. xfig or gnuplot
-    % e.g. \pstexfigure{figure}{short caption}{long caption}{label}
-    % or \pstexfigure{figure}{}{caption}{label}
+  } % pstex figure i.e. inkscape, xfig or gnuplot
+    % e.g. \pstexfigure{figure}{short caption}{long caption}{label}{scale}
+    % or \pstexfigure{figure}{}{caption}{label}{}
 
 \newcommand{\epsfigure}[4]{ %
   \begin{figure}[htbp] \centering %
@@ -185,8 +193,7 @@
 \newcommand{\tabthrurefs}[2]{Tables~\bref{#1}--\bref{#2}} % Tables-- ref.
 \newcommand{\Tabthrurefs}[2]{Tables~\bref{#1}--\bref{#2}} % Tables-- ref.
 
-
-
+%
 % Miscellaneous
 %
 \newcommand{\remark}[1]{\textbf{[Remark: #1]}}
@@ -197,8 +204,6 @@
 \newcommand{\compcom}[1]{\texttt{#1}}
 \newcommand{\compin}[1]{\texttt{#1}}
 \newcommand{\compout}[1]{\texttt{#1}}
-
-
 
 %
 % Ions
@@ -312,9 +317,57 @@
 \newcommand{\mgpkg}{\units{\mg\unitseparator\kg^{-1}}} % milligram/kilogram
 
 %
+% Base numbers
+%
+\newcommand{\naturalnums}{\ensuremath{ %
+    \mathbb{N} %
+  }} % Natural numbers
+\newcommand{\integernums}{\ensuremath{ %
+    \mathbb{Z} %
+  }} % Integer numbers
+\newcommand{\realnums}{\ensuremath{ %
+    \mathbb{R} %
+  }} % Real numbers
+\newcommand{\complexnums}{\ensuremath{ %
+    \mathbb{C} %
+  }} % Complex numbers
+\newcommand{\quaternionnums}{\ensuremath{ %
+    \mathbb{H} %
+  }} % Quaternion numbers
+\newcommand{\rationalnums}{\ensuremath{ %
+    \mathbb{Q} %
+  }} % Rational numbers
+\newcommand{\irrationalnums}{\ensuremath{ %
+    \mathbb{I} %
+  }} % Irrational numbers
+
+%
 % Sets
 %
 \newcommand{\union}[2]{\ensuremath{#1\cup#2}} % Union
+\newcommand{\intersection}[2]{\ensuremath{#1\cap#2}} % Intersection
+
+%
+% Topologies
+%
+\newcommand{\rntopology}[1]{\ensuremath{ %
+   \ifthenelse{\equal{#1}{}}{ %
+      \realnums}{ %
+      \realnums^{#1} %
+    } %
+  }} % R^n (real) topology
+\newcommand{\sntopology}[1]{\ensuremath{ %
+   \ifthenelse{\equal{#1}{}}{ %
+      \mathbb{S}}{ %
+      \mathbb{S}^{#1} %
+    } %
+  }} % S^n (spherical) topology
+\newcommand{\dntopology}[1]{\ensuremath{ %
+   \ifthenelse{\equal{#1}{}}{ %
+      \mathbb{D}}{ %
+      \mathbb{D}^{#1} %
+    } %
+  }} % D^n (discrete) topology
 
 %
 % Commonly-used Math Symbols and operations
@@ -326,36 +379,10 @@
 \newcommand{\pbrac}[1]{\brac{(}{#1}{)}} % parenthesis () bracket
 \newcommand{\pbracr}[1]{\brac{(}{#1}{.}} % parenthesis ( bracket
 \newcommand{\pbracl}[1]{\brac{.}{#1}{)}} % parenthesis ) bracket
-\newcommand{\normal}{\vect{n}} % normal
 \newcommand{\transpose}[1]{\ensuremath{{#1}^{T}}} % transpose
-% cpb 19/9/96 Changing from \mathbf to \boldsymbol to allow bold greek vectors
-\newcommand{\vect}[1]{\ensuremath{\lowercase{\boldsymbol{#1}}}} % vector
 %
 \newcommand{\abs}[1]{\brac{|}{#1}{|}} % absolute value
 \newcommand{\bbrac}[1]{\brac{\{}{#1}{\}}} % Braces { bracket
-\newcommand{\christoffel}[3]{\christoffelsecond{#1}{#2}{#3}} % Christoffel symbol
-                                % (defaults to Christoffel symbol of the
-                                % second kind)
-\newcommand{\christoffelfirst}[3]{\ensuremath{ %
-    \Gamma_{#1#2#3}
-    }} % Christoffel symbol of the first kind e.g. \christoffelfirst{i}{j}{k} => Gamma_{ijk}
-\newcommand{\christoffelsecond}[3]{\ensuremath{ %
-    \Gamma^{#1}_{#2#3}
-    }} % Christoffel symbol of the second kind e.g. \christoffelsecond{i}{j}{k} => Gamma^{i}_{jk}
-\newcommand{\covarpartialderiv}[2]{\ensuremath{ %
-    {#1}_{,#2}
-    }} % covariant partial derivative e.g. \convarpartialderiv{i}{j} => i_{,j}
-\newcommand{\contrapartialderiv}[2]{\ensuremath{ %
-    {#1}^{,#2}
-    }} % contravariant partial derivative e.g. \contrapartialderiv{i}{j} => i^{,j}
-\newcommand{\partialderiv}[2]{\covarpartialderiv{#1}{#2}
-    } % partial derivative. Default to covariant
-\newcommand{\covarderiv}[2]{\ensuremath{ %
-    {#1}_{;#2}
-    }} % covariant derivative e.g. \covarderiv{i}{j} => i_{;j}
-\newcommand{\mixedderiv}[3]{\ensuremath{ %
-    \brac{.}{#1}{|}^{#2}_{#3}
-    }} % mixed derivative e.g. \mixedderiv{i}{j}{k} => i | ^{j}_{k}
 \newcommand{\conjugate}[1]{\ensuremath{ %
     \overline{#1} %                                _
     }} %% complex conjugate e.g. \conjugate{Z} => Z
@@ -462,10 +489,6 @@
 \newcommand{\lnorm}[2]{\ensuremath{ %
     {\brac{\|}{#2}{\|}_{#1}} %
     }} % l-n norm e.g. \lnorm{x}{3} => ||x||_3
-% cpb 19/9/96 Changing from \mathbf to \boldsymbol to allow bold greek matrices
-%\newcommand{\matr}[1]{\ensuremath{\uppercase{\mathbf{#1}}}} % matrix
-\newcommand{\matr}[1]{\ensuremath{\uppercase{\boldsymbol{#1}}}} % matrix
-\newcommand{\norm}[1]{\lnorm{2}{#1}} % normalise i.e. l-2 norm
 \newcommand{\nth}[1]{\ensuremath{{#1}^{\text{th}}}} % ^th e.g. \nth{n} => n^th
 \newcommand{\orderof}[1]{\ensuremath{\fnof{\mathrm{O}}{#1}}} % order e.g. O(n)
 \newcommand{\pochhammer}[2]{\ensuremath{ %
@@ -485,12 +508,6 @@
 \newcommand{\tento}[1]{\ensuremath{ %
     10^{#1} %
 }} % e.g. \tento{3} ten to the power of 3
-% cpb 19/9/96 Changing from \mathbf to \boldsymbol to allow bold greek tensors
-%\newcommand{\tensor}[1]{\ensuremath{\mathbf{#1}}} % tensor
-\newcommand{\tensor}[1]{\ensuremath{\boldsymbol{#1}}} % tensor
-\newcommand{\covartensor}[3]{\ensuremath{{#1}_{#2#3}}} % covariant tensor
-\newcommand{\contratensor}[3]{\ensuremath{{#1}^{#2#3}}} % contravariant tensor
-\newcommand{\mixedtensor}[3]{\ensuremath{{#1}_{#2}^{#3}}} % mixed tensor
 \newcommand{\ttento}[1]{\ensuremath{ %
     \times \tento{#1} %
     }\xspace} % e.g. \ttento{5} => times ten the power of 5
@@ -589,6 +606,97 @@
   \delntwoby{#1}{}{#3}{#4}{#5}{#6}\pbrac{#2} %
   } % horizontal delntwoby e.g. \hdelntwoby{3}{u}{x}{1}{y}{2} => 
     % del^3/del x^1 del y^2 (u)
+%
+% Differential Geometry
+%
+
+\newcommand{\manifold}[1]{\ensuremath{ %
+  \mathfrak{#1} %
+  }} % manifold symbol
+\newcommand{\coordspacesymbol}{\ensuremath{ %
+    \mathcal{C} %
+  }} % Coordinate space symbol => C
+\newcommand{\tangentspacesymbol}{\ensuremath{ %
+    \mathcal{T} %
+  }} % Tangent space symbol => T
+\newcommand{\cotangentspacesymbol}{\ensuremath{ %
+    \tangentspacesymbol^{*} %
+  }} % Cotangent space symbol => T^*
+\newcommand{\coordspace}[2]{\ensuremath{ %
+    \coordspacesymbol_{#2} \manifold{#1} %
+  }} % Coordinate space e.g., \coordspace{M}{p} => C_p M
+\newcommand{\tangentspace}[2]{\ensuremath{ %
+    \tangentspacesymbol_{#2} \manifold{#1} %
+  }} % Tangent space e.g., \tangentspace{M}{p} => T_p M
+\newcommand{\cotangentspace}[2]{\ensuremath{ %
+    \cotangentspacesymbol_{#2} \manifold{#1} %
+  }} % Cotangent space e.g., \cotangentspace{M}{p} => T_p^* M
+\newcommand{\coordbundle}[1]{\ensuremath{ %
+    \coordspacesymbol \manifold{#1} %
+  }} % Coordinate bundle e.g., \coordbundle{M} => CM
+\newcommand{\tangentbundle}[1]{\ensuremath{ %
+    \tangentspacesymbol \manifold{#1} %
+  }} % Tangent bundle e.g., \tangentbundle{M} => TM
+\newcommand{\cotangentbundle}[1]{\ensuremath{ %
+    \cotangentspacesymbol \manifold{#1} %
+  }} % Cotangent bundle e.g., \cotangentbundle{M} => T^*M
+
+\newcommand{\christoffel}[3]{\christoffelsecond{#1}{#2}{#3}} % Christoffel symbol
+                                % (defaults to Christoffel symbol of the
+                                % second kind)
+\newcommand{\christoffelfirst}[3]{\ensuremath{ %
+    \Gamma_{#1#2#3}
+    }} % Christoffel symbol of the first kind e.g. \christoffelfirst{i}{j}{k} => Gamma_{ijk}
+\newcommand{\christoffelsecond}[3]{\ensuremath{ %
+    \Gamma^{#1}_{#2#3}
+    }} % Christoffel symbol of the second kind e.g. \christoffelsecond{i}{j}{k} => Gamma^{i}_{jk}
+\newcommand{\partialderiv}[2]{\ensuremath{
+    {#1}_{,#2}
+    }} % partial derivative. e.g., \partialderiv{i}{j} => i_{,j}
+\newcommand{\covarpartialderiv}[2]{\ensuremath{ %
+    {#1}_{,#2}
+    }} % covariant partial derivative e.g. \convarpartialderiv{i}{j} => i_{,j}
+\newcommand{\contrapartialderiv}[2]{\ensuremath{ %
+    {#1}^{,#2}
+    }} % contravariant partial derivative e.g. \contrapartialderiv{i}{j} => i^{,j}
+\newcommand{\covarderiv}[2]{\ensuremath{ %
+    {#1}_{;#2}
+    }} % covariant derivative e.g. \covarderiv{i}{j} => i_{;j}
+\newcommand{\mixedderiv}[3]{\ensuremath{ %
+    \brac{.}{#1}{|}^{#2}_{#3}
+    }} % mixed derivative e.g. \mixedderiv{i}{j}{k} => i | ^{j}_{k}
+\newcommand{\exteriorderiv}[2]{\ensuremath{ %
+    \boldsymbol{d}#1
+  }} % Exterior derivative e.g., \exteriorderiv{a} => da
+% cpb 19/9/96 Changing from \mathbf to \boldsymbol to allow bold greek tensors
+%\newcommand{\tensor}[1]{\ensuremath{\mathbf{#1}}} % tensor
+\newcommand{\tensor}[1]{\ensuremath{\boldsymbol{#1}}} % tensor
+\newcommand{\covartensor}[3]{\ensuremath{{#1}_{#2#3}}} % covariant tensor
+\newcommand{\contratensor}[3]{\ensuremath{{#1}^{#2#3}}} % contravariant tensor
+\newcommand{\mixedtensor}[3]{\ensuremath{{#1}_{#2}^{#3}}} % mixed tensor
+\newcommand{\vectr}[1]{\ensuremath{\boldsymbol{#1}}} % vector
+\newcommand{\covectr}[1]{\ensuremath{\boldsymbol{#1}}} % covector
+\newcommand{\tensorproduct}[2]{\ensuremath{ %
+    #1 \otimes #2 %
+  }} % tensor product e.g., \tensorproduct{a}{b} => a x b.
+\newcommand{\wedgeproduct}[2]{\ensuremath{ %
+    #1 \wedge #2 %
+  }} % wedge product e.g., \wedgeproduct{a}{b} => a^b.
+\newcommand{\exteriorproduct}[2]{\ensuremath{ %
+    \wedgeproduct{#1}{#2} %
+  }} % exterior product e.g., \exteriorproduct{a}{b} => a^b.
+
+%
+% Matrices and vectors
+%
+% cpb 19/9/96 Changing from \mathbf to \boldsymbol to allow bold greek matrices
+%\newcommand{\matr}[1]{\ensuremath{\uppercase{\mathbf{#1}}}} % matrix
+\newcommand{\matr}[1]{\ensuremath{\uppercase{\boldsymbol{#1}}}} % matrix
+% cpb 19/9/96 Changing from \mathbf to \boldsymbol to allow bold greek vectors
+\newcommand{\vect}[1]{\ensuremath{\lowercase{\boldsymbol{#1}}}} % vector
+\newcommand{\norm}[1]{\lnorm{2}{#1}} % normalise i.e. l-2 norm
+\newcommand{\normal}{\vect{n}} % normal
+
 %
 % Basis functions and interpolation
 %
