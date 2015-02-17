@@ -467,6 +467,11 @@
     }} % display evaluated integral with limits e.g. 
        % \inteval{xxx}{a}{b} => [xxx]_a^b
 \newcommand{\inverse}[1]{\ensuremath{{#1}^{-1}}} % inverse e.g. \inverse{A} => A^-1
+\newcommand{\circcomposition}[2]{\ensuremath{#1\circ#2}} % composition with
+                                % circ e.g. \circcomposition{A}{B} => A o 
+\newcommand{\funccomposition}[2]{\ensuremath{\fnof{#1}{#2}} % composition with
+                                % function e.g. \funccomposition{A}{B} => A(B)
+\newcommand{\composition}[2]{\circcomposition{#1}{#2}}} % composition
 \newcommand{\contrakronecker}[2]{\ensuremath{\delta^{{#1}{#2}}}} %
        % contravariant kronecker delta tensor e.g., \contrakronecker{i}{j} => delta^{ij}
 \newcommand{\covarkronecker}[2]{\ensuremath{\delta_{{#1}{#2}}}} %
@@ -489,6 +494,8 @@
 \newcommand{\lnorm}[2]{\ensuremath{ %
     {\brac{\|}{#2}{\|}_{#1}} %
     }} % l-n norm e.g. \lnorm{x}{3} => ||x||_3
+\newcommand{\mapping}[3]{\ensuremath{#1:#2\rightarrow#3}} % mapping
+                                % e.g. \mapping{a}{b}{c} => a:b->c
 \newcommand{\nth}[1]{\ensuremath{{#1}^{\text{th}}}} % ^th e.g. \nth{n} => n^th
 \newcommand{\orderof}[1]{\ensuremath{\fnof{\mathrm{O}}{#1}}} % order e.g. O(n)
 \newcommand{\pochhammer}[2]{\ensuremath{ %
@@ -613,6 +620,9 @@
 \newcommand{\manifold}[1]{\ensuremath{ %
   \mathfrak{#1} %
   }} % manifold symbol
+\newcommand{\embedmanifold}[1]{\ensuremath{ %
+  \mathcal{#1} %
+  }} % embedded manifold symbol
 \newcommand{\coordspacesymbol}{\ensuremath{ %
     \mathcal{C} %
   }} % Coordinate space symbol => C

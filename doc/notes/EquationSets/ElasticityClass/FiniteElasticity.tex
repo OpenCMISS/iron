@@ -4,13 +4,103 @@
 
 \subsubsection{Kinematics}
 
+As shown in \figref{fig:configurationsettting}, consider a \textit{material
+  body} which is a three-dimensional smooth manifold with a boundary, $\manifold{B}$,
+which consists of a set of points which are refered to as \textit{material
+  points}. Consider also an ambient space manifold,
+$\manifold{S}\element\rntopology{n}$. The material body is only accessible to
+the observer when it moves through the ambient space. This motion is a
+time-dependent embedding on the material body into the ambient space. The
+embedding is known as a \textit{placement of the body}. It is given by the
+mapping
+\begin{equation}
+  \mapping{\fnof{\kappa}{\mathcal{X},t}}{\manifold{B}}{\manifold{S}}
+\end{equation}
+
+The embedded submanifold occupying a location in the ambient space is is
+called a \textit{configuration} of $\manifold{B}$ and is given by
+\begin{equation}
+  \embedmanifold{B}_{t}=\fnof{\kappa_{t}}{\manifold{B}}=\fnof{\kappa}{\manifold{B},t}
+\end{equation}
+
+The customary (but not necessary) \textit{reference placement} is given by
+\begin{equation}
+  \mapping{\kappa_{0}}{\manifold{B}}{\manifold{S}}
+\end{equation}
+and the region of space occupied by the reference placement \ie the
+\textit{reference configuration} is given by
+\begin{equation}
+  \embedmanifold{B}_{0}=\fnof{\kappa_{0}}{\manifold{B}}
+\end{equation}
+Points in $\embedmanifold{B}$ are denoted by capital letters \ie $X, Y,
+\ldots$.
 
 \epstexfigure{svgs/EquationSets/Elasticity/FiniteElasticity/setup.eps_tex}{}{}{fig:configurationsetting}{0.75}
 
+A new configuration of $\manifold{B}$ is given by the deformation mapping
+\begin{equation}
+  \mapping{\chi}{\embedmanifold{B}}{\rntopology{3}}
+\end{equation}
+where a configuration represents a deformed state of the body. As the body
+moves we obtain a family of configurations. If we hold $X\in\embedmanifold{B}$
+fixed can write $\fnof{V_{t}}{X}=\fnof{V}{X,t}$. We then have
+\begin{equation}
+  \fnof{V_{t}}{X}=\fnof{V}{X,t}=\delby{\fnof{\chi}{X,t}}{t}=\dby{\fnof{\chi_{X}}{t}}{t}
+\end{equation}
+
+Here $V_{t}$ is called the \textit{material velocity} of the motion. The
+\textit{material acceleration} of the body is defined as
+\begin{equation}
+  \fnof{A_{t}}{X}=\fnof{A}{X,t}=\delby{\fnof{V}{X,t}}{t}=\dby{\fnof{V_{X}}{t}}{t}
+\end{equation}
+
+The \textit{spatial velocity} of the motion is defined by $v_{t}$ and the
+\textit{spatial acceleration} of the motion is defined by $a_{t}$.
 
 \subsubsection{Deformation Gradient}
 
-Polar decomposition
+Let
+$\mapping{\chi}{\embedmanifold{B}_{0}}{\fnof{\chi}{\embedmanifold{B}_{0}}\subset\manifold{S}}$
+be a deformation configuration of $\embedmanifold{B}$ in $\manifold{S}$. The
+tangent of the mapping \ie $\tangentbundle{\chi}$ is denoted as $\tensor{F}$
+and is called the \textit{deformation gradient} of $\chi$ \ie
+$\tensor{F}=\tangentbundle{\chi}$. For $X\in\embedmanifold{B}$ we have
+\begin{equation}
+  \tensor{F}_{X}=\mapping{\fnof{\tensor{F}}{X}}{\tangentspace{\embedmanifold{B}}{X}}{\tangentspace{\mainfold{S}}{\fnof{\chi}{X}}}
+\end{equation}
+ 
+If $X^{A}$ and $x^{a}$ are the coordinates on $\embedmanifold{B}$ and
+$\manifold{S}$ then the deformation gradient tensor with respect to the
+coordinate bases are
+\begin{equation}
+  \fnof{F^{a}_{A}}{X}=\delby{\fnof{\chi^{a}}{X}}{X^{A}}
+\end{equation}
+
+Note that F is a two-point tensor. 
+
+The \textit{right Cauchy-Green (or Green) deformation tensor}, $\tensor{C}$, is defined by
+\begin{equation}
+  \mapping{\fnof{\tensor{C}}{X}}{\tangentspace{\embedmanifold{B}}{X}}{\tangentspace{\embedmanifold{B}}{X}}}
+\end{equation}
+\ie $\fnof{\tensor{C}}{X}=\transpose{\fnof{\tensor{F}}{X}}\fnof{\tensor{F}}{X}$
+or $\tensor{C}=\transpose{\tensor{F}}\tensor{F}$. In terms of coordinates we
+have
+\begin{equation}
+  C^{A}_{B}=\pbrac{\transpose{F}}^{A}_{a}F^{a}_{B}=g_{ab}G^{AC}\delby{\chi^{b}}{X^{C}}\delby{\chi^{a}}{X^{B}}
+\end{equation}
+
+The \textit{left Cauchy-Green (or Finger) deformation tensor}, $\tensor{C}$, is defined by
+\begin{equation}
+  \mapping{\fnof{\tensor{C}}{x}}{\tangentspace{\fnof{\chi}{\embedmanifold{B}}}{x}}{\tangentspace{\fnof{\chi}{\embedmanifold{B}}}{x}}}
+\end{equation}
+\ie $\fnof{\tensor{b}}{x}=\fnof{\tensor{F}}{X}\transpose{\fnof{\tensor{F}}{X}}$
+or $\tensor{C}=\tensor{F}\transpose{\tensor{F}}$ where $X=\fnof{\inverse{\chi}}{x}$. In terms of coordinates we
+have
+\begin{equation}
+  b^{a}_{b}=\pbrac{\transpose{F}}^{A}_{a}F^{a}_{B}=g_{ab}G^{AC}\delby{\chi^{b}}{X^{C}}\delby{\chi^{a}}{X^{B}}
+\end{equation}
+
+The polar decomposition
 
 \begin{diagram}
  & & \tangentspace{B}{X} & & \\
