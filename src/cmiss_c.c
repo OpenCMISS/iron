@@ -67,7 +67,7 @@ static void cmfe_FatalHandler(int sig,
 			 int code,
 			 struct sigcontext *sc);
 #  endif
-*/
+
 /* Static variables */
 
 #ifdef __MINGW32__
@@ -182,11 +182,11 @@ void cmfe_SetFatalHandler(void)
 
 static void cmfe_FatalHandler(int sig,
 #  if defined (sun)
-                         siginfo_t *sip,
-                         ucontext_t *uap)
+             siginfo_t *sip,
+             ucontext_t *uap)
 #else
 #ifndef __MINGW32__
-			 ,int code,
+			 int code,
 			 struct sigcontext *sc)
 #else
 		)

@@ -7,10 +7,10 @@ if (NOT PYTHONINTERP_FOUND)
     message(WARNING "No Python interpreter found. Unable to generate any Iron bindings")
 else()
     set(_CLEANUP)
+    # Generate the c files in either C/python case, as swig for python wraps around the C interface
     if (WITH_C_BINDINGS OR WITH_Python_BINDINGS)
-        # Generate the c files in each case, as swig wraps again around the C interface
-        set(OPENCMISS_H "${CMAKE_CURRENT_BINARY_DIR}/opencmiss.h")
-        set(OPENCMISS_C_F90 "${CMAKE_CURRENT_BINARY_DIR}/opencmiss_c.f90")
+        set(OPENCMISS_H "${CMAKE_CURRENT_BINARY_DIR}/iron.h")
+        set(OPENCMISS_C_F90 "${CMAKE_CURRENT_BINARY_DIR}/iron_c.f90")
         add_custom_command(OUTPUT ${OPENCMISS_C_F90} ${OPENCMISS_H}
                 COMMAND "${PYTHON_EXECUTABLE}" generate_bindings "${Iron_SOURCE_DIR}" C "${OPENCMISS_H}" "${OPENCMISS_C_F90}"
                 WORKING_DIRECTORY ${Iron_SOURCE_DIR}/bindings)
