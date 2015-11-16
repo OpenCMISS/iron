@@ -17,7 +17,7 @@ try:
 
     setup(
         name='OpenCMISS-Iron',
-        version='0.4.0',
+        version='0.3.0',
         description=('Python bindings for the OpenCMISS computational '
                 'modelling library Iron.'),
         long_description=('Python bindings to OpenCMISS-Iron. '
@@ -25,7 +25,8 @@ try:
                 'and System identification) is a mathematical modelling '
                 'environment that enables the application of finite element '
                 'analysis techniques to a variety of complex '
-                'bioengineering problems.'),
+                'bioengineering problems. OpenCMISS-Iron is the computational backend component '
+                'of OpenCMISS.'),
         author='Adam Reeve',
         license='Mozilla Tri-license',
         author_email='aree035@aucklanduni.ac.nz',
