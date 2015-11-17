@@ -72,22 +72,21 @@ MODULE BIOELECTRIC_FINITE_ELASTICITY_ROUTINES
 
   IMPLICIT NONE
 
-  PUBLIC BIOELECTRIC_FINITE_ELASTICITY_EQUATIONS_SET_SETUP
-  PUBLIC BIOELECTRIC_FINITE_ELASTICITY_EQUATIONS_SET_SUBTYPE_SET
-  PUBLIC BIOELECTRIC_FINITE_ELASTICITY_EQUATIONS_SET_SOLUTION_METHOD_SET
+  PUBLIC BioelectricFiniteElasticity_EquationsSetSetup
+  PUBLIC BioelectricFiniteElasticity_EquationsSetSolutionMethodSet
 
   PUBLIC BIOELECTRIC_FINITE_ELASTICITY_PROBLEM_SETUP
-  PUBLIC BIOELECTRIC_FINITE_ELASTICITY_PROBLEM_SUBTYPE_SET
-  
-  PUBLIC BIOELECTRIC_FINITE_ELASTICITY_FINITE_ELEMENT_CALCULATE
+  PUBLIC BioelectricFiniteElasticity_ProblemSpecificationSet
+ 
+  PUBLIC BioelectricFiniteElasticity_FiniteElementCalculate
 
   PUBLIC BIOELECTRIC_FINITE_ELASTICITY_PRE_SOLVE
   PUBLIC BIOELECTRIC_FINITE_ELASTICITY_POST_SOLVE
 
-  PUBLIC BIOELECTRIC_FINITE_ELASTICITY_CONTROL_LOOP_PRE_LOOP
-  PUBLIC BIOELECTRIC_FINITE_ELASTICITY_CONTROL_LOOP_POST_LOOP
+  PUBLIC BioelectricFiniteElasticity_ControlLoopPreLoop
+  PUBLIC BioelectricFiniteElasticity_ControlLoopPostLoop
   
-  PUBLIC BIOELECTRIC_FINITE_ELASTICITY_UPDATE_GEOMETRIC_FIELD
+  PUBLIC BioelectricFiniteElasticity_UpdateGeometricField
 
 CONTAINS
 
@@ -96,7 +95,7 @@ CONTAINS
   !
 
   !>Sets/changes the solution method for a bioelectrics finite elasticity equation type of a multi physics equations set class.
-  SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_EQUATIONS_SET_SOLUTION_METHOD_SET(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*)
+  SUBROUTINE BioelectricFiniteElasticity_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
@@ -106,51 +105,59 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("BIOELECTRIC_FINITE_ELASTICITY_EQUATIONS_SET_SOLUTION_METHOD_SET",ERR,ERROR,*999)
+    ENTERS("BioelectricFiniteElasticity_EquationsSetSolutionMethodSet",ERR,ERROR,*999)
     
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      SELECT CASE(EQUATIONS_SET%SUBTYPE)
+      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
+        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)/=3) THEN
+        CALL FlagError("Equations set specification must have three entries for a "// &
+          & "Bioelectric-finite elasticity type equations set.",err,error,*999)
+      END IF
+      SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
+        !\todo what are problem constants doing here???
       CASE(EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE,EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE, &
         & EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
         SELECT CASE(SOLUTION_METHOD)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           EQUATIONS_SET%SOLUTION_METHOD=EQUATIONS_SET_FEM_SOLUTION_METHOD
         CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE DEFAULT
           LOCAL_ERROR="The specified solution method of "//TRIM(NUMBER_TO_VSTRING(SOLUTION_METHOD,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       CASE DEFAULT
-        LOCAL_ERROR="Equations set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SUBTYPE,"*",ERR,ERROR))// &
+        LOCAL_ERROR="Equations set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",ERR,ERROR))// &
           & " is not valid for a bioelectrics finite elasticity equation type of a multi physics equations set class."
-        CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
-    EXITS("BIOELECTRIC_FINITE_ELASTICITY_EQUATIONS_SET_SOLUTION_METHOD_SET")
+    EXITS("BioelectricFiniteElasticity_EquationsSetSolutionMethodSet")
     RETURN
-999 ERRORSEXITS("BIOELECTRIC_FINITE_ELASTICITY_EQUATIONS_SET_SOLUTION_METHOD_SET",ERR,ERROR)
+999 ERRORS("BioelectricFiniteElasticity_EquationsSetSolutionMethodSet",ERR,ERROR)
+    EXITS("BioelectricFiniteElasticity_EquationsSetSolutionMethodSet")
     RETURN 1
     
-  END SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_EQUATIONS_SET_SOLUTION_METHOD_SET
+  END SUBROUTINE BioelectricFiniteElasticity_EquationsSetSolutionMethodSet
 
   !
   !================================================================================================================================
   !
 
   !>Sets up the bioelectrics finite elasticity equation.
-  SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*)
+  SUBROUTINE BioelectricFiniteElasticity_EquationsSetSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup
@@ -158,23 +165,24 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
-    ENTERS("BIOELECTRIC_FINITE_ELASTICITY_EQUATIONS_SET_SETUP",ERR,ERROR,*999)
+    ENTERS("BioelectricFiniteElasticity_EquationsSetSetup",ERR,ERROR,*999)
 
-    CALL FLAG_ERROR("BIOELECTRIC_FINITE_ELASTICITY_EQUATIONS_SET_SETUP is not implemented.",ERR,ERROR,*999)
+    CALL FlagError("BioelectricFiniteElasticity_EquationsSetSetup is not implemented.",ERR,ERROR,*999)
 
-    EXITS("BIOELECTRIC_FINITE_ELASTICITY_EQUATIONS_SET_SETUP")
+    EXITS("BioelectricFiniteElasticity_EquationsSetSetup")
     RETURN
-999 ERRORSEXITS("BIOELECTRIC_FINITE_ELASTICITY_EQUATIONS_SET_SETUP",ERR,ERROR)
+999 ERRORS("BioelectricFiniteElasticity_EquationsSetSetup",ERR,ERROR)
+    EXITS("BioelectricFiniteElasticity_EquationsSetSetup")
     RETURN 1
     
-  END SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_EQUATIONS_SET_SETUP
+  END SUBROUTINE BioelectricFiniteElasticity_EquationsSetSetup
 
   !
   !================================================================================================================================
   !
 
   !>Calculates the element stiffness matrices and RHS for a bioelectrics finite elasticity equation finite element equations set.
-  SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*)
+  SUBROUTINE BioelectricFiniteElasticity_FiniteElementCalculate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to perform the finite element calculations on
@@ -182,92 +190,72 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
-    ENTERS("BIOELECTRIC_FINITE_ELASTICITY_FINITE_ELEMENT_CALCULATE",ERR,ERROR,*999)
+    ENTERS("BioelectricFiniteElasticity_FiniteElementCalculate",ERR,ERROR,*999)
 
-    CALL FLAG_ERROR("BIOELECTRIC_FINITE_ELASTICITY_FINITE_ELEMENT_CALCULATE is not implemented.",ERR,ERROR,*999)
+    CALL FlagError("BioelectricFiniteElasticity_FiniteElementCalculate is not implemented.",ERR,ERROR,*999)
 
-    EXITS("BIOELECTRIC_FINITE_ELASTICITY_FINITE_ELEMENT_CALCULATE")
+    EXITS("BioelectricFiniteElasticity_FiniteElementCalculate")
     RETURN
-999 ERRORSEXITS("BIOELECTRIC_FINITE_ELASTICITY_FINITE_ELEMENT_CALCULATE",ERR,ERROR)
+999 ERRORS("BioelectricFiniteElasticity_FiniteElementCalculate",ERR,ERROR)
+    EXITS("BioelectricFiniteElasticity_FiniteElementCalculate")
     RETURN 1
     
-  END SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_FINITE_ELEMENT_CALCULATE
+  END SUBROUTINE BioelectricFiniteElasticity_FiniteElementCalculate
 
   !
   !================================================================================================================================
   !
 
-  !>Sets/changes the equation subtype for a bioelectrics finite elasticity equation type of a multi physics equations set class.
-  SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_EQUATIONS_SET_SUBTYPE_SET(EQUATIONS_SET,EQUATIONS_SET_SUBTYPE,ERR,ERROR,*)
+  !>Sets the problem specification for a bioelectric finite elasticity problem type .
+  SUBROUTINE BioelectricFiniteElasticity_ProblemSpecificationSet(problem,problemSpecification,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the equation subtype for
-    INTEGER(INTG), INTENT(IN) :: EQUATIONS_SET_SUBTYPE !<The equation subtype to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(PROBLEM_TYPE), POINTER :: problem !<A pointer to the problem to set the problem specification for
+    INTEGER(INTG), INTENT(IN) :: problemSpecification(:) !<The problem specification to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    INTEGER(INTG) :: problemSubtype
 
-    ENTERS("BIOELECTRIC_FINITE_ELASTICITY_EQUATIONS_SET_SUBTYPE_SET",ERR,ERROR,*999)
+    ENTERS("BioelectricFiniteElasticity_ProblemSpecificationSet",err,error,*999)
 
-    CALL FLAG_ERROR("BIOELECTRIC_FINITE_ELASTICITY_EQUATIONS_SET_SUBTYPE_SET is not implemented.",ERR,ERROR,*999)
-
-    EXITS("BIOELECTRIC_FINITE_ELASTICITY_EQUATIONS_SET_SUBTYPE_SET")
-    RETURN
-999 ERRORSEXITS("BIOELECTRIC_FINITE_ELASTICITY_EQUATIONS_SET_SUBTYPE_SET",ERR,ERROR)
-    RETURN 1
-    
-  END SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_EQUATIONS_SET_SUBTYPE_SET
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Sets/changes the problem subtype for a bioelectric finite elasticity problem type .
-  SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_PROBLEM_SUBTYPE_SET(PROBLEM,PROBLEM_SUBTYPE,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem to set the problem subtype for
-    INTEGER(INTG), INTENT(IN) :: PROBLEM_SUBTYPE !<The problem subtype to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-    
-    ENTERS("BIOELECTRIC_FINITE_ELASTICITY_PROBLEM_SUBTYPE_SET",ERR,ERROR,*999)
-    
     IF(ASSOCIATED(PROBLEM)) THEN
-      SELECT CASE(PROBLEM_SUBTYPE)
-      CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE)
-        PROBLEM%CLASS=PROBLEM_MULTI_PHYSICS_CLASS
-        PROBLEM%TYPE=PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE
-        PROBLEM%SUBTYPE=PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE
-      CASE(PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE)
-        PROBLEM%CLASS=PROBLEM_MULTI_PHYSICS_CLASS
-        PROBLEM%TYPE=PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE
-        PROBLEM%SUBTYPE=PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE
-      CASE(PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE)
-        PROBLEM%CLASS=PROBLEM_MULTI_PHYSICS_CLASS
-        PROBLEM%TYPE=PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE
-        PROBLEM%SUBTYPE=PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE
-      CASE(PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
-        PROBLEM%CLASS=PROBLEM_MULTI_PHYSICS_CLASS
-        PROBLEM%TYPE=PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE
-        PROBLEM%SUBTYPE=PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE
-      CASE DEFAULT
-        LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SUBTYPE,"*",ERR,ERROR))// &
-          & " is not valid for a bioelectric finite elasticity problem type of a multi physics problem class."
-        CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
+      IF(SIZE(problemSpecification,1)==3) THEN
+        problemSubtype=problemSpecification(3)
+        SELECT CASE(problemSubtype)
+        CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE, &
+            & PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE, &
+            & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE, &
+            & PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
+          !ok
+        CASE DEFAULT
+          localError="The third problem specification of "//TRIM(NumberToVstring(problemSubtype,"*",err,error))// &
+            & " is not valid for a bioelectric finite elasticity type of a multi physics problem."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+        IF(ALLOCATED(problem%specification)) THEN
+          CALL FlagError("Problem specification is already allocated.",err,error,*999)
+        ELSE
+          ALLOCATE(problem%specification(3),stat=err)
+          IF(err/=0) CALL FlagError("Could not allocate problem specification.",err,error,*999)
+        END IF
+        problem%specification(1:3)=[PROBLEM_MULTI_PHYSICS_CLASS,PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE, &
+          & problemSubtype]
+      ELSE
+        CALL FlagError("Bioelectric finite elasticity problem specification must have three entries.",err,error,*999)
+      END IF
     ELSE
-      CALL FLAG_ERROR("Problem is not associated.",ERR,ERROR,*999)
-    ENDIF
-       
-    EXITS("BIOELECTRIC_FINITE_ELASTICITY_PROBLEM_SUBTYPE_SET")
+      CALL FlagError("Problem is not associated.",err,error,*999)
+    END IF
+
+    EXITS("BioelectricFiniteElasticity_ProblemSpecificationSet")
     RETURN
-999 ERRORSEXITS("BIOELECTRIC_FINITE_ELASTICITY_PROBLEM_SUBTYPE_SET",ERR,ERROR)
+999 ERRORS("BioelectricFiniteElasticity_ProblemSpecificationSet",err,error)
+    EXITS("BioelectricFiniteElasticity_ProblemSpecificationSet")
     RETURN 1
     
-  END SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_PROBLEM_SUBTYPE_SET
+  END SUBROUTINE BioelectricFiniteElasticity_ProblemSpecificationSet
 
   !
   !================================================================================================================================
@@ -303,7 +291,12 @@ CONTAINS
     NULLIFY(CELLML_EQUATIONS)
     
     IF(ASSOCIATED(PROBLEM)) THEN
-      SELECT CASE(PROBLEM%SUBTYPE)
+      IF(.NOT.ALLOCATED(problem%specification)) THEN
+        CALL FlagError("Problem specification is not allocated.",err,error,*999)
+      ELSE IF(SIZE(problem%specification,1)<3) THEN
+        CALL FlagError("Problem specification must have three entries for a bioelectric-finite elasticity problem.",err,error,*999)
+      END IF
+      SELECT CASE(PROBLEM%SPECIFICATION(3))
 
       !--------------------------------------------------------------------
       !   Transient Gudunov monodomain, simple finite elasticity  
@@ -321,7 +314,7 @@ CONTAINS
             LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
               & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
               & " is invalid for a bioelectrics finite elasticity equation."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE(PROBLEM_SETUP_CONTROL_TYPE)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
@@ -338,7 +331,7 @@ CONTAINS
             CALL CONTROL_LOOP_TYPE_SET(MONODOMAIN_SUB_LOOP,PROBLEM_CONTROL_TIME_LOOP_TYPE,ERR,ERROR,*999)
             CALL CONTROL_LOOP_OUTPUT_TYPE_SET(MONODOMAIN_SUB_LOOP,CONTROL_LOOP_PROGRESS_OUTPUT,ERR,ERROR,*999)
 
-            IF(PROBLEM%SUBTYPE==PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE) THEN
+            IF(PROBLEM%specification(3)==PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE) THEN
               !Set up the control sub loop for finite elasicity
               CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP,2,ELASTICITY_SUB_LOOP,ERR,ERROR,*999)
               CALL CONTROL_LOOP_LABEL_SET(ELASTICITY_SUB_LOOP,'ELASTICITY_WHILE_LOOP',ERR,ERROR,*999)
@@ -361,7 +354,7 @@ CONTAINS
             LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
               & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
               & " is invalid for a bioelectrics finite elasticity equation."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
           !Get the control loop
@@ -417,7 +410,7 @@ CONTAINS
             LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
               & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
                 & " is invalid for a bioelectrics finite elasticity equation."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
@@ -477,7 +470,7 @@ CONTAINS
             LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
               & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
               & " is invalid for a bioelectrics finite elasticity equation."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE(PROBLEM_SETUP_CELLML_EQUATIONS_TYPE)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
@@ -507,20 +500,20 @@ CONTAINS
             LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
               & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
               & " is invalid for a bioelectrics finite elasticity equation."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE DEFAULT
           LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
             & " is invalid for a bioelectrics finite elasticity equation."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       CASE DEFAULT
-        LOCAL_ERROR="The problem subtype of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SUBTYPE,"*",ERR,ERROR))// &
+        LOCAL_ERROR="The problem subtype of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
           & " does not equal a transient monodomain quasistatic finite elasticity equation subtype."
-        CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
     ELSE
-      CALL FLAG_ERROR("Problem is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("BIOELECTRIC_FINITE_ELASTICITY_PROBLEM_SETUP")
@@ -551,9 +544,15 @@ CONTAINS
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
       IF(ASSOCIATED(SOLVER)) THEN
         IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-          SELECT CASE(CONTROL_LOOP%PROBLEM%SUBTYPE)
+          IF(.NOT.ALLOCATED(control_loop%problem%specification)) THEN
+            CALL FlagError("Problem specification is not allocated.",err,error,*999)
+          ELSE IF(SIZE(control_loop%problem%specification,1)<3) THEN
+            CALL FlagError("Problem specification must have three entries for a bioelectric-finite elasticity problem.", &
+              & err,error,*999)
+          END IF
+          SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
           CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE,PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE, &
-            & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE)
+              & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE)
             SELECT CASE(CONTROL_LOOP%LOOP_TYPE)
             CASE(PROBLEM_CONTROL_TIME_LOOP_TYPE)
               CALL BIODOMAIN_PRE_SOLVE(SOLVER,ERR,ERROR,*999)
@@ -562,7 +561,7 @@ CONTAINS
             CASE DEFAULT
               LOCAL_ERROR="Control loop loop type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%LOOP_TYPE,"*",ERR,ERROR))// &
                 & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           CASE(PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
             SELECT CASE(CONTROL_LOOP%LOOP_TYPE)
@@ -573,21 +572,21 @@ CONTAINS
             CASE DEFAULT
               LOCAL_ERROR="Control loop loop type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%LOOP_TYPE,"*",ERR,ERROR))// &
                 & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           CASE DEFAULT
-            LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SUBTYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
               & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
-          CALL FLAG_ERROR("Problem is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Solver is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Solver is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Control loop is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
     ENDIF
 
     EXITS("BIOELECTRIC_FINITE_ELASTICITY_PRE_SOLVE")
@@ -618,7 +617,13 @@ CONTAINS
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
       IF(ASSOCIATED(SOLVER)) THEN
         IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN 
-          SELECT CASE(CONTROL_LOOP%PROBLEM%SUBTYPE)
+          IF(.NOT.ALLOCATED(control_loop%problem%specification)) THEN
+            CALL FlagError("Problem specification is not allocated.",err,error,*999)
+          ELSE IF(SIZE(control_loop%problem%specification,1)<3) THEN
+            CALL FlagError("Problem specification must have three entries for a bioelectric-finite elasticity problem.", &
+              & err,error,*999)
+          END IF
+          SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
           CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE,PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE, &
             & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
             SELECT CASE(SOLVER%SOLVE_TYPE)
@@ -631,21 +636,21 @@ CONTAINS
             CASE DEFAULT
               LOCAL_ERROR="Solver solve type "//TRIM(NUMBER_TO_VSTRING(SOLVER%SOLVE_TYPE,"*",ERR,ERROR))// &
                 & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           CASE DEFAULT
-            LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SUBTYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
               & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
-          CALL FLAG_ERROR("Problem is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Solver is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Solver is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Control loop is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
     ENDIF
 
     EXITS("BIOELECTRIC_FINITE_ELASTICITY_POST_SOLVE")
@@ -660,7 +665,7 @@ CONTAINS
   !
 
   !>Sets up the bioelectrics finite elasticity problem pre-control loop.
-  SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_CONTROL_LOOP_PRE_LOOP(CONTROL_LOOP,ERR,ERROR,*)
+  SUBROUTINE BioelectricFiniteElasticity_ControlLoopPreLoop(CONTROL_LOOP,ERR,ERROR,*)
 
     !Argument variables
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
@@ -670,77 +675,87 @@ CONTAINS
     TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
-    ENTERS("BIOELECTRIC_FINITE_ELASTICITY_CONTROL_LOOP_PRE_LOOP",ERR,ERROR,*999)
+    ENTERS("BioelectricFiniteElasticity_ControlLoopPreLoop",ERR,ERROR,*999)
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
       IF(CONTROL_LOOP%NUMBER_OF_SUB_LOOPS==0) THEN
         PROBLEM=>CONTROL_LOOP%PROBLEM
         IF(ASSOCIATED(PROBLEM)) THEN
-          SELECT CASE(PROBLEM%TYPE)
+          IF(.NOT.ALLOCATED(control_loop%problem%specification)) THEN
+            CALL FlagError("Problem specification is not allocated.",err,error,*999)
+          ELSE IF(SIZE(control_loop%problem%specification,1)<3) THEN
+            CALL FlagError("Problem specification must have three entries for a bioelectric-finite elasticity problem.", &
+              & err,error,*999)
+          END IF
+          SELECT CASE(PROBLEM%SPECIFICATION(2))
           CASE(PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE)
             SELECT CASE(CONTROL_LOOP%LOOP_TYPE)
             CASE(PROBLEM_CONTROL_TIME_LOOP_TYPE)
               !do nothing ???
             CASE(PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE)
-              SELECT CASE(PROBLEM%SUBTYPE)
+              SELECT CASE(PROBLEM%SPECIFICATION(3))
               CASE(PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE)
-                CALL BIOELECTRIC_FIN_ELA_INDEPENDENT_FIELD_INTERPOLATE(CONTROL_LOOP,ERR,ERROR,*999)
+                CALL BioelectricFiniteElasticity_IndependentFieldInterpolate(CONTROL_LOOP,ERR,ERROR,*999)
               CASE(PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE)
                 CALL BIOELECTRIC_FINITE_ELASTICITY_COMPUTE_TITIN(CONTROL_LOOP,ERR,ERROR,*999)
-                CALL BIOELECTRIC_FIN_ELA_INDEPENDENT_FIELD_INTERPOLATE(CONTROL_LOOP,ERR,ERROR,*999)
+                CALL BioelectricFiniteElasticity_IndependentFieldInterpolate(CONTROL_LOOP,ERR,ERROR,*999)
               CASE DEFAULT
-                LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SUBTYPE,"*",ERR,ERROR))// &
-                  & " is not valid for bioelectric finite elasticity problem type."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                LOCAL_ERROR="The third problem specification of "// &
+                  & TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
+                  & " is not valid for bioelectric finite elasticity problem."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
-              CALL FINITE_ELASTICITY_CONTROL_TIME_LOOP_PRE_LOOP(CONTROL_LOOP,ERR,ERROR,*999)
+              CALL FiniteElasticity_ControlTimeLoopPreLoop(CONTROL_LOOP,ERR,ERROR,*999)
             CASE(PROBLEM_CONTROL_WHILE_LOOP_TYPE)
-              SELECT CASE(PROBLEM%SUBTYPE)
+              SELECT CASE(PROBLEM%SPECIFICATION(3))
               CASE(PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
                 IF(CONTROL_LOOP%WHILE_LOOP%ITERATION_NUMBER==1) THEN
-                  CALL BIOELECTRIC_FIN_ELA_INDEPENDENT_FIELD_INTERPOLATE(CONTROL_LOOP,ERR,ERROR,*999)
+                  CALL BioelectricFiniteElasticity_IndependentFieldInterpolate(CONTROL_LOOP,ERR,ERROR,*999)
                 ENDIF
-                CALL BIOELECTRIC_FIN_ELA_COMPUTE_FIBRE_STRETCH(CONTROL_LOOP,ERR,ERROR,*999)
-                CALL BIOELECTRIC_FIN_ELA_FORCE_LENGTH_VELO_RELATION(CONTROL_LOOP,ERR,ERROR,*999)
+                CALL BioelectricFiniteElasticity_ComputeFibreStretch(CONTROL_LOOP,ERR,ERROR,*999)
+                CALL BioelectricFiniteElasticity_ForceLengthVelocityRelation(CONTROL_LOOP,ERR,ERROR,*999)
               CASE DEFAULT
-                LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SUBTYPE,"*",ERR,ERROR))// &
-                  & " is not valid for bioelectric finite elasticity problem type."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                LOCAL_ERROR="The third problem specification of "// &
+                  & TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
+                  & " is not valid for bioelectric finite elasticity problem."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
-              CALL FINITE_ELASTICITY_CONTROL_TIME_LOOP_PRE_LOOP(CONTROL_LOOP,ERR,ERROR,*999)
+              CALL FiniteElasticity_ControlTimeLoopPreLoop(CONTROL_LOOP,ERR,ERROR,*999)
             CASE DEFAULT
               LOCAL_ERROR="Control loop loop type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%LOOP_TYPE,"*",ERR,ERROR))// &
                 & " is not valid for bioelectric finite elasticity problem type."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           CASE DEFAULT
-            LOCAL_ERROR="Problem type "//TRIM(NUMBER_TO_VSTRING(PROBLEM%TYPE,"*",ERR,ERROR))// &
-              & " is not valid for a multi physics problem class."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            LOCAL_ERROR="The second problem specification of "// &
+              & TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
+              & " is not valid for a multi physics problem."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
-          CALL FLAG_ERROR("Control loop problem is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Control loop problem is not associated.",ERR,ERROR,*999)
         ENDIF
       ELSE
         !the main time loop - do nothing!
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Control loop is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
     ENDIF
     
-    EXITS("BIOELECTRIC_FINITE_ELASTICITY_CONTROL_LOOP_PRE_LOOP")
+    EXITS("BioelectricFiniteElasticity_ControlLoopPreLoop")
     RETURN
-999 ERRORSEXITS("BIOELECTRIC_FINITE_ELASTICITY_CONTROL_LOOP_PRE_LOOP",ERR,ERROR)
+999 ERRORS("BioelectricFiniteElasticity_ControlLoopPreLoop",ERR,ERROR)
+    EXITS("BioelectricFiniteElasticity_ControlLoopPreLoop")
     RETURN 1
     
-  END SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_CONTROL_LOOP_PRE_LOOP
+  END SUBROUTINE BioelectricFiniteElasticity_ControlLoopPreLoop
 
   !
   !================================================================================================================================
   !
 
   !>Computes the fibre stretch for bioelectrics finite elasticity problems.
-  SUBROUTINE BIOELECTRIC_FIN_ELA_COMPUTE_FIBRE_STRETCH(CONTROL_LOOP,ERR,ERROR,*)
+  SUBROUTINE BioelectricFiniteElasticity_ComputeFibreStretch(CONTROL_LOOP,ERR,ERROR,*)
 
     !Argument variables
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
@@ -771,7 +786,7 @@ CONTAINS
     INTEGER(INTG) :: equations_set_idx,gauss_idx,dof_idx,element_idx,idx
     REAL(DP) :: DZDNU(3,3),DZDNUT(3,3),AZL(3,3)
 
-    ENTERS("BIOELECTRIC_FIN_ELA_COMPUTE_FIBRE_STRETCH",ERR,ERROR,*999)
+    ENTERS("BioelectricFiniteElasticity_ComputeFibreStretch",ERR,ERROR,*999)
 
     NULLIFY(SOLVERS)
     NULLIFY(SOLVER)
@@ -807,43 +822,43 @@ CONTAINS
                   IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD)) THEN
                     LOCAL_ERROR="Geometric field is not associated for equations set index "// &
                       & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                   DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
                   IF(.NOT.ASSOCIATED(DEPENDENT_FIELD)) THEN
                     LOCAL_ERROR="Dependent field is not associated for equations set index "// &
                       & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                   INDEPENDENT_FIELD=>EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD
                   IF(.NOT.ASSOCIATED(INDEPENDENT_FIELD)) THEN
                     LOCAL_ERROR="Independent field is not associated for equations set index "// &
                       & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                   EQUATIONS=>EQUATIONS_SET%EQUATIONS
                   IF(.NOT.ASSOCIATED(EQUATIONS)) THEN
                     LOCAL_ERROR="Equations is not associated for equations set index "// &
                       & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                   FIBRE_FIELD=>EQUATIONS%INTERPOLATION%FIBRE_FIELD
                   IF(.NOT.ASSOCIATED(FIBRE_FIELD)) THEN
                     LOCAL_ERROR="Fibre field is not associated for equations set index "// &
                       & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                 ELSE
                   LOCAL_ERROR="Equations set is not associated for equations set index "// &
                     & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 ENDIF
               ENDDO !equations_set_idx
             ELSE
-              CALL FLAG_ERROR("Solver equations solver mapping is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Solver equations solver mapping is not associated.",ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Solver solver equations are not associated.",ERR,ERROR,*999)
+            CALL FlagError("Solver solver equations are not associated.",ERR,ERROR,*999)
           ENDIF
 
           CALL FIELD_VARIABLE_GET(INDEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_VAR_U1,ERR,ERROR,*999)
@@ -911,7 +926,7 @@ CONTAINS
                 & FIBRE_INTERPOLATED_POINT,ERR,ERROR,*999)
 
               !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
-              CALL FiniteElasticityGaussDeformationGradientTensor(DEPENDENT_INTERPOLATED_POINT_METRICS, &
+              CALL FiniteElasticity_GaussDeformationGradientTensor(DEPENDENT_INTERPOLATED_POINT_METRICS, &
                 & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,DZDNU,ERR,ERROR,*999)
               
               !compute C=F^T F
@@ -933,28 +948,29 @@ CONTAINS
         CASE DEFAULT
           LOCAL_ERROR="Control loop type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%LOOP_TYPE,"*",ERR,ERROR))// &
             & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE !the control loop contains subloops
         !do nothing
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Control loop is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
     ENDIF
 
-    EXITS("BIOELECTRIC_FIN_ELA_COMPUTE_FIBRE_STRETCH")
+    EXITS("BioelectricFiniteElasticity_ComputeFibreStretch")
     RETURN
-999 ERRORSEXITS("BIOELECTRIC_FIN_ELA_COMPUTE_FIBRE_STRETCH",ERR,ERROR)
+999 ERRORS("BioelectricFiniteElasticity_ComputeFibreStretch",ERR,ERROR)
+    EXITS("BioelectricFiniteElasticity_ComputeFibreStretch")
     RETURN 1
     
-  END SUBROUTINE BIOELECTRIC_FIN_ELA_COMPUTE_FIBRE_STRETCH
+  END SUBROUTINE BioelectricFiniteElasticity_ComputeFibreStretch
 
   !
   !================================================================================================================================
   !
 
   !>Computes the bioelectrics finite elasticity force-length and force_velocity relations.
-  SUBROUTINE BIOELECTRIC_FIN_ELA_FORCE_LENGTH_VELO_RELATION(CONTROL_LOOP,ERR,ERROR,*)
+  SUBROUTINE BioelectricFiniteElasticity_ForceLengthVelocityRelation(CONTROL_LOOP,ERR,ERROR,*)
 
     !Argument variables
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
@@ -992,7 +1008,7 @@ CONTAINS
     REAL(DP) :: VELOCITY_AVERAGE,STRETCH_AVERAGE,OLD_STRETCH_AVERAGE
     INTEGER(INTG) :: counter
 
-    ENTERS("BIOELECTRIC_FIN_ELA_FORCE_LENGTH_VELO_RELATION",ERR,ERROR,*999)
+    ENTERS("BioelectricFiniteElasticity_ForceLengthVelocityRelation",ERR,ERROR,*999)
 
     NULLIFY(CONTROL_LOOP_PARENT)
     NULLIFY(EQUATIONS_SET)
@@ -1034,25 +1050,25 @@ CONTAINS
                   IF(.NOT.ASSOCIATED(DEPENDENT_FIELD)) THEN
                     LOCAL_ERROR="Dependent field is not associated for equations set index "// &
                       & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                   INDEPENDENT_FIELD=>EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD
                   IF(.NOT.ASSOCIATED(INDEPENDENT_FIELD)) THEN
                     LOCAL_ERROR="Independent field is not associated for equations set index "// &
                       & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                 ELSE
                   LOCAL_ERROR="Equations set is not associated for equations set index "// &
                     & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))//" in the solver mapping."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 ENDIF
               ENDDO !equations_set_idx
             ELSE
-              CALL FLAG_ERROR("Solver equations solver mapping is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Solver equations solver mapping is not associated.",ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Solver solver equations are not associated.",ERR,ERROR,*999)
+            CALL FlagError("Solver solver equations are not associated.",ERR,ERROR,*999)
           ENDIF
 
           CALL FIELD_VARIABLE_GET(INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VAR_U,ERR,ERROR,*999)
@@ -1299,29 +1315,30 @@ CONTAINS
         CASE DEFAULT
           LOCAL_ERROR="Control loop type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%LOOP_TYPE,"*",ERR,ERROR))// &
             & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE !the control loop contains subloops
         !do nothing
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Control loop is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
     ENDIF
 
 
-    EXITS("BIOELECTRIC_FIN_ELA_FORCE_LENGTH_VELO_RELATION")
+    EXITS("BioelectricFiniteElasticity_ForceLengthVelocityRelation")
     RETURN
-999 ERRORSEXITS("BIOELECTRIC_FIN_ELA_FORCE_LENGTH_VELO_RELATION",ERR,ERROR)
+999 ERRORS("BioelectricFiniteElasticity_ForceLengthVelocityRelation",ERR,ERROR)
+    EXITS("BioelectricFiniteElasticity_ForceLengthVelocityRelation")
     RETURN 1
     
-  END SUBROUTINE BIOELECTRIC_FIN_ELA_FORCE_LENGTH_VELO_RELATION
+  END SUBROUTINE BioelectricFiniteElasticity_ForceLengthVelocityRelation
 
   !
   !================================================================================================================================
   !
 
   !>Sets up the bioelectrics finite elasticity problem post-control loop.
-  SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_CONTROL_LOOP_POST_LOOP(CONTROL_LOOP,ERR,ERROR,*)
+  SUBROUTINE BioelectricFiniteElasticity_ControlLoopPostLoop(CONTROL_LOOP,ERR,ERROR,*)
 
     !Argument variables
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
@@ -1341,32 +1358,38 @@ CONTAINS
     TYPE(VARYING_STRING) :: FILENAME,LOCAL_ERROR,METHOD
     TYPE(CONTROL_LOOP_TYPE), POINTER :: ELASTICITY_SUB_LOOP,BIOELECTRIC_SUB_LOOP
 
-    ENTERS("BIOELECTRIC_FINITE_ELASTICITY_CONTROL_LOOP_POST_LOOP",ERR,ERROR,*999)
+    ENTERS("BioelectricFiniteElasticity_ControlLoopPostLoop",ERR,ERROR,*999)
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
       IF(CONTROL_LOOP%NUMBER_OF_SUB_LOOPS==0) THEN
         PROBLEM=>CONTROL_LOOP%PROBLEM
         IF(ASSOCIATED(PROBLEM)) THEN
+          IF(.NOT.ALLOCATED(control_loop%problem%specification)) THEN
+            CALL FlagError("Problem specification is not allocated.",err,error,*999)
+          ELSE IF(SIZE(control_loop%problem%specification,1)<3) THEN
+            CALL FlagError("Problem specification must have three entries for a bioelectric-finite elasticity problem.", &
+              & err,error,*999)
+          END IF
           SELECT CASE(CONTROL_LOOP%LOOP_TYPE)
           CASE(PROBLEM_CONTROL_TIME_LOOP_TYPE)
-            SELECT CASE(PROBLEM%TYPE)
+            SELECT CASE(PROBLEM%SPECIFICATION(2))
             CASE(PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE)
               !the monodomain time loop - output of the monodomain fields
               CALL BIODOMAIN_CONTROL_LOOP_POST_LOOP(CONTROL_LOOP,ERR,ERROR,*999)
             CASE DEFAULT
-              LOCAL_ERROR="Problem type "//TRIM(NUMBER_TO_VSTRING(PROBLEM%TYPE,"*",ERR,ERROR))// &
+              LOCAL_ERROR="Problem type "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))// &
                 & " is not valid for a multi physics problem class."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           CASE(PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE)
-            CALL BIOELECTRIC_FINITE_ELASTICITY_UPDATE_GEOMETRIC_FIELD(CONTROL_LOOP,.FALSE.,ERR,ERROR,*999)
+            CALL BioelectricFiniteElasticity_UpdateGeometricField(CONTROL_LOOP,.FALSE.,ERR,ERROR,*999)
           CASE(PROBLEM_CONTROL_WHILE_LOOP_TYPE)
-            CALL BIOELECTRIC_FINITE_ELASTICITY_CONVERGENCE_CHECK(CONTROL_LOOP,ERR,ERROR,*999)
+            CALL BioelectricFiniteElasticity_ConvergenceCheck(CONTROL_LOOP,ERR,ERROR,*999)
           CASE DEFAULT
             !do nothing
           END SELECT
         ELSE
-          CALL FLAG_ERROR("Control loop problem is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Control loop problem is not associated.",ERR,ERROR,*999)
         ENDIF
       ELSE
         !the main time loop - output the finite elasticity fields 
@@ -1403,18 +1426,18 @@ CONTAINS
                       LOCAL_ERROR="Equations set is not associated for equations set index "// &
                         & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))// &
                         & " in the solver mapping."
-                      CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     ENDIF
                   ENDDO !equations_set_idx
                 ELSE
-                  CALL FLAG_ERROR("Solver equations solver mapping is not associated.",ERR,ERROR,*999)
+                  CALL FlagError("Solver equations solver mapping is not associated.",ERR,ERROR,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("Solver solver equations are not associated.",ERR,ERROR,*999)
+                CALL FlagError("Solver solver equations are not associated.",ERR,ERROR,*999)
               ENDIF
-              IF((PROBLEM%SUBTYPE==PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE).OR. &
-               & (PROBLEM%SUBTYPE==PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE).OR. &
-               & (PROBLEM%SUBTYPE==PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)) THEN
+              IF((PROBLEM%SPECIFICATION(3)==PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE).OR. &
+               & (PROBLEM%SPECIFICATION(3)==PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE).OR. &
+               & (PROBLEM%SPECIFICATION(3)==PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)) THEN
                 NULLIFY(SOLVERS)
                 NULLIFY(SOLVER)
                 NULLIFY(SOLVER_EQUATIONS)
@@ -1445,34 +1468,35 @@ CONTAINS
                         LOCAL_ERROR="Equations set is not associated for equations set index "// &
                           & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))// &
                           & " in the solver mapping."
-                        CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                       ENDIF
                     ENDDO !equations_set_idx
                   ELSE
-                    CALL FLAG_ERROR("Solver equations solver mapping is not associated.",ERR,ERROR,*999)
+                    CALL FlagError("Solver equations solver mapping is not associated.",ERR,ERROR,*999)
                   ENDIF
                 ELSE
-                  CALL FLAG_ERROR("Solver solver equations are not associated.",ERR,ERROR,*999)
+                  CALL FlagError("Solver solver equations are not associated.",ERR,ERROR,*999)
                 ENDIF
               ENDIF !PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE
             ELSE
-              CALL FLAG_ERROR("Control loop problem is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Control loop problem is not associated.",ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Time loop is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Time loop is not associated.",ERR,ERROR,*999)
           ENDIF
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Control loop is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
     ENDIF
 
-    EXITS("BIOELECTRIC_FINITE_ELASTICITY_CONTROL_LOOP_POST_LOOP")
+    EXITS("BioelectricFiniteElasticity_ControlLoopPostLoop")
     RETURN
-999 ERRORSEXITS("BIOELECTRIC_FINITE_ELASTICITY_CONTROL_LOOP_POST_LOOP",ERR,ERROR)
+999 ERRORS("BioelectricFiniteElasticity_ControlLoopPostLoop",ERR,ERROR)
+    EXITS("BioelectricFiniteElasticity_ControlLoopPostLoop")
     RETURN 1
     
-  END SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_CONTROL_LOOP_POST_LOOP
+  END SUBROUTINE BioelectricFiniteElasticity_ControlLoopPostLoop
 
 
   !
@@ -1480,7 +1504,7 @@ CONTAINS
   !
 
   !>Check for the convergence of the bioelectric finite elasticity while loop, i.e., if the force-length and force-velocity relations yielded a different actual configuration.
-  SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_CONVERGENCE_CHECK(CONTROL_LOOP,ERR,ERROR,*)
+  SUBROUTINE BioelectricFiniteElasticity_ConvergenceCheck(CONTROL_LOOP,ERR,ERROR,*)
 
     !Argument variables
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
@@ -1499,7 +1523,7 @@ CONTAINS
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VAR
     REAL(DP) :: x1,x2,x3,y1,y2,y3,my_sum
 
-    ENTERS("BIOELECTRIC_FINITE_ELASTICITY_CONVERGENCE_CHECK",ERR,ERROR,*999)
+    ENTERS("BioelectricFiniteElasticity_ConvergenceCheck",ERR,ERROR,*999)
 
     NULLIFY(SOLVERS)
     NULLIFY(SOLVER)
@@ -1532,14 +1556,14 @@ CONTAINS
                     LOCAL_ERROR="Equations set is not associated for equations set index "// &
                       & TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*",ERR,ERROR))// &
                       & " in the solver mapping."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                 ENDDO !equations_set_idx
               ELSE
-                CALL FLAG_ERROR("Solver equations solver mapping is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Solver equations solver mapping is not associated.",ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Solver solver equations are not associated.",ERR,ERROR,*999)
+              CALL FlagError("Solver solver equations are not associated.",ERR,ERROR,*999)
             ENDIF
 
             IF(CONTROL_LOOP%WHILE_LOOP%ITERATION_NUMBER==1) THEN
@@ -1579,12 +1603,12 @@ CONTAINS
               
               IF(my_sum<1.0E-06_DP) THEN !if converged then:
                 CONTROL_LOOP%WHILE_LOOP%CONTINUE_LOOP=.FALSE.
-                CALL BIOELECTRIC_FINITE_ELASTICITY_UPDATE_GEOMETRIC_FIELD(CONTROL_LOOP,.FALSE.,ERR,ERROR,*999)
+                CALL BioelectricFiniteElasticity_UpdateGeometricField(CONTROL_LOOP,.FALSE.,ERR,ERROR,*999)
                 !copy the current solution to the previous solution
                 CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,ERR,ERROR,*999)
               ELSEIF(CONTROL_LOOP%WHILE_LOOP%ITERATION_NUMBER==CONTROL_LOOP%WHILE_LOOP%MAXIMUM_NUMBER_OF_ITERATIONS) THEN
-                CALL BIOELECTRIC_FINITE_ELASTICITY_UPDATE_GEOMETRIC_FIELD(CONTROL_LOOP,.FALSE.,ERR,ERROR,*999)
+                CALL BioelectricFiniteElasticity_UpdateGeometricField(CONTROL_LOOP,.FALSE.,ERR,ERROR,*999)
                 CALL FLAG_WARNING('----------- Maximum number of iterations in while loop reached. -----------',ERR,ERROR,*999)
                 !copy the current solution to the previous solution
                 CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
@@ -1601,21 +1625,22 @@ CONTAINS
             !do nothing
           END SELECT
         ELSE
-          CALL FLAG_ERROR("Control loop problem is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Control loop problem is not associated.",ERR,ERROR,*999)
         ENDIF
       ELSE !the main time loop
         !do nothing
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Control loop is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
     ENDIF
 
-    EXITS("BIOELECTRIC_FINITE_ELASTICITY_CONVERGENCE_CHECK")
+    EXITS("BioelectricFiniteElasticity_ConvergenceCheck")
     RETURN
-999 ERRORSEXITS("BIOELECTRIC_FINITE_ELASTICITY_CONVERGENCE_CHECK",ERR,ERROR)
+999 ERRORS("BioelectricFiniteElasticity_ConvergenceCheck",ERR,ERROR)
+    EXITS("BioelectricFiniteElasticity_ConvergenceCheck")
     RETURN 1
     
-  END SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_CONVERGENCE_CHECK
+  END SUBROUTINE BioelectricFiniteElasticity_ConvergenceCheck
 
   !
   !================================================================================================================================
@@ -1623,7 +1648,7 @@ CONTAINS
 
   !>Update the the bioelectric equation geometric field from the finite elasticity dependent field (deformed geometry)
   !>NOTE: this is only temporary - will be replaced once embedded meshes are available
-  SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_UPDATE_GEOMETRIC_FIELD(CONTROL_LOOP,CALC_CLOSEST_GAUSS_POINT,ERR,ERROR,*)
+  SUBROUTINE BioelectricFiniteElasticity_UpdateGeometricField(CONTROL_LOOP,CALC_CLOSEST_GAUSS_POINT,ERR,ERROR,*)
 
     !Argument variables
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
@@ -1654,7 +1679,7 @@ CONTAINS
     REAL(DP) :: XI(3),PREVIOUS_NODE(3),DIST_INIT,SARCO_LENGTH_INIT,TIME_STEP,DIST
     REAL(DP), POINTER :: GAUSS_POSITIONS(:,:)
 
-    ENTERS("BIOELECTRIC_FINITE_ELASTICITY_UPDATE_GEOMETRIC_FIELD",ERR,ERROR,*999)
+    ENTERS("BioelectricFiniteElasticity_UpdateGeometricField",ERR,ERROR,*999)
 
     NULLIFY(CONTROL_LOOP_ROOT)
     NULLIFY(CONTROL_LOOP_PARENT)
@@ -1686,9 +1711,15 @@ CONTAINS
       IF(CONTROL_LOOP%NUMBER_OF_SUB_LOOPS==0) THEN
         PROBLEM=>CONTROL_LOOP%PROBLEM
         IF(ASSOCIATED(PROBLEM)) THEN
-          SELECT CASE(PROBLEM%TYPE)
+          IF(.NOT.ALLOCATED(problem%specification)) THEN
+            CALL FlagError("Problem specification is not allocated.",err,error,*999)
+          ELSE IF(SIZE(problem%specification,1)<3) THEN
+            CALL FlagError("Problem specification must have three entries for a bioelectric-finite elasticity problem.", &
+              & err,error,*999)
+          END IF
+          SELECT CASE(PROBLEM%SPECIFICATION(2))
           CASE(PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE)
-            SELECT CASE(PROBLEM%SUBTYPE)
+            SELECT CASE(PROBLEM%SPECIFICATION(3))
 
             CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE)
 
@@ -1706,16 +1737,16 @@ CONTAINS
                   IF(ASSOCIATED(EQUATIONS_SET)) THEN
                     GEOMETRIC_FIELD_MONODOMAIN=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
                     IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD_MONODOMAIN)) THEN
-                      CALL FLAG_ERROR("Geometric field is not associated.",ERR,ERROR,*999)
+                      CALL FlagError("Geometric field is not associated.",ERR,ERROR,*999)
                     ENDIF
                   ELSE
-                    CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+                    CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
                   ENDIF
                 ELSE
-                  CALL FLAG_ERROR("Solver mapping is not associated.",ERR,ERROR,*999)
+                  CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("Solver equations is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
               ENDIF
               NULLIFY(SOLVERS)
               NULLIFY(SOLVER)
@@ -1734,16 +1765,16 @@ CONTAINS
                   IF(ASSOCIATED(EQUATIONS_SET)) THEN
                     DEPENDENT_FIELD_ELASTICITY=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
                     IF(.NOT.ASSOCIATED(DEPENDENT_FIELD_ELASTICITY)) THEN
-                      CALL FLAG_ERROR("Dependent field is not associated.",ERR,ERROR,*999)
+                      CALL FlagError("Dependent field is not associated.",ERR,ERROR,*999)
                     ENDIF
                   ELSE
-                    CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+                    CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
                   ENDIF
                 ELSE
-                  CALL FLAG_ERROR("Solver mapping is not associated.",ERR,ERROR,*999)
+                  CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("Solver equations is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
               ENDIF
               DO component_idx=1,GEOMETRIC_FIELD_MONODOMAIN%VARIABLES(1)%NUMBER_OF_COMPONENTS
                 !check for identical interpolation of the fields
@@ -1751,7 +1782,7 @@ CONTAINS
                 DEPENDENT_FIELD_INTERPOLATION=DEPENDENT_FIELD_ELASTICITY%VARIABLES(1)%COMPONENTS(component_idx)%INTERPOLATION_TYPE
                 IF(GEOMETRIC_FIELD_INTERPOLATION==DEPENDENT_FIELD_INTERPOLATION) THEN
                   !copy the dependent field components to the geometric field
-                  CALL FIELD_PARAMETERS_TO_FIELD_PARAMETERS_COMPONENT_COPY(DEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
+                  CALL Field_ParametersToFieldParametersCopy(DEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
                     & FIELD_VALUES_SET_TYPE,component_idx,GEOMETRIC_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                     & component_idx,ERR,ERROR,*999)
                 ELSE
@@ -1759,7 +1790,7 @@ CONTAINS
                     & ERROR))//" of field number "//TRIM(NUMBER_TO_VSTRING(GEOMETRIC_FIELD_MONODOMAIN%USER_NUMBER,"*",ERR, &
                     & ERROR))//" does not coincide with the interpolation type of field number " &
                     & //TRIM(NUMBER_TO_VSTRING(DEPENDENT_FIELD_ELASTICITY%USER_NUMBER,"*",ERR,ERROR))//"."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 ENDIF
               ENDDO
 
@@ -1779,25 +1810,25 @@ CONTAINS
                   IF(ASSOCIATED(EQUATIONS_SET)) THEN
                     GEOMETRIC_FIELD_MONODOMAIN=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
                     IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD_MONODOMAIN)) THEN
-                      CALL FLAG_ERROR("Geometric field is not associated.",ERR,ERROR,*999)
+                      CALL FlagError("Geometric field is not associated.",ERR,ERROR,*999)
                     ENDIF
                     ! the Field_V_Variable_Type contains the 3D nodal positions
                     DEPENDENT_FIELD_MONODOMAIN=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
                     IF(.NOT.ASSOCIATED(DEPENDENT_FIELD_MONODOMAIN)) THEN
-                      CALL FLAG_ERROR("Dependent field is not associated.",ERR,ERROR,*999)
+                      CALL FlagError("Dependent field is not associated.",ERR,ERROR,*999)
                     ENDIF
                     INDEPENDENT_FIELD_MONODOMAIN=>EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD
                     IF(.NOT.ASSOCIATED(INDEPENDENT_FIELD_MONODOMAIN)) THEN
-                      CALL FLAG_ERROR("Independent field is not associated.",ERR,ERROR,*999)
+                      CALL FlagError("Independent field is not associated.",ERR,ERROR,*999)
                     ENDIF
                   ELSE
-                    CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+                    CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
                   ENDIF
                 ELSE
-                  CALL FLAG_ERROR("Solver mapping is not associated.",ERR,ERROR,*999)
+                  CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("Solver equations is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
               ENDIF
               NULLIFY(SOLVERS)
               NULLIFY(SOLVER)
@@ -1816,20 +1847,20 @@ CONTAINS
                   IF(ASSOCIATED(EQUATIONS_SET)) THEN
                     INDEPENDENT_FIELD_ELASTICITY=>EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD
                     IF(.NOT.ASSOCIATED(INDEPENDENT_FIELD_ELASTICITY)) THEN
-                      CALL FLAG_ERROR("Independent field is not associated.",ERR,ERROR,*999)
+                      CALL FlagError("Independent field is not associated.",ERR,ERROR,*999)
                     ENDIF
                     GEOMETRIC_FIELD_ELASTICITY=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
                     IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD_ELASTICITY)) THEN
-                      CALL FLAG_ERROR("Dependent field is not associated.",ERR,ERROR,*999)
+                      CALL FlagError("Dependent field is not associated.",ERR,ERROR,*999)
                     ENDIF
                   ELSE
-                    CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+                    CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
                   ENDIF
                 ELSE
-                  CALL FLAG_ERROR("Solver mapping is not associated.",ERR,ERROR,*999)
+                  CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("Solver equations is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
               ENDIF
 
 
@@ -2053,7 +2084,7 @@ CONTAINS
                           LOCAL_ERROR="The start element index is incorrect. The index is "// &
                             & TRIM(NUMBER_TO_VSTRING(start_elem,"*",ERR,ERROR))// &
                             & " and should be zero or one." 
-                          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                         ENDIF
                         
                       ENDDO !n1
@@ -2197,7 +2228,7 @@ CONTAINS
                           EXIT
                         ENDIF
                       ENDDO
-                      IF(my_element_idx==0) CALL FLAG_ERROR("my_element_idx not found.",ERR,ERROR,*999)                      
+                      IF(my_element_idx==0) CALL FlagError("my_element_idx not found.",ERR,ERROR,*999)                      
 
                       dof_idx=FIELD_VAR_IND_FE%COMPONENTS(1)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS(ne)
                       CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_ELASTICITY,FIELD_V_VARIABLE_TYPE, &
@@ -2243,25 +2274,25 @@ CONTAINS
                   IF(ASSOCIATED(EQUATIONS_SET)) THEN
                     GEOMETRIC_FIELD_MONODOMAIN=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
                     IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD_MONODOMAIN)) THEN
-                      CALL FLAG_ERROR("Geometric field is not associated.",ERR,ERROR,*999)
+                      CALL FlagError("Geometric field is not associated.",ERR,ERROR,*999)
                     ENDIF
                     ! the Field_V_Variable_Type contains the 3D nodal positions
                     DEPENDENT_FIELD_MONODOMAIN=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
                     IF(.NOT.ASSOCIATED(DEPENDENT_FIELD_MONODOMAIN)) THEN
-                      CALL FLAG_ERROR("Dependent field is not associated.",ERR,ERROR,*999)
+                      CALL FlagError("Dependent field is not associated.",ERR,ERROR,*999)
                     ENDIF
                     INDEPENDENT_FIELD_MONODOMAIN=>EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD
                     IF(.NOT.ASSOCIATED(INDEPENDENT_FIELD_MONODOMAIN)) THEN
-                      CALL FLAG_ERROR("Independent field is not associated.",ERR,ERROR,*999)
+                      CALL FlagError("Independent field is not associated.",ERR,ERROR,*999)
                     ENDIF
                   ELSE
-                    CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+                    CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
                   ENDIF
                 ELSE
-                  CALL FLAG_ERROR("Solver mapping is not associated.",ERR,ERROR,*999)
+                  CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("Solver equations is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
               ENDIF
               NULLIFY(SOLVERS)
               NULLIFY(SOLVER)
@@ -2280,20 +2311,20 @@ CONTAINS
                   IF(ASSOCIATED(EQUATIONS_SET)) THEN
                     INDEPENDENT_FIELD_ELASTICITY=>EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD
                     IF(.NOT.ASSOCIATED(INDEPENDENT_FIELD_ELASTICITY)) THEN
-                      CALL FLAG_ERROR("Independent field is not associated.",ERR,ERROR,*999)
+                      CALL FlagError("Independent field is not associated.",ERR,ERROR,*999)
                     ENDIF
                     GEOMETRIC_FIELD_ELASTICITY=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
                     IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD_ELASTICITY)) THEN
-                      CALL FLAG_ERROR("Dependent field is not associated.",ERR,ERROR,*999)
+                      CALL FlagError("Dependent field is not associated.",ERR,ERROR,*999)
                     ENDIF
                   ELSE
-                    CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+                    CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
                   ENDIF
                 ELSE
-                  CALL FLAG_ERROR("Solver mapping is not associated.",ERR,ERROR,*999)
+                  CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("Solver equations is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
               ENDIF
 
 
@@ -2445,7 +2476,7 @@ CONTAINS
                           LOCAL_ERROR="The start element index is incorrect. The index is "// &
                             & TRIM(NUMBER_TO_VSTRING(start_elem,"*",ERR,ERROR))// &
                             & " and should be zero or one." 
-                          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                         ENDIF
                         
                       ENDDO !n1
@@ -2475,7 +2506,7 @@ CONTAINS
                           EXIT
                         ENDIF
                       ENDDO
-                      IF(my_element_idx==0) CALL FLAG_ERROR("my_element_idx not found.",ERR,ERROR,*999)                      
+                      IF(my_element_idx==0) CALL FlagError("my_element_idx not found.",ERR,ERROR,*999)                      
 
                       dof_idx=FIELD_VAR_IND_FE%COMPONENTS(1)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS(ne)
                       CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_ELASTICITY,FIELD_V_VARIABLE_TYPE, &
@@ -2506,31 +2537,34 @@ CONTAINS
               ENDDO !element_idx
 
             CASE DEFAULT
-              LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SUBTYPE,"*",ERR,ERROR))// &
-                & " is not valid for a bioelectrics finite elasticity problem type of a multi physics problem class."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              LOCAL_ERROR="The third problem specification of "// &
+                & TRIM(NUMBER_TO_VSTRING(PROBLEM%specification(2),"*",ERR,ERROR))// &
+                & " is not valid for a bioelectrics finite elasticity of a multi physics problem."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           CASE DEFAULT
-            LOCAL_ERROR="Problem type "//TRIM(NUMBER_TO_VSTRING(PROBLEM%TYPE,"*",ERR,ERROR))// &
-              & " is not valid for a multi physics problem class."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            LOCAL_ERROR="The second problem specification of "// &
+              & TRIM(NUMBER_TO_VSTRING(PROBLEM%specification(2),"*",ERR,ERROR))// &
+              & " is not valid for a multi physics problem."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
-          CALL FLAG_ERROR("Control loop problem is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Control loop problem is not associated.",ERR,ERROR,*999)
         ENDIF
       ELSE
         !the main time loop - do nothing!
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Control loop is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
     ENDIF
     
-    EXITS("BIOELECTRIC_FINITE_ELASTICITY_UPDATE_GEOMETRIC_FIELD")
+    EXITS("BioelectricFiniteElasticity_UpdateGeometricField")
     RETURN
-999 ERRORSEXITS("BIOELECTRIC_FINITE_ELASTICITY_UPDATE_GEOMETRIC_FIELD",ERR,ERROR)
+999 ERRORS("BioelectricFiniteElasticity_UpdateGeometricField",ERR,ERROR)
+    EXITS("BioelectricFiniteElasticity_UpdateGeometricField")
     RETURN 1
     
-  END SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_UPDATE_GEOMETRIC_FIELD
+  END SUBROUTINE BioelectricFiniteElasticity_UpdateGeometricField
 
   !
   !================================================================================================================================
@@ -2538,7 +2572,7 @@ CONTAINS
 
   !>Interpolates the finite elasticity independent field from the biolectrics independent field.
   !>NOTE: this is only temporary - will be replaced once embedded meshes are available
-  SUBROUTINE BIOELECTRIC_FIN_ELA_INDEPENDENT_FIELD_INTERPOLATE(CONTROL_LOOP,ERR,ERROR,*)
+  SUBROUTINE BioelectricFiniteElasticity_IndependentFieldInterpolate(CONTROL_LOOP,ERR,ERROR,*)
 
     !Argument variables
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the time control loop
@@ -2578,12 +2612,18 @@ CONTAINS
     NULLIFY(FIELD_VARIABLE_V)
     NULLIFY(FIELD_VARIABLE_FE)
     
-    ENTERS("BIOELECTRIC_FIN_ELA_INDEPENDENT_FIELD_INTERPOLATE",ERR,ERROR,*999)
+    ENTERS("BioelectricFiniteElasticity_IndependentFieldInterpolate",ERR,ERROR,*999)
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
       PROBLEM=>CONTROL_LOOP%PROBLEM
       IF(ASSOCIATED(PROBLEM)) THEN
-        SELECT CASE(PROBLEM%SUBTYPE)
+        IF(.NOT.ALLOCATED(problem%specification)) THEN
+          CALL FlagError("Problem specification is not allocated.",err,error,*999)
+        ELSE IF(SIZE(problem%specification,1)<3) THEN
+          CALL FlagError("Problem specification must have three entries for a bioelectric-finite elasticity problem.", &
+            & err,error,*999)
+        END IF
+        SELECT CASE(PROBLEM%SPECIFICATION(3))
         CASE(PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE, &
           & PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
           IF(CONTROL_LOOP%NUMBER_OF_SUB_LOOPS==0) THEN
@@ -2600,16 +2640,16 @@ CONTAINS
                 EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(1)%PTR
                 IF(ASSOCIATED(EQUATIONS_SET)) THEN
                   INDEPENDENT_FIELD_MONODOMAIN=>EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD
-                  IF(.NOT.ASSOCIATED(INDEPENDENT_FIELD_MONODOMAIN)) CALL FLAG_ERROR("Independent field is not associated.", &
+                  IF(.NOT.ASSOCIATED(INDEPENDENT_FIELD_MONODOMAIN)) CALL FlagError("Independent field is not associated.", &
                     & ERR,ERROR,*999)
                 ELSE
-                  CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+                  CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("Solver mapping is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Solver equations is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
             ENDIF
 
             !--- FINITE ELASTICITY ---
@@ -2625,16 +2665,16 @@ CONTAINS
                 EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(1)%PTR
                 IF(ASSOCIATED(EQUATIONS_SET)) THEN
                   INDEPENDENT_FIELD_ELASTICITY=>EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD
-                  IF(.NOT.ASSOCIATED(INDEPENDENT_FIELD_ELASTICITY)) CALL FLAG_ERROR("Independent field is not associated.",ERR, &
+                  IF(.NOT.ASSOCIATED(INDEPENDENT_FIELD_ELASTICITY)) CALL FlagError("Independent field is not associated.",ERR, &
                     & ERROR,*999)
                 ELSE
-                  CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+                  CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("Solver mapping is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Solver equations is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
             ENDIF
 
             !--- NOW INTERPOLATE ---
@@ -2656,7 +2696,7 @@ CONTAINS
                 & DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR%TOPOLOGY%ELEMENTS%ELEMENTS(ne)%BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP &
                 & (BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR%NUMBER_OF_GAUSS
 
-              IF(NUMBER_OF_GAUSS_POINTS>MAX_NUMBER_OF_GAUSS_POINTS) CALL FLAG_ERROR( & 
+              IF(NUMBER_OF_GAUSS_POINTS>MAX_NUMBER_OF_GAUSS_POINTS) CALL FlagError( & 
                 & "NUMBER_OF_GAUSS_POINTS is greater than MAX_NUMBER_OF_GAUSS_POINTS.",ERR,ERROR,*999)
               NUMBER_OF_NODES=0
               ACTIVE_STRESS_VALUES=0.0_DP
@@ -2680,7 +2720,7 @@ CONTAINS
                     & VERSIONS(1)
                   CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                     & dof_idx,nearestGP,ERR,ERROR,*999)
-                  IF(nearestGP>MAX_NUMBER_OF_GAUSS_POINTS) CALL FLAG_ERROR( &
+                  IF(nearestGP>MAX_NUMBER_OF_GAUSS_POINTS) CALL FlagError( &
                     & "Nearest Gauss Point is greater than MAX_NUMBER_OF_GAUSS_POINTS.",ERR,ERROR,*999)
                   !component 1 of variable U contains the active stress
                   dof_idx=FIELD_VARIABLE_U%COMPONENTS(1)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(1)% &
@@ -2693,7 +2733,7 @@ CONTAINS
                   !add up the active stress value
                   ACTIVE_STRESS_VALUES(nearestGP)=ACTIVE_STRESS_VALUES(nearestGP)+ACTIVE_STRESS
 
-                  IF(EQUATIONS_SET%SUBTYPE==EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE) THEN
+                  IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE) THEN
                     !component 2 of variable U contains the titin stress unbound
                     dof_idx=FIELD_VARIABLE_U%COMPONENTS(2)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(1)% &
                       & VERSIONS(1)
@@ -2756,7 +2796,7 @@ CONTAINS
                 CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(INDEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_VALUES_SET_TYPE,dof_idx,ACTIVE_STRESS,ERR,ERROR,*999)
 
-                IF(EQUATIONS_SET%SUBTYPE==EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE) THEN
+                IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE) THEN
                   dof_idx=FIELD_VARIABLE_FE%COMPONENTS(2)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gauss_idx,ne)
                   CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(INDEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
                     & FIELD_VALUES_SET_TYPE,dof_idx,TITIN_STRESS_UNBOUND,ERR,ERROR,*999)
@@ -2786,22 +2826,23 @@ CONTAINS
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="Independent field interpolation is not implemented for problem subtype " &
-            & //TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SUBTYPE,"*",ERR,ERROR))
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & //TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("Problem is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Control loop is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
     ENDIF
 
-    EXITS("BIOELECTRIC_FIN_ELA_INDEPENDENT_FIELD_INTERPOLATE")
+    EXITS("BioelectricFiniteElasticity_IndependentFieldInterpolate")
     RETURN
-999 ERRORSEXITS("BIOELECTRIC_FIN_ELA_INDEPENDENT_FIELD_INTERPOLATE",ERR,ERROR)
+999 ERRORS("BioelectricFiniteElasticity_IndependentFieldInterpolate",ERR,ERROR)
+    EXITS("BioelectricFiniteElasticity_IndependentFieldInterpolate")
     RETURN 1
 
-  END SUBROUTINE BIOELECTRIC_FIN_ELA_INDEPENDENT_FIELD_INTERPOLATE
+  END SUBROUTINE BioelectricFiniteElasticity_IndependentFieldInterpolate
 
   !
   !================================================================================================================================
@@ -2929,7 +2970,7 @@ CONTAINS
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
       PROBLEM=>CONTROL_LOOP%PROBLEM
       IF(ASSOCIATED(PROBLEM)) THEN
-        SELECT CASE(PROBLEM%SUBTYPE)
+        SELECT CASE(PROBLEM%SPECIFICATION(3))
         CASE(PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE)
           IF(CONTROL_LOOP%NUMBER_OF_SUB_LOOPS==0) THEN
             CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
@@ -2947,7 +2988,7 @@ CONTAINS
                 IF(ASSOCIATED(EQUATIONS_SET)) THEN
                   INDEPENDENT_FIELD_MONODOMAIN=>EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD
                   IF(.NOT.ASSOCIATED(INDEPENDENT_FIELD_MONODOMAIN)) THEN
-                    CALL FLAG_ERROR("Independent field is not associated.",ERR,ERROR,*999)
+                    CALL FlagError("Independent field is not associated.",ERR,ERROR,*999)
                   ENDIF
 
                   CALL FIELD_VARIABLE_GET(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U1_VARIABLE_TYPE,FIELD_VAR_IND_M,ERR,ERROR,*999)
@@ -3163,23 +3204,23 @@ CONTAINS
                     & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
 
                 ELSE
-                  CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+                  CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("Solver mapping is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Solver equations is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
             ENDIF
           ENDIF
         CASE DEFAULT
-          CALL FLAG_ERROR("Problem subtype not implemented for titin",ERR,ERROR,*999)
+          CALL FlagError("Problem subtype not implemented for titin",ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("Problem not associated",ERR,ERROR,*999)
+        CALL FlagError("Problem not associated",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Control loop is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
     ENDIF
 
     EXITS("BIOELECTRIC_FINITE_ELASTICITY_COMPUTE_TITIN")

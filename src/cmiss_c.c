@@ -52,15 +52,14 @@
 
 /* Function prototypes */
 
-void CMISSResetFatalHandler(void);
+void cmfe_ResetFatalHandler(void);
 
-void CMISSSetFatalHandler(void);
+void cmfe_SetFatalHandler(void);
 
-void CMISSInitFatalHandler(void);
+void cmfe_InitFatalHandler(void);
 
 /* Internal functions */
-/*
-static void CMISSFatalHandler(int sig,
+static void cmfe_FatalHandler(int sig,
 #  if defined (sun)
                          siginfo_t *sip,
                          ucontext_t *uap);
@@ -68,7 +67,7 @@ static void CMISSFatalHandler(int sig,
 			 int code,
 			 struct sigcontext *sc);
 #  endif
-*/
+
 /* Static variables */
 
 #ifdef __MINGW32__
@@ -95,7 +94,7 @@ static struct sigaction old_SIGABRT_action;
 static struct sigaction old_SIGSEGV_action;
 static struct sigaction old_SIGTRAP_action;
 
-void CMISSResetFatalHandler()
+void cmfe_ResetFatalHandler()
 {
 #if defined (SIGBUS)
   if( 0 != sigaction(SIGBUS,&old_SIGBUS_action,NULL) )
@@ -137,7 +136,7 @@ void CMISSResetFatalHandler()
 #endif /* defined (SIGTRAP) */
 }
 
-void CMISSSetFatalHandler(void)
+void cmfe_SetFatalHandler(void)
 {
 #if (defined (unix) || defined (_AIX)) && !defined(__MINGW32__)
 #if defined (SIGBUS)
@@ -181,13 +180,13 @@ void CMISSSetFatalHandler(void)
 #endif /* defined (unix) || defined (_AIX) */
 }
 
-static void CMISSFatalHandler(int sig
-#if defined (sun)
-                         ,siginfo_t *sip,
-                         ucontext_t *uap)
+static void cmfe_FatalHandler(int sig,
+#  if defined (sun)
+             siginfo_t *sip,
+             ucontext_t *uap)
 #else
 #ifndef __MINGW32__
-			 ,int code,
+			 int code,
 			 struct sigcontext *sc)
 #else
 		)
@@ -265,12 +264,11 @@ static void CMISSFatalHandler(int sig
 #ifdef __MINGW32__
 #define SA_NODEFER 0x40000000u
 #endif
-
-void CMISSInitFatalHandler(void)
+void cmfe_InitFatalHandler(void)
 {
 #ifndef __MINGW32__
   fatal_sigaction.sa_flags = SA_NODEFER;
-  fatal_sigaction.sa_handler = (void (*)(int))CMISSFatalHandler;
+  fatal_sigaction.sa_handler = (void (*)(int))cmfe_FatalHandler;
   if( 0 != sigemptyset(&fatal_sigaction.sa_mask) )
     {
       fprintf(stderr,">>WARNING: sigemptyset failed in CMISSInitFatalHandler.\n");
