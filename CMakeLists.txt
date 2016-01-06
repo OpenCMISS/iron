@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.0 FATAL_ERROR)
+cmake_minimum_required (VERSION 3.3 FATAL_ERROR)
 project(Iron VERSION 0.4.0 LANGUAGES C CXX Fortran)# Need all languages as iron's deps cover all (link phase) 
 
 option(WITH_CELLML "Build iron with CellML support" ON)
