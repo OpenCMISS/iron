@@ -84,7 +84,7 @@ if(MSVC)
 else()
     add_library(iron ${IRON_SRC})
     set(IRON_TARGETS iron)
-ENDIF()
+endif()
 
 # Set the same stuff for either the separate targets (windows) or one target (else)
 foreach(irontarget ${IRON_TARGETS})
@@ -101,8 +101,11 @@ endforeach()
 set_source_files_properties(${IRON_Fortran_SRC} PROPERTIES
     COMPILE_FLAGS -cpp)
 target_link_libraries(iron PRIVATE ${LINK_LIBS})
+# Usually, fieldml would be a private dependency as no header file of iron
+# (there is only one generated one) includes stuff from fieldml.
+# However, as fieldml is fortran source
 if(WITH_FIELDML)
-     target_link_libraries(iron PRIVATE fieldml-api)
+     target_link_libraries(iron PUBLIC fieldml-api)
 endif()
 
 # Dont use "USE MPI" instructions if the percompiled mpi module files are incompatible.
