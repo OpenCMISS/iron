@@ -26,9 +26,10 @@ else()
         install(TARGETS iron_c
                     EXPORT iron-config
                     DESTINATION lib
-                    INCLUDES DESTINATION include/iron)
+                    INCLUDES DESTINATION include/opencmiss)
         install(FILES ${OPENCMISS_H}
-            DESTINATION include/iron)
+                ${CMAKE_Fortran_MODULE_DIRECTORY}/opencmiss_iron_c.mod
+            DESTINATION include/opencmiss)
         set(HAVE_C_BINDINGS TRUE)
     endif()
     

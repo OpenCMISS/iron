@@ -123,7 +123,7 @@ add_subdirectory(bindings)
 INSTALL(TARGETS iron
       EXPORT iron-config
       DESTINATION lib
-      INCLUDES DESTINATION include/iron)
+      INCLUDES DESTINATION include/opencmiss)
 
 install(EXPORT iron-config DESTINATION ${PACKAGE_CONFIG_DIR})
 include(CMakePackageConfigHelpers)
@@ -150,10 +150,13 @@ install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/iron-config-dependencies.cmake
     DESTINATION ${PACKAGE_CONFIG_DIR})  
 
-INSTALL(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/
-    DESTINATION include/iron
-    PATTERN *.mod)
+# The install directories are "opencmiss" instead of "iron", as those packages are to be seen under one name
+# rather than separate entities.
+install(FILES ${CMAKE_Fortran_MODULE_DIRECTORY}/opencmiss.mod
+    ${CMAKE_Fortran_MODULE_DIRECTORY}/opencmiss_iron.mod
+    DESTINATION include/opencmiss
+)
 
 if (HAVE_C_BINDINGS)
-    INSTALL(FILES ${OPENCMISS_H} DESTINATION include/iron)
+    install(FILES ${OPENCMISS_H} DESTINATION include/opencmiss)
 endif()
