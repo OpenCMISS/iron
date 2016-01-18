@@ -72,15 +72,12 @@ if(MSVC)
     # Need separate C/Fortran code due to Project natures in VS
     add_library(iron_Fortran OBJECT ${IRON_Fortran_SRC})
     target_include_directories(iron_Fortran 
-        PUBLIC ${MPI_C_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH}
         PRIVATE ${CMAKE_Fortran_MODULE_DIRECTORY})
-    
-    add_library(iron_C OBJECT ${IRON_C_SRC})
-    target_include_directories(iron_C 
-        PUBLIC ${MPI_C_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH})
+    add_library(iron_C OBJECT ${IRON_C_SRC})    
      
     # Add joining library to have the "iron" target in each case
     add_library(iron $<TARGET_OBJECTS:iron_Fortran> $<TARGET_OBJECTS:iron_C>)
+    set(IRON_TARGETS iron_Fortran iron_C)
 else()
     add_library(iron ${IRON_SRC})
     set(IRON_TARGETS iron)
@@ -88,24 +85,25 @@ endif()
 
 # Set the same stuff for either the separate targets (windows) or one target (else)
 foreach(irontarget ${IRON_TARGETS})
-    target_include_directories(${irontarget} 
-        PUBLIC ${MPI_C_INCLUDE_PATH} ${MPI_Fortran_INCLUDE_PATH}
-        PRIVATE ${CMAKE_Fortran_MODULE_DIRECTORY})
     if (WITH_CELLML)
         target_compile_definitions(${irontarget} PUBLIC USECELLML)
     endif()
     if (WITH_FIELDML)
         target_compile_definitions(${irontarget} PUBLIC USEFIELDML)
     endif()
+    # In case the compiler is not already the mpi wrapper,
+    # we need all the include paths etc.
+    # This is conveniently done by linking against the "mpi" interface target
+    # returned by our FindMPI module.
+    if (NOT CMAKE_Fortran_COMPILER STREQUAL MPI_Fortran_COMPILER)
+        target_link_libraries(${irontarget} PRIVATE mpi)
+    endif()
 endforeach()
 set_source_files_properties(${IRON_Fortran_SRC} PROPERTIES
     COMPILE_FLAGS -cpp)
 target_link_libraries(iron PRIVATE ${LINK_LIBS})
-# Usually, fieldml would be a private dependency as no header file of iron
-# (there is only one generated one) includes stuff from fieldml.
-# However, as fieldml is fortran source
 if(WITH_FIELDML)
-     target_link_libraries(iron PUBLIC fieldml-api)
+    target_link_libraries(iron PRIVATE fieldml-api)
 endif()
 
 # Dont use "USE MPI" instructions if the percompiled mpi module files are incompatible.
