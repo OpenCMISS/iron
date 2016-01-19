@@ -61,16 +61,17 @@ void cmfe_InitFatalHandler(void);
 /* Internal functions */
 static void cmfe_FatalHandler(int sig
 #if defined (sun)
-	,siginfo_t *sip,
-    ucontext_t *uap);
+             ,siginfo_t *sip,
+             ucontext_t *uap
 #else
 	#ifndef __MINGW32__
-		,int code,
-		struct sigcontext *sc);
-	#else
-		);
+			 ,int code
+		#if defined(_AIX)
+			 ,struct sigcontext *sc
+		#endif
 	#endif
 #endif
+			 );
 
 /* Static variables */
 
@@ -187,15 +188,16 @@ void cmfe_SetFatalHandler(void)
 static void cmfe_FatalHandler(int sig
 #if defined (sun)
              ,siginfo_t *sip,
-             ucontext_t *uap)
+             ucontext_t *uap
 #else
-#ifndef __MINGW32__
-			 ,int code,
-			 struct sigcontext *sc)
-#else
-			 )
+	#ifndef __MINGW32__
+			 ,int code
+		#if defined(_AIX)
+			 ,struct sigcontext *sc
+		#endif
+	#endif
 #endif
-#endif
+		 	 )
 {
 
 #if defined(_AIX)
