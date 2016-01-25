@@ -132,6 +132,7 @@ else()
                     if(VIRTUALENV_LOCATION)
                         #COMMAND pip install numpy
                         install(CODE "
+message(STATUS \"Installing opencmiss.iron package to Python virtual environment...\")                     
 execute_process(COMMAND pip install \"${CMAKE_CURRENT_BINARY_DIR}\"
     WORKING_DIRECTORY \"${VIRTUALENV_LOCATION}\")
 ")
