@@ -38,17 +38,15 @@ def generate(iron_source_dir, args):
     This wraps the lower level extension module created by SWIG
     """
     swig_module_name = args[0]
-    CMISS_py_path = args[1]
-    #module = open(os.sep.join((cm_path, 'bindings', 'python', 'opencmiss',
-    #    'CMISS.py')), 'w')
-    module = open(os.sep.join((CMISS_py_path, 'CMISS.py')), 'w')
+    iron_py_path = args[1]
+    module = open(os.sep.join((iron_py_path, 'iron.py')), 'w')
 
     library = LibrarySource(iron_source_dir)
 
     module.write('"""%s"""\n\n' % MODULE_DOCSTRING)
     module.write("import _%s\n" %(swig_module_name))
     module.write("import signal\n")
-    module.write("from ._utils import (CMISSError, CMISSType, Enum,\n"
+    module.write("from ._utils import (CMFEError, CMFEType, Enum,\n"
         "    wrap_cmiss_routine as _wrap_routine)\n\n\n")
 
     types = sorted(library.lib_source.types.values(), key=attrgetter('name'))
@@ -89,7 +87,7 @@ def generate(iron_source_dir, args):
 
 
 def type_to_py(swig_module_name, type):
-    """Convert CMISS type to Python class"""
+    """Convert CMFE type to Python class"""
 
     cmiss_type = type.name[len(PREFIX):-len('Type')]
     docstring = remove_doxygen_commands('\n    '.join(type.comment_lines))
@@ -106,7 +104,7 @@ def type_to_py(swig_module_name, type):
         raise RuntimeError("Couldn't find initialise routine for %s" %
                 type.name)
 
-    py_class = ["class %s(CMISSType):" % cmiss_type]
+    py_class = ["class %s(CMFEType):" % cmiss_type]
     py_class.append('    """%s\n    """\n' % docstring)
     py_class.append("    def __init__(self):")
     py_class.append('        """Initialise a null %s"""\n' % type.name)
@@ -184,8 +182,8 @@ def method_name(type, routine):
     elif (c_name.startswith('cmfe_FieldML') and
             not c_name.startswith('cmfe_FieldMLIO')):
         # Special case for FieldML routines that start
-        # with FieldML but take a CMISSFieldMLIOType, although
-        # some start with CMISSFieldMLIO...
+        # with FieldML but take a CMFEFieldMLIOType, although
+        # some start with CMFEFieldMLIO...
         name = c_name[len('cmfe_FieldML'):]
     else:
         # Old code style, no underscore after type name

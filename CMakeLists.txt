@@ -13,7 +13,6 @@ option(WITH_PROFILING "${PROJECT_NAME} - Build with profiling flags" OFF)
 option(WITH_C_BINDINGS "Build iron C bindings" ON)
 option(WITH_Python_BINDINGS "Build iron Python bindings" ON)
 set(PACKAGE_CONFIG_DIR "cmake" CACHE STRING "Directory for package config files (relative to CMAKE_INSTALL_PREFIX)")
-set(WITH_FIELDML ON)
 
 # Config
 # See http://cmake.3232098.n2.nabble.com/How-to-install-Fortran-module-files-td7584399.html
@@ -114,11 +113,16 @@ if (MINGW OR NOT MPI_Fortran_MODULE_COMPATIBLE)
     target_compile_definitions(iron PRIVATE NOMPIMOD)
 endif()
 
+if (BUILD_TESTS)
+    enable_testing()
+    # TODO: add unit test directory etc here
+endif()
+
 # Build bindings as selected
 add_subdirectory(bindings)
 
 # Install steps
-INSTALL(TARGETS iron
+install(TARGETS iron
       EXPORT iron-config
       DESTINATION lib
       INCLUDES DESTINATION include/opencmiss)
