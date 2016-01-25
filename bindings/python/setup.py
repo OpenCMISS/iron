@@ -7,7 +7,7 @@ from setuptools import setup
 #Don't compile the extension module here, just include it as an
 #additional file after building it from the main OpenCMISS Makefile
 
-requires = ['numpy']
+requires = []#['numpy']
 package_data = {'opencmiss.iron': ['_@IRON_PYTHON_MODULE@.so']}
 
 try:
@@ -17,7 +17,7 @@ try:
 
     setup(
         name='OpenCMISS-Iron',
-        version='0.3.0',
+        version='@IRON_VERSION@',
         description=('Python bindings for the OpenCMISS computational '
                 'modelling library Iron.'),
         long_description=('Python bindings to OpenCMISS-Iron. '

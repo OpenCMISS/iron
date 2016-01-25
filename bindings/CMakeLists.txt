@@ -114,8 +114,9 @@ else()
                             -DIRON_TARGET_FILE="$<TARGET_FILE:iron>" 
                             -DIRON_PYTHON_MODULE=${IRON_PYTHON_MODULE} 
                             -DUTILS_PY=${UTILS_PY} 
-                            -DSETUP_PY=${SETUP_PY} 
-                            -P ${CMAKE_CURRENT_SOURCE_DIR}/configurefiles.cmake
+                            -DSETUP_PY=${SETUP_PY}
+                            -DIRON_VERSION=${Iron_VERSION}
+                            -P ${CMAKE_CURRENT_SOURCE_DIR}/python/configurefiles.cmake
                         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
                             ${CMAKE_CURRENT_SOURCE_DIR}/python/opencmiss/__init__.py 
                             ${PKGUTIL_INIT_PY}
@@ -130,12 +131,13 @@ else()
                     list(APPEND _CLEANUP ${UTILS_PY} ${SETUP_PY} ${PKGUTIL_INIT_PY} ${INIT_PY})
                     
                     if(VIRTUALENV_LOCATION)
-                        #COMMAND pip install numpy
-                        install(CODE "
-message(STATUS \"Installing opencmiss.iron package to Python virtual environment...\")                     
-execute_process(COMMAND pip install \"${CMAKE_CURRENT_BINARY_DIR}\"
-    WORKING_DIRECTORY \"${VIRTUALENV_LOCATION}\")
-")
+                        set(SOURCE_COMMAND )
+                        if (UNIX)
+                            set(SOURCE_COMMAND source)
+                        endif()
+                        configure_file(${CMAKE_CURRENT_SOURCE_DIR}/python/install_virtualenv.in.cmake
+                            ${CMAKE_CURRENT_BINARY_DIR}/install_virtualenv.cmake @ONLY)
+                        install(SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/install_virtualenv.cmake)
                     endif()
                     list(APPEND _CLEANUP ${SWIG_IFACE} ${PYTHON_WRAPPER})
                     
