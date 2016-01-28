@@ -48,6 +48,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "cmiss.h"
+
 /* Type definitions */
 
 /* Function prototypes */
@@ -74,17 +76,6 @@ static void cmfe_FatalHandler(int sig
 			 );
 
 /* Static variables */
-
-#ifdef __MINGW32__
-struct sigaction {
-	int dummy;
-	/*__sighandler_t sa_handler;
-	unsigned long sa_flags;
-	__sigrestore_t sa_restorer;
-	sigset_t sa_mask;*/		/* mask last for extensibility */
-};
-#define sigaction(a,b,c) a
-#endif
 
 /* static sigjmp_buf jump_buffer; */ 
 static struct sigaction fatal_sigaction;
@@ -267,19 +258,14 @@ static void cmfe_FatalHandler(int sig
   exit(sig);
 }
 
-#ifdef __MINGW32__
-#define SA_NODEFER 0x40000000u
-#endif
 void cmfe_InitFatalHandler(void)
 {
-#ifndef __MINGW32__
   fatal_sigaction.sa_flags = SA_NODEFER;
   fatal_sigaction.sa_handler = (void (*)(int))cmfe_FatalHandler;
   if( 0 != sigemptyset(&fatal_sigaction.sa_mask) )
     {
       fprintf(stderr,">>WARNING: sigemptyset failed in CMISSInitFatalHandler.\n");
     }
-#endif
 
 #if defined (SIGBUS)
   sigaction(SIGBUS,NULL,&old_SIGBUS_action);

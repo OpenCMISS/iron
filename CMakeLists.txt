@@ -34,8 +34,8 @@ if (WITH_CELLML)
     LIST(APPEND LINK_LIBS cellml cellml_model_definition)
 endif()
 if (WITH_FIELDML)
-    message(STATUS "Building with FIELDML (${FIELDML-API_DIR})")
     find_package(FIELDML-API ${FIELDML-API_VERSION} CONFIG REQUIRED)
+    message(STATUS "Building with FIELDML (${FIELDML-API_DIR})")
 endif()
 
 # This include file is in the main "manage" directory.
@@ -64,26 +64,40 @@ foreach(DEP ${IRON_UPSTREAM_DEPS})
     endif()
 endforeach()
 
+# Platform-checks
+include(CheckSymbolExists)
+CHECK_SYMBOL_EXISTS(SA_NODEFER "" HAVE_SA_NODEFER)
+CHECK_SYMBOL_EXISTS(sigaction "signal.h" HAVE_SIGACTION_STRUCT)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmiss.in.h ${CMAKE_CURRENT_BINARY_DIR}/cmiss.h)
+
 # Populates the IRON_XX_SRC variables
 include(Sources)
 
 if(MSVC)
     # Need separate C/Fortran code due to Project natures in VS
-    add_library(iron_Fortran OBJECT ${IRON_Fortran_SRC})
-    target_include_directories(iron_Fortran 
-        PRIVATE ${CMAKE_Fortran_MODULE_DIRECTORY})
-    add_library(iron_C OBJECT ${IRON_C_SRC})    
-     
-    # Add joining library to have the "iron" target in each case
-    add_library(iron $<TARGET_OBJECTS:iron_Fortran> $<TARGET_OBJECTS:iron_C>)
-    set(IRON_TARGETS iron_Fortran iron_C)
+    set(IRON_TARGETS iron iron_static_C)
+    
+    add_library(iron_static_C STATIC ${IRON_C_SRC})
+    
+    add_library(iron ${IRON_Fortran_SRC})
+    target_link_libraries(iron PRIVATE iron_static_C)
+    
+    # IDE stuff
+    source_group(src FILES ${IRON_C_SRC})
+    source_group(src FILES ${IRON_Fortran_SRC})
 else()
-    add_library(iron ${IRON_SRC})
     set(IRON_TARGETS iron)
+    add_library(iron ${IRON_SRC})
+    target_compile_options(iron PRIVATE -cpp)
 endif()
 
 # Set the same stuff for either the separate targets (windows) or one target (else)
 foreach(irontarget ${IRON_TARGETS})
+    target_include_directories(${irontarget} PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src"
+        ${CMAKE_CURRENT_BINARY_DIR}
+    )
     if (WITH_CELLML)
         target_compile_definitions(${irontarget} PUBLIC USECELLML)
     endif()
@@ -97,21 +111,18 @@ foreach(irontarget ${IRON_TARGETS})
     if (NOT CMAKE_Fortran_COMPILER STREQUAL MPI_Fortran_COMPILER)
         target_link_libraries(${irontarget} PRIVATE mpi)
     endif()
+    target_link_libraries(${irontarget} PRIVATE ${LINK_LIBS})
+    if(WITH_FIELDML)
+        target_link_libraries(${irontarget} PRIVATE fieldml-api)
+    endif()
+    # Dont use "USE MPI" instructions if the percompiled mpi module files are incompatible.
+    # This happens when the fortran compiler used to build mpi differs from the currently used one.
+    # This holds on windows (only pre-compiled mpi implementations available; MPICH2 and MSMPI)
+    # and on e.g. clusters with inappropriately configured toolchain environments.
+    if (NOT MPI_Fortran_MODULE_COMPATIBLE)
+        target_compile_definitions(${irontarget} PRIVATE NOMPIMOD)
+    endif()
 endforeach()
-set_source_files_properties(${IRON_Fortran_SRC} PROPERTIES
-    COMPILE_FLAGS -cpp)
-target_link_libraries(iron PRIVATE ${LINK_LIBS})
-if(WITH_FIELDML)
-    target_link_libraries(iron PRIVATE fieldml-api)
-endif()
-
-# Dont use "USE MPI" instructions if the percompiled mpi module files are incompatible.
-# This happens when the fortran compiler used to build mpi differs from the currently used one.
-# This holds on windows (only pre-compiled mpi implementations available; MPICH2 and MSMPI)
-# and on e.g. clusters with inappropriately configured toolchain environments.
-if (MINGW OR NOT MPI_Fortran_MODULE_COMPATIBLE)
-    target_compile_definitions(iron PRIVATE NOMPIMOD)
-endif()
 
 if (BUILD_TESTS)
     enable_testing()
@@ -154,9 +165,9 @@ install(FILES
 
 # The install directories are "opencmiss" instead of "iron", as those packages are to be seen under one name
 # rather than separate entities.
-install(FILES ${CMAKE_Fortran_MODULE_DIRECTORY}/opencmiss.mod
-    ${CMAKE_Fortran_MODULE_DIRECTORY}/opencmiss_iron.mod
+install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/
     DESTINATION include/opencmiss
+    FILES_MATCHING PATTERN "opencmiss*.mod"
 )
 
 if (HAVE_C_BINDINGS)

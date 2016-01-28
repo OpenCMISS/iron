@@ -21,16 +21,24 @@ else()
     set(HAVE_C_BINDINGS FALSE)
     if (WITH_C_BINDINGS)
         message(STATUS "Creating C bindings")
-        add_library(iron_c SHARED ${OPENCMISS_C_F90})
+        add_library(iron_c ${OPENCMISS_C_F90})
         target_link_libraries(iron_c iron)
+        target_include_directories(iron_c PRIVATE ${Iron_SOURCE_DIR}/src)
         install(TARGETS iron_c
-                    EXPORT iron-config
-                    DESTINATION lib
-                    INCLUDES DESTINATION include/opencmiss)
+            EXPORT iron-config
+            DESTINATION lib
+            INCLUDES DESTINATION include/opencmiss)
         install(FILES ${OPENCMISS_H}
-                ${CMAKE_Fortran_MODULE_DIRECTORY}/opencmiss_iron_c.mod
-            DESTINATION include/opencmiss)
+            DESTINATION include/opencmiss
+        )
+        
         set(HAVE_C_BINDINGS TRUE)
+        
+        #include(GenerateExportHeader)
+        #generate_export_header(iron_c)
+        #install(FILES iron_c_exports.h
+        #    DESTINATION include/opencmiss
+        #)
     endif()
     
     # Python-Bindings extra target
@@ -148,12 +156,6 @@ else()
                     endif()
                     list(APPEND _CLEANUP ${SWIG_IFACE} ${PYTHON_WRAPPER})
                     
-                    #Generate wrapper object
-                    execute_process(COMMAND "${PYTHON_EXECUTABLE}" "${Iron_SOURCE_DIR}/utils/numpy_include.py"
-                        OUTPUT_VARIABLE NUMPY_INCLUDES
-                        RESULT_VARIABLE RES_NUMPY_INC
-                        OUTPUT_STRIP_TRAILING_WHITESPACE
-                    )
                     # "Bugfix": If we use the same source file name, there will be two processes messing with
                     # the same fortran module file which can lead to errors using -j parallel builds.
                     # By this we simply force to have iron_c build before the python module.

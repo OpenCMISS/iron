@@ -48,6 +48,11 @@
 !>
 !>
 !> The top level OpenCMISS Iron module. This module is the buffer Fortran module between the OpenCMISS Iron library and user code.
+
+! Eclipse regular expressions to add the DLLEXPORT macro:
+! Find: ^( *)(SUBROUTINE *)([^\(]*)(\([^\)]*\))
+! Replace: $1$2$3$4\R$1  !DLLEXPORT($3)
+
 MODULE OpenCMISS_Iron
 
   USE ANALYTIC_ANALYSIS_ROUTINES
@@ -98,7 +103,8 @@ MODULE OpenCMISS_Iron
   USE STRINGS
   USE TYPES
 
-#include "macros.h"  
+#include "macros.h"
+#include "dllexport.h"
 
   IMPLICIT NONE
 
@@ -7126,6 +7132,7 @@ CONTAINS
 
   !>Finalises CMISS.
   SUBROUTINE cmfe_Finalise(err)
+    !DLLEXPORT(cmfe_Finalise)
 
     !Argument variables
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -7149,6 +7156,7 @@ CONTAINS
 
   !>Initialises CMISS returning a user number to the world coordinate system and region.
   SUBROUTINE cmfe_InitialiseNumber(worldCoordinateSystemUserNumber,worldRegionUserNumber,err)
+    !DLLEXPORT(cmfe_InitialiseNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(OUT) :: worldCoordinateSystemUserNumber !<On return, the world coordinate system user number.
@@ -7180,6 +7188,7 @@ CONTAINS
 
   !>Initialises CMISS returning a pointer to the world coordinate system and region.
   SUBROUTINE cmfe_InitialiseObj(worldCoordinateSystem,worldRegion,err)
+    !DLLEXPORT(cmfe_InitialiseObj)
 
     !Argument variables
     TYPE(cmfe_CoordinateSystemType), INTENT(INOUT) :: worldCoordinateSystem !<On return, the world coordinate system.
@@ -7207,6 +7216,7 @@ CONTAINS
 
   !>Copy an array of cmfe_BasisTypes from C to an allocated Fortran array, for use by the C bindings
   SUBROUTINE cmfe_BasisTypesCopy(bases,basesSize,basesPtr,err)
+    !DLLEXPORT(cmfe_BasisTypesCopy)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(INOUT) :: bases(:) !<On return, the array of cmfe_BasisTypes
@@ -7252,6 +7262,7 @@ CONTAINS
 
   !>Finalises a cmfe_BasisType object.
   SUBROUTINE cmfe_Basis_Finalise(cmfe_Basis,err)
+    !DLLEXPORT(cmfe_Basis_Finalise)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(OUT) :: cmfe_Basis !<The cmfe_BasisType object to finalise.
@@ -7276,6 +7287,7 @@ CONTAINS
 
   !>Initialises a cmfe_BasisType object.
   SUBROUTINE cmfe_Basis_Initialise(cmfe_Basis,err)
+    !DLLEXPORT(cmfe_Basis_Initialise)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(OUT) :: cmfe_Basis !<The cmfe_BasisType object to initialise.
@@ -7300,6 +7312,7 @@ CONTAINS
 
   !>Finalises a cmfe_BoundaryConditionsType object.
   SUBROUTINE cmfe_BoundaryConditions_Finalise(cmfe_BoundaryConditions,err)
+    !DLLEXPORT(cmfe_BoundaryConditions_Finalise)
 
     !Argument variables
     TYPE(cmfe_BoundaryConditionsType), INTENT(OUT) :: cmfe_BoundaryConditions !<The cmfe_BoundaryConditionsType object to finalise.
@@ -7324,6 +7337,7 @@ CONTAINS
 
   !>Initialises a cmfe_BoundaryConditionsType object.
   SUBROUTINE cmfe_BoundaryConditions_Initialise(cmfe_BoundaryConditions,err)
+    !DLLEXPORT(cmfe_BoundaryConditions_Initialise)
 
     !Argument variables
     TYPE(cmfe_BoundaryConditionsType), INTENT(OUT) :: cmfe_BoundaryConditions !<The cmfe_BoundaryConditionsType object to initialise.
@@ -7348,6 +7362,7 @@ CONTAINS
 
   !>Finalises a cmfe_CellMLType object.
   SUBROUTINE cmfe_CellML_Finalise(cmfe_CellML,err)
+    !DLLEXPORT(cmfe_CellML_Finalise)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(OUT) :: cmfe_CellML !<The cmfe_CellMLType object to finalise.
@@ -7371,6 +7386,7 @@ CONTAINS
 
   !>Initialises a cmfe_CellMLType object.
   SUBROUTINE cmfe_CellML_Initialise(cmfe_CellML,err)
+    !DLLEXPORT(cmfe_CellML_Initialise)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(OUT) :: cmfe_CellML !<The cmfe_CellMLType object to initialise.
@@ -7395,6 +7411,7 @@ CONTAINS
 
   !>Finalises a cmfe_CellMLEquationsType object.
   SUBROUTINE cmfe_CellMLEquations_Finalise(cmfe_CellMLEquations,err)
+    !DLLEXPORT(cmfe_CellMLEquations_Finalise)
 
     !Argument variables
     TYPE(cmfe_CellMLEquationsType), INTENT(OUT) :: cmfe_CellMLEquations !<The cmfe_CellMLEquationsType object to finalise.
@@ -7420,6 +7437,7 @@ CONTAINS
 
   !>Initialises a cmfe_CellMLEquationsType object.
   SUBROUTINE cmfe_CellMLEquations_Initialise(cmfe_CellMLEquations,err)
+    !DLLEXPORT(cmfe_CellMLEquations_Initialise)
 
     !Argument variables
     TYPE(cmfe_CellMLEquationsType), INTENT(OUT) :: cmfe_CellMLEquations !<The cmfe_CellMLEquationsType object to initialise.
@@ -7444,6 +7462,7 @@ CONTAINS
 
   !>Initialises a cmfe_ComputationalWorkGroupType object.
   SUBROUTINE cmfe_ComputationalWorkGroup_Initialise(cmfe_ComputationalWorkGroup,err)
+    !DLLEXPORT(cmfe_ComputationalWorkGroup_Initialise)
 
     !Argument variables
     TYPE(cmfe_ComputationalWorkGroupType), INTENT(OUT) :: cmfe_ComputationalWorkGroup !<The cmfe_ComputationalWorkGroupType object to initialise.
@@ -7468,6 +7487,7 @@ CONTAINS
 
   !>Finalises a cmfe_ControlLoopType object.
   SUBROUTINE cmfe_ControlLoop_Finalise(cmfe_ControlLoop,err)
+    !DLLEXPORT(cmfe_ControlLoop_Finalise)
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(OUT) :: cmfe_ControlLoop !<The cmfe_ControlLoopType object to finalise.
@@ -7492,6 +7512,7 @@ CONTAINS
 
   !>Initialises a cmfe_ControlLoopType object.
   SUBROUTINE cmfe_ControlLoop_Initialise(cmfe_ControlLoop,err)
+    !DLLEXPORT(cmfe_ControlLoop_Initialise)
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(OUT) :: cmfe_ControlLoop !<The cmfe_ControlLoopType object to initialise.
@@ -7516,6 +7537,7 @@ CONTAINS
 
   !>Finalises a cmfe_CoordinateSystemType object.
   SUBROUTINE cmfe_CoordinateSystem_Finalise(cmfe_CoordinateSystem,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_Finalise)
 
     !Argument variables
     TYPE(cmfe_CoordinateSystemType), INTENT(OUT) :: cmfe_CoordinateSystem !<The cmfe_CoordinateSystemType object to finalise.
@@ -7540,6 +7562,7 @@ CONTAINS
 
   !>Initialises a cmfe_CoordinateSystemType object.
   SUBROUTINE cmfe_CoordinateSystem_Initialise(cmfe_CoordinateSystem,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_Initialise)
 
     !Argument variables
     TYPE(cmfe_CoordinateSystemType), INTENT(OUT) :: cmfe_CoordinateSystem !<The cmfe_CoordinateSystemType object to initialise.
@@ -7564,6 +7587,7 @@ CONTAINS
 
   !>Finalises a cmfe_DataPointsType object.
   SUBROUTINE cmfe_DataPoints_Finalise(cmfe_DataPoints,err)
+    !DLLEXPORT(cmfe_DataPoints_Finalise)
 
     !Argument variables
     TYPE(cmfe_DataPointsType), INTENT(OUT) :: cmfe_DataPoints !<The cmfe_DataPointsType object to finalise.
@@ -7589,6 +7613,7 @@ CONTAINS
 
   !>Initialises a cmfe_DataPointsType object.
   SUBROUTINE cmfe_DataPoints_Initialise(cmfe_DataPoints,err)
+    !DLLEXPORT(cmfe_DataPoints_Initialise)
 
     !Argument variables
     TYPE(cmfe_DataPointsType), INTENT(OUT) :: cmfe_DataPoints !<The cmfe_DataPointsType object to initialise.
@@ -7613,6 +7638,7 @@ CONTAINS
 
   !>Finalises a cmfe_DataProjectionType object.
   SUBROUTINE cmfe_DataProjection_Finalise(cmfe_DataProjection,err)
+    !DLLEXPORT(cmfe_DataProjection_Finalise)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(OUT) :: cmfe_DataProjection !<The cmfe_DataProjectionType object to finalise.
@@ -7638,6 +7664,7 @@ CONTAINS
 
   !>Initialises a cmfe_DataProjectionType object.
   SUBROUTINE cmfe_DataProjection_Initialise(cmfe_DataProjection,err)
+    !DLLEXPORT(cmfe_DataProjection_Initialise)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(OUT) :: cmfe_DataProjection !<The cmfe_DataProjectionType object to initialise.
@@ -7662,6 +7689,7 @@ CONTAINS
 
   !>Finalises a cmfe_DecompositionType object.
   SUBROUTINE cmfe_Decomposition_Finalise(cmfe_Decomposition,err)
+    !DLLEXPORT(cmfe_Decomposition_Finalise)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(OUT) :: cmfe_Decomposition !<The cmfe_DecompositionType object to finalise.
@@ -7687,6 +7715,7 @@ CONTAINS
 
   !>Initialises a cmfe_DecompositionType object.
   SUBROUTINE cmfe_Decomposition_Initialise(cmfe_Decomposition,err)
+    !DLLEXPORT(cmfe_Decomposition_Initialise)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(OUT) :: cmfe_Decomposition !<The cmfe_DecompositionType object to initialise.
@@ -7711,6 +7740,7 @@ CONTAINS
 
   !>Finalises a cmfe_EquationsType object.
   SUBROUTINE cmfe_Equations_Finalise(cmfe_Equations,err)
+    !DLLEXPORT(cmfe_Equations_Finalise)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(OUT) :: cmfe_Equations !<The cmfe_EquationsType object to finalise.
@@ -7736,6 +7766,7 @@ CONTAINS
 
   !>Initialises a cmfe_EquationsType object.
   SUBROUTINE cmfe_Equations_Initialise(cmfe_Equations,err)
+    !DLLEXPORT(cmfe_Equations_Initialise)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(OUT) :: cmfe_Equations !<The cmfe_EquationsType object to initialise.
@@ -7760,6 +7791,7 @@ CONTAINS
 
   !>Finalises a cmfe_EquationsSetType object.
   SUBROUTINE cmfe_EquationsSet_Finalise(cmfe_EquationsSet,err)
+    !DLLEXPORT(cmfe_EquationsSet_Finalise)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(OUT) :: cmfe_EquationsSet !<The cmfe_EquationsSetType object to finalise.
@@ -7785,6 +7817,7 @@ CONTAINS
 
   !>Initialises a cmfe_EquationsSetType object.
   SUBROUTINE cmfe_EquationsSet_Initialise(cmfe_EquationsSet,err)
+    !DLLEXPORT(cmfe_EquationsSet_Initialise)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(OUT) :: cmfe_EquationsSet !<The cmfe_EquationsSetType object to initialise.
@@ -7809,6 +7842,7 @@ CONTAINS
 
   !>Finalises a cmfe_FieldType object.
   SUBROUTINE cmfe_Field_Finalise(cmfe_Field,err)
+    !DLLEXPORT(cmfe_Field_Finalise)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(OUT) :: cmfe_Field !<The cmfe_FieldType object to finalise.
@@ -7833,6 +7867,7 @@ CONTAINS
 
   !>Initialises a cmfe_FieldType object.
   SUBROUTINE cmfe_Field_Initialise(cmfe_Field,err)
+    !DLLEXPORT(cmfe_Field_Initialise)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(OUT) :: cmfe_Field !<The cmfe_FieldType object to initialise.
@@ -7857,6 +7892,7 @@ CONTAINS
 
   !>Creates a cmfe_FieldsType object for an inteface by an object reference.
   SUBROUTINE cmfe_Fields_CreateInterface(interface,fields,err)
+    !DLLEXPORT(cmfe_Fields_CreateInterface)
 
     !Argument variables
     TYPE(cmfe_InterfaceType), INTENT(IN) :: interface !<The interface to get the fields from
@@ -7890,6 +7926,7 @@ CONTAINS
 
   !>Creates a cmfe_FieldsType object for a region by an object reference.
   SUBROUTINE cmfe_Fields_CreateRegion(region,fields,err)
+    !DLLEXPORT(cmfe_Fields_CreateRegion)
 
     !Argument variables
     TYPE(cmfe_RegionType), INTENT(IN) :: region !<The region to get the fields from
@@ -7923,6 +7960,7 @@ CONTAINS
 
   !>Finalises a cmfe_FieldsType object.
   SUBROUTINE cmfe_Fields_Finalise(cmfe_Fields,err)
+    !DLLEXPORT(cmfe_Fields_Finalise)
 
     !Argument variables
     TYPE(cmfe_FieldsType), INTENT(OUT) :: cmfe_Fields !<The cmfe_FieldsType object to finalise.
@@ -7951,6 +7989,7 @@ CONTAINS
 
   !>Initialises a cmfe_FieldsType object.
   SUBROUTINE cmfe_Fields_Initialise(cmfe_Fields,err)
+    !DLLEXPORT(cmfe_Fields_Initialise)
 
     !Argument variables
     TYPE(cmfe_FieldsType), INTENT(OUT) :: cmfe_Fields !<The cmfe_FieldsType object to initialise.
@@ -7979,6 +8018,7 @@ CONTAINS
 
   !>Finalises a cmfe_GeneratedMeshType object.
   SUBROUTINE cmfe_GeneratedMesh_Finalise(cmfe_GeneratedMesh,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_Finalise)
 
     !Argument variables
     TYPE(cmfe_GeneratedMeshType), INTENT(OUT) :: cmfe_GeneratedMesh !<The cmfe_GeneratedMeshType object to finalise.
@@ -8004,6 +8044,7 @@ CONTAINS
 
   !>Initialises a cmfe_GeneratedMeshType object.
   SUBROUTINE cmfe_GeneratedMesh_Initialise(cmfe_GeneratedMesh,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_Initialise)
 
     !Argument variables
     TYPE(cmfe_GeneratedMeshType), INTENT(OUT) :: cmfe_GeneratedMesh !<The cmfe_GeneratedMeshType object to initialise.
@@ -8028,6 +8069,7 @@ CONTAINS
 
   !>Finalises a cmfe_InterfaceType object.
   SUBROUTINE cmfe_Interface_Finalise(cmfe_Interface,err)
+    !DLLEXPORT(cmfe_Interface_Finalise)
 
     !Argument variables
     TYPE(cmfe_InterfaceType), INTENT(OUT) :: cmfe_Interface !<The cmfe_InterfaceType object to finalise.
@@ -8053,6 +8095,7 @@ CONTAINS
 
   !>Initialises a cmfe_InterfaceType object.
   SUBROUTINE cmfe_Interface_Initialise(cmfe_Interface,err)
+    !DLLEXPORT(cmfe_Interface_Initialise)
 
     !Argument variables
     TYPE(cmfe_InterfaceType), INTENT(OUT) :: cmfe_Interface !<The cmfe_InterfaceType object to initialise.
@@ -8077,6 +8120,7 @@ CONTAINS
 
   !>Finalises a cmfe_InterfaceConditionType object.
   SUBROUTINE cmfe_InterfaceCondition_Finalise(cmfe_InterfaceCondition,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_Finalise)
 
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(OUT) :: cmfe_InterfaceCondition !<The cmfe_InterfaceConditionType object to finalise.
@@ -8102,6 +8146,7 @@ CONTAINS
 
   !>Initialises a cmfe_InterfaceConditionType object.
   SUBROUTINE cmfe_InterfaceCondition_Initialise(cmfe_InterfaceCondition,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_Initialise)
 
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(OUT) :: cmfe_InterfaceCondition !<The cmfe_InterfaceConditionType object to initialise.
@@ -8126,6 +8171,7 @@ CONTAINS
 
   !>Finalises a cmfe_InterfaceEquationsType object.
   SUBROUTINE cmfe_InterfaceEquations_Finalise(cmfe_InterfaceEquations,err)
+    !DLLEXPORT(cmfe_InterfaceEquations_Finalise)
 
     !Argument variables
     TYPE(cmfe_InterfaceEquationsType), INTENT(OUT) :: cmfe_InterfaceEquations !<The cmfe_InterfaceEquationsType object to finalise.
@@ -8151,6 +8197,7 @@ CONTAINS
 
   !>Initialises a cmfe_InterfaceEquationsType object.
   SUBROUTINE cmfe_InterfaceEquations_Initialise(cmfe_InterfaceEquations,err)
+    !DLLEXPORT(cmfe_InterfaceEquations_Initialise)
 
     !Argument variables
     TYPE(cmfe_InterfaceEquationsType), INTENT(OUT) :: cmfe_InterfaceEquations !<The cmfe_InterfaceEquationsType object to initialise.
@@ -8175,6 +8222,7 @@ CONTAINS
   
   !>Finalise a cmfe_InterfaceMeshConnectivityType object.
   SUBROUTINE cmfe_InterfacePointsConnectivity_Finalise(cmfe_InterfacePointsConnectivity,err)
+    !DLLEXPORT(cmfe_InterfacePointsConnectivity_Finalise)
    
     !Argument variables
     TYPE(cmfe_InterfacePointsConnectivityType), INTENT(OUT) :: cmfe_InterfacePointsConnectivity !<The cmfe_InterfacePointsConnectivityType object to initialise.
@@ -8200,6 +8248,7 @@ CONTAINS
   
   !>Initialises a cmfe_InterfaceMeshConnectivityType object.
   SUBROUTINE cmfe_InterfacePointsConnectivity_Initialise(cmfe_InterfacePointsConnectivity,err)
+    !DLLEXPORT(cmfe_InterfacePointsConnectivity_Initialise)
    
     !Argument variables
     TYPE(cmfe_InterfacePointsConnectivityType), INTENT(OUT) :: cmfe_InterfacePointsConnectivity !<The cmfe_InterfacePointsConnectivityType object to initialise.
@@ -8224,6 +8273,7 @@ CONTAINS
 
    !>Finalises a cmfe_InterfaceMeshConnectivityType object.
    SUBROUTINE cmfe_InterfaceMeshConnectivity_Finalise(cmfe_InterfaceMeshConnectivity,err)
+     !DLLEXPORT(cmfe_InterfaceMeshConnectivity_Finalise)
 
      !Argument variables
      TYPE(cmfe_InterfaceMeshConnectivityType), INTENT(OUT) :: cmfe_InterfaceMeshConnectivity !<The cmfe_InterfaceMeshConnectivityType object to finalise.
@@ -8249,6 +8299,7 @@ CONTAINS
 
    !>Initialises a cmfe_InterfaceMeshConnectivityType object.
    SUBROUTINE cmfe_InterfaceMeshConnectivity_Initialise(cmfe_InterfaceMeshConnectivity,err)
+     !DLLEXPORT(cmfe_InterfaceMeshConnectivity_Initialise)
 
      !Argument variables
      TYPE(cmfe_InterfaceMeshConnectivityType), INTENT(OUT) :: cmfe_InterfaceMeshConnectivity !<The cmfe_InterfaceMeshConnectivityType object to initialise.
@@ -8273,6 +8324,7 @@ CONTAINS
 
   !>Finalises a cmfe_HistoryType object.
   SUBROUTINE cmfe_History_Finalise(cmfe_History,err)
+    !DLLEXPORT(cmfe_History_Finalise)
 
     !Argument variables
     TYPE(cmfe_HistoryType), INTENT(OUT) :: cmfe_History !<The cmfe_HistoryType object to finalise.
@@ -8298,6 +8350,7 @@ CONTAINS
 
   !>Initialises a cmfe_HistoryType object.
   SUBROUTINE cmfe_History_Initialise(cmfe_History,err)
+    !DLLEXPORT(cmfe_History_Initialise)
 
     !Argument variables
     TYPE(cmfe_HistoryType), INTENT(OUT) :: cmfe_History !<The cmfe_HistoryType object to initialise.
@@ -8322,6 +8375,7 @@ CONTAINS
 
   !>Initialises a cmfe_DistributedMatrixType object.
   SUBROUTINE cmfe_DistributedMatrix_Initialise(cmfe_DistributedMatrix,err)
+    !DLLEXPORT(cmfe_DistributedMatrix_Initialise)
 
     !Argument variables
     TYPE(cmfe_DistributedMatrixType), INTENT(OUT) :: cmfe_DistributedMatrix !<The cmfe_DistributedMatrixType object to initialise.
@@ -8346,6 +8400,7 @@ CONTAINS
 
   !>Initialises a cmfe_DistributedVectorType object.
   SUBROUTINE cmfe_DistributedVector_Initialise(cmfe_DistributedVector,err)
+    !DLLEXPORT(cmfe_DistributedVector_Initialise)
 
     !Argument variables
     TYPE(cmfe_DistributedVectorType), INTENT(OUT) :: cmfe_DistributedVector !<The cmfe_DistributedVectorType object to initialise.
@@ -8370,6 +8425,7 @@ CONTAINS
 
   !>Finalises a cmfe_MeshType object.
   SUBROUTINE cmfe_Mesh_Finalise(cmfe_Mesh,err)
+    !DLLEXPORT(cmfe_Mesh_Finalise)
 
     !Argument variables
     TYPE(cmfe_MeshType), INTENT(OUT) :: cmfe_Mesh !<The cmfe_MeshType object to finalise.
@@ -8395,6 +8451,7 @@ CONTAINS
 
   !>Initialises a cmfe_MeshType object.
   SUBROUTINE cmfe_Mesh_Initialise(cmfe_Mesh,err)
+    !DLLEXPORT(cmfe_Mesh_Initialise)
 
     !Argument variables
     TYPE(cmfe_MeshType), INTENT(OUT) :: cmfe_Mesh !<The cmfe_MeshType object to initialise.
@@ -8419,6 +8476,7 @@ CONTAINS
 
   !>Finalises a cmfe_MeshElementsType object.
   SUBROUTINE cmfe_MeshElements_Finalise(cmfe_MeshElements,err)
+    !DLLEXPORT(cmfe_MeshElements_Finalise)
 
     !Argument variables
     TYPE(cmfe_MeshElementsType), INTENT(OUT) :: cmfe_MeshElements !<The cmfe_MeshElementsType object to finalise.
@@ -8444,6 +8502,7 @@ CONTAINS
 
   !>Initialises a cmfe_MeshElementsType object.
   SUBROUTINE cmfe_MeshElements_Initialise(cmfe_MeshElements,err)
+    !DLLEXPORT(cmfe_MeshElements_Initialise)
 
     !Argument variables
     TYPE(cmfe_MeshElementsType), INTENT(OUT) :: cmfe_MeshElements !<The cmfe_MeshElementsType object to initialise.
@@ -8468,6 +8527,7 @@ CONTAINS
 
   !>Finalises a cmfe_MeshNodesType object.
   SUBROUTINE cmfe_MeshNodes_Finalise(cmfe_MeshNodes,err)
+    !DLLEXPORT(cmfe_MeshNodes_Finalise)
 
     !Argument variables
     TYPE(cmfe_MeshNodesType), INTENT(OUT) :: cmfe_MeshNodes !<The cmfe_MeshNodesType object to finalise.
@@ -8493,6 +8553,7 @@ CONTAINS
 
   !>Initialises a cmfe_MeshNodesType object.
   SUBROUTINE cmfe_MeshNodes_Initialise(cmfe_MeshNodes,err)
+    !DLLEXPORT(cmfe_MeshNodes_Initialise)
 
     !Argument variables
     TYPE(cmfe_MeshNodesType), INTENT(OUT) :: cmfe_MeshNodes !<The cmfe_MeshNodesType object to initialise.
@@ -8517,6 +8578,7 @@ CONTAINS
 
   !>Finalises a cmfe_NodesType object.
   SUBROUTINE cmfe_Nodes_Finalise(cmfe_Nodes,err)
+    !DLLEXPORT(cmfe_Nodes_Finalise)
 
     !Argument variables
     TYPE(cmfe_NodesType), INTENT(OUT) :: cmfe_Nodes !<The cmfe_NodesType object to finalise.
@@ -8541,6 +8603,7 @@ CONTAINS
 
   !>Initialises a cmfe_NodesType object.
   SUBROUTINE cmfe_Nodes_Initialise(cmfe_Nodes,err)
+    !DLLEXPORT(cmfe_Nodes_Initialise)
 
     !Argument variables
     TYPE(cmfe_NodesType), INTENT(OUT) :: cmfe_Nodes !<The cmfe_NodesType object to initialise.
@@ -8565,6 +8628,7 @@ CONTAINS
 
   !>Finalises a cmfe_ProblemType object.
   SUBROUTINE cmfe_Problem_Finalise(cmfe_Problem,err)
+    !DLLEXPORT(cmfe_Problem_Finalise)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(OUT) :: cmfe_Problem !<The cmfe_ProblemType object to finalise.
@@ -8589,6 +8653,7 @@ CONTAINS
 
   !>Initialises a cmfe_ProblemType object.
   SUBROUTINE cmfe_Problem_Initialise(cmfe_Problem,err)
+    !DLLEXPORT(cmfe_Problem_Initialise)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(OUT) :: cmfe_Problem !<The cmfe_ProblemType object to initialise.
@@ -8613,6 +8678,7 @@ CONTAINS
 
   !>Finalises a cmfe_QuadratureType object.
   SUBROUTINE cmfe_Quadrature_Finalise(cmfe_Quadrature,err)
+    !DLLEXPORT(cmfe_Quadrature_Finalise)
 
     !Argument variables
     TYPE(cmfe_QuadratureType), INTENT(OUT) :: cmfe_Quadrature !<The cmfe_QuadratureType object to finalise.
@@ -8638,6 +8704,7 @@ CONTAINS
 
   !>Initialises a cmfe_QuadratureType object.
   SUBROUTINE cmfe_Quadrature_Initialise(cmfe_Quadrature,err)
+    !DLLEXPORT(cmfe_Quadrature_Initialise)
 
     !Argument variables
     TYPE(cmfe_QuadratureType), INTENT(OUT) :: cmfe_Quadrature !<The cmfe_QuadratureType object to initialise.
@@ -8662,6 +8729,7 @@ CONTAINS
 
   !>Finalises a cmfe_RegionType object.
   SUBROUTINE cmfe_Region_Finalise(cmfe_Region,err)
+    !DLLEXPORT(cmfe_Region_Finalise)
 
     !Argument variables
     TYPE(cmfe_RegionType), INTENT(OUT) :: cmfe_Region !<The cmfe_RegionType object to finalise.
@@ -8687,6 +8755,7 @@ CONTAINS
 
   !>Initialises a cmfe_RegionType object.
   SUBROUTINE cmfe_Region_Initialise(cmfe_Region,err)
+    !DLLEXPORT(cmfe_Region_Initialise)
 
     !Argument variables
     TYPE(cmfe_RegionType), INTENT(OUT) :: cmfe_Region !<The cmfe_RegionType object to initialise.
@@ -8711,6 +8780,7 @@ CONTAINS
 
   !>Finalises a cmfe_SolverType object.
   SUBROUTINE cmfe_Solver_Finalise(cmfe_Solver,err)
+    !DLLEXPORT(cmfe_Solver_Finalise)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(OUT) :: cmfe_Solver !<The cmfe_SolverType object to finalise.
@@ -8735,6 +8805,7 @@ CONTAINS
 
   !>Initialises a cmfe_SolverType object.
   SUBROUTINE cmfe_Solver_Initialise(cmfe_Solver,err)
+    !DLLEXPORT(cmfe_Solver_Initialise)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(OUT) :: cmfe_Solver !<The cmfe_SolverType object to initialise.
@@ -8759,6 +8830,7 @@ CONTAINS
 
   !>Finalises a cmfe_SolverEquationsType object.
   SUBROUTINE cmfe_SolverEquations_Finalise(cmfe_SolverEquations,err)
+    !DLLEXPORT(cmfe_SolverEquations_Finalise)
 
     !Argument variables
     TYPE(cmfe_SolverEquationsType), INTENT(OUT) :: cmfe_SolverEquations !<The cmfe_SolverEquationsType object to finalise.
@@ -8784,6 +8856,7 @@ CONTAINS
 
   !>Initialises a cmfe_SolverEquationsType object.
   SUBROUTINE cmfe_SolverEquations_Initialise(cmfe_SolverEquations,err)
+    !DLLEXPORT(cmfe_SolverEquations_Initialise)
 
     !Argument variables
     TYPE(cmfe_SolverEquationsType), INTENT(OUT) :: cmfe_SolverEquations !<The cmfe_SolverEquationsType object to initialise.
@@ -8810,6 +8883,7 @@ CONTAINS
 
   !>Output the analytic error analysis for a field specified by a user number compared to the analytic values parameter set.
   SUBROUTINE cmfe_AnalyticAnalysis_OutputNumber(regionUserNumber,fieldUserNumber,fileName,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_OutputNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
@@ -8854,6 +8928,7 @@ CONTAINS
 
   !>Output the analytic error analysis for a field identified by an object compared to the analytic values parameter set.
   SUBROUTINE cmfe_AnalyticAnalysis_OutputObj(field,fileName,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_OutputObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
@@ -8880,6 +8955,7 @@ CONTAINS
   !>Get absolute error value for the node in a field specified by a user number compared to the analytic value.
   SUBROUTINE cmfe_AnalyticAnalysis_AbsoluteErrorGetNodeNumber(regionUserNumber,fieldUserNumber,variableType,versionNumber, &
     & derivativeNumber, nodeNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_AbsoluteErrorGetNodeNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
@@ -8932,6 +9008,7 @@ CONTAINS
   !>Get absolute error value for the node in a field identified by an object compared to the analytic value.
   SUBROUTINE cmfe_AnalyticAnalysis_AbsoluteErrorGetNodeObj(field,variableType,versionNumber,derivativeNumber,nodeNumber, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_AbsoluteErrorGetNodeObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
@@ -8965,6 +9042,7 @@ CONTAINS
   !>Get percentage error value for the node in a field specified by a user number compared to the analytic value.
   SUBROUTINE cmfe_AnalyticAnalysis_PercentageErrorGetNodeNumber(regionUserNumber,fieldUserNumber,variableType,versionNumber, &
     & derivativeNumber,nodeNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_PercentageErrorGetNodeNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
@@ -9017,6 +9095,7 @@ CONTAINS
   !>Get percentage error value for the node in a field identified by an object compared to the analytic value.
   SUBROUTINE cmfe_AnalyticAnalysis_PercentageErrorGetNodeObj(field,variableType,versionNumber,derivativeNumber,nodeNumber, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_PercentageErrorGetNodeObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
@@ -9051,6 +9130,7 @@ CONTAINS
   !>Get relative error value for the node in a field specified by a user number compared to the analytic value.
   SUBROUTINE cmfe_AnalyticAnalysis_RelativeErrorGetNodeNumber(regionUserNumber,fieldUserNumber,variableType,versionNumber, &
     & derivativeNumber,nodeNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_RelativeErrorGetNodeNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
@@ -9103,6 +9183,7 @@ CONTAINS
   !>Get relative error value for the node in a field identified by an object compared to the analytic value.
   SUBROUTINE cmfe_AnalyticAnalysis_RelativeErrorGetNodeObj(field,variableType,versionNumber,derivativeNumber,nodeNumber, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_RelativeErrorGetNodeObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
@@ -9136,6 +9217,7 @@ CONTAINS
   !>Get absolute error value for the element in a field specified by a user number compared to the analytic value.
   SUBROUTINE cmfe_AnalyticAnalysis_AbsoluteErrorGetElementNumber(regionUserNumber,fieldUserNumber,variableType,elementNumber, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_AbsoluteErrorGetElementNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
@@ -9184,6 +9266,7 @@ CONTAINS
 
   !>Get absolute error value for the element in a field identified by an object compared to the analytic value.
   SUBROUTINE cmfe_AnalyticAnalysis_AbsoluteErrorGetElementObj(field,variableType,elementNumber,componentNumber,VALUE,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_AbsoluteErrorGetElementObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
@@ -9214,6 +9297,7 @@ CONTAINS
   !>Get percentage error value for the element in a field specified by a user number compared to the analytic value.
   SUBROUTINE cmfe_AnalyticAnalysis_PercentageErrorGetElementNumber(regionUserNumber,fieldUserNumber,variableType,elementNumber, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_PercentageErrorGetElementNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
@@ -9262,6 +9346,7 @@ CONTAINS
 
   !>Get percentage error value for the element in a field identified by an object compared to the analytic value.
   SUBROUTINE cmfe_AnalyticAnalysis_PercentageErrorGetElementObj(field,variableType,elementNumber,componentNumber,VALUE,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_PercentageErrorGetElementObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
@@ -9293,6 +9378,7 @@ CONTAINS
   !>Get relative error value for the element in a field specified by a user number compared to the analytic value.
   SUBROUTINE cmfe_AnalyticAnalysis_RelativeErrorGetElementNumber(regionUserNumber,fieldUserNumber,variableType,elementNumber, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_RelativeErrorGetElementNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
@@ -9341,6 +9427,7 @@ CONTAINS
 
   !>Get relative error value for the element in a field identified by an object compared to the analytic value.
   SUBROUTINE cmfe_AnalyticAnalysis_RelativeErrorGetElementObj(field,variableType,elementNumber,componentNumber,VALUE,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_RelativeErrorGetElementObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
@@ -9371,6 +9458,7 @@ CONTAINS
   !>Get absolute error value for the constant in a field specified by a user number compared to the analytic value.
   SUBROUTINE cmfe_AnalyticAnalysis_AbsoluteErrorGetConstantNumber(regionUserNumber,fieldUserNumber,variableType,componentNumber, &
     & value,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_AbsoluteErrorGetConstantNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
@@ -9418,6 +9506,7 @@ CONTAINS
 
   !>Get absolute error value for the constant in a field identified by an object compared to the analytic value.
   SUBROUTINE cmfe_AnalyticAnalysis_AbsoluteErrorGetConstantObj(field,variableType,componentNumber,VALUE,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_AbsoluteErrorGetConstantObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
@@ -9447,6 +9536,7 @@ CONTAINS
   !>Get percentage error value for the constant in a field specified by a user number compared to the analytic value.
   SUBROUTINE cmfe_AnalyticAnalysis_PercentageErrorGetConstantNumber(regionUserNumber,fieldUserNumber,variableType,componentNumber, &
     & value,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_PercentageErrorGetConstantNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
@@ -9494,6 +9584,7 @@ CONTAINS
 
   !>Get percentage error value for the constant in a field identified by an object compared to the analytic value.
   SUBROUTINE cmfe_AnalyticAnalysis_PercentageErrorGetConstantObj(field,variableType,componentNumber,VALUE,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_PercentageErrorGetConstantObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
@@ -9524,6 +9615,7 @@ CONTAINS
   !>Get relative error value for the constant in a field specified by a user number compared to the analytic value.
   SUBROUTINE cmfe_AnalyticAnalysis_RelativeErrorGetConstantNumber(regionUserNumber,fieldUserNumber,variableType,componentNumber, &
     & value,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_RelativeErrorGetConstantNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
@@ -9571,6 +9663,7 @@ CONTAINS
 
   !>Get relative error value for the constant in a field identified by an object compared to the analytic value.
   SUBROUTINE cmfe_AnalyticAnalysis_RelativeErrorGetConstantObj(field,variableType,componentNumber,VALUE,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_RelativeErrorGetConstantObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
@@ -9600,6 +9693,7 @@ CONTAINS
   !>Get rms error value for nodes in a field compared to the analytic value.
   SUBROUTINE cmfe_AnalyticAnalysis_RMSErrorGetNodeNumber(regionUserNumber,fieldUserNumber,variableType,componentNumber,errorType, &
     & localValue,localGhostValue,globalValue,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_RMSErrorGetNodeNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
@@ -9651,6 +9745,7 @@ CONTAINS
   !>Get rms error value for nodes in a field identified by an object compared to the analytic value.
   SUBROUTINE cmfe_AnalyticAnalysis_RMSErrorGetNodeObj(field,variableType,componentNumber,errorType,localValue,localGhostValue, &
     & globalValue,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_RMSErrorGetNodeObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
@@ -9683,6 +9778,7 @@ CONTAINS
   !>Get rms error value for elements in a field compared to the analytic value.
   SUBROUTINE cmfe_AnalyticAnalysis_RMSErrorGetElementNumber(regionUserNumber,fieldUserNumber,variableType,componentNumber, &
     & errorType,localValue,localGhostValue,globalValue,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_RMSErrorGetElementNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
@@ -9735,6 +9831,7 @@ CONTAINS
   !>Get relative error value for the constant in a field identified by an object compared to the analytic value.
   SUBROUTINE cmfe_AnalyticAnalysis_RMSErrorGetElementObj(field,variableType,componentNumber,errorType,localValue,localGhostValue, &
     & globalValue,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_RMSErrorGetElementObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
@@ -9767,6 +9864,7 @@ CONTAINS
   !>Get integral value for the numerical values.
   SUBROUTINE cmfe_AnalyticAnalysis_IntegralNumericalValueGetNumber(regionUserNumber,fieldUserNumber,variableType,componentNumber, &
     & integralValue,ghostIntegralValue,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_IntegralNumericalValueGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
@@ -9817,6 +9915,7 @@ CONTAINS
   !>Get integral value for the numerical values.
   SUBROUTINE cmfe_AnalyticAnalysis_IntegralNumericalValueGetObj(field,variableType,componentNumber,integralValue, &
     & ghostIntegralValue,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_IntegralNumericalValueGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
@@ -9848,6 +9947,7 @@ CONTAINS
   !>Get integral value for the analytic values.
   SUBROUTINE cmfe_AnalyticAnalysis_IntegralAnalyticValueGetNumber(regionUserNumber,fieldUserNumber,variableType,componentNumber, &
     & integralValue,ghostIntegralValue,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_IntegralAnalyticValueGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
@@ -9898,6 +9998,7 @@ CONTAINS
   !>Get integral value for the analytic values.
   SUBROUTINE cmfe_AnalyticAnalysis_IntegralAnalyticValueGetObj(field,variableType,componentNumber,integralValue, &
     & ghostIntegralValue,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_IntegralAnalyticValueGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
@@ -9929,6 +10030,7 @@ CONTAINS
   !>Get integral value for the percentage errors.
   SUBROUTINE cmfe_AnalyticAnalysis_IntegralPercentageErrorGetNumber(regionUserNumber,fieldUserNumber,variableType,componentNumber, &
     & integralValue,ghostIntegralValue,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_IntegralPercentageErrorGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
@@ -9979,6 +10081,7 @@ CONTAINS
   !>Get integral value for the percentage errors.
   SUBROUTINE cmfe_AnalyticAnalysis_IntegralPercentageErrorGetObj(field,variableType,componentNumber,integralValue, &
     & ghostIntegralValue,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_IntegralPercentageErrorGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
@@ -10010,6 +10113,7 @@ CONTAINS
   !>Get integral value for the absolute errors.
   SUBROUTINE cmfe_AnalyticAnalysis_IntegralAbsoluteErrorGetNumber(regionUserNumber,fieldUserNumber,variableType,componentNumber, &
     & integralValue,ghostIntegralValue,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_IntegralAbsoluteErrorGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
@@ -10060,6 +10164,7 @@ CONTAINS
   !>Get integral value for the absolute errors.
   SUBROUTINE cmfe_AnalyticAnalysis_IntegralAbsoluteErrorGetObj(field,variableType,componentNumber,integralValue, &
     & ghostIntegralValue,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_IntegralAbsoluteErrorGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
@@ -10091,6 +10196,7 @@ CONTAINS
   !>Get integral value for the relative error.
   SUBROUTINE cmfe_AnalyticAnalysis_IntegralRelativeErrorGetNumber(regionUserNumber,fieldUserNumber,variableType,componentNumber, &
     & integralValue,ghostIntegralValue,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_IntegralRelativeErrorGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
@@ -10141,6 +10247,7 @@ CONTAINS
   !>Get integral value for the relative error.
   SUBROUTINE cmfe_AnalyticAnalysis_IntegralRelativeErrorGetObj(field,variableType,componentNumber,integralValue, &
     & ghostIntegralValue,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_IntegralRelativeErrorGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
@@ -10172,6 +10279,7 @@ CONTAINS
   !>Get integral value for the nid numerical.
   SUBROUTINE cmfe_AnalyticAnalysis_IntegralNIDNumericalValueGetNumber(regionUserNumber,fieldUserNumber,variableType, &
     & componentNumber,integralValue,ghostIntegralValue,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_IntegralNIDNumericalValueGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
@@ -10222,6 +10330,7 @@ CONTAINS
   !>Get integral value for the nid numerical.
   SUBROUTINE cmfe_AnalyticAnalysis_IntegralNIDNumericalValueGetObj(field,variableType,componentNumber,integralValue, &
     & ghostIntegralValue,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_IntegralNIDNumericalValueGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
@@ -10253,6 +10362,7 @@ CONTAINS
   !>Get integral value for the nid error.
   SUBROUTINE cmfe_AnalyticAnalysis_IntegralNIDErrorGetNumber(regionUserNumber,fieldUserNumber,variableType,componentNumber, &
     & integralValue,ghostIntegralValue,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_IntegralNIDErrorGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field for analytic error analysis.
@@ -10302,6 +10412,7 @@ CONTAINS
 
   !>Get integral value for the nid error.
   SUBROUTINE cmfe_AnalyticAnalysis_IntegralNIDErrorGetObj(field,variableType,componentNumber,integralValue,ghostIntegralValue,err)
+    !DLLEXPORT(cmfe_AnalyticAnalysis_IntegralNIDErrorGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to calculate the analytic error analysis for.
@@ -10335,6 +10446,7 @@ CONTAINS
 
   !>Sets diagnostics off. \see OpenCMISS::Iron::cmfe_DiagnosticsSetOn
   SUBROUTINE cmfe_DiagnosticsSetOff(err)
+    !DLLEXPORT(cmfe_DiagnosticsSetOff)
 
     !Argument variables
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -10358,6 +10470,7 @@ CONTAINS
 
   !>Sets diagnostics on \see OpenCMISS::Iron::cmfe_DiagnosticsSetOff
   SUBROUTINE cmfe_DiagnosticsSetOn(diagType,levelList,diagFilename,routineList,err)
+    !DLLEXPORT(cmfe_DiagnosticsSetOn)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: diagType !<The type of diagnostics to set on \see OPENCMISS_DiagnosticTypes.
@@ -10385,6 +10498,7 @@ CONTAINS
 
   !>Sets output off \see OpenCMISS::Iron::cmfe_OutputSetOff
   SUBROUTINE cmfe_OutputSetOff(err)
+    !DLLEXPORT(cmfe_OutputSetOff)
 
     !Argument variables
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -10408,6 +10522,7 @@ CONTAINS
 
   !>Sets output on \see OpenCMISS::Iron::cmfe_OutputSetOff
   SUBROUTINE cmfe_OutputSetOn(echoFilename,err)
+    !DLLEXPORT(cmfe_OutputSetOn)
 
     !Argument variables
     CHARACTER(LEN=*), INTENT(IN) :: echoFilename !<The filename of the file to echo output to
@@ -10432,6 +10547,7 @@ CONTAINS
 
   !>Sets timing off \see OpenCMISS::Iron::cmfe_TimingSetOn
   SUBROUTINE cmfe_TimingSetOff(err)
+    !DLLEXPORT(cmfe_TimingSetOff)
 
     !Argument variables
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -10455,6 +10571,7 @@ CONTAINS
 
   !>Sets timing on \see OpenCMISS::Iron::cmfe_TimingSetOff
   SUBROUTINE cmfe_TimingSetOn(timingType,timingSummaryFlag,timingFilename,routineList,err)
+    !DLLEXPORT(cmfe_TimingSetOn)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: timingType !<The type of timing to set on \see OPENCMISS_TimingTypes.
@@ -10482,6 +10599,7 @@ CONTAINS
 
   !>Outputs the timing summary.
   SUBROUTINE cmfe_TimingSummaryOutput(err)
+    !DLLEXPORT(cmfe_TimingSummaryOutput)
 
     !Argument variables
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
@@ -10506,6 +10624,7 @@ CONTAINS
 
   !>Returns the collapsed Xi flags of a basis identified by a user number.
   SUBROUTINE cmfe_Basis_CollapsedXiGetNumber(userNumber,collapsedXi,err)
+    !DLLEXPORT(cmfe_Basis_CollapsedXiGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to get the collapsed Xi flags for.
@@ -10540,6 +10659,7 @@ CONTAINS
 
   !>Returns the collapsed Xi flags of a basis identified by an object.
   SUBROUTINE cmfe_Basis_CollapsedXiGetObj(basis,collapsedXi,err)
+    !DLLEXPORT(cmfe_Basis_CollapsedXiGetObj)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(IN) :: basis !<The basis to get the collapsed Xi flags for.
@@ -10565,6 +10685,7 @@ CONTAINS
 
   !>Sets/changes the collapsed Xi flags of a basis identified by a user number.
   SUBROUTINE cmfe_Basis_CollapsedXiSetNumber(userNumber,collapsedXi,err)
+    !DLLEXPORT(cmfe_Basis_CollapsedXiSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to set the collapsed Xi flags for.
@@ -10599,6 +10720,7 @@ CONTAINS
 
   !>Sets/changes the collapsed Xi flags of a basis identified by an object.
   SUBROUTINE cmfe_Basis_CollapsedXiSetObj(basis,collapsedXi,err)
+    !DLLEXPORT(cmfe_Basis_CollapsedXiSetObj)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(INOUT) :: basis !<The basis to set the collapsed Xi flags for.
@@ -10624,6 +10746,7 @@ CONTAINS
 
    !>Finishes the creation of a new basis identified by a user number.
   SUBROUTINE cmfe_Basis_CreateFinishNumber(userNumber,err)
+    !DLLEXPORT(cmfe_Basis_CreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to finish the creation of.
@@ -10661,6 +10784,7 @@ CONTAINS
 
   !>Finishes the creation of a new basis identified by an object.
   SUBROUTINE cmfe_Basis_CreateFinishObj(basis,err)
+    !DLLEXPORT(cmfe_Basis_CreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(INOUT) :: basis !<The basis to finish the creation of
@@ -10689,6 +10813,7 @@ CONTAINS
 
   !>Starts the creation of a new basis for a basis identified by a user number.
   SUBROUTINE cmfe_Basis_CreateStartNumber(userNumber,err)
+    !DLLEXPORT(cmfe_Basis_CreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to start the creation of.
@@ -10719,6 +10844,7 @@ CONTAINS
 
   !>Starts the creation of a new basis for a basis identified by an object.
   SUBROUTINE cmfe_Basis_CreateStartObj(userNumber,basis,err)
+    !DLLEXPORT(cmfe_Basis_CreateStartObj)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to start the creation of.
@@ -10748,6 +10874,7 @@ CONTAINS
 
   !>Destroys a basis identified by its basis user number.
   SUBROUTINE cmfe_Basis_DestroyNumber(userNumber,err)
+    !DLLEXPORT(cmfe_Basis_DestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to destroy.
@@ -10781,6 +10908,7 @@ CONTAINS
 
   !>Destroys a basis identified by an object.
   SUBROUTINE cmfe_Basis_DestroyObj(basis,err)
+    !DLLEXPORT(cmfe_Basis_DestroyObj)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(INOUT) :: basis !<The basis to destroy.
@@ -10805,6 +10933,7 @@ CONTAINS
 
   !>Get the interpolation type in each xi directions for a basis identified by a user number.
   SUBROUTINE cmfe_Basis_InterpolationXiGetNumber(userNumber,interpolationXi,err)
+    !DLLEXPORT(cmfe_Basis_InterpolationXiGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to get the interpolation xi for.
@@ -10839,6 +10968,7 @@ CONTAINS
 
   !>Get the interpolation type in each xi directions for a basis indentified by an object.
   SUBROUTINE cmfe_Basis_InterpolationXiGetObj(basis,interpolationXi,err)
+    !DLLEXPORT(cmfe_Basis_InterpolationXiGetObj)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(IN) :: basis !<The basis to get the interpolation xi for.
@@ -10865,6 +10995,7 @@ CONTAINS
 
   !>Sets/changes the interpolation type in each xi directions for a basis identified by a user number.
   SUBROUTINE cmfe_Basis_InterpolationXiSetNumber(userNumber,interpolationXi,err)
+    !DLLEXPORT(cmfe_Basis_InterpolationXiSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to get the interpolation xi for.
@@ -10899,6 +11030,7 @@ CONTAINS
 
   !>Sets/changes the interpolation type in each xi directions for a basis indentified by an object.
   SUBROUTINE cmfe_Basis_InterpolationXiSetObj(basis,interpolationXi,err)
+    !DLLEXPORT(cmfe_Basis_InterpolationXiSetObj)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(IN) :: basis !<The basis to get the interpolation xi for.
@@ -10924,6 +11056,7 @@ CONTAINS
 
   !>Returns the number of local nodes in a basis identified by a user number.
   SUBROUTINE cmfe_Basis_NumberOfLocalNodesGetNumber(userNumber,numberOfLocalNodes,err)
+    !DLLEXPORT(cmfe_Basis_NumberOfLocalNodesGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to get the interpolation xi for.
@@ -10958,6 +11091,7 @@ CONTAINS
 
   !>Returns the number of local nodes in a basis identified by an object.
   SUBROUTINE cmfe_Basis_NumberOfLocalNodesGetObj(basis,numberOfLocalNodes,err)
+    !DLLEXPORT(cmfe_Basis_NumberOfLocalNodesGetObj)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(IN) :: basis !<The basis to get the number of local nodes for.
@@ -10983,6 +11117,7 @@ CONTAINS
 
   !>Returns the number of Xi directions in a basis identified by a user number.
   SUBROUTINE cmfe_Basis_NumberOfXiGetNumber(userNumber,numberOfXi,err)
+    !DLLEXPORT(cmfe_Basis_NumberOfXiGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to get the number xi for.
@@ -11017,6 +11152,7 @@ CONTAINS
 
   !>Returns the number of Xi directions in a basis identified by an object.
   SUBROUTINE cmfe_Basis_NumberOfXiGetObj(basis,numberOfXi,err)
+    !DLLEXPORT(cmfe_Basis_NumberOfXiGetObj)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(IN) :: basis !<The basis to get the number of xi directions for.
@@ -11042,6 +11178,7 @@ CONTAINS
 
   !>Sets/changes the number of Xi directions in a basis identified by a user number.
   SUBROUTINE cmfe_Basis_NumberOfXiSetNumber(userNumber,numberOfXi,err)
+    !DLLEXPORT(cmfe_Basis_NumberOfXiSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to set the number xi for.
@@ -11076,6 +11213,7 @@ CONTAINS
 
   !>Sets/changes the number of Xi directions in a basis identified by an object.
   SUBROUTINE cmfe_Basis_NumberOfXiSetObj(basis,numberOfXi,err)
+    !DLLEXPORT(cmfe_Basis_NumberOfXiSetObj)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(INOUT) :: basis !<The basis to set the number of xi directions for.
@@ -11101,6 +11239,7 @@ CONTAINS
 
   !>Returns the number of Gauss points in each Xi directions for a basis quadrature identified by a user number.
   SUBROUTINE cmfe_Basis_QuadratureNumberOfGaussXiGetNumber(userNumber,numberOfGaussXi,err)
+    !DLLEXPORT(cmfe_Basis_QuadratureNumberOfGaussXiGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to get the number of Gauss Xi for.
@@ -11136,6 +11275,7 @@ CONTAINS
 
   !>Returns the number Gauss points in each Xi directions for a basis quadrature identified by an object.
   SUBROUTINE cmfe_Basis_QuadratureNumberOfGaussXiGetObj(basis,numberOfGaussXi,err)
+    !DLLEXPORT(cmfe_Basis_QuadratureNumberOfGaussXiGetObj)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(IN) :: basis !<The basis to get the number of Gauss Xi for.
@@ -11161,6 +11301,7 @@ CONTAINS
 
   !>Sets/changes the number of Gauss points in each Xi directions for a basis quadrature identified by a user number.
   SUBROUTINE cmfe_Basis_QuadratureNumberOfGaussXiSetNumber(userNumber,numberOfGaussXi,err)
+    !DLLEXPORT(cmfe_Basis_QuadratureNumberOfGaussXiSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to set the number of Gauss Xi for.
@@ -11196,6 +11337,7 @@ CONTAINS
 
   !>Sets the number Gauss points in each Xi directions for a basis quadrature identified by an object.
   SUBROUTINE cmfe_Basis_QuadratureNumberOfGaussXiSetObj(basis,numberOfGaussXi,err)
+    !DLLEXPORT(cmfe_Basis_QuadratureNumberOfGaussXiSetObj)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(INOUT) :: basis !<The basis to get the number of Gauss Xi for.
@@ -11220,6 +11362,7 @@ CONTAINS
   !
   !>Returns the xi position of a Gauss point on a basis quadrature identified by a user number.
   SUBROUTINE cmfe_Basis_QuadratureSingleGaussXiGetNumber(userNumber,quadratureScheme,GaussPoint,GaussXi,err)
+    !DLLEXPORT(cmfe_Basis_QuadratureSingleGaussXiGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to get the Gauss Xi positions for.
@@ -11256,6 +11399,7 @@ CONTAINS
 
   !>Returns the xi position of a Gauss point on a basis quadrature identified by an object.
   SUBROUTINE cmfe_Basis_QuadratureSingleGaussXiGetObj(basis,quadratureScheme,GaussPoint,GaussXi,err)
+    !DLLEXPORT(cmfe_Basis_QuadratureSingleGaussXiGetObj)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(IN) :: basis !<The basis to get the Gauss Xi positions for.
@@ -11283,6 +11427,7 @@ CONTAINS
 
   !>Returns the xi positions of Gauss points on a basis quadrature identified by a user number.
   SUBROUTINE cmfe_Basis_QuadratureMultipleGaussXiGetNumber(userNumber,quadratureScheme,GaussPoints,GaussXi,err)
+    !DLLEXPORT(cmfe_Basis_QuadratureMultipleGaussXiGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to get the Gauss Xi positions for.
@@ -11320,6 +11465,7 @@ CONTAINS
 
   !>Returns the xi positions of Gauss points on a basis quadrature identified by an object.
   SUBROUTINE cmfe_Basis_QuadratureMultipleGaussXiGetObj(basis,quadratureScheme,GaussPoints,GaussXi,err)
+    !DLLEXPORT(cmfe_Basis_QuadratureMultipleGaussXiGetObj)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(IN) :: basis !<The basis to get the Gauss Xi positions for.
@@ -11347,6 +11493,7 @@ CONTAINS
 
   !>Returns the order of quadrature a basis quadrature identified by a user number.
   SUBROUTINE cmfe_Basis_QuadratureOrderGetNumber(userNumber,quadratureOrder,err)
+    !DLLEXPORT(cmfe_Basis_QuadratureOrderGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to get the quadrature order for.
@@ -11381,6 +11528,7 @@ CONTAINS
 
   !>Returns the the order of quadrature for a basis quadrature identified by an object.
   SUBROUTINE cmfe_Basis_QuadratureOrderGetObj(basis,quadratureOrder,err)
+    !DLLEXPORT(cmfe_Basis_QuadratureOrderGetObj)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(IN) :: basis !<The basis to get the quadrature order for.
@@ -11407,6 +11555,7 @@ CONTAINS
 
   !>Sets/changes the order of quadrature a basis quadrature identified by a user number.
   SUBROUTINE cmfe_Basis_QuadratureOrderSetNumber(userNumber,quadratureOrder,err)
+    !DLLEXPORT(cmfe_Basis_QuadratureOrderSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to set the quadrature order for.
@@ -11441,6 +11590,7 @@ CONTAINS
 
   !>Sets/changes the the order of quadrature for a basis quadrature identified by an object.
   SUBROUTINE cmfe_Basis_QuadratureOrderSetObj(basis,quadratureOrder,err)
+    !DLLEXPORT(cmfe_Basis_QuadratureOrderSetObj)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(INOUT) :: basis !<The basis to set the quadrature order for.
@@ -11466,6 +11616,7 @@ CONTAINS
 
   !>Returns the type of quadrature a basis quadrature identified by a user number.
   SUBROUTINE cmfe_Basis_QuadratureTypeGetNumber(userNumber,quadratureType,err)
+    !DLLEXPORT(cmfe_Basis_QuadratureTypeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to get the quadrature type for.
@@ -11500,6 +11651,7 @@ CONTAINS
 
   !>Returns the the type of quadrature for a basis quadrature identified by an object.
   SUBROUTINE cmfe_Basis_QuadratureTypeGetObj(basis,quadratureType,err)
+    !DLLEXPORT(cmfe_Basis_QuadratureTypeGetObj)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(IN) :: basis !<The basis to get the quadrature order for.
@@ -11525,6 +11677,7 @@ CONTAINS
 
   !>Sets/changes the type of quadrature a basis quadrature identified by a user number.
   SUBROUTINE cmfe_Basis_QuadratureTypeSetNumber(userNumber,quadratureType,err)
+    !DLLEXPORT(cmfe_Basis_QuadratureTypeSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to get the quadrature type for.
@@ -11559,6 +11712,7 @@ CONTAINS
 
   !>Sets/changes the the type of quadrature for a basis quadrature identified by an object.
   SUBROUTINE cmfe_Basis_QuadratureTypeSetObj(basis,quadratureType,err)
+    !DLLEXPORT(cmfe_Basis_QuadratureTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(INOUT) :: basis !<The basis to get the quadrature type for.
@@ -11584,6 +11738,7 @@ CONTAINS
 
   !>Sets/changes the local face Gauss scheme calculation, on a basis identified by a user number.
   SUBROUTINE cmfe_Basis_QuadratureLocalFaceGaussEvaluateSetNumber(userNumber,faceGaussEvaluate,err)
+    !DLLEXPORT(cmfe_Basis_QuadratureLocalFaceGaussEvaluateSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to get the quadrature type for.
@@ -11619,6 +11774,7 @@ CONTAINS
 
   !>Sets/changes the local face Gauss scheme calculation, on a basis identified by an object.
   SUBROUTINE cmfe_Basis_QuadratureLocalFaceGaussEvaluateSetObj(basis,faceGaussEvaluate,err)
+    !DLLEXPORT(cmfe_Basis_QuadratureLocalFaceGaussEvaluateSetObj)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(INOUT) :: basis !<The basis to get the quadrature type for.
@@ -11644,6 +11800,7 @@ CONTAINS
 
   !>Returns the type of a basis identified by a user number.
   SUBROUTINE cmfe_Basis_TypeGetNumber(userNumber,basisType,err)
+    !DLLEXPORT(cmfe_Basis_TypeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to get the type for.
@@ -11678,6 +11835,7 @@ CONTAINS
 
   !>Returns the type of a basis identified by an object.
   SUBROUTINE cmfe_Basis_TypeGetObj(basis,basisType,err)
+    !DLLEXPORT(cmfe_Basis_TypeGetObj)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(IN) :: basis !<The basis to get the type for.
@@ -11703,6 +11861,7 @@ CONTAINS
 
   !>Sets/changes the type of a basis identified by a user number.
   SUBROUTINE cmfe_Basis_TypeSetNumber(userNumber,basisType,err)
+    !DLLEXPORT(cmfe_Basis_TypeSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to set the type for.
@@ -11737,6 +11896,7 @@ CONTAINS
 
   !>Sets/changes the type of a basis identified by an object.
   SUBROUTINE cmfe_Basis_TypeSetObj(basis,basisType,err)
+    !DLLEXPORT(cmfe_Basis_TypeSetObj)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(INOUT) :: basis !<The basis to set the type for.
@@ -11765,6 +11925,7 @@ CONTAINS
 
   !>Destroys the boundary conditions for solver equations identified by a control loop identifier.
   SUBROUTINE cmfe_BoundaryConditions_DestroyNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,err)
+    !DLLEXPORT(cmfe_BoundaryConditions_DestroyNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem containing the solver equations to destroy the boundary conditions for.
@@ -11816,6 +11977,7 @@ CONTAINS
 
   !>Destroys the boundary conditions for solver equations identified by a control loop identifier.
   SUBROUTINE cmfe_BoundaryConditions_DestroyNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,err)
+    !DLLEXPORT(cmfe_BoundaryConditions_DestroyNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem containing the solver equations to destroy the boundary conditions for.
@@ -11867,6 +12029,7 @@ CONTAINS
 
   !>Destroys boundary conditions identified by an object.
   SUBROUTINE cmfe_BoundaryConditions_DestroyObj(boundaryConditions,err)
+    !DLLEXPORT(cmfe_BoundaryConditions_DestroyObj)
 
     !Argument variables
     TYPE(cmfe_BoundaryConditionsType), INTENT(INOUT) :: boundaryConditions !<The boundary conditions to destroy.
@@ -11892,6 +12055,7 @@ CONTAINS
   !>Adds to the value of the specified constant and sets this as a boundary condition on the specified constant for boundary conditions identified by a user number.
   SUBROUTINE cmfe_BoundaryConditions_AddConstantNumber(regionUserNumber,problemUserNumber,controlLoopIdentifiers,solverIndex, &
     & fieldUserNumber,variableType,componentNumber,condition,value,err)
+    !DLLEXPORT(cmfe_BoundaryConditions_AddConstantNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the dependent field to add the boundary conditions for.
@@ -11965,6 +12129,7 @@ CONTAINS
 
   !>Adds to the value of the specified constant and sets this as a boundary condition on the specified constant for boundary conditions identified by an object.
   SUBROUTINE cmfe_BoundaryConditions_AddConstantObj(boundaryConditions,field,variableType,componentNumber,condition,value,err)
+    !DLLEXPORT(cmfe_BoundaryConditions_AddConstantObj)
 
     !Argument variables
     TYPE(cmfe_BoundaryConditionsType), INTENT(IN) :: boundaryConditions !<The boundary conditions to add the constant to.
@@ -11997,6 +12162,7 @@ CONTAINS
   !>Sets the value of the specified constant as a boundary condition on the specified constant for boundary conditions identified by a user number.
   SUBROUTINE cmfe_BoundaryConditions_SetConstantNumber(regionUserNumber,problemUserNumber,controlLoopIdentifiers,solverIndex, &
     & variableType,fieldUserNumber,componentNumber,condition,value,err)
+    !DLLEXPORT(cmfe_BoundaryConditions_SetConstantNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set to set the boundary conditions for.
@@ -12070,6 +12236,7 @@ CONTAINS
 
   !>Sets the value of the specified constant and sets this as a boundary condition on the specified constant for boundary conditions identified by an object.
   SUBROUTINE cmfe_BoundaryConditions_SetConstantObj(boundaryConditions,field,variableType,componentNumber,condition,value,err)
+    !DLLEXPORT(cmfe_BoundaryConditions_SetConstantObj)
 
     !Argument variables
     TYPE(cmfe_BoundaryConditionsType), INTENT(IN) :: boundaryConditions !<The boundary conditions to set the constant to.
@@ -12101,6 +12268,7 @@ CONTAINS
   !>Adds the value to the specified element and sets this as a boundary condition on the specified element for boundary conditions identified by a user number.
   SUBROUTINE cmfe_BoundaryConditions_AddElementNumber(regionUserNumber,problemUserNumber,controlLoopIdentifiers,solverIndex, &
     & fieldUserNumber,variableType,elementUserNumber,componentNumber,condition,value,err)
+    !DLLEXPORT(cmfe_BoundaryConditions_AddElementNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set to add the boundary conditions for.
@@ -12176,6 +12344,7 @@ CONTAINS
   !>Adds to the value of the specified element and sets this as a boundary condition on the specified element for boundary conditions identified by an object.
   SUBROUTINE cmfe_BoundaryConditions_AddElementObj(boundaryConditions,field,variableType,elementUserNumber,componentNumber, &
     & condition,value,err)
+    !DLLEXPORT(cmfe_BoundaryConditions_AddElementObj)
 
     !Argument variables
     TYPE(cmfe_BoundaryConditionsType), INTENT(IN) :: boundaryConditions !<The boundary conditions to add the element to.
@@ -12208,6 +12377,7 @@ CONTAINS
   !>Sets the value of the specified element as a boundary condition on the specified element for boundary conditions identified by a user number.
   SUBROUTINE cmfe_BoundaryConditions_SetElementNumber(regionUserNumber,problemUserNumber,controlLoopIdentifiers,solverIndex, &
     & fieldUserNumber,variableType,elementUserNumber,componentNumber,condition,value,err)
+    !DLLEXPORT(cmfe_BoundaryConditions_SetElementNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set to set the boundary conditions for.
@@ -12283,6 +12453,7 @@ CONTAINS
   !>Sets the value of the specified element and sets this as a boundary condition on the specified elements for boundary conditions identified by an object.
   SUBROUTINE cmfe_BoundaryConditions_SetElementObj(boundaryConditions,field,variableType,elementUserNumber,componentNumber, &
     & condition,value,err)
+    !DLLEXPORT(cmfe_BoundaryConditions_SetElementObj)
 
     !Argument variables
     TYPE(cmfe_BoundaryConditionsType), INTENT(IN) :: boundaryConditions !<The boundary conditions to set the element to.
@@ -12315,6 +12486,7 @@ CONTAINS
   !>Adds the value to the specified node and sets this as a boundary condition on the specified node for boundary conditions identified by a user number.
   SUBROUTINE cmfe_BoundaryConditions_AddNodeNumber(regionUserNumber,problemUserNumber,controlLoopIdentifiers,solverIndex, &
     & fieldUserNumber,variableType,versionNumber,derivativeNumber,nodeUserNumber,componentNumber,condition,value,err)
+    !DLLEXPORT(cmfe_BoundaryConditions_AddNodeNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set to add the boundary conditions for.
@@ -12392,6 +12564,7 @@ CONTAINS
   !>Adds to the value of the specified node and sets this as a boundary condition on the specified node for boundary conditions identified by an object.
   SUBROUTINE cmfe_BoundaryConditions_AddNodeObj(boundaryConditions,field,variableType,versionNumber,derivativeNumber, &
       & nodeUserNumber,componentNumber,condition,value,err)
+    !DLLEXPORT(cmfe_BoundaryConditions_AddNodeObj)
 
     !Argument variables
     TYPE(cmfe_BoundaryConditionsType), INTENT(IN) :: boundaryConditions !<The boundary conditions to add the node to.
@@ -12426,6 +12599,7 @@ CONTAINS
   !>Sets the value of the specified node as a boundary condition on the specified node for boundary conditions identified by a user number.
   SUBROUTINE cmfe_BoundaryConditions_SetNodeNumber0(regionUserNumber,problemUserNumber,controlLoopIdentifier,solverIndex, &
     & fieldUserNumber,variableType,versionNumber,derivativeNumber,nodeUserNumber,componentNumber,condition,value,err)
+    !DLLEXPORT(cmfe_BoundaryConditions_SetNodeNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set to set the boundary conditions for.
@@ -12503,6 +12677,7 @@ CONTAINS
   !>Sets the value of the specified node as a boundary condition on the specified node for boundary conditions identified by a user number.
   SUBROUTINE cmfe_BoundaryConditions_SetNodeNumber1(regionUserNumber,problemUserNumber,controlLoopIdentifiers,solverIndex, &
     & fieldUserNumber,variableType,versionNumber,derivativeNumber,nodeUserNumber,componentNumber,condition,value,err)
+    !DLLEXPORT(cmfe_BoundaryConditions_SetNodeNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set to set the boundary conditions for.
@@ -12580,6 +12755,7 @@ CONTAINS
   !>Sets the value of the specified node and sets this as a boundary condition on the specified node for boundary conditions identified by an object.
   SUBROUTINE cmfe_BoundaryConditions_SetNodeObj(boundaryConditions,field,variableType,versionNumber,derivativeNumber, &
     & nodeUserNumber,componentNumber,condition,value,err)
+    !DLLEXPORT(cmfe_BoundaryConditions_SetNodeObj)
 
     !Argument variables
     TYPE(cmfe_BoundaryConditionsType), INTENT(IN) :: boundaryConditions !<The boundary conditions to set the node to.
@@ -12614,6 +12790,7 @@ CONTAINS
   !>Sets the Neumann integration matrix sparsity for boundary conditions identified by a control loop identifier.
   SUBROUTINE cmfe_BoundaryConditions_NeumannSparsityTypeSetNumber0( &
       & problemUserNumber,controlLoopIdentifier,solverIndex,sparsityType,err)
+    !DLLEXPORT(cmfe_BoundaryConditions_NeumannSparsityTypeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem containing the solver equations.
@@ -12668,6 +12845,7 @@ CONTAINS
   !>Sets the Neumann integration matrix sparsity for boundary conditions identified by a control loop identifier.
   SUBROUTINE cmfe_BoundaryConditions_NeumannSparsityTypeSetNumber1( &
       & problemUserNumber,controlLoopIdentifiers,solverIndex,sparsityType,err)
+    !DLLEXPORT(cmfe_BoundaryConditions_NeumannSparsityTypeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem containing the solver equations to destroy the boundary conditions for.
@@ -12721,6 +12899,7 @@ CONTAINS
 
   !>Sets the Neumann integration matrix sparsity type for the boundary conditions
   SUBROUTINE cmfe_BoundaryConditions_NeumannSparsityTypeSetObj(boundaryConditions,sparsityType,err)
+    !DLLEXPORT(cmfe_BoundaryConditions_NeumannSparsityTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_BoundaryConditionsType), INTENT(INOUT) :: boundaryConditions !<The boundary conditions
@@ -12748,6 +12927,7 @@ CONTAINS
   !>Constrain multiple nodal equations dependent field DOFs to be a single solver DOF in the solver equations
   SUBROUTINE cmfe_BoundaryConditions_ConstrainNodeDofsEqualNumber(regionUserNumber,problemUserNumber,controlLoopIdentifier, &
     & solverIndex,fieldUserNumber,fieldVariableType,versionNumber,derivativeNumber,component,nodes,err)
+    !DLLEXPORT(cmfe_BoundaryConditions_ConstrainNodeDofsEqualNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field DOFs to constrain.
@@ -12825,6 +13005,7 @@ CONTAINS
   !>Constrain multiple nodal equations dependent field DOFs to be a single solver DOF in the solver equations
   SUBROUTINE cmfe_BoundaryConditions_ConstrainNodeDofsEqualObj( &
       & boundaryConditions,field,fieldVariableType,versionNumber,derivativeNumber,component,nodes,err)
+    !DLLEXPORT(cmfe_BoundaryConditions_ConstrainNodeDofsEqualObj)
 
     !Argument variables
     TYPE(cmfe_BoundaryConditionsType), INTENT(IN) :: boundaryConditions !<The boundary conditions to constrain the DOFs in.
@@ -12858,6 +13039,7 @@ CONTAINS
 
   !>Returns the error handling mode for OpenCMISS
   SUBROUTINE cmfe_ErrorHandlingModeGet(errorHandlingMode,err)
+    !DLLEXPORT(cmfe_ErrorHandlingModeGet)
 
     !Argument variables
     INTEGER(INTG), INTENT(OUT) :: errorHandlingMode !<On return, the error handling mode. \see OPENCMISS_CMISSErrorHandlingModes,OPENCMISS
@@ -12882,6 +13064,7 @@ CONTAINS
 
   !>Sets the error handling mode for OpenCMISS
   SUBROUTINE cmfe_ErrorHandlingModeSet(errorHandlingMode,err)
+    !DLLEXPORT(cmfe_ErrorHandlingModeSet)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: errorHandlingMode !<The error handling mode to set. \see OPENCMISS_CMISSErrorHandlingModes,OPENCMISS
@@ -12906,6 +13089,7 @@ CONTAINS
 
   !>Extracts the most recent error string for OpenCMISS
   SUBROUTINE cmfe_ExtractErrorMessageC(errorMessage,err)
+    !DLLEXPORT(cmfe_ExtractErrorMessageC)
 
     !Argument variables
     CHARACTER(LEN=*), INTENT(OUT) :: errorMessage !<On return, the extracted error message.
@@ -12925,6 +13109,7 @@ CONTAINS
 
   !>Extracts the most recent error string for OpenCMISS
   SUBROUTINE cmfe_ExtractErrorMessageVS(errorMessage,err)
+    !DLLEXPORT(cmfe_ExtractErrorMessageVS)
 
     !Argument variables
     TYPE(VARYING_STRING), INTENT(OUT) :: errorMessage !<On return, the extracted error message.
@@ -12944,6 +13129,7 @@ CONTAINS
 
   !>Returns the random seeds for OpenCMISS
   SUBROUTINE cmfe_RandomSeedsGet0(randomSeed,err)
+    !DLLEXPORT(cmfe_RandomSeedsGet0)
 
     !Argument variables
     INTEGER(INTG), INTENT(OUT) :: randomSeed !<On return, the random seed.
@@ -12970,6 +13156,7 @@ CONTAINS
 
   !>Returns the random seeds for OpenCMISS
   SUBROUTINE cmfe_RandomSeedsGet1(randomSeeds,err)
+    !DLLEXPORT(cmfe_RandomSeedsGet1)
 
     !Argument variables
     INTEGER(INTG), INTENT(OUT) :: randomSeeds(:) !<On return, the random seeds.
@@ -12994,6 +13181,7 @@ CONTAINS
 
   !>Returns the size of the random seeds array for OpenCMISS
   SUBROUTINE cmfe_RandomSeedsSizeGet(randomSeedsSize,err)
+    !DLLEXPORT(cmfe_RandomSeedsSizeGet)
 
     !Argument variables
     INTEGER(INTG), INTENT(OUT) :: randomSeedsSize !<On return, the size of the random seeds array.
@@ -13018,6 +13206,7 @@ CONTAINS
 
   !>Sets the random seeds for OpenCMISS
   SUBROUTINE cmfe_RandomSeedsSet0(randomSeed,err)
+    !DLLEXPORT(cmfe_RandomSeedsSet0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: randomSeed !<The random seed to set.
@@ -13042,6 +13231,7 @@ CONTAINS
 
   !>Sets the random seeds for OpenCMISS
   SUBROUTINE cmfe_RandomSeedsSet1(randomSeeds,err)
+    !DLLEXPORT(cmfe_RandomSeedsSet1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: randomSeeds(:) !<The random seeds to set.
@@ -13068,6 +13258,7 @@ CONTAINS
 
   !>Sets a CellML model variable to be known by user number.
   SUBROUTINE cmfe_CellML_VariableSetAsKnownNumberC(regionUserNumber,CellMLUserNumber,CellMLModelUserNumber,variableID,err)
+    !DLLEXPORT(cmfe_CellML_VariableSetAsKnownNumberC)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML enviroment.
@@ -13114,6 +13305,7 @@ CONTAINS
 
   !>Sets a CellML model variable to be known by object.
   SUBROUTINE cmfe_CellML_VariableSetAsKnownObjC(CellML,CellMLModelUserNumber,variableID,err)
+    !DLLEXPORT(cmfe_CellML_VariableSetAsKnownObjC)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(IN) :: CellML !<The CellML enviroment.
@@ -13140,6 +13332,7 @@ CONTAINS
 
   !>Sets a CellML model variable to be known by user number.
   SUBROUTINE cmfe_CellML_VariableSetAsKnownNumberVS(regionUserNumber,CellMLUserNumber,CellMLModelUserNumber,variableID,err)
+    !DLLEXPORT(cmfe_CellML_VariableSetAsKnownNumberVS)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML enviroment.
@@ -13186,6 +13379,7 @@ CONTAINS
 
   !>Sets a CellML model variable to be known by object.
   SUBROUTINE cmfe_CellML_VariableSetAsKnownObjVS(CellML,CellMLModelUserNumber,variableID,err)
+    !DLLEXPORT(cmfe_CellML_VariableSetAsKnownObjVS)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(IN) :: CellML !<The CellML enviroment.
@@ -13212,6 +13406,7 @@ CONTAINS
 
   !>Sets a CellML model variable to be wanted by user number.
   SUBROUTINE cmfe_CellML_VariableSetAsWantedNumberC(regionUserNumber,CellMLUserNumber,CellMLModelUserNumber,variableID,err)
+    !DLLEXPORT(cmfe_CellML_VariableSetAsWantedNumberC)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML enviroment.
@@ -13258,6 +13453,7 @@ CONTAINS
 
   !>Sets a CellML model variable to be wanted by object.
   SUBROUTINE cmfe_CellML_VariableSetAsWantedObjC(CellML,CellMLModelUserNumber,variableID,err)
+    !DLLEXPORT(cmfe_CellML_VariableSetAsWantedObjC)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(IN) :: CellML !<The CellML enviroment.
@@ -13284,6 +13480,7 @@ CONTAINS
 
   !>Sets a CellML model variable to be wanted by user number.
   SUBROUTINE cmfe_CellML_VariableSetAsWantedNumberVS(regionUserNumber,CellMLUserNumber,CellMLModelUserNumber,variableID,err)
+    !DLLEXPORT(cmfe_CellML_VariableSetAsWantedNumberVS)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML enviroment.
@@ -13330,6 +13527,7 @@ CONTAINS
 
   !>Sets a CellML model variable to be wanted by object.
   SUBROUTINE cmfe_CellML_VariableSetAsWantedObjVS(CellML,CellMLModelUserNumber,variableID,err)
+    !DLLEXPORT(cmfe_CellML_VariableSetAsWantedObjVS)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(IN) :: CellML !<The CellML enviroment.
@@ -13357,6 +13555,7 @@ CONTAINS
   !>Defines a CellML model variable to field variable component map by user number
   SUBROUTINE cmfe_CellML_CreateCellMLToFieldMapNumberC(regionUserNumber,CellMLUserNumber,CellMLModelUserNumber,variableID, &
     & CellMLParameterSet,fieldUserNumber,variableType,componentNumber,fieldParameterSet,err)
+    !DLLEXPORT(cmfe_CellML_CreateCellMLToFieldMapNumberC)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML enviroment.
@@ -13419,6 +13618,7 @@ CONTAINS
   !>Defines a CellML model variable to field variable component map by object.
   SUBROUTINE cmfe_CellML_CreateCellMLToFieldMapObjC(CellML, CellMLModelUserNumber,variableID,CellMLParameterSet, &
     & field,variableType,componentNumber,fieldParameterSet,err)
+    !DLLEXPORT(cmfe_CellML_CreateCellMLToFieldMapObjC)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(IN) :: CellML !<The CellML enviroment.
@@ -13452,6 +13652,7 @@ CONTAINS
   !>Defines a CellML model variable to field variable component map by user number
   SUBROUTINE cmfe_CellML_CreateCellMLToFieldMapNumberVS(regionUserNumber,CellMLUserNumber,CellMLModelUserNumber,variableID, &
     & CellMLParameterSet,fieldUserNumber,variableType,componentNumber,fieldParameterSet,err)
+    !DLLEXPORT(cmfe_CellML_CreateCellMLToFieldMapNumberVS)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML enviroment.
@@ -13514,6 +13715,7 @@ CONTAINS
   !>Defines a field variable component to CellML model variable map, by object.
   SUBROUTINE cmfe_CellML_CreateCellMLToFieldMapObjVS(CellML,CellMLModelUserNumber,variableID,CellMLParameterSet, &
     & field,variableType,componentNumber,fieldParameterSet,err)
+    !DLLEXPORT(cmfe_CellML_CreateCellMLToFieldMapObjVS)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(IN) :: CellML !<The CellML enviroment.
@@ -13547,6 +13749,7 @@ CONTAINS
   !>Defines a field variable component to CellML model variable map by user number.
   SUBROUTINE cmfe_CellML_CreateFieldToCellMLMapNumberC(regionUserNumber,CellMLUserNumber,fieldUserNumber,variableType, &
     & componentNumber,fieldParameterSet,CellMLModelUserNumber,variableID,CellMLParameterSet,err)
+    !DLLEXPORT(cmfe_CellML_CreateFieldToCellMLMapNumberC)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML enviroment.
@@ -13609,6 +13812,7 @@ CONTAINS
   !>Defines a field variable component to CellML model variable map by object.
   SUBROUTINE cmfe_CellML_CreateFieldToCellMLMapObjC(CellML,field,variableType,componentNumber,fieldParameterSet, &
     & CellMLModelUserNumber,variableID,CellMLParameterSet,err)
+    !DLLEXPORT(cmfe_CellML_CreateFieldToCellMLMapObjC)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(IN) :: CellML !<The CellML enviroment.
@@ -13642,6 +13846,7 @@ CONTAINS
   !>Defines a field variable component to CellML model variable map by user number
   SUBROUTINE cmfe_CellML_CreateFieldToCellMLMapNumberVS(regionUserNumber,CellMLUserNumber,fieldUserNumber,variableType, &
     & fieldParameterSet,componentNumber,CellMLModelUserNumber,variableID,CellMLParameterSet,err)
+    !DLLEXPORT(cmfe_CellML_CreateFieldToCellMLMapNumberVS)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML enviroment.
@@ -13704,6 +13909,7 @@ CONTAINS
   !>Defines a field variable component to CellML model variable map by by object.
   SUBROUTINE cmfe_CellML_CreateFieldToCellMLMapObjVS(CellML,field,variableType,componentNumber,fieldParameterSet, &
     & CellMLModelUserNumber,variableID,CellMLParameterSet,err)
+    !DLLEXPORT(cmfe_CellML_CreateFieldToCellMLMapObjVS)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(IN) :: CellML !<The CellML enviroment.
@@ -13736,6 +13942,7 @@ CONTAINS
 
   !>Finishes the creation of a CellML environment identified by a user number.
   SUBROUTINE cmfe_CellML_CreateFinishNumber(regionUserNumber,CellMLUserNumber,err)
+    !DLLEXPORT(cmfe_CellML_CreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML environment.
@@ -13784,6 +13991,7 @@ CONTAINS
 
   !>Finish the creation of a CellML environment identified by an object.
   SUBROUTINE cmfe_CellML_CreateFinishObj(CellML,err)
+    !DLLEXPORT(cmfe_CellML_CreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(INOUT) :: CellML !<The CellML environment to finish the creation of.
@@ -13812,6 +14020,7 @@ CONTAINS
 
   !>Starts the creation of a CellML environment identified by a user number.
   SUBROUTINE cmfe_CellML_CreateStartNumber(CellMLUserNumber,regionUserNumber,err)
+    !DLLEXPORT(cmfe_CellML_CreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: CellMLUserNumber !<The user number of the CellML enviroment to start creating.
@@ -13853,6 +14062,7 @@ CONTAINS
 
   !>Start the creation of a CellML environment identified by an object.
   SUBROUTINE cmfe_CellML_CreateStartObj(CellMLUserNumber,region,CellML,err)
+    !DLLEXPORT(cmfe_CellML_CreateStartObj)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: CellMLUserNumber !<The user number of the CellML enviroment to start creating.
@@ -13883,6 +14093,7 @@ CONTAINS
 
   !>Destroys a CellML environment identified by a user number.
   SUBROUTINE cmfe_CellML_DestroyNumber(regionUserNumber,CellMLUserNumber,err)
+    !DLLEXPORT(cmfe_CellML_DestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML enviroment to destroy.
@@ -13927,6 +14138,7 @@ CONTAINS
 
   !>Destroy a CellML environment identified by an object.
   SUBROUTINE cmfe_CellML_DestroyObj(CellML,err)
+    !DLLEXPORT(cmfe_CellML_DestroyObj)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(INOUT) :: CellML !<The CellML environment to destroy.
@@ -13951,6 +14163,7 @@ CONTAINS
 
   !>Finishes the creation of field maps for a CellML environment identified by a user number.
   SUBROUTINE cmfe_CellML_FieldMapsCreateFinishNumber(regionUserNumber,CellMLUserNumber,err)
+    !DLLEXPORT(cmfe_CellML_FieldMapsCreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML environment.
@@ -13999,6 +14212,7 @@ CONTAINS
 
   !>Finish the creation of field maps for a CellML environment identified by an object.
   SUBROUTINE cmfe_CellML_FieldMapsCreateFinishObj(CellML,err)
+    !DLLEXPORT(cmfe_CellML_FieldMapsCreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(INOUT) :: CellML !<The CellML environment to finish the creation of maps for.
@@ -14023,6 +14237,7 @@ CONTAINS
 
   !>Starts the creation of field maps for a CellML environment identified by a user number.
   SUBROUTINE cmfe_CellML_FieldMapsCreateStartNumber(regionUserNumber,CellMLUserNumber,err)
+    !DLLEXPORT(cmfe_CellML_FieldMapsCreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the CellML enviroment.
@@ -14067,6 +14282,7 @@ CONTAINS
 
   !>Start the creation of field maps for a CellML environment identified by an object.
   SUBROUTINE cmfe_CellML_FieldMapsCreateStartObj(CellML,err)
+    !DLLEXPORT(cmfe_CellML_FieldMapsCreateStartObj)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(INOUT) :: CellML !<The CellML environment object to start the creation of maps for.
@@ -14091,6 +14307,7 @@ CONTAINS
 
   !>Imports a specified CellML model as specified by a character URI into a CellML environment identified by a user number.
   SUBROUTINE cmfe_CellML_ModelImportNumberC(regionUserNumber,CellMLUserNumber,URI,modelIndex,err)
+    !DLLEXPORT(cmfe_CellML_ModelImportNumberC)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML enviroment to import the model into.
@@ -14137,6 +14354,7 @@ CONTAINS
 
   !>Imports a specified CellML model as specified by a character URI into a CellML environment identified by an object.
   SUBROUTINE cmfe_CellML_ModelImportObjC(CellML,URI,modelIndex,err)
+    !DLLEXPORT(cmfe_CellML_ModelImportObjC)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(INOUT) :: CellML !<The CellML environment to import the model into.
@@ -14163,6 +14381,7 @@ CONTAINS
 
   !>Imports a specified CellML model as specified by a varying string URI into a CellML environment identified by a user number.
   SUBROUTINE cmfe_CellML_ModelImportNumberVS(regionUserNumber,CellMLUserNumber,URI,modelIndex,err)
+    !DLLEXPORT(cmfe_CellML_ModelImportNumberVS)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML enviroment to import the model into.
@@ -14209,6 +14428,7 @@ CONTAINS
 
   !>Imports a specified CellML model as specified by a varying string URI into a CellML environment identified by an object.
   SUBROUTINE cmfe_CellML_ModelImportObjVS(CellML,URI,modelIndex,err)
+    !DLLEXPORT(cmfe_CellML_ModelImportObjVS)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(INOUT) :: CellML !<The CellML environment to import the model into.
@@ -14235,6 +14455,7 @@ CONTAINS
 
   !>Finishes the creation of CellML models field for a CellML environment identified by a user number.
   SUBROUTINE cmfe_CellML_ModelsFieldCreateFinishNumber(regionUserNumber,CellMLUserNumber,err)
+    !DLLEXPORT(cmfe_CellML_ModelsFieldCreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML enviroment to finish creating.
@@ -14279,6 +14500,7 @@ CONTAINS
 
   !>Finish the creation of CellML models field for a CellML environment identified by an object.
   SUBROUTINE cmfe_CellML_ModelsFieldCreateFinishObj(CellML,err)
+    !DLLEXPORT(cmfe_CellML_ModelsFieldCreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(INOUT) :: CellML !<The CellML environment to finish the creation of the models field for.
@@ -14303,6 +14525,7 @@ CONTAINS
 
   !>Starts the creation of CellML models field for a CellML environment identified by a user number.
   SUBROUTINE cmfe_CellML_ModelsFieldCreateStartNumber(regionUserNumber,CellMLUserNumber,CellMLModelsFieldUserNumber,err)
+    !DLLEXPORT(cmfe_CellML_ModelsFieldCreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML enviroment.
@@ -14350,6 +14573,7 @@ CONTAINS
 
   !>Start the creation of CellML models field for a CellML environment identified by an object.
   SUBROUTINE cmfe_CellML_ModelsFieldCreateStartObj(CellML,CellMLModelsFieldUserNumber,field,err)
+    !DLLEXPORT(cmfe_CellML_ModelsFieldCreateStartObj)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(INOUT) :: CellML !<The CellML environment to start the creation of models field for.
@@ -14376,6 +14600,7 @@ CONTAINS
 
   !>Returns the CellML models field for a CellML environment identified by a user number.
   SUBROUTINE cmfe_CellML_ModelsFieldGetNumber(regionUserNumber,CellMLUserNumber,CellMLModelsFieldUserNumber,err)
+    !DLLEXPORT(cmfe_CellML_ModelsFieldGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML enviroment to get the CellML models field for.
@@ -14424,6 +14649,7 @@ CONTAINS
 
   !>Returns the CellML models field for a CellML environment identified by an object.
   SUBROUTINE cmfe_CellML_ModelsFieldGetObj(CellML,field,err)
+    !DLLEXPORT(cmfe_CellML_ModelsFieldGetObj)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(INOUT) :: CellML !<The CellML environment to get the models field for.
@@ -14449,6 +14675,7 @@ CONTAINS
 
   !>Finishes the creation of CellML state field for a CellML environment identified by a user number.
   SUBROUTINE cmfe_CellML_StateFieldCreateFinishNumber(regionUserNumber,CellMLUserNumber,err)
+    !DLLEXPORT(cmfe_CellML_StateFieldCreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML environment.
@@ -14493,6 +14720,7 @@ CONTAINS
 
   !>Finish the creation of CellML state field for a CellML environment identified by an object.
   SUBROUTINE cmfe_CellML_StateFieldCreateFinishObj(CellML,err)
+    !DLLEXPORT(cmfe_CellML_StateFieldCreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(INOUT) :: CellML !<The CellML environment to finish the creation of the state field for.
@@ -14517,6 +14745,7 @@ CONTAINS
 
   !>Starts the creation of CellML state field for a CellML environment identified by a user number.
   SUBROUTINE cmfe_CellML_StateFieldCreateStartNumber(regionUserNumber,CellMLUserNumber,CellMLStateFieldUserNumber,err)
+    !DLLEXPORT(cmfe_CellML_StateFieldCreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML environment.
@@ -14564,6 +14793,7 @@ CONTAINS
 
   !>Start the creation of CellML state field for a CellML environment identified by an object.
   SUBROUTINE cmfe_CellML_StateFieldCreateStartObj(CellML,CellMLStateFieldUserNumber,field,err)
+    !DLLEXPORT(cmfe_CellML_StateFieldCreateStartObj)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(INOUT) :: CellML !<The CellML environment to start the creation of state field for.
@@ -14590,6 +14820,7 @@ CONTAINS
 
   !>Returns the CellML state field for a CellML environment identified by a user number.
   SUBROUTINE cmfe_CellML_StateFieldGetNumber(regionUserNumber,CellMLUserNumber,CellMLStateFieldUserNumber,err)
+    !DLLEXPORT(cmfe_CellML_StateFieldGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML environment.
@@ -14638,6 +14869,7 @@ CONTAINS
 
   !>Returns the CellML state field for a CellML environment identified by an object.
   SUBROUTINE cmfe_CellML_StateFieldGetObj(CellML,field,err)
+    !DLLEXPORT(cmfe_CellML_StateFieldGetObj)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(INOUT) :: CellML !<The CellML environment to get the state field for.
@@ -14664,6 +14896,7 @@ CONTAINS
   !>Returns the field component number that corresponds to a character string VariableID for a CellML environment identified by a user number.
   SUBROUTINE cmfe_CellML_FieldComponentGetNumberC(regionUserNumber,CellMLUserNumber,CellMLModelUserNumber,CellMLFieldType,&
   & variableID,fieldComponent,err)
+    !DLLEXPORT(cmfe_CellML_FieldComponentGetNumberC)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML environment.
@@ -14713,6 +14946,7 @@ CONTAINS
 
   !>Returns the field component number that corresponds to a character string variable ID for a CellML environment identified by an object.
   SUBROUTINE cmfe_CellML_FieldComponentGetObjC(CellML,CellMLModelUserNumber,CellMLFieldType,variableID,fieldComponent,err)
+    !DLLEXPORT(cmfe_CellML_FieldComponentGetObjC)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(INOUT) :: CellML !<The CellML environment to get the field component for.
@@ -14742,6 +14976,7 @@ CONTAINS
   !>Returns the field component number that corresponds to a varying string variable ID for a CellML environment identified by a user number.
   SUBROUTINE cmfe_CellML_FieldComponentGetNumberVS(regionUserNumber,CellMLUserNumber,CellMLModelUserNumber,CellMLFieldType,&
   & variableID,fieldComponent,err)
+    !DLLEXPORT(cmfe_CellML_FieldComponentGetNumberVS)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML environment.
@@ -14790,6 +15025,7 @@ CONTAINS
 
   !>Returns the field component number that corresponds to a varying string variable ID for a CellML environment identified by an object.
   SUBROUTINE cmfe_CellML_FieldComponentGetObjVS(CellML,CellMLModelUserNumber,CellMLFieldType,variableID,fieldComponent,err)
+    !DLLEXPORT(cmfe_CellML_FieldComponentGetObjVS)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(INOUT) :: CellML !<The CellML environment to get the field component for.
@@ -14818,6 +15054,7 @@ CONTAINS
 
   !>Finishes the creation of CellML intermediate field for a CellML environment identified by a user number.
   SUBROUTINE cmfe_CellML_IntermediateFieldCreateFinishNumber(regionUserNumber,CellMLUserNumber,err)
+    !DLLEXPORT(cmfe_CellML_IntermediateFieldCreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML environment.
@@ -14863,6 +15100,7 @@ CONTAINS
 
   !>Finish the creation of CellML intermediate field for a CellML environment identified by an object.
   SUBROUTINE cmfe_CellML_IntermediateFieldCreateFinishObj(CellML,err)
+    !DLLEXPORT(cmfe_CellML_IntermediateFieldCreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(INOUT) :: CellML !<The CellML environment to finish the creation of the intermediate field for.
@@ -14888,6 +15126,7 @@ CONTAINS
 
   !>Starts the creation of CellML intermediate field for a CellML environment identified by a user number.
   SUBROUTINE cmfe_CellML_IntermediateFieldCreateStartNumber(regionUserNumber,CellMLUserNumber,CellMLIntermediateFieldUserNumber,err)
+    !DLLEXPORT(cmfe_CellML_IntermediateFieldCreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML environment.
@@ -14936,6 +15175,7 @@ CONTAINS
 
   !>Start the creation of CellML intermediate field for a CellML environment identified by an object.
   SUBROUTINE cmfe_CellML_IntermediateFieldCreateStartObj(CellML,CellMLIntermediateFieldUserNumber,field,err)
+    !DLLEXPORT(cmfe_CellML_IntermediateFieldCreateStartObj)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(INOUT) :: CellML !<The CellML environment to start the creation of intermediate field for.
@@ -14962,6 +15202,7 @@ CONTAINS
 
   !>Returns the CellML intermediate field for a CellML environment identified by a user number.
   SUBROUTINE cmfe_CellML_IntermediateFieldGetNumber(regionUserNumber,CellMLUserNumber,CellMLIntermediateFieldUserNumber,err)
+    !DLLEXPORT(cmfe_CellML_IntermediateFieldGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML environment.
@@ -15010,6 +15251,7 @@ CONTAINS
 
   !>Returns the CellML intermediate field for a CellML environment identified by an object.
   SUBROUTINE cmfe_CellML_IntermediateFieldGetObj(CellML,field,err)
+    !DLLEXPORT(cmfe_CellML_IntermediateFieldGetObj)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(INOUT) :: CellML !<The CellML environment to get the intermediate field for.
@@ -15035,6 +15277,7 @@ CONTAINS
 
   !>Finishes the creation of CellML parameters field for a CellML environment identified by a user number.
   SUBROUTINE cmfe_CellML_ParametersFieldCreateFinishNumber(regionUserNumber,CellMLUserNumber,err)
+    !DLLEXPORT(cmfe_CellML_ParametersFieldCreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML environment.
@@ -15080,6 +15323,7 @@ CONTAINS
 
   !>Finish the creation of CellML parameters field for a CellML environment identified by an object.
   SUBROUTINE cmfe_CellML_ParametersFieldCreateFinishObj(CellML,err)
+    !DLLEXPORT(cmfe_CellML_ParametersFieldCreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(INOUT) :: CellML !<The CellML environment to finish the creation of the parameters field for.
@@ -15104,6 +15348,7 @@ CONTAINS
 
   !>Starts the creation of CellML parameters field for a CellML environment identified by a user number.
   SUBROUTINE cmfe_CellML_ParametersFieldCreateStartNumber(regionUserNumber,CellMLUserNumber,CellMLParametersFieldUserNumber,err)
+    !DLLEXPORT(cmfe_CellML_ParametersFieldCreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML environment.
@@ -15152,6 +15397,7 @@ CONTAINS
 
   !>Start the creation of CellML parameters field for a CellML environment identified by an object.
   SUBROUTINE cmfe_CellML_ParametersFieldCreateStartObj(CellML,CellMLParametersFieldUserNumber,field,err)
+    !DLLEXPORT(cmfe_CellML_ParametersFieldCreateStartObj)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(INOUT) :: CellML !<The CellML environment to start the creation of parameters field for.
@@ -15178,6 +15424,7 @@ CONTAINS
 
   !>Returns the CellML parameters field for a CellML environment identified by a user number.
   SUBROUTINE cmfe_CellML_ParametersFieldGetNumber(regionUserNumber,CellMLUserNumber,CellMLParametersFieldUserNumber,err)
+    !DLLEXPORT(cmfe_CellML_ParametersFieldGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML environment.
@@ -15226,6 +15473,7 @@ CONTAINS
 
   !>Returns the CellML parameters field for a CellML environment identified by an object.
   SUBROUTINE cmfe_CellML_ParametersFieldGetObj(CellML,field,err)
+    !DLLEXPORT(cmfe_CellML_ParametersFieldGetObj)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(INOUT) :: CellML !<The CellML environment to get the parameters field for.
@@ -15251,6 +15499,7 @@ CONTAINS
 
   !>Validiate and instantiate a CellML environment identified by a user number.
   SUBROUTINE cmfe_CellML_GenerateNumber(regionUserNumber,CellMLUserNumber,err)
+    !DLLEXPORT(cmfe_CellML_GenerateNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML environment.
@@ -15295,6 +15544,7 @@ CONTAINS
 
   !>Validiate and instantiate a CellML environment identified by an object.
   SUBROUTINE cmfe_CellML_GenerateObj(CellML,err)
+    !DLLEXPORT(cmfe_CellML_GenerateObj)
 
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(INOUT) :: CellML !<The CellML environment to generate.
@@ -15322,6 +15572,7 @@ CONTAINS
 
   !>Returns the computational node number of the running process.
   SUBROUTINE cmfe_ComputationalNodeNumberGet(nodeNumber,err)
+    !DLLEXPORT(cmfe_ComputationalNodeNumberGet)
 
     !Argument variables
     INTEGER(INTG), INTENT(OUT) :: nodeNumber !<On return, the computational node number.
@@ -15346,6 +15597,7 @@ CONTAINS
 
   !>Returns the number of computational nodes for the running process.
   SUBROUTINE cmfe_ComputationalNumberOfNodesGet(numberOfNodes,err)
+    !DLLEXPORT(cmfe_ComputationalNumberOfNodesGet)
 
     !Argument variables
     INTEGER(INTG), INTENT(OUT) :: numberOfNodes !<On return, the number of computational nodes.
@@ -15370,6 +15622,7 @@ CONTAINS
 
   !>CREATE THE HIGHEST LEVEL WORK GROUP (DEFAULT: GROUP_WORLD)
   SUBROUTINE cmfe_ComputationalWorkGroup_CreateStart(worldWorkGroup, numberComputationalNodes, err)
+    !DLLEXPORT(cmfe_ComputationalWorkGroup_CreateStart)
     !Argument Variables
     TYPE(cmfe_ComputationalWorkGroupType), INTENT(INOUT) :: worldWorkGroup
     INTEGER(INTG),INTENT(IN) :: numberComputationalNodes
@@ -15394,6 +15647,7 @@ CONTAINS
 
   !>GENERATE THE HIERARCHY COMPUTATIONAL ENVIRONMENT BASED ON WORK GROUP TREE
   SUBROUTINE cmfe_ComputationalWorkGroup_CreateFinish(worldWorkGroup, err)
+    !DLLEXPORT(cmfe_ComputationalWorkGroup_CreateFinish)
     !Argument Variables
     TYPE(cmfe_ComputationalWorkGroupType), INTENT(INOUT) :: worldWorkGroup
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -15416,6 +15670,7 @@ CONTAINS
 
   !>ADD WORK SUB-GROUP TO THE PARENT GROUP BASED ON THE COMPUTATIONAL REQUIREMENTS (CALLED BY THE USER)
   SUBROUTINE cmfe_ComputationalWorkGroup_SubgroupAdd(parentWorkGroup, numberComputationalNodes,addedWorkGroup, err)
+    !DLLEXPORT(cmfe_ComputationalWorkGroup_SubgroupAdd)
     !Argument Variables
     TYPE(cmfe_ComputationalWorkGroupType), INTENT(INOUT) :: parentWorkGroup
     TYPE(cmfe_ComputationalWorkGroupType), INTENT(INOUT) :: addedWorkGroup
@@ -15439,6 +15694,7 @@ CONTAINS
 
   !>Set the working group tree in order to performe mesh decomposition
   SUBROUTINE cmfe_Decomposition_WorldWorkGroupSet(decomposition, worldWorkGroup, err)
+    !DLLEXPORT(cmfe_Decomposition_WorldWorkGroupSet)
     !Argument Variables
     TYPE(cmfe_DecompositionType), INTENT(INOUT) :: decomposition
     TYPE(cmfe_ComputationalWorkGroupType),INTENT(IN) :: worldWorkGroup
@@ -15465,6 +15721,7 @@ CONTAINS
 
   !>Gets the current time parameters for a time control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_CurrentTimesGetNumber0(problemUserNumber,controlLoopIdentifier,currentTime,timeIncrement,err)
+    !DLLEXPORT(cmfe_ControlLoop_CurrentTimesGetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the control loop for.
@@ -15504,6 +15761,7 @@ CONTAINS
 
   !>Gets the current time parameters for a time control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_CurrentTimesGetNumber1(problemUserNumber,controlLoopIdentifiers,currentTime,timeIncrement,err)
+    !DLLEXPORT(cmfe_ControlLoop_CurrentTimesGetNumber1)
 
     !Argument variables
      INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the control loop for.
@@ -15543,6 +15801,7 @@ CONTAINS
 
   !>Gets the current time parameters for a time control loop identified by an object.
   SUBROUTINE cmfe_ControlLoop_CurrentTimesGetObj(controlLoop,currentTime,timeIncrement,err)
+    !DLLEXPORT(cmfe_ControlLoop_CurrentTimesGetObj)
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(IN) :: controlLoop !<The control loop to get the current times for.
@@ -15569,6 +15828,7 @@ CONTAINS
 
   !>Destroys a control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_DestroyNumber0(problemUserNumber,controlLoopIdentifier,err)
+    !DLLEXPORT(cmfe_ControlLoop_DestroyNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to destroy the control loop for.
@@ -15606,6 +15866,7 @@ CONTAINS
 
   !>Destroys a control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_DestroyNumber1(problemUserNumber,controlLoopIdentifiers,err)
+    !DLLEXPORT(cmfe_ControlLoop_DestroyNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to destroy the control loop for.
@@ -15643,6 +15904,7 @@ CONTAINS
 
   !>Destroys a control loop identified by an object.
   SUBROUTINE cmfe_ControlLoop_DestroyObj(controlLoop,err)
+    !DLLEXPORT(cmfe_ControlLoop_DestroyObj)
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(INOUT) :: controlLoop !<The control loop to destroy.
@@ -15668,6 +15930,7 @@ CONTAINS
   !>Returns the specified control loop as indexed by the control loop identifier from the control loop root identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_ControlLoopGetNumber00(problemUserNumber,controlLoopRootIdentifier,controlLoopIdentifier, &
       & controlLoop,err)
+    !DLLEXPORT(cmfe_ControlLoop_ControlLoopGetNumber00)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the control loop for.
@@ -15708,6 +15971,7 @@ CONTAINS
   !>Returns the specified control loop as indexed by the control loop identifier from the control loop root identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_ControlLoopGetNumber10(problemUserNumber,controlLoopRootIdentifiers,controlLoopIdentifier, &
       & controlLoop,err)
+    !DLLEXPORT(cmfe_ControlLoop_ControlLoopGetNumber10)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the control loop for.
@@ -15748,6 +16012,7 @@ CONTAINS
   !>Returns the specified control loop as indexed by the control loop identifier from the control loop root identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_ControlLoopGetNumber01(problemUserNumber,controlLoopRootIdentifier,controlLoopIdentifiers, &
       & controlLoop,err)
+    !DLLEXPORT(cmfe_ControlLoop_ControlLoopGetNumber01)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the control loop for.
@@ -15788,6 +16053,7 @@ CONTAINS
   !>Returns the specified control loop as indexed by the control loop identifier from the control loop root identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_ControlLoopGetNumber11(problemUserNumber,controlLoopRootIdentifiers,controlLoopIdentifiers, &
       & controlLoop,err)
+    !DLLEXPORT(cmfe_ControlLoop_ControlLoopGetNumber11)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the control loop for.
@@ -15827,6 +16093,7 @@ CONTAINS
 
   !>Returns the specified control loop as indexed by the control loop identifier from the control loop root.
   SUBROUTINE cmfe_ControlLoop_ControlLoopGetObj0(controlLoopRoot,controlLoopIdentifier,controlLoop,err)
+    !DLLEXPORT(cmfe_ControlLoop_ControlLoopGetObj0)
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(IN) :: controlLoopRoot !<The root control loop.
@@ -15853,6 +16120,7 @@ CONTAINS
 
   !>Returns the specified control loop as indexed by the control loop identifiers from the control loop root.
   SUBROUTINE cmfe_ControlLoop_ControlLoopGetObj1(controlLoopRoot,controlLoopIdentifiers,controlLoop,err)
+    !DLLEXPORT(cmfe_ControlLoop_ControlLoopGetObj1)
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(IN) :: controlLoopRoot !<The root control loop.
@@ -15880,6 +16148,7 @@ CONTAINS
   !>Sets/changes the iteration parameters for a fixed control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_IterationsSetNumber0(problemUserNumber,controlLoopIdentifier,startIteration,stopIteration, &
     & iterationIncrement,err)
+    !DLLEXPORT(cmfe_ControlLoop_IterationsSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the iteration parameters for.
@@ -15921,6 +16190,7 @@ CONTAINS
   !>Sets/changes the iteration parameters for a fixed control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_IterationsSetNumber1(problemUserNumber,controlLoopIdentifiers,startIteration,stopIteration, &
     & iterationIncrement,err)
+    !DLLEXPORT(cmfe_ControlLoop_IterationsSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the iteration parameters for.
@@ -15960,6 +16230,7 @@ CONTAINS
 
   !>Sets/changes the iteration parameters for a fixed control loop identified by an object.
   SUBROUTINE cmfe_ControlLoop_IterationsSetObj(controlLoop,startIteration,stopIteration,iterationIncrement,err)
+    !DLLEXPORT(cmfe_ControlLoop_IterationsSetObj)
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(INOUT) :: controlLoop !<The control loop to set the iteration parameters for.
@@ -15987,6 +16258,7 @@ CONTAINS
 
   !>Returns the character string label for a control loop identified by an user number.
   SUBROUTINE cmfe_ControlLoop_LabelGetCNumber0(problemUserNumber,controlLoopIdentifier,label,err)
+    !DLLEXPORT(cmfe_ControlLoop_LabelGetCNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the label for.
@@ -16025,6 +16297,7 @@ CONTAINS
 
   !>Returns the character string label for a control loop identified by an user number.
   SUBROUTINE cmfe_ControlLoop_LabelGetCNumber1(problemUserNumber,controlLoopIdentifiers,label,err)
+    !DLLEXPORT(cmfe_ControlLoop_LabelGetCNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the label for.
@@ -16063,6 +16336,7 @@ CONTAINS
 
   !>Returns the character string label for a control loop identified by an object.
   SUBROUTINE cmfe_ControlLoop_LabelGetCObj(controlLoop,label,err)
+    !DLLEXPORT(cmfe_ControlLoop_LabelGetCObj)
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(IN) :: controlLoop !<The control loop to get the label for.
@@ -16088,6 +16362,7 @@ CONTAINS
 
   !>Returns the varying string label for a control loop identified by an user number.
   SUBROUTINE cmfe_ControlLoop_LabelGetVSNumber0(problemUserNumber,controlLoopIdentifier,label,err)
+    !DLLEXPORT(cmfe_ControlLoop_LabelGetVSNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the label for.
@@ -16126,6 +16401,7 @@ CONTAINS
 
   !>Returns the varying string label for a control loop identified by an user number.
   SUBROUTINE cmfe_ControlLoop_LabelGetVSNumber1(problemUserNumber,controlLoopIdentifiers,label,err)
+    !DLLEXPORT(cmfe_ControlLoop_LabelGetVSNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the label for.
@@ -16164,6 +16440,7 @@ CONTAINS
 
   !>Returns the varying string label for a control loop identified by an object.
   SUBROUTINE cmfe_ControlLoop_LabelGetVSObj(controlLoop,label,err)
+    !DLLEXPORT(cmfe_ControlLoop_LabelGetVSObj)
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(IN) :: controlLoop !<The control loop to get the label for.
@@ -16189,6 +16466,7 @@ CONTAINS
 
   !>Sets/changes the character string label for a control loop identified by an user number.
   SUBROUTINE cmfe_ControlLoop_LabelSetCNumber0(problemUserNumber,controlLoopIdentifier,label,err)
+    !DLLEXPORT(cmfe_ControlLoop_LabelSetCNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the label for.
@@ -16227,6 +16505,7 @@ CONTAINS
 
   !>Sets/changes the character string label for a control loop identified by an user number.
   SUBROUTINE cmfe_ControlLoop_LabelSetCNumber1(problemUserNumber,controlLoopIdentifiers,label,err)
+    !DLLEXPORT(cmfe_ControlLoop_LabelSetCNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the label for.
@@ -16265,6 +16544,7 @@ CONTAINS
 
   !>Sets/changes the character string label for a control loop identified by an object.
   SUBROUTINE cmfe_ControlLoop_LabelSetCObj(controlLoop,label,err)
+    !DLLEXPORT(cmfe_ControlLoop_LabelSetCObj)
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(IN) :: controlLoop !<The control loop to set the label for.
@@ -16290,6 +16570,7 @@ CONTAINS
 
   !>Sets/changes the varying string label for a control loop identified by an user number.
   SUBROUTINE cmfe_ControlLoop_LabelSetVSNumber0(problemUserNumber,controlLoopIdentifier,label,err)
+    !DLLEXPORT(cmfe_ControlLoop_LabelSetVSNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the label for.
@@ -16328,6 +16609,7 @@ CONTAINS
 
   !>Sets/changes the varying string label for a control loop identified by an user number.
   SUBROUTINE cmfe_ControlLoop_LabelSetVSNumber1(problemUserNumber,controlLoopIdentifiers,label,err)
+    !DLLEXPORT(cmfe_ControlLoop_LabelSetVSNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the label for.
@@ -16366,6 +16648,7 @@ CONTAINS
 
   !>Sets/changes string label for a control loop identified by an object.
   SUBROUTINE cmfe_ControlLoop_LabelSetVSObj(controlLoop,label,err)
+    !DLLEXPORT(cmfe_ControlLoop_LabelSetVSObj)
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(IN) :: controlLoop !<The control loop to set the label for.
@@ -16391,6 +16674,7 @@ CONTAINS
 
   !>Sets/changes the maximum iterations for a while control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_MaximumIterationsSetNumber0(problemUserNumber,controlLoopIdentifier,maximumIterations,err)
+    !DLLEXPORT(cmfe_ControlLoop_MaximumIterationsSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the maximum iterations for.
@@ -16430,6 +16714,7 @@ CONTAINS
 
   !>Sets/changes the maximum iterations for a while control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_MaximumIterationsSetNumber1(problemUserNumber,controlLoopIdentifiers,maximumIterations,err)
+    !DLLEXPORT(cmfe_ControlLoop_MaximumIterationsSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the maximum iterations for.
@@ -16469,6 +16754,7 @@ CONTAINS
 
   !>Sets/changes the maximum iterations for a while control loop identified by an object.
   SUBROUTINE cmfe_ControlLoop_MaximumIterationsSetObj(controlLoop,maximumIterations,err)
+    !DLLEXPORT(cmfe_ControlLoop_MaximumIterationsSetObj)
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(INOUT) :: controlLoop !<The control loop to set the maximum iterations for.
@@ -16494,6 +16780,7 @@ CONTAINS
 
   !>Sets/changes the output parameters for a load control loop identified by an object.
   SUBROUTINE cmfe_ControlLoop_LoadOutputSet(controlLoop,outputFrequency,err)
+    !DLLEXPORT(cmfe_ControlLoop_LoadOutputSet)
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(INOUT) :: controlLoop !<The control loop to set the output parameters for.
@@ -16519,6 +16806,7 @@ CONTAINS
 
   !>Sets/changes the maximum iterations for a while control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_AbsoluteToleranceSetNumber0(problemUserNumber,controlLoopIdentifier,absoluteTolerance,err)
+    !DLLEXPORT(cmfe_ControlLoop_AbsoluteToleranceSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the maximum iterations for.
@@ -16558,6 +16846,7 @@ CONTAINS
 
   !>Sets/changes the maximum iterations for a while control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_AbsoluteToleranceSetNumber1(problemUserNumber,controlLoopIdentifiers,absoluteTolerance,err)
+    !DLLEXPORT(cmfe_ControlLoop_AbsoluteToleranceSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the maximum iterations for.
@@ -16597,6 +16886,7 @@ CONTAINS
 
   !>Sets/changes the maximum iterations for a while control loop identified by an object.
   SUBROUTINE cmfe_ControlLoop_AbsoluteToleranceSetObj(controlLoop,absoluteTolerance,err)
+    !DLLEXPORT(cmfe_ControlLoop_AbsoluteToleranceSetObj)
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(INOUT) :: controlLoop !<The control loop to set the maximum iterations for.
@@ -16622,6 +16912,7 @@ CONTAINS
   
   !>Returns the number of sub-control loops for a control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_NumberOfSubLoopsGetNumber0(problemUserNumber,controlLoopIdentifier,numberOfSubLoops,err)
+    !DLLEXPORT(cmfe_ControlLoop_NumberOfSubLoopsGetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the number of sub loops for for.
@@ -16660,6 +16951,7 @@ CONTAINS
 
   !>Returns the number of sub-control loops for a control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_NumberOfSubLoopsGetNumber1(problemUserNumber,controlLoopIdentifiers,numberOfSubLoops,err)
+    !DLLEXPORT(cmfe_ControlLoop_NumberOfSubLoopsGetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the number of sub loops for for.
@@ -16698,6 +16990,7 @@ CONTAINS
 
   !>Returns the number of sub-control loops for a control loop identified by an object.
   SUBROUTINE cmfe_ControlLoop_NumberOfSubLoopsGetObj(controlLoop,numberOfSubLoops,err)
+    !DLLEXPORT(cmfe_ControlLoop_NumberOfSubLoopsGetObj)
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(IN) :: controlLoop !<The control loop to get the number of sub loops for.
@@ -16723,6 +17016,7 @@ CONTAINS
 
   !>Sets/changes the number of sub-control loops for a control loop identified by user numbers. \todo is this really public???
   SUBROUTINE cmfe_ControlLoop_NumberOfSubLoopsSetNumber0(problemUserNumber,controlLoopIdentifier,numberOfSubLoops,err)
+    !DLLEXPORT(cmfe_ControlLoop_NumberOfSubLoopsSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the number of sub loops for for.
@@ -16761,6 +17055,7 @@ CONTAINS
 
   !>Sets/changes the number of sub-control loops for a control loop identified by user numbers. \todo is this really public???
   SUBROUTINE cmfe_ControlLoop_NumberOfSubLoopsSetNumber1(problemUserNumber,controlLoopIdentifiers,numberOfSubLoops,err)
+    !DLLEXPORT(cmfe_ControlLoop_NumberOfSubLoopsSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the number of sub loops for.
@@ -16799,6 +17094,7 @@ CONTAINS
 
   !>Sets/changes the number of sub-control loops for a control loop identified by an object. \todo is this really public???
   SUBROUTINE cmfe_ControlLoop_NumberOfSubLoopsSetObj(controlLoop,numberOfSubLoops,err)
+    !DLLEXPORT(cmfe_ControlLoop_NumberOfSubLoopsSetObj)
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(INOUT) :: controlLoop !<The control loop to set the number of sub loops for.
@@ -16824,6 +17120,7 @@ CONTAINS
 
   !>Returns the output type for a control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_OutputTypeGetNumber0(problemUserNumber,controlLoopIdentifier,outputType,err)
+    !DLLEXPORT(cmfe_ControlLoop_OutputTypeGetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the output type for.
@@ -16862,6 +17159,7 @@ CONTAINS
 
   !>Returns the output type for a control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_OutputTypeGetNumber1(problemUserNumber,controlLoopIdentifiers,outputType,err)
+    !DLLEXPORT(cmfe_ControlLoop_OutputTypeGetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the output type for.
@@ -16900,6 +17198,7 @@ CONTAINS
 
   !>Returns the output type for a control loop identified by an object.
   SUBROUTINE cmfe_ControlLoop_OutputTypeGetObj(controlLoop,outputType,err)
+    !DLLEXPORT(cmfe_ControlLoop_OutputTypeGetObj)
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(IN) :: controlLoop !<The control loop to get the output type for.
@@ -16925,6 +17224,7 @@ CONTAINS
 
   !>Sets the output type for a control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_OutputTypeSetNumber0(problemUserNumber,controlLoopIdentifier,outputType,err)
+    !DLLEXPORT(cmfe_ControlLoop_OutputTypeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the output type for.
@@ -16963,6 +17263,7 @@ CONTAINS
 
   !>Sets the output type for a control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_OutputTypeSetNumber1(problemUserNumber,controlLoopIdentifiers,outputType,err)
+    !DLLEXPORT(cmfe_ControlLoop_OutputTypeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the output type for.
@@ -17001,6 +17302,7 @@ CONTAINS
 
   !>Sets the output type for a control loop identified by an object.
   SUBROUTINE cmfe_ControlLoop_OutputTypeSetObj(controlLoop,outputType,err)
+    !DLLEXPORT(cmfe_ControlLoop_OutputTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(IN) :: controlLoop !<The control loop to set the output type for.
@@ -17026,6 +17328,7 @@ CONTAINS
 
   !>Sets/changes the output parameters for a time control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_TimeOutputSetNumber0(problemUserNumber,controlLoopIdentifier,outputFrequency,err)
+    !DLLEXPORT(cmfe_ControlLoop_TimeOutputSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the output parameters for.
@@ -17064,6 +17367,7 @@ CONTAINS
 
   !>Sets/changes the output parameters for a time control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_TimeOutputSetNumber1(problemUserNumber,controlLoopIdentifiers,outputFrequency,err)
+    !DLLEXPORT(cmfe_ControlLoop_TimeOutputSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the output parameters for.
@@ -17102,6 +17406,7 @@ CONTAINS
 
   !>Sets/changes the output parameters for a time control loop identified by an object.
   SUBROUTINE cmfe_ControlLoop_TimeOutputSetObj(controlLoop,outputFrequency,err)
+    !DLLEXPORT(cmfe_ControlLoop_TimeOutputSetObj)
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(INOUT) :: controlLoop !<The control loop to set the output parameters for.
@@ -17127,6 +17432,7 @@ CONTAINS
 
   !>Sets/changes the input parameters for a time control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_TimeInputSetNumber0(problemUserNumber,controlLoopIdentifier,inputOption,err)
+    !DLLEXPORT(cmfe_ControlLoop_TimeInputSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the output parameters for.
@@ -17165,6 +17471,7 @@ CONTAINS
 
   !>Sets/changes the input parameters for a time control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_TimeInputSetNumber1(problemUserNumber,controlLoopIdentifiers,inputOption,err)
+    !DLLEXPORT(cmfe_ControlLoop_TimeInputSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the output parameters for.
@@ -17203,6 +17510,7 @@ CONTAINS
 
   !>Sets/changes the input parameters for a time control loop identified by an object.
   SUBROUTINE cmfe_ControlLoop_TimeInputSetObj(controlLoop,inputOption,err)
+    !DLLEXPORT(cmfe_ControlLoop_TimeInputSetObj)
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(INOUT) :: controlLoop !<The control loop to set the output parameters for.
@@ -17230,6 +17538,7 @@ CONTAINS
   !>Returns the time parameters for a time control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_TimesGetNumber0(problemUserNumber,controlLoopIdentifier,startTime,stopTime,timeIncrement, &
     & currentTime,currentLoopIteration,outputIterationNumber,err)
+    !DLLEXPORT(cmfe_ControlLoop_TimesGetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the time parameters for for.
@@ -17275,6 +17584,7 @@ CONTAINS
   !>Returns the time parameters for a time control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_TimesGetNumber1(problemUserNumber,controlLoopIdentifiers,startTime,stopTime,timeIncrement, &
     & currentTime,currentLoopIteration,outputIterationNumber,err)
+    !DLLEXPORT(cmfe_ControlLoop_TimesGetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the time parameters for for.
@@ -17320,6 +17630,7 @@ CONTAINS
   !>Returns the time parameters for a time control loop identified by an object.
   SUBROUTINE cmfe_ControlLoop_TimesGetObj(controlLoop,startTime,stopTime,timeIncrement,currentTime, &
     & currentLoopIteration,outputIterationNumber,err)
+    !DLLEXPORT(cmfe_ControlLoop_TimesGetObj)
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(IN) :: controlLoop !<The control loop to get the times for.
@@ -17351,6 +17662,7 @@ CONTAINS
 
   !>Sets/changes the time parameters for a time control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_TimesSetNumber0(problemUserNumber,controlLoopIdentifier,startTime,stopTime,timeIncrement,err)
+    !DLLEXPORT(cmfe_ControlLoop_TimesSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the time parameters for for.
@@ -17391,6 +17703,7 @@ CONTAINS
 
   !>Sets/changes the time parameters for a time control loop identified by user numbers.
   SUBROUTINE cmfe_ControlLoop_TimesSetNumber1(problemUserNumber,controlLoopIdentifiers,startTime,stopTime,timeIncrement,err)
+    !DLLEXPORT(cmfe_ControlLoop_TimesSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the time parameters for for.
@@ -17431,6 +17744,7 @@ CONTAINS
 
   !>Sets/changes the time parameters for a time control loop identified by an object.
   SUBROUTINE cmfe_ControlLoop_TimesSetObj(controlLoop,startTime,stopTime,timeIncrement,err)
+    !DLLEXPORT(cmfe_ControlLoop_TimesSetObj)
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(INOUT) :: controlLoop !<The control loop to set the times for.
@@ -17458,6 +17772,7 @@ CONTAINS
 
   !>Sets/changes the loop type for a control loop identified by user numbers. \todo is this really public???
   SUBROUTINE cmfe_ControlLoop_TypeSetNumber0(problemUserNumber,controlLoopIdentifier,loopType,err)
+    !DLLEXPORT(cmfe_ControlLoop_TypeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the loop type for.
@@ -17496,6 +17811,7 @@ CONTAINS
 
   !>Sets/changes the loop type for a control loop identified by user numbers. \todo is this really public???
   SUBROUTINE cmfe_ControlLoop_TypeSetNumber1(problemUserNumber,controlLoopIdentifiers,loopType,err)
+    !DLLEXPORT(cmfe_ControlLoop_TypeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the loop type for.
@@ -17534,6 +17850,7 @@ CONTAINS
 
   !>Sets/changes the loop type for a control loop identified by an object. \todo is this really public???
   SUBROUTINE cmfe_ControlLoop_TypeSetObj(controlLoop,loopType,err)
+    !DLLEXPORT(cmfe_ControlLoop_TypeSetObj)
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(INOUT) :: controlLoop !<The control loop to set the loop type for.
@@ -17561,6 +17878,7 @@ CONTAINS
 
   !>Finishes the creation of a coordinate system identified by a user number.
   SUBROUTINE cmfe_CoordinateSystem_CreateFinishNumber(coordinateSystemUserNumber,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_CreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: coordinateSystemUserNumber !<The user number of the coordinate system to finish creating.
@@ -17599,6 +17917,7 @@ CONTAINS
 
   !>Finishes the creation of a coordinate system identified by an object.
   SUBROUTINE cmfe_CoordinateSystem_CreateFinishObj(coordinateSystem,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_CreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_CoordinateSystemType), INTENT(INOUT) :: coordinateSystem !<The coordinate system to finish creating.
@@ -17627,6 +17946,7 @@ CONTAINS
 
   !>Starts the creation of a coordinate system identified by a user number.
   SUBROUTINE cmfe_CoordinateSystem_CreateStartNumber(coordinateSystemUserNumber,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_CreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: coordinateSystemUserNumber !<The user number of the coordinate system to start creating.
@@ -17657,6 +17977,7 @@ CONTAINS
 
   !>Starts the creation of a coordinate system identified by an object.
   SUBROUTINE cmfe_CoordinateSystem_CreateStartObj(coordinateSystemUserNumber,coordinateSystem,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_CreateStartObj)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: coordinateSystemUserNumber !<The user number of the coordinate system to start creating.
@@ -17686,6 +18007,7 @@ CONTAINS
 
   !>Destroys a coordinate system identified by a user number.
   SUBROUTINE cmfe_CoordinateSystem_DestroyNumber(coordinateSystemUserNumber,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_DestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: coordinateSystemUserNumber !<The user number of the coordinate system to destroy.
@@ -17720,6 +18042,7 @@ CONTAINS
 
   !>Destroys a coordinate system identified by an object.
   SUBROUTINE cmfe_CoordinateSystem_DestroyObj(coordinateSystem,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_DestroyObj)
 
     !Argument variables
     TYPE(cmfe_CoordinateSystemType), INTENT(INOUT) :: coordinateSystem !<The coordinate system to destroy.
@@ -17744,6 +18067,7 @@ CONTAINS
 
   !>Returns the dimension of a coordinate system identified by a user number.
   SUBROUTINE cmfe_CoordinateSystem_DimensionGetNumber(coordinateSystemUserNumber,coordinateSystemDimension,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_DimensionGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: coordinateSystemUserNumber !<The user number of the coordinate system to get the dimension for.
@@ -17779,6 +18103,7 @@ CONTAINS
 
   !>Returns the dimension of a coordinate system identified by an object.
   SUBROUTINE cmfe_CoordinateSystem_DimensionGetObj(coordinateSystem,coordinateSystemDimension,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_DimensionGetObj)
 
     !Argument variables
     TYPE(cmfe_CoordinateSystemType), INTENT(IN) :: coordinateSystem !<The coordinate system to get the dimension for.
@@ -17804,6 +18129,7 @@ CONTAINS
 
   !>Sets/changes the dimension of a coordinate system identified by a user number.
   SUBROUTINE cmfe_CoordinateSystem_DimensionSetNumber(coordinateSystemUserNumber,coordinateSystemDimension,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_DimensionSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: coordinateSystemUserNumber !<The user number of the coordinate system to set the dimension for.
@@ -17839,6 +18165,7 @@ CONTAINS
 
   !>Sets/changes the dimension of a coordinate system identified by an object.
   SUBROUTINE cmfe_CoordinateSystem_DimensionSetObj(coordinateSystem,coordinateSystemDimension,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_DimensionSetObj)
 
     !Argument variables
     TYPE(cmfe_CoordinateSystemType), INTENT(INOUT)  :: coordinateSystem !<The coordinate system to set the dimension for.
@@ -17864,6 +18191,7 @@ CONTAINS
 
   !>Returns the focus of a coordinate system identified by a user number.
   SUBROUTINE cmfe_CoordinateSystem_FocusGetNumber(coordinateSystemUserNumber,focus,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_FocusGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: coordinateSystemUserNumber !<The user number of the coordinate system to get the focus for.
@@ -17899,6 +18227,7 @@ CONTAINS
 
   !>Returns the focus of a coordinate system identified by an object.
   SUBROUTINE cmfe_CoordinateSystem_FocusGetObj(coordinateSystem,focus,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_FocusGetObj)
 
     !Argument variables
     TYPE(cmfe_CoordinateSystemType), INTENT(IN) :: coordinateSystem !<The coordinate system to get the focus for.
@@ -17924,6 +18253,7 @@ CONTAINS
 
   !>Sets/changes the focus of a coordinate system identified by a user number.
   SUBROUTINE cmfe_CoordinateSystem_FocusSetNumber(coordinateSystemUserNumber,focus,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_FocusSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: coordinateSystemUserNumber !<The user number of the coordinate system to set the focus for.
@@ -17959,6 +18289,7 @@ CONTAINS
 
   !>Sets/changes the focus of a coordinate system identified by an object.
   SUBROUTINE cmfe_CoordinateSystem_FocusSetObj(coordinateSystem,focus,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_FocusSetObj)
 
     !Argument variables
     TYPE(cmfe_CoordinateSystemType), INTENT(INOUT) :: coordinateSystem !<The coordinate system to set the focus for.
@@ -17984,6 +18315,7 @@ CONTAINS
 
   !>Returns the radial interpolation type of a coordinate system identified by a user number.
   SUBROUTINE cmfe_CoordinateSystem_RadialInterpolationGetNumber(coordinateSystemUserNumber,radialInterpolationType,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_RadialInterpolationGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: coordinateSystemUserNumber !<The user number of the coordinate system to get the radial interpolation for.
@@ -18020,6 +18352,7 @@ CONTAINS
 
   !>Returns the radial interpolation type of a coordinate system identified by an object.
   SUBROUTINE cmfe_CoordinateSystem_RadialInterpolationGetObj(coordinateSystem,radialInterpolationType,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_RadialInterpolationGetObj)
 
     !Argument variables
     TYPE(cmfe_CoordinateSystemType), INTENT(INOUT) :: coordinateSystem !<The coordinate system to get the radial interpolation type for.
@@ -18046,6 +18379,7 @@ CONTAINS
 
   !>Sets/changes the radial interpolation type of a coordinate system identified by a user number.
   SUBROUTINE cmfe_CoordinateSystem_RadialInterpolationSetNumber(coordinateSystemUserNumber,radialInterpolationType,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_RadialInterpolationSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: coordinateSystemUserNumber !<The user number of the coordinate system to set the radial interpolation for.
@@ -18082,6 +18416,7 @@ CONTAINS
 
   !>Sets/changes the radial interpolation type of a coordinate system identified by an object.
   SUBROUTINE cmfe_CoordinateSystem_RadialInterpolationSetObj(coordinateSystem,radialInterpolationType,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_RadialInterpolationSetObj)
 
     !Argument variables
     TYPE(cmfe_CoordinateSystemType), INTENT(INOUT)  :: coordinateSystem !<The coordinate system to set the radial interpolation type for.
@@ -18108,6 +18443,7 @@ CONTAINS
 
   !>Returns the type of a coordinate system identified by a user number.
   SUBROUTINE cmfe_CoordinateSystem_TypeGetNumber(coordinateSystemUserNumber,coordinateSystemType,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_TypeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: coordinateSystemUserNumber !<The user number of the coordinate system to get the type for.
@@ -18143,6 +18479,7 @@ CONTAINS
 
   !>Returns the type of a coordinate system identified by an object.
   SUBROUTINE cmfe_CoordinateSystem_TypeGetObj(coordinateSystem,coordinateSystemType,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_TypeGetObj)
 
     !Argument variables
     TYPE(cmfe_CoordinateSystemType), INTENT(IN) :: coordinateSystem !<The coordinate system to get the type for.
@@ -18168,6 +18505,7 @@ CONTAINS
 
   !>Sets/changes the type of a coordinate system identified by a user number.
   SUBROUTINE cmfe_CoordinateSystem_TypeSetNumber(coordinateSystemUserNumber,coordinateSystemType,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_TypeSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: coordinateSystemUserNumber !<The user number of the coordinate system to set the type for.
@@ -18203,6 +18541,7 @@ CONTAINS
 
   !>Sets/changes the type of a coordinate system identified by an object.
   SUBROUTINE cmfe_CoordinateSystem_TypeSetObj(coordinateSystem,coordinateSystemType,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_TypeSetObj)
 
     !Argument variables
     TYPE(cmfe_CoordinateSystemType), INTENT(INOUT) :: coordinateSystem !<The coordinate system to set the type for.
@@ -18228,6 +18567,7 @@ CONTAINS
 
   !>Returns the origin of a coordinate system identified by a user number.
   SUBROUTINE cmfe_CoordinateSystem_OriginGetNumber(coordinateSystemUserNumber,origin,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_OriginGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: coordinateSystemUserNumber !<The user number of the coordinate system to get the origin for.
@@ -18263,6 +18603,7 @@ CONTAINS
 
   !>Returns the origin of a coordinate system identified by an object.
   SUBROUTINE cmfe_CoordinateSystem_OriginGetObj(coordinateSystem,origin,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_OriginGetObj)
 
     !Argument variables
     TYPE(cmfe_CoordinateSystemType), INTENT(IN) :: coordinateSystem !<The coordinate system to get the origin for.
@@ -18288,6 +18629,7 @@ CONTAINS
 
   !>Sets/changes the origin of a coordinate system identified by a user number.
   SUBROUTINE cmfe_CoordinateSystem_OriginSetNumber(coordinateSystemUserNumber,origin,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_OriginSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: coordinateSystemUserNumber !<The user number of the coordinate system to set the origin for.
@@ -18323,6 +18665,7 @@ CONTAINS
 
   !>Sets/changes the origin of a coordinate system identified by an object.
   SUBROUTINE cmfe_CoordinateSystem_OriginSetObj(coordinateSystem,origin,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_OriginSetObj)
 
     !Argument variables
     TYPE(cmfe_CoordinateSystemType), INTENT(IN) :: coordinateSystem !<The coordinate system to set the origin for.
@@ -18348,6 +18691,7 @@ CONTAINS
 
   !>Returns the orientation of a coordinate system identified by a user number.
   SUBROUTINE cmfe_CoordinateSystem_OrientationGetNumber(coordinateSystemUserNumber,orientation,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_OrientationGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: coordinateSystemUserNumber !<The user number of the coordinate system to get the orientation for.
@@ -18383,6 +18727,7 @@ CONTAINS
 
   !>Returns the orientation of a coordinate system identified by an object.
   SUBROUTINE cmfe_CoordinateSystem_OrientationGetObj(coordinateSystem,orientation,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_OrientationGetObj)
 
     !Argument variables
     TYPE(cmfe_CoordinateSystemType), INTENT(IN) :: coordinateSystem !<The coordinate system to get the orientation for.
@@ -18408,6 +18753,7 @@ CONTAINS
 
   !>Sets/changes the orientation of a coordinate system identified by a user number.
   SUBROUTINE cmfe_CoordinateSystem_OrientationSetNumber(coordinateSystemUserNumber,orientation,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_OrientationSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: coordinateSystemUserNumber !<The user number of the coordinate system to set the orientation for.
@@ -18443,6 +18789,7 @@ CONTAINS
 
   !>Sets/changes the orientation of a coordinate system identified by an object.
   SUBROUTINE cmfe_CoordinateSystem_OrientationSetObj(coordinateSystem,orientation,err)
+    !DLLEXPORT(cmfe_CoordinateSystem_OrientationSetObj)
 
     !Argument variables
     TYPE(cmfe_CoordinateSystemType), INTENT(INOUT) :: coordinateSystem !<The coordinate system to set the orientation for.
@@ -18470,6 +18817,7 @@ CONTAINS
 
   !>Finishes the process of creating data points in a region for data points identified by user number.
   SUBROUTINE cmfe_DataPoints_CreateFinishNumber(regionUserNumber,err)
+    !DLLEXPORT(cmfe_DataPoints_CreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to finish the creation of.
@@ -18507,6 +18855,7 @@ CONTAINS
 
   !>Finishes the creation of a data points in a region for data points identified by an object.
   SUBROUTINE cmfe_DataPoints_CreateFinishObj(dataPoints,err)
+    !DLLEXPORT(cmfe_DataPoints_CreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_DataPointsType), INTENT(IN) :: dataPoints !<The data points to finish creating.
@@ -18531,6 +18880,7 @@ CONTAINS
 
   !>Starts the process of creating data points in a region for data points identified by user number.
   SUBROUTINE cmfe_DataPoints_CreateStartNumber(regionUserNumber,numberOfDataPoints,err)
+    !DLLEXPORT(cmfe_DataPoints_CreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to start the creation of.
@@ -18568,6 +18918,7 @@ CONTAINS
 
   !>Starts the creation of a data points in a region for data points identified by an object.
   SUBROUTINE cmfe_DataPoints_CreateStartObj(region,numberOfDataPoints,dataPoints,err)
+    !DLLEXPORT(cmfe_DataPoints_CreateStartObj)
 
     !Argument variables
     TYPE(cmfe_RegionType), INTENT(IN) :: region !<The region to start the creation of data points on.
@@ -18594,6 +18945,7 @@ CONTAINS
 
   !>Starts the creation of a data points in a region for data points identified by an object.
   SUBROUTINE cmfe_DataPoints_CreateStartInterfaceObj(interface,numberOfDataPoints,dataPoints,err)
+    !DLLEXPORT(cmfe_DataPoints_CreateStartInterfaceObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceType), INTENT(IN) :: interface !<The interface to start the creation of data points on.
@@ -18625,6 +18977,7 @@ CONTAINS
 
   !>Destroys the data points in a region for data points identified by user number.
   SUBROUTINE cmfe_DataPoints_DestroyNumber(regionUserNumber,err)
+    !DLLEXPORT(cmfe_DataPoints_DestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to destroy.
@@ -18662,6 +19015,7 @@ CONTAINS
 
   !>Destroys the data points in a region for data points identified by an object.
   SUBROUTINE cmfe_DataPoints_DestroyObj(dataPoints,err)
+    !DLLEXPORT(cmfe_DataPoints_DestroyObj)
 
     !Argument variables
     TYPE(cmfe_DataPointsType), INTENT(IN) :: dataPoints !<The data points to destroy.
@@ -18686,6 +19040,7 @@ CONTAINS
 
   !>Returns the number of data points
   SUBROUTINE cmfe_DataPoints_NumberOfDataPointsGetNumber(regionUserNumber,numberOfDataPoints,err)
+    !DLLEXPORT(cmfe_DataPoints_NumberOfDataPointsGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get data point count for.
@@ -18724,6 +19079,7 @@ CONTAINS
 
   !>Returns the number of data points
   SUBROUTINE cmfe_DataPoints_NumberOfDataPointsGetObj(dataPoints,numberOfDataPoints,err)
+    !DLLEXPORT(cmfe_DataPoints_NumberOfDataPointsGetObj)
 
     !Argument variables
     TYPE(cmfe_DataPointsType), INTENT(IN) :: dataPoints !<The data points get data point count for.
@@ -18750,6 +19106,7 @@ CONTAINS
 
   !>Returns the character label for a data point in a set of data points identified by user number.
   SUBROUTINE cmfe_DataPoints_LabelGetCNumber(regionUserNumber,dataPointGlobalNumber,label,err)
+    !DLLEXPORT(cmfe_DataPoints_LabelGetCNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get the label for.
@@ -18789,6 +19146,7 @@ CONTAINS
 
   !>Returns the character label for a data point in a set of data points identified by an object.
   SUBROUTINE cmfe_DataPoints_LabelGetCObj(dataPoints,dataPointGlobalNumber,label,err)
+    !DLLEXPORT(cmfe_DataPoints_LabelGetCObj)
 
     !Argument variables
     TYPE(cmfe_DataPointsType), INTENT(IN) :: dataPoints !<The data points to get the label for.
@@ -18815,6 +19173,7 @@ CONTAINS
 
   !>Returns the varying string label for a data point in a set of data points identified by user number.
   SUBROUTINE cmfe_DataPoints_LabelGetVSNumber(regionUserNumber,dataPointGlobalNumber,label,err)
+    !DLLEXPORT(cmfe_DataPoints_LabelGetVSNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get the label for.
@@ -18854,6 +19213,7 @@ CONTAINS
 
   !>Returns the varying string label for a data point in a set of data points identified by an object.
   SUBROUTINE cmfe_DataPoints_LabelGetVSObj(dataPoints,dataPointGlobalNumber,label,err)
+    !DLLEXPORT(cmfe_DataPoints_LabelGetVSObj)
 
     !Argument variables
     TYPE(cmfe_DataPointsType), INTENT(IN) :: dataPoints !<The data points to get the label for.
@@ -18880,6 +19240,7 @@ CONTAINS
 
   !>Sets/changes the character label for a data point in a set of data points identified by user number.
   SUBROUTINE cmfe_DataPoints_LabelSetCNumber(regionUserNumber,dataPointGlobalNumber,label,err)
+    !DLLEXPORT(cmfe_DataPoints_LabelSetCNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to set the label for.
@@ -18919,6 +19280,7 @@ CONTAINS
 
   !>Sets/changes the character label for a data point in a set of data points identified by an object.
   SUBROUTINE cmfe_DataPoints_LabelSetCObj(dataPoints,dataPointGlobalNumber,label,err)
+    !DLLEXPORT(cmfe_DataPoints_LabelSetCObj)
 
     !Argument variables
     TYPE(cmfe_DataPointsType), INTENT(IN) :: dataPoints !<The data points to set the label for.
@@ -18945,6 +19307,7 @@ CONTAINS
 
   !>Sets/changes the varying string label for a data point in a set of data points identified by user number.
   SUBROUTINE cmfe_DataPoints_LabelSetVSNumber(regionUserNumber,dataPointGlobalNumber,label,err)
+    !DLLEXPORT(cmfe_DataPoints_LabelSetVSNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to set the label for.
@@ -18984,6 +19347,7 @@ CONTAINS
 
   !>Sets/changes the varying string label for a data point in a set of data points identified by an object.
   SUBROUTINE cmfe_DataPoints_LabelSetVSObj(dataPoints,dataPointGlobalNumber,label,err)
+    !DLLEXPORT(cmfe_DataPoints_LabelSetVSObj)
 
     !Argument variables
     TYPE(cmfe_DataPointsType), INTENT(IN) :: dataPoints !<The data points to set the label for.
@@ -19010,6 +19374,7 @@ CONTAINS
 
   !>Returns the user number for a data point in a set of data points identified by user number.
   SUBROUTINE cmfe_DataPoints_UserNumberGetNumber(regionUserNumber,dataPointGlobalNumber,dataPointUserNumber,err)
+    !DLLEXPORT(cmfe_DataPoints_UserNumberGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get the data point user number for.
@@ -19049,6 +19414,7 @@ CONTAINS
 
   !>Returns the user number for a data point in a set of data points identified by an object.
   SUBROUTINE cmfe_DataPoints_UserNumberGetObj(dataPoints,dataPointGlobalNumber,dataPointUserNumber,err)
+    !DLLEXPORT(cmfe_DataPoints_UserNumberGetObj)
 
     !Argument variables
     TYPE(cmfe_DataPointsType), INTENT(IN) :: dataPoints !<The data points to get the data point user number for.
@@ -19075,6 +19441,7 @@ CONTAINS
 
   !>Sets/changes the user number for a data point in a set of data points identified by user number.
   SUBROUTINE cmfe_DataPoints_UserNumberSetNumber(regionUserNumber,dataPointGlobalNumber,dataPointUserNumber,err)
+    !DLLEXPORT(cmfe_DataPoints_UserNumberSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to set the data point user number for.
@@ -19114,6 +19481,7 @@ CONTAINS
 
   !>Sets/changes the user number for a data point in a set of data points identified by an object.
   SUBROUTINE cmfe_DataPoints_UserNumberSetObj(dataPoints,dataPointGlobalNumber,dataPointUserNumber,err)
+    !DLLEXPORT(cmfe_DataPoints_UserNumberSetObj)
 
     !Argument variables
     TYPE(cmfe_DataPointsType), INTENT(IN) :: dataPoints !<The data points to set the data point user number for.
@@ -19140,6 +19508,7 @@ CONTAINS
 
   !>Returns the values for a data point in a set of data points identified by user number.
   SUBROUTINE cmfe_DataPoints_ValuesGetNumber(regionUserNumber,dataPointGlobalNumber,dataPointValues,err)
+    !DLLEXPORT(cmfe_DataPoints_ValuesGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get the data point user number for.
@@ -19179,6 +19548,7 @@ CONTAINS
 
   !>Returns the values for a data point in a set of data points identified by an object.
   SUBROUTINE cmfe_DataPoints_ValuesGetObj(dataPoints,dataPointGlobalNumber,dataPointValues,err)
+    !DLLEXPORT(cmfe_DataPoints_ValuesGetObj)
 
     !Argument variables
     TYPE(cmfe_DataPointsType), INTENT(IN) :: dataPoints !<The data points to get the data point user number for.
@@ -19205,6 +19575,7 @@ CONTAINS
 
   !>Sets/changes the values for a data point in a set of data points identified by user number.
   SUBROUTINE cmfe_DataPoints_ValuesSetNumber(regionUserNumber,dataPointGlobalNumber,dataPointValues,err)
+    !DLLEXPORT(cmfe_DataPoints_ValuesSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to set the data point user number for.
@@ -19244,6 +19615,7 @@ CONTAINS
 
   !>Sets/changes the values for a data point in a set of data points identified by an object.
   SUBROUTINE cmfe_DataPoints_ValuesSetObj(dataPoints,dataPointGlobalNumber,dataPointValues,err)
+    !DLLEXPORT(cmfe_DataPoints_ValuesSetObj)
 
     !Argument variables
     TYPE(cmfe_DataPointsType), INTENT(IN) :: dataPoints !<The data points to set the data point user number for.
@@ -19270,6 +19642,7 @@ CONTAINS
 
   !>Returns the weights for a data point in a set of data points identified by user number.
   SUBROUTINE cmfe_DataPoints_WeightsGetNumber(regionUserNumber,dataPointGlobalNumber,dataPointWeights,err)
+    !DLLEXPORT(cmfe_DataPoints_WeightsGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get the data point user number for.
@@ -19309,6 +19682,7 @@ CONTAINS
 
   !>Returns the weights for a data point in a set of data points identified by an object.
   SUBROUTINE cmfe_DataPoints_WeightsGetObj(dataPoints,dataPointGlobalNumber,dataPointWeights,err)
+    !DLLEXPORT(cmfe_DataPoints_WeightsGetObj)
 
     !Argument variables
     TYPE(cmfe_DataPointsType), INTENT(IN) :: dataPoints !<The data points to get the data point user number for.
@@ -19335,6 +19709,7 @@ CONTAINS
 
   !>Sets/changes the weights for a data point in a set of data points identified by user number.
   SUBROUTINE cmfe_DataPoints_WeightsSetNumber(regionUserNumber,dataPointGlobalNumber,dataPointWeights,err)
+    !DLLEXPORT(cmfe_DataPoints_WeightsSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to set the data point user number for.
@@ -19374,6 +19749,7 @@ CONTAINS
 
   !>Sets/changes the weights for a data point in a set of data points identified by an object.
   SUBROUTINE cmfe_DataPoints_WeightsSetObj(dataPoints,dataPointGlobalNumber,dataPointWeights,err)
+    !DLLEXPORT(cmfe_DataPoints_WeightsSetObj)
 
     !Argument variables
     TYPE(cmfe_DataPointsType), INTENT(IN) :: dataPoints !<The data points to set the data point user number for.
@@ -19402,6 +19778,7 @@ CONTAINS
 
   !>Returns the absolute tolerance of data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_AbsoluteToleranceGetNumber(dataProjectionUserNumber,regionUserNumber,absoluteTolerance,err)
+    !DLLEXPORT(cmfe_DataProjection_AbsoluteToleranceGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
@@ -19447,6 +19824,7 @@ CONTAINS
 
   !>Returns the absolute tolerance of data projection identified an object.
   SUBROUTINE cmfe_DataProjection_AbsoluteToleranceGetObj(dataProjection,absoluteTolerance,err)
+    !DLLEXPORT(cmfe_DataProjection_AbsoluteToleranceGetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to get tolerance for.
@@ -19472,6 +19850,7 @@ CONTAINS
 
   !>Sets/changes the absolute tolerance of data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_AbsoluteToleranceSetNumber(dataProjectionUserNumber,regionUserNumber,absoluteTolerance,err)
+    !DLLEXPORT(cmfe_DataProjection_AbsoluteToleranceSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
@@ -19517,6 +19896,7 @@ CONTAINS
 
   !>Sets/changes the absolute tolerance of data projection identified an object.
   SUBROUTINE cmfe_DataProjection_AbsoluteToleranceSetObj(dataProjection,absoluteTolerance,err)
+    !DLLEXPORT(cmfe_DataProjection_AbsoluteToleranceSetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to set tolerance for.
@@ -19542,6 +19922,7 @@ CONTAINS
 
   !>Finishes the creation of a new data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_CreateFinishNumber(dataProjectionUserNumber,regionUserNumber,err)
+    !DLLEXPORT(cmfe_DataProjection_CreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
@@ -19585,6 +19966,7 @@ CONTAINS
 
   !>Finishes the creation of a new data projection identified by an object.
   SUBROUTINE cmfe_DataProjection_CreateFinishObj(dataProjection,err)
+    !DLLEXPORT(cmfe_DataProjection_CreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to finish the creation of
@@ -19610,6 +19992,7 @@ CONTAINS
   !>Starts the creation of a new data projection for a data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_CreateStartNumber(dataProjectionUserNumber,dataPointRegionUserNumber,meshUserNumber, &
     & meshRegionUserNumber,err)
+    !DLLEXPORT(cmfe_DataProjection_CreateStartNumber)
   
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number.
@@ -19671,6 +20054,7 @@ CONTAINS
 
   !>Starts the creation of a new data projection for a data projection identified by an object.
   SUBROUTINE cmfe_DataProjection_CreateStartObj(dataProjectionUserNumber,dataPoints,mesh,dataProjection,err)
+    !DLLEXPORT(cmfe_DataProjection_CreateStartObj)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number.
@@ -19699,6 +20083,7 @@ CONTAINS
 
   !>Destroys a data projection identified by region user number.
   SUBROUTINE cmfe_DataProjection_DestroyNumber(dataProjectionUserNumber,regionUserNumber,err)
+    !DLLEXPORT(cmfe_DataProjection_DestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
@@ -19742,6 +20127,7 @@ CONTAINS
 
   !>Destroys a data projection identified by an object.
   SUBROUTINE cmfe_DataProjection_DestroyObj(dataProjection,err)
+    !DLLEXPORT(cmfe_DataProjection_DestroyObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to destroy.
@@ -19767,6 +20153,7 @@ CONTAINS
   !>Evaluate the data points position in a field based on data projection in a region, identified by user number
   SUBROUTINE cmfe_DataProjection_DataPointsPositionEvaluateRegionNumber(dataProjectionUserNumber,regionUserNumber, &
     & fieldUserNumber,fieldVariableType,err)
+    !DLLEXPORT(cmfe_DataProjection_DataPointsPositionEvaluateRegionNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
@@ -19824,6 +20211,7 @@ CONTAINS
   !>Evaluate the data points position in a field based on data projection in an interface, identified by user number
   SUBROUTINE cmfe_DataProjection_DataPointsPositionEvaluateInterfaceNumber(dataProjectionUserNumber, &
       & parentRegionUserNumber,interfaceUserNumber,fieldUserNumber,fieldVariableType,err)
+    !DLLEXPORT(cmfe_DataProjection_DataPointsPositionEvaluateInterfaceNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
@@ -19890,6 +20278,7 @@ CONTAINS
 
   !>Evaluate the data points position in a field based on data projection, identified by object
   SUBROUTINE cmfe_DataProjection_DataPointsPositionEvaluateObj(dataProjection,field,fieldVariableType,err)
+    !DLLEXPORT(cmfe_DataProjection_DataPointsPositionEvaluateObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
@@ -19918,6 +20307,7 @@ CONTAINS
   !>Evaluate the data points position in a field based on data projection in a region, identified by user number
   SUBROUTINE cmfe_DataProjection_ProjectionCandidatesSetRegionNumber(dataProjectionUserNumber,regionUserNumber, &
     & candidateElements,localFaceLineNumbers,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionCandidatesSetRegionNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
@@ -19966,6 +20356,7 @@ CONTAINS
   !>Evaluate the data points position in a field based on data projection in an interface, identified by user number
   SUBROUTINE cmfe_DataProjection_ProjectionCandidatesSetInterfaceNumber(dataProjectionUserNumber, &
       & parentRegionUserNumber,interfaceUserNumber,candidateElements,localFaceLineNumbers,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionCandidatesSetInterfaceNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
@@ -20023,6 +20414,7 @@ CONTAINS
 
   !>Evaluate the data points position in a field based on data projection, identified by object
   SUBROUTINE cmfe_DataProjection_ProjectionCandidatesSetObj(dataProjection,candidateElements,localFaceLineNumbers,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionCandidatesSetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
@@ -20052,6 +20444,7 @@ CONTAINS
   !>Evaluate a data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_DataPointsProjectionEvaluateNumber(dataProjectionUserNumber,dataPointsRegionUserNumber, &
     & projectionFieldUserNumber,projectionFieldRegionUserNumber,err)
+    !DLLEXPORT(cmfe_DataProjection_DataPointsProjectionEvaluateNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
@@ -20117,6 +20510,7 @@ CONTAINS
 
   !>Evaluate a data projection identified by an object.
   SUBROUTINE cmfe_DataProjection_DataPointsProjectionEvaluateObj(dataProjection,projectionField,err)
+    !DLLEXPORT(cmfe_DataProjection_DataPointsProjectionEvaluateObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to evaluate.
@@ -20144,6 +20538,7 @@ CONTAINS
   !>Returns the relative tolerance of data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_MaximumIterationUpdateGetNumber(dataProjectionUserNumber,regionUserNumber, &
       & maximumIterationUpdate,err)
+    !DLLEXPORT(cmfe_DataProjection_MaximumIterationUpdateGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
@@ -20189,6 +20584,7 @@ CONTAINS
 
   !>Returns the relative tolerance of data projection identified an object.
   SUBROUTINE cmfe_DataProjection_MaximumIterationUpdateGetObj(dataProjection,maximumIterationUpdate,err)
+    !DLLEXPORT(cmfe_DataProjection_MaximumIterationUpdateGetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to get tolerance for.
@@ -20216,6 +20612,7 @@ CONTAINS
   !>Sets/changes the relative tolerance of data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_MaximumIterationUpdateSetNumber(dataProjectionUserNumber,regionUserNumber, &
       & maximumIterationUpdate,err)
+    !DLLEXPORT(cmfe_DataProjection_MaximumIterationUpdateSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
@@ -20261,6 +20658,7 @@ CONTAINS
 
   !>Sets/changes the relative tolerance of data projection identified an object.
   SUBROUTINE cmfe_DataProjection_MaximumIterationUpdateSetObj(dataProjection,maximumIterationUpdate,err)
+    !DLLEXPORT(cmfe_DataProjection_MaximumIterationUpdateSetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to set tolerance for.
@@ -20288,6 +20686,7 @@ CONTAINS
   !>Returns the maximum number of iterations of data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_MaximumNumberOfIterationsGetNumber(dataProjectionUserNumber,regionUserNumber, &
       & maximumNumberOfIterations,err)
+    !DLLEXPORT(cmfe_DataProjection_MaximumNumberOfIterationsGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
@@ -20334,6 +20733,7 @@ CONTAINS
   !>Returns the projection distance for a data point in a set of data points identified by user number.
   SUBROUTINE cmfe_DataProjection_ResultDistanceGetNumber(regionUserNumber,dataProjectionUserNumber,dataPointUserNumber, &
     & ProjectionDistance,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultDistanceGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get attributes for.
@@ -20387,6 +20787,7 @@ CONTAINS
 
   !>Returns the projection distance for a data point in a set of data points identified by an object.
   SUBROUTINE cmfe_DataProjection_ResultDistanceGetObj(dataProjection,dataPointUserNumber,ProjectionDistance,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultDistanceGetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(IN) :: dataProjection !<The data projection to get attributes for.
@@ -20415,6 +20816,7 @@ CONTAINS
   !>Returns the projection element number for a data point in a set of data points identified by user number.
   SUBROUTINE cmfe_DataProjection_ResultElementNumberGetNumber(regionUserNumber,dataProjectionUserNumber,dataPointUserNumber, &
     & ProjectionElementNumber,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultElementNumberGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get attributes for.
@@ -20468,6 +20870,7 @@ CONTAINS
 
   !>Returns the projection element number for a data point in a set of data points identified by an object.
   SUBROUTINE cmfe_DataProjection_ResultElementNumberGetObj(dataProjection,dataPointUserNumber,ProjectionElementNumber,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultElementNumberGetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(IN) :: dataProjection !<The data projection to get attributes for.
@@ -20497,6 +20900,7 @@ CONTAINS
   !>Returns the projection element face number for a data point in a set of data points identified by user number.
   SUBROUTINE cmfe_DataProjection_ResultElementFaceNumberGetNumber(regionUserNumber,dataProjectionUserNumber,dataPointUserNumber, &
     & ProjectionElementFaceNumber,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultElementFaceNumberGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get attributes for.
@@ -20552,6 +20956,7 @@ CONTAINS
   !>Returns the projection element face number for a data point in a set of data points identified by an object.
   SUBROUTINE cmfe_DataProjection_ResultElementFaceNumberGetObj(dataProjection,dataPointUserNumber, &
     & ProjectionElementFaceNumber,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultElementFaceNumberGetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(IN) :: dataProjection !<The data projection to get attributes for.
@@ -20581,6 +20986,7 @@ CONTAINS
   !>Returns the projection element line number for a data point in a set of data points identified by user number.
   SUBROUTINE cmfe_DataProjection_ResultElementLineNumberGetNumber(regionUserNumber,dataProjectionUserNumber,dataPointUserNumber, &
     & ProjectionElementLineNumber,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultElementLineNumberGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get attributes for.
@@ -20636,6 +21042,7 @@ CONTAINS
   !>Returns the projection element line number for a data point in a set of data points identified by an object.
   SUBROUTINE cmfe_DataProjection_ResultElementLineNumberGetObj(dataProjection,dataPointUserNumber, &
     & ProjectionElementLineNumber,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultElementLineNumberGetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(IN) :: dataProjection !<The data projection to get attributes for.
@@ -20665,6 +21072,7 @@ CONTAINS
   !>Returns the projection exit tag for a data point in a set of data points identified by user number.
   SUBROUTINE cmfe_DataProjection_ResultExitTagGetNumber(regionUserNumber,dataProjectionUserNumber,dataPointUserNumber, &
     & ProjectionExitTag,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultExitTagGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get attributes for.
@@ -20717,6 +21125,7 @@ CONTAINS
 
   !>Returns the projection exit tag for a data point in a set of data points identified by an object.
   SUBROUTINE cmfe_DataProjection_ResultExitTagGetObj(dataProjection,dataPointUserNumber,ProjectionExitTag,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultExitTagGetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(IN) :: dataProjection !<The data projection to get attributes for.
@@ -20744,6 +21153,7 @@ CONTAINS
 
   !>Returns the projection xi for a data point in a set of data points identified by user number.
   SUBROUTINE cmfe_DataProjection_ResultXiGetNumber(regionUserNumber,dataProjectionUserNumber,dataPointUserNumber,ProjectionXi,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultXiGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get attributes for.
@@ -20796,6 +21206,7 @@ CONTAINS
 
   !>Returns the projection xi for a data point in a set of data points identified by an object.
   SUBROUTINE cmfe_DataProjection_ResultXiGetObj(dataProjection,dataPointUserNumber,ProjectionXi,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultXiGetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(IN) :: dataProjection !<The data projection to get attributes for.
@@ -20822,6 +21233,7 @@ CONTAINS
 
   !>Sets the projection xi for a data point in a set of data points identified by user number.
   SUBROUTINE cmfe_DataProjection_ResultXiSetNumber(regionUserNumber,dataProjectionUserNumber,dataPointUserNumber,ProjectionXi,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultXiSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to set attributes for.
@@ -20874,6 +21286,7 @@ CONTAINS
 
   !>Sets the projection xi for a data point in a set of data points identified by an object.
   SUBROUTINE cmfe_DataProjection_ResultXiSetObj(dataProjection,dataPointUserNumber,ProjectionXi,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultXiSetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(IN) :: dataProjection !<The data projection to set attributes for.
@@ -20900,6 +21313,7 @@ CONTAINS
 
   !>Returns the maximum number of iterations of data projection identified an object.
   SUBROUTINE cmfe_DataProjection_MaximumNumberOfIterationsGetObj(dataProjection,maximumNumberOfIterations,err)
+    !DLLEXPORT(cmfe_DataProjection_MaximumNumberOfIterationsGetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to get maximum number of iterations for.
@@ -20927,6 +21341,7 @@ CONTAINS
   !>Sets/changes the maximum number of iterations of data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_MaximumNumberOfIterationsSetNumber(dataProjectionUserNumber,regionUserNumber, &
       & maximumNumberOfIterations,err)
+    !DLLEXPORT(cmfe_DataProjection_MaximumNumberOfIterationsSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
@@ -20972,6 +21387,7 @@ CONTAINS
 
   !>Sets/changes the maximum number of iterations of data projection identified an object.
   SUBROUTINE cmfe_DataProjection_MaximumNumberOfIterationsSetObj(dataProjection,maximumNumberOfIterations,err)
+    !DLLEXPORT(cmfe_DataProjection_MaximumNumberOfIterationsSetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to set maximum number of iterations for.
@@ -20999,6 +21415,7 @@ CONTAINS
   !>Returns the number of closest elements of data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_NumberOfClosestElementsGetNumber(dataProjectionUserNumber,regionUserNumber, &
       & numberOfClosestElements,err)
+    !DLLEXPORT(cmfe_DataProjection_NumberOfClosestElementsGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
@@ -21044,6 +21461,7 @@ CONTAINS
 
   !>Returns the number of closest elements of data projection identified an object.
   SUBROUTINE cmfe_DataProjection_NumberOfClosestElementsGetObj(dataProjection,numberOfClosestElements,err)
+    !DLLEXPORT(cmfe_DataProjection_NumberOfClosestElementsGetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to get number of closest elements for.
@@ -21071,6 +21489,7 @@ CONTAINS
   !>Sets/changes the number of closest elements of data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_NumberOfClosestElementsSetNumber(dataProjectionUserNumber,regionUserNumber, &
       & numberOfClosestElements,err)
+    !DLLEXPORT(cmfe_DataProjection_NumberOfClosestElementsSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
@@ -21116,6 +21535,7 @@ CONTAINS
 
   !>Sets/changes the number of closest elements of data projection identified an object.
   SUBROUTINE cmfe_DataProjection_NumberOfClosestElementsSetObj(dataProjection,numberOfClosestElements,err)
+    !DLLEXPORT(cmfe_DataProjection_NumberOfClosestElementsSetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to set number of closest elements for.
@@ -21142,6 +21562,7 @@ CONTAINS
 
   !>Returns the projection type of data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_ProjectionTypeGetNumber(dataProjectionUserNumber,regionUserNumber,projectionType,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionTypeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
@@ -21186,6 +21607,7 @@ CONTAINS
 
   !>Returns the projection type of data projection identified an object.
   SUBROUTINE cmfe_DataProjection_ProjectionTypeGetObj(dataProjection,projectionType,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionTypeGetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to get projection type for.
@@ -21211,6 +21633,7 @@ CONTAINS
 
   !>Sets/changes the projection type of data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_ProjectionTypeSetNumber(dataProjectionUserNumber,regionUserNumber,projectionType,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionTypeSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
@@ -21255,6 +21678,7 @@ CONTAINS
 
   !>Sets/changes the projection type of data projection identified an object.
   SUBROUTINE cmfe_DataProjection_ProjectionTypeSetObj(dataProjection,projectionType,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to set projection type for.
@@ -21280,6 +21704,7 @@ CONTAINS
 
   !>Returns the relative tolerance of data projection identified by a data projection user number and a region user number.
   SUBROUTINE cmfe_DataProjection_RelativeToleranceGetNumber(dataProjectionUserNumber,regionUserNumber,relativeTolerance,err)
+    !DLLEXPORT(cmfe_DataProjection_RelativeToleranceGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
@@ -21325,6 +21750,7 @@ CONTAINS
 
   !>Returns the relative tolerance of data projection identified an object.
   SUBROUTINE cmfe_DataProjection_RelativeToleranceGetObj(dataProjection,relativeTolerance,err)
+    !DLLEXPORT(cmfe_DataProjection_RelativeToleranceGetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to get relative tolerance for.
@@ -21350,6 +21776,7 @@ CONTAINS
 
   !>Sets/changes the relative tolerance of data projection identified by a data projection user number and a region user number.
   SUBROUTINE cmfe_DataProjection_RelativeToleranceSetNumber(dataProjectionUserNumber,regionUserNumber,relativeTolerance,err)
+    !DLLEXPORT(cmfe_DataProjection_RelativeToleranceSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
@@ -21395,6 +21822,7 @@ CONTAINS
 
   !>Sets/changes the relative tolerance of data projection identified an object.
   SUBROUTINE cmfe_DataProjection_RelativeToleranceSetObj(dataProjection,relativeTolerance,err)
+    !DLLEXPORT(cmfe_DataProjection_RelativeToleranceSetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to set relative tolerance for.
@@ -21420,6 +21848,7 @@ CONTAINS
 
   !>Returns the starting xi of data projection identified by a data projection user number and region user number.
   SUBROUTINE cmfe_DataProjection_StartingXiGetNumber(dataProjectionUserNumber,regionUserNumber,startingXi,err)
+    !DLLEXPORT(cmfe_DataProjection_StartingXiGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
@@ -21465,6 +21894,7 @@ CONTAINS
 
   !>Returns the starting xi of data projection identified an object.
   SUBROUTINE cmfe_DataProjection_StartingXiGetObj(dataProjection,startingXi,err)
+    !DLLEXPORT(cmfe_DataProjection_StartingXiGetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to get starting xi for.
@@ -21490,6 +21920,7 @@ CONTAINS
 
   !>Sets/changes the starting xi of data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_StartingXiSetNumber(dataProjectionUserNumber,regionUserNumber,startingXi,err)
+    !DLLEXPORT(cmfe_DataProjection_StartingXiSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
@@ -21534,6 +21965,7 @@ CONTAINS
 
   !>Sets/changes the starting xi of data projection identified an object.
   SUBROUTINE cmfe_DataProjection_StartingXiSetObj(dataProjection,startingXi,err)
+    !DLLEXPORT(cmfe_DataProjection_StartingXiSetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to set starting xi for.
@@ -21560,6 +21992,7 @@ CONTAINS
   !>Sets/changes the starting xi of data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_ElementSetInterfaceNumber(dataProjectionUserNumber,parentRegionUserNumber,interfaceUserNumber, &
       & dataPointNumber,elementNumber,err)
+    !DLLEXPORT(cmfe_DataProjection_ElementSetInterfaceNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
@@ -21616,6 +22049,7 @@ CONTAINS
 
   !>Sets/changes the starting xi of data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_ElementSetRegionNumber(dataProjectionUserNumber,regionUserNumber,dataPointNumber,elementNumber,err)
+    !DLLEXPORT(cmfe_DataProjection_ElementSetRegionNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
@@ -21661,6 +22095,7 @@ CONTAINS
 
   !>Sets/changes the starting xi of data projection identified an object.
   SUBROUTINE cmfe_DataProjection_ElementSetObj(dataProjection,dataPointNumber,elementNumber,err)
+    !DLLEXPORT(cmfe_DataProjection_ElementSetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to set starting xi for.
@@ -21688,6 +22123,7 @@ CONTAINS
   !>Get the character string label of a data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_LabelGetCInterfaceNumber(dataProjectionUserNumber,parentRegionUserNumber,interfaceUserNumber, &
     & label,err)
+    !DLLEXPORT(cmfe_DataProjection_LabelGetCInterfaceNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get the label for.
@@ -21738,6 +22174,7 @@ CONTAINS
   !>Get the varying string label of a data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_LabelGetVSInterfaceNumber(dataProjectionUserNumber,parentRegionUserNumber,interfaceUserNumber, &
     & label,err)
+    !DLLEXPORT(cmfe_DataProjection_LabelGetVSInterfaceNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get the label for.
@@ -21787,6 +22224,7 @@ CONTAINS
 
   !>Get the character string label of a data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_LabelGetCRegionNumber(dataProjectionUserNumber,regionUserNumber,label,err)
+    !DLLEXPORT(cmfe_DataProjection_LabelGetCRegionNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get the label for.
@@ -21825,6 +22263,7 @@ CONTAINS
 
   !>Get the varying string label of a data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_LabelGetVSRegionNumber(dataProjectionUserNumber,regionUserNumber,label,err)
+    !DLLEXPORT(cmfe_DataProjection_LabelGetVSRegionNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get the label for.
@@ -21863,6 +22302,7 @@ CONTAINS
 
   !>Gets the character string label of a data projection identified an object.
   SUBROUTINE cmfe_DataProjection_LabelGetCObj(dataProjection,label,err)
+    !DLLEXPORT(cmfe_DataProjection_LabelGetCObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to get the label for.
@@ -21888,6 +22328,7 @@ CONTAINS
 
   !>Gets the varying string label of a data projection identified an object.
   SUBROUTINE cmfe_DataProjection_LabelGetVSObj(dataProjection,label,err)
+    !DLLEXPORT(cmfe_DataProjection_LabelGetVSObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to get the label for.
@@ -21914,6 +22355,7 @@ CONTAINS
   !>Sets/changes the character string label of a data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_LabelSetCInterfaceNumber(dataProjectionUserNumber,parentRegionUserNumber,interfaceUserNumber, &
     & label,err)
+    !DLLEXPORT(cmfe_DataProjection_LabelSetCInterfaceNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to set the label for.
@@ -21964,6 +22406,7 @@ CONTAINS
   !>Sets/changes the varying string label of a data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_LabelSetVSInterfaceNumber(dataProjectionUserNumber,parentRegionUserNumber,interfaceUserNumber, &
     & label,err)
+    !DLLEXPORT(cmfe_DataProjection_LabelSetVSInterfaceNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to set the label for.
@@ -22013,6 +22456,7 @@ CONTAINS
 
   !>Sets/changes the character string label of a data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_LabelSetCRegionNumber(dataProjectionUserNumber,regionUserNumber,label,err)
+    !DLLEXPORT(cmfe_DataProjection_LabelSetCRegionNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to set the label for.
@@ -22051,6 +22495,7 @@ CONTAINS
 
   !>Sets/changes the varying string label of a data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_LabelSetVSRegionNumber(dataProjectionUserNumber,regionUserNumber,label,err)
+    !DLLEXPORT(cmfe_DataProjection_LabelSetVSRegionNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to set the label for.
@@ -22089,6 +22534,7 @@ CONTAINS
 
   !>Sets/changes the character string label of a data projection identified an object.
   SUBROUTINE cmfe_DataProjection_LabelSetCObj(dataProjection,label,err)
+    !DLLEXPORT(cmfe_DataProjection_LabelSetCObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to set the label for.
@@ -22114,6 +22560,7 @@ CONTAINS
 
   !>Sets/changes the varying string label of a data projection identified an object.
   SUBROUTINE cmfe_DataProjection_LabelSetVSObj(dataProjection,label,err)
+    !DLLEXPORT(cmfe_DataProjection_LabelSetVSObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to set the label for.
@@ -22141,6 +22588,7 @@ CONTAINS
 
   !>Destroys equations for equations identified by a user number.
   SUBROUTINE cmfe_Equations_DestroyNumber(regionUserNumber,equationsSetUserNumber,err)
+    !DLLEXPORT(cmfe_Equations_DestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations to destroy.
@@ -22187,6 +22635,7 @@ CONTAINS
 
   !>Destroy equations for equations identified by an object.
   SUBROUTINE cmfe_Equations_DestroyObj(equations,err)
+    !DLLEXPORT(cmfe_Equations_DestroyObj)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(INOUT) :: equations !<The equations to destroy.
@@ -22211,6 +22660,7 @@ CONTAINS
 
   !>Gets the linearity type for equations identified by a user number.
   SUBROUTINE cmfe_Equations_LinearityTypeGetNumber(regionUserNumber,equationsSetUserNumber,linearityType,err)
+    !DLLEXPORT(cmfe_Equations_LinearityTypeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations to get the linearity type for.
@@ -22258,6 +22708,7 @@ CONTAINS
 
   !>Gets the linearity type for equations identified by an object.
   SUBROUTINE cmfe_Equations_LinearityTypeGetObj(equations,linearityType,err)
+    !DLLEXPORT(cmfe_Equations_LinearityTypeGetObj)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the linearity type for.
@@ -22283,6 +22734,7 @@ CONTAINS
 
   !>Gets the lumping type for equations identified by a user number.
   SUBROUTINE cmfe_Equations_LumpingTypeGetNumber(regionUserNumber,equationsSetUserNumber,lumpingType,err)
+    !DLLEXPORT(cmfe_Equations_LumpingTypeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations to get the lumping type for.
@@ -22330,6 +22782,7 @@ CONTAINS
 
   !>Gets the lumping type for equations identified by an object.
   SUBROUTINE cmfe_Equations_LumpingTypeGetObj(equations,lumpingType,err)
+    !DLLEXPORT(cmfe_Equations_LumpingTypeGetObj)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the lumping type for.
@@ -22355,6 +22808,7 @@ CONTAINS
 
   !>Sets/changes the lumping type for equations identified by a user number.
   SUBROUTINE cmfe_Equations_LumpingTypeSetNumber(regionUserNumber,equationsSetUserNumber,lumpingType,err)
+    !DLLEXPORT(cmfe_Equations_LumpingTypeSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations to set the lumping type for.
@@ -22402,6 +22856,7 @@ CONTAINS
 
   !>Sets/changes the lumping type for equations identified by an object.
   SUBROUTINE cmfe_Equations_LumpingTypeSetObj(equations,lumpingType,err)
+    !DLLEXPORT(cmfe_Equations_LumpingTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(INOUT) :: equations !<The equations to set the lumping type for.
@@ -22427,6 +22882,7 @@ CONTAINS
 
   !>Gets the output type for equations identified by a user number.
   SUBROUTINE cmfe_Equations_OutputTypeGetNumber(regionUserNumber,equationsSetUserNumber,outputType,err)
+    !DLLEXPORT(cmfe_Equations_OutputTypeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations to get the output type for.
@@ -22474,6 +22930,7 @@ CONTAINS
 
   !>Gets the output type for equations identified by an object.
   SUBROUTINE cmfe_Equations_OutputTypeGetObj(equations,outputType,err)
+    !DLLEXPORT(cmfe_Equations_OutputTypeGetObj)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the output type for.
@@ -22499,6 +22956,7 @@ CONTAINS
 
   !>Sets/changes the output type for equations identified by a user number.
   SUBROUTINE cmfe_Equations_OutputTypeSetNumber(regionUserNumber,equationsSetUserNumber,outputType,err)
+    !DLLEXPORT(cmfe_Equations_OutputTypeSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations to set the output type for.
@@ -22546,6 +23004,7 @@ CONTAINS
 
   !>Sets/changes the output type for equations identified by an object.
   SUBROUTINE cmfe_Equations_OutputTypeSetObj(equations,outputType,err)
+    !DLLEXPORT(cmfe_Equations_OutputTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(INOUT) :: equations !<The equations to set the output type for.
@@ -22571,6 +23030,7 @@ CONTAINS
 
   !>Gets the sparsity type for equations identified by a user number.
   SUBROUTINE cmfe_Equations_SparsityTypeGetNumber(regionUserNumber,equationsSetUserNumber,sparsityType,err)
+    !DLLEXPORT(cmfe_Equations_SparsityTypeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations to get the sparsity type for.
@@ -22618,6 +23078,7 @@ CONTAINS
 
   !>Gets the sparsity type for equations identified by an object.
   SUBROUTINE cmfe_Equations_SparsityTypeGetObj(equations,sparsityType,err)
+    !DLLEXPORT(cmfe_Equations_SparsityTypeGetObj)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the sparsity type for.
@@ -22643,6 +23104,7 @@ CONTAINS
 
   !>Sets/changes the sparsity type for equations identified by a user number.
   SUBROUTINE cmfe_Equations_SparsityTypeSetNumber(regionUserNumber,equationsSetUserNumber,sparsityType,err)
+    !DLLEXPORT(cmfe_Equations_SparsityTypeSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations to set the sparsity type for.
@@ -22690,6 +23152,7 @@ CONTAINS
 
   !>Sets/changes the sparsity type for equations identified by an object.
   SUBROUTINE cmfe_Equations_SparsityTypeSetObj(equations,sparsityType,err)
+    !DLLEXPORT(cmfe_Equations_SparsityTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(INOUT) :: equations !<The equations to set the sparsity type for.
@@ -22715,6 +23178,7 @@ CONTAINS
 
   !>Gets the time dependence type for equations identified by a user number.
   SUBROUTINE cmfe_Equations_TimeDependenceTypeGetNumber(regionUserNumber,equationsSetUserNumber,timeDependenceType,err)
+    !DLLEXPORT(cmfe_Equations_TimeDependenceTypeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations to get the time dependence type for.
@@ -22762,6 +23226,7 @@ CONTAINS
 
   !>Gets the time dependence type for equations identified by an object.
   SUBROUTINE cmfe_Equations_TimeDependenceTypeGetObj(equations,timeDependenceType,err)
+    !DLLEXPORT(cmfe_Equations_TimeDependenceTypeGetObj)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the time dependence type for.
@@ -22787,6 +23252,7 @@ CONTAINS
 
   !>Get the number of linear matrices in the equations
   SUBROUTINE cmfe_Equations_NumberOfLinearMatricesGet(equations,numberOfMatrices,err)
+    !DLLEXPORT(cmfe_Equations_NumberOfLinearMatricesGet)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the number of linear matrices for
@@ -22811,6 +23277,7 @@ CONTAINS
 
   !>Get the number of Jacobian matrices in the equations
   SUBROUTINE cmfe_Equations_NumberOfJacobianMatricesGet(equations,numberOfMatrices,err)
+    !DLLEXPORT(cmfe_Equations_NumberOfJacobianMatricesGet)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the number of Jacobian matrices for
@@ -22835,6 +23302,7 @@ CONTAINS
 
   !>Get the number of dynamic matrices in the equations
   SUBROUTINE cmfe_Equations_NumberOfDynamicMatricesGet(equations,numberOfMatrices,err)
+    !DLLEXPORT(cmfe_Equations_NumberOfDynamicMatricesGet)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the number of dynamic matrices for
@@ -22859,6 +23327,7 @@ CONTAINS
 
   !>Get a linear equations matrix from the equations
   SUBROUTINE cmfe_Equations_LinearMatrixGet(equations,matrixIndex,matrix,err)
+    !DLLEXPORT(cmfe_Equations_LinearMatrixGet)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the linear matrix for
@@ -22884,6 +23353,7 @@ CONTAINS
 
   !>Finish the creation of derived variables for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_DerivedCreateFinishNumber(regionUserNumber,equationsSetUserNumber,err)
+    !DLLEXPORT(cmfe_EquationsSet_DerivedCreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set to finish the creation of derived variables for.
@@ -22927,6 +23397,7 @@ CONTAINS
 
   !>Finish the creation of derived variables for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_DerivedCreateFinishObj(equationsSet,err)
+    !DLLEXPORT(cmfe_EquationsSet_DerivedCreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to finish the creation of derived variables for.
@@ -22951,6 +23422,7 @@ CONTAINS
 
   !>Start the creation of derived variables for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_DerivedCreateStartNumber(regionUserNumber,equationsSetUserNumber,derivedFieldUserNumber,err)
+    !DLLEXPORT(cmfe_EquationsSet_DerivedCreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set to start the creation of derived variables for.
@@ -22998,6 +23470,7 @@ CONTAINS
 
   !>Start the creation of derived variables for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_DerivedCreateStartObj(equationsSet,derivedFieldUserNumber,derivedField,err)
+    !DLLEXPORT(cmfe_EquationsSet_DerivedCreateStartObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to start the creation of derived variables on.
@@ -23025,6 +23498,7 @@ CONTAINS
 
   !>Destroy the derived variables for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_DerivedDestroyNumber(regionUserNumber,equationsSetUserNumber,err)
+    !DLLEXPORT(cmfe_EquationsSet_DerivedDestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set to destroy the derived variables for.
@@ -23068,6 +23542,7 @@ CONTAINS
 
   !>Destroy the derived variables for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_DerivedDestroyObj(equationsSet,err)
+    !DLLEXPORT(cmfe_EquationsSet_DerivedDestroyObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to destroy the derived variables for.
@@ -23092,6 +23567,7 @@ CONTAINS
 
   !>Calculates a derived field value for the equations set and stores the result in the derived field previously set up
   SUBROUTINE cmfe_EquationsSet_DerivedVariableCalculateNumber(regionUserNumber,equationsSetUserNumber,derivedType,err)
+    !DLLEXPORT(cmfe_EquationsSet_DerivedVariableCalculateNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set.
@@ -23138,6 +23614,7 @@ CONTAINS
 
   !>Calculates a derived field value for the equations set and stores the result in the derived field previously set up
   SUBROUTINE cmfe_EquationsSet_DerivedVariableCalculateObj(equationsSet,derivedType,err)
+    !DLLEXPORT(cmfe_EquationsSet_DerivedVariableCalculateObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<The equations set to calculate the output for.
@@ -23162,6 +23639,7 @@ CONTAINS
 
   !>Sets the field variable type of the derived field to be used to store a derived variable
   SUBROUTINE cmfe_EquationsSet_DerivedVariableSetNumber(regionUserNumber,equationsSetUserNumber,derivedType,fieldVariableType,err)
+    !DLLEXPORT(cmfe_EquationsSet_DerivedVariableSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set.
@@ -23207,6 +23685,7 @@ CONTAINS
 
   !>Sets the field variable type of the derived field to be used to store a derived variable
   SUBROUTINE cmfe_EquationsSet_DerivedVariableSetObj(equationsSet,derivedType,fieldVariableType,err)
+    !DLLEXPORT(cmfe_EquationsSet_DerivedVariableSetObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<The equations set to calculate the output for.
@@ -23231,6 +23710,7 @@ CONTAINS
 
   !>Get a Jacobian matrix from the equations
   SUBROUTINE cmfe_Equations_JacobianMatrixGet(equations,residualIndex,variableType,matrix,err)
+    !DLLEXPORT(cmfe_Equations_JacobianMatrixGet)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the Jacobian matrix for
@@ -23258,6 +23738,7 @@ CONTAINS
 
   !>Get a dynamic equations matrix from equations using the dynamic matrix index
   SUBROUTINE cmfe_Equations_DynamicMatrixGet(equations,matrixIndex,matrix,err)
+    !DLLEXPORT(cmfe_Equations_DynamicMatrixGet)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the dynamic matrix for
@@ -23283,6 +23764,7 @@ CONTAINS
 
   !>Get a dynamic equations matrix from equations using the dynamic matrix type
   SUBROUTINE cmfe_Equations_DynamicMatrixGetByType(equations,matrixType,matrix,err)
+    !DLLEXPORT(cmfe_Equations_DynamicMatrixGetByType)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the dynamic matrix for
@@ -23308,6 +23790,7 @@ CONTAINS
 
   !>Get the type of a dynamic matrix from equations set equations
   SUBROUTINE cmfe_Equations_DynamicMatrixTypeGet(equations,matrixIndex,matrixType,err)
+    !DLLEXPORT(cmfe_Equations_DynamicMatrixTypeGet)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the dynamic matrix type from
@@ -23333,6 +23816,7 @@ CONTAINS
 
   !>Get the right hand side vector for equations
   SUBROUTINE cmfe_Equations_RhsVectorGet(equations,rhsVector,err)
+    !DLLEXPORT(cmfe_Equations_RhsVectorGet)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the right hand side vector for
@@ -23357,6 +23841,7 @@ CONTAINS
 
   !>Get the source vector for equations
   SUBROUTINE cmfe_Equations_SourceVectorGet(equations,sourceVector,err)
+    !DLLEXPORT(cmfe_Equations_SourceVectorGet)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the source vector for
@@ -23381,6 +23866,7 @@ CONTAINS
 
   !>Get a residual vector for equations
   SUBROUTINE cmfe_Equations_ResidualVectorGet(equations,residualIndex,residualVector,err)
+    !DLLEXPORT(cmfe_Equations_ResidualVectorGet)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the residual vector for
@@ -23406,6 +23892,7 @@ CONTAINS
 
   !>Get the number of field variables that contribute to the residual vector
   SUBROUTINE cmfe_Equations_ResidualNumberOfVariablesGet(equations,residualIndex,numberOfVariables,err)
+    !DLLEXPORT(cmfe_Equations_ResidualNumberOfVariablesGet)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the residual vector number of variables for
@@ -23431,6 +23918,7 @@ CONTAINS
 
   !>Get the field variables that contribute to the residual vector
   SUBROUTINE cmfe_Equations_ResidualVariablesGet(equations,residualIndex,residualVariables,err)
+    !DLLEXPORT(cmfe_Equations_ResidualVariablesGet)
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the residual vector variables for
@@ -23458,6 +23946,7 @@ CONTAINS
 
   !>Finish the creation of a analytic solution for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_AnalyticCreateFinishNumber(regionUserNumber,equationsSetUserNumber,err)
+    !DLLEXPORT(cmfe_EquationsSet_AnalyticCreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to finish.
@@ -23502,6 +23991,7 @@ CONTAINS
 
   !>Finish the creation of a analytic solution for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_AnalyticCreateFinishObj(equationsSet,err)
+    !DLLEXPORT(cmfe_EquationsSet_AnalyticCreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to finish.
@@ -23527,6 +24017,7 @@ CONTAINS
   !>Start the creation of a analytic solution for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_AnalyticCreateStartNumber(regionUserNumber,equationsSetUserNumber,analyticFunctionType, &
     & analyticFieldUserNumber,err)
+    !DLLEXPORT(cmfe_EquationsSet_AnalyticCreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to finish.
@@ -23576,6 +24067,7 @@ CONTAINS
 
   !>Start the creation of an analytic solution for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_AnalyticCreateStartObj(equationsSet,analyticFunctionType,analyticFieldUserNumber,analyticField,err)
+    !DLLEXPORT(cmfe_EquationsSet_AnalyticCreateStartObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to start the analytic creation on.
@@ -23604,6 +24096,7 @@ CONTAINS
 
   !>Destroy the analytic solution for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_AnalyticDestroyNumber(regionUserNumber,equationsSetUserNumber,err)
+    !DLLEXPORT(cmfe_EquationsSet_AnalyticDestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to destroy.
@@ -23647,6 +24140,7 @@ CONTAINS
 
   !>Destroy the analytic solution for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_AnalyticDestroyObj(equationsSet,err)
+    !DLLEXPORT(cmfe_EquationsSet_AnalyticDestroyObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to destroy the analytic for.
@@ -23672,6 +24166,7 @@ CONTAINS
 
   !>Evaluates the current analytic solution for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_AnalyticEvaluateNumber(regionUserNumber,equationsSetUserNumber,err)
+    !DLLEXPORT(cmfe_EquationsSet_AnalyticEvaluateNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to evaluate.
@@ -23715,6 +24210,7 @@ CONTAINS
 
   !>Evaluates the current analytic solution for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_AnalyticEvaluateObj(equationsSet,err)
+    !DLLEXPORT(cmfe_EquationsSet_AnalyticEvaluateObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to evaluate the current analytic solution for.
@@ -23739,6 +24235,7 @@ CONTAINS
 
   !>Returns the analytic time for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_AnalyticTimeGetNumber(regionUserNumber,equationsSetUserNumber,time,err)
+    !DLLEXPORT(cmfe_EquationsSet_AnalyticTimeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set get the analytic time for.
@@ -23783,6 +24280,7 @@ CONTAINS
 
   !>Returns the analytic time for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_AnalyticTimeGetObj(equationsSet,time,err)
+    !DLLEXPORT(cmfe_EquationsSet_AnalyticTimeGetObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to get the analytic time for.
@@ -23808,6 +24306,7 @@ CONTAINS
 
   !>Sets/changes the analytic time for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_AnalyticTimeSetNumber(regionUserNumber,equationsSetUserNumber,time,err)
+    !DLLEXPORT(cmfe_EquationsSet_AnalyticTimeSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set get the analytic time for.
@@ -23852,6 +24351,7 @@ CONTAINS
 
   !>Sets/changes the analytic time for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_AnalyticTimeSetObj(equationsSet,time,err)
+    !DLLEXPORT(cmfe_EquationsSet_AnalyticTimeSetObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to set the analytic time for.
@@ -23878,6 +24378,7 @@ CONTAINS
 
   !>Sets the analytic problem user parameter
   SUBROUTINE cmfe_EquationsSet_AnalyticUserParamSetNumber(regionUserNumber,equationsSetUserNumber,paramIdx,param,err)
+    !DLLEXPORT(cmfe_EquationsSet_AnalyticUserParamSetNumber)
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set
@@ -23929,6 +24430,7 @@ CONTAINS
 
   !>Sets the analytic problem user parameter
   SUBROUTINE cmfe_EquationsSet_AnalyticUserParamSetObj(equationsSet,paramIdx,param,err)
+    !DLLEXPORT(cmfe_EquationsSet_AnalyticUserParamSetObj)
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to set the analytic user parameter.
     INTEGER(INTG), INTENT(IN) :: paramIdx !<The index of the analytic user parameter to set
@@ -23954,6 +24456,7 @@ CONTAINS
 
   !>Sets the analytic problem user parameter
   SUBROUTINE cmfe_EquationsSet_AnalyticUserParamGetNumber(regionUserNumber,equationsSetUserNumber,paramIdx,param,err)
+    !DLLEXPORT(cmfe_EquationsSet_AnalyticUserParamGetNumber)
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set
@@ -24005,6 +24508,7 @@ CONTAINS
 
   !>Sets the analytic problem user parameter
   SUBROUTINE cmfe_EquationsSet_AnalyticUserParamGetObj(equationsSet,paramIdx,param,err)
+    !DLLEXPORT(cmfe_EquationsSet_AnalyticUserParamGetObj)
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to set the analytic user parameter.
     INTEGER(INTG), INTENT(IN) :: paramIdx !<The index of the analytic user parameter to set
@@ -24030,6 +24534,7 @@ CONTAINS
 
   !>Finish the creation of an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_CreateFinishNumber(regionUserNumber,equationsSetUserNumber,err)
+    !DLLEXPORT(cmfe_EquationsSet_CreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to finish.
@@ -24077,6 +24582,7 @@ CONTAINS
 
   !>Finish the creation of an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_CreateFinishObj(equationsSet,err)
+    !DLLEXPORT(cmfe_EquationsSet_CreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to finish the creation of.
@@ -24106,6 +24612,7 @@ CONTAINS
   !>Start the creation of an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_CreateStartNumber(equationsSetUserNumber,regionUserNumber,geomFibreFieldUserNumber,&
       & equationsSetSpecification,equationsSetFieldUserNumber,err)
+    !DLLEXPORT(cmfe_EquationsSet_CreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to be created.
@@ -24168,6 +24675,7 @@ CONTAINS
   SUBROUTINE cmfe_EquationsSet_CreateStartObj(equationsSetUserNumber,region,geomFibreField,&
       & equationsSetSpecification,equationsSetFieldUserNumber,&
       & equationsSetFieldField,equationsSet,err)
+    !DLLEXPORT(cmfe_EquationsSet_CreateStartObj)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to be created.
@@ -24204,6 +24712,7 @@ CONTAINS
 
   !>Destroy an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_DestroyNumber(regionUserNumber,equationsSetUserNumber,err)
+    !DLLEXPORT(cmfe_EquationsSet_DestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to destory.
@@ -24247,6 +24756,7 @@ CONTAINS
 
   !>Destroy an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_DestroyObj(equationsSet,err)
+    !DLLEXPORT(cmfe_EquationsSet_DestroyObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to destroy.
@@ -24271,6 +24781,7 @@ CONTAINS
 
   !>Finish the creation of dependent variables for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_DependentCreateFinishNumber(regionUserNumber,equationsSetUserNumber,err)
+    !DLLEXPORT(cmfe_EquationsSet_DependentCreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to finish the creation of dependent variables for.
@@ -24315,6 +24826,7 @@ CONTAINS
 
   !>Finish the creation of dependent variables for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_DependentCreateFinishObj(equationsSet,err)
+    !DLLEXPORT(cmfe_EquationsSet_DependentCreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to finish the creation of dependent variables for.
@@ -24339,6 +24851,7 @@ CONTAINS
 
   !>Start the creation of dependent variables for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_DependentCreateStartNumber(regionUserNumber,equationsSetUserNumber,dependentFieldUserNumber,err)
+    !DLLEXPORT(cmfe_EquationsSet_DependentCreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to start the creation of dependent variables for.
@@ -24387,6 +24900,7 @@ CONTAINS
 
   !>Start the creation of dependent variables for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_DependentCreateStartObj(equationsSet,dependentFieldUserNumber,dependentField,err)
+    !DLLEXPORT(cmfe_EquationsSet_DependentCreateStartObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to start the creation of dependent variables on.
@@ -24414,6 +24928,7 @@ CONTAINS
 
   !>Destroy the dependent variables for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_DependentDestroyNumber(regionUserNumber,equationsSetUserNumber,err)
+    !DLLEXPORT(cmfe_EquationsSet_DependentDestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to destroy the dependent variables for.
@@ -24457,6 +24972,7 @@ CONTAINS
 
   !>Destroy the dependent variables for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_DependentDestroyObj(equationsSet,err)
+    !DLLEXPORT(cmfe_EquationsSet_DependentDestroyObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to destroy the dependent variables for.
@@ -24481,6 +24997,7 @@ CONTAINS
 
   !>Finish the creation of equations for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_EquationsCreateFinishNumber(regionUserNumber,equationsSetUserNumber,err)
+    !DLLEXPORT(cmfe_EquationsSet_EquationsCreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to finish the creation of equations for.
@@ -24525,6 +25042,7 @@ CONTAINS
 
   !>Finish the creation of equations for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_EquationsCreateFinishObj(equationsSet,err)
+    !DLLEXPORT(cmfe_EquationsSet_EquationsCreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to finish the creation of equations for.
@@ -24549,6 +25067,7 @@ CONTAINS
 
   !>Start the creation of equations for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_EquationsCreateStartNumber(regionUserNumber,equationsSetUserNumber,err)
+    !DLLEXPORT(cmfe_EquationsSet_EquationsCreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to start the creation of equations for.
@@ -24595,6 +25114,7 @@ CONTAINS
 
   !>Start the creation of equations for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_EquationsCreateStartObj(equationsSet,equations,err)
+    !DLLEXPORT(cmfe_EquationsSet_EquationsCreateStartObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to start the creation of equations on.
@@ -24620,6 +25140,7 @@ CONTAINS
 
   !>Destroy the equations for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_EquationsDestroyNumber(regionUserNumber,equationsSetUserNumber,err)
+    !DLLEXPORT(cmfe_EquationsSet_EquationsDestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to destroy the equations for.
@@ -24663,6 +25184,7 @@ CONTAINS
 
   !>Destroy the equations for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_EquationsDestroyObj(equationsSet,err)
+    !DLLEXPORT(cmfe_EquationsSet_EquationsDestroyObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to destroy the equations for.
@@ -24687,6 +25209,7 @@ CONTAINS
 
   !>Finish the creation of independent variables for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_IndependentCreateFinishNumber(regionUserNumber,equationsSetUserNumber,err)
+    !DLLEXPORT(cmfe_EquationsSet_IndependentCreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to finish the creation of independent variables for.
@@ -24731,6 +25254,7 @@ CONTAINS
 
   !>Finish the creation of independent variables for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_IndependentCreateFinishObj(equationsSet,err)
+    !DLLEXPORT(cmfe_EquationsSet_IndependentCreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to finish the creation of independent variables for.
@@ -24756,6 +25280,7 @@ CONTAINS
 
   !>Start the creation of independent variables for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_IndependentCreateStartNumber(regionUserNumber,equationsSetUserNumber,independentFieldUserNumber,err)
+    !DLLEXPORT(cmfe_EquationsSet_IndependentCreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to start the creation of independent variables for.
@@ -24804,6 +25329,7 @@ CONTAINS
 
   !>Start the creation of independent variables for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_IndependentCreateStartObj(equationsSet,independentFieldUserNumber,independentField,err)
+    !DLLEXPORT(cmfe_EquationsSet_IndependentCreateStartObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to start the creation of independent variables on.
@@ -24831,6 +25357,7 @@ CONTAINS
 
   !>Destroy the independent variables for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_IndependentDestroyNumber(regionUserNumber,equationsSetUserNumber,err)
+    !DLLEXPORT(cmfe_EquationsSet_IndependentDestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to destroy the independent variables for.
@@ -24874,6 +25401,7 @@ CONTAINS
 
   !>Destroy the independent variables for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_IndependentDestroyObj(equationsSet,err)
+    !DLLEXPORT(cmfe_EquationsSet_IndependentDestroyObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to destroy the independent variables for.
@@ -24902,6 +25430,7 @@ CONTAINS
 
   !>Finish the creation of materials for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_MaterialsCreateFinishNumber(regionUserNumber,equationsSetUserNumber,err)
+    !DLLEXPORT(cmfe_EquationsSet_MaterialsCreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to finish the creation of materials for.
@@ -24946,6 +25475,7 @@ CONTAINS
 
   !>Finish the creation of materials for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_MaterialsCreateFinishObj(equationsSet,err)
+    !DLLEXPORT(cmfe_EquationsSet_MaterialsCreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to finish the creation of materials for.
@@ -24970,6 +25500,7 @@ CONTAINS
 
   !>Start the creation of materials for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_MaterialsCreateStartNumber(regionUserNumber,equationsSetUserNumber,materialsFieldUserNumber,err)
+    !DLLEXPORT(cmfe_EquationsSet_MaterialsCreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to start the creation of materials for.
@@ -25018,6 +25549,7 @@ CONTAINS
 
   !>Start the creation of materials for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_MaterialsCreateStartObj(equationsSet,materialsFieldUserNumber,materialsField,err)
+    !DLLEXPORT(cmfe_EquationsSet_MaterialsCreateStartObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to start the creation of materials on.
@@ -25045,6 +25577,7 @@ CONTAINS
 
   !>Destroy the materials for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_MaterialsDestroyNumber(regionUserNumber,equationsSetUserNumber,err)
+    !DLLEXPORT(cmfe_EquationsSet_MaterialsDestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to destroy the materials for.
@@ -25088,6 +25621,7 @@ CONTAINS
 
   !>Destroy the materials for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_MaterialsDestroyObj(equationsSet,err)
+    !DLLEXPORT(cmfe_EquationsSet_MaterialsDestroyObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to destroy the materials for.
@@ -25112,6 +25646,7 @@ CONTAINS
 
   !>Returns the solution method for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_SolutionMethodGetNumber(regionUserNumber,equationsSetUserNumber,solutionMethod,err)
+    !DLLEXPORT(cmfe_EquationsSet_SolutionMethodGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to get the solution method for.
@@ -25156,6 +25691,7 @@ CONTAINS
 
   !>Returns the solution method for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_SolutionMethodGetObj(equationsSet,solutionMethod,err)
+    !DLLEXPORT(cmfe_EquationsSet_SolutionMethodGetObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to get the solution method for.
@@ -25181,6 +25717,7 @@ CONTAINS
 
   !>Sets/changes the solution method for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_SolutionMethodSetNumber(regionUserNumber,equationsSetUserNumber,solutionMethod,err)
+    !DLLEXPORT(cmfe_EquationsSet_SolutionMethodSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to set the solution method for.
@@ -25225,6 +25762,7 @@ CONTAINS
 
   !>Sets/changes the solution method for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_SolutionMethodSetObj(equationsSet,solutionMethod,err)
+    !DLLEXPORT(cmfe_EquationsSet_SolutionMethodSetObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to set the solution method for.
@@ -25250,6 +25788,7 @@ CONTAINS
 
   !>Finish the creation of a source for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_SourceCreateFinishNumber(regionUserNumber,equationsSetUserNumber,err)
+    !DLLEXPORT(cmfe_EquationsSet_SourceCreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to finish the creation of a source for.
@@ -25293,6 +25832,7 @@ CONTAINS
 
   !>Finish the creation of a source for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_SourceCreateFinishObj(equationsSet,err)
+    !DLLEXPORT(cmfe_EquationsSet_SourceCreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to finish the creation of a source for.
@@ -25317,6 +25857,7 @@ CONTAINS
 
   !>Start the creation of a source for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_SourceCreateStartNumber(regionUserNumber,equationsSetUserNumber,sourceFieldUserNumber,err)
+    !DLLEXPORT(cmfe_EquationsSet_SourceCreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to start the creation of a source for.
@@ -25364,6 +25905,7 @@ CONTAINS
 
   !>Start the creation of a source for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_SourceCreateStartObj(equationsSet,sourceFieldUserNumber,sourceField,err)
+    !DLLEXPORT(cmfe_EquationsSet_SourceCreateStartObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to start the creation of a source on.
@@ -25390,6 +25932,7 @@ CONTAINS
 
   !>Destroy the source for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_SourceDestroyNumber(regionUserNumber,equationsSetUserNumber,err)
+    !DLLEXPORT(cmfe_EquationsSet_SourceDestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to destroy the source for.
@@ -25433,6 +25976,7 @@ CONTAINS
 
   !>Destroy the source for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_SourceDestroyObj(equationsSet,err)
+    !DLLEXPORT(cmfe_EquationsSet_SourceDestroyObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to destroy the source for.
@@ -25457,6 +26001,7 @@ CONTAINS
 
   !>Returns the equations set specification array for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_SpecificationGetNumber(regionUserNumber,equationsSetUserNumber,equationsSetSpecification,err)
+    !DLLEXPORT(cmfe_EquationsSet_SpecificationGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to get the specification for.
@@ -25502,6 +26047,7 @@ CONTAINS
 
   !>Returns the equations set specification array for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_SpecificationGetObj(equationsSet,equationsSetSpecification,err)
+    !DLLEXPORT(cmfe_EquationsSet_SpecificationGetObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<The equations set to get the specification for.
@@ -25528,6 +26074,7 @@ CONTAINS
 
   !>Returns the size of the equations set specification array for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_SpecificationSizeGetNumber(regionUserNumber,equationsSetUserNumber,specificationSize,err)
+    !DLLEXPORT(cmfe_EquationsSet_SpecificationSizeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to get the specification size for.
@@ -25573,6 +26120,7 @@ CONTAINS
 
   !>Returns the size of the equations set specification array for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_SpecificationSizeGetObj(equationsSet,specificationSize,err)
+    !DLLEXPORT(cmfe_EquationsSet_SpecificationSizeGetObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<The equations set to get the specification size for.
@@ -25599,6 +26147,7 @@ CONTAINS
 
   !>Calculate the strain tensor at a given element xi location, for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_StrainInterpolateXiNumber(regionUserNumber,equationsSetUserNumber,userElementNumber,xi,values,err)
+    !DLLEXPORT(cmfe_EquationsSet_StrainInterpolateXiNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set.
@@ -25647,6 +26196,7 @@ CONTAINS
 
   !>Calculate the strain tensor at a given element xi location, for an equations set identified by an object.
   SUBROUTINE cmfe_EquationsSet_StrainInterpolateXiObj(equationsSet,userElementNumber,xi,values,err)
+    !DLLEXPORT(cmfe_EquationsSet_StrainInterpolateXiObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<A pointer to the equations set to interpolate strain for.
@@ -25677,6 +26227,7 @@ CONTAINS
   !>Returns the interpolation type for a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ComponentInterpolationGetNumber(regionUserNumber,fieldUserNumber,variableType,componentNumber, &
     & interpolationType,err)
+    !DLLEXPORT(cmfe_Field_ComponentInterpolationGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the interpolation type for.
@@ -25723,6 +26274,7 @@ CONTAINS
 
   !>Returns the interpolation type for a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ComponentInterpolationGetObj(field,variableType,componentNumber,interpolationType,err)
+    !DLLEXPORT(cmfe_Field_ComponentInterpolationGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the interpolation type for.
@@ -25751,6 +26303,7 @@ CONTAINS
   !>Sets/changes the interpolation type for a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ComponentInterpolationSetNumber(regionUserNumber,fieldUserNumber,variableType,componentNumber, &
     & interpolationType,err)
+    !DLLEXPORT(cmfe_Field_ComponentInterpolationSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the interpolation type for.
@@ -25797,6 +26350,7 @@ CONTAINS
 
   !>Sets/changes the interpolation type for a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ComponentInterpolationSetObj(field,variableType,componentNumber,interpolationType,err)
+    !DLLEXPORT(cmfe_Field_ComponentInterpolationSetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the interpolation type for.
@@ -25824,6 +26378,7 @@ CONTAINS
 
   !>Returns the character string label for a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ComponentLabelGetCNumber(regionUserNumber,fieldUserNumber,variableType,componentNumber,label,err)
+    !DLLEXPORT(cmfe_Field_ComponentLabelGetCNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the label for.
@@ -25870,6 +26425,7 @@ CONTAINS
 
   !>Returns the character string label for a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ComponentLabelGetCObj(field,variableType,componentNumber,label,err)
+    !DLLEXPORT(cmfe_Field_ComponentLabelGetCObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the label for.
@@ -25897,6 +26453,7 @@ CONTAINS
 
   !>Returns the varying string label for a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ComponentLabelGetVSNumber(regionUserNumber,fieldUserNumber,variableType,componentNumber,label,err)
+    !DLLEXPORT(cmfe_Field_ComponentLabelGetVSNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the label for.
@@ -25943,6 +26500,7 @@ CONTAINS
 
   !>Returns the varying string label for a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ComponentLabelGetVSObj(field,variableType,componentNumber,label,err)
+    !DLLEXPORT(cmfe_Field_ComponentLabelGetVSObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the label for.
@@ -25970,6 +26528,7 @@ CONTAINS
 
   !>Sets/changes the character string label for a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ComponentLabelSetCNumber(regionUserNumber,fieldUserNumber,variableType,componentNumber,label,err)
+    !DLLEXPORT(cmfe_Field_ComponentLabelSetCNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the label for.
@@ -26016,6 +26575,7 @@ CONTAINS
 
   !>Sets/changes the character string label for a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ComponentLabelSetCObj(field,variableType,componentNumber,label,err)
+    !DLLEXPORT(cmfe_Field_ComponentLabelSetCObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the label for.
@@ -26043,6 +26603,7 @@ CONTAINS
 
   !>Sets/changes the varying string label for a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ComponentLabelSetVSNumber(regionUserNumber,fieldUserNumber,variableType,componentNumber,label,err)
+    !DLLEXPORT(cmfe_Field_ComponentLabelSetVSNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the label for.
@@ -26089,6 +26650,7 @@ CONTAINS
 
   !>Sets/changes the varying string label for a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ComponentLabelSetVSObj(field,variableType,componentNumber,label,err)
+    !DLLEXPORT(cmfe_Field_ComponentLabelSetVSObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the label for.
@@ -26117,6 +26679,7 @@ CONTAINS
   !>Returns the mesh component number for a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ComponentMeshComponentGetNumber(regionUserNumber,fieldUserNumber,variableType,componentNumber, &
     & meshComponent,err)
+    !DLLEXPORT(cmfe_Field_ComponentMeshComponentGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the mesh component number for.
@@ -26163,6 +26726,7 @@ CONTAINS
 
   !>Returns the mesh component number for a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ComponentMeshComponentGetObj(field,variableType,componentNumber,meshComponent,err)
+    !DLLEXPORT(cmfe_Field_ComponentMeshComponentGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the mesh component number for.
@@ -26191,6 +26755,7 @@ CONTAINS
   !>Sets/changes the mesh component number for a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ComponentMeshComponentSetNumber(regionUserNumber,fieldUserNumber,variableType,componentNumber, &
     & meshComponent,err)
+    !DLLEXPORT(cmfe_Field_ComponentMeshComponentSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the mesh component number for.
@@ -26237,6 +26802,7 @@ CONTAINS
 
   !>Sets/changes the mesh component number for a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ComponentMeshComponentSetObj(field,variableType,componentNumber,meshComponent,err)
+    !DLLEXPORT(cmfe_Field_ComponentMeshComponentSetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the mesh component number for.
@@ -26265,6 +26831,7 @@ CONTAINS
   !>Initialises the values of parameter set of a field variable component to an integer constant value for a field identified by a user number.
   SUBROUTINE cmfe_Field_ComponentValuesInitialiseIntgNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ComponentValuesInitialiseIntgNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to initialise the field variable component for.
@@ -26313,6 +26880,7 @@ CONTAINS
 
   !>Initialises the values of parameter set of a field variable component to an integer constant value for a field identified by an object.
   SUBROUTINE cmfe_Field_ComponentValuesInitialiseIntgObj(field,variableType,fieldSetType,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ComponentValuesInitialiseIntgObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to initialise the field variable component for.
@@ -26341,6 +26909,7 @@ CONTAINS
   !>Initialises the values of parameter set of a field variable component to a single precision constant value for a field identified by a user number.
   SUBROUTINE cmfe_Field_ComponentValuesInitialiseSPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ComponentValuesInitialiseSPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to initialise the field variable component for.
@@ -26389,6 +26958,7 @@ CONTAINS
 
   !>Initialises the values of parameter set of a field variable component to a single precision constant value for a field identified by an object.
   SUBROUTINE cmfe_Field_ComponentValuesInitialiseSPObj(field,variableType,fieldSetType,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ComponentValuesInitialiseSPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to initialise the field variable component for.
@@ -26417,6 +26987,7 @@ CONTAINS
   !>Initialises the values of parameter set of a field variable component to a double precision constant value for a field identified by a user number.
   SUBROUTINE cmfe_Field_ComponentValuesInitialiseDPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ComponentValuesInitialiseDPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to initialise the field variable component for.
@@ -26465,6 +27036,7 @@ CONTAINS
 
   !>Initialises the values of parameter set of a field variable component to a double precision constant value for a field identified by an object.
   SUBROUTINE cmfe_Field_ComponentValuesInitialiseDPObj(field,variableType,fieldSetType,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ComponentValuesInitialiseDPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to initialise the field variable component for.
@@ -26493,6 +27065,7 @@ CONTAINS
   !>Initialises the values of parameter set of a field variable component to a logical constant value for a field identified by a user number.
   SUBROUTINE cmfe_Field_ComponentValuesInitialiseLNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ComponentValuesInitialiseLNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to initialise the field variable component for.
@@ -26540,6 +27113,7 @@ CONTAINS
 
   !>Initialises the values of parameter set of a field variable component to a logical constant value for a field identified by an object.
   SUBROUTINE cmfe_Field_ComponentValuesInitialiseLObj(field,variableType,fieldSetType,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ComponentValuesInitialiseLObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to initialise the field variable component for.
@@ -26568,6 +27142,7 @@ CONTAINS
 
   !>Returns the data type for a field variable for a field identified by a user number.
   SUBROUTINE cmfe_Field_DataTypeGetNumber(regionUserNumber,fieldUserNumber,variableType,dataType,err)
+    !DLLEXPORT(cmfe_Field_DataTypeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the data type for.
@@ -26613,6 +27188,7 @@ CONTAINS
 
   !>Returns the data type for a field variable for a field identified by an object.
   SUBROUTINE cmfe_Field_DataTypeGetObj(field,variableType,dataType,err)
+    !DLLEXPORT(cmfe_Field_DataTypeGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the data type for.
@@ -26639,6 +27215,7 @@ CONTAINS
 
   !>Sets/changes the data type for a field variable for a field identified by a user number.
   SUBROUTINE cmfe_Field_DataTypeSetNumber(regionUserNumber,fieldUserNumber,variableType,dataType,err)
+    !DLLEXPORT(cmfe_Field_DataTypeSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the data type for.
@@ -26684,6 +27261,7 @@ CONTAINS
 
   !>Sets/changes the data type for a field variable for a field identified by an object.
   SUBROUTINE cmfe_Field_DataTypeSetObj(field,variableType,dataType,err)
+    !DLLEXPORT(cmfe_Field_DataTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the data type for.
@@ -26710,6 +27288,7 @@ CONTAINS
 
   !>Returns the DOF order type for a field variable for a field identified by a user number.
   SUBROUTINE cmfe_Field_DOFOrderTypeGetNumber(regionUserNumber,fieldUserNumber,variableType,DOFOrderType,err)
+    !DLLEXPORT(cmfe_Field_DOFOrderTypeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the DOF Order type for.
@@ -26755,6 +27334,7 @@ CONTAINS
 
   !>Returns the DOF Order type for a field variable for a field identified by an object.
   SUBROUTINE cmfe_Field_DOFOrderTypeGetObj(field,variableType,DOFOrderType,err)
+    !DLLEXPORT(cmfe_Field_DOFOrderTypeGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the DOF order type for.
@@ -26781,6 +27361,7 @@ CONTAINS
 
   !>Sets/changes the DOF order type for a field variable for a field identified by a user number.
   SUBROUTINE cmfe_Field_DOFOrderTypeSetNumber(regionUserNumber,fieldUserNumber,variableType,DOFOrderType,err)
+    !DLLEXPORT(cmfe_Field_DOFOrderTypeSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the DOF Order type for.
@@ -26826,6 +27407,7 @@ CONTAINS
 
   !>Sets/changes the DOF Order type for a field variable for a field identified by an object.
   SUBROUTINE cmfe_Field_DOFOrderTypeSetObj(field,variableType,DOFOrderType,err)
+    !DLLEXPORT(cmfe_Field_DOFOrderTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the DOF order type for.
@@ -26852,6 +27434,7 @@ CONTAINS
 
   !>Finishes the creation of a field identified by a user number.
   SUBROUTINE cmfe_Field_CreateFinishNumber(regionUserNumber,fieldUserNumber,err)
+    !DLLEXPORT(cmfe_Field_CreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to finish the creation of.
@@ -26899,6 +27482,7 @@ CONTAINS
 
   !>Finishes the creation of a field identified by an object.
   SUBROUTINE cmfe_Field_CreateFinishObj(field,err)
+    !DLLEXPORT(cmfe_Field_CreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(INOUT) :: field !<The field to finish the creation of.
@@ -26927,6 +27511,7 @@ CONTAINS
 
   !>Starts the creation of a field identified by a user number.
   SUBROUTINE cmfe_Field_CreateStartNumber(fieldUserNumber,regionUserNumber,err)
+    !DLLEXPORT(cmfe_Field_CreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to start the creation of.
@@ -26967,6 +27552,7 @@ CONTAINS
 
   !>Starts the creation of a field on an interface identified by an object.
   SUBROUTINE cmfe_Field_CreateStartInterfaceObj(fieldUserNumber,interface,field,err)
+    !DLLEXPORT(cmfe_Field_CreateStartInterfaceObj)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to start the creation of.
@@ -26993,6 +27579,7 @@ CONTAINS
 
    !>Starts the creation of a field on a region identified by an object.
   SUBROUTINE cmfe_Field_CreateStartRegionObj(fieldUserNumber,region,field,err)
+    !DLLEXPORT(cmfe_Field_CreateStartRegionObj)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to start the creation of.
@@ -27023,6 +27610,7 @@ CONTAINS
 
   !>Returns the dependent type for a field identified by a user number.
   SUBROUTINE cmfe_Field_DependentTypeGetNumber(regionUserNumber,fieldUserNumber,dependentType,err)
+    !DLLEXPORT(cmfe_Field_DependentTypeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the dependent type for.
@@ -27067,6 +27655,7 @@ CONTAINS
 
   !>Returns the dependent type for a field identified by an object.
   SUBROUTINE cmfe_Field_DependentTypeGetObj(field,dependentType,err)
+    !DLLEXPORT(cmfe_Field_DependentTypeGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the dependent type for.
@@ -27092,6 +27681,7 @@ CONTAINS
 
   !>Sets/changes the dependent type for a field identified by a user number.
   SUBROUTINE cmfe_Field_DependentTypeSetNumber(regionUserNumber,fieldUserNumber,dependentType,err)
+    !DLLEXPORT(cmfe_Field_DependentTypeSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the dependent type for.
@@ -27136,6 +27726,7 @@ CONTAINS
 
   !>Sets/changes the dependent type for a field identified by an object.
   SUBROUTINE cmfe_Field_DependentTypeSetObj(field,dependentType,err)
+    !DLLEXPORT(cmfe_Field_DependentTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the dependent type for.
@@ -27161,6 +27752,7 @@ CONTAINS
 
   !>Destroys a field identified by a user number.
   SUBROUTINE cmfe_Field_DestroyNumber(regionUserNumber,fieldUserNumber,err)
+    !DLLEXPORT(cmfe_Field_DestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to destroy.
@@ -27204,6 +27796,7 @@ CONTAINS
 
   !>Destroys a field identified by an object.
   SUBROUTINE cmfe_Field_DestroyObj(field,err)
+    !DLLEXPORT(cmfe_Field_DestroyObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to destroy.
@@ -27228,6 +27821,7 @@ CONTAINS
 
   !>Returns the dimension for a field identified by a user number.
   SUBROUTINE cmfe_Field_DimensionGetNumber(regionUserNumber,fieldUserNumber,variableType,dimension,err)
+    !DLLEXPORT(cmfe_Field_DimensionGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the dimension for.
@@ -27273,6 +27867,7 @@ CONTAINS
 
   !>Returns the dimension for a field identified by an object.
   SUBROUTINE cmfe_Field_DimensionGetObj(field,variableType,dimension,err)
+    !DLLEXPORT(cmfe_Field_DimensionGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the dimension for.
@@ -27299,6 +27894,7 @@ CONTAINS
 
   !>Sets/changes the dimension for a field identified by a user number.
   SUBROUTINE cmfe_Field_DimensionSetNumber(regionUserNumber,fieldUserNumber,variableType,dimension,err)
+    !DLLEXPORT(cmfe_Field_DimensionSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the dimension for.
@@ -27344,6 +27940,7 @@ CONTAINS
 
   !>Sets/changes the dimension for a field identified by an object.
   SUBROUTINE cmfe_Field_DimensionSetObj(field,variableType,dimension,err)
+    !DLLEXPORT(cmfe_Field_DimensionSetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the dimension for.
@@ -27370,6 +27967,7 @@ CONTAINS
 
   !>Returns the geometric field for a field identified by a user number.
   SUBROUTINE cmfe_Field_GeometricFieldGetNumber(regionUserNumber,fieldUserNumber,geometricFieldUserNumber,err)
+    !DLLEXPORT(cmfe_Field_GeometricFieldGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the geometric field for.
@@ -27416,6 +28014,7 @@ CONTAINS
 
   !>Returns the geometric field for a field identified by an object.
   SUBROUTINE cmfe_Field_GeometricFieldGetObj(field,geometricField,err)
+    !DLLEXPORT(cmfe_Field_GeometricFieldGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the geometric field for.
@@ -27441,6 +28040,7 @@ CONTAINS
 
   !>Sets/changes the geometric field for a field identified by a user number.
   SUBROUTINE cmfe_Field_GeometricFieldSetNumber(regionUserNumber,fieldUserNumber,geometricFieldUserNumber,err)
+    !DLLEXPORT(cmfe_Field_GeometricFieldSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the geometric field for.
@@ -27494,6 +28094,7 @@ CONTAINS
 
   !>Sets/changes the geometric field for a field identified by an object.
   SUBROUTINE cmfe_Field_GeometricFieldSetObj(field,geometricField,err)
+    !DLLEXPORT(cmfe_Field_GeometricFieldSetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the geometric field for.
@@ -27520,6 +28121,7 @@ CONTAINS
   !>Gets the line length between nodes of a geometric field for a given element number and element basis line number by a user number.
   SUBROUTINE cmfe_Field_GeometricParametersElementLineLengthGetNumber(regionUserNumber,geometricFieldUserNumber,elementNumber, &
     & elementLineNumber,lineLength,err)
+    !DLLEXPORT(cmfe_Field_GeometricParametersElementLineLengthGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to obtain the line length from
@@ -27568,6 +28170,7 @@ CONTAINS
 
   !>Gets the line length between nodes of a geometric field for a given element number and element basis line number by an object.
   SUBROUTINE cmfe_Field_GeometricParametersElementLineLengthGetObj(geometricField,elementNumber,elementLineNumber,lineLength,err)
+    !DLLEXPORT(cmfe_Field_GeometricParametersElementLineLengthGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: geometricField !<The geometric field to obtain the line length from
@@ -27598,6 +28201,7 @@ CONTAINS
   !>Gets the scale factor for a particular node identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetNodeScaleFactorGetNumber(regionUserNumber,fieldUserNumber,variableType, &
     & versionNumber,derivativeNumber,nodeUserNumber,componentNumber,scaleFactor,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetNodeScaleFactorGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the scalefactor for
@@ -27650,6 +28254,7 @@ CONTAINS
   !>Gets the scale factor for a particular node identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetNodeScaleFactorGetObj(field,variableType, &
     & versionNumber,derivativeNumber,nodeUserNumber,componentNumber,scaleFactor,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetNodeScaleFactorGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get scale factor for
@@ -27684,6 +28289,7 @@ CONTAINS
   !>Gets the scale factors for all nodes identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetNodeScaleFactorsGetNumber(regionUserNumber,fieldUserNumber,variableType, &
     & meshComponentNumber,scaleFactors,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetNodeScaleFactorsGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the scalefactor for
@@ -27731,6 +28337,7 @@ CONTAINS
 
   !>Gets the scale factors for all nodes identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetNodeScaleFactorsGetObj(field,variableType,meshComponentNumber,scaleFactors,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetNodeScaleFactorsGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get scale factor for
@@ -27759,6 +28366,7 @@ CONTAINS
   !>Gets the number of scale factor dofs, identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetNodeNumberOfScaleFactorDofsGetNumber(regionUserNumber,fieldUserNumber,variableType, &
     & meshComponentNumber,numberOfScaleFactorsDofs,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetNodeNumberOfScaleFactorDofsGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the number of scalefactors for
@@ -27808,6 +28416,7 @@ CONTAINS
   !>Gets the number of scale factor dofs, identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetNodeNumberOfScaleFactorDofsGetObj(field,variableType,meshComponentNumber, &
     & numberOfScaleFactorsDofs,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetNodeNumberOfScaleFactorDofsGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the number of scale factor dofs for
@@ -27838,6 +28447,7 @@ CONTAINS
   !>Sets the scale factor for a particular node identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetNodeScaleFactorSetNumber(regionUserNumber,fieldUserNumber,variableType, &
     & versionNumber,derivativeNumber,nodeUserNumber,componentNumber,scaleFactor,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetNodeScaleFactorSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the scalefactor for
@@ -27890,6 +28500,7 @@ CONTAINS
   !>Sets the scale factor for a particular node identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetNodeScaleFactorSetObj(field,variableType, &
     & versionNumber,derivativeNumber,nodeUserNumber,componentNumber,scaleFactor,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetNodeScaleFactorSetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set scale factor for
@@ -27923,6 +28534,7 @@ CONTAINS
   !>Sets the scale factors for all nodes identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetNodeScaleFactorsSetNumber(regionUserNumber,fieldUserNumber,variableType, &
     & meshComponentNumber,scaleFactors,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetNodeScaleFactorsSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the scalefactor for
@@ -27970,6 +28582,7 @@ CONTAINS
 
   !>Sets the scale factors for all nodes identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetNodeScaleFactorsSetObj(field,variableType,meshComponentNumber,scaleFactors,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetNodeScaleFactorsSetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set scale factor for
@@ -27998,6 +28611,7 @@ CONTAINS
 
   !>Returns the character string label for a field identified by a user number.
   SUBROUTINE cmfe_Field_LabelGetCNumber(regionUserNumber,fieldUserNumber,label,err)
+    !DLLEXPORT(cmfe_Field_LabelGetCNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the label for.
@@ -28042,6 +28656,7 @@ CONTAINS
 
   !>Returns the character string label for a field identified by an object.
   SUBROUTINE cmfe_Field_LabelGetCObj(field,label,err)
+    !DLLEXPORT(cmfe_Field_LabelGetCObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the label for.
@@ -28067,6 +28682,7 @@ CONTAINS
 
   !>Returns the varying string label for a field identified by a user number.
   SUBROUTINE cmfe_Field_LabelGetVSNumber(regionUserNumber,fieldUserNumber,label,err)
+    !DLLEXPORT(cmfe_Field_LabelGetVSNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the label for.
@@ -28111,6 +28727,7 @@ CONTAINS
 
   !>Returns the varying string label for a field identified by an object.
   SUBROUTINE cmfe_Field_LabelGetVSObj(field,label,err)
+    !DLLEXPORT(cmfe_Field_LabelGetVSObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the label for.
@@ -28136,6 +28753,7 @@ CONTAINS
 
   !>Sets/changes the character string label for a field identified by a user number.
   SUBROUTINE cmfe_Field_LabelSetCNumber(regionUserNumber,fieldUserNumber,label,err)
+    !DLLEXPORT(cmfe_Field_LabelSetCNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the label for.
@@ -28180,6 +28798,7 @@ CONTAINS
 
   !>Sets/changes the character string label for a field identified by an object.
   SUBROUTINE cmfe_Field_LabelSetCObj(field,label,err)
+    !DLLEXPORT(cmfe_Field_LabelSetCObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the label for.
@@ -28205,6 +28824,7 @@ CONTAINS
 
   !>Sets/changes the varying string label for a field identified by a user number.
   SUBROUTINE cmfe_Field_LabelSetVSNumber(regionUserNumber,fieldUserNumber,label,err)
+    !DLLEXPORT(cmfe_Field_LabelSetVSNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the label for.
@@ -28249,6 +28869,7 @@ CONTAINS
 
   !>Sets/changes the varying string label for a field identified by an object.
   SUBROUTINE cmfe_Field_LabelSetVSObj(field,label,err)
+    !DLLEXPORT(cmfe_Field_LabelSetVSObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the label for.
@@ -28275,6 +28896,7 @@ CONTAINS
   !>Returns the interpolation type for a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_PositionNormalTangentCalculateNodeNumber(regionUserNumber,fieldUserNumber,variableType,componentNumber, &
     & localNodeNumber,position,normal,tangents,err)
+    !DLLEXPORT(cmfe_Field_PositionNormalTangentCalculateNodeNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the interpolation type for.
@@ -28325,6 +28947,7 @@ CONTAINS
   !>Returns the position, normal and tangents for a field node for a field identified by an object.
   SUBROUTINE cmfe_Field_PositionNormalTangentCalculateNodeObj(field,variableType,componentNumber,localNodeNumber, &
     & position,normal,tangents,err)
+    !DLLEXPORT(cmfe_Field_PositionNormalTangentCalculateNodeObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the interpolation type for.
@@ -28357,6 +28980,7 @@ CONTAINS
 
   !>Returns the mesh decomposition for a field identified by a user number.
   SUBROUTINE cmfe_Field_MeshDecompositionGetNumber(regionUserNumber,fieldUserNumber,decompositionUserNumber,err)
+    !DLLEXPORT(cmfe_Field_MeshDecompositionGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the mesh decomposition for.
@@ -28404,6 +29028,7 @@ CONTAINS
 
   !>Returns the mesh decomposition for a field identified by an object.
   SUBROUTINE cmfe_Field_MeshDecompositionGetObj(field,meshDecomposition,err)
+    !DLLEXPORT(cmfe_Field_MeshDecompositionGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the mesh decomposition for.
@@ -28429,6 +29054,7 @@ CONTAINS
 
   !>Sets/changes the mesh decomposition for a field identified by a user number.
   SUBROUTINE cmfe_Field_MeshDecompositionSetNumber(regionUserNumber,fieldUserNumber,meshUserNumber,decompositionUserNumber,err)
+    !DLLEXPORT(cmfe_Field_MeshDecompositionSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the mesh decomposition for.
@@ -28492,6 +29118,7 @@ CONTAINS
 
   !>Sets/changes the mesh decomposition for a field identified by an object.
   SUBROUTINE cmfe_Field_MeshDecompositionSetObj(field,meshDecomposition,err)
+    !DLLEXPORT(cmfe_Field_MeshDecompositionSetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the mesh decomposition for.
@@ -28517,6 +29144,7 @@ CONTAINS
 
   !>Sets/changes the data projection for a field identified by a user number.
   SUBROUTINE cmfe_Field_DataProjectionSetNumber(regionUserNumber,fieldUserNumber,dataProjectionUserNumber,err)
+    !DLLEXPORT(cmfe_Field_DataProjectionSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the mesh decomposition for.
@@ -28580,6 +29208,7 @@ CONTAINS
 
   !>Sets/changes the data projection for a field identified by an object.
   SUBROUTINE cmfe_Field_DataProjectionSetObj(field,dataProjection,err)
+    !DLLEXPORT(cmfe_Field_DataProjectionSetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the mesh decomposition for.
@@ -28605,6 +29234,7 @@ CONTAINS
 
   !>Returns the number of componenets for a field variable for a field identified by a user number.
   SUBROUTINE cmfe_Field_NumberOfComponentsGetNumber(regionUserNumber,fieldUserNumber,variableType,numberOfComponents,err)
+    !DLLEXPORT(cmfe_Field_NumberOfComponentsGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the number of components for.
@@ -28650,6 +29280,7 @@ CONTAINS
 
   !>Returns the number of components for a field variable for a field identified by an object.
   SUBROUTINE cmfe_Field_NumberOfComponentsGetObj(field,variableType,numberOfComponents,err)
+    !DLLEXPORT(cmfe_Field_NumberOfComponentsGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the number of components for.
@@ -28676,6 +29307,7 @@ CONTAINS
 
   !>Sets/changes the number of componenets for a field variable for a field identified by a user number.
   SUBROUTINE cmfe_Field_NumberOfComponentsSetNumber(regionUserNumber,fieldUserNumber,variableType,numberOfComponents,err)
+    !DLLEXPORT(cmfe_Field_NumberOfComponentsSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the number of components for.
@@ -28721,6 +29353,7 @@ CONTAINS
 
   !>Sets/changes the number of components for a field variable for a field identified by an object.
   SUBROUTINE cmfe_Field_NumberOfComponentsSetObj(field,variableType,numberOfComponents,err)
+    !DLLEXPORT(cmfe_Field_NumberOfComponentsSetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the number of components for.
@@ -28747,6 +29380,7 @@ CONTAINS
 
   !>Returns the number of variables for a field identified by a user number.
   SUBROUTINE cmfe_Field_NumberOfVariablesGetNumber(regionUserNumber,fieldUserNumber,numberOfVariables,err)
+    !DLLEXPORT(cmfe_Field_NumberOfVariablesGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the number of variables for.
@@ -28791,6 +29425,7 @@ CONTAINS
 
   !>Returns the number of variables for a field identified by an object.
   SUBROUTINE cmfe_Field_NumberOfVariablesGetObj(field,numberOfVariables,err)
+    !DLLEXPORT(cmfe_Field_NumberOfVariablesGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the number of variables for.
@@ -28816,6 +29451,7 @@ CONTAINS
 
   !>Sets/chnages the number of variables for a field identified by a user number.
   SUBROUTINE cmfe_Field_NumberOfVariablesSetNumber(regionUserNumber,fieldUserNumber,numberOfVariables,err)
+    !DLLEXPORT(cmfe_Field_NumberOfVariablesSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the number of variables for.
@@ -28860,6 +29496,7 @@ CONTAINS
 
   !>Sets/changes the number of variables for a field identified by an object.
   SUBROUTINE cmfe_Field_NumberOfVariablesSetObj(field,numberOfVariables,err)
+    !DLLEXPORT(cmfe_Field_NumberOfVariablesSetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the number of variables for.
@@ -28886,6 +29523,7 @@ CONTAINS
   !>Adds the given integer value to the given parameter set for the constant of the field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetAddConstantIntgNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddConstantIntgNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the constant to the field parameter set for.
@@ -28934,6 +29572,7 @@ CONTAINS
 
   !>Adds the given integer value to the given parameter set for the constant of the field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetAddConstantIntgObj(field,variableType,fieldSetType,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddConstantIntgObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the constant to the field parameter set for.
@@ -28963,6 +29602,7 @@ CONTAINS
   !>Adds the given single precision value to the given parameter set for the constant of the field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetAddConstantSPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddConstantSPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the constant to the field parameter set for.
@@ -29010,6 +29650,7 @@ CONTAINS
 
   !>Adds the given single precision value to the given parameter set for the constant of the field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetAddConstantSPObj(field,variableType,fieldSetType,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddConstantSPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the constant to the field parameter set for.
@@ -29039,6 +29680,7 @@ CONTAINS
   !>Adds the given double precision value to the given parameter set for the constant of the field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetAddConstantDPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddConstantDPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the constant to the field parameter set for.
@@ -29086,6 +29728,7 @@ CONTAINS
 
   !>Adds the given double precision value to the given parameter set for the constant of the field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetAddConstantDPObj(field,variableType,fieldSetType,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddConstantDPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the constant to the field parameter set for.
@@ -29115,6 +29758,7 @@ CONTAINS
   !>Adds the given logical value to the given parameter set for the constant of the field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetAddConstantLNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddConstantLNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the constant to the field parameter set for.
@@ -29162,6 +29806,7 @@ CONTAINS
 
   !>Adds the given logical value to the given parameter set for the constant of the field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetAddConstantLObj(field,variableType,fieldSetType,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddConstantLObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the constant to the field parameter set for.
@@ -29191,6 +29836,7 @@ CONTAINS
   !>Adds the given integer value to an element in the given parameter set for field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetAddElementIntgNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & userElementNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddElementIntgNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the value to the element in the field parameter set.
@@ -29239,6 +29885,7 @@ CONTAINS
 
   !>Adds the given integer value to an element in the given parameter set for field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetAddElementIntgObj(field,variableType,fieldSetType,userElementNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddElementIntgObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the value to the element in the field parameter set.
@@ -29270,6 +29917,7 @@ CONTAINS
   !>Adds the given single precision value to an element in the given parameter set for field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetAddElementSPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & userElementNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddElementSPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the value to the element in the field parameter set.
@@ -29318,6 +29966,7 @@ CONTAINS
 
   !>Adds the given single precision value to an element in the given parameter set for field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetAddElementSPObj(field,variableType,fieldSetType,userElementNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddElementSPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the value to the element in the field parameter set.
@@ -29349,6 +29998,7 @@ CONTAINS
   !>Adds the given double precision value to an element in the given parameter set for field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetAddElementDPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & userElementNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddElementDPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the value to the element in the field parameter set.
@@ -29397,6 +30047,7 @@ CONTAINS
 
   !>Adds the given double precision value to an element in the given parameter set for field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetAddElementDPObj(field,variableType,fieldSetType,userElementNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddElementDPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the value to the element in the field parameter set.
@@ -29428,6 +30079,7 @@ CONTAINS
   !>Adds the given logical value to an element in the given parameter set for field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetAddElementLNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & userElementNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddElementLNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the value to the element in the field parameter set.
@@ -29476,6 +30128,7 @@ CONTAINS
 
   !>Adds the given logical value to an element in the given parameter set for field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetAddElementLObj(field,variableType,fieldSetType,userElementNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddElementLObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the value to the element in the field parameter set.
@@ -29507,6 +30160,7 @@ CONTAINS
   !>Adds the given integer value to an node in the given parameter set for field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetAddNodeIntgNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType,versionNumber, &
     & derivativeNumber,userNodeNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddNodeIntgNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the value to the node in the field parameter set.
@@ -29559,6 +30213,7 @@ CONTAINS
   !>Adds the given integer value to an node in the given parameter set for field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetAddNodeIntgObj(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddNodeIntgObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the value to the node in the field parameter set.
@@ -29592,6 +30247,7 @@ CONTAINS
   !>Adds the given single precision value to an node in the given parameter set for field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetAddNodeSPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType,versionNumber, &
     & derivativeNumber,userNodeNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddNodeSPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the value to the node in the field parameter set.
@@ -29644,6 +30300,7 @@ CONTAINS
   !>Adds the given single precision value to an node in the given parameter set for field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetAddNodeSPObj(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddNodeSPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the value to the node in the field parameter set.
@@ -29677,6 +30334,7 @@ CONTAINS
   !>Adds the given double precision value to an node in the given parameter set for field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetAddNodeDPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType,versionNumber, &
     & derivativeNumber,userNodeNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddNodeDPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the value to the node in the field parameter set.
@@ -29729,6 +30387,7 @@ CONTAINS
   !>Adds the given double precision value to an node in the given parameter set for field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetAddNodeDPObj(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddNodeDPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the value to the node in the field parameter set.
@@ -29762,6 +30421,7 @@ CONTAINS
   !>Adds the given logical value to an node in the given parameter set for field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetAddNodeLNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType,versionNumber, &
     & derivativeNumber,userNodeNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddNodeLNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the value to the node in the field parameter set.
@@ -29814,6 +30474,7 @@ CONTAINS
   !>Adds the given logical value to an node in the given parameter set for field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetAddNodeLObj(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
     & componentNumber, value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddNodeLObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the value to the node in the field parameter set.
@@ -29846,6 +30507,7 @@ CONTAINS
 
   !>Creates a new parameter set of type set type for a field variable for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetCreateNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetCreateNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to create the parameter set on.
@@ -29891,6 +30553,7 @@ CONTAINS
 
   !>Creates a new parameter set of type set type for a field variable for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetCreateObj(field,variableType,fieldSetType,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetCreateObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to create the field parameter set on.
@@ -29917,6 +30580,7 @@ CONTAINS
 
   !>Destroys the specified parameter set type for a field variable for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetDestroyNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetDestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to destroy the parameter set for.
@@ -29962,6 +30626,7 @@ CONTAINS
 
   !>Destroys the specified parameter set type for a field variable for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetDestroyObj(field,variableType,fieldSetType,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetDestroyObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to destroy the field parameter set for.
@@ -29988,6 +30653,7 @@ CONTAINS
 
   !>Returns a pointer to the specified field parameter set local integer data array for a field identified by an user number. The pointer must be restored with a call to OpenCMISS::Iron::cmfe_Field_ParameterSetDataRestore call. Note: the values can be used for read operations but a field parameter set update or add calls must be used to change any values.
   SUBROUTINE cmfe_Field_ParameterSetDataGetIntgNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType,parameters,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetDataGetIntgNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the parameter set data for.
@@ -30034,6 +30700,7 @@ CONTAINS
 
   !>Returns a pointer to the specified field parameter set local integer data array for a field identified by an object. The pointer must be restored with a call to OpenCMISS::Iron::cmfe_Field_ParameterSetDataRestore call. Note: the values can be used for read operations but a field parameter set update or add calls must be used to change any values.
   SUBROUTINE cmfe_Field_ParameterSetDataGetIntgObj(field,variableType,fieldSetType,parameters,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetDataGetIntgObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the field parameter set data for.
@@ -30061,6 +30728,7 @@ CONTAINS
 
   !>Returns a pointer to the specified field parameter set local single precision data array for a field identified by an user number. The pointer must be restored with a call to OpenCMISS::Iron::cmfe_Field_ParameterSetDataRestore call. Note: the values can be used for read operations but a field parameter set update or add calls must be used to change any values.
   SUBROUTINE cmfe_Field_ParameterSetDataGetSPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType,parameters,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetDataGetSPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the parameter set data for.
@@ -30107,6 +30775,7 @@ CONTAINS
 
   !>Returns a pointer to the specified field parameter set local single precision data array for a field identified by an object. The pointer must be restored with a call to OpenCMISS::Iron::cmfe_Field_ParameterSetDataRestore call. Note: the values can be used for read operations but a field parameter set update or add calls must be used to change any values.
   SUBROUTINE cmfe_Field_ParameterSetDataGetSPObj(field,variableType,fieldSetType,parameters,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetDataGetSPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the field parameter set data for.
@@ -30134,6 +30803,7 @@ CONTAINS
 
   !>Returns a pointer to the specified field parameter set local double precision data array for a field identified by an user number. The pointer must be restored with a call to OpenCMISS::Iron::cmfe_Field_ParameterSetDataRestore call. Note: the values can be used for read operations but a field parameter set update or add calls must be used to change any values.
   SUBROUTINE cmfe_Field_ParameterSetDataGetDPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType,parameters,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetDataGetDPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the parameter set data for.
@@ -30180,6 +30850,7 @@ CONTAINS
 
   !>Returns a pointer to the specified field parameter set local double precision data array for a field identified by an object. The pointer must be restored with a call to OpenCMISS::Iron::cmfe_Field_ParameterSetDataRestore call. Note: the values can be used for read operations but a field parameter set update or add calls must be used to change any values.
   SUBROUTINE cmfe_Field_ParameterSetDataGetDPObj(field,variableType,fieldSetType,parameters,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetDataGetDPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the field parameter set data for.
@@ -30207,6 +30878,7 @@ CONTAINS
 
   !>Returns a pointer to the specified field parameter set local logical data array for a field identified by an user number. The pointer must be restored with a call to OpenCMISS::Iron::cmfe_Field_ParameterSetDataRestore call. Note: the values can be used for read operations but a field parameter set update or add calls must be used to change any values.
   SUBROUTINE cmfe_Field_ParameterSetDataGetLNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType,parameters,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetDataGetLNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the parameter set data for.
@@ -30253,6 +30925,7 @@ CONTAINS
 
   !>Returns a pointer to the specified field parameter set local logical data array for a field identified by an object. The pointer must be restored with a call to OpenCMISS::Iron::cmfe_Field_ParameterSetDataRestore call. Note: the values can be used for read operations but a field parameter set update or add calls must be used to change any values.
   SUBROUTINE cmfe_Field_ParameterSetDataGetLObj(field,variableType,fieldSetType,parameters,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetDataGetLObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the field parameter set data for.
@@ -30280,6 +30953,7 @@ CONTAINS
 
   !>Restores the specified field variable parameter set local integer array that was obtained with an OpenCMISS::Iron::cmfe_Field_ParameterSetDataGet call for a field that is specified with an user number.
   SUBROUTINE cmfe_Field_ParameterSetDataRestoreIntgNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType,parameters,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetDataRestoreIntgNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to restore the parameter set data for.
@@ -30327,6 +31001,7 @@ CONTAINS
 
   !>Restores the specified field variable parameter set local integer array that was obtained with an OpenCMISS::Iron::cmfe_Field_ParameterSetDataGet call for a field that is specified with an object.
   SUBROUTINE cmfe_Field_ParameterSetDataRestoreIntgObj(field,variableType,fieldSetType,parameters,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetDataRestoreIntgObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to restore the field parameter set data for.
@@ -30354,6 +31029,7 @@ CONTAINS
 
   !>Restores the specified field variable parameter set local single precision array that was obtained with an OpenCMISS::Iron::cmfe_Field_ParameterSetDataGet call for a field that is specified with an user number.
   SUBROUTINE cmfe_Field_ParameterSetDataRestoreSPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType,parameters,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetDataRestoreSPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to restore the parameter set data for.
@@ -30400,6 +31076,7 @@ CONTAINS
 
   !>Restores the specified field variable parameter set local single precision array that was obtained with an OpenCMISS::Iron::cmfe_Field_ParameterSetDataGet call for a field that is specified with an object.
   SUBROUTINE cmfe_Field_ParameterSetDataRestoreSPObj(field,variableType,fieldSetType,parameters,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetDataRestoreSPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to restore the field parameter set data for.
@@ -30427,6 +31104,7 @@ CONTAINS
 
   !>Restores the specified field variable parameter set local double precision array that was obtained with an OpenCMISS::Iron::cmfe_Field_ParameterSetDataGet call for a field that is specified with an user number.
   SUBROUTINE cmfe_Field_ParameterSetDataRestoreDPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType,parameters,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetDataRestoreDPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to restore the parameter set data for.
@@ -30473,6 +31151,7 @@ CONTAINS
 
   !>Restores the specified field variable parameter set local double precision array that was obtained with an OpenCMISS::Iron::cmfe_Field_ParameterSetDataGet call for a field that is specified with an object.
   SUBROUTINE cmfe_Field_ParameterSetDataRestoreDPObj(field,variableType,fieldSetType,parameters,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetDataRestoreDPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to restore the field parameter set data for.
@@ -30500,6 +31179,7 @@ CONTAINS
 
   !>Restores the specified field variable parameter set local logical array that was obtained with an OpenCMISS::Iron::cmfe_Field_ParameterSetDataGet call for a field that is specified with an user number.
   SUBROUTINE cmfe_Field_ParameterSetDataRestoreLNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType,parameters,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetDataRestoreLNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to restore the parameter set data for.
@@ -30546,6 +31226,7 @@ CONTAINS
 
   !>Restores the specified field variable parameter set local logical array that was obtained with an OpenCMISS::Iron::cmfe_Field_ParameterSetDataGet call for a field that is specified with an object.
   SUBROUTINE cmfe_Field_ParameterSetDataRestoreLObj(field,variableType,fieldSetType,parameters,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetDataRestoreLObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to restore the field parameter set data for.
@@ -30574,6 +31255,7 @@ CONTAINS
   !>Returns from the given parameter set an integer value for the specified constant of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetGetConstantIntgNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetConstantIntgNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the constant value from the field parameter set.
@@ -30622,6 +31304,7 @@ CONTAINS
 
   !>Returns from the given parameter set an integer value for the specified constant of a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetGetConstantIntgObj(field,variableType,fieldSetType,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetConstantIntgObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the constant value from the field parameter set.
@@ -30651,6 +31334,7 @@ CONTAINS
   !>Returns from the given parameter set a single precision value for the specified constant of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetGetConstantSPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetConstantSPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the constant value from the field parameter set.
@@ -30698,6 +31382,7 @@ CONTAINS
 
   !>Returns from the given parameter set a single precision value for the specified constant of a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetGetConstantSPObj(field,variableType,fieldSetType,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetConstantSPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the constant value from the field parameter set.
@@ -30727,6 +31412,7 @@ CONTAINS
   !>Returns from the given parameter set a double precision value for the specified constant of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetGetConstantDPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetConstantDPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the constant value from the field parameter set.
@@ -30774,6 +31460,7 @@ CONTAINS
 
   !>Returns from the given parameter set a double precision value for the specified constant of a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetGetConstantDPObj(field,variableType,fieldSetType,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetConstantDPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the constant value from the field parameter set.
@@ -30803,6 +31490,7 @@ CONTAINS
   !>Returns from the given parameter set a logical value for the specified constant of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetGetConstantLNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetConstantLNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the constant value from the field parameter set.
@@ -30850,6 +31538,7 @@ CONTAINS
 
   !>Returns from the given parameter set a logical value for the specified constant of a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetGetConstantLObj(field,variableType,fieldSetType,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetConstantLObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the constant value from the field parameter set.
@@ -30879,6 +31568,7 @@ CONTAINS
   !>Returns from the given parameter set a integer value for the specified data point of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetGetDataPointIntgNumberI(parentRegionUserNumber,interfaceUserNumber,fieldUserNumber, &
     & variableType,fieldSetType,userDataPointNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetDataPointIntgNumberI)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region for the interface.
@@ -30941,6 +31631,7 @@ CONTAINS
   !>Returns from the given parameter set a integer value for the specified data point of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetGetDataPointIntgNumberR(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & userDataPointNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetDataPointIntgNumberR)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the data point value from the field parameter set.
@@ -30992,6 +31683,7 @@ CONTAINS
   !>Returns from the given parameter set a integer value for the specified constant of a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetGetDataPointIntgObj(field,variableType,fieldSetType,userDataPointNumber,componentNumber, &
       & value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetDataPointIntgObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the data point value from the field parameter set.
@@ -31023,6 +31715,7 @@ CONTAINS
   !>Returns from the given parameter set a single precision value for the specified data point of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetGetDataPointSPNumberI(parentRegionUserNumber,interfaceUserNumber,fieldUserNumber, &
     & variableType,fieldSetType,userDataPointNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetDataPointSPNumberI)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region for the interface.
@@ -31085,6 +31778,7 @@ CONTAINS
   !>Returns from the given parameter set a single precision value for the specified data point of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetGetDataPointSPNumberR(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & userDataPointNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetDataPointSPNumberR)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the data point value from the field parameter set.
@@ -31135,6 +31829,7 @@ CONTAINS
 
   !>Returns from the given parameter set a single precision value for the specified constant of a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetGetDataPointSPObj(field,variableType,fieldSetType,userDataPointNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetDataPointSPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the data point value from the field parameter set.
@@ -31166,6 +31861,7 @@ CONTAINS
   !>Returns from the given parameter set a double precision value for the specified data point of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetGetDataPointDPNumberI(parentRegionUserNumber,interfaceUserNumber,fieldUserNumber, &
     & variableType,fieldSetType,userDataPointNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetDataPointDPNumberI)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region for the interface.
@@ -31228,6 +31924,7 @@ CONTAINS
   !>Returns from the given parameter set a double precision value for the specified data point of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetGetDataPointDPNumberR(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & userDataPointNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetDataPointDPNumberR)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the data point value from the field parameter set.
@@ -31278,6 +31975,7 @@ CONTAINS
 
   !>Returns from the given parameter set a double precision value for the specified constant of a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetGetDataPointDPObj(field,variableType,fieldSetType,userDataPointNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetDataPointDPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the data point value from the field parameter set.
@@ -31309,6 +32007,7 @@ CONTAINS
   !>Returns from the given parameter set a logical value for the specified data point of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetGetDataPointLNumberI(parentRegionUserNumber,interfaceUserNumber,fieldUserNumber, &
     & variableType,fieldSetType,userDataPointNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetDataPointLNumberI)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region for the interface.
@@ -31370,6 +32069,7 @@ CONTAINS
   !>Returns from the given parameter set a logical value for the specified data point of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetGetDataPointLNumberR(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & userDataPointNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetDataPointLNumberR)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the data point value from the field parameter set.
@@ -31419,6 +32119,7 @@ CONTAINS
 
   !>Returns from the given parameter set a logical value for the specified constant of a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetGetDataPointLObj(field,variableType,fieldSetType,userDataPointNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetDataPointLObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the data point value from the field parameter set.
@@ -31450,6 +32151,7 @@ CONTAINS
   !>Returns from the given parameter set an integer value for the specified element of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetGetElementIntgNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & userElementNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetElementIntgNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the element value from the field parameter set.
@@ -31498,6 +32200,7 @@ CONTAINS
 
   !>Returns from the given parameter set an integer value for the specified element of a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetGetElementIntgObj(field,variableType,fieldSetType,userElementNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetElementIntgObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the element value from the field parameter set.
@@ -31529,6 +32232,7 @@ CONTAINS
   !>Returns from the given parameter set a single precision value for the specified element of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetGetElementSPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & userElementNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetElementSPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the element value from the field parameter set.
@@ -31577,6 +32281,7 @@ CONTAINS
 
   !>Returns from the given parameter set a single precision value for the specified element of a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetGetElementSPObj(field,variableType,fieldSetType,userElementNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetElementSPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the element value from the field parameter set.
@@ -31608,6 +32313,7 @@ CONTAINS
   !>Returns from the given parameter set a double precision value for the specified element of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetGetElementDPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & userElementNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetElementDPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the element value from the field parameter set.
@@ -31656,6 +32362,7 @@ CONTAINS
 
   !>Returns from the given parameter set a double precision value for the specified element of a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetGetElementDPObj(field,variableType,fieldSetType,userElementNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetElementDPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the element value from the field parameter set.
@@ -31687,6 +32394,7 @@ CONTAINS
   !>Returns from the given parameter set a logical value for the specified element of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetGetElementLNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & userElementNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetElementLNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the element value from the field parameter set.
@@ -31735,6 +32443,7 @@ CONTAINS
 
   !>Returns from the given parameter set a logical value for the specified element of a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetGetElementLObj(field,variableType,fieldSetType,userElementNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetElementLObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the element value from the field parameter set.
@@ -31766,6 +32475,7 @@ CONTAINS
   !>Returns from the given parameter set an integer value for the specified node and derivative of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetGetNodeIntgNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & versionNumber,derivativeNumber,userNodeNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetNodeIntgNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the nodal value from the field parameter set.
@@ -31818,6 +32528,7 @@ CONTAINS
   !>Returns from the given parameter set an integer value for the specified node and derivative of a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetGetNodeIntgObj(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetNodeIntgObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the nodal value from the field parameter set.
@@ -31851,6 +32562,7 @@ CONTAINS
   !>Returns from the given parameter set a single precision value for the specified node and derivative of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetGetNodeSPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & versionNumber,derivativeNumber,userNodeNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetNodeSPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the nodal value from the field parameter set.
@@ -31903,6 +32615,7 @@ CONTAINS
   !>Returns from the given parameter set a single precision value for the specified node and derivative of a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetGetNodeSPObj(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetNodeSPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the nodal value from the field parameter set.
@@ -31936,6 +32649,7 @@ CONTAINS
   !>Returns from the given parameter set a double precision value for the specified node and derivative of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetGetNodeDPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & versionNumber,derivativeNumber,userNodeNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetNodeDPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the nodal value from the field parameter set.
@@ -31988,6 +32702,7 @@ CONTAINS
   !>Returns from the given parameter set a double precision value for the specified node and derivative of a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetGetNodeDPObj(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetNodeDPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the nodal value from the field parameter set.
@@ -32021,6 +32736,7 @@ CONTAINS
   !>Returns from the given parameter set a logical value for the specified node and derivative of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetGetNodeLNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & versionNumber,derivativeNumber,userNodeNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetNodeLNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the nodal value from the field parameter set.
@@ -32073,6 +32789,7 @@ CONTAINS
   !>Returns from the given parameter set a logical value for the specified node and derivative of a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetGetNodeLObj(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetNodeLObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the nodal value from the field parameter set.
@@ -32106,6 +32823,7 @@ CONTAINS
   !>Returns from the given parameter set a double precision value for the specified element of a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetGetGaussPointDPObj(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
     & componentNumber,VALUE,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetGetGaussPointDPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the element value from the field parameter set.
@@ -32138,6 +32856,7 @@ CONTAINS
   !>Updates the given parameter set with the given integer value for the constant of the field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateConstantIntgNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateConstantIntgNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the constant value for the field parameter set.
@@ -32186,6 +32905,7 @@ CONTAINS
 
   !>Updates the given parameter set with the given integer value for the constant of the field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetUpdateConstantIntgObj(field,variableType,fieldSetType,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateConstantIntgObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the constant value for the field parameter set.
@@ -32216,6 +32936,7 @@ CONTAINS
   !>Updates the given parameter set with the given single precision value for the constant of the field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateConstantSPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateConstantSPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the constant value for the field parameter set.
@@ -32264,6 +32985,7 @@ CONTAINS
 
   !>Updates the given parameter set with the given single precision value for the constant of the field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetUpdateConstantSPObj(field,variableType,fieldSetType,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateConstantSPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the constant value for the field parameter set.
@@ -32293,6 +33015,7 @@ CONTAINS
   !>Updates the given parameter set with the given double precision value for the constant of the field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateConstantDPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateConstantDPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the constant value for the field parameter set.
@@ -32341,6 +33064,7 @@ CONTAINS
 
   !>Updates the given parameter set with the given double precision value for the constant of the field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetUpdateConstantDPObj(field,variableType,fieldSetType,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateConstantDPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the constant value for the field parameter set.
@@ -32370,6 +33094,7 @@ CONTAINS
   !>Updates the given parameter set with the given logical value for the constant of the field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateConstantLNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateConstantLNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the constant value for the field parameter set.
@@ -32418,6 +33143,7 @@ CONTAINS
 
   !>Updates the given parameter set with the given logical value for the constant of the field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetUpdateConstantLObj(field,variableType,fieldSetType,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateConstantLObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the constant value for the field parameter set.
@@ -32447,6 +33173,7 @@ CONTAINS
   !>Update the given parameter set a integer value for the specified data point of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateDataPointIntgNumberI(parentRegionUserNumber,interfaceUserNumber,fieldUserNumber, &
     & variableType,fieldSetType,userDataPointNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateDataPointIntgNumberI)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region for the interface.
@@ -32509,6 +33236,7 @@ CONTAINS
   !>Update the given parameter set a integer value for the specified data point of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateDataPointIntgNumberR(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & userDataPointNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateDataPointIntgNumberR)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the data point value from the field parameter set.
@@ -32560,6 +33288,7 @@ CONTAINS
   !>Update the given parameter set a integer value for the specified constant of a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetUpdateDataPointIntgObj(field,variableType,fieldSetType,userDataPointNumber,componentNumber, &
       & value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateDataPointIntgObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the data point value from the field parameter set.
@@ -32592,6 +33321,7 @@ CONTAINS
   !>Update the given parameter set a single precision value for the specified data point of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateDataPointSPNumberI(parentRegionUserNumber,interfaceUserNumber,fieldUserNumber, &
     & variableType,fieldSetType,userDataPointNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateDataPointSPNumberI)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region for the interface.
@@ -32654,6 +33384,7 @@ CONTAINS
   !>Update the given parameter set a single precision value for the specified data point of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateDataPointSPNumberR(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & userDataPointNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateDataPointSPNumberR)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the data point value from the field parameter set.
@@ -32705,6 +33436,7 @@ CONTAINS
   !>Update the given parameter set a single precision value for the specified constant of a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetUpdateDataPointSPObj(field,variableType,fieldSetType,userDataPointNumber,componentNumber, &
       & value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateDataPointSPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the data point value from the field parameter set.
@@ -32736,6 +33468,7 @@ CONTAINS
   !>Update the given parameter set a double precision value for the specified data point of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateDataPointDPNumberI(parentRegionUserNumber,interfaceUserNumber,fieldUserNumber, &
     & variableType,fieldSetType,userDataPointNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateDataPointDPNumberI)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region for the interface.
@@ -32798,6 +33531,7 @@ CONTAINS
   !>Update the given parameter set a double precision value for the specified data point of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateDataPointDPNumberR(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & userDataPointNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateDataPointDPNumberR)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the data point value from the field parameter set.
@@ -32849,6 +33583,7 @@ CONTAINS
   !>Update the given parameter set a double precision value for the specified constant of a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetUpdateDataPointDPObj(field,variableType,fieldSetType,userDataPointNumber,componentNumber, &
       & value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateDataPointDPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the data point value from the field parameter set.
@@ -32880,6 +33615,7 @@ CONTAINS
   !>Update the given parameter set a logical value for the specified data point of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateDataPointLNumberI(parentRegionUserNumber,interfaceUserNumber,fieldUserNumber, &
     & variableType,fieldSetType,userDataPointNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateDataPointLNumberI)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region for the interface.
@@ -32942,6 +33678,7 @@ CONTAINS
   !>Update the given parameter set a logical value for the specified data point of a field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateDataPointLNumberR(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & userDataPointNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateDataPointLNumberR)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the data point value from the field parameter set.
@@ -32993,6 +33730,7 @@ CONTAINS
   !>Update the given parameter set a logical value for the specified constant of a field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetUpdateDataPointLObj(field,variableType,fieldSetType,userDataPointNumber,componentNumber, &
       & value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateDataPointLObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the data point value from the field parameter set.
@@ -33024,6 +33762,7 @@ CONTAINS
   !>Updates the given parameter set with the given integer value for the element of the field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateElementIntgNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & userElementNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateElementIntgNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the element value for the field parameter set.
@@ -33075,6 +33814,7 @@ CONTAINS
   !>Updates the given parameter set with the given integer value for the element of the field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetUpdateElementIntgObj(field,variableType,fieldSetType,userElementNumber,componentNumber, &
     & value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateElementIntgObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the constant value for the field parameter set.
@@ -33106,6 +33846,7 @@ CONTAINS
   !>Updates the given parameter set with the given single precision value for the element of the field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateElementSPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & userElementNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateElementSPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the element value for the field parameter set.
@@ -33157,6 +33898,7 @@ CONTAINS
   !>Updates the given parameter set with the given single precision value for the element of the field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetUpdateElementSPObj(field,variableType,fieldSetType,userElementNumber,componentNumber, &
     & value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateElementSPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the constant value for the field parameter set.
@@ -33188,6 +33930,7 @@ CONTAINS
   !>Updates the given parameter set with the given double precision value for the element of the field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateElementDPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & userElementNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateElementDPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the element value for the field parameter set.
@@ -33239,6 +33982,7 @@ CONTAINS
   !>Updates the given parameter set with the given double precision value for the element of the field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetUpdateElementDPObj(field,variableType,fieldSetType,userElementNumber,componentNumber, &
     & value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateElementDPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the constant value for the field parameter set.
@@ -33270,6 +34014,7 @@ CONTAINS
   !>Updates the given parameter set with the given logical value for the element of the field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateElementLNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & userElementNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateElementLNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the element value for the field parameter set.
@@ -33320,6 +34065,7 @@ CONTAINS
   !>Updates the given parameter set with the given logical value for the element of the field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetUpdateElementLObj(field,variableType,fieldSetType,userElementNumber,componentNumber, &
     & value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateElementLObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the constant value for the field parameter set.
@@ -33351,6 +34097,7 @@ CONTAINS
   !>Updates the given parameter set with the given double precision value for the element data point of the field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetUpdateElementDataPointDPObj(field,variableType,fieldSetType,elementNumber,dataPointIndex, &
        & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateElementDataPointDPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the constant value for the field parameter set.
@@ -33383,6 +34130,7 @@ CONTAINS
 
   !>Finishes the parameter set update for a field variable for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateFinishNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to finish the parameter set update for.
@@ -33428,6 +34176,7 @@ CONTAINS
 
   !>Finishes the parameter set update for a field variable for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetUpdateFinishObj(field,variableType,fieldSetType,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateFinishObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to finishe the parameter set update for.
@@ -33455,6 +34204,7 @@ CONTAINS
   !>Updates the given parameter set with the given integer value for the node and derivative of the field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateNodeIntgNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & versionNumber,derivativeNumber,userNodeNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateNodeIntgNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the nodal value for the field parameter set.
@@ -33508,6 +34258,7 @@ CONTAINS
 
   SUBROUTINE cmfe_Field_ParameterSetUpdateNodeIntgObj(field,variableType,fieldSetType,versionNumber,derivativeNumber, &
     & userNodeNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateNodeIntgObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the nodal value for the field parameter set.
@@ -33541,6 +34292,7 @@ CONTAINS
   !>Updates the given parameter set with the given single precision value for the node and derivative of the field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateNodeSPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & versionNumber,derivativeNumber,userNodeNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateNodeSPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the nodal value for the field parameter set.
@@ -33594,6 +34346,7 @@ CONTAINS
 
   SUBROUTINE cmfe_Field_ParameterSetUpdateNodeSPObj(field,variableType,fieldSetType,versionNumber,derivativeNumber, &
     & userNodeNumber, componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateNodeSPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the nodal value for the field parameter set.
@@ -33627,6 +34380,7 @@ CONTAINS
   !>Updates the given parameter set with the given double precision value for the node and derivative of the field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateNodeDPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & versionNumber,derivativeNumber,userNodeNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateNodeDPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the nodal value for the field parameter set.
@@ -33680,6 +34434,7 @@ CONTAINS
 
   SUBROUTINE cmfe_Field_ParameterSetUpdateNodeDPObj(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateNodeDPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the nodal value for the field parameter set.
@@ -33713,6 +34468,7 @@ CONTAINS
   !>Updates the given parameter set with the given logical value for the node and derivative of the field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateNodeLNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & versionNumber,derivativeNumber,userNodeNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateNodeLNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the nodal value for the field parameter set.
@@ -33766,6 +34522,7 @@ CONTAINS
 
   SUBROUTINE cmfe_Field_ParameterSetUpdateNodeLObj(field,variableType,fieldSetType,versionNumber,derivativeNumber,userNodeNumber, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateNodeLObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the nodal value for the field parameter set.
@@ -33798,6 +34555,7 @@ CONTAINS
 
   !>Updates the given parameter set with the given values for all local dofs of the field variable identified by an object..
   SUBROUTINE cmfe_Field_ParameterSetUpdateLocalDofsDPObj(field,variableType,fieldSetType,values,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateLocalDofsDPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the values for the field parameter set.
@@ -33826,6 +34584,7 @@ CONTAINS
   !>Updates the given parameter set with the given integer value for the element Gauss point of the field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateGaussPointIntgNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & gaussPointNumber,userElementNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateGaussPointIntgNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the Gauss point value for the field parameter set.
@@ -33878,6 +34637,7 @@ CONTAINS
   !>Updates the given parameter set with the given integer value for the element Gauss point of the field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetUpdateGaussPointIntgObj(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
     & componentNumber, value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateGaussPointIntgObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the Gauss point value for the field parameter set.
@@ -33913,6 +34673,7 @@ CONTAINS
   !>Updates the given parameter set with the given single precision value for the element Gauss point of the field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateGaussPointSPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & gaussPointNumber,userElementNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateGaussPointSPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the Gauss point value for the field parameter set.
@@ -33965,6 +34726,7 @@ CONTAINS
   !>Updates the given parameter set with the given single precision value for the element Gauss point of the field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetUpdateGaussPointSPObj(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateGaussPointSPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the Gauss point value for the field parameter set.
@@ -34000,6 +34762,7 @@ CONTAINS
   !>Updates the given parameter set with the given double precision value for the element Gauss point of the field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateGaussPointDPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & gaussPointNumber,userElementNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateGaussPointDPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the Gauss point value for the field parameter set.
@@ -34052,6 +34815,7 @@ CONTAINS
   !>Updates the given parameter set with the given double precision value for the element Gauss point of the field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetUpdateGaussPointDPObj(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
     & componentNumber, value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateGaussPointDPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the Gauss point value for the field parameter set.
@@ -34087,6 +34851,7 @@ CONTAINS
   !>Updates the given parameter set with the given logical value for the element Gauss point of the field variable component for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateGaussPointLNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & gaussPointNumber,userElementNumber,componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateGaussPointLNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the Gauss point value for the field parameter set.
@@ -34141,6 +34906,7 @@ CONTAINS
   !>Updates the given parameter set with the given logical value for the element Gauss point of the field variable component for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetUpdateGaussPointLObj(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
     & componentNumber,value,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateGaussPointLObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the Gauss point value for the field parameter set.
@@ -34173,6 +34939,7 @@ CONTAINS
   !>Interpolates the given parameter set at a specified xi location for the specified element and derviative and returns double precision values for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetInterpolateSingleXiDPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & derivativeNumber,userElementNumber,xi,values,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetInterpolateSingleXiDPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field whose parameter set is to be interpolated.
@@ -34225,6 +34992,7 @@ CONTAINS
   !>Interpolates the given parameter set at a specified xi location for the specified element and derviative and returns double precision values for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetInterpolateSingleXiDPObj(field,variableType,fieldSetType,derivativeNumber,userElementNumber, &
     & xi,values,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetInterpolateSingleXiDPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field whose parameter set is to be interpolated.
@@ -34258,6 +35026,7 @@ CONTAINS
   !>Interpolates the given parameter set at a specified set of xi locations for the specified element and derviative and returns double precision values for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetInterpolateMultipleXiDPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & derivativeNumber,userElementNumber,xi,values,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetInterpolateMultipleXiDPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field whose parameter set is to be interpolated.
@@ -34310,6 +35079,7 @@ CONTAINS
   !>Interpolates the given parameter set at a specified set of xi locations for the specified element and derviative and returns double precision values for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetInterpolateMultipleXiDPObj(field,variableType,fieldSetType,derivativeNumber,userElementNumber, &
     & xi,values,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetInterpolateMultipleXiDPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field whose parameter set is to be interpolated.
@@ -34343,6 +35113,7 @@ CONTAINS
   !>Interpolates the given parameter set at a specified Gauss point for the specified element and derviative and returns double precision values for a or a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetInterpolateSingleGaussDPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & derivativeNumber,userElementNumber,quadratureScheme,GaussPoint,values,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetInterpolateSingleGaussDPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field whose parameter set is to be interpolated.
@@ -34396,6 +35167,7 @@ CONTAINS
   !>Interpolates the given parameter set at a specified Gauss point for the specified element and derviative and returns double precision values for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetInterpolateSingleGaussDPObj(field,variableType,fieldSetType,derivativeNumber, &
     & userElementNumber,quadratureScheme, GaussPoint,values,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetInterpolateSingleGaussDPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the constant value for the field parameter set.
@@ -34430,6 +35202,7 @@ CONTAINS
   !>Interpolates the given parameter set at a specified set of Gauss points for the specified element and derviative and returns double precision values for a or a field identified by a user number. If no Gauss points are specified then all Gauss points are interpolated.
   SUBROUTINE cmfe_Field_ParameterSetInterpolateMultipleGaussDPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
     & derivativeNumber,userElementNumber,quadratureScheme,GaussPoints,values,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetInterpolateMultipleGaussDPNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field whose parameter set is to be interpolated.
@@ -34483,6 +35256,7 @@ CONTAINS
   !>Interpolates the given parameter set at a specified set of Gauss points for the specified element and derviative and returns double precision values for a field identified by an object. If no Gauss points are specified then all Gauss points are interpolated.
   SUBROUTINE cmfe_Field_ParameterSetInterpolateMultipleGaussDPObj(field,variableType,fieldSetType,derivativeNumber, &
     & userElementNumber,quadratureScheme, GaussPoints,values,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetInterpolateMultipleGaussDPObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the constant value for the field parameter set.
@@ -34516,6 +35290,7 @@ CONTAINS
 
   !>Starts the parameter set update for a field variable for a field identified by a user number.
   SUBROUTINE cmfe_Field_ParameterSetUpdateStartNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to start the parameter set update for.
@@ -34561,6 +35336,7 @@ CONTAINS
 
   !>Starts the parameter set update for a field variable for a field identified by an object.
   SUBROUTINE cmfe_Field_ParameterSetUpdateStartObj(field,variableType,fieldSetType,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetUpdateStartObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to start the parameter set update for.
@@ -34590,6 +35366,7 @@ CONTAINS
   SUBROUTINE cmfe_Field_ParametersToFieldParametersComponentCopyNumber(fromRegionUserNumber,fromFieldUserNumber,fromVariableType, &
       & fromParameterSetType, fromComponentNumber,toRegionUserNumber,toFieldUserNumber,toVariableType,toParameterSetType, &
       & toComponentNumber,err)
+    !DLLEXPORT(cmfe_Field_ParametersToFieldParametersComponentCopyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: fromRegionUserNumber !<The user number of the region containing the field to copy from
@@ -34663,6 +35440,7 @@ CONTAINS
   !>a component of another field variable, where both fields are objects.
   SUBROUTINE cmfe_Field_ParametersToFieldParametersComponentCopyObj(fromField,fromVariableType,fromParameterSetType, &
     & fromComponentNumber,toField,toVariableType,toParameterSetType,toComponentNumber,err)
+    !DLLEXPORT(cmfe_Field_ParametersToFieldParametersComponentCopyObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: fromField !<The field to copy from
@@ -34695,6 +35473,7 @@ CONTAINS
 
   !>Returns the scaling type for a field identified by a user number.
   SUBROUTINE cmfe_Field_ScalingTypeGetNumber(regionUserNumber,fieldUserNumber,scalingType,err)
+    !DLLEXPORT(cmfe_Field_ScalingTypeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the scaling type for.
@@ -34739,6 +35518,7 @@ CONTAINS
 
   !>Returns the scaling type for a field identified by an object.
   SUBROUTINE cmfe_Field_ScalingTypeGetObj(field,scalingType,err)
+    !DLLEXPORT(cmfe_Field_ScalingTypeGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the scaling type for.
@@ -34764,6 +35544,7 @@ CONTAINS
 
   !>Sets/changes the scaling type for a field identified by a user number.
   SUBROUTINE cmfe_Field_ScalingTypeSetNumber(regionUserNumber,fieldUserNumber,scalingType,err)
+    !DLLEXPORT(cmfe_Field_ScalingTypeSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the scaling type for.
@@ -34808,6 +35589,7 @@ CONTAINS
 
   !>Sets/changes the scaling type for a field identified by an object.
   SUBROUTINE cmfe_Field_ScalingTypeSetObj(field,scalingType,err)
+    !DLLEXPORT(cmfe_Field_ScalingTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the scaling type for.
@@ -34833,6 +35615,7 @@ CONTAINS
 
   !>Returns the field type for a field identified by a user number.
   SUBROUTINE cmfe_Field_TypeGetNumber(regionUserNumber,fieldUserNumber,fieldType,err)
+    !DLLEXPORT(cmfe_Field_TypeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the field type for.
@@ -34877,6 +35660,7 @@ CONTAINS
 
   !>Returns the type for a field identified by an object.
   SUBROUTINE cmfe_Field_TypeGetObj(field,fieldType,err)
+    !DLLEXPORT(cmfe_Field_TypeGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the field type for.
@@ -34902,6 +35686,7 @@ CONTAINS
 
   !>Sets/changes the field type for a field identified by a user number.
   SUBROUTINE cmfe_Field_TypeSetNumber(regionUserNumber,fieldUserNumber,fieldType,err)
+    !DLLEXPORT(cmfe_Field_TypeSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the field type for.
@@ -34946,6 +35731,7 @@ CONTAINS
 
   !>Sets/changes the type for a field identified by an object.
   SUBROUTINE cmfe_Field_TypeSetObj(field,fieldType,err)
+    !DLLEXPORT(cmfe_Field_TypeSetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the field type for.
@@ -34971,6 +35757,7 @@ CONTAINS
 
   !>Returns the character string label for a field variable for a field identified by a user number.
   SUBROUTINE cmfe_Field_VariableLabelGetCNumber(regionUserNumber,fieldUserNumber,variableType,label,err)
+    !DLLEXPORT(cmfe_Field_VariableLabelGetCNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the label for.
@@ -35016,6 +35803,7 @@ CONTAINS
 
   !>Returns the character string label for a field variable for a field identified by an object.
   SUBROUTINE cmfe_Field_VariableLabelGetCObj(field,variableType,label,err)
+    !DLLEXPORT(cmfe_Field_VariableLabelGetCObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the label for.
@@ -35042,6 +35830,7 @@ CONTAINS
 
   !>Returns the varying string label for a field variable for a field identified by a user number.
   SUBROUTINE cmfe_Field_VariableLabelGetVSNumber(regionUserNumber,fieldUserNumber,variableType,label,err)
+    !DLLEXPORT(cmfe_Field_VariableLabelGetVSNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the label for.
@@ -35087,6 +35876,7 @@ CONTAINS
 
   !>Returns the varying string label for a field variable for a field identified by an object.
   SUBROUTINE cmfe_Field_VariableLabelGetVSObj(field,variableType,label,err)
+    !DLLEXPORT(cmfe_Field_VariableLabelGetVSObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the label for.
@@ -35113,6 +35903,7 @@ CONTAINS
 
   !>Sets/changes the character string label for a field variable for a field identified by a user number.
   SUBROUTINE cmfe_Field_VariableLabelSetCNumber(regionUserNumber,fieldUserNumber,variableType,label,err)
+    !DLLEXPORT(cmfe_Field_VariableLabelSetCNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the label for.
@@ -35158,6 +35949,7 @@ CONTAINS
 
   !>Sets/changes the character string label for a field variable for a field identified by an object.
   SUBROUTINE cmfe_Field_VariableLabelSetCObj(field,variableType,label,err)
+    !DLLEXPORT(cmfe_Field_VariableLabelSetCObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the label for.
@@ -35184,6 +35976,7 @@ CONTAINS
 
   !>Sets/changes the varying string label for a field variable for a field identified by a user number.
   SUBROUTINE cmfe_Field_VariableLabelSetVSNumber(regionUserNumber,fieldUserNumber,variableType,label,err)
+    !DLLEXPORT(cmfe_Field_VariableLabelSetVSNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the label for.
@@ -35229,6 +36022,7 @@ CONTAINS
 
   !>Sets/changes the varying string label for a field variable for a field identified by an object.
   SUBROUTINE cmfe_Field_VariableLabelSetVSObj(field,variableType,label,err)
+    !DLLEXPORT(cmfe_Field_VariableLabelSetVSObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the label for.
@@ -35255,6 +36049,7 @@ CONTAINS
 
   !>Returns the field variable types for a field identified by a user number.
   SUBROUTINE cmfe_Field_VariableTypesGetNumber(regionUserNumber,fieldUserNumber,variableTypes,err)
+    !DLLEXPORT(cmfe_Field_VariableTypesGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the field variable types for.
@@ -35299,6 +36094,7 @@ CONTAINS
 
   !>Returns the variable types for a field identified by an object.
   SUBROUTINE cmfe_Field_VariableTypesGetObj(field,variableTypes,err)
+    !DLLEXPORT(cmfe_Field_VariableTypesGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the field variable types for.
@@ -35324,6 +36120,7 @@ CONTAINS
 
   !>Sets/changes the field variable types for a field identified by a user number.
   SUBROUTINE cmfe_Field_VariableTypesSetNumber(regionUserNumber,fieldUserNumber,variableTypes,err)
+    !DLLEXPORT(cmfe_Field_VariableTypesSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the field variable types for.
@@ -35368,6 +36165,7 @@ CONTAINS
 
   !>Sets/changes the variable types for a field identified by an object.
   SUBROUTINE cmfe_Field_VariableTypesSetObj(field,variableTypes,err)
+    !DLLEXPORT(cmfe_Field_VariableTypesSetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the field variable types for.
@@ -35395,6 +36193,7 @@ CONTAINS
 
   !>Export element information for fields set identified by an object. \todo number method
   SUBROUTINE cmfe_Fields_ElementsExportCCObj(fields,fileName,method,err)
+    !DLLEXPORT(cmfe_Fields_ElementsExportCCObj)
 
     !Argument variables
     TYPE(cmfe_FieldsType), INTENT(INOUT) :: fields !<The fields to export the elements for.
@@ -35431,6 +36230,7 @@ CONTAINS
 
   !>Export element information for fields set identified by an object. \todo number method
   SUBROUTINE cmfe_Fields_ElementsExportVSCObj(fields,fileName,method,err)
+    !DLLEXPORT(cmfe_Fields_ElementsExportVSCObj)
 
     !Argument variables
     TYPE(cmfe_FieldsType), INTENT(INOUT) :: fields !<The fields to export the elements for.
@@ -35463,6 +36263,7 @@ CONTAINS
 
   !>Export element information for fields set identified by an object. \todo number method
   SUBROUTINE cmfe_Fields_ElementsExportCVSObj(fields,fileName,method,err)
+    !DLLEXPORT(cmfe_Fields_ElementsExportCVSObj)
 
     !Argument variables
     TYPE(cmfe_FieldsType), INTENT(INOUT) :: fields !<The fields to export the elements for.
@@ -35494,6 +36295,7 @@ CONTAINS
 
   !>Export element information for fields set identified by an object. \todo number method
   SUBROUTINE cmfe_Fields_ElementsExportVSVSObj(fields,fileName,method,err)
+    !DLLEXPORT(cmfe_Fields_ElementsExportVSVSObj)
 
     !Argument variables
     TYPE(cmfe_FieldsType), INTENT(INOUT) :: fields !<The fields to export the elements for.
@@ -35520,6 +36322,7 @@ CONTAINS
 
   !>Export nodal information for fields set identified by an object. \todo number method
   SUBROUTINE cmfe_Fields_NodesExportCCObj(fields,fileName,method,err)
+    !DLLEXPORT(cmfe_Fields_NodesExportCCObj)
 
     !Argument variables
     TYPE(cmfe_FieldsType), INTENT(INOUT) :: fields !<The fields to export the nodes for.
@@ -35555,6 +36358,7 @@ CONTAINS
 
   !>Export nodal information for fields set identified by an object. \todo number method
   SUBROUTINE cmfe_Fields_NodesExportVSCObj(fields,fileName,method,err)
+    !DLLEXPORT(cmfe_Fields_NodesExportVSCObj)
 
     !Argument variables
     TYPE(cmfe_FieldsType), INTENT(INOUT) :: fields !<The fields to export the nodes for.
@@ -35586,6 +36390,7 @@ CONTAINS
 
   !>Export nodal information for fields set identified by an object. \todo number method
   SUBROUTINE cmfe_Fields_NodesExportCVSObj(fields,fileName,method,err)
+    !DLLEXPORT(cmfe_Fields_NodesExportCVSObj)
 
     !Argument variables
     TYPE(cmfe_FieldsType), INTENT(INOUT) :: fields !<The fields to export the nodes for.
@@ -35617,6 +36422,7 @@ CONTAINS
 
   !>Export nodal information for fields set identified by an object. \todo number method
   SUBROUTINE cmfe_Fields_NodesExportVSVSObj(fields,fileName,method,err)
+    !DLLEXPORT(cmfe_Fields_NodesExportVSVSObj)
 
     !Argument variables
     TYPE(cmfe_FieldsType), INTENT(INOUT) :: fields !<The fields to export the nodes for.
@@ -35645,6 +36451,7 @@ CONTAINS
 
   !>Returns the basis for a generated mesh on a region identified by a user number.
   SUBROUTINE cmfe_GeneratedMesh_BasisGetNumber(regionUserNumber,generatedMeshUserNumber,basisUserNumbers,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_BasisGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the generated mesh to get the basis for.
@@ -35718,6 +36525,7 @@ CONTAINS
 
   !>Returns the basis for a generated mesh identified by an object.
   SUBROUTINE cmfe_GeneratedMesh_BasisGetObj(generatedMesh,bases,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_BasisGetObj)
 
     !Argument variables
     TYPE(cmfe_GeneratedMeshType), INTENT(IN) :: generatedMesh !<The generated mesh to get the basis for.
@@ -35764,6 +36572,7 @@ CONTAINS
 
   !>Sets/changes the basis for a generated mesh on a region identified by a user number.
   SUBROUTINE cmfe_GeneratedMesh_BasisSetNumber0(regionUserNumber,generatedMeshUserNumber,basisUserNumber,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_BasisSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the generated mesh to set the basis for.
@@ -35823,6 +36632,7 @@ CONTAINS
 
   !>Sets/changes the basis for a generated mesh on a region identified by a user number.
   SUBROUTINE cmfe_GeneratedMesh_BasisSetNumber1(regionUserNumber,generatedMeshUserNumber,basisUserNumbers,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_BasisSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the generated mesh to set the basis for.
@@ -35888,6 +36698,7 @@ CONTAINS
 
   !>Sets/changes the basis for a generated mesh identified by an object.
   SUBROUTINE cmfe_GeneratedMesh_BasisSetObj0(generatedMesh,basis,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_BasisSetObj0)
 
     !Argument variables
     TYPE(cmfe_GeneratedMeshType), INTENT(IN) :: generatedMesh !<The generated mesh to set the basis for.
@@ -35913,6 +36724,7 @@ CONTAINS
 
   !>Sets/changes the basis for a generated mesh identified by an object.
   SUBROUTINE cmfe_GeneratedMesh_BasisSetObj1(generatedMesh,bases,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_BasisSetObj1)
 
     !Argument variables
     TYPE(cmfe_GeneratedMeshType), INTENT(IN) :: generatedMesh !<The generated mesh to set the basis for.
@@ -35952,6 +36764,7 @@ CONTAINS
 
   !>Sets/changes the base vectors for a generated mesh on a region identified by a user number.
   SUBROUTINE cmfe_GeneratedMesh_BaseVectorsSetNumber(regionUserNumber,generatedMeshUserNumber,baseVectors,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_BaseVectorsSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the generated mesh to set the base vectors for.
@@ -35997,6 +36810,7 @@ CONTAINS
 
   !>Sets/changes the base vectors for a generated mesh identified by an object.
   SUBROUTINE cmfe_GeneratedMesh_BaseVectorsSetObj(generatedMesh,baseVectors,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_BaseVectorsSetObj)
 
     !Argument variables
     TYPE(cmfe_GeneratedMeshType), INTENT(IN) :: generatedMesh !<The generated mesh to set the base vectors for.
@@ -36022,6 +36836,7 @@ CONTAINS
 
   !>Finishes the creation of a generated mesh on a region identified by a user number.
   SUBROUTINE cmfe_GeneratedMesh_CreateFinishNumber(regionUserNumber,generatedMeshUserNumber,meshUserNumber,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_CreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the generated mesh to finish the creation of.
@@ -36073,6 +36888,7 @@ CONTAINS
 
   !>Finishes the creation of a generated mesh identified by an object.
   SUBROUTINE cmfe_GeneratedMesh_CreateFinishObj(generatedMesh,meshUserNumber,mesh,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_CreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_GeneratedMeshType), INTENT(IN) :: generatedMesh !<The generated mesh to finish the creation of.
@@ -36103,6 +36919,7 @@ CONTAINS
 
   !>Starts the creation of a generated mesh on a region identified by a user number.
   SUBROUTINE cmfe_GeneratedMesh_CreateStartNumber(generatedMeshUserNumber,regionUserNumber,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_CreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: generatedMeshUserNumber !<The user number of the generated mesh to create.
@@ -36144,6 +36961,7 @@ CONTAINS
 
   !>Starts the creation of a generated mesh on an interface identified by an object.
   SUBROUTINE cmfe_GeneratedMesh_CreateStartInterfaceObj(generatedMeshUserNumber,interface,generatedMesh,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_CreateStartInterfaceObj)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: generatedMeshUserNumber !<The user number of the generated mesh to create.
@@ -36170,6 +36988,7 @@ CONTAINS
 
   !>Starts the creation of a generated mesh on a region identified by an object.
   SUBROUTINE cmfe_GeneratedMesh_CreateStartRegionObj(generatedMeshUserNumber,region,generatedMesh,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_CreateStartRegionObj)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: generatedMeshUserNumber !<The user number of the generated mesh to create.
@@ -36200,6 +37019,7 @@ CONTAINS
 
   !>Destroys a generated mesh on a region identified by a user number.
   SUBROUTINE cmfe_GeneratedMesh_DestroyNumber(regionUserNumber,generatedMeshUserNumber,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_DestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the generated mesh to destroy.
@@ -36244,6 +37064,7 @@ CONTAINS
 
   !>Destroys a generated mesh identified by an object.
   SUBROUTINE cmfe_GeneratedMesh_DestroyObj(generatedMesh,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_DestroyObj)
 
     !Argument variables
     TYPE(cmfe_GeneratedMeshType), INTENT(INOUT) :: generatedMesh !<The generated mesh to destroy.
@@ -36267,6 +37088,7 @@ CONTAINS
 
   !>Returns the extent for a generated mesh on a region identified by a user number.
   SUBROUTINE cmfe_GeneratedMesh_ExtentGetNumber(regionUserNumber,generatedMeshUserNumber,extent,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_ExtentGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the generated mesh to get the extent for.
@@ -36312,6 +37134,7 @@ CONTAINS
 
   !>Returns the extent for a generated mesh identified by an object.
   SUBROUTINE cmfe_GeneratedMesh_ExtentGetObj(generatedMesh,extent,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_ExtentGetObj)
 
     !Argument variables
     TYPE(cmfe_GeneratedMeshType), INTENT(IN) :: generatedMesh !<The generated mesh to get the extent for.
@@ -36337,6 +37160,7 @@ CONTAINS
 
   !>Sets/changes the extent for a generated mesh on a region identified by a user number.
   SUBROUTINE cmfe_GeneratedMesh_ExtentSetNumber(regionUserNumber,generatedMeshUserNumber,extent,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_ExtentSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the generated mesh to set the extent for.
@@ -36382,6 +37206,7 @@ CONTAINS
 
   !>Sets/changes the extent for a generated mesh identified by an object.
   SUBROUTINE cmfe_GeneratedMesh_ExtentSetObj(generatedMesh,extent,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_ExtentSetObj)
 
     !Argument variables
     TYPE(cmfe_GeneratedMeshType), INTENT(IN) :: generatedMesh !<The generated mesh to set the extent for.
@@ -36407,6 +37232,7 @@ CONTAINS
 
   !>Returns the number of elements for a generated mesh on a region identified by a user number.
   SUBROUTINE cmfe_GeneratedMesh_NumberOfElementsGetNumber(regionUserNumber,generatedMeshUserNumber,numberOfElements,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_NumberOfElementsGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the generated mesh to get the number of elements for.
@@ -36453,6 +37279,7 @@ CONTAINS
 
   !>Returns the number of elements for a generated mesh identified by an object.
   SUBROUTINE cmfe_GeneratedMesh_NumberOfElementsGetObj(generatedMesh,numberOfElements,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_NumberOfElementsGetObj)
 
     !Argument variables
     TYPE(cmfe_GeneratedMeshType), INTENT(IN) :: generatedMesh !<The generated mesh to get the number of elements for.
@@ -36478,6 +37305,7 @@ CONTAINS
 
   !>Sets/changes the number of elements for a generated mesh on a region identified by a user number.
   SUBROUTINE cmfe_GeneratedMesh_NumberOfElementsSetNumber(regionUserNumber,generatedMeshUserNumber,numberOfElements,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_NumberOfElementsSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the generated mesh to set the number of elements for.
@@ -36524,6 +37352,7 @@ CONTAINS
 
   !>Sets/changes the number of elements for a generated mesh identified by an object.
   SUBROUTINE cmfe_GeneratedMesh_NumberOfElementsSetObj(generatedMesh,numberOfElements,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_NumberOfElementsSetObj)
 
     !Argument variables
     TYPE(cmfe_GeneratedMeshType), INTENT(IN) :: generatedMesh !<The generated mesh to set the number of elements for.
@@ -36549,6 +37378,7 @@ CONTAINS
 
   !>Returns the origin of a generated mesh on a region identified by a user number.
   SUBROUTINE cmfe_GeneratedMesh_OriginGetNumber(regionUserNumber,generatedMeshUserNumber,origin,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_OriginGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the generated mesh to get the origin for.
@@ -36594,6 +37424,7 @@ CONTAINS
 
   !>Returns the origin of a generated mesh identified by an object.
   SUBROUTINE cmfe_GeneratedMesh_OriginGetObj(generatedMesh,origin,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_OriginGetObj)
 
     !Argument variables
     TYPE(cmfe_GeneratedMeshType), INTENT(IN) :: generatedMesh !<The generated mesh to get the origin for.
@@ -36619,6 +37450,7 @@ CONTAINS
 
   !>Sets/changes the origin of a generated mesh on a region identified by a user number.
   SUBROUTINE cmfe_GeneratedMesh_OriginSetNumber(regionUserNumber,generatedMeshUserNumber,origin,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_OriginSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the generated mesh to set the origin for.
@@ -36664,6 +37496,7 @@ CONTAINS
 
   !>Sets/changes the origin of a generated mesh identified by an object.
   SUBROUTINE cmfe_GeneratedMesh_OriginSetObj(generatedMesh,origin,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_OriginSetObj)
 
     !Argument variables
     TYPE(cmfe_GeneratedMeshType), INTENT(IN) :: generatedMesh !<The generated mesh to set the origin for.
@@ -36689,6 +37522,7 @@ CONTAINS
 
   !>Returns the type of a generated mesh on a region identified by a user number.
   SUBROUTINE cmfe_GeneratedMesh_TypeGetNumber(regionUserNumber,generatedMeshUserNumber,generatedMeshType,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_TypeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the generated mesh to get the type for.
@@ -36734,6 +37568,7 @@ CONTAINS
 
   !>Returns the type of a generated mesh identified by an object.
   SUBROUTINE cmfe_GeneratedMesh_TypeGetObj(generatedMesh,generatedMeshType,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_TypeGetObj)
 
     !Argument variables
     TYPE(cmfe_GeneratedMeshType), INTENT(IN) :: generatedMesh !<The generated mesh to get the generated mesh type for.
@@ -36759,6 +37594,7 @@ CONTAINS
 
   !>Sets/changes the type of a generated mesh on a region identified by a user number.
   SUBROUTINE cmfe_GeneratedMesh_TypeSetNumber(regionUserNumber,generatedMeshUserNumber,generatedMeshType,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_TypeSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the generated mesh to set the type for.
@@ -36804,6 +37640,7 @@ CONTAINS
 
   !>Sets/changes the type of a generated mesh identified by an object.
   SUBROUTINE cmfe_GeneratedMesh_TypeSetObj(generatedMesh,generatedMeshType,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_TypeSetObj)
 
     !Argument variables
     TYPE(cmfe_GeneratedMeshType), INTENT(IN) :: generatedMesh !<The generated mesh to set the generated mesh type for.
@@ -36830,6 +37667,7 @@ CONTAINS
   !>Calculates and sets the geometric field parameters for a generated mesh identified by a user number.
   SUBROUTINE cmfe_GeneratedMesh_GeometricParametersCalculateNumber(regionUserNumber,generatedMeshUserNumber, &
       & fieldUserNumber,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_GeometricParametersCalculateNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to calculate the geometric parameters for.
@@ -36885,6 +37723,7 @@ CONTAINS
 
   !>Calculates and sets the geometric field parameters for a generated mesh identified by an object.
   SUBROUTINE cmfe_GeneratedMesh_GeometricParametersCalculateObj(generatedMesh,field,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_GeometricParametersCalculateObj)
 
     !Argument variables
     TYPE(cmfe_GeneratedMeshType), INTENT(IN) :: generatedMesh !<The generated mesh to calculate the geometric parameters for.
@@ -36911,6 +37750,7 @@ CONTAINS
 
   !>Returns a list of the nodes belonging to a surface, and their normal xi direction, of a generated mesh identified by an object.
   SUBROUTINE cmfe_GeneratedMesh_SurfaceGetNumber0(regionUserNumber,generatedMeshUserNumber,surfaceType,surfaceNodes,normalXi,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_SurfaceGetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the generated mesh.
@@ -36959,6 +37799,7 @@ CONTAINS
   !>Returns a list of the nodes belonging to a surface, and their normal xi direction, of a generated mesh identified by an object.
   SUBROUTINE cmfe_GeneratedMesh_SurfaceGetNumber1(regionUserNumber,meshComponent,generatedMeshUserNumber,surfaceType, &
       & surfaceNodes,normalXi,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_SurfaceGetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the generated mesh.
@@ -37007,6 +37848,7 @@ CONTAINS
 
   !>Returns a list of the nodes belonging to a surface, and their normal xi direction, of a generated mesh identified by an object.
   SUBROUTINE cmfe_GeneratedMesh_SurfaceGetObj0(generatedMesh,surfaceType,surfaceNodes,normalXi,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_SurfaceGetObj0)
 
     !Argument variables
     TYPE(cmfe_GeneratedMeshType), INTENT(IN) :: generatedMesh !<The generated mesh from which to extract surface nodes.
@@ -37032,6 +37874,7 @@ CONTAINS
 
   !>Returns a list of the nodes belonging to a surface, and their normal xi direction, of a generated mesh identified by an object.
   SUBROUTINE cmfe_GeneratedMesh_SurfaceGetObj1(generatedMesh,meshComponent,surfaceType,surfaceNodes,normalXi,err)
+    !DLLEXPORT(cmfe_GeneratedMesh_SurfaceGetObj1)
 
     !Argument variables
     TYPE(cmfe_GeneratedMeshType), INTENT(IN) :: generatedMesh !<The generated mesh from which to extract surface nodes.
@@ -37064,6 +37907,7 @@ CONTAINS
 
   !>Initialises a EmbeddedMeshType object.
   SUBROUTINE cmfe_MeshEmbedding_Initialise(meshEmbedding,err)
+    !DLLEXPORT(cmfe_MeshEmbedding_Initialise)
     !Argument variables
     TYPE(cmfe_MeshEmbeddingType), INTENT(OUT) ::  meshEmbedding !<The  MeshEmbeddingType object to initialise.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -37087,6 +37931,7 @@ CONTAINS
 !>Creates a mesh embedding
   SUBROUTINE cmfe_MeshEmbedding_CreateNumber(regionOneUserNumber,regionTwoUserNumber,meshEmbedding,parentMeshUserNumber, &
     & childMeshUserNumber,err)
+    !DLLEXPORT(cmfe_MeshEmbedding_CreateNumber)
 
     TYPE(cmfe_MeshEmbeddingType), INTENT(INOUT) :: meshEmbedding !<The embedding
     TYPE(REGION_TYPE), POINTER :: REGION1, REGION2
@@ -37142,6 +37987,7 @@ CONTAINS
 
   !>Creates a mesh embedding
   SUBROUTINE cmfe_MeshEmbedding_CreateObj(meshEmbedding, parentMesh, childMesh, err)
+    !DLLEXPORT(cmfe_MeshEmbedding_CreateObj)
     TYPE(cmfe_MeshEmbeddingType), INTENT(INOUT) :: meshEmbedding !<The embedding
     TYPE(cmfe_MeshType), INTENT(IN) :: parentMesh, childMesh   !<The parent and child meshes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -37155,6 +38001,7 @@ CONTAINS
 
   !>Sets the embedded nodes for one parent element
   SUBROUTINE cmfe_MeshEmbedding_SetChildNodePositionObj(meshEmbedding, elementNumber, nodeNumbers, xiCoords, err)
+    !DLLEXPORT(cmfe_MeshEmbedding_SetChildNodePositionObj)
     TYPE(cmfe_MeshEmbeddingType), INTENT(INOUT) :: meshEmbedding !<The embedding
     INTEGER(INTG), INTENT(IN) :: elementNumber   !<Parent element number
     INTEGER(INTG), INTENT(IN) :: nodeNumbers(:)  !<Node numbers in child mesh
@@ -37170,6 +38017,7 @@ CONTAINS
 
   !>Pushes data to embedded mesh. Will generally be used at library and not API level. /TODO: Parameter set etc, function name?
   SUBROUTINE cmfe_MeshEmbedding_PushDataObj(meshEmbedding, parentField, parentComponent, childField, childComponent, err)
+    !DLLEXPORT(cmfe_MeshEmbedding_PushDataObj)
     TYPE(cmfe_MeshEmbeddingType), INTENT(INOUT) :: meshEmbedding !<The embedding
     TYPE(cmfe_FieldType), INTENT(IN) :: parentField, childField  !<Fields associated with parent and child mesh to get/set data from
 !    TYPE(cmfe_FieldType), POINTER, INTENT(IN) :: parentField, childField  !<Fields associated with parent and child mesh to get/set data from
@@ -37187,6 +38035,7 @@ CONTAINS
 !   !>Sets the positions of a Gauss point of the parent mesh in terms of element/xi coordinated in the child mesh
     SUBROUTINE cmfe_MeshEmbedding_SetGaussPointDataObj(meshEmbedding, parentElementNumber,gaussPointNumber, &
        & parentXiCoords,childElementNumber,childXiCoords, err)
+      !DLLEXPORT(cmfe_MeshEmbedding_SetGaussPointDataObj)
      TYPE(cmfe_MeshEmbeddingType), INTENT(INOUT) :: meshEmbedding !<The embedding
      INTEGER(INTG), INTENT(IN) :: parentElementNumber   !<Parent element number
      INTEGER(INTG), INTENT(IN) :: childElementNumber   !<Child element number
@@ -37205,6 +38054,7 @@ CONTAINS
 !   !>Sets the positions of a Gauss point of the parent mesh in terms of element/xi coordinated in the child mesh
     SUBROUTINE cmfe_MeshEmbedding_PullGaussPointDataObj(meshEmbedding, parentField, parentComponent, childField, &
       & childComponent, err)
+      !DLLEXPORT(cmfe_MeshEmbedding_PullGaussPointDataObj)
     TYPE(cmfe_MeshEmbeddingType), INTENT(INOUT) :: meshEmbedding !<The embedding
     TYPE(cmfe_FieldType), INTENT(IN) :: parentField, childField  !<Fields associated with parent and child mesh to get/set data from
     INTEGER(INTG), INTENT(IN) :: parentComponent, childComponent  !<Component numbers in respective fields
@@ -37219,6 +38069,7 @@ CONTAINS
   !
    SUBROUTINE cmfe_Field_ParameterSetGetGaussPointCoordObj(meshEmbedding,componentNumber,numberOfGaussPoints, &
      & coords,err)
+     !DLLEXPORT(cmfe_Field_ParameterSetGetGaussPointCoordObj)
 
     !Argument variables
     TYPE(cmfe_MeshEmbeddingType), INTENT(INOUT) :: meshEmbedding !<The embedding
@@ -37250,6 +38101,7 @@ CONTAINS
 
   !>Finishes the creation of an interface identified by a user number.
   SUBROUTINE cmfe_Interface_CreateFinishNumber(regionUserNumber,interfaceUserNumber,err)
+    !DLLEXPORT(cmfe_Interface_CreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface to finish the interface for.
@@ -37294,6 +38146,7 @@ CONTAINS
 
   !>Finishes the creation of an interface identified by an object.
   SUBROUTINE cmfe_Interface_CreateFinishObj(interface,err)
+    !DLLEXPORT(cmfe_Interface_CreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceType), INTENT(IN) :: interface !<The interface to finish creating.
@@ -37318,6 +38171,7 @@ CONTAINS
 
   !>Starts the creation of an interface identified by a user number.
   SUBROUTINE cmfe_Interface_CreateStartNumber(interfaceUserNumber,regionUserNumber,err)
+    !DLLEXPORT(cmfe_Interface_CreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface to start the creation of.
@@ -37355,6 +38209,7 @@ CONTAINS
 
   !>Starts the creation of an interface identified by an object.
   SUBROUTINE cmfe_Interface_CreateStartObj(interfaceUserNumber,region,interface,err)
+    !DLLEXPORT(cmfe_Interface_CreateStartObj)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the field to start the creation of.
@@ -37381,6 +38236,7 @@ CONTAINS
  
   !>Sets/changes the coordinate system for an interface identified by an user number.
   SUBROUTINE cmfe_Interface_CoordinateSystemSetNumber(parentRegionUserNumber,interfaceUserNumber,coordinateSystemUserNumber,err)
+    !DLLEXPORT(cmfe_Interface_CoordinateSystemSetNumber)
   
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region where interface was created.
@@ -37430,6 +38286,7 @@ CONTAINS
  
   !>Sets/changes the coordinate system for an interface identified by an object.
   SUBROUTINE cmfe_Interface_CoordinateSystemSetObj(interface,coordinateSystem,err)
+    !DLLEXPORT(cmfe_Interface_CoordinateSystemSetObj)
   
     !Argument variables
     TYPE(cmfe_InterfaceType), INTENT(IN) :: interface !<The interface to set the coordinate system for
@@ -37454,6 +38311,7 @@ CONTAINS
   
   !>Returns the coordinate system for an interface identified by an user number.
   SUBROUTINE cmfe_Interface_CoordinateSystemGetNumber(parentRegionUserNumber,interfaceUserNumber,coordinateSystemUserNumber,err)
+    !DLLEXPORT(cmfe_Interface_CoordinateSystemGetNumber)
   
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the region to get the coordinate system for.
@@ -37502,6 +38360,7 @@ CONTAINS
  
   !>Returns the coordinate system for an interface identified by an object. 
   SUBROUTINE cmfe_Interface_CoordinateSystemGetObj(Interface,CoordinateSystem,err)
+    !DLLEXPORT(cmfe_Interface_CoordinateSystemGetObj)
   
     !Argument variables
     TYPE(cmfe_InterfaceType), INTENT(IN) :: Interface !<The interface to get the coordinate system for.
@@ -37527,6 +38386,7 @@ CONTAINS
 
   !>Destroys an interface identified by a user number.
   SUBROUTINE cmfe_Interface_DestroyNumber(regionUserNumber,interfaceUserNumber,err)
+    !DLLEXPORT(cmfe_Interface_DestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface to destroy.
@@ -37570,6 +38430,7 @@ CONTAINS
 
   !>Destroys an interface identified by an object.
   SUBROUTINE cmfe_Interface_DestroyObj(interface,err)
+    !DLLEXPORT(cmfe_Interface_DestroyObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceType), INTENT(IN) :: Interface !<The interface to destroy.
@@ -37594,6 +38455,7 @@ CONTAINS
 
   !>Returns the character string label for an interface identified by an user number.
   SUBROUTINE cmfe_Interface_LabelGetCNumber(parentRegionUserNumber,interfaceUserNumber,label,err)
+    !DLLEXPORT(cmfe_Interface_LabelGetCNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region containing the interface to get the label for.
@@ -37640,6 +38502,7 @@ CONTAINS
 
   !>Returns the character string label for an interface identified by an object.
   SUBROUTINE cmfe_Interface_LabelGetCObj(interface,label,err)
+    !DLLEXPORT(cmfe_Interface_LabelGetCObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceType), INTENT(IN) :: interface !<The interface to get the label for.
@@ -37665,6 +38528,7 @@ CONTAINS
 
   !>Returns the varying string label for an interface identified by an user number.
   SUBROUTINE cmfe_Interface_LabelGetVSNumber(parentRegionUserNumber,interfaceUserNumber,label,err)
+    !DLLEXPORT(cmfe_Interface_LabelGetVSNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region containing the interface to get the label for.
@@ -37711,6 +38575,7 @@ CONTAINS
 
   !>Returns the varying string label for an interface identified by an object.
   SUBROUTINE cmfe_Interface_LabelGetVSObj(interface,label,err)
+    !DLLEXPORT(cmfe_Interface_LabelGetVSObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceType), INTENT(IN) :: Interface !<The interface to get the label for.
@@ -37736,6 +38601,7 @@ CONTAINS
 
   !>Sets/changes the character string label for an interface identified by an user number.
   SUBROUTINE cmfe_Interface_LabelSetCNumber(parentRegionUserNumber,interfaceUserNumber,label,err)
+    !DLLEXPORT(cmfe_Interface_LabelSetCNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region containing the interface to set the label for.
@@ -37782,6 +38648,7 @@ CONTAINS
 
   !>Sets/changes the character string label for an interface identified by an object.
   SUBROUTINE cmfe_Interface_LabelSetCObj(interface,label,err)
+    !DLLEXPORT(cmfe_Interface_LabelSetCObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceType), INTENT(IN) :: Interface !<The interface to set the label for.
@@ -37807,6 +38674,7 @@ CONTAINS
 
   !>Sets/changes the varying string label for an interface identified by an user number.
   SUBROUTINE cmfe_Interface_LabelSetVSNumber(parentRegionUserNumber,interfaceUserNumber,label,err)
+    !DLLEXPORT(cmfe_Interface_LabelSetVSNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region containing the interface to set the label for.
@@ -37853,6 +38721,7 @@ CONTAINS
 
   !>Sets/changes string label for an interface identified by an object.
   SUBROUTINE cmfe_Interface_LabelSetVSObj(interface,label,err)
+    !DLLEXPORT(cmfe_Interface_LabelSetVSObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceType), INTENT(IN) :: Interface !<The interface to set the label for.
@@ -37878,6 +38747,7 @@ CONTAINS
 
   !>Returns the nodes for a interface identified by an object.
   SUBROUTINE cmfe_Interface_NodesGetObj(interface,nodes,err)
+    !DLLEXPORT(cmfe_Interface_NodesGetObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceType), INTENT(IN) :: interface !<The interface to get the nodes for.
@@ -37904,6 +38774,7 @@ CONTAINS
   !>Adds a mesh to be coupled in an interface identified by a user number.
   SUBROUTINE cmfe_Interface_MeshAddNumber(interfaceRegionUserNumber,interfaceUserNumber,meshRegionUserNumber, &
     & meshUserNumber,meshIndex,err)
+    !DLLEXPORT(cmfe_Interface_MeshAddNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: interfaceRegionUserNumber !<The user number of the parent region containing the interface to add a coupled mesh to.
@@ -37970,6 +38841,7 @@ CONTAINS
 
   !>Adds a mesh to be coupled in an interface identified by an object.
   SUBROUTINE cmfe_Interface_MeshAddObj(interface,mesh,meshIndex,err)
+    !DLLEXPORT(cmfe_Interface_MeshAddObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceType), INTENT(IN) :: interface !<The interface to finish creating.
@@ -37996,6 +38868,7 @@ CONTAINS
 
   !>Finishes the creation of an interface coupled mesh connectivity identified by a user number.
   SUBROUTINE cmfe_InterfaceMeshConnectivity_CreateFinishNumber(regionUserNumber,interfaceUserNumber,err)
+    !DLLEXPORT(cmfe_InterfaceMeshConnectivity_CreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface to finish the interface meshes connectivity for.
@@ -38041,6 +38914,7 @@ CONTAINS
 
   !>Finishes the creation of an interface meshes connectivity identified by an object.
   SUBROUTINE cmfe_InterfaceMeshConnectivity_CreateFinishObj(interfaceMeshConnectivity,err)
+    !DLLEXPORT(cmfe_InterfaceMeshConnectivity_CreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceMeshConnectivityType), INTENT(IN) :: interfaceMeshConnectivity !<The interface meshes connectivity to finish creating.
@@ -38066,6 +38940,7 @@ CONTAINS
 
   !>Starts the creation of an interface meshes connectivity identified by a user number.
   SUBROUTINE cmfe_InterfaceMeshConnectivity_CreateStartNumber(regionUserNumber,interfaceUserNumber,meshNumber,err)
+    !DLLEXPORT(cmfe_InterfaceMeshConnectivity_CreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface to start the creation of the meshes connectivity.
@@ -38122,6 +38997,7 @@ CONTAINS
 
   !>Starts the creation of an interface meshes connectivity identified by an object.
   SUBROUTINE cmfe_InterfaceMeshConnectivity_CreateStartObj(interface,interfaceMesh,interfaceMeshConnectivity,err)
+    !DLLEXPORT(cmfe_InterfaceMeshConnectivity_CreateStartObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceType), INTENT(IN) :: interface !<The interface to start the creation of the meshes connectivity for
@@ -38152,6 +39028,7 @@ CONTAINS
   !>Sets the connectivity between an element in a coupled mesh to an element in the interface mesh
   SUBROUTINE cmfe_InterfaceMeshConnectivity_ElementNumberSetNumber(regionUserNumber,interfaceUserNumber, &
      &  interfaceElementNumber,coupledMeshIndexNumber,coupledMeshElementNumber,err)
+    !DLLEXPORT(cmfe_InterfaceMeshConnectivity_ElementNumberSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface meshe connectivity.
@@ -38202,6 +39079,7 @@ CONTAINS
   !>Sets the connectivity between an element in a coupled mesh to an element in the interface mesh
   SUBROUTINE cmfe_InterfaceMeshConnectivity_ElementNumberSetObj(interfaceMeshConnectivity,interfaceElementNumber, &
      &  coupledMeshIndexNumber,coupledMeshElementNumber,err)
+    !DLLEXPORT(cmfe_InterfaceMeshConnectivity_ElementNumberSetObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceMeshConnectivityType), INTENT(IN) :: interfaceMeshConnectivity !<The interface mesh connectivity for the interface mesh
@@ -38233,6 +39111,7 @@ CONTAINS
   !>Sets the connectivity between an element in a coupled mesh to an element in the interface mesh
   SUBROUTINE cmfe_InterfaceMeshConnectivity_NodeNumberSetNumber(regionUserNumber,interfaceUserNumber, &
      &  interfaceElementNumber,coupledMeshIndexNumber,coupledMeshElementNumber,err)
+    !DLLEXPORT(cmfe_InterfaceMeshConnectivity_NodeNumberSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface meshe connectivity.
@@ -38263,6 +39142,7 @@ CONTAINS
   !>Sets the connectivity between nodes in coupled meshes to nodes in the interface mesh
   SUBROUTINE cmfe_InterfaceMeshConnectivity_NodeNumberSetObj(interfaceMeshConnectivity,interfaceNodeNumbers, &
      &  firstCoupledMeshIndexNumber,firstCoupledMeshNodeNumbers,secondCoupledMeshIndexNumber,secondCoupledMeshNodeNumbers,err)
+    !DLLEXPORT(cmfe_InterfaceMeshConnectivity_NodeNumberSetObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceMeshConnectivityType), INTENT(IN) :: interfaceMeshConnectivity !<The interface mesh connectivity for the interface mesh
@@ -38303,6 +39183,7 @@ CONTAINS
   !>Sets the mapping from an xi position of a coupled mesh element to a node of an interface mesh element
   SUBROUTINE cmfe_InterfaceMeshConnectivity_ElementXiSetNumber(regionUserNumber,interfaceUserNumber,interfaceElementNumber, &
      &  coupledMeshIndexNumber,coupledMeshElementNumber,interfaceMeshLocalNodeNumber,interfaceMeshComponentNodeNumber,xi,err)
+    !DLLEXPORT(cmfe_InterfaceMeshConnectivity_ElementXiSetNumber)
   
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface to start the creation of the meshes connectivity.
@@ -38358,6 +39239,7 @@ CONTAINS
   !>Sets the mapping from an xi position of a coupled mesh element to a node of an interface mesh element
   SUBROUTINE cmfe_InterfaceMeshConnectivity_ElementXiSetObj(interfaceMeshConnectivity,interfaceElementNumber, &
      &  coupledMeshIndexNumber,coupledMeshElementNumber,interfaceMeshLocalNodeNumber,interfaceMeshComponentNodeNumber,xi,err)
+    !DLLEXPORT(cmfe_InterfaceMeshConnectivity_ElementXiSetObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceMeshConnectivityType), INTENT(IN) :: interfaceMeshConnectivity !<The interface to start the creation of the meshes connectivity for
@@ -38390,6 +39272,7 @@ CONTAINS
   !
 
   SUBROUTINE cmfe_InterfaceMeshConnectivity_BasisSetNumber(regionUserNumber,interfaceUserNumber,interfaceBasisNumber,err)
+    !DLLEXPORT(cmfe_InterfaceMeshConnectivity_BasisSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface and interface condition to destroy the meshes connectivity for.
@@ -38444,6 +39327,7 @@ CONTAINS
 
   !>Sets the basis for the mesh connectivity
   SUBROUTINE cmfe_InterfaceMeshConnectivity_BasisSetObj(interfaceMeshConnectivity,interfaceMappingBasis,err)
+    !DLLEXPORT(cmfe_InterfaceMeshConnectivity_BasisSetObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceMeshConnectivityType), INTENT(IN) :: interfaceMeshConnectivity !<The interface to start the creation of the meshes connectivity for
@@ -38470,6 +39354,7 @@ CONTAINS
 
   !>Destroys an interface meshes connectivity identified by a user number.
   SUBROUTINE cmfe_InterfaceMeshConnectivity_DestroyNumber(regionUserNumber,interfaceUserNumber,err)
+    !DLLEXPORT(cmfe_InterfaceMeshConnectivity_DestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface and interface condition to destroy the meshes connectivity for.
@@ -38514,6 +39399,7 @@ CONTAINS
 
   !>Destroys an interface meshes connectivity identified by an object.
   SUBROUTINE cmfe_InterfaceMeshConnectivity_DestroyObj(interfaceMeshConnectivity,err)
+    !DLLEXPORT(cmfe_InterfaceMeshConnectivity_DestroyObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceMeshConnectivityType), INTENT(IN) :: interfaceMeshConnectivity !<The interface meshes connectivity to destroy.
@@ -38539,6 +39425,7 @@ CONTAINS
 
   !>Finishes the creation of an interface coupled mesh points connectivity identified by a user number.
   SUBROUTINE cmfe_InterfacePointsConnectivity_CreateFinishNumber(regionUserNumber,interfaceUserNumber,err)
+    !DLLEXPORT(cmfe_InterfacePointsConnectivity_CreateFinishNumber)
   
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface to finish the interface points connectivity for.
@@ -38584,6 +39471,7 @@ CONTAINS
  
   !>Finishes the creation of an interface meshes connectivity identified by an object.
   SUBROUTINE cmfe_InterfacePointsConnectivity_CreateFinishObj(interfacePointsConnectivity,err)
+    !DLLEXPORT(cmfe_InterfacePointsConnectivity_CreateFinishObj)
   
     !Argument variables
     TYPE(cmfe_InterfacePointsConnectivityType), INTENT(IN) :: interfacePointsConnectivity !<The interface points connectivity to finish creating.
@@ -38609,6 +39497,7 @@ CONTAINS
   
   !>Starts the creation of an interface points connectivity identified by a user number.
   SUBROUTINE cmfe_InterfacePointsConnectivity_CreateStartNumber(regionUserNumber,interfaceUserNumber,MeshNumber,err)
+    !DLLEXPORT(cmfe_InterfacePointsConnectivity_CreateStartNumber)
   
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface to start the creation of the meshes connectivity.
@@ -38665,6 +39554,7 @@ CONTAINS
  
   !>Starts the creation of an interface points connectivity identified by an object.
   SUBROUTINE cmfe_InterfacePointsConnectivity_CreateStartObj(interface,interfaceMesh,interfacePointsConnectivity,err)
+    !DLLEXPORT(cmfe_InterfacePointsConnectivity_CreateStartObj)
   
     !Argument variables
     TYPE(cmfe_InterfaceType), INTENT(IN) :: interface !<The interface to start the creation of the meshes connectivity for
@@ -38693,6 +39583,7 @@ CONTAINS
 
   !>Destroys an interface points connectivity identified by a user number.
   SUBROUTINE cmfe_InterfacePointsConnectivity_DestroyNumber(regionUserNumber,interfaceUserNumber,err)
+    !DLLEXPORT(cmfe_InterfacePointsConnectivity_DestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface to destroy the points connectivity for.
@@ -38737,6 +39628,7 @@ CONTAINS
 
   !>Destroys an interface points connectivity identified by an object.
   SUBROUTINE cmfe_InterfacePointsConnectivity_DestroyObj(interfacePointsConnectivity,err)
+    !DLLEXPORT(cmfe_InterfacePointsConnectivity_DestroyObj)
 
     !Argument variables
     TYPE(cmfe_InterfacePointsConnectivityType), INTENT(IN) :: interfacePointsConnectivity !<The interface points connectivity to destroy.
@@ -38762,6 +39654,7 @@ CONTAINS
   !>Gets coupled mesh element number that the data point in the interface is connected to
   SUBROUTINE cmfe_InterfacePointsConnectivity_ElementNumberGetNumber(regionUserNumber,interfaceUserNumber, &
      &  interfaceDataPointIndexNumber,coupledMeshIndexNumber,meshComponentNumber,coupledMeshElementNumber,err)
+    !DLLEXPORT(cmfe_InterfacePointsConnectivity_ElementNumberGetNumber)
   
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface
@@ -38813,6 +39706,7 @@ CONTAINS
   !>Gets coupled mesh element number that the data point in the interface is connected to
   SUBROUTINE cmfe_InterfacePointsConnectivity_ElementNumberGetObj(interfacePointsConnectivity,interfaceDataPointIndexNumber, &
       & coupledMeshIndexNumber,meshComponentNumber,coupledMeshElementNumber,err)
+    !DLLEXPORT(cmfe_InterfacePointsConnectivity_ElementNumberGetObj)
   
     !Argument variables
     TYPE(cmfe_InterfacePointsConnectivityType), INTENT(IN) :: InterfacePointsConnectivity !<The interface points connectivity to set the element number for
@@ -38844,6 +39738,7 @@ CONTAINS
   !>Sets coupled mesh element number that the data point in the interface is connected to
   SUBROUTINE cmfe_InterfacePointsConnectivity_ElementNumberSetNumber(regionUserNumber,interfaceUserNumber, &
      &  interfaceDataPointIndexNumber,coupledMeshIndexNumber,coupledMeshElementNumber,meshComponentNumber,err)
+    !DLLEXPORT(cmfe_InterfacePointsConnectivity_ElementNumberSetNumber)
   
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface
@@ -38895,6 +39790,7 @@ CONTAINS
   !>Sets coupled mesh element number that the data point in the interface is connected to
   SUBROUTINE cmfe_InterfacePointsConnectivity_ElementNumberSetObj(interfacePointsConnectivity,interfaceDataPointIndexNumber, &
       & coupledMeshIndexNumber,coupledMeshElementNumber,meshComponentNumber,err)
+    !DLLEXPORT(cmfe_InterfacePointsConnectivity_ElementNumberSetObj)
   
     !Argument variables
     TYPE(cmfe_InterfacePointsConnectivityType), INTENT(IN) :: InterfacePointsConnectivity !<The interface points connectivity to set the element number for
@@ -38926,6 +39822,7 @@ CONTAINS
   !>Gets the xi coordinate mapping between the data points in interface and xi coordinates in a coupled region mesh
   SUBROUTINE cmfe_InterfacePointsConnectivity_PointXiGetNumber(regionUserNumber,interfaceUserNumber, &
       & interfaceDataPointIndexNumber,coupledMeshIndexNumber,xi,err)
+    !DLLEXPORT(cmfe_InterfacePointsConnectivity_PointXiGetNumber)
   
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface
@@ -38976,6 +39873,7 @@ CONTAINS
   !>Gets the xi coordinate mapping between the interface data points and xi coordinates in a coupled region mesh
   SUBROUTINE cmfe_InterfacePointsConnectivity_PointXiGetObj(interfacePointsConnectivity,interfaceDataPointIndexNumber, & 
      &  coupledMeshIndexNumber,xi,err)
+    !DLLEXPORT(cmfe_InterfacePointsConnectivity_PointXiGetObj)
   
     !Argument variables
     TYPE(cmfe_InterfacePointsConnectivityType), INTENT(IN) :: InterfacePointsConnectivity !<The interface to start the creation of the meshes connectivity for
@@ -39006,6 +39904,7 @@ CONTAINS
   !>Sets the xi coordinate mapping between the data points in interface and xi coordinates in a coupled region mesh
   SUBROUTINE cmfe_InterfacePointsConnectivity_PointXiSetNumber(regionUserNumber,interfaceUserNumber, &
       & interfaceDataPointIndexNumber,coupledMeshIndexNumber,xi,err)
+    !DLLEXPORT(cmfe_InterfacePointsConnectivity_PointXiSetNumber)
   
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface
@@ -39056,6 +39955,7 @@ CONTAINS
   !>Sets the xi coordinate mapping between the interface data points and xi coordinates in a coupled region mesh
   SUBROUTINE cmfe_InterfacePointsConnectivity_PointXiSetObj(interfacePointsConnectivity,interfaceDataPointIndexNumber, & 
      &  coupledMeshIndexNumber,xi,err)
+    !DLLEXPORT(cmfe_InterfacePointsConnectivity_PointXiSetObj)
   
     !Argument variables
     TYPE(cmfe_InterfacePointsConnectivityType), INTENT(IN) :: InterfacePointsConnectivity !<The interface to start the creation of the meshes connectivity for
@@ -39086,6 +39986,7 @@ CONTAINS
   !>Update points connectivity with projection results, data projection identified by region user number
   SUBROUTINE cmfe_InterfacePointsConnectivity_UpdateFromProjectionRNumber(regionUserNumber,interfaceUserNumber, &
       & dataPointsRegionUserNumber,dataProjectionUserNumber,coupledMeshIndex,err)
+    !DLLEXPORT(cmfe_InterfacePointsConnectivity_UpdateFromProjectionRNumber)
   
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface
@@ -39147,6 +40048,7 @@ CONTAINS
   !>Update points connectivity with projection results, data projection identified by interface user number
   SUBROUTINE cmfe_InterfacePointsConnectivity_UpdateFromProjectionINumber(regionUserNumber,interfaceUserNumber, &
     & dataPointsRegionUserNumber,dataPointsInterfaceUserNumber,dataProjectionUserNumber,coupledMeshIndex,err)
+    !DLLEXPORT(cmfe_InterfacePointsConnectivity_UpdateFromProjectionINumber)
   
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface
@@ -39211,6 +40113,7 @@ CONTAINS
   !>Update points connectivity with projection results, data projection identified by object
   SUBROUTINE cmfe_InterfacePointsConnectivity_UpdateFromProjectionObj(pointsConnectivity,dataProjection, &
       & coupledMeshIndex,err)
+    !DLLEXPORT(cmfe_InterfacePointsConnectivity_UpdateFromProjectionObj)
   
     !Argument variables
     TYPE(cmfe_InterfacePointsConnectivityType), INTENT(IN) :: pointsConnectivity !<A pointer to the interface points connectivity to finish creating
@@ -39241,6 +40144,7 @@ CONTAINS
 
   !>Finishes the creation of an interface condition identified by an user number.
   SUBROUTINE cmfe_InterfaceCondition_CreateFinishNumber(regionUserNumber,interfaceUserNumber,interfaceConditionUserNumber,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_CreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface to finish the interface condition for.
@@ -39298,6 +40202,7 @@ CONTAINS
 
   !>Finishes the creation of an interface condition identified by an object.
   SUBROUTINE cmfe_InterfaceCondition_CreateFinishObj(interfaceCondition,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_CreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to finish creating.
@@ -39323,6 +40228,7 @@ CONTAINS
   !>Starts the creation of an interface condition identified by a user number.
   SUBROUTINE cmfe_InterfaceCondition_CreateStartNumber(interfaceConditionUserNumber,regionUserNumber,interfaceUserNumber, &
     & geometricFieldUserNumber,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_CreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition to start the creation of.
@@ -39383,6 +40289,7 @@ CONTAINS
 
   !>Starts the creation of an interface condition identified by an object.
   SUBROUTINE cmfe_InterfaceCondition_CreateStartObj(interfaceConditionUserNumber,interface,geometricField,interfaceCondition,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_CreateStartObj)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface conditon to start the creation of.
@@ -39412,6 +40319,7 @@ CONTAINS
   !>Adds a dependent variable to an interface condition identified by a user number.
   SUBROUTINE cmfe_InterfaceCondition_DependentVariableAddNumber(interfaceRegionUserNumber,interfaceUserNumber, &
     & interfaceConditionUserNumber,meshIndex,equationsSetRegionUserNumber,equationsSetUserNumber,variableType,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_DependentVariableAddNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: interfaceRegionUserNumber !<The user number of the region containing the interface containing the interface condition to add the dependent variable for.
@@ -39493,6 +40401,7 @@ CONTAINS
 
   !>Adds a dependent field variable to an interface condition identified by an object.
   SUBROUTINE cmfe_InterfaceCondition_DependentVariableAddObj(interfaceCondition,meshIndex,equationsSet,variableType,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_DependentVariableAddObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to add the dependent variable to.
@@ -39522,6 +40431,7 @@ CONTAINS
 
   !>Destroys an interface condition identified by a user number.
   SUBROUTINE cmfe_InterfaceCondition_DestroyNumber(regionUserNumber,interfaceUserNumber,interfaceConditionUserNumber,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_DestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface containing the interface condition to destroy.
@@ -39578,6 +40488,7 @@ CONTAINS
 
   !>Destroys an interface condition identified by an object.
   SUBROUTINE cmfe_InterfaceCondition_DestroyObj(interfaceCondition,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_DestroyObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to destroy.
@@ -39603,6 +40514,7 @@ CONTAINS
   !>Finishes the creation of equations for an interface condition identified by an user number.
   SUBROUTINE cmfe_InterfaceCondition_EquationsCreateFinishNumber(regionUserNumber,interfaceUserNumber, &
     & interfaceConditionUserNumber,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_EquationsCreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface to finish the interface equations for.
@@ -39661,6 +40573,7 @@ CONTAINS
 
   !>Finishes the creation of interface equations for an interface condition identified by an object.
   SUBROUTINE cmfe_InterfaceCondition_EquationsCreateFinishObj(interfaceCondition,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_EquationsCreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to finish creating the interface equations for.
@@ -39687,6 +40600,7 @@ CONTAINS
   !>Starts the creation of interface equations for an interface condition identified by a user number.
   SUBROUTINE cmfe_InterfaceCondition_EquationsCreateStartNumber(regionUserNumber,interfaceUserNumber,interfaceConditionUserNumber, &
     & err)
+    !DLLEXPORT(cmfe_InterfaceCondition_EquationsCreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface and interface condition to start the creation of the interface equations for.
@@ -39747,6 +40661,7 @@ CONTAINS
 
   !>Starts the creation of interface equations for an interface condition identified by an object.
   SUBROUTINE cmfe_InterfaceCondition_EquationsCreateStartObj(interfaceCondition,interfaceEquations,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_EquationsCreateStartObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to start the creation of interface equations for
@@ -39774,6 +40689,7 @@ CONTAINS
 
   !>Destroys interface equations for an interface condition identified by a user number.
   SUBROUTINE cmfe_InterfaceCondition_EquationsDestroyNumber(regionUserNumber,interfaceUserNumber,interfaceConditionUserNumber,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_EquationsDestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface and interface condition to destroy the interface equations for.
@@ -39831,6 +40747,7 @@ CONTAINS
 
   !>Destroys the interface equations for an interface condition identified by an object.
   SUBROUTINE cmfe_InterfaceCondition_EquationsDestroyObj(interfaceCondition,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_EquationsDestroyObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to destroy the interface equations for.
@@ -39856,6 +40773,7 @@ CONTAINS
   !>Returns the integration type for an interface condition identified by a user number.
   SUBROUTINE cmfe_InterfaceCondition_IntegrationTypeGetNumber(regionUserNumber,interfaceUserNumber,interfaceConditionUserNumber, &
     & interfaceConditionIntegrationType,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_IntegrationTypeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface containing the interface condition to get the method for.
@@ -39914,6 +40832,7 @@ CONTAINS
 
   !>Gets the integration type for an interface condition identified by an object.
   SUBROUTINE cmfe_InterfaceCondition_IntegrationTypeGetObj(interfaceCondition,interfaceConditionIntegrationType,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_IntegrationTypeGetObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to get the method for.
@@ -39942,6 +40861,7 @@ CONTAINS
   !>Sets/changes the integration type for an interface condition identified by a user number.
   SUBROUTINE cmfe_InterfaceCondition_IntegrationTypeSetNumber(regionUserNumber,interfaceUserNumber,interfaceConditionUserNumber, &
     & interfaceConditionIntegrationType,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_IntegrationTypeSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface containing the interface condition to set the method for.
@@ -40000,6 +40920,7 @@ CONTAINS
 
   !>Sets/changes the integration type for an interface condition identified by an object.
   SUBROUTINE cmfe_InterfaceCondition_IntegrationTypeSetObj(interfaceCondition,interfaceConditionIntegrationType,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_IntegrationTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to set the method for.
@@ -40028,6 +40949,7 @@ CONTAINS
   !>Finishes the creation of a Lagrange Multiplier Field for an interface condition identified by an user number.
   SUBROUTINE cmfe_InterfaceCondition_LagrangeFieldCreateFinishNumber(regionUserNumber,interfaceUserNumber, &
     & interfaceConditionUserNumber,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_LagrangeFieldCreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface and interface condition to finish the Lagrange multiplier field for.
@@ -40086,6 +41008,7 @@ CONTAINS
 
   !>Finishes the creation of a Lagrange multiplier field for an interface condition identified by an object.
   SUBROUTINE cmfe_InterfaceCondition_LagrangeFieldCreateFinishObj(interfaceCondition,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_LagrangeFieldCreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to finish creating the Lagrange multiplier field for.
@@ -40112,6 +41035,7 @@ CONTAINS
   !>Starts the creation of a Lagrange multiplier field for an interface condition identified by a user number.
   SUBROUTINE cmfe_InterfaceCondition_LagrangeFieldCreateStartNumber(regionUserNumber,interfaceUserNumber, &
     & interfaceConditionUserNumber,lagrangeFieldUserNumber,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_LagrangeFieldCreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface and interface condition to start the creation of the Lagrange multiplier field for.
@@ -40174,6 +41098,7 @@ CONTAINS
 
   !>Starts the creation of a Lagrange multiplier field for an interface condition identified by an object.
   SUBROUTINE cmfe_InterfaceCondition_LagrangeFieldCreateStartObj(interfaceCondition,lagrangeFieldUserNumber,lagrangeField,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_LagrangeFieldCreateStartObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to start the creation of the Lagrange multiplier field for.
@@ -40203,6 +41128,7 @@ CONTAINS
   !>Finishes the creation of a penalty Field for an interface condition identified by an user number.
   SUBROUTINE cmfe_InterfaceCondition_PenaltyFieldCreateFinishNumber(RegionUserNumber,InterfaceUserNumber, &
     & InterfaceConditionUserNumber,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_PenaltyFieldCreateFinishNumber)
   
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: RegionUserNumber !<The user number of the region containing the interface and interface condition to finish the penalty field for.
@@ -40261,6 +41187,7 @@ CONTAINS
  
   !>Finishes the creation of a penalty field for an interface condition identified by an object.
   SUBROUTINE cmfe_InterfaceCondition_PenaltyFieldCreateFinishObj(InterfaceCondition,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_PenaltyFieldCreateFinishObj)
   
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: InterfaceCondition !<The interface condition to finish creating the penalty field for.
@@ -40287,6 +41214,7 @@ CONTAINS
   !>Starts the creation of a penalty field for an interface condition identified by a user number.
   SUBROUTINE cmfe_InterfaceCondition_PenaltyFieldCreateStartNumber(RegionUserNumber,InterfaceUserNumber, &
     & InterfaceConditionUserNumber,PenaltyFieldUserNumber,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_PenaltyFieldCreateStartNumber)
   
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: RegionUserNumber !<The user number of the region containing the interface and interface condition to start the creation of the penalty field for.
@@ -40349,6 +41277,7 @@ CONTAINS
  
   !>Starts the creation of a penalty field for an interface condition identified by an object.
   SUBROUTINE cmfe_InterfaceCondition_PenaltyFieldCreateStartObj(InterfaceCondition,PenaltyFieldUserNumber,PenaltyField,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_PenaltyFieldCreateStartObj)
   
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: InterfaceCondition !<The interface condition to start the creation of the penalty field for.
@@ -40378,6 +41307,7 @@ CONTAINS
   !>Returns the method for an interface condition identified by a user number.
   SUBROUTINE cmfe_InterfaceCondition_MethodGetNumber(regionUserNumber,interfaceUserNumber,interfaceConditionUserNumber, &
     & interfaceConditionMethod,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_MethodGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface containing the interface condition to get the method for.
@@ -40435,6 +41365,7 @@ CONTAINS
 
   !>Gets the method for an interface condition identified by an object.
   SUBROUTINE cmfe_InterfaceCondition_MethodGetObj(interfaceCondition,interfaceConditionMethod,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_MethodGetObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to get the method for.
@@ -40461,6 +41392,7 @@ CONTAINS
   !>Sets/changes the method for an interface condition identified by a user number.
   SUBROUTINE cmfe_InterfaceCondition_MethodSetNumber(regionUserNumber,interfaceUserNumber,interfaceConditionUserNumber, &
     & interfaceConditionMethod,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_MethodSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface containing the interface condition to set the method for.
@@ -40518,6 +41450,7 @@ CONTAINS
 
   !>Sets/changes the method for an interface condition identified by an object.
   SUBROUTINE cmfe_InterfaceCondition_MethodSetObj(interfaceCondition,interfaceConditionMethod,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_MethodSetObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to set the method for.
@@ -40544,6 +41477,7 @@ CONTAINS
   !>Returns the operator for an interface condition identified by a user number.
   SUBROUTINE cmfe_InterfaceCondition_OperatorGetNumber(regionUserNumber,interfaceUserNumber,interfaceConditionUserNumber, &
     & interfaceConditionOperator,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_OperatorGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface containing the interface condition to get the operator for.
@@ -40601,6 +41535,7 @@ CONTAINS
 
   !>Gets the operator for an interface condition identified by an object.
   SUBROUTINE cmfe_InterfaceCondition_OperatorGetObj(interfaceCondition,interfaceConditionOperator,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_OperatorGetObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to get the operator for.
@@ -40628,6 +41563,7 @@ CONTAINS
   !>Sets/changes the operator for an interface condition identified by a user number.
   SUBROUTINE cmfe_InterfaceCondition_OperatorSetNumber(regionUserNumber,interfaceUserNumber,interfaceConditionUserNumber, &
     & interfaceConditionOperator,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_OperatorSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface containing the interface condition to set the operator for.
@@ -40685,6 +41621,7 @@ CONTAINS
 
   !>Sets/changes the operator for an interface condition identified by an object.
   SUBROUTINE cmfe_InterfaceCondition_OperatorSetObj(interfaceCondition,interfaceConditionOperator,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_OperatorSetObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to set the operator for.
@@ -40712,6 +41649,7 @@ CONTAINS
   !>Returns the output type for an interface equations identified by a user number.
   SUBROUTINE cmfe_InterfaceEquations_OutputTypeGetNumber(regionUserNumber,interfaceUserNumber,interfaceConditionUserNumber, &
     & outputType,err)
+    !DLLEXPORT(cmfe_InterfaceEquations_OutputTypeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface, interface condition and interface equations to get the output type for.
@@ -40772,6 +41710,7 @@ CONTAINS
 
   !>Gets the output type for an interface equations identified by an object.
   SUBROUTINE cmfe_InterfaceEquations_OutputTypeGetObj(interfaceEquations,outputType,err)
+    !DLLEXPORT(cmfe_InterfaceEquations_OutputTypeGetObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceEquationsType), INTENT(IN) :: interfaceEquations !<The interface equations to get the output type for.
@@ -40798,6 +41737,7 @@ CONTAINS
   !>Sets/changes the output type for an interface equations identified by a user number.
   SUBROUTINE cmfe_InterfaceEquations_OutputTypeSetNumber(regionUserNumber,interfaceUserNumber,interfaceConditionUserNumber, &
     & outputType,err)
+    !DLLEXPORT(cmfe_InterfaceEquations_OutputTypeSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface, interface condition and interface equations to set the output type for.
@@ -40858,6 +41798,7 @@ CONTAINS
 
   !>Sets/changes the output type for an interface equations identified by an object.
   SUBROUTINE cmfe_InterfaceEquations_OutputTypeSetObj(interfaceEquations,outputType,err)
+    !DLLEXPORT(cmfe_InterfaceEquations_OutputTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceEquationsType), INTENT(IN) :: interfaceEquations !<The interface equations to set the output type for.
@@ -40884,6 +41825,7 @@ CONTAINS
   !>Returns the sparsity type for an interface equations identified by a user number.
   SUBROUTINE cmfe_InterfaceEquations_SparsityGetNumber(regionUserNumber,interfaceUserNumber,interfaceConditionUserNumber, &
     & sparsityType,err)
+    !DLLEXPORT(cmfe_InterfaceEquations_SparsityGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface, interface condition and interface equations to get the sparsity type for.
@@ -40944,6 +41886,7 @@ CONTAINS
 
   !>Gets the sparsity type for an interface equations identified by an object.
   SUBROUTINE cmfe_InterfaceEquations_SparsityGetObj(interfaceEquations,sparsityType,err)
+    !DLLEXPORT(cmfe_InterfaceEquations_SparsityGetObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceEquationsType), INTENT(IN) :: interfaceEquations !<The interface equations to get the sparsity type for.
@@ -40970,6 +41913,7 @@ CONTAINS
   !>Sets/changes the sparsity type for an interface equations identified by a user number.
   SUBROUTINE cmfe_InterfaceEquations_SparsitySetNumber(regionUserNumber,interfaceUserNumber,interfaceConditionUserNumber, &
     & sparsityType,err)
+    !DLLEXPORT(cmfe_InterfaceEquations_SparsitySetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface, interface condition and interface equations to set the sparsity type for.
@@ -41030,6 +41974,7 @@ CONTAINS
 
   !>Sets/changes the sparsity type for an interface equations identified by an object.
   SUBROUTINE cmfe_InterfaceEquations_SparsitySetObj(interfaceEquations,sparsityType,err)
+    !DLLEXPORT(cmfe_InterfaceEquations_SparsitySetObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceEquationsType), INTENT(IN) :: interfaceEquations !<The interface equations to set the sparsity type for.
@@ -41057,6 +42002,7 @@ CONTAINS
 
   !>Finishes the creation of a domain decomposition for a decomposition identified by a user number.
   SUBROUTINE cmfe_Decomposition_CreateFinishNumber(regionUserNumber,meshUserNumber,decompositionUserNumber,err)
+    !DLLEXPORT(cmfe_Decomposition_CreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to finish the decomposition for.
@@ -41115,6 +42061,7 @@ CONTAINS
 
   !>Finishes the creation of a domain decomposition for a decomposition identified by an object.
   SUBROUTINE cmfe_Decomposition_CreateFinishObj(decomposition,err)
+    !DLLEXPORT(cmfe_Decomposition_CreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to finish creating.
@@ -41143,6 +42090,7 @@ CONTAINS
 
   !> Calculates the decomposition topology for data points
   SUBROUTINE cmfe_Decomposition_TopologyDataProjectionCalculateObj(decomposition,err)
+    !DLLEXPORT(cmfe_Decomposition_TopologyDataProjectionCalculateObj)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to finish creating.
@@ -41173,6 +42121,7 @@ CONTAINS
   !>Gets the local data point number for data points projected on an element
   SUBROUTINE cmfe_Decomposition_TopologyElementDataPointLocalNumberGetObj(decomposition,elementNumber,dataPointIndex, &
        & dataPointLocalNumber,err)
+    !DLLEXPORT(cmfe_Decomposition_TopologyElementDataPointLocalNumberGetObj)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to finish creating.
@@ -41207,6 +42156,7 @@ CONTAINS
   !>Gets the user data point number for data points projected on an element
   SUBROUTINE cmfe_Decomposition_TopologyElementDataPointUserNumberGetObj(decomposition,elementNumber,dataPointIndex, &
        & dataPointUserNumber,err)
+    !DLLEXPORT(cmfe_Decomposition_TopologyElementDataPointUserNumberGetObj)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to finish creating.
@@ -41240,6 +42190,7 @@ CONTAINS
 
   !>Gets the number of data points projected on an element
   SUBROUTINE cmfe_Decomposition_TopologyNumberOfElementDataPointsGetObj(decomposition,elementNumber,numberOfDataPoints,err)
+    !DLLEXPORT(cmfe_Decomposition_TopologyNumberOfElementDataPointsGetObj)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to finish creating.
@@ -41272,6 +42223,7 @@ CONTAINS
 
   !>Starts the creation of a domain decomposition for a decomposition identified by a user number.
   SUBROUTINE cmfe_Decomposition_CreateStartNumber(decompositionUserNumber,regionUserNumber,meshUserNumber,err)
+    !DLLEXPORT(cmfe_Decomposition_CreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to create.
@@ -41323,6 +42275,7 @@ CONTAINS
 
   !>Starts the creation of a domain decomposition for a decomposition identified by an object.
   SUBROUTINE cmfe_Decomposition_CreateStartObj(decompositionUserNumber,mesh,decomposition,err)
+    !DLLEXPORT(cmfe_Decomposition_CreateStartObj)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to create.
@@ -41353,6 +42306,7 @@ CONTAINS
 
   !>Destroys a decomposition identified by a user number.
   SUBROUTINE cmfe_Decomposition_DestroyNumber(regionUserNumber,meshUserNumber,decompositionUserNumber,err)
+    !DLLEXPORT(cmfe_Decomposition_DestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to destroy the decomposition for.
@@ -41407,6 +42361,7 @@ CONTAINS
 
   !>Destroys a decomposition identified by an object.
   SUBROUTINE cmfe_Decomposition_DestroyObj(decomposition,err)
+    !DLLEXPORT(cmfe_Decomposition_DestroyObj)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to destroy.
@@ -41431,6 +42386,7 @@ CONTAINS
 
   !>Calculates the element domains for a decomposition identified by a user number.
   SUBROUTINE cmfe_Decomposition_ElementDomainCalculateNumber(regionUserNumber,meshUserNumber,decompositionUserNumber,err)
+    !DLLEXPORT(cmfe_Decomposition_ElementDomainCalculateNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to calculate the element domains for.
@@ -41486,6 +42442,7 @@ CONTAINS
 
   !>Calculates the element domains for a decomposition identified by an object.
   SUBROUTINE cmfe_Decomposition_ElementDomainCalculateObj(decomposition,err)
+    !DLLEXPORT(cmfe_Decomposition_ElementDomainCalculateObj)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to calcualte the element domains for.
@@ -41512,6 +42469,7 @@ CONTAINS
   !>Returns the domain for a given element in a decomposition identified by a user number.
   SUBROUTINE cmfe_Decomposition_ElementDomainGetNumber(regionUserNumber,meshUserNumber,decompositionUserNumber, &
     & elementUserNumber,domain,err)
+    !DLLEXPORT(cmfe_Decomposition_ElementDomainGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the element domain for.
@@ -41568,6 +42526,7 @@ CONTAINS
 
   !>Returns the domain for a given element in a decomposition identified by an object.
   SUBROUTINE cmfe_Decomposition_ElementDomainGetObj(decomposition,elementUserNumber,domain,err)
+    !DLLEXPORT(cmfe_Decomposition_ElementDomainGetObj)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the domain for.
@@ -41595,6 +42554,7 @@ CONTAINS
   !>Sets/changes the domain for a given element in a decomposition identified by a user number.
   SUBROUTINE cmfe_Decomposition_ElementDomainSetNumber(regionUserNumber,meshUserNumber,decompositionUserNumber, &
     & elementUserNumber,domain,err)
+    !DLLEXPORT(cmfe_Decomposition_ElementDomainSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to set the element domain for.
@@ -41651,6 +42611,7 @@ CONTAINS
 
   !>Sets/changes the domain for a given element in a decomposition identified by an object.
   SUBROUTINE cmfe_Decomposition_ElementDomainSetObj(decomposition,elementUserNumber,domain,err)
+    !DLLEXPORT(cmfe_Decomposition_ElementDomainSetObj)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to set the element domain for.
@@ -41678,6 +42639,7 @@ CONTAINS
   !>Returns the mesh component number used for the decomposition of a mesh for a decomposition identified by a user number.
   SUBROUTINE cmfe_Decomposition_MeshComponentGetNumber(regionUserNumber,meshUserNumber,decompositionUserNumber, &
     & meshComponentNumber,err)
+    !DLLEXPORT(cmfe_Decomposition_MeshComponentGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the decomposition mesh component for.
@@ -41733,6 +42695,7 @@ CONTAINS
 
   !>Returns the mesh component number used for the decomposition of a mesh for a decomposition identified by an object.
   SUBROUTINE cmfe_Decomposition_MeshComponentGetObj(decomposition,meshComponentNumber,err)
+    !DLLEXPORT(cmfe_Decomposition_MeshComponentGetObj)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the mesh component for.
@@ -41759,6 +42722,7 @@ CONTAINS
   !>Sets/changes the mesh component number used for the decomposition of a mesh for a decomposition identified by a user number.
   SUBROUTINE cmfe_Decomposition_MeshComponentSetNumber(regionUserNumber,meshUserNumber,decompositionUserNumber, &
     & meshComponentNumber,err)
+    !DLLEXPORT(cmfe_Decomposition_MeshComponentSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to set the decomposition mesh component for.
@@ -41814,6 +42778,7 @@ CONTAINS
 
   !>Sets/changes the mesh component number used for the decomposition of a mesh for a decomposition identified by an object.
   SUBROUTINE cmfe_Decomposition_MeshComponentSetObj(decomposition,meshComponentNumber,err)
+    !DLLEXPORT(cmfe_Decomposition_MeshComponentSetObj)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to Set the mesh component for.
@@ -41840,6 +42805,7 @@ CONTAINS
   !>Returns the number of domains for a decomposition identified by a user number.
   SUBROUTINE cmfe_Decomposition_NumberOfDomainsGetNumber(regionUserNumber,meshUserNumber,decompositionUserNumber, &
     & numberOfDomains,err)
+    !DLLEXPORT(cmfe_Decomposition_NumberOfDomainsGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the number of domains for.
@@ -41895,6 +42861,7 @@ CONTAINS
 
   !>Returns the number of domains for a decomposition identified by an object.
   SUBROUTINE cmfe_Decomposition_NumberOfDomainsGetObj(decomposition,numberOfDomains,err)
+    !DLLEXPORT(cmfe_Decomposition_NumberOfDomainsGetObj)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the number of domains for.
@@ -41921,6 +42888,7 @@ CONTAINS
   !>Sets/changes the number of domains for a decomposition identified by a user number.
   SUBROUTINE cmfe_Decomposition_NumberOfDomainsSetNumber(regionUserNumber,meshUserNumber,decompositionUserNumber, &
     & numberOfDomains,err)
+    !DLLEXPORT(cmfe_Decomposition_NumberOfDomainsSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to set the number of domains for.
@@ -41976,6 +42944,7 @@ CONTAINS
 
   !>Sets/changes the number of domains for a decomposition identified by an object.
   SUBROUTINE cmfe_Decomposition_NumberOfDomainsSetObj(decomposition,numberOfDomains,err)
+    !DLLEXPORT(cmfe_Decomposition_NumberOfDomainsSetObj)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to set the number of domains for.
@@ -42001,6 +42970,7 @@ CONTAINS
 
   !>Returns the type of a decomposition identified by a user number.
   SUBROUTINE cmfe_Decomposition_TypeGetNumber(regionUserNumber,meshUserNumber,decompositionUserNumber,decompositionType,err)
+    !DLLEXPORT(cmfe_Decomposition_TypeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the decomposition type for.
@@ -42056,6 +43026,7 @@ CONTAINS
 
   !>Returns the type of a decomposition identified by an object.
   SUBROUTINE cmfe_Decomposition_TypeGetObj(decomposition,decompositionType,err)
+    !DLLEXPORT(cmfe_Decomposition_TypeGetObj)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the type for.
@@ -42081,6 +43052,7 @@ CONTAINS
 
   !>Sets/changes the type of a decomposition identified by a user number.
   SUBROUTINE cmfe_Decomposition_TypeSetNumber(regionUserNumber,meshUserNumber,decompositionUserNumber,decompositionType,err)
+    !DLLEXPORT(cmfe_Decomposition_TypeSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to set the decomposition type for.
@@ -42136,6 +43108,7 @@ CONTAINS
 
   !>Sets/changes the type of a decomposition identified by an object.
   SUBROUTINE cmfe_Decomposition_TypeSetObj(decomposition,decompositionType,err)
+    !DLLEXPORT(cmfe_Decomposition_TypeSetObj)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to Set the type for.
@@ -42162,6 +43135,7 @@ CONTAINS
   !>Sets whether lines should be calculated
   SUBROUTINE cmfe_Decomposition_CalculateLinesSetNumber(regionUserNumber,meshUserNumber,&
                                                      & decompositionUserNumber,calculateLinesFlag,err)
+    !DLLEXPORT(cmfe_Decomposition_CalculateLinesSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region.
@@ -42217,6 +43191,7 @@ CONTAINS
 
   !>Sets whether lines should be calculated
   SUBROUTINE cmfe_Decomposition_CalculateLinesSetObj(decomposition,calculateLinesFlag,err)
+    !DLLEXPORT(cmfe_Decomposition_CalculateLinesSetObj)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to set the calculate lines flag for.
@@ -42243,6 +43218,7 @@ CONTAINS
   !>Sets whether faces should be calculated
   SUBROUTINE cmfe_Decomposition_CalculateFacesSetNumber(regionUserNumber,meshUserNumber, &
                                                      & decompositionUserNumber,calculateFacesFlag,err)
+    !DLLEXPORT(cmfe_Decomposition_CalculateFacesSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region.
@@ -42298,6 +43274,7 @@ CONTAINS
 
   !>Sets whether faces should be calculated
   SUBROUTINE cmfe_Decomposition_CalculateFacesSetObj(decomposition,calculateFacesFlag,err)
+    !DLLEXPORT(cmfe_Decomposition_CalculateFacesSetObj)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to set the calculate faces flag for.
@@ -42324,6 +43301,7 @@ CONTAINS
   !>Returns the domain for a given node in a decomposition identified by a user number.
   SUBROUTINE cmfe_Decomposition_NodeDomainGetNumber(regionUserNumber,meshUserNumber,decompositionUserNumber, &
     & nodeUserNumber,meshComponentNumber,domain,err)
+    !DLLEXPORT(cmfe_Decomposition_NodeDomainGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the node domain for.
@@ -42381,6 +43359,7 @@ CONTAINS
 
   !>Returns the domain for a given node in a decomposition identified by an object. \todo Maybe swap Node and MeshComponent?
   SUBROUTINE cmfe_Decomposition_NodeDomainGetObj(decomposition,nodeUserNumber,meshComponentNumber,domain,err)
+    !DLLEXPORT(cmfe_Decomposition_NodeDomainGetObj)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the domain for.
@@ -42408,6 +43387,7 @@ CONTAINS
 
   !>Finishes the creation of a mesh for a mesh identified by a user number.
   SUBROUTINE cmfe_Mesh_CreateFinishNumber(regionUserNumber,meshUserNumber,err)
+    !DLLEXPORT(cmfe_Mesh_CreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to finish the creation of.
@@ -42456,6 +43436,7 @@ CONTAINS
 
   !>Finishes the creation of a mesh for a mesh identified by an object.
   SUBROUTINE cmfe_Mesh_CreateFinishObj(mesh,err)
+    !DLLEXPORT(cmfe_Mesh_CreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_MeshType), INTENT(IN) :: mesh !<The mesh to finish creating.
@@ -42484,6 +43465,7 @@ CONTAINS
 
   !>Starts the creation of a mesh for a mesh identified by a user number.
   SUBROUTINE cmfe_Mesh_CreateStartNumber(meshUserNumber,regionUserNumber,numberOfDimensions,err)
+    !DLLEXPORT(cmfe_Mesh_CreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to start the creation of.
@@ -42526,6 +43508,7 @@ CONTAINS
 
   !>Starts the creation of a mesh for a mesh identified by an object.
   SUBROUTINE cmfe_Mesh_CreateStartObj(meshUserNumber,region,numberOfDimensions,mesh,err)
+    !DLLEXPORT(cmfe_Mesh_CreateStartObj)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to start the creation of.
@@ -42557,6 +43540,7 @@ CONTAINS
 
   !>Starts the creation of a mesh for a mesh identified by an object.
   SUBROUTINE cmfe_Mesh_CreateStartInterfaceObj(meshUserNumber,interface,numberOfDimensions,mesh,err)
+    !DLLEXPORT(cmfe_Mesh_CreateStartInterfaceObj)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to start the creation of.
@@ -42588,6 +43572,7 @@ CONTAINS
 
   !>Destroys a mesh identified by a user number.
   SUBROUTINE cmfe_Mesh_DestroyNumber(regionUserNumber,meshUserNumber,err)
+    !DLLEXPORT(cmfe_Mesh_DestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to destroy.
@@ -42632,6 +43617,7 @@ CONTAINS
 
   !>Destroys a mesh identified by an object.
   SUBROUTINE cmfe_Mesh_DestroyObj(mesh,err)
+    !DLLEXPORT(cmfe_Mesh_DestroyObj)
 
     !Argument variables
     TYPE(cmfe_MeshType), INTENT(IN) :: mesh !<The mesh to destroy.
@@ -42656,6 +43642,7 @@ CONTAINS
 
   !>Returns the number of components in a mesh identified by a user number.
   SUBROUTINE cmfe_Mesh_NumberOfComponentsGetNumber(regionUserNumber,meshUserNumber,numberOfComponents,err)
+    !DLLEXPORT(cmfe_Mesh_NumberOfComponentsGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the number of components for.
@@ -42701,6 +43688,7 @@ CONTAINS
 
   !>Returns the number of components in a mesh identified by an object.
   SUBROUTINE cmfe_Mesh_NumberOfComponentsGetObj(mesh,numberOfComponents,err)
+    !DLLEXPORT(cmfe_Mesh_NumberOfComponentsGetObj)
 
     !Argument variables
     TYPE(cmfe_MeshType), INTENT(IN) :: mesh !<The mesh to get the number of components for.
@@ -42726,6 +43714,7 @@ CONTAINS
 
   !>Sets/changes the number of components in a mesh identified by a user number.
   SUBROUTINE cmfe_Mesh_NumberOfComponentsSetNumber(regionUserNumber,meshUserNumber,numberOfComponents,err)
+    !DLLEXPORT(cmfe_Mesh_NumberOfComponentsSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to set the number of components for.
@@ -42771,6 +43760,7 @@ CONTAINS
 
   !>Sets/changes the number of components in a mesh identified by an object.
   SUBROUTINE cmfe_Mesh_NumberOfComponentsSetObj(mesh,numberOfComponents,err)
+    !DLLEXPORT(cmfe_Mesh_NumberOfComponentsSetObj)
 
     !Argument variables
     TYPE(cmfe_MeshType), INTENT(IN) :: mesh !<The mesh to set the number of components for.
@@ -42796,6 +43786,7 @@ CONTAINS
 
   !>Sets/changes the surrounding elements calculate flag.
   SUBROUTINE cmfe_Mesh_SurroundingElementsCalculateSetNumber(regionUserNumber,meshUserNumber,surroundingElementsCalculateFlag,err)
+    !DLLEXPORT(cmfe_Mesh_SurroundingElementsCalculateSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to set the surrounding elements calculate flag for.
@@ -42842,6 +43833,7 @@ CONTAINS
 
   !>Sets/changes the surrounding elements calculate flag.
   SUBROUTINE cmfe_Mesh_SurroundingElementsCalculateSetObj(mesh,surroundingElementsCalculateFlag,err)
+    !DLLEXPORT(cmfe_Mesh_SurroundingElementsCalculateSetObj)
 
     !Argument variables
     TYPE(cmfe_MeshType), INTENT(IN) :: mesh !<The mesh to set the surrounding elements calculate flag for.
@@ -42868,6 +43860,7 @@ CONTAINS
 
   !>Returns the number of elements in a mesh identified by a user number.
   SUBROUTINE cmfe_Mesh_NumberOfElementsGetNumber(regionUserNumber,meshUserNumber,numberOfElements,err)
+    !DLLEXPORT(cmfe_Mesh_NumberOfElementsGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the number of elements for.
@@ -42913,6 +43906,7 @@ CONTAINS
 
   !>Returns the number of elements in a mesh identified by an object.
   SUBROUTINE cmfe_Mesh_NumberOfElementsGetObj(mesh,numberOfElements,err)
+    !DLLEXPORT(cmfe_Mesh_NumberOfElementsGetObj)
 
     !Argument variables
     TYPE(cmfe_MeshType), INTENT(IN) :: mesh !<The mesh to get the number of elements for.
@@ -42938,6 +43932,7 @@ CONTAINS
 
   !>Sets/changes the number of elements in a mesh identified by a user number.
   SUBROUTINE cmfe_Mesh_NumberOfElementsSetNumber(regionUserNumber,meshUserNumber,numberOfElements,err)
+    !DLLEXPORT(cmfe_Mesh_NumberOfElementsSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to set the number of elements for.
@@ -42983,6 +43978,7 @@ CONTAINS
 
   !>Sets/changes the number of elements in a mesh identified by an object.
   SUBROUTINE cmfe_Mesh_NumberOfElementsSetObj(mesh,numberOfElements,err)
+    !DLLEXPORT(cmfe_Mesh_NumberOfElementsSetObj)
 
     !Argument variables
     TYPE(cmfe_MeshType), INTENT(IN) :: mesh !<The mesh to set the number of elements for.
@@ -43009,6 +44005,7 @@ CONTAINS
   !>Calculate mesh data points topology in a region identified by a user number based on projection
   SUBROUTINE cmfe_Mesh_TopologyDataPointsCalculateProjectionRegionNumber(regionUserNumber,MeshUserNumber, &
       & DataProjection,err)
+    !DLLEXPORT(cmfe_Mesh_TopologyDataPointsCalculateProjectionRegionNumber)
   
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region.
@@ -43056,6 +44053,7 @@ CONTAINS
   !>Calculate mesh data points topology in an interface identified by a user number based on projection
   SUBROUTINE cmfe_Mesh_TopologyDataPointsCalculateProjectionInterfaceNumber(parentRegionUserNumber,interfaceUserNumber, &
       & MeshUserNumber,DataProjection,err)
+    !DLLEXPORT(cmfe_Mesh_TopologyDataPointsCalculateProjectionInterfaceNumber)
   
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: parentregionUserNumber !<The user number of the region.
@@ -43112,6 +44110,7 @@ CONTAINS
   
   !>Calculate mesh data points topology identified by object based on projection
   SUBROUTINE cmfe_Mesh_TopologyDataPointsCalculateProjectionObj(Mesh,DataProjection,err)
+    !DLLEXPORT(cmfe_Mesh_TopologyDataPointsCalculateProjectionObj)
   
   !Argument variables
     TYPE(cmfe_MeshType), INTENT(IN) :: Mesh !<The mesh to calculate data points topology for
@@ -43138,6 +44137,7 @@ CONTAINS
 
   !>Finishes creating elements for a mesh component of a mesh identified by a user number.
   SUBROUTINE cmfe_MeshElements_CreateFinishNumber(regionUserNumber,meshUserNumber,meshComponentNumber,err)
+    !DLLEXPORT(cmfe_MeshElements_CreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to finish creating the elements for.
@@ -43186,6 +44186,7 @@ CONTAINS
 
   !>Finishes creating elements for a mesh component of a mesh identified by an object.
   SUBROUTINE cmfe_MeshElements_CreateFinishObj(meshElements,err)
+    !DLLEXPORT(cmfe_MeshElements_CreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_MeshElementsType), INTENT(IN) :: meshElements !<The mesh elements to finish creating.
@@ -43210,6 +44211,7 @@ CONTAINS
 
   !>Starts creating elements for a mesh component of a mesh identified by a user number.
   SUBROUTINE cmfe_MeshElements_CreateStartNumber(regionUserNumber,meshUserNumber,meshComponentNumber,basisUserNumber,err)
+    !DLLEXPORT(cmfe_MeshElements_CreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to start creating the elements for.
@@ -43267,6 +44269,7 @@ CONTAINS
 
   !>Starts creating elements for a mesh component of a mesh identified by an object.
   SUBROUTINE cmfe_MeshElements_CreateStartObj(mesh,meshComponentNumber,basis,meshElements,err)
+    !DLLEXPORT(cmfe_MeshElements_CreateStartObj)
 
     !Argument variables
     TYPE(cmfe_MeshType), INTENT(INOUT) :: mesh !<The mesh to start the creation of elements for.
@@ -43294,6 +44297,7 @@ CONTAINS
 
   !>Returns the mesh elements for a mesh component on a mesh identified by an user number.
   SUBROUTINE cmfe_Mesh_ElementsGetNumber(regionUserNumber,meshUserNumber,meshComponentNumber,meshElements,err)
+    !DLLEXPORT(cmfe_Mesh_ElementsGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the elements for.
@@ -43343,6 +44347,7 @@ CONTAINS
   !>Returns the mesh elements for a mesh component on a mesh identified by an
   !user number.
   SUBROUTINE cmfe_Mesh_ElementsGetObj(mesh,meshComponentNumber,meshElements,err)
+    !DLLEXPORT(cmfe_Mesh_ElementsGetObj)
 
     !Argument variables
     TYPE(cmfe_MeshType), INTENT(IN) :: mesh !<The mesh to get the elements for.
@@ -43371,6 +44376,7 @@ CONTAINS
   !>Returns the basis for an element in a mesh identified by an user number. \todo should the global element number be a user number?
   SUBROUTINE cmfe_MeshElements_BasisGetNumber(regionUserNumber,meshUserNumber,meshComponentNumber,globalElementNumber, &
     & basisUserNumber,err)
+    !DLLEXPORT(cmfe_MeshElements_BasisGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the basis for.
@@ -43433,6 +44439,7 @@ CONTAINS
 
   !>Returns the basis for an element in a mesh identified by an object. \todo should the global element number be a user number?
   SUBROUTINE cmfe_MeshElements_BasisGetObj(meshElements,globalElementNumber,basis,err)
+    !DLLEXPORT(cmfe_MeshElements_BasisGetObj)
 
     !Argument variables
     TYPE(cmfe_MeshElementsType), INTENT(IN) :: meshElements !<The mesh elements to get the basis for.
@@ -43460,6 +44467,7 @@ CONTAINS
   !>Sets/changes the basis for an element in a mesh identified by an user number. \todo should the global element number be a user number?
   SUBROUTINE cmfe_MeshElements_BasisSetNumber(regionUserNumber,meshUserNumber,meshComponentNumber,globalElementNumber, &
     & basisUserNumber,err)
+    !DLLEXPORT(cmfe_MeshElements_BasisSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to set the basis for.
@@ -43519,6 +44527,7 @@ CONTAINS
 
   !>Sets/changes the basis for an element in a mesh identified by an object. \todo should the global element number be a user number?
   SUBROUTINE cmfe_MeshElements_BasisSetObj(meshElements,globalElementNumber,basis,err)
+    !DLLEXPORT(cmfe_MeshElements_BasisSetObj)
 
     !Argument variables
     TYPE(cmfe_MeshElementsType), INTENT(IN) :: meshElements !<The mesh elements to set the basis for.
@@ -43546,6 +44555,7 @@ CONTAINS
   !>Returns the adjacent element number of a mesh identified by a user number
   SUBROUTINE cmfe_MeshElements_AdjacentElementGetNumber(regionUserNumber,meshUserNumber,meshComponentNumber,globalElementNumber, &
     & adjacentElementXi,adjacentElement,err)
+    !DLLEXPORT(cmfe_MeshElements_AdjacentElementGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh from which to get the adjacent element from.
@@ -43598,6 +44608,7 @@ CONTAINS
 
   !>Returns the adjacent element number of a mesh identified by an object.
   SUBROUTINE cmfe_MeshElements_AdjacentElementGetObj(meshElements,globalElementNumber,adjacentElementXi,adjacentElement,err)
+    !DLLEXPORT(cmfe_MeshElements_AdjacentElementGetObj)
 
     !Argument variables
     TYPE(cmfe_MeshElementsType), INTENT(IN) :: meshElements !<The mesh elements from which to get the adjacent element for.
@@ -43627,6 +44638,7 @@ CONTAINS
   !>Returns the element nodes for an element in a mesh identified by an user number. \todo should the global element number be a user number?
   SUBROUTINE cmfe_MeshElements_NodesGetNumber(regionUserNumber,meshUserNumber,meshComponentNumber,globalElementNumber, &
     & elementUserNodes,err)
+    !DLLEXPORT(cmfe_MeshElements_NodesGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the element nodes for.
@@ -43677,6 +44689,7 @@ CONTAINS
 
   !>Returns the element nodes for an element in a mesh identified by an object. \todo should the global element number be a user number?
   SUBROUTINE cmfe_MeshElements_NodesGetObj(meshElements,globalElementNumber,elementUserNodes,err)
+    !DLLEXPORT(cmfe_MeshElements_NodesGetObj)
 
     !Argument variables
     TYPE(cmfe_MeshElementsType), INTENT(IN) :: meshElements !<The mesh elements to get the element nodes for.
@@ -43704,6 +44717,7 @@ CONTAINS
   !>Sets/changes the element nodes for an element in a mesh identified by an user number. \todo should the global element number be a user number?
   SUBROUTINE cmfe_MeshElements_NodesSetNumber(regionUserNumber,meshUserNumber,meshComponentNumber,globalElementNumber, &
     & elementUserNodes,err)
+    !DLLEXPORT(cmfe_MeshElements_NodesSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to set the element nodes for.
@@ -43754,6 +44768,7 @@ CONTAINS
 
   !>Sets/changes the element nodes for an element in a mesh identified by an object. \todo should the global element number be a user number?
   SUBROUTINE cmfe_MeshElements_NodesSetObj(meshElements,globalElementNumber,elementUserNodes,err)
+    !DLLEXPORT(cmfe_MeshElements_NodesSetObj)
 
     !Argument variables
     TYPE(cmfe_MeshElementsType), INTENT(IN) :: meshElements !<The mesh elements to set the element nodes for.
@@ -43782,6 +44797,7 @@ CONTAINS
   !>Sets/changes the element nodes for an element in a mesh identified by an user number. \todo should the global element number be a user number?
   SUBROUTINE cmfe_MeshElements_UserNodeVersionSetNumber(regionUserNumber,meshUserNumber,globalElementNumber,versionNumber, &
     & derivativeNumber,userNodeNumber,meshComponentNumber,err)
+    !DLLEXPORT(cmfe_MeshElements_UserNodeVersionSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to set the element nodes for.
@@ -43852,6 +44868,7 @@ CONTAINS
   !>Sets/changes the element nodes for an element in a mesh identified by an object. \todo should the global element number be a user number?
   SUBROUTINE cmfe_MeshElements_UserNodeVersionSetObj(meshElements,globalElementNumber,versionNumber,derivativeNumber, &
     & userNodeNumber,err)
+    !DLLEXPORT(cmfe_MeshElements_UserNodeVersionSetObj)
 
     !Argument variables
     TYPE(cmfe_MeshElementsType), INTENT(IN) :: meshElements !<The mesh elements to set the element nodes for.
@@ -43898,6 +44915,7 @@ CONTAINS
   !>Sets/changes the element nodes for an element in a mesh identified by an user number. \todo should the global element number be a user number?
   SUBROUTINE cmfe_MeshElements_LocalElementNodeVersionSetNumber(regionUserNumber,meshUserNumber,globalElementNumber,versionNumber, &
     & derivativeNumber,localElementNodeNumber,meshComponentNumber,err)
+    !DLLEXPORT(cmfe_MeshElements_LocalElementNodeVersionSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to set the element nodes for.
@@ -43954,6 +44972,7 @@ CONTAINS
   !>Sets/changes the element nodes for an element in a mesh identified by an object. \todo should the global element number be a user number?
   SUBROUTINE cmfe_MeshElements_LocalElementNodeVersionSetObj(meshElements,globalElementNumber,versionNumber,derivativeNumber, &
     & localElementNodeNumber,err)
+    !DLLEXPORT(cmfe_MeshElements_LocalElementNodeVersionSetObj)
 
     !Argument variables
     TYPE(cmfe_MeshElementsType), INTENT(IN) :: meshElements !<The mesh elements to set the element nodes for.
@@ -43985,6 +45004,7 @@ CONTAINS
   !>Returns the user number for an element in a mesh identified by an user number.
   SUBROUTINE cmfe_MeshElements_UserNumberGetNumber(regionUserNumber,meshUserNumber,meshComponentNumber,elementGlobalNumber, &
     & elementUserNumber,err)
+    !DLLEXPORT(cmfe_MeshElements_UserNumberGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the element user number for.
@@ -44035,6 +45055,7 @@ CONTAINS
 
   !>Returns the element user number for an element in a mesh identified by an object.
   SUBROUTINE cmfe_MeshElements_UserNumberGetObj(meshElements,elementGlobalNumber,elementUserNumber,err)
+    !DLLEXPORT(cmfe_MeshElements_UserNumberGetObj)
 
     !Argument variables
     TYPE(cmfe_MeshElementsType), INTENT(IN) :: meshElements !<The mesh elements to get the element nodes for.
@@ -44063,6 +45084,7 @@ CONTAINS
   !>Sets/changes the user number for an element in a mesh identified by an user number.
   SUBROUTINE cmfe_MeshElements_UserNumberSetNumber(regionUserNumber,meshUserNumber,meshComponentNumber,elementGlobalNumber, &
     & elementUserNumber,err)
+    !DLLEXPORT(cmfe_MeshElements_UserNumberSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to set the element user number for.
@@ -44113,6 +45135,7 @@ CONTAINS
 
   !>Sets/changes the element user number for an element in a mesh identified by an object.
   SUBROUTINE cmfe_MeshElements_UserNumberSetObj(meshElements,elementGlobalNumber,elementUserNumber,err)
+    !DLLEXPORT(cmfe_MeshElements_UserNumberSetObj)
 
     !Argument variables
     TYPE(cmfe_MeshElementsType), INTENT(IN) :: meshElements !<The mesh elements to set the element nodes for.
@@ -44141,6 +45164,7 @@ CONTAINS
   !>Sets/changes the user numbers for all elements in a mesh identified by an user number.
   SUBROUTINE cmfe_MeshElements_UserNumbersAllSetNumber(regionUserNumber,meshUserNumber,meshComponentNumber, &
     & elementUserNumbers,err)
+    !DLLEXPORT(cmfe_MeshElements_UserNumbersAllSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to set the element user numbers for.
@@ -44191,6 +45215,7 @@ CONTAINS
 
   !>Sets/changes the element user numbers for all elements in a mesh identified by an object.
   SUBROUTINE cmfe_MeshElements_UserNumbersAllSetObj(meshElements,elementUserNumbers,err)
+    !DLLEXPORT(cmfe_MeshElements_UserNumbersAllSetObj)
 
     !Argument variables
     TYPE(cmfe_MeshElementsType), INTENT(IN) :: meshElements !<The mesh elements to set the element user numbers for
@@ -44218,6 +45243,7 @@ CONTAINS
 
   !>Checks if the given node exists on the given mesh component.
   SUBROUTINE cmfe_Mesh_NodeExistsNumber( regionUserNumber, meshUserNumber, meshComponentNumber, nodeUserNumber, nodeExists, err )
+    !DLLEXPORT(cmfe_Mesh_NodeExistsNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to check the node for.
@@ -44268,6 +45294,7 @@ CONTAINS
 
   !>Checks if the given node exists on the given mesh component.
   SUBROUTINE cmfe_Mesh_NodeExistsObj( mesh, meshComponentNumber, nodeUserNumber, nodeExists, err )
+    !DLLEXPORT(cmfe_Mesh_NodeExistsObj)
 
     !Argument variables
     TYPE(cmfe_MeshType), INTENT(IN) :: mesh !<The mesh to check the node for.
@@ -44299,6 +45326,7 @@ CONTAINS
   !>Checks if the given element exists on the given mesh component.
   SUBROUTINE cmfe_Mesh_ElementExistsNumber( regionUserNumber, meshUserNumber, meshComponentNumber, &
     & elementUserNumber, elementExists, err )
+    !DLLEXPORT(cmfe_Mesh_ElementExistsNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to check the element for.
@@ -44351,6 +45379,7 @@ CONTAINS
 
   !>Checks if the given element exists on the given mesh component.
   SUBROUTINE cmfe_Mesh_ElementExistsObj( mesh, meshComponentNumber, elementUserNumber, elementExists, err )
+    !DLLEXPORT(cmfe_Mesh_ElementExistsObj)
 
     !Argument variables
     TYPE(cmfe_MeshType), INTENT(IN) :: mesh !<The mesh to check the node for.
@@ -44383,6 +45412,7 @@ CONTAINS
 
   !>Returns the mesh nodes for a mesh component on a mesh identified by an user number.
   SUBROUTINE cmfe_Mesh_NodesGetNumber(regionUserNumber,meshUserNumber,meshComponentNumber,meshNodes,err)
+    !DLLEXPORT(cmfe_Mesh_NodesGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the nodes for.
@@ -44430,6 +45460,7 @@ CONTAINS
 
   !>Returns the mesh nodes for a mesh component on a mesh identified by an object.
   SUBROUTINE cmfe_Mesh_NodesGetObj(mesh,meshComponentNumber,meshNodes,err)
+    !DLLEXPORT(cmfe_Mesh_NodesGetObj)
 
     !Argument variables
     TYPE(cmfe_MeshType), INTENT(IN) :: mesh !<The mesh to get the nodes for.
@@ -44456,6 +45487,7 @@ CONTAINS
 
   !>Returns the number of nodes at a node in a mesh identified by an user number. 
   SUBROUTINE cmfe_MeshNodes_NumberOfNodesGetNumber(regionUserNumber,meshUserNumber,meshComponentNumber,numberOfNodes,err)
+    !DLLEXPORT(cmfe_MeshNodes_NumberOfNodesGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the number of dervatives for.
@@ -44505,6 +45537,7 @@ CONTAINS
 
   !>Returns the number of derivatives for a node in a mesh identified by an object.
   SUBROUTINE cmfe_MeshNodes_NumberOfNodesGetObj(meshNodes,numberOfNodes,err)
+    !DLLEXPORT(cmfe_MeshNodes_NumberOfNodesGetObj)
 
     !Argument variables
     TYPE(cmfe_MeshNodesType), INTENT(IN) :: meshNodes!<The mesh nodes to get the number of derivatives at a node for.
@@ -44530,6 +45563,7 @@ CONTAINS
   !>Returns the number of derivatives at a node in a mesh identified by an user number. 
   SUBROUTINE cmfe_MeshNodes_NumberOfDerivativesGetNumber(regionUserNumber,meshUserNumber,meshComponentNumber,userNodeNumber, &
     & numberOfDerivatives,err)
+    !DLLEXPORT(cmfe_MeshNodes_NumberOfDerivativesGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the number of dervatives for.
@@ -44580,6 +45614,7 @@ CONTAINS
 
   !>Returns the number of derivatives for a node in a mesh identified by an object.
   SUBROUTINE cmfe_MeshNodes_NumberOfDerivativesGetObj(meshNodes,userNodeNumber,numberOfDerivatives,err)
+    !DLLEXPORT(cmfe_MeshNodes_NumberOfDerivativesGetObj)
 
     !Argument variables
     TYPE(cmfe_MeshNodesType), INTENT(IN) :: meshNodes!<The mesh nodes to get the number of derivatives at a node for.
@@ -44607,6 +45642,7 @@ CONTAINS
   !>Returns the derivatives at a node in a mesh identified by an user number. 
   SUBROUTINE cmfe_MeshNodes_DerivativesGetNumber(regionUserNumber,meshUserNumber,meshComponentNumber,userNodeNumber, &
     & derivatives,err)
+    !DLLEXPORT(cmfe_MeshNodes_DerivativesGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the derivatives for.
@@ -44657,6 +45693,7 @@ CONTAINS
 
   !>Returns the derivatives for a node in a mesh identified by an object.
   SUBROUTINE cmfe_MeshNodes_DerivativesGetObj(meshNodes,userNodeNumber,derivatives,err)
+    !DLLEXPORT(cmfe_MeshNodes_DerivativesGetObj)
 
     !Argument variables
     TYPE(cmfe_MeshNodesType), INTENT(IN) :: meshNodes!<The mesh nodes to get the derivatives at a node for.
@@ -44684,6 +45721,7 @@ CONTAINS
   !>Returns the number of version at a derivative for a node in a mesh identified by an user number. 
   SUBROUTINE cmfe_MeshNodes_NumberOfVersionsGetNumber(regionUserNumber,meshUserNumber,meshComponentNumber,derivativeNumber, &
     & userNodeNumber,numberOfVersions,err)
+    !DLLEXPORT(cmfe_MeshNodes_NumberOfVersionsGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the number of versions.
@@ -44735,6 +45773,7 @@ CONTAINS
 
   !>Returns the number of versions for an node in a mesh identified by an object.
   SUBROUTINE cmfe_MeshNodes_NumberOfVersionsGetObj(meshNodes,derivativeNumber,userNodeNumber,numberOfVersions,err)
+    !DLLEXPORT(cmfe_MeshNodes_NumberOfVersionsGetObj)
 
     !Argument variables
     TYPE(cmfe_MeshNodesType), INTENT(IN) :: meshNodes !<The mesh nodes to get the number of versions at a node for.
@@ -44765,6 +45804,7 @@ CONTAINS
 
   !>Get the storage type for a distributed matrix
   SUBROUTINE cmfe_DistributedMatrix_StorageTypeGetObj(matrix,storageType,err)
+    !DLLEXPORT(cmfe_DistributedMatrix_StorageTypeGetObj)
 
     !Argument variables
     TYPE(cmfe_DistributedMatrixType), INTENT(IN) :: matrix !<The matrix to get the storage type for
@@ -44790,6 +45830,7 @@ CONTAINS
 
   !>Get the data type of a distributed matrix
   SUBROUTINE cmfe_DistributedMatrix_DataTypeGetObj(matrix,dataType,err)
+    !DLLEXPORT(cmfe_DistributedMatrix_DataTypeGetObj)
 
     !Argument variables
     TYPE(cmfe_DistributedMatrixType), INTENT(IN) :: matrix !<The matrix to get the data type for
@@ -44815,6 +45856,7 @@ CONTAINS
 
   !>Get the dimensions of a distributed matrix on this computational node
   SUBROUTINE cmfe_DistributedMatrix_DimensionsGetObj(matrix,m,n,err)
+    !DLLEXPORT(cmfe_DistributedMatrix_DimensionsGetObj)
 
     !Argument variables
     TYPE(cmfe_DistributedMatrixType), INTENT(IN) :: matrix !<The matrix to get the data type for
@@ -44841,6 +45883,7 @@ CONTAINS
 
   !>Get the row indices and column indices for a sparse matrix
   SUBROUTINE cmfe_DistributedMatrix_StorageLocationsGetObj(matrix,rowIndices,columnIndices,err)
+    !DLLEXPORT(cmfe_DistributedMatrix_StorageLocationsGetObj)
 
     !Argument variables
     TYPE(cmfe_DistributedMatrixType), INTENT(IN) :: matrix !<The matrix to get the storage locations for
@@ -44868,6 +45911,7 @@ CONTAINS
 
   !>Get the data array for this matrix on this computational node
   SUBROUTINE cmfe_DistributedMatrix_DataGetIntgObj(matrix,data,err)
+    !DLLEXPORT(cmfe_DistributedMatrix_DataGetIntgObj)
 
     !Argument variables
     TYPE(cmfe_DistributedMatrixType), INTENT(IN) :: matrix !<The matrix to get the data for
@@ -44893,6 +45937,7 @@ CONTAINS
 
   !>Restore the data array for this matrix once it has finished being used
   SUBROUTINE cmfe_DistributedMatrix_DataRestoreIntgObj(matrix,data,err)
+    !DLLEXPORT(cmfe_DistributedMatrix_DataRestoreIntgObj)
 
     !Argument variables
     TYPE(cmfe_DistributedMatrixType), INTENT(IN) :: matrix !<The matrix to restore the data for
@@ -44918,6 +45963,7 @@ CONTAINS
 
   !>Get the data array for this matrix on this computational node
   SUBROUTINE cmfe_DistributedMatrix_DataGetDPObj(matrix,data,err)
+    !DLLEXPORT(cmfe_DistributedMatrix_DataGetDPObj)
 
     !Argument variables
     TYPE(cmfe_DistributedMatrixType), INTENT(IN) :: matrix !<The matrix to get the data for
@@ -44943,6 +45989,7 @@ CONTAINS
 
   !>Restore the data array for this matrix once it has finished being used
   SUBROUTINE cmfe_DistributedMatrix_DataRestoreDPObj(matrix,data,err)
+    !DLLEXPORT(cmfe_DistributedMatrix_DataRestoreDPObj)
 
     !Argument variables
     TYPE(cmfe_DistributedMatrixType), INTENT(IN) :: matrix !<The matrix to restore the data for
@@ -44968,6 +46015,7 @@ CONTAINS
 
   !>Get the data array for this matrix on this computational node
   SUBROUTINE cmfe_DistributedMatrix_DataGetSPObj(matrix,data,err)
+    !DLLEXPORT(cmfe_DistributedMatrix_DataGetSPObj)
 
     !Argument variables
     TYPE(cmfe_DistributedMatrixType), INTENT(IN) :: matrix !<The matrix to get the data for
@@ -44993,6 +46041,7 @@ CONTAINS
 
   !>Restore the data array for this matrix once it has finished being used
   SUBROUTINE cmfe_DistributedMatrix_DataRestoreSPObj(matrix,data,err)
+    !DLLEXPORT(cmfe_DistributedMatrix_DataRestoreSPObj)
 
     !Argument variables
     TYPE(cmfe_DistributedMatrixType), INTENT(IN) :: matrix !<The matrix to restore the data for
@@ -45018,6 +46067,7 @@ CONTAINS
 
   !>Get the data array for this matrix on this computational node
   SUBROUTINE cmfe_DistributedMatrix_DataGetLObj(matrix,data,err)
+    !DLLEXPORT(cmfe_DistributedMatrix_DataGetLObj)
 
     !Argument variables
     TYPE(cmfe_DistributedMatrixType), INTENT(IN) :: matrix !<The matrix to get the data for
@@ -45043,6 +46093,7 @@ CONTAINS
 
   !>Restore the data array for this matrix once it has finished being used
   SUBROUTINE cmfe_DistributedMatrix_DataRestoreLObj(matrix,data,err)
+    !DLLEXPORT(cmfe_DistributedMatrix_DataRestoreLObj)
 
     !Argument variables
     TYPE(cmfe_DistributedMatrixType), INTENT(IN) :: matrix !<The matrix to restore the data for
@@ -45068,6 +46119,7 @@ CONTAINS
 
   !>Get the data type of a distributed vector
   SUBROUTINE cmfe_DistributedVector_DataTypeGetObj(vector,dataType,err)
+    !DLLEXPORT(cmfe_DistributedVector_DataTypeGetObj)
 
     !Argument variables
     TYPE(cmfe_DistributedVectorType), INTENT(IN) :: vector !<The vector to get the data type for
@@ -45093,6 +46145,7 @@ CONTAINS
 
   !>Get the data array for this vector on this computational node
   SUBROUTINE cmfe_DistributedVector_DataGetIntgObj(vector,data,err)
+    !DLLEXPORT(cmfe_DistributedVector_DataGetIntgObj)
 
     !Argument variables
     TYPE(cmfe_DistributedVectorType), INTENT(IN) :: vector !<The vector to get the data for
@@ -45118,6 +46171,7 @@ CONTAINS
 
   !>Restore the data array for this vector once it has finished being used
   SUBROUTINE cmfe_DistributedVector_DataRestoreIntgObj(vector,data,err)
+    !DLLEXPORT(cmfe_DistributedVector_DataRestoreIntgObj)
 
     !Argument variables
     TYPE(cmfe_DistributedVectorType), INTENT(IN) :: vector !<The vector to restore the data for
@@ -45143,6 +46197,7 @@ CONTAINS
 
   !>Get the data array for this vector on this computational node
   SUBROUTINE cmfe_DistributedVector_DataGetDPObj(vector,data,err)
+    !DLLEXPORT(cmfe_DistributedVector_DataGetDPObj)
 
     !Argument variables
     TYPE(cmfe_DistributedVectorType), INTENT(IN) :: vector !<The vector to get the data for
@@ -45168,6 +46223,7 @@ CONTAINS
 
   !>Restore the data array for this vector once it has finished being used
   SUBROUTINE cmfe_DistributedVector_DataRestoreDPObj(vector,data,err)
+    !DLLEXPORT(cmfe_DistributedVector_DataRestoreDPObj)
 
     !Argument variables
     TYPE(cmfe_DistributedVectorType), INTENT(IN) :: vector !<The vector to restore the data for
@@ -45193,6 +46249,7 @@ CONTAINS
 
   !>Get the data array for this vector on this computational node
   SUBROUTINE cmfe_DistributedVector_DataGetSPObj(vector,data,err)
+    !DLLEXPORT(cmfe_DistributedVector_DataGetSPObj)
 
     !Argument variables
     TYPE(cmfe_DistributedVectorType), INTENT(IN) :: vector !<The vector to get the data for
@@ -45218,6 +46275,7 @@ CONTAINS
 
   !>Restore the data array for this vector once it has finished being used
   SUBROUTINE cmfe_DistributedVector_DataRestoreSPObj(vector,data,err)
+    !DLLEXPORT(cmfe_DistributedVector_DataRestoreSPObj)
 
     !Argument variables
     TYPE(cmfe_DistributedVectorType), INTENT(IN) :: vector !<The vector to restore the data for
@@ -45243,6 +46301,7 @@ CONTAINS
 
   !>Get the data array for this vector on this computational node
   SUBROUTINE cmfe_DistributedVector_DataGetLObj(vector,data,err)
+    !DLLEXPORT(cmfe_DistributedVector_DataGetLObj)
 
     !Argument variables
     TYPE(cmfe_DistributedVectorType), INTENT(IN) :: vector !<The vector to get the data for
@@ -45268,6 +46327,7 @@ CONTAINS
 
   !>Restore the data array for this vector once it has finished being used
   SUBROUTINE cmfe_DistributedVector_DataRestoreLObj(vector,data,err)
+    !DLLEXPORT(cmfe_DistributedVector_DataRestoreLObj)
 
     !Argument variables
     TYPE(cmfe_DistributedVectorType), INTENT(IN) :: vector !<The vector to restore the data for
@@ -45295,6 +46355,7 @@ CONTAINS
 
   !>Finishes the process of creating nodes in a region for nodes identified by user number.
   SUBROUTINE cmfe_Nodes_CreateFinishNumber(regionUserNumber,err)
+    !DLLEXPORT(cmfe_Nodes_CreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the nodes to finish the creation of.
@@ -45336,6 +46397,7 @@ CONTAINS
 
   !>Finishes the creation of a nodes in a region for nodes identified by an object.
   SUBROUTINE cmfe_Nodes_CreateFinishObj(nodes,err)
+    !DLLEXPORT(cmfe_Nodes_CreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_NodesType), INTENT(IN) :: nodes !<The nodes to finish creating.
@@ -45364,6 +46426,7 @@ CONTAINS
 
   !>Starts the process of creating nodes in a region for nodes identified by user number.
   SUBROUTINE cmfe_Nodes_CreateStartNumber(regionUserNumber,numberOfNodes,err)
+    !DLLEXPORT(cmfe_Nodes_CreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the nodes to start the creation of.
@@ -45405,6 +46468,7 @@ CONTAINS
 
   !>Starts the creation of a nodes in a region for nodes identified by an object.
   SUBROUTINE cmfe_Nodes_CreateStartObj(region,numberOfNodes,nodes,err)
+    !DLLEXPORT(cmfe_Nodes_CreateStartObj)
 
     !Argument variables
     TYPE(cmfe_RegionType), INTENT(IN) :: region !<The region to start the creation of nodes on.
@@ -45435,6 +46499,7 @@ CONTAINS
 
   !>Starts the creation of a nodes in a region for nodes identified by an object.
   SUBROUTINE cmfe_Nodes_CreateStartInterfaceObj(interface,numberOfNodes,nodes,err)
+    !DLLEXPORT(cmfe_Nodes_CreateStartInterfaceObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceType), INTENT(IN) :: interface !<The interface to start the creation of nodes on.
@@ -45465,6 +46530,7 @@ CONTAINS
 
   !>Destroys the nodes in a region for nodes identified by user number.
   SUBROUTINE cmfe_Nodes_DestroyNumber(regionUserNumber,err)
+    !DLLEXPORT(cmfe_Nodes_DestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the nodes to destroy.
@@ -45502,6 +46568,7 @@ CONTAINS
 
   !>Destroys the nodes in a region for nodes identified by an object.
   SUBROUTINE cmfe_Nodes_DestroyObj(nodes,err)
+    !DLLEXPORT(cmfe_Nodes_DestroyObj)
 
     !Argument variables
     TYPE(cmfe_NodesType), INTENT(IN) :: nodes !<The nodes to destroy.
@@ -45526,6 +46593,7 @@ CONTAINS
 
   !>Returns the number of nodes
   SUBROUTINE cmfe_Nodes_NumberOfNodesGetNumber(regionUserNumber,numberOfNodes,err)
+    !DLLEXPORT(cmfe_Nodes_NumberOfNodesGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the nodes to get node count for.
@@ -45564,6 +46632,7 @@ CONTAINS
 
   !>Returns the number of nodes
   SUBROUTINE cmfe_Nodes_NumberOfNodesGetObj(nodes,numberOfNodes,err)
+    !DLLEXPORT(cmfe_Nodes_NumberOfNodesGetObj)
 
     !Argument variables
     TYPE(cmfe_NodesType), INTENT(IN) :: nodes !<The nodes get node count for.
@@ -45589,6 +46658,7 @@ CONTAINS
 
   !>Returns the character label for a node in a set of nodes identified by user number. \todo should this be user number??
   SUBROUTINE cmfe_Nodes_LabelGetCNumber(regionUserNumber,nodeGlobalNumber,label,err)
+    !DLLEXPORT(cmfe_Nodes_LabelGetCNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the nodes to get the label for.
@@ -45628,6 +46698,7 @@ CONTAINS
 
   !>Returns the character label for a node in a set of nodes identified by an object. \todo should this be user number??
   SUBROUTINE cmfe_Nodes_LabelGetCObj(nodes,nodeGlobalNumber,label,err)
+    !DLLEXPORT(cmfe_Nodes_LabelGetCObj)
 
     !Argument variables
     TYPE(cmfe_NodesType), INTENT(IN) :: nodes !<The nodes to get the label for.
@@ -45654,6 +46725,7 @@ CONTAINS
 
   !>Returns the varying string label for a node in a set of nodes identified by user number. \todo should this be user number??
   SUBROUTINE cmfe_Nodes_LabelGetVSNumber(regionUserNumber,nodeGlobalNumber,label,err)
+    !DLLEXPORT(cmfe_Nodes_LabelGetVSNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the nodes to get the label for.
@@ -45693,6 +46765,7 @@ CONTAINS
 
   !>Returns the varying string label for a node in a set of nodes identified by an object. \todo should this be user number??
   SUBROUTINE cmfe_Nodes_LabelGetVSObj(nodes,nodeGlobalNumber,label,err)
+    !DLLEXPORT(cmfe_Nodes_LabelGetVSObj)
 
     !Argument variables
     TYPE(cmfe_NodesType), INTENT(IN) :: nodes !<The nodes to get the label for.
@@ -45719,6 +46792,7 @@ CONTAINS
 
   !>Sets/changes the character label for a node in a set of nodes identified by user number. \todo should this be user number??
   SUBROUTINE cmfe_Nodes_LabelSetCNumber(regionUserNumber,nodeGlobalNumber,label,err)
+    !DLLEXPORT(cmfe_Nodes_LabelSetCNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the nodes to set the label for.
@@ -45758,6 +46832,7 @@ CONTAINS
 
   !>Sets/changes the character label for a node in a set of nodes identified by an object. \todo should this be user number??
   SUBROUTINE cmfe_Nodes_LabelSetCObj(nodes,nodeGlobalNumber,label,err)
+    !DLLEXPORT(cmfe_Nodes_LabelSetCObj)
 
     !Argument variables
     TYPE(cmfe_NodesType), INTENT(IN) :: nodes !<The nodes to set the label for.
@@ -45784,6 +46859,7 @@ CONTAINS
 
   !>Sets/changes the varying string label for a node in a set of nodes identified by user number. \todo should this be user number??
   SUBROUTINE cmfe_Nodes_LabelSetVSNumber(regionUserNumber,nodeGlobalNumber,label,err)
+    !DLLEXPORT(cmfe_Nodes_LabelSetVSNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the nodes to set the label for.
@@ -45823,6 +46899,7 @@ CONTAINS
 
   !>Sets/changes the varying string label for a node in a set of nodes identified by an object. \todo should this be user number??
   SUBROUTINE cmfe_Nodes_LabelSetVSObj(nodes,nodeGlobalNumber,label,err)
+    !DLLEXPORT(cmfe_Nodes_LabelSetVSObj)
 
     !Argument variables
     TYPE(cmfe_NodesType), INTENT(IN) :: nodes !<The nodes to set the label for.
@@ -45849,6 +46926,7 @@ CONTAINS
 
   !>Returns the user number for a node in a set of nodes identified by user number.
   SUBROUTINE cmfe_Nodes_UserNumberGetNumber(regionUserNumber,nodeGlobalNumber,nodeUserNumber,err)
+    !DLLEXPORT(cmfe_Nodes_UserNumberGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the nodes to get the node user number for.
@@ -45888,6 +46966,7 @@ CONTAINS
 
   !>Returns the user number for a node in a set of nodes identified by an object. \todo should this be user number??
   SUBROUTINE cmfe_Nodes_UserNumberGetObj(nodes,nodeGlobalNumber,nodeUserNumber,err)
+    !DLLEXPORT(cmfe_Nodes_UserNumberGetObj)
 
     !Argument variables
     TYPE(cmfe_NodesType), INTENT(IN) :: nodes !<The nodes to get the node user number for.
@@ -45914,6 +46993,7 @@ CONTAINS
 
   !>Sets/changes the user number for a node in a set of nodes identified by user number.
   SUBROUTINE cmfe_Nodes_UserNumberSetNumber(regionUserNumber,nodeGlobalNumber,nodeUserNumber,err)
+    !DLLEXPORT(cmfe_Nodes_UserNumberSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the nodes to set the node user number for.
@@ -45953,6 +47033,7 @@ CONTAINS
 
   !>Sets/changes the user number for a node in a set of nodes identified by an object. \todo should this be user number??
   SUBROUTINE cmfe_Nodes_UserNumberSetObj(nodes,nodeGlobalNumber,nodeUserNumber,err)
+    !DLLEXPORT(cmfe_Nodes_UserNumberSetObj)
 
     !Argument variables
     TYPE(cmfe_NodesType), INTENT(IN) :: nodes !<The nodes to set the node user number for.
@@ -45979,6 +47060,7 @@ CONTAINS
 
   !>Sets/changes the user numbers for a set of nodes identified by user number.
   SUBROUTINE cmfe_Nodes_UserNumbersAllSetNumber(regionUserNumber,nodeUserNumbers,err)
+    !DLLEXPORT(cmfe_Nodes_UserNumbersAllSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the nodes to set the node user numbers for.
@@ -46017,6 +47099,7 @@ CONTAINS
 
   !>Sets/changes the user numbers for a set of nodes identified by an object. 
   SUBROUTINE cmfe_Nodes_UserNumbersAllSetObj(nodes,nodeUserNumbers,err)
+    !DLLEXPORT(cmfe_Nodes_UserNumbersAllSetObj)
 
     !Argument variables
     TYPE(cmfe_NodesType), INTENT(IN) :: nodes !<The nodes to set the node user number for.
@@ -46044,6 +47127,7 @@ CONTAINS
 
   !>Finishes the process of creating CellML equations for a problem identified by user number.
   SUBROUTINE cmfe_Problem_CellMLEquationsCreateFinishNumber(problemUserNumber,err)
+    !DLLEXPORT(cmfe_Problem_CellMLEquationsCreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to finish the creation of CellML equations for.
@@ -46083,6 +47167,7 @@ CONTAINS
 
   !>Finishes the creation of CellML equations for problem identified by an object.
   SUBROUTINE cmfe_Problem_CellMLEquationsCreateFinishObj(problem,err)
+    !DLLEXPORT(cmfe_Problem_CellMLEquationsCreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(IN) :: problem !<The problem to finish creating the CellML equations for.
@@ -46111,6 +47196,7 @@ CONTAINS
 
   !>Starts the process of creating CellML equations for a problem identified by user number.
   SUBROUTINE cmfe_Problem_CellMLEquationsCreateStartNumber(problemUserNumber,err)
+    !DLLEXPORT(cmfe_Problem_CellMLEquationsCreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to start the creation of CellML equations for.
@@ -46150,6 +47236,7 @@ CONTAINS
 
   !>Starts the creation of CellML equations for problem identified by an object.
   SUBROUTINE cmfe_Problem_CellMLEquationsCreateStartObj(problem,err)
+    !DLLEXPORT(cmfe_Problem_CellMLEquationsCreateStartObj)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(IN) :: problem !<The problem to start creating the CellML equations for.
@@ -46178,6 +47265,7 @@ CONTAINS
 
   !>Returns the CellML equations from a problem identified by an user number.
   SUBROUTINE cmfe_Problem_CellMLEquationsGetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,CellMLEquations,err)
+    !DLLEXPORT(cmfe_Problem_CellMLEquationsGetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the CellML equations for.
@@ -46214,6 +47302,7 @@ CONTAINS
 
   !>Returns the CellML equations from a problem identified by an user number.
   SUBROUTINE cmfe_Problem_CellMLEquationsGetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,CellMLEquations,err)
+    !DLLEXPORT(cmfe_Problem_CellMLEquationsGetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the CellML equations for.
@@ -46250,6 +47339,7 @@ CONTAINS
 
   !>Returns the CellML equations from a problem identified by an object.
   SUBROUTINE cmfe_Problem_CellMLEquationsGetObj0(problem,controlLoopIdentifier,solverIndex,CellMLEquations,err)
+    !DLLEXPORT(cmfe_Problem_CellMLEquationsGetObj0)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(IN) :: problem !<The problem to get the CellML equations for.
@@ -46278,6 +47368,7 @@ CONTAINS
 
   !>Returns the CellML equations from a problem identified by an object.
   SUBROUTINE cmfe_Problem_CellMLEquationsGetObj1(problem,controlLoopIdentifiers,solverIndex,CellMLEquations,err)
+    !DLLEXPORT(cmfe_Problem_CellMLEquationsGetObj1)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(IN) :: problem !<The problem to get the CellML equations for.
@@ -46306,6 +47397,7 @@ CONTAINS
 
   !>Finishes the process of a problem identified by user number.
   SUBROUTINE cmfe_Problem_CreateFinishNumber(problemUserNumber,err)
+    !DLLEXPORT(cmfe_Problem_CreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to finish the creation of.
@@ -46344,6 +47436,7 @@ CONTAINS
 
   !>Finishes the creation of a problem identified by an object.
   SUBROUTINE cmfe_Problem_CreateFinishObj(problem,err)
+    !DLLEXPORT(cmfe_Problem_CreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(IN) :: problem !<The problem to finish creating.
@@ -46372,6 +47465,7 @@ CONTAINS
 
   !>Starts the process of a problem identified by user number.
   SUBROUTINE cmfe_Problem_CreateStartNumber(problemUserNumber,problemSpecification,err)
+    !DLLEXPORT(cmfe_Problem_CreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to start the creation of.
@@ -46403,6 +47497,7 @@ CONTAINS
 
   !>Starts the creation of a problem identified by an object.
   SUBROUTINE cmfe_Problem_CreateStartObj(problemUserNumber,problemSpecification,problem,err)
+    !DLLEXPORT(cmfe_Problem_CreateStartObj)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to start the creation of.
@@ -46433,6 +47528,7 @@ CONTAINS
 
   !>Finishes the process of creating a control loop for a problem identified by user number.
   SUBROUTINE cmfe_Problem_ControlLoopCreateFinishNumber(problemUserNumber,err)
+    !DLLEXPORT(cmfe_Problem_ControlLoopCreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to finish creating the control loop for.
@@ -46471,6 +47567,7 @@ CONTAINS
 
   !>Finishes the creation of a control loop on a problem identified by an object.
   SUBROUTINE cmfe_Problem_ControlLoopCreateFinishObj(problem,err)
+    !DLLEXPORT(cmfe_Problem_ControlLoopCreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(IN) :: problem !<The problem to finish creating the control loop for.
@@ -46499,6 +47596,7 @@ CONTAINS
 
   !>Starts the process of creating a control loop for a problem identified by user number.
   SUBROUTINE cmfe_Problem_ControlLoopCreateStartNumber(problemUserNumber,err)
+    !DLLEXPORT(cmfe_Problem_ControlLoopCreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to start creating the control loop for.
@@ -46537,6 +47635,7 @@ CONTAINS
 
   !>Starts the creation of a control loop on a problem identified by an object.
   SUBROUTINE cmfe_Problem_ControlLoopCreateStartObj(problem,err)
+    !DLLEXPORT(cmfe_Problem_ControlLoopCreateStartObj)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(IN) :: problem !<The problem to start creating the control loop for.
@@ -46565,6 +47664,7 @@ CONTAINS
 
   !>Destroys the control loops for a problem identified by user number.
   SUBROUTINE cmfe_Problem_ControlLoopDestroyNumber(problemUserNumber,err)
+    !DLLEXPORT(cmfe_Problem_ControlLoopDestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to destroy the control loops for.
@@ -46599,6 +47699,7 @@ CONTAINS
 
   !>Destroys the control loops on a problem identified by an object.
   SUBROUTINE cmfe_Problem_ControlLoopDestroyObj(problem,err)
+    !DLLEXPORT(cmfe_Problem_ControlLoopDestroyObj)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(IN) :: problem !<The problem to destroy the control loops for.
@@ -46623,6 +47724,7 @@ CONTAINS
 
   !>Returns a control loop from a problem identified by an user number.
   SUBROUTINE cmfe_Problem_ControlLoopGetNumber0(problemUserNumber,controlLoopIdentifier,controlLoop,err)
+    !DLLEXPORT(cmfe_Problem_ControlLoopGetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the control loop for.
@@ -46658,6 +47760,7 @@ CONTAINS
 
   !>Returns a control loop from a problem identified by an user number.
   SUBROUTINE cmfe_Problem_ControlLoopGetNumber1(problemUserNumber,controlLoopIdentifiers,controlLoop,err)
+    !DLLEXPORT(cmfe_Problem_ControlLoopGetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the control loop for.
@@ -46693,6 +47796,7 @@ CONTAINS
 
   !>Returns a control loop from a problem identified by an object.
   SUBROUTINE cmfe_Problem_ControlLoopGetObj0(problem,controlLoopIdentifier,controlLoop,err)
+    !DLLEXPORT(cmfe_Problem_ControlLoopGetObj0)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(IN) :: problem !<The problem to get the control loop for.
@@ -46719,6 +47823,7 @@ CONTAINS
 
   !>Returns a control loop from a problem identified by an object.
   SUBROUTINE cmfe_Problem_ControlLoopGetObj1(problem,controlLoopIdentifiers,controlLoop,err)
+    !DLLEXPORT(cmfe_Problem_ControlLoopGetObj1)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(IN) :: problem !<The problem to get the control loop for.
@@ -46745,6 +47850,7 @@ CONTAINS
 
   !>Destroys a problem identified by an user number.
   SUBROUTINE cmfe_Problem_DestroyNumber(problemUserNumber,err)
+    !DLLEXPORT(cmfe_Problem_DestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to destroy.
@@ -46779,6 +47885,7 @@ CONTAINS
 
   !>Destroys a problem identified by an object.
   SUBROUTINE cmfe_Problem_DestroyObj(problem,err)
+    !DLLEXPORT(cmfe_Problem_DestroyObj)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(IN) :: problem !<The problem to destroy.
@@ -46803,6 +47910,7 @@ CONTAINS
 
   !>Solves a problem identified by an user number.
   SUBROUTINE cmfe_Problem_SolveNumber(problemUserNumber,err)
+    !DLLEXPORT(cmfe_Problem_SolveNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to solve.
@@ -46845,6 +47953,7 @@ CONTAINS
 
   !>Solves a problem identified by an object.
   SUBROUTINE cmfe_Problem_SolveObj(problem,err)
+    !DLLEXPORT(cmfe_Problem_SolveObj)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(IN) :: problem !<The problem to solve.
@@ -46877,6 +47986,7 @@ CONTAINS
 
   !>Returns a solver from a problem identified by an user number.
   SUBROUTINE cmfe_Problem_SolverGetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,solver,err)
+    !DLLEXPORT(cmfe_Problem_SolverGetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the solver for.
@@ -46913,6 +48023,7 @@ CONTAINS
 
   !>Returns a solver from a problem identified by an user number.
   SUBROUTINE cmfe_Problem_SolverGetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,solver,err)
+    !DLLEXPORT(cmfe_Problem_SolverGetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the solver for.
@@ -46949,6 +48060,7 @@ CONTAINS
 
   !>Returns a solver from a problem identified by an object.
   SUBROUTINE cmfe_Problem_SolverGetObj0(problem,controlLoopIdentifier,solverIndex,solver,err)
+    !DLLEXPORT(cmfe_Problem_SolverGetObj0)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(IN) :: problem !<The problem to get the solver for.
@@ -46976,6 +48088,7 @@ CONTAINS
 
   !>Returns a solver from a problem identified by an object.
   SUBROUTINE cmfe_Problem_SolverGetObj1(problem,controlLoopIdentifiers,solverIndex,solver,err)
+    !DLLEXPORT(cmfe_Problem_SolverGetObj1)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(IN) :: problem !<The problem to get the solver for.
@@ -47003,6 +48116,7 @@ CONTAINS
 
   !>Set boundary conditions for solver equations according to the analytic equations for solver equations identified by user numbers.
   SUBROUTINE cmfe_SolverEquations_BoundaryConditionsAnalyticNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,err)
+    !DLLEXPORT(cmfe_SolverEquations_BoundaryConditionsAnalyticNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem containing the solver equations to calculate the boundary conditions for.
@@ -47049,6 +48163,7 @@ CONTAINS
 
   !>Set boundary conditions for solver equations according to the analytic equations for solver equations identified by user numbers.
   SUBROUTINE cmfe_SolverEquations_BoundaryConditionsAnalyticNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,err)
+    !DLLEXPORT(cmfe_SolverEquations_BoundaryConditionsAnalyticNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem containing the solver equations to calculate the boundary conditions for.
@@ -47095,6 +48210,7 @@ CONTAINS
 
   !>Set boundary conditions for solver equations according to the analytic equations.
   SUBROUTINE cmfe_SolverEquations_BoundaryConditionsAnalyticObj(solverEquations,err)
+    !DLLEXPORT(cmfe_SolverEquations_BoundaryConditionsAnalyticObj)
 
     !Argument variables
     TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to get the boundary conditions for.
@@ -47119,6 +48235,7 @@ CONTAINS
 
   !>Finishes the process of creating solver equations for a problem identified by user number.
   SUBROUTINE cmfe_Problem_SolverEquationsCreateFinishNumber(problemUserNumber,err)
+    !DLLEXPORT(cmfe_Problem_SolverEquationsCreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to finish the creation of solver equations for.
@@ -47158,6 +48275,7 @@ CONTAINS
 
   !>Finishes the creation of solver equations for problem identified by an object.
   SUBROUTINE cmfe_Problem_SolverEquationsCreateFinishObj(problem,err)
+    !DLLEXPORT(cmfe_Problem_SolverEquationsCreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(IN) :: problem !<The problem to finish creating the solver equations for.
@@ -47186,6 +48304,7 @@ CONTAINS
 
   !>Starts the process of creating solver equations for a problem identified by user number.
   SUBROUTINE cmfe_Problem_SolverEquationsCreateStartNumber(problemUserNumber,err)
+    !DLLEXPORT(cmfe_Problem_SolverEquationsCreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to start the creation of solver equations for.
@@ -47225,6 +48344,7 @@ CONTAINS
 
   !>Starts the creation of solver equations for problem identified by an object.
   SUBROUTINE cmfe_Problem_SolverEquationsCreateStartObj(problem,err)
+    !DLLEXPORT(cmfe_Problem_SolverEquationsCreateStartObj)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(IN) :: problem !<The problem to start creating the solver equations for.
@@ -47253,6 +48373,7 @@ CONTAINS
 
   !>Destroys the solver equations for a problem identified by an user number.
   SUBROUTINE cmfe_Problem_SolverEquationsDestroyNumber(problemUserNumber,err)
+    !DLLEXPORT(cmfe_Problem_SolverEquationsDestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to destroy solver equations for.
@@ -47287,6 +48408,7 @@ CONTAINS
 
   !>Destroys the solver equations for problem identified by an object.
   SUBROUTINE cmfe_Problem_SolverEquationsDestroyObj(problem,err)
+    !DLLEXPORT(cmfe_Problem_SolverEquationsDestroyObj)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(IN) :: problem !<The problem to destroy the solver equations for.
@@ -47311,6 +48433,7 @@ CONTAINS
 
   !>Returns the solver equations from a problem identified by an user number.
   SUBROUTINE cmfe_Problem_SolverEquationsGetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,solverEquations,err)
+    !DLLEXPORT(cmfe_Problem_SolverEquationsGetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the solver equations for.
@@ -47347,6 +48470,7 @@ CONTAINS
 
   !>Returns the solver equations from a problem identified by an user number.
   SUBROUTINE cmfe_Problem_SolverEquationsGetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,solverEquations,err)
+    !DLLEXPORT(cmfe_Problem_SolverEquationsGetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the solver equations for.
@@ -47383,6 +48507,7 @@ CONTAINS
 
   !>Returns the solver equations from a problem identified by an object.
   SUBROUTINE cmfe_Problem_SolverEquationsGetObj0(problem,controlLoopIdentifier,solverIndex,solverEquations,err)
+    !DLLEXPORT(cmfe_Problem_SolverEquationsGetObj0)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(IN) :: problem !<The problem to get the solver equations for.
@@ -47411,6 +48536,7 @@ CONTAINS
 
   !>Returns the solver equations from a problem identified by an object.
   SUBROUTINE cmfe_Problem_SolverEquationsGetObj1(problem,controlLoopIdentifiers,solverIndex,solverEquations,err)
+    !DLLEXPORT(cmfe_Problem_SolverEquationsGetObj1)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(IN) :: problem !<The problem to get the solver equations for.
@@ -47439,6 +48565,7 @@ CONTAINS
 
   !>Finishes the process of creating solvers for a problem identified by user number.
   SUBROUTINE cmfe_Problem_SolversCreateFinishNumber(problemUserNumber,err)
+    !DLLEXPORT(cmfe_Problem_SolversCreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to finish the creation of solvers for.
@@ -47477,6 +48604,7 @@ CONTAINS
 
   !>Finishes the creation of solvers for problem identified by an object.
   SUBROUTINE cmfe_Problem_SolversCreateFinishObj(problem,err)
+    !DLLEXPORT(cmfe_Problem_SolversCreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(IN) :: problem !<The problem to finish creating the solvers for.
@@ -47505,6 +48633,7 @@ CONTAINS
 
   !>Starts the process of creating solvers for a problem identified by user number.
   SUBROUTINE cmfe_Problem_SolversCreateStartNumber(problemUserNumber,err)
+    !DLLEXPORT(cmfe_Problem_SolversCreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to start the creation of solvers for.
@@ -47543,6 +48672,7 @@ CONTAINS
 
   !>Starts the creation of solvers for problem identified by an object.
   SUBROUTINE cmfe_Problem_SolversCreateStartObj(problem,err)
+    !DLLEXPORT(cmfe_Problem_SolversCreateStartObj)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(IN) :: problem !<The problem to start creating the solvers for.
@@ -47571,6 +48701,7 @@ CONTAINS
 
   !>Destroys the solvers for a problem identified by an user number.
   SUBROUTINE cmfe_Problem_SolversDestroyNumber(problemUserNumber,err)
+    !DLLEXPORT(cmfe_Problem_SolversDestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to destroy the solvers for.
@@ -47605,6 +48736,7 @@ CONTAINS
 
   !>Destroys the solvers for problem identified by an object.
   SUBROUTINE cmfe_Problem_SolversDestroyObj(problem,err)
+    !DLLEXPORT(cmfe_Problem_SolversDestroyObj)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(IN) :: problem !<The problem to destroy the solvers for.
@@ -47629,6 +48761,7 @@ CONTAINS
 
   !>Returns the specification array for a problem identified by a user number.
   SUBROUTINE cmfe_Problem_SpecificationGetNumber(problemUserNumber,problemSpecification,err)
+    !DLLEXPORT(cmfe_Problem_SpecificationGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the specification for.
@@ -47665,6 +48798,7 @@ CONTAINS
 
   !>Returns the specification array for a problem identified by an object.
   SUBROUTINE cmfe_Problem_SpecificationGetObj(problem,problemSpecification,err)
+    !DLLEXPORT(cmfe_Problem_SpecificationGetObj)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(IN) :: problem !<The problem to get the specification for.
@@ -47690,6 +48824,7 @@ CONTAINS
 
   !>Returns the size of the specification array for a problem identified by a user number.
   SUBROUTINE cmfe_Problem_SpecificationSizeGetNumber(problemUserNumber,specificationSize,err)
+    !DLLEXPORT(cmfe_Problem_SpecificationSizeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the size of the specification for.
@@ -47725,6 +48860,7 @@ CONTAINS
 
   !>Returns the size of the specification array for a problem identified by an object.
   SUBROUTINE cmfe_Problem_SpecificationSizeGetObj(problem,specificationSize,err)
+    !DLLEXPORT(cmfe_Problem_SpecificationSizeGetObj)
 
     !Argument variables
     TYPE(cmfe_ProblemType), INTENT(IN) :: problem !<The problem to get the size of the specification for.
@@ -47752,6 +48888,7 @@ CONTAINS
 
   !>Returns the coordinate system for a region identified by an user number.
   SUBROUTINE cmfe_Region_CoordinateSystemGetNumber(regionUserNumber,coordinateSystemUserNumber,err)
+    !DLLEXPORT(cmfe_Region_CoordinateSystemGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region to get the coordinate system for.
@@ -47796,6 +48933,7 @@ CONTAINS
 
   !>Returns the coordinate system for a region identified by an object.
   SUBROUTINE cmfe_Region_CoordinateSystemGetObj(region,coordinateSystem,err)
+    !DLLEXPORT(cmfe_Region_CoordinateSystemGetObj)
 
     !Argument variables
     TYPE(cmfe_RegionType), INTENT(IN) :: region !<The region to get the coordinate system for.
@@ -47821,6 +48959,7 @@ CONTAINS
 
   !>Sets/changes the coordinate system for a region identified by an user number.
   SUBROUTINE cmfe_Region_CoordinateSystemSetNumber(regionUserNumber,coordinateSystemUserNumber,err)
+    !DLLEXPORT(cmfe_Region_CoordinateSystemSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region to set the coordinate system for.
@@ -47865,6 +49004,7 @@ CONTAINS
 
   !>Sets/changes the coordinate system for a region identified by an object.
   SUBROUTINE cmfe_Region_CoordinateSystemSetObj(region,coordinateSystem,err)
+    !DLLEXPORT(cmfe_Region_CoordinateSystemSetObj)
 
     !Argument variables
     TYPE(cmfe_RegionType), INTENT(IN) :: region !<The region to set the coordinate system for.
@@ -47890,6 +49030,7 @@ CONTAINS
 
   !>Finishes the process of creating a region identified by user number.
   SUBROUTINE cmfe_Region_CreateFinishNumber(regionUserNumber,err)
+    !DLLEXPORT(cmfe_Region_CreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region to finish the creation of.
@@ -47928,6 +49069,7 @@ CONTAINS
 
   !>Finishes the creation of a region identified by an object.
   SUBROUTINE cmfe_Region_CreateFinishObj(region,err)
+    !DLLEXPORT(cmfe_Region_CreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_RegionType), INTENT(IN) :: region !<The region to finish creating.
@@ -47956,6 +49098,7 @@ CONTAINS
 
   !>Starts the process creating a region identified by user number.
   SUBROUTINE cmfe_Region_CreateStartNumber(regionUserNumber,parentRegionUserNumber,err)
+    !DLLEXPORT(cmfe_Region_CreateStartNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region to start the creation of.
@@ -47996,6 +49139,7 @@ CONTAINS
 
   !>Starts the creation of a region identified by an object.
   SUBROUTINE cmfe_Region_CreateStartObj(regionUserNumber,parentRegion,region,err)
+    !DLLEXPORT(cmfe_Region_CreateStartObj)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region to start the creation of.
@@ -48026,6 +49170,7 @@ CONTAINS
 
   !>Destroys a region identified by an user number.
   SUBROUTINE cmfe_Region_DestroyNumber(regionUserNumber,err)
+    !DLLEXPORT(cmfe_Region_DestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region to destroy.
@@ -48060,6 +49205,7 @@ CONTAINS
 
   !>Returns the data points for a region identified by an object.
   SUBROUTINE cmfe_Region_DataPointsGetObj(region,dataPoints,err)
+    !DLLEXPORT(cmfe_Region_DataPointsGetObj)
 
     !Argument variables
     TYPE(cmfe_RegionType), INTENT(IN) :: region !<The region to get the data points for.
@@ -48085,6 +49231,7 @@ CONTAINS
 
   !>Destroys a region identified by an object.
   SUBROUTINE cmfe_Region_DestroyObj(region,err)
+    !DLLEXPORT(cmfe_Region_DestroyObj)
 
     !Argument variables
     TYPE(cmfe_RegionType), INTENT(INOUT) :: region !<The region to destroy
@@ -48109,6 +49256,7 @@ CONTAINS
 
   !>Returns the character string label for a region identified by an user number.
   SUBROUTINE cmfe_Region_LabelGetCNumber(regionUserNumber,label,err)
+    !DLLEXPORT(cmfe_Region_LabelGetCNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region to get the label for.
@@ -48143,6 +49291,7 @@ CONTAINS
 
   !>Returns the character string label for a region identified by an object.
   SUBROUTINE cmfe_Region_LabelGetCObj(region,label,err)
+    !DLLEXPORT(cmfe_Region_LabelGetCObj)
 
     !Argument variables
     TYPE(cmfe_RegionType), INTENT(IN) :: region !<The region to get the label for.
@@ -48168,6 +49317,7 @@ CONTAINS
 
   !>Returns the varying string label for a region identified by an user number.
   SUBROUTINE cmfe_Region_LabelGetVSNumber(regionUserNumber,label,err)
+    !DLLEXPORT(cmfe_Region_LabelGetVSNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region to get the label for.
@@ -48202,6 +49352,7 @@ CONTAINS
 
   !>Returns the varying string label for a region identified by an object.
   SUBROUTINE cmfe_Region_LabelGetVSObj(region,label,err)
+    !DLLEXPORT(cmfe_Region_LabelGetVSObj)
 
     !Argument variables
     TYPE(cmfe_RegionType), INTENT(IN) :: region !<The region to get the label for.
@@ -48227,6 +49378,7 @@ CONTAINS
 
   !>Sets/changes the character string label for a region identified by an user number.
   SUBROUTINE cmfe_Region_LabelSetCNumber(regionUserNumber,label,err)
+    !DLLEXPORT(cmfe_Region_LabelSetCNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region to set the label for.
@@ -48261,6 +49413,7 @@ CONTAINS
 
   !>Sets/changes the character string label for a region identified by an object.
   SUBROUTINE cmfe_Region_LabelSetCObj(region,label,err)
+    !DLLEXPORT(cmfe_Region_LabelSetCObj)
 
     !Argument variables
     TYPE(cmfe_RegionType), INTENT(IN) :: region !<The region to set the label for.
@@ -48286,6 +49439,7 @@ CONTAINS
 
   !>Sets/changes the varying string label for a region identified by an user number.
   SUBROUTINE cmfe_Region_LabelSetVSNumber(regionUserNumber,label,err)
+    !DLLEXPORT(cmfe_Region_LabelSetVSNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region to set the label for.
@@ -48320,6 +49474,7 @@ CONTAINS
 
   !>Sets/changes string label for a region identified by an object.
   SUBROUTINE cmfe_Region_LabelSetVSObj(region,label,err)
+    !DLLEXPORT(cmfe_Region_LabelSetVSObj)
 
     !Argument variables
     TYPE(cmfe_RegionType), INTENT(IN) :: region !<The region to set the label for.
@@ -48345,6 +49500,7 @@ CONTAINS
 
   !>Returns the nodes for a region identified by an object.
   SUBROUTINE cmfe_Region_NodesGetObj(region,nodes,err)
+    !DLLEXPORT(cmfe_Region_NodesGetObj)
 
     !Argument variables
     TYPE(cmfe_RegionType), INTENT(IN) :: region !<The region to get the nodes for.
@@ -48377,6 +49533,7 @@ CONTAINS
   !>Adds a CellML environment to CellML equations identified by an user number.
   SUBROUTINE cmfe_CellMLEquations_CellMLAddNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
     & regionUserNumber,CellMLUserNumber,CellMLIndex,err)
+    !DLLEXPORT(cmfe_CellMLEquations_CellMLAddNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem with the solver to add the CellML environment for.
@@ -48441,6 +49598,7 @@ CONTAINS
   !>Adds a CellML environment to CellML equations identified by an user number.
   SUBROUTINE cmfe_CellMLEquations_CellMLAddNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex, &
     & regionUserNumber,CellMLUserNumber,CellMLIndex,err)
+    !DLLEXPORT(cmfe_CellMLEquations_CellMLAddNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to add the CellML environment for.
@@ -48504,6 +49662,7 @@ CONTAINS
 
   !>Adds a CellML environment to CellML equations identified by an object.
   SUBROUTINE cmfe_CellMLEquations_CellMLAddObj(CellMLEquations,CellML,CellMLIndex,err)
+    !DLLEXPORT(cmfe_CellMLEquations_CellMLAddObj)
 
     !Argument variables
     TYPE(cmfe_CellMLEquationsType), INTENT(IN) :: CellMLEquations !<The CellML equations to add the CellML environment for.
@@ -48530,6 +49689,7 @@ CONTAINS
 
   !>Returns the CellML equations for a solver identified by an user number.
   SUBROUTINE cmfe_Solver_CellMLEquationsGetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,CellMLEquations,err)
+    !DLLEXPORT(cmfe_Solver_CellMLEquationsGetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the CellML equations for.
@@ -48570,6 +49730,7 @@ CONTAINS
 
   !>Returns the CellML equations for a solver identified by an user number.
   SUBROUTINE cmfe_Solver_CellMLEquationsGetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,CellMLEquations,err)
+    !DLLEXPORT(cmfe_Solver_CellMLEquationsGetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the CellML equations for.
@@ -48609,6 +49770,7 @@ CONTAINS
 
   !>Returns the CellML equations for a solver identified by an object.
   SUBROUTINE cmfe_Solver_CellMLEquationsGetObj(solver,CellMLEquations,err)
+    !DLLEXPORT(cmfe_Solver_CellMLEquationsGetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to get the CellML equations for.
@@ -48634,6 +49796,7 @@ CONTAINS
 
   !>Returns the solve type for an Euler differential-algebraic equation solver identified by an user number.
   SUBROUTINE cmfe_Solver_DAEEulerSolverTypeGetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,DAEEulerSolverType,err)
+    !DLLEXPORT(cmfe_Solver_DAEEulerSolverTypeGetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the DAE Euler solver type for.
@@ -48674,6 +49837,7 @@ CONTAINS
 
   !>Returns the solve type for an Euler differential-algebraic equation solver identified by an user number.
   SUBROUTINE cmfe_Solver_DAEEulerSolverTypeGetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,DAEEulerSolverType,err)
+    !DLLEXPORT(cmfe_Solver_DAEEulerSolverTypeGetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the DAE Euler solver type for.
@@ -48714,6 +49878,7 @@ CONTAINS
 
   !>Returns the solve type for an Euler differential-algebraic equation solver identified by an object.
   SUBROUTINE cmfe_Solver_DAEEulerSolverTypeGetObj(solver,DAEEulerSolverType,err)
+    !DLLEXPORT(cmfe_Solver_DAEEulerSolverTypeGetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to get the DAE Euler solver type for.
@@ -48739,6 +49904,7 @@ CONTAINS
 
   !>Sets/changes the solve type for an Euler differential-algebraic equation solver identified by an user number.
   SUBROUTINE cmfe_Solver_DAEEulerSolverTypeSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,DAEEulerSolverType,err)
+    !DLLEXPORT(cmfe_Solver_DAEEulerSolverTypeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the DAE Euler solver type for.
@@ -48779,6 +49945,7 @@ CONTAINS
 
   !>Sets/changes the solve type for an Euler differential-algebraic equation solver identified by an user number.
   SUBROUTINE cmfe_Solver_DAEEulerSolverTypeSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,DAEEulerSolverType,err)
+    !DLLEXPORT(cmfe_Solver_DAEEulerSolverTypeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the DAE Euler solver type for.
@@ -48819,6 +49986,7 @@ CONTAINS
 
   !>Sets/changes the solve type for an Euler differential-algebraic equation solver identified by an object.
   SUBROUTINE cmfe_Solver_DAEEulerSolverTypeSetObj(solver,DAEEulerSolverType,err)
+    !DLLEXPORT(cmfe_Solver_DAEEulerSolverTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to set the DAE Euler solver type for.
@@ -48844,6 +50012,7 @@ CONTAINS
 
   !>Returns the solve type for an differential-algebraic equation solver identified by an user number.
   SUBROUTINE cmfe_Solver_DAESolverTypeGetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,DAESolverType,err)
+    !DLLEXPORT(cmfe_Solver_DAESolverTypeGetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the DAE solver type for.
@@ -48884,6 +50053,7 @@ CONTAINS
 
   !>Returns the solve type for an differential-algebraic equation solver identified by an user number.
   SUBROUTINE cmfe_Solver_DAESolverTypeGetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,DAESolverType,err)
+    !DLLEXPORT(cmfe_Solver_DAESolverTypeGetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the DAE solver type for.
@@ -48924,6 +50094,7 @@ CONTAINS
 
   !>Returns the solve type for an differential-algebraic equation solver identified by an object.
   SUBROUTINE cmfe_Solver_DAESolverTypeGetObj(solver,DAESolverType,err)
+    !DLLEXPORT(cmfe_Solver_DAESolverTypeGetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to get the DAE solver type for.
@@ -48949,6 +50120,7 @@ CONTAINS
 
   !>Sets/changes the solve type for an differential-algebraic equation solver identified by an user number.
   SUBROUTINE cmfe_Solver_DAESolverTypeSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,DAESolverType,err)
+    !DLLEXPORT(cmfe_Solver_DAESolverTypeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the DAE solver type for.
@@ -48989,6 +50161,7 @@ CONTAINS
 
   !>Sets/changes the solve type for an differential-algebraic equation solver identified by an user number.
   SUBROUTINE cmfe_Solver_DAESolverTypeSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,DAESolverType,err)
+    !DLLEXPORT(cmfe_Solver_DAESolverTypeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the DAE solver type for.
@@ -49029,6 +50202,7 @@ CONTAINS
 
   !>Sets/changes the solve type for an differential-algebraic equation solver identified by an object.
   SUBROUTINE cmfe_Solver_DAESolverTypeSetObj(solver,DAESolverType,err)
+    !DLLEXPORT(cmfe_Solver_DAESolverTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to set the DAE solver type for.
@@ -49054,6 +50228,7 @@ CONTAINS
 
   !>Sets/changes the times for an differential-algebraic equation solver identified by an user number.
   SUBROUTINE cmfe_Solver_DAETimesSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,startTime,endTime,err)
+    !DLLEXPORT(cmfe_Solver_DAETimesSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the DAE times for.
@@ -49095,6 +50270,7 @@ CONTAINS
 
   !>Sets/changes the times for an differential-algebraic equation solver identified by an user number.
   SUBROUTINE cmfe_Solver_DAETimesSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,startTime,endTime,err)
+    !DLLEXPORT(cmfe_Solver_DAETimesSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the DAE times for.
@@ -49136,6 +50312,7 @@ CONTAINS
 
   !>Sets/changes the times for an differential-algebraic equation solver identified by an object.
   SUBROUTINE cmfe_Solver_DAETimesSetObj(solver,startTime,endTime,err)
+    !DLLEXPORT(cmfe_Solver_DAETimesSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to set the DAE times for.
@@ -49162,6 +50339,7 @@ CONTAINS
 
   !>Sets/changes the (initial) time step for an differential-algebraic equation solver identified by an user number.
   SUBROUTINE cmfe_Solver_DAETimeStepSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,timeStep,err)
+    !DLLEXPORT(cmfe_Solver_DAETimeStepSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the DAE times for.
@@ -49202,6 +50380,7 @@ CONTAINS
 
   !>Sets/changes the (initial) time step for an differential-algebraic equation solver identified by an user number.
   SUBROUTINE cmfe_Solver_DAETimeStepSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,timeStep,err)
+    !DLLEXPORT(cmfe_Solver_DAETimeStepSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the DAE times for.
@@ -49242,6 +50421,7 @@ CONTAINS
 
   !>Sets/changes the (initial) time step for an differential-algebraic equation solver identified by an object.
   SUBROUTINE cmfe_Solver_DAETimeStepSetObj(solver,timeStep,err)
+    !DLLEXPORT(cmfe_Solver_DAETimeStepSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to set the DAE times for.
@@ -49267,6 +50447,7 @@ CONTAINS
 
   !>Returns the degree of the polynomial used to interpolate time for a dynamic solver identified by an user number.
   SUBROUTINE cmfe_Solver_DynamicDegreeGetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,degree,err)
+    !DLLEXPORT(cmfe_Solver_DynamicDegreeGetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the dynamic degree for.
@@ -49307,6 +50488,7 @@ CONTAINS
 
   !>Returns the degree of the polynomial used to interpolate time for a dynamic solver identified by an user number.
   SUBROUTINE cmfe_Solver_DynamicDegreeGetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,degree,err)
+    !DLLEXPORT(cmfe_Solver_DynamicDegreeGetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the dynamic degree for.
@@ -49347,6 +50529,7 @@ CONTAINS
 
   !>Returns the degree of the polynomial used to interpolate time for a dynamic solver identified by an object.
   SUBROUTINE cmfe_Solver_DynamicDegreeGetObj(solver,degree,err)
+    !DLLEXPORT(cmfe_Solver_DynamicDegreeGetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to get the dynamic degree for.
@@ -49372,6 +50555,7 @@ CONTAINS
 
   !>Sets/changes the degree of the polynomial used to interpolate time for a dynamic solver identified by an user number.
   SUBROUTINE cmfe_Solver_DynamicDegreeSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,degree,err)
+    !DLLEXPORT(cmfe_Solver_DynamicDegreeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the dynamic degree for.
@@ -49412,6 +50596,7 @@ CONTAINS
 
   !>Sets/changes the degree of the polynomial used to interpolate time for a dynamic solver identified by an user number.
   SUBROUTINE cmfe_Solver_DynamicDegreeSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,degree,err)
+    !DLLEXPORT(cmfe_Solver_DynamicDegreeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the dynamic degree for.
@@ -49452,6 +50637,7 @@ CONTAINS
 
   !>Sets/changes the degree of the polynomial used to interpolate time for a dynamic solver identified by an object.
   SUBROUTINE cmfe_Solver_DynamicDegreeSetObj(solver,degree,err)
+    !DLLEXPORT(cmfe_Solver_DynamicDegreeSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to set the dynamic degree for.
@@ -49477,6 +50663,7 @@ CONTAINS
 
   !>Returns the linearity type for a dynamic solver identified by an user number.
   SUBROUTINE cmfe_Solver_DynamicLinearityTypeGetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,linearityType,err)
+    !DLLEXPORT(cmfe_Solver_DynamicLinearityTypeGetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the dynamic linearity type for.
@@ -49517,6 +50704,7 @@ CONTAINS
 
   !>Returns the linearity type for a dynamic solver identified by an user number.
   SUBROUTINE cmfe_Solver_DynamicLinearityTypeGetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,linearityType,err)
+    !DLLEXPORT(cmfe_Solver_DynamicLinearityTypeGetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the dynamic linearity type for.
@@ -49557,6 +50745,7 @@ CONTAINS
 
   !>Returns the linearity type for a dynamic solver identified by an object.
   SUBROUTINE cmfe_Solver_DynamicLinearityTypeGetObj(solver,linearityType,err)
+    !DLLEXPORT(cmfe_Solver_DynamicLinearityTypeGetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to get the dynamic linearity type for.
@@ -49583,6 +50772,7 @@ CONTAINS
   !>Returns the nonlinear solver associated with a nonlinear dynamic solver identified by an user number.
   SUBROUTINE cmfe_Solver_DynamicNonlinearSolverGetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
     & nonlinearSolverIndex,err)
+    !DLLEXPORT(cmfe_Solver_DynamicNonlinearSolverGetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the dynamic nonlinear solver for.
@@ -49629,6 +50819,7 @@ CONTAINS
   !>Returns the nonlinear solver associated with a nonlinear dynamic solver identified by an user number.
   SUBROUTINE cmfe_Solver_DynamicNonlinearSolverGetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex, &
     & nonlinearSolverIndex,err)
+    !DLLEXPORT(cmfe_Solver_DynamicNonlinearSolverGetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the dynamic nonlinear solver for.
@@ -49674,6 +50865,7 @@ CONTAINS
 
   !>Returns the nonlinear solver associated with a nonlinear dynamic solver identified by an object.
   SUBROUTINE cmfe_Solver_DynamicNonlinearSolverGetObj(solver,nonlinearSolver,err)
+    !DLLEXPORT(cmfe_Solver_DynamicNonlinearSolverGetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to get the dynamic nonlinear solver for.
@@ -49699,6 +50891,7 @@ CONTAINS
 
   !>Returns the linear solver associated with a linear dynamic solver identified by an user number.
   SUBROUTINE cmfe_Solver_DynamicLinearSolverGetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,linearSolverIndex,err)
+    !DLLEXPORT(cmfe_Solver_DynamicLinearSolverGetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the dynamic linear solver for.
@@ -49743,6 +50936,7 @@ CONTAINS
 
   !>Returns the linear solver associated with a linear dynamic solver identified by an user number.
   SUBROUTINE cmfe_Solver_DynamicLinearSolverGetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,linearSolverIndex,err)
+    !DLLEXPORT(cmfe_Solver_DynamicLinearSolverGetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the dynamic linear solver for.
@@ -49786,6 +50980,7 @@ CONTAINS
 
   !>Returns the linear solver associated with a linear dynamic solver identified by an object.
   SUBROUTINE cmfe_Solver_DynamicLinearSolverGetObj(solver,linearSolver,err)
+    !DLLEXPORT(cmfe_Solver_DynamicLinearSolverGetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to get the dynamic linear solver for.
@@ -49811,6 +51006,7 @@ CONTAINS
 
   !>Sets/changes the scheme for a dynamic solver identified by an user number.
   SUBROUTINE cmfe_Solver_DynamicSchemeSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,scheme,err)
+    !DLLEXPORT(cmfe_Solver_DynamicSchemeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the scheme for.
@@ -49851,6 +51047,7 @@ CONTAINS
 
   !>Sets/changes the scheme for a dynamic solver identified by an user number.
   SUBROUTINE cmfe_Solver_DynamicSchemeSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,scheme,err)
+    !DLLEXPORT(cmfe_Solver_DynamicSchemeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the scheme for.
@@ -49890,6 +51087,7 @@ CONTAINS
 
   !>Sets/changes the scheme for a dynamic solver identified by an object.
   SUBROUTINE cmfe_Solver_DynamicSchemeSetObj(solver,scheme,err)
+    !DLLEXPORT(cmfe_Solver_DynamicSchemeSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to set the scheme for.
@@ -49915,6 +51113,7 @@ CONTAINS
 
   !>Sets/changes the theta value for a dynamic solver identified by an user number.
   SUBROUTINE cmfe_Solver_DynamicThetaSetNumber00(problemUserNumber,controlLoopIdentifier,solverIndex,theta,err)
+    !DLLEXPORT(cmfe_Solver_DynamicThetaSetNumber00)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the theta for.
@@ -49955,6 +51154,7 @@ CONTAINS
 
   !>Sets/changes the theta value for a dynamic solver identified by an user number.
   SUBROUTINE cmfe_Solver_DynamicThetaSetNumber01(problemUserNumber,controlLoopIdentifier,solverIndex,thetas,err)
+    !DLLEXPORT(cmfe_Solver_DynamicThetaSetNumber01)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the theta for.
@@ -49995,6 +51195,7 @@ CONTAINS
 
   !>Sets/changes the theta for a dynamic solver identified by an user number.
   SUBROUTINE cmfe_Solver_DynamicThetaSetNumber10(problemUserNumber,controlLoopIdentifiers,solverIndex,theta,err)
+    !DLLEXPORT(cmfe_Solver_DynamicThetaSetNumber10)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the theta for.
@@ -50035,6 +51236,7 @@ CONTAINS
 
   !>Sets/changes the theta for a dynamic solver identified by an user number.
   SUBROUTINE cmfe_Solver_DynamicThetaSetNumber11(problemUserNumber,controlLoopIdentifiers,solverIndex,thetas,err)
+    !DLLEXPORT(cmfe_Solver_DynamicThetaSetNumber11)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the theta for.
@@ -50075,6 +51277,7 @@ CONTAINS
 
   !>Sets/changes the theta for a dynamic solver identified by an object.
   SUBROUTINE cmfe_Solver_DynamicThetaSetObj0(solver,theta,err)
+    !DLLEXPORT(cmfe_Solver_DynamicThetaSetObj0)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to set the theta for.
@@ -50100,6 +51303,7 @@ CONTAINS
 
   !>Sets/changes the theta for a dynamic solver identified by an object.
   SUBROUTINE cmfe_Solver_DynamicThetaSetObj1(solver,thetas,err)
+    !DLLEXPORT(cmfe_Solver_DynamicThetaSetObj1)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to set the theta for.
@@ -50125,6 +51329,7 @@ CONTAINS
 
   !>Sets/changes the times for a dynamic solver identified by an user number.
   SUBROUTINE cmfe_Solver_DynamicTimesSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,currentTime,timeIncrement,err)
+    !DLLEXPORT(cmfe_Solver_DynamicTimesSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the times for.
@@ -50166,6 +51371,7 @@ CONTAINS
 
   !>Sets/changes the times for a dynamic solver identified by an user number.
   SUBROUTINE cmfe_Solver_DynamicTimesSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,currentTime,timeIncrement,err)
+    !DLLEXPORT(cmfe_Solver_DynamicTimesSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the times for.
@@ -50206,6 +51412,7 @@ CONTAINS
 
   !>Sets/changes the times for a dynamic solver identified by an object.
   SUBROUTINE cmfe_Solver_DynamicTimesSetObj(solver,currentTime,timeIncrement,err)
+    !DLLEXPORT(cmfe_Solver_DynamicTimesSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to set the times for.
@@ -50233,6 +51440,7 @@ CONTAINS
   !>Sets the arbitrary path logical for a geometric transformation identified by an user number.
   SUBROUTINE cmfe_Solver_GeometricTransformationArbitraryPathSetNumber(problemUserNumber,controlLoopIdentifier,solverIndex, &
       & arbitraryPath,err)
+    !DLLEXPORT(cmfe_Solver_GeometricTransformationArbitraryPathSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the arbitrary path for.
@@ -50280,6 +51488,7 @@ CONTAINS
 
   !>Sets the arbitrary path logical for a geometric transformation solver identified by an object.
   SUBROUTINE cmfe_Solver_GeometricTransformationArbitraryPathSetObj(solver,arbitraryPath,err)
+    !DLLEXPORT(cmfe_Solver_GeometricTransformationArbitraryPathSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The geometric transformation solver to set the arbitrary path for.
@@ -50306,6 +51515,7 @@ CONTAINS
 
   !>Clear transformation a geometric transformation identified by an user number.
   SUBROUTINE cmfe_Solver_GeometricTransformationClearNumber(problemUserNumber,controlLoopIdentifier,solverIndex,err)
+    !DLLEXPORT(cmfe_Solver_GeometricTransformationClearNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to clear.
@@ -50352,6 +51562,7 @@ CONTAINS
 
   !>Clear transformation for a geometric transformation solver identified by an object.
   SUBROUTINE cmfe_Solver_GeometricTransformationClearObj(solver,err)
+    !DLLEXPORT(cmfe_Solver_GeometricTransformationClearObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The geometric transformation solver to clear
@@ -50377,6 +51588,7 @@ CONTAINS
   !>Sets the field for a geometric transformation identified by an user number.
   SUBROUTINE cmfe_Solver_GeometricTransformationFieldSetNumber(problemUserNumber,controlLoopIdentifier,solverIndex, &
       & regionUserNumber,fieldUserNumber,variableType,err)
+    !DLLEXPORT(cmfe_Solver_GeometricTransformationFieldSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the field for.
@@ -50444,6 +51656,7 @@ CONTAINS
 
   !>Sets the field for a geometric transformation solver identified by an object.
   SUBROUTINE cmfe_Solver_GeometricTransformationFieldSetObj(solver,field,variableType,err)
+    !DLLEXPORT(cmfe_Solver_GeometricTransformationFieldSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The geometric transformation solver to set the field for.
@@ -50472,6 +51685,7 @@ CONTAINS
   !>Sets the full transformation matrix for a geometric transformation identified by an user number, default to be the 1st load increment
   SUBROUTINE cmfe_Solver_GeometricTransformationMatrixSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
       & matrix,err)
+    !DLLEXPORT(cmfe_Solver_GeometricTransformationMatrixSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the matrix for.
@@ -50519,6 +51733,7 @@ CONTAINS
 
   !>Sets the full transformation matrix for a geometric transformation solver identified by an object, default to be the 1st load increment
   SUBROUTINE cmfe_Solver_GeometricTransformationMatrixSetObj0(solver,matrix,err)
+    !DLLEXPORT(cmfe_Solver_GeometricTransformationMatrixSetObj0)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The geometric transformation solver to set the matrix for.
@@ -50546,6 +51761,7 @@ CONTAINS
   !>Sets the full transformation matrix at a specific increment for a geometric transformation identified by an user number.
   SUBROUTINE cmfe_Solver_GeometricTransformationMatrixSetNumber1(problemUserNumber,controlLoopIdentifier,solverIndex, &
       & matrix,loadIncrementIdx,err)
+    !DLLEXPORT(cmfe_Solver_GeometricTransformationMatrixSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the matrix for.
@@ -50594,6 +51810,7 @@ CONTAINS
 
   !>Sets the full transformation matrix vector at a specific load increment for a geometric transformation solver identified by an object.
   SUBROUTINE cmfe_Solver_GeometricTransformationMatrixSetObj1(solver,matrix,loadIncrementIdx,err)
+    !DLLEXPORT(cmfe_Solver_GeometricTransformationMatrixSetObj1)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The geometric transformation solver to set the matrix for.
@@ -50622,6 +51839,7 @@ CONTAINS
   !>Sets the arbitrary path logical for a geometric transformation identified by an user number.
   SUBROUTINE cmfe_Solver_GeometricTransformationNoLoadIncrementsSetNumber(problemUserNumber,controlLoopIdentifier, &
       & solverIndex,numberOfIncrements,err)
+    !DLLEXPORT(cmfe_Solver_GeometricTransformationNoLoadIncrementsSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the field for.
@@ -50669,6 +51887,7 @@ CONTAINS
 
   !>Sets the arbitrary path logical for a geometric transformation solver identified by an object.
   SUBROUTINE cmfe_Solver_GeometricTransformationNoLoadIncrementsSetObj(solver,numberOfIncrements,err)
+    !DLLEXPORT(cmfe_Solver_GeometricTransformationNoLoadIncrementsSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The geometric transformation solver to set the field for.
@@ -50696,6 +51915,7 @@ CONTAINS
   !>Sets the rotation for a geometric transformation identified by an user number, default to be the 1st load increment
   SUBROUTINE cmfe_Solver_GeometricTransformationRotationSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
       & pivotPoint,axis,angle,err)
+    !DLLEXPORT(cmfe_Solver_GeometricTransformationRotationSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the rotation for.
@@ -50745,6 +51965,7 @@ CONTAINS
 
   !>Sets the rotation for a geometric transformation solver identified by an object, default to be the 1st load increment
   SUBROUTINE cmfe_Solver_GeometricTransformationRotationSetObj0(solver,pivotPoint,axis,angle,err)
+    !DLLEXPORT(cmfe_Solver_GeometricTransformationRotationSetObj0)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The geometric transformation solver to set the rotation for.
@@ -50774,6 +51995,7 @@ CONTAINS
   !>Sets the rotation at a specific increment for a geometric transformation identified by an user number.
   SUBROUTINE cmfe_Solver_GeometricTransformationRotationSetNumber1(problemUserNumber,controlLoopIdentifier,solverIndex, &
       & pivotPoint,axis,angle,loadIncrementIdx,err)
+    !DLLEXPORT(cmfe_Solver_GeometricTransformationRotationSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the rotation for.
@@ -50824,6 +52046,7 @@ CONTAINS
 
   !>Sets the rotation at a specific load increment for a geometric transformation solver identified by an object.
   SUBROUTINE cmfe_Solver_GeometricTransformationRotationSetObj1(solver,pivotPoint,axis,angle,loadIncrementIdx,err)
+    !DLLEXPORT(cmfe_Solver_GeometricTransformationRotationSetObj1)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The geometric transformation solver to set the rotation for.
@@ -50854,6 +52077,7 @@ CONTAINS
   !>Sets the scalings for a geometric transformation identified by an user number.
   SUBROUTINE cmfe_Solver_GeometricTransformationScalingsSetNumber(problemUserNumber,controlLoopIdentifier,solverIndex, &
       & scalings,err)
+    !DLLEXPORT(cmfe_Solver_GeometricTransformationScalingsSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the scalings for.
@@ -50901,6 +52125,7 @@ CONTAINS
 
   !>Sets the scalings for a geometric transformation solver identified by an object.
   SUBROUTINE cmfe_Solver_GeometricTransformationScalingsSetObj(solver,scalings,err)
+    !DLLEXPORT(cmfe_Solver_GeometricTransformationScalingsSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The geometric transformation solver to set the scalings for.
@@ -50928,6 +52153,7 @@ CONTAINS
   !>Sets the translation for a geometric transformation identified by an user number, default to be the 1st load increment
   SUBROUTINE cmfe_Solver_GeometricTransformationTranslationSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
       & translation,err)
+    !DLLEXPORT(cmfe_Solver_GeometricTransformationTranslationSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the translation for.
@@ -50975,6 +52201,7 @@ CONTAINS
 
   !>Sets the translation vector for a geometric transformation solver identified by an object, default to be the 1st load increment
   SUBROUTINE cmfe_Solver_GeometricTransformationTranslationSetObj0(solver,translation,err)
+    !DLLEXPORT(cmfe_Solver_GeometricTransformationTranslationSetObj0)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The geometric transformation solver to set the translation for.
@@ -51002,6 +52229,7 @@ CONTAINS
   !>Sets the translation at a specific increment for a geometric transformation identified by an user number.
   SUBROUTINE cmfe_Solver_GeometricTransformationTranslationSetNumber1(problemUserNumber,controlLoopIdentifier,solverIndex, &
       & translation,loadIncrementIdx,err)
+    !DLLEXPORT(cmfe_Solver_GeometricTransformationTranslationSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the translation for.
@@ -51050,6 +52278,7 @@ CONTAINS
 
   !>Sets the translation vector at a specific load increment for a geometric transformation solver identified by an object.
   SUBROUTINE cmfe_Solver_GeometricTransformationTranslationSetObj1(solver,translation,loadIncrementIdx,err)
+    !DLLEXPORT(cmfe_Solver_GeometricTransformationTranslationSetObj1)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The geometric transformation solver to set the translation for.
@@ -51077,6 +52306,7 @@ CONTAINS
 
   !>Returns the character string label for a solver identified by an user number.
   SUBROUTINE cmfe_Solver_LabelGetCNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,label,err)
+    !DLLEXPORT(cmfe_Solver_LabelGetCNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the label for.
@@ -51116,6 +52346,7 @@ CONTAINS
 
   !>Returns the character string label for a solver identified by an user number.
   SUBROUTINE cmfe_Solver_LabelGetCNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,label,err)
+    !DLLEXPORT(cmfe_Solver_LabelGetCNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the label for.
@@ -51155,6 +52386,7 @@ CONTAINS
 
   !>Returns the character string label for a solver identified by an object.
   SUBROUTINE cmfe_Solver_LabelGetCObj(solver,label,err)
+    !DLLEXPORT(cmfe_Solver_LabelGetCObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to get the label for.
@@ -51180,6 +52412,7 @@ CONTAINS
 
   !>Returns the varying string label for a solver identified by an user number.
   SUBROUTINE cmfe_Solver_LabelGetVSNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,label,err)
+    !DLLEXPORT(cmfe_Solver_LabelGetVSNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the label for.
@@ -51219,6 +52452,7 @@ CONTAINS
 
   !>Returns the varying string label for a solver identified by an user number.
   SUBROUTINE cmfe_Solver_LabelGetVSNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,label,err)
+    !DLLEXPORT(cmfe_Solver_LabelGetVSNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the label for.
@@ -51258,6 +52492,7 @@ CONTAINS
 
   !>Returns the varying string label for a solver identified by an object.
   SUBROUTINE cmfe_Solver_LabelGetVSObj(solver,label,err)
+    !DLLEXPORT(cmfe_Solver_LabelGetVSObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to get the label for.
@@ -51283,6 +52518,7 @@ CONTAINS
 
   !>Sets/changes the character string label for a solver identified by an user number.
   SUBROUTINE cmfe_Solver_LabelSetCNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,label,err)
+    !DLLEXPORT(cmfe_Solver_LabelSetCNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the label for.
@@ -51322,6 +52558,7 @@ CONTAINS
 
   !>Sets/changes the character string label for a solver identified by an user number.
   SUBROUTINE cmfe_Solver_LabelSetCNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,label,err)
+    !DLLEXPORT(cmfe_Solver_LabelSetCNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the label for.
@@ -51361,6 +52598,7 @@ CONTAINS
 
   !>Sets/changes the character string label for a solver identified by an object.
   SUBROUTINE cmfe_Solver_LabelSetCObj(solver,label,err)
+    !DLLEXPORT(cmfe_Solver_LabelSetCObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to set the label for.
@@ -51386,6 +52624,7 @@ CONTAINS
 
   !>Sets/changes the varying string label for a solver identified by an user number.
   SUBROUTINE cmfe_Solver_LabelSetVSNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,label,err)
+    !DLLEXPORT(cmfe_Solver_LabelSetVSNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the label for.
@@ -51425,6 +52664,7 @@ CONTAINS
 
   !>Sets/changes the varying string label for a solver identified by an user number.
   SUBROUTINE cmfe_Solver_LabelSetVSNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,label,err)
+    !DLLEXPORT(cmfe_Solver_LabelSetVSNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the label for.
@@ -51464,6 +52704,7 @@ CONTAINS
 
   !>Sets/changes string label for a solver identified by an object.
   SUBROUTINE cmfe_Solver_LabelSetVSObj(solver,label,err)
+    !DLLEXPORT(cmfe_Solver_LabelSetVSObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to set the label for.
@@ -51489,6 +52730,7 @@ CONTAINS
 
   !>Returns the type of library for a solver identified by an user number.
   SUBROUTINE cmfe_Solver_LibraryTypeGetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,libraryType,err)
+    !DLLEXPORT(cmfe_Solver_LibraryTypeGetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the library type for.
@@ -51529,6 +52771,7 @@ CONTAINS
 
   !>Returns the library type for a solver identified by an user number.
   SUBROUTINE cmfe_Solver_LibraryTypeGetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,libraryType,err)
+    !DLLEXPORT(cmfe_Solver_LibraryTypeGetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the library type for.
@@ -51568,6 +52811,7 @@ CONTAINS
 
   !>Returns the library type for a solver identified by an object.
   SUBROUTINE cmfe_Solver_LibraryTypeGetObj(solver,libraryType,err)
+    !DLLEXPORT(cmfe_Solver_LibraryTypeGetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to get the library type for.
@@ -51593,6 +52837,7 @@ CONTAINS
 
   !>Sets/changes the type of library for a solver identified by an user number.
   SUBROUTINE cmfe_Solver_LibraryTypeSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,libraryType,err)
+    !DLLEXPORT(cmfe_Solver_LibraryTypeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the library type for.
@@ -51633,6 +52878,7 @@ CONTAINS
 
   !>Sets/changes the library type for a solver identified by an user number.
   SUBROUTINE cmfe_Solver_LibraryTypeSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,libraryType,err)
+    !DLLEXPORT(cmfe_Solver_LibraryTypeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the library type for.
@@ -51672,6 +52918,7 @@ CONTAINS
 
   !>Sets/changes the library type for a solver identified by an object.
   SUBROUTINE cmfe_Solver_LibraryTypeSetObj(solver,libraryType,err)
+    !DLLEXPORT(cmfe_Solver_LibraryTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to set the library type for.
@@ -51697,6 +52944,7 @@ CONTAINS
 
   !>Sets/changes the type of direct linear solver for a solver identified by an user number.
   SUBROUTINE cmfe_Solver_LinearDirectTypeSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,directSolverType,err)
+    !DLLEXPORT(cmfe_Solver_LinearDirectTypeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the direct linear solver to set the direct type for.
@@ -51737,6 +52985,7 @@ CONTAINS
 
   !>Sets/changes the type of direct linear solver for a solver identified by an user number.
   SUBROUTINE cmfe_Solver_LinearDirectTypeSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,directSolverType,err)
+    !DLLEXPORT(cmfe_Solver_LinearDirectTypeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the direct linear solver to set the direct type for.
@@ -51776,6 +53025,7 @@ CONTAINS
 
   !>Sets/changes the type of direct linear solver for a solver identified by an object.
   SUBROUTINE cmfe_Solver_LinearDirectTypeSetObj(solver,directSolverType,err)
+    !DLLEXPORT(cmfe_Solver_LinearDirectTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to set the library type for.
@@ -51801,6 +53051,7 @@ CONTAINS
 
   !>Sets/changes the MUMPS ICNTL(icntl)=ivalue integer control parameters through the PETSc-MUMPS interface. Must be called after the boundary conditions have been set up.
   SUBROUTINE cmfe_Solver_MumpsSetIcntl(solver,icntl,ivalue,err)
+    !DLLEXPORT(cmfe_Solver_MumpsSetIcntl)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to set the library type for.
@@ -51827,6 +53078,7 @@ CONTAINS
 
   !>Sets/changes the MUMPS CNTL(icntl)=val real/complex control parameters through the PETSc-MUMPS interface. Must be called after the boundary conditions have been set up.
   SUBROUTINE cmfe_Solver_MumpsSetCntl(solver,icntl,val,err)
+    !DLLEXPORT(cmfe_Solver_MumpsSetCntl)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to set the library type for.
@@ -51854,6 +53106,7 @@ CONTAINS
   !>Sets/changes the maximum absolute tolerance for an iterative linear solver identified by an user number.
   SUBROUTINE cmfe_Solver_LinearIterativeAbsoluteToleranceSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
     & absoluteTolerance,err)
+    !DLLEXPORT(cmfe_Solver_LinearIterativeAbsoluteToleranceSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the iterative linear solver to set the absolute tolerance for.
@@ -51896,6 +53149,7 @@ CONTAINS
   !>Sets/changes the maximum absolute tolerance for an iterative linear solver identified by an user number.
   SUBROUTINE cmfe_Solver_LinearIterativeAbsoluteToleranceSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex, &
     & absoluteTolerance,err)
+    !DLLEXPORT(cmfe_Solver_LinearIterativeAbsoluteToleranceSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the iterative linear solver to set the absolute tolerance for.
@@ -51936,6 +53190,7 @@ CONTAINS
 
   !>Sets/changes the maximum absolute tolerance for an iterative linear solver identified by an object.
   SUBROUTINE cmfe_Solver_LinearIterativeAbsoluteToleranceSetObj(solver,absoluteTolerance,err)
+    !DLLEXPORT(cmfe_Solver_LinearIterativeAbsoluteToleranceSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The iterative linear solver to set the absolute tolerance for.
@@ -51963,6 +53218,7 @@ CONTAINS
   !>Sets/changes the maximum divergence tolerance for an iterative linear solver identified by an user number.
   SUBROUTINE cmfe_Solver_LinearIterativeDivergenceToleranceSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
     & divergenceTolerance,err)
+    !DLLEXPORT(cmfe_Solver_LinearIterativeDivergenceToleranceSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the iterative linear solver to set the divergence tolerance for.
@@ -52005,6 +53261,7 @@ CONTAINS
   !>Sets/changes the maximum divergence tolerance for an iterative linear solver identified by an user number.
   SUBROUTINE cmfe_Solver_LinearIterativeDivergenceToleranceSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex, &
     & divergenceTolerance,err)
+    !DLLEXPORT(cmfe_Solver_LinearIterativeDivergenceToleranceSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the iterative linear solver to set the divergence tolerance for.
@@ -52045,6 +53302,7 @@ CONTAINS
 
   !>Sets/changes the maximum divergence tolerance for an iterative linear solver identified by an object.
   SUBROUTINE cmfe_Solver_LinearIterativeDivergenceToleranceSetObj(solver,divergenceTolerance,err)
+    !DLLEXPORT(cmfe_Solver_LinearIterativeDivergenceToleranceSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The iterative linear solver to set the divergence tolerance for.
@@ -52072,6 +53330,7 @@ CONTAINS
   !>Sets/changes the GMRES restart value for a GMRES iterative linear solver identified by an user number.
   SUBROUTINE cmfe_Solver_LinearIterativeGMRESRestartSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
     & GMRESRestart,err)
+    !DLLEXPORT(cmfe_Solver_LinearIterativeGMRESRestartSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the GMRES iterative linear solver to set the restart value for.
@@ -52114,6 +53373,7 @@ CONTAINS
   !>Sets/changes the GMRES restart value for a GMRES iterative linear solver identified by an user number.
   SUBROUTINE cmfe_Solver_LinearIterativeGMRESRestartSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex, &
     & GMRESRestart,err)
+    !DLLEXPORT(cmfe_Solver_LinearIterativeGMRESRestartSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the GMRES iterative linear solver to set the restart value for.
@@ -52154,6 +53414,7 @@ CONTAINS
 
   !>Sets/changes the GMRES restart value for a GMRES iterative linear solver identified by an object.
   SUBROUTINE cmfe_Solver_LinearIterativeGMRESRestartSetObj(solver,GMRESRestart,err)
+    !DLLEXPORT(cmfe_Solver_LinearIterativeGMRESRestartSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The GMRES iterative linear solver to set the restart value for.
@@ -52181,6 +53442,7 @@ CONTAINS
   !>Sets/changes the maximum number of iterations for an iterative linear solver identified by an user number.
   SUBROUTINE cmfe_Solver_LinearIterativeMaximumIterationsSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
     & maximumIterations,err)
+    !DLLEXPORT(cmfe_Solver_LinearIterativeMaximumIterationsSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the iterative linear solver to set the maximum iterations for.
@@ -52223,6 +53485,7 @@ CONTAINS
   !>Sets/changes the maximum number of iterations for an iterative linear solver identified by an user number.
   SUBROUTINE cmfe_Solver_LinearIterativeMaximumIterationsSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex, &
     & maximumIterations,err)
+    !DLLEXPORT(cmfe_Solver_LinearIterativeMaximumIterationsSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the iterative linear solver to set the maximum iterations for.
@@ -52263,6 +53526,7 @@ CONTAINS
 
   !>Sets/changes the maximum number of iterations for an iterative linear solver identified by an object.
   SUBROUTINE cmfe_Solver_LinearIterativeMaximumIterationsSetObj(solver,maximumIterations,err)
+    !DLLEXPORT(cmfe_Solver_LinearIterativeMaximumIterationsSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The iterative linear solver to set the maximum iterations for.
@@ -52290,6 +53554,7 @@ CONTAINS
   !>Sets/changes the preconditioner type for an iterative linear solver identified by an user number.
   SUBROUTINE cmfe_Solver_LinearIterativePreconditionerTypeSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
     & preconditionerType,err)
+    !DLLEXPORT(cmfe_Solver_LinearIterativePreconditionerTypeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the iterative linear solver to set the preconditioner type for.
@@ -52332,6 +53597,7 @@ CONTAINS
   !>Sets/changes the preconditioner type for an iterative linear solver identified by an user number.
   SUBROUTINE cmfe_Solver_LinearIterativePreconditionerTypeSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex, &
     & preconditionerType,err)
+    !DLLEXPORT(cmfe_Solver_LinearIterativePreconditionerTypeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the iterative linear solver to set the preconditioner type for.
@@ -52372,6 +53638,7 @@ CONTAINS
 
   !>Sets/changes the preconditioner type for an iterative linear solver identified by an object.
   SUBROUTINE cmfe_Solver_LinearIterativePreconditionerTypeSetObj(solver,preconditionerType,err)
+    !DLLEXPORT(cmfe_Solver_LinearIterativePreconditionerTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The iterative linear solver to set the preconditioner type for.
@@ -52399,6 +53666,7 @@ CONTAINS
   !>Sets/changes the maximum relative tolerance for an iterative linear solver identified by an user number.
   SUBROUTINE cmfe_Solver_LinearIterativeRelativeToleranceSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
     & relativeTolerance,err)
+    !DLLEXPORT(cmfe_Solver_LinearIterativeRelativeToleranceSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the iterative linear solver to set the relative tolerance for.
@@ -52441,6 +53709,7 @@ CONTAINS
   !>Sets/changes the maximum relative tolerance for an iterative linear solver identified by an user number.
   SUBROUTINE cmfe_Solver_LinearIterativeRelativeToleranceSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex, &
     & relativeTolerance,err)
+    !DLLEXPORT(cmfe_Solver_LinearIterativeRelativeToleranceSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the iterative linear solver to set the relative tolerance for.
@@ -52481,6 +53750,7 @@ CONTAINS
 
   !>Sets/changes the maximum relative tolerance for an iterative linear solver identified by an object.
   SUBROUTINE cmfe_Solver_LinearIterativeRelativeToleranceSetObj(solver,relativeTolerance,err)
+    !DLLEXPORT(cmfe_Solver_LinearIterativeRelativeToleranceSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The iterative linear solver to set the relative tolerance for.
@@ -52507,6 +53777,7 @@ CONTAINS
 
   !>Sets/changes the type for an iterative linear solver identified by an user number.
   SUBROUTINE cmfe_Solver_LinearIterativeTypeSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,iterativeSolverType,err)
+    !DLLEXPORT(cmfe_Solver_LinearIterativeTypeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the iterative linear solver to set the type for.
@@ -52547,6 +53818,7 @@ CONTAINS
 
   !>Sets/changes the type for an iterative linear solver identified by an user number.
   SUBROUTINE cmfe_Solver_LinearIterativeTypeSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,iterativeSolverType,err)
+    !DLLEXPORT(cmfe_Solver_LinearIterativeTypeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the iterative linear solver to set the type for.
@@ -52586,6 +53858,7 @@ CONTAINS
 
   !>Sets/changes the type for an iterative linear solver identified by an object.
   SUBROUTINE cmfe_Solver_LinearIterativeTypeSetObj(solver,iterativeSolverType,err)
+    !DLLEXPORT(cmfe_Solver_LinearIterativeTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The iterative linear solver to set the type for.
@@ -52611,6 +53884,7 @@ CONTAINS
 
   !>Sets/changes the type for a linear solver identified by an user number.
   SUBROUTINE cmfe_Solver_LinearTypeSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,linearSolverType,err)
+    !DLLEXPORT(cmfe_Solver_LinearTypeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the linear solver to set the type for.
@@ -52651,6 +53925,7 @@ CONTAINS
 
   !>Sets/changes the type for a linear solver identified by an user number.
   SUBROUTINE cmfe_Solver_LinearTypeSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,linearSolverType,err)
+    !DLLEXPORT(cmfe_Solver_LinearTypeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the linear solver to set the type for.
@@ -52690,6 +53965,7 @@ CONTAINS
 
   !>Sets/changes the type for a linear solver identified by an object.
   SUBROUTINE cmfe_Solver_LinearTypeSetObj(solver,linearSolverType,err)
+    !DLLEXPORT(cmfe_Solver_LinearTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The linear solver to set the type for.
@@ -52716,6 +53992,7 @@ CONTAINS
   !>Sets/changes the absolute tolerance for an Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonAbsoluteToleranceSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
     & absoluteTolerance,err)
+    !DLLEXPORT(cmfe_Solver_NewtonAbsoluteToleranceSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton solver to set the absolute tolerance for.
@@ -52758,6 +54035,7 @@ CONTAINS
   !>Sets/changes the absolute tolerance for a Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonAbsoluteToleranceSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,absoluteTolerance, &
     & err)
+    !DLLEXPORT(cmfe_Solver_NewtonAbsoluteToleranceSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton solver to set the absolute tolerance for.
@@ -52798,6 +54076,7 @@ CONTAINS
 
   !>Sets/changes the absolute tolerance for a Newton solver identified by an object.
   SUBROUTINE cmfe_Solver_NewtonAbsoluteToleranceSetObj(solver,absoluteTolerance,err)
+    !DLLEXPORT(cmfe_Solver_NewtonAbsoluteToleranceSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Newton solver to set the absolute tolerance for.
@@ -52824,6 +54103,7 @@ CONTAINS
   !>Enables/disables output monitoring for a nonlinear Newton line search solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonLineSearchMonitorOutputSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
     & monitorLinesearchFlag,err)
+    !DLLEXPORT(cmfe_Solver_NewtonLineSearchMonitorOutputSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton solver to set linesearch monitoring for.
@@ -52866,6 +54146,7 @@ CONTAINS
   !>Enables/disables output monitoring for a nonlinear Newton line search solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonLineSearchMonitorOutputSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex, &
     & monitorLinesearchFlag,err)
+    !DLLEXPORT(cmfe_Solver_NewtonLineSearchMonitorOutputSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton solver to set the linesearch monitoring for.
@@ -52906,6 +54187,7 @@ CONTAINS
 
   !>Enables/disables output monitoring for a nonlinear Newton line search solver identified by an object.
   SUBROUTINE cmfe_Solver_NewtonLineSearchMonitorOutputSetObj(solver,monitorLinesearchFlag,err)
+    !DLLEXPORT(cmfe_Solver_NewtonLineSearchMonitorOutputSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Newton solver to set the linesearch monitoring for.
@@ -52933,6 +54215,7 @@ CONTAINS
   !>Sets/changes the Jacobian calculation type for an Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonJacobianCalculationTypeSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
     & jacobianCalculationType,err)
+    !DLLEXPORT(cmfe_Solver_NewtonJacobianCalculationTypeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton solver to set the Jacobian calculation type for.
@@ -52975,6 +54258,7 @@ CONTAINS
   !>Sets/changes the Jacobian calculation type for a Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonJacobianCalculationTypeSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex, &
     & jacobianCalculationType,err)
+    !DLLEXPORT(cmfe_Solver_NewtonJacobianCalculationTypeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton solver to set the Jacobian calculation type for.
@@ -53015,6 +54299,7 @@ CONTAINS
 
   !>Sets/changes the Jacobian calculation type for a Newton solver identified by an object.
   SUBROUTINE cmfe_Solver_NewtonJacobianCalculationTypeSetObj(solver,jacobianCalculationType,err)
+    !DLLEXPORT(cmfe_Solver_NewtonJacobianCalculationTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Newton solver to set the Jacobian calculation type for.
@@ -53041,6 +54326,7 @@ CONTAINS
 
   !>Returns the linear solver associated with a Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonLinearSolverGetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,linearSolverIndex,err)
+    !DLLEXPORT(cmfe_Solver_NewtonLinearSolverGetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the Newton linear solver for.
@@ -53085,6 +54371,7 @@ CONTAINS
 
   !>Returns the linear solver associated with a Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonLinearSolverGetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,linearSolverIndex,err)
+    !DLLEXPORT(cmfe_Solver_NewtonLinearSolverGetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the Newton linear solver for.
@@ -53128,6 +54415,7 @@ CONTAINS
 
   !>Returns the linear solver associated with a Newton solver identified by an object.
   SUBROUTINE cmfe_Solver_NewtonLinearSolverGetObj(solver,linearSolver,err)
+    !DLLEXPORT(cmfe_Solver_NewtonLinearSolverGetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to get the Newton linear solver for.
@@ -53153,6 +54441,7 @@ CONTAINS
 
   !>Returns the CellML solver associated with a Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonCellMLSolverGetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,CellMLSolverIndex,err)
+    !DLLEXPORT(cmfe_Solver_NewtonCellMLSolverGetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the Newton CellML solver for.
@@ -53197,6 +54486,7 @@ CONTAINS
 
   !>Returns the CellML solver associated with a Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonCellMLSolverGetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,CellMLSolverIndex,err)
+    !DLLEXPORT(cmfe_Solver_NewtonCellMLSolverGetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the Newton CellML solver for.
@@ -53241,6 +54531,7 @@ CONTAINS
 
   !>Returns the CellML solver associated with a Newton solver identified by an object.
   SUBROUTINE cmfe_Solver_NewtonCellMLSolverGetObj(solver,CellMLSolver,err)
+    !DLLEXPORT(cmfe_Solver_NewtonCellMLSolverGetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to get the Newton CellML solver for.
@@ -53267,6 +54558,7 @@ CONTAINS
   !>Sets/changes the convergence test type for an Newton linesearch solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonConvergenceTestTypeSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
       & convergenceTestType,err)
+    !DLLEXPORT(cmfe_Solver_NewtonConvergenceTestTypeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton solver to set the convergence test type for.
@@ -53309,6 +54601,7 @@ CONTAINS
   !>Sets/changes the convergence test type for a Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonConvergenceTestTypeSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex, &
       & convergenceTestType,err)
+    !DLLEXPORT(cmfe_Solver_NewtonConvergenceTestTypeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton solver to set the convergence test type for.
@@ -53350,6 +54643,7 @@ CONTAINS
 
   !>Sets/changes the convergence test type for a Newton solver identified by an object.
   SUBROUTINE cmfe_Solver_NewtonConvergenceTestTypeSetObj(solver,convergenceTestType,err)
+    !DLLEXPORT(cmfe_Solver_NewtonConvergenceTestTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Newton solver to set the convergence test type for.
@@ -53375,6 +54669,7 @@ CONTAINS
   
   !>Sets/changes the line search alpha for an Newton linesearch solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonLineSearchAlphaSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,alpha,err)
+    !DLLEXPORT(cmfe_Solver_NewtonLineSearchAlphaSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton line search solver to set the alpha for.
@@ -53415,6 +54710,7 @@ CONTAINS
 
   !>Sets/changes the line search alpha for a Newton line search solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonLineSearchAlphaSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,alpha,err)
+    !DLLEXPORT(cmfe_Solver_NewtonLineSearchAlphaSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton line search solver to set the alpha for.
@@ -53454,6 +54750,7 @@ CONTAINS
 
   !>Sets/changes the line search alpha for a Newton line search solver identified by an object.
   SUBROUTINE cmfe_Solver_NewtonLineSearchAlphaSetObj(solver,alpha,err)
+    !DLLEXPORT(cmfe_Solver_NewtonLineSearchAlphaSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Newton line search solver to set the alpha for.
@@ -53479,6 +54776,7 @@ CONTAINS
 
   !>Sets/changes the line search maximum step for an Newton linesearch solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonLineSearchMaxStepSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,maxStep,err)
+    !DLLEXPORT(cmfe_Solver_NewtonLineSearchMaxStepSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton line search solver to set the maximum step for.
@@ -53520,6 +54818,7 @@ CONTAINS
 
   !>Sets/changes the line search maximum step for a Newton line search solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonLineSearchMaxStepSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,maxStep,err)
+    !DLLEXPORT(cmfe_Solver_NewtonLineSearchMaxStepSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton line search solver to set the maximum step for.
@@ -53560,6 +54859,7 @@ CONTAINS
 
   !>Sets/changes the line search maximum step for a Newton line search solver identified by an object.
   SUBROUTINE cmfe_Solver_NewtonLineSearchMaxStepSetObj(solver,maxStep,err)
+    !DLLEXPORT(cmfe_Solver_NewtonLineSearchMaxStepSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Newton line search solver to set the maximum step for.
@@ -53585,6 +54885,7 @@ CONTAINS
 
   !>Sets/changes the line search step tolerance for an Newton linesearch solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonLineSearchStepTolSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,stepTol,err)
+    !DLLEXPORT(cmfe_Solver_NewtonLineSearchStepTolSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton line search solver to set the step tolerance for.
@@ -53626,6 +54927,7 @@ CONTAINS
 
   !>Sets/changes the line search step tolerance for a Newton line search solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonLineSearchStepTolSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,stepTol,err)
+    !DLLEXPORT(cmfe_Solver_NewtonLineSearchStepTolSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton line search solver to set the step tolerance for.
@@ -53666,6 +54968,7 @@ CONTAINS
 
   !>Sets/changes the line search step tolerance for a Newton line search solver identified by an object.
   SUBROUTINE cmfe_Solver_NewtonLineSearchStepTolSetObj(solver,stepTol,err)
+    !DLLEXPORT(cmfe_Solver_NewtonLineSearchStepTolSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Newton line search solver to set the step tolerance for.
@@ -53691,6 +54994,7 @@ CONTAINS
 
   !>Sets/changes the line search type for an Newton linesearch solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonLineSearchTypeSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,lineSearchType,err)
+    !DLLEXPORT(cmfe_Solver_NewtonLineSearchTypeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton line search solver to set the line search type for.
@@ -53731,6 +55035,7 @@ CONTAINS
 
   !>Sets/changes the type of line search for a Newton line search solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonLineSearchTypeSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,lineSearchType,err)
+    !DLLEXPORT(cmfe_Solver_NewtonLineSearchTypeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton line search solver to set the line search type for.
@@ -53770,6 +55075,7 @@ CONTAINS
 
   !>Sets/changes the type of line search for a Newton line search solver identified by an object.
   SUBROUTINE cmfe_Solver_NewtonLineSearchTypeSetObj(solver,lineSearchType,err)
+    !DLLEXPORT(cmfe_Solver_NewtonLineSearchTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Newton line search solver to set the line search type for.
@@ -53796,6 +55102,7 @@ CONTAINS
   !>Sets/changes the maximum number of function evaluations for an Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonMaximumFunctionEvaluationsSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
     & maximumFunctionEvaluations,err)
+    !DLLEXPORT(cmfe_Solver_NewtonMaximumFunctionEvaluationsSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton solver to set the maximum function evaluations for.
@@ -53838,6 +55145,7 @@ CONTAINS
   !>Sets/changes the maximum number of function evaluations for a Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonMaximumFunctionEvaluationsSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex, &
     & maximumFunctionEvaluations,err)
+    !DLLEXPORT(cmfe_Solver_NewtonMaximumFunctionEvaluationsSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton solver to set the maximum function evaluations for.
@@ -53878,6 +55186,7 @@ CONTAINS
 
   !>Sets/changes the maximum number of function evaluations for a Newton solver identified by an object.
   SUBROUTINE cmfe_Solver_NewtonMaximumFunctionEvaluationsSetObj(solver,maximumFunctionEvaluations,err)
+    !DLLEXPORT(cmfe_Solver_NewtonMaximumFunctionEvaluationsSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Newton solver to set the maximum number of function evaluations for.
@@ -53905,6 +55214,7 @@ CONTAINS
   !>Sets/changes the maximum number of iterations for an Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonMaximumIterationsSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
       & maximumIterations,err)
+    !DLLEXPORT(cmfe_Solver_NewtonMaximumIterationsSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton solver to set the maximum iterations for.
@@ -53947,6 +55257,7 @@ CONTAINS
   !>Sets/changes the maximum number of iterations for a Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonMaximumIterationsSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,maximumIterations, &
     & err)
+    !DLLEXPORT(cmfe_Solver_NewtonMaximumIterationsSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton solver to set the maximum iterations for.
@@ -53987,6 +55298,7 @@ CONTAINS
 
   !>Sets/changes the maximum number of iterations for a Newton solver identified by an object.
   SUBROUTINE cmfe_Solver_NewtonMaximumIterationsSetObj(solver,maximumIterations,err)
+    !DLLEXPORT(cmfe_Solver_NewtonMaximumIterationsSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Newton solver to set the maximum number of iterations for.
@@ -54013,6 +55325,7 @@ CONTAINS
   !>Sets/changes the relative tolerance for an Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonRelativeToleranceSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
       & relativeTolerance,err)
+    !DLLEXPORT(cmfe_Solver_NewtonRelativeToleranceSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton solver to set the relative tolerance for.
@@ -54055,6 +55368,7 @@ CONTAINS
   !>Sets/changes the relative tolerance for a Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonRelativeToleranceSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,relativeTolerance, &
     & err)
+    !DLLEXPORT(cmfe_Solver_NewtonRelativeToleranceSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton solver to set the relative tolerance for.
@@ -54095,6 +55409,7 @@ CONTAINS
 
   !>Sets/changes the relative tolerance for a Newton solver identified by an object.
   SUBROUTINE cmfe_Solver_NewtonRelativeToleranceSetObj(solver,relativeTolerance,err)
+    !DLLEXPORT(cmfe_Solver_NewtonRelativeToleranceSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Newton solver to set the relative tolerance for.
@@ -54121,6 +55436,7 @@ CONTAINS
   !>Sets/changes the solution tolerance for an Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonSolutionToleranceSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
       & solutionTolerance,err)
+    !DLLEXPORT(cmfe_Solver_NewtonSolutionToleranceSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton solver to set the solution tolerance for.
@@ -54163,6 +55479,7 @@ CONTAINS
   !>Sets/changes the solution tolerance for a Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonSolutionToleranceSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,solutionTolerance, &
     & err)
+    !DLLEXPORT(cmfe_Solver_NewtonSolutionToleranceSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton solver to set the solution tolerance for.
@@ -54203,6 +55520,7 @@ CONTAINS
 
   !>Sets/changes the solution tolerance for a Newton solver identified by an object.
   SUBROUTINE cmfe_Solver_NewtonSolutionToleranceSetObj(solver,solutionTolerance,err)
+    !DLLEXPORT(cmfe_Solver_NewtonSolutionToleranceSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Newton solver to set the solution tolerance for.
@@ -54228,6 +55546,7 @@ CONTAINS
 
   !>Sets/changes the delta0 for a Newton trust region solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonTrustRegionDelta0SetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,delta0,err)
+    !DLLEXPORT(cmfe_Solver_NewtonTrustRegionDelta0SetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton trust region solver to set the delta0 for.
@@ -54269,6 +55588,7 @@ CONTAINS
 
   !>Sets/changes the delta0 for a Newton trust region solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonTrustRegionDelta0SetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,delta0,err)
+    !DLLEXPORT(cmfe_Solver_NewtonTrustRegionDelta0SetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton trust region solver to set the delta0 for.
@@ -54310,6 +55630,7 @@ CONTAINS
 
   !>Sets/changes the delta0 for a Newton trust region solver identified by an object.
   SUBROUTINE cmfe_Solver_NewtonTrustRegionDelta0SetObj(solver,delta0,err)
+    !DLLEXPORT(cmfe_Solver_NewtonTrustRegionDelta0SetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Newton trust region solver to set the delta0 for.
@@ -54335,6 +55656,7 @@ CONTAINS
 
   !>Sets/changes the tolerance for a Newton trust region solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonTrustRegionToleranceSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,tolerance,err)
+    !DLLEXPORT(cmfe_Solver_NewtonTrustRegionToleranceSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton trust region solver to set the tolerance for.
@@ -54376,6 +55698,7 @@ CONTAINS
 
   !>Sets/changes the tolerance for a Newton trust region solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonTrustRegionToleranceSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,tolerance,err)
+    !DLLEXPORT(cmfe_Solver_NewtonTrustRegionToleranceSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton trust region solver to set the tolerance for.
@@ -54416,6 +55739,7 @@ CONTAINS
 
   !>Sets/changes the tolerance for a Newton trust region solver identified by an object.
   SUBROUTINE cmfe_Solver_NewtonTrustRegionToleranceSetObj(solver,tolerance,err)
+    !DLLEXPORT(cmfe_Solver_NewtonTrustRegionToleranceSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Newton trust region solver to set the tolerance for.
@@ -54442,6 +55766,7 @@ CONTAINS
 
   !>Sets/changes the type of a Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonTypeSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,newtonSolveType,err)
+    !DLLEXPORT(cmfe_Solver_NewtonTypeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton solver to set the type for.
@@ -54482,6 +55807,7 @@ CONTAINS
 
   !>Sets/changes the type of a Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_NewtonTypeSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,newtonSolveType,err)
+    !DLLEXPORT(cmfe_Solver_NewtonTypeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton solver to set the type for.
@@ -54521,6 +55847,7 @@ CONTAINS
 
   !>Sets/changes the type of a Newton solver identified by an object.
   SUBROUTINE cmfe_Solver_NewtonTypeSetObj(solver,newtonSolveType,err)
+    !DLLEXPORT(cmfe_Solver_NewtonTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Newton solver to set the type for.
@@ -54546,6 +55873,7 @@ CONTAINS
   !>Sets/changes the absolute tolerance for an Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonAbsoluteToleranceSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
       & absoluteTolerance,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonAbsoluteToleranceSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the absolute tolerance for.
@@ -54588,6 +55916,7 @@ CONTAINS
   !>Sets/changes the absolute tolerance for a Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonAbsoluteToleranceSetNumber1(problemUserNumber, &
       & controlLoopIdentifiers,solverIndex,absoluteTolerance,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonAbsoluteToleranceSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the absolute tolerance for.
@@ -54628,6 +55957,7 @@ CONTAINS
 
   !>Sets/changes the absolute tolerance for a Quasi-Newton solver identified by an object.
   SUBROUTINE cmfe_Solver_QuasiNewtonAbsoluteToleranceSetObj(solver,absoluteTolerance,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonAbsoluteToleranceSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Quasi-Newton solver to set the absolute tolerance for.
@@ -54655,6 +55985,7 @@ CONTAINS
   !>Enables/disables output monitoring for a nonlinear Quasi-Newton line search solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonLineSearchMonitorOutputSetNumber0(problemUserNumber, &
       & controlLoopIdentifier,solverIndex,monitorLinesearchFlag,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonLineSearchMonitorOutputSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set linesearch monitoring for.
@@ -54697,6 +56028,7 @@ CONTAINS
   !>Enables/disables output monitoring for a nonlinear Quasi-Newton line search solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonLineSearchMonitorOutputSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex, &
       & monitorLinesearchFlag,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonLineSearchMonitorOutputSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the linesearch monitoring for.
@@ -54737,6 +56069,7 @@ CONTAINS
 
   !>Enables/disables output monitoring for a nonlinear Quasi-Newton line search solver identified by an object.
   SUBROUTINE cmfe_Solver_QuasiNewtonLineSearchMonitorOutputSetObj(solver,monitorLinesearchFlag,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonLineSearchMonitorOutputSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Quasi-Newton solver to set the linesearch monitoring for.
@@ -54764,6 +56097,7 @@ CONTAINS
   !>Sets/changes the Jacobian calculation type for an Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonJacobianCalculationTypeSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
       & jacobianCalculationType,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonJacobianCalculationTypeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the Jacobian calculation type for.
@@ -54806,6 +56140,7 @@ CONTAINS
   !>Sets/changes the Jacobian calculation type for a Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonJacobianCalculationTypeSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex, &
       & jacobianCalculationType,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonJacobianCalculationTypeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the Jacobian calculation type for.
@@ -54846,6 +56181,7 @@ CONTAINS
 
   !>Sets/changes the Jacobian calculation type for a Quasi-Newton solver identified by an object.
   SUBROUTINE cmfe_Solver_QuasiNewtonJacobianCalculationTypeSetObj(solver,jacobianCalculationType,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonJacobianCalculationTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Quasi-Newton solver to set the Jacobian calculation type for.
@@ -54873,6 +56209,7 @@ CONTAINS
   !>Returns the linear solver associated with a Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonLinearSolverGetNumber0(problemUserNumber,controlLoopIdentifier, &
       & solverIndex,linearSolverIndex,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonLinearSolverGetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the Quasi-Newton linear solver for.
@@ -54919,6 +56256,7 @@ CONTAINS
   !>Returns the linear solver associated with a Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonLinearSolverGetNumber1(problemUserNumber,controlLoopIdentifiers, &
       & solverIndex,linearSolverIndex,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonLinearSolverGetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the Quasi-Newton linear solver for.
@@ -54963,6 +56301,7 @@ CONTAINS
 
   !>Returns the linear solver associated with a Quasi-Newton solver identified by an object.
   SUBROUTINE cmfe_Solver_QuasiNewtonLinearSolverGetObj(solver,linearSolver,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonLinearSolverGetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to get the Quasi-Newton linear solver for.
@@ -54989,6 +56328,7 @@ CONTAINS
   !>Returns the CellML solver associated with a Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonCellMLSolverGetNumber0(problemUserNumber,controlLoopIdentifier, &
       & solverIndex,CellMLSolverIndex,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonCellMLSolverGetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the Quasi-Newton CellML solver for.
@@ -55035,6 +56375,7 @@ CONTAINS
   !>Returns the CellML solver associated with a Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonCellMLSolverGetNumber1(problemUserNumber,controlLoopIdentifiers, &
       & solverIndex,CellMLSolverIndex,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonCellMLSolverGetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the Quasi-Newton CellML solver for.
@@ -55080,6 +56421,7 @@ CONTAINS
 
   !>Returns the CellML solver associated with a Quasi-Newton solver identified by an object.
   SUBROUTINE cmfe_Solver_QuasiNewtonCellMLSolverGetObj(solver,CellMLSolver,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonCellMLSolverGetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to get the Quasi-Newton CellML solver for.
@@ -55106,6 +56448,7 @@ CONTAINS
   !>Sets/changes the convergence test type for an Quasi-Newton linesearch solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonConvergenceTestTypeSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
       & convergenceTestType,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonConvergenceTestTypeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the convergence test type for.
@@ -55148,6 +56491,7 @@ CONTAINS
   !>Sets/changes the convergence test type for a Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonConvergenceTestTypeSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex, &
       & convergenceTestType,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonConvergenceTestTypeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the convergence test type for.
@@ -55189,6 +56533,7 @@ CONTAINS
 
   !>Sets/changes the convergence test type for a Quasi-Newton solver identified by an object.
   SUBROUTINE cmfe_Solver_QuasiNewtonConvergenceTestTypeSetObj(solver,convergenceTestType,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonConvergenceTestTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Quasi-Newton solver to set the convergence test type for.
@@ -55215,6 +56560,7 @@ CONTAINS
 
   !>Sets/changes the line search maximum step for an Quasi-Newton linesearch solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonLineSearchMaxStepSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,maxStep,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonLineSearchMaxStepSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton line search solver to set the maximum step for.
@@ -55256,6 +56602,7 @@ CONTAINS
 
   !>Sets/changes the line search maximum step for a Quasi-Newton line search solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonLineSearchMaxStepSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,maxStep,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonLineSearchMaxStepSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton line search solver to set the maximum step for.
@@ -55296,6 +56643,7 @@ CONTAINS
 
   !>Sets/changes the line search maximum step for a Quasi-Newton line search solver identified by an object.
   SUBROUTINE cmfe_Solver_QuasiNewtonLineSearchMaxStepSetObj(solver,maxStep,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonLineSearchMaxStepSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Quasi-Newton line search solver to set the maximum step for.
@@ -55322,6 +56670,7 @@ CONTAINS
 
   !>Sets/changes the line search step tolerance for an Quasi-Newton linesearch solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonLineSearchStepTolSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,stepTol,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonLineSearchStepTolSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton line search solver to set the step tolerance for.
@@ -55363,6 +56712,7 @@ CONTAINS
 
   !>Sets/changes the line search step tolerance for a Quasi-Newton line search solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonLineSearchStepTolSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,stepTol,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonLineSearchStepTolSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton line search solver to set the step tolerance for.
@@ -55403,6 +56753,7 @@ CONTAINS
 
   !>Sets/changes the line search step tolerance for a Quasi-Newton line search solver identified by an object.
   SUBROUTINE cmfe_Solver_QuasiNewtonLineSearchStepTolSetObj(solver,stepTol,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonLineSearchStepTolSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Quasi-Newton line search solver to set the step tolerance for.
@@ -55430,6 +56781,7 @@ CONTAINS
   !>Sets/changes the line search type for an Quasi-Newton linesearch solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonLineSearchTypeSetNumber0(problemUserNumber,controlLoopIdentifier, &
       & solverIndex,lineSearchType,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonLineSearchTypeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton line search solver to set the line search type for.
@@ -55472,6 +56824,7 @@ CONTAINS
   !>Sets/changes the type of line search for a Quasi-Newton line search solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonLineSearchTypeSetNumber1(problemUserNumber,controlLoopIdentifiers, &
       & solverIndex,lineSearchType,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonLineSearchTypeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton line search solver to set the line search type for.
@@ -55512,6 +56865,7 @@ CONTAINS
 
   !>Sets/changes the type of line search for a Quasi-Newton line search solver identified by an object.
   SUBROUTINE cmfe_Solver_QuasiNewtonLineSearchTypeSetObj(solver,lineSearchType,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonLineSearchTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Quasi-Newton line search solver to set the line search type for.
@@ -55539,6 +56893,7 @@ CONTAINS
   !>Sets/changes the maximum number of function evaluations for an Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonMaximumFunctionEvaluationsSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
       & maximumFunctionEvaluations,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonMaximumFunctionEvaluationsSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the maximum function evaluations for.
@@ -55581,6 +56936,7 @@ CONTAINS
   !>Sets/changes the maximum number of function evaluations for a Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonMaximumFunctionEvaluationsSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex, &
       & maximumFunctionEvaluations,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonMaximumFunctionEvaluationsSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the maximum function evaluations for.
@@ -55621,6 +56977,7 @@ CONTAINS
 
   !>Sets/changes the maximum number of function evaluations for a Quasi-Newton solver identified by an object.
   SUBROUTINE cmfe_Solver_QuasiNewtonMaximumFunctionEvaluationsSetObj(solver,maximumFunctionEvaluations,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonMaximumFunctionEvaluationsSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Quasi-Newton solver to set the maximum number of function evaluations for.
@@ -55648,6 +57005,7 @@ CONTAINS
   !>Sets/changes the maximum number of iterations for an Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonMaximumIterationsSetNumber0(problemUserNumber,controlLoopIdentifier, &
       & solverIndex,maximumIterations,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonMaximumIterationsSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the maximum iterations for.
@@ -55690,6 +57048,7 @@ CONTAINS
   !>Sets/changes the maximum number of iterations for a Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonMaximumIterationsSetNumber1(problemUserNumber,controlLoopIdentifiers, &
       & solverIndex,maximumIterations,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonMaximumIterationsSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the maximum iterations for.
@@ -55730,6 +57089,7 @@ CONTAINS
 
   !>Sets/changes the maximum number of iterations for a Quasi-Newton solver identified by an object.
   SUBROUTINE cmfe_Solver_QuasiNewtonMaximumIterationsSetObj(solver,maximumIterations,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonMaximumIterationsSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Quasi-Newton solver to set the maximum number of iterations for.
@@ -55757,6 +57117,7 @@ CONTAINS
   !>Sets/changes the relative tolerance for an Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonRelativeToleranceSetNumber0(problemUserNumber,controlLoopIdentifier, &
       & solverIndex,relativeTolerance,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonRelativeToleranceSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the relative tolerance for.
@@ -55799,6 +57160,7 @@ CONTAINS
   !>Sets/changes the relative tolerance for a Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonRelativeToleranceSetNumber1(problemUserNumber,controlLoopIdentifiers, &
     & solverIndex,relativeTolerance,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonRelativeToleranceSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the relative tolerance for.
@@ -55839,6 +57201,7 @@ CONTAINS
 
   !>Sets/changes the relative tolerance for a Quasi-Newton solver identified by an object.
   SUBROUTINE cmfe_Solver_QuasiNewtonRelativeToleranceSetObj(solver,relativeTolerance,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonRelativeToleranceSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Quasi-Newton solver to set the relative tolerance for.
@@ -55866,6 +57229,7 @@ CONTAINS
   !>Sets/changes the solution tolerance for an Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonSolutionToleranceSetNumber0(problemUserNumber,controlLoopIdentifier, &
       & solverIndex,solutionTolerance,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonSolutionToleranceSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the solution tolerance for.
@@ -55908,6 +57272,7 @@ CONTAINS
   !>Sets/changes the solution tolerance for a Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonSolutionToleranceSetNumber1(problemUserNumber,controlLoopIdentifiers, &
     & solverIndex,solutionTolerance,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonSolutionToleranceSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the solution tolerance for.
@@ -55948,6 +57313,7 @@ CONTAINS
 
   !>Sets/changes the solution tolerance for a Quasi-Newton solver identified by an object.
   SUBROUTINE cmfe_Solver_QuasiNewtonSolutionToleranceSetObj(solver,solutionTolerance,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonSolutionToleranceSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Quasi-Newton solver to set the solution tolerance for.
@@ -55974,6 +57340,7 @@ CONTAINS
 
   !>Sets/changes the delta0 for a Quasi-Newton trust region solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonTrustRegionDelta0SetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,delta0,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonTrustRegionDelta0SetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton trust region solver to set the delta0 for.
@@ -56015,6 +57382,7 @@ CONTAINS
 
   !>Sets/changes the delta0 for a Quasi-Newton trust region solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonTrustRegionDelta0SetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,delta0,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonTrustRegionDelta0SetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton trust region solver to set the delta0 for.
@@ -56055,6 +57423,7 @@ CONTAINS
 
   !>Sets/changes the delta0 for a Quasi-Newton trust region solver identified by an object.
   SUBROUTINE cmfe_Solver_QuasiNewtonTrustRegionDelta0SetObj(solver,delta0,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonTrustRegionDelta0SetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Quasi-Newton trust region solver to set the delta0 for.
@@ -56082,6 +57451,7 @@ CONTAINS
   !>Sets/changes the tolerance for a Quasi-Newton trust region solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonTrustRegionToleranceSetNumber0(problemUserNumber,controlLoopIdentifier, &
       & solverIndex,tolerance,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonTrustRegionToleranceSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton trust region solver to set the tolerance for.
@@ -56124,6 +57494,7 @@ CONTAINS
   !>Sets/changes the tolerance for a Quasi-Newton trust region solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonTrustRegionToleranceSetNumber1(problemUserNumber,controlLoopIdentifiers, &
       & solverIndex,tolerance,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonTrustRegionToleranceSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton trust region solver to set the tolerance for.
@@ -56164,6 +57535,7 @@ CONTAINS
 
   !>Sets/changes the tolerance for a Quasi-Newton trust region solver identified by an object.
   SUBROUTINE cmfe_Solver_QuasiNewtonTrustRegionToleranceSetObj(solver,tolerance,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonTrustRegionToleranceSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Quasi-Newton trust region solver to set the tolerance for.
@@ -56191,6 +57563,7 @@ CONTAINS
   !>Sets/changes the restart of a Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonRestartSetNumber0(problemUserNumber,controlLoopIdentifier, &
       & solverIndex,quasiNewtonRestart,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonRestartSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the type for.
@@ -56232,6 +57605,7 @@ CONTAINS
   !>Sets/changes the restart of a Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonRestartSetNumber1(problemUserNumber,controlLoopIdentifiers, &
       & solverIndex,quasiNewtonRestart,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonRestartSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the for.
@@ -56271,6 +57645,7 @@ CONTAINS
 
   !>Sets/changes the restart of a Quasi-Newton solver identified by an object.
   SUBROUTINE cmfe_Solver_QuasiNewtonRestartSetObj(solver,quasiNewtonRestart,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonRestartSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Quasi-Newton solver to set the for.
@@ -56297,6 +57672,7 @@ CONTAINS
   !>Sets/changes the restart type of a Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonRestartTypeSetNumber0(problemUserNumber,controlLoopIdentifier, &
       & solverIndex,quasiNewtonRestartType,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonRestartTypeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the type for.
@@ -56339,6 +57715,7 @@ CONTAINS
   !>Sets/changes the restart type of a Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonRestartTypeSetNumber1(problemUserNumber,controlLoopIdentifiers, &
       & solverIndex,quasiNewtonRestartType,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonRestartTypeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the type for.
@@ -56379,6 +57756,7 @@ CONTAINS
 
   !>Sets/changes the restart type of a Quasi-Newton solver identified by an object.
   SUBROUTINE cmfe_Solver_QuasiNewtonRestartTypeSetObj(solver,quasiNewtonRestartType,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonRestartTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Quasi-Newton solver to set the type for.
@@ -56405,6 +57783,7 @@ CONTAINS
   !>Sets/changes the scale type of a Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonScaleTypeSetNumber0(problemUserNumber,controlLoopIdentifier, &
       & solverIndex,quasiNewtonScaleType,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonScaleTypeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the type for.
@@ -56446,6 +57825,7 @@ CONTAINS
   !>Sets/changes the scale type of a Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonScaleTypeSetNumber1(problemUserNumber,controlLoopIdentifiers, &
       & solverIndex,quasiNewtonScaleType,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonScaleTypeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the type for.
@@ -56485,6 +57865,7 @@ CONTAINS
 
   !>Sets/changes the scale type of a Quasi-Newton solver identified by an object.
   SUBROUTINE cmfe_Solver_QuasiNewtonScaleTypeSetObj(solver,quasiNewtonScaleType,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonScaleTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Quasi-Newton solver to set the type for.
@@ -56511,6 +57892,7 @@ CONTAINS
   !>Sets/changes the type of a Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonSolveTypeSetNumber0(problemUserNumber,controlLoopIdentifier, &
       & solverIndex,quasiNewtonSolveType,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonSolveTypeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the type for.
@@ -56552,6 +57934,7 @@ CONTAINS
   !>Sets/changes the type of a Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonSolveTypeSetNumber1(problemUserNumber,controlLoopIdentifiers, &
       & solverIndex,quasiNewtonSolveType,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonSolveTypeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the type for.
@@ -56591,6 +57974,7 @@ CONTAINS
 
   !>Sets/changes the type of a Quasi-Newton solver identified by an object.
   SUBROUTINE cmfe_Solver_QuasiNewtonSolveTypeSetObj(solver,quasiNewtonSolveType,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonSolveTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Quasi-Newton solver to set the type for.
@@ -56617,6 +58001,7 @@ CONTAINS
   !>Sets/changes the type of a Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonTypeSetNumber0(problemUserNumber,controlLoopIdentifier, &
       & solverIndex,quasiNewtonType,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonTypeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the type for.
@@ -56658,6 +58043,7 @@ CONTAINS
   !>Sets/changes the type of a Quasi-Newton solver identified by an user number.
   SUBROUTINE cmfe_Solver_QuasiNewtonTypeSetNumber1(problemUserNumber,controlLoopIdentifiers, &
       & solverIndex,quasiNewtonType,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonTypeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the type for.
@@ -56697,6 +58083,7 @@ CONTAINS
 
   !>Sets/changes the type of a Quasi-Newton solver identified by an object.
   SUBROUTINE cmfe_Solver_QuasiNewtonTypeSetObj(solver,quasiNewtonType,err)
+    !DLLEXPORT(cmfe_Solver_QuasiNewtonTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Quasi-Newton solver to set the type for.
@@ -56722,6 +58109,7 @@ CONTAINS
 
   !>Sets/changes the type of a nonlinear solver identified by an user number.
   SUBROUTINE cmfe_Solver_NonlinearTypeSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,nonlinearSolveType,err)
+    !DLLEXPORT(cmfe_Solver_NonlinearTypeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the nonlinear solver to set the type for.
@@ -56762,6 +58150,7 @@ CONTAINS
 
   !>Sets/changes the type of a nonlinear solver identified by an user number.
   SUBROUTINE cmfe_Solver_NonlinearTypeSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,nonlinearSolveType,err)
+    !DLLEXPORT(cmfe_Solver_NonlinearTypeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the nonlinear solver to set the type for.
@@ -56801,6 +58190,7 @@ CONTAINS
 
   !>Sets/changes the type of a nonlinear solver identified by an object.
   SUBROUTINE cmfe_Solver_NonlinearTypeSetObj(solver,nonlinearSolveType,err)
+    !DLLEXPORT(cmfe_Solver_NonlinearTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The nonlinear solver to set the type for.
@@ -56826,6 +58216,7 @@ CONTAINS
 
   !>Sets/changes the output type for a solver identified by an user number.
   SUBROUTINE cmfe_Solver_OutputTypeSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,outputType,err)
+    !DLLEXPORT(cmfe_Solver_OutputTypeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the output type for.
@@ -56866,6 +58257,7 @@ CONTAINS
 
   !>Sets/changes the type of output for a solver identified by an user number.
   SUBROUTINE cmfe_Solver_OutputTypeSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,outputType,err)
+    !DLLEXPORT(cmfe_Solver_OutputTypeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the output type for.
@@ -56905,6 +58297,7 @@ CONTAINS
 
   !>Sets/changes the output type for a solver identified by an object.
   SUBROUTINE cmfe_Solver_OutputTypeSetObj(solver,outputType,err)
+    !DLLEXPORT(cmfe_Solver_OutputTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to set the output type for.
@@ -56930,6 +58323,7 @@ CONTAINS
 
   !>Returns the solver equations for a solver identified by an user number.
   SUBROUTINE cmfe_Solver_SolverEquationsGetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,solverEquations,err)
+    !DLLEXPORT(cmfe_Solver_SolverEquationsGetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the solver equations for.
@@ -56970,6 +58364,7 @@ CONTAINS
 
   !>Returns the solver equations for a solver identified by an user number.
   SUBROUTINE cmfe_Solver_SolverEquationsGetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,solverEquations,err)
+    !DLLEXPORT(cmfe_Solver_SolverEquationsGetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the solver equations for.
@@ -57009,6 +58404,7 @@ CONTAINS
 
   !>Returns the solver equations for a solver identified by an object.
   SUBROUTINE cmfe_Solver_SolverEquationsGetObj(solver,solverEquations,err)
+    !DLLEXPORT(cmfe_Solver_SolverEquationsGetObj)
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to get the solver equations for.
@@ -57035,6 +58431,7 @@ CONTAINS
   !>Adds equations sets to solver equations identified by an user number.
   SUBROUTINE cmfe_SolverEquations_EquationsSetAddNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
     & regionUserNumber,equationsSetUserNumber,equationsSetIndex,err)
+    !DLLEXPORT(cmfe_SolverEquations_EquationsSetAddNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem with the solver to add the equations set for.
@@ -57099,6 +58496,7 @@ CONTAINS
   !>Adds equations sets to solver equations identified by an user number.
   SUBROUTINE cmfe_SolverEquations_EquationsSetAddNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex, &
     & regionUserNumber,equationsSetUserNumber,equationsSetIndex,err)
+    !DLLEXPORT(cmfe_SolverEquations_EquationsSetAddNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to add the equations set for.
@@ -57161,6 +58559,7 @@ CONTAINS
 
   !>Adds equations sets to solver equations identified by an object.
   SUBROUTINE cmfe_SolverEquations_EquationsSetAddObj(solverEquations,equationsSet,equationsSetIndex,err)
+    !DLLEXPORT(cmfe_SolverEquations_EquationsSetAddObj)
 
     !Argument variables
     TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to add the equations set for.
@@ -57189,6 +58588,7 @@ CONTAINS
   !>Adds an interface condition to solver equations identified by an user number.
   SUBROUTINE cmfe_SolverEquations_InterfaceConditionAddNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
     & interfaceRegionUserNumber,interfaceUserNumber,interfaceConditionUserNumber,interfaceConditionIndex,err)
+    !DLLEXPORT(cmfe_SolverEquations_InterfaceConditionAddNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem with the solver to add the interface condition for.
@@ -57269,6 +58669,7 @@ CONTAINS
   !>Adds an interface condition to solver equations identified by an user number.
   SUBROUTINE cmfe_SolverEquations_InterfaceConditionAddNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex, &
     & interfaceRegionUserNumber,interfaceUserNumber,interfaceConditionUserNumber,interfaceConditionIndex,err)
+    !DLLEXPORT(cmfe_SolverEquations_InterfaceConditionAddNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to add the interface condition for.
@@ -57347,6 +58748,7 @@ CONTAINS
 
   !>Adds an interface condition to solver equations identified by an object.
   SUBROUTINE cmfe_SolverEquations_InterfaceConditionAddObj(solverEquations,interfaceCondition,interfaceConditionIndex,err)
+    !DLLEXPORT(cmfe_SolverEquations_InterfaceConditionAddObj)
 
     !Argument variables
     TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to add the equations set for.
@@ -57376,6 +58778,7 @@ CONTAINS
   !>Set the time dependence type of interface matrices
   SUBROUTINE cmfe_InterfaceMatrices_TimeDependenceTypeSet(interfaceCondition, &
     & interfaceMatrixIndex,hasTranspose,timeDependenceTypes,Err)
+    !DLLEXPORT(cmfe_InterfaceMatrices_TimeDependenceTypeSet)
     
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to add.
@@ -57429,6 +58832,7 @@ CONTAINS
   !>Get the time dependence type of interface matrices
   SUBROUTINE cmfe_InterfaceMatrices_TimeDependenceTypeGet(interfaceCondition, &
     & interfaceMatrixIndex,hasTranspose,timeDependenceTypes,Err)
+    !DLLEXPORT(cmfe_InterfaceMatrices_TimeDependenceTypeGet)
     
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to add.
@@ -57463,6 +58867,7 @@ CONTAINS
 
   !>Sets/changes the sparsity type for solver equations identified by an user number.
   SUBROUTINE cmfe_SolverEquations_SparsityTypeSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,sparsityType,err)
+    !DLLEXPORT(cmfe_SolverEquations_SparsityTypeSetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the sparsity type for.
@@ -57506,6 +58911,7 @@ CONTAINS
 
   !>Sets/changes the sparsity type for solver equations identified by an user number.
   SUBROUTINE cmfe_SolverEquations_SparsityTypeSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,sparsityType,err)
+    !DLLEXPORT(cmfe_SolverEquations_SparsityTypeSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the sparsity type for.
@@ -57548,6 +58954,7 @@ CONTAINS
 
   !>Sets/changes the sparsity type for solver equations identified by an object.
   SUBROUTINE cmfe_SolverEquations_SparsityTypeSetObj(solverEquations,sparsityType,err)
+    !DLLEXPORT(cmfe_SolverEquations_SparsityTypeSetObj)
 
     !Argument variables
     TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to set the sparsity type for.
@@ -57573,6 +58980,7 @@ CONTAINS
 
   !>Finish the creation of the boundary conditions for the solver equations identified by the user numbers
   SUBROUTINE cmfe_SolverEquations_BoundaryConditionsCreateFinishNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,err)
+    !DLLEXPORT(cmfe_SolverEquations_BoundaryConditionsCreateFinishNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem containing the solver equations to finish the boundary conditions for.
@@ -57619,6 +59027,7 @@ CONTAINS
 
   !>Finish the creation of the boundary conditions for the solver equations identified by the user numbers
   SUBROUTINE cmfe_SolverEquations_BoundaryConditionsCreateFinishNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,err)
+    !DLLEXPORT(cmfe_SolverEquations_BoundaryConditionsCreateFinishNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem containing the solver equations to finish the boundary conditions for.
@@ -57665,6 +59074,7 @@ CONTAINS
 
   !>Finish the creation of the boundary conditions for the solver equations
   SUBROUTINE cmfe_SolverEquations_BoundaryConditionsCreateFinishObj(solverEquations,err)
+    !DLLEXPORT(cmfe_SolverEquations_BoundaryConditionsCreateFinishObj)
 
     !Argument variables
     TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations containing the boundary conditions to finish.
@@ -57690,6 +59100,7 @@ CONTAINS
 
   !>Start the creation of boundary conditions for solver equations identified by user numbers
   SUBROUTINE cmfe_SolverEquations_BoundaryConditionsCreateStartNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,err)
+    !DLLEXPORT(cmfe_SolverEquations_BoundaryConditionsCreateStartNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem containing the solver equations to start the boundary conditions for.
@@ -57736,6 +59147,7 @@ CONTAINS
 
   !>Start the creation of boundary conditions for solver equations identified by user numbers
   SUBROUTINE cmfe_SolverEquations_BoundaryConditionsCreateStartNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,err)
+    !DLLEXPORT(cmfe_SolverEquations_BoundaryConditionsCreateStartNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem containing the solver equations to start the boundary conditions for.
@@ -57782,6 +59194,7 @@ CONTAINS
 
    !>Start the creation of the boundary conditions for the solver equations
   SUBROUTINE cmfe_SolverEquations_BoundaryConditionsCreateStartObj(solverEquations,boundaryConditions,err)
+    !DLLEXPORT(cmfe_SolverEquations_BoundaryConditionsCreateStartObj)
 
     !Argument variables
     TYPE(cmfe_SolverEquationsType), INTENT(INOUT) :: solverEquations !<The solver equations containing the boundary conditions to start.
@@ -57810,6 +59223,7 @@ CONTAINS
   !>Get the boundary conditions for solver equations identified by user numbers
   SUBROUTINE cmfe_SolverEquations_BoundaryConditionsGetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex, &
     & boundaryConditions,err)
+    !DLLEXPORT(cmfe_SolverEquations_BoundaryConditionsGetNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem containing the solver equations to get the boundary conditions for.
@@ -57856,6 +59270,7 @@ CONTAINS
   !>Get the boundary conditions for solver equations identified by user numbers
   SUBROUTINE cmfe_SolverEquations_BoundaryConditionsGetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex, &
     & boundaryConditions,err)
+    !DLLEXPORT(cmfe_SolverEquations_BoundaryConditionsGetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem containing the solver equations to start the boundary conditions for.
@@ -57901,6 +59316,7 @@ CONTAINS
 
   !>Get the boundary conditions for solver equations
   SUBROUTINE cmfe_SolverEquations_BoundaryConditionsGetObj(solverEquations,boundaryConditions,err)
+    !DLLEXPORT(cmfe_SolverEquations_BoundaryConditionsGetObj)
 
     !Argument variables
     TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to get the boundary conditions for.
@@ -57927,6 +59343,7 @@ CONTAINS
 
   !>Get the number of solver matrices for the solver equations
   SUBROUTINE cmfe_SolverEquations_NumberOfMatricesGet(solverEquations,numberOfMatrices,err)
+    !DLLEXPORT(cmfe_SolverEquations_NumberOfMatricesGet)
 
     !Argument variables
     TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to get the number of matrices for
@@ -57951,6 +59368,7 @@ CONTAINS
 
   !>Get a solver matrix from the solver equations matrices
   SUBROUTINE cmfe_SolverEquations_MatrixGet(solverEquations,matrixIndex,matrix,err)
+    !DLLEXPORT(cmfe_SolverEquations_MatrixGet)
 
     !Argument variables
     TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to get the matrix for
@@ -57976,6 +59394,7 @@ CONTAINS
 
   !>Get the Jacobian matrix from the solver equations matrices for nonlinear solver equations
   SUBROUTINE cmfe_SolverEquations_JacobianMatrixGet(solverEquations,matrix,err)
+    !DLLEXPORT(cmfe_SolverEquations_JacobianMatrixGet)
 
     !Argument variables
     TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to get the Jacobian matrix for
@@ -58000,6 +59419,7 @@ CONTAINS
 
   !>Get the vector assiciated with a solver matrix from the solver equations matrices
   SUBROUTINE cmfe_SolverEquations_VectorGet(solverEquations,matrixIndex,vector,err)
+    !DLLEXPORT(cmfe_SolverEquations_VectorGet)
 
     !Argument variables
     TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to get the vector for
@@ -58025,6 +59445,7 @@ CONTAINS
 
   !>Get the residual vector from the solver equations for nonlinear problems
   SUBROUTINE cmfe_SolverEquations_ResidualVectorGet(solverEquations,residualVector,err)
+    !DLLEXPORT(cmfe_SolverEquations_ResidualVectorGet)
 
     !Argument variables
     TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to get the residual vector for
@@ -58049,6 +59470,7 @@ CONTAINS
 
   !>Get the right hand side vector from the solver equations
   SUBROUTINE cmfe_SolverEquations_RhsVectorGet(solverEquations,rhsVector,err)
+    !DLLEXPORT(cmfe_SolverEquations_RhsVectorGet)
 
     !Argument variables
     TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to get the right hand side vector for
@@ -58073,6 +59495,7 @@ CONTAINS
 
   !>Get the user number of the given region.
   SUBROUTINE cmfe_UserNumberGetRegion( region, userNumber, err )
+    !DLLEXPORT(cmfe_UserNumberGetRegion)
     !Argument variables
     TYPE(cmfe_RegionType), INTENT(IN) :: region !<The region to get the user number for
     INTEGER(INTG), INTENT(OUT) :: userNumber !<The region's user number
@@ -58090,6 +59513,7 @@ CONTAINS
 
   !>Get the user number of the given mesh.
   SUBROUTINE cmfe_UserNumberGetMesh( mesh, userNumber, err )
+    !DLLEXPORT(cmfe_UserNumberGetMesh)
     !Argument variables
     TYPE(cmfe_MeshType), INTENT(IN) :: mesh !<The mesh to get the user number for
     INTEGER(INTG), INTENT(OUT) :: userNumber !<The mesh's user number
@@ -58107,6 +59531,7 @@ CONTAINS
 
   !>Get the user number of the given basis.
   SUBROUTINE cmfe_UserNumberGetBasis( basis, userNumber, err )
+    !DLLEXPORT(cmfe_UserNumberGetBasis)
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(IN) :: basis !<The basis to get the user number for
     INTEGER(INTG), INTENT(OUT) :: userNumber !<The basis's user number
@@ -58124,6 +59549,7 @@ CONTAINS
 
   !>Update the bioelectrics geometric field by interpolating the finite elasticity geometric field
   SUBROUTINE cmfe_BioelectricsFiniteElasticity_UpdateGeometricField(controlLoop,calcClosestGaussPoint,err)
+    !DLLEXPORT(cmfe_BioelectricsFiniteElasticity_UpdateGeometricField)
   
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(INOUT) :: controlLoop !<The bioelectrics control loop
@@ -58149,6 +59575,7 @@ CONTAINS
 
   !> Initialise the given FieldML context using the given FieldML XML file.
   SUBROUTINE cmfe_FieldML_InputCreateFromFileVS( filename, fieldml, err )
+    !DLLEXPORT(cmfe_FieldML_InputCreateFromFileVS)
     !Arguments
     TYPE(VARYING_STRING), INTENT(IN) :: filename !< The FieldML XML file to parse.
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context to initialise.
@@ -58179,6 +59606,7 @@ CONTAINS
 
   !> Initialise the given FieldML context using the given FieldML XML file.
   SUBROUTINE cmfe_FieldML_InputCreateFromFileC( filename, fieldml, err )
+    !DLLEXPORT(cmfe_FieldML_InputCreateFromFileC)
     !Arguments
     CHARACTER(LEN=*), INTENT(IN) :: filename !< The FieldML XML file to parse.
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context to initialise.
@@ -58209,6 +59637,7 @@ CONTAINS
 
   !> Creates a mesh using the given FieldML evaluator.
   SUBROUTINE cmfe_FieldML_InputMeshCreateStartObjVS( fieldml, meshArgumentName, mesh, meshNumber, region, err )
+    !DLLEXPORT(cmfe_FieldML_InputMeshCreateStartObjVS)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     TYPE(VARYING_STRING), INTENT(IN) :: meshArgumentName !< The name of the argument evaluator to create a mesh from.
@@ -58242,6 +59671,7 @@ CONTAINS
 
   !> Creates a mesh with the given user number using the given FieldML evaluator.
   SUBROUTINE cmfe_FieldML_InputMeshCreateStartNumberVS( fieldml, meshArgumentName, meshNumber, regionNumber, err )
+    !DLLEXPORT(cmfe_FieldML_InputMeshCreateStartNumberVS)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     TYPE(VARYING_STRING), INTENT(IN) :: meshArgumentName !< The name of the mesh argument evaluator to create a mesh from.
@@ -58279,6 +59709,7 @@ CONTAINS
 
   !> Creates a mesh using the given FieldML evaluator.
   SUBROUTINE cmfe_FieldML_InputMeshCreateStartObjC( fieldml, meshArgumentName, mesh, meshNumber, region, err )
+    !DLLEXPORT(cmfe_FieldML_InputMeshCreateStartObjC)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     CHARACTER(LEN=*), INTENT(IN) :: meshArgumentName !< The name of the argument evaluator to create a mesh from.
@@ -58312,6 +59743,7 @@ CONTAINS
 
   !> Creates a mesh with the given user number using the given FieldML evaluator.
   SUBROUTINE cmfe_FieldML_InputMeshCreateStartNumberC( fieldml, meshArgumentName, meshNumber, regionNumber, err )
+    !DLLEXPORT(cmfe_FieldML_InputMeshCreateStartNumberC)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     CHARACTER(LEN=*), INTENT(IN) :: meshArgumentName !< The name of the mesh argument evaluator to create a mesh from.
@@ -58351,6 +59783,7 @@ CONTAINS
 
   !> Create a coordinate system using the given FieldML evaluator.
   SUBROUTINE cmfe_FieldML_InputCoordinateSystemCreateStartObjVS( fieldml, evaluatorName, coordinateSystem, userNumber, err )
+    !DLLEXPORT(cmfe_FieldML_InputCoordinateSystemCreateStartObjVS)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     TYPE(VARYING_STRING), INTENT(IN) :: evaluatorName !< The name of the argument evaluator to create the coordinate system from.
@@ -58384,6 +59817,7 @@ CONTAINS
 
   !> Create a coordinate system using the given FieldML evaluator.
   SUBROUTINE cmfe_FieldML_InputCoordinateSystemCreateStartNumberVS( fieldml, evaluatorName, userNumber, err )
+    !DLLEXPORT(cmfe_FieldML_InputCoordinateSystemCreateStartNumberVS)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     TYPE(VARYING_STRING), INTENT(IN) :: evaluatorName !< The name of the argument evaluator to create the coordinate system from.
@@ -58419,6 +59853,7 @@ CONTAINS
 
   !> Create a coordinate system using the given FieldML evaluator.
   SUBROUTINE cmfe_FieldML_InputCoordinateSystemCreateStartObjC( fieldml, evaluatorName, coordinateSystem, userNumber, err )
+    !DLLEXPORT(cmfe_FieldML_InputCoordinateSystemCreateStartObjC)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     CHARACTER(LEN=*), INTENT(IN) :: evaluatorName !< The name of the argument evaluator to create the coordinate system from.
@@ -58452,6 +59887,7 @@ CONTAINS
 
   !> Create a coordinate system using the given FieldML evaluator.
   SUBROUTINE cmfe_FieldML_InputCoordinateSystemCreateStartNumberC( fieldml, evaluatorName, userNumber, err )
+    !DLLEXPORT(cmfe_FieldML_InputCoordinateSystemCreateStartNumberC)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     CHARACTER(LEN=*), INTENT(IN) :: evaluatorName !< The name of the argument evaluator to create the coordinate system from.
@@ -58488,6 +59924,7 @@ CONTAINS
 
   !> Create a basis using the given FieldML evaluator.
   SUBROUTINE cmfe_FieldML_InputBasisCreateStartNumberVS( fieldml, evaluatorName, userNumber, err )
+    !DLLEXPORT(cmfe_FieldML_InputBasisCreateStartNumberVS)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     TYPE(VARYING_STRING), INTENT(IN) :: evaluatorName !< The name of the argument evaluator to create the basis from.
@@ -58522,6 +59959,7 @@ CONTAINS
 
   !> Create a basis using the given FieldML evaluator.
   SUBROUTINE cmfe_FieldML_InputBasisCreateStartObjVS( fieldml, evaluatorName, userNumber, basis, err )
+    !DLLEXPORT(cmfe_FieldML_InputBasisCreateStartObjVS)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     TYPE(VARYING_STRING), INTENT(IN) :: evaluatorName !< The name of the argument evaluator to create the basis from.
@@ -58553,6 +59991,7 @@ CONTAINS
 
   !> Create a basis using the given FieldML evaluator.
   SUBROUTINE cmfe_FieldML_InputBasisCreateStartNumberC( fieldml, evaluatorName, userNumber, err )
+    !DLLEXPORT(cmfe_FieldML_InputBasisCreateStartNumberC)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     CHARACTER(LEN=*), INTENT(IN) :: evaluatorName !< The name of the argument evaluator to create the basis from.
@@ -58587,6 +60026,7 @@ CONTAINS
 
   !> Create a basis using the given FieldML evaluator.
   SUBROUTINE cmfe_FieldML_InputBasisCreateStartObjC( fieldml, evaluatorName, userNumber, basis, err )
+    !DLLEXPORT(cmfe_FieldML_InputBasisCreateStartObjC)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     CHARACTER(LEN=*), INTENT(IN) :: evaluatorName !< The name of the argument evaluator to create the basis from.
@@ -58618,6 +60058,7 @@ CONTAINS
 
   !> Creates a region's nodes using the given FieldML evaluator.
   SUBROUTINE cmfe_FieldML_InputNodesCreateStartNumberVS( fieldml, nodesArgumentName, regionNumber, nodes, err )
+    !DLLEXPORT(cmfe_FieldML_InputNodesCreateStartNumberVS)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     TYPE(VARYING_STRING), INTENT(IN) :: nodesArgumentName !< The name of the argument evaluator to create the nodes from.
@@ -58653,6 +60094,7 @@ CONTAINS
 
   !> Creates a region's nodes using the given FieldML evaluator.
   SUBROUTINE cmfe_FieldML_InputNodesCreateStartObjVS( fieldml, nodesArgumentName, region, nodes, err )
+    !DLLEXPORT(cmfe_FieldML_InputNodesCreateStartObjVS)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     TYPE(VARYING_STRING), INTENT(IN) :: nodesArgumentName !< The name of the argument evaluator to create the basis from.
@@ -58684,6 +60126,7 @@ CONTAINS
 
   !> Creates a region's nodes using the given FieldML evaluator.
   SUBROUTINE cmfe_FieldML_InputNodesCreateStartNumberC( fieldml, nodesArgumentName, regionNumber, nodes, err )
+    !DLLEXPORT(cmfe_FieldML_InputNodesCreateStartNumberC)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     CHARACTER(LEN=*), INTENT(IN) :: nodesArgumentName !< The name of the argument evaluator to create the nodes from.
@@ -58719,6 +60162,7 @@ CONTAINS
 
   !> Creates a region's nodes using the given FieldML evaluator.
   SUBROUTINE cmfe_FieldML_InputNodesCreateStartObjC( fieldml, nodesArgumentName, region, nodes, err )
+    !DLLEXPORT(cmfe_FieldML_InputNodesCreateStartObjC)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     CHARACTER(LEN=*), INTENT(IN) :: nodesArgumentName !< The name of the argument evaluator to create the basis from.
@@ -58751,6 +60195,7 @@ CONTAINS
 
   !> Use the given FieldML evaluator as a template to create a component on the given mesh.
   SUBROUTINE cmfe_FieldML_InputCreateMeshComponentObjVS( fieldml, mesh, componentNumber, evaluatorName, err )
+    !DLLEXPORT(cmfe_FieldML_InputCreateMeshComponentObjVS)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     TYPE(cmfe_MeshType), INTENT(IN) :: mesh !< The mesh for which to create the mesh component.
@@ -58783,6 +60228,7 @@ CONTAINS
   !> Use the given FieldML evaluator as a template to create a component on the mesh identified by the given user number.
   SUBROUTINE cmfe_FieldML_InputCreateMeshComponentNumberVS( fieldml, regionNumber, meshNumber, componentNumber, evaluatorName, &
     & err )
+    !DLLEXPORT(cmfe_FieldML_InputCreateMeshComponentNumberVS)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     INTEGER(INTG), INTENT(IN) :: regionNumber !< The user number of the region in which the mesh component is to be created.
@@ -58825,6 +60271,7 @@ CONTAINS
 
   !> Use the given FieldML evaluator as a template to create a component on the given mesh.
   SUBROUTINE cmfe_FieldML_InputCreateMeshComponentObjC( fieldml, mesh, componentNumber, evaluatorName, err )
+    !DLLEXPORT(cmfe_FieldML_InputCreateMeshComponentObjC)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     TYPE(cmfe_MeshType), INTENT(IN) :: mesh !< The mesh for which to create the mesh component.
@@ -58858,6 +60305,7 @@ CONTAINS
   !> Use the given FieldML evaluator as a template to create a component on the mesh identified by the given user number.
   SUBROUTINE cmfe_FieldML_InputCreateMeshComponentNumberC( fieldml, regionNumber, meshNumber, componentNumber, evaluatorName, &
     & err )
+    !DLLEXPORT(cmfe_FieldML_InputCreateMeshComponentNumberC)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     INTEGER(INTG), INTENT(IN) :: regionNumber !< The user number of the region in which the mesh component is to be created.
@@ -58899,6 +60347,7 @@ CONTAINS
   !> Create a field using the given FieldML evaluator.
   SUBROUTINE cmfe_FieldML_InputFieldCreateStartObjVS( fieldml, region, decomposition, fieldNumber, field, variableType, &
     & evaluatorName, err )
+    !DLLEXPORT(cmfe_FieldML_InputFieldCreateStartObjVS)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     TYPE(cmfe_RegionType), INTENT(IN) :: region !< The region in which the field is to be created.
@@ -58935,6 +60384,7 @@ CONTAINS
   !> Create a field with the given user number using the given FieldML evaluator.
   SUBROUTINE cmfe_FieldML_InputFieldCreateStartNumberVS( fieldml, regionNumber, meshNumber, decompositionNumber, fieldNumber, &
     & variableType, evaluatorName, err )
+    !DLLEXPORT(cmfe_FieldML_InputFieldCreateStartNumberVS)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     INTEGER(INTG), INTENT(IN) :: regionNumber !< The user number of the region in which to create the field.
@@ -58982,6 +60432,7 @@ CONTAINS
   !> Create a field using the given FieldML evaluator.
   SUBROUTINE cmfe_FieldML_InputFieldCreateStartObjC( fieldml, region, decomposition, fieldNumber, field, variableType, &
     & evaluatorName, err )
+    !DLLEXPORT(cmfe_FieldML_InputFieldCreateStartObjC)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     TYPE(cmfe_RegionType), INTENT(IN) :: region !< The region in which the field is to be created.
@@ -59018,6 +60469,7 @@ CONTAINS
   !> Create a field with the given user number using the given FieldML evaluator.
   SUBROUTINE cmfe_FieldML_InputFieldCreateStartNumberC( fieldml, regionNumber, meshNumber, decompositionNumber, fieldNumber, &
     & variableType, evaluatorName, err )
+    !DLLEXPORT(cmfe_FieldML_InputFieldCreateStartNumberC)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     INTEGER(INTG), INTENT(IN) :: regionNumber !< The user number of the region in which to create the field.
@@ -59065,6 +60517,7 @@ CONTAINS
   !> Update the DOF parameters of the given field, using the given FieldML evaluator.
   SUBROUTINE cmfe_FieldML_InputFieldParametersUpdateObjVS( fieldml, field, evaluatorName, variableType, &
     & setType, err )
+    !DLLEXPORT(cmfe_FieldML_InputFieldParametersUpdateObjVS)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     TYPE(cmfe_FieldType), INTENT(INOUT) :: field !< On return, the field object.
@@ -59100,6 +60553,7 @@ CONTAINS
   !> Update the DOF parameters of field with the given user number, using the given FieldML evaluator.
   SUBROUTINE cmfe_FieldML_InputFieldParametersUpdateNumberVS( fieldml, regionNumber, fieldNumber, &
     & evaluatorName, variableType, setType, err )
+    !DLLEXPORT(cmfe_FieldML_InputFieldParametersUpdateNumberVS)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     INTEGER(INTG), INTENT(IN) :: regionNumber !< The user number of the region of the field for which parameters are to be updated.
@@ -59143,6 +60597,7 @@ CONTAINS
   !> Update the DOF parameters of the given field, using the given FieldML evaluator.
   SUBROUTINE cmfe_FieldML_InputFieldParametersUpdateObjC( fieldml, field, evaluatorName, &
     & variableType, setType, err )
+    !DLLEXPORT(cmfe_FieldML_InputFieldParametersUpdateObjC)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     TYPE(cmfe_FieldType), INTENT(INOUT) :: field !< On return, the field object.
@@ -59177,6 +60632,7 @@ CONTAINS
   !> Update the DOF parameters of field with the given user number, using the given FieldML evaluator.
   SUBROUTINE cmfe_FieldML_InputFieldParametersUpdateNumberC( fieldml, regionNumber, fieldNumber, &
     & evaluatorName, variableType, setType, err )
+    !DLLEXPORT(cmfe_FieldML_InputFieldParametersUpdateNumberC)
     !Arguments
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context containing the evaluator to use.
     INTEGER(INTG), INTENT(IN) :: regionNumber !< The user number of the region of the field for which parameters are to be updated.
@@ -59219,6 +60675,7 @@ CONTAINS
 
   !> Write the FieldML document managed by the given context to a file with the given name.
   SUBROUTINE cmfe_FieldML_OutputWriteVS( fieldml, filename, err )
+    !DLLEXPORT(cmfe_FieldML_OutputWriteVS)
     !Argument variables
     TYPE(cmfe_FieldMLIOType), INTENT(IN) :: fieldml !< The FieldML context containing the evaluator to use.
     TYPE(VARYING_STRING), INTENT(IN) :: filename !< The name of the file to write the FieldML document to.
@@ -59252,6 +60709,7 @@ CONTAINS
 
   !> Write the FieldML document managed by the given context to a file with the given name.
   SUBROUTINE cmfe_FieldML_OutputWriteC( fieldml, filename, err )
+    !DLLEXPORT(cmfe_FieldML_OutputWriteC)
     !Argument variables
     TYPE(cmfe_FieldMLIOType), INTENT(IN) :: fieldml !< The FieldML context containing the evaluator to use.
     CHARACTER(KIND=C_CHAR,LEN=*), INTENT(IN) :: filename !< The name of the file to write the FieldML document to.
@@ -59285,6 +60743,7 @@ CONTAINS
 
   !> Add the given field to the given FieldML context. The FieldML type will be inferred.
   SUBROUTINE cmfe_FieldML_OutputAddFieldNoTypeObjVS( fieldml, baseName, dofFormat, field, variableType, setType, err )
+    !DLLEXPORT(cmfe_FieldML_OutputAddFieldNoTypeObjVS)
     !Argument variables
     TYPE(cmfe_FieldMLIOType), INTENT(IN) :: fieldml !< The FieldML context containing the evaluator to use.
     TYPE(VARYING_STRING), INTENT(IN) :: baseName !< The prefix to use when naming automatically created FieldML objects in the context.
@@ -59320,6 +60779,7 @@ CONTAINS
   !> Add the field with the given user number to the given FieldML context. The FieldML type will be inferred.
   SUBROUTINE cmfe_FieldML_OutputAddFieldNoTypeNumberVS( fieldml, baseName, dofFormat, regionNumber, fieldNumber, &
     & variableType, setType, err )
+    !DLLEXPORT(cmfe_FieldML_OutputAddFieldNoTypeNumberVS)
     !Argument variables
     TYPE(cmfe_FieldMLIOType), INTENT(IN) :: fieldml !< The FieldML context containing the evaluator to use.
     TYPE(VARYING_STRING), INTENT(IN) :: baseName !< The prefix to use when naming automatically created FieldML objects in the context.
@@ -59361,6 +60821,7 @@ CONTAINS
 
   !> Add the given field to the given FieldML context, using the given FieldML type.
   SUBROUTINE cmfe_FieldML_OutputAddFieldWithTypeObjVS( fieldml, baseName, dofFormat, field, variableType, setType, typeHandle, err )
+    !DLLEXPORT(cmfe_FieldML_OutputAddFieldWithTypeObjVS)
     !Argument variables
     TYPE(cmfe_FieldMLIOType), INTENT(IN) :: fieldml !< The FieldML context containing the evaluator to use.
     TYPE(VARYING_STRING), INTENT(IN) :: baseName !< The prefix to use when naming automatically created FieldML objects in the context.
@@ -59397,6 +60858,7 @@ CONTAINS
   !> Add the given field to the given FieldML context, using the given FieldML type.
   SUBROUTINE cmfe_FieldML_OutputAddFieldWithTypeNumberVS( fieldml, baseName, dofFormat, regionNumber, fieldNumber, &
     & variableType, setType, typeHandle, err )
+    !DLLEXPORT(cmfe_FieldML_OutputAddFieldWithTypeNumberVS)
     !Argument variables
     TYPE(cmfe_FieldMLIOType), INTENT(IN) :: fieldml !< The FieldML context containing the evaluator to use.
     TYPE(VARYING_STRING), INTENT(IN) :: baseName !< The prefix to use when naming automatically created FieldML objects in the context.
@@ -59440,6 +60902,7 @@ CONTAINS
 
   !> Add the given field to the given FieldML context. The FieldML type will be inferred.
   SUBROUTINE cmfe_FieldML_OutputAddFieldNoTypeObjC( fieldml, baseName, dofFormat, field, variableType, setType, err )
+    !DLLEXPORT(cmfe_FieldML_OutputAddFieldNoTypeObjC)
     !Argument variables
     TYPE(cmfe_FieldMLIOType), INTENT(IN) :: fieldml !< The FieldML context containing the evaluator to use.
     CHARACTER(KIND=C_CHAR,LEN=*), INTENT(IN) :: baseName !< The prefix to use when naming automatically created FieldML objects in the context.
@@ -59475,6 +60938,7 @@ CONTAINS
   !> Add the field with the given user number to the given FieldML context. The FieldML type will be inferred.
   SUBROUTINE cmfe_FieldML_OutputAddFieldNoTypeNumberC( fieldml, baseName, dofFormat, regionNumber, fieldNumber, &
     & variableType, setType, err )
+    !DLLEXPORT(cmfe_FieldML_OutputAddFieldNoTypeNumberC)
     !Argument variables
     TYPE(cmfe_FieldMLIOType), INTENT(IN) :: fieldml !< The FieldML context containing the evaluator to use.
     CHARACTER(KIND=C_CHAR,LEN=*), INTENT(IN) :: baseName !< The prefix to use when naming automatically created FieldML objects in the context.
@@ -59517,6 +60981,7 @@ CONTAINS
 
   !> Add the given field to the given FieldML context, using the given FieldML type.
   SUBROUTINE cmfe_FieldML_OutputAddFieldWithTypeObjC( fieldml, baseName, dofFormat, field, variableType, setType, typeHandle, err )
+    !DLLEXPORT(cmfe_FieldML_OutputAddFieldWithTypeObjC)
     !Argument variables
     TYPE(cmfe_FieldMLIOType), INTENT(IN) :: fieldml !< The FieldML context containing the evaluator to use.
     CHARACTER(KIND=C_CHAR,LEN=*), INTENT(IN) :: baseName !< The prefix to use when naming automatically created FieldML objects in the context.
@@ -59553,6 +61018,7 @@ CONTAINS
   !> Add the given field to the given FieldML context, using the given FieldML type.
   SUBROUTINE cmfe_FieldML_OutputAddFieldWithTypeNumberC( fieldml, baseName, dofFormat, regionNumber, fieldNumber, &
     & variableType, setType, typeHandle, err )
+    !DLLEXPORT(cmfe_FieldML_OutputAddFieldWithTypeNumberC)
     !Argument variables
     TYPE(cmfe_FieldMLIOType), INTENT(IN) :: fieldml !< The FieldML context containing the evaluator to use.
     CHARACTER(KIND=C_CHAR,LEN=*), INTENT(IN) :: baseName !< The prefix to use when naming automatically created FieldML objects in the context.
@@ -59596,6 +61062,7 @@ CONTAINS
 
   !> Initialise the given FieldML context using the given mesh.
   SUBROUTINE cmfe_FieldML_OutputCreateObjVS( mesh, location, baseName, connectivityFormat, fieldml, err )
+    !DLLEXPORT(cmfe_FieldML_OutputCreateObjVS)
     !Argument variables
     TYPE(cmfe_MeshType), INTENT(IN) :: mesh !< The mesh to use when initialising the FieldML context.
     TYPE(VARYING_STRING), INTENT(IN) :: location !< The root directory in which associated data files should be created.
@@ -59630,6 +61097,7 @@ CONTAINS
 
   !> Initialise the given FieldML context using the mesh with the given user number.
   SUBROUTINE cmfe_FieldML_OutputCreateNumberVS( regionNumber, meshNumber, location, baseName, connectivityFormat, fieldml, err )
+    !DLLEXPORT(cmfe_FieldML_OutputCreateNumberVS)
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionNumber !< The user number of the region owning the mesh to use when initialising the FieldML context.
     INTEGER(INTG), INTENT(IN) :: meshNumber !< The user number of the mesh to use when initialising the FieldML context.
@@ -59670,6 +61138,7 @@ CONTAINS
 
   !> Initialise the given FieldML context using the given mesh.
   SUBROUTINE cmfe_FieldML_OutputCreateObjC( mesh, location, baseName, connectivityFormat, fieldml, err )
+    !DLLEXPORT(cmfe_FieldML_OutputCreateObjC)
     !Argument variables
     TYPE(cmfe_MeshType), INTENT(IN) :: mesh !< The mesh to use when initialising the FieldML context.
     CHARACTER(KIND=C_CHAR,LEN=*), INTENT(IN) :: location !< The root directory in which associated data files should be created.
@@ -59704,6 +61173,7 @@ CONTAINS
 
   !> Initialise the given FieldML context using the mesh with the given user number.
   SUBROUTINE cmfe_FieldML_OutputCreateNumberC( regionNumber, meshNumber, location, baseName, connectivityFormat, fieldml, err )
+    !DLLEXPORT(cmfe_FieldML_OutputCreateNumberC)
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionNumber !< The user number of the region owning the mesh to use when initialising the FieldML context.
     INTEGER(INTG), INTENT(IN) :: meshNumber !< The user number of the mesh to use when initialising the FieldML context.
@@ -59746,6 +61216,7 @@ CONTAINS
   !> Add the given field to the current FieldML context, only including the given components.
   SUBROUTINE cmfe_FieldML_OutputAddFieldComponentsObjVS( fieldml, typeHandle, baseName, dofFormat, field, fieldComponentNumbers, &
     & variableType, setType, err )
+    !DLLEXPORT(cmfe_FieldML_OutputAddFieldComponentsObjVS)
     !Argument variables
     TYPE(cmfe_FieldMLIOType), INTENT(IN) :: fieldml !< The FieldML context containing the evaluator to use.
     INTEGER(INTG), INTENT(IN) :: typeHandle !< The FieldML type to assign to the new FieldML field.
@@ -59783,6 +61254,7 @@ CONTAINS
   !> Add the field with the given user number to the current FieldML context, only including the given components.
   SUBROUTINE cmfe_FieldML_OutputAddFieldComponentsNumberVS( fieldml, typeHandle, baseName, dofFormat, regionNumber, &
     & fieldNumber, fieldComponentNumbers, variableType, setType, err )
+    !DLLEXPORT(cmfe_FieldML_OutputAddFieldComponentsNumberVS)
     !Argument variables
     TYPE(cmfe_FieldMLIOType), INTENT(IN) :: fieldml !< The FieldML context containing the evaluator to use.
     INTEGER(INTG), INTENT(IN) :: typeHandle !< The FieldML type to assign to the new FieldML field.
@@ -59829,6 +61301,7 @@ CONTAINS
   !> Add the given field to the current FieldML context, only including the given components.
   SUBROUTINE cmfe_FieldML_OutputAddFieldComponentsObjC( fieldml, typeHandle, baseName, dofFormat, field, fieldComponentNumbers, &
     & variableType, setType, err )
+    !DLLEXPORT(cmfe_FieldML_OutputAddFieldComponentsObjC)
     !Argument variables
     TYPE(cmfe_FieldMLIOType), INTENT(IN) :: fieldml !< The FieldML context containing the evaluator to use.
     INTEGER(INTG), INTENT(IN) :: typeHandle !< The FieldML type to assign to the new FieldML field.
@@ -59866,6 +61339,7 @@ CONTAINS
   !> Add the field with the given user number to the current FieldML context, only including the given components.
   SUBROUTINE cmfe_FieldML_OutputAddFieldComponentsNumberC( fieldml, typeHandle, baseName, dofFormat, regionNumber, &
     & fieldNumber, fieldComponentNumbers, variableType, setType, err )
+    !DLLEXPORT(cmfe_FieldML_OutputAddFieldComponentsNumberC)
     !Argument variables
     TYPE(cmfe_FieldMLIOType), INTENT(IN) :: fieldml !< The FieldML context containing the evaluator to use.
     INTEGER(INTG), INTENT(IN) :: typeHandle !< The FieldML type to assign to the new FieldML field.
@@ -59911,6 +61385,7 @@ CONTAINS
 
   !>Import a FieldML object from the library into the current session.
   SUBROUTINE cmfe_FieldML_OutputAddImport( fieldml, name, handle, err )
+    !DLLEXPORT(cmfe_FieldML_OutputAddImport)
     !Argument variables
     TYPE(cmfe_FieldMLIOType), INTENT(IN) :: fieldml !< The FieldML context containing the evaluator to use.
     CHARACTER(KIND=C_CHAR,LEN=*), INTENT(IN) :: name !< The name of the object to import.
@@ -59947,6 +61422,7 @@ CONTAINS
 
   !>Finalises a Fieldml context.
   SUBROUTINE cmfe_FieldMLIO_Finalise( fieldml, err )
+    !DLLEXPORT(cmfe_FieldMLIO_Finalise)
     !Argument variables
     TYPE(cmfe_FieldMLIOType), INTENT(OUT) :: fieldml !< The FieldML context to finalise.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -59975,6 +61451,7 @@ CONTAINS
 
   !>Initialises a Fieldml context.
   SUBROUTINE cmfe_FieldMLIO_Initialise( fieldml, err )
+    !DLLEXPORT(cmfe_FieldMLIO_Initialise)
     !Argument variables
     TYPE(cmfe_FieldMLIOType), INTENT(OUT) :: fieldml !< The FieldML context to initialise.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -60003,6 +61480,7 @@ CONTAINS
 
   !>Get the session handle from a Fieldml context.
   SUBROUTINE cmfe_FieldMLIO_GetSession( fieldml, sessionHandle, err )
+    !DLLEXPORT(cmfe_FieldMLIO_GetSession)
     !Argument variables
     TYPE(cmfe_FieldMLIOType), INTENT(INOUT) :: fieldml !< The FieldML context whose session handle is to be returned.
     INTEGER(INTG), INTENT(OUT) :: sessionHandle !<The session handle.
