@@ -140,7 +140,12 @@ else()
                     )
                     list(APPEND _CLEANUP ${UTILS_PY} ${SETUP_PY} ${PKGUTIL_INIT_PY} ${INIT_PY})
                     
-                    if(VIRTUALENV_LOCATION)
+                    if (NOT PYTHON_BINDINGS_INSTALL_DIR)
+                        set(PYTHON_BINDINGS_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/python)
+                    endif()
+                    # Either install to existing virtual environment or simply copy all the necessary files into
+                    # a folder
+                    if(PYTHON_BINDINGS_INSTALL_DIR_IS_VIRTUALENV)
                         set(SOURCE_COMMAND )
                         if (UNIX)
                             set(SOURCE_COMMAND source)
@@ -150,9 +155,12 @@ else()
                         install(SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/install_virtualenv.cmake)
                         
                         add_test(NAME python_bindings_import
-                            COMMAND ${VIRTUALENV_LOCATION}/bin/python -c "from opencmiss.iron import iron"
-                            WORKING_DIRECTORY ${VIRTUALENV_LOCATION}
+                            COMMAND ${PYTHON_BINDINGS_INSTALL_DIR}/bin/python -c "from opencmiss.iron import iron"
+                            WORKING_DIRECTORY ${PYTHON_BINDINGS_INSTALL_DIR}
                         )
+                    else()
+                        install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/opencmiss
+                            DESTINATION ${PYTHON_BINDINGS_INSTALL_DIR})
                     endif()
                     list(APPEND _CLEANUP ${SWIG_IFACE} ${PYTHON_WRAPPER})
                     
