@@ -170,6 +170,6 @@ install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/
     FILES_MATCHING PATTERN "opencmiss*.mod"
 )
 
-if (HAVE_C_BINDINGS)
+if (WITH_C_BINDINGS)
     install(FILES ${OPENCMISS_H} DESTINATION include/opencmiss)
 endif()

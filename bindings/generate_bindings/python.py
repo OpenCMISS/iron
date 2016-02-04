@@ -25,10 +25,6 @@ WorldRegion = Region()
 Initialise(WorldCoordinateSystem, WorldRegion)
 # Don't output errors, we'll include trace in exception
 ErrorHandlingModeSet(ErrorHandlingModes.RETURN_ERROR_CODE)
-
-# Ignore SIGPIPE generated when closing the help pager when it isn't fully
-# buffered, otherwise it gets caught by OpenCMISS and crashes the interpreter
-signal.signal(signal.SIGPIPE, signal.SIG_IGN)
 """
 
 PREFIX = 'cmfe_'
@@ -83,6 +79,14 @@ def generate(iron_source_dir, args):
         module.write(extra_content.read())
 
     module.write(INITIALISE)
+    
+    from sys import platform
+    if platform != 'win32':
+        module.write("""
+# Ignore SIGPIPE generated when closing the help pager when it isn't fully
+# buffered, otherwise it gets caught by OpenCMISS and crashes the interpreter
+signal.signal(signal.SIGPIPE, signal.SIG_IGN)
+""")
     module.close()
 
 
