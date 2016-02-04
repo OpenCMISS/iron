@@ -190,11 +190,13 @@ if (WITH_Python_BINDINGS)
             WORKING_DIRECTORY "${PYTHON_BINDINGS_INSTALL_DIR}"
         )
     else()
-        install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/opencmiss
+        install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}/opencmiss
             DESTINATION ${PYTHON_BINDINGS_INSTALL_DIR})
-        file(TO_NATIVE_PATH NATIVE_PYTHON_BINDINGS_INSTALL_DIR "${PYTHON_BINDINGS_INSTALL_DIR}")
+        file(TO_NATIVE_PATH "${PYTHON_BINDINGS_INSTALL_DIR}" NATIVE_PYTHON_BINDINGS_INSTALL_DIR)
         add_test(NAME python_bindings_import
             COMMAND ${PYTHON_EXECUTABLE} -c "from opencmiss.iron import iron"
+        )
+        set_tests_properties(python_bindings_import PROPERTIES 
             ENVIRONMENT "PYTHONPATH=${NATIVE_PYTHON_BINDINGS_INSTALL_DIR}"
         )
     endif()
