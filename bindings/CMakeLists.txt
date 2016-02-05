@@ -164,19 +164,21 @@ if (WITH_Python_BINDINGS)
     # Either install to existing virtual environment or simply copy all the necessary files into
     # a folder
     if(PYTHON_BINDINGS_INSTALL_DIR_IS_VIRTUALENV)
-        set(SOURCE_COMMAND )
-        if (UNIX)
-            set(SOURCE_COMMAND source)
-        endif()
-        
+        # The binary directories for the python environments are different on windows (for what reason exactly?)
+        # So we need different subpaths
         set(VENV_BINDIR bin/)
         if (WIN32)
             set(VENV_BINDIR Scripts/)
         endif()
+        # Convention between manage and iron CMake scripts: On multiconfig-environments, the 
+        # installation directories have the build type path element inside the PYTHON_BINDINGS_INSTALL_DIR
         if (HAVE_MULTICONFIG_ENV)
             set(VENV_BINDIR $<LOWER_CASE:$<CONFIG>>/${VENV_BINDIR})
         endif()
+        # We need a native path to pass to the pip program
         file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>" NATIVE_CMAKE_CURRENT_BINARY_DIR)
+        # This target takes care to install the python package generated in the build tree to the specified virtual
+        # environment.
         add_custom_target(install_venv
             DEPENDS collect_python_binding_files
             COMMAND ${VENV_BINDIR}/pip install --upgrade "${NATIVE_CMAKE_CURRENT_BINARY_DIR}"

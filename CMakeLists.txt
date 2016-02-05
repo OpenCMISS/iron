@@ -15,6 +15,10 @@ option(WITH_Python_BINDINGS "Build iron Python bindings" ON)
 set(PACKAGE_CONFIG_DIR "cmake" CACHE STRING "Directory for package config files (relative to CMAKE_INSTALL_PREFIX)")
 
 # Config
+if (MSVC)
+    set(HAVE_MULTICONFIG_ENV YES)
+endif()
+
 # See http://cmake.3232098.n2.nabble.com/How-to-install-Fortran-module-files-td7584399.html
 SET(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/fortran_modules)
 SET(CMAKE_NO_SYSTEM_FROM_IMPORTED TRUE)
