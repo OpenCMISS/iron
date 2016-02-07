@@ -6317,13 +6317,14 @@ CONTAINS
   !
 
   !>Evaluate a tensor at a given element xi location.
-  SUBROUTINE EquationsSet_TensorInterpolateXi(equationsSet,userElementNumber,xi,values,err,error,*)
+  SUBROUTINE EquationsSet_TensorInterpolateXi(equationsSet,tensorEvaluateType,userElementNumber,xi,values,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to interpolate the tensor for.
+    INTEGER(INTG), INTENT(IN) :: tensorEvaluateType !<The type of tensor to evaluate.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
     REAL(DP), INTENT(IN) :: xi(:) !<The element xi to interpolate the field at.
-    REAL(DP), INTENT(OUT) :: values(6) !<The interpolated tensor values.
+    REAL(DP), INTENT(OUT) :: values(3,3) !<The interpolated tensor values.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
@@ -6343,7 +6344,7 @@ CONTAINS
 
     SELECT CASE(equationsSet%specification(1))
     CASE(EQUATIONS_SET_ELASTICITY_CLASS)
-      CALL Elasticity_TensorInterpolateXi(equationsSet,userElementNumber,xi,values,err,error,*999)
+      CALL Elasticity_TensorInterpolateXi(equationsSet,tensorEvaluateType,userElementNumber,xi,values,err,error,*999)
     CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_ELECTROMAGNETICS_CLASS)

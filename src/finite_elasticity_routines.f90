@@ -2900,12 +2900,13 @@ CONTAINS
   !
 
   !>Evaluates a tensor at a given element xi location.
-  SUBROUTINE FiniteElasticity_TensorInterpolateXi(equationsSet,userElementNumber,xi,values,err,error,*)
+  SUBROUTINE FiniteElasticity_TensorInterpolateXi(equationsSet,tensorEvaluateType,userElementNumber,xi,values,err,error,*)
     ! Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to calculate the tensor for
+    INTEGER(INTG), INTENT(IN) :: tensorEvaluateType !<The type of tensor to evaluate.
     INTEGER(INTG), INTENT(IN) :: userElementNumber
     REAL(DP), INTENT(IN) :: xi(:)
-    REAL(DP), INTENT(OUT) :: values(6) !<The interpolated tensor values.
+    REAL(DP), INTENT(OUT) :: values(3,3) !<The interpolated tensor values.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     ! Local variables
@@ -3019,25 +3020,34 @@ CONTAINS
       & geometricInterpolatedPointMetrics,fibreInterpolatedPoint, &
       & dZdNu,err,error,*999)
 
-    !Calculate E
-    CALL MATRIX_TRANSPOSE(dZdNu,dZdNuT,err,error,*999)
-    CALL MATRIX_PRODUCT(dZdNuT,dZdNu,AZL,err,error,*999)
-    E=0.5_DP*AZL
-    DO i=1,3
-      E(i,i)=E(i,i)-0.5_DP
-    END DO
+    IF(tensorEvaluateType==EQUATIONS_SET_EVALUATE_R_CAUCHY_GREEN_DEFORMATION_TENSOR .OR. &
+      & tensorEvaluateType==EQUATIONS_SET_EVALUATE_GREEN_LAGRANGE_STRAIN_TENSOR) THEN
+      CALL MATRIX_TRANSPOSE(dZdNu,dZdNuT,err,error,*999)
+      CALL MATRIX_PRODUCT(dZdNuT,dZdNu,AZL,err,error,*999)
+    END IF
 
-    !Set output E components
-    values(1)=E(1,1)
-    values(2)=E(1,2)
-    values(3)=E(1,3)
-    values(4)=E(2,2)
-    values(5)=E(2,3)
-    values(6)=E(3,3)
+    IF(tensorEvaluateType==EQUATIONS_SET_EVALUATE_GREEN_LAGRANGE_STRAIN_TENSOR) THEN
+      !Calculate E
+      E=0.5_DP*AZL
+      DO i=1,3
+        E(i,i)=E(i,i)-0.5_DP
+      END DO
+    END IF
+
+    SELECT CASE(tensorEvaluateType)
+    CASE(EQUATIONS_SET_EVALUATE_DEFORMATION_GRADIENT_TENSOR)
+      values=dZdNu
+    CASE(EQUATIONS_SET_EVALUATE_R_CAUCHY_GREEN_DEFORMATION_TENSOR)
+      values=AZL
+    CASE(EQUATIONS_SET_EVALUATE_GREEN_LAGRANGE_STRAIN_TENSOR)
+      values=E
+    CASE DEFAULT
+      CALL FlagError("The tensor evalaute type of "//TRIM(NUMBER_TO_VSTRING(tensorEvaluateType,"*",err,error))//" is invalid.", &
+        & err,error,*999)
+    END SELECT
 
     EXITS("FiniteElasticity_TensorInterpolateXi")
     RETURN
-
 999 ERRORSEXITS("FiniteElasticity_TensorInterpolateXi",err,error)
     RETURN 1
   END SUBROUTINE FiniteElasticity_TensorInterpolateXi
