@@ -126,7 +126,7 @@ MODULE FINITE_ELASTICITY_ROUTINES
     & FiniteElasticity_FiniteElementPreResidualEvaluate,FiniteElasticity_FiniteElementPostResidualEvaluate
 
   PUBLIC FiniteElasticityEquationsSet_DerivedVariableCalculate, &
-    & FiniteElasticity_StrainInterpolateXi
+    & FiniteElasticity_TensorInterpolateXi
 
 CONTAINS
 
@@ -2899,13 +2899,13 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Calculate the Green-Lagrange strain tensor at a given element xi location.
-  SUBROUTINE FiniteElasticity_StrainInterpolateXi(equationsSet,userElementNumber,xi,values,err,error,*)
+  !>Evaluates a tensor at a given element xi location.
+  SUBROUTINE FiniteElasticity_TensorInterpolateXi(equationsSet,userElementNumber,xi,values,err,error,*)
     ! Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to calculate strain for
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to calculate the tensor for
     INTEGER(INTG), INTENT(IN) :: userElementNumber
     REAL(DP), INTENT(IN) :: xi(:)
-    REAL(DP), INTENT(OUT) :: values(6) !<The interpolated strain tensor values.
+    REAL(DP), INTENT(OUT) :: values(6) !<The interpolated tensor values.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     ! Local variables
@@ -2926,7 +2926,7 @@ CONTAINS
     INTEGER(INTG) :: localElementNumber,i
     REAL(DP) :: dZdNu(3,3),dZdNuT(3,3),AZL(3,3),E(3,3)
 
-    ENTERS("FiniteElasticity_StrainInterpolateXi",err,error,*999)
+    ENTERS("FiniteElasticity_TensorInterpolateXi",err,error,*999)
 
     NULLIFY(equations)
     NULLIFY(dependentField)
@@ -2999,7 +2999,6 @@ CONTAINS
     dependentInterpolatedPointMetrics=>equations%interpolation% &
       & dependent_interp_point_metrics(dependentVarType)%ptr
 
-
     !Interpolate fields at xi position
     CALL FIELD_INTERPOLATE_XI(FIRST_PART_DERIV,xi,dependentInterpolatedPoint,err,error,*999)
     CALL FIELD_INTERPOLATE_XI(FIRST_PART_DERIV,xi,geometricInterpolatedPoint,err,error,*999)
@@ -3036,12 +3035,12 @@ CONTAINS
     values(5)=E(2,3)
     values(6)=E(3,3)
 
-    EXITS("FiniteElasticity_StrainInterpolateXi")
+    EXITS("FiniteElasticity_TensorInterpolateXi")
     RETURN
 
-999 ERRORSEXITS("FiniteElasticity_StrainInterpolateXi",err,error)
+999 ERRORSEXITS("FiniteElasticity_TensorInterpolateXi",err,error)
     RETURN 1
-  END SUBROUTINE FiniteElasticity_StrainInterpolateXi
+  END SUBROUTINE FiniteElasticity_TensorInterpolateXi
 
   !
   !================================================================================================================================

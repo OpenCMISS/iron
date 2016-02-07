@@ -146,7 +146,7 @@ MODULE EQUATIONS_SET_ROUTINES
 
   PUBLIC EquationsSet_SpecificationGet,EquationsSet_SpecificationSizeGet
 
-  PUBLIC EquationsSet_StrainInterpolateXi
+  PUBLIC EquationsSet_TensorInterpolateXi
 
   PUBLIC EquationsSet_DerivedVariableCalculate,EquationsSet_DerivedVariableSet
 
@@ -6316,18 +6316,18 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Calculate the strain tensor at a given element xi location.
-  SUBROUTINE EquationsSet_StrainInterpolateXi(equationsSet,userElementNumber,xi,values,err,error,*)
+  !>Evaluate a tensor at a given element xi location.
+  SUBROUTINE EquationsSet_TensorInterpolateXi(equationsSet,userElementNumber,xi,values,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to interpolate strain for.
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to interpolate the tensor for.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
     REAL(DP), INTENT(IN) :: xi(:) !<The element xi to interpolate the field at.
-    REAL(DP), INTENT(OUT) :: values(6) !<The interpolated strain tensor values.
+    REAL(DP), INTENT(OUT) :: values(6) !<The interpolated tensor values.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
-    ENTERS("EquationsSet_StrainInterpolateXi",err,error,*999)
+    ENTERS("EquationsSet_TensorInterpolateXi",err,error,*999)
 
     IF(.NOT.ASSOCIATED(equationsSet)) THEN
       CALL FlagError("Equations set is not associated.",err,error,*999)
@@ -6343,7 +6343,7 @@ CONTAINS
 
     SELECT CASE(equationsSet%specification(1))
     CASE(EQUATIONS_SET_ELASTICITY_CLASS)
-      CALL Elasticity_StrainInterpolateXi(equationsSet,userElementNumber,xi,values,err,error,*999)
+      CALL Elasticity_TensorInterpolateXi(equationsSet,userElementNumber,xi,values,err,error,*999)
     CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_ELECTROMAGNETICS_CLASS)
@@ -6364,12 +6364,12 @@ CONTAINS
         & " is not valid.",err,error,*999)
     END SELECT
 
-    EXITS("EquationsSet_StrainInterpolateXi")
+    EXITS("EquationsSet_TensorInterpolateXi")
     RETURN
-999 ERRORSEXITS("EquationsSet_StrainInterpolateXi",err,error)
+999 ERRORSEXITS("EquationsSet_TensorInterpolateXi",err,error)
     RETURN 1
     
-  END SUBROUTINE EquationsSet_StrainInterpolateXi
+  END SUBROUTINE EquationsSet_TensorInterpolateXi
 
   !
   !================================================================================================================================
