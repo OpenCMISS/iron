@@ -33,7 +33,9 @@ if (WITH_C_BINDINGS)
     target_include_directories(iron_c PRIVATE ${Iron_SOURCE_DIR}/src)
     install(TARGETS iron_c
         EXPORT iron-config
-        DESTINATION lib
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
         INCLUDES DESTINATION include/opencmiss)
     install(FILES ${OPENCMISS_H}
         DESTINATION include/opencmiss

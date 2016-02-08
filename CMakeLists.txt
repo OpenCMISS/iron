@@ -139,7 +139,9 @@ add_subdirectory(bindings)
 # Install steps
 install(TARGETS iron
       EXPORT iron-config
-      DESTINATION lib
+      RUNTIME DESTINATION bin
+      LIBRARY DESTINATION lib
+      ARCHIVE DESTINATION lib
       INCLUDES DESTINATION include/opencmiss)
 
 install(EXPORT iron-config DESTINATION ${PACKAGE_CONFIG_DIR})
