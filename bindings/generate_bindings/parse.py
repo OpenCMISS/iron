@@ -218,11 +218,11 @@ class LibrarySource(object):
         # Remove cmfe...TypesCopy routines, as these are only used within the
         # C bindings.  Also remove cmfe_GeneratedMeshSurfaceGet for now as it
         # takes an allocatable array but will be removed soon anyways.
-        self.public_subroutines = filter(
+        self.public_subroutines = list(filter(
                 lambda r:
                 not (r.name.startswith('cmfe_GeneratedMesh_SurfaceGet') or
                 r.name.endswith('TypesCopy')),
-                self.public_subroutines)
+                self.public_subroutines))
 
         self.unbound_routines = []
         for routine in self.public_subroutines:
