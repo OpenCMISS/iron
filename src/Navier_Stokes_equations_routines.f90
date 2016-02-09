@@ -12142,7 +12142,7 @@ CONTAINS
       !allocate array for mpi communication
       ALLOCATE(globalConverged(numberOfComputationalNodes),STAT=ERR) 
       IF(ERR/=0) CALL FlagError("Could not allocate global convergence check array.",ERR,ERROR,*999)
-      CALL MPI_ALLGATHER(localConverged,1,MPI_LOGICAL,globalConverged,1,MPI_LOGICAL, &
+      CALL MPI_ALLGATHER(localConverged,1,MPI_INTEGER,globalConverged,1,MPI_INTEGER, &
        & COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPI_IERROR,ERR,ERROR,*999)
       IF(ALL(globalConverged)) THEN
