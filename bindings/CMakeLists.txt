@@ -196,12 +196,28 @@ if (WITH_Python_BINDINGS)
     else()
         install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}/opencmiss
             DESTINATION ${PYTHON_BINDINGS_INSTALL_DIR})
+        
+        # Set the correct python path to have it find the opencmiss package
         file(TO_NATIVE_PATH "${PYTHON_BINDINGS_INSTALL_DIR}" NATIVE_PYTHON_BINDINGS_INSTALL_DIR)
+        
+        # Set up the correct environment for the tests
+        # See https://cmake.org/pipermail/cmake/2009-May/029464.html
+        if (WIN32)
+           set(LD_VARNAME "PATH")
+           file(TO_NATIVE_PATH "${CMAKE_INSTALL_PREFIX}/bin" _PATH)
+           set(LD_PATH "${_PATH};$ENV{PATH}")
+           string(REPLACE ";" "\\;" LD_PATH "${LD_PATH}")
+        else()
+           set(LD_VARNAME "LD_LIBRARY_PATH")
+           file(TO_NATIVE_PATH "${CMAKE_INSTALL_PREFIX}/lib" _PATH)
+           set(LD_PATH "${_PATH}:$ENV{LD_LIBRARY_PATH}")
+        endif()
+        # Add the test
         add_test(NAME python_bindings_import
             COMMAND ${PYTHON_EXECUTABLE} -c "from opencmiss.iron import iron"
         )
-        set_tests_properties(python_bindings_import PROPERTIES 
-            ENVIRONMENT "PYTHONPATH=${NATIVE_PYTHON_BINDINGS_INSTALL_DIR}"
+        set_tests_properties(python_bindings_import
+            PROPERTIES ENVIRONMENT "PYTHONPATH=${NATIVE_PYTHON_BINDINGS_INSTALL_DIR};${LD_VARNAME}=${LD_PATH}"
         )
     endif()
     list(APPEND _CLEANUP ${SWIG_IFACE} ${PYTHON_WRAPPER})
