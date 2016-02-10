@@ -29,7 +29,7 @@ setup(
     author_email='hsorby@aucklanduni.ac.nz',
     url='http://www.opencmiss.org/',
     install_requires=requires,
-    packages=['opencmiss', 'opencmiss.iron', 'opencmiss.zinc'],
+    packages=['opencmiss', 'opencmiss.iron'],
     package_data=package_data
 )
 #finally:
