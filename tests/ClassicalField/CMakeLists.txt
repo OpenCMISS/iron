@@ -1,0 +1,40 @@
+add_executable(Laplace Laplace.f90)
+target_link_libraries(Laplace iron)
+add_test(ClassicalField_Laplace Laplace)
+add_test(ClassicalField_Laplace_5_0_0_I1 Laplace 5 0 0 1)
+add_test(ClassicalField_Laplace_5_0_0_I2 Laplace 5 0 0 2)
+add_test(ClassicalField_Laplace_5_0_0_I7 Laplace 5 0 0 7)
+add_test(ClassicalField_Laplace_5_5_0_I1 Laplace 5 5 0 1)
+add_test(ClassicalField_Laplace_5_5_0_I2 Laplace 5 5 0 2)
+add_test(ClassicalField_Laplace_5_5_0_I7 Laplace 5 5 0 7)
+add_test(ClassicalField_Laplace_5_5_5_I1 Laplace 5 5 5 1)
+add_test(ClassicalField_Laplace_5_5_5_I2 Laplace 5 5 5 2)
+add_test(ClassicalField_Laplace_5_5_5_I7 Laplace 5 5 5 7)
+
+add_executable(AnalyticLaplace AnalyticLaplace.f90)
+target_link_libraries(AnalyticLaplace iron)
+add_test(ClassicalField_AnalyticLaplace AnalyticLaplace)
+
+add_executable(Analytic1DDiffusion Analytic1DDiffusion.f90)
+target_link_libraries(Analytic1DDiffusion iron)
+add_test(ClassicalField_Analytic1DDiffusion Analytic1DDiffusion)
+
+add_executable(AnalyticHelmholtz AnalyticHelmholtz.f90)
+target_link_libraries(AnalyticHelmholtz iron)
+add_test(ClassicalField_AnalyticHelmholtz AnalyticHelmholtz)
+
+add_executable(AnalyticNonlinearPoisson AnalyticNonlinearPoisson.f90)
+target_link_libraries(AnalyticNonlinearPoisson iron)
+
+add_test(ClassicalField_AnalyticNonlinearPoisson AnalyticNonlinearPoisson)
+add_test(ClassicalField_AnalyticNonlinearPoisson_5_5_0_I1 AnalyticNonlinearPoisson 5 5 0 1)
+add_test(ClassicalField_AnalyticNonlinearPoisson_5_5_0_I2 AnalyticNonlinearPoisson 5 5 0 2)
+add_test(ClassicalField_AnalyticNonlinearPoisson_5_5_0_I3 AnalyticNonlinearPoisson 5 5 0 3)
+# Throws ERROR:  1: Not implemented. in Poisson_BoundaryConditionsAnalyticCalculate
+#add_test(ClassicalField_AnalyticNonlinearPoisson_5_5_0_I4 AnalyticNonlinearPoisson 5 5 0 4)
+add_test(ClassicalField_AnalyticNonlinearPoisson_5_5_0_I6 AnalyticNonlinearPoisson 5 5 0 6)
+add_test(ClassicalField_AnalyticNonlinearPoisson_5_5_0_I7 AnalyticNonlinearPoisson 5 5 0 7)
+add_test(ClassicalField_AnalyticNonlinearPoisson_5_5_0_I8 AnalyticNonlinearPoisson 5 5 0 8)
+add_test(ClassicalField_AnalyticNonlinearPoisson_2_2_2_I1 AnalyticNonlinearPoisson 2 2 2 1)
+add_test(ClassicalField_AnalyticNonlinearPoisson_2_2_2_I7 AnalyticNonlinearPoisson 2 2 2 7)
+

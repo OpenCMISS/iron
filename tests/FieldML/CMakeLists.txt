@@ -1,0 +1,3 @@
+add_executable(StaticAdvectionDiffusion_FieldML StaticAdvectionDiffusion_FieldML.f90)
+target_link_libraries(StaticAdvectionDiffusion_FieldML iron fieldml-api)
+add_test(StaticAdvectionDiffusion_FieldML StaticAdvectionDiffusion_FieldML)

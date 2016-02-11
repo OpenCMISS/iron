@@ -93,7 +93,7 @@ if(MSVC)
 else()
     set(IRON_TARGETS iron)
     add_library(iron ${IRON_SRC})
-    target_compile_options(iron PRIVATE -cpp)
+    target_compile_options(iron PUBLIC $<BUILD_INTERFACE:-cpp>)
 endif()
 
 # Set the same stuff for either the separate targets (windows) or one target (else)
@@ -130,7 +130,7 @@ endforeach()
 
 if (BUILD_TESTS)
     enable_testing()
-    # TODO: add unit test directory etc here
+    add_subdirectory(tests)
 endif()
 
 # Build bindings as selected
