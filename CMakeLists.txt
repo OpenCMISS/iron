@@ -113,23 +113,52 @@ foreach(irontarget ${IRON_TARGETS})
     # This is conveniently done by linking against the "mpi" interface target
     # returned by our FindMPI module.
     if (NOT CMAKE_Fortran_COMPILER STREQUAL MPI_Fortran_COMPILER)
-        target_link_libraries(${irontarget} PRIVATE mpi)
+        target_link_libraries(${irontarget} PUBLIC $<BUILD_INTERFACE:mpi>)
     endif()
     target_link_libraries(${irontarget} PRIVATE ${LINK_LIBS})
     if(WITH_FIELDML)
-        target_link_libraries(${irontarget} PRIVATE fieldml-api)
+        target_link_libraries(${irontarget} PUBLIC $<BUILD_INTERFACE:fieldml-api>)
     endif()
     # Dont use "USE MPI" instructions if the percompiled mpi module files are incompatible.
     # This happens when the fortran compiler used to build mpi differs from the currently used one.
     # This holds on windows (only pre-compiled mpi implementations available; MPICH2 and MSMPI)
     # and on e.g. clusters with inappropriately configured toolchain environments.
     if (NOT MPI_Fortran_MODULE_COMPATIBLE)
-        target_compile_definitions(${irontarget} PRIVATE NOMPIMOD)
+        target_compile_definitions(${irontarget} PUBLIC $<BUILD_INTERFACE:NOMPIMOD>)
     endif()
 endforeach()
 
 if (BUILD_TESTS)
     enable_testing()
+    
+    # Set up the correct environment for the tests
+    # See https://cmake.org/pipermail/cmake/2009-May/029464.html
+    if (WIN32)
+       set(LD_VARNAME "PATH")
+    else()
+       set(LD_VARNAME "LD_LIBRARY_PATH")
+    endif()
+    
+    # Composes a native PATH-compatible variable to use for DLL/SO finding.
+    # Each extra argument is assumed a path to add. Added in the order specified.
+    function(GET_LD_PATH OUTPUT_VARIABLE)
+        if (WIN32)
+           set(LD_PATH "$ENV{PATH}")
+           foreach(_PATH ${ARGN})
+               file(TO_NATIVE_PATH "${_PATH}" _PATH)
+               set(LD_PATH "${_PATH};${LD_PATH}")
+           endforeach()
+           string(REPLACE ";" "\\;" LD_PATH "${LD_PATH}")
+        else()
+           set(LD_PATH "$ENV{LD_LIBRARY_PATH}")
+           foreach(_PATH ${ARGN})
+               file(TO_NATIVE_PATH "${_PATH}" _PATH)
+               set(LD_PATH "${_PATH}:${LD_PATH}")
+           endforeach()
+        endif()
+        set(${OUTPUT_VARIABLE} "${LD_PATH}" PARENT_SCOPE)
+    endfunction()
+    
     add_subdirectory(tests)
 endif()
 

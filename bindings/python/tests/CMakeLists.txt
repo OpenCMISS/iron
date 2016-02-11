@@ -1,19 +1,6 @@
 # Set the correct python path to have it find the opencmiss package
 file(TO_NATIVE_PATH "${BINDINGS_BIN_DIR}/$<CONFIG>" NATIVE_PYTHON_BINDINGS_DIR)
 
-# Set up the correct environment for the tests
-# See https://cmake.org/pipermail/cmake/2009-May/029464.html
-if (WIN32)
-   set(LD_VARNAME "PATH")
-   file(TO_NATIVE_PATH "${BINDINGS_BIN_DIR}" _PATH)
-   set(LD_PATH "${_PATH};$ENV{PATH}")
-   string(REPLACE ";" "\\;" LD_PATH "${LD_PATH}")
-else()
-   set(LD_VARNAME "LD_LIBRARY_PATH")
-   file(TO_NATIVE_PATH "${BINDINGS_BIN_DIR}" _PATH)
-   set(LD_PATH "${_PATH}:$ENV{LD_LIBRARY_PATH}")
-endif()
-
 # Add the tests
 set(PYTHONTESTS )
 add_test(NAME Python_Bindings_Import
@@ -53,7 +40,7 @@ list(APPEND PYTHONTESTS Python_Bindings_Laplace)
 #)
 #list(APPEND PYTHONTESTS Python_Bindings_Monodomain2DSquare)
 
-
+GET_LD_PATH(LD_PATH "${BINDINGS_BIN_DIR}")
 foreach(_TEST ${PYTHONTESTS})
     set_tests_properties(${_TEST} PROPERTIES
         TIMEOUT 60 

@@ -13,6 +13,8 @@ if (WITH_C_BINDINGS)
         message(FATAL_ERROR "No Python found. A working Python interpreter is required to generate any Iron bindings")
     endif()
 endif()
+# Directory used within tests
+set(BINDINGS_BIN_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 
 set(_CLEANUP)
 # C-Bindings extra target
@@ -203,7 +205,6 @@ if (WITH_Python_BINDINGS)
     list(APPEND _CLEANUP ${SWIG_IFACE} ${PYTHON_WRAPPER})
     
     if (BUILD_TESTS)
-        set(BINDINGS_BIN_DIR "${CMAKE_CURRENT_BINARY_DIR}")
         add_subdirectory(python/tests)
     endif()
     

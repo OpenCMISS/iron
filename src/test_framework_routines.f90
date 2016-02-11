@@ -50,7 +50,8 @@ MODULE TEST_FRAMEWORK_ROUTINES
   USE MATRIX_VECTOR
   USE STRINGS
 
-#include "macros.h"  
+#include "macros.h"
+#include "dllexport.h"
 
   IMPLICIT NONE
 
@@ -81,6 +82,7 @@ CONTAINS
   
   !>Check if the actual integer value is as expected.
   SUBROUTINE TEST_FRAMEWORK_ASSERT_EQUALS_INTG(EXPECTED_VALUE,ACTUAL_VALUE,ERR)
+    !DLLEXPORT(TEST_FRAMEWORK_ASSERT_EQUALS_INTG)
   
     !Argument variables 
     INTEGER(INTG), INTENT(IN) :: EXPECTED_VALUE !<expected value
@@ -107,7 +109,7 @@ CONTAINS
   
   !>Check if the actual real(DP) value is as expected.
   SUBROUTINE TEST_FRAMEWORK_ASSERT_EQUALS_DP1(EXPECTED_VALUE,ACTUAL_VALUE,ERR)
-  
+    !DLLEXPORT(TEST_FRAMEWORK_ASSERT_EQUALS_DP1)
     !Argument variables 
     REAL(DP), INTENT(IN) :: EXPECTED_VALUE !<expected value
     REAL(DP), INTENT(IN) :: ACTUAL_VALUE !<actual value
@@ -131,6 +133,7 @@ CONTAINS
   
   !>Check if the actual real(DP) value is as expected.
   SUBROUTINE TEST_FRAMEWORK_ASSERT_EQUALS_DP2(EXPECTED_VALUE,ACTUAL_VALUE,TOLERANCE,ERR)
+    !DLLEXPORT(TEST_FRAMEWORK_ASSERT_EQUALS_DP2)
   
     !Argument variables 
     REAL(DP), INTENT(IN) :: EXPECTED_VALUE !<expected value
@@ -158,7 +161,7 @@ CONTAINS
   
   !>Check if the actual real(DP) values is as expected.
   SUBROUTINE TEST_FRAMEWORK_ASSERT_EQUALS_DP(EXPECTED_VALUE,ACTUAL_VALUE,ERR)
-  
+    !DLLEXPORT(TEST_FRAMEWORK_ASSERT_EQUALS_DP)
     !Argument variables 
     REAL(DP), INTENT(IN) :: EXPECTED_VALUE(:) !<expected value
     REAL(DP), INTENT(IN) :: ACTUAL_VALUE(:) !<actual value
@@ -189,6 +192,7 @@ CONTAINS
   
   !>Get the gradient value of two array.
   SUBROUTINE TEST_FRAMEWORK_GRADIENT_VALUE_GET(X_VALUES,Y_VALUES,GRADIENT_VALUE)
+    !DLLEXPORT(TEST_FRAMEWORK_GRADIENT_VALUE_GET)
   
     !Argument variables 
     REAL(DP), INTENT(IN) :: X_VALUES(:) !<expected value
