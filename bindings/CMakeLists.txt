@@ -178,9 +178,9 @@ if (WITH_Python_BINDINGS)
     if(PYTHON_BINDINGS_INSTALL_DIR_IS_VIRTUALENV)
         # The binary directories for the python environments are different on windows (for what reason exactly?)
         # So we need different subpaths
-        set(VENV_BINDIR bin/)
+        set(VENV_BINDIR bin)
         if (WIN32)
-            set(VENV_BINDIR Scripts/)
+            set(VENV_BINDIR Scripts)
         endif()
         # Convention between manage and iron CMake scripts: On multiconfig-environments, the 
         # installation directories have the build type path element inside the PYTHON_BINDINGS_INSTALL_DIR
