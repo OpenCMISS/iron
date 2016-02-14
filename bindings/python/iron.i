@@ -80,12 +80,27 @@
 
 /* String input */
 %typemap(in,numinputs=1) (const int Size, const char *DummyInputString) {
-  if (!PyString_Check($input)) {
+  PyObject *temp_obj;
+  if (PyString_Check($input)) {
+    $1 = PyString_Size($input)+1;
+    $2 = PyString_AsString($input);
+  } else if (PyUnicode_Check($input)) {
+%#if PY_VERSION_HEX < 0x03030000
+    $1 = PyUnicode_GetSize($input)+1;
+%#else
+    $1 = PyUnicode_GetLength($input)+1;
+%#endif
+    temp_obj = PyUnicode_AsUTF8String($input);
+    if (temp_obj != NULL) {
+      $2 = PyString_AsString(temp_obj);
+    } else {
+      PyErr_SetString(PyExc_ValueError,"Expected a UTF8 compatible string");
+      return NULL;
+    }
+  } else {
     PyErr_SetString(PyExc_ValueError,"Expected a string");
     return NULL;
   }
-  $1 = PyString_Size($input)+1;
-  $2 = PyString_AsString($input);
 }
 
 /* String output */
