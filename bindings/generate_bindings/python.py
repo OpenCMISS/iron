@@ -40,7 +40,7 @@ def generate(iron_source_dir, args):
     library = LibrarySource(iron_source_dir)
 
     module.write('"""%s"""\n\n' % MODULE_DOCSTRING)
-    module.write("import _%s\n" %(swig_module_name))
+    module.write("from . import _%s\n" %(swig_module_name))
     module.write("import signal\n")
     module.write("from ._utils import (CMFEError, CMFEType, Enum,\n"
         "    wrap_cmiss_routine as _wrap_routine)\n\n\n")

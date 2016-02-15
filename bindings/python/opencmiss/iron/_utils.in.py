@@ -1,7 +1,7 @@
 """Utility routines and classes used by OpenCMISS
 """
 
-import _@IRON_PYTHON_MODULE@
+from . import _@IRON_PYTHON_MODULE@
 
 
 class CMFEError(Exception):

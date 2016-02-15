@@ -14,7 +14,7 @@ package_data = {'opencmiss.iron': ['$<TARGET_FILE_NAME:@IRON_PYTHON_MODULE@>']}
 
 setup(
     name='OpenCMISS-Iron',
-    version='@IRON_VERSION@',
+    version='@Iron_VERSION@',
     description=('Python bindings for the OpenCMISS computational '
             'modelling library Iron.'),
     long_description=('Python bindings to OpenCMISS-Iron. '
@@ -29,7 +29,7 @@ setup(
     author_email='hsorby@aucklanduni.ac.nz',
     url='http://www.opencmiss.org/',
     install_requires=requires,
-    packages=['opencmiss', 'opencmiss.iron', 'opencmiss.zinc'],
+    packages=['opencmiss', 'opencmiss.iron'],
     package_data=package_data
 )
 #finally:
