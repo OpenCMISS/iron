@@ -2,7 +2,7 @@
 %module iron_python
 %{
 #include "stdlib.h"
-#include "iron.h"
+#include "opencmiss/iron.h"
 #define MAX_OUTPUT_STRING_SIZE 300
 %}
 
