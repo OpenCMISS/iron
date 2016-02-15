@@ -204,8 +204,9 @@ if (WITH_Python_BINDINGS)
         )
         install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" --build . --target install_venv --config \${CMAKE_INSTALL_CONFIG_NAME} WORKING_DIRECTORY \"${Iron_BINARY_DIR}\")")
     else()
+        file(RELATIVE_PATH REL_PB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}" "${PYTHON_BINDINGS_INSTALL_DIR}")
         install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}/opencmiss
-            DESTINATION ${PYTHON_BINDINGS_INSTALL_DIR})
+            DESTINATION ${REL_PB_INSTALL_DIR})
     endif()
     list(APPEND _CLEANUP ${SWIG_IFACE} ${PYTHON_WRAPPER})
     
