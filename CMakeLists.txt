@@ -28,11 +28,10 @@ LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 # External components
 # MPI
 find_package(MPI REQUIRED)
-
+ 
 # Collect libraries to configure for/link against
 SET(LINK_LIBS )
 if (WITH_CELLML)
-    find_package(LIBCELLML ${LIBCELLML_VERSION} CONFIG REQUIRED)
     find_package(CELLML ${CELLML_VERSION} CONFIG REQUIRED)
     message(STATUS "Building with CELLML (${LIBCELLML_DIR})")
     LIST(APPEND LINK_LIBS cellml cellml_model_definition)
