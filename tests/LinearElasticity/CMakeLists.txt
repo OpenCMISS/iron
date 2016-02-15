@@ -1,0 +1,7 @@
+add_executable(CantileverBeam CantileverBeam.f90)
+target_link_libraries(CantileverBeam iron)
+oc_add_test(LinearElasticity_CantileverBeam CantileverBeam)
+
+add_executable(Extension Extension.f90)
+target_link_libraries(Extension iron)
+oc_add_test(LinearElasticity_Extension Extension)

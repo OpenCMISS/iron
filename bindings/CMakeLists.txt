@@ -13,13 +13,16 @@ if (WITH_C_BINDINGS)
         message(FATAL_ERROR "No Python found. A working Python interpreter is required to generate any Iron bindings")
     endif()
 endif()
+# Directory used within tests
+set(BINDINGS_BIN_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 
 set(_CLEANUP)
 # C-Bindings extra target
 if (WITH_C_BINDINGS)
     message(STATUS "Creating C bindings")
-    # Generate the c files 
-    set(OPENCMISS_H "${CMAKE_CURRENT_BINARY_DIR}/iron.h")
+    # Generate the c files
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/opencmiss") # need this sub-path as the include directive is 
+    set(OPENCMISS_H "${CMAKE_CURRENT_BINARY_DIR}/opencmiss/iron.h")
     set(OPENCMISS_C_F90 "${CMAKE_CURRENT_BINARY_DIR}/iron_c.f90")
     add_custom_command(OUTPUT ${OPENCMISS_C_F90} ${OPENCMISS_H}
         DEPENDS ${Iron_SOURCE_DIR}/src/opencmiss_iron.f90 # Need to re-build if that file changes!
@@ -30,7 +33,10 @@ if (WITH_C_BINDINGS)
     
     add_library(iron_c ${OPENCMISS_C_F90})
     target_link_libraries(iron_c PUBLIC iron)
-    target_include_directories(iron_c PRIVATE ${Iron_SOURCE_DIR}/src)
+    target_include_directories(iron_c PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+        $<BUILD_INTERFACE:${Iron_SOURCE_DIR}/src>
+    )
     install(TARGETS iron_c
         EXPORT iron-config
         RUNTIME DESTINATION bin
@@ -40,6 +46,10 @@ if (WITH_C_BINDINGS)
     install(FILES ${OPENCMISS_H}
         DESTINATION include/opencmiss
     )
+    
+    if (BUILD_TESTS)
+        add_subdirectory(c/tests)
+    endif()
     
     #include(GenerateExportHeader)
     #generate_export_header(iron_c)
@@ -168,9 +178,9 @@ if (WITH_Python_BINDINGS)
     if(PYTHON_BINDINGS_INSTALL_DIR_IS_VIRTUALENV)
         # The binary directories for the python environments are different on windows (for what reason exactly?)
         # So we need different subpaths
-        set(VENV_BINDIR bin/)
+        set(VENV_BINDIR bin)
         if (WIN32)
-            set(VENV_BINDIR Scripts/)
+            set(VENV_BINDIR Scripts)
         endif()
         # Convention between manage and iron CMake scripts: On multiconfig-environments, the 
         # installation directories have the build type path element inside the PYTHON_BINDINGS_INSTALL_DIR
@@ -188,39 +198,15 @@ if (WITH_Python_BINDINGS)
             COMMENT "Installing: opencmiss.iron package for Python virtual environment ..."
         )
         install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" --build . --target install_venv --config \${CMAKE_INSTALL_CONFIG_NAME} WORKING_DIRECTORY \"${Iron_BINARY_DIR}\")")
-        
-        add_test(NAME python_bindings_import
-            COMMAND ${VENV_BINDIR}/python -c "from opencmiss.iron import iron"
-            WORKING_DIRECTORY "${PYTHON_BINDINGS_INSTALL_DIR}"
-        )
     else()
         install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}/opencmiss
             DESTINATION ${PYTHON_BINDINGS_INSTALL_DIR})
-        
-        # Set the correct python path to have it find the opencmiss package
-        file(TO_NATIVE_PATH "${PYTHON_BINDINGS_INSTALL_DIR}" NATIVE_PYTHON_BINDINGS_INSTALL_DIR)
-        
-        # Set up the correct environment for the tests
-        # See https://cmake.org/pipermail/cmake/2009-May/029464.html
-        if (WIN32)
-           set(LD_VARNAME "PATH")
-           file(TO_NATIVE_PATH "${CMAKE_INSTALL_PREFIX}/bin" _PATH)
-           set(LD_PATH "${_PATH};$ENV{PATH}")
-           string(REPLACE ";" "\\;" LD_PATH "${LD_PATH}")
-        else()
-           set(LD_VARNAME "LD_LIBRARY_PATH")
-           file(TO_NATIVE_PATH "${CMAKE_INSTALL_PREFIX}/lib" _PATH)
-           set(LD_PATH "${_PATH}:$ENV{LD_LIBRARY_PATH}")
-        endif()
-        # Add the test
-        add_test(NAME python_bindings_import
-            COMMAND ${PYTHON_EXECUTABLE} -c "from opencmiss.iron import iron"
-        )
-        set_tests_properties(python_bindings_import
-            PROPERTIES ENVIRONMENT "PYTHONPATH=${NATIVE_PYTHON_BINDINGS_INSTALL_DIR};${LD_VARNAME}=${LD_PATH}"
-        )
     endif()
     list(APPEND _CLEANUP ${SWIG_IFACE} ${PYTHON_WRAPPER})
+    
+    if (BUILD_TESTS)
+        add_subdirectory(python/tests)
+    endif()
     
     # "Bugfix": If we use the same source file name, there will be two processes messing with
     # the same fortran module file which can lead to errors using -j parallel builds.

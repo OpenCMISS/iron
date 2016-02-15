@@ -53,7 +53,8 @@ MODULE FLUID_MECHANICS_IO_ROUTINES
  USE INPUT_OUTPUT 
  USE KINDS   
 
-#include "macros.h"  
+#include "macros.h"
+#include "dllexport.h"
 
   IMPLICIT NONE
 
@@ -2844,7 +2845,8 @@ CONTAINS
 
   !> Reads in information defined by cmheart input file format.
   SUBROUTINE FLUID_MECHANICS_IO_READ_CMHEART1(EXPORT,ERR)
-
+    !DLLEXPORT(FLUID_MECHANICS_IO_READ_CMHEART1)
+  
     !Argument variables
     TYPE (EXPORT_CONTAINER):: EXPORT  
     INTEGER(INTG) :: ERR !<The error code
@@ -2958,7 +2960,8 @@ CONTAINS
 
   !> Reads in information defined by cmheart input file format.
   SUBROUTINE FLUID_MECHANICS_IO_READ_CMHEART2(EXPORT,BC,ERR)
-
+    !DLLEXPORT(FLUID_MECHANICS_IO_READ_CMHEART2)
+  
     !Argument variables
     TYPE (EXPORT_CONTAINER):: EXPORT  
     TYPE (BOUNDARY_PARAMETERS):: BC
@@ -3079,7 +3082,8 @@ CONTAINS
 
   !> Reads in information defined by cmheart input file format.
   SUBROUTINE FLUID_MECHANICS_IO_READ_CMHEART3(EXPORT1,EXPORT2,EXPORT3,CONNECT,BC,ERR)
-
+    !DLLEXPORT(FLUID_MECHANICS_IO_READ_CMHEART3)
+  
     !Argument variables
     TYPE (EXPORT_CONTAINER):: EXPORT1,EXPORT2,EXPORT3
     TYPE (COUPLING_PARAMETERS):: CONNECT

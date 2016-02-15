@@ -1,0 +1,6 @@
+file(COPY input/ DESTINATION input)
+add_executable(Darcy Darcy.f90)
+target_link_libraries(Darcy iron)
+oc_add_test(FluidMechanics_Darcy_Poly Darcy 1 test1)
+oc_add_test(FluidMechanics_Darcy_Exp Darcy 2 test2)
+oc_add_test(FluidMechanics_Darcy_SinCos Darcy 3 test3)
