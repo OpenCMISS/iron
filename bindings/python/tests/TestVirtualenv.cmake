@@ -25,3 +25,5 @@ execute_process(
 if (NOT RES EQUAL 0)
     message(FATAL_ERROR "Importing opencmiss iron package in virtual environment failed")
 endif()
+# Dont forget to clean up!
+file(REMOVE_RECURSE ${WD}/test_venv)

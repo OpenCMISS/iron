@@ -40,22 +40,29 @@ if (WITH_C_BINDINGS)
     install(TARGETS iron_c
         EXPORT iron-config
         RUNTIME DESTINATION bin
+        COMPONENT CBindings
         LIBRARY DESTINATION lib
+        INCLUDES DESTINATION include
+        COMPONENT Development
         ARCHIVE DESTINATION lib
-        INCLUDES DESTINATION include/opencmiss)
+        INCLUDES DESTINATION include
+        COMPONENT Development
+    )
     install(FILES ${OPENCMISS_H}
         DESTINATION include/opencmiss
+        COMPONENT CBindings
     )
     
     if (BUILD_TESTS)
         add_subdirectory(c/tests)
     endif()
     
-    #include(GenerateExportHeader)
-    #generate_export_header(iron_c)
-    #install(FILES iron_c_exports.h
-    #    DESTINATION include/opencmiss
-    #)
+    include(GenerateExportHeader)
+    generate_export_header(iron_c)
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/iron_c_export.h"
+        DESTINATION include/opencmiss
+        COMPONENT CBindings
+    )
 endif()
 
 # Python-Bindings extra target
@@ -132,6 +139,13 @@ if (WITH_Python_BINDINGS)
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron
     )
+    # "Bugfix": If we use the same source file name, there will be two processes messing with
+    # the same fortran module file which can lead to errors using -j parallel builds.
+    # By this we simply force to have iron_c build before the python module.
+    if (WITH_C_BINDINGS)
+        add_dependencies(${IRON_PYTHON_MODULE} iron_c)
+    endif()
+    
 
     # We dont want any libXX or .dll - see UseSWIG.cmake
     set_target_properties(${IRON_PYTHON_MODULE} PROPERTIES PREFIX "_")
@@ -170,17 +184,17 @@ if (WITH_Python_BINDINGS)
         COMMENT "Generating Python binding script"
         WORKING_DIRECTORY "${Iron_SOURCE_DIR}/bindings"
     )
+    list(APPEND _CLEANUP ${IRON_PY})
     add_custom_target(collect_python_binding_files ALL
         DEPENDS "${IRON_PY}"
         COMMAND ${CMAKE_COMMAND} -E copy ${IRON_PY} ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron/iron.py
     )
     
-    if (NOT PYTHON_BINDINGS_INSTALL_DIR)
-        set(PYTHON_BINDINGS_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/python)
-    endif()
-    # Either install to existing virtual environment or simply copy all the necessary files into
-    # a folder
-    if(PYTHON_BINDINGS_INSTALL_DIR_IS_VIRTUALENV)
+    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}/opencmiss
+        DESTINATION python/$<CONFIG>
+        COMPONENT PythonBindings)
+    
+    if (INSTALL_TO_VIRTUALENV)
         # The binary directories for the python environments are different on windows (for what reason exactly?)
         # So we need different subpaths
         set(VENV_BINDIR bin)
@@ -188,7 +202,7 @@ if (WITH_Python_BINDINGS)
             set(VENV_BINDIR Scripts)
         endif()
         # Convention between manage and iron CMake scripts: On multiconfig-environments, the 
-        # installation directories have the build type path element inside the PYTHON_BINDINGS_INSTALL_DIR
+        # installation directories have the build type path element inside the INSTALL_TO_VIRTUALENV
         if (HAVE_MULTICONFIG_ENV)
             set(VENV_BINDIR $<LOWER_CASE:$<CONFIG>>/${VENV_BINDIR})
         endif()
@@ -199,29 +213,15 @@ if (WITH_Python_BINDINGS)
         add_custom_target(install_venv
             DEPENDS collect_python_binding_files
             COMMAND ${VENV_BINDIR}/pip install --upgrade "${NATIVE_CMAKE_CURRENT_BINARY_DIR}"
-            WORKING_DIRECTORY "${PYTHON_BINDINGS_INSTALL_DIR}"
+            WORKING_DIRECTORY "${INSTALL_TO_VIRTUALENV}"
             COMMENT "Installing: opencmiss.iron package for Python virtual environment ..."
         )
         install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" --build . --target install_venv --config \${CMAKE_INSTALL_CONFIG_NAME} WORKING_DIRECTORY \"${Iron_BINARY_DIR}\")")
-    else()
-        file(RELATIVE_PATH REL_PB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}" "${PYTHON_BINDINGS_INSTALL_DIR}")
-        install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}/opencmiss
-            DESTINATION ${REL_PB_INSTALL_DIR})
     endif()
-    list(APPEND _CLEANUP ${SWIG_IFACE} ${PYTHON_WRAPPER})
     
     if (BUILD_TESTS)
         add_subdirectory(python/tests)
     endif()
-    
-    # "Bugfix": If we use the same source file name, there will be two processes messing with
-    # the same fortran module file which can lead to errors using -j parallel builds.
-    # By this we simply force to have iron_c build before the python module.
-    if (WITH_C_BINDINGS)
-        add_dependencies(${IRON_PYTHON_MODULE} iron_c)
-    endif()
-        
-    list(APPEND _CLEANUP ${IRON_PY} ${SWIG_OUTDIR} ${IRON_OPENCMISS_DIR})
 endif()
 if (_CLEANUP)
     set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${_CLEANUP}")

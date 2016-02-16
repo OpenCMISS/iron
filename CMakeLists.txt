@@ -166,13 +166,21 @@ add_subdirectory(bindings)
 
 # Install steps
 install(TARGETS iron
-      EXPORT iron-config
-      RUNTIME DESTINATION bin
-      LIBRARY DESTINATION lib
-      ARCHIVE DESTINATION lib
-      INCLUDES DESTINATION include/opencmiss)
+    EXPORT iron-config
+    RUNTIME DESTINATION bin
+    COMPONENT Runtime
+    LIBRARY DESTINATION lib
+    INCLUDES DESTINATION include
+    COMPONENT Development 
+    ARCHIVE DESTINATION lib
+    INCLUDES DESTINATION include
+    COMPONENT Development
+)
 
-install(EXPORT iron-config DESTINATION ${PACKAGE_CONFIG_DIR})
+install(EXPORT iron-config
+    DESTINATION ${PACKAGE_CONFIG_DIR}
+    COMPONENT Development
+)
 include(CMakePackageConfigHelpers)
 WRITE_BASIC_PACKAGE_VERSION_FILE(${CMAKE_CURRENT_BINARY_DIR}/iron-config-version.cmake COMPATIBILITY AnyNewerVersion)
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/iron-config-dependencies.cmake 
@@ -195,15 +203,13 @@ file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/iron-config-dependencies.cmake "set(_IMP
 install(FILES 
     ${CMAKE_CURRENT_BINARY_DIR}/iron-config-version.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/iron-config-dependencies.cmake
-    DESTINATION ${PACKAGE_CONFIG_DIR})  
+    DESTINATION ${PACKAGE_CONFIG_DIR}
+    COMPONENT Development) 
 
 # The install directories are "opencmiss" instead of "iron", as those packages are to be seen under one name
 # rather than separate entities.
 install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/
     DESTINATION include/opencmiss
+    COMPONENT Development
     FILES_MATCHING PATTERN "opencmiss*.mod"
 )
-
-if (WITH_C_BINDINGS)
-    install(FILES ${OPENCMISS_H} DESTINATION include/opencmiss)
-endif()

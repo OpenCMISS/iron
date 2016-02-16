@@ -48,7 +48,7 @@ foreach(_TEST ${PYTHONTESTS})
     )
 endforeach()
 
-if(PYTHON_BINDINGS_INSTALL_DIR_IS_VIRTUALENV)
+if(INSTALL_TO_VIRTUALENV)
     find_program(VIRTUALENV_EXEC virtualenv)
     # Add an extra test ensuring the installed opencmiss iron package works in the virtualenvironment
     add_test(NAME Python_Bindings_Virtualenv
