@@ -166,13 +166,13 @@ def subroutine_c_names(subroutine):
     return c_name, c_f90_name
 
 
-def subroutine_to_c_header(subroutine):
+def subroutine_to_c_header(subroutine, export=True):
     """Returns the function declaration in C"""
 
     output = ['\n/*>']
     output.append('\n *>'.join(subroutine.comment_lines))
     output.append(' */\n')
-    output.append('IRON_C_EXPORT cmfe_Error %s(' % subroutine_c_names(subroutine)[0])
+    output.append('{0}cmfe_Error {1}('.format('IRON_C_EXPORT ' if export else '', subroutine_c_names(subroutine)[0]))
 
     c_parameters = _chain_iterable([parameter_to_c(p)
             for p in subroutine.parameters])

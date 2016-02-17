@@ -31,7 +31,7 @@ def write_interface(library, output):
         if isinstance(o, c.Subroutine):
             (start_lines, end_lines) = routine_swig_lines(o)
             output.write(start_lines)
-            output.write(c.subroutine_to_c_header(o))
+            output.write(c.subroutine_to_c_header(o, export=False))
             output.write(end_lines)
         elif isinstance(o, c.Constant):
             output.write(c.constant_to_c_header(o))
