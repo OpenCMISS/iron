@@ -169,12 +169,12 @@ install(TARGETS iron
     EXPORT iron-config
     RUNTIME DESTINATION bin
     COMPONENT Runtime
-    LIBRARY DESTINATION lib
-    INCLUDES DESTINATION include
-    COMPONENT Development 
     ARCHIVE DESTINATION lib
-    INCLUDES DESTINATION include
+    COMPONENT Runtime
+    INCLUDES DESTINATION include/opencmiss
+    LIBRARY DESTINATION lib
     COMPONENT Development
+    INCLUDES DESTINATION include/opencmiss
 )
 
 install(EXPORT iron-config
@@ -183,7 +183,12 @@ install(EXPORT iron-config
 )
 include(CMakePackageConfigHelpers)
 WRITE_BASIC_PACKAGE_VERSION_FILE(${CMAKE_CURRENT_BINARY_DIR}/iron-config-version.cmake COMPATIBILITY AnyNewerVersion)
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/iron-config-dependencies.cmake 
+install(FILES 
+    ${CMAKE_CURRENT_BINARY_DIR}/iron-config-version.cmake
+    DESTINATION ${PACKAGE_CONFIG_DIR}
+    COMPONENT Development
+)
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/iron-config-dependencies.cmake
     "include(CMakeFindDependencyMacro)\r\n"
     "set(${PROJECT_NAME}_IMPORT_PREFIX \${_IMPORT_PREFIX})\r\n"
 )
@@ -201,10 +206,9 @@ if (WITH_FIELDML)
 endif()
 file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/iron-config-dependencies.cmake "set(_IMPORT_PREFIX \${${PROJECT_NAME}_IMPORT_PREFIX})")
 install(FILES 
-    ${CMAKE_CURRENT_BINARY_DIR}/iron-config-version.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/iron-config-dependencies.cmake
     DESTINATION ${PACKAGE_CONFIG_DIR}
-    COMPONENT Development) 
+    COMPONENT DevelopmentSDK)    
 
 # The install directories are "opencmiss" instead of "iron", as those packages are to be seen under one name
 # rather than separate entities.

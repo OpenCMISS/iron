@@ -41,12 +41,12 @@ if (WITH_C_BINDINGS)
         EXPORT iron-config
         RUNTIME DESTINATION bin
         COMPONENT CBindings
-        LIBRARY DESTINATION lib
-        INCLUDES DESTINATION include
-        COMPONENT Development
         ARCHIVE DESTINATION lib
+        COMPONENT CBindings
         INCLUDES DESTINATION include
+        LIBRARY DESTINATION lib
         COMPONENT Development
+        INCLUDES DESTINATION include
     )
     install(FILES ${OPENCMISS_H}
         DESTINATION include/opencmiss
@@ -216,7 +216,8 @@ if (WITH_Python_BINDINGS)
             WORKING_DIRECTORY "${INSTALL_TO_VIRTUALENV}"
             COMMENT "Installing: opencmiss.iron package for Python virtual environment ..."
         )
-        install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" --build . --target install_venv --config \${CMAKE_INSTALL_CONFIG_NAME} WORKING_DIRECTORY \"${Iron_BINARY_DIR}\")")
+        install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" --build . --target install_venv --config \${CMAKE_INSTALL_CONFIG_NAME} WORKING_DIRECTORY \"${Iron_BINARY_DIR}\")"
+            COMPONENT VirtualEnv)
     endif()
     
     if (BUILD_TESTS)
