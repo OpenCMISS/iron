@@ -178,7 +178,6 @@ install(TARGETS iron
     COMPONENT Runtime
     ARCHIVE DESTINATION lib
     COMPONENT Runtime
-    INCLUDES DESTINATION include/opencmiss
     LIBRARY DESTINATION lib
     COMPONENT Development
     INCLUDES DESTINATION include/opencmiss
@@ -224,3 +223,24 @@ install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/
     COMPONENT Development
     FILES_MATCHING PATTERN "opencmiss*.mod"
 )
+
+# Bundle fixup for iron shared library
+# We need non-system libraries shipped out with the Runtime libraries.
+
+# The wild turkey is out! We need this generator-intermediate step to get a hold of the effective output location
+# of the iron shared library. This in turn in placed inside a directory that is configuration-dependent,
+# and in the cmake_install script the CMAKE_INSTALL_CONFIG_NAME helps us getting the job done.
+file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/wildturkey.cmake"
+    CONTENT "set(IRON_LIB_NAME \"$<TARGET_FILE:iron>\")")
+# Hack: The BundleUtilities dont seem to work unless you give them an executable (just the dll wont work),
+# and as we dont always have the tests around we just use the cmake executable, which will always be around.
+install(FILES ${CMAKE_COMMAND}
+    DESTINATION bin)
+get_filename_component(CMAKE_NAME "${CMAKE_COMMAND}" NAME)
+install(CODE "
+   include(BundleUtilities)
+   include(${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}/wildturkey.cmake)
+   fixup_bundle(\"\${CMAKE_INSTALL_PREFIX}/bin/${CMAKE_NAME}\" \"\${IRON_LIB_NAME}\" \"\")
+   file(REMOVE \"\${CMAKE_INSTALL_PREFIX}/bin/${CMAKE_NAME}\")
+   "
+   COMPONENT Runtime)
