@@ -40,11 +40,11 @@ list(APPEND PYTHONTESTS Python_Bindings_Laplace)
 #)
 #list(APPEND PYTHONTESTS Python_Bindings_Monodomain2DSquare)
 
-GET_LD_PATH(LD_PATH "${BINDINGS_BIN_DIR}")
+get_library_path(PATH_DEF "${Iron_BINARY_DIR}" "${BINDINGS_BIN_DIR}")
 foreach(_TEST ${PYTHONTESTS})
     set_tests_properties(${_TEST} PROPERTIES
         TIMEOUT 60 
-        ENVIRONMENT "PYTHONPATH=${NATIVE_PYTHON_BINDINGS_DIR};${LD_VARNAME}=${LD_PATH}"
+        ENVIRONMENT "PYTHONPATH=${NATIVE_PYTHON_BINDINGS_DIR};${PATH_DEF}"
     )
 endforeach()
 
@@ -58,5 +58,6 @@ if(INSTALL_TO_VIRTUALENV)
         -DPACKAGE_DIR=${NATIVE_CMAKE_CURRENT_BINARY_DIR}
         -P ${CMAKE_CURRENT_SOURCE_DIR}/TestVirtualenv.cmake
     )
+    add_test_path(Python_Bindings_Virtualenv "${Iron_BINARY_DIR}" "${BINDINGS_BIN_DIR}")
 endif()
 

@@ -1,10 +1,7 @@
-GET_LD_PATH(LD_PATH "${Iron_BINARY_DIR}/$<CONFIG>")
 # Defines a simple wrapper for the add_test command that also sets the right environment for test execution
 function(oc_add_test TESTNAME)
     add_test(NAME ${TESTNAME} COMMAND ${ARGN})
-    set_tests_properties(${TESTNAME} PROPERTIES
-        ENVIRONMENT "${LD_VARNAME}=${LD_PATH}"
-    )
+    add_test_path(${TESTNAME} "${Iron_BINARY_DIR}")
 endfunction()
 
 add_subdirectory(ClassicalField)

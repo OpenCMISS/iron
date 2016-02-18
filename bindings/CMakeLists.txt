@@ -43,7 +43,6 @@ if (WITH_C_BINDINGS)
         COMPONENT CBindings
         ARCHIVE DESTINATION lib
         COMPONENT CBindings
-        INCLUDES DESTINATION include
         LIBRARY DESTINATION lib
         COMPONENT Development
         INCLUDES DESTINATION include
@@ -146,7 +145,6 @@ if (WITH_Python_BINDINGS)
         add_dependencies(${IRON_PYTHON_MODULE} iron_c)
     endif()
     
-
     # We dont want any libXX or .dll - see UseSWIG.cmake
     set_target_properties(${IRON_PYTHON_MODULE} PROPERTIES PREFIX "_")
     if(WIN32 AND NOT CYGWIN)
@@ -193,6 +191,10 @@ if (WITH_Python_BINDINGS)
     install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}/opencmiss
         DESTINATION python/$<CONFIG>
         COMPONENT PythonBindings)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}/setup.py
+        DESTINATION python/$<CONFIG>
+        COMPONENT PythonBindings
+)
     
     if (INSTALL_TO_VIRTUALENV)
         # The binary directories for the python environments are different on windows (for what reason exactly?)
