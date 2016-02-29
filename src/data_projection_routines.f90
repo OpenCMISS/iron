@@ -945,7 +945,7 @@ CONTAINS
 
 
   !>Evaluates data projection.
-  SUBROUTINE DataProjection_DataPointsProjectionEvaluate(DATA_PROJECTION,PROJECTION_FIELD,ERR,ERROR,*) !optimising
+  SUBROUTINE DataProjection_DataPointsProjectionEvaluate(DATA_PROJECTION,PROJECTION_FIELD,DISTANCE_VECTORS,ERR,ERROR,*) !optimising
     
     !Argument variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION !<A pointer to the data projection to evaluate

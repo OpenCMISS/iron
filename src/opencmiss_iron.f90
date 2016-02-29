@@ -20450,7 +20450,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
     INTEGER(INTG), INTENT(IN) :: dataPointsRegionUserNumber !<The region user number of the data projection to evaluate.
     INTEGER(INTG), INTENT(IN) :: projectionFieldUserNumber !<The field user number of the field data points are be projected on.
-    INTEGER(INTG), INTENT(IN) :: projectionFieldRegionUserNumber !<The region user number of the field data points are be projected on.    
+    INTEGER(INTG), INTENT(IN) :: projectionFieldRegionUserNumber !<The region user number of the field data points are be projected on.  
+    REAL(DP), INTENT(OUT) :: distance_vectors(:,:)  
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables  
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION
@@ -20475,7 +20476,7 @@ CONTAINS
       CALL DataPoints_DataProjectionGlobalNumberGet(DATA_POINTS,dataProjectionUserNumber,GLOBAL_NUMBER,err,error,*999)
       CALL DATA_POINTS_DATA_PROJECTION_GET(DATA_POINTS,GLOBAL_NUMBER,DATA_PROJECTION,err,error,*999)
       IF(ASSOCIATED(PROJECTION_FIELD_REGION)) THEN
-        CALL FIELD_USER_NUMBER_FIND(projectionFieldUserNumber,PROJECTION_FIELD_REGION,PROJECTION_FIELD,err,error,*999)
+        CALL FIELD_USER_NUMBER_FIND(projectionFieldUserNumber,PROJECTION_FIELD_REGION,PROJECTION_FIELD,distance_vectors,err,error,*999)
         IF(ASSOCIATED(PROJECTION_FIELD)) THEN
           CALL DataProjection_DataPointsProjectionEvaluate(DATA_PROJECTION,PROJECTION_FIELD,err,error,*999)
         ELSE
