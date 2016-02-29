@@ -950,7 +950,7 @@ CONTAINS
     !Argument variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION !<A pointer to the data projection to evaluate
     TYPE(FIELD_TYPE), POINTER :: PROJECTION_FIELD !<A pointer to the projection field to evaluate, this would normally be geometric field or dependent field
-    REAL(DP), INTENT(OUT) :: DISTANCE_VECTORS(:,:) !< The distance vectors of projection - from data point to point on face/line/element. 
+    REAL(DP), POINTER :: DISTANCE_VECTORS(:,:) !< The distance vectors of projection - from data point to point on face/line/element. 
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -1234,7 +1234,7 @@ CONTAINS
                   ENDDO
                   PROJECTED_DISTANCE(1,data_point_idx)=GLOBAL_CLOSEST_DISTANCES(data_point_idx,TOTAL_NUMBER_OF_CLOSEST_CANDIDATES) !assign initial distance to something large                           
                 ENDDO
-                ALLOCATE(DISTANCE_VECTORS(3, NUMBER_OF_DATA_POINTS), STAT=ERR) !Store distance vector for each data point for output. 
+                !ALLOCATE(DISTANCE_VECTORS(3, NUMBER_OF_DATA_POINTS), STAT=ERR) !Store distance vector for each data point for output. 
                 SELECT CASE(DATA_PROJECTION%PROJECTION_TYPE)
                   CASE (DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE) !Newton project to closest lines, and find miminum projection
                     DO data_point_idx=1,NUMBER_OF_DATA_POINTS
@@ -1245,7 +1245,7 @@ CONTAINS
                           & data_point_idx,1:NUMBER_OF_CLOSEST_CANDIDATES),CLOSEST_FACES(data_point_idx,1: &
                           & NUMBER_OF_CLOSEST_CANDIDATES),PROJECTION_EXIT_TAG(data_point_idx),PROJECTED_ELEMENT(data_point_idx),  &
                           & PROJECTED_FACE(data_point_idx),PROJECTED_DISTANCE(1,data_point_idx),PROJECTED_XI(:,data_point_idx), &
-                          & ERR,ERROR,*999)
+                          & DISTANCE_VECTORS(:, data_point_idx),ERR,ERROR,*999)
                         PROJECTED_ELEMENT(data_point_idx)=DOMAIN%MAPPINGS%ELEMENTS%LOCAL_TO_GLOBAL_MAP(PROJECTED_ELEMENT( &
                           & data_point_idx)) !map the element number to global number
                       ENDIF
@@ -1258,7 +1258,8 @@ CONTAINS
                           & DATA_POINTS%DATA_POINTS(data_point_idx)%position,CLOSEST_ELEMENTS( &
                           & data_point_idx,1:NUMBER_OF_CLOSEST_CANDIDATES),CLOSEST_FACES(data_point_idx, &
                           & 1:NUMBER_OF_CLOSEST_CANDIDATES),PROJECTION_EXIT_TAG(data_point_idx),PROJECTED_ELEMENT(data_point_idx), &
-                          & PROJECTED_FACE(data_point_idx),PROJECTED_DISTANCE(1,data_point_idx),PROJECTED_XI(:,data_point_idx), DISTANCE_VECTORS(:, data_point_idx) &
+                          & PROJECTED_FACE(data_point_idx),PROJECTED_DISTANCE(1,data_point_idx),PROJECTED_XI(:,data_point_idx), &
+                          & DISTANCE_VECTORS(:, data_point_idx) &
                           & ERR,ERROR,*999)
                         PROJECTED_ELEMENT(data_point_idx)=DOMAIN%MAPPINGS%ELEMENTS%LOCAL_TO_GLOBAL_MAP(PROJECTED_ELEMENT( &
                           & data_point_idx)) !map the element number to global number
@@ -1274,7 +1275,7 @@ CONTAINS
                               & DATA_POINTS(data_point_idx)%position,CLOSEST_ELEMENTS(data_point_idx, &
                               & 1:NUMBER_OF_CLOSEST_CANDIDATES),PROJECTION_EXIT_TAG(data_point_idx), &
                               & PROJECTED_ELEMENT(data_point_idx),PROJECTED_DISTANCE(1,data_point_idx), &
-                              & PROJECTED_XI(:,data_point_idx),ERR,ERROR,*999)
+                              & PROJECTED_XI(:,data_point_idx),DISTANCE_VECTORS(:, data_point_idx),ERR,ERROR,*999)
                             PROJECTED_ELEMENT(data_point_idx)=DOMAIN%MAPPINGS%ELEMENTS%LOCAL_TO_GLOBAL_MAP(PROJECTED_ELEMENT( &
                               & data_point_idx)) !map the element number to global number
 
@@ -1288,7 +1289,7 @@ CONTAINS
                               & DATA_POINTS(data_point_idx)%position,CLOSEST_ELEMENTS(data_point_idx, &
                               & 1:NUMBER_OF_CLOSEST_CANDIDATES),PROJECTION_EXIT_TAG(data_point_idx), &
                               & PROJECTED_ELEMENT(data_point_idx),PROJECTED_DISTANCE(1,data_point_idx), &
-                              & PROJECTED_XI(:,data_point_idx),ERR,ERROR,*999)                    
+                              & PROJECTED_XI(:,data_point_idx),DISTANCE_VECTORS(:, data_point_idx),ERR,ERROR,*999)                    
                             PROJECTED_ELEMENT(data_point_idx)=DOMAIN%MAPPINGS%ELEMENTS%LOCAL_TO_GLOBAL_MAP(PROJECTED_ELEMENT( &
                               & data_point_idx)) !map the element number to global number
                           ENDIF
@@ -1301,7 +1302,7 @@ CONTAINS
                               & DATA_POINTS(data_point_idx)%position,CLOSEST_ELEMENTS(data_point_idx, &
                               & 1:NUMBER_OF_CLOSEST_CANDIDATES),PROJECTION_EXIT_TAG(data_point_idx), &
                               & PROJECTED_ELEMENT(data_point_idx),PROJECTED_DISTANCE(1,data_point_idx), &
-                              & PROJECTED_XI(:,data_point_idx),ERR,ERROR,*999)
+                              & PROJECTED_XI(:,data_point_idx),DISTANCE_VECTORS(:, data_point_idx),ERR,ERROR,*999)
                             PROJECTED_ELEMENT(data_point_idx)=DOMAIN%MAPPINGS%ELEMENTS%LOCAL_TO_GLOBAL_MAP(PROJECTED_ELEMENT( &
                               & data_point_idx)) !map the element number to global number
                           ENDIF
@@ -1380,7 +1381,8 @@ CONTAINS
                         & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%EXIT_TAG,DATA_PROJECTION% &
                         & DATA_PROJECTION_RESULTS(data_point_idx)%ELEMENT_NUMBER,DATA_PROJECTION% &
                         & DATA_PROJECTION_RESULTS(data_point_idx)%ELEMENT_LINE_NUMBER,DATA_PROJECTION%DATA_PROJECTION_RESULTS( &
-                        & data_point_idx)%DISTANCE,DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI,ERR,ERROR,*999)
+                        & data_point_idx)%DISTANCE,DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI, &
+                        & DISTANCE_VECTORS(:, data_point_idx),ERR,ERROR,*999)
                     ENDDO
                   CASE (DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE) !find closest candidate faces
                     DO data_point_idx=1,NUMBER_OF_DATA_POINTS
@@ -1389,7 +1391,8 @@ CONTAINS
                         & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%EXIT_TAG,DATA_PROJECTION% &
                         & DATA_PROJECTION_RESULTS(data_point_idx)%ELEMENT_NUMBER,DATA_PROJECTION% &
                         & DATA_PROJECTION_RESULTS(data_point_idx)%ELEMENT_FACE_NUMBER,DATA_PROJECTION%DATA_PROJECTION_RESULTS( &
-                        & data_point_idx)%DISTANCE,DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI,ERR,ERROR,*999)
+                        & data_point_idx)%DISTANCE,DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI, &
+                        & DISTANCE_VECTORS(:, data_point_idx),ERR,ERROR,*999)
                     ENDDO
                   CASE (DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE) !find closest candidate elements        
                     SELECT CASE(DATA_PROJECTION%NUMBER_OF_XI)
@@ -1399,7 +1402,8 @@ CONTAINS
                             & DATA_POINTS(data_point_idx)%position,CLOSEST_ELEMENTS(data_point_idx,:),DATA_PROJECTION% &
                             & DATA_PROJECTION_RESULTS(data_point_idx)%EXIT_TAG,DATA_PROJECTION%DATA_PROJECTION_RESULTS( &
                             & data_point_idx)%ELEMENT_NUMBER, DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%DISTANCE, &
-                            & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI,ERR,ERROR,*999)
+                            & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI,DISTANCE_VECTORS(:, data_point_idx),&
+                            & ERR,ERROR,*999)
                         ENDDO
                       CASE (2) !2D mesh
                         DO data_point_idx=1,NUMBER_OF_DATA_POINTS
@@ -1407,7 +1411,8 @@ CONTAINS
                             & DATA_POINTS(data_point_idx)%position,CLOSEST_ELEMENTS(data_point_idx,:),DATA_PROJECTION% &
                             & DATA_PROJECTION_RESULTS(data_point_idx)%EXIT_TAG,DATA_PROJECTION%DATA_PROJECTION_RESULTS( &
                             & data_point_idx)%ELEMENT_NUMBER,DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%DISTANCE, &
-                            & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI,ERR,ERROR,*999)
+                            & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI,DISTANCE_VECTORS(:, data_point_idx), &
+			    & ERR,ERROR,*999)
                         ENDDO
                       CASE (3) !3D mesh
                         DO data_point_idx=1,NUMBER_OF_DATA_POINTS
@@ -1415,7 +1420,8 @@ CONTAINS
                             & DATA_POINTS(data_point_idx)%position,CLOSEST_ELEMENTS(data_point_idx,:),DATA_PROJECTION% &
                             & DATA_PROJECTION_RESULTS(data_point_idx)%EXIT_TAG,DATA_PROJECTION%DATA_PROJECTION_RESULTS( &
                             & data_point_idx)%ELEMENT_NUMBER,DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%DISTANCE, &
-                            & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI,ERR,ERROR,*999)
+                            & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI,DISTANCE_VECTORS(:, data_point_idx), &
+ 			    & ERR,ERROR,*999)
                         ENDDO
                       CASE DEFAULT
                         CALL FLAG_ERROR("Data projection number of xi is invalid",ERR,ERROR,*999)
@@ -1696,7 +1702,7 @@ CONTAINS
   
   !>Find the projection of a data point onto 1D elements
   SUBROUTINE DATA_PROJECTION_NEWTON_ELEMENTS_EVALUATE_1(DATA_PROJECTION,INTERPOLATED_POINT,POINT_VALUES,CANDIDATE_ELEMENTS, &
-    & PROJECTION_EXIT_TAG,PROJECTION_ELEMENT_NUMBER,PROJECTION_DISTANCE,PROJECTION_XI,ERR,ERROR,*)
+    & PROJECTION_EXIT_TAG,PROJECTION_ELEMENT_NUMBER,PROJECTION_DISTANCE,PROJECTION_XI,DISTANCE_VECTOR,ERR,ERROR,*)
     !Argument variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION !<Data projection problem to evaluate
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: INTERPOLATED_POINT    
@@ -1706,6 +1712,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: PROJECTION_ELEMENT_NUMBER
     REAL(DP), INTENT(OUT) :: PROJECTION_DISTANCE
     REAL(DP), INTENT(OUT) :: PROJECTION_XI(1)
+    REAL(DP), INTENT(OUT) :: DISTANCE_VECTOR(3)
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
    
@@ -1716,7 +1723,7 @@ CONTAINS
     INTEGER(INTG) :: BOUND,EXIT_TAG
     REAL(DP) :: XI(1),XI_NEW(1),XI_UPDATE(1),XI_UPDATE_NORM !<xi
     REAL(DP) :: RELATIVE_TOLERANCE,ABSOLUTE_TOLERANCE !<tolerances
-    REAL(DP) :: DISTANCE_VECTOR(3),FUNCTION_VALUE,FUNCTION_VALUE_NEW
+    REAL(DP) :: FUNCTION_VALUE,FUNCTION_VALUE_NEW
     REAL(DP) :: FUNCTION_GRADIENT,FUNCTION_HESSIAN
     REAL(DP) :: MAXIMUM_DELTA,MINIMUM_DELTA,DELTA !<trust region size
     REAL(DP) :: PREDICTED_REDUCTION,PREDICTION_ACCURACY
@@ -1848,7 +1855,7 @@ CONTAINS
   
   !>Find the projection of a data point onto 2D elements
   SUBROUTINE DATA_PROJECTION_NEWTON_ELEMENTS_EVALUATE_2(DATA_PROJECTION,INTERPOLATED_POINT,POINT_VALUES,CANDIDATE_ELEMENTS, &
-    & PROJECTION_EXIT_TAG,PROJECTION_ELEMENT_NUMBER,PROJECTION_DISTANCE,PROJECTION_XI,ERR,ERROR,*)
+    & PROJECTION_EXIT_TAG,PROJECTION_ELEMENT_NUMBER,PROJECTION_DISTANCE,PROJECTION_XI,DISTANCE_VECTOR,ERR,ERROR,*)
     !Argument variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION !<Data projection problem to evaluate
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: INTERPOLATED_POINT    
@@ -2061,7 +2068,7 @@ CONTAINS
   
   !>Find the projection of a data point onto 3D elements
   SUBROUTINE DATA_PROJECTION_NEWTON_ELEMENTS_EVALUATE_3(DATA_PROJECTION,INTERPOLATED_POINT,POINT_VALUES,CANDIDATE_ELEMENTS, &
-    & PROJECTION_EXIT_TAG,PROJECTION_ELEMENT_NUMBER,PROJECTION_DISTANCE,PROJECTION_XI,ERR,ERROR,*)
+    & PROJECTION_EXIT_TAG,PROJECTION_ELEMENT_NUMBER,PROJECTION_DISTANCE,PROJECTION_XI,DISTANCE_VECTOR,ERR,ERROR,*)
     !Argument variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION !<Data projection problem to evaluate
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: INTERPOLATED_POINT    
@@ -2071,6 +2078,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: PROJECTION_ELEMENT_NUMBER
     REAL(DP), INTENT(OUT) :: PROJECTION_DISTANCE
     REAL(DP), INTENT(OUT) :: PROJECTION_XI(3)
+    REAL(DP), INTENT(OUT) :: DISTANCE_VECTOR(3)
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
    
@@ -2082,7 +2090,7 @@ CONTAINS
     INTEGER(INTG) :: NBOUND,BOUND(3),EXIT_TAG
     REAL(DP) :: XI(3),XI_NEW(3),XI_UPDATE(3),XI_UPDATE_NORM !<xi
     REAL(DP) :: RELATIVE_TOLERANCE,ABSOLUTE_TOLERANCE !<tolerances
-    REAL(DP) :: DISTANCE_VECTOR(3),FUNCTION_VALUE,FUNCTION_VALUE_NEW
+    REAL(DP) :: FUNCTION_VALUE,FUNCTION_VALUE_NEW
     REAL(DP) :: FUNCTION_GRADIENT(3),FUNCTION_GRADIENT_NORM,FUNCTION_GRADIENT2(2)
     REAL(DP) :: FUNCTION_HESSIAN(3,3),HESSIAN_DIAGONAL(3),FUNCTION_HESSIAN2(2,2),HESSIAN_DIAGONAL2(2)
     REAL(DP) :: TEMP1,TEMP2,TEMP3,TEMP4,DET,TRACE,TRACE2,EIGEN_MIN,EIGEN_MAX,EIGEN_SHIFT    
@@ -2597,7 +2605,7 @@ CONTAINS
   !>Find the projection of a data point onto element lines (slight difference to DATA_PROJECTION_NEWTON_ELEMENTS_EVALUATE_1)
   SUBROUTINE DATA_PROJECTION_NEWTON_LINES_EVALUATE(DATA_PROJECTION,INTERPOLATED_POINT,POINT_VALUES,CANDIDATE_ELEMENTS, &
     & CANDIDATE_ELEMENT_LINES,PROJECTION_EXIT_TAG,PROJECTION_ELEMENT_NUMBER,PROJECTION_ELEMENT_LINE_NUMBER,PROJECTION_DISTANCE, &
-    & PROJECTION_XI,ERR,ERROR,*)
+    & PROJECTION_XI,DISTANCE_VECTOR,ERR,ERROR,*)
     !Argument variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION !<Data projection problem to evaluate
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: INTERPOLATED_POINT    
@@ -2609,6 +2617,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: PROJECTION_ELEMENT_LINE_NUMBER
     REAL(DP), INTENT(OUT) :: PROJECTION_DISTANCE
     REAL(DP), INTENT(OUT) :: PROJECTION_XI(1)
+    REAL(DP), INTENT(OUT) :: DISTANCE_VECTOR(3)
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
    
@@ -2619,7 +2628,7 @@ CONTAINS
     INTEGER(INTG) :: BOUND,EXIT_TAG
     REAL(DP) :: XI(1),XI_NEW(1),XI_UPDATE(1),XI_UPDATE_NORM !<xi
     REAL(DP) :: RELATIVE_TOLERANCE,ABSOLUTE_TOLERANCE !<tolerances
-    REAL(DP) :: DISTANCE_VECTOR(3),FUNCTION_VALUE,FUNCTION_VALUE_NEW
+    REAL(DP) :: FUNCTION_VALUE,FUNCTION_VALUE_NEW
     REAL(DP) :: FUNCTION_GRADIENT,FUNCTION_HESSIAN
     REAL(DP) :: MAXIMUM_DELTA,MINIMUM_DELTA,DELTA !<trust region size
     REAL(DP) :: PREDICTED_REDUCTION,PREDICTION_ACCURACY

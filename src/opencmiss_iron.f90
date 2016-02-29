@@ -20443,7 +20443,7 @@ CONTAINS
 
   !>Evaluate a data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_DataPointsProjectionEvaluateNumber(dataProjectionUserNumber,dataPointsRegionUserNumber, &
-    & projectionFieldUserNumber,projectionFieldRegionUserNumber,err)
+    & projectionFieldUserNumber,projectionFieldRegionUserNumber, distance_vectors,err)
     !DLLEXPORT(cmfe_DataProjection_DataPointsProjectionEvaluateNumber)
 
     !Argument variables
@@ -20510,18 +20510,19 @@ CONTAINS
   !
 
   !>Evaluate a data projection identified by an object.
-  SUBROUTINE cmfe_DataProjection_DataPointsProjectionEvaluateObj(dataProjection,projectionField,err)
+  SUBROUTINE cmfe_DataProjection_DataPointsProjectionEvaluateObj(dataProjection,projectionField,distance_vectors, err)
     !DLLEXPORT(cmfe_DataProjection_DataPointsProjectionEvaluateObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to evaluate.
     TYPE(cmfe_FieldType), INTENT(IN) :: projectionField !<The field data points is projected on
+    REAL(DP), INTENT(OUT) :: distance_vectors(:,:) 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_DataProjection_DataPointsProjectionEvaluateObj",err,error,*999)
 
-    CALL DataProjection_DataPointsProjectionEvaluate(dataProjection%dataProjection,projectionField%field,err,error,*999)
+    CALL DataProjection_DataPointsProjectionEvaluate(dataProjection%dataProjection,projectionField%field,distance_vectors,err,error,*999)
 
     EXITS("cmfe_DataProjection_DataPointsProjectionEvaluateObj")
     RETURN
