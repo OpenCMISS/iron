@@ -1234,7 +1234,7 @@ CONTAINS
                   ENDDO
                   PROJECTED_DISTANCE(1,data_point_idx)=GLOBAL_CLOSEST_DISTANCES(data_point_idx,TOTAL_NUMBER_OF_CLOSEST_CANDIDATES) !assign initial distance to something large                           
                 ENDDO
-                !ALLOCATE(DISTANCE_VECTORS(3, NUMBER_OF_DATA_POINTS), STAT=ERR) !Store distance vector for each data point for output. 
+                ALLOCATE(DISTANCE_VECTORS(3, NUMBER_OF_DATA_POINTS), STAT=ERR) !Store distance vector for each data point for output. 
                 SELECT CASE(DATA_PROJECTION%PROJECTION_TYPE)
                   CASE (DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE) !Newton project to closest lines, and find miminum projection
                     DO data_point_idx=1,NUMBER_OF_DATA_POINTS
@@ -1259,8 +1259,7 @@ CONTAINS
                           & data_point_idx,1:NUMBER_OF_CLOSEST_CANDIDATES),CLOSEST_FACES(data_point_idx, &
                           & 1:NUMBER_OF_CLOSEST_CANDIDATES),PROJECTION_EXIT_TAG(data_point_idx),PROJECTED_ELEMENT(data_point_idx), &
                           & PROJECTED_FACE(data_point_idx),PROJECTED_DISTANCE(1,data_point_idx),PROJECTED_XI(:,data_point_idx), &
-                          & DISTANCE_VECTORS(:, data_point_idx) &
-                          & ERR,ERROR,*999)
+                          & DISTANCE_VECTORS(:, data_point_idx),ERR,ERROR,*999)
                         PROJECTED_ELEMENT(data_point_idx)=DOMAIN%MAPPINGS%ELEMENTS%LOCAL_TO_GLOBAL_MAP(PROJECTED_ELEMENT( &
                           & data_point_idx)) !map the element number to global number
                       ENDIF
@@ -1289,7 +1288,8 @@ CONTAINS
                               & DATA_POINTS(data_point_idx)%position,CLOSEST_ELEMENTS(data_point_idx, &
                               & 1:NUMBER_OF_CLOSEST_CANDIDATES),PROJECTION_EXIT_TAG(data_point_idx), &
                               & PROJECTED_ELEMENT(data_point_idx),PROJECTED_DISTANCE(1,data_point_idx), &
-                              & PROJECTED_XI(:,data_point_idx),DISTANCE_VECTORS(:, data_point_idx),ERR,ERROR,*999)                    
+                              & PROJECTED_XI(:,data_point_idx),DISTANCE_VECTORS(:, data_point_idx), &
+			      & ERR,ERROR,*999)                    
                             PROJECTED_ELEMENT(data_point_idx)=DOMAIN%MAPPINGS%ELEMENTS%LOCAL_TO_GLOBAL_MAP(PROJECTED_ELEMENT( &
                               & data_point_idx)) !map the element number to global number
                           ENDIF

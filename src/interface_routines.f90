@@ -1539,6 +1539,7 @@ CONTAINS
     INTEGER(INTG) :: fixedBodyIdx,projectionBodyIdx,dataPointIdx
     INTEGER(INTG) :: elementNumber,numberOfGeometricComponents
     INTEGER(INTG) :: coupledMeshFaceLineNumber,component
+    REAL(DP), POINTER :: distanceVectors(:,:)
   
     ENTERS("InterfacePointsConnectivity_DataReprojection",err,error,*999)
     
@@ -1590,7 +1591,8 @@ CONTAINS
               dependentFieldProjection=>interfaceCondition%DEPENDENT%FIELD_VARIABLES(projectionBodyIdx)%PTR%FIELD
               IF(ASSOCIATED(dependentFieldProjection)) THEN
                 !Projection the data points (with know spatial positions) on the projection dependent field 
-                CALL DataProjection_DataPointsProjectionEvaluate(dataProjection,dependentFieldProjection,err,error,*999)
+                CALL DataProjection_DataPointsProjectionEvaluate(dataProjection,dependentFieldProjection, &
+		  & distanceVectors,err,error,*999)
                 CALL InterfacePointsConnectivity_UpdateFromProjection(InterfacePointsConnectivity,dataProjection, &
                   & projectionBodyIdx,err,error,*999) 
               ELSE

@@ -2490,7 +2490,8 @@ MODULE OpenCMISS_Iron
     & EQUATIONS_SET_DIVFREE_VECTOR_DATA_PRE_FITTING_SUBTYPE !<Standard Galerkin Projection equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
 
 
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_ELASTICITY_DARCY_SUBTYPE = EQUATIONS_SET_STANDARD_ELASTICITY_DARCY_SUBTYPE !<Standard Elasticity Darcy equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_ELASTICITY_DARCY_SUBTYPE = &
+    & EQUATIONS_SET_STANDARD_ELASTICITY_DARCY_SUBTYPE !<Standard Elasticity Darcy equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_DIFFUSION_SUBTYPE = &
     & EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_DIFFUSION_SUBTYPE !<Coupled source diffusion-diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE =  &
@@ -20443,7 +20444,7 @@ CONTAINS
 
   !>Evaluate a data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_DataPointsProjectionEvaluateNumber(dataProjectionUserNumber,dataPointsRegionUserNumber, &
-    & projectionFieldUserNumber,projectionFieldRegionUserNumber, distance_vectors,err)
+    & projectionFieldUserNumber,projectionFieldRegionUserNumber,distance_vectors,err)
     !DLLEXPORT(cmfe_DataProjection_DataPointsProjectionEvaluateNumber)
 
     !Argument variables
@@ -20460,6 +20461,7 @@ CONTAINS
     TYPE(REGION_TYPE), POINTER :: DATA_POINTS_REGION
     TYPE(REGION_TYPE), POINTER :: PROJECTION_FIELD_REGION
     INTEGER(INTG) :: GLOBAL_NUMBER !<The data projection global number.
+    REAL(DP), POINTER :: distance_vectors_temp(:,:)
     TYPE(VARYING_STRING) :: localError      
 
     ENTERS("cmfe_DataProjection_DataPointsProjectionEvaluateNumber",err,error,*999)
@@ -20476,9 +20478,11 @@ CONTAINS
       CALL DataPoints_DataProjectionGlobalNumberGet(DATA_POINTS,dataProjectionUserNumber,GLOBAL_NUMBER,err,error,*999)
       CALL DATA_POINTS_DATA_PROJECTION_GET(DATA_POINTS,GLOBAL_NUMBER,DATA_PROJECTION,err,error,*999)
       IF(ASSOCIATED(PROJECTION_FIELD_REGION)) THEN
-        CALL FIELD_USER_NUMBER_FIND(projectionFieldUserNumber,PROJECTION_FIELD_REGION,PROJECTION_FIELD,distance_vectors,err,error,*999)
+        CALL FIELD_USER_NUMBER_FIND(projectionFieldUserNumber,PROJECTION_FIELD_REGION,PROJECTION_FIELD,err,error,*999)
         IF(ASSOCIATED(PROJECTION_FIELD)) THEN
-          CALL DataProjection_DataPointsProjectionEvaluate(DATA_PROJECTION,PROJECTION_FIELD,err,error,*999)
+          CALL DataProjection_DataPointsProjectionEvaluate(DATA_PROJECTION,PROJECTION_FIELD, &
+            & distance_vectors_temp,err,error,*999)
+	  distance_vectors = distance_vectors_temp
         ELSE
           localError="A field with an user number of "//TRIM(NumberToVString(projectionFieldUserNumber,"*",err,error))// &
             & " does not exist."
@@ -20518,11 +20522,14 @@ CONTAINS
     TYPE(cmfe_FieldType), INTENT(IN) :: projectionField !<The field data points is projected on
     REAL(DP), INTENT(OUT) :: distance_vectors(:,:) 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    REAL(DP), POINTER :: distance_vectors_temp(:,:)
     !Local variables
 
     ENTERS("cmfe_DataProjection_DataPointsProjectionEvaluateObj",err,error,*999)
 
-    CALL DataProjection_DataPointsProjectionEvaluate(dataProjection%dataProjection,projectionField%field,distance_vectors,err,error,*999)
+    CALL DataProjection_DataPointsProjectionEvaluate(dataProjection%dataProjection,projectionField%field, &
+      & distance_vectors_temp,err,error,*999)
+    distance_vectors = distance_vectors_temp
 
     EXITS("cmfe_DataProjection_DataPointsProjectionEvaluateObj")
     RETURN
