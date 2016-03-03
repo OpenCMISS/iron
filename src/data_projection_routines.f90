@@ -950,7 +950,7 @@ CONTAINS
     !Argument variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION !<A pointer to the data projection to evaluate
     TYPE(FIELD_TYPE), POINTER :: PROJECTION_FIELD !<A pointer to the projection field to evaluate, this would normally be geometric field or dependent field
-    REAL(DP), POINTER :: DISTANCE_VECTORS(:,:) !< The distance vectors of projection - from data point to point on face/line/element. 
+    REAL(DP), INTENT(OUT) :: DISTANCE_VECTORS(:,:) !< The distance vectors of projection - from data point to point on face/line/element. 
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -1234,7 +1234,7 @@ CONTAINS
                   ENDDO
                   PROJECTED_DISTANCE(1,data_point_idx)=GLOBAL_CLOSEST_DISTANCES(data_point_idx,TOTAL_NUMBER_OF_CLOSEST_CANDIDATES) !assign initial distance to something large                           
                 ENDDO
-                ALLOCATE(DISTANCE_VECTORS(3, NUMBER_OF_DATA_POINTS), STAT=ERR) !Store distance vector for each data point for output. 
+                !ALLOCATE(DISTANCE_VECTORS(3, NUMBER_OF_DATA_POINTS), STAT=ERR) !Store distance vector for each data point for output. 
                 SELECT CASE(DATA_PROJECTION%PROJECTION_TYPE)
                   CASE (DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE) !Newton project to closest lines, and find miminum projection
                     DO data_point_idx=1,NUMBER_OF_DATA_POINTS

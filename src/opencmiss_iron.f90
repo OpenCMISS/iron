@@ -20461,7 +20461,6 @@ CONTAINS
     TYPE(REGION_TYPE), POINTER :: DATA_POINTS_REGION
     TYPE(REGION_TYPE), POINTER :: PROJECTION_FIELD_REGION
     INTEGER(INTG) :: GLOBAL_NUMBER !<The data projection global number.
-    REAL(DP), POINTER :: distance_vectors_temp(:,:)
     TYPE(VARYING_STRING) :: localError      
 
     ENTERS("cmfe_DataProjection_DataPointsProjectionEvaluateNumber",err,error,*999)
@@ -20481,8 +20480,7 @@ CONTAINS
         CALL FIELD_USER_NUMBER_FIND(projectionFieldUserNumber,PROJECTION_FIELD_REGION,PROJECTION_FIELD,err,error,*999)
         IF(ASSOCIATED(PROJECTION_FIELD)) THEN
           CALL DataProjection_DataPointsProjectionEvaluate(DATA_PROJECTION,PROJECTION_FIELD, &
-            & distance_vectors_temp,err,error,*999)
-	  distance_vectors = distance_vectors_temp
+            & distance_vectors,err,error,*999)
         ELSE
           localError="A field with an user number of "//TRIM(NumberToVString(projectionFieldUserNumber,"*",err,error))// &
             & " does not exist."
@@ -20514,7 +20512,7 @@ CONTAINS
   !
 
   !>Evaluate a data projection identified by an object.
-  SUBROUTINE cmfe_DataProjection_DataPointsProjectionEvaluateObj(dataProjection,projectionField,distance_vectors, err)
+  SUBROUTINE cmfe_DataProjection_DataPointsProjectionEvaluateObj(dataProjection,projectionField,distance_vectors,err)
     !DLLEXPORT(cmfe_DataProjection_DataPointsProjectionEvaluateObj)
 
     !Argument variables
@@ -20522,14 +20520,12 @@ CONTAINS
     TYPE(cmfe_FieldType), INTENT(IN) :: projectionField !<The field data points is projected on
     REAL(DP), INTENT(OUT) :: distance_vectors(:,:) 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    REAL(DP), POINTER :: distance_vectors_temp(:,:)
     !Local variables
 
     ENTERS("cmfe_DataProjection_DataPointsProjectionEvaluateObj",err,error,*999)
 
     CALL DataProjection_DataPointsProjectionEvaluate(dataProjection%dataProjection,projectionField%field, &
-      & distance_vectors_temp,err,error,*999)
-    distance_vectors = distance_vectors_temp
+      & distance_vectors,err,error,*999)
 
     EXITS("cmfe_DataProjection_DataPointsProjectionEvaluateObj")
     RETURN
