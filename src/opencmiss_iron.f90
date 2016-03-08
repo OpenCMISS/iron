@@ -1955,6 +1955,12 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_DataProjection_ResultXiSetObj
   END INTERFACE cmfe_DataProjection_ResultXiSet
 
+  !>Returns the projection vector for a data point identified by a given user number.
+  INTERFACE cmfe_DataProjection_ResultProjectionVectorGet
+    MODULE PROCEDURE cmfe_DataProjection_ResultProjectionVectorGetNumber
+    MODULE PROCEDURE cmfe_DataProjection_ResultProjectionVectorGetObj
+  END INTERFACE cmfe_DataProjection_ResultProjectionVectorGet
+
   PUBLIC CMFE_DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE,CMFE_DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE
 
   PUBLIC CMFE_DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE
@@ -1994,6 +2000,8 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_DataProjection_ResultExitTagGet
 
   PUBLIC cmfe_DataProjection_ResultXiGet,cmfe_DataProjection_ResultXiSet
+
+  PUBLIC cmfe_DataProjection_ResultProjectionVectorGet
 
 !!==================================================================================================================================
 !!
@@ -20444,7 +20452,7 @@ CONTAINS
 
   !>Evaluate a data projection identified by a region user number.
   SUBROUTINE cmfe_DataProjection_DataPointsProjectionEvaluateNumber(dataProjectionUserNumber,dataPointsRegionUserNumber, &
-    & projectionFieldUserNumber,projectionFieldRegionUserNumber,distance_vectors,err)
+    & projectionFieldUserNumber,projectionFieldRegionUserNumber,err)
     !DLLEXPORT(cmfe_DataProjection_DataPointsProjectionEvaluateNumber)
 
     !Argument variables
@@ -20452,7 +20460,6 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataPointsRegionUserNumber !<The region user number of the data projection to evaluate.
     INTEGER(INTG), INTENT(IN) :: projectionFieldUserNumber !<The field user number of the field data points are be projected on.
     INTEGER(INTG), INTENT(IN) :: projectionFieldRegionUserNumber !<The region user number of the field data points are be projected on.  
-    REAL(DP), INTENT(OUT) :: distance_vectors(:,:)  
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables  
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION
@@ -20479,8 +20486,7 @@ CONTAINS
       IF(ASSOCIATED(PROJECTION_FIELD_REGION)) THEN
         CALL FIELD_USER_NUMBER_FIND(projectionFieldUserNumber,PROJECTION_FIELD_REGION,PROJECTION_FIELD,err,error,*999)
         IF(ASSOCIATED(PROJECTION_FIELD)) THEN
-          CALL DataProjection_DataPointsProjectionEvaluate(DATA_PROJECTION,PROJECTION_FIELD, &
-            & distance_vectors,err,error,*999)
+          CALL DataProjection_DataPointsProjectionEvaluate(DATA_PROJECTION,PROJECTION_FIELD,err,error,*999)
         ELSE
           localError="A field with an user number of "//TRIM(NumberToVString(projectionFieldUserNumber,"*",err,error))// &
             & " does not exist."
@@ -20512,20 +20518,18 @@ CONTAINS
   !
 
   !>Evaluate a data projection identified by an object.
-  SUBROUTINE cmfe_DataProjection_DataPointsProjectionEvaluateObj(dataProjection,projectionField,distance_vectors,err)
+  SUBROUTINE cmfe_DataProjection_DataPointsProjectionEvaluateObj(dataProjection,projectionField,err)
     !DLLEXPORT(cmfe_DataProjection_DataPointsProjectionEvaluateObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to evaluate.
     TYPE(cmfe_FieldType), INTENT(IN) :: projectionField !<The field data points is projected on
-    REAL(DP), INTENT(OUT) :: distance_vectors(:,:) 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_DataProjection_DataPointsProjectionEvaluateObj",err,error,*999)
 
-    CALL DataProjection_DataPointsProjectionEvaluate(dataProjection%dataProjection,projectionField%field, &
-      & distance_vectors,err,error,*999)
+    CALL DataProjection_DataPointsProjectionEvaluate(dataProjection%dataProjection,projectionField%field,err,error,*999)
 
     EXITS("cmfe_DataProjection_DataPointsProjectionEvaluateObj")
     RETURN
@@ -21311,6 +21315,88 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_DataProjection_ResultXiSetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the projection vector for a data point in a set of data points identified by user number.
+  SUBROUTINE cmfe_DataProjection_ResultProjectionVectorGetNumber(regionUserNumber,dataProjectionUserNumber, &
+      & dataPointUserNumber,ProjectionVector,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultProjectionVectorGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get attributes for.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The user number of the data projection containing the data points to get attributes for.
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to get attributes for.
+    REAL(DP), INTENT(OUT) :: ProjectionVector(:) !<On return, the projection vector for the data point.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS
+    TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION
+    INTEGER(INTG) :: DATA_PROJECTION_GLOBAL_NUMBER  
+    TYPE(REGION_TYPE), POINTER :: REGION
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("cmfe_DataProjection_ResultProjectionVectorGetNumber",err,error,*999)
+
+    NULLIFY(REGION)
+    NULLIFY(DATA_POINTS)    
+    NULLIFY(DATA_PROJECTION)
+    CALL REGION_USER_NUMBER_FIND(regionUserNumber,REGION,err,error,*999)
+    IF(ASSOCIATED(REGION)) THEN
+      CALL REGION_DATA_POINTS_GET(REGION,DATA_POINTS,err,error,*999)
+      CALL DataPoints_DataProjectionGlobalNumberGet(DATA_POINTS,dataProjectionUserNumber,DATA_PROJECTION_GLOBAL_NUMBER,ERR, &
+        & error,*999)
+      CALL DATA_POINTS_DATA_PROJECTION_GET(DATA_POINTS,DATA_PROJECTION_GLOBAL_NUMBER,DATA_PROJECTION,err,error,*999)
+      IF(ASSOCIATED(DATA_PROJECTION)) THEN
+        CALL DATA_PROJECTION_RESULT_PROJECTION_VECTOR_GET(DATA_PROJECTION,dataPointUserNumber,ProjectionVector,err,error,*999)
+      ELSE
+        localError="A data projection with an user number of "//TRIM(NumberToVString(dataProjectionUserNumber,"*",err,error)) &
+          & //" does not exist."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ELSE
+      localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
+        & " does not exist."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    EXITS("cmfe_DataProjection_ResultProjectionVectorGetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_DataProjection_ResultProjectionVectorGetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ResultProjectionVectorGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the projection vector for a data point in a set of data points identified by an object.
+  SUBROUTINE cmfe_DataProjection_ResultProjectionVectorGetObj(dataProjection,dataPointUserNumber,ProjectionVector,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultProjectionVectorGetObj)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(IN) :: dataProjection !<The data projection to get attributes for.
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to get attributes for.        
+    REAL(DP), INTENT(OUT) :: ProjectionVector(:) !<On return, the projection vector for the data point.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_DataProjection_ResultProjectionVectorGetObj",err,error,*999)
+
+    CALL DATA_PROJECTION_RESULT_PROJECTION_VECTOR_GET(dataProjection%dataProjection,dataPointUserNumber, &
+      & ProjectionVector,err,error,*999)
+
+    EXITS("cmfe_DataProjection_ResultProjectionVectorGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_DataProjection_ResultProjectionVectorGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ResultProjectionVectorGetObj
 
   !
   !================================================================================================================================
