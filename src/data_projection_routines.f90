@@ -2566,10 +2566,14 @@ CONTAINS
               DISTANCE_VECTOR=POINT_VALUES-INTERPOLATED_POINT%VALUES(:,NO_PART_DERIV)
               FUNCTION_VALUE_NEW=DOT_PRODUCT(DISTANCE_VECTOR(1:REGION_DIMENSIONS),DISTANCE_VECTOR(1:REGION_DIMENSIONS))
               CONVERGED=CONVERGED.AND.(DABS(FUNCTION_VALUE_NEW-FUNCTION_VALUE)/(1.0_DP+FUNCTION_VALUE)<RELATIVE_TOLERANCE) !second half of the convergence test (before collision detection)
-              IF(CONVERGED) EXIT !converged: exit inner loop first
+              IF(CONVERGED) THEN
+                FUNCTION_VALUE=FUNCTION_VALUE_NEW
+                EXIT !converged: exit inner loop first
+              ENDIF
               IF((FUNCTION_VALUE_NEW-FUNCTION_VALUE)>ABSOLUTE_TOLERANCE) THEN !bad model: reduce step size
                 IF(DELTA<=MINIMUM_DELTA) THEN !something went wrong, MINIMUM_DELTA too large? not likely to happen if MINIMUM_DELTA is small
                   EXIT_TAG=DATA_PROJECTION_EXIT_TAG_MAX_ITERATION ! it will get stucked!!
+                  FUNCTION_VALUE=FUNCTION_VALUE_NEW
                   EXIT main_loop
                 ENDIF
                 DELTA=DMAX1(MINIMUM_DELTA,0.25_DP*DELTA)
@@ -2581,13 +2585,16 @@ CONTAINS
                 IF(PREDICTION_ACCURACY<0.01_DP) THEN !bad model: reduce region size
                   IF(DELTA<=MINIMUM_DELTA) THEN !something went wrong, MINIMUM_DELTA too large? not likely to happen if MINIMUM_DELTA is small
                     EXIT_TAG=DATA_PROJECTION_EXIT_TAG_MAX_ITERATION ! it will get stucked!!
+                    FUNCTION_VALUE=FUNCTION_VALUE_NEW
                     EXIT main_loop
                   ENDIF
                   DELTA=DMAX1(MINIMUM_DELTA,0.5_DP*DELTA)
                 ELSEIF(PREDICTION_ACCURACY>0.9_DP.AND.PREDICTION_ACCURACY<1.1_DP) THEN !good model: increase region size
                   DELTA=DMIN1(MAXIMUM_DELTA,2.0_DP*DELTA)
+                  FUNCTION_VALUE=FUNCTION_VALUE_NEW
                   EXIT
                 ELSE !ok model: keep the current region size
+                  FUNCTION_VALUE=FUNCTION_VALUE_NEW
                   EXIT
                 ENDIF
               ENDIF
