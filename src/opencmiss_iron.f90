@@ -21322,14 +21322,14 @@ CONTAINS
 
   !>Returns the projection vector for a data point in a set of data points identified by user number.
   SUBROUTINE cmfe_DataProjection_ResultProjectionVectorGetNumber(regionUserNumber,dataProjectionUserNumber, &
-      & dataPointUserNumber,ProjectionVector,err)
+      & dataPointUserNumber,projectionVector,err)
     !DLLEXPORT(cmfe_DataProjection_ResultProjectionVectorGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get attributes for.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The user number of the data projection containing the data points to get attributes for.
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to get attributes for.
-    REAL(DP), INTENT(OUT) :: ProjectionVector(:) !<On return, the projection vector for the data point.
+    REAL(DP), INTENT(OUT) :: projectionVector(:) !<On return, the projection vector for the data point.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS
@@ -21350,7 +21350,7 @@ CONTAINS
         & error,*999)
       CALL DATA_POINTS_DATA_PROJECTION_GET(DATA_POINTS,DATA_PROJECTION_GLOBAL_NUMBER,DATA_PROJECTION,err,error,*999)
       IF(ASSOCIATED(DATA_PROJECTION)) THEN
-        CALL DATA_PROJECTION_RESULT_PROJECTION_VECTOR_GET(DATA_PROJECTION,dataPointUserNumber,ProjectionVector,err,error,*999)
+        CALL DataProjection_ResultProjectionVectorGet(DATA_PROJECTION,dataPointUserNumber,projectionVector,err,error,*999)
       ELSE
         localError="A data projection with an user number of "//TRIM(NumberToVString(dataProjectionUserNumber,"*",err,error)) &
           & //" does not exist."
@@ -21375,20 +21375,20 @@ CONTAINS
   !
 
   !>Returns the projection vector for a data point in a set of data points identified by an object.
-  SUBROUTINE cmfe_DataProjection_ResultProjectionVectorGetObj(dataProjection,dataPointUserNumber,ProjectionVector,err)
+  SUBROUTINE cmfe_DataProjection_ResultProjectionVectorGetObj(dataProjection,dataPointUserNumber,projectionVector,err)
     !DLLEXPORT(cmfe_DataProjection_ResultProjectionVectorGetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(IN) :: dataProjection !<The data projection to get attributes for.
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to get attributes for.        
-    REAL(DP), INTENT(OUT) :: ProjectionVector(:) !<On return, the projection vector for the data point.
+    REAL(DP), INTENT(OUT) :: projectionVector(:) !<On return, the projection vector for the data point.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_DataProjection_ResultProjectionVectorGetObj",err,error,*999)
 
-    CALL DATA_PROJECTION_RESULT_PROJECTION_VECTOR_GET(dataProjection%dataProjection,dataPointUserNumber, &
-      & ProjectionVector,err,error,*999)
+    CALL DataProjection_ResultProjectionVectorGet(dataProjection%dataProjection,dataPointUserNumber, &
+      & projectionVector,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultProjectionVectorGetObj")
     RETURN

@@ -141,7 +141,7 @@ MODULE DATA_PROJECTION_ROUTINES
 
   PUBLIC DATA_PROJECTION_RESULT_XI_GET, DATA_PROJECTION_RESULT_XI_SET
 
-  PUBLIC DATA_PROJECTION_RESULT_PROJECTION_VECTOR_GET
+  PUBLIC DataProjection_ResultProjectionVectorGet
 
   PUBLIC DATA_PROJECTION_ELEMENT_SET
   
@@ -795,13 +795,13 @@ CONTAINS
               DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%ELEMENT_LINE_NUMBER=0
               DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%EXIT_TAG=DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
               ALLOCATE(DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI(DATA_PROJECTION%NUMBER_OF_XI),STAT=ERR)
-	      ALLOCATE(DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%PROJECTION_VECTORS( &
+	      ALLOCATE(DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%projectionVector( &
                 & DATA_PROJECTION%COORDINATE_SYSTEM_DIMENSIONS),STAT=ERR)
               IF(ERR/=0) CALL FLAG_ERROR("Could not allocate data projection data projection results "// &
                 & "("//TRIM(NUMBER_TO_VSTRING (data_point_idx,"*",ERR,ERROR))//") xi.",ERR,ERROR,*999)
               DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI(1:DATA_PROJECTION%NUMBER_OF_XI)= &
                 & DATA_PROJECTION%STARTING_XI(1:DATA_PROJECTION%NUMBER_OF_XI)
-	      DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%PROJECTION_VECTORS( &
+	      DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%projectionVector( &
                 & 1:DATA_PROJECTION%COORDINATE_SYSTEM_DIMENSIONS)=0.0_DP
             ENDDO !data_point_idx
           ELSE
@@ -884,8 +884,8 @@ CONTAINS
           IF(ALLOCATED(DATA_PROJECTION%DATA_PROJECTION_RESULTS(dataPointIdx)%XI)) THEN
             DEALLOCATE(DATA_PROJECTION%DATA_PROJECTION_RESULTS(dataPointIdx)%XI)
           ENDIF
-          IF(ALLOCATED(DATA_PROJECTION%DATA_PROJECTION_RESULTS(dataPointIdx)%PROJECTION_VECTORS)) THEN
-            DEALLOCATE(DATA_PROJECTION%DATA_PROJECTION_RESULTS(dataPointIdx)%PROJECTION_VECTORS)
+          IF(ALLOCATED(DATA_PROJECTION%DATA_PROJECTION_RESULTS(dataPointIdx)%projectionVector)) THEN
+            DEALLOCATE(DATA_PROJECTION%DATA_PROJECTION_RESULTS(dataPointIdx)%projectionVector)
           ENDIF
         ENDDO !dataPointIdx
         DEALLOCATE(DATA_PROJECTION%DATA_PROJECTION_RESULTS)
@@ -1372,7 +1372,7 @@ CONTAINS
                   DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%DISTANCE=PROJECTED_DISTANCE(1,data_point_idx)
                   DATA_PROJECTION%DATA_PROJECTION_RESULTS(SORTING_IND_2(data_point_idx))%XI(1:DATA_PROJECTION%NUMBER_OF_XI)= &
                     & PROJECTED_XI(1:DATA_PROJECTION%NUMBER_OF_XI,data_point_idx)
-		  DATA_PROJECTION%DATA_PROJECTION_RESULTS(SORTING_IND_2(data_point_idx))%PROJECTION_VECTORS( &
+		  DATA_PROJECTION%DATA_PROJECTION_RESULTS(SORTING_IND_2(data_point_idx))%projectionVector( &
                     & 1:DATA_PROJECTION%COORDINATE_SYSTEM_DIMENSIONS)=PROJECTION_VECTORS( &
                     & 1:DATA_PROJECTION%COORDINATE_SYSTEM_DIMENSIONS,data_point_idx)
                 ENDDO !data_point_idx
@@ -1400,7 +1400,7 @@ CONTAINS
                         & DATA_PROJECTION_RESULTS(data_point_idx)%ELEMENT_NUMBER,DATA_PROJECTION% &
                         & DATA_PROJECTION_RESULTS(data_point_idx)%ELEMENT_LINE_NUMBER,DATA_PROJECTION%DATA_PROJECTION_RESULTS( &
                         & data_point_idx)%DISTANCE,DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI, &
-                        & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%PROJECTION_VECTORS,ERR,ERROR,*999)
+                        & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%projectionVector,ERR,ERROR,*999)
                     ENDDO
                   CASE (DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE) !find closest candidate faces
                     DO data_point_idx=1,NUMBER_OF_DATA_POINTS
@@ -1410,7 +1410,7 @@ CONTAINS
                         & DATA_PROJECTION_RESULTS(data_point_idx)%ELEMENT_NUMBER,DATA_PROJECTION% &
                         & DATA_PROJECTION_RESULTS(data_point_idx)%ELEMENT_FACE_NUMBER,DATA_PROJECTION%DATA_PROJECTION_RESULTS( &
                         & data_point_idx)%DISTANCE,DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI, &
-                        & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%PROJECTION_VECTORS,ERR,ERROR,*999)
+                        & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%projectionVector,ERR,ERROR,*999)
                     ENDDO
                   CASE (DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE) !find closest candidate elements        
                     SELECT CASE(DATA_PROJECTION%NUMBER_OF_XI)
@@ -1421,7 +1421,7 @@ CONTAINS
                             & DATA_PROJECTION_RESULTS(data_point_idx)%EXIT_TAG,DATA_PROJECTION%DATA_PROJECTION_RESULTS( &
                             & data_point_idx)%ELEMENT_NUMBER, DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%DISTANCE, &
                             & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI, &
-                            & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%PROJECTION_VECTORS,&
+                            & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%projectionVector,&
                             & ERR,ERROR,*999)
                         ENDDO
                       CASE (2) !2D mesh
@@ -1431,7 +1431,7 @@ CONTAINS
                             & DATA_PROJECTION_RESULTS(data_point_idx)%EXIT_TAG,DATA_PROJECTION%DATA_PROJECTION_RESULTS( &
                             & data_point_idx)%ELEMENT_NUMBER,DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%DISTANCE, &
                             & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI, &
-                            & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%PROJECTION_VECTORS, &
+                            & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%projectionVector, &
 			    & ERR,ERROR,*999)
                         ENDDO
                       CASE (3) !3D mesh
@@ -1441,7 +1441,7 @@ CONTAINS
                             & DATA_PROJECTION_RESULTS(data_point_idx)%EXIT_TAG,DATA_PROJECTION%DATA_PROJECTION_RESULTS( &
                             & data_point_idx)%ELEMENT_NUMBER,DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%DISTANCE, &
                             & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI, &
-                            & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%PROJECTION_VECTORS, &
+                            & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%projectionVector, &
  			    & ERR,ERROR,*999)
                         ENDDO
                       CASE DEFAULT
@@ -3657,32 +3657,32 @@ CONTAINS
   !
 
   !>Gets the projection vector for a data point identified by a given global number.
-  SUBROUTINE DATA_PROJECTION_RESULT_PROJECTION_VECTOR_GET(DATA_PROJECTION,DATA_POINT_USER_NUMBER,PROJECTION_VECTOR,ERR,ERROR,*)
+  SUBROUTINE DataProjection_ResultProjectionVectorGet(DATA_PROJECTION,DATA_POINT_USER_NUMBER,projectionVector,ERR,ERROR,*)
 
     !Argument variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION !<A pointer to the data projection for which projection result is stored
     INTEGER(INTG), INTENT(IN) :: DATA_POINT_USER_NUMBER !<The Data projection user number to get the projection xi for
-    REAL(DP), INTENT(OUT) :: PROJECTION_VECTOR(:) !<On exit, the projection vector of the specified global data point
+    REAL(DP), INTENT(OUT) :: projectionVector(:) !<On exit, the projection vector of the specified global data point
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     INTEGER(INTG) :: DATA_POINT_GLOBAL_NUMBER
     
-    ENTERS("DATA_PROJECTION_RESULT_XI_GET",ERR,ERROR,*999)
+    ENTERS("DataProjection_ResultProjectionVectorGet",ERR,ERROR,*999)
 
     IF(ASSOCIATED(DATA_PROJECTION)) THEN
       IF(DATA_PROJECTION%DATA_PROJECTION_FINISHED) THEN
         IF(DATA_PROJECTION%DATA_PROJECTION_PROJECTED) THEN
           CALL DataProjection_DataPointGlobalNumberGet(DATA_PROJECTION,DATA_POINT_USER_NUMBER, &
             & DATA_POINT_GLOBAL_NUMBER,ERR,ERROR,*999)
-          IF(SIZE(PROJECTION_VECTOR,1)==SIZE(DATA_PROJECTION%DATA_PROJECTION_RESULTS(DATA_POINT_GLOBAL_NUMBER)%PROJECTION_VECTORS, &
+          IF(SIZE(projectionVector,1)>=SIZE(DATA_PROJECTION%DATA_PROJECTION_RESULTS(DATA_POINT_GLOBAL_NUMBER)%projectionVector, &
             & 1)) THEN
-            PROJECTION_VECTOR=DATA_PROJECTION%DATA_PROJECTION_RESULTS(DATA_POINT_GLOBAL_NUMBER)%PROJECTION_VECTORS
+            projectionVector=DATA_PROJECTION%DATA_PROJECTION_RESULTS(DATA_POINT_GLOBAL_NUMBER)%projectionVector(1:DATA_PROJECTION%COORDINATE_SYSTEM_DIMENSIONS)
           ELSE
-            CALL FLAG_ERROR("projection vector has size of "//TRIM(NUMBER_TO_VSTRING(SIZE(PROJECTION_VECTOR,1),"*",ERR,ERROR))// &
+            CALL FLAG_ERROR("projection vector has size of "//TRIM(NUMBER_TO_VSTRING(SIZE(projectionVector,1),"*",ERR,ERROR))// &
               & "but it needs to have size of "// &
               & TRIM(NUMBER_TO_VSTRING(SIZE(DATA_PROJECTION%DATA_PROJECTION_RESULTS &
-              & (DATA_POINT_GLOBAL_NUMBER)%PROJECTION_VECTORS,1),"*",ERR,ERROR))// &
+              & (DATA_POINT_GLOBAL_NUMBER)%projectionVector,1),"*",ERR,ERROR))// &
               & "." ,ERR,ERROR,*999)
           ENDIF
         ELSE
@@ -3695,12 +3695,12 @@ CONTAINS
       CALL FLAG_ERROR("Data projection is not associated.",ERR,ERROR,*999)
     ENDIF
 
-    EXITS("DATA_PROJECTION_RESULT_PROJECTION_VECTOR_GET")
+    EXITS("DataProjection_ResultProjectionVectorGet")
     RETURN
-999 ERRORSEXITS("DATA_PROJECTION_RESULT_PROJECTION_VECTOR_GET",ERR,ERROR)    
+999 ERRORSEXITS("DataProjection_ResultProjectionVectorGet",ERR,ERROR)    
     RETURN 1
 
-  END SUBROUTINE DATA_PROJECTION_RESULT_PROJECTION_VECTOR_GET
+  END SUBROUTINE DataProjection_ResultProjectionVectorGet
 
   !
   !================================================================================================================================

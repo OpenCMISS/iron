@@ -410,8 +410,6 @@ CONTAINS
         CALL FLAG_ERROR("Data_points region is not associated.",ERR,ERROR,*999)
       ENDIF
       CALL DATA_POINTS_FINALISE(DATA_POINTS,ERR,ERROR,*999)
-    ELSE
-      CALL FlagError("Data points is not associated.",ERR,ERROR,*999)
     ENDIF
    
     EXITS("DATA_POINTS_DESTROY")

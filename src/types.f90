@@ -283,7 +283,7 @@ MODULE TYPES
     INTEGER(INTG) :: ELEMENT_LINE_NUMBER !<The element line of the mesh the data point projects onto. Assigned only if DATA_POINTS_PROJECTED is .TRUE. and DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE is chosen
     INTEGER(INTG) :: EXIT_TAG !<The exit tage of the data projection. \See DATA_PROJECTION_ROUTINES. Assigned only if DATA_POINTS_PROJECTED is .TRUE. 
     REAL(DP), ALLOCATABLE :: XI(:) !<The xi coordinate of the projection. Assigned only if DATA_POINTS_PROJECTED is .TRUE.
-    REAL(DP), ALLOCATABLE :: PROJECTION_VECTORS(:) !<The projection vectors from data point to the projected point. 
+    REAL(DP), ALLOCATABLE :: projectionVector(:) !<The projection vectors from data point to the projected point. 
   END TYPE DATA_PROJECTION_RESULT_TYPE
 
   TYPE DATA_PROJECTION_TYPE
