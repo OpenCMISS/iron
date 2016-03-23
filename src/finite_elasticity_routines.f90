@@ -8056,7 +8056,8 @@ CONTAINS
                 DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                   EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
                   METHOD="FORTRAN"
-                  EXPORT_FIELD=.TRUE.
+                  !EXPORT_FIELD=.TRUE.
+                  EXPORT_FIELD=.FALSE.
                   IF(EXPORT_FIELD) THEN          
                     IF(SOLVER%OUTPUT_TYPE>=SOLVER_PROGRESS_OUTPUT) THEN
                       CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Finite Elasticity export fields ... ",ERR,ERROR,*999)
