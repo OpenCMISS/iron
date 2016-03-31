@@ -4,11 +4,11 @@
 
 \subsubsection{Kinematics}
 
-As shown in \figref{fig:configurationsettting}, consider a \textit{material
+As shown in \figref{fig:configurationsetting}, consider a \textit{material
   body} which is a three-dimensional smooth manifold with a boundary, $\manifold{B}$,
 which consists of a set of points which are refered to as \textit{material
   points}. Consider also an ambient space manifold,
-$\manifold{S}\element\rntopology{n}$. The material body is only accessible to
+$\manifold{S}\in\rntopology{n}$. The material body is only accessible to
 the observer when it moves through the ambient space. This motion is a
 time-dependent embedding on the material body into the ambient space. The
 embedding is known as a \textit{placement of the body}. It is given by the
@@ -66,7 +66,7 @@ tangent of the mapping \ie $\tangentbundle{\chi}$ is denoted as $\tensor{F}$
 and is called the \textit{deformation gradient} of $\chi$ \ie
 $\tensor{F}=\tangentbundle{\chi}$. For $X\in\embedmanifold{B}$ we have
 \begin{equation}
-  \tensor{F}_{X}=\mapping{\fnof{\tensor{F}}{X}}{\tangentspace{\embedmanifold{B}}{X}}{\tangentspace{\mainfold{S}}{\fnof{\chi}{X}}}
+  \tensor{F}_{X}=\mapping{\fnof{\tensor{F}}{X}}{\tangentspace{\embedmanifold{B}}{X}}{\tangentspace{\manifold{S}}{\fnof{\chi}{X}}}
 \end{equation}
  
 If $X^{A}$ and $x^{a}$ are the coordinates on $\embedmanifold{B}$ and
@@ -80,7 +80,7 @@ Note that F is a two-point tensor.
 
 The \textit{right Cauchy-Green (or Green) deformation tensor}, $\tensor{C}$, is defined by
 \begin{equation}
-  \mapping{\fnof{\tensor{C}}{X}}{\tangentspace{\embedmanifold{B}}{X}}{\tangentspace{\embedmanifold{B}}{X}}}
+  \mapping{\fnof{\tensor{C}}{X}}{\tangentspace{\embedmanifold{B}}{X}}{\tangentspace{\embedmanifold{B}}{X}}
 \end{equation}
 \ie $\fnof{\tensor{C}}{X}=\transpose{\fnof{\tensor{F}}{X}}\fnof{\tensor{F}}{X}$
 or $\tensor{C}=\transpose{\tensor{F}}\tensor{F}$. In terms of coordinates we
@@ -91,7 +91,7 @@ have
 
 The \textit{left Cauchy-Green (or Finger) deformation tensor}, $\tensor{C}$, is defined by
 \begin{equation}
-  \mapping{\fnof{\tensor{C}}{x}}{\tangentspace{\fnof{\chi}{\embedmanifold{B}}}{x}}{\tangentspace{\fnof{\chi}{\embedmanifold{B}}}{x}}}
+  \mapping{\fnof{\tensor{C}}{x}}{\tangentspace{\fnof{\chi}{\embedmanifold{B}}}{x}}{\tangentspace{\fnof{\chi}{\embedmanifold{B}}}{x}}
 \end{equation}
 \ie $\fnof{\tensor{b}}{x}=\fnof{\tensor{F}}{X}\transpose{\fnof{\tensor{F}}{X}}$
 or $\tensor{C}=\tensor{F}\transpose{\tensor{F}}$ where $X=\fnof{\inverse{\chi}}{x}$. In terms of coordinates we
