@@ -3677,7 +3677,8 @@ CONTAINS
             & DATA_POINT_GLOBAL_NUMBER,ERR,ERROR,*999)
           IF(SIZE(projectionVector,1)>=SIZE(DATA_PROJECTION%DATA_PROJECTION_RESULTS(DATA_POINT_GLOBAL_NUMBER)%projectionVector, &
             & 1)) THEN
-            projectionVector=DATA_PROJECTION%DATA_PROJECTION_RESULTS(DATA_POINT_GLOBAL_NUMBER)%projectionVector(1:DATA_PROJECTION%COORDINATE_SYSTEM_DIMENSIONS)
+            projectionVector=DATA_PROJECTION%DATA_PROJECTION_RESULTS(DATA_POINT_GLOBAL_NUMBER)%projectionVector( &
+	      & 1:DATA_PROJECTION%COORDINATE_SYSTEM_DIMENSIONS)
           ELSE
             CALL FLAG_ERROR("projection vector has size of "//TRIM(NUMBER_TO_VSTRING(SIZE(projectionVector,1),"*",ERR,ERROR))// &
               & "but it needs to have size of "// &
