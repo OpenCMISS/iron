@@ -2,6 +2,8 @@
 #  define ENTERSEXITS !Just for now (will be -D'ed)
 #endif
 
+#define ENTERSEXITS
+
 #ifdef ENTERSEXITS
 #  define ENTERS(routinename,err,error,linenum) \
           CALL Enters(routinename,err,error,linenum)

@@ -162,7 +162,7 @@ MODULE Maths
     MODULE PROCEDURE L2NORM_SP
     MODULE PROCEDURE L2NORM_DP
   END INTERFACE L2Norm
-
+    
   !>Calculates and returns the matrix-prouct A*B in the matrix C.
   INTERFACE MATRIX_PRODUCT
     MODULE PROCEDURE MATRIX_PRODUCT_SP
