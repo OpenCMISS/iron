@@ -1314,7 +1314,7 @@ CONTAINS
       & piolaTensor(3,3),TEMP(3,3)
     REAL(DP) :: cauchyTensor(3,3),JGW_CAUCHY_TENSOR(3,3),kirchoffTensor(3,3),STRESS_TENSOR(6)
     REAL(DP) :: deformationGradientTensor(3,3),growthTensor(3,3),growthTensorInverse(3,3),growthTensorInverseTranspose(3,3), &
-      & Jg,fibreGrowth,sheetGrowth,normalGrowth,fibreVector(3),sheetVector(3),normalVector(3)
+      & Jg,Je,fibreGrowth,sheetGrowth,normalGrowth,fibreVector(3),sheetVector(3),normalVector(3)
     REAL(DP) :: dNudXi(3,3),dXidNu(3,3)
     REAL(DP) :: DFDZ(64,3,3) !temporary until a proper alternative is found
     REAL(DP) :: DPHIDZ(3,64,3) !temporary until a proper alternative is found
@@ -1831,7 +1831,7 @@ CONTAINS
             P=DEPENDENT_INTERPOLATED_POINT%VALUES(HYDROSTATIC_PRESSURE_COMPONENT,1)
             
             CALL FiniteElasticity_GaussGrowthTensor(EQUATIONS_SET,NUMBER_OF_DIMENSIONS,gauss_idx,ELEMENT_NUMBER,DEPENDENT_FIELD, &
-              & dZdNu,Fg,Fe,Jg,err,error,*999)
+              & dZdNu,Fg,Fe,Jg,Je,err,error,*999)
             CALL MatrixTranspose(Fe,FeT,err,error,*999)
             
             CALL FiniteElasticity_StrainTensor(Fe,C,f,Jznu,E,err,error,*999)
@@ -1883,7 +1883,7 @@ CONTAINS
             CALL MatrixProduct(temp,FeT,kirchoffTensor,ERR,ERROR,*999)
 
             !Calculate the Cauchy stress tensor
-            cauchyTensor=kirchoffTensor/Jznu             
+            cauchyTensor=kirchoffTensor/Je            
             
             IF(DIAGNOSTICS1) THEN
               CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
@@ -2532,7 +2532,7 @@ CONTAINS
       & startIdx,finishIdx
     INTEGER(INTG) :: var1 ! Variable number corresponding to 'U' in single physics case
     INTEGER(INTG) :: var2 ! Variable number corresponding to 'DELUDLEN' in single physics case
-    REAL(DP) :: dZdNu(3,3),dZdXi(3,3),Fg(3,3),Fe(3,3),J,Jg,C(3,3),f(3,3),E(3,3)
+    REAL(DP) :: dZdNu(3,3),dZdXi(3,3),Fg(3,3),Fe(3,3),J,Jg,Je,C(3,3),f(3,3),E(3,3)
     REAL(SP) :: elementUserElapsed,elementSystemElapsed,systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1),systemTime4(1), &
       & userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1)
 
@@ -2665,7 +2665,7 @@ CONTAINS
                 & geometricInterpolatedPointMetrics,fibreInterpolatedPoint,dZdXi,dZdNu,err,error,*999)
               
               CALL FiniteElasticity_GaussGrowthTensor(equationsSet,numberOfDimensions,gaussIdx,elementNumber,dependentField, &
-                & dZdNu,Fg,Fe,Jg,err,error,*999)
+                & dZdNu,Fg,Fe,Jg,Je,err,error,*999)
               
               CALL FiniteElasticity_StrainTensor(Fe,C,f,J,E,err,error,*999)
               
@@ -3249,18 +3249,18 @@ CONTAINS
 
   !>Evaluates the deformation gradient tensor at a given Gauss point
   SUBROUTINE FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics,&
-    & fibreInterpolatedPoint,dZdXi,dZdNu,err,error,*)
+    & fibreInterpolatedPoint,dZdX,dZdNu,err,error,*)
 
     !Argument variables
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: dependentInterpPointMetrics,geometricInterpPointMetrics
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: fibreInterpolatedPoint
-    REAL(DP), INTENT(OUT) :: dZdXi(3,3) !<dZdXi(coordinateIdx,xiCoordianteIdx). On return, the deformation gradient tensor in xi coordinates
-    REAL(DP), INTENT(OUT) :: dZdNu(3,3) !<dZdNu(coordinateIdx,xiCoordianteIdx). On return, the deformation gradient tensor in nu (fibre coordinates)
+    REAL(DP), INTENT(OUT) :: dZdX(3,3) !<dZdX(coordinateIdx,coordianteIdx). On return, the deformation gradient tensor in X coordinates
+    REAL(DP), INTENT(OUT) :: dZdNu(3,3) !<dZdNu(coordinateIdx,xiCoordinateIdx). On return, the deformation gradient tensor in nu (fibre coordinates)
     INTEGER(INTG), INTENT(OUT) :: err   !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: numberOfXDimensions,numberOfXiDimensions,numberOfZDimensions
-    REAL(DP) :: dNuDXi(3,3),dXidNu(3,3),dXidNuNorm(3,3),det,F(3,3)
+    REAL(DP) :: dNudX(3,3),dXdNu(3,3),dNuDXi(3,3),dXidNu(3,3)
 
     ENTERS("FiniteElasticity_GaussDeformationGradientTensor",err,error,*999)
 
@@ -3270,23 +3270,17 @@ CONTAINS
         numberOfXiDimensions=geometricInterpPointMetrics%NUMBER_OF_XI_DIMENSIONS
         numberOfZDimensions=dependentInterpPointMetrics%NUMBER_OF_X_DIMENSIONS
 
-        !\todo Does differentiating the deformed position to give F only work for RC coordinates???
-        dZdXi(1:numberOfZDimensions,1:numberOfXiDimensions)=dependentInterpPointMetrics%DX_DXI(1:numberOfZDimensions, &
-          & 1:numberOfXiDimensions)
+        CALL MatrixProduct(dependentInterpPointMetrics%DX_DXI(1:numberOfZDimensions, &
+          & 1:numberOfXiDimensions),geometricInterpPointMetrics%DXI_DX(1:numberOfXiDimensions, &
+          & 1:numberOfXDimensions),dZdX(1:numberOfZDimensions,1:numberOfXiDimensions),err,error,*999)
         CALL Coordinates_MaterialSystemCalculate(geometricInterpPointMetrics,fibreInterpolatedPoint, &
+          & dNudX(1:numberOfXDimensions,1:numberOfXDimensions), &
+          & dXdNu(1:numberOfXDimensions,1:numberOfXDimensions), &
           & dNudXi(1:numberOfXiDimensions,1:numberOfXiDimensions), &
           & dXidNu(1:numberOfXiDimensions,1:numberOfXiDimensions),err,error,*999)
-        dXidNuNorm(1,1:3)=Normalise(dXidNu(1,1:3),err,error)
-        dXidNuNorm(2,1:3)=Normalise(dXidNu(2,1:3),err,error)
-        dXidNuNorm(3,1:3)=Normalise(dXidNu(3,1:3),err,error)        
-        !dZ/dNu = dZ/dXi * dXi/dNu  (deformation gradient tensor, F)
-        !CALL MatrixProduct(dZdXi(1:numberOfZDimensions,1:numberOfXiDimensions), &
-        !  & dXidNuNorm(1:numberOfXiDimensions,1:numberOfXDimensions), &
-        !  & dZdNu(1:numberOfZDimensions,1:numberOfXDimensions),err,error,*999)
-        !dZ/dNu = dXi/dNu * dZ/dXi
-        CALL MatrixProduct(dXidNuNorm(1:numberOfXiDimensions,1:numberOfXiDimensions), &
-          & dZdXi(1:numberOfZDimensions,1:numberOfXiDimensions), &
-          & dZdNu(1:numberOfZDimensions,1:numberOfXiDimensions),err,error,*999)
+        CALL MatrixProduct(dXdNu(1:numberOfXDimensions,1:numberOfXDimensions), &
+          & dZdX(1:numberOfZDimensions,1:numberOfXDimensions), &
+          & dZdNu(1:numberOfZDimensions,1:numberOfXDimensions),err,error,*999)
 
         IF(numberOfZDimensions == 2) THEN
           dZdNu(:,3) = [0.0_DP,0.0_DP,1.0_DP]
@@ -3299,21 +3293,17 @@ CONTAINS
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Z dimensions  = ",numberOfZDimensions,err,error,*999)
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of X dimensions  = ",numberOfXDimensions,err,error,*999)
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi dimensions = ",numberOfXiDimensions,err,error,*999)
-          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Deformation gradient tensor wrt Xi coordinates:",err,error,*999)
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Deformation gradient tensor wrt X coordinates:",err,error,*999)
           CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfZDimensions,1,1,numberOfXiDimensions, &
-            & numberOfXiDimensions,numberOfXiDimensions,dZdXi,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-            & '("    dZ_dXi','(",I1,",:)','   :",3(X,E13.6))','(19X,3(X,E13.6))',err,error,*999)
-          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Determinant dZ_dXi  = ",Determinant(dZdXi,err,error), &
+            & numberOfXiDimensions,numberOfXiDimensions,dZdX,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+            & '("    dZ_dX','(",I1,",:)','    :",3(X,E13.6))','(19X,3(X,E13.6))',err,error,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Determinant dZ_dX = ",Determinant(dZdX,err,error), &
             & err,error,*999)
-          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of Xi wrt to Nu coordinates:",err,error,*999)
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of X wrt to Nu coordinates:",err,error,*999)
           CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXiDimensions,1,1,numberOfXDimensions, &
             & numberOfXDimensions,numberOfXDimensions,dXidNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-            & '("    dXi_dNu','(",I1,",:)','  :",3(X,E13.6))','(19X,3(X,E13.6))',err,error,*999)
-          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Normalised derivative of Xi wrt to Nu coordinates:",err,error,*999)
-          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXiDimensions,1,1,numberOfXDimensions, &
-            & numberOfXDimensions,numberOfXDimensions,dXidNuNorm,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-            & '("    dXi_dNuN','(",I1,",:)',' :",3(X,E13.6))','(19X,3(X,E13.6))',err,error,*999)
-          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Deformation gradient tensor wrt fibre coordinates:",err,error,*999)
+            & '("    dX_dNu','(",I1,",:)','   :",3(X,E13.6))','(19X,3(X,E13.6))',err,error,*999)
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Deformation gradient tensor wrt Nu coordinates:",err,error,*999)
           CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfZDimensions,1,1,numberOfXDimensions, &
             & numberOfXDimensions,numberOfXDimensions,dZdNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
             & '("    dZ_dNu','(",I1,",:)','   :",3(X,E13.6))','(19X,3(X,E13.6))',err,error,*999)
@@ -4250,7 +4240,7 @@ CONTAINS
 
   !>Evaluates the growth tensor at a given Gauss point and calculates the elastic part of the deformation gradient tensor
   SUBROUTINE FiniteElasticity_GaussGrowthTensor(equationsSet,numberOfDimensions,gaussPointNumber,elementNumber,dependentField, &
-    & deformationGradientTensor,growthTensor,elasticDeformationGradientTensor,Jg,err,error,*)
+    & deformationGradientTensor,growthTensor,elasticDeformationGradientTensor,Jg,Je,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set
@@ -4262,6 +4252,7 @@ CONTAINS
     REAL(DP), INTENT(OUT) :: growthTensor(3,3) !<On output, the growth tensor
     REAL(DP), INTENT(OUT) :: elasticDeformationGradientTensor(3,3) !<On output, the elastic part of the deformation gradient tensor
     REAL(DP), INTENT(OUT) :: Jg !<On output, the Jacobian of the growth tensor
+    REAL(DP), INTENT(OUT) :: Je !<On output, the Jacobian of the elastic tensor
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -4292,6 +4283,8 @@ CONTAINS
         Jg=1.0_DP
         elasticDeformationGradientTensor=deformationGradientTensor
       ENDIF
+      Je=Determinant(elasticDeformationGradientTensor,err,error)
+      IF(err/=0) GOTO 999
     ELSE
       CALL FlagError("Equations set is not associated.",err,error,*999)
     ENDIF
@@ -4302,9 +4295,12 @@ CONTAINS
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Total deformation gradient tensor:",err,error,*999)
       CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,deformationGradientTensor, &
         & WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    F','(",I1,",:)','  :",3(X,E13.6))','(13X,3(X,E13.6))',err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Determinant F, J = ",Determinant(deformationGradientTensor,err,error), &
+        & err,error,*999)
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Elastic component of the deformation gradient tensor:",err,error,*999)
       CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,elasticDeformationGradientTensor, &
         & WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    Fe','(",I1,",:)',' :",3(X,E13.6))','(13X,3(X,E13.6))',err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Determinant Fe, Je = ",Je,err,error,*999)
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Growth component of the deformation gradient tensor:",err,error,*999)
       CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,growthTensor, &
         & WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    Fg','(",I1,",:)',' :",3(X,E13.6))','(13X,3(X,E13.6))',err,error,*999)

@@ -3881,18 +3881,20 @@ CONTAINS
   !
  
   !>Calculates the tensor to get from material coordinate system, nu, to local coordinate system, xi.
-  SUBROUTINE Coordinates_MaterialSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint,dNudXi,dXidNu,err,error,*)
+  SUBROUTINE Coordinates_MaterialSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint,dNudX,dXdNu,dNudXi,dXidNu,err,error,*)
   
     !Argument variables
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: geometricInterpPointMetrics !<The geometric interpolation point metrics at the point to calculate the material coordinate system from.
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: fibreInterpPoint !<The fibre interpolation point at the point to calculate the material coordinate system from
+    REAL(DP), INTENT(OUT) :: dNudX(:,:) !<dNudX(nuIdx,xIdx). On return, the tensor to transform from the material system to the geometric coordinate system
+    REAL(DP), INTENT(OUT) :: dXdNu(:,:) !<dXdNu(xIdx,nuIdx). On return, the tensor to transform from the geometric coordinate system to the material coordinate system
     REAL(DP), INTENT(OUT) :: dNudXi(:,:) !<dNudXi(nuIdx,xiIdx). On return, the tensor to transform from the material system to the xi coordinate system
     REAL(DP), INTENT(OUT) :: dXidNu(:,:) !<dXidNu(xiIdx,nuIdx). On return, the tensor to transform from the xi coordinate system to the material coordinate system
     INTEGER(INTG), INTENT(OUT) :: err   !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) ::  error   !<The error string
     !Local variables
-    INTEGER(INTG) :: numberOfXDimensions,numberOfXiDimensions,numberOfNuDimensions
-    REAL(DP) :: dXdNu(3,3),dNudX(3,3),dNudXiTemp(3,3),Jnuxi
+    INTEGER(INTG) :: numberOfXDimensions,numberOfXiDimensions,numberOfNuDimensions,xiIdx
+    REAL(DP) :: dNudXiTemp(3,3),Jnuxi
     TYPE(VARYING_STRING) :: localError 
      
     ENTERS("Coordinates_MaterialSystemCalculate",err,error,*999)
@@ -3923,20 +3925,22 @@ CONTAINS
             & " is invalid. The number of dimensions must be >= 1 and <= 3."
           CALL FlagError(localError,err,error,*999)
         END SELECT
-        !Calculate dNu/dX the inverse of dX/dNu (same as transpose due to orthogonality)
-        CALL MatrixTranspose(dXdNu(1:numberOfXDimensions,1:numberOfXDimensions),dNudX(1:numberOfXDimensions,1: &
-          & numberOfXDimensions),err,error,*999)
-        !Calculate dNu/dXi = dNu/dX * dX/dXi and its inverse dXi/dNu
-        CALL MatrixProduct(dNudX(1:numberOfXDimensions,1:numberOfXDimensions), &
-          & geometricInterpPointMetrics%DX_DXI(1:numberOfXDimensions,1:numberOfXiDimensions), &
-          & dNudXiTemp(1:numberOfXDimensions,1:numberOfXiDimensions),err,error,*999)
       ELSE
         !No fibre field
         numberOfNuDimensions=0
-        dNudXiTemp(1:numberOfXDimensions,1:numberOfXiDimensions)=geometricInterpPointMetrics%DX_DXI(1:numberOfXDimensions, &
-          & 1:numberOfXiDimensions)
+        DO xiIdx=1,numberOfXiDimensions
+          dNudXiTemp(1:numberOfXDimensions,xiIdx)=geometricInterpPointMetrics%DX_DXI(1:numberOfXDimensions,xiIdx)
+          dXdNu(1:numberOfXDimensions,xiIdx)=Normalise(dNudXiTemp(1:numberOfXDimensions,xiIdx),err,error)
+        ENDDO !xiIdx
       ENDIF
-
+      !Calculate dNu/dX the inverse of dX/dNu (same as transpose due to orthogonality)
+      CALL MatrixTranspose(dXdNu(1:numberOfXDimensions,1:numberOfXDimensions),dNudX(1:numberOfXDimensions,1: &
+        & numberOfXDimensions),err,error,*999)
+      !Calculate dNu/dXi = dNu/dX * dX/dXi and its inverse dXi/dNu
+      CALL MatrixProduct(dNudX(1:numberOfXDimensions,1:numberOfXDimensions), &
+        & geometricInterpPointMetrics%DX_DXI(1:numberOfXDimensions,1:numberOfXiDimensions), &
+        & dNudXiTemp(1:numberOfXDimensions,1:numberOfXiDimensions),err,error,*999)
+      !Setup dNudXi
       CALL IdentityMatrix(dNudXi,err,error,*999)
       dNudXi(1:numberOfXDimensions,1:numberOfXiDimensions)=dNudXiTemp(1:numberOfXDimensions,1:numberOfXiDimensions)
 
@@ -3953,16 +3957,16 @@ CONTAINS
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of X dimensions  = ",numberOfXDimensions,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi dimensions = ",numberOfXiDimensions,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Nu dimensions = ",numberOfNuDimensions,err,error,*999)
-        IF(numberOfNuDimensions>0) THEN
-          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of X wrt Nu:",err,error,*999)
-          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,1,1,numberOfXDimensions, &
-            & numberOfXDimensions,numberOfXDimensions,dXdNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-            & '("    dX_dNu','(",I1,",:)','  :",3(X,E13.6))','(18X,3(X,E13.6))',err,error,*999)
-          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of Nu wrt X:",err,error,*999)
-          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,1,1,numberOfXDimensions, &
-            & numberOfXDimensions,numberOfXDimensions,dNudX,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-            & '("    dNu_dX','(",I1,",:)','  :",3(X,E13.6))','(18X,3(X,E13.6))',err,error,*999)
-        ENDIF
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of X wrt Nu:",err,error,*999)
+        CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,1,1,numberOfXDimensions, &
+          & numberOfXDimensions,numberOfXDimensions,dXdNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+          & '("    dX_dNu','(",I1,",:)','  :",3(X,E13.6))','(18X,3(X,E13.6))',err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of Nu wrt X:",err,error,*999)
+        CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,1,1,numberOfXDimensions, &
+          & numberOfXDimensions,numberOfXDimensions,dNudX,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+          & '("    dNu_dX','(",I1,",:)','  :",3(X,E13.6))','(18X,3(X,E13.6))',err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Determinant dNu_dX, JNuX = ", &
+          & Determinant(dNudX(1:numberOfXDimensions,1:numberOfXDimensions),err,error),err,error,*999)
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of Nu wrt Xi:",err,error,*999)
         CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,1,1,numberOfXiDimensions, &
           & numberOfXiDimensions,numberOfXiDimensions,dNudXi,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
