@@ -36,6 +36,8 @@ MY_TEX_SRC="TitlePage/TitlePage.tex "\
 "EquationSets/ClassicalFieldClass/PoissonEquation.tex "\
 "EquationSets/ClassicalFieldClass/ReactionDiffusionEquation.tex "\
 "EquationSets/ClassicalFieldClass/WaveEquation.tex "\
+"EquationSets/ElasticityClass/LinearElasticity.tex "\
+"EquationSets/ElasticityClass/FiniteElasticity.tex "\
 "EquationSets/FluidMechanicsClass/BurgersEquation.tex "\
 "EquationSets/FluidMechanicsClass/PoiseuilleFlow.tex "\
 "EquationSets/FluidMechanicsClass/StokesEquation.tex "\

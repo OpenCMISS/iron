@@ -113,6 +113,104 @@ The polar decomposition
  & &  \tangentspace{S}{x} & &
 \end{diagram}
 
+
+If we let the deformed coordinates be given by the position vector,
+$\fnof{\vectr{z}}{\vectr{x},t}$ then the deformation gradient tensor with
+respect to the undeformed $\vectr{X}$ coordinates is given by
+\begin{equation}
+  \fnof{\tensor{F}}{\vectr{X}}=\delby{\vectr{z}}{\vectr{X}}
+\end{equation}
+or, in component form,
+\begin{equation}
+  F^{i}_{M}=\delby{z^{i}}{X^{M}}=\delby{z^{i}}{\xi^{k}}\delby{\xi^{k}}{X^{M}}
+\end{equation}
+
+In order to deal with orthotropy we wish to base our stress and strain
+calculation is fibre, $\vectr{\nu}$, coordinates. To change our reference
+coordinate system from $\vectr{X}$ to $\vectr{\nu}$ we need to transform
+$\fnof{\tensor{F}}{\vectr{X}}$. As $\fnof{\tensor{F}}{\vectr{X}}$ is a two point tensor the transformation
+rule for transforming just the reference coordinates is given by
+\begin{equation}
+\fnof{\tensor{F}}{\vectr{\nu}}=\tensor{Q}\fnof{\tensor{F}}{\vectr{X}}
+\end{equation}
+where $\tensor{Q}$ is the rotation matrix from $\vectr{X}$ to $\vectr{\nu}$ \ie
+\begin{equation}
+  F^{i}_{A}=\delby{X^{M}}{\nu^{A}}F^{i}_{M}=\delby{X^{M}}{\nu^{A}}\delby{z^{i}}{\xi^{k}}\delby{\xi^{k}}{X^{M}}
+\end{equation}
+
+To allow for growth we use a multiplicative decomposition approach \ie
+\begin{equation}
+  \fnof{\tensor{F}}{\vectr{\nu}}=\fnof{\tensor{F}_{g}}{\vectr{\nu}}\fnof{\tensor{F}_{e}}{\vectr{\nu}}
+\end{equation}
+where $\fnof{\tensor{F}_{g}}{\vectr{\nu}}$ is the growth tensor with
+respect to fibre coordinates and $\fnof{\tensor{F}_{e}}{\vectr{\nu}}$ is the
+elastic component of the deformation gradient tensor in fibre coordinates.
+
+The elastic component of the deformation gradient tensor can be calculated
+from
+\begin{equation}
+  \fnof{\tensor{F}_{e}}{\vectr{\nu}}=\fnof{\inverse{\tensor{F}_{g}}}{\vectr{\nu}}\fnof{\tensor{F}}{\vectr{\nu}}
+\end{equation}
+
+In component form we have
+\begin{equation}
+  F^{i}_{A}=\pbrac{F_{g}}^{B}_{A}\pbrac{F_{e}}^{i}_{B}
+\end{equation}
+and
+\begin{equation}
+  \pbrac{F_{e}}^{i}_{B}=\pbrac{\inverse{F_{g}}}^{A}_{B}F^{i}_{A}
+\end{equation}
+
+The Jacobian of the growth component of the deformation is given by
+$J_{g}=\det{\fnof{\tensor{F}_{g}}{\vectr{\nu}}}$ and the Jacobian of the
+elastic component of the deformation is given by
+$J_{e}=\det{\fnof{\tensor{F}_{e}}{\vectr{\nu}}}$.
+
+The right Cauchy Green deformation tensor in fibre coordinates is now given by
+\begin{equation}
+  \fnof{\tensor{C}}{\vectr{\nu}}=\fnof{\transpose{\tensor{F}_{e}}}{\vectr{\nu}}\fnof{\tensor{F}_{e}}{\vectr{\nu}}
+\end{equation}
+and the Lagrange strain tensor is given by
+\begin{equation}
+  \fnof{\tensor{E}}{\vectr{\nu}}=\frac{1}{2}\pbrac{\fnof{\tensor{C}}{\vectr{\nu}}-\tensor{I}}
+\end{equation}
+
+The constituative law can then be used to derive the second Piola Kirchoff
+stress tensor in fibre coordinates, $\fnof{\tensor{T}}{\vectr{\nu}}$, from the
+Lagrange strain tensor. To use this tensor we need to push it forward to the
+deformed coordinates, $\vectr{x}$, to give the Kirchoff stress tensor,
+$\fnof{\tensor{\tau}}{\vectr{x}}$. The push foward is given by
+\begin{equation}
+  \fnof{\tensor{\tau}}{\vectr{x}}=\fnof{\tensor{F}_{e}}{\vectr{\nu}}\fnof{\tensor{T}}{\vectr{\nu}}
+  \fnof{\transpose{\tensor{F}_{e}}}{\vectr{\nu}}
+\end{equation}
+
+The Cauchy stress tensor, $\fnof{\tensor{\sigma}}{\vectr{x}}$, can then be calculated from the Kirchoff stress
+tensor using the Jacobian of the deformation \ie
+\begin{equation}
+  \fnof{\tensor{\sigma}}{\vectr{x}}=\inverse{J_{e}}\fnof{\tensor{\tau}}{\vectr{x}}=\inverse{J_{e}}
+  \fnof{\tensor{F}_{e}}{\vectr{\nu}}\fnof{\tensor{T}}{\vectr{\nu}}\fnof{\transpose{\tensor{F}_{e}}}{\vectr{\nu}}
+\end{equation}
+
+In component form we have
+\begin{equation}
+  \tau^{ij}=\pbrac{F_{e}}^{i}_{B}T^{BC}\pbrac{\transpose{F_{e}}}^{j}_{C}
+\end{equation}
+and
+\begin{equation}
+  \sigma^{ij}=\inverse{J_{e}}\pbrac{F_{e}}^{i}_{B}T^{BC}\pbrac{\transpose{F_{e}}}^{j}_{C}
+\end{equation}
+
+We now adopt a virtual work approach with the deformed configuration. The
+balance statement is
+\begin{equation}
+  \gint{v}{}{\sigma^{ij}\delby{\delta
+      u_{j}}{x^{i}}}{v}=\gint{v}{}{\rho\pbrac{b^{j}-f^{j}}\delta
+    u_{j}}{v}+\gint{s_{2}}{}{\dotprod{\vectr{t}}{\delta\vectr{u}}}{s}
+\end{equation}
+where $\delta\vectr{u}$ are the virtual displacements and $v$ is the deformed
+volume.
+
 \subsection{Old Stuff}
 
 Formulation of finite element equations for finite elasticity (large
