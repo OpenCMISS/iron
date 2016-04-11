@@ -1318,7 +1318,7 @@ CONTAINS
     REAL(DP) :: dNudXi(3,3),dXidNu(3,3)
     REAL(DP) :: DFDZ(64,3,3) !temporary until a proper alternative is found
     REAL(DP) :: DPHIDZ(3,64,3) !temporary until a proper alternative is found
-    REAL(DP) :: GAUSS_WEIGHT,Jznu,Jxxi,JGW
+    REAL(DP) :: GAUSS_WEIGHT,Jznu,Jxxi,Jzxi,JGW
     REAL(DP) :: SUM1,TEMPTERM1
     REAL(DP) :: THICKNESS ! for elastic membrane
     REAL(DP) :: DARCY_MASS_INCREASE,DARCY_VOL_INCREASE,DARCY_RHO_0_F,DENSITY  !coupling with Darcy model
@@ -1826,6 +1826,8 @@ CONTAINS
 
             Jxxi=GEOMETRIC_INTERPOLATED_POINT_METRICS%JACOBIAN
             
+            Jzxi=DEPENDENT_INTERPOLATED_POINT_METRICS%JACOBIAN
+            
             HYDROSTATIC_PRESSURE_COMPONENT=DEPENDENT_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
               & NUMBER_OF_COMPONENTS
             P=DEPENDENT_INTERPOLATED_POINT%VALUES(HYDROSTATIC_PRESSURE_COMPONENT,1)
@@ -1851,12 +1853,12 @@ CONTAINS
               CALL Field_ParameterSetGetLocalGaussPoint(DEPENDENT_FIELD,FIELD_U2_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                 & gauss_idx,ELEMENT_NUMBER,6,piolaTensor(3,3),ERR,ERROR,*999)
               !CellML computes the deviatoric stress. Add the volumetric component!
-              piolaTensor(1,1)=piolaTensor(1,1)+2.0_DP*P*f(1,1)
-              piolaTensor(2,2)=piolaTensor(2,2)+2.0_DP*P*f(2,2)
-              piolaTensor(3,3)=piolaTensor(3,3)+2.0_DP*P*f(3,3)
-              piolaTensor(1,2)=piolaTensor(1,2)+2.0_DP*P*f(1,2)
-              piolaTensor(1,3)=piolaTensor(1,3)+2.0_DP*P*f(1,3)
-              piolaTensor(2,3)=piolaTensor(2,3)+2.0_DP*P*f(2,3)
+              piolaTensor(1,1)=piolaTensor(1,1)+P*f(1,1)
+              piolaTensor(2,2)=piolaTensor(2,2)+P*f(2,2)
+              piolaTensor(3,3)=piolaTensor(3,3)+P*f(3,3)
+              piolaTensor(1,2)=piolaTensor(1,2)+P*f(1,2)
+              piolaTensor(1,3)=piolaTensor(1,3)+P*f(1,3)
+              piolaTensor(2,3)=piolaTensor(2,3)+P*f(2,3)
               piolaTensor(2,1)=piolaTensor(1,2)
               piolaTensor(3,1)=piolaTensor(1,3)
               piolaTensor(3,2)=piolaTensor(2,3)
@@ -1868,14 +1870,14 @@ CONTAINS
               CALL Field_ParameterSetGetLocalGaussPoint(DEPENDENT_FIELD,FIELD_U2_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                 & gauss_idx,ELEMENT_NUMBER,3,piolaTensor(2,2),ERR,ERROR,*999)
               !CellML computes the deviatoric stress. Add the volumetric component!
-              piolaTensor(1,1)=piolaTensor(1,1)+2.0_DP*P*f(1,1)
-              piolaTensor(2,2)=piolaTensor(2,2)+2.0_DP*P*f(2,2)
-              piolaTensor(1,2)=piolaTensor(1,2)+2.0_DP*P*f(1,2)
+              piolaTensor(1,1)=piolaTensor(1,1)+P*f(1,1)
+              piolaTensor(2,2)=piolaTensor(2,2)+P*f(2,2)
+              piolaTensor(1,2)=piolaTensor(1,2)+P*f(1,2)
               piolaTensor(2,1)=piolaTensor(1,2)
             ELSE
               CALL Field_ParameterSetGetLocalGaussPoint(DEPENDENT_FIELD,FIELD_U2_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                 & gauss_idx,ELEMENT_NUMBER,1,piolaTensor(1,1),ERR,ERROR,*999)
-              piolaTensor(1,1)=piolaTensor(1,1)+2.0_DP*P*f(1,1)
+              piolaTensor(1,1)=piolaTensor(1,1)+P*f(1,1)
             ENDIF
 
             !Compute the Kirchoff stress tensor by pushing the 2nd Piola Kirchoff stress tensor forward \tau = F.S.F^T
@@ -1888,13 +1890,14 @@ CONTAINS
             IF(DIAGNOSTICS1) THEN
               CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
               CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Stress tensors:",err,error,*999)
-              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Second Piola-Kirchoff stress tensors:",err,error,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Hydrostatic pressure = ",P,err,error,*999)
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Second Piola-Kirchoff stress tensor:",err,error,*999)
               CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
-                & 3,3,piolaTensor,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    T','(",I1,",:)',' :",3(X,E13.6))', &
+                & 3,3,piolaTensor,WRITE_STRING_MATRIX_NAME_AND_INDICES, '("    T','(",I1,",:)','     :",3(X,E13.6))', &
                 & '(12X,3(X,E13.6))',ERR,ERROR,*999)
-              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Cauchy stress tensors:",err,error,*999)
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Cauchy stress tensor:",err,error,*999)
               CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
-                & 3,3,cauchyTensor,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    s','(",I1,",:)',' :",3(X,E13.6))', &
+                & 3,3,cauchyTensor,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    sigma','(",I1,",:)',' :",3(X,E13.6))', &
                 & '(12X,3(X,E13.6))',ERR,ERROR,*999)
             ENDIF
 
@@ -1929,7 +1932,7 @@ CONTAINS
                   DO component_idx2=1,NUMBER_OF_DIMENSIONS
                     NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(element_dof_idx)= &
                       & NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(element_dof_idx)+ &
-                      & GAUSS_WEIGHT*Jxxi*Jznu*THICKNESS*cauchyTensor(component_idx,component_idx2)* &
+                      & GAUSS_WEIGHT*Jzxi*THICKNESS*cauchyTensor(component_idx,component_idx2)* &
                       & DFDZ(parameter_idx,component_idx2,component_idx)
                   ENDDO ! component_idx2 (inner component index)
                 ENDDO ! parameter_idx (residual vector loop)
@@ -1953,13 +1956,13 @@ CONTAINS
                   IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
                     NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(element_dof_idx)= &
                       & NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(element_dof_idx)+ &
-                      & GAUSS_WEIGHT*Jxxi*COMPONENT_QUADRATURE_SCHEME%GAUSS_BASIS_FNS(parameter_idx,1,gauss_idx)* &
-                      & (Jznu-1.0_DP-DARCY_VOL_INCREASE)
+                      & GAUSS_WEIGHT*Jzxi*COMPONENT_QUADRATURE_SCHEME%GAUSS_BASIS_FNS(parameter_idx,1,gauss_idx)* &
+                      & (Je-1.0_DP-DARCY_VOL_INCREASE)
                   ELSE
                     NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(element_dof_idx)= &
                       & NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(element_dof_idx)+ &
-                      & GAUSS_WEIGHT*Jxxi*COMPONENT_QUADRATURE_SCHEME%GAUSS_BASIS_FNS(parameter_idx,1,gauss_idx)* &
-                      & (Jznu-1.0_DP)
+                      & GAUSS_WEIGHT*Jzxi*COMPONENT_QUADRATURE_SCHEME%GAUSS_BASIS_FNS(parameter_idx,1,gauss_idx)* &
+                      & (Je-1.0_DP)
                   ENDIF
                 ENDDO
               ELSEIF(DEPENDENT_COMPONENT_INTERPOLATION_TYPE==FIELD_ELEMENT_BASED_INTERPOLATION) THEN !element based
@@ -1967,11 +1970,11 @@ CONTAINS
                 IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
                   NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(element_dof_idx)= &
                     & NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(element_dof_idx)+GAUSS_WEIGHT*Jxxi* &
-                    & (Jznu-1.0_DP-DARCY_VOL_INCREASE)
+                    & (Je-1.0_DP-DARCY_VOL_INCREASE)
                 ELSE
                   NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(element_dof_idx)= &
                     & NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(element_dof_idx)+GAUSS_WEIGHT*Jxxi* &
-                    & (Jznu-1.0_DP)
+                    & (Je-1.0_DP)
                 ENDIF
               ENDIF
             ENDIF
@@ -2675,30 +2678,30 @@ CONTAINS
                 ! 3 dimensional problem
                 ! ORDER OF THE COMPONENTS: U_11, U_12, U_13, U_22, U_23, U_33 (upper triangular matrix)
                 CALL Field_ParameterSetUpdateLocalGaussPoint(strainField,strainFieldVariableType,FIELD_VALUES_SET_TYPE, &
-                  & gaussIdx,elementNumber,1,E(1,1),err,error,*999)
+                  & gaussIdx,elementNumber,1,C(1,1),err,error,*999)
                 CALL Field_ParameterSetUpdateLocalGaussPoint(strainField,strainFieldVariableType,FIELD_VALUES_SET_TYPE, &
-                  & gaussIdx,elementNumber,2,E(1,2),err,error,*999)
+                  & gaussIdx,elementNumber,2,C(1,2),err,error,*999)
                 CALL Field_ParameterSetUpdateLocalGaussPoint(strainField,strainFieldVariableType,FIELD_VALUES_SET_TYPE, &
-                  & gaussIdx,elementNumber,3,E(1,3),err,error,*999)
+                  & gaussIdx,elementNumber,3,C(1,3),err,error,*999)
                 CALL Field_ParameterSetUpdateLocalGaussPoint(strainField,strainFieldVariableType,FIELD_VALUES_SET_TYPE, &
-                  & gaussIdx,elementNumber,4,E(2,2),err,error,*999)
+                  & gaussIdx,elementNumber,4,C(2,2),err,error,*999)
                 CALL Field_ParameterSetUpdateLocalGaussPoint(strainField,strainFieldVariableType,FIELD_VALUES_SET_TYPE, &
-                  & gaussIdx,elementNumber,5,E(2,3),err,error,*999)
+                  & gaussIdx,elementNumber,5,C(2,3),err,error,*999)
                 CALL Field_ParameterSetUpdateLocalGaussPoint(strainField,strainFieldVariableType,FIELD_VALUES_SET_TYPE, &
-                  & gaussIdx,elementNumber,6,E(3,3),err,error,*999)
+                  & gaussIdx,elementNumber,6,C(3,3),err,error,*999)
               CASE(2)
                 ! 2 dimensional problem
                 ! ORDER OF THE COMPONENTS: U_11, U_12, U_22 (upper triangular matrix)
                 CALL Field_ParameterSetUpdateLocalGaussPoint(strainField,strainFieldVariableType,FIELD_VALUES_SET_TYPE, &
-                  & gaussIdx,elementNumber,1,E(1,1),err,error,*999)
+                  & gaussIdx,elementNumber,1,C(1,1),err,error,*999)
                 CALL Field_ParameterSetUpdateLocalGaussPoint(strainField,strainFieldVariableType,FIELD_VALUES_SET_TYPE, &
-                  & gaussIdx,elementNumber,2,E(1,2),err,error,*999)
+                  & gaussIdx,elementNumber,2,C(1,2),err,error,*999)
                 CALL Field_ParameterSetUpdateLocalGaussPoint(strainField,strainFieldVariableType,FIELD_VALUES_SET_TYPE, &
-                  & gaussIdx,elementNumber,3,E(2,2),err,error,*999)
+                  & gaussIdx,elementNumber,3,C(2,2),err,error,*999)
               CASE(1)
                 ! 1 dimensional problem
                 CALL Field_ParameterSetUpdateLocalGaussPoint(strainField,strainFieldVariableType,FIELD_VALUES_SET_TYPE, &
-                  & gaussIdx,elementNumber,1,E(1,1),err,error,*999)
+                  & gaussIdx,elementNumber,1,C(1,1),err,error,*999)
               CASE DEFAULT
                 localError="The number of dimensions of "//TRIM(NumberToVString(numberofDimensions,"*",err,error))// &
                   & " is invalid."
