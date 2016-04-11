@@ -175,10 +175,141 @@ and the Lagrange strain tensor is given by
   \fnof{\tensor{E}}{\vectr{\nu}}=\frac{1}{2}\pbrac{\fnof{\tensor{C}}{\vectr{\nu}}-\tensor{I}}
 \end{equation}
 
+In component form we have
+\begin{equation}
+  C_{AB}=g_{ij}\pbrac{F_{e}}^{i}_{A}\pbrac{F_{e}}^{j}_{B}
+\end{equation}
+and
+\begin{equation}
+  2E_{AB}=C_{AB}-G_{AB}
+\end{equation}
+
 The constituative law can then be used to derive the second Piola Kirchoff
-stress tensor in fibre coordinates, $\fnof{\tensor{T}}{\vectr{\nu}}$, from the
-Lagrange strain tensor. To use this tensor we need to push it forward to the
-deformed coordinates, $\vectr{x}$, to give the Kirchoff stress tensor,
+stress tensor in fibre coordinates, $\fnof{\tensor{T}}{\vectr{\nu}}$, from
+either the right Cauchy-Green deformation tensor or the Green-Lagrange strain
+tensor \ie
+\begin{equation}
+  \fnof{\tensor{T}}{\vectr{\nu}}=2\delby{\fnof{W}{\fnof{\tensor{C}}{\vectr{\nu}}}}{\fnof{\tensor{C}}{\vectr{\nu}}}
+\end{equation}
+or
+\begin{equation}
+  \fnof{\tensor{T}}{\vectr{\nu}}=\delby{\fnof{W}{\fnof{\tensor{E}}{\vectr{\nu}}}}{\fnof{\tensor{E}}{\vectr{\nu}}}
+\end{equation}
+where $\fnof{W}{\fnof{\tensor{C}}{\vectr{\nu}}}$ or
+$\fnof{W}{\fnof{\tensor{E}}{\vectr{\nu}}}$ is the strain energy
+function. In component form we have
+\begin{equation}
+  T^{AB}=2\delby{W}{C_{AB}}
+\end{equation}
+or
+\begin{equation}
+  T^{AB}=\delby{W}{E_{AB}}
+\end{equation}
+
+Because $\tensor{C}$ is symmetric then we can deal with the invariants. The
+three invariants are
+\begin{equation}
+  \begin{split}
+    I_{1} &= \operatorname{tr}\tensor{C} \\
+    &= C_{11} + C_{22} + C_{33} \\
+    I_{2} &=
+    \dfrac{1}{2}\pbrac{\pbrac{\operatorname{tr}\tensor{C}}^{2}-\operatorname{tr}\tensor{C}^{2}} \\
+    &=
+    \dfrac{1}{2}\left(\pbrac{C_{11}+C_{22}+C_{33}}^{2}\right. \\
+      & \quad\left.-\pbrac{C_{11}^{2}+C_{12}C_{21}+C_{13}C_{31}+
+        C_{21}C_{12}+C_{22}^{2}+C_{23}C_{32}+C_{31}C_{13}+C_{32}C_{23}+C_{33}^{2}}\right) \\
+    I_{3} &= \det{\tensor{C}} \\
+    &=C_{11}C_{22}C_{33}+C_{12}C_{23}C_{31}+C_{13}C_{21}C_{32}\\
+    &\quad-C_{13}C_{22}C_{31}-C_{12}C_{21}C_{33}-C_{11}C_{23}C_{32}
+  \end{split}
+\end{equation}
+We thus have
+$\fnof{W}{\fnof{\tensor{C}}{\vectr{\nu}}}=\fnof{W}{I_{1},I_{2},I_{3}}$ and
+thus
+\begin{equation}
+  T^{AB}=2\pbrac{\delby{W}{I_{1}}\delby{I_{1}}{C_{AB}}+\delby{W}{I_{2}}\delby{I_{2}}{C_{AB}}+\delby{W}{I_{3}}\delby{I_{3}}{C_{AB}}}
+\end{equation}
+or if we have
+$\fnof{W}{\fnof{\tensor{E}}{\vectr{\nu}}}=\fnof{W}{I_{1},I_{2},I_{3}}$ and
+thus
+\begin{equation}
+  T^{AB}=\pbrac{\delby{W}{I_{1}}\delby{I_{1}}{E_{AB}}+\delby{W}{I_{2}}\delby{I_{2}}{E_{AB}}+\delby{W}{I_{3}}\delby{I_{3}}{E_{AB}}}
+\end{equation}
+
+Now we have
+\begin{equation}
+  \delby{I_{1}}{C_{AB}}=\begin{bmatrix}
+    1 & 0 & 0 \\
+    0 & 1 & 0 \\
+    0 & 0 & 1
+  \end{bmatrix}
+\end{equation}
+and
+\begin{equation}
+  \delby{I_{2}}{C_{AB}}=\begin{bmatrix}
+    C_{22}+C_{33} & -C_{21} & -C_{31} \\
+    -C_{12} & C_{11}+C_{33} & -C_{32} \\
+    -C_{13} & -C_{23} & C_{11}+C_{22}
+  \end{bmatrix}
+\end{equation}
+and
+\begin{equation}
+  \delby{I_{3}}{C_{AB}}=\begin{bmatrix}
+    C_{22}C_{33}-C_{23}C_{32} & C_{23}C_{31}-C_{21}C_{33} & C_{23}C_{32}-C_{22}C_{31} \\
+    C_{13}C_{32}-C_{12}C_{33} & C_{11}C_{33}-C_{13}C_{31} & C_{12}C_{31}-C_{11}C_{32} \\
+    C_{12}C_{32}-C_{22}C_{31} & C_{13}C_{23}-C_{11}C_{23} & C_{11}C_{22}-C_{12}C_{21}
+  \end{bmatrix}
+\end{equation}
+
+As an example consider a Mooney-Rivlin material. The strain energy function is
+given by
+\begin{equation}
+  \fnof{W}{I_{1},I_{2}}=c_{1}\pbrac{I_{1}-3}+c_{2}\pbrac{I_{2}-3}
+\end{equation}
+
+The second Piola Kirchoff tensor is thus
+\begin{equation}
+  T^{AB}=\begin{bmatrix}
+    2c_{1}+2c_{2}\pbrac{C_{22}+C_{33}} & -2c_{2}C_{21} & -2c_{2}C_{31} \\
+    -2c_{2}C_{12} & 2c_{1}+2c_{2}\pbrac{C_{11}+C_{33}} & -2c_{2}C_{32} \\
+    -2c_{2}C_{13} & -2c_{2}C_{23} & 2c_{1}+2c_{2}\pbrac{C_{11}+C_{22}}
+  \end{bmatrix}
+\end{equation}
+or
+\begin{equation}
+  T^{AB}=\begin{bmatrix}
+    c_{1}+c_{2}\pbrac{E_{22}+E_{33}} & -c_{2}E_{21} & -c_{2}E_{31} \\
+    -c_{2}E_{12} & c_{1}+c_{2}\pbrac{E_{11}+E_{33}} & -c_{2}E_{32} \\
+    -c_{2}E_{13} & -c_{2}E_{23} & c_{1}+c_{2}\pbrac{E_{11}+E_{22}}
+  \end{bmatrix}
+\end{equation}
+
+For incompressible materials we need to add in the volumetric stress. The
+hydrostatic stress is a Cauchy stress and so the final stress is 
+\begin{equation}
+  \tensor{\sigma}_{p} = -p\tensor{I}
+\end{equation}
+or in component form
+\begin{equation}
+  \sigma_{p}^{ij} = -p\delta^{ij}
+\end{equation}
+
+We can pull this stress back to give a second Piola Kirchoff stress via the
+pullback operation for a second order tensor \ie
+\begin{equation}
+  \tensor{T}_{p}=
+  -\inverse{\tensor{F}_{e}}\tensor{\sigma}_{p}\invtranspose{\tensor{F}_{e}} = -p\inverse{\tensor{C}}
+\end{equation}
+or in component form
+\begin{equation}
+  T_{p}^{AB}=-\pbrac{F_{e}}^{A}_{i}p\delta^{ij}\pbrac{F_{e}}^{B}_{j}=-p\pbrac{\inverse{C}}^{AB}
+\end{equation}
+
+The final stress tensors are
+
+To find the stress tensors in deformed coordinates we need to push the second
+Piola Kirchoff tensor in the reference coordinates forward to the deformed
+coordinates, $\vectr{x}$, to give the Kirchoff stress tensor,
 $\fnof{\tensor{\tau}}{\vectr{x}}$. The push foward is given by
 \begin{equation}
   \fnof{\tensor{\tau}}{\vectr{x}}=\fnof{\tensor{F}_{e}}{\vectr{\nu}}\fnof{\tensor{T}}{\vectr{\nu}}
