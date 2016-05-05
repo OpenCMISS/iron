@@ -12,6 +12,7 @@ option(BUILD_TESTS "${PROJECT_NAME} - Build tests" ON)
 option(WITH_PROFILING "${PROJECT_NAME} - Build with profiling flags" OFF)
 option(WITH_C_BINDINGS "Build iron C bindings" ON)
 option(WITH_Python_BINDINGS "Build iron Python bindings" ON)
+option(WITH_DIAGNOSTICS "Build iron with diagnostics support" ON)
 set(PACKAGE_CONFIG_DIR "cmake" CACHE STRING "Directory for package config files (relative to CMAKE_INSTALL_PREFIX)")
 
 # Config
@@ -87,6 +88,7 @@ if(MSVC)
     target_link_libraries(iron PRIVATE iron_static_C)
     
     # IDE stuff
+    source_group(headers FILES ${IRON_HEADERS})
     source_group(src FILES ${IRON_C_SRC})
     source_group(src FILES ${IRON_Fortran_SRC})
 else()
@@ -106,6 +108,9 @@ foreach(irontarget ${IRON_TARGETS})
     endif()
     if (WITH_FIELDML)
         target_compile_definitions(${irontarget} PUBLIC USEFIELDML)
+    endif()
+    if (WITH_DIAGNOSTICS)
+        target_compile_definitions(${irontarget} PUBLIC USEDIAGNOSTICS)
     endif()
     # In case the compiler is not already the mpi wrapper,
     # we need all the include paths etc.
