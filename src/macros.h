@@ -1,10 +1,8 @@
-#ifdef DEBUG
-#  define ENTERSEXITS !Just for now (will be -D'ed)
+#ifdef USEDIAGNOSTICS
+#  define USEDIAGNOSTICS !Just for now (will be -D'ed)
 #endif
 
-#define ENTERSEXITS
-
-#ifdef ENTERSEXITS
+#ifdef USEDIAGNOSTICS
 #  define ENTERS(routinename,err,error,linenum) \
           CALL Enters(routinename,err,error,linenum)
 #  define EXITS(routinename) \

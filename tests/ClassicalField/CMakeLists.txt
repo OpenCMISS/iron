@@ -1,4 +1,5 @@
 add_executable(Laplace Laplace.f90)
+set_target_properties(Laplace PROPERTIES LINKER_LANGUAGE Fortran)
 target_link_libraries(Laplace iron)
 oc_add_test(ClassicalField_Laplace Laplace)
 oc_add_test(ClassicalField_Laplace_5_0_0_I1 Laplace 5 0 0 1)
@@ -12,18 +13,22 @@ oc_add_test(ClassicalField_Laplace_5_5_5_I2 Laplace 5 5 5 2)
 oc_add_test(ClassicalField_Laplace_5_5_5_I7 Laplace 5 5 5 7)
 
 add_executable(AnalyticLaplace AnalyticLaplace.f90)
+set_target_properties(AnalyticLaplace PROPERTIES LINKER_LANGUAGE Fortran)
 target_link_libraries(AnalyticLaplace iron)
 oc_add_test(ClassicalField_AnalyticLaplace AnalyticLaplace)
 
 add_executable(Analytic1DDiffusion Analytic1DDiffusion.f90)
+set_target_properties(Analytic1DDiffusion PROPERTIES LINKER_LANGUAGE Fortran)
 target_link_libraries(Analytic1DDiffusion iron)
 oc_add_test(ClassicalField_Analytic1DDiffusion Analytic1DDiffusion)
 
 add_executable(AnalyticHelmholtz AnalyticHelmholtz.f90)
+set_target_properties(AnalyticHelmholtz PROPERTIES LINKER_LANGUAGE Fortran)
 target_link_libraries(AnalyticHelmholtz iron)
 oc_add_test(ClassicalField_AnalyticHelmholtz AnalyticHelmholtz)
 
 add_executable(AnalyticNonlinearPoisson AnalyticNonlinearPoisson.f90)
+set_target_properties(AnalyticNonlinearPoisson PROPERTIES LINKER_LANGUAGE Fortran)
 target_link_libraries(AnalyticNonlinearPoisson iron)
 
 oc_add_test(ClassicalField_AnalyticNonlinearPoisson AnalyticNonlinearPoisson)
