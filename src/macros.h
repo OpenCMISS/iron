@@ -1,6 +1,3 @@
-#ifdef USEDIAGNOSTICS
-#  define USEDIAGNOSTICS !Just for now (will be -D'ed)
-#endif
 
 #ifdef USEDIAGNOSTICS
 #  define ENTERS(routinename,err,error,linenum) \

@@ -21364,7 +21364,8 @@ CONTAINS
 
     EXITS("cmfe_DataProjection_ResultProjectionVectorGetNumber")
     RETURN
-999 ERRORSEXITS("cmfe_DataProjection_ResultProjectionVectorGetNumber",err,error)
+999 ERRORS("cmfe_DataProjection_ResultProjectionVectorGetNumber",err,error)
+    EXITS("cmfe_DataProjection_ResultProjectionVectorGetNumber")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -21392,7 +21393,8 @@ CONTAINS
 
     EXITS("cmfe_DataProjection_ResultProjectionVectorGetObj")
     RETURN
-999 ERRORSEXITS("cmfe_DataProjection_ResultProjectionVectorGetObj",err,error)
+999 ERRORS("cmfe_DataProjection_ResultProjectionVectorGetObj",err,error)
+    EXITS("cmfe_DataProjection_ResultProjectionVectorGetObj")
     CALL cmfe_HandleError(err,error)
     RETURN
 
