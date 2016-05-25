@@ -49,7 +49,7 @@ MODULE CMISS_CELLML
 
   USE BASE_ROUTINES
   
-#ifdef USECELLML
+#ifdef WITH_CELLML
   USE CELLML_MODEL_DEFINITION
 #endif
   
@@ -221,7 +221,7 @@ CONTAINS
     
     ENTERS("CELLML_CELLML_TO_FIELD_UPDATE",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       IF(ASSOCIATED(CELLML%MODELS_FIELD)) THEN
@@ -554,7 +554,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -589,7 +589,7 @@ CONTAINS
 
     ENTERS("CELLML_CREATE_START",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(REGION)) THEN
       IF(ASSOCIATED(CELLML)) THEN
@@ -633,7 +633,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -664,7 +664,7 @@ CONTAINS
     
     ENTERS("CELLML_CREATE_FINISH",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       IF(CELLML%CELLML_FINISHED) THEN
@@ -702,7 +702,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -728,7 +728,7 @@ CONTAINS
     
     ENTERS("CELLML_DESTROY",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
 
@@ -763,7 +763,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -800,7 +800,7 @@ CONTAINS
     
     ENTERS("CELLML_FIELD_TO_CELLML_UPDATE",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       IF(ASSOCIATED(CELLML%MODELS_FIELD)) THEN
@@ -1132,7 +1132,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -1157,7 +1157,7 @@ CONTAINS
     
     ENTERS("CELLML_FINALISE",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       IF(ALLOCATED(CELLML%MODELS)) THEN
@@ -1176,7 +1176,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -1202,7 +1202,7 @@ CONTAINS
     
     ENTERS("CELLML_INITIALISE",ERR,ERROR,*998)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       CALL FlagError("CellML environment is already associated.",ERR,ERROR,*998)
@@ -1228,7 +1228,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*998)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*998)
 
 #endif
 
@@ -1257,7 +1257,7 @@ CONTAINS
      
     ENTERS("CELLML_FIELD_MAPS_CREATE_FINISH",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       IF(CELLML%CELLML_FINISHED) THEN
@@ -1294,7 +1294,7 @@ CONTAINS
     
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -1319,7 +1319,7 @@ CONTAINS
   
     ENTERS("CELLML_FIELD_MAPS_CREATE_START",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       IF(CELLML%CELLML_FINISHED) THEN
@@ -1334,7 +1334,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -1359,7 +1359,7 @@ CONTAINS
     
     ENTERS("CELLML_FIELD_MAPS_FINALISE",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML_FIELD_MAPS)) THEN
       IF(ALLOCATED(CELLML_FIELD_MAPS%MODEL_MAPS)) THEN
@@ -1373,7 +1373,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -1400,7 +1400,7 @@ CONTAINS
     
     ENTERS("CELLML_FIELD_MAPS_INITIALISE",ERR,ERROR,*998)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       IF(ASSOCIATED(CELLML%FIELD_MAPS)) THEN
@@ -1434,7 +1434,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*998)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*998)
 
 #endif
 
@@ -1459,7 +1459,7 @@ CONTAINS
      
     ENTERS("CELLML_MODEL_FINALISE",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML_MODEL)) THEN
       IF(C_ASSOCIATED(CELLML_MODEL%PTR)) CALL DESTROY_CELLML_MODEL_DEFINITION(CELLML_MODEL%PTR)
@@ -1469,7 +1469,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -1496,7 +1496,7 @@ CONTAINS
     
     ENTERS("CELLML_MODEL_INITIALISE",ERR,ERROR,*998)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML_MODEL)) THEN
       CALL FlagError("CellML model is already associated.",ERR,ERROR,*998)
@@ -1514,7 +1514,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*998)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*998)
 
 #endif
 
@@ -1539,7 +1539,7 @@ CONTAINS
     
     ENTERS("CELLML_MODEL_MAP_FINALISE",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML_MODEL_MAP)) THEN
       CALL ERASE(CELLML_MODEL_MAP%VARIABLE_ID)
@@ -1548,7 +1548,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -1575,7 +1575,7 @@ CONTAINS
     
     ENTERS("CELLML_MODEL_MAP_INITIALISE",ERR,ERROR,*998)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML_MODEL_MAP)) THEN
       CALL FlagError("CellML model map field is already associated.",ERR,ERROR,*998)
@@ -1595,7 +1595,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*998)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*998)
 
 #endif
 
@@ -1621,7 +1621,7 @@ CONTAINS
     
     ENTERS("CELLML_MODEL_MAPS_FINALISE",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML_MODEL_MAPS)) THEN
       IF(ALLOCATED(CELLML_MODEL_MAPS%FIELDS_MAPPED_TO)) THEN
@@ -1641,7 +1641,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -1668,7 +1668,7 @@ CONTAINS
     
     ENTERS("CELLML_MODEL_MAPS_INITIALISE",ERR,ERROR,*998)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML_MODEL_MAPS)) THEN
       CALL FlagError("CellML model maps is already associated.",ERR,ERROR,*998)
@@ -1681,7 +1681,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*998)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*998)
 
 #endif
 
@@ -1715,7 +1715,7 @@ CONTAINS
 
     ENTERS("CELLML_MODEL_IMPORT_C",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     NULLIFY(NEW_MODEL)
     MODEL_INDEX=0
@@ -1750,7 +1750,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -1776,13 +1776,13 @@ CONTAINS
 
     ENTERS("CELLML_MODEL_IMPORT_VS",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     CALL CELLML_MODEL_IMPORT(CELLML,CHAR(URI),MODEL_INDEX,ERR,ERROR,*999)
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -1814,7 +1814,7 @@ CONTAINS
 
     ENTERS("CELLML_VARIABLE_SET_AS_KNOWN_C",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       IF(CELLML%CELLML_FINISHED) THEN
@@ -1847,7 +1847,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -1874,13 +1874,13 @@ CONTAINS
 
     ENTERS("CELLML_VARIABLE_SET_AS_KNOWN_VS",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     CALL CELLML_VARIABLE_SET_AS_KNOWN(CELLML,MODEL_USER_NUMBER,CHAR(VARIABLE_ID),ERR,ERROR,*999)
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -1912,7 +1912,7 @@ CONTAINS
 
     ENTERS("CELLML_VARIABLE_SET_AS_WANTED_C",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       IF(CELLML%CELLML_FINISHED) THEN
@@ -1945,7 +1945,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -1972,13 +1972,13 @@ CONTAINS
 
     ENTERS("CELLML_VARIABLE_SET_AS_WANTED_VS",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     CALL CELLML_VARIABLE_SET_AS_WANTED(CELLML,MODEL_USER_NUMBER,CHAR(VARIABLE_ID),ERR,ERROR,*999)
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -2023,7 +2023,7 @@ CONTAINS
     
     ENTERS("CELLML_CREATE_CELLML_TO_FIELD_MAP_C",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       CALL CMISSF2CString(VARIABLE_ID,C_NAME)
@@ -2185,7 +2185,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -2218,14 +2218,14 @@ CONTAINS
 
     ENTERS("CELLML_CREATE_CELLML_TO_FIELD_MAP_VS",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     CALL CELLML_CREATE_CELLML_TO_FIELD_MAP(CELLML,MODEL_USER_NUMBER,CHAR(VARIABLE_ID),CELLML_PARAMETER_SET, &
       & FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,FIELD_PARAMETER_SET,ERR,ERROR,*999)
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -2271,7 +2271,7 @@ CONTAINS
     
     ENTERS("CELLML_CREATE_FIELD_TO_CELLML_MAP_C",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       CALL CMISSF2CString(VARIABLE_ID,C_NAME)
@@ -2419,7 +2419,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -2452,14 +2452,14 @@ CONTAINS
 
     ENTERS("CELLML_CREATE_FIELD_TO_CELLML_MAP_VS",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     CALL CELLML_CREATE_FIELD_TO_CELLML_MAP(CELLML,FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,FIELD_PARAMETER_SET, &
       & MODEL_USER_NUMBER,CHAR(VARIABLE_ID),CELLML_PARAMETER_SET,ERR,ERROR,*999)
     
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -2493,7 +2493,7 @@ CONTAINS
 
     ENTERS("CellML_FieldModelDofSet",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(modelVariable)) THEN
       IF(modelDofIdx>0.AND.modelDofIdx<=modelVariable%NUMBER_OF_DOFS) THEN
@@ -2537,7 +2537,7 @@ CONTAINS
     
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",err,error,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",err,error,*999)
 
 #endif
 
@@ -2567,7 +2567,7 @@ CONTAINS
     
     ENTERS("CELLML_MODELS_FIELD_CHECK",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(MODELS_FIELD)) THEN
       IF(MODELS_FIELD%MODELS_FIELD_FINISHED) THEN
@@ -2643,7 +2643,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -2673,7 +2673,7 @@ CONTAINS
  
     ENTERS("CELLML_MODELS_FIELD_CREATE_START",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       CELLML_FIELD_MAPS=>CELLML%FIELD_MAPS
@@ -2802,7 +2802,7 @@ CONTAINS
 
 #else
     
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
     
 #endif
     
@@ -2826,7 +2826,7 @@ CONTAINS
 
     ENTERS("CELLML_MODELS_FIELD_CREATE_FINISH",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       IF(ASSOCIATED(CELLML%MODELS_FIELD)) THEN
@@ -2850,7 +2850,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -2874,7 +2874,7 @@ CONTAINS
     
     ENTERS("CELLML_MODELS_FIELD_FINALISE",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(MODELS_FIELD)) THEN
       DEALLOCATE(MODELS_FIELD)
@@ -2882,7 +2882,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -2908,7 +2908,7 @@ CONTAINS
 
     ENTERS("CELLML_MODELS_FIELD_GET",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       IF(ASSOCIATED(CELLML%MODELS_FIELD)) THEN
@@ -2930,7 +2930,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -2956,7 +2956,7 @@ CONTAINS
     
     ENTERS("CELLML_MODELS_FIELD_INITIALISE",ERR,ERROR,*998)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       IF(ASSOCIATED(CELLML%MODELS_FIELD)) THEN
@@ -2976,7 +2976,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*998)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*998)
 
 #endif
 
@@ -3008,7 +3008,7 @@ CONTAINS
 
     ENTERS("CELLML_STATE_FIELD_CREATE_START",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
     
     IF(ASSOCIATED(CELLML)) THEN
       CELLML_FIELD_MAPS=>CELLML%FIELD_MAPS
@@ -3141,7 +3141,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -3173,7 +3173,7 @@ CONTAINS
 
     ENTERS("CELLML_STATE_FIELD_CREATE_FINISH",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       IF(ASSOCIATED(CELLML%STATE_FIELD)) THEN
@@ -3270,7 +3270,7 @@ CONTAINS
 
 #else
     
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
     
 #endif
 
@@ -3294,7 +3294,7 @@ CONTAINS
     
     ENTERS("CELLML_STATE_FIELD_FINALISE",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(STATE_FIELD)) THEN
       DEALLOCATE(STATE_FIELD)
@@ -3302,7 +3302,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -3328,7 +3328,7 @@ CONTAINS
 
     ENTERS("CELLML_STATE_FIELD_GET",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       IF(ASSOCIATED(CELLML%STATE_FIELD)) THEN
@@ -3350,7 +3350,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -3376,7 +3376,7 @@ CONTAINS
     
     ENTERS("CELLML_STATE_FIELD_INITIALISE",ERR,ERROR,*998)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       IF(ASSOCIATED(CELLML%STATE_FIELD)) THEN
@@ -3395,7 +3395,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*998)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*998)
 
 #endif
 
@@ -3434,7 +3434,7 @@ CONTAINS
 
    ENTERS("CELLML_FIELD_COMPONENT_GET_C",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
    IF(ASSOCIATED(CELLML)) THEN
      CELLML_MODEL=>CELLML%MODELS(MODEL_INDEX)%PTR
@@ -3454,7 +3454,7 @@ CONTAINS
 
 #else
 
-   CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+   CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -3484,13 +3484,13 @@ CONTAINS
 
     ENTERS("CELLML_FIELD_COMPONENT_GET_VS",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     CALL CELLML_FIELD_COMPONENT_GET(CELLML,MODEL_INDEX,CELLML_FIELD_TYPE,CHAR(VARIABLE_ID),COMPONENT_USER_NUMBER,ERR,ERROR,*999)
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -3521,7 +3521,7 @@ CONTAINS
 
     ENTERS("CELLML_INTERMEDIATE_FIELD_CREATE_START",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       CELLML_FIELD_MAPS=>CELLML%FIELD_MAPS
@@ -3658,7 +3658,7 @@ CONTAINS
     
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -3685,7 +3685,7 @@ CONTAINS
 
     ENTERS("CELLML_INTERMEDIATE_FIELD_CREATE_FINISH",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       IF(ASSOCIATED(CELLML%INTERMEDIATE_FIELD)) THEN
@@ -3716,7 +3716,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -3740,7 +3740,7 @@ CONTAINS
     
     ENTERS("CELLML_INTERMEDIATE_FIELD_FINALISE",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(INTERMEDIATE_FIELD)) THEN
       DEALLOCATE(INTERMEDIATE_FIELD)
@@ -3748,7 +3748,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -3773,7 +3773,7 @@ CONTAINS
 
     ENTERS("CELLML_INTERMEDIATE_FIELD_GET",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       IF(ASSOCIATED(CELLML%INTERMEDIATE_FIELD)) THEN
@@ -3796,7 +3796,7 @@ CONTAINS
     
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -3822,7 +3822,7 @@ CONTAINS
     
     ENTERS("CELLML_INTERMEDIATE_FIELD_INITIALISE",ERR,ERROR,*998)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       IF(ASSOCIATED(CELLML%INTERMEDIATE_FIELD)) THEN
@@ -3841,7 +3841,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*998)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*998)
 
 #endif
 
@@ -3873,7 +3873,7 @@ CONTAINS
  
     ENTERS("CELLML_PARAMETERS_FIELD_CREATE_START",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       CELLML_FIELD_MAPS=>CELLML%FIELD_MAPS
@@ -4009,7 +4009,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -4039,7 +4039,7 @@ CONTAINS
 
     ENTERS("CELLML_PARAMETERS_FIELD_CREATE_FINISH",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
     
     IF(ASSOCIATED(CELLML)) THEN
       IF(ASSOCIATED(CELLML%PARAMETERS_FIELD)) THEN
@@ -4142,7 +4142,7 @@ CONTAINS
     
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -4166,7 +4166,7 @@ CONTAINS
     
     ENTERS("CELLML_PARAMETERS_FIELD_FINALISE",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(PARAMETERS_FIELD)) THEN
       DEALLOCATE(PARAMETERS_FIELD)
@@ -4174,7 +4174,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -4199,7 +4199,7 @@ CONTAINS
 
     ENTERS("CELLML_PARAMETERS_FIELD_GET",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       IF(ASSOCIATED(CELLML%PARAMETERS_FIELD)) THEN
@@ -4221,7 +4221,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -4247,7 +4247,7 @@ CONTAINS
     
     ENTERS("CELLML_PARAMETERS_FIELD_INITIALISE",ERR,ERROR,*998)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       IF(ASSOCIATED(CELLML%PARAMETERS_FIELD)) THEN
@@ -4266,7 +4266,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*998)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*998)
 
 #endif
 
@@ -4296,7 +4296,7 @@ CONTAINS
  
     ENTERS("CELLML_GENERATE",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       IF(CELLML%CELLML_FINISHED) THEN 
@@ -4311,7 +4311,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
@@ -4340,7 +4340,7 @@ CONTAINS
 
     ENTERS("CELLML_USER_NUMBER_FIND",ERR,ERROR,*999)
 
-#ifdef USECELLML
+#ifdef WITH_CELLML
 
     IF(ASSOCIATED(REGION)) THEN
       IF(ASSOCIATED(CELLML)) THEN
@@ -4367,7 +4367,7 @@ CONTAINS
 
 #else
 
-    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
+    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
 
 #endif
 
