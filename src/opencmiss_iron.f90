@@ -61522,9 +61522,7 @@ CONTAINS
 
 #ifdef USEFIELDML
 
-    IF( ASSOCIATED(fieldml%fieldmlInfo) ) THEN
-      CALL FIELDML_IO_FINALISE( fieldml%fieldmlInfo, err, error, *999  )
-    ENDIF
+    CALL FIELDML_IO_FINALISE( fieldml%fieldmlInfo, err, error, *999  )
 
 #else
     CALL FlagError("Must compile with USEFIELDML=true to use FieldML functionality.",ERR,error,*999)
