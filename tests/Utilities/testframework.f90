@@ -53,10 +53,11 @@ MODULE IRON_TEST_FRAMEWORK
 
   INTERFACE EXPECT_NEAR
     MODULE PROCEDURE EXPECT_NEAR_DP
+    MODULE PROCEDURE EXPECT_NEAR_SP
   END INTERFACE EXPECT_NEAR
 
-  CHARACTER(LEN=:), ALLOCATABLE :: current_test_name !< The name of the current test.
-  INTEGER(CMISSIntg) :: test_err
+  CHARACTER(LEN=:), ALLOCATABLE, SAVE :: current_test_name !< The name of the current test.
+  INTEGER(CMISSIntg), SAVE :: test_err = 0
 
   PUBLIC INITIALISE_TESTS, FINALISE_TESTS, BEGIN_TEST, END_TEST, &
     & AUTO_USER_NUMBER, EXPECT_EQ, EXPECT_NEAR
@@ -80,21 +81,21 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: test_name !< The name of the test.
 
     IF (LEN(current_test_name) > 0) THEN
-      WRITE(unit = error_unit, fmt = "(a)") "Called BEGIN_TEST when test in progress. Cannot nest tests. Aborting."
+      WRITE(unit = error_unit, fmt = '("Called BEGIN_TEST when test in progress. Cannot nest tests. Aborting.")') 
       STOP 1
     ENDIF
-    WRITE(unit = output_unit, fmt = "(a)") "----------------------------------------"
-    WRITE(unit = output_unit, fmt = "(a,a)") "Begin test: ", test_name
+    WRITE(unit = output_unit, fmt = '("----------------------------------------")')
+    WRITE(unit = output_unit, fmt = '("Begin test: ",a)') test_name
     current_test_name = test_name
   END SUBROUTINE BEGIN_TEST
 
   !> End the current test. Test name is retained from prior call to BEGIN_TEST.
   SUBROUTINE END_TEST()
     IF (LEN(current_test_name) == 0) THEN
-      WRITE(unit = error_unit, fmt = "(a)") "Called END_TEST without call to BEGIN_TEST. Aborting."
+      WRITE(unit = error_unit, fmt = '("Called END_TEST without call to BEGIN_TEST. Aborting.")')
       STOP 1
     ENDIF
-    WRITE(unit = output_unit, fmt = "(a,a)") "End test: ", current_test_name
+    WRITE(unit = output_unit, fmt = '("End test: ",a)') current_test_name
     current_test_name = ""
   END SUBROUTINE END_TEST
 
@@ -120,8 +121,8 @@ CONTAINS
     INTEGER(CMISSIntg), INTENT(IN) :: actual !< Actual value.
 
     IF (actual /= expected) THEN
-      WRITE(unit = output_unit, fmt = "(a,a,a,i0,a,i0,a)") "The value of ", description, " (", actual, &
-        & ") is not near expected (", expected, ")"
+      WRITE(unit = output_unit, fmt = '("The value of ",a," (",i0,") is not near expected (",i0,")")') &
+        & description, actual, expected
       CALL set_err()
     ENDIF
   END SUBROUTINE EXPECT_EQ_INTG
@@ -129,15 +130,29 @@ CONTAINS
   !> Check actual value is within tolerance of expected. Reports and records any error and continues.
   SUBROUTINE EXPECT_NEAR_DP(description, expected, actual, tolerance)
     CHARACTER(LEN=*), INTENT(IN) :: description !< Description of quantity being compared.
-    REAL(DP), INTENT(IN) :: expected !< Expected value.
-    REAL(DP), INTENT(IN) :: actual !< Actual value.
-    REAL(DP), INTENT(IN) :: tolerance !< Absolute tolerance actual value must be around expected value
+    REAL(CMISSDP), INTENT(IN) :: expected !< Expected value.
+    REAL(CMISSDP), INTENT(IN) :: actual !< Actual value.
+    REAL(CMISSDP), INTENT(IN) :: tolerance !< Absolute tolerance actual value must be around expected value
 
     IF ((actual < (expected - tolerance)).OR.(actual > (expected + tolerance))) THEN
-      WRITE(unit = output_unit, fmt = "(a,a,a,g0,a,g0,a,g0,a)") "The value of ", description, " (", actual, &
-        & ") is not near expected (", expected, ") with tolerance (", tolerance, ")"
+      WRITE(unit = output_unit, fmt = '("The value of ",a," (",g0,") is not near expected (",g0,") with tolerance (",g0,")")') &
+        & description, actual, expected, tolerance
       CALL set_err()
     ENDIF
   END SUBROUTINE EXPECT_NEAR_DP
+
+  !> Check actual value is within tolerance of expected. Reports and records any error and continues.
+  SUBROUTINE EXPECT_NEAR_SP(description, expected, actual, tolerance)
+    CHARACTER(LEN=*), INTENT(IN) :: description !< Description of quantity being compared.
+    REAL(CMISSSP), INTENT(IN) :: expected !< Expected value.
+    REAL(CMISSSP), INTENT(IN) :: actual !< Actual value.
+    REAL(CMISSSP), INTENT(IN) :: tolerance !< Absolute tolerance actual value must be around expected value
+
+    IF ((actual < (expected - tolerance)).OR.(actual > (expected + tolerance))) THEN
+      WRITE(unit = output_unit, fmt = '("The value of ",a," (",g0,") is not near expected (",g0,") with tolerance (",g0,")")') &
+        & description, actual, expected, tolerance
+      CALL set_err()
+    ENDIF
+  END SUBROUTINE EXPECT_NEAR_SP
 
 END MODULE IRON_TEST_FRAMEWORK
