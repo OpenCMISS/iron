@@ -221,11 +221,11 @@ CONTAINS
     TYPE(cmfe_MeshType), INTENT(IN) :: mesh
     TYPE(cmfe_FieldType), INTENT(IN) :: geometricField
     ! local variables
-    REAL(DP), PARAMETER, DIMENSION(3, 4) :: xi = &
+    REAL(CMISSRP), PARAMETER, DIMENSION(3, 4) :: xi = &
       & RESHAPE([ 0.5, 0.5, 0.5,  0.0, 0.1, 0.2,  0.0, 0.0, 0.0,  0.667, 0.123, 0.456], [3, 4])
     INTEGER(CMISSIntg), PARAMETER :: elementUserNumber = 1
-    REAL(DP), DIMENSION(3) :: values
-    REAL(DP) :: tolerance = 1.0E-12_DP
+    REAL(CMISSRP), DIMENSION(3) :: values
+    REAL(CMISSRP), PARAMETER :: tolerance = 1.0E-14_RP*(10.0_RP**(precision(0.0_DP) - precision(0.0_RP)))
     INTEGER :: i, p
     TYPE(cmfe_MeshNodesType) :: meshNodes
     INTEGER(CMISSIntg) :: elementCount, err, meshComponentCount, nodeCount
