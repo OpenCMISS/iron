@@ -334,6 +334,8 @@ MODULE OpenCMISS_Iron
   !PUBLIC cmfe_Finalise,cmfe_Initialise
   PUBLIC cmfe_Finalise,cmfe_Initialise
 
+  PUBLIC cmfe_WorkingRealPrecisionGet
+
   PUBLIC cmfe_BasisType,cmfe_BasisTypesCopy,cmfe_Basis_Finalise,cmfe_Basis_Initialise
 
   PUBLIC cmfe_BoundaryConditionsType,cmfe_BoundaryConditions_Finalise,cmfe_BoundaryConditions_Initialise
@@ -1265,8 +1267,24 @@ MODULE OpenCMISS_Iron
   !Module parameters
 
   !> \addtogroup OPENCMISS_Constants OPENCMISS::Constants
-  !> \brief Control loops constants.
+  !> \brief OpeCMISS constants.
   !>@{
+  !> \addtogroup OPENCMISS_DataTypeConstants OPENCMISS::Constants::DataTypeConstants
+  !> \brief Data type constants for base data types
+  !> \see OPENCMISS_Constants,OPENCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_INTEGER_TYPE = INTEGER_TYPE !<Integer data type \see OPENCMISS_DataTypeConstants,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SHORT_INTEGER_TYPE = SHORT_INTEGER_TYPE !<Short integer data type \see OPENCMISS_DataTypeConstants,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_LONG_INTEGER_TYPE = LONG_INTEGER_TYPE !<Long integer data type \see OPENCMISS_DataTypeConstants,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SINGLE_REAL_TYPE = SINGLE_REAL_TYPE !<Single precision real data type \see OPENCMISS_DataTypeConstants,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DOUBLE_REAL_TYPE = DOUBLE_REAL_TYPE !<Double precision real data type \see OPENCMISS_DataTypeConstants,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_QUADRAUPLE_REAL_TYPE = QUADRUPLE_REAL_TYPE !<Quadruple precision real data type \see OPENCMISS_DataTypeConstants,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_CHARACTER_TYPE = CHARACTER_TYPE !<Character data type \see OPENCMISS_DataTypeConstants,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_LOGICAL_TYPE = LOGICAL_TYPE !<Logical data type \see OPENCMISS_DataTypeConstants,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SINGLE_COMPLEX_TYPE = SINGLE_COMPLEX_TYPE !<Single precision complex data type \see OPENCMISS_DataTypeConstants,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DOUBLE_COMPLEX_TYPE = DOUBLE_COMPLEX_TYPE !<Double precision complex data type \see OPENCMISS_DataTypeConstants,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_QUADRUPLE_COMPLEX_TYPE = QUADRUPLE_COMPLEX_TYPE !<Quadruple precision complex data type \see OPENCMISS_DataTypeConstants,OPENCMISS
+  !>@}
   !> \addtogroup OPENCMISS_GlobalDerivativeConstants OPENCMISS::Constants::GlobalDerivativeConstants
   !> \brief Global derivative constant identifiers
   !> \see OPENCMISS_CONSTANTS,OPENCMISS
@@ -1288,6 +1306,10 @@ MODULE OpenCMISS_Iron
 
   !Interfaces
 
+  PUBLIC CMFE_INTEGER_TYPE,CMFE_SHORT_INTEGER_TYPE,CMFE_LONG_INTEGER_TYPE,CMFE_SINGLE_REAL_TYPE,CMFE_DOUBLE_REAL_TYPE, &
+    & CMFE_QUADRAUPLE_REAL_TYPE,CMFE_CHARACTER_TYPE,CMFE_LOGICAL_TYPE,CMFE_SINGLE_COMPLEX_TYPE,CMFE_DOUBLE_COMPLEX_TYPE, &
+    & CMFE_QUADRUPLE_COMPLEX_TYPE
+  
   PUBLIC CMFE_NO_GLOBAL_DERIV,CMFE_GLOBAL_DERIV_S1,CMFE_GLOBAL_DERIV_S2,CMFE_GLOBAL_DERIV_S1_S2, &
     & CMFE_GLOBAL_DERIV_S3,CMFE_GLOBAL_DERIV_S1_S3,CMFE_GLOBAL_DERIV_S2_S3,CMFE_GLOBAL_DERIV_S1_S2_S3
 
@@ -7218,6 +7240,35 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_InitialiseObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the working precision
+  SUBROUTINE cmfe_WorkingRealPrecisionGet(workingRealPrecision,err)
+    !DLLEXPORT(cmfe_WorkingRealPrecisionGet)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(OUT) :: workingRealPrecision !<On return, the working real precision
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+ 
+    ENTERS("cmfe_WorkingRealPrecisionGet",err,error,*999)
+    
+#ifdef SINGLE_REAL_PRECISION
+    workingRealPrecision=CMFE_SINGLE_REAL_TYPE
+#else
+    workingRealPrecision=CMFE_DOUBLE_REAL_TYPE
+#endif
+
+    EXITS("cmfe_WorkingRealPrecisionGet")
+    RETURN
+999 ERRORSEXITS("cmfe_WorkingRealPrecisionGet",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_WorkingRealPrecisionGet
 
   !
   !================================================================================================================================
