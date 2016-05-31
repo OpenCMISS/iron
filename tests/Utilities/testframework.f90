@@ -39,7 +39,6 @@
 
 MODULE IRON_TEST_FRAMEWORK
 
-  USE KINDS
   USE OpenCMISS
   USE, INTRINSIC :: ISO_FORTRAN_ENV, only : output_unit, error_unit
 
@@ -82,26 +81,26 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: testName !< The name of the test.
 
     IF (LEN(TRIM(currentTestName)) > 0) THEN
-      WRITE(unit = error_unit, fmt = '("Called BEGIN_TEST when test in progress. Cannot nest tests. Aborting.")') 
+      WRITE(error_unit, '("Called BEGIN_TEST when test in progress. Cannot nest tests. Aborting.")') 
       STOP 1
     ENDIF
-    WRITE(unit = output_unit, fmt = '("----------------------------------------")')
-    WRITE(unit = output_unit, fmt = '("Begin test: ",a)') testName
+    WRITE(output_unit, '("----------------------------------------")')
+    WRITE(output_unit, '("Begin test: ",a)') testName
     currentTestName = testName
   END SUBROUTINE BEGIN_TEST
 
   !> End the current test. Test name is retained from prior call to BEGIN_TEST.
   SUBROUTINE END_TEST()
     IF (LEN(TRIM(currentTestName)) == 0) THEN
-      WRITE(unit = error_unit, fmt = '("Called END_TEST without call to BEGIN_TEST. Aborting.")')
+      WRITE(error_unit, '("Called END_TEST without call to BEGIN_TEST. Aborting.")')
       STOP 1
     ENDIF
-    WRITE(unit = output_unit, fmt = '("End test: ",a)') TRIM(currentTestName)
+    WRITE(output_unit, '("End test: ",a)') TRIM(currentTestName)
     currentTestName = ""
   END SUBROUTINE END_TEST
 
   !> Record that an error has occurred.
-  SUBROUTINE setError()
+  SUBROUTINE SetError()
     testErr = 1
   END SUBROUTINE
 
@@ -122,9 +121,9 @@ CONTAINS
     INTEGER(CMISSIntg), INTENT(IN) :: actual !< Actual value.
 
     IF (actual /= expected) THEN
-      WRITE(unit = output_unit, fmt = '("The value of ",a," (",i0,") is not near expected (",i0,")")') &
+      WRITE(output_unit, '("The value of ",a," (",i0,") is not near expected (",i0,")")') &
         & description, actual, expected
-      CALL setError()
+      CALL SetError()
     ENDIF
   END SUBROUTINE EXPECT_EQ_INTG
 
@@ -135,10 +134,10 @@ CONTAINS
     REAL(CMISSDP), INTENT(IN) :: actual !< Actual value.
     REAL(CMISSDP), INTENT(IN) :: tolerance !< Absolute tolerance actual value must be around expected value
 
-    IF ((actual < (expected - tolerance)).OR.(actual > (expected + tolerance))) THEN
-      WRITE(unit = output_unit, fmt = '("The value of ",a," (",g0,") is not near expected (",g0,") with tolerance (",g0,")")') &
+    IF (ABS(actual - expected) > tolerance) THEN
+      WRITE(output_unit, '("The value of ",a," (",g0,") is not near expected (",g0,") with tolerance (",g0,")")') &
         & description, actual, expected, tolerance
-      CALL setError()
+      CALL SetError()
     ENDIF
   END SUBROUTINE EXPECT_NEAR_DP
 
@@ -149,10 +148,10 @@ CONTAINS
     REAL(CMISSSP), INTENT(IN) :: actual !< Actual value.
     REAL(CMISSSP), INTENT(IN) :: tolerance !< Absolute tolerance actual value must be around expected value
 
-    IF ((actual < (expected - tolerance)).OR.(actual > (expected + tolerance))) THEN
-      WRITE(unit = output_unit, fmt = '("The value of ",a," (",g0,") is not near expected (",g0,") with tolerance (",g0,")")') &
+    IF (ABS(actual - expected) > tolerance) THEN
+      WRITE(output_unit, '("The value of ",a," (",g0,") is not near expected (",g0,") with tolerance (",g0,")")') &
         & description, actual, expected, tolerance
-      CALL setError()
+      CALL SetError()
     ENDIF
   END SUBROUTINE EXPECT_NEAR_SP
 

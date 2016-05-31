@@ -39,7 +39,6 @@
 
 MODULE IRON_TEST_FIELDML_CUBE
 
-  USE KINDS
   USE OpenCMISS
   USE OpenCMISS_Iron
   USE ISO_C_BINDING
@@ -140,7 +139,7 @@ CONTAINS
     ! Define Coordinate System from value type of coordinates field evaluator
 
     CALL cmfe_CoordinateSystem_Initialise(coordinateSystem, err)
-    CALL cmfe_FieldML_InputcoordinateSystemCreateStart( fieldmlInfo, geometricFieldName, coordinateSystem, &
+    CALL cmfe_FieldML_InputCoordinateSystemCreateStart( fieldmlInfo, geometricFieldName, coordinateSystem, &
       & AUTO_USER_NUMBER(), err )
     CALL cmfe_CoordinateSystem_CreateFinish(coordinateSystem, err)
     ! CALL cmfe_CoordinateSystem_DimensionGet(coordinateSystem, coordinateCount, err )
