@@ -56,8 +56,8 @@ MODULE IRON_TEST_FRAMEWORK
     MODULE PROCEDURE EXPECT_NEAR_SP
   END INTERFACE EXPECT_NEAR
 
-  CHARACTER(LEN=100), SAVE :: current_test_name = "" !< The name of the current test.
-  INTEGER(CMISSIntg), SAVE :: test_err = 0
+  CHARACTER(LEN=100), SAVE :: currentTestName = "" !< The name of the current test.
+  INTEGER(CMISSIntg), SAVE :: testErr = 0
 
   PUBLIC INITIALISE_TESTS, FINALISE_TESTS, BEGIN_TEST, END_TEST, &
     & AUTO_USER_NUMBER, EXPECT_EQ, EXPECT_NEAR
@@ -66,53 +66,53 @@ CONTAINS
 
   !> Initialise contents of test framework. Must be done before first use.
   SUBROUTINE INITIALISE_TESTS()
-    current_test_name = ""
-    test_err = 0
+    currentTestName = ""
+    testErr = 0
   END SUBROUTINE INITIALISE_TESTS
 
   !> Clean up anything used in test framework and return result. Call after last test.
   SUBROUTINE FINALISE_TESTS(err)
     INTEGER(CMISSIntg), INTENT(OUT) :: err !< The test result, non-zero if failed.
 
-    err = test_err
+    err = testErr
   END SUBROUTINE FINALISE_TESTS
 
   !> Begin test of the given name. Currently doesn't handle nested tests. Must pair with END_TEST
-  SUBROUTINE BEGIN_TEST(test_name)
-    CHARACTER(LEN=*), INTENT(IN) :: test_name !< The name of the test.
+  SUBROUTINE BEGIN_TEST(testName)
+    CHARACTER(LEN=*), INTENT(IN) :: testName !< The name of the test.
 
-    IF (LEN(TRIM(current_test_name)) > 0) THEN
+    IF (LEN(TRIM(currentTestName)) > 0) THEN
       WRITE(unit = error_unit, fmt = '("Called BEGIN_TEST when test in progress. Cannot nest tests. Aborting.")') 
       STOP 1
     ENDIF
     WRITE(unit = output_unit, fmt = '("----------------------------------------")')
-    WRITE(unit = output_unit, fmt = '("Begin test: ",a)') test_name
-    current_test_name = test_name
+    WRITE(unit = output_unit, fmt = '("Begin test: ",a)') testName
+    currentTestName = testName
   END SUBROUTINE BEGIN_TEST
 
   !> End the current test. Test name is retained from prior call to BEGIN_TEST.
   SUBROUTINE END_TEST()
-    IF (LEN(TRIM(current_test_name)) == 0) THEN
+    IF (LEN(TRIM(currentTestName)) == 0) THEN
       WRITE(unit = error_unit, fmt = '("Called END_TEST without call to BEGIN_TEST. Aborting.")')
       STOP 1
     ENDIF
-    WRITE(unit = output_unit, fmt = '("End test: ",a)') TRIM(current_test_name)
-    current_test_name = ""
+    WRITE(unit = output_unit, fmt = '("End test: ",a)') TRIM(currentTestName)
+    currentTestName = ""
   END SUBROUTINE END_TEST
 
   !> Record that an error has occurred.
-  SUBROUTINE set_err()
-    test_err = 1
+  SUBROUTINE setError()
+    testErr = 1
   END SUBROUTINE
 
   !> Generate a unique user number for an object, by incrementing an integer module variable.
-  FUNCTION AUTO_USER_NUMBER() RESULT(user_number)
-    INTEGER(CMISSIntg) :: user_number
+  FUNCTION AUTO_USER_NUMBER() RESULT(userNumber)
+    INTEGER(CMISSIntg) :: userNumber
     ! static variables
-    INTEGER(CMISSIntg), SAVE :: next_user_number = 1
+    INTEGER(CMISSIntg), SAVE :: nextUserNumber = 1
 
-    user_number = next_user_number
-    next_user_number = next_user_number + 1
+    userNumber = nextUserNumber
+    nextUserNumber = nextUserNumber + 1
   END FUNCTION AUTO_USER_NUMBER
 
   !> Check actual value is equal to expect, integer variant. Reports and records any error and continues.
@@ -124,7 +124,7 @@ CONTAINS
     IF (actual /= expected) THEN
       WRITE(unit = output_unit, fmt = '("The value of ",a," (",i0,") is not near expected (",i0,")")') &
         & description, actual, expected
-      CALL set_err()
+      CALL setError()
     ENDIF
   END SUBROUTINE EXPECT_EQ_INTG
 
@@ -138,7 +138,7 @@ CONTAINS
     IF ((actual < (expected - tolerance)).OR.(actual > (expected + tolerance))) THEN
       WRITE(unit = output_unit, fmt = '("The value of ",a," (",g0,") is not near expected (",g0,") with tolerance (",g0,")")') &
         & description, actual, expected, tolerance
-      CALL set_err()
+      CALL setError()
     ENDIF
   END SUBROUTINE EXPECT_NEAR_DP
 
@@ -152,7 +152,7 @@ CONTAINS
     IF ((actual < (expected - tolerance)).OR.(actual > (expected + tolerance))) THEN
       WRITE(unit = output_unit, fmt = '("The value of ",a," (",g0,") is not near expected (",g0,") with tolerance (",g0,")")') &
         & description, actual, expected, tolerance
-      CALL set_err()
+      CALL setError()
     ENDIF
   END SUBROUTINE EXPECT_NEAR_SP
 
