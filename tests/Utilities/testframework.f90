@@ -56,7 +56,7 @@ MODULE IRON_TEST_FRAMEWORK
     MODULE PROCEDURE EXPECT_NEAR_SP
   END INTERFACE EXPECT_NEAR
 
-  CHARACTER(LEN=:), ALLOCATABLE, SAVE :: current_test_name !< The name of the current test.
+  CHARACTER(LEN=100), SAVE :: current_test_name = "" !< The name of the current test.
   INTEGER(CMISSIntg), SAVE :: test_err = 0
 
   PUBLIC INITIALISE_TESTS, FINALISE_TESTS, BEGIN_TEST, END_TEST, &
@@ -73,6 +73,7 @@ CONTAINS
   !> Clean up anything used in test framework and return result. Call after last test.
   SUBROUTINE FINALISE_TESTS(err)
     INTEGER(CMISSIntg), INTENT(OUT) :: err !< The test result, non-zero if failed.
+
     err = test_err
   END SUBROUTINE FINALISE_TESTS
 
@@ -80,7 +81,7 @@ CONTAINS
   SUBROUTINE BEGIN_TEST(test_name)
     CHARACTER(LEN=*), INTENT(IN) :: test_name !< The name of the test.
 
-    IF (LEN(current_test_name) > 0) THEN
+    IF (LEN(TRIM(current_test_name)) > 0) THEN
       WRITE(unit = error_unit, fmt = '("Called BEGIN_TEST when test in progress. Cannot nest tests. Aborting.")') 
       STOP 1
     ENDIF
@@ -91,11 +92,11 @@ CONTAINS
 
   !> End the current test. Test name is retained from prior call to BEGIN_TEST.
   SUBROUTINE END_TEST()
-    IF (LEN(current_test_name) == 0) THEN
+    IF (LEN(TRIM(current_test_name)) == 0) THEN
       WRITE(unit = error_unit, fmt = '("Called END_TEST without call to BEGIN_TEST. Aborting.")')
       STOP 1
     ENDIF
-    WRITE(unit = output_unit, fmt = '("End test: ",a)') current_test_name
+    WRITE(unit = output_unit, fmt = '("End test: ",a)') TRIM(current_test_name)
     current_test_name = ""
   END SUBROUTINE END_TEST
 
