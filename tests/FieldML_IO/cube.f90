@@ -48,11 +48,11 @@ MODULE IRON_TEST_FIELDML_CUBE
 
   PRIVATE
 
-  PUBLIC :: test_fieldml_cube_io
+  PUBLIC :: TestFieldMLIOCube
 
 CONTAINS
 
-  SUBROUTINE test_fieldml_cube_io(worldRegion)
+  SUBROUTINE TestFieldMLIOCube(worldRegion)
     TYPE(cmfe_RegionType), INTENT(IN) :: worldRegion
     ! local variables
     TYPE(cmfe_RegionType) :: region
@@ -67,7 +67,7 @@ CONTAINS
     ! Files exported from Zinc are currently not yet readable in Iron due to the
     ! additional derivative/version mappings for element field parameters, which
     ! are present even for Lagrange bases (and set to defaults of 1).
-    CALL read_cube(worldRegion, "input/cube.fieldml", &
+    CALL ReadCube(worldRegion, "input/cube.fieldml", &
       & region, mesh, geometricField, &
       & geometricFieldName = "coordinates", &
       & geometricFieldNodeParametersName = "nodes.coordinates", &
@@ -75,16 +75,16 @@ CONTAINS
       & basisEvaluatorName = "mesh3d.trilinearLagrange", & ! will become "mesh3d.interpolation1" if exported from Zinc
       & meshArgumentName = "mesh3d.argument", &
       & meshComponentTemplateName = "mesh3d.template1")
-    CALL check_cube(mesh, geometricField)
+    CALL CheckCube(mesh, geometricField)
 
-    CALL write_cube(mesh, geometricField, "cube", "cube.fieldml")
+    CALL WriteCube(mesh, geometricField, "cube", "cube.fieldml")
 
     CALL cmfe_Field_Destroy(geometricField, err)
     CALL cmfe_Mesh_Destroy(mesh, err)
     CALL cmfe_Region_Destroy(region, err)
 
     ! File is re-read with Iron naming conventions
-    CALL read_cube(worldRegion, "cube.fieldml", &
+    CALL ReadCube(worldRegion, "cube.fieldml", &
       & region, mesh, geometricField, &
       & geometricFieldName = "coordinates", &
       & geometricFieldNodeParametersName = "coordinates.dofs.node", &
@@ -92,16 +92,16 @@ CONTAINS
       & basisEvaluatorName = "cube.component1trilinearLagrange_3.evaluator", &
       & meshArgumentName = "cube.mesh.argument", &
       & meshComponentTemplateName = "cube.component1.template")
-    CALL check_cube(mesh, geometricField)
+    CALL CheckCube(mesh, geometricField)
 
     CALL cmfe_Field_Destroy(geometricField, err)
     CALL cmfe_Mesh_Destroy(mesh, err)
     CALL cmfe_Region_Destroy(region, err)
 
     CALL END_TEST()
-  END SUBROUTINE test_fieldml_cube_io
+  END SUBROUTINE TestFieldMLIOCube
 
-  SUBROUTINE read_cube(worldRegion, inputFilename, region, mesh, geometricField, &
+  SUBROUTINE ReadCube(worldRegion, inputFilename, region, mesh, geometricField, &
       & geometricFieldName, geometricFieldNodeParametersName, nodesArgumentName, &
       & basisEvaluatorName, meshArgumentName, meshComponentTemplateName)
     TYPE(cmfe_RegionType), INTENT(IN) :: worldRegion
@@ -193,9 +193,9 @@ CONTAINS
     CALL cmfe_Field_ParameterSetUpdateFinish(geometricField, CMFE_FIELD_U_VARIABLE_TYPE, CMFE_FIELD_VALUES_SET_TYPE, err)
 
     CALL cmfe_FieldMLIO_Finalise(fieldmlInfo, err)
-  END SUBROUTINE read_cube
+  END SUBROUTINE ReadCube
 
-  SUBROUTINE write_cube(mesh, geometricField, Basename, OutputFileName)
+  SUBROUTINE WriteCube(mesh, geometricField, Basename, OutputFileName)
     TYPE(cmfe_MeshType), INTENT(IN) :: mesh
     TYPE(cmfe_FieldType), INTENT(IN) :: geometricField
     CHARACTER(KIND=C_CHAR,LEN=*), INTENT(IN) :: Basename !< Name prefixed to all objects output, separated by .
@@ -214,9 +214,9 @@ CONTAINS
       & CMFE_FIELD_U_VARIABLE_TYPE, CMFE_FIELD_VALUES_SET_TYPE, err)
     CALL cmfe_FieldML_OutputWrite(fieldmlInfo, OutputFileName, err)
     CALL cmfe_FieldMLIO_Finalise(fieldmlInfo, err)
-  END SUBROUTINE write_cube
+  END SUBROUTINE WriteCube
 
-  SUBROUTINE check_cube(mesh, geometricField)
+  SUBROUTINE CheckCube(mesh, geometricField)
     TYPE(cmfe_MeshType), INTENT(IN) :: mesh
     TYPE(cmfe_FieldType), INTENT(IN) :: geometricField
     ! local variables
@@ -245,6 +245,6 @@ CONTAINS
         CALL EXPECT_NEAR("coordinates", xi(i,p), values(i), tolerance)
       ENDDO
     ENDDO
-  END SUBROUTINE check_cube
+  END SUBROUTINE CheckCube
 
 END MODULE IRON_TEST_FIELDML_CUBE

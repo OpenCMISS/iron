@@ -67,8 +67,8 @@ PROGRAM IRON_TEST_FIELDML_IO
   CALL cmfe_ComputationalNumberOfNodesGet(numberOfComputationalNodes, err)
   CALL cmfe_ComputationalNodeNumberGet(computationalNodeNumber, err)
 
-  CALL test_fieldml_cube_io(worldRegion)
-  
+  CALL TestFieldMLIOCube(worldRegion)
+
   CALL cmfe_Finalise(err)
 
   CALL FINALISE_TESTS(err)
