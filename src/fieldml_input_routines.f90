@@ -796,7 +796,7 @@ CONTAINS
   !>Initialize the given FieldML parsing state from the given FieldML file.
   SUBROUTINE FIELDML_INPUT_INITIALISE_FROM_FILE( FIELDML_INFO, FILENAME, ERR, ERROR, * )
     !Arguments
-    TYPE(FIELDML_IO_TYPE), INTENT(INOUT) :: FIELDML_INFO !<The FieldML parsing state.
+    TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     TYPE(VARYING_STRING), INTENT(IN) :: FILENAME !<The name of the FieldML file to parse.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
