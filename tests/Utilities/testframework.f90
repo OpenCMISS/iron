@@ -40,7 +40,6 @@
 MODULE IRON_TEST_FRAMEWORK
 
   USE OpenCMISS
-  USE, INTRINSIC :: ISO_FORTRAN_ENV, only : output_unit, error_unit
 
   IMPLICIT NONE
 
@@ -81,21 +80,21 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: testName !< The name of the test.
 
     IF (LEN(TRIM(currentTestName)) > 0) THEN
-      WRITE(error_unit, '("Called BEGIN_TEST when test in progress. Cannot nest tests. Aborting.")') 
+      WRITE(*, '("Called BEGIN_TEST when test in progress. Cannot nest tests. Aborting.")') 
       STOP 1
     ENDIF
-    WRITE(output_unit, '("----------------------------------------")')
-    WRITE(output_unit, '("Begin test: ",a)') testName
+    WRITE(*, '("----------------------------------------")')
+    WRITE(*, '("Begin test: ",a)') testName
     currentTestName = testName
   END SUBROUTINE BEGIN_TEST
 
   !> End the current test. Test name is retained from prior call to BEGIN_TEST.
   SUBROUTINE END_TEST()
     IF (LEN(TRIM(currentTestName)) == 0) THEN
-      WRITE(error_unit, '("Called END_TEST without call to BEGIN_TEST. Aborting.")')
+      WRITE(*, '("Called END_TEST without call to BEGIN_TEST. Aborting.")')
       STOP 1
     ENDIF
-    WRITE(output_unit, '("End test: ",a)') TRIM(currentTestName)
+    WRITE(*, '("End test: ",a)') TRIM(currentTestName)
     currentTestName = ""
   END SUBROUTINE END_TEST
 
@@ -114,14 +113,14 @@ CONTAINS
     nextUserNumber = nextUserNumber + 1
   END FUNCTION AUTO_USER_NUMBER
 
-  !> Check actual value is equal to expect, integer variant. Reports and records any error and continues.
+  !> Check actual value is equal to expected, integer variant. Reports and records any error and continues.
   SUBROUTINE EXPECT_EQ_INTG(description, expected, actual)
     CHARACTER(LEN=*), INTENT(IN) :: description !< Description of quantity being compared.
     INTEGER(CMISSIntg), INTENT(IN) :: expected !< Expected value.
     INTEGER(CMISSIntg), INTENT(IN) :: actual !< Actual value.
 
     IF (actual /= expected) THEN
-      WRITE(output_unit, '("The value of ",a," (",i0,") is not near expected (",i0,")")') &
+      WRITE(*, '("The value of ",a," (",i0,") does not equal expected (",i0,")")') &
         & description, actual, expected
       CALL SetError()
     ENDIF
@@ -135,7 +134,7 @@ CONTAINS
     REAL(CMISSDP), INTENT(IN) :: tolerance !< Absolute tolerance actual value must be around expected value
 
     IF (ABS(actual - expected) > tolerance) THEN
-      WRITE(output_unit, '("The value of ",a," (",g0,") is not near expected (",g0,") with tolerance (",g0,")")') &
+      WRITE(*, '("The value of ",a," (",g0,") is not near expected (",g0,") with tolerance (",g0,")")') &
         & description, actual, expected, tolerance
       CALL SetError()
     ENDIF
@@ -149,7 +148,7 @@ CONTAINS
     REAL(CMISSSP), INTENT(IN) :: tolerance !< Absolute tolerance actual value must be around expected value
 
     IF (ABS(actual - expected) > tolerance) THEN
-      WRITE(output_unit, '("The value of ",a," (",g0,") is not near expected (",g0,") with tolerance (",g0,")")') &
+      WRITE(*, '("The value of ",a," (",g0,") is not near expected (",g0,") with tolerance (",g0,")")') &
         & description, actual, expected, tolerance
       CALL SetError()
     ENDIF
