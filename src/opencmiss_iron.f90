@@ -61488,7 +61488,7 @@ CONTAINS
 
     stringName = name
 
-    handle = FIELDML_OUTPUT_IMPORT( fieldml%fieldmlInfo, stringName, err, error )
+    handle = FIELDML_OUTPUT_ADD_IMPORT( fieldml%fieldmlInfo, stringName, err, error )
     IF(err/=0) GOTO 999
 
 #else
