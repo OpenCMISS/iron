@@ -969,6 +969,7 @@ CONTAINS
     ENDIF
     
     IF(DIAGNOSTICS1) THEN
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
       CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Coordinate system metrics:",ERR,ERROR,*999)
       CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Coordinate system type = ",TRIM(COORDINATE_SYSTEM_TYPE_STRING( &
         & COORDINATE_SYSTEM%TYPE)),ERR,ERROR,*999)
@@ -3880,18 +3881,20 @@ CONTAINS
   !
  
   !>Calculates the tensor to get from material coordinate system, nu, to local coordinate system, xi.
-  SUBROUTINE Coordinates_MaterialSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint,dNudXi,dXidNu,err,error,*)
+  SUBROUTINE Coordinates_MaterialSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint,dNudX,dXdNu,dNudXi,dXidNu,err,error,*)
   
     !Argument variables
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: geometricInterpPointMetrics !<The geometric interpolation point metrics at the point to calculate the material coordinate system from.
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: fibreInterpPoint !<The fibre interpolation point at the point to calculate the material coordinate system from
+    REAL(DP), INTENT(OUT) :: dNudX(:,:) !<dNudX(nuIdx,xIdx). On return, the tensor to transform from the material system to the geometric coordinate system
+    REAL(DP), INTENT(OUT) :: dXdNu(:,:) !<dXdNu(xIdx,nuIdx). On return, the tensor to transform from the geometric coordinate system to the material coordinate system
     REAL(DP), INTENT(OUT) :: dNudXi(:,:) !<dNudXi(nuIdx,xiIdx). On return, the tensor to transform from the material system to the xi coordinate system
     REAL(DP), INTENT(OUT) :: dXidNu(:,:) !<dXidNu(xiIdx,nuIdx). On return, the tensor to transform from the xi coordinate system to the material coordinate system
     INTEGER(INTG), INTENT(OUT) :: err   !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) ::  error   !<The error string
     !Local variables
-    INTEGER(INTG) :: numberOfXDimensions,numberOfXiDimensions,numberOfNuDimensions
-    REAL(DP) :: dXdNu(3,3),dNudX(3,3),dNudXiTemp(3,3),Jnuxi
+    INTEGER(INTG) :: numberOfXDimensions,numberOfXiDimensions,numberOfNuDimensions,xiIdx
+    REAL(DP) :: dNudXiTemp(3,3),Jnuxi
     TYPE(VARYING_STRING) :: localError 
      
     ENTERS("Coordinates_MaterialSystemCalculate",err,error,*999)
@@ -3922,20 +3925,22 @@ CONTAINS
             & " is invalid. The number of dimensions must be >= 1 and <= 3."
           CALL FlagError(localError,err,error,*999)
         END SELECT
-        !Calculate dNu/dX the inverse of dX/dNu (same as transpose due to orthogonality)
-        CALL MatrixTranspose(dXdNu(1:numberOfXDimensions,1:numberOfXDimensions),dNudX(1:numberOfXDimensions,1: &
-          & numberOfXDimensions),err,error,*999)
-        !Calculate dNu/dXi = dNu/dX * dX/dXi and its inverse dXi/dNu
-        CALL MatrixProduct(dNudX(1:numberOfXDimensions,1:numberOfXDimensions), &
-          & geometricInterpPointMetrics%DX_DXI(1:numberOfXDimensions,1:numberOfXiDimensions), &
-          & dNudXiTemp(1:numberOfXDimensions,1:numberOfXiDimensions),err,error,*999)
       ELSE
         !No fibre field
         numberOfNuDimensions=0
-        dNudXiTemp(1:numberOfXDimensions,1:numberOfXiDimensions)=geometricInterpPointMetrics%DX_DXI(1:numberOfXDimensions, &
-          & 1:numberOfXiDimensions)
+        DO xiIdx=1,numberOfXiDimensions
+          dNudXiTemp(1:numberOfXDimensions,xiIdx)=geometricInterpPointMetrics%DX_DXI(1:numberOfXDimensions,xiIdx)
+          dXdNu(1:numberOfXDimensions,xiIdx)=Normalise(dNudXiTemp(1:numberOfXDimensions,xiIdx),err,error)
+        ENDDO !xiIdx
       ENDIF
-
+      !Calculate dNu/dX the inverse of dX/dNu (same as transpose due to orthogonality)
+      CALL MatrixTranspose(dXdNu(1:numberOfXDimensions,1:numberOfXDimensions),dNudX(1:numberOfXDimensions,1: &
+        & numberOfXDimensions),err,error,*999)
+      !Calculate dNu/dXi = dNu/dX * dX/dXi and its inverse dXi/dNu
+      CALL MatrixProduct(dNudX(1:numberOfXDimensions,1:numberOfXDimensions), &
+        & geometricInterpPointMetrics%DX_DXI(1:numberOfXDimensions,1:numberOfXiDimensions), &
+        & dNudXiTemp(1:numberOfXDimensions,1:numberOfXiDimensions),err,error,*999)
+      !Setup dNudXi
       CALL IdentityMatrix(dNudXi,err,error,*999)
       dNudXi(1:numberOfXDimensions,1:numberOfXiDimensions)=dNudXiTemp(1:numberOfXDimensions,1:numberOfXiDimensions)
 
@@ -3952,21 +3957,25 @@ CONTAINS
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of X dimensions  = ",numberOfXDimensions,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi dimensions = ",numberOfXiDimensions,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Nu dimensions = ",numberOfNuDimensions,err,error,*999)
-        IF(numberOfNuDimensions>0) THEN
-          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,1,1,numberOfXDimensions, &
-            & numberOfXDimensions,numberOfXDimensions,dXdNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-            & '("  dXdNu','(",I1,",:)','  :",3(X,E13.6))','(15X,3(X,E13.6))',err,error,*999)
-          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,1,1,numberOfXDimensions, &
-            & numberOfXDimensions,numberOfXDimensions,dNudX,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-            & '("  dNudX','(",I1,",:)','  :",3(X,E13.6))','(15X,3(X,E13.6))',err,error,*999)
-        ENDIF
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of X wrt Nu:",err,error,*999)
+        CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,1,1,numberOfXDimensions, &
+          & numberOfXDimensions,numberOfXDimensions,dXdNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+          & '("    dX_dNu','(",I1,",:)','  :",3(X,E13.6))','(18X,3(X,E13.6))',err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of Nu wrt X:",err,error,*999)
+        CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,1,1,numberOfXDimensions, &
+          & numberOfXDimensions,numberOfXDimensions,dNudX,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+          & '("    dNu_dX','(",I1,",:)','  :",3(X,E13.6))','(18X,3(X,E13.6))',err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Determinant dNu_dX, JNuX = ", &
+          & Determinant(dNudX(1:numberOfXDimensions,1:numberOfXDimensions),err,error),err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of Nu wrt Xi:",err,error,*999)
         CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,1,1,numberOfXiDimensions, &
           & numberOfXiDimensions,numberOfXiDimensions,dNudXi,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-          & '("  dNudXi','(",I1,",:)',' :",3(X,E13.6))','(15X,3(X,E13.6))',err,error,*999)
+          & '("    dNu_dXi','(",I1,",:)',' :",3(X,E13.6))','(18X,3(X,E13.6))',err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of Xi wrt Nu:",err,error,*999)
         CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXiDimensions,1,1,numberOfXDimensions, &
           & numberOfXDimensions,numberOfXDimensions,dXidNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-          & '("  dXidNu','(",I1,",:)',' :",3(X,E13.6))','(15X,3(X,E13.6))',err,error,*999)
-        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Determinant JNuXi = ",JNuXi,err,error,*999)
+          & '("    dXi_dNu','(",I1,",:)',' :",3(X,E13.6))','(18X,3(X,E13.6))',err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Determinant dNu_dXi, JNuXi = ",JNuXi,err,error,*999)
       ENDIF
       
     ELSE
@@ -3994,7 +4003,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP) :: dXdNuR(2,2),R(2,2)
+    REAL(DP) :: det,dXdNuR(2,2),R(2,2),f(2),g(2)
 
     ENTERS("Coordinates_MaterialSystemCalculatedXdNu2D",err,error,*999)
 
@@ -4003,14 +4012,14 @@ CONTAINS
       !First calculate reference material CS
       
       !Reference material direction 1.
-      dXdNuR(:,1) = [ geometricInterpPointMetrics%DX_DXI(1,1),geometricInterpPointMetrics%DX_DXI(2,1) ]
+      f(1:2) = [ geometricInterpPointMetrics%DX_DXI(1,1),geometricInterpPointMetrics%DX_DXI(2,1) ]
       
       !Compute (normalised) vector orthogonal to material direction 1 to form material direction 2
-      dXdNuR(:,2) = [ -1.0_DP*dXdNuR(2,1),dXdNuR(1,1) ]
+      g(1:2) = [ -1.0_DP*f(2),f(1) ]
       
-      dXdNuR(1:2,1) = Normalise(dXdNuR(1:2,1),err,error)
+      dXdNuR(1:2,1) = Normalise(f(1:2),err,error)
       IF(err/=0) GOTO 999
-      dXdNuR(1:2,2) = Normalise(dXdNuR(1:2,2),err,error)
+      dXdNuR(1:2,2) = Normalise(g(1:2),err,error)
       IF(err/=0) GOTO 999
       
       !Rotate by multiply with rotation matrix
@@ -4024,6 +4033,31 @@ CONTAINS
       dXdNu(1:2,2) = Normalise(dXdNu(1:2,2),err,error)
       IF(err/=0) GOTO 999
 
+      IF(diagnostics1) THEN
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"2D material system calculation:",err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Reference material directions:",err,error,*999)
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,2,2,f,'("    f              :",2(X,E13.6))','(20X,2(X,E13.6))', &
+          & err,error,*999)      
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,2,2,g,'("    g              :",2(X,E13.6))','(20X,2(X,E13.6))', &
+          & err,error,*999)      
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Derivative of X wrt Nu (reference):",err,error,*999)
+        CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,1,1,2,2,2,dXdNuR,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+          & '("      dX_dNuR','(",I1,",:)',' :",2(X,E13.6))','(20X,2(X,E13.6))',err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Fibre calculation:",err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Fibre angle = ",angle(1),err,error,*999)
+        IF(diagnostics2) THEN
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Rotation matrix:",err,error,*999)
+          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,1,1,2,2,2,R,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+            & '("      R','(",I1,",:)','       :",2(X,E13.6))','(20X,2(X,E13.6))',err,error,*999)
+        ENDIF
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Derivative of X wrt Nu (material):",err,error,*999)
+        CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,1,1,2,2,2,dXdNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+          & '("      dX_dNu','(",I1,",:)','   :",2(X,E13.6))','(20X,2(X,E13.6))',err,error,*999)
+        det=Determinant(dXdNu,err,error)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Determinant dX_dNu = ",det,err,error,*999)
+      ENDIF
+      
     ELSE
       CALL FlagError("Geometry interpolated point metrics is not associated.",err,error,*999)
     ENDIF
@@ -4032,6 +4066,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("Coordinates_MaterialSystemCalculatedXdNu2D",err,error)
     RETURN 1
+    
   END SUBROUTINE Coordinates_MaterialSystemCalculatedXdNu2D
 
   !
@@ -4048,7 +4083,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP) :: angles(3),dXdNu2(3,3),dXdNu3(3,3),dXdNuR(3,3),f(3),g(3),h(3),Ra(3,3),Rb(3,3)
+    REAL(DP) :: angles(3),det,dXdNu2(3,3),dXdNu3(3,3),dXdNuR(3,3),f(3),g(3),h(3), &
+      & Raf(3,3),Rbf(3,3),Rai(3,3),Rbi(3,3),Ras(3,3),Rbs(3,3)
     
     ENTERS("Coordinates_MaterialSystemCalculatedXdNu3D",err,error,*999)
     
@@ -4070,6 +4106,9 @@ CONTAINS
       dXdNuR(1:3,3)=Normalise(h,err,error)
       IF(err/=0) GOTO 999
       
+      IF(diagnostics1) THEN
+      ENDIF
+
       !FIBRE ANGLE(alpha) - angles(1) 
       !In order to rotate reference material CS by alpha(fibre angle) in anti-clockwise  
       !direction about its axis 3, following steps are performed.
@@ -4080,18 +4119,18 @@ CONTAINS
       !rotation in (a) by rotation in (b). i.e. Ra*Rb  
       
       !The normalised reference material CS contains the transformation(rotation) between 
-      !the spatial CS -> reference material CS. i.e. Ra
-      Ra=dXdNuR
+      !the spatial CS -> reference material CS. i.e. Raf
+      Raf=dXdNuR
         
-      !Initialise rotation matrix Rb
-      CALL IdentityMatrix(Rb,err,error,*999)
-      !Populate rotation matrix Rb about axis 3 (Z)
-      Rb(1,1)=COS(angles(1))
-      Rb(1,2)=-1.0_DP*SIN(angles(1))
-      Rb(2,1)=SIN(angles(1))
-      Rb(2,2)=COS(angles(1))
+      !Initialise rotation matrix Rbf
+      CALL IdentityMatrix(Rbf,err,error,*999)
+      !Populate rotation matrix Rbf about axis 3 (Z)
+      Rbf(1,1)=COS(angles(1))
+      Rbf(1,2)=-1.0_DP*SIN(angles(1))
+      Rbf(2,1)=SIN(angles(1))
+      Rbf(2,2)=COS(angles(1))
         
-      CALL MatrixProduct(Ra,Rb,dXdNu3,err,error,*999)  
+      CALL MatrixProduct(Raf,Rbf,dXdNu3,err,error,*999)  
 
       !IMBRICATION ANGLE (beta) - angles(2)     
       !In order to rotate alpha-rotated material CS by beta(imbrication angle) in anti-clockwise  
@@ -4100,20 +4139,20 @@ CONTAINS
       !(b) then rotate the aligned CS by beta about Y axis in anti-clockwise direction
       !(c) apply the inverse of step(a) to the CS in (b)
       !As mentioned above, (a),(b) and (c) are equivalent to post-multiplying
-      !rotation in (a) by rotation in (b). i.e. Ra*Rb  
+      !rotation in (a) by rotation in (b). i.e. Rai*Rbi  
       
       !dXdNu3 contains the transformation(rotation) between 
-      !the spatial CS -> alpha-rotated reference material CS. i.e. Ra
-      Ra=dXdNu3
-      !Initialise rotation matrix Rb
-      CALL IdentityMatrix(Rb,err,error,*999)
-      !Populate rotation matrix Rb about axis 2 (Y). Note the sign change
-      Rb(1,1)=COS(angles(2))
-      Rb(1,3)=SIN(angles(2))
-      Rb(3,1)=-1.0_DP*SIN(angles(2))
-      Rb(3,3)=COS(angles(2))
+      !the spatial CS -> alpha-rotated reference material CS. i.e. Rai
+      Rai=dXdNu3
+      !Initialise rotation matrix Rbi
+      CALL IdentityMatrix(Rbi,err,error,*999)
+      !Populate rotation matrix Rbi about axis 2 (Y). Note the sign change
+      Rbi(1,1)=COS(angles(2))
+      Rbi(1,3)=SIN(angles(2))
+      Rbi(3,1)=-1.0_DP*SIN(angles(2))
+      Rbi(3,3)=COS(angles(2))
         
-      CALL MatrixProduct(Ra,Rb,dXdNu2,err,error,*999)  
+      CALL MatrixProduct(Rai,Rbi,dXdNu2,err,error,*999)  
 
       !SHEET ANGLE (gamma) - angles(3)    
       !In order to rotate alpha-beta-rotated material CS by gama(sheet angle) in anti-clockwise  
@@ -4122,30 +4161,86 @@ CONTAINS
       !(b) then rotate the aligned CS by gama about X axis in anti-clockwise direction
       !(c) apply the inverse of step(a) to the CS in (b)
       !Again steps (a),(b) and (c) are equivalent to post-multiplying
-      !rotation in (a) by rotation in (b). i.e. Ra*Rb  
+      !rotation in (a) by rotation in (b). i.e. Ras*Rbs  
       
       !dXdNu2 contains the transformation(rotation) between 
-      !the spatial CS -> alpha-beta-rotated reference material CS. i.e. Ra
-      Ra=dXdNu2
-      !Initialise rotation matrix Rb
-      CALL IdentityMatrix(Rb,err,error,*999)
-      !Populate rotation matrix Rb about axis 1 (X). 
-      Rb(2,2)=COS(angles(3))
-      Rb(2,3)=-1.0_DP*SIN(angles(3))
-      Rb(3,2)=SIN(angles(3))
-      Rb(3,3)=COS(angles(3))
+      !the spatial CS -> alpha-beta-rotated reference material CS. i.e. Ras
+      Ras=dXdNu2
+      !Initialise rotation matrix Rbs
+      CALL IdentityMatrix(Rbs,err,error,*999)
+      !Populate rotation matrix Rbs about axis 1 (X). 
+      Rbs(2,2)=COS(angles(3))
+      Rbs(2,3)=-1.0_DP*SIN(angles(3))
+      Rbs(3,2)=SIN(angles(3))
+      Rbs(3,3)=COS(angles(3))
       
-      CALL MatrixProduct(Ra,Rb,dXdNu,err,error,*999)  
-      
+      CALL MatrixProduct(Ras,Rbs,dXdNu,err,error,*999)  
+
+      IF(diagnostics1) THEN
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"3D material system calculation:",err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Reference material directions:",err,error,*999)
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,3,3,f,'("    f              :",3(X,E13.6))','(20X,3(X,E13.6))', &
+          & err,error,*999)      
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,3,3,g,'("    g              :",3(X,E13.6))','(20X,3(X,E13.6))', &
+          & err,error,*999)      
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,3,3,h,'("    h              :",3(X,E13.6))','(20X,3(X,E13.6))', &
+          & err,error,*999)      
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Derivative of X wrt Nu (reference):",err,error,*999)
+        CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,dXdNuR,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+          & '("      dX_dNuR','(",I1,",:)',' :",3(X,E13.6))','(20X,3(X,E13.6))',err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Fibre calculation:",err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Fibre angle = ",angles(1),err,error,*999)
+        IF(diagnostics2) THEN
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Rotation matrix A:",err,error,*999)
+          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,Raf,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+            & '("      Ra','(",I1,",:)','      :",3(X,E13.6))','(20X,3(X,E13.6))',err,error,*999)
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Rotation matrix B:",err,error,*999)
+          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,Rbf,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+            & '("      Rb','(",I1,",:)','      :",3(X,E13.6))','(20X,3(X,E13.6))',err,error,*999)
+        ENDIF
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Derivative of X wrt Nu (after alpha rotation):",err,error,*999)
+        CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,dXdNu3,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+          & '("      dX_dNu3','(",I1,",:)',' :",3(X,E13.6))','(20X,3(X,E13.6))',err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Imbrication calculation:",err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Imbrication angle = ",angles(2),err,error,*999)
+        IF(diagnostics2) THEN
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Rotation matrix A:",err,error,*999)
+          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,Rai,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+            & '("      Ra','(",I1,",:)','      :",3(X,E13.6))','(20X,3(X,E13.6))',err,error,*999)
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Rotation matrix B:",err,error,*999)
+          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,Rbi,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+            & '("      Rb','(",I1,",:)','      :",3(X,E13.6))','(20X,3(X,E13.6))',err,error,*999)
+        ENDIF
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Derivative of X wrt Nu (after alpha-beta rotation):",err,error,*999)
+        CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,dXdNu2,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+          & '("      dX_dNu2','(",I1,",:)',' :",3(X,E13.6))','(20X,3(X,E13.6))',err,error,*999)
+         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Sheet calculation:",err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Sheet angle = ",angles(3),err,error,*999)
+        IF(diagnostics2) THEN
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Rotation matrix A:",err,error,*999)
+          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,Ras,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+            & '("      Ra','(",I1,",:)','      :",3(X,E13.6))','(20X,3(X,E13.6))',err,error,*999)
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Rotation matrix B:",err,error,*999)
+          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,Rbs,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+            & '("      Rb','(",I1,",:)','      :",3(X,E13.6))','(20X,3(X,E13.6))',err,error,*999)
+        ENDIF
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Derivative of X wrt Nu (material):",err,error,*999)
+        CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,dXdNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+          & '("      dX_dNu','(",I1,",:)','  :",3(X,E13.6))','(20X,3(X,E13.6))',err,error,*999)
+        det=Determinant(dXdNu,err,error)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Determinant dX_dNu = ",det,err,error,*999)
+      ENDIF
+            
     ELSE
       CALL FlagError("Geometry interpolated point metrics is not associated.",err,error,*999)
     ENDIF
     
     EXITS("Coordinates_MaterialSystemCalculatedXdNu3D")
-
     RETURN
 999 ERRORSEXITS("Coordinates_MaterialSystemCalculatedXdNu3D",err,error)
     RETURN 1
+    
   END SUBROUTINE Coordinates_MaterialSystemCalculatedXdNu3D
 
   !
