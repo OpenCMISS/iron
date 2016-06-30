@@ -2,8 +2,8 @@
 \subsection{Finite Elasticity}
 \label{subsec:FiniteElasticity}
 
-Deformation can be viewed three ways: A point to point transformation; A
-coordinate transformation; or as a transformation of metrics (convected coordinates).
+%Deformation can be viewed three ways: A point to point transformation; A
+%coordinate transformation; or as a transformation of metrics (convected coordinates).
 
 \subsubsection{Kinematics}
 
@@ -35,8 +35,9 @@ and the region of space occupied by the reference placement \ie the
 \begin{equation}
   \embedmanifold{B}_{0}=\fnof{\kappa_{0}}{\manifold{B}}
 \end{equation}
-Points in $\embedmanifold{B}$ are denoted by capital letters \ie $X, Y,
-\ldots$.
+Points in $\embedmanifold{B}_{0}$ are denoted by capital letters \ie $X, Y,
+\ldots$. Points in $\embedmanifold{B}$ are denoted by lower case leters \ie
+$x, y, \dots$.
 
 \epstexfigure{svgs/EquationSets/Elasticity/FiniteElasticity/setup.eps_tex}{}{}{fig:configurationsetting}{0.75}
 
@@ -79,7 +80,7 @@ coordinate bases are
   \fnof{F^{a}_{A}}{X}=\delby{\fnof{\chi^{a}}{X}}{X^{A}}
 \end{equation}
 
-Note that F is a two-point tensor. 
+Note that $\tensor{F}$ is a two-point tensor. 
 
 The \textit{right Cauchy-Green (or Green) deformation tensor}, $\tensor{C}$, is defined by
 \begin{equation}
@@ -92,16 +93,21 @@ have
   C^{A}_{B}=\pbrac{\transpose{F}}^{A}_{a}F^{a}_{B}=g_{ab}G^{AC}\delby{\chi^{b}}{X^{C}}\delby{\chi^{a}}{X^{B}}
 \end{equation}
 
-The \textit{left Cauchy-Green (or Finger) deformation tensor}, $\tensor{C}$, is defined by
+If $\tensor{C}$ is invertible we also have $\tensor{B}=\inverse{\tensor{C}}$
+called the \textit{Piola deformation tensor}.
+
+The \textit{left Cauchy-Green (or Finger) deformation tensor}, $\tensor{b}$, is defined by
 \begin{equation}
-  \mapping{\fnof{\tensor{C}}{x}}{\tangentspace{\fnof{\chi}{\embedmanifold{B}}}{x}}{\tangentspace{\fnof{\chi}{\embedmanifold{B}}}{x}}
+  \mapping{\fnof{\tensor{b}}{x}}{\tangentspace{\fnof{\chi}{\embedmanifold{B}}}{x}}{\tangentspace{\fnof{\chi}{\embedmanifold{B}}}{x}}
 \end{equation}
 \ie $\fnof{\tensor{b}}{x}=\fnof{\tensor{F}}{X}\transpose{\fnof{\tensor{F}}{X}}$
-or $\tensor{C}=\tensor{F}\transpose{\tensor{F}}$ where $X=\fnof{\inverse{\chi}}{x}$. In terms of coordinates we
+or $\tensor{b}=\tensor{F}\transpose{\tensor{F}}$ where $X=\fnof{\inverse{\chi}}{x}$. In terms of coordinates we
 have
 \begin{equation}
   b^{a}_{b}=\pbrac{\transpose{F}}^{A}_{a}F^{a}_{B}=g_{ab}G^{AC}\delby{\chi^{b}}{X^{C}}\delby{\chi^{a}}{X^{B}}
 \end{equation}
+
+We also have $\tensor{c}=\inverse{\tensor{b}}$.
 
 The polar decomposition
 
@@ -125,8 +131,8 @@ or, in component form,
   F^{i}_{M}=\delby{z^{i}}{X^{M}}=\delby{z^{i}}{\xi^{k}}\delby{\xi^{k}}{X^{M}}
 \end{equation}
 
-In order to deal with orthotropy we wish to base our stress and strain
-calculation is fibre, $\vectr{\nu}$, coordinates. To change our reference
+In order to deal with anisotropy we wish to base our stress and strain
+calculation on fibre, $\vectr{\nu}$, coordinates. To change our reference
 coordinate system from $\vectr{X}$ to $\vectr{\nu}$ we need to transform
 $\fnof{\tensor{F}}{\vectr{X}}$. As $\fnof{\tensor{F}}{\vectr{X}}$ is a two point tensor the transformation
 rule for transforming just the reference coordinates is given by
@@ -167,12 +173,13 @@ elastic component of the deformation is given by
 $J_{e}=\det{\fnof{\tensor{F}_{e}}{\vectr{\nu}}}$.
 
 The right Cauchy Green deformation tensor in fibre coordinates is now given by
+the pullback of the current configuration metric tensor, $\tensor{g}$,
 \begin{equation}
-  \fnof{\tensor{C}}{\vectr{\nu}}=\fnof{\transpose{\tensor{F}_{e}}}{\vectr{\nu}}\fnof{\tensor{F}_{e}}{\vectr{\nu}}
+  \fnof{\tensor{C}}{\vectr{\nu}}=\fnof{\transpose{\tensor{F}_{e}}}{\vectr{\nu}}\tensor{g}\fnof{\tensor{F}_{e}}{\vectr{\nu}}
 \end{equation}
-and the Lagrange strain tensor is given by
+and the Lagrange strain tensor is given by the difference in metric tensors
 \begin{equation}
-  \fnof{\tensor{E}}{\vectr{\nu}}=\frac{1}{2}\pbrac{\fnof{\tensor{C}}{\vectr{\nu}}-\tensor{I}}
+  \fnof{\tensor{E}}{\vectr{\nu}}=\frac{1}{2}\pbrac{\fnof{\tensor{C}}{\vectr{\nu}}-\tensor{G}}
 \end{equation}
 
 In component form we have
@@ -181,10 +188,10 @@ In component form we have
 \end{equation}
 and
 \begin{equation}
-  2E_{AB}=C_{AB}-G_{AB}
+  E_{AB}=\frac{1}{2}\pbrac{C_{AB}-G_{AB}}
 \end{equation}
 
-The constituative law can then be used to derive the second Piola Kirchoff
+The constituative law can then be used to derive the second Piola Kirchhoff
 stress tensor in fibre coordinates, $\fnof{\tensor{T}}{\vectr{\nu}}$, from
 either the right Cauchy-Green deformation tensor or the Green-Lagrange strain
 tensor \ie
@@ -267,7 +274,7 @@ given by
   \fnof{W}{I_{1},I_{2}}=c_{1}\pbrac{I_{1}-3}+c_{2}\pbrac{I_{2}-3}
 \end{equation}
 
-The second Piola Kirchoff tensor is thus
+The second Piola Kirchhoff tensor is thus
 \begin{equation}
   T^{AB}=\begin{bmatrix}
     2c_{1}+2c_{2}\pbrac{C_{22}+C_{33}} & -2c_{2}C_{21} & -2c_{2}C_{31} \\
@@ -285,16 +292,16 @@ or
 \end{equation}
 
 For incompressible materials we need to add in the volumetric stress. The
-hydrostatic stress is a Cauchy stress and so the final stress is 
+hydrostatic stress is a Cauchy stress and so we have
 \begin{equation}
-  \tensor{\sigma}_{p} = -p\tensor{I}
+  \tensor{\sigma}_{p} = -p\tensor{g}
 \end{equation}
 or in component form
 \begin{equation}
-  \sigma_{p}^{ij} = -p\delta^{ij}
+  \sigma_{p}^{ij} = -p g^{ij}
 \end{equation}
 
-We can pull this stress back to give a second Piola Kirchoff stress via the
+We can pull this stress back to give a second Piola Kirchhoff stress via the
 pullback operation for a second order tensor \ie
 \begin{equation}
   \tensor{T}_{p}=
@@ -302,21 +309,19 @@ pullback operation for a second order tensor \ie
 \end{equation}
 or in component form
 \begin{equation}
-  T_{p}^{AB}=-\pbrac{F_{e}}^{A}_{i}p\delta^{ij}\pbrac{F_{e}}^{B}_{j}=-p\pbrac{\inverse{C}}^{AB}
+  T_{p}^{AB}=-\pbrac{F_{e}}^{A}_{i}p g^{ij}\pbrac{F_{e}}^{B}_{j}=-p\pbrac{\inverse{C}}^{AB}
 \end{equation}
 
-The final stress tensors are
-
 To find the stress tensors in deformed coordinates we need to push the second
-Piola Kirchoff tensor in the reference coordinates forward to the deformed
-coordinates, $\vectr{x}$, to give the Kirchoff stress tensor,
+Piola Kirchhoff tensor in the reference coordinates forward to the deformed
+coordinates, $\vectr{x}$, to give the Kirchhoff stress tensor,
 $\fnof{\tensor{\tau}}{\vectr{x}}$. The push foward is given by
 \begin{equation}
   \fnof{\tensor{\tau}}{\vectr{x}}=\fnof{\tensor{F}_{e}}{\vectr{\nu}}\fnof{\tensor{T}}{\vectr{\nu}}
   \fnof{\transpose{\tensor{F}_{e}}}{\vectr{\nu}}
 \end{equation}
 
-The Cauchy stress tensor, $\fnof{\tensor{\sigma}}{\vectr{x}}$, can then be calculated from the Kirchoff stress
+The Cauchy stress tensor, $\fnof{\tensor{\sigma}}{\vectr{x}}$, can then be calculated from the Kirchhoff stress
 tensor using the Jacobian of the deformation \ie
 \begin{equation}
   \fnof{\tensor{\sigma}}{\vectr{x}}=\inverse{J_{e}}\fnof{\tensor{\tau}}{\vectr{x}}=\inverse{J_{e}}
@@ -332,15 +337,177 @@ and
   \sigma^{ij}=\inverse{J_{e}}\pbrac{F_{e}}^{i}_{B}T^{BC}\pbrac{\transpose{F_{e}}}^{j}_{C}
 \end{equation}
 
-We now adopt a virtual work approach with the deformed configuration. The
-balance statement is
+Now the principle of virtual work (Marsden and Hughes, pg 168) can be stated as
 \begin{equation}
-  \gint{v}{}{\sigma^{ij}\delby{\delta
-      u_{j}}{x^{i}}}{v}=\gint{v}{}{\rho\pbrac{b^{j}-f^{j}}\delta
-    u_{j}}{v}+\gint{s_{2}}{}{\dotprod{\vectr{t}}{\delta\vectr{u}}}{s}
+  \gint{\embedmanifold{B}}{}{\rho\dotprod{\vectr{a}}{\delta\vectr{u}}}{v}=
+  \gint{\embedmanifold{B}}{}{\rho\dotprod{\vectr{b}}{\delta\vectr{u}}}{v}-
+  \gint{\embedmanifold{B}}{}{\doubledotprod{\tensor{\sigma}}{\gradient{\delta\vectr{u}}}}{v}+
+  \gint{\boundary{\embedmanifold{B}}}{}{\dotprod{\pbrac{\dotprod{\tensor{\sigma}}{\vectr{n}}}}{\delta\vectr{u}}}{a}
 \end{equation}
-where $\delta\vectr{u}$ are the virtual displacements and $v$ is the deformed
-volume.
+where $\delta\vectr{u}$ are the virtual displacements.
+
+In component form we have
+\begin{equation}
+  \gint{\embedmanifold{B}}{}{\sigma^{ij}\covarderiv{\delta u_{j}}{i}}{v}=
+  \gint{\embedmanifold{B}}{}{\rho\pbrac{b^{j}-a^{j}}\delta u_{j}}{v}+
+  \gint{\boundary{\embedmanifold{B}}}{}{t^{j}\delta u_{j}}{a}
+\end{equation}
+
+The left hand side of the virtual work statement is
+\begin{equation}
+  \begin{split}
+    \gint{\embedmanifold{B}}{}{\sigma^{ij}\covarderiv{\delta u_{j}}{i}}{v}
+    &= \gint{\embedmanifold{B}}{}{\sigma^{ij}\pbrac{\partialderiv{\delta
+          u_{j}}{i}-\christoffel{k}{j}{i}\delta u_{k}}}{v} \\
+    &= \gint{\embedmanifold{B}}{}{\sigma^{ij}\pbrac{\delby{\delta
+          u_{j}}{x^{i}}-\christoffel{k}{j}{i}\delta u_{k}}}{v}
+  \end{split}
+\end{equation}
+
+Now
+\begin{equation}
+  \vectr{u}=\vectr{z}-\vectr{x}
+\end{equation}
+and so
+\begin{equation}
+  \begin{split}
+    \delta\vectr{u} &=\delta\pbrac{\vectr{z} -\vectr{X}} \\
+    &=\delta\vectr{z}-\delta\vectr{X} \\
+    &=\delta\vectr{z}
+  \end{split}
+\end{equation}
+
+If we now substitute $\delta\vectr{u}=\delta\vectr{z}$ and convert the left
+hand side of the virtual work statement from an integral with respect to
+spatial coordinates to an integral with respect to $\vectr{\xi}$ coordinates we obtain
+
+\begin{equation}
+  \begin{split}
+    \gint{\embedmanifold{B}}{}{\sigma^{ij}\pbrac{\delby{\delta
+          u_{j}}{x^{i}}-\christoffel{k}{j}{i}\delta u_{k}}}{v}
+    &= \gint{\embedmanifold{B}}{}{\sigma^{ij}\pbrac{\delby{\delta
+          z_{j}}{x^{i}}-\christoffel{k}{j}{i}\delta z_{k}}}{v} \\
+    &= \gint{\vectr{0}}{\vectr{1}}{\fnof{\sigma^{ij}}{\vectr{\xi}}\pbrac{\delby{\xi_{l}}{x^{i}}\delby{\delta
+          \fnof{z_{j}}{\vectr{\xi}}}{\xi^{l}}-\christoffel{k}{j}{i}\delta\fnof{z_{k}}{\vect{\xi}}}\fnof{J_{\embedmanifold{B}}}{\vectr{\xi}}}{\vectr{\xi}}
+  \end{split}
+\end{equation}
+
+Note that in rectangular cartesian coordinates $\christoffel{k}{j}{i}=0$ 
+$\forall i,j,k$. In addition it is not necessary to transform either the
+Cauchy stress tensor or gradient of the virtual displacements so that the
+components are with respect to $\vectr{\xi}$ coordinates. What is important is that
+the stress and displacement are with respect to the same coordinate
+system. Because the gradient of $\delta \vectr{z}$ is with respect to $\vectr{x}$ coordinates
+then $\tensor{\sigma}$ needs to be with respect to $\vectr{x}$ coordinates. As there
+is no coordinate transformations the Christoffel symbols are all zero and can
+be dropped.
+
+The right hand side of the virtual work statement is
+\begin{equation}
+  \begin{split}
+    \gint{\embedmanifold{B}}{}{\rho\pbrac{b^{j}-a^{j}}\delta u_{j}}{v}+
+    \gint{\boundary{\embedmanifold{B}}}{}{t^{j}\delta u_{j}}{a}
+    &= \gint{\embedmanifold{B}}{}{\rho\pbrac{b^{j}-a^{j}}\delta z_{j}}{v}+
+    \gint{\boundary{\embedmanifold{B}}}{}{Pn^{j}\delta z_{j}}{a} \\
+    &= \gint{\vectr{0}}{\vectr{1}}{\rho\pbrac{\fnof{b^{j}}{\vectr{\xi}}-\fnof{a^{j}}{\vectr{\xi}}}\delta
+      \fnof{z_{j}}{\vectr{\xi}}\fnof{J_{\embedmanifold{B}}}{\vectr{\xi}}}{\vectr{\xi}}\\
+    &\quad+\gint{\vectr{0}}{\vectr{1}}{\fnof{P}{\vectr{\xi}}\fnof{n^{j}}{\vectr{\xi}}\delta
+      \fnof{z_{j}}{\vectr{\xi}}\fnof{J_{\embedmanifold{B}}}{\vectr{\xi}}}{\vectr{\xi}}    
+  \end{split}
+\end{equation}
+where $P$ is the applied surface pressure.
+
+If we now use basis functions to interpolate the virtual displacements \ie
+\begin{equation}
+  \delta \fnof{z_{j}}{\vectr{\xi}} = \idxgbfn{j}{m}{\alpha}{\vectr{\xi}}\delta z_{j,\alpha}^{m}\gsf{m}{\alpha}
+\end{equation}
+which, assuming rectangular cartesian coordinates, gives for the left hand side integral
+\begin{equation}
+  \begin{split}
+    \gint{\vectr{0}}{\vectr{1}}{\fnof{\sigma^{ij}}{\vectr{\xi}}\delby{\xi_{l}}{x^{i}}\delby{\delta
+          \fnof{z_{j}}{\vectr{\xi}}}{\xi^{l}}\fnof{J_{\embedmanifold{B}}}{\vectr{\xi}}}{\vectr{\xi}}
+    &= \gint{\vectr{0}}{\vectr{1}}{\fnof{\sigma^{ij}}{\vectr{\xi}}\delby{\xi_{l}}{x^{i}}\delby{
+          \pbrac{\idxgbfn{j}{m}{\alpha}{\vectr{\xi}}\delta z_{j,\alpha}^{m}\gsf{m}{\alpha}}}{\xi^{l}}
+      \fnof{J_{\embedmanifold{B}}}{\vectr{\xi}}}{\vectr{\xi}} \\
+    &= \gint{\vectr{0}}{\vectr{1}}{\fnof{\sigma^{ij}}{\vectr{\xi}}\delby{\xi_{l}}{x^{i}}\delby{
+          \idxgbfn{j}{m}{\alpha}{\vectr{\xi}}}{\xi^{l}}\delta z_{j,\alpha}^{m}\gsf{m}{\alpha}
+      \fnof{J_{\embedmanifold{B}}}{\vectr{\xi}}}{\vectr{\xi}} \\
+    &= \delta z_{j,\alpha}^{m}\gsf{m}{\alpha}
+    \gint{\vectr{0}}{\vectr{1}}{\fnof{\sigma^{ij}}{\vectr{\xi}}\delby{\xi_{l}}{x^{i}}\delby{
+          \gbfn{m}{j\alpha}{\vectr{\xi}}}{\xi^{l}}
+      \fnof{J_{\embedmanifold{B}}}{\vectr{\xi}}}{\vectr{\xi}} 
+  \end{split}
+\end{equation}
+and for the first integral on the right hand side integral we have
+\begin{equation}
+  \begin{split}
+    \gint{\vectr{0}}{\vectr{1}}{\rho\pbrac{\fnof{b^{j}}{\vectr{\xi}}-\fnof{a^{j}}{\vectr{\xi}}}\delta
+      \fnof{z_{j}}{\vectr{\xi}}\fnof{J_{\embedmanifold{B}}}{\vectr{\xi}}}{\vectr{\xi}}
+    &= \gint{\vectr{0}}{\vectr{1}}{\rho\pbrac{\fnof{b^{j}}{\vectr{\xi}}-\fnof{a^{j}}{\vectr{\xi}}}
+      \idxgbfn{j}{m}{\alpha}{\vectr{\xi}}\delta
+      z_{j,\alpha}^{m}\gsf{m}{\alpha}
+      \fnof{J_{\embedmanifold{B}}}{\vectr{\xi}}}{\vectr{\xi}} \\
+    &= \delta
+    z_{j,\alpha}^{m}\gsf{m}{\alpha}\gint{\vectr{0}}{\vectr{1}}{\rho\pbrac{\fnof{b^{j}}{\vectr{\xi}}-
+        \fnof{a^{j}}{\vectr{\xi}}}\gbfn{m}{j\alpha}{\vectr{\xi}}
+      \fnof{J_{\embedmanifold{B}}}{\vectr{\xi}}}{\vectr{\xi}}
+  \end{split}
+\end{equation}
+and for the second integral on the right hand side we have
+\begin{equation}
+  \begin{split}
+    \gint{\vectr{0}}{\vectr{1}}{\fnof{P}{\vectr{\xi}}\fnof{n^{j}}{\vectr{\xi}}\delta
+      \fnof{z_{j}}{\vectr{\xi}}\fnof{J_{\embedmanifold{B}}}{\vectr{\xi}}}{\vectr{\xi}}
+    &= \gint{\vectr{0}}{\vectr{1}}{\fnof{P}{\vectr{\xi}}\fnof{n^{j}}{\vectr{\xi}}
+      \idxgbfn{j}{m}{\alpha}{\vectr{\xi}}\delta
+      z_{j,\alpha}^{m}\gsf{m}{\alpha}
+      \fnof{J_{\embedmanifold{B}}}{\vectr{\xi}}}{\vectr{\xi}}
+    \\
+    &= \delta z_{j,\alpha}^{m}\gsf{m}{\alpha}\gint{\vectr{0}}{\vectr{1}}{\fnof{P}{\vectr{\xi}}\fnof{n^{j}}{\vectr{\xi}}
+      \gbfn{m}{j\alpha}{\vectr{\xi}}
+      \fnof{J_{\embedmanifold{B}}}{\vectr{\xi}}}{\vectr{\xi}}
+  \end{split}
+\end{equation}
+
+This can be formulated as
+\begin{equation}
+  r_{m}^{j\alpha}\delta z_{j,\alpha}^{m}=0
+\end{equation}
+where the residual vector is thus given by
+\begin{multline}
+  r_{m}^{j\alpha}=\gsf{m}{\alpha}\left(
+    \gint{\vectr{0}}{\vectr{1}}{\pbrac{\fnof{\sigma^{ij}}{\vectr{\xi}}\delby{\xi_{l}}{x^{i}}\delby{
+          \gbfn{m}{j\alpha}{\vectr{\xi}}}{\xi^{l}}+\rho\pbrac{
+        \fnof{a^{j}}{\vectr{\xi}}-\fnof{b^{j}}{\vectr{\xi}}}\gbfn{m}{j\alpha}{\vectr{\xi}}}
+      \fnof{J_{\embedmanifold{B}}}{\vectr{\xi}}}{\vectr{\xi}}\right. \\
+    \left.-\gint{\vectr{0}}{\vectr{1}}{\fnof{P}{\vectr{\xi}}\fnof{n^{j}}{\vectr{\xi}}
+      \gbfn{m}{j\alpha}{\vectr{\xi}}
+      \fnof{J_{\embedmanifold{B}}}{\vectr{\xi}}}{\vectr{\xi}}\right)
+\end{multline}
+
+Now, as the virtual displacements are arbitrary we have the residual statement
+\begin{equation}
+  r_{m}^{j\alpha}=0
+\end{equation}
+
+In order to handle incompressible materials we need an additional constraint
+which penalises change in volume. The change in volume is given by
+\begin{equation}
+  \Delta V = \dfrac{J_{\embedmanifold{B}}}{J_{g}J_{\embedmanifold{B}_{0}}}
+\end{equation}
+and the residual equation is
+\begin{equation}
+  \begin{split}
+    r_{m}^{\pbrac{N+1}\alpha}&=\gint{\vectr{0}}{\vectr{1}}{\pbrac{\fnof{\Delta V}{\vectr{\xi}} -
+        1}\gbfn{m}{\pbrac{N+1}\alpha}{\vectr{\xi}}\gsf{m}{\alpha}\fnof{J_{\embedmanifold{B}}}{\vectr{\xi}}}{\vectr{\xi}}
+    \\
+    &=\gsf{m}{\alpha}\gint{\vectr{0}}{\vectr{1}}{\pbrac{\dfrac{\fnof{J_{\embedmanifold{B}}}{\vectr{\xi}}}{\fnof{J_{g}}{\vectr{\xi}}\fnof{J_{\embedmanifold{B}_{0}}}{\vectr{\xi}}} -
+        1}\gbfn{m}{\pbrac{N+1}\alpha}{\vectr{\xi}}\fnof{J_{\embedmanifold{B}}}{\vectr{\xi}}}{\vectr{\xi}}
+  \end{split}
+\end{equation}
+where $N$ is the number of dimensions.
+
+\clearpage
 
 \subsection{Old Stuff}
 
@@ -476,7 +643,7 @@ obtained from,
 
 \begin{equation}
   \matr{C}=\transpose{[\matr{R}\matr{U}]}[\matr{R}\matr{U}]=\transpose{\matr{U}}\transpose{\matr{R}}\matr{R}\matr{U}=\transpose{\matr{U}}\matr{U}
-  \label{eqn:rightcauchy}
+  \label{eqn:rightCauchy}
 \end{equation}
 
 Similarly the left Cauchy deformation tensor or the Finger tensor \matr{B} is
@@ -484,7 +651,7 @@ obtained from the left multiplication of \matr{F},
 
 \begin{equation}
   \matr{B}=[\matr{V}\matr{R_{1}}]\transpose{[\matr{V}\matr{R_{1}}]}=\matr{V}\matr{R_{1}}\transpose{\matr{R_{1}}}\transpose{\matr{V}}=\matr{V}\transpose{\matr{V}}
-  \label{eqn:leftcauchy}
+  \label{eqn:leftCauchy}
 \end{equation}
 
 \noindent Note that both $\matr{R}$ and $\matr{R_{1}}$ are orthogonal tensors
