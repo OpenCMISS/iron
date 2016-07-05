@@ -276,6 +276,7 @@ PROGRAM STATICADVECTIONDIFFUSIONEXAMPLE
   !Finish the equations set dependent field variables
   CALL cmfe_EquationsSet_SourceCreateFinish(EquationsSet,Err)
 
+  NULLIFY(GEOMETRIC_PARAMETERS)
   CALL cmfe_Field_ParameterSetDataGet(GeometricField,CMFE_FIELD_U_VARIABLE_TYPE,CMFE_FIELD_VALUES_SET_TYPE,GEOMETRIC_PARAMETERS, &
     & Err)
   !Create the equations set independent field variables
