@@ -181,6 +181,12 @@ MODULE Maths
     MODULE PROCEDURE MatrixTransposeProductDP
   END INTERFACE MatrixTransposeProduct
   
+  !>Calculates and returns the matrix-product-transpose A*B^T in the matrix C.
+  INTERFACE MatrixProductTranspose
+    MODULE PROCEDURE MatrixProductTransposeSP
+    MODULE PROCEDURE MatrixProductTransposeDP
+  END INTERFACE MatrixProductTranspose
+  
   !>Returns the transpose of a matrix A in A^T.
   INTERFACE MATRIX_TRANSPOSE
     MODULE PROCEDURE MatrixTransposeSP
@@ -248,9 +254,9 @@ MODULE Maths
   END INTERFACE Coth 
 
   PUBLIC CROSS_PRODUCT,CrossProduct,D_CROSS_PRODUCT,dCrossProduct,Determinant,Eigenvalue,Eigenvector,IdentityMatrix,Invert, &
-    & L2Norm,MATRIX_PRODUCT,MatrixProduct,MatrixTransposeProduct,MATRIX_TRANSPOSE,MatrixTranspose,Normalise,NORM_CROSS_PRODUCT, &
-    & NormCrossProduct,SOLVE_SMALL_LINEAR_SYSTEM,SolveSmallLinearSystem,Coth,spline_cubic_set,s3_fs,spline_cubic_val, &
-    & MATRIX_VECTOR_PRODUCT,MatrixVectorProduct,MatrixTransposeVectorProduct
+    & L2Norm,MATRIX_PRODUCT,MatrixProduct,MatrixTransposeProduct,MatrixProductTranspose,MATRIX_TRANSPOSE,MatrixTranspose, &
+    & Normalise,NORM_CROSS_PRODUCT,NormCrossProduct,SOLVE_SMALL_LINEAR_SYSTEM,SolveSmallLinearSystem,Coth,spline_cubic_set, &
+    & s3_fs,spline_cubic_val,MATRIX_VECTOR_PRODUCT,MatrixVectorProduct,MatrixTransposeVectorProduct
   
   
 CONTAINS
@@ -2113,6 +2119,105 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE MatrixTransposeProductDP
+
+  !
+  !================================================================================================================================
+  !
+  !>Calculates and returns the matrix-product-transpose of the single precision matrix A*B^T in C for single precision arguments.
+  SUBROUTINE MatrixProductTransposeSP(A,B,C,err,error,*)
+  
+    !Argument variables
+    REAL(SP), INTENT(IN) :: A(:,:) !<The first matrix A
+    REAL(SP), INTENT(IN) :: B(:,:) !<The second matrix B
+    REAL(SP), INTENT(OUT) :: C(:,:) !<On exit, the product matrix C=A*B^T
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    
+    ENTERS("MatrixProductTransposeSP",err,error,*999)
+
+    IF(SIZE(A,2)==SIZE(B,2).AND.SIZE(A,1)==SIZE(C,1).AND.SIZE(B,1)==SIZE(C,2)) THEN
+      SELECT CASE(SIZE(A,1))
+      CASE(1)
+        C(1,1)=A(1,1)*B(1,1)
+      CASE(2)
+        C(1,1)=A(1,1)*B(1,1)+A(1,2)*B(1,2)
+        C(1,2)=A(1,1)*B(2,1)+A(1,2)*B(2,2)
+        C(2,1)=A(2,1)*B(1,1)+A(2,2)*B(1,2)
+        C(2,2)=A(2,1)*B(2,1)+A(2,2)*B(2,2)
+      CASE(3)
+        C(1,1)=A(1,1)*B(1,1)+A(1,2)*B(1,2)+A(1,3)*B(1,3)
+        C(1,2)=A(1,1)*B(2,1)+A(1,2)*B(2,2)+A(1,3)*B(2,3)
+        C(1,3)=A(1,1)*B(3,1)+A(1,2)*B(3,2)+A(1,3)*B(3,3)        
+        C(2,1)=A(2,1)*B(1,1)+A(2,2)*B(1,2)+A(2,3)*B(1,3)
+        C(2,2)=A(2,1)*B(2,1)+A(2,2)*B(2,2)+A(2,3)*B(2,3)
+        C(2,3)=A(2,1)*B(3,1)+A(2,2)*B(3,2)+A(2,3)*B(3,3)
+        C(3,1)=A(3,1)*B(1,1)+A(3,2)*B(1,2)+A(3,3)*B(1,3)
+        C(3,2)=A(3,1)*B(2,1)+A(3,2)*B(2,2)+A(3,3)*B(2,3)
+        C(3,3)=A(3,1)*B(3,1)+A(3,2)*B(3,2)+A(3,3)*B(3,3)
+      CASE DEFAULT
+        CALL FlagError("Invalid matrix size.",err,error,*999)
+      END SELECT
+    ELSE
+      CALL FlagError("Invalid matrix sizes.",err,error,*999)
+    ENDIF
+
+    EXITS("MatrixProductTransposeSP")
+    RETURN
+999 ERRORSEXITS("MatrixProductTransposeSP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE MatrixProductTransposeSP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates and returns the matrix-product-transpose of the double precision matrix A*B^T in C.
+  SUBROUTINE MatrixProductTransposeDP(A,B,C,err,error,*)
+  
+    !Argument variables
+    REAL(DP), INTENT(IN) :: A(:,:) !<The A matrix
+    REAL(DP), INTENT(IN) :: B(:,:) !<The B matrix
+    REAL(DP), INTENT(OUT) :: C(:,:) !<On exit, the product matrix C=A*B^T
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+        
+    ENTERS("MatrixProductTranposeDP",err,error,*999)
+    
+   IF(SIZE(A,2)==SIZE(B,2).AND.SIZE(A,1)==SIZE(C,1).AND.SIZE(B,1)==SIZE(C,2)) THEN
+      SELECT CASE(SIZE(A,1))
+      CASE(1)
+        C(1,1)=A(1,1)*B(1,1)
+      CASE(2)
+        C(1,1)=A(1,1)*B(1,1)+A(1,2)*B(1,2)
+        C(1,2)=A(1,1)*B(2,1)+A(1,2)*B(2,2)
+        C(2,1)=A(2,1)*B(1,1)+A(2,2)*B(1,2)
+        C(2,2)=A(2,1)*B(2,1)+A(2,2)*B(2,2)
+      CASE(3)
+        C(1,1)=A(1,1)*B(1,1)+A(1,2)*B(1,2)+A(1,3)*B(1,3)
+        C(1,2)=A(1,1)*B(2,1)+A(1,2)*B(2,2)+A(1,3)*B(2,3)
+        C(1,3)=A(1,1)*B(3,1)+A(1,2)*B(3,2)+A(1,3)*B(3,3)        
+        C(2,1)=A(2,1)*B(1,1)+A(2,2)*B(1,2)+A(2,3)*B(1,3)
+        C(2,2)=A(2,1)*B(2,1)+A(2,2)*B(2,2)+A(2,3)*B(2,3)
+        C(2,3)=A(2,1)*B(3,1)+A(2,2)*B(3,2)+A(2,3)*B(3,3)
+        C(3,1)=A(3,1)*B(1,1)+A(3,2)*B(1,2)+A(3,3)*B(1,3)
+        C(3,2)=A(3,1)*B(2,1)+A(3,2)*B(2,2)+A(3,3)*B(2,3)
+        C(3,3)=A(3,1)*B(3,1)+A(3,2)*B(3,2)+A(3,3)*B(3,3)
+      CASE DEFAULT
+        CALL FlagError("Invalid matrix size.",err,error,*999)
+      END SELECT
+    ELSE
+      CALL FlagError("Invalid matrix sizes.",err,error,*999)
+    ENDIF
+
+    EXITS("MatrixProductTransposeDP")
+    RETURN
+999 ERRORSEXITS("MatrixProductTransposeDP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE MatrixProductTransposeDP
 
   !
   !================================================================================================================================

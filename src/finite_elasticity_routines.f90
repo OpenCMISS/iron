@@ -1881,7 +1881,7 @@ CONTAINS
 
             !Compute the Kirchoff stress tensor by pushing the 2nd Piola Kirchoff stress tensor forward \tau = F.S.F^T
             CALL MatrixProduct(Fe,piolaTensor,temp,ERR,ERROR,*999)
-            CALL MatrixTransposeProduct(temp,Fe,kirchoffTensor,ERR,ERROR,*999)
+            CALL MatrixProductTranspose(temp,Fe,kirchoffTensor,ERR,ERROR,*999)
 
             !Calculate the Cauchy stress tensor
             cauchyTensor=kirchoffTensor/Je            
@@ -1941,9 +1941,6 @@ CONTAINS
             !  ENDIF
             !ENDDO ! component_idx
 
-            CALL MatrixTransposeProduct(DEPENDENT_INTERPOLATED_POINT_METRICS%DX_DXI,cauchyTensor,temp,err,error,*999)
-            CALL MatrixProduct(temp,DEPENDENT_INTERPOLATED_POINT_METRICS%DX_DXI,cauchyTensor,err,error,*999)
-
             !Loop over geometric dependent basis functions.
             DO nh=1,NUMBER_OF_DIMENSIONS
               MESH_COMPONENT_NUMBER=FIELD_VARIABLE%COMPONENTS(nh)%MESH_COMPONENT_NUMBER
@@ -1981,7 +1978,11 @@ CONTAINS
               HYDROSTATIC_PRESSURE_COMPONENT=DEPENDENT_FIELD%VARIABLES(var1)%NUMBER_OF_COMPONENTS
               DEPENDENT_COMPONENT_INTERPOLATION_TYPE=DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS(HYDROSTATIC_PRESSURE_COMPONENT)% &
                 & INTERPOLATION_TYPE
-              Jv=Jzxi/(Jxxi*Jg)
+              IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
+                TEMPTERM1=GAUSS_WEIGHT*(Jzxi-(Jg-DARCY_VOL_INCREASE)*Jxxi)
+              ELSE
+                TEMPTERM1=GAUSS_WEIGHT*(Jzxi-Jg*Jxxi)
+              ENDIF            
               IF(DEPENDENT_COMPONENT_INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN !node based
                 COMPONENT_BASIS=>DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS(HYDROSTATIC_PRESSURE_COMPONENT)%DOMAIN% &
                   & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
@@ -1989,29 +1990,14 @@ CONTAINS
                 NUMBER_OF_FIELD_COMPONENT_INTERPOLATION_PARAMETERS=COMPONENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
                 DO parameter_idx=1,NUMBER_OF_FIELD_COMPONENT_INTERPOLATION_PARAMETERS
                   mhs=mhs+1 
-                  IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
-                    NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(mhs)= &
-                      & NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(mhs)+ &
-                      & GAUSS_WEIGHT*Jzxi*COMPONENT_QUADRATURE_SCHEME%GAUSS_BASIS_FNS(parameter_idx,1,gauss_idx)* &
-                      & (Jv-1.0_DP-DARCY_VOL_INCREASE)
-                  ELSE
-                    NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(mhs)= &
-                      & NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(mhs)+ &
-                      & GAUSS_WEIGHT*Jzxi*COMPONENT_QUADRATURE_SCHEME%GAUSS_BASIS_FNS(parameter_idx,1,gauss_idx)* &
-                      & (Jv-1.0_DP)
-                  ENDIF
+                  NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(mhs)= &
+                    & NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(mhs)+ &
+                    & COMPONENT_QUADRATURE_SCHEME%GAUSS_BASIS_FNS(parameter_idx,1,gauss_idx)*TEMPTERM1
                 ENDDO
               ELSEIF(DEPENDENT_COMPONENT_INTERPOLATION_TYPE==FIELD_ELEMENT_BASED_INTERPOLATION) THEN !element based
                 mhs=mhs+1
-                IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
-                  NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(mhs)= &
-                    & NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(mhs)+GAUSS_WEIGHT*Jxxi* &
-                    & (Jv-1.0_DP-DARCY_VOL_INCREASE)
-                ELSE
-                  NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(mhs)= &
-                    & NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(mhs)+GAUSS_WEIGHT*Jxxi* &
-                    & (Jv-1.0_DP)
-                ENDIF
+                NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(mhs)= &
+                  & NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(mhs)+TEMPTERM1
               ENDIF
             ENDIF
           ENDDO !gauss_idx
@@ -3344,8 +3330,8 @@ CONTAINS
           & dXdNu(1:numberOfXDimensions,1:numberOfXDimensions), &
           & dNudXi(1:numberOfXiDimensions,1:numberOfXiDimensions), &
           & dXidNu(1:numberOfXiDimensions,1:numberOfXiDimensions),err,error,*999)
-        CALL MatrixProduct(dXdNu(1:numberOfXDimensions,1:numberOfXDimensions), &
-          & dZdX(1:numberOfZDimensions,1:numberOfXDimensions), &
+        CALL MatrixProduct(dZdX(1:numberOfZDimensions,1:numberOfXDimensions), &
+          & dXdNu(1:numberOfXDimensions,1:numberOfXDimensions), &
           & dZdNu(1:numberOfZDimensions,1:numberOfXDimensions),err,error,*999)
 
         IF(numberOfZDimensions == 2) THEN
@@ -4322,7 +4308,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP) :: growthTensorInverse(3,3),growthTensorInverseTranspose(3,3)
+    REAL(DP) :: growthTensorInverse(3,3)
     
     ENTERS("FiniteElasticity_GaussGrowthTensor",ERR,ERROR,*999)
 
@@ -4339,12 +4325,10 @@ CONTAINS
               & gaussPointNumber,elementNumber,3,growthTensor(3,3),err,error,*999)
           ENDIF
         ENDIF
-        !Calculate inverse growth deformation tensor, Fg^-1, Jg and (Fg^-1)^T
+        !Calculate inverse growth deformation tensor, Fg^-1, Jg 
         CALL Invert(growthTensor,growthTensorInverse,Jg,err,error,*999)
-        Jg=Jg**0.5_DP
-        CALL MatrixTranspose(growthTensorInverse,growthTensorInverseTranspose,err,error,*999)
-        !Calculate elastic deformation tensor, Fe=(Fg)^-1.F        
-        CALL MatrixProduct(growthTensorInverse,deformationGradientTensor,elasticDeformationGradientTensor,err,error,*999)
+        !Calculate elastic deformation tensor, Fe=F.(Fg)^-1.       
+        CALL MatrixProduct(deformationGradientTensor,growthTensorInverse,elasticDeformationGradientTensor,err,error,*999)
       ELSE
         Jg=1.0_DP
         elasticDeformationGradientTensor=deformationGradientTensor
