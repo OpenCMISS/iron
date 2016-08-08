@@ -1545,7 +1545,7 @@ CONTAINS
                       IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_FREQUENCY)==0) THEN
                         IF(CONTROL_LOOP%TIME_LOOP%CURRENT_TIME<=CONTROL_LOOP%TIME_LOOP%STOP_TIME) THEN
                           IF(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS.EQ.1) THEN
-                            WRITE(TEMP_FMT,'("I",I1,".",I1)') MAX_DIGITS,MAX_DIGITS
+                            WRITE(TEMP_FMT,'("I",I0,".",I0)') MAX_DIGITS,MAX_DIGITS
                             !100 FORMAT 
                             FMT = TRIM(TEMP_FMT)
                             WRITE(TEMP_FMT,'(A2,A38,A20,A2)') "(", '"TIME_STEP_SPEC_1.part",I2.2,".",',FMT,")"
@@ -1553,7 +1553,7 @@ CONTAINS
                             WRITE(OUTPUT_FILE,FMT) &
                               & myComputationalNodeNumber,CURRENT_LOOP_ITERATION
                           ELSE
-                            WRITE(TEMP_FMT,'("I",I1,".",I1)') MAX_DIGITS,MAX_DIGITS
+                            WRITE(TEMP_FMT,'("I",I0,".",I0)') MAX_DIGITS,MAX_DIGITS
                             !200 FORMAT 
                             FMT = TRIM(TEMP_FMT)
                             WRITE(TEMP_FMT,'(A2,A38,A20,A2)') "(", '"TIME_STEP_SPEC_",I0,".part",I2.2,".",',FMT,")"
