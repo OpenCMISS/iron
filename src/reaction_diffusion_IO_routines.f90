@@ -82,7 +82,7 @@ CONTAINS
 
     !Argument variables
     TYPE(REGION_TYPE), INTENT(IN), POINTER :: REGION !<A pointer to the region to get the coordinate system for
-    CHARACTER(28),INTENT(IN) :: NAME !<the prefix name of file.
+    CHARACTER(30),INTENT(IN) :: NAME !<the prefix name of file.
     INTEGER(INTG) :: ERR !<The error code
     INTEGER(INTG), INTENT(IN) :: EQUATIONS_SET_GLOBAL_NUMBER
     TYPE(VARYING_STRING):: ERROR !<The error string
