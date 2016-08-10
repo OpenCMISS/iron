@@ -883,7 +883,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets diagnositics off. \see BASE_ROUTINES::DIAGNOSTICS_SET_ON,OPENCMISS::CMISSDiagnosticsSetOff
+  !>Sets diagnositics off. \see BASE_ROUTINES::DIAGNOSTICS_SET_OFF,OPENCMISS::CMISSDiagnosticsSetOff
   SUBROUTINE DIAGNOSTICS_SET_OFF(ERR,ERROR,*)
 
     !Argument variables
@@ -937,7 +937,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets diagnositics on. \see BASE_ROUTINES::DIAGNOSTICS_SET_OFF,OPENCMISS::CMISSDiagnosticsSetOn
+  !>Sets diagnositics on. \see BASE_ROUTINES::DIAGNOSTICS_SET_ON,OPENCMISS::CMISSDiagnosticsSetOn
   SUBROUTINE DIAGNOSTICS_SET_ON(DIAG_TYPE,LEVEL_LIST,DIAG_FILENAME,ROUTINE_LIST,ERR,ERROR,*)
 
     !Argument variables
@@ -1004,19 +1004,14 @@ CONTAINS
       SELECT CASE(LEVEL)
       CASE(1)
         DIAGNOSTICS_LEVEL1=.TRUE.
-        DIAGNOSTICS1=.TRUE.
       CASE(2)
         DIAGNOSTICS_LEVEL2=.TRUE.
-        DIAGNOSTICS2=.TRUE.
       CASE(3)
         DIAGNOSTICS_LEVEL3=.TRUE.
-        DIAGNOSTICS3=.TRUE.
       CASE(4)
         DIAGNOSTICS_LEVEL4=.TRUE.
-        DIAGNOSTICS4=.TRUE.
       CASE(5)
         DIAGNOSTICS_LEVEL5=.TRUE.
-        DIAGNOSTICS5=.TRUE.
       CASE DEFAULT
         CALL FlagError("Invalid diagnostic level.",ERR,ERROR,*999)
       END SELECT
