@@ -1695,7 +1695,7 @@ CONTAINS
               ENDDO !derivativeIdx
             ELSE
               DO derivativeIdx=1,basis%NUMBER_OF_DERIVATIVES(localNodeIdx)
-                basis%DERIVATIVE_ORDER_INDEX(derivativeIdx,localNodeIdx,xiIdx1)=NO_PART_DERIV
+                basis%DERIVATIVE_ORDER_INDEX(derivativeIdx,localNodeIdx,xiIdx1)=1
               ENDDO !derivativeIdx
             ENDIF
           ENDDO !xiIdx1

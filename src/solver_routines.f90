@@ -46,7 +46,7 @@ MODULE SOLVER_ROUTINES
 
   USE BASE_ROUTINES
   USE BOUNDARY_CONDITIONS_ROUTINES
-#ifdef WITH_CELLML
+#ifdef USECELLML
   USE CELLML_MODEL_DEFINITION
 #endif
   USE CMISS_CELLML
@@ -1391,11 +1391,11 @@ CONTAINS
                       PARAMETERS(parameter_idx)=PARAMETERS_DATA((dof_idx-1)*N+parameter_idx)
                     ENDDO !parameter_idx
                   
-#ifdef WITH_CELLML                    
+#ifdef USECELLML                    
                     CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,0.0_DP,STATES,RATES,INTERMEDIATES, &
                       & PARAMETERS)
 #else
-                    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
+                    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
 #endif
 
                     !Copy temporary data back to CellML arrays
@@ -1433,11 +1433,11 @@ CONTAINS
                       PARAMETERS(parameter_idx)=PARAMETERS_DATA((dof_idx-1)*N+parameter_idx)
                     ENDDO !parameter_idx
 
-#ifdef WITH_CELLML                    
+#ifdef USECELLML                    
                     CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,0.0_DP,STATES,RATES,INTERMEDIATES, &
                       & PARAMETERS)
 #else
-                    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
+                    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
 #endif
                     
                     !Copy temporary data back to CellML arrays
@@ -1460,7 +1460,7 @@ CONTAINS
             IF(ONLY_ONE_MODEL_INDEX==CELLML_MODELS_FIELD_NOT_CONSTANT) THEN
               !Mulitple models
 
-#ifdef WITH_CELLML                    
+#ifdef USECELLML                    
 
               DO dof_idx=1,N
                 model_idx=MODELS_DATA(dof_idx)
@@ -1559,7 +1559,7 @@ CONTAINS
                 ENDIF  !model_idx                
               ENDDO !dof_idx
 #else
-              CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
+              CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
 #endif
 
             ELSE
@@ -1569,7 +1569,7 @@ CONTAINS
                 NUMBER_STATES=MODEL%NUMBER_OF_STATE
                 NUMBER_INTERMEDIATES=MODEL%NUMBER_OF_INTERMEDIATE
                 NUMBER_PARAMETERS=MODEL%NUMBER_OF_PARAMETERS                
-#ifdef WITH_CELLML
+#ifdef USECELLML
                 !Call RHS. Note some models might not have state, rates, intermediate or parameter data so call accordingly
                 !to avoid referencing null pointers
                 IF(NUMBER_STATES>0) THEN
@@ -1679,7 +1679,7 @@ CONTAINS
                   ENDIF
                 ENDIF
 #else
-                CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
+                CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
 #endif
               ELSE
                 LOCAL_ERROR="CellML environment model is not associated for model index "// &
@@ -2123,11 +2123,11 @@ CONTAINS
                         PARAMETERS(parameter_idx)=PARAMETERS_DATA((dof_idx-1)*N+parameter_idx)
                       ENDDO !parameter_idx
                     
-#ifdef WITH_CELLML                    
+#ifdef USECELLML                    
                       CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,TIME,STATES,RATES,INTERMEDIATES, &
                         & PARAMETERS)
 #else
-                      CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
+                      CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
 #endif
 
                       !Copy temporary data back to CellML arrays
@@ -2169,11 +2169,11 @@ CONTAINS
                         PARAMETERS(parameter_idx)=PARAMETERS_DATA((dof_idx-1)*N+parameter_idx)
                       ENDDO !parameter_idx
 
-#ifdef WITH_CELLML                    
+#ifdef USECELLML                    
                       CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,TIME,STATES,RATES,INTERMEDIATES, &
                         & PARAMETERS)
 #else
-                      CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
+                      CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
 #endif
                     
                       !Copy temporary data back to CellML arrays
@@ -2210,7 +2210,7 @@ CONTAINS
                       NUMBER_INTERMEDIATES=MODEL%NUMBER_OF_INTERMEDIATE
                       NUMBER_PARAMETERS=MODEL%NUMBER_OF_PARAMETERS
 
-#ifdef WITH_CELLML                    
+#ifdef USECELLML                    
                       !Call RHS. Note some models might not have state, rates, intermediate or parameter data so call accordingly
                       !to avoid referencing null pointers
                       IF(NUMBER_STATES>0) THEN
@@ -2268,7 +2268,7 @@ CONTAINS
                       ENDIF
                         
 #else
-                      CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
+                      CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
 #endif
                       STATE_DATA(STATE_START_DOF:STATE_END_DOF)=STATE_DATA(STATE_START_DOF:STATE_END_DOF)+ &
                         & TIME_INCREMENT*RATES(1:NUMBER_STATES)
@@ -2294,7 +2294,7 @@ CONTAINS
                 NUMBER_STATES=MODEL%NUMBER_OF_STATE
                 NUMBER_INTERMEDIATES=MODEL%NUMBER_OF_INTERMEDIATE
                 NUMBER_PARAMETERS=MODEL%NUMBER_OF_PARAMETERS
-#ifdef WITH_CELLML                    
+#ifdef USECELLML                    
 
                 !Call RHS. Note some models might not have state, rates, intermediate or parameter data so call accordingly
                 !to avoid referencing null pointers
@@ -2404,7 +2404,7 @@ CONTAINS
                 ENDIF
 
 #else
-                CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
+                CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",ERR,ERROR,*999)
 #endif
                     
               ELSE
@@ -4244,7 +4244,7 @@ CONTAINS
     
     ENTERS("Solver_DAECellMLRHSEvaluate",err,error,*999)
 
-#ifdef WITH_CELLML                    
+#ifdef USECELLML                    
 
     IF(ASSOCIATED(model)) THEN
       numberOfStates=model%NUMBER_OF_STATE
@@ -4566,7 +4566,7 @@ CONTAINS
     ENDIF
     
 #else
-    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",err,error,*999)
+    CALL FlagError("Must compile with USECELLML=true to use CellML functionality.",err,error,*999)
 #endif 
         
     EXITS("Solver_DAECellMLRHSEvaluate")

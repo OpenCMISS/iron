@@ -1366,12 +1366,7 @@ int FieldExport_Variable( const int handle, const char *variableName, const int 
     }
     else if( session->type == EXPORT_TYPE_FILE )
     {
-        // need to avoid using the region path separator in names
-        char* escapedName = (char*)malloc(strlen(variableName)+1);
-        strcpy(escapedName, variableName);
-        size_t i;
-        for (i=0;i<strlen(escapedName);++i) if (escapedName[i] == '/') escapedName[i] = '_';
-        return FieldExport_File_Variable( &session->fileSession, escapedName, variableNumber, fieldType, variableType, componentCount );
+      return FieldExport_File_Variable( &session->fileSession, variableName, variableNumber, fieldType, variableType, componentCount );
     }
     else
     {

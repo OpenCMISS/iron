@@ -451,7 +451,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
     INTEGER(INTG) :: NUMBER_OF_DIMENSIONS,NUMBER_OF_XI
-    REAL(DP) :: DNUDXI(3,3),DXIDNU(3,3),dXdNu(3,3),dNudX(3,3)
+    REAL(DP) :: DNUDXI(3,3),DXIDNU(3,3)
     
 #ifdef TAUPROF
     CHARACTER(26) :: CVAR
@@ -651,7 +651,7 @@ CONTAINS
   
             !rotate the conductivity from material coordinates into xi-space to get the effective conductivity
             CALL Coordinates_MaterialSystemCalculate(GEOMETRIC_INTERP_POINT_METRICS,FIBRE_INTERPOLATED_POINT, &
-              & dNudX,dXdNu,dNudXi,dXidNu,ERR,ERROR,*999)
+              & DNUDXI,DXIDNU,ERR,ERROR,*999)
 
             CALL MATRIX_PRODUCT(DNUDXI,CONDUCTIVITY_MATERIAL,CONDUCTIVITY_TEMP,ERR,ERROR,*999)
             CALL MATRIX_PRODUCT(CONDUCTIVITY_TEMP,DXIDNU,CONDUCTIVITY,ERR,ERROR,*999)

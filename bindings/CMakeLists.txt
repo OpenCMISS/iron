@@ -155,13 +155,8 @@ if (WITH_Python_BINDINGS)
     # Step 1: Configuration phase - replaces variables
     set(SETUP_PY ${CMAKE_CURRENT_BINARY_DIR}/setup.py)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/python/setup.in.py ${SETUP_PY} @ONLY)
-
-    if (WIN32)
-        file(TO_NATIVE_PATH "${CMAKE_INSTALL_PREFIX}/bin" NATIVE_LIBRARY_PATH)
-    else()
-        file(TO_NATIVE_PATH "${CMAKE_INSTALL_PREFIX}/lib" NATIVE_LIBRARY_PATH)
-    endif()
-
+    
+    file(TO_NATIVE_PATH "${CMAKE_INSTALL_PREFIX}/lib" NATIVE_LIBRARY_PATH)
     set(INIT_PY ${CMAKE_CURRENT_BINARY_DIR}/__init__.py)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/python/opencmiss/iron/__init__.in.py ${INIT_PY} @ONLY)
     

@@ -1,5 +1,4 @@
 add_executable(Cantilever Cantilever.f90)
-set_target_properties(Cantilever PROPERTIES LINKER_LANGUAGE Fortran)
 target_link_libraries(Cantilever iron)
 # This is reading the default settings that should apply to the file
 # - however not giving it any arguments assumes type 9 interpolation opposite to the 
@@ -13,6 +12,5 @@ foreach(ITYPE RANGE 1 9)
 endforeach()
 
 add_executable(SimpleShear SimpleShear.f90)
-set_target_properties(SimpleShear PROPERTIES LINKER_LANGUAGE Fortran)
 target_link_libraries(SimpleShear iron)
 oc_add_test(FiniteElasticity_SimpleShear SimpleShear)

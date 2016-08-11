@@ -61,13 +61,11 @@ MODULE CONSTANTS
   !> \addtogroup CONSTANTS_NumericalConstants CONSTANTS::NumericalConstants
   !> \see CONSTANTS
   !>@{ 
-  REAL(DP), PARAMETER :: CONVERGENCE_TOLERANCE_DP=5.0_DP*EPSILON(1.0_DP) !<The convergence tolerance for double precision convergence calculations. Convergence tests should be of the form \f$\frac{|X_{i+1}-X_{i}|}{1+|X_{i}|}<\texttt{CONVERGENCE\_TOLERANCE}\f$ or for norms, \f$\frac{\|r\|}{\sqrt{n}+\|b\|}<\texttt{CONVERGENCE\_TOLERANCE}\f$
-  REAL(DP), PARAMETER :: CONVERGENCE_TOLERANCE=CONVERGENCE_TOLERANCE_DP
+  REAL(DP), PARAMETER :: CONVERGENCE_TOLERANCE=5.0_DP*EPSILON(1.0_DP) !<The convergence tolerance for double precision convergence calculations. Convergence tests should be of the form \f$\frac{|X_{i+1}-X_{i}|}{1+|X_{i}|}<\texttt{CONVERGENCE\_TOLERANCE}\f$ or for norms, \f$\frac{\|r\|}{\sqrt{n}+\|b\|}<\texttt{CONVERGENCE\_TOLERANCE}\f$
   !cpb 02/04/07 IBM compilers do not like this, initialise in BASE_ROUTINES_INITIALISE
   !REAL(DP), PARAMETER :: LOOSE_TOLERANCE=EPSILON(1.0_DP)**0.5
   REAL(DP) :: LOOSE_TOLERANCE !<The loose tolerance for double precision convergence calculations. Loose tolerance is to be used in the same manner as CONSTANTS::CONVERGENCE_TOLERANCE when a looser criterion is desired.
-  REAL(DP), PARAMETER :: ZERO_TOLERANCE_DP=5.0_DP*EPSILON(1.0_DP) !<The zero tolerance for double precision zero tests i.e., if(abs(x)>zero_tolerance) then...
-  REAL(DP), PARAMETER :: ZERO_TOLERANCE=ZERO_TOLERANCE_DP
+  REAL(DP), PARAMETER :: ZERO_TOLERANCE=5.0_DP*EPSILON(1.0_DP) !<The zero tolerance for double precision zero tests i.e., if(abs(x)>zero_tolerance) then...
   REAL(DP), PARAMETER :: CONVERGENCE_TOLERANCE_SP=5.0_SP*EPSILON(1.0_SP) !<The convergence tolerance for single precision convergence calculations. Convergence tests should be of the form \f$\frac{|X_{i+1}-X_{i}|}{1+|X_{i}|}<\texttt{CONVERGENCE\_TOLERANCE}\f$ or for norms, \f$\frac{\|r\|}{\sqrt{n}+\|b\|}<\texttt{CONVERGENCE\_TOLERANCE}\f$
   !cpb 02/04/07 IBM compilers do not like this, initialise in BASE_ROUTINES_INITIALISE
   !REAL(SP), PARAMETER :: LOOSE_TOLERANCE_SP=EPSILON(1.0_SP)**0.5

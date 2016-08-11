@@ -67,11 +67,7 @@ MODULE KINDS
   INTEGER, PARAMETER :: SP=SELECTED_REAL_KIND(6,15) !<Single precision real kind \see KINDS_RealKinds,KINDS
   INTEGER, PARAMETER :: DP=SELECTED_REAL_KIND(15,307) !<Double precision real kind \see KINDS_RealKinds,KINDS
   INTEGER, PARAMETER :: QP=SELECTED_REAL_KIND(30,1000) !<Quadruple precision real kind \see KINDS_RealKinds,KINDS
-#ifdef SINGLE_REAL_PRECISION
-  INTEGER, PARAMETER :: RP=SP !<Real working precision kind i.e., single, double, etc. \see KINDS_RealKinds,KINDS
-#else
   INTEGER, PARAMETER :: RP=DP !<Real working precision kind i.e., single, double, etc. \see KINDS_RealKinds,KINDS
-#endif
   !>@}
 
   !> \addtogroup KINDS_ComplexKinds KINDS::ComplexKinds
@@ -81,11 +77,7 @@ MODULE KINDS
   INTEGER, PARAMETER :: SPC=KIND((1.0_SP,1.0_SP)) !<Single precision complex kind \see KINDS_ComplexKinds,KINDS
   INTEGER, PARAMETER :: DPC=KIND((1.0_DP,1.0_DP)) !<Double precision complex kind \see KINDS_ComplexKinds,KINDS
   !INTEGER, PARAMETER :: QPC=KIND((1.0_QP,1.0_QP))
-#ifdef SINGLE_REAL_PRECISION
-  INTEGER, PARAMETER :: RPC=SPC !<Real working precision complex kind i.e., single, double, etc. \see KINDS_ComplexKinds,KINDS
-#else
   INTEGER, PARAMETER :: RPC=DPC !<Real working precision complex kind i.e., single, double, etc. \see KINDS_ComplexKinds,KINDS
-#endif
   !>@}
 
 END MODULE KINDS
