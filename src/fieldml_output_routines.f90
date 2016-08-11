@@ -87,8 +87,8 @@ MODULE FIELDML_OUTPUT_ROUTINES
     MODULE PROCEDURE FIELDML_OUTPUT_ADD_FIELD_WITH_TYPE
   END INTERFACE
  
-  PUBLIC :: FIELDML_OUTPUT_WRITE, FIELDML_OUTPUT_ADD_FIELD, FIELDML_OUTPUT_INITIALISE_INFO, FIELDML_OUTPUT_IMPORT, &
-    & FIELDML_OUTPUT_ADD_FIELD_COMPONENTS
+  PUBLIC :: FIELDML_OUTPUT_WRITE, FIELDML_OUTPUT_ADD_FIELD, FIELDML_OUTPUT_INITIALISE_INFO, &
+    & FIELDML_OUTPUT_ADD_IMPORT, FIELDML_OUTPUT_ADD_FIELD_COMPONENTS
 
 CONTAINS
 
@@ -96,16 +96,19 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !> Asserts that the FieldML Info is associated and created for output
   SUBROUTINE FIELDML_ASSERT_IS_OUT( FIELDML_INFO, ERR, ERROR, * )
     !Argument variables
-    TYPE(FIELDML_IO_TYPE), INTENT(IN) :: FIELDML_INFO !<The FieldML parsing state.
+    TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
     
     ENTERS( "FIELDML_ASSERT_IS_OUT", ERR, ERROR, *999 )
 
-    IF( .NOT. FIELDML_INFO%IS_OUT ) THEN
-      CALL FlagError( "Inbound FieldML handle used four an output-only operation.", ERR, ERROR, *999 )
+    IF(.NOT.ASSOCIATED(FIELDML_INFO)) THEN
+      CALL FlagError( "FieldML Info is not associated.", ERR, ERROR, *999 )
+    ELSE IF( .NOT. FIELDML_INFO%IS_OUT ) THEN
+      CALL FlagError( "Inbound FieldML Info used for an output-only operation.", ERR, ERROR, *999 )
     ENDIF
     
     EXITS( "FIELDML_ASSERT_IS_OUT" )
@@ -198,8 +201,6 @@ CONTAINS
     INTEGER(INTG) :: FIELDML_OUTPUT_IMPORT
     
     ENTERS( "FIELDML_OUTPUT_IMPORT", ERR, ERROR, *999 )
-    
-    CALL FIELDML_ASSERT_IS_OUT( FIELDML_INFO, ERR, ERROR, *999 )
 
     FIELDML_OUTPUT_IMPORT = FIELDML_OUTPUT_IMPORT_FML( FIELDML_INFO%FML_HANDLE, REMOTE_NAME, ERR, ERROR )
  
@@ -208,6 +209,33 @@ CONTAINS
 999 ERRORSEXITS( "FIELDML_OUTPUT_IMPORT", ERR, ERROR )
 
   END FUNCTION FIELDML_OUTPUT_IMPORT
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Import the named object from the built-in library into the current FieldML document. The local name will be the same as the remote name.
+  ! External variant of FIELDML_OUTPUT_IMPORT taking pointer argument and checking it
+  FUNCTION FIELDML_OUTPUT_ADD_IMPORT( FIELDML_INFO, REMOTE_NAME, ERR, ERROR )
+    !Argument variables
+    TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
+    TYPE(VARYING_STRING), INTENT(IN) :: REMOTE_NAME !<The name of the object to import.
+    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code.
+    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+
+    INTEGER(INTG) :: FIELDML_OUTPUT_ADD_IMPORT
+    
+    ENTERS( "FIELDML_OUTPUT_ADD_IMPORT", ERR, ERROR, *999 )
+    
+    CALL FIELDML_ASSERT_IS_OUT( FIELDML_INFO, ERR, ERROR, *999 )
+
+    FIELDML_OUTPUT_ADD_IMPORT = FIELDML_OUTPUT_IMPORT_FML( FIELDML_INFO%FML_HANDLE, REMOTE_NAME, ERR, ERROR )
+ 
+    EXITS( "FIELDML_OUTPUT_ADD_IMPORT" )
+    RETURN
+999 ERRORSEXITS( "FIELDML_OUTPUT_ADD_IMPORT", ERR, ERROR )
+
+  END FUNCTION FIELDML_OUTPUT_ADD_IMPORT
   
   !
   !================================================================================================================================
@@ -2090,7 +2118,7 @@ CONTAINS
   SUBROUTINE FIELDML_OUTPUT_ADD_FIELD_COMPONENTS( FIELDML_INFO, TYPE_HANDLE, BASE_NAME, DOF_FORMAT, FIELD, &
     & FIELD_COMPONENT_NUMBERS, VARIABLE_TYPE, SET_TYPE, ERR, ERROR, * )
     !Argument variables
-    TYPE(FIELDML_IO_TYPE), INTENT(IN) :: FIELDML_INFO !<The FieldML parsing state.
+    TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     INTEGER(INTG), INTENT(IN) :: TYPE_HANDLE !<The FieldML type handle for the field.
     TYPE(VARYING_STRING), INTENT(IN) :: BASE_NAME !<The root name of the basis evaluator.
     TYPE(VARYING_STRING), INTENT(IN) :: DOF_FORMAT !<The name of the format to use when writing dof data.
@@ -2212,7 +2240,7 @@ CONTAINS
   SUBROUTINE FIELDML_OUTPUT_ADD_FIELD_NO_TYPE( FIELDML_INFO, BASE_NAME, DOF_FORMAT, FIELD, VARIABLE_TYPE, SET_TYPE, &
     & ERR, ERROR, * )
     !Argument variables
-    TYPE(FIELDML_IO_TYPE), INTENT(IN) :: FIELDML_INFO !<The FieldML parsing state.
+    TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     TYPE(VARYING_STRING), INTENT(IN) :: BASE_NAME !<The root name of the basis evaluator.
     TYPE(VARYING_STRING), INTENT(IN) :: DOF_FORMAT !<The name of the format to use when writing dof data.
     TYPE(FIELD_TYPE), POINTER, INTENT(IN) :: FIELD !<The field for which evaluators are to be created.
@@ -2248,7 +2276,7 @@ CONTAINS
   SUBROUTINE FIELDML_OUTPUT_ADD_FIELD_WITH_TYPE( FIELDML_INFO, BASE_NAME, DOF_FORMAT, FIELD, VARIABLE_TYPE, SET_TYPE, &
     & TYPE_HANDLE, ERR, ERROR, * )
     !Argument variables
-    TYPE(FIELDML_IO_TYPE), INTENT(IN) :: FIELDML_INFO !<The FieldML parsing state.
+    TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     TYPE(VARYING_STRING), INTENT(IN) :: BASE_NAME !<The root name of the basis evaluator.
     TYPE(VARYING_STRING), INTENT(IN) :: DOF_FORMAT !<The name of the format to use when writing dof data.
     TYPE(FIELD_TYPE), POINTER, INTENT(IN) :: FIELD !<The field for which evaluators are to be created.
@@ -2300,7 +2328,7 @@ CONTAINS
   !>Write the given FieldML document to the given file.
   SUBROUTINE FIELDML_OUTPUT_WRITE( FIELDML_INFO, FILENAME, ERR, ERROR, * )
     !Argument variables
-    TYPE(FIELDML_IO_TYPE), INTENT(IN) :: FIELDML_INFO !<The FieldML parsing state.
+    TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     TYPE(VARYING_STRING), INTENT(IN) :: FILENAME !<The file to write the FieldML document to.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
