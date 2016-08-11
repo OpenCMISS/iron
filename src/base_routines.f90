@@ -358,7 +358,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Records the entry into the named procedure and initialises the error code \see BASE_ROUTINES::EXITS
+  !>Records the entry into the named procedure and initialises the error code \see BASE_ROUTINES::ENTERS
   SUBROUTINE ENTERS(NAME,ERR,ERROR,*)
 
     !Argument variables
