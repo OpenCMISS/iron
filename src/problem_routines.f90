@@ -1224,7 +1224,7 @@ CONTAINS
       CASE(PROBLEM_CLASSICAL_FIELD_CLASS)
         CALL CLASSICAL_FIELD_PROBLEM_SETUP(problem,problemSetupInfo,err,error,*999)
       CASE(PROBLEM_FITTING_CLASS)
-        CALL FITTING_PROBLEM_SETUP(problem,problemSetupInfo,err,error,*999)
+        CALL Fitting_ProblemSetup(problem,problemSetupInfo,err,error,*999)
       CASE(PROBLEM_MODAL_CLASS)
         CALL FlagError("Not implemented.",err,error,*999)
       CASE(PROBLEM_MULTI_PHYSICS_CLASS)

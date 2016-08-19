@@ -160,83 +160,217 @@ MODULE BASIS_ROUTINES
   
   !Interfaces
 
-  !>Evaluates the appropriate partial derivative index for the specificied basis function at a Xi location \see BASIS_ROUTINES
-  INTERFACE BASIS_EVALUATE_XI
-    MODULE PROCEDURE BASIS_EVALUATE_XI_DP
-  END INTERFACE !BASIS_EVALUATE_XI
-
-  !>Evaluates the list of gauss points and weights for a given basis type and order.
-  INTERFACE BASIS_GAUSS_POINTS_CALCULATE
-    MODULE PROCEDURE  BASIS_GAUSS_POINTS_CALCULATE_DP
-  END INTERFACE !BASIS_GAUSS_POINTS_CALCULATE
-
-  !>Interpolates the appropriate partial derivative index of the elements parameters for basis function at a Gauss point \see BASIS_ROUTINES
-  INTERFACE BASIS_INTERPOLATE_GAUSS
-    MODULE PROCEDURE BASIS_INTERPOLATE_GAUSS_DP
-  END INTERFACE !BASIS_INTERPOLATE_GAUSS
+  INTERFACE Basis_CollapsedXiGet
+    MODULE PROCEDURE BASIS_COLLAPSED_XI_GET
+  END INTERFACE Basis_CollapsedXiGet
   
-  !>Interpolates the appropriate partial derivative index of the elements parameters for basis function at Xi location \see BASIS_ROUTINES
-  INTERFACE BASIS_INTERPOLATE_XI
-    MODULE PROCEDURE BASIS_INTERPOLATE_XI_DP
-  END INTERFACE !BASIS_INTERPOLATE_XI
-
-  !>Interpolates the requested partial derivative index(ices) of the element parameters for basis function at a face Gauss point \see BASIS_ROUTINES
-  INTERFACE BASIS_INTERPOLATE_LOCAL_FACE_GAUSS
-    MODULE PROCEDURE BASIS_INTERPOLATE_LOCAL_FACE_GAUSS_DP
-  END INTERFACE !BASIS_INTERPOLATE_LOCAL_FACE_GAUSS
-
-  !>Sets/changes the interpolation type in each Xi direction for a basis
-  INTERFACE BASIS_INTERPOLATION_XI_SET
-    MODULE PROCEDURE BASIS_INTERPOLATION_XI_SET_NUMBER
-    MODULE PROCEDURE BASIS_INTERPOLATION_XI_SET_PTR
-  END INTERFACE !BASIS_INTERPOLATION_XI_SET
-
-  !>Sets/changes the number of Xi directions for a basis
-  INTERFACE BASIS_NUMBER_OF_XI_SET
-    MODULE PROCEDURE BASIS_NUMBER_OF_XI_SET_NUMBER
-    MODULE PROCEDURE BASIS_NUMBER_OF_XI_SET_PTR
-  END INTERFACE !BASIS_NUMBER_OF_XI_SET
-
-  !>Sets/changes the type for a basis.
-  INTERFACE BASIS_TYPE_SET
-    MODULE PROCEDURE BASIS_TYPE_SET_NUMBER
-    MODULE PROCEDURE BASIS_TYPE_SET_PTR
-  END INTERFACE !BASIS_TYPE_SET
-
   !>Sets/changes the collapsed Xi flags for a basis.
   INTERFACE BASIS_COLLAPSED_XI_SET
     MODULE PROCEDURE BASIS_COLLAPSED_XI_SET_NUMBER
     MODULE PROCEDURE BASIS_COLLAPSED_XI_SET_PTR
-  END INTERFACE !BASIS_COLLAPSED_XI_SET
+  END INTERFACE BASIS_COLLAPSED_XI_SET
 
+  !>Sets/changes the collapsed Xi flags for a basis.
+  INTERFACE Basis_CollapsedXiSet
+    MODULE PROCEDURE BASIS_COLLAPSED_XI_SET_NUMBER
+    MODULE PROCEDURE BASIS_COLLAPSED_XI_SET_PTR
+  END INTERFACE Basis_CollapsedXiSet
+
+  INTERFACE Basis_CreateStart
+    MODULE PROCEDURE BASIS_CREATE_START
+  END INTERFACE Basis_CreateStart
+
+  INTERFACE Basis_CreateFinish
+    MODULE PROCEDURE BASIS_CREATE_FINISH
+  END INTERFACE Basis_CreateFinish
+
+  !>Evaluates the appropriate partial derivative index for the specificied basis function at a Xi location \see BASIS_ROUTINES
+  INTERFACE BASIS_EVALUATE_XI
+    MODULE PROCEDURE BASIS_EVALUATE_XI_DP
+  END INTERFACE BASIS_EVALUATE_XI
+
+  !>Evaluates the appropriate partial derivative index for the specificied basis function at a Xi location \see BASIS_ROUTINES
+  INTERFACE Basis_EvaluateXi
+    MODULE PROCEDURE BASIS_EVALUATE_XI_DP
+  END INTERFACE Basis_EvaluateXi
+
+  !>Evaluates the list of gauss points and weights for a given basis type and order.
+  INTERFACE BASIS_GAUSS_POINTS_CALCULATE
+    MODULE PROCEDURE  BASIS_GAUSS_POINTS_CALCULATE_DP
+  END INTERFACE BASIS_GAUSS_POINTS_CALCULATE
+
+  !>Evaluates the list of gauss points and weights for a given basis type and order.
+  INTERFACE Basis_GaussPointsCalculate
+    MODULE PROCEDURE  BASIS_GAUSS_POINTS_CALCULATE_DP
+  END INTERFACE Basis_GaussPointsCalculate
+
+  !>Interpolates the appropriate partial derivative index of the elements parameters for basis function at a Gauss point \see BASIS_ROUTINES
+  INTERFACE BASIS_INTERPOLATE_GAUSS
+    MODULE PROCEDURE BASIS_INTERPOLATE_GAUSS_DP
+  END INTERFACE BASIS_INTERPOLATE_GAUSS
+  
+  !>Interpolates the appropriate partial derivative index of the elements parameters for basis function at a Gauss point \see BASIS_ROUTINES
+  INTERFACE Basis_InterpolateGauss
+    MODULE PROCEDURE BASIS_INTERPOLATE_GAUSS_DP
+  END INTERFACE Basis_InterpolateGauss
+  
+  !>Interpolates the appropriate partial derivative index of the elements parameters for basis function at Xi location \see BASIS_ROUTINES
+  INTERFACE BASIS_INTERPOLATE_XI
+    MODULE PROCEDURE BASIS_INTERPOLATE_XI_DP
+  END INTERFACE BASIS_INTERPOLATE_XI
+
+   !>Interpolates the appropriate partial derivative index of the elements parameters for basis function at Xi location \see BASIS_ROUTINES
+  INTERFACE Basis_InterpolateXi
+    MODULE PROCEDURE BASIS_INTERPOLATE_XI_DP
+  END INTERFACE Basis_InterpolateXi
+
+  !>Interpolates the requested partial derivative index(ices) of the element parameters for basis function at a face Gauss point \see BASIS_ROUTINES
+  INTERFACE BASIS_INTERPOLATE_LOCAL_FACE_GAUSS
+    MODULE PROCEDURE BASIS_INTERPOLATE_LOCAL_FACE_GAUSS_DP
+  END INTERFACE BASIS_INTERPOLATE_LOCAL_FACE_GAUSS
+
+   !>Interpolates the requested partial derivative index(ices) of the element parameters for basis function at a face Gauss point \see BASIS_ROUTINES
+  INTERFACE Basis_InterpolateLocalFaceGauss
+    MODULE PROCEDURE BASIS_INTERPOLATE_LOCAL_FACE_GAUSS_DP
+  END INTERFACE Basis_InterpolateLocalFaceGauss
+
+  INTERFACE Basis_LocalNodeXiCalculate
+    MODULE PROCEDURE BASIS_LOCAL_NODE_XI_CALCULATE
+  END INTERFACE Basis_LocalNodeXiCalculate
+
+  INTERFACE Basis_InterpolationXiGet
+    MODULE PROCEDURE BASIS_INTERPOLATION_XI_GET
+  END INTERFACE Basis_InterpolationXiGet
+  
+  !>Sets/changes the interpolation type in each Xi direction for a basis
+  INTERFACE BASIS_INTERPOLATION_XI_SET
+    MODULE PROCEDURE BASIS_INTERPOLATION_XI_SET_NUMBER
+    MODULE PROCEDURE BASIS_INTERPOLATION_XI_SET_PTR
+  END INTERFACE BASIS_INTERPOLATION_XI_SET
+
+   !>Sets/changes the interpolation type in each Xi direction for a basis
+  INTERFACE Basis_InterpolationXiSet
+    MODULE PROCEDURE BASIS_INTERPOLATION_XI_SET_NUMBER
+    MODULE PROCEDURE BASIS_INTERPOLATION_XI_SET_PTR
+  END INTERFACE Basis_InterpolationXiSet
+
+  INTERFACE Basis_NumberOfLocalNodesGet
+    MODULE PROCEDURE BASIS_NUMBER_OF_LOCAL_NODES_GET
+  END INTERFACE Basis_NumberOfLocalNodesGet
+
+  INTERFACE Basis_NumberOfXiGet
+    MODULE PROCEDURE BASIS_NUMBER_OF_XI_GET
+  END INTERFACE Basis_NumberOfXiGet
+  
+  !>Sets/changes the number of Xi directions for a basis
+  INTERFACE BASIS_NUMBER_OF_XI_SET
+    MODULE PROCEDURE BASIS_NUMBER_OF_XI_SET_NUMBER
+    MODULE PROCEDURE BASIS_NUMBER_OF_XI_SET_PTR
+  END INTERFACE BASIS_NUMBER_OF_XI_SET
+
+  !>Sets/changes the number of Xi directions for a basis
+  INTERFACE Basis_NumberOfXiSet
+    MODULE PROCEDURE BASIS_NUMBER_OF_XI_SET_NUMBER
+    MODULE PROCEDURE BASIS_NUMBER_OF_XI_SET_PTR
+  END INTERFACE Basis_NumberOfXiSet
+
+  INTERFACE Basis_QuadratureDestroy
+    MODULE PROCEDURE BASIS_QUADRATURE_DESTROY
+  END INTERFACE Basis_QuadratureDestroy
+
+  INTERFACE Basis_QuadratureMultipleGaussXiGet
+    MODULE PROCEDURE BASIS_QUADRATURE_MULTIPLE_GAUSS_XI_GET
+  END INTERFACE Basis_QuadratureMultipleGaussXiGet
+  
+  INTERFACE Basis_QuadratureNumberOfGaussXiGet
+    MODULE PROCEDURE BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_GET
+  END INTERFACE Basis_QuadratureNUmberOfGaussXiGet
+
+  INTERFACE Basis_QuadratureNumberOfGaussXiSet
+    MODULE PROCEDURE BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_SET
+  END INTERFACE Basis_QuadratureNUmberOfGaussXiSet
+
+  INTERFACE Basis_QuadratureOrderGet
+    MODULE PROCEDURE BASIS_QUADRATURE_ORDER_GET
+  END INTERFACE Basis_QuadratureOrderGet
+  
   !>Sets/changes the order of a quadrature for a basis quadrature.
   INTERFACE BASIS_QUADRATURE_ORDER_SET
     MODULE PROCEDURE BASIS_QUADRATURE_ORDER_SET_NUMBER
     MODULE PROCEDURE BASIS_QUADRATURE_ORDER_SET_PTR
-  END INTERFACE !BASIS_QUADRATURE_ORDER_SET
+  END INTERFACE BASIS_QUADRATURE_ORDER_SET
 
+  !>Sets/changes the order of a quadrature for a basis quadrature.
+  INTERFACE Basis_QuadratureOrderSet
+    MODULE PROCEDURE BASIS_QUADRATURE_ORDER_SET_NUMBER
+    MODULE PROCEDURE BASIS_QUADRATURE_ORDER_SET_PTR
+  END INTERFACE Basis_QuadratureOrderSet
+
+  INTERFACE Basis_QuadratureSingleGaussXiGet
+    MODULE PROCEDURE BASIS_QUADRATURE_SINGLE_GAUSS_XI_GET
+  END INTERFACE Basis_QuadratureSingleGaussXiGet
+
+  INTERFACE Basis_QuadratureTypeGet
+    MODULE PROCEDURE BASIS_QUADRATURE_TYPE_GET
+  END INTERFACE Basis_QuadratureTypeGet
+  
   !>Sets/changes the quadrature type for a basis
   INTERFACE BASIS_QUADRATURE_TYPE_SET
     MODULE PROCEDURE BASIS_QUADRATURE_TYPE_SET_NUMBER
     MODULE PROCEDURE BASIS_QUADRATURE_TYPE_SET_PTR
-  END INTERFACE !BASIS_QUADRATURE_TYPE_SET
+  END INTERFACE BASIS_QUADRATURE_TYPE_SET
   
+  !>Sets/changes the quadrature type for a basis
+  INTERFACE Basis_QuadratureTypeSet
+    MODULE PROCEDURE BASIS_QUADRATURE_TYPE_SET_NUMBER
+    MODULE PROCEDURE BASIS_QUADRATURE_TYPE_SET_PTR
+  END INTERFACE Basis_QuadratureTypeSet
+
+  INTERFACE Basis_TypeGet
+    MODULE PROCEDURE BASIS_TYPE_GET
+  END INTERFACE Basis_TypeGet
+  
+  !>Sets/changes the type for a basis.
+  INTERFACE BASIS_TYPE_SET
+    MODULE PROCEDURE BASIS_TYPE_SET_NUMBER
+    MODULE PROCEDURE BASIS_TYPE_SET_PTR
+  END INTERFACE BASIS_TYPE_SET
+
+  !>Sets/changes the type for a basis.
+  INTERFACE Basis_TypeSet
+    MODULE PROCEDURE BASIS_TYPE_SET_NUMBER
+    MODULE PROCEDURE BASIS_TYPE_SET_PTR
+  END INTERFACE Basis_TypeSet
+
+  !>Evaluates a linear Simplex basis function
   INTERFACE SIMPLEX_LINEAR_EVALUATE
     MODULE PROCEDURE SIMPLEX_LINEAR_EVALUATE_DP
-  END INTERFACE !SIMPLEX_LINEAR_EVALUATE
+  END INTERFACE SIMPLEX_LINEAR_EVALUATE
 
+  !>Evaluates a quadratic Simplex basis function
   INTERFACE SIMPLEX_QUADRATIC_EVALUATE
     MODULE PROCEDURE SIMPLEX_QUADRATIC_EVALUATE_DP
-  END INTERFACE !SIMPLEX_QUADRATIC_EVALUATE
+  END INTERFACE SIMPLEX_QUADRATIC_EVALUATE
 
+  !>Evaluates a cubic Simplex basis function
   INTERFACE SIMPLEX_CUBIC_EVALUATE
     MODULE PROCEDURE SIMPLEX_CUBIC_EVALUATE_DP
-  END INTERFACE !SIMPLEX_CUBIC_EVALUATE
+  END INTERFACE SIMPLEX_CUBIC_EVALUATE
 
   !>Evaluates the Lagrange/Hermite/Fourier tensor product basis function for the given basis
   INTERFACE BASIS_LHTP_BASIS_EVALUATE
     MODULE PROCEDURE BASIS_LHTP_BASIS_EVALUATE_DP
-  END INTERFACE !BASIS_LHTP_BASIS_EVALUATE
+  END INTERFACE BASIS_LHTP_BASIS_EVALUATE
+
+  !>Evaluates the Lagrange/Hermite/Fourier tensor product basis function for the given basis
+  INTERFACE Basis_LHTPBasisEvaluate
+    MODULE PROCEDURE BASIS_LHTP_BASIS_EVALUATE_DP
+  END INTERFACE Basis_LHTPBasisEvaluate
+
+  INTERFACE Basis_UserNumberFind
+    MODULE PROCEDURE BASIS_USER_NUMBER_FIND
+  END INTERFACE Basis_UserNumberFind
+
 
   PUBLIC BASIS_LAGRANGE_HERMITE_TP_TYPE,BASIS_SIMPLEX_TYPE,BASIS_SERENDIPITY_TYPE,BASIS_AUXILLIARY_TYPE,BASIS_B_SPLINE_TP_TYPE, &
     & BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE,BASIS_EXTENDED_LAGRANGE_TP_TYPE
@@ -256,51 +390,95 @@ MODULE BASIS_ROUTINES
   PUBLIC BASIS_XI_COLLAPSED,BASIS_COLLAPSED_AT_XI0,BASIS_COLLAPSED_AT_XI1,BASIS_NOT_COLLAPSED, BASIS_FUNCTIONS
 
   PUBLIC BASIS_COLLAPSED_XI_SET
-  
+
+  PUBLIC Basis_CollapsedXiSet
+
   PUBLIC BASIS_EVALUATE_XI
 
+  PUBLIC Basis_EvaluateXi
+  
   PUBLIC BASIS_GAUSS_POINTS_CALCULATE
+
+  PUBLIC Basis_GaussPointsCalculate
   
   PUBLIC BASIS_INTERPOLATE_GAUSS,BASIS_INTERPOLATE_XI,BASIS_INTERPOLATE_LOCAL_FACE_GAUSS
 
+  PUBLIC Basis_InterpolateGauss,Basis_InterpolateXi,Basis_InterpolateLocalFaceGauss
+
   PUBLIC BASIS_LOCAL_NODE_XI_CALCULATE
+
+  PUBLIC Basis_LocalNodeXiCalculate
 
   PUBLIC BASIS_NUMBER_OF_LOCAL_NODES_GET
 
+  PUBLIC Basis_NumberOfLocalNodesGet
+
   PUBLIC BASIS_INTERPOLATION_XI_SET
+
+  PUBLIC Basis_InterpolationXiSet
 
   PUBLIC BASIS_NUMBER_OF_XI_SET
 
+  PUBLIC Basis_NumberOfXiSet
+
   PUBLIC BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_SET
+
+  PUBLIC Basis_QuadratureNumberOfGaussXiSet
 
   PUBLIC BASIS_QUADRATURE_DESTROY,BASIS_QUADRATURE_ORDER_SET,BASIS_QUADRATURE_TYPE_SET
 
-  PUBLIC BASIS_TYPE_SET,Basis_QuadratureLocalFaceGaussEvaluateSet
+  PUBLIC Basis_QuadratureDestroy,Basis_QuadratureOrderSet,Basis_QuadratureTypeSet
+
+  PUBLIC BASIS_TYPE_SET
+
+  PUBLIC Basis_TypeSet
+
+  PUBLIC Basis_QuadratureLocalFaceGaussEvaluateSet
   
   PUBLIC BASIS_CREATE_START,BASIS_CREATE_FINISH
 
-  PUBLIC BASIS_DESTROY
+  PUBLIC Basis_CreateStart,Basis_CreateFinish
 
-  PUBLIC BASES_FINALISE,BASES_INITIALISE
+  PUBLIC Basis_Destroy
+
+  PUBLIC Bases_Finalise,Bases_Initialise
 
   PUBLIC BASIS_USER_NUMBER_FIND
 
+  PUBLIC Basis_UserNumberFind
+
   PUBLIC BASIS_COLLAPSED_XI_GET
+
+  PUBLIC Basis_CollapsedXiGet
 
   PUBLIC BASIS_INTERPOLATION_XI_GET
 
+  PUBLIC Basis_InterpolationXiGet
+
   PUBLIC BASIS_NUMBER_OF_XI_GET
+
+  PUBLIC Basis_NumberOfXiGet
 
   PUBLIC BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_GET
 
+  PUBLIC Basis_QuadratureNumberOfGaussXiGet
+
+!!TODO: These should be changed to operate on an array rather than have separate single/multiple routines
   PUBLIC BASIS_QUADRATURE_SINGLE_GAUSS_XI_GET, BASIS_QUADRATURE_MULTIPLE_GAUSS_XI_GET
 
-  PUBLIC BASIS_QUADRATURE_ORDER_GET 
+  PUBLIC Basis_QuadratureSingleGaussXiGet,Basis_QuadratureMultipleGaussXiGet
+
+  PUBLIC BASIS_QUADRATURE_ORDER_GET
+
+  PUBLIC Basis_QuadratureOrderGet
 
   PUBLIC BASIS_QUADRATURE_TYPE_GET
 
+  PUBLIC Basis_QuadratureTypeGet
+
   PUBLIC BASIS_TYPE_GET
 
+  PUBLIC Basis_TypeGet
 
 CONTAINS
 
