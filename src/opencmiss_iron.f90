@@ -3633,6 +3633,18 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_Field_ParameterSetAddElementLObj
   END INTERFACE cmfe_Field_ParameterSetAddElement
 
+  !>Adds the given value to the given parameter set for a particular Gauss point of a user element of the field variable component.
+  INTERFACE cmfe_Field_ParameterSetAddGaussPoint
+    MODULE PROCEDURE cmfe_Field_ParameterSetAddGaussPointIntgNumber
+    MODULE PROCEDURE cmfe_Field_ParameterSetAddGaussPointIntgObj
+    MODULE PROCEDURE cmfe_Field_ParameterSetAddGaussPointSPNumber
+    MODULE PROCEDURE cmfe_Field_ParameterSetAddGaussPointSPObj
+    MODULE PROCEDURE cmfe_Field_ParameterSetAddGaussPointDPNumber
+    MODULE PROCEDURE cmfe_Field_ParameterSetAddGaussPointDPObj
+    MODULE PROCEDURE cmfe_Field_ParameterSetAddGaussPointLNumber
+    MODULE PROCEDURE cmfe_Field_ParameterSetAddGaussPointLObj
+  END INTERFACE cmfe_Field_ParameterSetAddGaussPoint
+
   !>Adds the given value to the given parameter set for a particular user node of the field variable component.
   INTERFACE cmfe_Field_ParameterSetAddNode
     MODULE PROCEDURE cmfe_Field_ParameterSetAddNodeIntgNumber
@@ -4024,7 +4036,8 @@ MODULE OpenCMISS_Iron
 
   PUBLIC cmfe_Field_NumberOfVariablesGet,cmfe_Field_NumberOfVariablesSet
 
-  PUBLIC cmfe_Field_ParameterSetAddConstant,cmfe_Field_ParameterSetAddElement,cmfe_Field_ParameterSetAddNode
+  PUBLIC cmfe_Field_ParameterSetAddConstant,cmfe_Field_ParameterSetAddElement,cmfe_Field_ParameterSetAddGaussPoint, &
+    & cmfe_Field_ParameterSetAddNode
 
   PUBLIC cmfe_Field_ParameterSetCreate
 
@@ -30322,6 +30335,346 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Field_ParameterSetAddElementLObj
+
+   !
+  !================================================================================================================================
+  !
+
+  !>Adds the given integer value to a Gauss point of an element in the given parameter set for field variable component for a field identified by a user number.
+  SUBROUTINE cmfe_Field_ParameterSetAddGaussPointIntgNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
+    & gaussPointNumber,userElementNumber,componentNumber,VALUE,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddGaussPointIntgNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the value to the element in the field parameter set.
+    INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to add the value to the element in the field parameter set.
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The gauss Point number to add the value to.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to add the value to.
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the value to the element to in the field parameter set.
+    INTEGER(INTG), INTENT(IN) :: value !<The value to add to the element in the field parameter set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("cmfe_Field_ParameterSetAddGaussPointIntgNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(field)
+    CALL REGION_USER_NUMBER_FIND(regionUserNumber,region,err,error,*999)
+    IF(ASSOCIATED(region)) THEN
+      CALL FIELD_USER_NUMBER_FIND(fieldUserNumber,region,field,err,error,*999)
+      IF(ASSOCIATED(field)) THEN
+        CALL Field_ParameterSetAddGaussPoint(field,variableType,fieldSetType,gaussPointNumber,userElementNumber,componentNumber, &
+          & VALUE,err,error,*999)
+      ELSE
+        localError="A field with an user number of "//TRIM(NumberToVString(fieldUserNumber,"*",err,error))// &
+          & " does not exist on region number "//TRIM(NumberToVString(regionUserNumber,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      END IF
+    ELSE
+      localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))//" does not exist."
+      CALL FlagError(localError,err,error,*999)
+    END IF
+
+    EXITS("cmfe_Field_ParameterSetAddGaussPointIntgNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Field_ParameterSetAddGaussPointIntgNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Field_ParameterSetAddGaussPointIntgNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds the given integer value to a Gauss point in an element in the given parameter set for field variable component for a field identified by an object.
+  SUBROUTINE cmfe_Field_ParameterSetAddGaussPointIntgObj(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
+    & componentNumber,VALUE,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddGaussPointIntgObj)
+
+    !Argument variables
+    TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the value to the element in the field parameter set.
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number to add the value to.
+    INTEGER(INTG), INTENT(IN) :: UserElementNumber !<The user element number to add the value to.
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the value to the element to in the field parameter set.
+    INTEGER(INTG), INTENT(IN) :: value !<The value to add to the element in the field parameter set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_Field_ParameterSetAddGaussPointIntgObj",err,error,*999)
+
+    CALL Field_ParameterSetAddGaussPoint(field%field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
+      & componentNumber,VALUE,err,error,*999)
+
+    EXITS("cmfe_Field_ParameterSetAddGaussPointIntgObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Field_ParameterSetAddGaussPointIntgObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Field_ParameterSetAddGaussPointIntgObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds the given single precision value to a Gauss point in an element in the given parameter set for field variable component for a field identified by a user number.
+  SUBROUTINE cmfe_Field_ParameterSetAddGaussPointSPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
+    & gaussPointNumber,userElementNumber,componentNumber,VALUE,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddGaussPointSPNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the value to the element in the field parameter set.
+    INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to add the value to the element in the field parameter set.
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number to add the value to.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to add the value to.
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the value to the element to in the field parameter set.
+    REAL(SP), INTENT(IN) :: value !<The value to add to the element in the field parameter set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("cmfe_Field_ParameterSetAddGaussPointSPNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(field)
+    CALL REGION_USER_NUMBER_FIND(regionUserNumber,region,err,error,*999)
+    IF(ASSOCIATED(region)) THEN
+      CALL FIELD_USER_NUMBER_FIND(fieldUserNumber,region,field,err,error,*999)
+      IF(ASSOCIATED(field)) THEN
+        CALL Field_ParameterSetAddGaussPoint(field,variableType,fieldSetType,gaussPointNumber,userElementNumber,componentNumber, &
+          & VALUE,err,error,*999)
+      ELSE
+        localError="A field with an user number of "//TRIM(NumberToVString(fieldUserNumber,"*",err,error))// &
+          & " does not exist on region number "//TRIM(NumberToVString(regionUserNumber,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      END IF
+    ELSE
+      localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))//" does not exist."
+      CALL FlagError(localError,err,error,*999)
+    END IF
+
+    EXITS("cmfe_Field_ParameterSetAddGaussPointSPNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Field_ParameterSetAddGaussPointSPNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Field_ParameterSetAddGaussPointSPNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds the given single precision value to a Gauss point in an element in the given parameter set for field variable component for a field identified by an object.
+  SUBROUTINE cmfe_Field_ParameterSetAddGaussPointSPObj(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
+    & componentNumber,VALUE,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddGaussPointSPObj)
+
+    !Argument variables
+    TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the value to the element in the field parameter set.
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number to add the value to.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to add the value to.
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the value to the element to in the field parameter set.
+    REAL(SP), INTENT(IN) :: value !<The value to add to the element in the field parameter set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_Field_ParameterSetAddGaussPointSPObj",err,error,*999)
+
+    CALL Field_ParameterSetAddGaussPoint(field%field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
+      & componentNumber,VALUE,err,error,*999)
+
+    EXITS("cmfe_Field_ParameterSetAddGaussPointSPObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Field_ParameterSetAddGaussPointSPObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Field_ParameterSetAddGaussPointSPObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds the given double precision value to a Gauss point to an element in the given parameter set for field variable component for a field identified by a user number.
+  SUBROUTINE cmfe_Field_ParameterSetAddGaussPointDPNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
+    & gaussPointNumber,userElementNumber,componentNumber,VALUE,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddGaussPointDPNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the value to the element in the field parameter set.
+    INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to add the value to the element in the field parameter set.
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number to add the value to.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to add the value to.
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the value to the element to in the field parameter set.
+    REAL(DP), INTENT(IN) :: value !<The value to add to the element in the field parameter set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("cmfe_Field_ParameterSetAddGaussPointDPNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(field)
+    CALL REGION_USER_NUMBER_FIND(regionUserNumber,region,err,error,*999)
+    IF(ASSOCIATED(region)) THEN
+      CALL FIELD_USER_NUMBER_FIND(fieldUserNumber,region,field,err,error,*999)
+      IF(ASSOCIATED(field)) THEN
+        CALL Field_ParameterSetAddGaussPoint(field,variableType,fieldSetType,gaussPointNumber,userElementNumber,componentNumber, &
+          & VALUE,err,error,*999)
+      ELSE
+        localError="A field with an user number of "//TRIM(NumberToVString(fieldUserNumber,"*",err,error))// &
+          & " does not exist on region number "//TRIM(NumberToVString(regionUserNumber,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      END IF
+    ELSE
+      localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))//" does not exist."
+      CALL FlagError(localError,err,error,*999)
+    END IF
+
+    EXITS("cmfe_Field_ParameterSetAddGaussPointDPNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Field_ParameterSetAddGaussPointDPNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Field_ParameterSetAddGaussPointDPNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds the given double precision value to a Gauss point of an element in the given parameter set for field variable component for a field identified by an object.
+  SUBROUTINE cmfe_Field_ParameterSetAddGaussPointDPObj(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
+    & componentNumber,VALUE,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddGaussPointDPObj)
+
+    !Argument variables
+    TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the value to the element in the field parameter set.
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number to add the value to.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to add the value to.
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the value to the element to in the field parameter set.
+    REAL(DP), INTENT(IN) :: value !<The value to add to the element in the field parameter set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_Field_ParameterSetAddGaussPointDPObj",err,error,*999)
+
+    CALL Field_ParameterSetAddGaussPoint(field%field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
+      & componentNumber,VALUE,err,error,*999)
+
+    EXITS("cmfe_Field_ParameterSetAddGaussPointDPObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Field_ParameterSetAddGaussPointDPObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Field_ParameterSetAddGaussPointDPObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds the given logical value to a Gauss point in an element in the given parameter set for field variable component for a field identified by a user number.
+  SUBROUTINE cmfe_Field_ParameterSetAddGaussPointLNumber(regionUserNumber,fieldUserNumber,variableType,fieldSetType, &
+    & gaussPointNumber,userElementNumber,componentNumber,VALUE,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddGaussPointLNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the value to the element in the field parameter set.
+    INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to add the value to the element in the field parameter set.
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number to add the value to.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to add the value to.
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the value to the element to in the field parameter set.
+    LOGICAL, INTENT(IN) :: value !<The value to add to the element in the field parameter set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("cmfe_Field_ParameterSetAddGaussPointLNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(field)
+    CALL REGION_USER_NUMBER_FIND(regionUserNumber,region,err,error,*999)
+    IF(ASSOCIATED(region)) THEN
+      CALL FIELD_USER_NUMBER_FIND(fieldUserNumber,region,field,err,error,*999)
+      IF(ASSOCIATED(field)) THEN
+        CALL Field_ParameterSetAddGaussPoint(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
+          & componentNumber,VALUE,err,error,*999)
+      ELSE
+        localError="A field with an user number of "//TRIM(NumberToVString(fieldUserNumber,"*",err,error))// &
+          & " does not exist on region number "//TRIM(NumberToVString(regionUserNumber,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      END IF
+    ELSE
+      localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))//" does not exist."
+      CALL FlagError(localError,err,error,*999)
+    END IF
+
+    EXITS("cmfe_Field_ParameterSetAddGaussPointLNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Field_ParameterSetAddGaussPointLNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Field_ParameterSetAddGaussPointLNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds the given logical value to a Gauss point in an element in the given parameter set for field variable component for a field identified by an object.
+  SUBROUTINE cmfe_Field_ParameterSetAddGaussPointLObj(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
+    & componentNumber,VALUE,err)
+    !DLLEXPORT(cmfe_Field_ParameterSetAddGaussPointLObj)
+
+    !Argument variables
+    TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the value to the element in the field parameter set.
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number to add the value to.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to add the value to.
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the value to the element to in the field parameter set.
+    LOGICAL, INTENT(IN) :: value !<The value to add to the element in the field parameter set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_Field_ParameterSetAddGaussPointLObj",err,error,*999)
+
+    CALL Field_ParameterSetAddGaussPoint(field%field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
+      & componentNumber,VALUE,err,error,*999)
+
+    EXITS("cmfe_Field_ParameterSetAddGaussPointLObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Field_ParameterSetAddGaussPointLObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Field_ParameterSetAddGaussPointLObj
 
   !
   !================================================================================================================================

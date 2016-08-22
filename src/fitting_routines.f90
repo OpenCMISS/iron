@@ -42,7 +42,7 @@
 !>
 
 !>This module handles all Galerkin projection routines.
-MODULE FITTING_ROUTINES
+MODULE FittingRoutines
 
   USE BASE_ROUTINES
   USE BASIS_ROUTINES
@@ -84,8 +84,6 @@ MODULE FITTING_ROUTINES
 
   !Interfaces
 
-!!MERGE: move
-
   PUBLIC Fitting_EquationsSetSetup
   PUBLIC Fitting_EquationsSetSpecificationSet
   PUBLIC Fitting_EquationsSetSolutionMethodSet
@@ -95,9 +93,8 @@ MODULE FITTING_ROUTINES
 
   PUBLIC Fitting_FiniteElementCalculate
 
-  PUBLIC FITTING_PRE_SOLVE
-  PUBLIC FITTING_POST_SOLVE
-  PUBLIC FITTING_PRE_SOLVE_UPDATE_INPUT_DATA
+  PUBLIC Fitting_PreSolve
+  PUBLIC Fitting_PostSolve
 
 CONTAINS
 
@@ -151,7 +148,7 @@ CONTAINS
     REAL(DP):: materialFact
     REAL(DP):: dXdY(3,3), dXdXi(3,3), dYdXi(3,3), dXidY(3,3), dXidX(3,3)
     REAL(DP):: Jxy, Jyxi
-    REAL(DP):: dataPointWeight,dataPointVector(3)
+    REAL(DP):: dataPointWeight,dataPointVector(99)
     INTEGER(INTG) :: derivative_idx, component_idx, xi_idx, numberOfDimensions,smoothingType
     INTEGER(INTG) :: dataPointIdx,dataPointUserNumber,dataPointLocalNumber,dataPointGlobalNumber
     INTEGER(INTG) :: numberOfXi
@@ -898,7 +895,7 @@ CONTAINS
             CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE(EQUATIONS_SET_GAUSS_FITTING_EQUATION_TYPE)
-          SELECT CASE(equationsSet%specification(2))
+          SELECT CASE(equationsSet%specification(3))
           CASE(EQUATIONS_SET_GAUSS_POINT_FITTING_SUBTYPE)            
             dependentField=>equations%interpolation%DEPENDENT_FIELD
             independentField=>equations%interpolation%INDEPENDENT_FIELD
@@ -927,6 +924,7 @@ CONTAINS
               & INDEPENDENT_INTERP_PARAMETERS(FIELD_V_VARIABLE_TYPE)%ptr,err,error,*999)
             CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
             CALL Field_NumberOfComponentsGet(independentField,FIELD_U_VARIABLE_TYPE,numberOfDataComponents,err,error,*999)
+            IF(numberOfDataComponents>99) CALL FlagError("Increase the size of the data point vector.",err,error,*999)
             numberOfXi = dependentBasis%NUMBER_OF_XI
             
             SELECT CASE(smoothingType)
@@ -965,16 +963,16 @@ CONTAINS
               
               !Get fitting data from interpolated fields
               DO componentIdx=1,numberOfDataComponents
-                dataPointVector(componentIdx)=equations%interpolation%INDEPENDENT_INTERP_POINT(FIELD_V_VARIABLE_TYPE)%ptr% &
+                dataPointVector(componentIdx)=equations%interpolation%INDEPENDENT_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%ptr% &
                   & values(componentIdx,NO_PART_DERIV)
               ENDDO
               dataPointWeight=equations%interpolation%INDEPENDENT_INTERP_POINT(FIELD_V_VARIABLE_TYPE)%ptr%values(1,NO_PART_DERIV)
-              !Get Sobolev smoothing data from interpolated fields
               
               SELECT CASE(smoothingType)
               CASE(EQUATIONS_SET_FITTING_NO_SMOOTHING)
                 !Do nothing
               CASE(EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING)
+                !Get Sobolev smoothing data from interpolated fields
                 CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
                   & equations%interpolation%MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
                 tauParam=equations%interpolation%MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%ptr%values(1,NO_PART_DERIV)
@@ -1005,85 +1003,86 @@ CONTAINS
                   phiM=quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,NO_PART_DERIV,gaussPointIdx)
                   IF(equationsMatrix%UPDATE_MATRIX) THEN
                     !Loop over element columns
-                    DO dependentComponentColumnIdx=1,mappingVariable%NUMBER_OF_COMPONENTS
-                      meshComponentColumn=mappingVariable%components(dependentComponentColumnIdx)%MESH_COMPONENT_NUMBER
-                      dependentBasisColumn=>dependentField%decomposition%domain(meshComponentColumn)%ptr% &
-                        & topology%elements%elements(elementNumber)%basis
-                      quadratureSchemeColumn=>dependentBasisColumn%quadrature%QUADRATURE_SCHEME_MAP( &
-                        & BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-                      DO dependentElementParameterColumnIdx=1,dependentBasisColumn%NUMBER_OF_ELEMENT_PARAMETERS
-                        dependentParameterColumnIdx=dependentParameterColumnIdx+1
-                        phiN=quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,NO_PART_DERIV,gaussPointIdx)
-                        sum=0.0_DP
-                        IF(dependentComponentRowIdx==dependentComponentColumnIdx) sum=sum+phiM*phiN*dataPointWeight
-                        
-                        SELECT CASE(smoothingType)
-                        CASE(EQUATIONS_SET_FITTING_NO_SMOOTHING)
-                          !Do nothing
-                        CASE(EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING)
-                          !Calculate Sobolev surface tension and curvature smoothing terms                      
-                          tension = tauParam*2.0_DP* ( &
-                            & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1, &
+                    !Treat each component as separate and independent so only calculate the diagonal blocks by
+                    !setting the column component to be the row component
+                    dependentComponentColumnIdx=dependentComponentRowIdx
+                    meshComponentColumn=mappingVariable%components(dependentComponentColumnIdx)%MESH_COMPONENT_NUMBER
+                    dependentBasisColumn=>dependentField%decomposition%domain(meshComponentColumn)%ptr% &
+                      & topology%elements%elements(elementNumber)%basis
+                    quadratureSchemeColumn=>dependentBasisColumn%quadrature%QUADRATURE_SCHEME_MAP( &
+                      & BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
+                    DO dependentElementParameterColumnIdx=1,dependentBasisColumn%NUMBER_OF_ELEMENT_PARAMETERS
+                      dependentParameterColumnIdx=dependentParameterColumnIdx+1
+                      
+                      phiN=quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,NO_PART_DERIV, &
+                        & gaussPointIdx)
+                      sum=phiM*phiN*dataPointWeight                        
+                      SELECT CASE(smoothingType)
+                      CASE(EQUATIONS_SET_FITTING_NO_SMOOTHING)
+                        !Do nothing
+                      CASE(EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING)
+                        !Calculate Sobolev surface tension and curvature smoothing terms                      
+                        tension = tauParam*2.0_DP* ( &
+                          & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1, &
+                          & gaussPointIdx)* &
+                          & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1, &
+                          & gaussPointIdx))
+                        curvature = kappaParam*2.0_DP* ( &
+                          & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S1, &
+                          & gaussPointIdx)* &
+                          & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1_S1, &
+                          & gaussPointIdx))
+                        IF(numberOfXi > 1) THEN
+                          tension = tension + tauParam*2.0_DP* ( &
+                            & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2, &
                             & gaussPointIdx)* &
-                            & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1, &
+                            & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S2, &
                             & gaussPointIdx))
-                          curvature = kappaParam*2.0_DP* ( &
-                            & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S1, &
+                          curvature = curvature + kappaParam*2.0_DP* ( &
+                            & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2_S2, &
                             & gaussPointIdx)* &
-                            & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1_S1, &
+                            & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S2_S2, &
+                            & gaussPointIdx) + &
+                            & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S2, &
+                            & gaussPointIdx)* &
+                            & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1_S2, &
                             & gaussPointIdx))
-                          IF(numberOfXi > 1) THEN
+                          IF(numberOfXi > 2) THEN
                             tension = tension + tauParam*2.0_DP* ( &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2, &
+                              & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S3, &
                               & gaussPointIdx)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S2, &
+                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S3, &
                               & gaussPointIdx))
                             curvature = curvature + kappaParam*2.0_DP* ( &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2_S2, &
+                              & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S3_S3, &
                               & gaussPointIdx)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S2_S2, &
-                              & gaussPointIdx) + &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S2, &
+                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S3_S3, &
+                              & gaussPointIdx)+ &
+                              & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S3, &
                               & gaussPointIdx)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1_S2, &
+                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1_S3, &
+                              & gaussPointIdx)+ &
+                              & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2_S3, &
+                              & gaussPointIdx)* &
+                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S2_S3, &
                               & gaussPointIdx))
-                            IF(numberOfXi > 2) THEN
-                              tension = tension + tauParam*2.0_DP* ( &
-                                & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S3, &
-                                & gaussPointIdx)* &
-                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S3, &
-                                & gaussPointIdx))
-                              curvature = curvature + kappaParam*2.0_DP* ( &
-                                & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S3_S3, &
-                                & gaussPointIdx)* &
-                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S3_S3, &
-                                & gaussPointIdx)+ &
-                                & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S3, &
-                                & gaussPointIdx)* &
-                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1_S3, &
-                                & gaussPointIdx)+ &
-                                & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2_S3, &
-                                & gaussPointIdx)* &
-                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S2_S3, &
-                                & gaussPointIdx))
-                            ENDIF ! 3D
-                          ENDIF ! 2 or 3D
-                          sum = sum + (tension + curvature) * jacobianGaussWeight
-                        CASE(EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING)
-                          CALL FlagError("Not implemented.",err,error,*999)
-                        CASE(EQUATIONS_SET_FITTING_STRAIN_ENERGY_SMOOTHING)
-                          CALL FlagError("Not implemented.",err,error,*999)
-                        CASE DEFAULT
-                          localError="The fitting smoothing type of "//TRIM(NumberToVString(smoothingType,"*",err,error))// &
-                            & " is invalid."
-                          CALL FlagError(localError,err,error,*999)              
-                        END SELECT
-                          
-                        equationsMatrix%ELEMENT_MATRIX%matrix(dependentParameterRowIdx,dependentParameterColumnIdx)= &
-                          equationsMatrix%ELEMENT_MATRIX%matrix(dependentParameterRowIdx,dependentParameterColumnIdx)+sum
-                        
-                      ENDDO !dependentElementParameterColumnIdx
-                    ENDDO !dependentComponentColumnIdx
+                          ENDIF ! 3D
+                        ENDIF ! 2 or 3D
+                        sum = sum + (tension + curvature) * jacobianGaussWeight
+                      CASE(EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING)
+                        CALL FlagError("Not implemented.",err,error,*999)
+                      CASE(EQUATIONS_SET_FITTING_STRAIN_ENERGY_SMOOTHING)
+                        CALL FlagError("Not implemented.",err,error,*999)
+                      CASE DEFAULT
+                        localError="The fitting smoothing type of "//TRIM(NumberToVString(smoothingType,"*",err,error))// &
+                          & " is invalid."
+                        CALL FlagError(localError,err,error,*999)              
+                      END SELECT
+                      
+                      equationsMatrix%ELEMENT_MATRIX%matrix(dependentParameterRowIdx,dependentParameterColumnIdx)= &
+                        equationsMatrix%ELEMENT_MATRIX%matrix(dependentParameterRowIdx,dependentParameterColumnIdx)+sum
+                      
+                    ENDDO !dependentElementParameterColumnIdx
                   ENDIF
                   IF(rhsVector%UPDATE_VECTOR) THEN
                     rhsVector%ELEMENT_VECTOR%vector(dependentParameterRowIdx)= &
@@ -1104,29 +1103,40 @@ CONTAINS
           IF(dependentField%SCALINGS%SCALING_TYPE/=FIELD_NO_SCALING) THEN
             CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,equations%interpolation% &
               & DEPENDENT_INTERP_PARAMETERS(fieldVariableType)%ptr,err,error,*999)
-            mhs=0          
-            DO mh=1,mappingVariable%NUMBER_OF_COMPONENTS
-              !Loop over element rows
-              DO ms=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
-                mhs=mhs+1                    
-                nhs=0
+            dependentParameterRowIdx=0          
+            !Loop over element rows
+            DO dependentComponentRowIdx=1,mappingVariable%NUMBER_OF_COMPONENTS
+              meshComponentRow=mappingVariable%components(dependentComponentRowIdx)%MESH_COMPONENT_NUMBER
+              dependentBasisRow=>dependentField%decomposition%domain(meshComponentRow)%ptr% &
+                & topology%elements%elements(elementNumber)%basis
+              DO dependentElementParameterRowIdx=1,dependentBasisRow%NUMBER_OF_ELEMENT_PARAMETERS
+                dependentParameterRowIdx=dependentParameterRowIdx+1                    
+                dependentParameterColumnIdx=0
                 IF(equationsMatrix%UPDATE_MATRIX) THEN
                   !Loop over element columns
-                  DO nh=1,mappingVariable%NUMBER_OF_COMPONENTS
-                    DO ns=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
-                      nhs=nhs+1
-                      equationsMatrix%ELEMENT_MATRIX%matrix(mhs,nhs)=equationsMatrix%ELEMENT_MATRIX%matrix(mhs,nhs)* &
-                        & equations%interpolation%DEPENDENT_INTERP_PARAMETERS(fieldVariableType)%ptr%SCALE_FACTORS(ms,mh)* &
-                        & equations%interpolation%DEPENDENT_INTERP_PARAMETERS(fieldVariableType)%ptr%SCALE_FACTORS(ns,nh)
-                    ENDDO !ns
-                  ENDDO !nh
+                  DO dependentComponentColumnIdx=1,mappingVariable%NUMBER_OF_COMPONENTS
+                    meshComponentColumn=mappingVariable%components(dependentComponentColumnIdx)%MESH_COMPONENT_NUMBER
+                    dependentBasisColumn=>dependentField%decomposition%domain(meshComponentColumn)%ptr% &
+                      & topology%elements%elements(elementNumber)%basis
+                    DO dependentElementParameterColumnIdx=1,dependentBasisColumn%NUMBER_OF_ELEMENT_PARAMETERS
+                      dependentParameterColumnIdx=dependentParameterColumnIdx+1
+                      equationsMatrix%ELEMENT_MATRIX%matrix(dependentParameterRowIdx,dependentParameterColumnIdx)= &
+                        & equationsMatrix%ELEMENT_MATRIX%matrix(dependentParameterRowIdx,dependentParameterColumnIdx)* &
+                        & equations%interpolation%DEPENDENT_INTERP_PARAMETERS(fieldVariableType)%ptr% &
+                        & SCALE_FACTORS(dependentElementParameterRowIdx,dependentComponentRowIdx)* &
+                        & equations%interpolation%DEPENDENT_INTERP_PARAMETERS(fieldVariableType)%ptr% &
+                        & SCALE_FACTORS(dependentElementParameterColumnIdx,dependentComponentColumnIdx)
+                    ENDDO !dependentElementParameterColumnIdx
+                  ENDDO !dependentComponentColumnIdx
                 ENDIF
                 IF(rhsVector%UPDATE_VECTOR) THEN
-                  rhsVector%ELEMENT_VECTOR%vector(mhs)=rhsVector%ELEMENT_VECTOR%vector(mhs)* &
-                    & equations%interpolation%DEPENDENT_INTERP_PARAMETERS(fieldVariableType)%ptr%SCALE_FACTORS(ms,mh)
+                  rhsVector%ELEMENT_VECTOR%vector(dependentParameterRowIdx)= &
+                    & rhsVector%ELEMENT_VECTOR%vector(dependentParameterRowIdx)* &
+                    & equations%interpolation%DEPENDENT_INTERP_PARAMETERS(fieldVariableType)%ptr% &
+                    & SCALE_FACTORS(dependentElementParameterRowIdx,dependentComponentRowIdx)
                 ENDIF
-              ENDDO !ms
-            ENDDO !mh
+              ENDDO !dependentElementParameterRowIdx
+            ENDDO !dependentComponentRowIdx
           ENDIF
           
         CASE DEFAULT
@@ -4670,244 +4680,271 @@ CONTAINS
   !
 
   !>Evaluates the deformation gradient tensor at a given Gauss point
-  SUBROUTINE FITTING_GAUSS_DEFORMATION_GRADIENT_TENSOR(referenceGeometricInterpolatedPoint, &
-    & geometricInterpolatedPoint, dXdY, Jxy, ERR, ERROR, *)    
+  SUBROUTINE Fitting_GaussDeformationGradientTensor(referenceGeometricInterpolatedPoint,geometricInterpolatedPoint, &
+    & dXdY,Jxy,err,error,*)    
 
     !Argument variables
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: referenceGeometricInterpolatedPoint, geometricInterpolatedPoint
     REAL(DP) :: dXdY(3,3)  !dXdY - Deformation Gradient Tensor  
     REAL(DP) :: Jxy
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string   
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string   
     !Local Variables
-    INTEGER(INTG) :: derivative_idx,component_idx,xi_idx 
+    INTEGER(INTG) :: derivativeIdx,componentIdx,xiIdx 
     REAL(DP) :: dXdXi(3,3),dYdXi(3,3),dXidY(3,3)
     REAL(DP) :: Jyxi
 
-    ENTERS("FITTING_GAUSS_DEFORMATION_GRADIENT_TENSOR",err,error,*999)
+    ENTERS("Fitting_GaussDeformationGradientTensor",err,error,*999)
 
     !--- ToDo: Needs to be generalized such that it also works for 2D
-    DO component_idx=1,3 !Always 3 components - 3D
-      DO xi_idx=1,3 !Thus 3 element coordinates
-        derivative_idx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xi_idx) !2,4,7      
-        dXdXi(component_idx,xi_idx)=geometricInterpolatedPoint%values(component_idx,derivative_idx) !dx/dxi
-        dYdXi(component_idx,xi_idx)=referenceGeometricInterpolatedPoint%values(component_idx,derivative_idx) !dy/dxi (y = referential)
+    DO componentIdx=1,3 !Always 3 components - 3D
+      DO xiIdx=1,3 !Thus 3 element coordinates
+        derivativeIdx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx) !2,4,7      
+        dXdXi(componentIdx,xiIdx)=geometricInterpolatedPoint%values(componentIdx,derivativeIdx) !dx/dxi
+        dYdXi(componentIdx,xiIdx)=referenceGeometricInterpolatedPoint%values(componentIdx,derivativeIdx) !dy/dxi (y = referential)
       ENDDO
     ENDDO
 
-
     CALL Invert(dYdXi,dXidY,Jyxi,err,error,*999) !dy/dxi -> dxi/dy 
-
     CALL MatrixProduct(dXdXi,dXidY,dXdY,err,error,*999) !dx/dxi * dxi/dy = dx/dy (deformation gradient tensor, F)
-
     Jxy=Determinant(dXdY,err,error)
 
-
-    EXITS("FITTING_GAUSS_DEFORMATION_GRADIENT_TENSOR")
+    EXITS("Fitting_GaussDeformationGradientTensor")
     RETURN
-999 ERRORSEXITS("FITTING_GAUSS_DEFORMATION_GRADIENT_TENSOR",err,error)
+999 ERRORSEXITS("Fitting_GaussDeformationGradientTensor",err,error)
     RETURN 1
-  END SUBROUTINE FITTING_GAUSS_DEFORMATION_GRADIENT_TENSOR
+    
+  END SUBROUTINE Fitting_GaussDeformationGradientTensor
 
   !
   !================================================================================================================================
   !
 
-
-  !>Sets up the output type for a data fitting problem class.
-  SUBROUTINE FITTING_PRE_SOLVE(CONTROL_LOOP,SOLVER,err,error,*)
+ !>Sets up the output type for a data fitting problem class.
+  SUBROUTINE Fitting_PreSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
+    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(SOLVERS_TYPE), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
     
-    ENTERS("FITTING_PRE_SOLVE",err,error,*999)
+    ENTERS("Fitting_PreSolve",err,error,*999)
 
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(ASSOCIATED(SOLVER)) THEN
-        IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-          IF(.NOT.ALLOCATED(CONTROL_LOOP%problem%SPECIFICATION)) THEN
-            CALL FlagError("Problem specification is not allocated.",err,error,*999)
-          ELSE IF(SIZE(CONTROL_LOOP%problem%SPECIFICATION,1)<3) THEN
-            CALL FlagError("Problem specification must have three entries for a fitting problem.",err,error,*999)
-          END IF
-          SELECT CASE(CONTROL_LOOP%problem%specification(3))
+    IF(ASSOCIATED(solver)) THEN
+      solvers=>solver%solvers
+      IF(ASSOCIATED(solvers)) THEN        
+        controlLoop=>solvers%CONTROL_LOOP
+        IF(ASSOCIATED(controlLoop)) THEN
+          problem=>controlLoop%problem
+          IF(ASSOCIATED(problem)) THEN
+            IF(.NOT.ALLOCATED(problem%specification)) THEN
+              CALL FlagError("Problem specification is not allocated.",err,error,*999)
+            ELSE
+              IF(SIZE(problem%specification,1)<3) THEN
+                CALL FlagError("Problem specification must have three entries for a fitting problem.",err,error,*999)
+              END IF
+            ENDIF
+            SELECT CASE(problem%specification(3))
+            CASE(PROBLEM_STATIC_FITTING_SUBTYPE)
+              !Do nothing
             CASE(PROBLEM_STANDARD_DATA_FITTING_SUBTYPE)
-!               do nothing
+              !Do nothing
             CASE(PROBLEM_GENERALISED_DATA_FITTING_SUBTYPE)
-!               do nothing
+              !Do nothing
             CASE(PROBLEM_MAT_PROPERTIES_DATA_FITTING_SUBTYPE)
-!               do nothing
+              !Do nothing
             CASE(PROBLEM_DATA_POINT_VECTOR_STATIC_FITTING_SUBTYPE)
-!               do nothing
+              !Do nothing
             CASE(PROBLEM_DATA_POINT_VECTOR_QUASISTATIC_FITTING_SUBTYPE)
-!               do nothing
+              !Do nothing
             CASE(PROBLEM_VECTOR_DATA_FITTING_SUBTYPE,PROBLEM_DIV_FREE_VECTOR_DATA_FITTING_SUBTYPE)
-! !               IF(CONTROL_LOOP%WHILE_LOOP%ITERATION_NUMBER==1)THEN
-                CALL WriteString(GENERAL_OUTPUT_TYPE,"Read in vector data... ",err,error,*999)
-                !Update indpendent data fields
-                CALL FITTING_PRE_SOLVE_UPDATE_INPUT_DATA(CONTROL_LOOP,SOLVER,err,error,*999)
-! !                 CALL WriteString(GENERAL_OUTPUT_TYPE,"While loop... ",err,error,*999)
-! !               ELSE
-! !                 CALL WriteString(GENERAL_OUTPUT_TYPE,"While loop... ",err,error,*999)
-! !               ENDIF
+              !IF(controlLoop%WHILE_LOOP%ITERATION_NUMBER==1)THEN
+              CALL WriteString(GENERAL_OUTPUT_TYPE,"Read in vector data... ",err,error,*999)
+              !Update indpendent data fields
+              CALL Fitting_PreSolveUpdateInputData(solver,err,error,*999)
+              !  CALL WriteString(GENERAL_OUTPUT_TYPE,"While loop... ",err,error,*999)
+              !ELSE
+              !  CALL WriteString(GENERAL_OUTPUT_TYPE,"While loop... ",err,error,*999)
+              !ENDIF
             CASE DEFAULT
               localError="The third problem specification of "// &
-                & TRIM(NumberToVString(CONTROL_LOOP%problem%specification(3),"*",err,error))// &
+                & TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
                 & " is not valid for a data fitting problem class."
               CALL FlagError(localError,err,error,*999)
-          END SELECT
+            END SELECT
+          ELSE
+            CALL FlagError("Control loop problem is not associated.",err,error,*999)
+          ENDIF
         ELSE
-          CALL FlagError("Problem is not associated.",err,error,*999)
+          CALL FlagError("Solvers control loop is not associated.",err,error,*999)
         ENDIF
       ELSE
-        CALL FlagError("Solver is not associated.",err,error,*999)
+        CALL FlagError("Solver solvers is not associated.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Control loop is not associated.",err,error,*999)
+      CALL FlagError("Solver is not associated.",err,error,*999)
     ENDIF
-       
-    EXITS("FITTING_PRE_SOLVE")
+    
+    EXITS("Fitting_PreSolve")
     RETURN
-999 ERRORSEXITS("FITTING_PRE_SOLVE",err,error)
+999 ERRORSEXITS("Fitting_PreSolve",err,error)
     RETURN 1
-  END SUBROUTINE FITTING_PRE_SOLVE
+    
+  END SUBROUTINE Fitting_PreSolve
 
   !
   !================================================================================================================================
   !
 
   !>Sets up the output type for a data fitting problem class.
-  SUBROUTINE FITTING_POST_SOLVE(CONTROL_LOOP,SOLVER,err,error,*)
+  SUBROUTINE Fitting_PostSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER2 !<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop 
+    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(SOLVERS_TYPE), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("FITTING_POST_SOLVE",err,error,*999)
-    NULLIFY(SOLVER2)
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(ASSOCIATED(SOLVER)) THEN
-        IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN 
-          IF(.NOT.ALLOCATED(CONTROL_LOOP%problem%SPECIFICATION)) THEN
-            CALL FlagError("Problem specification is not allocated.",err,error,*999)
-          ELSE IF(SIZE(CONTROL_LOOP%problem%SPECIFICATION,1)<3) THEN
-            CALL FlagError("Problem specification must have three entries for a fitting problem.",err,error,*999)
-          END IF
-          SELECT CASE(CONTROL_LOOP%problem%specification(3))
+    ENTERS("Fitting_PostSolve",err,error,*999)
+    
+    IF(ASSOCIATED(solver)) THEN
+      solvers=>solver%solvers
+      IF(ASSOCIATED(solvers)) THEN
+        controlLoop=>solvers%CONTROL_LOOP
+        IF(ASSOCIATED(controlLoop)) THEN
+          problem=>controlLoop%problem
+          IF(ASSOCIATED(problem)) THEN 
+            IF(.NOT.ALLOCATED(problem%specification)) THEN
+              CALL FlagError("Problem specification is not allocated.",err,error,*999)
+            ELSE
+              IF(SIZE(problem%specification,1)<3) THEN
+                CALL FlagError("Problem specification must have three entries for a fitting problem.",err,error,*999)
+              ENDIF
+            ENDIF
+            SELECT CASE(problem%specification(3))
+            CASE(PROBLEM_STATIC_FITTING_SUBTYPE)
+              !Do nothing
             CASE(PROBLEM_STANDARD_DATA_FITTING_SUBTYPE,PROBLEM_GENERALISED_DATA_FITTING_SUBTYPE, &
               & PROBLEM_MAT_PROPERTIES_DATA_FITTING_SUBTYPE)
-!               do nothing
+              !Do nothing
             CASE(PROBLEM_VECTOR_DATA_FITTING_SUBTYPE,PROBLEM_DIV_FREE_VECTOR_DATA_FITTING_SUBTYPE, &
               & PROBLEM_DATA_POINT_VECTOR_STATIC_FITTING_SUBTYPE)
-              CALL FITTING_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,err,error,*999)
+              CALL Fitting_PostSolveOutputData(solver,err,error,*999)
             CASE(PROBLEM_DATA_POINT_VECTOR_QUASISTATIC_FITTING_SUBTYPE)
-              ! do nothing
+              !Do nothing
             CASE(PROBLEM_VECTOR_DATA_PRE_FITTING_SUBTYPE,PROBLEM_DIV_FREE_VECTOR_DATA_PRE_FITTING_SUBTYPE)
-!               do nothing
+              !Do nothing
             CASE DEFAULT
-              localError="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%problem%specification(3),"*",err,error))// &
-                & " is not valid for a fitting type of a classical field problem class."
+              localError="Problem subtype "//TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
+                & " is not valid for a fitting problem class."
               CALL FlagError(localError,err,error,*999)
-          END SELECT
+            END SELECT
+          ELSE
+            CALL FlagError("Control loop problem is not associated.",err,error,*999)
+          ENDIF
         ELSE
-          CALL FlagError("Problem is not associated.",err,error,*999)
+          CALL FlagError("Solvers control loop is not associated.",err,error,*999)
         ENDIF
       ELSE
-        CALL FlagError("Problem is not associated.",err,error,*999)
+        CALL FlagError("Solver solvers is not associated.",err,error,*999)
       ENDIF
-    ENDIF   
-    EXITS("FITTING_POST_SOLVE")
+    ELSE
+      CALL FlagError("Solver is not associated.",err,error,*999)
+    ENDIF
+    
+    EXITS("Fitting_PostSolve")
     RETURN
-999 ERRORSEXITS("FITTING_POST_SOLVE",err,error)
+999 ERRORSEXITS("Fitting_PostSolve",err,error)
     RETURN 1
-  END SUBROUTINE FITTING_POST_SOLVE
-
+    
+  END SUBROUTINE Fitting_PostSolve
 
   !
   !================================================================================================================================
   !
 
-
   !>Output data post solve
-  SUBROUTINE FITTING_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,err,error,*)
+  SUBROUTINE Fitting_PostSolveOutputData(solver,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop !<A pointer to the control loop to solve.
+    TYPE(PROBLEM_TYPE), POINTER :: problem  !<A pointer to the solver equations
+    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations  !<A pointer to the solver equations
+    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping !<A pointer to the solver mapping
+    TYPE(SOLVERS_TYPE), POINTER :: solvers
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
     TYPE(VARYING_STRING) :: localError
-    REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
-    INTEGER(INTG) :: EQUATIONS_SET_IDX,CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_TIME_LOOP !<A pointer to the control loop to solve.
-    LOGICAL :: EXPORT_FIELD
-    TYPE(VARYING_STRING) :: METHOD!,FILE
-    CHARACTER(7) :: FILE
-    CHARACTER(7) :: OUTPUT_FILE
+    REAL(DP) :: currentTime,timeIncrement
+    INTEGER(INTG) :: equationsSetIdx,currentLoopIteration,outputIterationNumber
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlTimeLoop !<A pointer to the control loop to solve.
+    LOGICAL :: exportField
+    CHARACTER(7) :: outputFile
 
-    ENTERS("FITTING_POST_SOLVE_OUTPUT_DATA",err,error,*999)
+    ENTERS("Fitting_PostSolveOutputData",err,error,*999)
 
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-!       write(*,*)'CURRENT_TIME = ',CURRENT_TIME
-!       write(*,*)'TIME_INCREMENT = ',TIME_INCREMENT
-      IF(ASSOCIATED(SOLVER)) THEN
-        IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-          IF(.NOT.ALLOCATED(CONTROL_LOOP%problem%SPECIFICATION)) THEN
-            CALL FlagError("Problem specification is not allocated.",err,error,*999)
-          ELSE IF(SIZE(CONTROL_LOOP%problem%SPECIFICATION,1)<3) THEN
-            CALL FlagError("Problem specification must have three entries for a fitting problem.",err,error,*999)
-          END IF
-          SELECT CASE(CONTROL_LOOP%problem%specification(3))
+    IF(ASSOCIATED(solver)) THEN
+      solvers=>solver%solvers
+      IF(ASSOCIATED(solvers)) THEN
+        controlLoop=>solvers%CONTROL_LOOP
+        IF(ASSOCIATED(controlLoop)) THEN
+          problem=>controlLoop%problem
+          IF(ASSOCIATED(problem)) THEN
+            IF(.NOT.ALLOCATED(problem%specification)) THEN
+              CALL FlagError("Problem specification is not allocated.",err,error,*999)
+            ELSE
+              IF(SIZE(problem%specification,1)<3) THEN
+                CALL FlagError("Problem specification must have three entries for a fitting problem.",err,error,*999)
+              ENDIF
+            ENDIF
+            SELECT CASE(problem%specification(3))
+            CASE(PROBLEM_STATIC_FITTING_SUBTYPE)
+              !Do nothing
             CASE(PROBLEM_STANDARD_DATA_FITTING_SUBTYPE,PROBLEM_GENERALISED_DATA_FITTING_SUBTYPE, &
               & PROBLEM_MAT_PROPERTIES_DATA_FITTING_SUBTYPE, &
               & PROBLEM_DATA_POINT_VECTOR_STATIC_FITTING_SUBTYPE)
-!               do nothing
+              !Do nothing
             CASE(PROBLEM_VECTOR_DATA_PRE_FITTING_SUBTYPE,PROBLEM_DIV_FREE_VECTOR_DATA_PRE_FITTING_SUBTYPE)
-!               do nothing
+              !Do nothing
             CASE(PROBLEM_VECTOR_DATA_FITTING_SUBTYPE,PROBLEM_DIV_FREE_VECTOR_DATA_FITTING_SUBTYPE)
-              CONTROL_TIME_LOOP=>CONTROL_LOOP
-              CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_TIME_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
-              SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
-              IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
-                IF(ASSOCIATED(SOLVER_MAPPING)) THEN
+              controlTimeLoop=>controlLoop
+              CALL ControlLoop_CurrentTimesGet(controlTimeLoop,currentTime,timeIncrement,err,error,*999)
+              solverEquations=>solver%SOLVER_EQUATIONS
+              IF(ASSOCIATED(solverEquations)) THEN
+                solverMapping=>solverEquations%SOLVER_MAPPING
+                IF(ASSOCIATED(solverMapping)) THEN
                   !Make sure the equations sets are up to date
-                  DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                    equationsSet=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
-                    CURRENT_LOOP_ITERATION=CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER
-                    OUTPUT_ITERATION_NUMBER=CONTROL_TIME_LOOP%TIME_LOOP%OUTPUT_NUMBER
-                    IF(OUTPUT_ITERATION_NUMBER/=0) THEN
-                      IF(CONTROL_TIME_LOOP%TIME_LOOP%CURRENT_TIME<=CONTROL_TIME_LOOP%TIME_LOOP%STOP_TIME) THEN
-                      IF(CURRENT_LOOP_ITERATION<10) THEN
-                         WRITE(OUTPUT_FILE,'("DATA_0",I0)') CURRENT_LOOP_ITERATION
-                        ELSE IF(CURRENT_LOOP_ITERATION<100) THEN
-                          WRITE(OUTPUT_FILE,'("DATA_",I0)') CURRENT_LOOP_ITERATION
-                        END IF
-                        FILE=OUTPUT_FILE
-!          FILE="TRANSIENT_OUTPUT"
-                        METHOD="FORTRAN"
-                        EXPORT_FIELD=.TRUE.
-                        IF(EXPORT_FIELD) THEN          
-                          IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER)==0)  THEN   
+                  DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+                    equationsSet=>solverMapping%EQUATIONS_SETS(equationsSetIdx)%ptr
+                    currentLoopIteration=controlTimeLoop%TIME_LOOP%ITERATION_NUMBER
+                    outputIterationNumber=controlTimeLoop%TIME_LOOP%OUTPUT_NUMBER
+                    IF(outputIterationNumber/=0) THEN
+                      IF(controlTimeLoop%TIME_LOOP%CURRENT_TIME<=controlTimeLoop%TIME_LOOP%STOP_TIME) THEN
+                        IF(currentLoopIteration<10) THEN
+                          WRITE(outputFile,'("DATA_0",I0)') currentLoopIteration
+                        ELSE IF(currentLoopIteration<100) THEN
+                          WRITE(outputFile,'("DATA_",I0)') currentLoopIteration
+                        ENDIF
+                        exportField=.TRUE.
+                        IF(exportField) THEN          
+                          IF(MOD(currentLoopIteration,outputIterationNumber)==0)  THEN   
                             CALL WriteString(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
                             CALL WriteString(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
-                            CALL FLUID_MECHANICS_IO_WRITE_FITTED_FIELD(equationsSet%REGION,equationsSet%GLOBAL_NUMBER, &
-                              & OUTPUT_FILE,err,error,*999)
-                            CALL WriteString(GENERAL_OUTPUT_TYPE,OUTPUT_FILE,err,error,*999)
+                            CALL FLUID_MECHANICS_IO_WRITE_FITTED_FIELD(equationsSet%region,equationsSet%GLOBAL_NUMBER, &
+                              & outputFile,err,error,*999)
+                            CALL WriteString(GENERAL_OUTPUT_TYPE,outputFile,err,error,*999)
                             CALL WriteString(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
                           ENDIF
                         ENDIF 
@@ -4917,179 +4954,153 @@ CONTAINS
                 ENDIF
               ENDIF
             CASE DEFAULT
-              localError="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%problem%specification(3),"*",err,error))// &
+              localError="Problem subtype "//TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
                 & " is not valid for a fitting equation of a classical field problem class."
               CALL FlagError(localError,err,error,*999)
-          END SELECT
+            END SELECT
+          ELSE
+            CALL FlagError("Control loop problem is not associated.",err,error,*999)
+          ENDIF
         ELSE
-          CALL FlagError("Problem is not associated.",err,error,*999)
+          CALL FlagError("Solvers control loop is not associated.",err,error,*999)
         ENDIF
       ELSE
-        CALL FlagError("Solver is not associated.",err,error,*999)
+        CALL FlagError("Solver solvers is not associated.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Control loop is not associated.",err,error,*999)
+      CALL FlagError("Solver is not associated.",err,error,*999)
     ENDIF
-    EXITS("FITTING_POST_SOLVE_OUTPUT_DATA")
+    
+    EXITS("Fitting_PostSolveOutputData")
     RETURN
-999 ERRORSEXITS("FITTING_POST_SOLVE_OUTPUT_DATA",err,error)
+999 ERRORSEXITS(" Fitting_PostSolveOutputData",err,error)
     RETURN 1
-  END SUBROUTINE FITTING_POST_SOLVE_OUTPUT_DATA
+    
+  END SUBROUTINE Fitting_PostSolveOutputData
 
   !
   !================================================================================================================================
   !
 
   !>Update input data conditions for field fitting
-  SUBROUTINE FITTING_PRE_SOLVE_UPDATE_INPUT_DATA(CONTROL_LOOP,SOLVER,err,error,*)
+  SUBROUTINE Fitting_PreSolveUpdateInputData(solver,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop,controlTimeLoop  
+    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations !<A pointer to the solver equations
+    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping !<A pointer to the solver mapping
+    TYPE(SOLVERS_TYPE), POINTER :: solvers
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
+    TYPE(EQUATIONS_TYPE), POINTER :: equations
     TYPE(VARYING_STRING) :: localError
-! !     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
-! !     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
+    INTEGER(INTG) :: numberOfDimensions,currentLoopIteration
+    INTEGER(INTG) :: inputType,inputOption
+    REAL(DP), POINTER :: inputVelNewData(:)
+    REAL(DP) :: currentTime,timeIncrement
+    LOGICAL :: boundaryUpdate
 
-!     REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
+    boundaryUpdate=.FALSE.
 
-    INTEGER(INTG) :: numberOfDimensions,CURRENT_LOOP_ITERATION
-    INTEGER(INTG) :: INPUT_TYPE,INPUT_OPTION
-    REAL(DP), POINTER :: INPUT_VEL_NEW_DATA(:)!,INPUT_VEL_OLD_DATA(:)
-!     REAL(DP), POINTER :: INPUT_VEL_LABEL_DATA(:) !,INPUT_VEL_U_DATA(:),INPUT_VEL_V_DATA(:),INPUT_VEL_W_DATA(:)
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_TIME_LOOP !<A pointer to the control loop to solve.
-    REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
-    LOGICAL :: BOUNDARY_UPDATE
+    ENTERS("Fitting_PreSolveUpdateInputData",err,error,*999)
 
-    BOUNDARY_UPDATE=.FALSE.
+    NULLIFY(inputVelNewData)
 
-    ENTERS("FITTING_PRE_SOLVE_UPDATE_INPUT_DATA",err,error,*999)
-
-    NULLIFY(INPUT_VEL_NEW_DATA)
-
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(ASSOCIATED(SOLVER)) THEN
-        IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-          IF(.NOT.ALLOCATED(CONTROL_LOOP%problem%SPECIFICATION)) THEN
-            CALL FlagError("Problem specification is not allocated.",err,error,*999)
-          ELSE IF(SIZE(CONTROL_LOOP%problem%SPECIFICATION,1)<3) THEN
-            CALL FlagError("Problem specification must have three entries for a fitting problem.",err,error,*999)
-          END IF
-          SELECT CASE(CONTROL_LOOP%problem%specification(3))
+    IF(ASSOCIATED(solver)) THEN
+      solvers=>solver%solvers
+      IF(ASSOCIATED(solvers)) THEN
+        controlLoop=>solvers%CONTROL_LOOP
+        IF(ASSOCIATED(controlLoop)) THEN
+          problem=>controlLoop%problem
+          IF(ASSOCIATED(problem)) THEN
+            IF(.NOT.ALLOCATED(problem%specification)) THEN
+              CALL FlagError("Problem specification is not allocated.",err,error,*999)
+            ELSE
+              IF(SIZE(problem%specification,1)<3) THEN
+                CALL FlagError("Problem specification must have three entries for a fitting problem.",err,error,*999)
+              ENDIF
+            ENDIF
+            SELECT CASE(problem%specification(3))
+            CASE(PROBLEM_STATIC_FITTING_SUBTYPE)
+              !Do nothing
             CASE(PROBLEM_STANDARD_DATA_FITTING_SUBTYPE)
-!               do nothing
+              !Do nothing
             CASE(PROBLEM_GENERALISED_DATA_FITTING_SUBTYPE)
-!               do nothing
+              !Do nothing
             CASE(PROBLEM_MAT_PROPERTIES_DATA_FITTING_SUBTYPE)
-!               do nothing
+              !Do nothing
             CASE(PROBLEM_DATA_POINT_VECTOR_STATIC_FITTING_SUBTYPE)
-!               do nothing
+              !Do nothing
             CASE(PROBLEM_DATA_POINT_VECTOR_QUASISTATIC_FITTING_SUBTYPE)
-!               do nothing
+              !Do nothing
             CASE(PROBLEM_VECTOR_DATA_FITTING_SUBTYPE,PROBLEM_DIV_FREE_VECTOR_DATA_FITTING_SUBTYPE)
-!               do nothing
-                CONTROL_TIME_LOOP=>CONTROL_LOOP
-                CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_TIME_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
-                CALL WriteString(GENERAL_OUTPUT_TYPE,"Read input data... ",err,error,*999)
-                SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
-                IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                  SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
-                  EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
-                  IF(ASSOCIATED(EQUATIONS)) THEN
-                    equationsSet=>EQUATIONS%EQUATIONS_SET
-                    IF(ASSOCIATED(equationsSet)) THEN
-                      CALL Field_NumberOfComponentsGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                        & numberOfDimensions,err,error,*999)
-                      CURRENT_LOOP_ITERATION=CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER
-                      !this is the current time step
-!\todo: Provide possibility for user to define input type and option (that's more or less an IO question)
-                      INPUT_TYPE=1
-                      INPUT_OPTION=1
-                      CALL Field_ParameterSetDataGet(equationsSet%SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, & 
-! ! !                         & FIELD_INPUT_DATA1_SET_TYPE,INPUT_VEL_NEW_DATA,err,error,*999)
-                        & FIELD_VALUES_SET_TYPE,INPUT_VEL_NEW_DATA,err,error,*999)
-! ! !                       CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,INPUT_VEL_NEW_DATA, & 
-! ! !                         & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP)
-                      CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,INPUT_VEL_NEW_DATA, & 
-                        & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CURRENT_LOOP_ITERATION,1.0_DP)
-                      !this is the previous time step
-! ! ! !\todo: Provide possibility for user to define input type and option (that's more or less an IO question)
-! ! !                       INPUT_TYPE=1
-! ! !                       INPUT_OPTION=2
-! ! !                       CALL Field_ParameterSetDataGet(equationsSet%SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, & 
-! ! !                         & FIELD_INPUT_DATA2_SET_TYPE,INPUT_VEL_OLD_DATA,err,error,*999)
-! ! !                       CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,INPUT_VEL_OLD_DATA, & 
-! ! !                         & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP)
-! ! !                       !this is the interior flag
-! ! !                       INPUT_TYPE=1
-! ! !                       INPUT_OPTION=3
-! ! !                       CALL Field_ParameterSetDataGet(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
-! ! !                         & FIELD_INPUT_LABEL_SET_TYPE,INPUT_VEL_LABEL_DATA,err,error,*999)
-! ! !                       CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,INPUT_VEL_LABEL_DATA, & 
-! ! !                         & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP)
-! ! !                       !this is the reference U velocity
-! ! !                       INPUT_TYPE=1
-! ! !                       INPUT_OPTION=4
-! ! !                       CALL Field_ParameterSetDataGet(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
-! ! !                         & FIELD_INPUT_VEL1_SET_TYPE,INPUT_VEL_U_DATA,err,error,*999)
-! ! !                       CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,INPUT_VEL_U_DATA, & 
-! ! !                         & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP)
-! ! !                       !this is the reference V velocity
-! ! !                       INPUT_TYPE=1
-! ! !                       INPUT_OPTION=5
-! ! !                       CALL Field_ParameterSetDataGet(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
-! ! !                         & FIELD_INPUT_VEL2_SET_TYPE,INPUT_VEL_V_DATA,err,error,*999)
-! ! !                       CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,INPUT_VEL_V_DATA, & 
-! ! !                         & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP)
-! ! !                       !this is the reference W velocity
-! ! !                       INPUT_TYPE=1
-! ! !                       INPUT_OPTION=6
-! ! !                       CALL Field_ParameterSetDataGet(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
-! ! !                         & FIELD_INPUT_VEL3_SET_TYPE,INPUT_VEL_W_DATA,err,error,*999)
-! ! !                       CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,INPUT_VEL_W_DATA, & 
-! ! !                         & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP)
-                    ELSE
-                      CALL FlagError("Equations set is not associated.",err,error,*999)
-                    END IF
+              !Do nothing
+              controlTimeLoop=>controlLoop
+              CALL ControlLoop_CurrentTimesGet(controlTimeLoop,currentTime,TimeIncrement,err,error,*999)
+              CALL WriteString(GENERAL_OUTPUT_TYPE,"Read input data... ",err,error,*999)
+              solverEquations=>solver%SOLVER_EQUATIONS
+              IF(ASSOCIATED(solverEquations)) THEN
+                solverMapping=>solverEquations%SOLVER_MAPPING
+                equations=>solverMapping%EQUATIONS_SET_TO_SOLVER_MAP(1)%equations
+                IF(ASSOCIATED(equations)) THEN
+                  equationsSet=>equations%EQUATIONS_SET
+                  IF(ASSOCIATED(equationsSet)) THEN
+                    CALL Field_NumberOfComponentsGet(equationsSet%geometry%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
+                      & numberOfDimensions,err,error,*999)
+                    currentLoopIteration=controlTimeLoop%TIME_LOOP%ITERATION_NUMBER
+                    !this is the current time step
+                    !\todo: Provide possibility for user to define input type and option (that's more or less an IO question)
+                    inputType=1
+                    inputOption=1
+                    CALL Field_ParameterSetDataGet(equationsSet%source%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, & 
+                      & FIELD_VALUES_SET_TYPE,inputVelNewData,err,error,*999)
+                    CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,inputVelNewData, & 
+                      & numberOfDimensions,inputType,inputOption,currentLoopIteration,1.0_DP)
                   ELSE
-                    CALL FlagError("Equations are not associated.",err,error,*999)
-                  END IF                
+                    CALL FlagError("Equations set is not associated.",err,error,*999)
+                  END IF
                 ELSE
-                  CALL FlagError("Solver equations are not associated.",err,error,*999)
-                END IF 
+                  CALL FlagError("Equations are not associated.",err,error,*999)
+                END IF
+              ELSE
+                CALL FlagError("Solver equations are not associated.",err,error,*999)
+              END IF
             CASE DEFAULT
-              localError="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%problem%specification(3),"*",err,error))// &
+              localError="Problem subtype "//TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
                 & " is not valid for a vector data type of a fitting field problem class."
               CALL FlagError(localError,err,error,*999)
-          END SELECT
-          CALL Field_ParameterSetUpdateStart(equationsSet%source%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, & 
-             & FIELD_VALUES_SET_TYPE,err,error,*999)
-          CALL Field_ParameterSetUpdateFinish(equationsSet%source%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, & 
-             & FIELD_VALUES_SET_TYPE,err,error,*999)
+            END SELECT
+            CALL Field_ParameterSetUpdateStart(equationsSet%source%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, & 
+              & FIELD_VALUES_SET_TYPE,err,error,*999)
+            CALL Field_ParameterSetUpdateFinish(equationsSet%source%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, & 
+              & FIELD_VALUES_SET_TYPE,err,error,*999)
+          ELSE
+            CALL FlagError("Control loop problem is not associated.",err,error,*999)
+          ENDIF
         ELSE
-          CALL FlagError("Problem is not associated.",err,error,*999)
+          CALL FlagError("Solvers control loop is not associated.",err,error,*999)
         ENDIF
       ELSE
-        CALL FlagError("Solver is not associated.",err,error,*999)
+        CALL FlagError("Solver solvers is not associated.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Control loop is not associated.",err,error,*999)
+      CALL FlagError("Solver is not associated.",err,error,*999)
     ENDIF
-    EXITS("FITTING_PRE_SOLVE_UPDATE_INPUT_DATA")
+    
+    EXITS("Fitting_PreSolveUpdateInputData")
     RETURN
-999 ERRORSEXITS("FITTING_PRE_SOLVE_UPDATE_INPUT_DATA",err,error)
+999 ERRORSEXITS("Fitting_PreSolveUpdateInputData",err,error)
     RETURN 1
-  END SUBROUTINE FITTING_PRE_SOLVE_UPDATE_INPUT_DATA
+    
+  END SUBROUTINE Fitting_PreSolveUpdateInputData
 
   !
   !================================================================================================================================
   !
 
  
-END MODULE FITTING_ROUTINES
+END MODULE FittingRoutines

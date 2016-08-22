@@ -664,6 +664,14 @@ MODULE FIELD_ROUTINES
     MODULE PROCEDURE FIELD_PARAMETER_SET_ADD_ELEMENT_L
   END INTERFACE Field_ParameterSetAddElement
   
+  !>Adds the given value to the given parameter set for a particular Gauss point of a user element of the field variable component.
+  INTERFACE Field_ParameterSetAddGaussPoint
+    MODULE PROCEDURE Field_ParameterSetAddGaussPointIntg
+    MODULE PROCEDURE Field_ParameterSetAddGaussPointSP
+    MODULE PROCEDURE Field_ParameterSetAddGaussPointDP
+    MODULE PROCEDURE Field_ParameterSetAddGaussPointL
+  END INTERFACE Field_ParameterSetAddGaussPoint
+  
   !>Adds the given value to the given parameter set for a particular local element of the field variable component.
   INTERFACE FIELD_PARAMETER_SET_ADD_LOCAL_ELEMENT
     MODULE PROCEDURE FIELD_PARAMETER_SET_ADD_LOCAL_ELEMENT_INTG
@@ -842,17 +850,17 @@ MODULE FIELD_ROUTINES
 
   !>Returns from the given parameter set a value for the specified user element and Gauss point of a field variable component.  TODO: sp/int/l versions
   INTERFACE Field_ParameterSetGetGaussPoint
-    MODULE PROCEDURE Field_ParameterSetGetGaussPointDp
+    MODULE PROCEDURE Field_ParameterSetGetGaussPointDP
   END INTERFACE Field_ParameterSetGetGaussPoint
   
   !>Returns from the given parameter set a value for the specified user element and Gauss point of a field variable component.  TODO: sp/int/l versions
   INTERFACE FIELD_PARAMETER_SET_GET_GAUSS_POINT
-    MODULE PROCEDURE Field_ParameterSetGetGaussPointDp
+    MODULE PROCEDURE Field_ParameterSetGetGaussPointDP
   END INTERFACE FIELD_PARAMETER_SET_GET_GAUSS_POINT
   
   !>Returns from the given parameter set a value for the specified local element and Gauss point of a field variable component.  TODO: sp/int/l versions
   INTERFACE Field_ParameterSetGetLocalGaussPoint
-    MODULE PROCEDURE Field_ParameterSetGetLocalGaussPointDp
+    MODULE PROCEDURE Field_ParameterSetGetLocalGaussPointDP
   END INTERFACE Field_ParameterSetGetLocalGaussPoint
   
   INTERFACE Field_ParameterSetOutput
@@ -1360,7 +1368,8 @@ MODULE FIELD_ROUTINES
     & FIELD_PARAMETER_SET_ADD_LOCAL_ELEMENT,FIELD_PARAMETER_SET_ADD_NODE,FIELD_PARAMETER_SET_ADD_LOCAL_NODE
 
   PUBLIC Field_ParameterSetAddConstant,Field_ParameterSetAddLocalDOF,Field_ParameterSetAddElement, &
-    & Field_ParameterSetAddLocalElement,Field_ParameterSetAddNode,Field_ParameterSetAddLocalNode
+    & Field_ParameterSetAddGaussPoint,Field_ParameterSetAddLocalElement,Field_ParameterSetAddNode, &
+    & Field_ParameterSetAddLocalNode
   
   PUBLIC FIELD_PARAMETER_SET_CREATE
 
@@ -1587,7 +1596,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the interpolation type for a field variable component identified by a pointer. \see OPENCMISS::CMISSFieldComponentInterpolationGet
+  !>Gets the interpolation type for a field variable component identified by a pointer. \see OpenCMISS::Iron::cmfe_FieldComponentInterpolationGet
   SUBROUTINE FIELD_COMPONENT_INTERPOLATION_GET(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,INTERPOLATION_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -1648,7 +1657,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the interpolation type for a field variable component. \see OPENCMISS::CMISSFieldComponentInterpolationSet
+  !>Sets/changes the interpolation type for a field variable component. \see OpenCMISS::Iron::cmfe_FieldComponentInterpolationSet
   SUBROUTINE FIELD_COMPONENT_INTERPOLATION_SET(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,INTERPOLATION_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -2299,7 +2308,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the label for a field variable component for character labels. \see OPENCMISS::CMISSFieldComponentLabelGet
+  !>Gets the label for a field variable component for character labels. \see OpenCMISS::Iron::cmfe_FieldComponentLabelGet
   SUBROUTINE FIELD_COMPONENT_LABEL_GET_C(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,LABEL,ERR,ERROR,*)
 
     !Argument variables
@@ -2366,7 +2375,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the label for a field variable component for varying string labels. \see OPENCMISS::CMISSFieldComponentLabelGet
+  !>Gets the label for a field variable component for varying string labels. \see OpenCMISS::Iron::cmfe_FieldComponentLabelGet
   SUBROUTINE FIELD_COMPONENT_LABEL_GET_VS(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,LABEL,ERR,ERROR,*)
 
     !Argument variables
@@ -2426,7 +2435,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the label for a field variable component for character labels. \see OPENCMISS::CMISSFieldComponentLabelSet
+  !>Sets/changes the label for a field variable component for character labels. \see OpenCMISS::Iron::cmfe_FieldComponentLabelSet
   SUBROUTINE FIELD_COMPONENT_LABEL_SET_C(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,LABEL,ERR,ERROR,*)
 
     !Argument variables
@@ -2498,7 +2507,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the label for a field variable component for varying string labels. \see OPENCMISS::CMISSFieldComponentLabelSet
+  !>Sets/changes the label for a field variable component for varying string labels. \see OpenCMISS::Iron::cmfe_FieldComponentLabelSet
   SUBROUTINE FIELD_COMPONENT_LABEL_SET_VS(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,LABEL,ERR,ERROR,*)
 
     !Argument variables
@@ -2775,7 +2784,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the mesh component number for a field variable component. \see OPENCMISS::CMISSFieldComponentMeshComponentSet
+  !>Sets/changes the mesh component number for a field variable component. \see OpenCMISS::Iron::cmfe_FieldComponentMeshComponentSet
   SUBROUTINE FIELD_COMPONENT_MESH_COMPONENT_SET(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,MESH_COMPONENT_NUMBER,ERR,ERROR,*)
 
     !Argument variables
@@ -2925,7 +2934,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Initialises the values of parameter set of a field variable component to a constant integer value. \see OPENCMISS::CMISSFieldComponentValuesInitialise
+  !>Initialises the values of parameter set of a field variable component to a constant integer value. \see OpenCMISS::Iron::cmfe_FieldComponentValuesInitialise
   SUBROUTINE FIELD_COMPONENT_VALUES_INITIALISE_INTG(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
     
     !Argument variables
@@ -3147,7 +3156,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Initialises the values of parameter set of a field variable component to a single precision constant value. \see OPENCMISS::CMISSFieldComponentValuesInitialise
+  !>Initialises the values of parameter set of a field variable component to a single precision constant value. \see OpenCMISS::Iron::cmfe_FieldComponentValuesInitialise
   SUBROUTINE FIELD_COMPONENT_VALUES_INITIALISE_SP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
     
     !Argument variables
@@ -3366,7 +3375,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Initialises the values of parameter set of a field variable component to a double precision constant value. \see OPENCMISS::CMISSFieldComponentValuesInitialise
+  !>Initialises the values of parameter set of a field variable component to a double precision constant value. \see OpenCMISS::Iron::cmfe_FieldComponentValuesInitialise
   SUBROUTINE FIELD_COMPONENT_VALUES_INITIALISE_DP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
     
     !Argument variables
@@ -3618,7 +3627,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Initialises the values of parameter set of a field variable component to a logical constant value. \see OPENCMISS::CMISSFieldComponentValuesInitialise
+  !>Initialises the values of parameter set of a field variable component to a logical constant value. \see OpenCMISS::Iron::cmfe_FieldComponentValuesInitialise
   SUBROUTINE FIELD_COMPONENT_VALUES_INITIALISE_L(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
     
     !Argument variables
@@ -3972,7 +3981,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the data type for a field variable. \see OPENCMISS::CMISSFieldDataTypeGet
+  !>Gets the data type for a field variable. \see OpenCMISS::Iron::cmfe_FieldDataTypeGet
   SUBROUTINE FIELD_DATA_TYPE_GET(FIELD,VARIABLE_TYPE,DATA_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -4023,7 +4032,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the data type for a field variable. \see OPENCMISS::CMISSFieldDataTypeSet
+  !>Sets/changes the data type for a field variable. \see OpenCMISS::Iron::cmfe_FieldDataTypeSet
   SUBROUTINE FIELD_DATA_TYPE_SET(FIELD,VARIABLE_TYPE,DATA_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -4206,7 +4215,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the DOF order type for a field variable. \see OPENCMISS::CMISSFieldDOFOrderTypeGet
+  !>Gets the DOF order type for a field variable. \see OpenCMISS::Iron::cmfe_FieldDOFOrderTypeGet
   SUBROUTINE FIELD_DOF_ORDER_TYPE_GET(FIELD,VARIABLE_TYPE,DOF_ORDER_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -4736,7 +4745,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the creation of a field. \see OPENCMISS::CMISSFieldCreateFinish
+  !>Finishes the creation of a field. \see OpenCMISS::Iron::cmfe_FieldCreateFinish
   SUBROUTINE FIELD_CREATE_FINISH(FIELD,ERR,ERROR,*)
 
     !Argument variables
@@ -4931,7 +4940,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the creation of a field defined by a user number in the specified interface. \see OPENCMISS::CMISSFieldCreateStart
+  !>Starts the creation of a field defined by a user number in the specified interface. \see OpenCMISS::Iron::cmfe_FieldCreateStart
   !>Default values set for the FIELD's attributes are:
   !>- DEPENDENT_TYPE: 1 (FIELD_INDEPENDENT_TYPE)
   !>- DIMENSION: 2 (FIELD_VECTOR_DIMENSION_TYPE)
@@ -4990,7 +4999,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the creation of a field defined by a user number in the specified region. \see OPENCMISS::CMISSFieldCreateStart
+  !>Starts the creation of a field defined by a user number in the specified region. \see OpenCMISS::Iron::cmfe_FieldCreateStart
   !>Default values set for the FIELD's attributes are:
   !>- DEPENDENT_TYPE: 1 (FIELD_INDEPENDENT_TYPE)
   !>- DIMENSION: 2 (FIELD_VECTOR_DIMENSION_TYPE)
@@ -5479,7 +5488,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the dependent type for a field. \see OPENCMISS::CMISSFieldDependentTypeGet
+  !>Gets the dependent type for a field. \see OpenCMISS::Iron::cmfe_FieldDependentTypeGet
   SUBROUTINE FIELD_DEPENDENT_TYPE_GET(FIELD,DEPENDENT_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -5513,7 +5522,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the dependent type for a field. \see OPENCMISS::CMISSFieldDependentTypeSet
+  !>Sets/changes the dependent type for a field. \see OpenCMISS::Iron::cmfe_FieldDependentTypeSet
   SUBROUTINE FIELD_DEPENDENT_TYPE_SET(FIELD,DEPENDENT_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -5603,7 +5612,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys a field. \see OPENCMISS::CMISSFieldDestroy
+  !>Destroys a field. \see OpenCMISS::Iron::cmfe_FieldDestroy
   SUBROUTINE FIELD_DESTROY(FIELD,ERR,ERROR,*)
 
     !Argument variables
@@ -5778,7 +5787,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the field dimension for a field variable. \see OPENCMISS::CMISSFieldDimensionGet
+  !>Gets the field dimension for a field variable. \see OpenCMISS::Iron::cmfe_FieldDimensionGet
   SUBROUTINE FIELD_DIMENSION_GET(FIELD,VARIABLE_TYPE,DIMENSION,ERR,ERROR,*)
 
     !Argument variables
@@ -8363,7 +8372,7 @@ CONTAINS
     INTEGER(INTG), OPTIONAL, INTENT(IN) :: componentType !<The components type to interpolate
     !Local Variables
     INTEGER(INTG) :: component_idx,local_derivative_idx,version_idx,global_derivative_idx,element_node_idx,node_idx, &
-      & element_parameter_idx,dof_idx,node_scaling_dof_idx,scaling_idx,startComponentIdx,endComponentIdx
+      & element_parameter_idx,gaussIdx,dof_idx,node_scaling_dof_idx,scaling_idx,startComponentIdx,endComponentIdx
     REAL(DP), POINTER :: FIELD_PARAMETER_SET_DATA(:),SCALE_FACTORS(:)
     TYPE(BASIS_TYPE), POINTER :: BASIS
     TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM
@@ -8462,7 +8471,7 @@ CONTAINS
                         INTERPOLATION_PARAMETERS%PARAMETERS(element_parameter_idx,component_idx)=FIELD_PARAMETER_SET_DATA(dof_idx)
                       ENDDO !local_derivative_idx
                     ENDDO !element_node_idx
-                CASE(FIELD_UNIT_SCALING,FIELD_ARITHMETIC_MEAN_SCALING,FIELD_GEOMETRIC_MEAN_SCALING,FIELD_HARMONIC_MEAN_SCALING)
+                  CASE(FIELD_UNIT_SCALING,FIELD_ARITHMETIC_MEAN_SCALING,FIELD_GEOMETRIC_MEAN_SCALING,FIELD_HARMONIC_MEAN_SCALING)
                     scaling_idx=INTERPOLATION_PARAMETERS%FIELD_VARIABLE%COMPONENTS(component_idx)%SCALING_INDEX
                     NULLIFY(SCALE_FACTORS)
                     CALL DISTRIBUTED_VECTOR_DATA_GET(INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)% &
@@ -8499,8 +8508,14 @@ CONTAINS
                       & TRIM(NUMBER_TO_VSTRING(INTERPOLATION_PARAMETERS%FIELD%USER_NUMBER,"*",ERR,ERROR))//"."
                     CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   END SELECT
-                CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                  CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)                  
+                  INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
+                    & COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% GAUSS_POINT_PARAM2DOF_MAP%NUMBER_OF_GAUSS_POINT_PARAMETERS
+                  DO gaussIdx=1,BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR%NUMBER_OF_GAUSS
+                    dof_idx=INTERPOLATION_PARAMETERS%FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
+                      & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gaussIdx,ELEMENT_NUMBER)
+                    INTERPOLATION_PARAMETERS%PARAMETERS(gaussIdx,component_idx)=FIELD_PARAMETER_SET_DATA(dof_idx)
+                  ENDDO !gaussIdx
                 CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                 CASE DEFAULT
@@ -11483,7 +11498,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the geometric field for a field identified by a pointer. \see OPENCMISS::CMISSFieldGeometricFieldGet
+  !>Gets the geometric field for a field identified by a pointer. \see OpenCMISS::Iron::cmfe_FieldGeometricFieldGet
   SUBROUTINE FIELD_GEOMETRIC_FIELD_GET(FIELD,GEOMETRIC_FIELD,ERR,ERROR,*)
 
     !Argument variables
@@ -11522,7 +11537,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the geometric field for a field. \see OPENCMISS::CMISSFieldGeometricFieldSet
+  !>Sets/changes the geometric field for a field. \see OpenCMISS::Iron::cmfe_FieldGeometricFieldSet
   SUBROUTINE FIELD_GEOMETRIC_FIELD_SET(FIELD,GEOMETRIC_FIELD,ERR,ERROR,*)
 
     !Argument variables
@@ -12176,7 +12191,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the field label for a field for character labels. \see OPENCMISS::CMISSFieldLabelGet
+  !>Gets the field label for a field for character labels. \see OpenCMISS::Iron::cmfe_FieldLabelGet
   SUBROUTINE FIELD_LABEL_GET_C(FIELD,LABEL,ERR,ERROR,*)
 
     !Argument variables
@@ -12218,7 +12233,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the field label for a field for varying string labels. \see OPENCMISS::CMISSFieldLabelGet
+  !>Gets the field label for a field for varying string labels. \see OpenCMISS::Iron::cmfe_FieldLabelGet
   SUBROUTINE FIELD_LABEL_GET_VS(FIELD,LABEL,ERR,ERROR,*)
 
     !Argument variables
@@ -12253,7 +12268,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the field label for a field for character labels. \see OPENCMISS::CMISSFieldLabelSet
+  !>Sets/changes the field label for a field for character labels. \see OpenCMISS::Iron::cmfe_FieldLabelSet
   SUBROUTINE FIELD_LABEL_SET_C(FIELD,LABEL,ERR,ERROR,*)
 
     !Argument variables
@@ -12300,7 +12315,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the field label for a field for varying string labels. \see OPENCMISS::CMISSFieldLabelSet
+  !>Sets/changes the field label for a field for varying string labels. \see OpenCMISS::Iron::cmfe_FieldLabelSet
   SUBROUTINE FIELD_LABEL_SET_VS(FIELD,LABEL,ERR,ERROR,*)
 
     !Argument variables
@@ -12419,7 +12434,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the mesh decomposition for a field. \see OPENCMISS::CMISSFieldMeshDecompositionGet
+  !>Gets the mesh decomposition for a field. \see OpenCMISS::Iron::cmfe_FieldMeshDecompositionGet
   SUBROUTINE FIELD_MESH_DECOMPOSITION_GET(FIELD,MESH_DECOMPOSITION,ERR,ERROR,*)
 
     !Argument variables
@@ -12460,7 +12475,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the mesh decomposition for a field. \see OPENCMISS::CMISSFieldMeshDecompositionSet
+  !>Sets/changes the mesh decomposition for a field. \see OpenCMISS::Iron::cmfe_FieldMeshDecompositionSet
   SUBROUTINE FIELD_MESH_DECOMPOSITION_SET(FIELD,MESH_DECOMPOSITION,ERR,ERROR,*)
 
     !Argument variables
@@ -12637,7 +12652,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the data projection for a field. \see OPENCMISS::CMISSFieldDataProjectionSet
+  !>Sets/changes the data projection for a field. \see OpenCMISS::Iron::cmfe_FieldDataProjectionSet
   SUBROUTINE Field_DataProjectionSet(field,dataProjection,err,error,*)
 
     !Argument variables
@@ -12745,7 +12760,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the number of field components for a field variable. \see OPENCMISS::CMISSFieldNumberOfComponentsGet
+  !>Gets the number of field components for a field variable. \see OpenCMISS::Iron::cmfe_FieldNumberOfComponentsGet
   SUBROUTINE FIELD_NUMBER_OF_COMPONENTS_GET(FIELD,VARIABLE_TYPE,NUMBER_OF_COMPONENTS,ERR,ERROR,*)
 
     !Argument variables
@@ -12795,7 +12810,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the number of field components for a field variable. \see OPENCMISS::CMISSFieldNumberOfComponentsSet
+  !>Sets/changes the number of field components for a field variable. \see OpenCMISS::Iron::cmfe_FieldNumberOfComponentsSet
   SUBROUTINE FIELD_NUMBER_OF_COMPONENTS_SET(FIELD,VARIABLE_TYPE,NUMBER_OF_COMPONENTS,ERR,ERROR,*)
 
     !Argument variables
@@ -13032,7 +13047,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the number of variables for a field. \see OPENCMISS::CMISSFieldNumberOfVariablesGet
+  !>Gets the number of variables for a field. \see OpenCMISS::Iron::cmfe_FieldNumberOfVariablesGet
   SUBROUTINE FIELD_NUMBER_OF_VARIABLES_GET(FIELD,NUMBER_OF_VARIABLES,ERR,ERROR,*)
 
     !Argument variables
@@ -13067,7 +13082,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the number of variables for a field. \see OPENCMISS::CMISSFieldNumberOfVariablesSet
+  !>Sets/changes the number of variables for a field. \see OpenCMISS::Iron::cmfe_FieldNumberOfVariablesSet
   SUBROUTINE FIELD_NUMBER_OF_VARIABLES_SET(FIELD,NUMBER_OF_VARIABLES,ERR,ERROR,*)
 
     !Argument variables
@@ -13947,7 +13962,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given integer value to the given parameter set for the constant of the field variable component. \see OPENCMISS::CMISSFieldParameterSetAddConstant
+  !>Adds the given integer value to the given parameter set for the constant of the field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetAddConstant
   SUBROUTINE FIELD_PARAMETER_SET_ADD_CONSTANT_INTG(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
 
     !Argument variables
@@ -14080,7 +14095,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given single precision value to the given parameter set for the constant of the field variable component. \see OPENCMISS::CMISSFieldParameterSetAddConstant
+  !>Adds the given single precision value to the given parameter set for the constant of the field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetAddConstant
   SUBROUTINE FIELD_PARAMETER_SET_ADD_CONSTANT_SP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
 
     !Argument variables
@@ -14213,7 +14228,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given double precision value to the given parameter set for the constant of the field variable component. \see OPENCMISS::CMISSFieldParameterSetAddConstant
+  !>Adds the given double precision value to the given parameter set for the constant of the field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetAddConstant
   SUBROUTINE FIELD_PARAMETER_SET_ADD_CONSTANT_DP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
 
     !Argument variables
@@ -14346,7 +14361,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given logical value to the given parameter set for the constant of the field variable component. \see OPENCMISS::CMISSFieldParameterSetAddConstant
+  !>Adds the given logical value to the given parameter set for the constant of the field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetAddConstant
   SUBROUTINE FIELD_PARAMETER_SET_ADD_CONSTANT_L(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
 
     !Argument variables
@@ -14855,7 +14870,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given integer value to the given parameter set for a particular user element of the field variable component. \see OPENCMISS::CMISSFieldParameterSetAddElement
+  !>Adds the given integer value to the given parameter set for a particular user element of the field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetAddElement
   SUBROUTINE FIELD_PARAMETER_SET_ADD_ELEMENT_INTG(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,USER_ELEMENT_NUMBER,COMPONENT_NUMBER, &
     & VALUE,ERR,ERROR,*)
 
@@ -15010,7 +15025,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given single precision value to the given parameter set for a particular user element of the field variable component.\see OPENCMISS::CMISSFieldParameterSetAddElement 
+  !>Adds the given single precision value to the given parameter set for a particular user element of the field variable component.\see OpenCMISS::Iron::cmfe_FieldParameterSetAddElement 
   SUBROUTINE FIELD_PARAMETER_SET_ADD_ELEMENT_SP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,USER_ELEMENT_NUMBER,COMPONENT_NUMBER, &
     & VALUE,ERR,ERROR,*)
 
@@ -15166,7 +15181,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given double precision value to the given parameter set for a particular user element of the field variable component.\see OPENCMISS::CMISSFieldParameterSetAddElement 
+  !>Adds the given double precision value to the given parameter set for a particular user element of the field variable component.\see OpenCMISS::Iron::cmfe_FieldParameterSetAddElement 
   SUBROUTINE FIELD_PARAMETER_SET_ADD_ELEMENT_DP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,USER_ELEMENT_NUMBER,COMPONENT_NUMBER, &
     & VALUE,ERR,ERROR,*)
 
@@ -15321,7 +15336,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given logical value to the given parameter set for a particular user element of the field variable component. \see OPENCMISS::CMISSFieldParameterSetAddElement
+  !>Adds the given logical value to the given parameter set for a particular user element of the field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetAddElement
   SUBROUTINE FIELD_PARAMETER_SET_ADD_ELEMENT_L(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,USER_ELEMENT_NUMBER,COMPONENT_NUMBER, &
     & VALUE,ERR,ERROR,*)
 
@@ -15471,6 +15486,662 @@ CONTAINS
 999 ERRORSEXITS("FIELD_PARAMETER_SET_ADD_ELEMENT_L",ERR,ERROR)
     RETURN 1
   END SUBROUTINE FIELD_PARAMETER_SET_ADD_ELEMENT_L
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds the given integer value to the given parameter set for a particular Gauss point of a user element of the field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetAddGaussPoint
+  SUBROUTINE Field_ParameterSetAddGaussPointIntg(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
+    & componentNumber,value,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to add
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number in the element to add
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to add
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field variable component to add
+    INTEGER(INTG), INTENT(IN) :: value !<The value to add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dofIdx,localElementNumber
+    LOGICAL :: ghostElement,userElementExists
+    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
+    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology
+    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Field_ParameterSetAddGaussPointIntg",err,error,*999)
+
+    IF(ASSOCIATED(field)) THEN
+      IF(field%FIELD_FINISHED) THEN
+        IF(variableType>=1.AND.variableType<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+          fieldVariable=>field%VARIABLE_TYPE_MAP(variableType)%PTR
+          IF(ASSOCIATED(fieldVariable)) THEN
+            IF(fieldVariable%DATA_TYPE==FIELD_INTG_TYPE) THEN
+              IF(fieldSetType>0.AND.fieldSetType<=FIELD_NUMBER_OF_SET_TYPES) THEN
+                parameterSet=>fieldVariable%PARAMETER_SETS%SET_TYPE(fieldSetType)%PTR
+                IF(ASSOCIATED(parameterSet)) THEN
+                  IF(componentNumber>=1.AND.componentNumber<=fieldVariable%NUMBER_OF_COMPONENTS) THEN
+                    SELECT CASE(fieldVariable%components(componentNumber)%INTERPOLATION_TYPE)
+                    CASE(FIELD_CONSTANT_INTERPOLATION)
+                      localError="Can not update by Gauss point for component number "// &
+                        & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+                        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                        & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" which has constant interpolation."
+                      CALL FlagError(localError,err,error,*999)
+                    CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+                      localError="Can not update by Gauss point for component number "// &
+                        & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+                        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                        & TRIM(NumberToVString(FIELD%USER_NUMBER,"*",err,error))//" which has element based interpolation."
+                      CALL FlagError(localError,err,error,*999)
+                    CASE(FIELD_NODE_BASED_INTERPOLATION)
+                      localError="Can not update by Gauss point for component number "// &
+                        & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+                        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                        & TRIM(NumberToVString(FIELD%USER_NUMBER,"*",err,error))//" which has node based interpolation."
+                      CALL FlagError(localError,err,error,*999)
+                    CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+                      localError="Can not update by Gauss point for component number "// &
+                        & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+                        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                        & TRIM(NumberToVString(FIELD%USER_NUMBER,"*",err,error))//" which has grid point based interpolation."
+                      CALL FlagError(localError,err,error,*999)
+                    CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+                      decomposition=>field%decomposition
+                      IF(ASSOCIATED(decomposition)) THEN
+                        decompositionTopology=>decomposition%topology
+                        CALL DECOMPOSITION_TOPOLOGY_ELEMENT_CHECK_EXISTS(decompositionTopology,userElementNumber, &
+                          & userElementExists,localElementNumber,ghostElement,err,error,*999)
+                        IF(userElementExists) THEN
+                          IF(ghostElement) THEN
+                            localError="Cannot update by Gauss point for user element "// &
+                              & TRIM(NumberToVString(userElementNumber,"*",err,error))//" as it is a ghost element."
+                            CALL FlagError(localError,err,error,*999)
+                          ELSE
+                            ! TODO: could check for actual # of gp
+                            IF(gaussPointNumber>=1.AND.gaussPointNumber<= SIZE(fieldVariable% &
+                              & components(componentNumber)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS,1)) THEN
+                              dofIdx=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP% &
+                                & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gaussPointNumber,localElementNumber)
+                              CALL DistributedVector_ValuesAdd(parameterSet%parameters,dofIdx,value,err,error,*999)
+                            ELSE
+                              localError="The specified Gauss point number "// &
+                                & TRIM(NumberToVString(gaussPointNumber,"*",err,error))// &
+                                & " is not within the expected range."
+                              CALL FlagError(localError,err,error,*999)
+                            ENDIF
+                          ENDIF
+                        ELSE
+                          localError="The specified user element number of "// &
+                            & TRIM(NumberToVString(userElementNumber,"*",err,error))// &
+                            & " does not exist in the decomposition for field component number "// &
+                            & TRIM(NumberToVString(componentNumber,"*",err,error))//" of field variable type "// &
+                            & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                            & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
+                          CALL FlagError(localError,err,error,*999)
+                        ENDIF
+                      ELSE
+                        CALL FlagError("Field decomposition is not associated.",err,error,*999)
+                      ENDIF
+                    CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
+                      localError="Can not update by Gauss point for component number "// &
+                        & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+                        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                        & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" which has data point based interpolation."
+                      CALL FlagError(localError,err,error,*999)
+                    CASE DEFAULT
+                      localError="The field component interpolation type of "//TRIM(NumberToVString(fieldVariable% &
+                        & components(componentNumber)%INTERPOLATION_TYPE,"*",err,error))// &
+                        & " is invalid for component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+                        & " of variable type "//TRIM(NumberToVString(variableType,"*",err,error))// &
+                        & " of field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
+                      CALL FlagError(localError,err,error,*999)
+                    END SELECT
+                  ELSE
+                    localError="Component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+                      & " is invalid for variable type "//TRIM(NumberToVString(variableType,"*",err,error))// &
+                      & " of field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" which has "// &
+                      & TRIM(NumberToVString(fieldVariable%NUMBER_OF_COMPONENTS,"*",err,error))//" components."
+                    CALL FlagError(localError,err,error,*999)
+                  ENDIF
+                ELSE
+                  localError="The field parameter set type of "//TRIM(NumberToVString(fieldSetType,"*",err,error))// &
+                    & " has not been created on field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))
+                  CALL FlagError(localError,err,error,*999)
+                ENDIF
+              ELSE
+                localError="The field parameter set type of "//TRIM(NumberToVString(fieldSetType,"*",err,error))// &
+                  & " is invalid. The field parameter set type must be between 1 and "// &
+                  & TRIM(NumberToVString(FIELD_NUMBER_OF_SET_TYPES,"*",err,error))//"."
+                CALL FlagError(localError,err,error,*999)
+              ENDIF
+            ELSE
+              localError="The field variable data type of "//TRIM(NumberToVString(fieldVariable%DATA_TYPE,"*",err,error))// &
+                & " does not correspond to the integer data type of the given value."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+          ELSE
+            localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+              & " has not been defined on field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+        ELSE
+          localError="The specified variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+            & " is invalid. The variable type must be between 1 and "// &
+            & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ELSE
+        localError="Field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" has not been finished."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ELSE
+      CALL FlagError("Field is not associated.",err,error,*999)
+    ENDIF
+
+    EXITS("Field_ParameterSetAddGaussPointIntg")
+    RETURN
+999 ERRORSEXITS("Field_ParameterSetAddGaussPointIntg",err,error)
+    RETURN 1
+
+  END SUBROUTINE Field_ParameterSetAddGaussPointIntg
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds the given single precision value to the given parameter set for a particular Gauss point of a user element of the field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetAddGaussPoint
+  SUBROUTINE Field_ParameterSetAddGaussPointSP(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
+    & componentNumber,value,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to add
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number in the element to add
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to add
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field variable component to add
+    REAL(SP), INTENT(IN) :: value !<The value to add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dofIdx,localElementNumber
+    LOGICAL :: ghostElement,userElementExists
+    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
+    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology
+    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Field_ParameterSetAddGaussPointSP",err,error,*999)
+
+    IF(ASSOCIATED(field)) THEN
+      IF(field%FIELD_FINISHED) THEN
+        IF(variableType>=1.AND.variableType<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+          fieldVariable=>field%VARIABLE_TYPE_MAP(variableType)%PTR
+          IF(ASSOCIATED(fieldVariable)) THEN
+            IF(fieldVariable%DATA_TYPE==FIELD_SP_TYPE) THEN
+              IF(fieldSetType>0.AND.fieldSetType<=FIELD_NUMBER_OF_SET_TYPES) THEN
+                parameterSet=>fieldVariable%PARAMETER_SETS%SET_TYPE(fieldSetType)%PTR
+                IF(ASSOCIATED(parameterSet)) THEN
+                  IF(componentNumber>=1.AND.componentNumber<=fieldVariable%NUMBER_OF_COMPONENTS) THEN
+                    SELECT CASE(fieldVariable%components(componentNumber)%INTERPOLATION_TYPE)
+                    CASE(FIELD_CONSTANT_INTERPOLATION)
+                      localError="Can not update by Gauss point for component number "// &
+                        & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+                        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                        & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" which has constant interpolation."
+                      CALL FlagError(localError,err,error,*999)
+                    CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+                      localError="Can not update by Gauss point for component number "// &
+                        & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+                        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                        & TRIM(NumberToVString(FIELD%USER_NUMBER,"*",err,error))//" which has element based interpolation."
+                      CALL FlagError(localError,err,error,*999)
+                    CASE(FIELD_NODE_BASED_INTERPOLATION)
+                      localError="Can not update by Gauss point for component number "// &
+                        & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+                        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                        & TRIM(NumberToVString(FIELD%USER_NUMBER,"*",err,error))//" which has node based interpolation."
+                      CALL FlagError(localError,err,error,*999)
+                    CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+                      localError="Can not update by Gauss point for component number "// &
+                        & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+                        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                        & TRIM(NumberToVString(FIELD%USER_NUMBER,"*",err,error))//" which has grid point based interpolation."
+                      CALL FlagError(localError,err,error,*999)
+                    CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+                      decomposition=>field%decomposition
+                      IF(ASSOCIATED(decomposition)) THEN
+                        decompositionTopology=>decomposition%topology
+                        CALL DECOMPOSITION_TOPOLOGY_ELEMENT_CHECK_EXISTS(decompositionTopology,userElementNumber, &
+                          & userElementExists,localElementNumber,ghostElement,err,error,*999)
+                        IF(userElementExists) THEN
+                          IF(ghostElement) THEN
+                            localError="Cannot update by Gauss point for user element "// &
+                              & TRIM(NumberToVString(userElementNumber,"*",err,error))//" as it is a ghost element."
+                            CALL FlagError(localError,err,error,*999)
+                          ELSE
+                            ! TODO: could check for actual # of gp
+                            IF(gaussPointNumber>=1.AND.gaussPointNumber<= SIZE(fieldVariable% &
+                              & components(componentNumber)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS,1)) THEN
+                              dofIdx=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP% &
+                                & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gaussPointNumber,localElementNumber)
+                              CALL DistributedVector_ValuesAdd(parameterSet%parameters,dofIdx,value,err,error,*999)
+                            ELSE
+                              localError="The specified Gauss point number "// &
+                                & TRIM(NumberToVString(gaussPointNumber,"*",err,error))// &
+                                & " is not within the expected range."
+                              CALL FlagError(localError,err,error,*999)
+                            ENDIF
+                          ENDIF
+                        ELSE
+                          localError="The specified user element number of "// &
+                            & TRIM(NumberToVString(userElementNumber,"*",err,error))// &
+                            & " does not exist in the decomposition for field component number "// &
+                            & TRIM(NumberToVString(componentNumber,"*",err,error))//" of field variable type "// &
+                            & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                            & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
+                          CALL FlagError(localError,err,error,*999)
+                        ENDIF
+                      ELSE
+                        CALL FlagError("Field decomposition is not associated.",err,error,*999)
+                      ENDIF
+                    CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
+                      localError="Can not update by Gauss point for component number "// &
+                        & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+                        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                        & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" which has data point based interpolation."
+                      CALL FlagError(localError,err,error,*999)
+                    CASE DEFAULT
+                      localError="The field component interpolation type of "//TRIM(NumberToVString(fieldVariable% &
+                        & components(componentNumber)%INTERPOLATION_TYPE,"*",err,error))// &
+                        & " is invalid for component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+                        & " of variable type "//TRIM(NumberToVString(variableType,"*",err,error))// &
+                        & " of field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
+                      CALL FlagError(localError,err,error,*999)
+                    END SELECT
+                  ELSE
+                    localError="Component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+                      & " is invalid for variable type "//TRIM(NumberToVString(variableType,"*",err,error))// &
+                      & " of field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" which has "// &
+                      & TRIM(NumberToVString(fieldVariable%NUMBER_OF_COMPONENTS,"*",err,error))//" components."
+                    CALL FlagError(localError,err,error,*999)
+                  ENDIF
+                ELSE
+                  localError="The field parameter set type of "//TRIM(NumberToVString(fieldSetType,"*",err,error))// &
+                    & " has not been created on field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))
+                  CALL FlagError(localError,err,error,*999)
+                ENDIF
+              ELSE
+                localError="The field parameter set type of "//TRIM(NumberToVString(fieldSetType,"*",err,error))// &
+                  & " is invalid. The field parameter set type must be between 1 and "// &
+                  & TRIM(NumberToVString(FIELD_NUMBER_OF_SET_TYPES,"*",err,error))//"."
+                CALL FlagError(localError,err,error,*999)
+              ENDIF
+            ELSE
+              localError="The field variable data type of "//TRIM(NumberToVString(fieldVariable%DATA_TYPE,"*",err,error))// &
+                & " does not correspond to the single precision data type of the given value."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+          ELSE
+            localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+              & " has not been defined on field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+        ELSE
+          localError="The specified variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+            & " is invalid. The variable type must be between 1 and "// &
+            & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ELSE
+        localError="Field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" has not been finished."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ELSE
+      CALL FlagError("Field is not associated.",err,error,*999)
+    ENDIF
+
+    EXITS("Field_ParameterSetAddGaussPointSP")
+    RETURN
+999 ERRORSEXITS("Field_ParameterSetAddGaussPointSP",err,error)
+    RETURN 1
+
+  END SUBROUTINE Field_ParameterSetAddGaussPointSP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds the given double precision value to the given parameter set for a particular Gauss point of a user element of the field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetAddGaussPoint
+  SUBROUTINE Field_ParameterSetAddGaussPointDP(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
+    & componentNumber,value,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to add
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number in the element to add
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to add
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field variable component to add
+    REAL(DP), INTENT(IN) :: value !<The value to add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dofIdx,localElementNumber
+    LOGICAL :: ghostElement,userElementExists
+    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
+    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology
+    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Field_ParameterSetAddGaussPointDP",err,error,*999)
+
+    IF(ASSOCIATED(field)) THEN
+      IF(field%FIELD_FINISHED) THEN
+        IF(variableType>=1.AND.variableType<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+          fieldVariable=>field%VARIABLE_TYPE_MAP(variableType)%PTR
+          IF(ASSOCIATED(fieldVariable)) THEN
+            IF(fieldVariable%DATA_TYPE==FIELD_DP_TYPE) THEN
+              IF(fieldSetType>0.AND.fieldSetType<=FIELD_NUMBER_OF_SET_TYPES) THEN
+                parameterSet=>fieldVariable%PARAMETER_SETS%SET_TYPE(fieldSetType)%PTR
+                IF(ASSOCIATED(parameterSet)) THEN
+                  IF(componentNumber>=1.AND.componentNumber<=fieldVariable%NUMBER_OF_COMPONENTS) THEN
+                    SELECT CASE(fieldVariable%components(componentNumber)%INTERPOLATION_TYPE)
+                    CASE(FIELD_CONSTANT_INTERPOLATION)
+                      localError="Can not update by Gauss point for component number "// &
+                        & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+                        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                        & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" which has constant interpolation."
+                      CALL FlagError(localError,err,error,*999)
+                    CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+                      localError="Can not update by Gauss point for component number "// &
+                        & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+                        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                        & TRIM(NumberToVString(FIELD%USER_NUMBER,"*",err,error))//" which has element based interpolation."
+                      CALL FlagError(localError,err,error,*999)
+                    CASE(FIELD_NODE_BASED_INTERPOLATION)
+                      localError="Can not update by Gauss point for component number "// &
+                        & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+                        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                        & TRIM(NumberToVString(FIELD%USER_NUMBER,"*",err,error))//" which has node based interpolation."
+                      CALL FlagError(localError,err,error,*999)
+                    CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+                      localError="Can not update by Gauss point for component number "// &
+                        & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+                        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                        & TRIM(NumberToVString(FIELD%USER_NUMBER,"*",err,error))//" which has grid point based interpolation."
+                      CALL FlagError(localError,err,error,*999)
+                    CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+                      decomposition=>field%decomposition
+                      IF(ASSOCIATED(decomposition)) THEN
+                        decompositionTopology=>decomposition%topology
+                        CALL DECOMPOSITION_TOPOLOGY_ELEMENT_CHECK_EXISTS(decompositionTopology,userElementNumber, &
+                          & userElementExists,localElementNumber,ghostElement,err,error,*999)
+                        IF(userElementExists) THEN
+                          IF(ghostElement) THEN
+                            localError="Cannot update by Gauss point for user element "// &
+                              & TRIM(NumberToVString(userElementNumber,"*",err,error))//" as it is a ghost element."
+                            CALL FlagError(localError,err,error,*999)
+                          ELSE
+                            ! TODO: could check for actual # of gp
+                            IF(gaussPointNumber>=1.AND.gaussPointNumber<= SIZE(fieldVariable% &
+                              & components(componentNumber)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS,1)) THEN
+                              dofIdx=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP% &
+                                & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gaussPointNumber,localElementNumber)
+                              CALL DistributedVector_ValuesAdd(parameterSet%parameters,dofIdx,value,err,error,*999)
+                            ELSE
+                              localError="The specified Gauss point number "// &
+                                & TRIM(NumberToVString(gaussPointNumber,"*",err,error))// &
+                                & " is not within the expected range."
+                              CALL FlagError(localError,err,error,*999)
+                            ENDIF
+                          ENDIF
+                        ELSE
+                          localError="The specified user element number of "// &
+                            & TRIM(NumberToVString(userElementNumber,"*",err,error))// &
+                            & " does not exist in the decomposition for field component number "// &
+                            & TRIM(NumberToVString(componentNumber,"*",err,error))//" of field variable type "// &
+                            & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                            & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
+                          CALL FlagError(localError,err,error,*999)
+                        ENDIF
+                      ELSE
+                        CALL FlagError("Field decomposition is not associated.",err,error,*999)
+                      ENDIF
+                    CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
+                      localError="Can not update by Gauss point for component number "// &
+                        & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+                        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                        & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" which has data point based interpolation."
+                      CALL FlagError(localError,err,error,*999)
+                    CASE DEFAULT
+                      localError="The field component interpolation type of "//TRIM(NumberToVString(fieldVariable% &
+                        & components(componentNumber)%INTERPOLATION_TYPE,"*",err,error))// &
+                        & " is invalid for component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+                        & " of variable type "//TRIM(NumberToVString(variableType,"*",err,error))// &
+                        & " of field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
+                      CALL FlagError(localError,err,error,*999)
+                    END SELECT
+                  ELSE
+                    localError="Component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+                      & " is invalid for variable type "//TRIM(NumberToVString(variableType,"*",err,error))// &
+                      & " of field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" which has "// &
+                      & TRIM(NumberToVString(fieldVariable%NUMBER_OF_COMPONENTS,"*",err,error))//" components."
+                    CALL FlagError(localError,err,error,*999)
+                  ENDIF
+                ELSE
+                  localError="The field parameter set type of "//TRIM(NumberToVString(fieldSetType,"*",err,error))// &
+                    & " has not been created on field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))
+                  CALL FlagError(localError,err,error,*999)
+                ENDIF
+              ELSE
+                localError="The field parameter set type of "//TRIM(NumberToVString(fieldSetType,"*",err,error))// &
+                  & " is invalid. The field parameter set type must be between 1 and "// &
+                  & TRIM(NumberToVString(FIELD_NUMBER_OF_SET_TYPES,"*",err,error))//"."
+                CALL FlagError(localError,err,error,*999)
+              ENDIF
+            ELSE
+              localError="The field variable data type of "//TRIM(NumberToVString(fieldVariable%DATA_TYPE,"*",err,error))// &
+                & " does not correspond to the double precision data type of the given value."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+          ELSE
+            localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+              & " has not been defined on field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+        ELSE
+          localError="The specified variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+            & " is invalid. The variable type must be between 1 and "// &
+            & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ELSE
+        localError="Field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" has not been finished."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ELSE
+      CALL FlagError("Field is not associated.",err,error,*999)
+    ENDIF
+
+    EXITS("Field_ParameterSetAddGaussPointDP")
+    RETURN
+999 ERRORSEXITS("Field_ParameterSetAddGaussPointDP",err,error)
+    RETURN 1
+
+  END SUBROUTINE Field_ParameterSetAddGaussPointDP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds the given logical value to the given parameter set for a particular Gauss point of a user element of the field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetAddGaussPoint
+  SUBROUTINE Field_ParameterSetAddGaussPointL(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
+    & componentNumber,value,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to add
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number in the element to add
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to add
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field variable component to add
+    LOGICAL, INTENT(IN) :: value !<The value to add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dofIdx,localElementNumber
+    LOGICAL :: ghostElement,userElementExists
+    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
+    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology
+    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Field_ParameterSetAddGaussPointL",err,error,*999)
+
+    IF(ASSOCIATED(field)) THEN
+      IF(field%FIELD_FINISHED) THEN
+        IF(variableType>=1.AND.variableType<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+          fieldVariable=>field%VARIABLE_TYPE_MAP(variableType)%PTR
+          IF(ASSOCIATED(fieldVariable)) THEN
+            IF(fieldVariable%DATA_TYPE==FIELD_L_TYPE) THEN
+              IF(fieldSetType>0.AND.fieldSetType<=FIELD_NUMBER_OF_SET_TYPES) THEN
+                parameterSet=>fieldVariable%PARAMETER_SETS%SET_TYPE(fieldSetType)%PTR
+                IF(ASSOCIATED(parameterSet)) THEN
+                  IF(componentNumber>=1.AND.componentNumber<=fieldVariable%NUMBER_OF_COMPONENTS) THEN
+                    SELECT CASE(fieldVariable%components(componentNumber)%INTERPOLATION_TYPE)
+                    CASE(FIELD_CONSTANT_INTERPOLATION)
+                      localError="Can not update by Gauss point for component number "// &
+                        & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+                        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                        & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" which has constant interpolation."
+                      CALL FlagError(localError,err,error,*999)
+                    CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+                      localError="Can not update by Gauss point for component number "// &
+                        & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+                        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                        & TRIM(NumberToVString(FIELD%USER_NUMBER,"*",err,error))//" which has element based interpolation."
+                      CALL FlagError(localError,err,error,*999)
+                    CASE(FIELD_NODE_BASED_INTERPOLATION)
+                      localError="Can not update by Gauss point for component number "// &
+                        & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+                        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                        & TRIM(NumberToVString(FIELD%USER_NUMBER,"*",err,error))//" which has node based interpolation."
+                      CALL FlagError(localError,err,error,*999)
+                    CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+                      localError="Can not update by Gauss point for component number "// &
+                        & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+                        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                        & TRIM(NumberToVString(FIELD%USER_NUMBER,"*",err,error))//" which has grid point based interpolation."
+                      CALL FlagError(localError,err,error,*999)
+                    CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+                      decomposition=>field%decomposition
+                      IF(ASSOCIATED(decomposition)) THEN
+                        decompositionTopology=>decomposition%topology
+                        CALL DECOMPOSITION_TOPOLOGY_ELEMENT_CHECK_EXISTS(decompositionTopology,userElementNumber, &
+                          & userElementExists,localElementNumber,ghostElement,err,error,*999)
+                        IF(userElementExists) THEN
+                          IF(ghostElement) THEN
+                            localError="Cannot update by Gauss point for user element "// &
+                              & TRIM(NumberToVString(userElementNumber,"*",err,error))//" as it is a ghost element."
+                            CALL FlagError(localError,err,error,*999)
+                          ELSE
+                            ! TODO: could check for actual # of gp
+                            IF(gaussPointNumber>=1.AND.gaussPointNumber<= SIZE(fieldVariable% &
+                              & components(componentNumber)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS,1)) THEN
+                              dofIdx=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP% &
+                                & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gaussPointNumber,localElementNumber)
+                              CALL DistributedVector_ValuesAdd(parameterSet%parameters,dofIdx,value,err,error,*999)
+                            ELSE
+                              localError="The specified Gauss point number "// &
+                                & TRIM(NumberToVString(gaussPointNumber,"*",err,error))// &
+                                & " is not within the expected range."
+                              CALL FlagError(localError,err,error,*999)
+                            ENDIF
+                          ENDIF
+                        ELSE
+                          localError="The specified user element number of "// &
+                            & TRIM(NumberToVString(userElementNumber,"*",err,error))// &
+                            & " does not exist in the decomposition for field component number "// &
+                            & TRIM(NumberToVString(componentNumber,"*",err,error))//" of field variable type "// &
+                            & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                            & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
+                          CALL FlagError(localError,err,error,*999)
+                        ENDIF
+                      ELSE
+                        CALL FlagError("Field decomposition is not associated.",err,error,*999)
+                      ENDIF
+                    CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
+                      localError="Can not update by Gauss point for component number "// &
+                        & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+                        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                        & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" which has data point based interpolation."
+                      CALL FlagError(localError,err,error,*999)
+                    CASE DEFAULT
+                      localError="The field component interpolation type of "//TRIM(NumberToVString(fieldVariable% &
+                        & components(componentNumber)%INTERPOLATION_TYPE,"*",err,error))// &
+                        & " is invalid for component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+                        & " of variable type "//TRIM(NumberToVString(variableType,"*",err,error))// &
+                        & " of field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
+                      CALL FlagError(localError,err,error,*999)
+                    END SELECT
+                  ELSE
+                    localError="Component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+                      & " is invalid for variable type "//TRIM(NumberToVString(variableType,"*",err,error))// &
+                      & " of field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" which has "// &
+                      & TRIM(NumberToVString(fieldVariable%NUMBER_OF_COMPONENTS,"*",err,error))//" components."
+                    CALL FlagError(localError,err,error,*999)
+                  ENDIF
+                ELSE
+                  localError="The field parameter set type of "//TRIM(NumberToVString(fieldSetType,"*",err,error))// &
+                    & " has not been created on field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))
+                  CALL FlagError(localError,err,error,*999)
+                ENDIF
+              ELSE
+                localError="The field parameter set type of "//TRIM(NumberToVString(fieldSetType,"*",err,error))// &
+                  & " is invalid. The field parameter set type must be between 1 and "// &
+                  & TRIM(NumberToVString(FIELD_NUMBER_OF_SET_TYPES,"*",err,error))//"."
+                CALL FlagError(localError,err,error,*999)
+              ENDIF
+            ELSE
+              localError="The field variable data type of "//TRIM(NumberToVString(fieldVariable%DATA_TYPE,"*",err,error))// &
+                & " does not correspond to the logical data type of the given value."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+          ELSE
+            localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+              & " has not been defined on field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+        ELSE
+          localError="The specified variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+            & " is invalid. The variable type must be between 1 and "// &
+            & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ELSE
+        localError="Field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" has not been finished."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ELSE
+      CALL FlagError("Field is not associated.",err,error,*999)
+    ENDIF
+
+    EXITS("Field_ParameterSetAddGaussPointL")
+    RETURN
+999 ERRORSEXITS("Field_ParameterSetAddGaussPointL",err,error)
+    RETURN 1
+
+  END SUBROUTINE Field_ParameterSetAddGaussPointL
 
   !
   !================================================================================================================================
@@ -16032,7 +16703,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given integer value to the given parameter set for a particular user node, derivative and version of the field variable component. \see OPENCMISS::CMISSFieldParameterSetAddNode
+  !>Adds the given integer value to the given parameter set for a particular user node, derivative and version of the field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetAddNode
   SUBROUTINE FIELD_PARAMETER_SET_ADD_NODE_INTG(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER, &
     & USER_NODE_NUMBER,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
 
@@ -16226,7 +16897,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given single precision value to the given parameter set for a particular user node, derivative and version of the field variable component. \see OPENCMISS::CMISSFieldParameterSetAddNode
+  !>Adds the given single precision value to the given parameter set for a particular user node, derivative and version of the field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetAddNode
   SUBROUTINE FIELD_PARAMETER_SET_ADD_NODE_SP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER, &
     & USER_NODE_NUMBER,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
 
@@ -16420,7 +17091,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given double precision value to the given parameter set for a particular user node, derivative and version of the field variable component. \see OPENCMISS::CMISSFieldParameterSetAddNode
+  !>Adds the given double precision value to the given parameter set for a particular user node, derivative and version of the field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetAddNode
   SUBROUTINE FIELD_PARAMETER_SET_ADD_NODE_DP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER, &
     & USER_NODE_NUMBER,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
 
@@ -16614,7 +17285,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given logical value to the given parameter set for a particular user node, derivative and version of the field variable component. \see OPENCMISS::CMISSFieldParameterSetAddNode
+  !>Adds the given logical value to the given parameter set for a particular user node, derivative and version of the field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetAddNode
   SUBROUTINE FIELD_PARAMETER_SET_ADD_NODE_L(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER, &
     & USER_NODE_NUMBER,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
 
@@ -17493,7 +18164,7 @@ CONTAINS
   !
 
   !>Creates a new parameter set of type set type for a field variable. If the field parameter set has already been
-  !>created then an error will be raised. \see OPENCMISS::CMISSFieldParameterSetCreate
+  !>created then an error will be raised. \see OpenCMISS::Iron::cmfe_FieldParameterSetCreate
   SUBROUTINE FIELD_PARAMETER_SET_CREATE(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -17708,7 +18379,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys the parameter set of type set type for a field variable and deallocates all memory. \see OPENCMISS::CMISSFieldParameterSetDestroy
+  !>Destroys the parameter set of type set type for a field variable and deallocates all memory. \see OpenCMISS::Iron::cmfe_FieldParameterSetDestroy
   SUBROUTINE FIELD_PARAMETER_SET_DESTROY(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -17817,7 +18488,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the specified field integer parameter set array. The pointer must be restored with a call to FIELD_ROUTINES::FIELD_PARAMETER_SET_DATA_RESTORE call. Note: the values can be used for read operations but a FIELD_ROUTINES::FIELD_PARAMETER_SET_UPDATE call must be used to change any values. \see OPENCMISS::CMISSFieldParameterSetDataGet
+  !>Returns a pointer to the specified field integer parameter set array. The pointer must be restored with a call to FIELD_ROUTINES::FIELD_PARAMETER_SET_DATA_RESTORE call. Note: the values can be used for read operations but a FIELD_ROUTINES::FIELD_PARAMETER_SET_UPDATE call must be used to change any values. \see OpenCMISS::Iron::cmfe_FieldParameterSetDataGet
   SUBROUTINE FIELD_PARAMETER_SET_DATA_GET_INTG(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,PARAMETERS,ERR,ERROR,*)
 
     !Argument variables
@@ -17896,7 +18567,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the specified field single precision parameter set array. The pointer must be restored with a call to FIELD_ROUTINES::FIELD_PARAMETER_SET_DATA_RESTORE call. Note: the values can be used for read operations but a FIELD_ROUTINES::FIELD_PARAMETER_SET_UPDATE call must be used to change any values. \see OPENCMISS::CMISSFieldParameterSetDataGet
+  !>Returns a pointer to the specified field single precision parameter set array. The pointer must be restored with a call to FIELD_ROUTINES::FIELD_PARAMETER_SET_DATA_RESTORE call. Note: the values can be used for read operations but a FIELD_ROUTINES::FIELD_PARAMETER_SET_UPDATE call must be used to change any values. \see OpenCMISS::Iron::cmfe_FieldParameterSetDataGet
   SUBROUTINE FIELD_PARAMETER_SET_DATA_GET_SP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,PARAMETERS,ERR,ERROR,*)
 
     !Argument variables
@@ -17975,7 +18646,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the specified field double precision parameter set array. The pointer must be restored with a call to FIELD_ROUTINES::FIELD_PARAMETER_SET_DATA_RESTORE call. Note: the values can be used for read operations but a FIELD_ROUTINES::FIELD_PARAMETER_SET_UPDATE call must be used to change any values. \see OPENCMISS::CMISSFieldParameterSetDataGet
+  !>Returns a pointer to the specified field double precision parameter set array. The pointer must be restored with a call to FIELD_ROUTINES::FIELD_PARAMETER_SET_DATA_RESTORE call. Note: the values can be used for read operations but a FIELD_ROUTINES::FIELD_PARAMETER_SET_UPDATE call must be used to change any values. \see OpenCMISS::Iron::cmfe_FieldParameterSetDataGet
   SUBROUTINE FIELD_PARAMETER_SET_DATA_GET_DP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,PARAMETERS,ERR,ERROR,*)
 
     !Argument variables
@@ -18054,7 +18725,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the specified field logical parameter set array. The pointer must be restored with a call to FIELD_ROUTINES::FIELD_PARAMETER_SET_DATA_RESTORE call. Note: the values can be used for read operations but a FIELD_ROUTINES::FIELD_PARAMETER_SET_UPDATE call must be used to change any values. \see OPENCMISS::CMISSFieldParameterSetDataGet
+  !>Returns a pointer to the specified field logical parameter set array. The pointer must be restored with a call to FIELD_ROUTINES::FIELD_PARAMETER_SET_DATA_RESTORE call. Note: the values can be used for read operations but a FIELD_ROUTINES::FIELD_PARAMETER_SET_UPDATE call must be used to change any values. \see OpenCMISS::Iron::cmfe_FieldParameterSetDataGet
   SUBROUTINE FIELD_PARAMETER_SET_DATA_GET_L(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,PARAMETERS,ERR,ERROR,*)
 
     !Argument variables
@@ -18133,7 +18804,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Restores the specified field variable integer parameter set array that was obtained with FIELD_ROUTINES::FIELD_PARAMETER_SET_DATA_GET. \see OPENCMISS::CMISSFieldParameterSetDataRestore
+  !>Restores the specified field variable integer parameter set array that was obtained with FIELD_ROUTINES::FIELD_PARAMETER_SET_DATA_GET. \see OpenCMISS::Iron::cmfe_FieldParameterSetDataRestore
   SUBROUTINE FIELD_PARAMETER_SET_DATA_RESTORE_INTG(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,PARAMETERS,ERR,ERROR,*)
 
     !Argument variables
@@ -18211,7 +18882,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Restores the specified field variable single precision parameter set array that was obtained with FIELD_ROUTINES::FIELD_PARAMETER_SET_DATA_GET. \see OPENCMISS::CMISSFieldParameterSetDataRestore
+  !>Restores the specified field variable single precision parameter set array that was obtained with FIELD_ROUTINES::FIELD_PARAMETER_SET_DATA_GET. \see OpenCMISS::Iron::cmfe_FieldParameterSetDataRestore
   SUBROUTINE FIELD_PARAMETER_SET_DATA_RESTORE_SP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,PARAMETERS,ERR,ERROR,*)
 
     !Argument variables
@@ -18289,7 +18960,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Restores the specified field variable double precision parameter set array that was obtained with FIELD_ROUTINES::FIELD_PARAMETER_SET_DATA_GET. \see OPENCMISS::CMISSFieldParameterSetDataRestore
+  !>Restores the specified field variable double precision parameter set array that was obtained with FIELD_ROUTINES::FIELD_PARAMETER_SET_DATA_GET. \see OpenCMISS::Iron::cmfe_FieldParameterSetDataRestore
   SUBROUTINE FIELD_PARAMETER_SET_DATA_RESTORE_DP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,PARAMETERS,ERR,ERROR,*)
 
     !Argument variables
@@ -18367,7 +19038,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Restores the specified field variable logical parameter set array that was obtained with FIELD_ROUTINES::FIELD_PARAMETER_SET_DATA_GET. \see OPENCMISS::CMISSFieldParameterSetDataRestore
+  !>Restores the specified field variable logical parameter set array that was obtained with FIELD_ROUTINES::FIELD_PARAMETER_SET_DATA_GET. \see OpenCMISS::Iron::cmfe_FieldParameterSetDataRestore
   SUBROUTINE FIELD_PARAMETER_SET_DATA_RESTORE_L(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,PARAMETERS,ERR,ERROR,*)
 
     !Argument variables
@@ -18519,7 +19190,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set an integer value for the specified constant of a field variable component. \see OPENCMISS::CMISSFieldParameterSetGetConstant
+  !>Returns from the given parameter set an integer value for the specified constant of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetGetConstant
   SUBROUTINE FIELD_PARAMETER_SET_GET_CONSTANT_INTG(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
     
     !Argument variables
@@ -18653,7 +19324,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set a single precision value for the specified constant of a field variable component. \see OPENCMISS::CMISSFieldParameterSetGetConstant
+  !>Returns from the given parameter set a single precision value for the specified constant of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetGetConstant
   SUBROUTINE FIELD_PARAMETER_SET_GET_CONSTANT_SP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
     
     !Argument variables
@@ -18786,7 +19457,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set a double precision value for the specified constant of a field variable component. \see OPENCMISS::CMISSFieldParameterSetGetConstant
+  !>Returns from the given parameter set a double precision value for the specified constant of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetGetConstant
   SUBROUTINE FIELD_PARAMETER_SET_GET_CONSTANT_DP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
     
     !Argument variables
@@ -18920,7 +19591,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set a logical value for the specified constant of a field variable component. \see OPENCMISS::CMISSFieldParameterSetGetConstant
+  !>Returns from the given parameter set a logical value for the specified constant of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetGetConstant
   SUBROUTINE FIELD_PARAMETER_SET_GET_CONSTANT_L(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
     
     !Argument variables
@@ -19054,7 +19725,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Returns from the given parameter set an integer value for the specified data point of a field variable component. \see OPENCMISS::CMISSFieldParameterSetGetDataPoint
+  !>Returns from the given parameter set an integer value for the specified data point of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetGetDataPoint
   SUBROUTINE Field_ParameterSetGetDataPointIntg(field,variableType,fieldSetType,userDataPointNumber,componentNumber,value, &
       & err,error,*)
     
@@ -19206,7 +19877,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Returns from the given parameter set a single precision value for the specified data point of a field variable component. \see OPENCMISS::CMISSFieldParameterSetGetDataPoint
+  !>Returns from the given parameter set a single precision value for the specified data point of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetGetDataPoint
   SUBROUTINE Field_ParameterSetGetDataPointSP(field,variableType,fieldSetType,userDataPointNumber,componentNumber,value,err,error,*)
     
     !Argument variables
@@ -19357,7 +20028,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Returns from the given parameter set a double precision value for the specified data point of a field variable component. \see OPENCMISS::CMISSFieldParameterSetGetDataPoint
+  !>Returns from the given parameter set a double precision value for the specified data point of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetGetDataPoint
   SUBROUTINE Field_ParameterSetGetDataPointDP(field,variableType,fieldSetType,userDataPointNumber,componentNumber,value,err,error,*)
     
     !Argument variables
@@ -19508,7 +20179,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Returns from the given parameter set a logical value for the specified data point of a field variable component. \see OPENCMISS::CMISSFieldParameterSetGetDataPoint
+  !>Returns from the given parameter set a logical value for the specified data point of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetGetDataPoint
   SUBROUTINE Field_ParameterSetGetDataPointL(field,variableType,fieldSetType,userDataPointNumber,componentNumber,value,err,error,*)
     
     !Argument variables
@@ -19659,7 +20330,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set an integer value for the specified element of a field variable component. \see OPENCMISS::CMISSFieldParameterSetGetElement
+  !>Returns from the given parameter set an integer value for the specified element of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetGetElement
   SUBROUTINE FIELD_PARAMETER_SET_GET_ELEMENT_INTG(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,USER_ELEMENT_NUMBER,COMPONENT_NUMBER, &
     & VALUE,ERR,ERROR,*)
 
@@ -19808,7 +20479,7 @@ CONTAINS
   !
 
 
-  !>Returns from the given parameter set a single precision value for the specified element of a field variable component. \see OPENCMISS::CMISSFieldParameterSetGetElement
+  !>Returns from the given parameter set a single precision value for the specified element of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetGetElement
   SUBROUTINE FIELD_PARAMETER_SET_GET_ELEMENT_SP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,USER_ELEMENT_NUMBER,COMPONENT_NUMBER, &
     & VALUE,ERR,ERROR,*)
 
@@ -19957,7 +20628,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set a double precision value for the specified element of a field variable component. \see OPENCMISS::CMISSFieldParameterSetGetElement
+  !>Returns from the given parameter set a double precision value for the specified element of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetGetElement
   SUBROUTINE FIELD_PARAMETER_SET_GET_ELEMENT_DP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,USER_ELEMENT_NUMBER,COMPONENT_NUMBER, &
     & VALUE,ERR,ERROR,*)
 
@@ -20105,7 +20776,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set a logical value for the specified element of a field variable component. \see OPENCMISS::CMISSFieldParameterSetGetElement
+  !>Returns from the given parameter set a logical value for the specified element of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetGetElement
   SUBROUTINE FIELD_PARAMETER_SET_GET_ELEMENT_L(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,USER_ELEMENT_NUMBER,COMPONENT_NUMBER, &
     & VALUE,ERR,ERROR,*)
 
@@ -20585,7 +21256,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-   !>Returns from the given parameter set a integer value for the specified local node, derivative and version of a field variable component. \see OPENCMISS::CMISSFieldParameterSetGetNode
+   !>Returns from the given parameter set a integer value for the specified local node, derivative and version of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetGetNode
  SUBROUTINE FIELD_PARAMETER_SET_GET_NODE_INTG(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER, &
     & USER_NODE_NUMBER,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
 
@@ -20773,7 +21444,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-   !>Returns from the given parameter set a single precision value for the specified local node, derivative and version of a field variable component. \see OPENCMISS::CMISSFieldParameterSetGetNode
+   !>Returns from the given parameter set a single precision value for the specified local node, derivative and version of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetGetNode
   SUBROUTINE FIELD_PARAMETER_SET_GET_NODE_SP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER, &
     & USER_NODE_NUMBER,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
 
@@ -20961,7 +21632,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-   !>Returns from the given parameter set a double precision value for the specified local node, derivative and version of a field variable component. \see OPENCMISS::CMISSFieldParameterSetGetNode
+   !>Returns from the given parameter set a double precision value for the specified local node, derivative and version of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetGetNode
  SUBROUTINE FIELD_PARAMETER_SET_GET_NODE_DP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER, &
     & USER_NODE_NUMBER,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
 
@@ -21149,7 +21820,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-   !>Returns from the given parameter set a logical value for the specified local node, derivative and version of a field variable component. \see OPENCMISS::CMISSFieldParameterSetGetNode
+   !>Returns from the given parameter set a logical value for the specified local node, derivative and version of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetGetNode
  SUBROUTINE FIELD_PARAMETER_SET_GET_NODE_L(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER, &
     & USER_NODE_NUMBER,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
 
@@ -22732,7 +23403,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Returns from the given parameter set a double precision value for the specified gauss point of a user element of a field variable component. \see OPENCMISS::CMISSFieldParameterSetGetGaussPoint
+  !>Returns from the given parameter set a double precision value for the specified gauss point of a user element of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetGetGaussPoint
   SUBROUTINE Field_ParameterSetGetGaussPointDP(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
     & componentNumber,value,err,error,*)
 
@@ -23324,7 +23995,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Updates the given parameter set with the given integer value for the constant of the field variable component. \see OPENCMISS::CMISSFieldParameterSetUpdateConstant
+  !>Updates the given parameter set with the given integer value for the constant of the field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetUpdateConstant
   SUBROUTINE FIELD_PARAMETER_SET_UPDATE_CONSTANT_INTG(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
     
     !Argument variables
@@ -23457,7 +24128,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Updates the given parameter set with the given single precision value for the constant of the field variable component. \see OPENCMISS::CMISSFieldParameterSetUpdateConstant
+  !>Updates the given parameter set with the given single precision value for the constant of the field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetUpdateConstant
   SUBROUTINE FIELD_PARAMETER_SET_UPDATE_CONSTANT_SP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
     
     !Argument variables
@@ -23591,7 +24262,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Updates the given parameter set with the given double precision value for the constant of the field variable component. \see OPENCMISS::CMISSFieldParameterSetUpdateConstant
+  !>Updates the given parameter set with the given double precision value for the constant of the field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetUpdateConstant
   SUBROUTINE FIELD_PARAMETER_SET_UPDATE_CONSTANT_DP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
     
     !Argument variables
@@ -23724,7 +24395,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Updates the given parameter set with the given logical value for the constant of the field variable component. \see OPENCMISS::CMISSFieldParameterSetUpdateConstant
+  !>Updates the given parameter set with the given logical value for the constant of the field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetUpdateConstant
   SUBROUTINE FIELD_PARAMETER_SET_UPDATE_CONSTANT_L(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
     
     !Argument variables
@@ -23857,7 +24528,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Update the given parameter set an integer value for the specified data point of a field variable component. \see OPENCMISS::CMISSFieldParameterSetUpdateDataPoint
+  !>Update the given parameter set an integer value for the specified data point of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetUpdateDataPoint
   SUBROUTINE Field_ParameterSetUpdateDataPointIntg(field,variableType,fieldSetType,userDataPointNumber,componentNumber,value, &
       & err,error,*)
     
@@ -24009,7 +24680,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Update the given parameter set a single precision value for the specified data point of a field variable component. \see OPENCMISS::CMISSFieldParameterSetUpdateDataPoint
+  !>Update the given parameter set a single precision value for the specified data point of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetUpdateDataPoint
   SUBROUTINE Field_ParameterSetUpdateDataPointSP(field,variableType,fieldSetType,userDataPointNumber,componentNumber,value, & 
       & err,error,*)
     
@@ -24161,7 +24832,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Update the given parameter set a double precision value for the specified data point of a field variable component. \see OPENCMISS::CMISSFieldParameterSetUpdateDataPoint
+  !>Update the given parameter set a double precision value for the specified data point of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetUpdateDataPoint
   SUBROUTINE Field_ParameterSetUpdateDataPointDP(field,variableType,fieldSetType,userDataPointNumber,componentNumber,value, &
       & err,error,*)
     
@@ -24313,7 +24984,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Update the given parameter set a logical value for the specified data point of a field variable component. \see OPENCMISS::CMISSFieldParameterSetUpdateDataPoint
+  !>Update the given parameter set a logical value for the specified data point of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetUpdateDataPoint
   SUBROUTINE Field_ParameterSetUpdateDataPointL(field,variableType,fieldSetType,userDataPointNumber,componentNumber,value, &
       & err,error,*)
     
@@ -26058,7 +26729,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the parameter set update for a field variable. \see OPENCMISS::CMISSFieldParameterSetUpdateFinish
+  !>Finishes the parameter set update for a field variable. \see OpenCMISS::Iron::cmfe_FieldParameterSetUpdateFinish
   SUBROUTINE FIELD_PARAMETER_SET_UPDATE_FINISH(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,ERR,ERROR,*)
 
      !Argument variables
@@ -26128,7 +26799,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Updates the given parameter set with the given integer value for a particular user node, derivative and version of the field variable component. \see OPENCMISS::CMISSFieldParameterSetUpdateNode
+  !>Updates the given parameter set with the given integer value for a particular user node, derivative and version of the field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetUpdateNode
   SUBROUTINE FIELD_PARAMETER_SET_UPDATE_NODE_INTG(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER, &
     & USER_NODE_NUMBER,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
 
@@ -26322,7 +26993,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Updates the given parameter set with the given single precision value for a particular user node, derivative and version of the field variable component. \see OPENCMISS::CMISSFieldParameterSetUpdateNode
+  !>Updates the given parameter set with the given single precision value for a particular user node, derivative and version of the field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetUpdateNode
   SUBROUTINE FIELD_PARAMETER_SET_UPDATE_NODE_SP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER, &
     & USER_NODE_NUMBER,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
 
@@ -26516,7 +27187,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Updates the given parameter set with the given double precision value for a particular user node, derivative and version of the field variable component. \see OPENCMISS::CMISSFieldParameterSetUpdateNode
+  !>Updates the given parameter set with the given double precision value for a particular user node, derivative and version of the field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetUpdateNode
   SUBROUTINE FIELD_PARAMETER_SET_UPDATE_NODE_DP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER, &
     & USER_NODE_NUMBER,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
 
@@ -26710,7 +27381,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Updates the given parameter set with the given logical value for a particular user node, derivative and version of the field variable component. \see OPENCMISS::CMISSFieldParameterSetUpdateNode
+  !>Updates the given parameter set with the given logical value for a particular user node, derivative and version of the field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetUpdateNode
   SUBROUTINE FIELD_PARAMETER_SET_UPDATE_NODE_L(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER, &
     & USER_NODE_NUMBER,COMPONENT_NUMBER,VALUE,ERR,ERROR,*)
 
@@ -28413,7 +29084,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Interpolates the given parameter set at a specified xi location for the specified element and derviative and returns double precision values. \see OPENCMISS::CMISSFieldParameterSetInterpolateXI
+  !>Interpolates the given parameter set at a specified xi location for the specified element and derviative and returns double precision values. \see OpenCMISS::Iron::cmfe_FieldParameterSetInterpolateXI
   SUBROUTINE Field_ParameterSetInterpolateSingleXiDP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,DERIVATIVE_NUMBER, &
     & USER_ELEMENT_NUMBER,XI,VALUES,ERR,ERROR,*)
 
@@ -28529,7 +29200,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Interpolates the given parameter set at a specified set of xi locations for the specified element and derviative and returns double precision values. \see OPENCMISS::CMISSFieldParameterSetInterpolateXI
+  !>Interpolates the given parameter set at a specified set of xi locations for the specified element and derviative and returns double precision values. \see OpenCMISS::Iron::cmfe_FieldParameterSetInterpolateXI
   SUBROUTINE Field_ParameterSetInterpolateMultipleXiDP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,DERIVATIVE_NUMBER, &
     & USER_ELEMENT_NUMBER,XI,VALUES,ERR,ERROR,*)
 
@@ -28653,7 +29324,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Interpolates the given parameter set at a specified Gauss point for the specified element and derviative and returns double precision values. \see OPENCMISS::CMISSFieldParameterSetInterpolateGauss
+  !>Interpolates the given parameter set at a specified Gauss point for the specified element and derviative and returns double precision values. \see OpenCMISS::Iron::cmfe_FieldParameterSetInterpolateGauss
   SUBROUTINE Field_ParameterSetInterpolateSingleGaussDP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,DERIVATIVE_NUMBER, &
     & USER_ELEMENT_NUMBER,SCHEME,GAUSS_POINT,VALUES,ERR,ERROR,*)
 
@@ -28776,7 +29447,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Interpolates the given parameter set at a specified set of Gauss points for the specified element and derviative and returns double precision values. If no Gauss points are specified then all Gauss points are interpolated. \see OPENCMISS::CMISSFieldParameterSetInterpolateGauss
+  !>Interpolates the given parameter set at a specified set of Gauss points for the specified element and derviative and returns double precision values. If no Gauss points are specified then all Gauss points are interpolated. \see OpenCMISS::Iron::cmfe_FieldParameterSetInterpolateGauss
   SUBROUTINE Field_ParameterSetInterpolateMultipleGaussDP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,DERIVATIVE_NUMBER, &
     & USER_ELEMENT_NUMBER,SCHEME,GAUSS_POINTS,VALUES,ERR,ERROR,*)
 
@@ -28935,7 +29606,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the parameter set update for a field variable. \see OPENCMISS::CMISSFieldParameterSetUpdateStart
+  !>Starts the parameter set update for a field variable. \see OpenCMISS::Iron::cmfe_FieldParameterSetUpdateStart
   SUBROUTINE FIELD_PARAMETER_SET_UPDATE_START(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -29783,7 +30454,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the scaling type for a field. \see OPENCMISS::CMISSFieldScalingTypeGet
+  !>Gets the scaling type for a field. \see OpenCMISS::Iron::cmfe_FieldScalingTypeGet
   SUBROUTINE FIELD_SCALING_TYPE_GET(FIELD,SCALING_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -29818,7 +30489,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the scaling type for a field. \see OPENCMISS::CMISSFieldScalingTypeSet
+  !>Sets/changes the scaling type for a field. \see OpenCMISS::Iron::cmfe_FieldScalingTypeSet
   SUBROUTINE FIELD_SCALING_TYPE_SET(FIELD,SCALING_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -29997,7 +30668,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the field type for a field. \see OPENCMISS::CMISSFieldTypeGet
+  !>Gets the field type for a field. \see OpenCMISS::Iron::cmfe_FieldTypeGet
   SUBROUTINE FIELD_TYPE_GET(FIELD,TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -30032,7 +30703,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the field type for a field. \see OPENCMISS::CMISSFieldTypeSet
+  !>Sets/changes the field type for a field. \see OpenCMISS::Iron::cmfe_FieldTypeSet
   SUBROUTINE FIELD_TYPE_SET(FIELD,TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -30417,7 +31088,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the label for a field variable for character labels. \see OPENCMISS::CMISSFieldVariableLabelGet
+  !>Gets the label for a field variable for character labels. \see OpenCMISS::Iron::cmfe_FieldVariableLabelGet
   SUBROUTINE FIELD_VARIABLE_LABEL_GET_C(FIELD,VARIABLE_TYPE,LABEL,ERR,ERROR,*)
 
     !Argument variables
@@ -30474,7 +31145,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the label for a field variable for varying string labels. \see OPENCMISS::CMISSFieldVariableLabelGet
+  !>Gets the label for a field variable for varying string labels. \see OpenCMISS::Iron::cmfe_FieldVariableLabelGet
   SUBROUTINE FIELD_VARIABLE_LABEL_GET_VS(FIELD,VARIABLE_TYPE,LABEL,ERR,ERROR,*)
 
     !Argument variables
@@ -30524,7 +31195,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the label for a field variable for character labels. \see OPENCMISS::CMISSFieldVariableLabelSet
+  !>Sets/changes the label for a field variable for character labels. \see OpenCMISS::Iron::cmfe_FieldVariableLabelSet
   SUBROUTINE FIELD_VARIABLE_LABEL_SET_C(FIELD,VARIABLE_TYPE,LABEL,ERR,ERROR,*)
 
     !Argument variables
@@ -30586,7 +31257,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the label for a field variable for varying string labels. \see OPENCMISS::CMISSFieldVariableLabelSet
+  !>Sets/changes the label for a field variable for varying string labels. \see OpenCMISS::Iron::cmfe_FieldVariableLabelSet
   SUBROUTINE FIELD_VARIABLE_LABEL_SET_VS(FIELD,VARIABLE_TYPE,LABEL,ERR,ERROR,*)
 
     !Argument variables
@@ -30829,7 +31500,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the field variable types for a field. \see OPENCMISS::CMISSFieldVariableTypesGet
+  !>Gets the field variable types for a field. \see OpenCMISS::Iron::cmfe_FieldVariableTypesGet
   SUBROUTINE FIELD_VARIABLE_TYPES_GET(FIELD,VARIABLE_TYPES,ERR,ERROR,*)
 
     !Argument variables
@@ -30875,7 +31546,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the field variable types for a field. \see OPENCMISS::CMISSFieldVariableTypesSet
+  !>Sets/changes the field variable types for a field. \see OpenCMISS::Iron::cmfe_FieldVariableTypesSet
   SUBROUTINE FIELD_VARIABLE_TYPES_SET(FIELD,VARIABLE_TYPES,ERR,ERROR,*)
 
     !Argument variables
@@ -31433,7 +32104,7 @@ CONTAINS
   !================================================================================================================================
   !
 
- !>Returns from the given parameter set a double precision value for the specified gauss point of a field variable component. \see OPENCMISS::CMISSFieldParameterSetGetGaussPoint
+ !>Returns from the given parameter set a double precision value for the specified gauss point of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetGetGaussPoint
   SUBROUTINE FIELD_PARAMETER_SET_GET_GAUSS_POINT_COORD(MESH_EMBEDDING,COMPONENT_NUMBER,NGP,COORD_VALUE, &
     & ERR,ERROR,*)
     
