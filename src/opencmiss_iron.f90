@@ -30382,7 +30382,8 @@ CONTAINS
 
     EXITS("cmfe_Field_ParameterSetAddGaussPointIntgNumber")
     RETURN
-999 ERRORSEXITS("cmfe_Field_ParameterSetAddGaussPointIntgNumber",err,error)
+999 ERRORS("cmfe_Field_ParameterSetAddGaussPointIntgNumber",err,error)
+    EXITS("cmfe_Field_ParameterSetAddGaussPointIntgNumber")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -30415,7 +30416,8 @@ CONTAINS
 
     EXITS("cmfe_Field_ParameterSetAddGaussPointIntgObj")
     RETURN
-999 ERRORSEXITS("cmfe_Field_ParameterSetAddGaussPointIntgObj",err,error)
+999 ERRORS("cmfe_Field_ParameterSetAddGaussPointIntgObj",err,error)
+    EXITS("cmfe_Field_ParameterSetAddGaussPointIntgObj")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -30467,7 +30469,8 @@ CONTAINS
 
     EXITS("cmfe_Field_ParameterSetAddGaussPointSPNumber")
     RETURN
-999 ERRORSEXITS("cmfe_Field_ParameterSetAddGaussPointSPNumber",err,error)
+999 ERRORS("cmfe_Field_ParameterSetAddGaussPointSPNumber",err,error)
+    EXITS("cmfe_Field_ParameterSetAddGaussPointSPNumber")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -30500,7 +30503,8 @@ CONTAINS
 
     EXITS("cmfe_Field_ParameterSetAddGaussPointSPObj")
     RETURN
-999 ERRORSEXITS("cmfe_Field_ParameterSetAddGaussPointSPObj",err,error)
+999 ERRORS("cmfe_Field_ParameterSetAddGaussPointSPObj",err,error)
+    EXITS("cmfe_Field_ParameterSetAddGaussPointSPObj")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -30552,7 +30556,8 @@ CONTAINS
 
     EXITS("cmfe_Field_ParameterSetAddGaussPointDPNumber")
     RETURN
-999 ERRORSEXITS("cmfe_Field_ParameterSetAddGaussPointDPNumber",err,error)
+999 ERRORS("cmfe_Field_ParameterSetAddGaussPointDPNumber",err,error)
+    EXITS("cmfe_Field_ParameterSetAddGaussPointDPNumber")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -30585,7 +30590,8 @@ CONTAINS
 
     EXITS("cmfe_Field_ParameterSetAddGaussPointDPObj")
     RETURN
-999 ERRORSEXITS("cmfe_Field_ParameterSetAddGaussPointDPObj",err,error)
+999 ERRORS("cmfe_Field_ParameterSetAddGaussPointDPObj",err,error)
+    EXITS("cmfe_Field_ParameterSetAddGaussPointDPObj")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -30637,7 +30643,8 @@ CONTAINS
 
     EXITS("cmfe_Field_ParameterSetAddGaussPointLNumber")
     RETURN
-999 ERRORSEXITS("cmfe_Field_ParameterSetAddGaussPointLNumber",err,error)
+999 ERRORS("cmfe_Field_ParameterSetAddGaussPointLNumber",err,error)
+    EXITS("cmfe_Field_ParameterSetAddGaussPointLNumber")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -30670,7 +30677,8 @@ CONTAINS
 
     EXITS("cmfe_Field_ParameterSetAddGaussPointLObj")
     RETURN
-999 ERRORSEXITS("cmfe_Field_ParameterSetAddGaussPointLObj",err,error)
+999 ERRORS("cmfe_Field_ParameterSetAddGaussPointLObj",err,error)
+    EXITS("cmfe_Field_ParameterSetAddGaussPointLObj")
     CALL cmfe_HandleError(err,error)
     RETURN
 
