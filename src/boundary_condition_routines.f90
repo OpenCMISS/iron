@@ -1394,6 +1394,7 @@ CONTAINS
                         CALL BoundaryConditions_SetConditionType(BOUNDARY_CONDITIONS_VARIABLE,global_ny,CONDITIONS(i), &
                           & ERR,ERROR,*999)
                         ! Update field sets with boundary condition value
+
                         SELECT CASE(CONDITIONS(i))
                         CASE(BOUNDARY_CONDITION_FREE)
                           ! No field update
@@ -1618,7 +1619,16 @@ CONTAINS
     !Set the boundary condition type and DOF type
     boundaryConditionsVariable%CONDITION_TYPES(globalDof)=condition
     boundaryConditionsVariable%DOF_TYPES(globalDof)=dofType
-
+    IF(DIAGNOSTICS1) THEN
+      CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Boundary Condition Being Set",err,error,*999)
+      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"global dof = ", globalDof,err,error,*999)
+      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"Variable Type = ", &
+        & boundaryConditionsVariable%VARIABLE_TYPE,err,error,*999)
+      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"New Condition = ", &
+        & condition,err,error,*999)
+      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"dof type = ", &
+        & dofType,err,error,*999)
+    ENDIF
     EXITS("BoundaryConditions_SetConditionType")
     RETURN
 999 ERRORSEXITS("BoundaryConditions_SetConditionType",err,error)
