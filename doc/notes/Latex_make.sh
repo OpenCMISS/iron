@@ -25,6 +25,7 @@ MY_MAINFILE=OpenCMISSNotes
 
 MY_TEX_SRC="TitlePage/TitlePage.tex "\
 "Introduction/Introduction.tex "\
+"DifferentialGeometry/DifferentialGeometry.tex "\
 "Theory/Theory.tex "\
 "EquationSets/EquationSets.tex "\
 "EquationSets/ClassicalFieldClass/AdvectionDiffusionEquation.tex "\
@@ -35,6 +36,8 @@ MY_TEX_SRC="TitlePage/TitlePage.tex "\
 "EquationSets/ClassicalFieldClass/PoissonEquation.tex "\
 "EquationSets/ClassicalFieldClass/ReactionDiffusionEquation.tex "\
 "EquationSets/ClassicalFieldClass/WaveEquation.tex "\
+"EquationSets/ElasticityClass/LinearElasticity.tex "\
+"EquationSets/ElasticityClass/FiniteElasticity.tex "\
 "EquationSets/FluidMechanicsClass/BurgersEquation.tex "\
 "EquationSets/FluidMechanicsClass/PoiseuilleFlow.tex "\
 "EquationSets/FluidMechanicsClass/StokesEquation.tex "\
@@ -56,7 +59,7 @@ MY_TEX_SRC="TitlePage/TitlePage.tex "\
 #MY_EPS_SRC="epsfiles/*.eps"
 MY_EPS_SRC=
 MY_FIG_SRC=figs/Theory/*.fig
-MY_SVG_SRC=svgs/Theory/*.svg
+MY_SVG_SRC="svgs/DifferentialGeometry/*.svg svgs/Theory/*.svg"
 MY_PLOT_SRC=plots/Theory/*.gnu
 
 #

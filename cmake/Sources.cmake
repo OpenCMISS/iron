@@ -9,6 +9,8 @@ set(IRON_HEADERS
     external_dae_solver_routines.h
     FieldExport.h
     FieldExportConstants.h
+    macros.h
+    dllexport.h
 )
 set(IRON_Fortran_SRC
     advection_diffusion_equation_routines.f90
