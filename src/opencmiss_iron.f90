@@ -60116,7 +60116,6 @@ CONTAINS
 
 #ifdef WITH_FIELDML
 
-    ALLOCATE( fieldml%fieldmlInfo, stat=err )
     CALL FIELDML_INPUT_INITIALISE_FROM_FILE( fieldml%fieldmlInfo, filename, err, error, *999 )
 
 #else
@@ -60147,7 +60146,6 @@ CONTAINS
 
 #ifdef WITH_FIELDML
 
-    ALLOCATE( fieldml%fieldmlInfo, stat=err )
     CALL FIELDML_INPUT_INITIALISE_FROM_FILE( fieldml%fieldmlInfo, var_str(filename), err, error, *999 )
 
 #else
@@ -61606,7 +61604,6 @@ CONTAINS
 
 #ifdef WITH_FIELDML
 
-    ALLOCATE( fieldml%fieldmlInfo, stat=err )
     CALL FIELDML_OUTPUT_INITIALISE_INFO( mesh%mesh, location, baseName, connectivityFormat, fieldml%fieldmlInfo, &
       & err, error, *999 )
 
@@ -61682,7 +61679,6 @@ CONTAINS
 
 #ifdef WITH_FIELDML
 
-    ALLOCATE( fieldml%fieldmlInfo, stat=err )
     CALL FIELDML_OUTPUT_INITIALISE_INFO( mesh%mesh, var_str(location), var_str(baseName), var_str(connectivityFormat), &
       & fieldml%fieldmlInfo, err, error, *999 )
 
@@ -61932,7 +61928,7 @@ CONTAINS
 
     stringName = name
 
-    handle = FIELDML_OUTPUT_IMPORT( fieldml%fieldmlInfo, stringName, err, error )
+    handle = FIELDML_OUTPUT_ADD_IMPORT( fieldml%fieldmlInfo, stringName, err, error )
     IF(err/=0) GOTO 999
 
 #else
