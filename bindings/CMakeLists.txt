@@ -2,154 +2,236 @@
 # I know there's a UseSWIG.cmake file.
 # This did not seem to be very flexible at the current stage.
 
-find_package(PythonInterp QUIET)
-if (NOT PYTHONINTERP_FOUND)
-    message(WARNING "No Python interpreter found. Unable to generate any Iron bindings")
-else()
-    set(_CLEANUP)
-    if (WITH_C_BINDINGS OR WITH_Python_BINDINGS)
-        # Generate the c files in each case, as swig wraps again around the C interface
-        set(OPENCMISS_H "${CMAKE_CURRENT_BINARY_DIR}/opencmiss.h")
-        set(OPENCMISS_C_F90 "${CMAKE_CURRENT_BINARY_DIR}/opencmiss_c.f90")
-        add_custom_command(OUTPUT ${OPENCMISS_C_F90} ${OPENCMISS_H}
-                COMMAND "${PYTHON_EXECUTABLE}" generate_bindings "${Iron_SOURCE_DIR}" C "${OPENCMISS_H}" "${OPENCMISS_C_F90}"
-                WORKING_DIRECTORY ${Iron_SOURCE_DIR}/bindings)
-        list(APPEND _CLEANUP ${OPENCMISS_H} ${OPENCMISS_C_F90}) 
-    endif()
-    
-    # C-Bindings extra target
-    set(HAVE_C_BINDINGS FALSE)
-    if (WITH_C_BINDINGS)
-        message(STATUS "Creating C bindings")
-        add_library(iron_c SHARED ${OPENCMISS_C_F90})
-        target_link_libraries(iron_c iron)
-        install(TARGETS iron_c
-                    EXPORT iron-config
-                    DESTINATION lib
-                    INCLUDES DESTINATION include/iron)
-        install(FILES ${OPENCMISS_H}
-            DESTINATION include/iron)
-        set(HAVE_C_BINDINGS TRUE)
-    endif()
-    
-    # Python-Bindings extra target
-    set(HAVE_Python_BINDINGS FALSE)
-    if (WITH_Python_BINDINGS)
-        message(STATUS "Creating Python bindings")
-        find_package(PythonLibs QUIET)
-        find_package(SWIG QUIET)
-        # I know there's also a UseSWIG.cmake file (http://www.cmake.org/cmake/help/v3.3/module/UseSWIG.html)
-        # This did not seem to be very flexible at the current stage.
-        if (SWIG_FOUND)
-            if(PYTHONLIBS_FOUND)
-            
-                set(IRON_PYTHON_MODULE iron_python)
-                set(IRON_OPENCMISS_DIR ${CMAKE_CURRENT_BINARY_DIR}/opencmiss)
-            
-                # Copy interface files to binary dir
-                set(SWIG_INTERFACE_FILES ${CMAKE_CURRENT_BINARY_DIR}/numpy.i ${CMAKE_CURRENT_BINARY_DIR}/numpy_extra.i ${CMAKE_CURRENT_BINARY_DIR}/iron.i)
-                add_custom_command(OUTPUT ${SWIG_INTERFACE_FILES}
-                    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/python/numpy.i ${CMAKE_CURRENT_BINARY_DIR}
-                    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/python/numpy_extra.i ${CMAKE_CURRENT_BINARY_DIR}
-                    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/python/iron.i ${CMAKE_CURRENT_BINARY_DIR}
-                )
-                list(APPEND _CLEANUP ${SWIG_INTERFACE_FILES})
-     
-                # iron_generated.i is included by iron.i later
-                set(SWIG_IFACE "${CMAKE_CURRENT_BINARY_DIR}/iron_generated.i")
-                add_custom_command(OUTPUT ${SWIG_IFACE}
-                    COMMAND "${PYTHON_EXECUTABLE}" generate_bindings "${Iron_SOURCE_DIR}" SWIG "${SWIG_IFACE}"
-                    COMMENT "Generating swig interface file for Iron"
-                    WORKING_DIRECTORY ${Iron_SOURCE_DIR}/bindings
-                )
-    
-                set(SWIG_OUTDIR "${IRON_OPENCMISS_DIR}/iron")
-                # Generate C wrapper
-                set(PYTHON_WRAPPER "${CMAKE_CURRENT_BINARY_DIR}/iron_python_wrapper.c")
-                add_custom_command(OUTPUT ${PYTHON_WRAPPER}
-                    DEPENDS ${SWIG_IFACE}
-                    DEPENDS ${SWIG_INTERFACE_FILES}
-                    COMMAND ${CMAKE_COMMAND} -E make_directory ${SWIG_OUTDIR}
-                    COMMAND ${SWIG_EXECUTABLE} -python -o "${PYTHON_WRAPPER}"
-                        -module ${IRON_PYTHON_MODULE} -outdir ${SWIG_OUTDIR} iron.i
-                    COMMENT "Generating python wrapper for Iron with swig"
-                )
-                list(APPEND _CLEANUP ${SWIG_IFACE} ${PYTHON_WRAPPER})
-    
-                #Generate wrapper object
-                execute_process(COMMAND "${PYTHON_EXECUTABLE}" "${Iron_SOURCE_DIR}/utils/numpy_include.py"
-                    OUTPUT_VARIABLE NUMPY_INCLUDES
-                    RESULT_VARIABLE RES_NUMPY_INC
-                    OUTPUT_STRIP_TRAILING_WHITESPACE
-                )
-                if (NOT RES_NUMPY_INC)
-                    # MODULE: See http://www.cmake.org/cmake/help/v3.3/command/add_library.html
-                    add_library(${IRON_PYTHON_MODULE} MODULE ${PYTHON_WRAPPER} ${OPENCMISS_H} ${OPENCMISS_C_F90})
-                    target_link_libraries(${IRON_PYTHON_MODULE} PUBLIC iron ${PYTHON_LIBRARIES})
-                    target_include_directories(${IRON_PYTHON_MODULE} PRIVATE
-                        ${CMAKE_CURRENT_BINARY_DIR}
-                        ${PYTHON_INCLUDE_DIRS}
-                        ${NUMPY_INCLUDES}
-                    )
-                    set_target_properties(${IRON_PYTHON_MODULE} PROPERTIES PREFIX ""
-                        LIBRARY_OUTPUT_DIRECTORY ${SWIG_OUTDIR}
-                        RUNTIME_OUTPUT_DIRECTORY ${SWIG_OUTDIR})
-    
-                    # We dont want any libXX or .dll - see UseSWIG.cmake
-                    set_target_properties(${IRON_PYTHON_MODULE} PROPERTIES PREFIX "_")
-                    if(WIN32 AND NOT CYGWIN)
-                        set_target_properties(${IRON_PYTHON_MODULE} PROPERTIES SUFFIX ".pyd")
-                    endif()
-                        
-                    # Generate Python module
-                    set(IRON_PY ${CMAKE_CURRENT_BINARY_DIR}/iron.py)
-    
-                    set(PKGUTIL_INIT_PY ${IRON_OPENCMISS_DIR}/__init__.py)
-                    set(INIT_PY ${SWIG_OUTDIR}/__init__.py)
-                    set(UTILS_PY ${SWIG_OUTDIR}/_utils.py)
-                    set(SETUP_PY ${CMAKE_CURRENT_BINARY_DIR}/setup.py)
-                    add_custom_command(TARGET ${IRON_PYTHON_MODULE} POST_BUILD
-                        COMMAND ${CMAKE_COMMAND} -DIRON_TARGET_FILE="$<TARGET_FILE:iron>" -DIRON_PYTHON_MODULE=${IRON_PYTHON_MODULE} -DUTILS_PY=${UTILS_PY} -DSETUP_PY=${SETUP_PY} -P ${CMAKE_CURRENT_SOURCE_DIR}/configurefiles.cmake
-                        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/python/opencmiss/__init__.py ${PKGUTIL_INIT_PY}
-                        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/python/opencmiss/iron/__init__.py ${INIT_PY}
-                        COMMAND "${PYTHON_EXECUTABLE}" generate_bindings "${Iron_SOURCE_DIR}" Python ${IRON_PYTHON_MODULE} "${SWIG_OUTDIR}"
-                        COMMENT "Generating Python top-level module"
-                        WORKING_DIRECTORY "${Iron_SOURCE_DIR}/bindings"
-                    )
-                    list(APPEND _CLEANUP ${UTILS_PY} ${SETUP_PY} ${PKGUTIL_INIT_PY} ${INIT_PY})
-                    install(TARGETS ${IRON_PYTHON_MODULE}
-                        EXPORT iron-config
-                        DESTINATION python/opencmiss
-                    )
-                    list(APPEND _CLEANUP ${SWIG_IFACE} ${PYTHON_WRAPPER})
-                    
-                    #Generate wrapper object
-                    execute_process(COMMAND "${PYTHON_EXECUTABLE}" "${Iron_SOURCE_DIR}/utils/numpy_include.py"
-                        OUTPUT_VARIABLE NUMPY_INCLUDES
-                        RESULT_VARIABLE RES_NUMPY_INC
-                        OUTPUT_STRIP_TRAILING_WHITESPACE
-                    )
-                    # "Bugfix": If we use the same source file name, there will be two processes messing with
-                    # the same fortran module file which can lead to errors using -j parallel builds.
-                    # By this we simply force to have iron_c build before the python module.
-                    if (HAVE_C_BINDINGS)
-                        add_dependencies(${IRON_PYTHON_MODULE} iron_c)
-                    endif()
-                        
-                    list(APPEND _CLEANUP ${IRON_PY} ${SWIG_OUTDIR} ${IRON_OPENCMISS_DIR})
-                else()
-                    message(FATAL_ERROR "Could not detect NumPy includes")
-                endif()
-                
-                set(HAVE_Python_BINDINGS TRUE)
-            else()
-                message(WARNING "No Python libraries found. Unable to generate Python bindings for Iron.")
-            endif()
-        else()
-            message(WARNING "SWIG could not be found. Unable to generate Python bindings for Iron.")            
-        endif()
-    endif()
-    if (_CLEANUP)
-        set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${_CLEANUP}")
+# Need C bindings for Python bindings in any case (Python wraps around C)
+if (WITH_Python_BINDINGS)
+    set(WITH_C_BINDINGS YES)
+endif()
+# Run checks
+if (WITH_C_BINDINGS)
+    find_package(PythonInterp QUIET)
+    if (NOT PYTHONINTERP_FOUND)
+        message(FATAL_ERROR "No Python found. A working Python interpreter is required to generate any Iron bindings")
     endif()
 endif()
+# Directory used within tests
+set(BINDINGS_BIN_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+
+set(_CLEANUP)
+# C-Bindings extra target
+if (WITH_C_BINDINGS)
+    message(STATUS "Creating C bindings")
+    # Generate the c files
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/opencmiss") # need this sub-path as the include directive is 
+    set(OPENCMISS_H "${CMAKE_CURRENT_BINARY_DIR}/opencmiss/iron.h")
+    set(OPENCMISS_C_F90 "${CMAKE_CURRENT_BINARY_DIR}/iron_c.f90")
+    add_custom_command(OUTPUT ${OPENCMISS_C_F90} ${OPENCMISS_H}
+        DEPENDS ${Iron_SOURCE_DIR}/src/opencmiss_iron.f90 # Need to re-build if that file changes!
+        COMMAND "${PYTHON_EXECUTABLE}" generate_bindings "${Iron_SOURCE_DIR}" C "${OPENCMISS_H}" "${OPENCMISS_C_F90}"
+        WORKING_DIRECTORY ${Iron_SOURCE_DIR}/bindings
+    )
+    list(APPEND _CLEANUP ${OPENCMISS_H} ${OPENCMISS_C_F90})
+    
+    add_library(iron_c ${OPENCMISS_C_F90})
+    target_link_libraries(iron_c PUBLIC iron)
+    target_include_directories(iron_c PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+        $<BUILD_INTERFACE:${Iron_SOURCE_DIR}/src>
+    )
+    install(TARGETS iron_c
+        EXPORT iron-config
+        RUNTIME DESTINATION bin
+        COMPONENT CBindings
+        ARCHIVE DESTINATION lib
+        COMPONENT CBindings
+        LIBRARY DESTINATION lib
+        COMPONENT Development
+        INCLUDES DESTINATION include
+    )
+    install(FILES ${OPENCMISS_H}
+        DESTINATION include/opencmiss
+        COMPONENT CBindings
+    )
+    
+    if (BUILD_TESTS)
+        add_subdirectory(c/tests)
+    endif()
+    
+    include(GenerateExportHeader)
+    generate_export_header(iron_c)
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/iron_c_export.h"
+        DESTINATION include/opencmiss
+        COMPONENT CBindings
+    )
+endif()
+
+# Python-Bindings extra target
+if (WITH_Python_BINDINGS)
+    message(STATUS "Creating Python bindings")
+    find_package(PythonLibs QUIET)
+    if(NOT PYTHONLIBS_FOUND)
+        message(FATAL_ERROR "No Python development libraries found. Unable to generate Python bindings for Iron.")
+    endif()
+    # I know there's also a UseSWIG.cmake file (http://www.cmake.org/cmake/help/v3.3/module/UseSWIG.html)
+    # This did not seem to be very flexible at the current stage.
+    find_package(SWIG QUIET)
+    if (NOT SWIG_FOUND)
+        message(FATAL_ERROR "SWIG could not be found. Unable to generate Python bindings for Iron.")
+    endif()
+    execute_process(COMMAND "${PYTHON_EXECUTABLE}" "${Iron_SOURCE_DIR}/utils/numpy_include.py"
+        OUTPUT_VARIABLE NUMPY_INCLUDES
+        RESULT_VARIABLE RES_NUMPY_INC
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if (NOT RES_NUMPY_INC EQUAL 0)
+        message(FATAL_ERROR "Could not detect NumPy includes. Unable to generate Python bindings for Iron.")
+    endif()
+        
+    set(IRON_PYTHON_MODULE iron_python)
+
+    # Copy interface files to binary dir
+    set(SWIG_INTERFACE_FILES ${CMAKE_CURRENT_BINARY_DIR}/numpy.i ${CMAKE_CURRENT_BINARY_DIR}/numpy_extra.i ${CMAKE_CURRENT_BINARY_DIR}/iron.i)
+    add_custom_command(OUTPUT ${SWIG_INTERFACE_FILES}
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/python/numpy.i ${CMAKE_CURRENT_BINARY_DIR}
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/python/numpy_extra.i ${CMAKE_CURRENT_BINARY_DIR}
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/python/iron.i ${CMAKE_CURRENT_BINARY_DIR}
+    )
+    list(APPEND _CLEANUP ${SWIG_INTERFACE_FILES})
+ 
+    # iron_generated.i is included by iron.i later
+    set(SWIG_IFACE "${CMAKE_CURRENT_BINARY_DIR}/iron_generated.i")
+    add_custom_command(OUTPUT ${SWIG_IFACE}
+        DEPENDS ${Iron_SOURCE_DIR}/src/opencmiss_iron.f90 # Need to re-build if that file changes!
+        COMMAND "${PYTHON_EXECUTABLE}" generate_bindings "${Iron_SOURCE_DIR}" SWIG "${SWIG_IFACE}"
+        COMMENT "Generating swig interface file for Iron"
+        WORKING_DIRECTORY ${Iron_SOURCE_DIR}/bindings
+    )
+
+    string(SUBSTRING ${PYTHONLIBS_VERSION_STRING} 0 1 PYTHONLIBS_MAJOR_VERSION)
+    if(${PYTHONLIBS_MAJOR_VERSION} STREQUAL "3")
+        set(PYTHONLIBS_SWIG_FLAGS -py3)
+    endif()
+
+    # Generate C wrapper
+    set(PYTHON_WRAPPER "${CMAKE_CURRENT_BINARY_DIR}/iron_python_wrapper.c")
+    add_custom_command(OUTPUT ${PYTHON_WRAPPER}
+        DEPENDS ${SWIG_IFACE}
+        DEPENDS ${SWIG_INTERFACE_FILES}
+        COMMAND ${SWIG_EXECUTABLE} -python ${PYTHONLIBS_SWIG_FLAGS} -o "${PYTHON_WRAPPER}"
+           -module ${IRON_PYTHON_MODULE} -outdir ${CMAKE_CURRENT_BINARY_DIR} iron.i
+        # we dont need the iron_python.py file generated by swig.
+        COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/${IRON_PYTHON_MODULE}.py
+        COMMENT "Generating python wrapper for Iron with swig"
+    )
+    list(APPEND _CLEANUP ${SWIG_IFACE} ${PYTHON_WRAPPER})
+
+    #Generate wrapper object
+    # MODULE: See http://www.cmake.org/cmake/help/v3.3/command/add_library.html
+    add_library(${IRON_PYTHON_MODULE} MODULE ${PYTHON_WRAPPER} ${OPENCMISS_H} ${OPENCMISS_C_F90})
+    target_link_libraries(${IRON_PYTHON_MODULE} PUBLIC iron_c ${PYTHON_LIBRARIES})
+    target_include_directories(${IRON_PYTHON_MODULE} PRIVATE
+        ${CMAKE_CURRENT_BINARY_DIR}
+        ${PYTHON_INCLUDE_DIRS}
+        ${NUMPY_INCLUDES}
+    )
+    set_target_properties(${IRON_PYTHON_MODULE} PROPERTIES PREFIX ""
+        DEBUG_POSTFIX ""
+        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron
+    )
+    # "Bugfix": If we use the same source file name, there will be two processes messing with
+    # the same fortran module file which can lead to errors using -j parallel builds.
+    # By this we simply force to have iron_c build before the python module.
+    if (WITH_C_BINDINGS)
+        add_dependencies(${IRON_PYTHON_MODULE} iron_c)
+    endif()
+    
+    # We dont want any libXX or .dll - see UseSWIG.cmake
+    set_target_properties(${IRON_PYTHON_MODULE} PROPERTIES PREFIX "_")
+    if(WIN32 AND NOT CYGWIN)
+        set_target_properties(${IRON_PYTHON_MODULE} PROPERTIES SUFFIX ".pyd")
+    endif()
+        
+    # Generate Python module
+    # Step 1: Configuration phase - replaces variables
+    set(SETUP_PY ${CMAKE_CURRENT_BINARY_DIR}/setup.py)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/python/setup.in.py ${SETUP_PY} @ONLY)
+
+    if (WIN32)
+        file(TO_NATIVE_PATH "${CMAKE_INSTALL_PREFIX}/bin" NATIVE_LIBRARY_PATH)
+    else()
+        file(TO_NATIVE_PATH "${CMAKE_INSTALL_PREFIX}/lib" NATIVE_LIBRARY_PATH)
+    endif()
+
+    set(INIT_PY ${CMAKE_CURRENT_BINARY_DIR}/__init__.py)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/python/opencmiss/iron/__init__.in.py ${INIT_PY} @ONLY)
+    
+    set(UTILS_PY ${CMAKE_CURRENT_BINARY_DIR}/_utils.py)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/python/opencmiss/iron/_utils.in.py ${UTILS_PY} @ONLY)
+            
+    # Step 2: Generation phase - replaces remaining generator expressions
+    file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron/__init__.py"
+        INPUT ${INIT_PY})
+    file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/setup.py"
+        INPUT ${SETUP_PY})
+    file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron/_utils.py"
+        INPUT ${UTILS_PY})
+    file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/__init__.py"
+        INPUT ${CMAKE_CURRENT_SOURCE_DIR}/python/opencmiss/__init__.py)
+    file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/zinc/__init__.py"
+        CONTENT "")
+    
+    set(IRON_PY ${CMAKE_CURRENT_BINARY_DIR}/iron.py) # see python.py script in generate_bindings for iron.py name
+    add_custom_command(OUTPUT ${IRON_PY}
+        COMMAND "${PYTHON_EXECUTABLE}" generate_bindings 
+            "${Iron_SOURCE_DIR}" Python ${IRON_PYTHON_MODULE} "${CMAKE_CURRENT_BINARY_DIR}"
+        COMMENT "Generating Python binding script"
+        WORKING_DIRECTORY "${Iron_SOURCE_DIR}/bindings"
+    )
+    list(APPEND _CLEANUP ${IRON_PY})
+    add_custom_target(collect_python_binding_files ALL
+        DEPENDS "${IRON_PY}"
+        COMMAND ${CMAKE_COMMAND} -E copy ${IRON_PY} ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron/iron.py
+    )
+    
+    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}/opencmiss
+        DESTINATION python/$<CONFIG>
+        COMPONENT PythonBindings)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}/setup.py
+        DESTINATION python/$<CONFIG>
+        COMPONENT PythonBindings
+)
+    
+    if (INSTALL_TO_VIRTUALENV)
+        # The binary directories for the python environments are different on windows (for what reason exactly?)
+        # So we need different subpaths
+        set(VENV_BINDIR bin)
+        if (WIN32)
+            set(VENV_BINDIR Scripts)
+        endif()
+        # Convention between manage and iron CMake scripts: On multiconfig-environments, the 
+        # installation directories have the build type path element inside the INSTALL_TO_VIRTUALENV
+        if (HAVE_MULTICONFIG_ENV)
+            set(VENV_BINDIR $<LOWER_CASE:$<CONFIG>>/${VENV_BINDIR})
+        endif()
+        # We need a native path to pass to the pip program
+        file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>" NATIVE_CMAKE_CURRENT_BINARY_DIR)
+        # This target takes care to install the python package generated in the build tree to the specified virtual
+        # environment.
+        add_custom_target(install_venv
+            DEPENDS collect_python_binding_files
+            COMMAND ${VENV_BINDIR}/pip install --upgrade "${NATIVE_CMAKE_CURRENT_BINARY_DIR}"
+            WORKING_DIRECTORY "${INSTALL_TO_VIRTUALENV}"
+            COMMENT "Installing: opencmiss.iron package for Python virtual environment ..."
+        )
+        install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" --build . --target install_venv --config \${CMAKE_INSTALL_CONFIG_NAME} WORKING_DIRECTORY \"${Iron_BINARY_DIR}\")"
+            COMPONENT VirtualEnv)
+    endif()
+    
+    if (BUILD_TESTS)
+        add_subdirectory(python/tests)
+    endif()
+endif()
+if (_CLEANUP)
+    set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${_CLEANUP}")
+endif()
+

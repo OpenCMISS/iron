@@ -1,0 +1,8 @@
+file(COPY input/ DESTINATION input)
+add_executable(Darcy Darcy.f90)
+set_target_properties(Darcy PROPERTIES LINKER_LANGUAGE Fortran)
+target_link_libraries(Darcy iron)
+add_custom_command(TARGET Darcy POST_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory output)
+oc_add_test(FluidMechanics_Darcy_Poly Darcy 1 test1)
+oc_add_test(FluidMechanics_Darcy_Exp Darcy 2 test2)
+oc_add_test(FluidMechanics_Darcy_SinCos Darcy 3 test3)

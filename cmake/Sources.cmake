@@ -93,6 +93,7 @@ set(IRON_Fortran_SRC
     Navier_Stokes_equations_routines.f90
     node_routines.f90
     opencmiss.f90
+    opencmiss_iron.f90
     Poiseuille_equations_routines.f90
     Poisson_equations_routines.f90
     problem_constants.f90

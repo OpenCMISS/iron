@@ -121,15 +121,15 @@ MODULE DATA_PROJECTION_ROUTINES
   
   PUBLIC DATA_PROJECTION_DESTROY
   
-  PUBLIC DATA_PROJECTION_DATA_POINTS_PROJECTION_EVALUATE
+  PUBLIC DataProjection_DataPointsProjectionEvaluate
   
   PUBLIC DataProjection_DataPointsPositionEvaluate
   
-  PUBLIC DATA_PROJECTION_MAXIMUM_ITERATION_UPDATE_GET,DATA_PROJECTION_MAXIMUM_ITERATION_UPDATE_SET
+  PUBLIC DataProjection_MaximumInterationUpdateGet,DataProjection_MaximumInterationUpdateSet
   
-  PUBLIC DATA_PROJECTION_MAXIMUM_NUMBER_OF_ITERATIONS_GET,DATA_PROJECTION_MAXIMUM_NUMBER_OF_ITERATIONS_SET
+  PUBLIC DataProjection_MaximumNumberOfIterationsGet,DataProjection_MaximumNumberOfIterationsSet
   
-  PUBLIC DATA_PROJECTION_NUMBER_OF_CLOSEST_ELEMENTS_GET,DATA_PROJECTION_NUMBER_OF_CLOSEST_ELEMENTS_SET
+  PUBLIC DataProjection_NumberOfClosestElementsGet,DataProjection_NumberOfClosestElementsSet
   
   PUBLIC DataProjection_ProjectionCandidatesSet
   
@@ -141,13 +141,15 @@ MODULE DATA_PROJECTION_ROUTINES
 
   PUBLIC DATA_PROJECTION_RESULT_XI_GET, DATA_PROJECTION_RESULT_XI_SET
 
+  PUBLIC DataProjection_ResultProjectionVectorGet
+
   PUBLIC DATA_PROJECTION_ELEMENT_SET
   
   PUBLIC DATA_PROJECTION_RESULT_DISTANCE_GET
   
-  PUBLIC DATA_PROJECTION_RESULT_ELEMENT_NUMBER_GET,DATA_PROJECTION_RESULT_ELEMENT_FACE_NUMBER_GET
+  PUBLIC DATA_PROJECTION_RESULT_ELEMENT_NUMBER_GET,DataProjection_ResultElementFaceNumberGet
   
-  PUBLIC DATA_PROJECTION_RESULT_ELEMENT_LINE_NUMBER_GET
+  PUBLIC DataProjection_ResultElementLineNumberGet
   
   PUBLIC DATA_PROJECTION_RESULT_EXIT_TAG_GET
   
@@ -564,7 +566,7 @@ CONTAINS
               CALL FLAG_ERROR("Data projection have already been finished.",ERR,ERROR,*999)
             ELSE
               DATA_PROJECTION%DATA_PROJECTION_FINISHED=.TRUE.
-              CALL DATA_PROJECTION_DATA_PROJECTION_RESULT_INITIALISE(DATA_PROJECTION,ERR,ERROR, &
+              CALL DataProjection_DataProjectionResultInitialise(DATA_PROJECTION,ERR,ERROR, &
                 & *999) !<Initialise data projection part in data points
             ENDIF         
           ELSE
@@ -764,7 +766,7 @@ CONTAINS
   !
   
   !>Initialises the data projection part in a given data points. %%%%% THIS NEED TO BE CHANGED!!! TIM
-  SUBROUTINE DATA_PROJECTION_DATA_PROJECTION_RESULT_INITIALISE(DATA_PROJECTION,ERR,ERROR,*)
+  SUBROUTINE DataProjection_DataProjectionResultInitialise(DATA_PROJECTION,ERR,ERROR,*)
 
     !Argument variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION !<A pointer to the data projection to initialise the data projection result for
@@ -774,7 +776,7 @@ CONTAINS
     INTEGER(INTG) :: NUMBER_OF_DATA_POINTS
     INTEGER(INTG) :: data_point_idx
     
-    ENTERS("DATA_PROJECTION_DATA_PROJECTION_RESULT_INITIALISE",ERR,ERROR,*999)
+    ENTERS("DataProjection_DataProjectionResultInitialise",ERR,ERROR,*999)
 
     !NULLIFY(PROJECTED_POINTS)
     IF(ASSOCIATED(DATA_PROJECTION)) THEN
@@ -793,10 +795,14 @@ CONTAINS
               DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%ELEMENT_LINE_NUMBER=0
               DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%EXIT_TAG=DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
               ALLOCATE(DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI(DATA_PROJECTION%NUMBER_OF_XI),STAT=ERR)
+	      ALLOCATE(DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%projectionVector( &
+                & DATA_PROJECTION%COORDINATE_SYSTEM_DIMENSIONS),STAT=ERR)
               IF(ERR/=0) CALL FLAG_ERROR("Could not allocate data projection data projection results "// &
                 & "("//TRIM(NUMBER_TO_VSTRING (data_point_idx,"*",ERR,ERROR))//") xi.",ERR,ERROR,*999)
               DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI(1:DATA_PROJECTION%NUMBER_OF_XI)= &
                 & DATA_PROJECTION%STARTING_XI(1:DATA_PROJECTION%NUMBER_OF_XI)
+	      DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%projectionVector( &
+                & 1:DATA_PROJECTION%COORDINATE_SYSTEM_DIMENSIONS)=0.0_DP
             ENDDO !data_point_idx
           ELSE
             CALL FLAG_ERROR("Data projection data points have not been finished.",ERR,ERROR,*999)
@@ -811,12 +817,13 @@ CONTAINS
       CALL FLAG_ERROR("Data projection is not associated.",ERR,ERROR,*999)
     ENDIF
     
-    EXITS("DATA_PROJECTION_DATA_PROJECTION_RESULT_INITIALISE")
+    EXITS("DataProjection_DataProjectionResultInitialise")
     RETURN
-999 ERRORSEXITS("DATA_PROJECTION_DATA_PROJECTION_RESULT_INITIALISE",ERR,ERROR)
+999 ERRORS("DataProjection_DataProjectionResultInitialise",ERR,ERROR)
+    EXITS("DataProjection_DataProjectionResultInitialise")
     RETURN 1
 
-  END SUBROUTINE DATA_PROJECTION_DATA_PROJECTION_RESULT_INITIALISE 
+  END SUBROUTINE DataProjection_DataProjectionResultInitialise 
   
   !
   !================================================================================================================================
@@ -877,6 +884,9 @@ CONTAINS
           IF(ALLOCATED(DATA_PROJECTION%DATA_PROJECTION_RESULTS(dataPointIdx)%XI)) THEN
             DEALLOCATE(DATA_PROJECTION%DATA_PROJECTION_RESULTS(dataPointIdx)%XI)
           ENDIF
+          IF(ALLOCATED(DATA_PROJECTION%DATA_PROJECTION_RESULTS(dataPointIdx)%projectionVector)) THEN
+            DEALLOCATE(DATA_PROJECTION%DATA_PROJECTION_RESULTS(dataPointIdx)%projectionVector)
+          ENDIF
         ENDDO !dataPointIdx
         DEALLOCATE(DATA_PROJECTION%DATA_PROJECTION_RESULTS)
       ENDIF
@@ -897,7 +907,7 @@ CONTAINS
   !  
 
   !>Gets the user number for a data point identified by a given global number. 
-  SUBROUTINE DATA_PROJECTION_DATA_POINTS_GLOBAL_NUMBER_GET(DATA_PROJECTION,USER_NUMBER,GLOBAL_NUMBER,ERR,ERROR,*)
+  SUBROUTINE DataProjection_DataPointGlobalNumberGet(DATA_PROJECTION,USER_NUMBER,GLOBAL_NUMBER,ERR,ERROR,*)
 
     !Argument variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION !<A pointer to the data projection whose data points to get the number for
@@ -910,7 +920,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     TYPE(TREE_NODE_TYPE), POINTER :: TREE_NODE
     
-    ENTERS("DATA_PROJECTION_DATA_POINTS_GLOBAL_NUMBER_GET",ERR,ERROR,*999)
+    ENTERS("DataProjection_DataPointGlobalNumberGet",ERR,ERROR,*999)
 
     IF(ASSOCIATED(DATA_PROJECTION)) THEN
       DATA_POINTS=>DATA_PROJECTION%DATA_POINTS
@@ -931,12 +941,12 @@ CONTAINS
       CALL FLAG_ERROR("Data projection is not associated.",ERR,ERROR,*999)
     ENDIF
     
-    EXITS("DATA_PROJECTION_DATA_POINTS_GLOBAL_NUMBER_GET")
+    EXITS("DataProjection_DataPointGlobalNumberGet")
     RETURN
-999 ERRORSEXITS("DATA_PROJECTION_DATA_POINST_GLOBAL_NUMBER_GET",ERR,ERROR)    
+999 ERRORSEXITS("DataProjection_DataPointGlobalNumberGet",ERR,ERROR)    
     RETURN 1
    
-  END SUBROUTINE DATA_PROJECTION_DATA_POINTS_GLOBAL_NUMBER_GET
+  END SUBROUTINE DataProjection_DataPointGlobalNumberGet
   
   !
   !================================================================================================================================
@@ -944,7 +954,7 @@ CONTAINS
 
 
   !>Evaluates data projection.
-  SUBROUTINE DATA_PROJECTION_DATA_POINTS_PROJECTION_EVALUATE(DATA_PROJECTION,PROJECTION_FIELD,ERR,ERROR,*) !optimising
+  SUBROUTINE DataProjection_DataPointsProjectionEvaluate(DATA_PROJECTION,PROJECTION_FIELD,ERR,ERROR,*) !optimising
     
     !Argument variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION !<A pointer to the data projection to evaluate
@@ -975,7 +985,7 @@ CONTAINS
     !LOGICAL :: ELEMENT_FOUND
     !LOGICAL, ALLOCATABLE :: PROJECTION_CONVERGED(:)
     INTEGER(INTG), ALLOCATABLE :: PROJECTED_ELEMENT(:),PROJECTED_FACE(:),PROJECTION_EXIT_TAG(:)
-    REAL(DP), ALLOCATABLE :: PROJECTED_DISTANCE(:,:),PROJECTED_XI(:,:)
+    REAL(DP), ALLOCATABLE :: PROJECTED_DISTANCE(:,:),PROJECTED_XI(:,:), PROJECTION_VECTORS(:,:)
     
     INTEGER(INTG) :: ne,nse,ncn,ni,localElementNumber
     INTEGER(INTG) :: temp_number,start_idx,finish_idx,data_point_idx
@@ -984,7 +994,7 @@ CONTAINS
     
     !INTEGER(INTG) :: NUMBER_OF_PROJECTED_POINTS,NUMBER_OF_PROJECTED_POINTS_2
   
-    ENTERS("DATA_PROJECTION_DATA_POINTS_PROJECTION_EVALUATE",ERR,ERROR,*999)
+    ENTERS("DataProjection_DataPointsProjectionEvaluate",ERR,ERROR,*999)
     
     NULLIFY(INTERPOLATION_PARAMETERS)
     NULLIFY(INTERPOLATED_POINTS)
@@ -1187,6 +1197,7 @@ CONTAINS
                 ALLOCATE(PROJECTED_DISTANCE(2,NUMBER_OF_DATA_POINTS),STAT=ERR) !PROJECTED_DISTANCE(2,:) stores the compuational node number, the information for each data point has to be stored in the corresponding column for MPI_ALLREDUCE with location return to work
                 IF(ERR/=0) CALL FLAG_ERROR("Could not allocate projected distance.",ERR,ERROR,*999)
                 ALLOCATE(PROJECTED_XI(DATA_PROJECTION%NUMBER_OF_XI,NUMBER_OF_DATA_POINTS),STAT=ERR) !the information for each data point is stored in the corresponding column to be consistent with PROJECTED_DISTANCE
+                ALLOCATE(PROJECTION_VECTORS(DATA_PROJECTION%COORDINATE_SYSTEM_DIMENSIONS, NUMBER_OF_DATA_POINTS), STAT=ERR) !ZJW: The projection vector for each data point is stored in the corresponding colum to be consistent with PROJECTED_DISTANCE. 
                 IF(ERR/=0) CALL FLAG_ERROR("Could not allocate projected.",ERR,ERROR,*999)
                 ALLOCATE(SORTING_IND_2(NUMBER_OF_DATA_POINTS),STAT=ERR) 
                 IF(ERR/=0) CALL FLAG_ERROR("Could not allocate sorting ind 2.",ERR,ERROR,*999)          
@@ -1242,7 +1253,7 @@ CONTAINS
                           & data_point_idx,1:NUMBER_OF_CLOSEST_CANDIDATES),CLOSEST_FACES(data_point_idx,1: &
                           & NUMBER_OF_CLOSEST_CANDIDATES),PROJECTION_EXIT_TAG(data_point_idx),PROJECTED_ELEMENT(data_point_idx),  &
                           & PROJECTED_FACE(data_point_idx),PROJECTED_DISTANCE(1,data_point_idx),PROJECTED_XI(:,data_point_idx), &
-                          & ERR,ERROR,*999)
+                          & PROJECTION_VECTORS(:, data_point_idx),ERR,ERROR,*999)
                         PROJECTED_ELEMENT(data_point_idx)=DOMAIN%MAPPINGS%ELEMENTS%LOCAL_TO_GLOBAL_MAP(PROJECTED_ELEMENT( &
                           & data_point_idx)) !map the element number to global number
                       ENDIF
@@ -1256,7 +1267,7 @@ CONTAINS
                           & data_point_idx,1:NUMBER_OF_CLOSEST_CANDIDATES),CLOSEST_FACES(data_point_idx, &
                           & 1:NUMBER_OF_CLOSEST_CANDIDATES),PROJECTION_EXIT_TAG(data_point_idx),PROJECTED_ELEMENT(data_point_idx), &
                           & PROJECTED_FACE(data_point_idx),PROJECTED_DISTANCE(1,data_point_idx),PROJECTED_XI(:,data_point_idx), &
-                          & ERR,ERROR,*999)
+                          & PROJECTION_VECTORS(:, data_point_idx),ERR,ERROR,*999)
                         PROJECTED_ELEMENT(data_point_idx)=DOMAIN%MAPPINGS%ELEMENTS%LOCAL_TO_GLOBAL_MAP(PROJECTED_ELEMENT( &
                           & data_point_idx)) !map the element number to global number
                       ENDIF
@@ -1271,7 +1282,7 @@ CONTAINS
                               & DATA_POINTS(data_point_idx)%position,CLOSEST_ELEMENTS(data_point_idx, &
                               & 1:NUMBER_OF_CLOSEST_CANDIDATES),PROJECTION_EXIT_TAG(data_point_idx), &
                               & PROJECTED_ELEMENT(data_point_idx),PROJECTED_DISTANCE(1,data_point_idx), &
-                              & PROJECTED_XI(:,data_point_idx),ERR,ERROR,*999)
+                              & PROJECTED_XI(:,data_point_idx),PROJECTION_VECTORS(:, data_point_idx),ERR,ERROR,*999)
                             PROJECTED_ELEMENT(data_point_idx)=DOMAIN%MAPPINGS%ELEMENTS%LOCAL_TO_GLOBAL_MAP(PROJECTED_ELEMENT( &
                               & data_point_idx)) !map the element number to global number
 
@@ -1285,7 +1296,8 @@ CONTAINS
                               & DATA_POINTS(data_point_idx)%position,CLOSEST_ELEMENTS(data_point_idx, &
                               & 1:NUMBER_OF_CLOSEST_CANDIDATES),PROJECTION_EXIT_TAG(data_point_idx), &
                               & PROJECTED_ELEMENT(data_point_idx),PROJECTED_DISTANCE(1,data_point_idx), &
-                              & PROJECTED_XI(:,data_point_idx),ERR,ERROR,*999)                    
+                              & PROJECTED_XI(:,data_point_idx),PROJECTION_VECTORS(:, data_point_idx), &
+			      & ERR,ERROR,*999)                    
                             PROJECTED_ELEMENT(data_point_idx)=DOMAIN%MAPPINGS%ELEMENTS%LOCAL_TO_GLOBAL_MAP(PROJECTED_ELEMENT( &
                               & data_point_idx)) !map the element number to global number
                           ENDIF
@@ -1298,7 +1310,7 @@ CONTAINS
                               & DATA_POINTS(data_point_idx)%position,CLOSEST_ELEMENTS(data_point_idx, &
                               & 1:NUMBER_OF_CLOSEST_CANDIDATES),PROJECTION_EXIT_TAG(data_point_idx), &
                               & PROJECTED_ELEMENT(data_point_idx),PROJECTED_DISTANCE(1,data_point_idx), &
-                              & PROJECTED_XI(:,data_point_idx),ERR,ERROR,*999)
+                              & PROJECTED_XI(:,data_point_idx),PROJECTION_VECTORS(:, data_point_idx),ERR,ERROR,*999)
                             PROJECTED_ELEMENT(data_point_idx)=DOMAIN%MAPPINGS%ELEMENTS%LOCAL_TO_GLOBAL_MAP(PROJECTED_ELEMENT( &
                               & data_point_idx)) !map the element number to global number
                           ENDIF
@@ -1345,6 +1357,12 @@ CONTAINS
                   & MY_COMPUTATIONAL_NODE+1),MPI_INTEGER,PROJECTION_EXIT_TAG,GLOBAL_NUMBER_OF_PROJECTED_POINTS, &
                   & GLOBAL_MPI_DISPLACEMENTS,MPI_INTEGER,COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPI_IERROR) !PROJECTION_EXIT_TAG
                 CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPI_IERROR,ERR,ERROR,*999)
+		DO ni=1,DATA_PROJECTION%COORDINATE_SYSTEM_DIMENSIONS
+		  CALL MPI_ALLGATHERV(PROJECTION_VECTORS(ni, SORTING_IND_2(start_idx:finish_idx)),GLOBAL_NUMBER_OF_PROJECTED_POINTS( &
+                    & MY_COMPUTATIONAL_NODE+1),MPI_DOUBLE_PRECISION,PROJECTION_VECTORS(ni,:),GLOBAL_NUMBER_OF_PROJECTED_POINTS, &
+                    & GLOBAL_MPI_DISPLACEMENTS,MPI_DOUBLE_PRECISION,COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPI_IERROR)  !PROJECTION_VECTORS
+                  CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPI_IERROR,ERR,ERROR,*999)
+		ENDDO
                 !assign projection information to projected points
                 DO data_point_idx=1,NUMBER_OF_DATA_POINTS
                   DATA_PROJECTION%DATA_PROJECTION_RESULTS(SORTING_IND_2(data_point_idx))%EXIT_TAG=PROJECTION_EXIT_TAG( &
@@ -1354,8 +1372,12 @@ CONTAINS
                   DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%DISTANCE=PROJECTED_DISTANCE(1,data_point_idx)
                   DATA_PROJECTION%DATA_PROJECTION_RESULTS(SORTING_IND_2(data_point_idx))%XI(1:DATA_PROJECTION%NUMBER_OF_XI)= &
                     & PROJECTED_XI(1:DATA_PROJECTION%NUMBER_OF_XI,data_point_idx)
+		  DATA_PROJECTION%DATA_PROJECTION_RESULTS(SORTING_IND_2(data_point_idx))%projectionVector( &
+                    & 1:DATA_PROJECTION%COORDINATE_SYSTEM_DIMENSIONS)=PROJECTION_VECTORS( &
+                    & 1:DATA_PROJECTION%COORDINATE_SYSTEM_DIMENSIONS,data_point_idx)
                 ENDDO !data_point_idx
                 PROJECTED_XI(:,SORTING_IND_2)=PROJECTED_XI
+		PROJECTION_VECTORS(:, SORTING_IND_2)=PROJECTION_VECTORS
                 PROJECTED_ELEMENT(SORTING_IND_2)=PROJECTED_ELEMENT       
                 IF(DATA_PROJECTION%PROJECTION_TYPE==DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE) THEN
                   DO data_point_idx=1,NUMBER_OF_DATA_POINTS          
@@ -1377,7 +1399,8 @@ CONTAINS
                         & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%EXIT_TAG,DATA_PROJECTION% &
                         & DATA_PROJECTION_RESULTS(data_point_idx)%ELEMENT_NUMBER,DATA_PROJECTION% &
                         & DATA_PROJECTION_RESULTS(data_point_idx)%ELEMENT_LINE_NUMBER,DATA_PROJECTION%DATA_PROJECTION_RESULTS( &
-                        & data_point_idx)%DISTANCE,DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI,ERR,ERROR,*999)
+                        & data_point_idx)%DISTANCE,DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI, &
+                        & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%projectionVector,ERR,ERROR,*999)
                     ENDDO
                   CASE (DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE) !find closest candidate faces
                     DO data_point_idx=1,NUMBER_OF_DATA_POINTS
@@ -1386,7 +1409,8 @@ CONTAINS
                         & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%EXIT_TAG,DATA_PROJECTION% &
                         & DATA_PROJECTION_RESULTS(data_point_idx)%ELEMENT_NUMBER,DATA_PROJECTION% &
                         & DATA_PROJECTION_RESULTS(data_point_idx)%ELEMENT_FACE_NUMBER,DATA_PROJECTION%DATA_PROJECTION_RESULTS( &
-                        & data_point_idx)%DISTANCE,DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI,ERR,ERROR,*999)
+                        & data_point_idx)%DISTANCE,DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI, &
+                        & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%projectionVector,ERR,ERROR,*999)
                     ENDDO
                   CASE (DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE) !find closest candidate elements        
                     SELECT CASE(DATA_PROJECTION%NUMBER_OF_XI)
@@ -1396,7 +1420,9 @@ CONTAINS
                             & DATA_POINTS(data_point_idx)%position,CLOSEST_ELEMENTS(data_point_idx,:),DATA_PROJECTION% &
                             & DATA_PROJECTION_RESULTS(data_point_idx)%EXIT_TAG,DATA_PROJECTION%DATA_PROJECTION_RESULTS( &
                             & data_point_idx)%ELEMENT_NUMBER, DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%DISTANCE, &
-                            & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI,ERR,ERROR,*999)
+                            & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI, &
+                            & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%projectionVector,&
+                            & ERR,ERROR,*999)
                         ENDDO
                       CASE (2) !2D mesh
                         DO data_point_idx=1,NUMBER_OF_DATA_POINTS
@@ -1404,7 +1430,9 @@ CONTAINS
                             & DATA_POINTS(data_point_idx)%position,CLOSEST_ELEMENTS(data_point_idx,:),DATA_PROJECTION% &
                             & DATA_PROJECTION_RESULTS(data_point_idx)%EXIT_TAG,DATA_PROJECTION%DATA_PROJECTION_RESULTS( &
                             & data_point_idx)%ELEMENT_NUMBER,DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%DISTANCE, &
-                            & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI,ERR,ERROR,*999)
+                            & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI, &
+                            & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%projectionVector, &
+			    & ERR,ERROR,*999)
                         ENDDO
                       CASE (3) !3D mesh
                         DO data_point_idx=1,NUMBER_OF_DATA_POINTS
@@ -1412,7 +1440,9 @@ CONTAINS
                             & DATA_POINTS(data_point_idx)%position,CLOSEST_ELEMENTS(data_point_idx,:),DATA_PROJECTION% &
                             & DATA_PROJECTION_RESULTS(data_point_idx)%EXIT_TAG,DATA_PROJECTION%DATA_PROJECTION_RESULTS( &
                             & data_point_idx)%ELEMENT_NUMBER,DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%DISTANCE, &
-                            & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI,ERR,ERROR,*999)
+                            & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%XI, &
+                            & DATA_PROJECTION%DATA_PROJECTION_RESULTS(data_point_idx)%projectionVector, &
+ 			    & ERR,ERROR,*999)
                         ENDDO
                       CASE DEFAULT
                         CALL FLAG_ERROR("Data projection number of xi is invalid",ERR,ERROR,*999)
@@ -1453,11 +1483,12 @@ CONTAINS
     IF(ALLOCATED(PROJECTED_FACE)) DEALLOCATE(PROJECTED_FACE)
     IF(ALLOCATED(PROJECTED_DISTANCE)) DEALLOCATE(PROJECTED_DISTANCE)
     IF(ALLOCATED(PROJECTED_XI)) DEALLOCATE(PROJECTED_XI)
+    IF(ALLOCATED(PROJECTION_VECTORS)) DEALLOCATE(PROJECTION_VECTORS)
     IF(ALLOCATED(SORTING_IND_2)) DEALLOCATE(SORTING_IND_2)
     IF(ALLOCATED(GLOBAL_CLOSEST_DISTANCES)) DEALLOCATE(GLOBAL_CLOSEST_DISTANCES)
     IF(ALLOCATED(SORTING_IND_1)) DEALLOCATE(SORTING_IND_1)
 
-    EXITS("DATA_PROJECTION_DATA_POINTS_PROJECTION_EVALUATE")
+    EXITS("DataProjection_DataPointsProjectionEvaluate")
     RETURN
 999 IF(ALLOCATED(CANDIDATE_ELEMENTS)) DEALLOCATE(CANDIDATE_ELEMENTS)
     IF(ALLOCATED(CANDIDATE_FACES)) DEALLOCATE(CANDIDATE_FACES)
@@ -1473,13 +1504,14 @@ CONTAINS
     IF(ALLOCATED(PROJECTED_FACE)) DEALLOCATE(PROJECTED_FACE)
     IF(ALLOCATED(PROJECTED_DISTANCE)) DEALLOCATE(PROJECTED_DISTANCE)
     IF(ALLOCATED(PROJECTED_XI)) DEALLOCATE(PROJECTED_XI)
+    IF(ALLOCATED(PROJECTION_VECTORS)) DEALLOCATE(PROJECTION_VECTORS)
     IF(ALLOCATED(SORTING_IND_2)) DEALLOCATE(SORTING_IND_2)
     IF(ALLOCATED(GLOBAL_CLOSEST_DISTANCES)) DEALLOCATE(GLOBAL_CLOSEST_DISTANCES)
     IF(ALLOCATED(SORTING_IND_1)) DEALLOCATE(SORTING_IND_1)
-998 ERRORSEXITS("DATA_PROJECTION_DATA_POINTS_PROJECTION_EVALUATE",ERR,ERROR)
+998 ERRORSEXITS("DataProjection_DataPointsProjectionEvaluate",ERR,ERROR)
     RETURN 1
 
-  END SUBROUTINE DATA_PROJECTION_DATA_POINTS_PROJECTION_EVALUATE
+  END SUBROUTINE DataProjection_DataPointsProjectionEvaluate
   
   !
   !================================================================================================================================
@@ -1552,7 +1584,7 @@ CONTAINS
   !
   
   !>Gets the maximum iteration update for a data projection.
-  SUBROUTINE DATA_PROJECTION_MAXIMUM_ITERATION_UPDATE_GET(DATA_PROJECTION,MAXIMUM_ITERATION_UPDATE,ERR,ERROR,*)
+  SUBROUTINE DataProjection_MaximumInterationUpdateGet(DATA_PROJECTION,MAXIMUM_ITERATION_UPDATE,ERR,ERROR,*)
 
     !Argument variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION !<A pointer to the data projection to get the maximum iteration update for
@@ -1560,7 +1592,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables    
-    ENTERS("DATA_PROJECTION_MAXIMUM_ITERATION_UPDATE_GET",ERR,ERROR,*999)
+    ENTERS("DataProjection_MaximumInterationUpdateGet",ERR,ERROR,*999)
 
     IF(ASSOCIATED(DATA_PROJECTION)) THEN
       IF(DATA_PROJECTION%DATA_PROJECTION_FINISHED) THEN
@@ -1572,19 +1604,19 @@ CONTAINS
       CALL FLAG_ERROR("Data projection is not associated.",ERR,ERROR,*999)
     ENDIF
     
-    EXITS("DATA_PROJECTION_MAXIMUM_ITERATION_UPDATE_GET")
+    EXITS("DataProjection_MaximumInterationUpdateGet")
     RETURN
-999 ERRORSEXITS("DATA_PROJECTION_MAXIMUM_ITERATION_UPDATE_GET",ERR,ERROR)    
+999 ERRORSEXITS("DataProjection_MaximumInterationUpdateGet",ERR,ERROR)    
     RETURN 1
 
-  END SUBROUTINE DATA_PROJECTION_MAXIMUM_ITERATION_UPDATE_GET
+  END SUBROUTINE DataProjection_MaximumInterationUpdateGet
 
   !
   !================================================================================================================================
   !
   
   !>Sets the maximum iteration update for a data projection.
-  SUBROUTINE DATA_PROJECTION_MAXIMUM_ITERATION_UPDATE_SET(DATA_PROJECTION,MAXIMUM_ITERATION_UPDATE,ERR,ERROR,*)
+  SUBROUTINE DataProjection_MaximumInterationUpdateSet(DATA_PROJECTION,MAXIMUM_ITERATION_UPDATE,ERR,ERROR,*)
 
     !Argument variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION !<A pointer to the data projection to set the maximum iteration update for
@@ -1593,7 +1625,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     
-    ENTERS("DATA_PROJECTION_MAXIMUM_ITERATION_UPDATE_SET",ERR,ERROR,*999)
+    ENTERS("DataProjection_MaximumInterationUpdateSet",ERR,ERROR,*999)
 
     IF(ASSOCIATED(DATA_PROJECTION)) THEN
       IF(DATA_PROJECTION%DATA_PROJECTION_FINISHED) THEN
@@ -1609,12 +1641,12 @@ CONTAINS
       CALL FLAG_ERROR("Data projection is not associated.",ERR,ERROR,*999)
     ENDIF
     
-    EXITS("DATA_PROJECTION_MAXIMUM_ITERATION_UPDATE_SET")
+    EXITS("DataProjection_MaximumInterationUpdateSet")
     RETURN
-999 ERRORSEXITS("DATA_PROJECTION_MAXIMUM_ITERATION_UPDATE_SET",ERR,ERROR)    
+999 ERRORSEXITS("DataProjection_MaximumInterationUpdateSet",ERR,ERROR)    
     RETURN 1
 
-  END SUBROUTINE DATA_PROJECTION_MAXIMUM_ITERATION_UPDATE_SET
+  END SUBROUTINE DataProjection_MaximumInterationUpdateSet
   
 
   !
@@ -1622,7 +1654,7 @@ CONTAINS
   !
   
   !>Gets the maximum number of iterations for a data projection.
-  SUBROUTINE DATA_PROJECTION_MAXIMUM_NUMBER_OF_ITERATIONS_GET(DATA_PROJECTION,MAXIMUM_NUMBER_OF_ITERATIONS,ERR,ERROR,*)
+  SUBROUTINE DataProjection_MaximumNumberOfIterationsGet(DATA_PROJECTION,MAXIMUM_NUMBER_OF_ITERATIONS,ERR,ERROR,*)
 
     !Argument variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION !<A pointer to the data projection to get the maximum number of iterations for
@@ -1631,7 +1663,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     
-    ENTERS("DATA_PROJECTION_MAXIMUM_NUMBER_OF_ITERATIONS_GET",ERR,ERROR,*999)
+    ENTERS("DataProjection_MaximumNumberOfIterationsGet",ERR,ERROR,*999)
 
     IF(ASSOCIATED(DATA_PROJECTION)) THEN
       IF(DATA_PROJECTION%DATA_PROJECTION_FINISHED) THEN      
@@ -1643,19 +1675,19 @@ CONTAINS
       CALL FLAG_ERROR("Data projection is not associated.",ERR,ERROR,*999)
     ENDIF
     
-    EXITS("DATA_PROJECTION_MAXIMUM_NUMBER_OF_ITERATIONS_GET")
+    EXITS("DataProjection_MaximumNumberOfIterationsGet")
     RETURN
-999 ERRORSEXITS("DATA_PROJECTION_MAXIMUM_NUMBER_OF_ITERATIONS_GET",ERR,ERROR)    
+999 ERRORSEXITS("DataProjection_MaximumNumberOfIterationsGet",ERR,ERROR)    
     RETURN 1
 
-  END SUBROUTINE DATA_PROJECTION_MAXIMUM_NUMBER_OF_ITERATIONS_GET
+  END SUBROUTINE DataProjection_MaximumNumberOfIterationsGet
 
   !
   !================================================================================================================================
   !
   
   !>Sets the maximum number of iterations for a data projection.
-  SUBROUTINE DATA_PROJECTION_MAXIMUM_NUMBER_OF_ITERATIONS_SET(DATA_PROJECTION,MAXIMUM_NUMBER_OF_ITERATIONS,ERR,ERROR,*)
+  SUBROUTINE DataProjection_MaximumNumberOfIterationsSet(DATA_PROJECTION,MAXIMUM_NUMBER_OF_ITERATIONS,ERR,ERROR,*)
 
     !Argument variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION !<A pointer to the data projection to set the maximum number of iterations for
@@ -1664,7 +1696,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     
-    ENTERS("DATA_PROJECTION_MAXIMUM_NUMBER_OF_ITERATIONS_SET",ERR,ERROR,*999)
+    ENTERS("DataProjection_MaximumNumberOfIterationsSet",ERR,ERROR,*999)
 
     IF(ASSOCIATED(DATA_PROJECTION)) THEN
       IF(DATA_PROJECTION%DATA_PROJECTION_FINISHED) THEN
@@ -1680,12 +1712,12 @@ CONTAINS
       CALL FLAG_ERROR("Data projection is not associated.",ERR,ERROR,*999)
     ENDIF
     
-    EXITS("DATA_PROJECTION_MAXIMUM_NUMBER_OF_ITERATIONS_SET")
+    EXITS("DataProjection_MaximumNumberOfIterationsSet")
     RETURN
-999 ERRORSEXITS("DATA_PROJECTION_MAXIMUM_NUMBER_OF_ITERATIONS_SET",ERR,ERROR)    
+999 ERRORSEXITS("DataProjection_MaximumNumberOfIterationsSet",ERR,ERROR)    
     RETURN 1
 
-  END SUBROUTINE DATA_PROJECTION_MAXIMUM_NUMBER_OF_ITERATIONS_SET
+  END SUBROUTINE DataProjection_MaximumNumberOfIterationsSet
   
   !
   !================================================================================================================================
@@ -1693,7 +1725,7 @@ CONTAINS
   
   !>Find the projection of a data point onto 1D elements
   SUBROUTINE DATA_PROJECTION_NEWTON_ELEMENTS_EVALUATE_1(DATA_PROJECTION,INTERPOLATED_POINT,POINT_VALUES,CANDIDATE_ELEMENTS, &
-    & PROJECTION_EXIT_TAG,PROJECTION_ELEMENT_NUMBER,PROJECTION_DISTANCE,PROJECTION_XI,ERR,ERROR,*)
+    & PROJECTION_EXIT_TAG,PROJECTION_ELEMENT_NUMBER,PROJECTION_DISTANCE,PROJECTION_XI,PROJECTION_VECTOR,ERR,ERROR,*)
     !Argument variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION !<Data projection problem to evaluate
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: INTERPOLATED_POINT    
@@ -1703,6 +1735,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: PROJECTION_ELEMENT_NUMBER
     REAL(DP), INTENT(OUT) :: PROJECTION_DISTANCE
     REAL(DP), INTENT(OUT) :: PROJECTION_XI(1)
+    REAL(DP), INTENT(OUT) :: PROJECTION_VECTOR(3)
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
    
@@ -1712,8 +1745,8 @@ CONTAINS
     INTEGER(INTG) :: REGION_DIMENSIONS
     INTEGER(INTG) :: BOUND,EXIT_TAG
     REAL(DP) :: XI(1),XI_NEW(1),XI_UPDATE(1),XI_UPDATE_NORM !<xi
-    REAL(DP) :: RELATIVE_TOLERANCE,ABSOLUTE_TOLERANCE !<tolerances
-    REAL(DP) :: DISTANCE_VECTOR(3),FUNCTION_VALUE,FUNCTION_VALUE_NEW
+    REAL(DP) :: DISTANCE_VECTOR(3),RELATIVE_TOLERANCE,ABSOLUTE_TOLERANCE !<tolerances
+    REAL(DP) :: FUNCTION_VALUE,FUNCTION_VALUE_NEW
     REAL(DP) :: FUNCTION_GRADIENT,FUNCTION_HESSIAN
     REAL(DP) :: MAXIMUM_DELTA,MINIMUM_DELTA,DELTA !<trust region size
     REAL(DP) :: PREDICTED_REDUCTION,PREDICTION_ACCURACY
@@ -1823,6 +1856,7 @@ CONTAINS
             PROJECTION_ELEMENT_NUMBER=ELEMENT_NUMBER
             PROJECTION_DISTANCE=DSQRT(FUNCTION_VALUE)
             PROJECTION_XI=XI
+            PROJECTION_VECTOR=DISTANCE_VECTOR
           ENDIF
         ENDDO !ne
       ELSE
@@ -1845,7 +1879,7 @@ CONTAINS
   
   !>Find the projection of a data point onto 2D elements
   SUBROUTINE DATA_PROJECTION_NEWTON_ELEMENTS_EVALUATE_2(DATA_PROJECTION,INTERPOLATED_POINT,POINT_VALUES,CANDIDATE_ELEMENTS, &
-    & PROJECTION_EXIT_TAG,PROJECTION_ELEMENT_NUMBER,PROJECTION_DISTANCE,PROJECTION_XI,ERR,ERROR,*)
+    & PROJECTION_EXIT_TAG,PROJECTION_ELEMENT_NUMBER,PROJECTION_DISTANCE,PROJECTION_XI,PROJECTION_VECTOR,ERR,ERROR,*)
     !Argument variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION !<Data projection problem to evaluate
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: INTERPOLATED_POINT    
@@ -1855,6 +1889,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: PROJECTION_ELEMENT_NUMBER
     REAL(DP), INTENT(OUT) :: PROJECTION_DISTANCE
     REAL(DP), INTENT(OUT) :: PROJECTION_XI(2)
+    REAL(DP), INTENT(OUT) :: PROJECTION_VECTOR(3)
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
    
@@ -1865,8 +1900,8 @@ CONTAINS
     INTEGER(INTG) :: MESH_COMPONENT_NUMBER,REGION_DIMENSIONS
     INTEGER(INTG) :: BOUND(2),EXIT_TAG
     REAL(DP) :: XI(2),XI_NEW(2),XI_UPDATE(2),XI_UPDATE_NORM !<xi
-    REAL(DP) :: RELATIVE_TOLERANCE,ABSOLUTE_TOLERANCE !<tolerances
-    REAL(DP) :: DISTANCE_VECTOR(3),FUNCTION_VALUE,FUNCTION_VALUE_NEW
+    REAL(DP) :: DISTANCE_VECTOR(3),RELATIVE_TOLERANCE,ABSOLUTE_TOLERANCE !<tolerances
+    REAL(DP) :: FUNCTION_VALUE,FUNCTION_VALUE_NEW
     REAL(DP) :: FUNCTION_GRADIENT(2),FUNCTION_GRADIENT_NORM
     REAL(DP) :: FUNCTION_HESSIAN(2,2),HESSIAN_DIAGONAL(2)
     REAL(DP) :: TEMP1,TEMP2,DET,EIGEN_MIN,EIGEN_MAX,EIGEN_SHIFT
@@ -2035,6 +2070,7 @@ CONTAINS
             PROJECTION_ELEMENT_NUMBER=ELEMENT_NUMBER
             PROJECTION_DISTANCE=DSQRT(FUNCTION_VALUE)
             PROJECTION_XI=XI
+	    PROJECTION_VECTOR=DISTANCE_VECTOR
           ENDIF
         ENDDO !ne
       ELSE
@@ -2057,7 +2093,7 @@ CONTAINS
   
   !>Find the projection of a data point onto 3D elements
   SUBROUTINE DATA_PROJECTION_NEWTON_ELEMENTS_EVALUATE_3(DATA_PROJECTION,INTERPOLATED_POINT,POINT_VALUES,CANDIDATE_ELEMENTS, &
-    & PROJECTION_EXIT_TAG,PROJECTION_ELEMENT_NUMBER,PROJECTION_DISTANCE,PROJECTION_XI,ERR,ERROR,*)
+    & PROJECTION_EXIT_TAG,PROJECTION_ELEMENT_NUMBER,PROJECTION_DISTANCE,PROJECTION_XI,PROJECTION_VECTOR,ERR,ERROR,*)
     !Argument variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION !<Data projection problem to evaluate
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: INTERPOLATED_POINT    
@@ -2067,6 +2103,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: PROJECTION_ELEMENT_NUMBER
     REAL(DP), INTENT(OUT) :: PROJECTION_DISTANCE
     REAL(DP), INTENT(OUT) :: PROJECTION_XI(3)
+    REAL(DP), INTENT(OUT) :: PROJECTION_VECTOR(3)
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
    
@@ -2077,8 +2114,8 @@ CONTAINS
     INTEGER(INTG) :: MESH_COMPONENT_NUMBER
     INTEGER(INTG) :: NBOUND,BOUND(3),EXIT_TAG
     REAL(DP) :: XI(3),XI_NEW(3),XI_UPDATE(3),XI_UPDATE_NORM !<xi
-    REAL(DP) :: RELATIVE_TOLERANCE,ABSOLUTE_TOLERANCE !<tolerances
-    REAL(DP) :: DISTANCE_VECTOR(3),FUNCTION_VALUE,FUNCTION_VALUE_NEW
+    REAL(DP) :: DISTANCE_VECTOR(3),RELATIVE_TOLERANCE,ABSOLUTE_TOLERANCE !<tolerances
+    REAL(DP) :: FUNCTION_VALUE,FUNCTION_VALUE_NEW
     REAL(DP) :: FUNCTION_GRADIENT(3),FUNCTION_GRADIENT_NORM,FUNCTION_GRADIENT2(2)
     REAL(DP) :: FUNCTION_HESSIAN(3,3),HESSIAN_DIAGONAL(3),FUNCTION_HESSIAN2(2,2),HESSIAN_DIAGONAL2(2)
     REAL(DP) :: TEMP1,TEMP2,TEMP3,TEMP4,DET,TRACE,TRACE2,EIGEN_MIN,EIGEN_MAX,EIGEN_SHIFT    
@@ -2350,6 +2387,7 @@ CONTAINS
             PROJECTION_ELEMENT_NUMBER=ELEMENT_NUMBER
             PROJECTION_DISTANCE=DSQRT(FUNCTION_VALUE)
             PROJECTION_XI=XI
+	    PROJECTION_VECTOR=DISTANCE_VECTOR
           ENDIF
         ENDDO !ne
       ELSE
@@ -2373,7 +2411,7 @@ CONTAINS
   !>Find the projection of a data point onto element faces (slight difference to DATA_PROJECTION_NEWTON_ELEMENTS_EVALUATE_2)
   SUBROUTINE DATA_PROJECTION_NEWTON_FACES_EVALUATE(DATA_PROJECTION,INTERPOLATED_POINT,POINT_VALUES,CANDIDATE_ELEMENTS, &
     & CANDIDATE_ELEMENT_FACES,PROJECTION_EXIT_TAG,PROJECTION_ELEMENT_NUMBER,PROJECTION_ELEMENT_FACE_NUMBER,PROJECTION_DISTANCE, &
-    & PROJECTION_XI,ERR,ERROR,*)
+    & PROJECTION_XI,PROJECTION_VECTOR,ERR,ERROR,*)
     !Argument variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION !<Data projection problem to evaluate
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: INTERPOLATED_POINT    
@@ -2385,6 +2423,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: PROJECTION_ELEMENT_FACE_NUMBER
     REAL(DP), INTENT(OUT) :: PROJECTION_DISTANCE
     REAL(DP), INTENT(OUT) :: PROJECTION_XI(2)
+    REAL(DP), INTENT(OUT) :: PROJECTION_VECTOR(3)
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
    
@@ -2395,8 +2434,8 @@ CONTAINS
     INTEGER(INTG) :: MESH_COMPONENT_NUMBER,REGION_DIMENSIONS
     INTEGER(INTG) :: BOUND(2),EXIT_TAG
     REAL(DP) :: XI(2),XI_NEW(2),XI_UPDATE(2),XI_UPDATE_NORM !<xi
-    REAL(DP) :: RELATIVE_TOLERANCE,ABSOLUTE_TOLERANCE !<tolerances
-    REAL(DP) :: DISTANCE_VECTOR(3),FUNCTION_VALUE,FUNCTION_VALUE_NEW
+    REAL(DP) :: DISTANCE_VECTOR(3),RELATIVE_TOLERANCE,ABSOLUTE_TOLERANCE !<tolerances
+    REAL(DP) :: FUNCTION_VALUE,FUNCTION_VALUE_NEW
     REAL(DP) :: FUNCTION_GRADIENT(2),FUNCTION_GRADIENT_NORM
     REAL(DP) :: FUNCTION_HESSIAN(2,2),HESSIAN_DIAGONAL(2)
     REAL(DP) :: TEMP1,TEMP2,DET,EIGEN_MIN,EIGEN_MAX,EIGEN_SHIFT
@@ -2527,10 +2566,14 @@ CONTAINS
               DISTANCE_VECTOR=POINT_VALUES-INTERPOLATED_POINT%VALUES(:,NO_PART_DERIV)
               FUNCTION_VALUE_NEW=DOT_PRODUCT(DISTANCE_VECTOR(1:REGION_DIMENSIONS),DISTANCE_VECTOR(1:REGION_DIMENSIONS))
               CONVERGED=CONVERGED.AND.(DABS(FUNCTION_VALUE_NEW-FUNCTION_VALUE)/(1.0_DP+FUNCTION_VALUE)<RELATIVE_TOLERANCE) !second half of the convergence test (before collision detection)
-              IF(CONVERGED) EXIT !converged: exit inner loop first
+              IF(CONVERGED) THEN
+                FUNCTION_VALUE=FUNCTION_VALUE_NEW
+                EXIT !converged: exit inner loop first
+              ENDIF
               IF((FUNCTION_VALUE_NEW-FUNCTION_VALUE)>ABSOLUTE_TOLERANCE) THEN !bad model: reduce step size
                 IF(DELTA<=MINIMUM_DELTA) THEN !something went wrong, MINIMUM_DELTA too large? not likely to happen if MINIMUM_DELTA is small
                   EXIT_TAG=DATA_PROJECTION_EXIT_TAG_MAX_ITERATION ! it will get stucked!!
+                  FUNCTION_VALUE=FUNCTION_VALUE_NEW
                   EXIT main_loop
                 ENDIF
                 DELTA=DMAX1(MINIMUM_DELTA,0.25_DP*DELTA)
@@ -2542,13 +2585,16 @@ CONTAINS
                 IF(PREDICTION_ACCURACY<0.01_DP) THEN !bad model: reduce region size
                   IF(DELTA<=MINIMUM_DELTA) THEN !something went wrong, MINIMUM_DELTA too large? not likely to happen if MINIMUM_DELTA is small
                     EXIT_TAG=DATA_PROJECTION_EXIT_TAG_MAX_ITERATION ! it will get stucked!!
+                    FUNCTION_VALUE=FUNCTION_VALUE_NEW
                     EXIT main_loop
                   ENDIF
                   DELTA=DMAX1(MINIMUM_DELTA,0.5_DP*DELTA)
                 ELSEIF(PREDICTION_ACCURACY>0.9_DP.AND.PREDICTION_ACCURACY<1.1_DP) THEN !good model: increase region size
                   DELTA=DMIN1(MAXIMUM_DELTA,2.0_DP*DELTA)
+                  FUNCTION_VALUE=FUNCTION_VALUE_NEW
                   EXIT
                 ELSE !ok model: keep the current region size
+                  FUNCTION_VALUE=FUNCTION_VALUE_NEW
                   EXIT
                 ENDIF
               ENDIF
@@ -2569,6 +2615,7 @@ CONTAINS
             PROJECTION_ELEMENT_FACE_NUMBER=ELEMENT_FACE_NUMBER            
             PROJECTION_DISTANCE=DSQRT(FUNCTION_VALUE)
             PROJECTION_XI=XI
+	    PROJECTION_VECTOR=DISTANCE_VECTOR
           ENDIF
         ENDDO !ne
       ELSE
@@ -2592,7 +2639,7 @@ CONTAINS
   !>Find the projection of a data point onto element lines (slight difference to DATA_PROJECTION_NEWTON_ELEMENTS_EVALUATE_1)
   SUBROUTINE DATA_PROJECTION_NEWTON_LINES_EVALUATE(DATA_PROJECTION,INTERPOLATED_POINT,POINT_VALUES,CANDIDATE_ELEMENTS, &
     & CANDIDATE_ELEMENT_LINES,PROJECTION_EXIT_TAG,PROJECTION_ELEMENT_NUMBER,PROJECTION_ELEMENT_LINE_NUMBER,PROJECTION_DISTANCE, &
-    & PROJECTION_XI,ERR,ERROR,*)
+    & PROJECTION_XI,PROJECTION_VECTOR,ERR,ERROR,*)
     !Argument variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION !<Data projection problem to evaluate
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: INTERPOLATED_POINT    
@@ -2604,6 +2651,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: PROJECTION_ELEMENT_LINE_NUMBER
     REAL(DP), INTENT(OUT) :: PROJECTION_DISTANCE
     REAL(DP), INTENT(OUT) :: PROJECTION_XI(1)
+    REAL(DP), INTENT(OUT) :: PROJECTION_VECTOR(3)
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
    
@@ -2613,8 +2661,8 @@ CONTAINS
     INTEGER(INTG) :: REGION_DIMENSIONS
     INTEGER(INTG) :: BOUND,EXIT_TAG
     REAL(DP) :: XI(1),XI_NEW(1),XI_UPDATE(1),XI_UPDATE_NORM !<xi
-    REAL(DP) :: RELATIVE_TOLERANCE,ABSOLUTE_TOLERANCE !<tolerances
-    REAL(DP) :: DISTANCE_VECTOR(3),FUNCTION_VALUE,FUNCTION_VALUE_NEW
+    REAL(DP) :: DISTANCE_VECTOR(3),RELATIVE_TOLERANCE,ABSOLUTE_TOLERANCE !<tolerances
+    REAL(DP) :: FUNCTION_VALUE,FUNCTION_VALUE_NEW
     REAL(DP) :: FUNCTION_GRADIENT,FUNCTION_HESSIAN
     REAL(DP) :: MAXIMUM_DELTA,MINIMUM_DELTA,DELTA !<trust region size
     REAL(DP) :: PREDICTED_REDUCTION,PREDICTION_ACCURACY
@@ -2728,6 +2776,7 @@ CONTAINS
             PROJECTION_ELEMENT_LINE_NUMBER=ELEMENT_LINE_NUMBER
             PROJECTION_DISTANCE=DSQRT(FUNCTION_VALUE)
             PROJECTION_XI=XI
+	    PROJECTION_VECTOR=DISTANCE_VECTOR
           ENDIF
         ENDDO !ne
       ELSE
@@ -2749,7 +2798,7 @@ CONTAINS
   !
   
   !>Gets the number of closest elements for a data projection.
-  SUBROUTINE DATA_PROJECTION_NUMBER_OF_CLOSEST_ELEMENTS_GET(DATA_PROJECTION,NUMBER_OF_CLOSEST_ELEMENTS,ERR,ERROR,*)
+  SUBROUTINE DataProjection_NumberOfClosestElementsGet(DATA_PROJECTION,NUMBER_OF_CLOSEST_ELEMENTS,ERR,ERROR,*)
 
     !Argument variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION !<A pointer to the data projection to get the number of closest elements for
@@ -2758,7 +2807,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     
-    ENTERS("DATA_PROJECTION_NUMBER_OF_CLOSEST_ELEMENTS_GET",ERR,ERROR,*999)
+    ENTERS("DataProjection_NumberOfClosestElementsGet",ERR,ERROR,*999)
 
     IF(ASSOCIATED(DATA_PROJECTION)) THEN
       IF(DATA_PROJECTION%DATA_PROJECTION_FINISHED) THEN
@@ -2770,19 +2819,19 @@ CONTAINS
       CALL FLAG_ERROR("Data projection is not associated.",ERR,ERROR,*999)
     ENDIF
     
-    EXITS("DATA_PROJECTION_NUMBER_OF_CLOSEST_ELEMENTS_GET")
+    EXITS("DataProjection_NumberOfClosestElementsGet")
     RETURN
-999 ERRORSEXITS("DATA_PROJECTION_NUMBER_OF_CLOSEST_ELEMENTS_GET",ERR,ERROR)    
+999 ERRORSEXITS("DataProjection_NumberOfClosestElementsGet",ERR,ERROR)    
     RETURN 1
 
-  END SUBROUTINE DATA_PROJECTION_NUMBER_OF_CLOSEST_ELEMENTS_GET
+  END SUBROUTINE DataProjection_NumberOfClosestElementsGet
 
   !
   !================================================================================================================================
   !
   
   !>Sets the number of closest elements for a data projection.
-  SUBROUTINE DATA_PROJECTION_NUMBER_OF_CLOSEST_ELEMENTS_SET(DATA_PROJECTION,NUMBER_OF_CLOSEST_ELEMENTS,ERR,ERROR,*)
+  SUBROUTINE DataProjection_NumberOfClosestElementsSet(DATA_PROJECTION,NUMBER_OF_CLOSEST_ELEMENTS,ERR,ERROR,*)
 
     !Argument variables
     TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION !<A pointer to the data projection to set the number of closest elements for
@@ -2791,7 +2840,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     
-    ENTERS("DATA_PROJECTION_NUMBER_OF_CLOSEST_ELEMENTS_SET",ERR,ERROR,*999)
+    ENTERS("DataProjection_NumberOfClosestElementsSet",ERR,ERROR,*999)
 
     IF(ASSOCIATED(DATA_PROJECTION)) THEN
       IF(DATA_PROJECTION%DATA_PROJECTION_FINISHED) THEN
@@ -2807,12 +2856,12 @@ CONTAINS
       CALL FLAG_ERROR("Data projection is not associated.",ERR,ERROR,*999)
     ENDIF
     
-    EXITS("DATA_PROJECTION_NUMBER_OF_CLOSEST_ELEMENTS_SET")
+    EXITS("DataProjection_NumberOfClosestElementsSet")
     RETURN
-999 ERRORSEXITS("DATA_PROJECTION_NUMBER_OF_CLOSEST_ELEMENTS_SET",ERR,ERROR)    
+999 ERRORSEXITS("DataProjection_NumberOfClosestElementsSet",ERR,ERROR)    
     RETURN 1
 
-  END SUBROUTINE DATA_PROJECTION_NUMBER_OF_CLOSEST_ELEMENTS_SET
+  END SUBROUTINE DataProjection_NumberOfClosestElementsSet
   
   !
   !================================================================================================================================
@@ -3182,7 +3231,7 @@ CONTAINS
     IF(ASSOCIATED(DATA_PROJECTION)) THEN
       IF(DATA_PROJECTION%DATA_PROJECTION_FINISHED) THEN
         IF(DATA_PROJECTION%DATA_PROJECTION_PROJECTED) THEN
-          CALL DATA_PROJECTION_DATA_POINTS_GLOBAL_NUMBER_GET(DATA_PROJECTION,DATA_POINT_USER_NUMBER, &
+          CALL DataProjection_DataPointGlobalNumberGet(DATA_PROJECTION,DATA_POINT_USER_NUMBER, &
             & DATA_POINT_GLOBAL_NUMBER,ERR,ERROR,*999)
           PROJECTION_DISTANCE=DATA_PROJECTION%DATA_PROJECTION_RESULTS(DATA_POINT_GLOBAL_NUMBER)%DISTANCE
         ELSE
@@ -3347,7 +3396,7 @@ CONTAINS
     IF(ASSOCIATED(DATA_PROJECTION)) THEN
       IF(DATA_PROJECTION%DATA_PROJECTION_FINISHED) THEN
         IF(DATA_PROJECTION%DATA_PROJECTION_PROJECTED) THEN
-          CALL DATA_PROJECTION_DATA_POINTS_GLOBAL_NUMBER_GET(DATA_PROJECTION,DATA_POINT_USER_NUMBER, &
+          CALL DataProjection_DataPointGlobalNumberGet(DATA_PROJECTION,DATA_POINT_USER_NUMBER, &
             & DATA_POINT_GLOBAL_NUMBER,ERR,ERROR,*999)
           PROJECTION_ELEMENT_NUMBER=DATA_PROJECTION%DATA_PROJECTION_RESULTS(DATA_POINT_GLOBAL_NUMBER)%ELEMENT_NUMBER
         ELSE
@@ -3372,7 +3421,7 @@ CONTAINS
   !
   
   !>Gets the projection element face number for a data point identified by a given global number.
-  SUBROUTINE DATA_PROJECTION_RESULT_ELEMENT_FACE_NUMBER_GET(DATA_PROJECTION,DATA_POINT_USER_NUMBER,PROJECTION_ELEMENT_FACE_NUMBER &
+  SUBROUTINE DataProjection_ResultElementFaceNumberGet(DATA_PROJECTION,DATA_POINT_USER_NUMBER,PROJECTION_ELEMENT_FACE_NUMBER &
     & ,ERR,ERROR,*)
 
     !Argument variables
@@ -3384,14 +3433,14 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: DATA_POINT_GLOBAL_NUMBER
     
-    ENTERS("DATA_PROJECTION_RESULT_ELEMENT_FACE_NUMBER_GET",ERR,ERROR,*999)
+    ENTERS("DataProjection_ResultElementFaceNumberGet",ERR,ERROR,*999)
 
     IF(ASSOCIATED(DATA_PROJECTION)) THEN
       IF(DATA_PROJECTION%DATA_PROJECTION_FINISHED) THEN
         IF(DATA_PROJECTION%DATA_PROJECTION_PROJECTED) THEN
           ! Check if boundary faces projection type was set
           IF(DATA_PROJECTION%PROJECTION_TYPE==DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE) THEN
-            CALL DATA_PROJECTION_DATA_POINTS_GLOBAL_NUMBER_GET(DATA_PROJECTION,DATA_POINT_USER_NUMBER, &
+            CALL DataProjection_DataPointGlobalNumberGet(DATA_PROJECTION,DATA_POINT_USER_NUMBER, &
               & DATA_POINT_GLOBAL_NUMBER,ERR,ERROR,*999)
             PROJECTION_ELEMENT_FACE_NUMBER=DATA_PROJECTION%DATA_PROJECTION_RESULTS(DATA_POINT_GLOBAL_NUMBER)%ELEMENT_FACE_NUMBER
           ELSE
@@ -3408,19 +3457,19 @@ CONTAINS
       CALL FLAG_ERROR("Data projection is not associated.",ERR,ERROR,*999)
     ENDIF
     
-    EXITS("DATA_PROJECTION_RESULT_ELEMENT_FACE_NUMBER_GET")
+    EXITS("DataProjection_ResultElementFaceNumberGet")
     RETURN
-999 ERRORSEXITS("DATA_PROJECTION_RESULT_ELEMENT_FACE_NUMBER_GET",ERR,ERROR)    
+999 ERRORSEXITS("DataProjection_ResultElementFaceNumberGet",ERR,ERROR)    
     RETURN 1
 
-  END SUBROUTINE DATA_PROJECTION_RESULT_ELEMENT_FACE_NUMBER_GET
+  END SUBROUTINE DataProjection_ResultElementFaceNumberGet
   
   !
   !================================================================================================================================
   !
   
   !>Gets the projection element line number for a data point identified by a given global number.
-  SUBROUTINE DATA_PROJECTION_RESULT_ELEMENT_LINE_NUMBER_GET(DATA_PROJECTION,DATA_POINT_USER_NUMBER,PROJECTION_ELEMENT_LINE_NUMBER &
+  SUBROUTINE DataProjection_ResultElementLineNumberGet(DATA_PROJECTION,DATA_POINT_USER_NUMBER,PROJECTION_ELEMENT_LINE_NUMBER &
     & ,ERR,ERROR,*)
 
     !Argument variables
@@ -3432,14 +3481,14 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: DATA_POINT_GLOBAL_NUMBER
     
-    ENTERS("DATA_PROJECTION_RESULT_ELEMENT_LINE_NUMBER_GET",ERR,ERROR,*999)
+    ENTERS("DataProjection_ResultElementLineNumberGet",ERR,ERROR,*999)
 
     IF(ASSOCIATED(DATA_PROJECTION)) THEN
       IF(DATA_PROJECTION%DATA_PROJECTION_FINISHED) THEN
         IF(DATA_PROJECTION%DATA_PROJECTION_PROJECTED) THEN
           ! Check if boundary lines projection type was set
           IF(DATA_PROJECTION%PROJECTION_TYPE==DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE) THEN
-            CALL DATA_PROJECTION_DATA_POINTS_GLOBAL_NUMBER_GET(DATA_PROJECTION,DATA_POINT_USER_NUMBER, &
+            CALL DataProjection_DataPointGlobalNumberGet(DATA_PROJECTION,DATA_POINT_USER_NUMBER, &
               & DATA_POINT_GLOBAL_NUMBER,ERR,ERROR,*999)
             PROJECTION_ELEMENT_LINE_NUMBER=DATA_PROJECTION%DATA_PROJECTION_RESULTS(DATA_POINT_GLOBAL_NUMBER)%ELEMENT_LINE_NUMBER
           ELSE
@@ -3456,12 +3505,12 @@ CONTAINS
       CALL FLAG_ERROR("Data projection is not associated.",ERR,ERROR,*999)
     ENDIF
 
-    EXITS("DATA_PROJECTION_RESULT_ELEMENT_LINE_NUMBER_GET")
+    EXITS("DataProjection_ResultElementLineNumberGet")
     RETURN
-999 ERRORSEXITS("DATA_PROJECTION_RESULT_ELEMENT_LINE_NUMBER_GET",ERR,ERROR)    
+999 ERRORSEXITS("DataProjection_ResultElementLineNumberGet",ERR,ERROR)    
     RETURN 1
 
-  END SUBROUTINE DATA_PROJECTION_RESULT_ELEMENT_LINE_NUMBER_GET
+  END SUBROUTINE DataProjection_ResultElementLineNumberGet
 
   !
   !================================================================================================================================
@@ -3484,7 +3533,7 @@ CONTAINS
     IF(ASSOCIATED(DATA_PROJECTION)) THEN
       IF(DATA_PROJECTION%DATA_PROJECTION_FINISHED) THEN
         IF(DATA_PROJECTION%DATA_PROJECTION_PROJECTED) THEN
-          CALL DATA_PROJECTION_DATA_POINTS_GLOBAL_NUMBER_GET(DATA_PROJECTION,DATA_POINT_USER_NUMBER, &
+          CALL DataProjection_DataPointGlobalNumberGet(DATA_PROJECTION,DATA_POINT_USER_NUMBER, &
             & DATA_POINT_GLOBAL_NUMBER,ERR,ERROR,*999)
           PROJECTION_EXIT_TAG=DATA_PROJECTION%DATA_PROJECTION_RESULTS(DATA_POINT_GLOBAL_NUMBER)%EXIT_TAG
         ELSE
@@ -3525,7 +3574,7 @@ CONTAINS
     IF(ASSOCIATED(DATA_PROJECTION)) THEN
       IF(DATA_PROJECTION%DATA_PROJECTION_FINISHED) THEN
         IF(DATA_PROJECTION%DATA_PROJECTION_PROJECTED) THEN
-          CALL DATA_PROJECTION_DATA_POINTS_GLOBAL_NUMBER_GET(DATA_PROJECTION,DATA_POINT_USER_NUMBER, &
+          CALL DataProjection_DataPointGlobalNumberGet(DATA_PROJECTION,DATA_POINT_USER_NUMBER, &
             & DATA_POINT_GLOBAL_NUMBER,ERR,ERROR,*999)
           IF(SIZE(PROJECTION_XI,1)==SIZE(DATA_PROJECTION%DATA_PROJECTION_RESULTS(DATA_POINT_GLOBAL_NUMBER)%XI,1)) THEN
             PROJECTION_XI=DATA_PROJECTION%DATA_PROJECTION_RESULTS(DATA_POINT_GLOBAL_NUMBER)%XI
@@ -3574,7 +3623,7 @@ CONTAINS
     IF(ASSOCIATED(DATA_PROJECTION)) THEN
       IF(DATA_PROJECTION%DATA_PROJECTION_FINISHED) THEN
         IF(DATA_PROJECTION%DATA_PROJECTION_PROJECTED) THEN
-          CALL DATA_PROJECTION_DATA_POINTS_GLOBAL_NUMBER_GET(DATA_PROJECTION,DATA_POINT_USER_NUMBER, &
+          CALL DataProjection_DataPointGlobalNumberGet(DATA_PROJECTION,DATA_POINT_USER_NUMBER, &
             & DATA_POINT_GLOBAL_NUMBER,ERR,ERROR,*999)
           IF(SIZE(PROJECTION_XI,1)==SIZE(DATA_PROJECTION%DATA_PROJECTION_RESULTS(DATA_POINT_GLOBAL_NUMBER)%XI,1)) THEN
             DATA_PROJECTION%DATA_PROJECTION_RESULTS(DATA_POINT_GLOBAL_NUMBER)%XI(1:SIZE(PROJECTION_XI,1))= &
@@ -3602,6 +3651,57 @@ CONTAINS
     RETURN 1
 
   END SUBROUTINE DATA_PROJECTION_RESULT_XI_SET
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the projection vector for a data point identified by a given global number.
+  SUBROUTINE DataProjection_ResultProjectionVectorGet(DATA_PROJECTION,DATA_POINT_USER_NUMBER,projectionVector,ERR,ERROR,*)
+
+    !Argument variables
+    TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION !<A pointer to the data projection for which projection result is stored
+    INTEGER(INTG), INTENT(IN) :: DATA_POINT_USER_NUMBER !<The Data projection user number to get the projection xi for
+    REAL(DP), INTENT(OUT) :: projectionVector(:) !<On exit, the projection vector of the specified global data point
+    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    !Local Variables
+    INTEGER(INTG) :: DATA_POINT_GLOBAL_NUMBER
+    
+    ENTERS("DataProjection_ResultProjectionVectorGet",ERR,ERROR,*999)
+
+    IF(ASSOCIATED(DATA_PROJECTION)) THEN
+      IF(DATA_PROJECTION%DATA_PROJECTION_FINISHED) THEN
+        IF(DATA_PROJECTION%DATA_PROJECTION_PROJECTED) THEN
+          CALL DataProjection_DataPointGlobalNumberGet(DATA_PROJECTION,DATA_POINT_USER_NUMBER, &
+            & DATA_POINT_GLOBAL_NUMBER,ERR,ERROR,*999)
+          IF(SIZE(projectionVector,1)>=SIZE(DATA_PROJECTION%DATA_PROJECTION_RESULTS(DATA_POINT_GLOBAL_NUMBER)%projectionVector, &
+            & 1)) THEN
+            projectionVector=DATA_PROJECTION%DATA_PROJECTION_RESULTS(DATA_POINT_GLOBAL_NUMBER)%projectionVector( &
+	      & 1:DATA_PROJECTION%COORDINATE_SYSTEM_DIMENSIONS)
+          ELSE
+            CALL FLAG_ERROR("projection vector has size of "//TRIM(NUMBER_TO_VSTRING(SIZE(projectionVector,1),"*",ERR,ERROR))// &
+              & "but it needs to have size of "// &
+              & TRIM(NUMBER_TO_VSTRING(SIZE(DATA_PROJECTION%DATA_PROJECTION_RESULTS &
+              & (DATA_POINT_GLOBAL_NUMBER)%projectionVector,1),"*",ERR,ERROR))// &
+              & "." ,ERR,ERROR,*999)
+          ENDIF
+        ELSE
+          CALL FLAG_ERROR("Data projection have not been projected.",ERR,ERROR,*999)
+        ENDIF   
+      ELSE
+        CALL FLAG_ERROR("Data projection have not been finished.",ERR,ERROR,*999)
+      ENDIF
+    ELSE
+      CALL FLAG_ERROR("Data projection is not associated.",ERR,ERROR,*999)
+    ENDIF
+
+    EXITS("DataProjection_ResultProjectionVectorGet")
+    RETURN
+999 ERRORSEXITS("DataProjection_ResultProjectionVectorGet",ERR,ERROR)    
+    RETURN 1
+
+  END SUBROUTINE DataProjection_ResultProjectionVectorGet
 
   !
   !================================================================================================================================

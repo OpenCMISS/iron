@@ -87,8 +87,8 @@ MODULE FIELDML_OUTPUT_ROUTINES
     MODULE PROCEDURE FIELDML_OUTPUT_ADD_FIELD_WITH_TYPE
   END INTERFACE
  
-  PUBLIC :: FIELDML_OUTPUT_WRITE, FIELDML_OUTPUT_ADD_FIELD, FIELDML_OUTPUT_INITIALISE_INFO, FIELDML_OUTPUT_IMPORT, &
-    & FIELDML_OUTPUT_ADD_FIELD_COMPONENTS
+  PUBLIC :: FIELDML_OUTPUT_WRITE, FIELDML_OUTPUT_ADD_FIELD, FIELDML_OUTPUT_INITIALISE_INFO, &
+    & FIELDML_OUTPUT_ADD_IMPORT, FIELDML_OUTPUT_ADD_FIELD_COMPONENTS
 
 CONTAINS
 
@@ -96,16 +96,19 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !> Asserts that the FieldML Info is associated and created for output
   SUBROUTINE FIELDML_ASSERT_IS_OUT( FIELDML_INFO, ERR, ERROR, * )
     !Argument variables
-    TYPE(FIELDML_IO_TYPE), INTENT(IN) :: FIELDML_INFO !<The FieldML parsing state.
+    TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
     
     ENTERS( "FIELDML_ASSERT_IS_OUT", ERR, ERROR, *999 )
 
-    IF( .NOT. FIELDML_INFO%IS_OUT ) THEN
-      CALL FLAG_ERROR( "Inbound FieldML handle used four an output-only operation.", ERR, ERROR, *999 )
+    IF(.NOT.ASSOCIATED(FIELDML_INFO)) THEN
+      CALL FlagError( "FieldML Info is not associated.", ERR, ERROR, *999 )
+    ELSE IF( .NOT. FIELDML_INFO%IS_OUT ) THEN
+      CALL FlagError( "Inbound FieldML Info used for an output-only operation.", ERR, ERROR, *999 )
     ENDIF
     
     EXITS( "FIELDML_ASSERT_IS_OUT" )
@@ -198,8 +201,6 @@ CONTAINS
     INTEGER(INTG) :: FIELDML_OUTPUT_IMPORT
     
     ENTERS( "FIELDML_OUTPUT_IMPORT", ERR, ERROR, *999 )
-    
-    CALL FIELDML_ASSERT_IS_OUT( FIELDML_INFO, ERR, ERROR, *999 )
 
     FIELDML_OUTPUT_IMPORT = FIELDML_OUTPUT_IMPORT_FML( FIELDML_INFO%FML_HANDLE, REMOTE_NAME, ERR, ERROR )
  
@@ -208,6 +209,33 @@ CONTAINS
 999 ERRORSEXITS( "FIELDML_OUTPUT_IMPORT", ERR, ERROR )
 
   END FUNCTION FIELDML_OUTPUT_IMPORT
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Import the named object from the built-in library into the current FieldML document. The local name will be the same as the remote name.
+  ! External variant of FIELDML_OUTPUT_IMPORT taking pointer argument and checking it
+  FUNCTION FIELDML_OUTPUT_ADD_IMPORT( FIELDML_INFO, REMOTE_NAME, ERR, ERROR )
+    !Argument variables
+    TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
+    TYPE(VARYING_STRING), INTENT(IN) :: REMOTE_NAME !<The name of the object to import.
+    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code.
+    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+
+    INTEGER(INTG) :: FIELDML_OUTPUT_ADD_IMPORT
+    
+    ENTERS( "FIELDML_OUTPUT_ADD_IMPORT", ERR, ERROR, *999 )
+    
+    CALL FIELDML_ASSERT_IS_OUT( FIELDML_INFO, ERR, ERROR, *999 )
+
+    FIELDML_OUTPUT_ADD_IMPORT = FIELDML_OUTPUT_IMPORT_FML( FIELDML_INFO%FML_HANDLE, REMOTE_NAME, ERR, ERROR )
+ 
+    EXITS( "FIELDML_OUTPUT_ADD_IMPORT" )
+    RETURN
+999 ERRORSEXITS( "FIELDML_OUTPUT_ADD_IMPORT", ERR, ERROR )
+
+  END FUNCTION FIELDML_OUTPUT_ADD_IMPORT
   
   !
   !================================================================================================================================
@@ -337,11 +365,11 @@ CONTAINS
         TYPE_NAME = "coordinates.rc.3d"
       ELSE
         TYPE_HANDLE = FML_INVALID_HANDLE
-        CALL FLAG_ERROR( var_str("Cannot get FieldML RC coordinates type of dimension ")//DIMENSIONS//".", ERR, ERROR, *999)
+        CALL FlagError( var_str("Cannot get FieldML RC coordinates type of dimension ")//DIMENSIONS//".", ERR, ERROR, *999)
       ENDIF
     ELSE
       TYPE_HANDLE = FML_INVALID_HANDLE
-      CALL FLAG_ERROR( var_str("Cannot get FieldML coordinates for OpenCMISS type ")//COORDS_TYPE//".", ERR, ERROR, *999 )
+      CALL FlagError( var_str("Cannot get FieldML coordinates for OpenCMISS type ")//COORDS_TYPE//".", ERR, ERROR, *999 )
     ENDIF
 
     IF( DO_IMPORT ) THEN
@@ -387,7 +415,7 @@ CONTAINS
       TYPE_NAME = "real.3d"
     ELSE
       TYPE_HANDLE = FML_INVALID_HANDLE
-      CALL FLAG_ERROR( var_str("Cannot get FieldML generic type of dimensionality ")//DIMENSIONS//".", ERR, ERROR, *999 )
+      CALL FlagError( var_str("Cannot get FieldML generic type of dimensionality ")//DIMENSIONS//".", ERR, ERROR, *999 )
     ENDIF
 
     IF( DO_IMPORT ) THEN
@@ -432,7 +460,7 @@ CONTAINS
       TYPE_NAME = "chart.3d"
     ELSE
       TYPE_HANDLE = FML_INVALID_HANDLE
-      CALL FLAG_ERROR( var_str("Chart dimensionality ")//DIMENSIONS//" not supported.", ERR, ERROR, *999 )
+      CALL FlagError( var_str("Chart dimensionality ")//DIMENSIONS//" not supported.", ERR, ERROR, *999 )
     ENDIF
 
     IF( DO_IMPORT ) THEN
@@ -529,7 +557,7 @@ CONTAINS
         FIRST_INTERPOLATION = XI_INTERPOLATIONS(I)
       ELSE IF( XI_INTERPOLATIONS(I) /= FIRST_INTERPOLATION ) THEN
         !Do not yet support inhomogeneous TP bases
-        CALL FLAG_ERROR( "Translation of inhomogeneous tensor-product basis not yet supported.", ERR, ERROR, *999 )
+        CALL FlagError( "Translation of inhomogeneous tensor-product basis not yet supported.", ERR, ERROR, *999 )
       ENDIF
     ENDDO
    
@@ -550,7 +578,7 @@ CONTAINS
         PARAMETER_NAME = "parameters.3d.unit.triquadraticLagrange"//SUFFIX
       ELSE
         !Do not yet support dimensions higher than 3.
-        CALL FLAG_ERROR( var_str("Quadratic Lagrangian interpolation not supported for ")//XI_COUNT//" dimensions.", &
+        CALL FlagError( var_str("Quadratic Lagrangian interpolation not supported for ")//XI_COUNT//" dimensions.", &
           & ERR, ERROR, *999 )
       ENDIF
     ELSE IF( FIRST_INTERPOLATION == BASIS_LINEAR_LAGRANGE_INTERPOLATION ) THEN
@@ -565,26 +593,26 @@ CONTAINS
         PARAMETER_NAME = "parameters.3d.unit.trilinearLagrange"//SUFFIX
       ELSE
         !Do not yet support dimensions higher than 3.
-        CALL FLAG_ERROR( var_str("Quadratic Lagrangian interpolation not supported for ")//XI_COUNT//" dimensions.", &
+        CALL FlagError( var_str("Quadratic Lagrangian interpolation not supported for ")//XI_COUNT//" dimensions.", &
           & ERR, ERROR, *999 )
       ENDIF
     ELSE
-      CALL FLAG_ERROR( var_str("FieldML translation not yet supported for interpolation type ")//FIRST_INTERPOLATION//".", &
+      CALL FlagError( var_str("FieldML translation not yet supported for interpolation type ")//FIRST_INTERPOLATION//".", &
         & ERR, ERROR, *999 )
     ENDIF
 
     EVALUATOR_HANDLE = FIELDML_OUTPUT_IMPORT_FML( FML_HANDLE, INTERPOLATOR_NAME, ERR, ERROR )
-    IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not import interpolator "//char(INTERPOLATOR_NAME)//".", ERR, ERROR, *999 )
+    IF( ERR /= 0 ) CALL FlagError( "Could not import interpolator "//char(INTERPOLATOR_NAME)//".", ERR, ERROR, *999 )
 
     PARAMETERS_HANDLE = FIELDML_OUTPUT_IMPORT_FML( FML_HANDLE, PARAMETER_NAME, ERR, ERROR )
-    IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not import parameter type "//char(PARAMETER_NAME)//".", ERR, ERROR, *999 )
+    IF( ERR /= 0 ) CALL FlagError( "Could not import parameter type "//char(PARAMETER_NAME)//".", ERR, ERROR, *999 )
     
     IF( EVALUATOR_HANDLE == FML_INVALID_HANDLE ) THEN
-      CALL FLAG_ERROR( "Cannot get a handle for basis evaluator "//char(INTERPOLATOR_NAME)//".", ERR, ERROR, *999 )
+      CALL FlagError( "Cannot get a handle for basis evaluator "//char(INTERPOLATOR_NAME)//".", ERR, ERROR, *999 )
     ENDIF
 
     IF( PARAMETERS_HANDLE == FML_INVALID_HANDLE ) THEN
-      CALL FLAG_ERROR( "Cannot get a handle for basis parameters "//char(PARAMETER_NAME)//".", ERR, ERROR, *999 )
+      CALL FlagError( "Cannot get a handle for basis parameters "//char(PARAMETER_NAME)//".", ERR, ERROR, *999 )
     ENDIF
     
     EXITS( "FIELDML_OUTPUT_GET_TP_BASIS_EVALUATOR" )
@@ -718,7 +746,7 @@ CONTAINS
     DO I = 2, XI_COUNT
       IF( XI_INTERPOLATIONS(I) /= FIRST_INTERPOLATION ) THEN
         !Do not yet support inhomogeneous TP bases
-        CALL FLAG_ERROR( "FieldML translation of inhomogeneous tensor-product bases are not yet supported.", &
+        CALL FlagError( "FieldML translation of inhomogeneous tensor-product bases are not yet supported.", &
           & ERR, ERROR, *999 )
       ENDIF
     ENDDO
@@ -734,7 +762,7 @@ CONTAINS
         LAYOUT_NAME = "localNodes.3d.cube3x3x3"//SUFFIX
       ELSE
         !Do not yet support dimensions higher than 3.
-        CALL FLAG_ERROR( var_str("Quadratic Lagrangian interpolation not supported for ")//XI_COUNT//" dimensions.", &
+        CALL FlagError( var_str("Quadratic Lagrangian interpolation not supported for ")//XI_COUNT//" dimensions.", &
           & ERR, ERROR, *999 )
       ENDIF
     ELSE IF( FIRST_INTERPOLATION == BASIS_LINEAR_LAGRANGE_INTERPOLATION ) THEN
@@ -746,11 +774,11 @@ CONTAINS
         LAYOUT_NAME = "localNodes.3d.cube2x2x2"//SUFFIX
       ELSE
         !Do not yet support dimensions higher than 3.
-        CALL FLAG_ERROR( var_str("Linear Lagrangian interpolation not supported for ")//XI_COUNT//" dimensions.", &
+        CALL FlagError( var_str("Linear Lagrangian interpolation not supported for ")//XI_COUNT//" dimensions.", &
           & ERR, ERROR, *999 )
       ENDIF
     ELSE
-      CALL FLAG_ERROR( var_str("FieldML translation not yet supported for interpolation type ")//FIRST_INTERPOLATION//".", &
+      CALL FlagError( var_str("FieldML translation not yet supported for interpolation type ")//FIRST_INTERPOLATION//".", &
         & ERR, ERROR, *999 )
     ENDIF
 
@@ -872,9 +900,9 @@ CONTAINS
     
     IF( BASISTYPE == BASIS_LAGRANGE_HERMITE_TP_TYPE ) THEN
       ALLOCATE( XI_INTERPOLATIONS( XI_COUNT ), STAT = ERR )
-      IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not allocate xi interpolations array.", ERR, ERROR, *999 )
+      IF( ERR /= 0 ) CALL FlagError( "Could not allocate xi interpolations array.", ERR, ERROR, *999 )
       ALLOCATE( COLLAPSE_INFO( XI_COUNT ), STAT = ERR )
-      IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not allocate collapse info array.", ERR, ERROR, *999 )
+      IF( ERR /= 0 ) CALL FlagError( "Could not allocate collapse info array.", ERR, ERROR, *999 )
       CALL BASIS_INTERPOLATION_XI_GET( BASIS, XI_INTERPOLATIONS, ERR, ERROR, *999 )
       CALL BASIS_COLLAPSED_XI_GET( BASIS, COLLAPSE_INFO, ERR, ERROR, *999 )
       
@@ -885,7 +913,7 @@ CONTAINS
       DEALLOCATE( COLLAPSE_INFO )
     ELSE IF( BASISTYPE == BASIS_SIMPLEX_TYPE ) THEN
       ALLOCATE( XI_INTERPOLATIONS( XI_COUNT ), STAT = ERR )
-      IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not allocate xi interpolations array.", ERR, ERROR, *999 )
+      IF( ERR /= 0 ) CALL FlagError( "Could not allocate xi interpolations array.", ERR, ERROR, *999 )
       CALL BASIS_INTERPOLATION_XI_GET( BASIS, XI_INTERPOLATIONS, ERR, ERROR, *999 )
 
       CALL FieldmlOutputGetSimplexConnectivityType( FIELDML_HANDLE, XI_INTERPOLATIONS, .TRUE., TYPE_HANDLE, &
@@ -893,7 +921,7 @@ CONTAINS
 
       DEALLOCATE( XI_INTERPOLATIONS )
     ELSE
-      CALL FLAG_ERROR( "Only translation of tensor product bases are currently supported", ERR, ERROR, *999 )
+      CALL FlagError( "Only translation of tensor product bases are currently supported", ERR, ERROR, *999 )
     ENDIF
     
     EXITS( "FIELDML_OUTPUT_GET_CONNECTIVITY_ENSEMBLE" )
@@ -1069,7 +1097,7 @@ CONTAINS
     
     IF( BASIS_TYPE == BASIS_LAGRANGE_HERMITE_TP_TYPE ) THEN
       ALLOCATE( XI_INTERPOLATIONS( XI_COUNT ), STAT = ERR )
-      IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not allocate xi interpolation array.", ERR, ERROR, *999 )
+      IF( ERR /= 0 ) CALL FlagError( "Could not allocate xi interpolation array.", ERR, ERROR, *999 )
       ALLOCATE( COLLAPSE_INFO( XI_COUNT ), STAT = ERR )
       CALL BASIS_INTERPOLATION_XI_GET( BASIS_INFO%BASIS, XI_INTERPOLATIONS, ERR, ERROR, *999 )
       CALL BASIS_COLLAPSED_XI_GET( BASIS_INFO%BASIS, COLLAPSE_INFO, ERR, ERROR, *999 )
@@ -1134,7 +1162,7 @@ CONTAINS
 
     ELSE IF( BASIS_TYPE == BASIS_SIMPLEX_TYPE ) THEN
       ALLOCATE( XI_INTERPOLATIONS( XI_COUNT ), STAT = ERR )
-      IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not allocate xi interpolation array.", ERR, ERROR, *999 )
+      IF( ERR /= 0 ) CALL FlagError( "Could not allocate xi interpolation array.", ERR, ERROR, *999 )
 
       CALL BASIS_INTERPOLATION_XI_GET( BASIS_INFO%BASIS, XI_INTERPOLATIONS, ERR, ERROR, *999 )
       
@@ -1197,7 +1225,7 @@ CONTAINS
 
     ELSE
       BASIS_INFO%REFERENCE_HANDLE = FML_INVALID_HANDLE
-      CALL FLAG_ERROR( "FieldML export code can currently only translate tensor-product bases.", ERR, ERROR, *999 )
+      CALL FlagError( "FieldML export code can currently only translate tensor-product bases.", ERR, ERROR, *999 )
     ENDIF
     
     EXITS( "FIELDML_OUTPUT_CREATE_BASIS_REFERENCE" )
@@ -1332,14 +1360,14 @@ CONTAINS
       IF( IDX == -1 ) THEN
         IF( CONNECTIVITY_COUNT == 0 ) THEN
           ALLOCATE( CONNECTIVITY_INFO( CONNECTIVITY_COUNT + 1 ), STAT = ERR )
-          IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not allocate connectivity info array.", ERR, ERROR, *999 )
+          IF( ERR /= 0 ) CALL FlagError( "Could not allocate connectivity info array.", ERR, ERROR, *999 )
         ELSE
           ALLOCATE( TEMP_CONNECTIVITY_INFO( CONNECTIVITY_COUNT ), STAT = ERR )
-          IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not allocate temporary connectivity array.", ERR, ERROR, *999 )
+          IF( ERR /= 0 ) CALL FlagError( "Could not allocate temporary connectivity array.", ERR, ERROR, *999 )
           TEMP_CONNECTIVITY_INFO(:) = CONNECTIVITY_INFO(:)
           DEALLOCATE( CONNECTIVITY_INFO )
           ALLOCATE( CONNECTIVITY_INFO( CONNECTIVITY_COUNT + 1 ), STAT = ERR )
-          IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not allocate new connectivity info array.", ERR, ERROR, *999 )
+          IF( ERR /= 0 ) CALL FlagError( "Could not allocate new connectivity info array.", ERR, ERROR, *999 )
           CONNECTIVITY_INFO( 1:CONNECTIVITY_COUNT ) = TEMP_CONNECTIVITY_INFO( 1:CONNECTIVITY_COUNT )
         ENDIF
         
@@ -1380,14 +1408,14 @@ CONTAINS
       IF( IDX == -1 ) THEN
         IF( BASIS_COUNT == 0 ) THEN
           ALLOCATE( BASIS_INFO( BASIS_COUNT + 1 ), STAT = ERR )
-          IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not allocate basis info array.", ERR, ERROR, *999 )
+          IF( ERR /= 0 ) CALL FlagError( "Could not allocate basis info array.", ERR, ERROR, *999 )
         ELSE
           ALLOCATE( TEMP_BASIS_INFO( BASIS_COUNT ), STAT = ERR )
-          IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not allocate temporary basis info array.", ERR, ERROR, *999 )
+          IF( ERR /= 0 ) CALL FlagError( "Could not allocate temporary basis info array.", ERR, ERROR, *999 )
           TEMP_BASIS_INFO(:) = BASIS_INFO(:)
           DEALLOCATE( BASIS_INFO )
           ALLOCATE( BASIS_INFO( BASIS_COUNT + 1 ), STAT = ERR )
-          IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not allocate new basis info array.", ERR, ERROR, *999 )
+          IF( ERR /= 0 ) CALL FlagError( "Could not allocate new basis info array.", ERR, ERROR, *999 )
           BASIS_INFO( 1:BASIS_COUNT ) = TEMP_BASIS_INFO( 1:BASIS_COUNT )
         ENDIF
 
@@ -1426,7 +1454,7 @@ CONTAINS
       CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot open connectivity data writer.", FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
       
       ALLOCATE( IBUFFER( LAYOUT_NODE_COUNT ), STAT = ERR )
-      IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not allocate layout buffer.", ERR, ERROR, *999 )
+      IF( ERR /= 0 ) CALL FlagError( "Could not allocate layout buffer.", ERR, ERROR, *999 )
       SIZES(1) = 1
       SIZES(2) = LAYOUT_NODE_COUNT
       OFFSETS(:) = 0
@@ -1441,7 +1469,7 @@ CONTAINS
         ENDIF
         FML_ERR = Fieldml_WriteIntSlab( WRITER, C_LOC(OFFSETS), C_LOC(SIZES), C_LOC(IBUFFER) )
         IF( FML_ERR /= FML_ERR_NO_ERROR ) THEN
-          CALL FLAG_ERROR( var_str("I/O error while writing connectivity data for ")//BASE_NAME//"("&
+          CALL FlagError( var_str("I/O error while writing connectivity data for ")//BASE_NAME//"("&
             & // TRIM(NUMBER_TO_VSTRING(FML_ERR,"*",ERR,ERROR)) //").", &
             & ERR, ERROR, *999 )
         ENDIF
@@ -1515,9 +1543,9 @@ CONTAINS
     NODE_COUNT = Fieldml_GetMemberCount( FIELDML_INFO%FML_HANDLE, FIELDML_INFO%NODES_HANDLE )
     
     ALLOCATE( MESH_COMPONENT_NUMBERS( COMPONENT_COUNT ), STAT = ERR )
-    IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not allocate mesh component array.", ERR, ERROR, *999 )
+    IF( ERR /= 0 ) CALL FlagError( "Could not allocate mesh component array.", ERR, ERROR, *999 )
     ALLOCATE( IS_NODE_BASED( COMPONENT_COUNT ), STAT = ERR )
-    IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not allocate nodal component array.", ERR, ERROR, *999 )
+    IF( ERR /= 0 ) CALL FlagError( "Could not allocate nodal component array.", ERR, ERROR, *999 )
 
     DO I = 1, COMPONENT_COUNT
       CALL FIELD_COMPONENT_MESH_COMPONENT_GET( FIELD, VARIABLE_TYPE, FIELD_COMPONENT_NUMBERS(I), &
@@ -1581,7 +1609,7 @@ CONTAINS
     ENDIF
 
     ALLOCATE( DBUFFER( COMPONENT_COUNT ), STAT = ERR )
-    IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not allocate nodal dofs array.", ERR, ERROR, *999 )
+    IF( ERR /= 0 ) CALL FlagError( "Could not allocate nodal dofs array.", ERR, ERROR, *999 )
     WRITER = Fieldml_OpenArrayWriter( FIELDML_INFO%FML_HANDLE, SOURCE_HANDLE, REAL_1D_HANDLE, 0, SIZE_POINTER, RANK )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot open nodal parameter writer for "//BASE_NAME//".dofs.node.data.", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
@@ -1613,7 +1641,7 @@ CONTAINS
       ENDDO
       FML_ERR = Fieldml_WriteDoubleSlab( WRITER, C_LOC(OFFSETS), C_LOC(SIZES), C_LOC(DBUFFER) )
       IF( FML_ERR /= FML_ERR_NO_ERROR ) THEN
-        CALL FLAG_ERROR( var_str("I/O error while writing nodal parameter values for ")//BASE_NAME//"("// &
+        CALL FlagError( var_str("I/O error while writing nodal parameter values for ")//BASE_NAME//"("// &
           & TRIM(NUMBER_TO_VSTRING(FML_ERR,"*",ERR,ERROR)) //").", err, ERROR, *999 )
       ENDIF
       OFFSETS(1) = OFFSETS(1) + 1
@@ -1674,9 +1702,9 @@ CONTAINS
     ELEMENT_COUNT = Fieldml_GetMemberCount( FIELDML_INFO%FML_HANDLE, FIELDML_INFO%ELEMENTS_HANDLE )
     
     ALLOCATE( MESH_COMPONENT_NUMBERS( COMPONENT_COUNT ), STAT = ERR )
-    IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not allocate mesh component number array.", ERR, ERROR, *999 )
+    IF( ERR /= 0 ) CALL FlagError( "Could not allocate mesh component number array.", ERR, ERROR, *999 )
     ALLOCATE( IS_ELEMENT_BASED( COMPONENT_COUNT ), STAT = ERR )
-    IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not allocate element component array.", ERR, ERROR, *999 )
+    IF( ERR /= 0 ) CALL FlagError( "Could not allocate element component array.", ERR, ERROR, *999 )
 
     DO I = 1, COMPONENT_COUNT
       CALL FIELD_COMPONENT_MESH_COMPONENT_GET( FIELD, VARIABLE_TYPE, FIELD_COMPONENT_NUMBERS(I), &
@@ -1731,7 +1759,7 @@ CONTAINS
     ENDIF
 
     ALLOCATE( DBUFFER( COMPONENT_COUNT ), STAT = ERR )
-    IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not allocate element dofs buffer.", ERR, ERROR, *999 )
+    IF( ERR /= 0 ) CALL FlagError( "Could not allocate element dofs buffer.", ERR, ERROR, *999 )
     WRITER = Fieldml_OpenArrayWriter( FIELDML_INFO%FML_HANDLE, SOURCE_HANDLE, REAL_1D_HANDLE, 0, C_LOC(SIZES), 2 )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot open element parameter writer for "//BASE_NAME//".dofs.element.data.", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
@@ -1750,7 +1778,7 @@ CONTAINS
       ENDDO
       FML_ERR = Fieldml_WriteDoubleSlab( WRITER, C_LOC(OFFSETS), C_LOC(SIZES), C_LOC(DBUFFER) )
       IF( FML_ERR /= FML_ERR_NO_ERROR ) THEN
-        CALL FLAG_ERROR( var_str("I/O error while writing element parameter values for")//BASE_NAME//"("&
+        CALL FlagError( var_str("I/O error while writing element parameter values for")//BASE_NAME//"("&
           & // TRIM(NUMBER_TO_VSTRING(FML_ERR,"*",ERR,ERROR)) //").", err, ERROR, *999 )
       ENDIF
       OFFSETS(1) = OFFSETS(1) + 1
@@ -1821,9 +1849,9 @@ CONTAINS
     ENDIF
     
     ALLOCATE( MESH_COMPONENT_NUMBERS( COMPONENT_COUNT ), STAT = ERR )
-    IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not allocate mesh component array.", ERR, ERROR, *999 )
+    IF( ERR /= 0 ) CALL FlagError( "Could not allocate mesh component array.", ERR, ERROR, *999 )
     ALLOCATE( IS_CONSTANT( COMPONENT_COUNT ), STAT = ERR )
-    IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not allocate constant component array.", ERR, ERROR, *999 )
+    IF( ERR /= 0 ) CALL FlagError( "Could not allocate constant component array.", ERR, ERROR, *999 )
 
     DO I = 1, COMPONENT_COUNT
       CALL FIELD_COMPONENT_MESH_COMPONENT_GET( FIELD, VARIABLE_TYPE, FIELD_COMPONENT_NUMBERS(I), &
@@ -1885,7 +1913,7 @@ CONTAINS
     SINGLE_SIZE = COMPONENT_COUNT
     IF( IS_REAL ) THEN
       ALLOCATE( DBUFFER( COMPONENT_COUNT ), STAT = ERR )
-      IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not allocate constant dofs buffer.", ERR, ERROR, *999 )
+      IF( ERR /= 0 ) CALL FlagError( "Could not allocate constant dofs buffer.", ERR, ERROR, *999 )
       DO J = 1, COMPONENT_COUNT
         DVALUE = 0
         IF( IS_CONSTANT(J) ) THEN
@@ -1896,7 +1924,7 @@ CONTAINS
       ENDDO
       FML_ERR = Fieldml_WriteDoubleSlab( WRITER, C_LOC(OFFSETS), C_LOC(SINGLE_SIZE), C_LOC(DBUFFER) )
       IF( FML_ERR /= FML_ERR_NO_ERROR ) THEN
-        CALL FLAG_ERROR( var_str("I/O error while writing constant parameter values for ")//BASE_NAME//"(" &
+        CALL FlagError( var_str("I/O error while writing constant parameter values for ")//BASE_NAME//"(" &
         & // TRIM(NUMBER_TO_VSTRING(FML_ERR,"*",ERR,ERROR)) //").", err, ERROR, *999)
       ENDIF
       FML_ERR = Fieldml_CloseWriter( WRITER )
@@ -1905,7 +1933,7 @@ CONTAINS
       DEALLOCATE( DBUFFER )
     ELSE
       ALLOCATE( IBUFFER( COMPONENT_COUNT ), STAT = ERR )
-      IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not allocate constant dofs buffer.", ERR, ERROR, *999 )
+      IF( ERR /= 0 ) CALL FlagError( "Could not allocate constant dofs buffer.", ERR, ERROR, *999 )
       DO J = 1, COMPONENT_COUNT
         IVALUE = 0
         IF( IS_CONSTANT(J) ) THEN
@@ -1916,7 +1944,7 @@ CONTAINS
       ENDDO
       FML_ERR = Fieldml_WriteIntSlab( WRITER, C_LOC(OFFSETS), C_LOC(SINGLE_SIZE), C_LOC(IBUFFER) )
       IF( FML_ERR /= FML_ERR_NO_ERROR ) THEN
-        CALL FLAG_ERROR( var_str("I/O while writing constant parameter values for ")//BASE_NAME//"(" &
+        CALL FlagError( var_str("I/O while writing constant parameter values for ")//BASE_NAME//"(" &
           & // TRIM(NUMBER_TO_VSTRING(FML_ERR,"*",ERR,ERROR)) //").", ERR, ERROR, *999 )
       ENDIF
       FML_ERR = Fieldml_CloseWriter( WRITER )
@@ -1946,7 +1974,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(IN) :: LOCATION !<The location of the FieldML file. Data resources will be created here.
     TYPE(VARYING_STRING), INTENT(IN) :: BASE_NAME !<The root name of the basis evaluator.
     TYPE(VARYING_STRING), INTENT(IN) :: CONNECTIVITY_FORMAT !<The name of the format to use when writing connectivity data.
-    TYPE(FIELDML_IO_TYPE), INTENT(OUT) :: FIELDML_INFO !<The FieldML parsing state.
+    TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
 
@@ -2090,7 +2118,7 @@ CONTAINS
   SUBROUTINE FIELDML_OUTPUT_ADD_FIELD_COMPONENTS( FIELDML_INFO, TYPE_HANDLE, BASE_NAME, DOF_FORMAT, FIELD, &
     & FIELD_COMPONENT_NUMBERS, VARIABLE_TYPE, SET_TYPE, ERR, ERROR, * )
     !Argument variables
-    TYPE(FIELDML_IO_TYPE), INTENT(IN) :: FIELDML_INFO !<The FieldML parsing state.
+    TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     INTEGER(INTG), INTENT(IN) :: TYPE_HANDLE !<The FieldML type handle for the field.
     TYPE(VARYING_STRING), INTENT(IN) :: BASE_NAME !<The root name of the basis evaluator.
     TYPE(VARYING_STRING), INTENT(IN) :: DOF_FORMAT !<The name of the format to use when writing dof data.
@@ -2116,10 +2144,10 @@ CONTAINS
     COMPONENT_HANDLE = Fieldml_GetTypeComponentEnsemble( FIELDML_INFO%FML_HANDLE, TYPE_HANDLE )
     COMPONENT_COUNT = Fieldml_GetTypeComponentCount( FIELDML_INFO%FML_HANDLE, TYPE_HANDLE )
     ALLOCATE( COMPONENT_EVALUATORS( COMPONENT_COUNT ), STAT = ERR )
-    IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not allocate component evaluators array.", ERR, ERROR, *999 )
+    IF( ERR /= 0 ) CALL FlagError( "Could not allocate component evaluators array.", ERR, ERROR, *999 )
 
     IF( SIZE( FIELD_COMPONENT_NUMBERS ) /= COMPONENT_COUNT ) THEN
-      CALL FLAG_ERROR( var_str("Fieldml Component count ")//SIZE( FIELD_COMPONENT_NUMBERS )//&
+      CALL FlagError( var_str("Fieldml Component count ")//SIZE( FIELD_COMPONENT_NUMBERS )//&
         & " must match value type component count "//COMPONENT_COUNT//".", ERR, ERROR, *999 )
     ENDIF
 
@@ -2212,7 +2240,7 @@ CONTAINS
   SUBROUTINE FIELDML_OUTPUT_ADD_FIELD_NO_TYPE( FIELDML_INFO, BASE_NAME, DOF_FORMAT, FIELD, VARIABLE_TYPE, SET_TYPE, &
     & ERR, ERROR, * )
     !Argument variables
-    TYPE(FIELDML_IO_TYPE), INTENT(IN) :: FIELDML_INFO !<The FieldML parsing state.
+    TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     TYPE(VARYING_STRING), INTENT(IN) :: BASE_NAME !<The root name of the basis evaluator.
     TYPE(VARYING_STRING), INTENT(IN) :: DOF_FORMAT !<The name of the format to use when writing dof data.
     TYPE(FIELD_TYPE), POINTER, INTENT(IN) :: FIELD !<The field for which evaluators are to be created.
@@ -2248,7 +2276,7 @@ CONTAINS
   SUBROUTINE FIELDML_OUTPUT_ADD_FIELD_WITH_TYPE( FIELDML_INFO, BASE_NAME, DOF_FORMAT, FIELD, VARIABLE_TYPE, SET_TYPE, &
     & TYPE_HANDLE, ERR, ERROR, * )
     !Argument variables
-    TYPE(FIELDML_IO_TYPE), INTENT(IN) :: FIELDML_INFO !<The FieldML parsing state.
+    TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     TYPE(VARYING_STRING), INTENT(IN) :: BASE_NAME !<The root name of the basis evaluator.
     TYPE(VARYING_STRING), INTENT(IN) :: DOF_FORMAT !<The name of the format to use when writing dof data.
     TYPE(FIELD_TYPE), POINTER, INTENT(IN) :: FIELD !<The field for which evaluators are to be created.
@@ -2270,13 +2298,13 @@ CONTAINS
     MESH => FIELD%DECOMPOSITION%MESH
 
     IF( TYPE_HANDLE == FML_INVALID_HANDLE ) THEN
-      CALL FLAG_ERROR( var_str("Cannot get value type for field ")//BASE_NAME//".", ERR, ERROR, *999 )
+      CALL FlagError( var_str("Cannot get value type for field ")//BASE_NAME//".", ERR, ERROR, *999 )
     ENDIF
     
     CALL FIELD_NUMBER_OF_COMPONENTS_GET( FIELD, VARIABLE_TYPE, COMPONENT_COUNT, ERR, ERROR, *999 )
     
     ALLOCATE( FIELD_COMPONENT_NUMBERS( COMPONENT_COUNT ), STAT = ERR )
-    IF( ERR /= 0 ) CALL FLAG_ERROR( "Could not allocate component numbers array.", ERR, ERROR, *999 )
+    IF( ERR /= 0 ) CALL FlagError( "Could not allocate component numbers array.", ERR, ERROR, *999 )
     DO I = 1, COMPONENT_COUNT
       FIELD_COMPONENT_NUMBERS(I) = I
     ENDDO
@@ -2300,7 +2328,7 @@ CONTAINS
   !>Write the given FieldML document to the given file.
   SUBROUTINE FIELDML_OUTPUT_WRITE( FIELDML_INFO, FILENAME, ERR, ERROR, * )
     !Argument variables
-    TYPE(FIELDML_IO_TYPE), INTENT(IN) :: FIELDML_INFO !<The FieldML parsing state.
+    TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     TYPE(VARYING_STRING), INTENT(IN) :: FILENAME !<The file to write the FieldML document to.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.

@@ -1,16 +1,16 @@
 """Utility routines and classes used by OpenCMISS
 """
 
-import _@IRON_PYTHON_MODULE@
+from . import _@IRON_PYTHON_MODULE@
 
 
-class CMISSError(Exception):
+class CMFEError(Exception):
     """Base class for errors in the OpenCMISS library"""
 
     pass
 
 
-class CMISSType(object):
+class CMFEType(object):
     """Base class for all OpenCMISS types"""
 
     pass
@@ -64,15 +64,15 @@ def wrap_cmiss_routine(routine, args=None):
     else:
         status = r
         return_val = None
-    if status != _@IRON_PYTHON_MODULE@.cvar.CMISS_NO_ERROR:
-        if status == _@IRON_PYTHON_MODULE@.cvar.CMISS_POINTER_IS_NULL:
-            raise CMISSError("CMISS type pointer is null")
-        elif status == _@IRON_PYTHON_MODULE@.cvar.CMISS_POINTER_NOT_NULL:
-            raise CMISSError("CMISS type pointer is not null")
-        elif status == _@IRON_PYTHON_MODULE@.cvar.CMISS_COULD_NOT_ALLOCATE_POINTER:
-            raise CMISSError("Could not allocate pointer")
-        elif status == _@IRON_PYTHON_MODULE@.cvar.CMISS_ERROR_CONVERTING_POINTER:
-            raise CMISSError("Error converting pointer")
+    if status != _@IRON_PYTHON_MODULE@.cvar.CMFE_NO_ERROR:
+        if status == _@IRON_PYTHON_MODULE@.cvar.CMFE_POINTER_IS_NULL:
+            raise CMFEError("CMFE type pointer is null")
+        elif status == _@IRON_PYTHON_MODULE@.cvar.CMFE_POINTER_NOT_NULL:
+            raise CMFEError("CMFE type pointer is not null")
+        elif status == _@IRON_PYTHON_MODULE@.cvar.CMFE_COULD_NOT_ALLOCATE_POINTER:
+            raise CMFEError("Could not allocate pointer")
+        elif status == _@IRON_PYTHON_MODULE@.cvar.CMFE_ERROR_CONVERTING_POINTER:
+            raise CMFEError("Error converting pointer")
         else:
-            raise CMISSError(_@IRON_PYTHON_MODULE@.CMISSExtractErrorMessage()[1])
+            raise CMFEError(_@IRON_PYTHON_MODULE@.cmfe_ExtractErrorMessage()[1])
     return return_val

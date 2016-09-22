@@ -133,6 +133,14 @@ MODULE DISTRIBUTED_MATRIX_VECTOR
     MODULE PROCEDURE DISTRIBUTED_MATRIX_ALL_VALUES_SET_L
   END INTERFACE DistributedMatrix_AllValuesSet
 
+  INTERFACE DistributedMatrix_CreateFinish
+    MODULE PROCEDURE DISTRIBUTED_MATRIX_CREATE_FINISH
+  END INTERFACE DistributedMatrix_CreateFinish
+
+  INTERFACE DistributedMatrix_CreateStart
+    MODULE PROCEDURE DISTRIBUTED_MATRIX_CREATE_START
+  END INTERFACE DistributedMatrix_CreateStart
+
   INTERFACE DISTRIBUTED_MATRIX_DATA_GET
     MODULE PROCEDURE DISTRIBUTED_MATRIX_DATA_GET_INTG
     MODULE PROCEDURE DISTRIBUTED_MATRIX_DATA_GET_SP
@@ -154,12 +162,92 @@ MODULE DISTRIBUTED_MATRIX_VECTOR
     MODULE PROCEDURE DISTRIBUTED_MATRIX_DATA_RESTORE_L
   END INTERFACE DISTRIBUTED_MATRIX_DATA_RESTORE
 
- INTERFACE DistributedMatrix_DataRestore
+  INTERFACE DistributedMatrix_DataRestore
     MODULE PROCEDURE DISTRIBUTED_MATRIX_DATA_RESTORE_INTG
     MODULE PROCEDURE DISTRIBUTED_MATRIX_DATA_RESTORE_SP
     MODULE PROCEDURE DISTRIBUTED_MATRIX_DATA_RESTORE_DP
     MODULE PROCEDURE DISTRIBUTED_MATRIX_DATA_RESTORE_L
   END INTERFACE DistributedMatrix_DataRestore
+
+  INTERFACE DistributedMatrix_DataTypeSet
+    MODULE PROCEDURE DISTRIBUTED_MATRIX_DATA_TYPE_SET
+  END INTERFACE DistributedMatrix_DataTypeSet
+
+  INTERFACE DistributedMatrix_Destroy
+    MODULE PROCEDURE DISTRIBUTED_MATRIX_DESTROY
+  END INTERFACE DistributedMatrix_Destroy
+
+  INTERFACE DistributedMatrix_Duplicate
+    MODULE PROCEDURE DISTRIBUTED_MATRIX_DUPLICATE
+  END INTERFACE DistributedMatrix_Duplicate
+
+  INTERFACE DistributedMatrix_Form
+    MODULE PROCEDURE DISTRIBUTED_MATRIX_FORM
+  END INTERFACE DistributedMatrix_Form
+
+  INTERFACE DistributedMatrix_GhostingTypeSet
+    MODULE PROCEDURE DISTRIBUTED_MATRIX_GHOSTING_TYPE_SET
+  END INTERFACE DistributedMatrix_GhostingTypeSet
+
+  INTERFACE DistributedMatrix_LibraryTypeSet
+    MODULE PROCEDURE DISTRIBUTED_MATRIX_LIBRARY_TYPE_SET
+  END INTERFACE DistributedMatrix_LibraryTypeSet
+
+  INTERFACE DistributedMatrix_MaxColumnsPerRowGet
+    MODULE PROCEDURE DISTRIBUTED_MATRIX_MAX_COLUMNS_PER_ROW_GET
+  END INTERFACE DistributedMatrix_MaxColumnsPerRowGet
+
+  INTERFACE DistributedMatrix_NumberNonZerosGet
+    MODULE PROCEDURE DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_GET
+  END INTERFACE DistributedMatrix_NumberNonZerosGet
+
+  INTERFACE DistributedMatrix_NumberNonZerosSet
+    MODULE PROCEDURE DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_SET
+  END INTERFACE DistributedMatrix_NumberNonZerosSet
+
+  INTERFACE DistributedMatrix_Output
+    MODULE PROCEDURE DISTRIBUTED_MATRIX_OUTPUT
+  END INTERFACE DistributedMatrix_Output
+
+  INTERFACE DistributedMatrix_OverrideSetOn
+    MODULE PROCEDURE DISTRIBUTED_MATRIX_OVERRIDE_SET_ON
+  END INTERFACE DistributedMatrix_OverrideSetOn
+
+  INTERFACE DistributedMatrix_OverrideSetOff
+    MODULE PROCEDURE DISTRIBUTED_MATRIX_OVERRIDE_SET_OFF
+  END INTERFACE DistributedMatrix_OverrideSetOff
+
+  INTERFACE DistributedMatrix_StorageLocationsGet
+    MODULE PROCEDURE DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_GET
+  END INTERFACE DistributedMatrix_StorageLocationsGet
+
+  INTERFACE DistributedMatrix_StorageLocationsSet
+    MODULE PROCEDURE DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_SET
+  END INTERFACE DistributedMatrix_StorageLocationsSet
+
+  INTERFACE DistributedMatrix_StorageTypeGet
+    MODULE PROCEDURE DISTRIBUTED_MATRIX_STORAGE_TYPE_GET
+  END INTERFACE DistributedMatrix_StorageTypeGet
+
+  INTERFACE DistributedMatrix_StorageTypeSet
+    MODULE PROCEDURE DISTRIBUTED_MATRIX_STORAGE_TYPE_SET
+  END INTERFACE DistributedMatrix_StorageTypeSet
+
+  INTERFACE DistributedMatrix_UpdateFinish
+    MODULE PROCEDURE DISTRIBUTED_MATRIX_UPDATE_FINISH
+  END INTERFACE DistributedMatrix_UpdateFinish
+
+  INTERFACE DistributedMatrix_UpdateStart
+    MODULE PROCEDURE DISTRIBUTED_MATRIX_UPDATE_START
+  END INTERFACE DistributedMatrix_UpdateStart
+
+  INTERFACE DistributedMatrix_UpdateIsFinished
+    MODULE PROCEDURE DISTRIBUTED_MATRIX_UPDATE_ISFINISHED
+  END INTERFACE DistributedMatrix_UpdateIsFinished
+
+  INTERFACE DistributedMatrix_UpdateWaitFinished
+    MODULE PROCEDURE DISTRIBUTED_MATRIX_UPDATE_WAITFINISHED
+  END INTERFACE DistributedMatrix_UpdateWaitFinished
 
   INTERFACE DISTRIBUTED_MATRIX_VALUES_ADD
     MODULE PROCEDURE DISTRIBUTED_MATRIX_VALUES_ADD_INTG
@@ -251,6 +339,10 @@ MODULE DISTRIBUTED_MATRIX_VECTOR
     MODULE PROCEDURE DISTRIBUTED_MATRIX_VALUES_SET_L2
   END INTERFACE DistributedMatrix_ValuesSet
 
+  INTERFACE DistributedMatrix_MatrixByVectorAdd
+    MODULE PROCEDURE DISTRIBUTED_MATRIX_BY_VECTOR_ADD
+  END INTERFACE DistributedMatrix_MatrixByVectorAdd
+  
   INTERFACE DISTRIBUTED_VECTOR_ALL_VALUES_SET
     MODULE PROCEDURE DISTRIBUTED_VECTOR_ALL_VALUES_SET_INTG
     MODULE PROCEDURE DISTRIBUTED_VECTOR_ALL_VALUES_SET_SP
@@ -278,6 +370,14 @@ MODULE DISTRIBUTED_MATRIX_VECTOR
     MODULE PROCEDURE DISTRIBUTED_VECTOR_COPY_DP
     MODULE PROCEDURE DISTRIBUTED_VECTOR_COPY_L
   END INTERFACE DistributedVector_Copy
+
+  INTERFACE DistributedVector_CreateFinish
+    MODULE PROCEDURE DISTRIBUTED_VECTOR_CREATE_FINISH
+  END INTERFACE DistributedVector_CreateFinish
+
+  INTERFACE DistributedVector_CreateStart
+    MODULE PROCEDURE DISTRIBUTED_VECTOR_CREATE_START
+  END INTERFACE DistributedVector_CreateStart
   
   INTERFACE DISTRIBUTED_VECTOR_DATA_GET
     MODULE PROCEDURE DISTRIBUTED_VECTOR_DATA_GET_INTG
@@ -306,6 +406,50 @@ MODULE DISTRIBUTED_MATRIX_VECTOR
     MODULE PROCEDURE DISTRIBUTED_VECTOR_DATA_RESTORE_DP
     MODULE PROCEDURE DISTRIBUTED_VECTOR_DATA_RESTORE_L
   END INTERFACE DistributedVector_DataRestore
+
+  INTERFACE DistributedVector_Destroy
+    MODULE PROCEDURE DISTRIBUTED_VECTOR_DESTROY
+  END INTERFACE DistributedVector_Destroy
+
+  INTERFACE DistributedVector_Duplicate
+    MODULE PROCEDURE DISTRIBUTED_VECTOR_DUPLICATE
+  END INTERFACE DistributedVector_Duplicate
+
+  INTERFACE DistributedVector_GhostingTypeSet
+    MODULE PROCEDURE DISTRIBUTED_VECTOR_GHOSTING_TYPE_SET
+  END INTERFACE DistributedVector_GhostingTypeSet
+
+  INTERFACE DistributedVector_LibraryTypeSet
+    MODULE PROCEDURE DISTRIBUTED_VECTOR_LIBRARY_TYPE_SET
+  END INTERFACE DistributedVector_LibraryTypeSet
+
+  INTERFACE DistributedVector_Output
+    MODULE PROCEDURE DISTRIBUTED_VECTOR_OUTPUT
+  END INTERFACE DistributedVector_Output
+
+  INTERFACE DistributedVector_OverrideSetOn
+    MODULE PROCEDURE DISTRIBUTED_VECTOR_OVERRIDE_SET_ON
+  END INTERFACE DistributedVector_OverrideSetOn
+
+  INTERFACE DistributedVector_OverrideSetOff
+    MODULE PROCEDURE DISTRIBUTED_VECTOR_OVERRIDE_SET_OFF
+  END INTERFACE DistributedVector_OverrideSetOff
+
+  INTERFACE DistributedVector_UpdateFinish
+    MODULE PROCEDURE DISTRIBUTED_VECTOR_UPDATE_FINISH
+  END INTERFACE DistributedVector_UpdateFinish
+
+  INTERFACE DistributedVector_UpdateStart
+    MODULE PROCEDURE DISTRIBUTED_VECTOR_UPDATE_START
+  END INTERFACE DistributedVector_UpdateStart
+
+  INTERFACE DistributedVector_UpdateIsFinished
+    MODULE PROCEDURE DISTRIBUTED_VECTOR_UPDATE_ISFINISHED
+  END INTERFACE DistributedVector_UpdateIsFinished
+
+  INTERFACE DistributedVector_UpdateWaitFinished
+    MODULE PROCEDURE DISTRIBUTED_VECTOR_UPDATE_WAITFINISHED
+  END INTERFACE DistributedVector_UpdateWaitFinished
 
   INTERFACE DISTRIBUTED_VECTOR_VALUES_ADD
     MODULE PROCEDURE DISTRIBUTED_VECTOR_VALUES_ADD_INTG
@@ -393,9 +537,11 @@ MODULE DISTRIBUTED_MATRIX_VECTOR
   
   PUBLIC DISTRIBUTED_MATRIX_ALL_VALUES_SET
 
-  PUBLIC DistributedVector_AllValuesSet
+  PUBLIC DistributedMatrix_AllValuesSet
 
   PUBLIC DISTRIBUTED_MATRIX_CREATE_FINISH,DISTRIBUTED_MATRIX_CREATE_START
+
+  PUBLIC DistributedMatrix_CreateFinish,DistributedMatrix_CreateStart
 
   PUBLIC DISTRIBUTED_MATRIX_DATA_GET,DISTRIBUTED_MATRIX_DATA_RESTORE
 
@@ -403,37 +549,63 @@ MODULE DISTRIBUTED_MATRIX_VECTOR
 
   PUBLIC DISTRIBUTED_MATRIX_DATA_TYPE_SET
 
-  PUBLIC DistributedMatrix_DataTypeGet
+  PUBLIC DistributedMatrix_DataTypeGet,DistributedMatrix_DataTypeSet
 
   PUBLIC DistributedMatrix_DimensionsGet
 
   PUBLIC DISTRIBUTED_MATRIX_DESTROY
 
+  PUBLIC DistributedMatrix_Destroy
+
   PUBLIC DISTRIBUTED_MATRIX_DUPLICATE
+
+  PUBLIC DistributedMatrix_Duplicate
 
   PUBLIC DISTRIBUTED_MATRIX_FORM
 
+  PUBLIC DistributedMatrix_Form
+
   PUBLIC DISTRIBUTED_MATRIX_GHOSTING_TYPE_SET
 
+  PUBLIC DistributedMatrix_GhostingTypeSet
+
   PUBLIC DISTRIBUTED_MATRIX_LIBRARY_TYPE_SET
+
+  PUBLIC DistributedMatrix_LibraryTypeSet
 
   PUBLIC DISTRIBUTED_MATRIX_LINKLIST_SET,DISTRIBUTED_MATRIX_LINKLIST_GET
 
   PUBLIC DISTRIBUTED_MATRIX_MAX_COLUMNS_PER_ROW_GET
 
+  PUBLIC DistributedMatrix_MaxColumnsPerRowGet
+
   PUBLIC DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_SET,DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_GET
+
+  PUBLIC DistributedMatrix_NumberNonZerosGet,DistributedMatrix_NumberNonZerosSet
 
   PUBLIC DISTRIBUTED_MATRIX_OUTPUT
 
+  PUBLIC DistributedMatrix_Output
+
   PUBLIC DISTRIBUTED_MATRIX_OVERRIDE_SET_ON,DISTRIBUTED_MATRIX_OVERRIDE_SET_OFF
+
+  PUBLIC DistributedMatrix_OverrideSetOn,DistributedMatrix_OverrideSetOff
 
   PUBLIC DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_GET,DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_SET
 
+  PUBLIC DistributedMatrix_StorageLocationsGet,DistributedMatrix_StorageLocationsSet
+
   PUBLIC DISTRIBUTED_MATRIX_STORAGE_TYPE_GET,DISTRIBUTED_MATRIX_STORAGE_TYPE_SET
+
+  PUBLIC DistributedMatrix_StorageTypeGet,DistributedMatrix_StorageTypeSet
 
   PUBLIC DISTRIBUTED_MATRIX_UPDATE_START,DISTRIBUTED_MATRIX_UPDATE_FINISH
 
+  PUBLIC DistributedMatrix_UpdateFinish,DistributedMatrix_UpdateStart
+
   PUBLIC DISTRIBUTED_MATRIX_UPDATE_ISFINISHED,DISTRIBUTED_MATRIX_UPDATE_WAITFINISHED
+
+  PUBLIC DistributedMatrix_UpdateIsFinished,DistributedMatrix_UpdateWaitFinished
 
   PUBLIC DISTRIBUTED_MATRIX_VALUES_ADD
 
@@ -444,12 +616,20 @@ MODULE DISTRIBUTED_MATRIX_VECTOR
   PUBLIC DistributedMatrix_ValuesGet,DistributedMatrix_ValuesSet
 
   PUBLIC DISTRIBUTED_MATRIX_BY_VECTOR_ADD
+
+  PUBLIC DistributedMatrix_MatrixByVectorAdd
   
   PUBLIC DISTRIBUTED_VECTOR_ALL_VALUES_SET
 
+  PUBLIC DistributedVector_AllValuesSet
+
   PUBLIC DISTRIBUTED_VECTOR_COPY
 
+  PUBLIC DistributedVector_Copy
+
   PUBLIC DISTRIBUTED_VECTOR_CREATE_FINISH,DISTRIBUTED_VECTOR_CREATE_START
+
+  PUBLIC DistributedVector_CreateFinish,DistributedVector_CreateStart
 
   PUBLIC DISTRIBUTED_VECTOR_DATA_GET,DISTRIBUTED_VECTOR_DATA_RESTORE
 
@@ -461,25 +641,43 @@ MODULE DISTRIBUTED_MATRIX_VECTOR
 
   PUBLIC DISTRIBUTED_VECTOR_DESTROY
 
+  PUBLIC DistributedVector_Destroy
+
   PUBLIC DISTRIBUTED_VECTOR_DUPLICATE
+
+  PUBLIC DistributedVector_Duplicate
 
   PUBLIC DISTRIBUTED_VECTOR_GHOSTING_TYPE_SET
 
+  PUBLIC DistributedVector_GhostingTypeSet
+
   PUBLIC DISTRIBUTED_VECTOR_LIBRARY_TYPE_SET
+
+  PUBLIC DistributedVector_LibraryTypeSet
+
+  PUBLIC DistributedVector_L2Norm
 
   PUBLIC DISTRIBUTED_VECTOR_OUTPUT
 
+  PUBLIC DistributedVector_Output
+
   PUBLIC DISTRIBUTED_VECTOR_OVERRIDE_SET_ON,DISTRIBUTED_VECTOR_OVERRIDE_SET_OFF
+
+  PUBLIC DistributedVector_OverrideSetOn,DistributedVector_OverrideSetOff
 
   PUBLIC DISTRIBUTED_VECTOR_UPDATE_START,DISTRIBUTED_VECTOR_UPDATE_FINISH
 
+  PUBLIC DistributedVector_UpdateFinish,DistributedVector_UpdateStart
+
   PUBLIC DISTRIBUTED_VECTOR_UPDATE_ISFINISHED,DISTRIBUTED_VECTOR_UPDATE_WAITFINISHED
+
+  PUBLIC DistributedVector_UpdateIsFinished,DistributedVector_UpdateWaitFinished
   
   PUBLIC DISTRIBUTED_VECTOR_VALUES_ADD
 
   PUBLIC DistributedVector_ValuesAdd
 
-  PUBLIC DistributedVector_L2Norm,DistributedVector_VecDot
+  PUBLIC DistributedVector_VecDot
 
   PUBLIC DISTRIBUTED_VECTOR_VALUES_GET,DISTRIBUTED_VECTOR_VALUES_SET
 
@@ -511,20 +709,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_ALL_VALUES_SET(DISTRIBUTED_MATRIX%CMISS%MATRIX,VALUE,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot set all values for an integer PETSc distributed matrix.",ERR,ERROR,*999)
+          CALL FlagError("Cannot set all values for an integer PETSc distributed matrix.",ERR,ERROR,*999)
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
 
     EXITS("DISTRIBUTED_MATRIX_ALL_VALUES_SET_INTG")
@@ -557,20 +755,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_ALL_VALUES_SET(DISTRIBUTED_MATRIX%CMISS%MATRIX,VALUE,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot set all values for a single precision PETSc distributed matrix.",ERR,ERROR,*999)
+          CALL FlagError("Cannot set all values for a single precision PETSc distributed matrix.",ERR,ERROR,*999)
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
 
     EXITS("DISTRIBUTED_MATRIX_ALL_VALUES_SET_SP")
@@ -603,7 +801,7 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_ALL_VALUES_SET(DISTRIBUTED_MATRIX%CMISS%MATRIX,VALUE,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix cmiss is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix cmiss is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
@@ -614,21 +812,21 @@ CONTAINS
                 CALL Petsc_MatZeroEntries(DISTRIBUTED_MATRIX%PETSC%MATRIX,ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Distributed matrix petsc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix petsc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
 
     EXITS("DISTRIBUTED_MATRIX_ALL_VALUES_SET_DP")
@@ -661,20 +859,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_ALL_VALUES_SET(DISTRIBUTED_MATRIX%CMISS%MATRIX,VALUE,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot set all values for a logical PETSc distributed matrix.",ERR,ERROR,*999)
+          CALL FlagError("Cannot set all values for a logical PETSc distributed matrix.",ERR,ERROR,*999)
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
 
     EXITS("DISTRIBUTED_MATRIX_ALL_VALUES_SET_L")
@@ -713,10 +911,10 @@ CONTAINS
         END IF
         CALL MATRIX_CREATE_FINISH(CMISS_MATRIX%MATRIX,ERR,ERROR,*999)
       ELSE
-        CALL FLAG_ERROR("Distributed matrix row domain mapping is not associated.",ERR,ERROR,*998)
+        CALL FlagError("Distributed matrix row domain mapping is not associated.",ERR,ERROR,*998)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*998)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_CMISS_CREATE_FINISH")
@@ -772,14 +970,14 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
       IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
-        CALL FLAG_ERROR("CMISS is already associated for this distributed matrix.",ERR,ERROR,*998)
+        CALL FlagError("CMISS is already associated for this distributed matrix.",ERR,ERROR,*998)
       ELSE
         ROW_DOMAIN_MAPPING=>DISTRIBUTED_MATRIX%ROW_DOMAIN_MAPPING
         COLUMN_DOMAIN_MAPPING=>DISTRIBUTED_MATRIX%COLUMN_DOMAIN_MAPPING
         IF(ASSOCIATED(ROW_DOMAIN_MAPPING)) THEN
           IF(ASSOCIATED(COLUMN_DOMAIN_MAPPING)) THEN
             ALLOCATE(DISTRIBUTED_MATRIX%CMISS,STAT=ERR)
-            IF(ERR/=0) CALL FLAG_ERROR("Could not allocate CMISS distributed matrix.",ERR,ERROR,*999)
+            IF(ERR/=0) CALL FlagError("Could not allocate CMISS distributed matrix.",ERR,ERROR,*999)
             DISTRIBUTED_MATRIX%CMISS%DISTRIBUTED_MATRIX=>DISTRIBUTED_MATRIX
             DISTRIBUTED_MATRIX%LIBRARY_TYPE=DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE
             NULLIFY(DISTRIBUTED_MATRIX%CMISS%MATRIX)
@@ -796,18 +994,18 @@ CONTAINS
                 & COLUMN_DOMAIN_MAPPING%NUMBER_OF_GLOBAL,ERR,ERROR,*999)
             CASE DEFAULT
               LOCAL_ERROR="The distributed matrix ghosting type of "// &
-                & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%GHOSTING_TYPE,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(DISTRIBUTED_MATRIX%GHOSTING_TYPE,"*",ERR,ERROR))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ELSE
-            CALL FLAG_ERROR("Distributed matrix column domain mapping is not associated.",ERR,ERROR,*998)
+            CALL FlagError("Distributed matrix column domain mapping is not associated.",ERR,ERROR,*998)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Distributed matrix row domain mapping is not associated.",ERR,ERROR,*998)
+          CALL FlagError("Distributed matrix row domain mapping is not associated.",ERR,ERROR,*998)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*998)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_CMISS_INITIALSE")
@@ -837,7 +1035,7 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
       IF(DISTRIBUTED_MATRIX%MATRIX_FINISHED) THEN
-        CALL FLAG_ERROR("The distributed matrix has been finished.",ERR,ERROR,*998)
+        CALL FlagError("The distributed matrix has been finished.",ERR,ERROR,*998)
       ELSE
         SELECT CASE(DISTRIBUTED_MATRIX%LIBRARY_TYPE)
         CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -846,13 +1044,13 @@ CONTAINS
           CALL DISTRIBUTED_MATRIX_PETSC_CREATE_FINISH(DISTRIBUTED_MATRIX%PETSC,ERR,ERROR,*999)
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT        
         DISTRIBUTED_MATRIX%MATRIX_FINISHED=.TRUE.
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*998)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_CREATE_FINISH")
@@ -884,24 +1082,24 @@ CONTAINS
     IF(ASSOCIATED(ROW_DOMAIN_MAPPING)) THEN
       IF(ASSOCIATED(COLUMN_DOMAIN_MAPPING)) THEN
         IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
-          CALL FLAG_ERROR("Distributed matrix is already associated.",ERR,ERROR,*998)
+          CALL FlagError("Distributed matrix is already associated.",ERR,ERROR,*998)
         ELSE
           IF(ROW_DOMAIN_MAPPING%NUMBER_OF_DOMAINS==COLUMN_DOMAIN_MAPPING%NUMBER_OF_DOMAINS) THEN
             CALL DISTRIBUTED_MATRIX_INITIALISE(ROW_DOMAIN_MAPPING,COLUMN_DOMAIN_MAPPING,DISTRIBUTED_MATRIX,ERR,ERROR,*999)
             !Set the defaults
           ELSE
             LOCAL_ERROR="The number of domains in the row domain mapping ("// &
-              & TRIM(NUMBER_TO_VSTRING(ROW_DOMAIN_MAPPING%NUMBER_OF_DOMAINS,"*",ERR,ERROR))// &
+              & TRIM(NumberToVString(ROW_DOMAIN_MAPPING%NUMBER_OF_DOMAINS,"*",ERR,ERROR))// &
               & ") does not match the number of domains in the column domain mapping ("// &
-              & TRIM(NUMBER_TO_VSTRING(COLUMN_DOMAIN_MAPPING%NUMBER_OF_DOMAINS,"*",ERR,ERROR))//")."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(COLUMN_DOMAIN_MAPPING%NUMBER_OF_DOMAINS,"*",ERR,ERROR))//")."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Column domain mapping is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Column domain mapping is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Row domain mapping is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Row domain mapping is not associated.",ERR,ERROR,*998)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_CREATE_START")
@@ -930,7 +1128,7 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
       IF(ASSOCIATED(DATA)) THEN
-        CALL FLAG_ERROR("Data is already associated",ERR,ERROR,*999)
+        CALL FlagError("Data is already associated",ERR,ERROR,*999)
       ELSE
         NULLIFY(DATA)
         IF(DISTRIBUTED_MATRIX%MATRIX_FINISHED) THEN
@@ -939,21 +1137,21 @@ CONTAINS
             IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
               CALL MATRIX_DATA_GET(DISTRIBUTED_MATRIX%CMISS%MATRIX,DATA,ERR,ERROR,*999)
             ELSE
-              CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-            CALL FLAG_ERROR("Cannot get data for an integer PETSc distributed matrix.",ERR,ERROR,*999)
+            CALL FlagError("Cannot get data for an integer PETSc distributed matrix.",ERR,ERROR,*999)
           CASE DEFAULT
             LOCAL_ERROR="The distributed matrix library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
-          CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+          CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_DATA_GET_INTG")
@@ -981,7 +1179,7 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
       IF(ASSOCIATED(DATA)) THEN
-        CALL FLAG_ERROR("Data is already associated.",ERR,ERROR,*999)
+        CALL FlagError("Data is already associated.",ERR,ERROR,*999)
       ELSE
         NULLIFY(DATA)
         IF(DISTRIBUTED_MATRIX%MATRIX_FINISHED) THEN
@@ -990,21 +1188,21 @@ CONTAINS
             IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
               CALL MATRIX_DATA_GET(DISTRIBUTED_MATRIX%CMISS%MATRIX,DATA,ERR,ERROR,*999)
             ELSE
-              CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-            CALL FLAG_ERROR("Cannot get data for a single precision PETSc distributed matrix.",ERR,ERROR,*999)
+            CALL FlagError("Cannot get data for a single precision PETSc distributed matrix.",ERR,ERROR,*999)
           CASE DEFAULT
             LOCAL_ERROR="The distributed matrix library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
-          CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+          CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_DATA_GET_SP")
@@ -1034,7 +1232,7 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
       IF(ASSOCIATED(DATA)) THEN
-        CALL FLAG_ERROR("Data is already associated.",ERR,ERROR,*999)
+        CALL FlagError("Data is already associated.",ERR,ERROR,*999)
       ELSE
         NULLIFY(DATA)
         IF(DISTRIBUTED_MATRIX%MATRIX_FINISHED) THEN
@@ -1043,7 +1241,7 @@ CONTAINS
             IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
               CALL MATRIX_DATA_GET(DISTRIBUTED_MATRIX%CMISS%MATRIX,DATA,ERR,ERROR,*999)
             ELSE
-              CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
             IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
@@ -1052,42 +1250,42 @@ CONTAINS
                 CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
                   CALL Petsc_MatDenseGetArrayF90(DISTRIBUTED_MATRIX%petsc%OVERRIDE_MATRIX,petscData,err,error,*999)
                 CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
-                  CALL FLAG_ERROR("Diagonal storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                  CALL FlagError("Diagonal storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-                  CALL FLAG_ERROR("Column major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                  CALL FlagError("Column major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
-                  CALL FLAG_ERROR("Row major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                  CALL FlagError("Row major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
                   CALL Petsc_MatSeqAIJGetArrayF90(DISTRIBUTED_MATRIX%petsc%OVERRIDE_MATRIX,petscData,ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-                  CALL FLAG_ERROR("Compressed column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                  CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
-                  CALL FLAG_ERROR("Row column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                  CALL FlagError("Row column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
                 CASE DEFAULT
-                  LOCAL_ERROR="The PETSc matrix storage type of "//TRIM(NUMBER_TO_VSTRING( &
+                  LOCAL_ERROR="The PETSc matrix storage type of "//TRIM(NumberToVString( &
                     & DISTRIBUTED_MATRIX%PETSC%STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 END SELECT
               ELSE
                 SELECT CASE(DISTRIBUTED_MATRIX%PETSC%STORAGE_TYPE)
                 CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
                   CALL Petsc_MatDenseGetArrayF90(DISTRIBUTED_MATRIX%petsc%matrix,petscData,err,error,*999)
                 CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
-                  CALL FLAG_ERROR("Diagonal storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                  CALL FlagError("Diagonal storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-                  CALL FLAG_ERROR("Column major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                  CALL FlagError("Column major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
-                  CALL FLAG_ERROR("Row major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                  CALL FlagError("Row major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
                   CALL Petsc_MatSeqAIJGetArrayF90(DISTRIBUTED_MATRIX%petsc%matrix,petscData,ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-                  CALL FLAG_ERROR("Compressed column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                  CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
-                  CALL FLAG_ERROR("Row column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                  CALL FlagError("Row column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
                 CASE DEFAULT
-                  LOCAL_ERROR="The PETSc matrix storage type of "//TRIM(NUMBER_TO_VSTRING( &
+                  LOCAL_ERROR="The PETSc matrix storage type of "//TRIM(NumberToVString( &
                     & DISTRIBUTED_MATRIX%PETSC%STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 END SELECT
               ENDIF
               ! Convert 2D array from PETSc to 1D array
@@ -1097,11 +1295,11 @@ CONTAINS
                 TEMP_ME = C_LOC(petscData(1,1))
                 CALL C_F_POINTER(TEMP_ME,DATA,[DISTRIBUTED_MATRIX%PETSC%M*DISTRIBUTED_MATRIX%PETSC%N])
               CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
-                CALL FLAG_ERROR("Diagonal storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                CALL FlagError("Diagonal storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
               CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-                CALL FLAG_ERROR("Column major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                CALL FlagError("Column major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
               CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
-                CALL FLAG_ERROR("Row major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                CALL FlagError("Row major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
               CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
                 !PETSc returns an m * n matrix rather than number non-zeros by 1, so the returned
                 !2D array actually contains junk data outside of the actual matrix.
@@ -1109,28 +1307,28 @@ CONTAINS
                 TEMP_ME = C_LOC(petscData(1,1))
                 CALL C_F_POINTER(TEMP_ME,DATA,[DISTRIBUTED_MATRIX%PETSC%NUMBER_NON_ZEROS])
               CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-                CALL FLAG_ERROR("Compressed column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
               CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
-                CALL FLAG_ERROR("Row column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                CALL FlagError("Row column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
               CASE DEFAULT
-                LOCAL_ERROR="The PETSc matrix storage type of "//TRIM(NUMBER_TO_VSTRING( &
+                LOCAL_ERROR="The PETSc matrix storage type of "//TRIM(NumberToVString( &
                   & DISTRIBUTED_MATRIX%PETSC%STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
             ELSE
-              CALL FLAG_ERROR("Distributed matris PETSc is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed matris PETSc is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE DEFAULT
             LOCAL_ERROR="The distributed matrix library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
-          CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+          CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_DATA_GET_DP")
@@ -1159,7 +1357,7 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
       IF(ASSOCIATED(DATA)) THEN
-        CALL FLAG_ERROR("Data is already associated",ERR,ERROR,*999)
+        CALL FlagError("Data is already associated",ERR,ERROR,*999)
       ELSE
         NULLIFY(DATA)
         IF(DISTRIBUTED_MATRIX%MATRIX_FINISHED) THEN
@@ -1168,21 +1366,21 @@ CONTAINS
             IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
               CALL MATRIX_DATA_GET(DISTRIBUTED_MATRIX%CMISS%MATRIX,DATA,ERR,ERROR,*999)
             ELSE
-              CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-            CALL FLAG_ERROR("Cannot get data for a logical PETSc distributed matrix.",ERR,ERROR,*999)
+            CALL FlagError("Cannot get data for a logical PETSc distributed matrix.",ERR,ERROR,*999)
           CASE DEFAULT
             LOCAL_ERROR="The distributed matrix library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
-          CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+          CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_DATA_GET_L")
@@ -1215,20 +1413,20 @@ CONTAINS
           CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
             NULLIFY(DATA)              
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-            CALL FLAG_ERROR("Cannot restore data for an integer PETSc distributed matrix.",ERR,ERROR,*999)
+            CALL FlagError("Cannot restore data for an integer PETSc distributed matrix.",ERR,ERROR,*999)
           CASE DEFAULT
             LOCAL_ERROR="The distributed matrix library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
-          CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+          CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Data is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Data is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_DATA_RESTORE_INTG")
@@ -1261,20 +1459,20 @@ CONTAINS
           CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
             NULLIFY(DATA)
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-            CALL FLAG_ERROR("Cannot restore data for a single precision PETSc distributed matrix.",ERR,ERROR,*999)
+            CALL FlagError("Cannot restore data for a single precision PETSc distributed matrix.",ERR,ERROR,*999)
           CASE DEFAULT
             LOCAL_ERROR="The distributed matrix library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
-          CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+          CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Data is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Data is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_DATA_RESTORE_SP")
@@ -1316,84 +1514,84 @@ CONTAINS
                 TEMP_ME = C_LOC(DATA(1))
                 CALL C_F_POINTER(TEMP_ME,petscData,[DISTRIBUTED_MATRIX%PETSC%M,DISTRIBUTED_MATRIX%PETSC%N])
               CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
-                CALL FLAG_ERROR("Diagonal storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                CALL FlagError("Diagonal storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
               CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-                CALL FLAG_ERROR("Column major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                CALL FlagError("Column major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
               CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
-                CALL FLAG_ERROR("Row major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                CALL FlagError("Row major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
               CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
                 !PETSc expects an m * n 2D matrix rather than a 1D array with length equal to number of non-zeros
                 !This is a bug in PETSc so we have to give it a 2D matrix with junk at the end
                 TEMP_ME = C_LOC(DATA(1))
                 CALL C_F_POINTER(TEMP_ME,petscData,[DISTRIBUTED_MATRIX%PETSC%M,DISTRIBUTED_MATRIX%PETSC%N])
               CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-                CALL FLAG_ERROR("Compressed column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
               CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
-                CALL FLAG_ERROR("Row column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                CALL FlagError("Row column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
               CASE DEFAULT
-                LOCAL_ERROR="The PETSc matrix storage type of "//TRIM(NUMBER_TO_VSTRING( &
+                LOCAL_ERROR="The PETSc matrix storage type of "//TRIM(NumberToVString( &
                   & DISTRIBUTED_MATRIX%PETSC%STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
               IF(DISTRIBUTED_MATRIX%PETSC%USE_OVERRIDE_MATRIX) THEN
                 SELECT CASE(DISTRIBUTED_MATRIX%PETSC%STORAGE_TYPE)
                 CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
                   CALL Petsc_MatDenseRestoreArrayF90(DISTRIBUTED_MATRIX%PETSC%OVERRIDE_MATRIX,petscData,ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
-                  CALL FLAG_ERROR("Diagonal storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                  CALL FlagError("Diagonal storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-                  CALL FLAG_ERROR("Column major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                  CALL FlagError("Column major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
-                  CALL FLAG_ERROR("Row major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                  CALL FlagError("Row major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
                   CALL Petsc_MatSeqAIJRestoreArrayF90(DISTRIBUTED_MATRIX%PETSC%OVERRIDE_MATRIX,petscData,ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-                  CALL FLAG_ERROR("Compressed column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                  CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
-                  CALL FLAG_ERROR("Row column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                  CALL FlagError("Row column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
                 CASE DEFAULT
-                  LOCAL_ERROR="The PETSc matrix storage type of "//TRIM(NUMBER_TO_VSTRING( &
+                  LOCAL_ERROR="The PETSc matrix storage type of "//TRIM(NumberToVString( &
                     & DISTRIBUTED_MATRIX%PETSC%STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 END SELECT
               ELSE
                 SELECT CASE(DISTRIBUTED_MATRIX%PETSC%STORAGE_TYPE)
                 CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
                   CALL Petsc_MatDenseRestoreArrayF90(DISTRIBUTED_MATRIX%PETSC%MATRIX,petscData,ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
-                  CALL FLAG_ERROR("Diagonal storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                  CALL FlagError("Diagonal storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-                  CALL FLAG_ERROR("Column major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                  CALL FlagError("Column major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
-                  CALL FLAG_ERROR("Row major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                  CALL FlagError("Row major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
                   CALL Petsc_MatSeqAIJRestoreArrayF90(DISTRIBUTED_MATRIX%PETSC%MATRIX,petscData,ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-                  CALL FLAG_ERROR("Compressed column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                  CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
-                  CALL FLAG_ERROR("Row column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                  CALL FlagError("Row column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
                 CASE DEFAULT
-                  LOCAL_ERROR="The PETSc matrix storage type of "//TRIM(NUMBER_TO_VSTRING( &
+                  LOCAL_ERROR="The PETSc matrix storage type of "//TRIM(NumberToVString( &
                     & DISTRIBUTED_MATRIX%PETSC%STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 END SELECT
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE DEFAULT
             LOCAL_ERROR="The distributed matrix library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
-          CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+          CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Data is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Data is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_DATA_RESTORE_DP")
@@ -1427,20 +1625,20 @@ CONTAINS
           CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
             NULLIFY(DATA)
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-            CALL FLAG_ERROR("Cannot restore data for a logical PETSc distributed matrix.",ERR,ERROR,*999)
+            CALL FlagError("Cannot restore data for a logical PETSc distributed matrix.",ERR,ERROR,*999)
           CASE DEFAULT
             LOCAL_ERROR="The distributed matrix library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
-          CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+          CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Data is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Data is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_DATA_RESTORE_L")
@@ -1499,7 +1697,7 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
       IF(DISTRIBUTED_MATRIX%MATRIX_FINISHED) THEN
-        CALL FLAG_ERROR("The distributed matrix has been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has been finished.",ERR,ERROR,*999)
       ELSE
         SELECT CASE(DISTRIBUTED_MATRIX%LIBRARY_TYPE)
         CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -1507,30 +1705,30 @@ CONTAINS
             CALL MATRIX_DATA_TYPE_SET(DISTRIBUTED_MATRIX%CMISS%MATRIX,DATA_TYPE,ERR,ERROR,*999)
             DISTRIBUTED_MATRIX%DATA_TYPE=DATA_TYPE
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           SELECT CASE(DATA_TYPE)
           CASE(DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE)
-            CALL FLAG_ERROR("An integer distributed PETSc matrix is not implemented.",ERR,ERROR,*999)
+            CALL FlagError("An integer distributed PETSc matrix is not implemented.",ERR,ERROR,*999)
           CASE(DISTRIBUTED_MATRIX_VECTOR_SP_TYPE)
-            CALL FLAG_ERROR("A single precision distributed PETSc matrix is not implemented.",ERR,ERROR,*999)
+            CALL FlagError("A single precision distributed PETSc matrix is not implemented.",ERR,ERROR,*999)
           CASE(DISTRIBUTED_MATRIX_VECTOR_DP_TYPE)
             DISTRIBUTED_MATRIX%DATA_TYPE=DISTRIBUTED_MATRIX_VECTOR_DP_TYPE
           CASE(DISTRIBUTED_MATRIX_VECTOR_L_TYPE)
-            CALL FLAG_ERROR("A logical distributed PETSc matrix is not implemented.",ERR,ERROR,*999)
+            CALL FlagError("A logical distributed PETSc matrix is not implemented.",ERR,ERROR,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The specified data type of "//TRIM(NUMBER_TO_VSTRING(DATA_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            LOCAL_ERROR="The specified data type of "//TRIM(NumberToVString(DATA_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_DATA_TYPE_SET")
@@ -1618,7 +1816,7 @@ CONTAINS
     IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
       CALL DISTRIBUTED_MATRIX_FINALISE(DISTRIBUTED_MATRIX,ERR,ERROR,*999)
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_DESTROY")
@@ -1647,7 +1845,7 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
       IF(ASSOCIATED(NEW_DISTRIBUTED_MATRIX)) THEN
-        CALL FLAG_ERROR("New distributed matrix is already associated.",ERR,ERROR,*998)
+        CALL FlagError("New distributed matrix is already associated.",ERR,ERROR,*998)
       ELSE
         SELECT CASE(DISTRIBUTED_MATRIX%LIBRARY_TYPE)
         CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -1657,7 +1855,7 @@ CONTAINS
             CALL MATRIX_DUPLICATE(DISTRIBUTED_MATRIX%CMISS%MATRIX,NEW_DISTRIBUTED_MATRIX%CMISS%MATRIX,ERR,ERROR,*999)
             CALL DISTRIBUTED_MATRIX_CREATE_FINISH(NEW_DISTRIBUTED_MATRIX,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF          
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           CALL DISTRIBUTED_MATRIX_CREATE_START(DISTRIBUTED_MATRIX%ROW_DOMAIN_MAPPING,DISTRIBUTED_MATRIX%COLUMN_DOMAIN_MAPPING, &
@@ -1666,12 +1864,12 @@ CONTAINS
           CALL DISTRIBUTED_MATRIX_CREATE_FINISH(NEW_DISTRIBUTED_MATRIX,ERR,ERROR,*999)
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*998)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_DUPLICATE")
@@ -1731,9 +1929,9 @@ CONTAINS
         SELECT CASE(DISTRIBUTED_MATRIX%LIBRARY_TYPE)
         CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)          
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
-            CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+            CALL FlagError("Not implemented.",ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           PETSC_MATRIX=>DISTRIBUTED_MATRIX%PETSC
@@ -1742,11 +1940,11 @@ CONTAINS
             CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
               CALL Petsc_MatZeroEntries(PETSC_MATRIX%MATRIX,ERR,ERROR,*999)
             CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
-              CALL FLAG_ERROR("Diagonal storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+              CALL FlagError("Diagonal storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
             CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-              CALL FLAG_ERROR("Column major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+              CALL FlagError("Column major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
             CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
-              CALL FLAG_ERROR("Row major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+              CALL FlagError("Row major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
             CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
               IF(PETSC_MATRIX%USE_OVERRIDE_MATRIX) THEN
                 DO row=1,PETSC_MATRIX%M
@@ -1766,13 +1964,13 @@ CONTAINS
                 ENDDO !row_idx
               ENDIF
             CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-              CALL FLAG_ERROR("Compressed column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+              CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
             CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
-              CALL FLAG_ERROR("Row column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+              CALL FlagError("Row column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
             CASE DEFAULT
-              LOCAL_ERROR="The PETSc matrix storage type of "//TRIM(NUMBER_TO_VSTRING(PETSC_MATRIX%STORAGE_TYPE,"*",ERR,ERROR))// &
+              LOCAL_ERROR="The PETSc matrix storage type of "//TRIM(NumberToVString(PETSC_MATRIX%STORAGE_TYPE,"*",ERR,ERROR))// &
                 & " is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
             IF(PETSC_MATRIX%USE_OVERRIDE_MATRIX) THEN
               CALL Petsc_MatAssemblyBegin(PETSC_MATRIX%OVERRIDE_MATRIX,PETSC_MAT_FINAL_ASSEMBLY,ERR,ERROR,*999)
@@ -1782,15 +1980,15 @@ CONTAINS
               CALL Petsc_MatAssemblyEnd(PETSC_MATRIX%MATRIX,PETSC_MAT_FINAL_ASSEMBLY,ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ENDIF
     
@@ -1820,7 +2018,7 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
       IF(DISTRIBUTED_MATRIX%MATRIX_FINISHED) THEN
-        CALL FLAG_ERROR("The distributed matrix has already been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has already been finished.",ERR,ERROR,*999)
       ELSE
         ROW_DOMAIN_MAPPING=>DISTRIBUTED_MATRIX%ROW_DOMAIN_MAPPING
         COLUMN_DOMAIN_MAPPING=>DISTRIBUTED_MATRIX%COLUMN_DOMAIN_MAPPING
@@ -1837,11 +2035,11 @@ CONTAINS
                   CALL MATRIX_SIZE_SET(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_DOMAIN_MAPPING%NUMBER_OF_LOCAL, &
                     & COLUMN_DOMAIN_MAPPING%NUMBER_OF_GLOBAL,ERR,ERROR,*999)
                 CASE DEFAULT
-                  LOCAL_ERROR="The given ghosting type of "//TRIM(NUMBER_TO_VSTRING(GHOSTING_TYPE,"*",ERR,ERROR))//" is invalid."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  LOCAL_ERROR="The given ghosting type of "//TRIM(NumberToVString(GHOSTING_TYPE,"*",ERR,ERROR))//" is invalid."
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 END SELECT
               ELSE
-                CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
               IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
@@ -1851,27 +2049,27 @@ CONTAINS
                 CASE(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE)
                   DISTRIBUTED_MATRIX%PETSC%N=ROW_DOMAIN_MAPPING%NUMBER_OF_LOCAL
                 CASE DEFAULT
-                  LOCAL_ERROR="The given ghosting type of "//TRIM(NUMBER_TO_VSTRING(GHOSTING_TYPE,"*",ERR,ERROR))//" is invalid."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  LOCAL_ERROR="The given ghosting type of "//TRIM(NumberToVString(GHOSTING_TYPE,"*",ERR,ERROR))//" is invalid."
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 END SELECT
               ELSE
-                CALL FLAG_ERROR("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
               ENDIF
             CASE DEFAULT
               LOCAL_ERROR="The distributed matrix library type of "// &
-                & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
             DISTRIBUTED_MATRIX%GHOSTING_TYPE=GHOSTING_TYPE
           ELSE
-            CALL FLAG_ERROR("Distributed matrix column domain mapping is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix column domain mapping is not associated.",ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Distributed matrix row domain mapping is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Distributed matrix row domain mapping is not associated.",ERR,ERROR,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_GHOSTING_TYPE_SET")
@@ -1900,7 +2098,7 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
       IF(DISTRIBUTED_MATRIX%MATRIX_FINISHED) THEN
-        CALL FLAG_ERROR("The distributed matrix has already been finished.",ERR,ERROR,*998)
+        CALL FlagError("The distributed matrix has already been finished.",ERR,ERROR,*998)
       ELSE
         OLD_LIBRARY_TYPE=DISTRIBUTED_MATRIX%LIBRARY_TYPE
         IF(LIBRARY_TYPE/=OLD_LIBRARY_TYPE) THEN
@@ -1911,8 +2109,8 @@ CONTAINS
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
             CALL DISTRIBUTED_MATRIX_PETSC_INITIALISE(DISTRIBUTED_MATRIX,ERR,ERROR,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The library type of "//TRIM(NUMBER_TO_VSTRING(LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            LOCAL_ERROR="The library type of "//TRIM(NumberToVString(LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
           !Finalise the old library type
           SELECT CASE(OLD_LIBRARY_TYPE)
@@ -1922,14 +2120,14 @@ CONTAINS
             CALL DISTRIBUTED_MATRIX_PETSC_FINALISE(DISTRIBUTED_MATRIX%PETSC,ERR,ERROR,*999)
           CASE DEFAULT
             LOCAL_ERROR="The distributed matrix library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(OLD_LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(OLD_LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT          
           DISTRIBUTED_MATRIX%LIBRARY_TYPE=LIBRARY_TYPE
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*998)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_LIBRARY_TYPE_SET")
@@ -1966,10 +2164,10 @@ CONTAINS
     IF(ASSOCIATED(ROW_DOMAIN_MAPPING)) THEN
       IF(ASSOCIATED(COLUMN_DOMAIN_MAPPING)) THEN
         IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
-          CALL FLAG_ERROR("Distributed matrix is already associated.",ERR,ERROR,*998)
+          CALL FlagError("Distributed matrix is already associated.",ERR,ERROR,*998)
         ELSE
           ALLOCATE(DISTRIBUTED_MATRIX,STAT=ERR)
-          IF(ERR/=0) CALL FLAG_ERROR("Could not allocated the distributed matrix.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocated the distributed matrix.",ERR,ERROR,*999)
           DISTRIBUTED_MATRIX%MATRIX_FINISHED=.FALSE.
           DISTRIBUTED_MATRIX%LIBRARY_TYPE=0
           DISTRIBUTED_MATRIX%GHOSTING_TYPE=DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE
@@ -1981,10 +2179,10 @@ CONTAINS
           CALL DISTRIBUTED_MATRIX_CMISS_INITIALISE(DISTRIBUTED_MATRIX,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Column domain mapping is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Column domain mapping is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Row domain mapping is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Row domain mapping is not associated.",ERR,ERROR,*998)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_INITIALSE")
@@ -2018,24 +2216,24 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_MAX_COLUMNS_PER_ROW_GET(DISTRIBUTED_MATRIX%CMISS%MATRIX,MAX_COLUMNS_PER_ROW,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
             MAX_COLUMNS_PER_ROW=DISTRIBUTED_MATRIX%PETSC%MAXIMUM_COLUMN_INDICES_PER_ROW
           ELSE
-            CALL FLAG_ERROR("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed mtrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed mtrix is not associated.",ERR,ERROR,*999)
     ENDIF
 
     EXITS("DISTRIBUTED_MATRIX_MAX_COLUMNS_PER_ROW_GET")
@@ -2063,35 +2261,35 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
       IF(DISTRIBUTED_MATRIX%MATRIX_FINISHED) THEN
-        CALL FLAG_ERROR("The distributed matrix has been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has been finished.",ERR,ERROR,*999)
       ELSE
         SELECT CASE(DISTRIBUTED_MATRIX%LIBRARY_TYPE)
         CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_NUMBER_NON_ZEROS_SET(DISTRIBUTED_MATRIX%CMISS%MATRIX,NUMBER_NON_ZEROS,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
             IF(NUMBER_NON_ZEROS>0) THEN
               DISTRIBUTED_MATRIX%PETSC%NUMBER_NON_ZEROS=NUMBER_NON_ZEROS
             ELSE
-              LOCAL_ERROR="The specified number of non zeros ("//TRIM(NUMBER_TO_VSTRING(NUMBER_NON_ZEROS,"*",ERR,ERROR))// &
+              LOCAL_ERROR="The specified number of non zeros ("//TRIM(NumberToVString(NUMBER_NON_ZEROS,"*",ERR,ERROR))// &
                 & ") is invalid. The number must be > 0."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed mtrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed mtrix is not associated.",ERR,ERROR,*999)
     ENDIF
 
     EXITS("DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_SET")
@@ -2124,24 +2322,24 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_NUMBER_NON_ZEROS_GET(DISTRIBUTED_MATRIX%CMISS%MATRIX,NUMBER_NON_ZEROS,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
             NUMBER_NON_ZEROS=DISTRIBUTED_MATRIX%PETSC%NUMBER_NON_ZEROS
           ELSE
-            CALL FLAG_ERROR("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix is not finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix is not finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
 
     EXITS("DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_GET")
@@ -2172,7 +2370,7 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
       IF(DISTRIBUTED_MATRIX%MATRIX_FINISHED) THEN
-        CALL FLAG_ERROR("The distributed matrix has been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has been finished.",ERR,ERROR,*999)
       ELSE
         SELECT CASE(DISTRIBUTED_MATRIX%LIBRARY_TYPE)
         CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -2180,7 +2378,7 @@ CONTAINS
             CALL MATRIX_LINKLIST_SET(DISTRIBUTED_MATRIX%CMISS%MATRIX,LIST,ERR,ERROR,*999)
             !DISTRIBUTED_MATRIX%CMISS%list=list 
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
@@ -2188,21 +2386,21 @@ CONTAINS
               ! Check this
               DISTRIBUTED_MATRIX%PETSC%list=>list
             !ELSE
-            !  LOCAL_ERROR="The specified number of non zeros ("//TRIM(NUMBER_TO_VSTRING(NUMBER_NON_ZEROS,"*",ERR,ERROR))// &
+            !  LOCAL_ERROR="The specified number of non zeros ("//TRIM(NumberToVString(NUMBER_NON_ZEROS,"*",ERR,ERROR))// &
             !    & ") is invalid. The number must be > 0."
-            !  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            !  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             !ENDIF
           ELSE
-            CALL FLAG_ERROR("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed mtrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed mtrix is not associated.",ERR,ERROR,*999)
     ENDIF
 
     EXITS("DISTRIBUTED_MATRIX_LIKLIST_SET")
@@ -2237,24 +2435,24 @@ CONTAINS
             !list=DISTRIBUTED_MATRIX%CMISS%list
             CALL MATRIX_LINKLIST_GET(DISTRIBUTED_MATRIX%CMISS%MATRIX,LIST,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
             list=>DISTRIBUTED_MATRIX%PETSC%list
           ELSE
-            CALL FLAG_ERROR("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix is not finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix is not finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
 
     EXITS("DISTRIBUTED_MATRIX_LINKLIST_GET")
@@ -2291,7 +2489,7 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_OUTPUT(ID,DISTRIBUTED_MATRIX%CMISS%MATRIX,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
@@ -2301,9 +2499,9 @@ CONTAINS
               CALL Petsc_MatView(DISTRIBUTED_MATRIX%PETSC%MATRIX,PETSC_VIEWER_STDOUT_WORLD,ERR,ERROR,*999) 
             ENDIF
             !ALLOCATE(COLUMNS(DISTRIBUTED_MATRIX%PETSC%MAXIMUM_COLUMN_INDICES_PER_ROW),STAT=ERR)
-            !IF(ERR/=0) CALL FLAG_ERROR("Could not allocate columns.",ERR,ERROR,*999)
+            !IF(ERR/=0) CALL FlagError("Could not allocate columns.",ERR,ERROR,*999)
             !ALLOCATE(VALUES(DISTRIBUTED_MATRIX%PETSC%MAXIMUM_COLUMN_INDICES_PER_ROW),STAT=ERR)
-            !IF(ERR/=0) CALL FLAG_ERROR("Could not allocate values.",ERR,ERROR,*999)
+            !IF(ERR/=0) CALL FlagError("Could not allocate values.",ERR,ERROR,*999)
             !DO i=1,DISTRIBUTED_MATRIX%PETSC%M
             !  IF(DISTRIBUTED_MATRIX%PETSC%USE_OVERRIDE_MATRIX) THEN
             !    CALL Petsc_MatGetRow(DISTRIBUTED_MATRIX%PETSC%OVERRIDE_MATRIX,i-1,NUMBER_OF_COLUMNS,COLUMNS,VALUES, &
@@ -2325,18 +2523,18 @@ CONTAINS
             !IF(ALLOCATED(VALUES)) DEALLOCATE(VALUES)
             !IF(ALLOCATED(COLUMNS)) DEALLOCATE(COLUMNS)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("Distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("Distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_OUTPUT")
@@ -2368,24 +2566,24 @@ CONTAINS
       IF(DISTRIBUTED_MATRIX%MATRIX_FINISHED) THEN
         SELECT CASE(DISTRIBUTED_MATRIX%LIBRARY_TYPE)
         CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)          
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)          
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
             DISTRIBUTED_MATRIX%PETSC%USE_OVERRIDE_MATRIX=.TRUE.
             DISTRIBUTED_MATRIX%PETSC%OVERRIDE_MATRIX=OVERRIDE_MATRIX
           ELSE
-            CALL FLAG_ERROR("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-       CALL FLAG_ERROR("Distributed matrix has not been finished.",ERR,ERROR,*999)
+       CALL FlagError("Distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_OVERRIDE_SET_ON")
@@ -2414,24 +2612,24 @@ CONTAINS
       IF(DISTRIBUTED_MATRIX%MATRIX_FINISHED) THEN
         SELECT CASE(DISTRIBUTED_MATRIX%LIBRARY_TYPE)
         CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)          
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)          
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
             DISTRIBUTED_MATRIX%PETSC%USE_OVERRIDE_MATRIX=.FALSE.
             CALL Petsc_MatInitialise(DISTRIBUTED_MATRIX%PETSC%OVERRIDE_MATRIX,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("Distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("Distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_OVERRIDE_SET_OFF")
@@ -2474,13 +2672,13 @@ CONTAINS
               PETSC_MATRIX%DATA_SIZE=PETSC_MATRIX%NUMBER_NON_ZEROS
               !Set up the Local to Global mappings
               ALLOCATE(PETSC_MATRIX%GLOBAL_ROW_NUMBERS(PETSC_MATRIX%M),STAT=ERR)
-              IF(ERR/=0) CALL FLAG_ERROR("Could not allocate global row numbers for PETSc distributed matrix.",ERR,ERROR,*999)
+              IF(ERR/=0) CALL FlagError("Could not allocate global row numbers for PETSc distributed matrix.",ERR,ERROR,*999)
               DO i=1,PETSC_MATRIX%M
                 PETSC_MATRIX%GLOBAL_ROW_NUMBERS(i)=ROW_DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(i)-1 !PETSc uses 0 based indexing
               ENDDO !i
               !Set up the matrix
               ALLOCATE(PETSC_MATRIX%DATA_DP(PETSC_MATRIX%DATA_SIZE),STAT=ERR)
-              IF(ERR/=0) CALL FLAG_ERROR("Could not allocate PETSc matrix data.",ERR,ERROR,*999)
+              IF(ERR/=0) CALL FlagError("Could not allocate PETSc matrix data.",ERR,ERROR,*999)
               CALL Petsc_MatCreateDense(COMPUTATIONAL_ENVIRONMENT%MPI_COMM,PETSC_MATRIX%M,PETSC_MATRIX%N, &
                 & PETSC_MATRIX%GLOBAL_M,PETSC_MATRIX%GLOBAL_N,PETSC_MATRIX%DATA_DP,PETSC_MATRIX%MATRIX,ERR,ERROR,*999)
             CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
@@ -2489,15 +2687,15 @@ CONTAINS
               PETSC_MATRIX%DATA_SIZE=PETSC_MATRIX%NUMBER_NON_ZEROS
               !Set up the Local to Global mappings
               ALLOCATE(PETSC_MATRIX%GLOBAL_ROW_NUMBERS(PETSC_MATRIX%M),STAT=ERR)
-              IF(ERR/=0) CALL FLAG_ERROR("Could not allocate global row numbers for PETSc distributed matrix.",ERR,ERROR,*999)
+              IF(ERR/=0) CALL FlagError("Could not allocate global row numbers for PETSc distributed matrix.",ERR,ERROR,*999)
               DO i=1,PETSC_MATRIX%M
                 PETSC_MATRIX%GLOBAL_ROW_NUMBERS(i)=ROW_DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(i)-1 !PETSc uses 0 based indexing
               ENDDO !i
               !Set up the matrix
               ALLOCATE(PETSC_MATRIX%DIAGONAL_NUMBER_NON_ZEROS(PETSC_MATRIX%N),STAT=ERR)
-              IF(ERR/=0) CALL FLAG_ERROR("Could not allocate diagonal number of non zeros.",ERR,ERROR,*999)
+              IF(ERR/=0) CALL FlagError("Could not allocate diagonal number of non zeros.",ERR,ERROR,*999)
               ALLOCATE(PETSC_MATRIX%OFFDIAGONAL_NUMBER_NON_ZEROS(PETSC_MATRIX%N),STAT=ERR)
-              IF(ERR/=0) CALL FLAG_ERROR("Could not allocate off diagonal number of non zeros.",ERR,ERROR,*999)
+              IF(ERR/=0) CALL FlagError("Could not allocate off diagonal number of non zeros.",ERR,ERROR,*999)
               PETSC_MATRIX%DIAGONAL_NUMBER_NON_ZEROS=1
               PETSC_MATRIX%OFFDIAGONAL_NUMBER_NON_ZEROS=0
               !Create the PETsc AIJ matrix
@@ -2505,9 +2703,9 @@ CONTAINS
                 & PETSC_MATRIX%GLOBAL_M,PETSC_MATRIX%GLOBAL_N,PETSC_NULL_INTEGER,PETSC_MATRIX%DIAGONAL_NUMBER_NON_ZEROS, &
                 & PETSC_NULL_INTEGER,PETSC_MATRIX%OFFDIAGONAL_NUMBER_NON_ZEROS,PETSC_MATRIX%MATRIX,ERR,ERROR,*999)
             CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-              CALL FLAG_ERROR("Column major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+              CALL FlagError("Column major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
             CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
-              CALL FLAG_ERROR("Row major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+              CALL FlagError("Row major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
             CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
               IF(ALLOCATED(PETSC_MATRIX%DIAGONAL_NUMBER_NON_ZEROS)) THEN
                 IF(ALLOCATED(PETSC_MATRIX%OFFDIAGONAL_NUMBER_NON_ZEROS)) THEN
@@ -2521,7 +2719,7 @@ CONTAINS
                   CALL Petsc_MatSetOption(PETSC_MATRIX%MATRIX,PETSC_MAT_UNUSED_NONZERO_LOCATION_ERR,.TRUE.,ERR,ERROR,*999)
                   !Set up the Local to Global mappings
                   ALLOCATE(PETSC_MATRIX%GLOBAL_ROW_NUMBERS(PETSC_MATRIX%M),STAT=ERR)
-                  IF(ERR/=0) CALL FLAG_ERROR("Could not allocate global row numbers for PETSc distributed matrix.",ERR,ERROR,*999)
+                  IF(ERR/=0) CALL FlagError("Could not allocate global row numbers for PETSc distributed matrix.",ERR,ERROR,*999)
                   PETSC_MATRIX%MAXIMUM_COLUMN_INDICES_PER_ROW=0
                   DO i=1,PETSC_MATRIX%M
                     PETSC_MATRIX%GLOBAL_ROW_NUMBERS(i)=ROW_DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(i)-1 !PETSc uses 0 based indexing
@@ -2529,29 +2727,29 @@ CONTAINS
                       & PETSC_MATRIX%MAXIMUM_COLUMN_INDICES_PER_ROW=PETSC_MATRIX%ROW_INDICES(i+1)-PETSC_MATRIX%ROW_INDICES(i)
                   ENDDO !i
                 ELSE
-                  CALL FLAG_ERROR("Matrix off diagonal storage locations have not been set.",ERR,ERROR,*999)
+                  CALL FlagError("Matrix off diagonal storage locations have not been set.",ERR,ERROR,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("Matrix diagonal storage locations have not been set.",ERR,ERROR,*999)
+                CALL FlagError("Matrix diagonal storage locations have not been set.",ERR,ERROR,*999)
               ENDIF
             CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-              CALL FLAG_ERROR("Compressed column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+              CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
             CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
-              CALL FLAG_ERROR("Row column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+              CALL FlagError("Row column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
             CASE DEFAULT
-              LOCAL_ERROR="The PETSc matrix storage type of "//TRIM(NUMBER_TO_VSTRING(PETSC_MATRIX%STORAGE_TYPE,"*",ERR,ERROR))// &
+              LOCAL_ERROR="The PETSc matrix storage type of "//TRIM(NumberToVString(PETSC_MATRIX%STORAGE_TYPE,"*",ERR,ERROR))// &
                 & " is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ELSE
-            CALL FLAG_ERROR("PETSc matrix distributed matrix column domain mapping is not associated.",ERR,ERROR,*999)
+            CALL FlagError("PETSc matrix distributed matrix column domain mapping is not associated.",ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("PETSc matrix distributed matrix row domain mapping is not associated.",ERR,ERROR,*999)
+          CALL FlagError("PETSc matrix distributed matrix row domain mapping is not associated.",ERR,ERROR,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix PETSc is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*998)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_PETSC_CREATE_FINISH")
@@ -2614,14 +2812,14 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
       IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
-        CALL FLAG_ERROR("PETSc is already associated for this distributed matrix",ERR,ERROR,*998)
+        CALL FlagError("PETSc is already associated for this distributed matrix",ERR,ERROR,*998)
       ELSE
         ROW_DOMAIN_MAPPING=>DISTRIBUTED_MATRIX%ROW_DOMAIN_MAPPING
         COLUMN_DOMAIN_MAPPING=>DISTRIBUTED_MATRIX%COLUMN_DOMAIN_MAPPING
         IF(ASSOCIATED(ROW_DOMAIN_MAPPING)) THEN
           IF(ASSOCIATED(COLUMN_DOMAIN_MAPPING)) THEN
             ALLOCATE(DISTRIBUTED_MATRIX%PETSC,STAT=ERR)
-            IF(ERR/=0) CALL FLAG_ERROR("Could not allocate PETSc distributed matrix.",ERR,ERROR,*999)
+            IF(ERR/=0) CALL FlagError("Could not allocate PETSc distributed matrix.",ERR,ERROR,*999)
             DISTRIBUTED_MATRIX%PETSC%DISTRIBUTED_MATRIX=>DISTRIBUTED_MATRIX
             DISTRIBUTED_MATRIX%LIBRARY_TYPE=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
             !Set the defaults          
@@ -2632,8 +2830,8 @@ CONTAINS
               DISTRIBUTED_MATRIX%PETSC%M=ROW_DOMAIN_MAPPING%NUMBER_OF_LOCAL
             CASE DEFAULT
               LOCAL_ERROR="The distributed matrix ghosting type of "// &
-                & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%GHOSTING_TYPE,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(DISTRIBUTED_MATRIX%GHOSTING_TYPE,"*",ERR,ERROR))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
             DISTRIBUTED_MATRIX%PETSC%N=COLUMN_DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL
             DISTRIBUTED_MATRIX%PETSC%GLOBAL_M=ROW_DOMAIN_MAPPING%NUMBER_OF_GLOBAL
@@ -2645,14 +2843,14 @@ CONTAINS
             CALL Petsc_MatInitialise(DISTRIBUTED_MATRIX%PETSC%MATRIX,ERR,ERROR,*999)
             CALL Petsc_MatInitialise(DISTRIBUTED_MATRIX%PETSC%OVERRIDE_MATRIX,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix column domain mapping is not associated.",ERR,ERROR,*998)
+            CALL FlagError("Distributed matrix column domain mapping is not associated.",ERR,ERROR,*998)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Distributed matrix row domain mapping is not associated.",ERR,ERROR,*998)
+          CALL FlagError("Distributed matrix row domain mapping is not associated.",ERR,ERROR,*998)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*998)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_PETSC_INITIALSE")
@@ -2691,45 +2889,45 @@ CONTAINS
           IF(ASSOCIATED(CMISS_MATRIX)) THEN
             CALL MATRIX_STORAGE_LOCATIONS_GET(CMISS_MATRIX%MATRIX,ROW_INDICES,COLUMN_INDICES,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           PETSC_MATRIX=>DISTRIBUTED_MATRIX%PETSC
           IF(ASSOCIATED(PETSC_MATRIX)) THEN
             SELECT CASE(PETSC_MATRIX%STORAGE_TYPE)
             CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
-              CALL FLAG_ERROR("Cannot get matrix locations for a block storage matrix.",ERR,ERROR,*999)
+              CALL FlagError("Cannot get matrix locations for a block storage matrix.",ERR,ERROR,*999)
             CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
-              CALL FLAG_ERROR("Diagonal storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+              CALL FlagError("Diagonal storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
             CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-              CALL FLAG_ERROR("Column major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+              CALL FlagError("Column major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
             CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
-              CALL FLAG_ERROR("Row major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+              CALL FlagError("Row major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
             CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
               ROW_INDICES=>DISTRIBUTED_MATRIX%PETSC%ROW_INDICES
               COLUMN_INDICES=>DISTRIBUTED_MATRIX%PETSC%COLUMN_INDICES
             CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-              CALL FLAG_ERROR("Compressed column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+              CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
             CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
-              CALL FLAG_ERROR("Row column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+              CALL FlagError("Row column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
             CASE DEFAULT
               LOCAL_ERROR="The matrix storage type of "// &
-                & TRIM(NUMBER_TO_VSTRING(PETSC_MATRIX%STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(PETSC_MATRIX%STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ELSE
-            CALL FLAG_ERROR("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_GET")
@@ -2765,7 +2963,7 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
       IF(DISTRIBUTED_MATRIX%MATRIX_FINISHED) THEN
-        CALL FLAG_ERROR("The distributed matrix has been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has been finished.",ERR,ERROR,*999)
       ELSE
         ROW_DOMAIN_MAPPING=>DISTRIBUTED_MATRIX%ROW_DOMAIN_MAPPING
         COLUMN_DOMAIN_MAPPING=>DISTRIBUTED_MATRIX%COLUMN_DOMAIN_MAPPING
@@ -2777,7 +2975,7 @@ CONTAINS
               IF(ASSOCIATED(CMISS_MATRIX)) THEN
                 CALL MATRIX_STORAGE_LOCATIONS_SET(CMISS_MATRIX%MATRIX,ROW_INDICES,COLUMN_INDICES,ERR,ERROR,*999)
               ELSE
-                CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
               PETSC_MATRIX=>DISTRIBUTED_MATRIX%PETSC
@@ -2786,11 +2984,11 @@ CONTAINS
                 CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
                   !Do nothing
                 CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
-                  CALL FLAG_ERROR("Diagonal storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                  CALL FlagError("Diagonal storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-                  CALL FLAG_ERROR("Column major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                  CALL FlagError("Column major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
-                  CALL FLAG_ERROR("Row major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                  CALL FlagError("Row major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
                   IF(SIZE(ROW_INDICES,1)==PETSC_MATRIX%M+1) THEN
                     IF(SIZE(COLUMN_INDICES,1)==PETSC_MATRIX%NUMBER_NON_ZEROS) THEN
@@ -2799,26 +2997,26 @@ CONTAINS
                         IF(ROW_INDICES(PETSC_MATRIX%M+1)==PETSC_MATRIX%NUMBER_NON_ZEROS+1) THEN
                           DO i=2,PETSC_MATRIX%M+1
                             IF(ROW_INDICES(i)<ROW_INDICES(i-1)) THEN
-                              LOCAL_ERROR="Invalid row indices. Row "//TRIM(NUMBER_TO_VSTRING(i,"*",ERR,ERROR))// &
-                                & " index number ("//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" &
-                                & ) is less than row "//TRIM(NUMBER_TO_VSTRING(i-1,"*",ERR,ERROR))//" index number ("// &
-                                & TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i-1),"*",ERR,ERROR))//")."
-                              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                              LOCAL_ERROR="Invalid row indices. Row "//TRIM(NumberToVString(i,"*",ERR,ERROR))// &
+                                & " index number ("//TRIM(NumberToVString(ROW_INDICES(i),"*",ERR,ERROR))//" &
+                                & ) is less than row "//TRIM(NumberToVString(i-1,"*",ERR,ERROR))//" index number ("// &
+                                & TRIM(NumberToVString(ROW_INDICES(i-1),"*",ERR,ERROR))//")."
+                              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                             ENDIF
                           ENDDO !i
                           !Allocate the PETSc sparsity storage arrays
                           ALLOCATE(PETSC_MATRIX%DIAGONAL_NUMBER_NON_ZEROS(PETSC_MATRIX%M),STAT=ERR)
-                          IF(ERR/=0) CALL FLAG_ERROR("Could not allocate PETSc matrix diagonal number of non zeros.",ERR,ERROR,*999)
+                          IF(ERR/=0) CALL FlagError("Could not allocate PETSc matrix diagonal number of non zeros.",ERR,ERROR,*999)
                           PETSC_MATRIX%DIAGONAL_NUMBER_NON_ZEROS=0
                           ALLOCATE(PETSC_MATRIX%OFFDIAGONAL_NUMBER_NON_ZEROS(PETSC_MATRIX%M),STAT=ERR)
-                          IF(ERR/=0) CALL FLAG_ERROR("Could not allocate PETSc matrix off diagonal number of non zeros.", &
+                          IF(ERR/=0) CALL FlagError("Could not allocate PETSc matrix off diagonal number of non zeros.", &
                             & ERR,ERROR,*999)
                           PETSC_MATRIX%OFFDIAGONAL_NUMBER_NON_ZEROS=0
                           ALLOCATE(PETSC_MATRIX%ROW_INDICES(PETSC_MATRIX%M+1),STAT=ERR)
-                          IF(ERR/=0) CALL FLAG_ERROR("Could not allocate PETSc matrix row indices.",ERR,ERROR,*999)
+                          IF(ERR/=0) CALL FlagError("Could not allocate PETSc matrix row indices.",ERR,ERROR,*999)
                           PETSC_MATRIX%ROW_INDICES(1:PETSC_MATRIX%M+1)=ROW_INDICES(1:PETSC_MATRIX%M+1)
                           ALLOCATE(PETSC_MATRIX%COLUMN_INDICES(PETSC_MATRIX%NUMBER_NON_ZEROS),STAT=ERR)
-                          IF(ERR/=0) CALL FLAG_ERROR("Could not allocate PETSc matrix column indices.",ERR,ERROR,*999)
+                          IF(ERR/=0) CALL FlagError("Could not allocate PETSc matrix column indices.",ERR,ERROR,*999)
                           PETSC_MATRIX%COLUMN_INDICES(1:PETSC_MATRIX%NUMBER_NON_ZEROS)= &
                             & COLUMN_INDICES(1:PETSC_MATRIX%NUMBER_NON_ZEROS)
                           !Check the column indices are correct and calculate number of diagonal and off-diagonal columns
@@ -2829,11 +3027,11 @@ CONTAINS
                               k=COLUMN_INDICES(j)
                               IF(k>0) THEN
                                 IF(k>PETSC_MATRIX%GLOBAL_N) THEN
-                                  LOCAL_ERROR="Invalid column indices. Column index "//TRIM(NUMBER_TO_VSTRING(j,"*",ERR,ERROR))// &
-                                    & " ("//TRIM(NUMBER_TO_VSTRING(k,"*",ERR,ERROR))// &
+                                  LOCAL_ERROR="Invalid column indices. Column index "//TRIM(NumberToVString(j,"*",ERR,ERROR))// &
+                                    & " ("//TRIM(NumberToVString(k,"*",ERR,ERROR))// &
                                     & ") is greater than the number of columns ("// &
-                                    & TRIM(NUMBER_TO_VSTRING(PETSC_MATRIX%GLOBAL_N,"*",ERR,ERROR))//")."
-                                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                                    & TRIM(NumberToVString(PETSC_MATRIX%GLOBAL_N,"*",ERR,ERROR))//")."
+                                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                                 ENDIF
                                 IF(k>=global_row_start.AND.k<=global_row_finish) THEN
                                   PETSC_MATRIX%DIAGONAL_NUMBER_NON_ZEROS(i)=PETSC_MATRIX%DIAGONAL_NUMBER_NON_ZEROS(i)+1
@@ -2841,9 +3039,9 @@ CONTAINS
                                   PETSC_MATRIX%OFFDIAGONAL_NUMBER_NON_ZEROS(i)=PETSC_MATRIX%OFFDIAGONAL_NUMBER_NON_ZEROS(i)+1
                                 ENDIF
                               ELSE
-                                LOCAL_ERROR="Invalid column indices. Column index "//TRIM(NUMBER_TO_VSTRING(j,"*",ERR,ERROR))// &
-                                  & " ("//TRIM(NUMBER_TO_VSTRING(k,"*",ERR,ERROR))//") is less than zero."
-                                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                                LOCAL_ERROR="Invalid column indices. Column index "//TRIM(NumberToVString(j,"*",ERR,ERROR))// &
+                                  & " ("//TRIM(NumberToVString(k,"*",ERR,ERROR))//") is less than zero."
+                                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                               ENDIF
                             ENDDO !j
                             !Enforce a place for the diagonal entry.
@@ -2874,56 +3072,56 @@ CONTAINS
                           ENDIF
                         ELSE
                           LOCAL_ERROR="Invalid row indices. The last row index ("// &
-                            & TRIM(NUMBER_TO_VSTRING(ROW_INDICES(PETSC_MATRIX%M+1),"*",ERR,ERROR))// &
+                            & TRIM(NumberToVString(ROW_INDICES(PETSC_MATRIX%M+1),"*",ERR,ERROR))// &
                             & ") does not equal the number of non-zeros + 1 ("// &
-                            & TRIM(NUMBER_TO_VSTRING(PETSC_MATRIX%NUMBER_NON_ZEROS+1,"*",ERR,ERROR))//")."
-                          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                            & TRIM(NumberToVString(PETSC_MATRIX%NUMBER_NON_ZEROS+1,"*",ERR,ERROR))//")."
+                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                         ENDIF
                       ELSE
                         LOCAL_ERROR="Invalid row indices. The first row index ("// &
-                          & TRIM(NUMBER_TO_VSTRING(ROW_INDICES(1),"*",ERR,ERROR))//") does not equal 1."
-                        CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                          & TRIM(NumberToVString(ROW_INDICES(1),"*",ERR,ERROR))//") does not equal 1."
+                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                       ENDIF
                     ELSE
                       LOCAL_ERROR="The supplied number of column indices ("// &
-                        & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
+                        & TRIM(NumberToVString(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
                         & ") does not match the number of non-zeros in the matrix ("// &
-                        & TRIM(NUMBER_TO_VSTRING(PETSC_MATRIX%NUMBER_NON_ZEROS,"*",ERR,ERROR))//")."
-                      CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                        & TRIM(NumberToVString(PETSC_MATRIX%NUMBER_NON_ZEROS,"*",ERR,ERROR))//")."
+                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     ENDIF
                   ELSE
                     LOCAL_ERROR="The supplied number of row indices ("// &
-                      & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
+                      & TRIM(NumberToVString(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
                       & ") does not match the number of rows in the matrix + 1 ("// &
-                      & TRIM(NUMBER_TO_VSTRING(PETSC_MATRIX%M+1,"*",ERR,ERROR))//")."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                      & TRIM(NumberToVString(PETSC_MATRIX%M+1,"*",ERR,ERROR))//")."
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                 CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-                  CALL FLAG_ERROR("Compressed column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                  CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
-                  CALL FLAG_ERROR("Row column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+                  CALL FlagError("Row column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
                 CASE DEFAULT
                   LOCAL_ERROR="The specified matrix storage type of "// &
-                    & TRIM(NUMBER_TO_VSTRING(PETSC_MATRIX%STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                    & TRIM(NumberToVString(PETSC_MATRIX%STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 END SELECT
               ELSE
-                CALL FLAG_ERROR("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
               ENDIF
             CASE DEFAULT
               LOCAL_ERROR="The distributed matrix library type of "// &
-                & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ELSE
-            CALL FLAG_ERROR("Distributed matrix column domain mapping is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix column domain mapping is not associated.",ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Distributed matrix row domain mapping is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Distributed matrix row domain mapping is not associated.",ERR,ERROR,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_SET")
@@ -2960,24 +3158,24 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_STORAGE_TYPE_GET(DISTRIBUTED_MATRIX%CMISS%MATRIX,STORAGE_TYPE,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
             STORAGE_TYPE=DISTRIBUTED_MATRIX%PETSC%STORAGE_TYPE
           ELSE
-            CALL FLAG_ERROR("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_STORAGE_TYPE_GET")
@@ -3005,14 +3203,14 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
       IF(DISTRIBUTED_MATRIX%MATRIX_FINISHED) THEN
-        CALL FLAG_ERROR("The distributed matrix has been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has been finished.",ERR,ERROR,*999)
       ELSE
         SELECT CASE(DISTRIBUTED_MATRIX%LIBRARY_TYPE)
         CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_STORAGE_TYPE_SET(DISTRIBUTED_MATRIX%CMISS%MATRIX,STORAGE_TYPE,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
@@ -3022,31 +3220,31 @@ CONTAINS
             CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
               DISTRIBUTED_MATRIX%PETSC%STORAGE_TYPE=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE
             CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-              CALL FLAG_ERROR("Column major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+              CALL FlagError("Column major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
             CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
-              CALL FLAG_ERROR("Row major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+              CALL FlagError("Row major storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
             CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
               DISTRIBUTED_MATRIX%PETSC%STORAGE_TYPE=DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE
             CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-              CALL FLAG_ERROR("Compressed column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+              CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
             CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
-              CALL FLAG_ERROR("Row column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
+              CALL FlagError("Row column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
             CASE DEFAULT
-              LOCAL_ERROR="The specified matrix storage type of "//TRIM(NUMBER_TO_VSTRING(STORAGE_TYPE,"*",ERR,ERROR))// &
+              LOCAL_ERROR="The specified matrix storage type of "//TRIM(NumberToVString(STORAGE_TYPE,"*",ERR,ERROR))// &
                 & " is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ELSE
-            CALL FLAG_ERROR("Distributed matrix PETSc is not implemented.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix PETSc is not implemented.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_STORAGE_TYPE_SET")
@@ -3084,18 +3282,18 @@ CONTAINS
               CALL Petsc_MatAssemblyEnd(DISTRIBUTED_MATRIX%PETSC%MATRIX,PETSC_MAT_FINAL_ASSEMBLY,ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_UPDATE_FINISH")
@@ -3126,10 +3324,10 @@ CONTAINS
         !Do nothting for now.
         ISFINISHED=.TRUE.
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_UPDATE_ISFINISHED")
@@ -3157,10 +3355,10 @@ CONTAINS
       IF(DISTRIBUTED_MATRIX%MATRIX_FINISHED) THEN
         !Do nothing for now.
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_UPDATE_WAITFINISHED")
@@ -3198,18 +3396,18 @@ CONTAINS
               CALL Petsc_MatAssemblyBegin(DISTRIBUTED_MATRIX%PETSC%MATRIX,PETSC_MAT_FINAL_ASSEMBLY,ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
      ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
 
     EXITS("DISTRIBUTED_MATRIX_UPDATE_START")
@@ -3244,20 +3442,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_ADD(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Adding values to an integer PETSc distributed matrix is not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Adding values to an integer PETSc distributed matrix is not implemented.",ERR,ERROR,*999)
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_ADD_INTG")
@@ -3292,20 +3490,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_ADD(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDEX,COLUMN_INDEX,VALUE,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Adding values to an integer PETSc distributed matrix is not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Adding values to an integer PETSc distributed matrix is not implemented.",ERR,ERROR,*999)
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_ADD_INTG1")
@@ -3340,20 +3538,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_ADD(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Adding values to an integer PETSc distributed matrix is not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Adding values to an integer PETSc distributed matrix is not implemented.",ERR,ERROR,*999)
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_ADD_INTG2")
@@ -3388,20 +3586,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_ADD(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Adding values to a single precision PETSc distributed matrix is not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Adding values to a single precision PETSc distributed matrix is not implemented.",ERR,ERROR,*999)
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_ADD_SP")
@@ -3436,20 +3634,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_ADD(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDEX,COLUMN_INDEX,VALUE,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Adding values to a single precision PETSc distributed matrix is not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Adding values to a single precision PETSc distributed matrix is not implemented.",ERR,ERROR,*999)
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_ADD_SP1")
@@ -3484,20 +3682,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_ADD(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Adding values to a single precision PETSc distributed matrix is not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Adding values to a single precision PETSc distributed matrix is not implemented.",ERR,ERROR,*999)
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_ADD_SP2")
@@ -3533,7 +3731,7 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_ADD(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
@@ -3556,31 +3754,31 @@ CONTAINS
                 ENDIF
               ELSE
                 LOCAL_ERROR="The size of the column indices array ("// &
-                  & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
+                  & TRIM(NumberToVString(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
                   & ") does not conform to the size of the values array ("// &
-                  & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  & TRIM(NumberToVString(SIZE(VALUES,1),"*",ERR,ERROR))//")."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             ELSE
               LOCAL_ERROR="The size of the row indices array ("// &
-                & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
+                & TRIM(NumberToVString(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
                 & ") does not conform to the size of the values array ("// &
-                & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(SIZE(VALUES,1),"*",ERR,ERROR))//")."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("The distributed matrix PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("The distributed matrix PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_ADD_DP")
@@ -3617,7 +3815,7 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_ADD(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDEX,COLUMN_INDEX,VALUE,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
@@ -3632,18 +3830,18 @@ CONTAINS
                 & ROW_INDEX),COLUMN_INDEX-1,VALUE,PETSC_ADD_VALUES,ERR,ERROR,*999) !PETSc uses 0 based indices
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_ADD_DP1")
@@ -3679,7 +3877,7 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_ADD(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
@@ -3697,31 +3895,31 @@ CONTAINS
                 ENDIF
               ELSE
                 LOCAL_ERROR="The size of the column indices array ("// &
-                  & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
+                  & TRIM(NumberToVString(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
                   & ") does not conform to the number of columns in the values array ("// &
-                  & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,2),"*",ERR,ERROR))//")."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  & TRIM(NumberToVString(SIZE(VALUES,2),"*",ERR,ERROR))//")."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             ELSE
               LOCAL_ERROR="The size of the row indices array ("// &
-                & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
+                & TRIM(NumberToVString(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
                 & ") does not conform to the number of rows in the values array ("// &
-                & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(SIZE(VALUES,1),"*",ERR,ERROR))//")."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("The distributed matrix PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("The distributed matrix PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_ADD_DP2")
@@ -3756,20 +3954,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_ADD(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Adding values to a logical PETSc distributed matrix is not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Adding values to a logical PETSc distributed matrix is not implemented.",ERR,ERROR,*999)
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_ADD_L")
@@ -3804,20 +4002,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_ADD(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDEX,COLUMN_INDEX,VALUE,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Adding values to a logical PETSc distributed matrix is not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Adding values to a logical PETSc distributed matrix is not implemented.",ERR,ERROR,*999)
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_ADD_L1")
@@ -3852,20 +4050,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_ADD(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Adding values to a logical PETSc distributed matrix is not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Adding values to a logical PETSc distributed matrix is not implemented.",ERR,ERROR,*999)
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_ADD_L2")
@@ -3900,20 +4098,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_GET(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot get values for an integer PETSc distributed matrix.",ERR,ERROR,*999)          
+          CALL FlagError("Cannot get values for an integer PETSc distributed matrix.",ERR,ERROR,*999)          
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_GET_INTG")
@@ -3948,20 +4146,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_GET(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDEX,COLUMN_INDEX,VALUE,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot get values for an integer PETSc distributed matrix.",ERR,ERROR,*999)          
+          CALL FlagError("Cannot get values for an integer PETSc distributed matrix.",ERR,ERROR,*999)          
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_GET_INTG1")
@@ -3996,20 +4194,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_GET(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot get values for an integer PETSc distributed matrix.",ERR,ERROR,*999)          
+          CALL FlagError("Cannot get values for an integer PETSc distributed matrix.",ERR,ERROR,*999)          
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_GET_INTG2")
@@ -4044,20 +4242,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_GET(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot get values for a single precision PETSc distributed matrix.",ERR,ERROR,*999)          
+          CALL FlagError("Cannot get values for a single precision PETSc distributed matrix.",ERR,ERROR,*999)          
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_GET_SP")
@@ -4092,20 +4290,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_GET(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDEX,COLUMN_INDEX,VALUE,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot get values for a single precision PETSc distributed matrix.",ERR,ERROR,*999)          
+          CALL FlagError("Cannot get values for a single precision PETSc distributed matrix.",ERR,ERROR,*999)          
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_GET_SP1")
@@ -4140,20 +4338,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_GET(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot get values for a single precision PETSc distributed matrix.",ERR,ERROR,*999)          
+          CALL FlagError("Cannot get values for a single precision PETSc distributed matrix.",ERR,ERROR,*999)          
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_GET_SP2")
@@ -4189,7 +4387,7 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_GET(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
@@ -4209,31 +4407,31 @@ CONTAINS
                 ENDIF
               ELSE
                 LOCAL_ERROR="The size of the column indices array ("// &
-                  & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
+                  & TRIM(NumberToVString(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
                   & ") does not conform to the size of the values array ("// &
-                  & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  & TRIM(NumberToVString(SIZE(VALUES,1),"*",ERR,ERROR))//")."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             ELSE
               LOCAL_ERROR="The size of the row indices array ("// &
-                & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
+                & TRIM(NumberToVString(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
                 & ") does not conform to the size of the values array ("// &
-                & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(SIZE(VALUES,1),"*",ERR,ERROR))//")."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             ENDIF            
           ELSE
-            CALL FLAG_ERROR("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_GET_DP")
@@ -4270,7 +4468,7 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_GET(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDEX,COLUMN_INDEX,VALUE,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
@@ -4284,18 +4482,18 @@ CONTAINS
             ENDIF
             VALUE=VALUES(1)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_GET_DP1")
@@ -4332,10 +4530,10 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_GET(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot get values for an integer precision PETSc distributed matrix.",ERR,ERROR,*999)          
+          CALL FlagError("Cannot get values for an integer precision PETSc distributed matrix.",ERR,ERROR,*999)          
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
             IF(SIZE(ROW_INDICES,1)==SIZE(VALUES,1)) THEN
               IF(SIZE(COLUMN_INDICES,1)==SIZE(VALUES,2)) THEN
@@ -4351,31 +4549,31 @@ CONTAINS
                 ENDIF
               ELSE
                 LOCAL_ERROR="The size of the column indices array ("// &
-                  & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
+                  & TRIM(NumberToVString(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
                   & ") does not conform to the number of columns in the values array ("// &
-                  & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,2),"*",ERR,ERROR))//")."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  & TRIM(NumberToVString(SIZE(VALUES,2),"*",ERR,ERROR))//")."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             ELSE
               LOCAL_ERROR="The size of the row indices array ("// &
-                & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
+                & TRIM(NumberToVString(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
                 & ") does not conform to the number of rows in the values array ("// &
-                & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(SIZE(VALUES,1),"*",ERR,ERROR))//")."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_GET_DP2")
@@ -4410,20 +4608,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_GET(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot get values for a logical PETSc distributed matrix.",ERR,ERROR,*999)          
+          CALL FlagError("Cannot get values for a logical PETSc distributed matrix.",ERR,ERROR,*999)          
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_GET_L")
@@ -4458,20 +4656,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_GET(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDEX,COLUMN_INDEX,VALUE,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot get values for a logical PETSc distributed matrix.",ERR,ERROR,*999)          
+          CALL FlagError("Cannot get values for a logical PETSc distributed matrix.",ERR,ERROR,*999)          
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_GET_L1")
@@ -4506,20 +4704,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_GET(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot get values for a logical PETSc distributed matrix.",ERR,ERROR,*999)                    
+          CALL FlagError("Cannot get values for a logical PETSc distributed matrix.",ERR,ERROR,*999)                    
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_GET_L2")
@@ -4554,20 +4752,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_SET(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot get values for an integer PETSc distributed matrix.",ERR,ERROR,*999)          
+          CALL FlagError("Cannot get values for an integer PETSc distributed matrix.",ERR,ERROR,*999)          
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_SET_INTG")
@@ -4602,20 +4800,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_SET(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDEX,COLUMN_INDEX,VALUE,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot get values for an integer PETSc distributed matrix.",ERR,ERROR,*999)          
+          CALL FlagError("Cannot get values for an integer PETSc distributed matrix.",ERR,ERROR,*999)          
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_SET_INTG1")
@@ -4650,20 +4848,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_SET(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot get values for an integer PETSc distributed matrix.",ERR,ERROR,*999)          
+          CALL FlagError("Cannot get values for an integer PETSc distributed matrix.",ERR,ERROR,*999)          
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_SET_INTG2")
@@ -4698,20 +4896,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_SET(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot get values for a single precision PETSc distributed matrix.",ERR,ERROR,*999)          
+          CALL FlagError("Cannot get values for a single precision PETSc distributed matrix.",ERR,ERROR,*999)          
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_SET_SP")
@@ -4746,20 +4944,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_SET(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDEX,COLUMN_INDEX,VALUE,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot get values for a single precision PETSc distributed matrix.",ERR,ERROR,*999)          
+          CALL FlagError("Cannot get values for a single precision PETSc distributed matrix.",ERR,ERROR,*999)          
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_SET_SP1")
@@ -4794,20 +4992,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_SET(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot get values for a single precision PETSc distributed matrix.",ERR,ERROR,*999)          
+          CALL FlagError("Cannot get values for a single precision PETSc distributed matrix.",ERR,ERROR,*999)          
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_SET_SP2")
@@ -4843,7 +5041,7 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_SET(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
@@ -4863,31 +5061,31 @@ CONTAINS
                 ENDIF
               ELSE
                 LOCAL_ERROR="The size of the column indices array ("// &
-                  & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
+                  & TRIM(NumberToVString(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
                   & ") does not conform to the size of the values array ("// &
-                  & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  & TRIM(NumberToVString(SIZE(VALUES,1),"*",ERR,ERROR))//")."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             ELSE
               LOCAL_ERROR="The size of the row indices array ("// &
-                & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
+                & TRIM(NumberToVString(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
                 & ") does not conform to the size of the values array ("// &
-                & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(SIZE(VALUES,1),"*",ERR,ERROR))//")."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             ENDIF            
           ELSE
-            CALL FLAG_ERROR("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_SET_DP")
@@ -4922,7 +5120,7 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_SET(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDEX,COLUMN_INDEX,VALUE,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
@@ -4934,18 +5132,18 @@ CONTAINS
                 & 1,(/COLUMN_INDEX-1/),(/VALUE/),PETSC_INSERT_VALUES,ERR,ERROR,*999) !PETSc uses 0 based indices
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_SET_DP1")
@@ -4981,7 +5179,7 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_SET(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
@@ -4999,31 +5197,31 @@ CONTAINS
                 ENDIF
               ELSE
                 LOCAL_ERROR="The size of the column indices array ("// &
-                  & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
+                  & TRIM(NumberToVString(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
                   & ") does not conform to the number of columns in the values array ("// &
-                  & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,2),"*",ERR,ERROR))//")."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  & TRIM(NumberToVString(SIZE(VALUES,2),"*",ERR,ERROR))//")."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             ELSE
               LOCAL_ERROR="The size of the row indices array ("// &
-                & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
+                & TRIM(NumberToVString(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
                 & ") does not conform to the number of rows in the values array ("// &
-                & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(SIZE(VALUES,1),"*",ERR,ERROR))//")."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("The distributed matrix PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("The distributed matrix PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_SET_DP2")
@@ -5058,20 +5256,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_SET(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot set values for a logical PETSc distributed matrix.",ERR,ERROR,*999)          
+          CALL FlagError("Cannot set values for a logical PETSc distributed matrix.",ERR,ERROR,*999)          
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_SET_L")
@@ -5106,20 +5304,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_SET(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDEX,COLUMN_INDEX,VALUE,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot get values for a logical PETSc distributed matrix.",ERR,ERROR,*999)          
+          CALL FlagError("Cannot get values for a logical PETSc distributed matrix.",ERR,ERROR,*999)          
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_SET_L1")
@@ -5154,20 +5352,20 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
             CALL MATRIX_VALUES_SET(DISTRIBUTED_MATRIX%CMISS%MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot get values for a logical PETSc distributed matrix.",ERR,ERROR,*999)          
+          CALL FlagError("Cannot get values for a logical PETSc distributed matrix.",ERR,ERROR,*999)          
         CASE DEFAULT
           LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed matrix has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed matrix has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed matrix is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_MATRIX_VALUES_SET_L2")
@@ -5238,17 +5436,17 @@ CONTAINS
                                           NUMBER_OF_ROWS=ROW_MAPPING%NUMBER_OF_LOCAL
                                         CASE DEFAULT
                                           LOCAL_ERROR="The row selection type of "// &
-                                            & TRIM(NUMBER_TO_VSTRING(ROW_SELECTION_TYPE,"*",ERR,ERROR))//" is invalid."
-                                          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                                            & TRIM(NumberToVString(ROW_SELECTION_TYPE,"*",ERR,ERROR))//" is invalid."
+                                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                                         END SELECT
                                         NUMBER_OF_COLUMNS=COLUMN_MAPPING%NUMBER_OF_GLOBAL
                                         IF(MATRIX%DATA_TYPE==DISTRIBUTED_VECTOR%DATA_TYPE) THEN
                                           IF(MATRIX%DATA_TYPE==DISTRIBUTED_PRODUCT%DATA_TYPE) THEN
                                             SELECT CASE(MATRIX%DATA_TYPE)
                                             CASE(DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE)
-                                              CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                                              CALL FlagError("Not implemented.",ERR,ERROR,*999)
                                             CASE(DISTRIBUTED_MATRIX_VECTOR_SP_TYPE)
-                                              CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                                              CALL FlagError("Not implemented.",ERR,ERROR,*999)
                                             CASE(DISTRIBUTED_MATRIX_VECTOR_DP_TYPE)
                                               SELECT CASE(MATRIX%STORAGE_TYPE)
                                               CASE(MATRIX_BLOCK_STORAGE_TYPE)
@@ -5309,98 +5507,98 @@ CONTAINS
                                                   ENDDO !local_row
                                                 ENDDO !column_idx
                                               CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
-                                                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                                                CALL FlagError("Not implemented.",ERR,ERROR,*999)
                                               CASE DEFAULT
                                                 LOCAL_ERROR="The matrix storage type of "// &
-                                                  & TRIM(NUMBER_TO_VSTRING(MATRIX%STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
+                                                  & TRIM(NumberToVString(MATRIX%STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
 
-                                                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                                                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                                               END SELECT
                                             CASE(DISTRIBUTED_MATRIX_VECTOR_L_TYPE)
-                                              CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                                              CALL FlagError("Not implemented.",ERR,ERROR,*999)
                                             CASE DEFAULT
                                               LOCAL_ERROR="The distributed matrix vector data type of "// &
-                                                & TRIM(NUMBER_TO_VSTRING(MATRIX%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
-                                              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                                                & TRIM(NumberToVString(MATRIX%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
+                                              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                                             END SELECT
                                           ELSE
                                             LOCAL_ERROR="The distributed product vector data type of "// &
-                                              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_PRODUCT%DATA_TYPE,"*",ERR,ERROR))// &
+                                              & TRIM(NumberToVString(DISTRIBUTED_PRODUCT%DATA_TYPE,"*",ERR,ERROR))// &
                                               & " does not match the distributed matrix data type of "// &
-                                              & TRIM(NUMBER_TO_VSTRING(MATRIX%DATA_TYPE,"*",ERR,ERROR))//"."
-                                            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                                              & TRIM(NumberToVString(MATRIX%DATA_TYPE,"*",ERR,ERROR))//"."
+                                            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                                           ENDIF
                                         ELSE
                                           LOCAL_ERROR="The distributed vector data type of "// &
-                                            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+                                            & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
                                             & " does not match the distributed matrix data type of "// &
-                                            & TRIM(NUMBER_TO_VSTRING(MATRIX%DATA_TYPE,"*",ERR,ERROR))//"."
-                                          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                                            & TRIM(NumberToVString(MATRIX%DATA_TYPE,"*",ERR,ERROR))//"."
+                                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                                         ENDIF
                                       ELSE
-                                        CALL FLAG_ERROR("Distributed product CMISS vector is not associated.",ERR,ERROR,*999)
+                                        CALL FlagError("Distributed product CMISS vector is not associated.",ERR,ERROR,*999)
                                       ENDIF
                                     ELSE
-                                      CALL FLAG_ERROR("Distributed vector CMISS vector is not associated.",ERR,ERROR,*999)
+                                      CALL FlagError("Distributed vector CMISS vector is not associated.",ERR,ERROR,*999)
                                     ENDIF
                                   ELSE
-                                    CALL FLAG_ERROR("CMISS matrix matrix is not associated.",ERR,ERROR,*999)
+                                    CALL FlagError("CMISS matrix matrix is not associated.",ERR,ERROR,*999)
                                   ENDIF
                                 ELSE
-                                  CALL FLAG_ERROR("Distrubuted matrix CMISS is not associated.",ERR,ERROR,*999)
+                                  CALL FlagError("Distrubuted matrix CMISS is not associated.",ERR,ERROR,*999)
                                 ENDIF
                               CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-                                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                                CALL FlagError("Not implemented.",ERR,ERROR,*999)
                               CASE DEFAULT
                                 LOCAL_ERROR="The distributed matrix library type of "// &
-                                  & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid"
-                                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                                  & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid"
+                                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                               END SELECT
                             ELSE
-                              CALL FLAG_ERROR("The distributed matrix and the distributed product vector have different "// &
+                              CALL FlagError("The distributed matrix and the distributed product vector have different "// &
                                 & "domain mappings.",ERR,ERROR,*999)
                             ENDIF
                           ELSE
-                            CALL FLAG_ERROR("The distributed matrix and the distributed vector have different domain mappings.", &
+                            CALL FlagError("The distributed matrix and the distributed vector have different domain mappings.", &
                               & ERR,ERROR,*999)
                           ENDIF
                         ELSE
-                          CALL FLAG_ERROR("The distributed matrix row domain mapping is not associated.",ERR,ERROR,*999)
+                          CALL FlagError("The distributed matrix row domain mapping is not associated.",ERR,ERROR,*999)
                         ENDIF
                       ELSE
-                        CALL FLAG_ERROR("The distributed matrix column domain mapping is not associated.",ERR,ERROR,*999)
+                        CALL FlagError("The distributed matrix column domain mapping is not associated.",ERR,ERROR,*999)
                       ENDIF
                     ELSE
                       LOCAL_ERROR="The distributed product vector library type of "// &
-                        & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_PRODUCT%LIBRARY_TYPE,"*",ERR,ERROR))// &
+                        & TRIM(NumberToVString(DISTRIBUTED_PRODUCT%LIBRARY_TYPE,"*",ERR,ERROR))// &
                         & " does not match the distributed matrix library type of "// &
-                        &  TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//"."
-                      CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                        &  TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//"."
+                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     ENDIF
                   ELSE
                     LOCAL_ERROR="The distributed vector library type of "// &
-                      & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))// &
+                      & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))// &
                       & " does not match the distributed matrix library type of "// &
-                      &  TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//"."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                      &  TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//"."
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                 ELSE
-                  CALL FLAG_ERROR("The distributed product vector has not been finished.",ERR,ERROR,*999)
+                  CALL FlagError("The distributed product vector has not been finished.",ERR,ERROR,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("The distributed product vector is not associated.",ERR,ERROR,*999)
+                CALL FlagError("The distributed product vector is not associated.",ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Distributed vector has not been finished.",ERR,ERROR,*999)
+              CALL FlagError("Distributed vector has not been finished.",ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Distrubuted vector is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distrubuted vector is not associated.",ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Distributed matrix has not been finished.",ERR,ERROR,*999)
+          CALL FlagError("Distributed matrix has not been finished.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Distributed matrix is not associated",ERR,ERROR,*999)
+        CALL FlagError("Distributed matrix is not associated",ERR,ERROR,*999)
       ENDIF
     ENDIF
     EXITS("DISTRIBUTED_MATRIX_BY_VECTOR_ADD")
@@ -5434,25 +5632,25 @@ CONTAINS
             IF(ASSOCIATED(DISTRIBUTED_VECTOR%CMISS)) THEN
               DISTRIBUTED_VECTOR%CMISS%DATA_INTG=VALUE
             ELSE
-              CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-            CALL FLAG_ERROR("Cannot get values for an integer PETSc distributed vector.",ERR,ERROR,*999)          
+            CALL FlagError("Cannot get values for an integer PETSc distributed vector.",ERR,ERROR,*999)          
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The data type of "//TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
             & " does not correspond to the integer data type of the given value."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
 
     EXITS("DISTRIBUTED_VECTOR_ALL_VALUES_SET_INTG")
@@ -5486,25 +5684,25 @@ CONTAINS
             IF(ASSOCIATED(DISTRIBUTED_VECTOR%CMISS)) THEN
               DISTRIBUTED_VECTOR%CMISS%DATA_SP=VALUE
             ELSE
-              CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-            CALL FLAG_ERROR("Cannot get values for a single precision PETSc distributed vector.",ERR,ERROR,*999)          
+            CALL FlagError("Cannot get values for a single precision PETSc distributed vector.",ERR,ERROR,*999)          
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The data type of "//TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
             & " does not correspond to the single precision data type of the given value."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
 
     EXITS("DISTRIBUTED_VECTOR_ALL_VALUES_SET_SP")
@@ -5538,7 +5736,7 @@ CONTAINS
             IF(ASSOCIATED(DISTRIBUTED_VECTOR%CMISS)) THEN
               DISTRIBUTED_VECTOR%CMISS%DATA_DP=VALUE
             ELSE
-              CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
             IF(ASSOCIATED(DISTRIBUTED_VECTOR%PETSC)) THEN
@@ -5548,23 +5746,23 @@ CONTAINS
                 CALL Petsc_VecSet(DISTRIBUTED_VECTOR%PETSC%VECTOR,VALUE,ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The data type of "//TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
             & " does not correspond to the double precision data type of the given value."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
 
     EXITS("DISTRIBUTED_VECTOR_ALL_VALUES_SET_DP")
@@ -5598,25 +5796,25 @@ CONTAINS
             IF(ASSOCIATED(DISTRIBUTED_VECTOR%CMISS)) THEN
               DISTRIBUTED_VECTOR%CMISS%DATA_L=VALUE
             ELSE
-              CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-            CALL FLAG_ERROR("Cannot get values for a logical PETSc distributed vector.",ERR,ERROR,*999)          
+            CALL FlagError("Cannot get values for a logical PETSc distributed vector.",ERR,ERROR,*999)          
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The data type of "//TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
             & " does not correspond to the logical data type of the given value."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
 
     EXITS("DISTRIBUTED_VECTOR_ALL_VALUES_SET_L")
@@ -5658,48 +5856,48 @@ CONTAINS
                         IF(ASSOCIATED(FROM_VECTOR%DOMAIN_MAPPING,TO_VECTOR%DOMAIN_MAPPING)) THEN
                           TO_VECTOR%CMISS%DATA_INTG(1:TO_VECTOR%CMISS%N)=ALPHA*FROM_VECTOR%CMISS%DATA_INTG(1:FROM_VECTOR%CMISS%N)
                         ELSE
-                          CALL FLAG_ERROR("The from vector does not have the same domain mapping as the to vector.",ERR,ERROR,*999)
+                          CALL FlagError("The from vector does not have the same domain mapping as the to vector.",ERR,ERROR,*999)
                         ENDIF
                       ELSE
-                        CALL FLAG_ERROR("To vector CMISS is not associated.",ERR,ERROR,*999)
+                        CALL FlagError("To vector CMISS is not associated.",ERR,ERROR,*999)
                       ENDIF
                     ELSE
-                      CALL FLAG_ERROR("From vector CMISS is not associated.",ERR,ERROR,*999)
+                      CALL FlagError("From vector CMISS is not associated.",ERR,ERROR,*999)
                     ENDIF
                   CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-                    CALL FLAG_ERROR("Cannot copy a vector fro an integer PETSc distributed vector.",ERR,ERROR,*999)
+                    CALL FlagError("Cannot copy a vector fro an integer PETSc distributed vector.",ERR,ERROR,*999)
                   CASE DEFAULT
                     LOCAL_ERROR="The from vector library type of "// &
-                      & TRIM(NUMBER_TO_VSTRING(FROM_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                      & TRIM(NumberToVString(FROM_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   END SELECT
                 ELSE
                   !Vectors are of from different library types
-                  CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                  CALL FlagError("Not implemented.",ERR,ERROR,*999)
                 ENDIF
               ELSE
-                LOCAL_ERROR="The from vector data type of "//TRIM(NUMBER_TO_VSTRING(FROM_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+                LOCAL_ERROR="The from vector data type of "//TRIM(NumberToVString(FROM_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
                   & " does not match the integer data type of the supplied alpha value."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             ELSE
               LOCAL_ERROR="The from vector data type of "// &
-                & TRIM(NUMBER_TO_VSTRING(FROM_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+                & TRIM(NumberToVString(FROM_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
                 & " does not match the to vector data type of "// &
-                & TRIM(NUMBER_TO_VSTRING(TO_VECTOR%DATA_TYPE,"*",ERR,ERROR))//"."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(TO_VECTOR%DATA_TYPE,"*",ERR,ERROR))//"."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("To vector has not been finished.",ERR,ERROR,*999)
+            CALL FlagError("To vector has not been finished.",ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("To vector is not associated.",ERR,ERROR,*999)
+          CALL FlagError("To vector is not associated.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("From vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("From vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("From vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("From vector is not associated.",ERR,ERROR,*999)
     ENDIF
      
     EXITS("DISTRIBUTED_VECTOR_COPY_INTG")
@@ -5742,13 +5940,13 @@ CONTAINS
                         IF(ASSOCIATED(FROM_VECTOR%DOMAIN_MAPPING,TO_VECTOR%DOMAIN_MAPPING)) THEN
                           TO_VECTOR%CMISS%DATA_DP(1:TO_VECTOR%CMISS%N)=ALPHA*FROM_VECTOR%CMISS%DATA_DP(1:FROM_VECTOR%CMISS%N)
                         ELSE
-                          CALL FLAG_ERROR("The from vector does not have the same domain mapping as the to vector.",ERR,ERROR,*999)
+                          CALL FlagError("The from vector does not have the same domain mapping as the to vector.",ERR,ERROR,*999)
                         ENDIF
                       ELSE
-                        CALL FLAG_ERROR("To vector CMISS is not associated.",ERR,ERROR,*999)
+                        CALL FlagError("To vector CMISS is not associated.",ERR,ERROR,*999)
                       ENDIF
                     ELSE
-                      CALL FLAG_ERROR("From vector CMISS is not associated.",ERR,ERROR,*999)
+                      CALL FlagError("From vector CMISS is not associated.",ERR,ERROR,*999)
                     ENDIF
                   CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
                     IF(ASSOCIATED(FROM_VECTOR%PETSC)) THEN
@@ -5771,43 +5969,43 @@ CONTAINS
                           ENDIF
                         ENDIF
                       ELSE
-                        CALL FLAG_ERROR("To vector PETSc is not associated.",ERR,ERROR,*999)
+                        CALL FlagError("To vector PETSc is not associated.",ERR,ERROR,*999)
                       ENDIF
                     ELSE
-                      CALL FLAG_ERROR("From vector PETSc is not associated.",ERR,ERROR,*999)
+                      CALL FlagError("From vector PETSc is not associated.",ERR,ERROR,*999)
                     ENDIF
                   CASE DEFAULT
                     LOCAL_ERROR="The from vector library type of "// &
-                      & TRIM(NUMBER_TO_VSTRING(FROM_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                      & TRIM(NumberToVString(FROM_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   END SELECT
                 ELSE
                   !Vectors are of from different library types
-                  CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                  CALL FlagError("Not implemented.",ERR,ERROR,*999)
                 ENDIF
               ELSE
-                LOCAL_ERROR="The from vector data type of "//TRIM(NUMBER_TO_VSTRING(FROM_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+                LOCAL_ERROR="The from vector data type of "//TRIM(NumberToVString(FROM_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
                   & " does not match the double precision data type of the supplied alpha value."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             ELSE
               LOCAL_ERROR="The from vector data type of "// &
-                & TRIM(NUMBER_TO_VSTRING(FROM_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+                & TRIM(NumberToVString(FROM_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
                 & " does not match the to vector data type of "// &
-                & TRIM(NUMBER_TO_VSTRING(TO_VECTOR%DATA_TYPE,"*",ERR,ERROR))//"."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(TO_VECTOR%DATA_TYPE,"*",ERR,ERROR))//"."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("To vector has not been finished.",ERR,ERROR,*999)
+            CALL FlagError("To vector has not been finished.",ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("To vector is not associated.",ERR,ERROR,*999)
+          CALL FlagError("To vector is not associated.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("From vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("From vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("From vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("From vector is not associated.",ERR,ERROR,*999)
     ENDIF
      
     EXITS("DISTRIBUTED_VECTOR_COPY_DP")
@@ -5850,48 +6048,48 @@ CONTAINS
                         IF(ASSOCIATED(FROM_VECTOR%DOMAIN_MAPPING,TO_VECTOR%DOMAIN_MAPPING)) THEN
                           TO_VECTOR%CMISS%DATA_SP(1:TO_VECTOR%CMISS%N)=ALPHA*FROM_VECTOR%CMISS%DATA_SP(1:FROM_VECTOR%CMISS%N)
                         ELSE
-                          CALL FLAG_ERROR("The from vector does not have the same domain mapping as the to vector.",ERR,ERROR,*999)
+                          CALL FlagError("The from vector does not have the same domain mapping as the to vector.",ERR,ERROR,*999)
                         ENDIF
                       ELSE
-                        CALL FLAG_ERROR("To vector CMISS is not associated.",ERR,ERROR,*999)
+                        CALL FlagError("To vector CMISS is not associated.",ERR,ERROR,*999)
                       ENDIF
                     ELSE
-                      CALL FLAG_ERROR("From vector CMISS is not associated.",ERR,ERROR,*999)
+                      CALL FlagError("From vector CMISS is not associated.",ERR,ERROR,*999)
                     ENDIF
                   CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-                    CALL FLAG_ERROR("Cannot copy a vector for a single precision PETSc distributed vector.",ERR,ERROR,*999)
+                    CALL FlagError("Cannot copy a vector for a single precision PETSc distributed vector.",ERR,ERROR,*999)
                  CASE DEFAULT
                     LOCAL_ERROR="The from vector library type of "// &
-                      & TRIM(NUMBER_TO_VSTRING(FROM_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                      & TRIM(NumberToVString(FROM_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   END SELECT
                 ELSE
                   !Vectors are of from different library types
-                  CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                  CALL FlagError("Not implemented.",ERR,ERROR,*999)
                 ENDIF
               ELSE
-                LOCAL_ERROR="The from vector data type of "//TRIM(NUMBER_TO_VSTRING(FROM_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+                LOCAL_ERROR="The from vector data type of "//TRIM(NumberToVString(FROM_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
                   & " does not match the single precision data type of the supplied alpha value."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             ELSE
               LOCAL_ERROR="The from vector data type of "// &
-                & TRIM(NUMBER_TO_VSTRING(FROM_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+                & TRIM(NumberToVString(FROM_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
                 & " does not match the to vector data type of "// &
-                & TRIM(NUMBER_TO_VSTRING(TO_VECTOR%DATA_TYPE,"*",ERR,ERROR))//"."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(TO_VECTOR%DATA_TYPE,"*",ERR,ERROR))//"."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("To vector has not been finished.",ERR,ERROR,*999)
+            CALL FlagError("To vector has not been finished.",ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("To vector is not associated.",ERR,ERROR,*999)
+          CALL FlagError("To vector is not associated.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("From vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("From vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("From vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("From vector is not associated.",ERR,ERROR,*999)
     ENDIF
      
     EXITS("DISTRIBUTED_VECTOR_COPY_SP")
@@ -5934,48 +6132,48 @@ CONTAINS
                         IF(ASSOCIATED(FROM_VECTOR%DOMAIN_MAPPING,TO_VECTOR%DOMAIN_MAPPING)) THEN
                           TO_VECTOR%CMISS%DATA_L(1:TO_VECTOR%CMISS%N)=ALPHA.AND.FROM_VECTOR%CMISS%DATA_L(1:FROM_VECTOR%CMISS%N)
                         ELSE
-                          CALL FLAG_ERROR("The from vector does not have the same domain mapping as the to vector.",ERR,ERROR,*999)
+                          CALL FlagError("The from vector does not have the same domain mapping as the to vector.",ERR,ERROR,*999)
                         ENDIF
                       ELSE
-                        CALL FLAG_ERROR("To vector CMISS is not associated.",ERR,ERROR,*999)
+                        CALL FlagError("To vector CMISS is not associated.",ERR,ERROR,*999)
                       ENDIF
                     ELSE
-                      CALL FLAG_ERROR("From vector CMISS is not associated.",ERR,ERROR,*999)
+                      CALL FlagError("From vector CMISS is not associated.",ERR,ERROR,*999)
                     ENDIF
                   CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-                    CALL FLAG_ERROR("Cannot copy a vector for an integer PETSc distributed vector.",ERR,ERROR,*999)
+                    CALL FlagError("Cannot copy a vector for an integer PETSc distributed vector.",ERR,ERROR,*999)
                   CASE DEFAULT
                     LOCAL_ERROR="The from vector library type of "// &
-                      & TRIM(NUMBER_TO_VSTRING(FROM_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                      & TRIM(NumberToVString(FROM_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   END SELECT
                 ELSE
                   !Vectors are of from different library types
-                  CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                  CALL FlagError("Not implemented.",ERR,ERROR,*999)
                 ENDIF
               ELSE
-                LOCAL_ERROR="The from vector data type of "//TRIM(NUMBER_TO_VSTRING(FROM_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+                LOCAL_ERROR="The from vector data type of "//TRIM(NumberToVString(FROM_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
                   & " does not match the logical data type of the supplied alpha value."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             ELSE
               LOCAL_ERROR="The from vector data type of "// &
-                & TRIM(NUMBER_TO_VSTRING(FROM_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+                & TRIM(NumberToVString(FROM_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
                 & " does not match the to vector data type of "// &
-                & TRIM(NUMBER_TO_VSTRING(TO_VECTOR%DATA_TYPE,"*",ERR,ERROR))//"."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(TO_VECTOR%DATA_TYPE,"*",ERR,ERROR))//"."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("To vector has not been finished.",ERR,ERROR,*999)
+            CALL FlagError("To vector has not been finished.",ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("To vector is not associated.",ERR,ERROR,*999)
+          CALL FlagError("To vector is not associated.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("From vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("From vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("From vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("From vector is not associated.",ERR,ERROR,*999)
     ENDIF
      
     EXITS("DISTRIBUTED_VECTOR_COPY_L")
@@ -6040,11 +6238,11 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_VECTOR)) THEN
       IF(ASSOCIATED(DISTRIBUTED_VECTOR%CMISS)) THEN
-        CALL FLAG_ERROR("CMISS is already associated for this distributed vector.",ERR,ERROR,*998)
+        CALL FlagError("CMISS is already associated for this distributed vector.",ERR,ERROR,*998)
       ELSE
         IF(ASSOCIATED(DISTRIBUTED_VECTOR%DOMAIN_MAPPING)) THEN
           ALLOCATE(DISTRIBUTED_VECTOR%CMISS,STAT=ERR)
-          IF(ERR/=0) CALL FLAG_ERROR("Could not allocated CMISS distributed vector.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocated CMISS distributed vector.",ERR,ERROR,*999)
           DISTRIBUTED_VECTOR%CMISS%DISTRIBUTED_VECTOR=>DISTRIBUTED_VECTOR
           DISTRIBUTED_VECTOR%LIBRARY_TYPE=DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE
           !Set the defaults
@@ -6056,16 +6254,16 @@ CONTAINS
             DISTRIBUTED_VECTOR%CMISS%N=DISTRIBUTED_VECTOR%DOMAIN_MAPPING%NUMBER_OF_LOCAL
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector ghosting type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%GHOSTING_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%GHOSTING_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT         
           DISTRIBUTED_VECTOR%CMISS%DATA_SIZE=0         
         ELSE
-          CALL FLAG_ERROR("Distributed vector domain mapping is not associated.",ERR,ERROR,*998)
+          CALL FlagError("Distributed vector domain mapping is not associated.",ERR,ERROR,*998)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*998)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_CMISS_INITIALSE")
@@ -6105,20 +6303,20 @@ CONTAINS
           SELECT CASE(DISTRIBUTED_VECTOR%DATA_TYPE)
           CASE(MATRIX_VECTOR_INTG_TYPE)
             ALLOCATE(CMISS_VECTOR%DATA_INTG(CMISS_VECTOR%DATA_SIZE),STAT=ERR)
-            IF(ERR/=0) CALL FLAG_ERROR("Could not allocate CMISS distributed vector integer data.",ERR,ERROR,*999)
+            IF(ERR/=0) CALL FlagError("Could not allocate CMISS distributed vector integer data.",ERR,ERROR,*999)
           CASE(MATRIX_VECTOR_SP_TYPE)
             ALLOCATE(CMISS_VECTOR%DATA_SP(CMISS_VECTOR%DATA_SIZE),STAT=ERR)
-            IF(ERR/=0) CALL FLAG_ERROR("Could not allocate CMISS distributed vector single precsion data.",ERR,ERROR,*999)
+            IF(ERR/=0) CALL FlagError("Could not allocate CMISS distributed vector single precsion data.",ERR,ERROR,*999)
           CASE(MATRIX_VECTOR_DP_TYPE)
             ALLOCATE(CMISS_VECTOR%DATA_DP(CMISS_VECTOR%DATA_SIZE),STAT=ERR)
-            IF(ERR/=0) CALL FLAG_ERROR("Could not allocate CMISS distributed vector double precsion data.",ERR,ERROR,*999)
+            IF(ERR/=0) CALL FlagError("Could not allocate CMISS distributed vector double precsion data.",ERR,ERROR,*999)
           CASE(MATRIX_VECTOR_L_TYPE)
             ALLOCATE(CMISS_VECTOR%DATA_L(CMISS_VECTOR%DATA_SIZE),STAT=ERR)
-            IF(ERR/=0) CALL FLAG_ERROR("Could not allocate CMISS distributed vector logical data.",ERR,ERROR,*999)
+            IF(ERR/=0) CALL FlagError("Could not allocate CMISS distributed vector logical data.",ERR,ERROR,*999)
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector data type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
           CMISS_VECTOR%BASE_TAG_NUMBER=DISTRIBUTED_DATA_ID
           IF(DOMAIN_MAPPING%NUMBER_OF_DOMAINS==1) THEN
@@ -6132,9 +6330,9 @@ CONTAINS
             IF(ERR/=0) GOTO 999
             IF(DISTRIBUTED_VECTOR%GHOSTING_TYPE==DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE) THEN
               ALLOCATE(CMISS_VECTOR%TRANSFERS(DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS),STAT=ERR)
-              IF(ERR/=0) CALL FLAG_ERROR("Could not allocate CMISS distributed vector transfer buffers.",ERR,ERROR,*999)
+              IF(ERR/=0) CALL FlagError("Could not allocate CMISS distributed vector transfer buffers.",ERR,ERROR,*999)
               DO domain_idx=1,DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS
-                CALL DISTRIBUTED_VECTOR_CMISS_TRANSFER_INITIALISE(CMISS_VECTOR,domain_idx,ERR,ERROR,*999)
+                CALL DistributedVector_CmissTransferInitialise(CMISS_VECTOR,domain_idx,ERR,ERROR,*999)
                 CMISS_VECTOR%TRANSFERS(domain_idx)%SEND_BUFFER_SIZE=DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)% &
                   & NUMBER_OF_SEND_GHOSTS
                 CMISS_VECTOR%TRANSFERS(domain_idx)%RECEIVE_BUFFER_SIZE= &
@@ -6155,59 +6353,59 @@ CONTAINS
                   CMISS_VECTOR%TRANSFERS(domain_idx)%RECEIVE_TAG_NUMBER=CMISS_VECTOR%BASE_TAG_NUMBER + &
                     & DOMAIN_MAPPING%ADJACENT_DOMAINS_PTR(domain_no)+domain_idx2-1
                 ELSE
-                  CALL FLAG_ERROR("Could not find domain to set the receive tag number.",ERR,ERROR,*999)
+                  CALL FlagError("Could not find domain to set the receive tag number.",ERR,ERROR,*999)
                 ENDIF
                 SELECT CASE(DISTRIBUTED_VECTOR%DATA_TYPE)
                 CASE(DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE)
                   ALLOCATE(CMISS_VECTOR%TRANSFERS(domain_idx)%SEND_BUFFER_INTG(CMISS_VECTOR%TRANSFERS(domain_idx)% &
                     & SEND_BUFFER_SIZE),STAT=ERR)
-                  IF(ERR/=0) CALL FLAG_ERROR("Could not allocate distributed vector send integer transfer buffer.",ERR,ERROR,*999)
+                  IF(ERR/=0) CALL FlagError("Could not allocate distributed vector send integer transfer buffer.",ERR,ERROR,*999)
                   ALLOCATE(CMISS_VECTOR%TRANSFERS(domain_idx)%RECEIVE_BUFFER_INTG(CMISS_VECTOR%TRANSFERS(domain_idx)% &
                     & RECEIVE_BUFFER_SIZE),STAT=ERR)
-                  IF(ERR/=0) CALL FLAG_ERROR("Could not allocate distributed vector receive integer transfer buffer.", &
+                  IF(ERR/=0) CALL FlagError("Could not allocate distributed vector receive integer transfer buffer.", &
                     & ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_VECTOR_SP_TYPE)
                   ALLOCATE(CMISS_VECTOR%TRANSFERS(domain_idx)%SEND_BUFFER_SP(CMISS_VECTOR%TRANSFERS(domain_idx)% &
                     & SEND_BUFFER_SIZE),STAT=ERR)
-                  IF(ERR/=0) CALL FLAG_ERROR("Could not allocate distributed vector send single precision transfer buffer.", &
+                  IF(ERR/=0) CALL FlagError("Could not allocate distributed vector send single precision transfer buffer.", &
                     & ERR,ERROR,*999)
                   ALLOCATE(CMISS_VECTOR%TRANSFERS(domain_idx)%RECEIVE_BUFFER_SP(CMISS_VECTOR%TRANSFERS(domain_idx)% &
                     & RECEIVE_BUFFER_SIZE),STAT=ERR)
-                  IF(ERR/=0) CALL FLAG_ERROR("Could not allocate distributed vector receive single precision transfer buffer.", &
+                  IF(ERR/=0) CALL FlagError("Could not allocate distributed vector receive single precision transfer buffer.", &
                     & ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_VECTOR_DP_TYPE)
                   ALLOCATE(CMISS_VECTOR%TRANSFERS(domain_idx)%SEND_BUFFER_DP(CMISS_VECTOR%TRANSFERS(domain_idx)% &
                     & SEND_BUFFER_SIZE),STAT=ERR)
-                  IF(ERR/=0) CALL FLAG_ERROR("Could not allocate distributed vector send double precision transfer buffer.", &
+                  IF(ERR/=0) CALL FlagError("Could not allocate distributed vector send double precision transfer buffer.", &
                     & ERR,ERROR,*999)
                   ALLOCATE(CMISS_VECTOR%TRANSFERS(domain_idx)%RECEIVE_BUFFER_DP(CMISS_VECTOR%TRANSFERS(domain_idx)% &
                     & RECEIVE_BUFFER_SIZE),STAT=ERR)
-                  IF(ERR/=0) CALL FLAG_ERROR("Could not allocate distributed vector receive double precision transfer buffer.", &
+                  IF(ERR/=0) CALL FlagError("Could not allocate distributed vector receive double precision transfer buffer.", &
                     & ERR,ERROR,*999)
                 CASE(DISTRIBUTED_MATRIX_VECTOR_L_TYPE)
                   ALLOCATE(CMISS_VECTOR%TRANSFERS(domain_idx)%SEND_BUFFER_L(CMISS_VECTOR%TRANSFERS(domain_idx)%SEND_BUFFER_SIZE), &
                     & STAT=ERR)
-                  IF(ERR/=0) CALL FLAG_ERROR("Could not allocate distributed vector send logical transfer buffer.",ERR,ERROR,*999)
+                  IF(ERR/=0) CALL FlagError("Could not allocate distributed vector send logical transfer buffer.",ERR,ERROR,*999)
                   ALLOCATE(CMISS_VECTOR%TRANSFERS(domain_idx)%RECEIVE_BUFFER_L(CMISS_VECTOR%TRANSFERS(domain_idx)% &
                     & RECEIVE_BUFFER_SIZE),STAT=ERR)
-                  IF(ERR/=0) CALL FLAG_ERROR("Could not allocate distributed vector receive logical transfer buffer.", &
+                  IF(ERR/=0) CALL FlagError("Could not allocate distributed vector receive logical transfer buffer.", &
                     & ERR,ERROR,*999)
                 CASE DEFAULT
                   LOCAL_ERROR="The distributed vector data type of "// &
-                    & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                    & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 END SELECT
               ENDDO !domain_idx
             ENDIF
           ENDIF
         ELSE
-          CALL FLAG_ERROR("CMISS vector distributed vector domain mapping is not associated.",ERR,ERROR,*999)
+          CALL FlagError("CMISS vector distributed vector domain mapping is not associated.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("CMISS vector distributed vector is not associated.",ERR,ERROR,*999)
+        CALL FlagError("CMISS vector distributed vector is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("CMISS vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("CMISS vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_CMISS_CREATE_FINISH")
@@ -6236,25 +6434,25 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_VECTOR)) THEN
       IF(DISTRIBUTED_VECTOR%VECTOR_FINISHED) THEN
-        CALL FLAG_ERROR("The distributed vector has already been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has already been finished.",ERR,ERROR,*999)
       ELSE
         SELECT CASE(DISTRIBUTED_VECTOR%LIBRARY_TYPE)
         CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_VECTOR%CMISS)) THEN
             CALL DISTRIBUTED_VECTOR_CMISS_CREATE_FINISH(DISTRIBUTED_VECTOR%CMISS,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_VECTOR%PETSC)) THEN
             CALL DISTRIBUTED_VECTOR_PETSC_CREATE_FINISH(DISTRIBUTED_VECTOR%PETSC,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed vector library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
         DISTRIBUTED_VECTOR%VECTOR_FINISHED=.TRUE.
       ENDIF
@@ -6288,13 +6486,13 @@ CONTAINS
 
     IF(ASSOCIATED(DOMAIN_MAPPING)) THEN
       IF(ASSOCIATED(DISTRIBUTED_VECTOR)) THEN
-        CALL FLAG_ERROR("Distributed vector is already associated.",ERR,ERROR,*998)
+        CALL FlagError("Distributed vector is already associated.",ERR,ERROR,*998)
       ELSE
         CALL DISTRIBUTED_VECTOR_INITIALISE(DOMAIN_MAPPING,DISTRIBUTED_VECTOR,ERR,ERROR,*999)
         !Set the default values
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Domain mapping is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Domain mapping is not associated.",ERR,ERROR,*998)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_CREATE_START")
@@ -6354,7 +6552,7 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_VECTOR)) THEN
       IF(DISTRIBUTED_VECTOR%VECTOR_FINISHED) THEN
-        CALL FLAG_ERROR("The distributed vector has been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has been finished.",ERR,ERROR,*999)
       ELSE
         SELECT CASE(DISTRIBUTED_VECTOR%LIBRARY_TYPE)
         CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -6368,31 +6566,31 @@ CONTAINS
           CASE(MATRIX_VECTOR_L_TYPE)
             DISTRIBUTED_VECTOR%DATA_TYPE=MATRIX_VECTOR_L_TYPE
           CASE DEFAULT
-            LOCAL_ERROR="The distributed data type of "//TRIM(NUMBER_TO_VSTRING(DATA_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            LOCAL_ERROR="The distributed data type of "//TRIM(NumberToVString(DATA_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           SELECT CASE(DATA_TYPE)
           CASE(MATRIX_VECTOR_INTG_TYPE)
-            CALL FLAG_ERROR("An integer distributed PETSc vector is not implemented.",ERR,ERROR,*999)
+            CALL FlagError("An integer distributed PETSc vector is not implemented.",ERR,ERROR,*999)
           CASE(MATRIX_VECTOR_SP_TYPE)
-            CALL FLAG_ERROR("A single precision distributed PETSc vector is not implemented.",ERR,ERROR,*999)
+            CALL FlagError("A single precision distributed PETSc vector is not implemented.",ERR,ERROR,*999)
           CASE(MATRIX_VECTOR_DP_TYPE)
             DISTRIBUTED_VECTOR%DATA_TYPE=MATRIX_VECTOR_DP_TYPE
           CASE(MATRIX_VECTOR_L_TYPE)
-            CALL FLAG_ERROR("A logical distributed PETSc vector is not implemented.",ERR,ERROR,*999)
+            CALL FlagError("A logical distributed PETSc vector is not implemented.",ERR,ERROR,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The distributed data type of "//TRIM(NUMBER_TO_VSTRING(DATA_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            LOCAL_ERROR="The distributed data type of "//TRIM(NumberToVString(DATA_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE DEFAULT
           LOCAL_ERROR="The distributed vector library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_DATA_TYPE_SET")
@@ -6419,7 +6617,7 @@ CONTAINS
     IF(ASSOCIATED(DISTRIBUTED_VECTOR)) THEN
       CALL DISTRIBUTED_VECTOR_FINALISE(DISTRIBUTED_VECTOR,ERR,ERROR,*999)
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_DESTROY")
@@ -6448,7 +6646,7 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_VECTOR)) THEN
       IF(ASSOCIATED(NEW_DISTRIBUTED_VECTOR)) THEN
-        CALL FLAG_ERROR("New distributed vector is already associated.",ERR,ERROR,*998)
+        CALL FlagError("New distributed vector is already associated.",ERR,ERROR,*998)
       ELSE
         CALL DISTRIBUTED_VECTOR_CREATE_START(DISTRIBUTED_VECTOR%DOMAIN_MAPPING,NEW_DISTRIBUTED_VECTOR,ERR,ERROR,*999)
         CALL DISTRIBUTED_VECTOR_LIBRARY_TYPE_SET(NEW_DISTRIBUTED_VECTOR,DISTRIBUTED_VECTOR%LIBRARY_TYPE,ERR,ERROR,*999)
@@ -6456,7 +6654,7 @@ CONTAINS
         CALL DISTRIBUTED_VECTOR_CREATE_FINISH(NEW_DISTRIBUTED_VECTOR,ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*998)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_DUPLICATE")
@@ -6513,10 +6711,10 @@ CONTAINS
 
     IF(ASSOCIATED(DOMAIN_MAPPING)) THEN
       IF(ASSOCIATED(DISTRIBUTED_VECTOR)) THEN
-        CALL FLAG_ERROR("Distributed vector is already associated.",ERR,ERROR,*998)
+        CALL FlagError("Distributed vector is already associated.",ERR,ERROR,*998)
       ELSE
         ALLOCATE(DISTRIBUTED_VECTOR,STAT=ERR)
-        IF(ERR/=0) CALL FLAG_ERROR("Could not allocated the distributed vector.",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocated the distributed vector.",ERR,ERROR,*999)
         DISTRIBUTED_VECTOR%VECTOR_FINISHED=.FALSE.
         DISTRIBUTED_VECTOR%LIBRARY_TYPE=0
         DISTRIBUTED_VECTOR%GHOSTING_TYPE=DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE
@@ -6527,7 +6725,7 @@ CONTAINS
         CALL DISTRIBUTED_VECTOR_CMISS_INITIALISE(DISTRIBUTED_VECTOR,ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Domain mapping is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Domain mapping is not associated.",ERR,ERROR,*998)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_INITIALISE")
@@ -6556,7 +6754,7 @@ CONTAINS
 
      IF(ASSOCIATED(DISTRIBUTED_VECTOR)) THEN
       IF(ASSOCIATED(DATA)) THEN
-        CALL FLAG_ERROR("Data is already associated.",ERR,ERROR,*999)
+        CALL FlagError("Data is already associated.",ERR,ERROR,*999)
       ELSE
         NULLIFY(DATA)
         IF(DISTRIBUTED_VECTOR%VECTOR_FINISHED) THEN
@@ -6566,27 +6764,27 @@ CONTAINS
               IF(ASSOCIATED(DISTRIBUTED_VECTOR%CMISS)) THEN
                 DATA=>DISTRIBUTED_VECTOR%CMISS%DATA_INTG
               ELSE
-                CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-              CALL FLAG_ERROR("Cannot get data for an integer PETSc distributed vector.",ERR,ERROR,*999)          
+              CALL FlagError("Cannot get data for an integer PETSc distributed vector.",ERR,ERROR,*999)          
             CASE DEFAULT
               LOCAL_ERROR="The distributed vector library type of "// &
-                & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ELSE
             LOCAL_ERROR="The distributed data type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
               & " does not correspond to the integer data type of the requested values."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+          CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_DATA_GET_INTG")
@@ -6614,7 +6812,7 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_VECTOR)) THEN
       IF(ASSOCIATED(DATA)) THEN
-        CALL FLAG_ERROR("Data is already associated.",ERR,ERROR,*999)
+        CALL FlagError("Data is already associated.",ERR,ERROR,*999)
       ELSE
         NULLIFY(DATA)
         IF(DISTRIBUTED_VECTOR%VECTOR_FINISHED) THEN
@@ -6624,27 +6822,27 @@ CONTAINS
               IF(ASSOCIATED(DISTRIBUTED_VECTOR%CMISS)) THEN
                 DATA=>DISTRIBUTED_VECTOR%CMISS%DATA_SP
               ELSE
-                CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-              CALL FLAG_ERROR("Cannot get values for a single precision PETSc distributed vector.",ERR,ERROR,*999)          
+              CALL FlagError("Cannot get values for a single precision PETSc distributed vector.",ERR,ERROR,*999)          
             CASE DEFAULT
               LOCAL_ERROR="The distributed vector library type of "// &
-                & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ELSE
             LOCAL_ERROR="The distributed data type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
               & " does not correspond to the single precision data type of the requested values."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+          CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_DATA_GET_SP")
@@ -6672,7 +6870,7 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_VECTOR)) THEN
       IF(ASSOCIATED(DATA)) THEN
-        CALL FLAG_ERROR("Data is already associated.",ERR,ERROR,*999)
+        CALL FlagError("Data is already associated.",ERR,ERROR,*999)
       ELSE
         NULLIFY(DATA)
         IF(DISTRIBUTED_VECTOR%VECTOR_FINISHED) THEN
@@ -6682,7 +6880,7 @@ CONTAINS
               IF(ASSOCIATED(DISTRIBUTED_VECTOR%CMISS)) THEN
                 DATA=>DISTRIBUTED_VECTOR%CMISS%DATA_DP
               ELSE
-                CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
               IF(ASSOCIATED(DISTRIBUTED_VECTOR%PETSC)) THEN
@@ -6692,25 +6890,25 @@ CONTAINS
                   CALL Petsc_VecGetArrayReadF90(DISTRIBUTED_VECTOR%PETSC%VECTOR,DATA,ERR,ERROR,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
               ENDIF
             CASE DEFAULT
               LOCAL_ERROR="The distributed vector library type of "// &
-                & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ELSE
             LOCAL_ERROR="The distributed data type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
               & " does not correspond to the double precision data type of the requested values."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+          CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_DATA_GET_DP")
@@ -6738,7 +6936,7 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_VECTOR)) THEN
       IF(ASSOCIATED(DATA)) THEN
-        CALL FLAG_ERROR("Data is already associated.",ERR,ERROR,*999)
+        CALL FlagError("Data is already associated.",ERR,ERROR,*999)
       ELSE
         NULLIFY(DATA)
         IF(DISTRIBUTED_VECTOR%VECTOR_FINISHED) THEN
@@ -6748,26 +6946,26 @@ CONTAINS
               IF(ASSOCIATED(DISTRIBUTED_VECTOR%CMISS)) THEN
                 DATA=>DISTRIBUTED_VECTOR%CMISS%DATA_L
               ELSE
-                CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-              CALL FLAG_ERROR("Cannot get values for a logical PETSc distributed vector.",ERR,ERROR,*999)          
+              CALL FlagError("Cannot get values for a logical PETSc distributed vector.",ERR,ERROR,*999)          
             CASE DEFAULT
               LOCAL_ERROR="The distributed vector library type of "// &
-                & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ELSE
-            LOCAL_ERROR="The distributed data type of "//TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The distributed data type of "//TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
               & " does not correspond to the logical data type of the requested values."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+          CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_DATA_GET_L")
@@ -6800,20 +6998,20 @@ CONTAINS
           CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
             NULLIFY(DATA)              
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-            CALL FLAG_ERROR("Cannot restore data for an integer PETSc distributed vector.",ERR,ERROR,*999)
+            CALL FlagError("Cannot restore data for an integer PETSc distributed vector.",ERR,ERROR,*999)
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
-          CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+          CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Data is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Data is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_DATA_RESTORE_INTG")
@@ -6846,20 +7044,20 @@ CONTAINS
           CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
             NULLIFY(DATA)
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-            CALL FLAG_ERROR("Cannot restore data for a single precision PETSc distributed vector.",ERR,ERROR,*999)
+            CALL FlagError("Cannot restore data for a single precision PETSc distributed vector.",ERR,ERROR,*999)
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
-          CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+          CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Data is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Data is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_DATA_RESTORE_SP")
@@ -6899,21 +7097,21 @@ CONTAINS
                 CALL Petsc_VecRestoreArrayReadF90(DISTRIBUTED_VECTOR%PETSC%VECTOR,DATA,ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
-          CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+          CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Data is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Data is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_DATA_RESTORE_DP")
@@ -6946,20 +7144,20 @@ CONTAINS
           CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
             NULLIFY(DATA)
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-            CALL FLAG_ERROR("Cannot restore data for a logical PETSc distributed vector.",ERR,ERROR,*999)
+            CALL FlagError("Cannot restore data for a logical PETSc distributed vector.",ERR,ERROR,*999)
           CASE DEFAULT
             LOCAL_ERROR="The distributed matrix library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
-          CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+          CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Data is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Data is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_DATA_RESTORE_L")
@@ -6987,7 +7185,7 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_VECTOR)) THEN
       IF(DISTRIBUTED_VECTOR%VECTOR_FINISHED) THEN
-        CALL FLAG_ERROR("The distributed vector has already been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has already been finished.",ERR,ERROR,*999)
       ELSE
         IF(ASSOCIATED(DISTRIBUTED_VECTOR%DOMAIN_MAPPING)) THEN
           SELECT CASE(DISTRIBUTED_VECTOR%LIBRARY_TYPE)
@@ -6999,11 +7197,11 @@ CONTAINS
               CASE(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE)
                 DISTRIBUTED_VECTOR%CMISS%N=DISTRIBUTED_VECTOR%DOMAIN_MAPPING%NUMBER_OF_LOCAL
               CASE DEFAULT
-                LOCAL_ERROR="The given ghosting type of "//TRIM(NUMBER_TO_VSTRING(GHOSTING_TYPE,"*",ERR,ERROR))//" is invalid."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                LOCAL_ERROR="The given ghosting type of "//TRIM(NumberToVString(GHOSTING_TYPE,"*",ERR,ERROR))//" is invalid."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
             ELSE
-              CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
             IF(ASSOCIATED(DISTRIBUTED_VECTOR%PETSC)) THEN
@@ -7013,24 +7211,24 @@ CONTAINS
               CASE(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE)
                 DISTRIBUTED_VECTOR%PETSC%N=DISTRIBUTED_VECTOR%DOMAIN_MAPPING%NUMBER_OF_LOCAL
               CASE DEFAULT
-                LOCAL_ERROR="The given ghosting type of "//TRIM(NUMBER_TO_VSTRING(GHOSTING_TYPE,"*",ERR,ERROR))//" is invalid."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                LOCAL_ERROR="The given ghosting type of "//TRIM(NumberToVString(GHOSTING_TYPE,"*",ERR,ERROR))//" is invalid."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT              
             ELSE
-              CALL FLAG_ERROR("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
           DISTRIBUTED_VECTOR%GHOSTING_TYPE=GHOSTING_TYPE
         ELSE
-          CALL FLAG_ERROR("Distributed vector domain mapping is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Distributed vector domain mapping is not associated.",ERR,ERROR,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_GHOSTING_TYPE_SET")
@@ -7059,7 +7257,7 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_VECTOR)) THEN
       IF(DISTRIBUTED_VECTOR%VECTOR_FINISHED) THEN
-        CALL FLAG_ERROR("The distributed vector has already been finished.",ERR,ERROR,*998)
+        CALL FlagError("The distributed vector has already been finished.",ERR,ERROR,*998)
       ELSE
         OLD_LIBRARY_TYPE=DISTRIBUTED_VECTOR%LIBRARY_TYPE
         IF(LIBRARY_TYPE/=OLD_LIBRARY_TYPE) THEN
@@ -7070,9 +7268,9 @@ CONTAINS
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
             CALL DISTRIBUTED_VECTOR_PETSC_INITIALISE(DISTRIBUTED_VECTOR,ERR,ERROR,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The distributed vector library type of "//TRIM(NUMBER_TO_VSTRING(LIBRARY_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The distributed vector library type of "//TRIM(NumberToVString(LIBRARY_TYPE,"*",ERR,ERROR))// &
               & " is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
           !Finalise the old library type
           SELECT CASE(OLD_LIBRARY_TYPE)
@@ -7082,14 +7280,14 @@ CONTAINS
             CALL DISTRIBUTED_VECTOR_PETSC_FINALISE(DISTRIBUTED_VECTOR%PETSC,ERR,ERROR,*999)
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(OLD_LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(OLD_LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
           DISTRIBUTED_VECTOR%LIBRARY_TYPE=LIBRARY_TYPE
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*998)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_LIBRARY_TYPE_SET")
@@ -7142,11 +7340,11 @@ CONTAINS
                 & '("Vector(:)          :",8(X,L13))','(20X,8(X,L13))',ERR,ERROR,*999)
             CASE DEFAULT
               LOCAL_ERROR="The distributed vector data type of "// &
-                & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ELSE
-            CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_VECTOR%PETSC)) THEN
@@ -7164,18 +7362,18 @@ CONTAINS
               CALL Petsc_VecRestoreArrayReadF90(DISTRIBUTED_VECTOR%PETSC%VECTOR,VECTOR,ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed vector library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-       CALL FLAG_ERROR("Distributed vector has not been finished.",ERR,ERROR,*999)
+       CALL FlagError("Distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_OUTPUT")
@@ -7205,24 +7403,24 @@ CONTAINS
       IF(DISTRIBUTED_VECTOR%VECTOR_FINISHED) THEN
         SELECT CASE(DISTRIBUTED_VECTOR%LIBRARY_TYPE)
         CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)          
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)          
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_VECTOR%PETSC)) THEN
             DISTRIBUTED_VECTOR%PETSC%USE_OVERRIDE_VECTOR=.TRUE.
             DISTRIBUTED_VECTOR%PETSC%OVERRIDE_VECTOR=OVERRIDE_VECTOR
           ELSE
-            CALL FLAG_ERROR("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed vector library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-       CALL FLAG_ERROR("Distributed vector has not been finished.",ERR,ERROR,*999)
+       CALL FlagError("Distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_OVERRIDE_SET_ON")
@@ -7251,24 +7449,24 @@ CONTAINS
       IF(DISTRIBUTED_VECTOR%VECTOR_FINISHED) THEN
         SELECT CASE(DISTRIBUTED_VECTOR%LIBRARY_TYPE)
         CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)          
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)          
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_VECTOR%PETSC)) THEN
             DISTRIBUTED_VECTOR%PETSC%USE_OVERRIDE_VECTOR=.FALSE.
             CALL Petsc_VecInitialise(DISTRIBUTED_VECTOR%PETSC%OVERRIDE_VECTOR,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed vector library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-       CALL FLAG_ERROR("Distributed vector has not been finished.",ERR,ERROR,*999)
+       CALL FlagError("Distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_OVERRIDE_SET_OFF")
@@ -7311,11 +7509,11 @@ CONTAINS
             PETSC_VECTOR%GLOBAL_NUMBERS(i)=DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(i)-1
           ENDDO !i
         ELSE
-          CALL FLAG_ERROR("PETSc vector distributed vector domain mapping is not associated.",ERR,ERROR,*999)
+          CALL FlagError("PETSc vector distributed vector domain mapping is not associated.",ERR,ERROR,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("PETSc vector is not associated.",ERR,ERROR,*998)
+      CALL FlagError("PETSc vector is not associated.",ERR,ERROR,*998)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_PETSC_CREATE_FINISH")
@@ -7373,11 +7571,11 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_VECTOR)) THEN
       IF(ASSOCIATED(DISTRIBUTED_VECTOR%PETSC)) THEN
-        CALL FLAG_ERROR("PETSc is already associated for this distributed vector.",ERR,ERROR,*998)
+        CALL FlagError("PETSc is already associated for this distributed vector.",ERR,ERROR,*998)
       ELSE
         IF(ASSOCIATED(DISTRIBUTED_VECTOR%DOMAIN_MAPPING)) THEN
           ALLOCATE(DISTRIBUTED_VECTOR%PETSC,STAT=ERR)
-          IF(ERR/=0) CALL FLAG_ERROR("Could not allocate PETSc distributed vector.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate PETSc distributed vector.",ERR,ERROR,*999)
           DISTRIBUTED_VECTOR%PETSC%DISTRIBUTED_VECTOR=>DISTRIBUTED_VECTOR
           DISTRIBUTED_VECTOR%LIBRARY_TYPE=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
           !Set the defaults
@@ -7388,21 +7586,21 @@ CONTAINS
             DISTRIBUTED_VECTOR%PETSC%N=DISTRIBUTED_VECTOR%DOMAIN_MAPPING%NUMBER_OF_LOCAL
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector ghosting type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%GHOSTING_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%GHOSTING_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
           DISTRIBUTED_VECTOR%PETSC%GLOBAL_N=DISTRIBUTED_VECTOR%DOMAIN_MAPPING%NUMBER_OF_GLOBAL
           ALLOCATE(DISTRIBUTED_VECTOR%PETSC%GLOBAL_NUMBERS(DISTRIBUTED_VECTOR%PETSC%N),STAT=ERR)
-          IF(ERR/=0) CALL FLAG_ERROR("Could not allocate PETSc distributed vector global numbers.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate PETSc distributed vector global numbers.",ERR,ERROR,*999)
           DISTRIBUTED_VECTOR%PETSC%USE_OVERRIDE_VECTOR=.FALSE.
           CALL Petsc_VecInitialise(DISTRIBUTED_VECTOR%PETSC%VECTOR,ERR,ERROR,*999)
           CALL Petsc_VecInitialise(DISTRIBUTED_VECTOR%PETSC%OVERRIDE_VECTOR,ERR,ERROR,*999)          
         ELSE
-          CALL FLAG_ERROR("Distributed vector domain mapping is not associated",ERR,ERROR,*998)
+          CALL FlagError("Distributed vector domain mapping is not associated",ERR,ERROR,*998)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated",ERR,ERROR,*998)
+      CALL FlagError("Distributed vector is not associated",ERR,ERROR,*998)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_PETSC_INITIALSE")
@@ -7458,9 +7656,9 @@ CONTAINS
           IF(ALLOCATED(CMISS_VECTOR%TRANSFERS(domain_idx)%RECEIVE_BUFFER_L)) &
             & DEALLOCATE(CMISS_VECTOR%TRANSFERS(domain_idx)%RECEIVE_BUFFER_L)
         ELSE
-          LOCAL_ERROR="The domain index of "//TRIM(NUMBER_TO_VSTRING(domain_idx,"*",ERR,ERROR))// &
-            & " is invalid. It must be between 1 and "//TRIM(NUMBER_TO_VSTRING(SIZE(CMISS_VECTOR%TRANSFERS,1),"*",ERR,ERROR))//"."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          LOCAL_ERROR="The domain index of "//TRIM(NumberToVString(domain_idx,"*",ERR,ERROR))// &
+            & " is invalid. It must be between 1 and "//TRIM(NumberToVString(SIZE(CMISS_VECTOR%TRANSFERS,1),"*",ERR,ERROR))//"."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ENDIF
     ENDIF
@@ -7476,7 +7674,7 @@ CONTAINS
   !
 
   !>Initialises a CMISS distributed vector transfer information.
-  SUBROUTINE DISTRIBUTED_VECTOR_CMISS_TRANSFER_INITIALISE(CMISS_VECTOR,domain_idx,ERR,ERROR,*)
+  SUBROUTINE DistributedVector_CmissTransferInitialise(CMISS_VECTOR,domain_idx,ERR,ERROR,*)
 
     !Argument variables
     TYPE(DISTRIBUTED_VECTOR_CMISS_TYPE), POINTER :: CMISS_VECTOR !<A pointer to the CMISS distributed vector
@@ -7486,7 +7684,7 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
-    ENTERS("DISTRIBUTED_VECTOR_CMISS_TRANSFER_INITIALISE",ERR,ERROR,*999)
+    ENTERS("DistributedVector_CmissTransferInitialise",ERR,ERROR,*999)
 
     IF(ASSOCIATED(CMISS_VECTOR)) THEN
       IF(ALLOCATED(CMISS_VECTOR%TRANSFERS)) THEN
@@ -7500,23 +7698,23 @@ CONTAINS
           CMISS_VECTOR%TRANSFERS(domain_idx)%MPI_SEND_REQUEST=MPI_REQUEST_NULL
           CMISS_VECTOR%TRANSFERS(domain_idx)%MPI_RECEIVE_REQUEST=MPI_REQUEST_NULL
         ELSE
-          LOCAL_ERROR="The domain index of "//TRIM(NUMBER_TO_VSTRING(domain_idx,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The domain index of "//TRIM(NumberToVString(domain_idx,"*",ERR,ERROR))// &
             & " is invalid. It must be between 1 and "// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(CMISS_VECTOR%TRANSFERS,1),"*",ERR,ERROR))//"."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(SIZE(CMISS_VECTOR%TRANSFERS,1),"*",ERR,ERROR))//"."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("CMISS vector transfers is not allocated.",ERR,ERROR,*999)
+        CALL FlagError("CMISS vector transfers is not allocated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("CMISS vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("CMISS vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
-    EXITS("DISTRIBUTED_VECTOR_CMISS_TRANSFER_INITIALISE")
+    EXITS("DistributedVector_CmissTransferInitialise")
     RETURN
-999 ERRORSEXITS("DISTRIBUTED_VECTOR_CMISS_TRANSFER_INITIALISE",ERR,ERROR)
+999 ERRORSEXITS("DistributedVector_CmissTransferInitialise",ERR,ERROR)
     RETURN 1
-  END SUBROUTINE DISTRIBUTED_VECTOR_CMISS_TRANSFER_INITIALISE
+  END SUBROUTINE DistributedVector_CmissTransferInitialise
 
   !
   !================================================================================================================================
@@ -7570,16 +7768,16 @@ CONTAINS
                     ENDDO !i
                   CASE DEFAULT
                     LOCAL_ERROR="The distributed vector data type of "// &
-                      & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                      & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   END SELECT
                 ENDDO !domain_idx
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Distributed vector domain mapping is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed vector domain mapping is not associated.",ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_VECTOR%PETSC)) THEN
@@ -7589,18 +7787,18 @@ CONTAINS
               CALL Petsc_VecAssemblyEnd(DISTRIBUTED_VECTOR%PETSC%VECTOR,ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed vector library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
 
     IF(DIAGNOSTICS1) THEN
@@ -7642,18 +7840,18 @@ CONTAINS
               & DATA_L,'("  Data :",8(X,L))','(8X,8(X,L))',ERR,ERROR,*999)      
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector data type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
-          CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
         ENDIF
       CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
         !Do nothing
       CASE DEFAULT
         LOCAL_ERROR="The distributed vector library type of "// &
-          & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-        CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
     ENDIF
     
@@ -7699,23 +7897,23 @@ CONTAINS
                 !IF(.NOT.ISFINISHED) EXIT
               ENDDO !domain_idx
             ELSE
-              CALL FLAG_ERROR("Distributed vector domain mapping is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed vector domain mapping is not associated.",ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot test if update isfinished for a PETSc distributed vector.",ERR,ERROR,*999)          
+          CALL FlagError("Cannot test if update isfinished for a PETSc distributed vector.",ERR,ERROR,*999)          
         CASE DEFAULT
           LOCAL_ERROR="The distributed vector library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_UPDATE_ISFINISHED")
@@ -7754,23 +7952,23 @@ CONTAINS
                 CALL MPI_ERROR_CHECK("MPI_WAIT",MPI_IERROR,ERR,ERROR,*999)
               ENDDO !domain_idx
             ELSE
-              CALL FLAG_ERROR("Distributed vector domain mapping is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed vector domain mapping is not associated.",ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot wait for finished for a PETSc distributed vector.",ERR,ERROR,*999)          
+          CALL FlagError("Cannot wait for finished for a PETSc distributed vector.",ERR,ERROR,*999)          
         CASE DEFAULT
           LOCAL_ERROR="The distributed vector library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_UPDATE_WAITFINISHED")
@@ -7835,8 +8033,8 @@ CONTAINS
                       ENDDO !i
                     CASE DEFAULT
                       LOCAL_ERROR="The distributed vector data type of "// &
-                        & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
-                      CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                        & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
+                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     END SELECT
                   ENDDO !domain_idx
                   !Post all the receive calls first and then the send calls.
@@ -7928,8 +8126,8 @@ CONTAINS
                       ENDIF
                     CASE DEFAULT
                       LOCAL_ERROR="The distributed vector data type of "// &
-                        & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
-                      CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                        & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
+                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     END SELECT
                   ENDDO !domain_idx
                   !Post all the send calls.
@@ -8021,17 +8219,17 @@ CONTAINS
                       ENDIF
                     CASE DEFAULT
                       LOCAL_ERROR="The distributed vector data type of "// &
-                        & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
-                      CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                        & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
+                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     END SELECT
                   ENDDO !domain_idx
                 ENDIF
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Domain mapping is not associated for the distributed vector.",ERR,ERROR,*999)
+              CALL FlagError("Domain mapping is not associated for the distributed vector.",ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)          
           IF(ASSOCIATED(DISTRIBUTED_VECTOR%PETSC)) THEN
@@ -8041,18 +8239,18 @@ CONTAINS
               CALL Petsc_VecAssemblyBegin(DISTRIBUTED_VECTOR%PETSC%VECTOR,ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The distributed vector library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     IF(DIAGNOSTICS1) THEN
@@ -8094,18 +8292,18 @@ CONTAINS
               & DATA_L,'("  Data :",8(X,L))','(8X,8(X,L))',ERR,ERROR,*999)      
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector data type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
-          CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
         ENDIF
       CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
         !Do nothing
       CASE DEFAULT
         LOCAL_ERROR="The distributed vector library type of "// &
-          & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-        CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
     ENDIF
     
@@ -8146,32 +8344,32 @@ CONTAINS
                 ENDDO !i
                 norm=SQRT(norm)
               ELSE
-                CALL FLAG_ERROR("Distributed vector CMISS is not associated.",err,error,*999)
+                CALL FlagError("Distributed vector CMISS is not associated.",err,error,*999)
               ENDIF
           CASE(MATRIX_VECTOR_SP_TYPE)
-            CALL FLAG_ERROR("Not implemented.",err,error,*999)
+            CALL FlagError("Not implemented.",err,error,*999)
           CASE(MATRIX_VECTOR_INTG_TYPE)
-            CALL FLAG_ERROR("Not implemented.",err,error,*999)
+            CALL FlagError("Not implemented.",err,error,*999)
           CASE(MATRIX_VECTOR_L_TYPE)
-            CALL FLAG_ERROR("Not implemented.",err,error,*999)
+            CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
             localError="The distributed data type of "// &
-              & TRIM(NUMBER_TO_VSTRING(distributedVector%DATA_TYPE,"*",err,error))// &
+              & TRIM(NumberToVString(distributedVector%DATA_TYPE,"*",err,error))// &
               & " is invalid."
-            CALL FLAG_ERROR(localError,err,error,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot calculate norm for a PETSc distributed vector.",err,error,*999)
+          CALL FlagError("Cannot calculate norm for a PETSc distributed vector.",err,error,*999)
         CASE DEFAULT
           localError="The distributed vector library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(distributedVector%LIBRARY_TYPE,"*",err,error))//" is invalid."
-          CALL FLAG_ERROR(localError,err,error,*999)
+            & TRIM(NumberToVString(distributedVector%LIBRARY_TYPE,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",err,error,*999)
+        CALL FlagError("The distributed vector has not been finished.",err,error,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",err,error,*999)
+      CALL FlagError("Distributed vector is not associated.",err,error,*999)
     ENDIF
 
     EXITS("DistributedVector_L2Norm")
@@ -8215,32 +8413,32 @@ CONTAINS
                       dotProduct=dotProduct+(distributedVectorA%CMISS%DATA_INTG(i)*distributedVectorB%CMISS%DATA_INTG(i))
                     ENDDO !i
                   ELSE
-                    CALL FLAG_ERROR("Input distributed vector data type does not match output.",err,error,*999)
+                    CALL FlagError("Input distributed vector data type does not match output.",err,error,*999)
                   ENDIF
                 ELSE
-                  CALL FLAG_ERROR("The distributed vectors do not have the same size.",err,error,*999)
+                  CALL FlagError("The distributed vectors do not have the same size.",err,error,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("Distributed vector CMISS is not associated.",err,error,*999)
+                CALL FlagError("Distributed vector CMISS is not associated.",err,error,*999)
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-              CALL FLAG_ERROR("Distributed vector PETSC is double-precision, output scalar should be DP",err,error,*999)
+              CALL FlagError("Distributed vector PETSC is double-precision, output scalar should be DP",err,error,*999)
             CASE DEFAULT
               localError="The distributed vector library type of "// &
-                & TRIM(NUMBER_TO_VSTRING(distributedVectorA%LIBRARY_TYPE,"*",err,error))//" is invalid."
-              CALL FLAG_ERROR(localError,err,error,*999)
+                & TRIM(NumberToVString(distributedVectorA%LIBRARY_TYPE,"*",err,error))//" is invalid."
+              CALL FlagError(localError,err,error,*999)
             END SELECT
           ELSE
-            CALL FLAG_ERROR("The distributed vectors do not have the same data type.",err,error,*999)
+            CALL FlagError("The distributed vectors do not have the same data type.",err,error,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("The distributed vectors do not have the same library type.",err,error,*999)
+          CALL FlagError("The distributed vectors do not have the same library type.",err,error,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",err,error,*999)
+        CALL FlagError("The distributed vector has not been finished.",err,error,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",err,error,*999)
+      CALL FlagError("Distributed vector is not associated.",err,error,*999)
     ENDIF
 
     EXITS("DistributedVector_VecDotIntg")
@@ -8284,32 +8482,32 @@ CONTAINS
                       dotProduct=dotProduct+(distributedVectorA%CMISS%DATA_SP(i)*distributedVectorB%CMISS%DATA_SP(i))
                     ENDDO !i
                   ELSE
-                    CALL FLAG_ERROR("Input distributed vector data type does not match output.",err,error,*999)
+                    CALL FlagError("Input distributed vector data type does not match output.",err,error,*999)
                   ENDIF
                 ELSE
-                  CALL FLAG_ERROR("The distributed vectors do not have the same size.",err,error,*999)
+                  CALL FlagError("The distributed vectors do not have the same size.",err,error,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("Distributed vector CMISS is not associated.",err,error,*999)
+                CALL FlagError("Distributed vector CMISS is not associated.",err,error,*999)
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-              CALL FLAG_ERROR("Distributed vector PETSC is double-precision, output scalar should be DP",err,error,*999)
+              CALL FlagError("Distributed vector PETSC is double-precision, output scalar should be DP",err,error,*999)
             CASE DEFAULT
               localError="The distributed vector library type of "// &
-                & TRIM(NUMBER_TO_VSTRING(distributedVectorA%LIBRARY_TYPE,"*",err,error))//" is invalid."
-              CALL FLAG_ERROR(localError,err,error,*999)
+                & TRIM(NumberToVString(distributedVectorA%LIBRARY_TYPE,"*",err,error))//" is invalid."
+              CALL FlagError(localError,err,error,*999)
             END SELECT
           ELSE
-            CALL FLAG_ERROR("The distributed vectors do not have the same data type.",err,error,*999)
+            CALL FlagError("The distributed vectors do not have the same data type.",err,error,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("The distributed vectors do not have the same library type.",err,error,*999)
+          CALL FlagError("The distributed vectors do not have the same library type.",err,error,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",err,error,*999)
+        CALL FlagError("The distributed vector has not been finished.",err,error,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",err,error,*999)
+      CALL FlagError("Distributed vector is not associated.",err,error,*999)
     ENDIF
 
     EXITS("DistributedVector_VecDotSp")
@@ -8353,37 +8551,37 @@ CONTAINS
                       dotProduct=dotProduct+(distributedVectorA%CMISS%DATA_DP(i)*distributedVectorB%CMISS%DATA_DP(i))
                     ENDDO !i
                   ELSE
-                    CALL FLAG_ERROR("Input distributed vector data type does not match output.",err,error,*999)
+                    CALL FlagError("Input distributed vector data type does not match output.",err,error,*999)
                   ENDIF
                 ELSE
-                  CALL FLAG_ERROR("The distributed vectors do not have the same size.",err,error,*999)
+                  CALL FlagError("The distributed vectors do not have the same size.",err,error,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("Distributed vector CMISS is not associated.",err,error,*999)
+                CALL FlagError("Distributed vector CMISS is not associated.",err,error,*999)
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
               IF(ASSOCIATED(distributedVectorA%PETSC)) THEN
                 CALL Petsc_VecDot(distributedVectorA%PETSC%VECTOR,distributedVectorB%PETSC%VECTOR, &
                   & dotProduct,err,error,*999)
               ELSE
-                CALL FLAG_ERROR("Distributed vector PETSC is not associated.",err,error,*999)
+                CALL FlagError("Distributed vector PETSC is not associated.",err,error,*999)
               ENDIF
             CASE DEFAULT
               localError="The distributed vector library type of "// &
-                & TRIM(NUMBER_TO_VSTRING(distributedVectorA%LIBRARY_TYPE,"*",err,error))//" is invalid."
-              CALL FLAG_ERROR(localError,err,error,*999)
+                & TRIM(NumberToVString(distributedVectorA%LIBRARY_TYPE,"*",err,error))//" is invalid."
+              CALL FlagError(localError,err,error,*999)
             END SELECT
           ELSE
-            CALL FLAG_ERROR("The distributed vectors do not have the same data type.",err,error,*999)
+            CALL FlagError("The distributed vectors do not have the same data type.",err,error,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("The distributed vectors do not have the same library type.",err,error,*999)
+          CALL FlagError("The distributed vectors do not have the same library type.",err,error,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",err,error,*999)
+        CALL FlagError("The distributed vector has not been finished.",err,error,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",err,error,*999)
+      CALL FlagError("Distributed vector is not associated.",err,error,*999)
     ENDIF
 
     EXITS("DistributedVector_VecDotDp")
@@ -8423,38 +8621,38 @@ CONTAINS
                   IF(INDICES(i)>0.AND.INDICES(i)<=DISTRIBUTED_VECTOR%CMISS%DATA_SIZE) THEN
                     DISTRIBUTED_VECTOR%CMISS%DATA_INTG(INDICES(i))=DISTRIBUTED_VECTOR%CMISS%DATA_INTG(INDICES(i))+VALUES(i)
                   ELSE
-                    LOCAL_ERROR="Index "//TRIM(NUMBER_TO_VSTRING(INDICES(i),"*",ERR,ERROR))// &
+                    LOCAL_ERROR="Index "//TRIM(NumberToVString(INDICES(i),"*",ERR,ERROR))// &
                       & " is invalid. The index must be between 1 and "// &
-                      & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                      & TRIM(NumberToVString(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                 ENDDO !i
               ELSE
-                CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-              CALL FLAG_ERROR("Cannot add values for an integer PETSc distributed vector.",ERR,ERROR,*999)                    
+              CALL FlagError("Cannot add values for an integer PETSc distributed vector.",ERR,ERROR,*999)                    
             CASE DEFAULT
               LOCAL_ERROR="The distributed vector library type of "// &
-                & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ELSE
             LOCAL_ERROR="The distributed data type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
               & " does not correspond to the integer data type of the given values."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The size of the indicies array ("//TRIM(NUMBER_TO_VSTRING(SIZE(INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          LOCAL_ERROR="The size of the indicies array ("//TRIM(NumberToVString(SIZE(INDICES,1),"*",ERR,ERROR))// &
+            & ") does not conform to the size of the values array ("//TRIM(NumberToVString(SIZE(VALUES,1),"*",ERR,ERROR))//")."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_VALUES_ADD_INTG")
@@ -8491,32 +8689,32 @@ CONTAINS
               IF(INDEX>0.AND.INDEX<=DISTRIBUTED_VECTOR%CMISS%DATA_SIZE) THEN
                 DISTRIBUTED_VECTOR%CMISS%DATA_INTG(INDEX)=DISTRIBUTED_VECTOR%CMISS%DATA_INTG(INDEX)+VALUE
               ELSE
-                LOCAL_ERROR="Index "//TRIM(NUMBER_TO_VSTRING(INDEX,"*",ERR,ERROR))// &
+                LOCAL_ERROR="Index "//TRIM(NumberToVString(INDEX,"*",ERR,ERROR))// &
                   & " is invalid. The index must be between 1 and "// &
-                  & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  & TRIM(NumberToVString(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-            CALL FLAG_ERROR("Cannot add values for an integer PETSc distributed vector.",ERR,ERROR,*999)          
+            CALL FlagError("Cannot add values for an integer PETSc distributed vector.",ERR,ERROR,*999)          
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
           LOCAL_ERROR="The distributed data type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+            & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
             & " does not correspond to the integer data type of the given value."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_VALUES_ADD_INTG1")
@@ -8556,38 +8754,38 @@ CONTAINS
                   IF(INDICES(i)>0.AND.INDICES(i)<=DISTRIBUTED_VECTOR%CMISS%DATA_SIZE) THEN
                     DISTRIBUTED_VECTOR%CMISS%DATA_SP(INDICES(i))=DISTRIBUTED_VECTOR%CMISS%DATA_SP(INDICES(i))+VALUES(i)
                   ELSE
-                    LOCAL_ERROR="Index "//TRIM(NUMBER_TO_VSTRING(INDICES(i),"*",ERR,ERROR))// &
+                    LOCAL_ERROR="Index "//TRIM(NumberToVString(INDICES(i),"*",ERR,ERROR))// &
                       & " is invalid. The index must be between 1 and "// &
-                      & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                      & TRIM(NumberToVString(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                 ENDDO !i
               ELSE
-                CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-              CALL FLAG_ERROR("Cannot add values for a single precision PETSc distributed vector.",ERR,ERROR,*999)          
+              CALL FlagError("Cannot add values for a single precision PETSc distributed vector.",ERR,ERROR,*999)          
             CASE DEFAULT
               LOCAL_ERROR="The distributed vector library type of "// &
-                & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
          ELSE
             LOCAL_ERROR="The distributed data type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
               & " does not correspond to the single precision data type of the given values."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The size of the indices array ("//TRIM(NUMBER_TO_VSTRING(SIZE(INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          LOCAL_ERROR="The size of the indices array ("//TRIM(NumberToVString(SIZE(INDICES,1),"*",ERR,ERROR))// &
+            & ") does not conform to the size of the values array ("//TRIM(NumberToVString(SIZE(VALUES,1),"*",ERR,ERROR))//")."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_VALUES_ADD_SP")
@@ -8624,32 +8822,32 @@ CONTAINS
               IF(INDEX>0.AND.INDEX<=DISTRIBUTED_VECTOR%CMISS%DATA_SIZE) THEN
                 DISTRIBUTED_VECTOR%CMISS%DATA_SP(INDEX)=DISTRIBUTED_VECTOR%CMISS%DATA_SP(INDEX)+VALUE
               ELSE
-                LOCAL_ERROR="Index "//TRIM(NUMBER_TO_VSTRING(INDEX,"*",ERR,ERROR))// &
+                LOCAL_ERROR="Index "//TRIM(NumberToVString(INDEX,"*",ERR,ERROR))// &
                   & " is invalid. The index must be between 1 and "// &
-                  & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  & TRIM(NumberToVString(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-            CALL FLAG_ERROR("Cannot add values for a single precision PETSc distributed vector.",ERR,ERROR,*999)          
+            CALL FlagError("Cannot add values for a single precision PETSc distributed vector.",ERR,ERROR,*999)          
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
           LOCAL_ERROR="The distributed data type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+            & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
             & " does not correspond to the single precision data type of the given value."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_VALUES_ADD_SP1")
@@ -8689,14 +8887,14 @@ CONTAINS
                   IF(INDICES(i)>0.AND.INDICES(i)<=DISTRIBUTED_VECTOR%CMISS%DATA_SIZE) THEN
                     DISTRIBUTED_VECTOR%CMISS%DATA_DP(INDICES(i))=DISTRIBUTED_VECTOR%CMISS%DATA_DP(INDICES(i))+VALUES(i)
                   ELSE
-                    LOCAL_ERROR="Index "//TRIM(NUMBER_TO_VSTRING(INDICES(i),"*",ERR,ERROR))// &
+                    LOCAL_ERROR="Index "//TRIM(NumberToVString(INDICES(i),"*",ERR,ERROR))// &
                       & " is invalid. The index must be between 1 and "// &
-                      & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                      & TRIM(NumberToVString(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                 ENDDO !i
               ELSE
-                CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
               IF(ASSOCIATED(DISTRIBUTED_VECTOR%PETSC)) THEN
@@ -8708,29 +8906,29 @@ CONTAINS
                     & GLOBAL_NUMBERS(INDICES),VALUES,PETSC_ADD_VALUES,ERR,ERROR,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
               ENDIF
             CASE DEFAULT
               LOCAL_ERROR="The distributed vector library type of "// &
-                & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ELSE
             LOCAL_ERROR="The distributed data type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
               & " does not correspond to the double precision data type of the given values."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The size of the indices array ("//TRIM(NUMBER_TO_VSTRING(SIZE(INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          LOCAL_ERROR="The size of the indices array ("//TRIM(NumberToVString(SIZE(INDICES,1),"*",ERR,ERROR))// &
+            & ") does not conform to the size of the values array ("//TRIM(NumberToVString(SIZE(VALUES,1),"*",ERR,ERROR))//")."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_VALUES_ADD_DP")
@@ -8768,13 +8966,13 @@ CONTAINS
               IF(INDEX>0.AND.INDEX<=DISTRIBUTED_VECTOR%CMISS%DATA_SIZE) THEN
                 DISTRIBUTED_VECTOR%CMISS%DATA_DP(INDEX)=DISTRIBUTED_VECTOR%CMISS%DATA_DP(INDEX)+VALUE
               ELSE
-                LOCAL_ERROR="Index "//TRIM(NUMBER_TO_VSTRING(INDEX,"*",ERR,ERROR))// &
+                LOCAL_ERROR="Index "//TRIM(NumberToVString(INDEX,"*",ERR,ERROR))// &
                   & " is invalid. The index must be between 1 and "// &
-                  & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  & TRIM(NumberToVString(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
             IF(ASSOCIATED(DISTRIBUTED_VECTOR%PETSC)) THEN
@@ -8787,24 +8985,24 @@ CONTAINS
                   & PETSC_VALUE,PETSC_ADD_VALUES,ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT          
         ELSE
           LOCAL_ERROR="The distributed data type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+            & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
             & " does not correspond to the double precision data type of the given value."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_VALUES_ADD_DP1")
@@ -8844,38 +9042,38 @@ CONTAINS
                   IF(INDICES(i)>0.AND.INDICES(i)<=DISTRIBUTED_VECTOR%CMISS%DATA_SIZE) THEN
                     DISTRIBUTED_VECTOR%CMISS%DATA_L(INDICES(i))=DISTRIBUTED_VECTOR%CMISS%DATA_L(INDICES(i)).OR.VALUES(i)
                   ELSE
-                    LOCAL_ERROR="Index "//TRIM(NUMBER_TO_VSTRING(INDICES(i),"*",ERR,ERROR))// &
+                    LOCAL_ERROR="Index "//TRIM(NumberToVString(INDICES(i),"*",ERR,ERROR))// &
                       & " is invalid. The index must be between 1 and "// &
-                      & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                      & TRIM(NumberToVString(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                 ENDDO !i
               ELSE
-                CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-              CALL FLAG_ERROR("Cannot add values for a logical PETSc distributed vector.",ERR,ERROR,*999)          
+              CALL FlagError("Cannot add values for a logical PETSc distributed vector.",ERR,ERROR,*999)          
             CASE DEFAULT
               LOCAL_ERROR="The distributed vector library type of "// &
-                & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ELSE
             LOCAL_ERROR="The distributed data type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
               & " does not correspond to the logical data type of the given values."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The size of the indices array ("//TRIM(NUMBER_TO_VSTRING(SIZE(INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          LOCAL_ERROR="The size of the indices array ("//TRIM(NumberToVString(SIZE(INDICES,1),"*",ERR,ERROR))// &
+            & ") does not conform to the size of the values array ("//TRIM(NumberToVString(SIZE(VALUES,1),"*",ERR,ERROR))//")."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_VALUES_ADD_L")
@@ -8912,32 +9110,32 @@ CONTAINS
               IF(INDEX>0.AND.INDEX<=DISTRIBUTED_VECTOR%CMISS%DATA_SIZE) THEN
                 DISTRIBUTED_VECTOR%CMISS%DATA_L(INDEX)=DISTRIBUTED_VECTOR%CMISS%DATA_L(INDEX).OR.VALUE
               ELSE
-                LOCAL_ERROR="Index "//TRIM(NUMBER_TO_VSTRING(INDEX,"*",ERR,ERROR))// &
+                LOCAL_ERROR="Index "//TRIM(NumberToVString(INDEX,"*",ERR,ERROR))// &
                   & " is invalid. The index must be between 1 and "// &
-                  & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  & TRIM(NumberToVString(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-            CALL FLAG_ERROR("Cannot add values for a logical PETSc distributed vector.",ERR,ERROR,*999)          
+            CALL FlagError("Cannot add values for a logical PETSc distributed vector.",ERR,ERROR,*999)          
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
           LOCAL_ERROR="The distributed data type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+            & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
             & " does not correspond to the logical data type of the given value."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_VALUES_ADD_L1")
@@ -8976,39 +9174,39 @@ CONTAINS
                   IF(INDICES(i)>0.AND.INDICES(i)<=DISTRIBUTED_VECTOR%CMISS%DATA_SIZE) THEN
                     VALUES(i)=DISTRIBUTED_VECTOR%CMISS%DATA_INTG(INDICES(i))
                   ELSE
-                    LOCAL_ERROR="Index "//TRIM(NUMBER_TO_VSTRING(INDICES(i),"*",ERR,ERROR))// &
+                    LOCAL_ERROR="Index "//TRIM(NumberToVString(INDICES(i),"*",ERR,ERROR))// &
                       & " is invalid. The index must be between 1 and "// &
 
-                      & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                      & TRIM(NumberToVString(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                 ENDDO !i
               ELSE
-                CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-              CALL FLAG_ERROR("Cannot set values for an integer PETSc distributed vector.",ERR,ERROR,*999)          
+              CALL FlagError("Cannot set values for an integer PETSc distributed vector.",ERR,ERROR,*999)          
             CASE DEFAULT
               LOCAL_ERROR="The distributed vector library type of "// &
-                & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ELSE
             LOCAL_ERROR="The distributed data type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
               & " does not correspond to the integer data type of the given values."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The size of the indicies array ("//TRIM(NUMBER_TO_VSTRING(SIZE(INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          LOCAL_ERROR="The size of the indicies array ("//TRIM(NumberToVString(SIZE(INDICES,1),"*",ERR,ERROR))// &
+            & ") does not conform to the size of the values array ("//TRIM(NumberToVString(SIZE(VALUES,1),"*",ERR,ERROR))//")."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_VALUES_GET_INTG")
@@ -9044,32 +9242,32 @@ CONTAINS
               IF(INDEX>0.AND.INDEX<=DISTRIBUTED_VECTOR%CMISS%DATA_SIZE) THEN
                 VALUE=DISTRIBUTED_VECTOR%CMISS%DATA_INTG(INDEX)
               ELSE
-                LOCAL_ERROR="Index "//TRIM(NUMBER_TO_VSTRING(INDEX,"*",ERR,ERROR))// &
+                LOCAL_ERROR="Index "//TRIM(NumberToVString(INDEX,"*",ERR,ERROR))// &
                   & " is invalid. The index must be between 1 and "// &
-                  & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  & TRIM(NumberToVString(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-            CALL FLAG_ERROR("Cannot set values for an integer PETSc distributed vector.",ERR,ERROR,*999)          
+            CALL FlagError("Cannot set values for an integer PETSc distributed vector.",ERR,ERROR,*999)          
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
           LOCAL_ERROR="The distributed data type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+            & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
             & " does not correspond to the integer data type of the given value."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_VALUES_GET_INTG1")
@@ -9108,38 +9306,38 @@ CONTAINS
                   IF(INDICES(i)>0.AND.INDICES(i)<=DISTRIBUTED_VECTOR%CMISS%DATA_SIZE) THEN
                     VALUES(i)=DISTRIBUTED_VECTOR%CMISS%DATA_SP(INDICES(i))
                   ELSE
-                    LOCAL_ERROR="Index "//TRIM(NUMBER_TO_VSTRING(INDICES(i),"*",ERR,ERROR))// &
+                    LOCAL_ERROR="Index "//TRIM(NumberToVString(INDICES(i),"*",ERR,ERROR))// &
                       & " is invalid. The index must be between 1 and "// &
-                      & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                      & TRIM(NumberToVString(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                 ENDDO !i
               ELSE
-                CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-              CALL FLAG_ERROR("Cannot get values for a single precision PETSc distributed vector.",ERR,ERROR,*999)          
+              CALL FlagError("Cannot get values for a single precision PETSc distributed vector.",ERR,ERROR,*999)          
             CASE DEFAULT
               LOCAL_ERROR="The distributed vector library type of "// &
-                & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ELSE
             LOCAL_ERROR="The distributed data type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
               & " does not correspond to the single precision data type of the given values."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The size of the indices array ("//TRIM(NUMBER_TO_VSTRING(SIZE(INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          LOCAL_ERROR="The size of the indices array ("//TRIM(NumberToVString(SIZE(INDICES,1),"*",ERR,ERROR))// &
+            & ") does not conform to the size of the values array ("//TRIM(NumberToVString(SIZE(VALUES,1),"*",ERR,ERROR))//")."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_VALUES_GET_SP")
@@ -9175,32 +9373,32 @@ CONTAINS
               IF(INDEX>0.AND.INDEX<=DISTRIBUTED_VECTOR%CMISS%DATA_SIZE) THEN
                 VALUE=DISTRIBUTED_VECTOR%CMISS%DATA_SP(INDEX)
               ELSE
-                LOCAL_ERROR="Index "//TRIM(NUMBER_TO_VSTRING(INDEX,"*",ERR,ERROR))// &
+                LOCAL_ERROR="Index "//TRIM(NumberToVString(INDEX,"*",ERR,ERROR))// &
                   & " is invalid. The index must be between 1 and "// &
-                  & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  & TRIM(NumberToVString(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-            CALL FLAG_ERROR("Cannot set values for a single precision PETSc distributed vector.",ERR,ERROR,*999)          
+            CALL FlagError("Cannot set values for a single precision PETSc distributed vector.",ERR,ERROR,*999)          
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
           LOCAL_ERROR="The distributed data type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+            & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
             & " does not correspond to the single precision data type of the given value."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_VALUES_GET_SP1")
@@ -9239,14 +9437,14 @@ CONTAINS
                   IF(INDICES(i)>0.AND.INDICES(i)<=DISTRIBUTED_VECTOR%CMISS%DATA_SIZE) THEN
                     VALUES(i)=DISTRIBUTED_VECTOR%CMISS%DATA_DP(INDICES(i))
                   ELSE
-                    LOCAL_ERROR="Index "//TRIM(NUMBER_TO_VSTRING(INDICES(i),"*",ERR,ERROR))// &
+                    LOCAL_ERROR="Index "//TRIM(NumberToVString(INDICES(i),"*",ERR,ERROR))// &
                       & " is invalid. The index must be between 1 and "// &
-                      & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                      & TRIM(NumberToVString(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                 ENDDO !i
               ELSE
-                CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
               IF(ASSOCIATED(DISTRIBUTED_VECTOR%PETSC)) THEN
@@ -9260,29 +9458,29 @@ CONTAINS
                   CALL Petsc_VecGetValues(DISTRIBUTED_VECTOR%PETSC%VECTOR,SIZE(INDICES,1),PETSC_INDICES,VALUES,ERR,ERROR,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
               ENDIF
             CASE DEFAULT
               LOCAL_ERROR="The distributed vector library type of "// &
-                & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ELSE
             LOCAL_ERROR="The distributed data type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
               & " does not correspond to the double precision data type of the given values."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The size of the indices array ("//TRIM(NUMBER_TO_VSTRING(SIZE(INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          LOCAL_ERROR="The size of the indices array ("//TRIM(NumberToVString(SIZE(INDICES,1),"*",ERR,ERROR))// &
+            & ") does not conform to the size of the values array ("//TRIM(NumberToVString(SIZE(VALUES,1),"*",ERR,ERROR))//")."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_VALUES_GET_DP")
@@ -9320,13 +9518,13 @@ CONTAINS
               IF(INDEX>0.AND.INDEX<=DISTRIBUTED_VECTOR%CMISS%DATA_SIZE) THEN
                 VALUE=DISTRIBUTED_VECTOR%CMISS%DATA_DP(INDEX)
               ELSE
-                LOCAL_ERROR="Index "//TRIM(NUMBER_TO_VSTRING(INDEX,"*",ERR,ERROR))// &
+                LOCAL_ERROR="Index "//TRIM(NumberToVString(INDEX,"*",ERR,ERROR))// &
                   & " is invalid. The index must be between 1 and "// &
-                  & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  & TRIM(NumberToVString(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
             IF(ASSOCIATED(DISTRIBUTED_VECTOR%PETSC)) THEN
@@ -9338,24 +9536,24 @@ CONTAINS
               ENDIF
               VALUE=PETSC_VALUE(1)
             ELSE
-              CALL FLAG_ERROR("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
           LOCAL_ERROR="The distributed data type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+            & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
             & " does not correspond to the double precision data type of the given value."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_VALUES_GET_DP1")
@@ -9394,38 +9592,38 @@ CONTAINS
                   IF(INDICES(i)>0.AND.INDICES(i)<=DISTRIBUTED_VECTOR%CMISS%DATA_SIZE) THEN
                     VALUES(i)=DISTRIBUTED_VECTOR%CMISS%DATA_L(INDICES(i))
                   ELSE
-                    LOCAL_ERROR="Index "//TRIM(NUMBER_TO_VSTRING(INDICES(i),"*",ERR,ERROR))// &
+                    LOCAL_ERROR="Index "//TRIM(NumberToVString(INDICES(i),"*",ERR,ERROR))// &
                       & " is invalid. The index must be between 1 and "// &
-                      & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                      & TRIM(NumberToVString(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                 ENDDO !i
               ELSE
-                CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-              CALL FLAG_ERROR("Cannot set values for a logical PETSc distributed vector.",ERR,ERROR,*999)          
+              CALL FlagError("Cannot set values for a logical PETSc distributed vector.",ERR,ERROR,*999)          
             CASE DEFAULT
               LOCAL_ERROR="The distributed vector library type of "// &
-                & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ELSE
             LOCAL_ERROR="The distributed data type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
               & " does not correspond to the logical data type of the given values."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The size of the indices array ("//TRIM(NUMBER_TO_VSTRING(SIZE(INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          LOCAL_ERROR="The size of the indices array ("//TRIM(NumberToVString(SIZE(INDICES,1),"*",ERR,ERROR))// &
+            & ") does not conform to the size of the values array ("//TRIM(NumberToVString(SIZE(VALUES,1),"*",ERR,ERROR))//")."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_VALUES_GET_L")
@@ -9461,32 +9659,32 @@ CONTAINS
             IF(INDEX>0.AND.INDEX<=DISTRIBUTED_VECTOR%CMISS%DATA_SIZE) THEN
               VALUE=DISTRIBUTED_VECTOR%CMISS%DATA_L(INDEX)
             ELSE
-              LOCAL_ERROR="Index "//TRIM(NUMBER_TO_VSTRING(INDEX,"*",ERR,ERROR))// &
+              LOCAL_ERROR="Index "//TRIM(NumberToVString(INDEX,"*",ERR,ERROR))// &
                 & " is invalid. The index must be between 1 and "// &
-                & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot set values for a logical PETSc distributed vector.",ERR,ERROR,*999)          
+          CALL FlagError("Cannot set values for a logical PETSc distributed vector.",ERR,ERROR,*999)          
         CASE DEFAULT
           LOCAL_ERROR="The distributed vector library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
         ELSE
           LOCAL_ERROR="The distributed data type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+            & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
             & " does not correspond to the logical data type of the given value."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_VALUES_GET_L1")
@@ -9526,38 +9724,38 @@ CONTAINS
                   IF(INDICES(i)>0.AND.INDICES(i)<=DISTRIBUTED_VECTOR%CMISS%DATA_SIZE) THEN
                     DISTRIBUTED_VECTOR%CMISS%DATA_INTG(INDICES(i))=VALUES(i)
                   ELSE
-                    LOCAL_ERROR="Index "//TRIM(NUMBER_TO_VSTRING(INDICES(i),"*",ERR,ERROR))// &
+                    LOCAL_ERROR="Index "//TRIM(NumberToVString(INDICES(i),"*",ERR,ERROR))// &
                       & " is invalid. The index must be between 1 and "// &
-                      & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                      & TRIM(NumberToVString(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                 ENDDO !i
               ELSE
-                CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-              CALL FLAG_ERROR("Cannot set values for an integer PETSc distributed vector.",ERR,ERROR,*999)          
+              CALL FlagError("Cannot set values for an integer PETSc distributed vector.",ERR,ERROR,*999)          
             CASE DEFAULT
               LOCAL_ERROR="The distributed vector library type of "// &
-                & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ELSE
             LOCAL_ERROR="The distributed data type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
               & " does not correspond to the integer data type of the given values."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The size of the indicies array ("//TRIM(NUMBER_TO_VSTRING(SIZE(INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          LOCAL_ERROR="The size of the indicies array ("//TRIM(NumberToVString(SIZE(INDICES,1),"*",ERR,ERROR))// &
+            & ") does not conform to the size of the values array ("//TRIM(NumberToVString(SIZE(VALUES,1),"*",ERR,ERROR))//")."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_VALUES_SET_INTG")
@@ -9594,32 +9792,32 @@ CONTAINS
               IF(INDEX>0.AND.INDEX<=DISTRIBUTED_VECTOR%CMISS%DATA_SIZE) THEN
                 DISTRIBUTED_VECTOR%CMISS%DATA_INTG(INDEX)=VALUE
               ELSE
-                LOCAL_ERROR="Index "//TRIM(NUMBER_TO_VSTRING(INDEX,"*",ERR,ERROR))// &
+                LOCAL_ERROR="Index "//TRIM(NumberToVString(INDEX,"*",ERR,ERROR))// &
                   & " is invalid. The index must be between 1 and "// &
-                  & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  & TRIM(NumberToVString(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-            CALL FLAG_ERROR("Cannot set values for an integer PETSc distributed vector.",ERR,ERROR,*999)          
+            CALL FlagError("Cannot set values for an integer PETSc distributed vector.",ERR,ERROR,*999)          
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
           LOCAL_ERROR="The distributed data type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+            & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
             & " does not correspond to the integer data type of the given value."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_VALUES_SET_INTG1")
@@ -9659,38 +9857,38 @@ CONTAINS
                   IF(INDICES(i)>0.AND.INDICES(i)<=DISTRIBUTED_VECTOR%CMISS%DATA_SIZE) THEN
                     DISTRIBUTED_VECTOR%CMISS%DATA_SP(INDICES(i))=VALUES(i)
                   ELSE
-                    LOCAL_ERROR="Index "//TRIM(NUMBER_TO_VSTRING(INDICES(i),"*",ERR,ERROR))// &
+                    LOCAL_ERROR="Index "//TRIM(NumberToVString(INDICES(i),"*",ERR,ERROR))// &
                       & " is invalid. The index must be between 1 and "// &
-                      & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                      & TRIM(NumberToVString(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                 ENDDO !i
               ELSE
-                CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-              CALL FLAG_ERROR("Cannot get values for a single precision PETSc distributed vector.",ERR,ERROR,*999)          
+              CALL FlagError("Cannot get values for a single precision PETSc distributed vector.",ERR,ERROR,*999)          
             CASE DEFAULT
               LOCAL_ERROR="The distributed vector library type of "// &
-                & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ELSE
             LOCAL_ERROR="The distributed data type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
               & " does not correspond to the single precision data type of the given values."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The size of the indices array ("//TRIM(NUMBER_TO_VSTRING(SIZE(INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          LOCAL_ERROR="The size of the indices array ("//TRIM(NumberToVString(SIZE(INDICES,1),"*",ERR,ERROR))// &
+            & ") does not conform to the size of the values array ("//TRIM(NumberToVString(SIZE(VALUES,1),"*",ERR,ERROR))//")."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_VALUES_SET_SP")
@@ -9727,32 +9925,32 @@ CONTAINS
               IF(INDEX>0.AND.INDEX<=DISTRIBUTED_VECTOR%CMISS%DATA_SIZE) THEN
                 DISTRIBUTED_VECTOR%CMISS%DATA_SP(INDEX)=VALUE
               ELSE
-                LOCAL_ERROR="Index "//TRIM(NUMBER_TO_VSTRING(INDEX,"*",ERR,ERROR))// &
+                LOCAL_ERROR="Index "//TRIM(NumberToVString(INDEX,"*",ERR,ERROR))// &
                   & " is invalid. The index must be between 1 and "// &
-                  & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  & TRIM(NumberToVString(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-            CALL FLAG_ERROR("Cannot set values for a single precision PETSc distributed vector.",ERR,ERROR,*999)          
+            CALL FlagError("Cannot set values for a single precision PETSc distributed vector.",ERR,ERROR,*999)          
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
           LOCAL_ERROR="The distributed data type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+            & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
             & " does not correspond to the single precision data type of the given value."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_VALUES_SET_SP1")
@@ -9792,14 +9990,14 @@ CONTAINS
                   IF(INDICES(i)>0.AND.INDICES(i)<=DISTRIBUTED_VECTOR%CMISS%DATA_SIZE) THEN
                     DISTRIBUTED_VECTOR%CMISS%DATA_DP(INDICES(i))=VALUES(i)
                   ELSE
-                    LOCAL_ERROR="Index "//TRIM(NUMBER_TO_VSTRING(INDICES(i),"*",ERR,ERROR))// &
+                    LOCAL_ERROR="Index "//TRIM(NumberToVString(INDICES(i),"*",ERR,ERROR))// &
                       & " is invalid. The index must be between 1 and "// &
-                      & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                      & TRIM(NumberToVString(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                 ENDDO !i
               ELSE
-                CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
               IF(ASSOCIATED(DISTRIBUTED_VECTOR%PETSC)) THEN
@@ -9811,29 +10009,29 @@ CONTAINS
                     & INDICES),VALUES,PETSC_INSERT_VALUES,ERR,ERROR,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
               ENDIF
             CASE DEFAULT
               LOCAL_ERROR="The distributed vector library type of "// &
-                & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ELSE
             LOCAL_ERROR="The distributed data type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
               & " does not correspond to the double precision data type of the given values."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The size of the indices array ("//TRIM(NUMBER_TO_VSTRING(SIZE(INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          LOCAL_ERROR="The size of the indices array ("//TRIM(NumberToVString(SIZE(INDICES,1),"*",ERR,ERROR))// &
+            & ") does not conform to the size of the values array ("//TRIM(NumberToVString(SIZE(VALUES,1),"*",ERR,ERROR))//")."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_VALUES_SET_DP")
@@ -9872,13 +10070,13 @@ CONTAINS
               IF(INDEX>0.AND.INDEX<=DISTRIBUTED_VECTOR%CMISS%DATA_SIZE) THEN
                 DISTRIBUTED_VECTOR%CMISS%DATA_DP(INDEX)=VALUE
               ELSE
-                LOCAL_ERROR="Index "//TRIM(NUMBER_TO_VSTRING(INDEX,"*",ERR,ERROR))// &
+                LOCAL_ERROR="Index "//TRIM(NumberToVString(INDEX,"*",ERR,ERROR))// &
                   & " is invalid. The index must be between 1 and "// &
-                  & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  & TRIM(NumberToVString(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
             IF(ASSOCIATED(DISTRIBUTED_VECTOR%PETSC)) THEN
@@ -9892,24 +10090,24 @@ CONTAINS
                   & ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Distributed vector PETSc is not associated.",ERR,ERROR,*999)
             ENDIF
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector library type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
           LOCAL_ERROR="The distributed data type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+            & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
             & " does not correspond to the double precision data type of the given value."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_VALUES_SET_DP1")
@@ -9949,38 +10147,38 @@ CONTAINS
                   IF(INDICES(i)>0.AND.INDICES(i)<=DISTRIBUTED_VECTOR%CMISS%DATA_SIZE) THEN
                     DISTRIBUTED_VECTOR%CMISS%DATA_L(INDICES(i))=VALUES(i)
                   ELSE
-                    LOCAL_ERROR="Index "//TRIM(NUMBER_TO_VSTRING(INDICES(i),"*",ERR,ERROR))// &
+                    LOCAL_ERROR="Index "//TRIM(NumberToVString(INDICES(i),"*",ERR,ERROR))// &
                       & " is invalid. The index must be between 1 and "// &
-                      & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                      & TRIM(NumberToVString(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                 ENDDO !i
               ELSE
-                CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-              CALL FLAG_ERROR("Cannot set values for a logical PETSc distributed vector.",ERR,ERROR,*999)          
+              CALL FlagError("Cannot set values for a logical PETSc distributed vector.",ERR,ERROR,*999)          
             CASE DEFAULT
               LOCAL_ERROR="The distributed vector library type of "// &
-                & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ELSE
             LOCAL_ERROR="The distributed data type of "// &
-              & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+              & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
               & " does not correspond to the logical data type of the given values."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The size of the indices array ("//TRIM(NUMBER_TO_VSTRING(SIZE(INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          LOCAL_ERROR="The size of the indices array ("//TRIM(NumberToVString(SIZE(INDICES,1),"*",ERR,ERROR))// &
+            & ") does not conform to the size of the values array ("//TRIM(NumberToVString(SIZE(VALUES,1),"*",ERR,ERROR))//")."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_VALUES_SET_L")
@@ -10017,32 +10215,32 @@ CONTAINS
             IF(INDEX>0.AND.INDEX<=DISTRIBUTED_VECTOR%CMISS%DATA_SIZE) THEN
               DISTRIBUTED_VECTOR%CMISS%DATA_L(INDEX)=VALUE
             ELSE
-              LOCAL_ERROR="Index "//TRIM(NUMBER_TO_VSTRING(INDEX,"*",ERR,ERROR))// &
+              LOCAL_ERROR="Index "//TRIM(NumberToVString(INDEX,"*",ERR,ERROR))// &
                 & " is invalid. The index must be between 1 and "// &
-                & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,"*",ERR,ERROR))//"."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Distributed vector CMISS is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          CALL FLAG_ERROR("Cannot set values for a logical PETSc distributed vector.",ERR,ERROR,*999)          
+          CALL FlagError("Cannot set values for a logical PETSc distributed vector.",ERR,ERROR,*999)          
         CASE DEFAULT
           LOCAL_ERROR="The distributed vector library type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(DISTRIBUTED_VECTOR%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
         ELSE
           LOCAL_ERROR="The distributed data type of "// &
-            & TRIM(NUMBER_TO_VSTRING(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
+            & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))// &
             & " does not correspond to the logical data type of the given value."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The distributed vector has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("The distributed vector has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Distributed vector is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("DISTRIBUTED_VECTOR_VALUES_SET_L1")

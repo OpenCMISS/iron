@@ -283,6 +283,7 @@ MODULE TYPES
     INTEGER(INTG) :: ELEMENT_LINE_NUMBER !<The element line of the mesh the data point projects onto. Assigned only if DATA_POINTS_PROJECTED is .TRUE. and DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE is chosen
     INTEGER(INTG) :: EXIT_TAG !<The exit tage of the data projection. \See DATA_PROJECTION_ROUTINES. Assigned only if DATA_POINTS_PROJECTED is .TRUE. 
     REAL(DP), ALLOCATABLE :: XI(:) !<The xi coordinate of the projection. Assigned only if DATA_POINTS_PROJECTED is .TRUE.
+    REAL(DP), ALLOCATABLE :: projectionVector(:) !<The projection vectors from data point to the projected point. 
   END TYPE DATA_PROJECTION_RESULT_TYPE
 
   TYPE DATA_PROJECTION_TYPE
@@ -1114,8 +1115,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: NUMBER_OF_XI_DIMENSIONS !<The number of Xi dimensions
     REAL(DP), ALLOCATABLE :: GL(:,:) !<GL(m_xi_idx,n_xi_idx). Covariant metric tensor. Old CMISS name GL.
     REAL(DP), ALLOCATABLE :: GU(:,:) !<GU(m_xi_idx,n_xi_idx). Contravariant metric tensor. Old CMISS name GU.
-    REAL(DP), ALLOCATABLE :: DX_DXI(:,:) !<DX_DXI(coord_idx,xi_idx). Rate of change of the X coordinate system wrt the x coordinate system.
-    REAL(DP), ALLOCATABLE :: DXI_DX(:,:) !<DXI_DX(xi_idx,coord_idx). Rate of change of the Xi coordinate system wrt the x coordinate system. 
+    REAL(DP), ALLOCATABLE :: DX_DXI(:,:) !<DX_DXI(coord_idx,xi_idx). Rate of change of the X coordinate system wrt the Xi coordinate system.
+    REAL(DP), ALLOCATABLE :: DXI_DX(:,:) !<DXI_DX(xi_idx,coord_idx). Rate of change of the Xi coordinate system wrt the X coordinate system. 
     REAL(DP) :: JACOBIAN !<The Jacobian of the Xi to X coordinate system transformation. Old CMISS name RG.
     INTEGER(INTG) :: JACOBIAN_TYPE !<The type of Jacobian. \see COORDINATE_ROUTINES_JacobianType
   END TYPE FIELD_INTERPOLATED_POINT_METRICS_TYPE
@@ -1943,9 +1944,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     LOGICAL :: EQUATIONS_SET_FINISHED !<Is .TRUE. if the equations set have finished being created, .FALSE. if not.
     TYPE(EQUATIONS_SETS_TYPE), POINTER :: EQUATIONS_SETS !<A pointer back to the equations sets
     TYPE(REGION_TYPE), POINTER :: REGION !<A pointer back to the region containing the equations set.
-    INTEGER(INTG) :: CLASS !<The equations set specification class identifier
-    INTEGER(INTG) :: TYPE !<The equations set specification type identifier
-    INTEGER(INTG) :: SUBTYPE !<The equations set specification subtype identifier
+    INTEGER(INTG), ALLOCATABLE :: SPECIFICATION(:) !<The equations set specification array, eg. [class, type, subtype], although there can be more or fewer identifiers. Unused identifiers are set to zero.
     INTEGER(INTG) :: SOLUTION_METHOD !<The solution method for the equations set \see EQUATIONS_ROUTINES_SolutionMethods 
     TYPE(EQUATIONS_SET_GEOMETRY_TYPE) :: GEOMETRY !<The geometry information for the equations set.
     TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: MATERIALS !<A pointer to the materials information for the equations set.
@@ -2315,11 +2314,15 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(FIELD_TYPE), POINTER :: PARAMETERS_FIELD !<A pointer to the parameters field
   END TYPE CELLML_PARAMETERS_FIELD_TYPE
  
-  !> Contains information on the solver and the dof for which cellml equations are to be evaluated by petsc
-  TYPE CELLML_PETSC_CONTEXT_TYPE
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER
-    INTEGER(INTG) :: DOF_NUMBER
-  END TYPE CELLML_PETSC_CONTEXT_TYPE 
+  !> Contains information on the solver, cellml, dof etc. for which cellml equations are to be evaluated by petsc
+  TYPE CellMLPETScContextType
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    TYPE(CELLML_TYPE), POINTER :: cellml !<A pointer to the CellML environment
+    INTEGER(INTG) :: dofIdx !<The current DOF to be evaluated
+    REAL(DP), POINTER :: rates(:) !<A pointer to the temporary rates array
+    INTEGER(INTG), ALLOCATABLE :: ratesIndices(:) !<The PETSc array indices for the rates
+  END TYPE CellMLPETScContextType
+  
   !>Contains information on the mapping between CellML fields and OpenCMISS fields and vise versa.
   TYPE CELLML_MODEL_MAP_TYPE
     INTEGER(INTG) :: CELLML_MAP_TYPE !<The direction of the mapping. \see CELLML_FieldMappingTypes,CMISS_CELLML
@@ -3219,11 +3222,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: GLOBAL_NUMBER !<The global number of the problem in the list of problems.
     LOGICAL :: PROBLEM_FINISHED !<Is .TRUE. if the problem has finished being created, .FALSE. if not.
     TYPE(PROBLEMS_TYPE), POINTER :: PROBLEMS !<A pointer to the problems for this problem.
-    
-    INTEGER(INTG) :: CLASS !<The problem specification class identifier
-    INTEGER(INTG) :: TYPE !<The problem specification type identifier
-    INTEGER(INTG) :: SUBTYPE !<The problem specification subtype identifier
-    
+    INTEGER(INTG), ALLOCATABLE :: SPECIFICATION(:) !<The problem specification array, eg. [class, type, subtype], although there can be more or fewer identifiers. Unused identifiers are set to zero.
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop information for the problem.
   END TYPE PROBLEM_TYPE
   
