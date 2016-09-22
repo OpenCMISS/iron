@@ -201,7 +201,7 @@ if (WITH_Python_BINDINGS)
         COMPONENT PythonBindings
 )
     
-    if (INSTALL_TO_VIRTUALENV)
+    if (OC_PYTHON_BINDINGS_USE_VIRTUALENV AND EXISTS ${INSTALL_TO_VIRTUALENV})
         # The binary directories for the python environments are different on windows (for what reason exactly?)
         # So we need different subpaths
         set(VENV_BINDIR bin)
