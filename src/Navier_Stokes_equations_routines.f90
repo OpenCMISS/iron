@@ -2638,7 +2638,7 @@ CONTAINS
                             CALL FIELD_PARAMETER_SETS_COPY(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_INPUT_DATA2_SET_TYPE, &
                              & FIELD_RESIDUAL_SET_TYPE,1.0_DP,err,error,*999)
                           ELSE
-                            CALL FLAG_ERROR("Dependent field is not associated.",err,error,*999)
+                            CALL FlagError("Dependent field is not associated.",err,error,*999)
                           END IF
                           !Update boundary conditions and any analytic values
                           CALL NavierStokes_PreSolveUpdateBoundaryConditions(SOLVER,ERR,ERROR,*999)
@@ -2646,8 +2646,8 @@ CONTAINS
                         CASE(EQUATIONS_SET_ADVECTION_SUBTYPE)
                           CALL ADVECTION_PRE_SOLVE(SOLVER,err,error,*999)
                         CASE DEFAULT  
-                          LOCAL_ERROR="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SUBTYPE,"*",err,error))// &
-                            & " is not valid for a nonlinear Navier-Stokes solver."
+                          LOCAL_ERROR="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*", &
+                            & err,error))//" is not valid for a nonlinear Navier-Stokes solver."
                           CALL FlagError(LOCAL_ERROR,err,error,*999)
                         END SELECT
                       ELSE
@@ -2671,7 +2671,7 @@ CONTAINS
                     DO equationsSetIdx = 1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                       EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equationsSetIdx)%PTR
                       IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                        SELECT CASE(EQUATIONS_SET%SUBTYPE)
+                        SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
                         ! --- C h a r a c t e r i s t i c   E q u a t i o n s ---
                         CASE(EQUATIONS_SET_CHARACTERISTIC_SUBTYPE)
                           dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
@@ -2692,22 +2692,22 @@ CONTAINS
                               CALL Characteristic_Extrapolate(SOLVER,currentTime,timeIncrement,err,error,*999)
                             END IF
                           ELSE
-                            CALL FLAG_ERROR("Dependent field is not associated.",err,error,*999)
+                            CALL FlagError("Dependent field is not associated.",err,error,*999)
                           END IF
                         CASE DEFAULT  
-                          LOCAL_ERROR="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SUBTYPE,"*",err,error))// &
-                            & " is not valid for a nonlinear Navier-Stokes solver."
-                          CALL FLAG_ERROR(LOCAL_ERROR,err,error,*999)
+                          LOCAL_ERROR="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*", &
+                            & err,error))//" is not valid for a nonlinear Navier-Stokes solver."
+                          CALL FlagError(LOCAL_ERROR,err,error,*999)
                         END SELECT
                       ELSE
-                        CALL FLAG_ERROR("Equations set is not associated.",err,error,*999)
+                        CALL FlagError("Equations set is not associated.",err,error,*999)
                       END IF
                     END DO
                   ELSE
-                    CALL FLAG_ERROR("Solver mapping is not associated.",err,error,*999)
+                    CALL FlagError("Solver mapping is not associated.",err,error,*999)
                   END IF
                 ELSE
-                  CALL FLAG_ERROR("Solver equations is not associated.",err,error,*999)
+                  CALL FlagError("Solver equations is not associated.",err,error,*999)
                 END IF
               ! --- C e l l M L   S o l v e r ---
               CASE(SOLVER_DAE_TYPE)
@@ -2723,30 +2723,30 @@ CONTAINS
                     DO equationsSetIdx = 1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                       EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equationsSetIdx)%PTR
                       IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                        SELECT CASE(EQUATIONS_SET%SUBTYPE)
+                        SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
                         ! --- S t r u c t u r e d   T r e e  E q u a t i o n s ---
                         CASE(EQUATIONS_SET_STREE1D0D_SUBTYPE, &
                            & EQUATIONS_SET_STREE1D0D_ADV_SUBTYPE)
                           CALL Stree_PRE_SOLVE(SOLVER,err,error,*999)
                         CASE DEFAULT  
-                          LOCAL_ERROR="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SUBTYPE,"*",err,error))// &
-                            & " is not valid for a linear Navier-Stokes solver."
-                          CALL FLAG_ERROR(LOCAL_ERROR,err,error,*999)
+                          LOCAL_ERROR="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*", &
+                            & err,error))//" is not valid for a linear Navier-Stokes solver."
+                          CALL FlagError(LOCAL_ERROR,err,error,*999)
                         END SELECT
                       ELSE
-                        CALL FLAG_ERROR("Equations set is not associated.",err,error,*999)
+                        CALL FlagError("Equations set is not associated.",err,error,*999)
                       END IF
                     END DO
                   ELSE
-                    CALL FLAG_ERROR("Solver mapping is not associated.",err,error,*999)
+                    CALL FlagError("Solver mapping is not associated.",err,error,*999)
                   END IF
                 ELSE
-                  CALL FLAG_ERROR("Solver equations is not associated.",err,error,*999)
+                  CALL FlagError("Solver equations is not associated.",err,error,*999)
                 END IF
               CASE DEFAULT
                 LOCAL_ERROR="The solve type of "//TRIM(NUMBER_TO_VSTRING(SOLVER%SOLVE_TYPE,"*",err,error))// &
                   & " is invalid for a multiscale Navier-Stokes problem type."
-                CALL FLAG_ERROR(LOCAL_ERROR,err,error,*999)
+                CALL FlagError(LOCAL_ERROR,err,error,*999)
               END SELECT
 
             CASE(PROBLEM_TRANSIENT1D_NAVIER_STOKES_SUBTYPE, &
@@ -3221,7 +3221,7 @@ CONTAINS
                   CALL SOLVER_DYNAMIC_SCHEME_SET(SOLVER,SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME,ERR,ERROR,*999)
                   CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,ERR,ERROR,*999)
                   !setup CellML evaluator for constitutive law
-                  IF(PROBLEM%SUBTYPE==PROBLEM_CONSTITUTIVE_RBS_NAVIER_STOKES_SUBTYPE) THEN
+                  IF(PROBLEM%SPECIFICATION(3)==PROBLEM_CONSTITUTIVE_RBS_NAVIER_STOKES_SUBTYPE) THEN
                     !Create the CellML evaluator solver
                     CALL SOLVER_NEWTON_CELLML_EVALUATOR_CREATE(SOLVER,cellmlSolver,ERR,ERROR,*999)
                     !Link the CellML evaluator solver to the solver
@@ -3321,7 +3321,7 @@ CONTAINS
                   LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
                     & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
                     & " is invalid for a transient Navier-Stokes fluid."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
             CASE(PROBLEM_SETUP_CONTROL_TYPE)
               SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
@@ -3337,7 +3337,7 @@ CONTAINS
                   CALL CONTROL_LOOP_MAXIMUM_ITERATIONS_SET(iterativeWhileLoop,50,ERR,ERROR,*999)
                   CALL ControlLoop_AbsoluteToleranceSet(iterativeWhileLoop,0.001_DP,err,error,*999)
                   CALL ControlLoop_AbsoluteTolerance2Set(iterativeWhileLoop,0.1_DP,err,error,*999)
-                  IF (PROBLEM%SUBTYPE==PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE) THEN
+                  IF (PROBLEM%SPECIFICATION(3)==PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE) THEN
                     CALL CONTROL_LOOP_LABEL_SET(iterativeWhileLoop,"3D-0D Iterative Loop",ERR,ERROR,*999)
                     CALL CONTROL_LOOP_NUMBER_OF_SUB_LOOPS_SET(iterativeWhileLoop,2,ERR,ERROR,*999)
                     NULLIFY(simpleLoop)
@@ -3389,7 +3389,7 @@ CONTAINS
                   LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
                     & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
                     & " is invalid for a transient Navier-Stokes fluid."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
             CASE(PROBLEM_SETUP_SOLVERS_TYPE)
               !Get the control loop
@@ -3401,7 +3401,7 @@ CONTAINS
                   ! The 3D-1D iterative coupling loop
                   NULLIFY(iterativeWhileLoop)
                   CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP,1,iterativeWhileLoop,ERR,ERROR,*999)
-                  IF (PROBLEM%SUBTYPE==PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE) THEN
+                  IF (PROBLEM%SPECIFICATION(3)==PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE) THEN
                     ! Simple loop 1 contains the 0D/CellML DAE solver
                     ! (this subloop holds 1 solver)
                     NULLIFY(simpleLoop)
@@ -3490,7 +3490,7 @@ CONTAINS
                   NULLIFY(iterativeWhileLoop)
                   NULLIFY(iterativeWhileLoop2)
                   NULLIFY(SOLVERS)
-                  IF (PROBLEM%SUBTYPE==PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE) THEN
+                  IF (PROBLEM%SPECIFICATION(3)==PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE) THEN
                     CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP,1,iterativeWhileLoop,ERR,ERROR,*999)
                     !Finish the 0D solvers
                     NULLIFY(simpleLoop)
@@ -3530,11 +3530,11 @@ CONTAINS
                   LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
                     & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
                     & " is invalid for a transient Navier-Stokes fluid."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
             CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
               !Get the control loop
-              IF (PROBLEM%SUBTYPE==PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE) THEN
+              IF (PROBLEM%SPECIFICATION(3)==PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE) THEN
                 CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
                 NULLIFY(CONTROL_LOOP)
                 CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
@@ -3574,7 +3574,7 @@ CONTAINS
                   LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
                     & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
                     & " is invalid for a Navier-Stokes fluid."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 END SELECT
               ELSE
                 CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
@@ -3654,7 +3654,7 @@ CONTAINS
                   LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
                     & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
                     & " is invalid for a Navier-Stokes fluid."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 END SELECT
               END IF
 
@@ -3665,7 +3665,7 @@ CONTAINS
                 !Get the control loop
                 CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP              
                 CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
-                IF (PROBLEM%SUBTYPE==PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE) THEN
+                IF (PROBLEM%SPECIFICATION(3)==PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE) THEN
                   ! 3D-1D loop
                   NULLIFY(iterativeWhileLoop)
                   CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP,1,iterativeWhileLoop,ERR,ERROR,*999)
@@ -3697,7 +3697,7 @@ CONTAINS
                 END IF
               CASE(PROBLEM_SETUP_FINISH_ACTION)
                 !Get the control loop
-                IF (PROBLEM%SUBTYPE==PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE) THEN
+                IF (PROBLEM%SPECIFICATION(3)==PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE) THEN
                   CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
                   CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
                   ! 3D-0D
@@ -3733,13 +3733,13 @@ CONTAINS
                 LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
                   & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
                   & " is invalid for a CellML setup for a 1D Navier-Stokes equation."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
 
             CASE DEFAULT
               LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
                 & " is invalid for a 3D-1d-0D Navier-Stokes fluid type."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
 
         CASE(PROBLEM_TRANSIENT1D_NAVIER_STOKES_SUBTYPE, &    !1D Navier-Stokes
@@ -5179,7 +5179,7 @@ CONTAINS
             & DEPENDENT_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
           CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,EQUATIONS%INTERPOLATION% &
             & GEOMETRIC_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-          IF(EQUATIONS_SET%SUBTYPE==EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE) THEN
+          IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE) THEN
             CALL FIELD_PARAMETER_SET_GET_CONSTANT(MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1, &
               & muScale,err,error,*999)
           ELSE
@@ -6360,7 +6360,7 @@ CONTAINS
               END SELECT
             END IF
 
-          IF(EQUATIONS_SET%SUBTYPE==EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE .OR. &
+          IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE .OR. &
             & EQUATIONS_SET%specification(3)==EQUATIONS_SET_COUPLED1D0D_NAVIER_STOKES_SUBTYPE .OR. &
             & EQUATIONS_SET%specification(3)==EQUATIONS_SET_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE .OR. &
             & EQUATIONS_SET%specification(3)==EQUATIONS_SET_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE) THEN
@@ -6700,14 +6700,13 @@ CONTAINS
                   & " is invalid for the a 1D0D coupled Navier-Stokes problem."
                 CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END IF
-            CASE(PROBLEM_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE)
+            CASE(PROBLEM_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE, &
+               & PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE)
               CALL CONTROL_LOOP_TIMES_GET(CONTROL_LOOP,startTime,stopTime,currentTime,timeIncrement, &
                & timestep,outputIteration,ERR,ERROR,*999)
-              CALL NavierStokes_CalculateBoundaryFlux(SOLVER,ERR,ERROR,*999)
-              CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(SOLVER,err,error,*999)
-            CASE(PROBLEM_MULTISCALE_NAVIER_STOKES_SUBTYPE)
-              CALL NavierStokes_CalculateBoundaryFlux(SOLVER,ERR,ERROR,*999)
-              CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(SOLVER,err,error,*999)
+              ! CALL NavierStokes_CalculateBoundaryFlux(SOLVER,ERR,ERROR,*999)
+              ! CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(SOLVER,err,error,*999)
+            CASE(PROBLEM_CONSTITUTIVE_RBS_NAVIER_STOKES_SUBTYPE)
               DO equationsSetNumber=1,SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                 ! If this is a coupled constitutive (non-Newtonian) viscosity problem, update shear rate values
                 !  to be passed to the CellML solver at beginning of next timestep
@@ -6740,7 +6739,7 @@ CONTAINS
                 CASE DEFAULT
                   LOCAL_ERROR="The solver global number of "//TRIM(NUMBER_TO_VSTRING(SOLVER%GLOBAL_NUMBER,"*",ERR,ERROR))// &
                     & " is invalid for the iterative 1D-0D coupled Navier-Stokes problem."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 END SELECT
               ELSE IF(ASSOCIATED(SOLVER%SOLVERS%CONTROL_LOOP%SIMPLE_LOOP)) THEN
                 IF(SOLVER%GLOBAL_NUMBER == 1) THEN
@@ -6748,12 +6747,12 @@ CONTAINS
                 ELSE
                   LOCAL_ERROR="The solver global number of "//TRIM(NUMBER_TO_VSTRING(SOLVER%GLOBAL_NUMBER,"*",ERR,ERROR))// &
                     & " is invalid for the CellML DAE simple loop of a 1D0D coupled Navier-Stokes problem."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 END IF
               ELSE
                 LOCAL_ERROR="The control loop type for solver "//TRIM(NUMBER_TO_VSTRING(SOLVER%GLOBAL_NUMBER,"*",ERR,ERROR))// &
                   & " is invalid for the a 1D0D coupled Navier-Stokes problem."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END IF
 
             CASE(PROBLEM_ALE_NAVIER_STOKES_SUBTYPE)
@@ -7675,7 +7674,7 @@ CONTAINS
                     DO equationsSetIdx = 1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                       EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equationsSetIdx)%PTR
                       IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                        SELECT CASE(EQUATIONS_SET%SUBTYPE)
+                        SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
                         ! --- 3 D   T r a n s i e n t   N a v i e r - S t o k e s   E q u a t i o n s---
                         CASE(EQUATIONS_SET_LAPLACE_NAVIER_STOKES_SUBTYPE, &
                            & EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE, &
@@ -7714,16 +7713,16 @@ CONTAINS
                                       numberOfNodes = DOMAIN_NODES%NUMBER_OF_NODES
                                       numberOfGlobalNodes = DOMAIN_NODES%NUMBER_OF_GLOBAL_NODES
                                     ELSE
-                                      CALL FLAG_ERROR("Domain topology nodes is not associated.",ERR,ERROR,*999)
+                                      CALL FlagError("Domain topology nodes is not associated.",ERR,ERROR,*999)
                                     END IF
                                   ELSE
-                                    CALL FLAG_ERROR("Domain topology is not associated.",ERR,ERROR,*999)
+                                    CALL FlagError("Domain topology is not associated.",ERR,ERROR,*999)
                                   END IF
                                 ELSE
-                                  CALL FLAG_ERROR("Domain is not associated.",ERR,ERROR,*999)
+                                  CALL FlagError("Domain is not associated.",ERR,ERROR,*999)
                                 END IF
                               ELSE
-                                CALL FLAG_ERROR("Only node based interpolation is implemented.",ERR,ERROR,*999)
+                                CALL FlagError("Only node based interpolation is implemented.",ERR,ERROR,*999)
                               END IF
 
                               ! Construct the filename based on the computational node and time step
@@ -7773,17 +7772,17 @@ CONTAINS
                                 END DO !nodeIdx
                                 CLOSE(UNIT=10)
                                 ! Update any distributed field values
-                                CALL FIELD_PARAMETER_SET_UPDATE_START(DEPENDENT_FIELD,dependentVariableType,FIELD_VALUES_SET_TYPE, &
-                                  & err,error,*999)
-                                CALL FIELD_PARAMETER_SET_UPDATE_FINISH(DEPENDENT_FIELD,dependentVariableType,FIELD_VALUES_SET_TYPE, &
-                                  & err,error,*999)
-                                CALL FIELD_PARAMETER_SET_UPDATE_START(INDEPENDENT_FIELD,independentVariableType,FIELD_VALUES_SET_TYPE, &
-                                  & err,error,*999)
-                                CALL FIELD_PARAMETER_SET_UPDATE_FINISH(INDEPENDENT_FIELD,independentVariableType,FIELD_VALUES_SET_TYPE, &
-                                  & err,error,*999)
+                                CALL FIELD_PARAMETER_SET_UPDATE_START(DEPENDENT_FIELD,dependentVariableType, &
+                                  & FIELD_VALUES_SET_TYPE,err,error,*999)
+                                CALL FIELD_PARAMETER_SET_UPDATE_FINISH(DEPENDENT_FIELD,dependentVariableType, &
+                                  & FIELD_VALUES_SET_TYPE,err,error,*999)
+                                CALL FIELD_PARAMETER_SET_UPDATE_START(INDEPENDENT_FIELD,independentVariableType, &
+                                  & FIELD_VALUES_SET_TYPE,err,error,*999)
+                                CALL FIELD_PARAMETER_SET_UPDATE_FINISH(INDEPENDENT_FIELD,independentVariableType, &
+                                  & FIELD_VALUES_SET_TYPE,err,error,*999)
                               END IF !check import file exists
                             ELSE
-                              CALL FLAG_ERROR("Equations set independent field is not associated.",ERR,ERROR,*999)
+                              CALL FlagError("Equations set independent field is not associated.",ERR,ERROR,*999)
                             END IF
                           END IF !Equations set independent
                           ! Analytic equations
@@ -7795,13 +7794,14 @@ CONTAINS
                               !Calculate analytic values
                               BOUNDARY_CONDITIONS=>SOLVER_EQUATIONS%BOUNDARY_CONDITIONS
                               IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
-                                CALL NavierStokes_AnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,ERR,ERROR,*999)
+                                CALL NavierStokes_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS, &
+                                  & ERR,ERROR,*999)
                               END IF
                             ELSE
                               LOCAL_ERROR="Analytic equations type "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%ANALYTIC% &
                                & ANALYTIC_FUNCTION_TYPE,"*",err,error))//" is not yet implemented for a 3D Navier-Stokes"// &
                                & " equations set for a multiscale problem."
-                              CALL FLAG_ERROR(LOCAL_ERROR,err,error,*999)
+                              CALL FlagError(LOCAL_ERROR,err,error,*999)
                             END IF
                           END IF
                         ! --- 1 D    N a v i e r - S t o k e s   E q u a t i o n s ---
@@ -7825,9 +7825,10 @@ CONTAINS
                                     BOUNDARY_CONDITIONS=>SOLVER_EQUATIONS%BOUNDARY_CONDITIONS
                                     IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
                                       ! Calculate analytic values
-                                      CALL NavierStokes_AnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,ERR,ERROR,*999)
+                                      CALL NavierStokes_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS, &
+                                        & ERR,ERROR,*999)
                                     ELSE
-                                      CALL FLAG_ERROR("Boundary conditions are not associated.",ERR,ERROR,*999)
+                                      CALL FlagError("Boundary conditions are not associated.",ERR,ERROR,*999)
                                     END IF
                                   CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_SPLINT_FROM_FILE)
                                     ! Perform spline interpolation of values from a file
@@ -7936,20 +7937,20 @@ CONTAINS
                                                     CALL FIELD_PARAMETER_SET_UPDATE_FINISH(DEPENDENT_FIELD,dependentVariableType, &
                                                       & FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
                                                   ELSE
-                                                    CALL FLAG_ERROR("Domain topology nodes is not associated.",ERR,ERROR,*999)
+                                                    CALL FlagError("Domain topology nodes is not associated.",ERR,ERROR,*999)
                                                   END IF
                                                 ELSE
-                                                  CALL FLAG_ERROR("Domain topology is not associated.",ERR,ERROR,*999)
+                                                  CALL FlagError("Domain topology is not associated.",ERR,ERROR,*999)
                                                 END IF
                                               ELSE
-                                                CALL FLAG_ERROR("Domain is not associated.",ERR,ERROR,*999)
+                                                CALL FlagError("Domain is not associated.",ERR,ERROR,*999)
                                               END IF
                                             ELSE
-                                              CALL FLAG_ERROR("Only node based interpolation is implemented.",ERR,ERROR,*999)
+                                              CALL FlagError("Only node based interpolation is implemented.",ERR,ERROR,*999)
                                             END IF
                                           END DO !componentIdx
                                         ELSE
-                                          CALL FLAG_ERROR("Dependent field variable is not associated.",ERR,ERROR,*999)
+                                          CALL FlagError("Dependent field variable is not associated.",ERR,ERROR,*999)
                                         END IF
                                       END IF
                                     END DO !variableIdx
@@ -7958,34 +7959,34 @@ CONTAINS
                                   END SELECT
                                 END IF ! Check for analytic equations
                               ELSE
-                                CALL FLAG_ERROR("Equations are not associated.",ERR,ERROR,*999)
+                                CALL FlagError("Equations are not associated.",ERR,ERROR,*999)
                               END IF
                             ELSE
-                              CALL FLAG_ERROR("Solver mapping is not associated.",ERR,ERROR,*999)
+                              CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
                             END IF
                           END IF ! solver equations associated
                           ! Update any multiscale boundary values (coupled 0D or non-reflecting)
                           CALL NavierStokes_UpdateMultiscaleBoundary(EQUATIONS_SET,BOUNDARY_CONDITIONS, &
                             & CURRENT_TIME,TIME_INCREMENT,err,error,*999)
                         CASE DEFAULT  
-                          LOCAL_ERROR="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SUBTYPE,"*",err,error))// &
-                            & " is not valid for a multiscale dynamic Navier-Stokes solver."
-                          CALL FLAG_ERROR(LOCAL_ERROR,err,error,*999)
+                          LOCAL_ERROR="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*", &
+                            & err,error))//" is not valid for a multiscale dynamic Navier-Stokes solver."
+                          CALL FlagError(LOCAL_ERROR,err,error,*999)
                         END SELECT
                       ELSE
-                        CALL FLAG_ERROR("Equations set is not associated.",err,error,*999)
+                        CALL FlagError("Equations set is not associated.",err,error,*999)
                       END IF
                     END DO
                   ELSE
-                    CALL FLAG_ERROR("Solver mapping is not associated.",err,error,*999)
+                    CALL FlagError("Solver mapping is not associated.",err,error,*999)
                   END IF
                 ELSE
-                  CALL FLAG_ERROR("Solver equations is not associated.",err,error,*999)
+                  CALL FlagError("Solver equations is not associated.",err,error,*999)
                 END IF
               CASE DEFAULT
                 LOCAL_ERROR="The solve type of "//TRIM(NUMBER_TO_VSTRING(SOLVER%SOLVE_TYPE,"*",err,error))// &
                   & " is invalid for pre_solve_update_BC step of a multiscale Navier-Stokes problem type."
-                CALL FLAG_ERROR(LOCAL_ERROR,err,error,*999)
+                CALL FlagError(LOCAL_ERROR,err,error,*999)
               END SELECT
 
             CASE(PROBLEM_QUASISTATIC_NAVIER_STOKES_SUBTYPE)
@@ -9494,7 +9495,7 @@ CONTAINS
                 !Make sure the equations sets are up to date
                 DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                   EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
-                  SELECT CASE(EQUATIONS_SET%SUBTYPE)
+                  SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
                   CASE(EQUATIONS_SET_LAPLACE_NAVIER_STOKES_SUBTYPE, &
                      & EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE, &
                      & EQUATIONS_SET_QUASISTATIC_NAVIER_STOKES_SUBTYPE, &
@@ -9554,9 +9555,9 @@ CONTAINS
                       END IF 
                     END IF
                   CASE DEFAULT  
-                    LOCAL_ERROR="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SUBTYPE,"*",err,error))// &
+                    LOCAL_ERROR="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
                       & " is not valid for a dynamic solver output for a multiscale Navier-Stokes problem."
-                    CALL FLAG_ERROR(LOCAL_ERROR,err,error,*999)
+                    CALL FlagError(LOCAL_ERROR,err,error,*999)
                   END SELECT
                 END DO
               END IF
@@ -10223,44 +10224,44 @@ CONTAINS
                !calculate p
                VALUE = (3.0_DP*MU_PARAM*U_PARAM*(X(1)-L_PARAM))/(H_PARAM**2)+P_PARAM
              ELSE
-               CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+               CALL FlagError("Not implemented.",ERR,ERROR,*999)
              END IF
            CASE(GLOBAL_DERIV_S1)
-             CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+             CALL FlagError("Not implemented.",ERR,ERROR,*999)
            CASE(GLOBAL_DERIV_S2)
-             CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+             CALL FlagError("Not implemented.",ERR,ERROR,*999)
            CASE(GLOBAL_DERIV_S1_S2)
-             CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+             CALL FlagError("Not implemented.",ERR,ERROR,*999)
            CASE DEFAULT
              LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
                & " is invalid."
-             CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
            END SELECT
          CASE(FIELD_DELUDELN_VARIABLE_TYPE)
            SELECT CASE(GLOBAL_DERIV_INDEX)
            CASE( NO_GLOBAL_DERIV)
              VALUE= 0.0_DP
            CASE(GLOBAL_DERIV_S1)
-             CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+             CALL FlagError("Not implemented.",ERR,ERROR,*999)
            CASE(GLOBAL_DERIV_S2)
-             CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)                                    
+             CALL FlagError("Not implemented.",ERR,ERROR,*999)                                    
            CASE(GLOBAL_DERIV_S1_S2)
-             CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+             CALL FlagError("Not implemented.",ERR,ERROR,*999)
            CASE DEFAULT
              LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
                & " is invalid."
-             CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
            END SELECT
          CASE DEFAULT
            LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
              & " is invalid."
-           CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
          END SELECT      
        ELSE 
          LOCAL_ERROR="The number of components does not correspond to the number of dimensions."
-         CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
        END IF
 
      CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_TAYLOR_GREEN)
@@ -10287,44 +10288,44 @@ CONTAINS
                VALUE =-1.0_DP*(U_PARAM**2)*(RHO_PARAM/4.0_DP)*(COS(2.0_DP*K_PARAM*X(1))+ &
                  & COS(2.0_DP*K_PARAM*X(2)))*(EXP(-4.0_DP*(K_PARAM**2)*NU_PARAM*CURRENT_TIME))
              ELSE
-               CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+               CALL FlagError("Not implemented.",ERR,ERROR,*999)
              END IF
            CASE(GLOBAL_DERIV_S1)
-             CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+             CALL FlagError("Not implemented.",ERR,ERROR,*999)
            CASE(GLOBAL_DERIV_S2)
-             CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+             CALL FlagError("Not implemented.",ERR,ERROR,*999)
            CASE(GLOBAL_DERIV_S1_S2)
-             CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+             CALL FlagError("Not implemented.",ERR,ERROR,*999)
            CASE DEFAULT
              LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
                & " is invalid."
-             CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
            END SELECT
          CASE(FIELD_DELUDELN_VARIABLE_TYPE)
            SELECT CASE(GLOBAL_DERIV_INDEX)
            CASE( NO_GLOBAL_DERIV)
              VALUE= 0.0_DP
            CASE(GLOBAL_DERIV_S1)
-             CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+             CALL FlagError("Not implemented.",ERR,ERROR,*999)
            CASE(GLOBAL_DERIV_S2)
-             CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)                                    
+             CALL FlagError("Not implemented.",ERR,ERROR,*999)                                    
            CASE(GLOBAL_DERIV_S1_S2)
-             CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+             CALL FlagError("Not implemented.",ERR,ERROR,*999)
            CASE DEFAULT
              LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
                & " is invalid."
-             CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
            END SELECT
          CASE DEFAULT
            LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
              & " is invalid."
-           CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
          END SELECT      
        ELSE 
          LOCAL_ERROR="The number of components does not correspond to the number of dimensions."
-         CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
        END IF
 
      CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_FLOWRATE_AORTA)
@@ -10342,12 +10343,12 @@ CONTAINS
                Qo=100000.0_DP
                VALUE=(Qo*tt/(tmax**2.0_DP))*EXP(-(tt**2.0_DP)/(2.0_DP*(tmax**2.0_DP)))
              ELSE
-               CALL FLAG_ERROR("Incorrect component specification for Aorta flow rate waveform ",ERR,ERROR,*999)
+               CALL FlagError("Incorrect component specification for Aorta flow rate waveform ",ERR,ERROR,*999)
              END IF
            CASE DEFAULT
              LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// " is invalid."
-             CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
            END SELECT
          CASE(FIELD_DELUDELN_VARIABLE_TYPE) 
            SELECT CASE(GLOBAL_DERIV_INDEX)
@@ -10356,19 +10357,19 @@ CONTAINS
            CASE DEFAULT
              LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// " is invalid."
-             CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
            END SELECT
          CASE(FIELD_V_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE,FIELD_U2_VARIABLE_TYPE)
            ! Do nothing
          CASE DEFAULT
            LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
              & " is invalid."
-           CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
          END SELECT
        CASE DEFAULT
          LOCAL_ERROR="Aorta flowrate waveform for "//TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",ERR,ERROR))// &
            & " dimension problem has not yet been implemented."
-         CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
        END SELECT
 
      CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_FLOWRATE_OLUFSEN)
@@ -10428,12 +10429,12 @@ CONTAINS
                s=(TIME/period)-t(m)
                VALUE=(q(m)+s*delta(m))
              ELSE
-               CALL FLAG_ERROR("Incorrect component specification for Olufsen flow rate waveform ",ERR,ERROR,*999)
+               CALL FlagError("Incorrect component specification for Olufsen flow rate waveform ",ERR,ERROR,*999)
              END IF
            CASE DEFAULT
              LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// " is invalid."
-             CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
            END SELECT
          CASE(FIELD_DELUDELN_VARIABLE_TYPE) 
            SELECT CASE(GLOBAL_DERIV_INDEX)
@@ -10442,19 +10443,19 @@ CONTAINS
            CASE DEFAULT
              LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// " is invalid."
-             CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
            END SELECT
          CASE(FIELD_V_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE,FIELD_U2_VARIABLE_TYPE)
            ! Do nothing
          CASE DEFAULT
            LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
              & " is invalid."
-           CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
          END SELECT
        CASE DEFAULT
          LOCAL_ERROR="Olufsen flowrate waveform for "//TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",ERR,ERROR))// &
            & " dimension problem has not yet been implemented."
-         CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
        END SELECT
 
      CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_SINUSOID)
@@ -10484,7 +10485,7 @@ CONTAINS
            CASE DEFAULT
              LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// " is invalid."
-             CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
            END SELECT
          CASE(FIELD_DELUDELN_VARIABLE_TYPE) 
            SELECT CASE(GLOBAL_DERIV_INDEX)
@@ -10493,17 +10494,17 @@ CONTAINS
            CASE DEFAULT
              LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// " is invalid."
-             CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
            END SELECT
          CASE DEFAULT
            LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
              & " is invalid."
-           CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
          END SELECT
        CASE DEFAULT
          LOCAL_ERROR="Sinusoidal analytic types for "//TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",ERR,ERROR))// &
            & " dimensional problems have not yet been implemented."
-         CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
        END SELECT
 
      CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_ONE_DIM_1)
@@ -10523,43 +10524,43 @@ CONTAINS
                !calculate P
                VALUE=X(1)**2/10.0_DP**2
              ELSE
-               CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+               CALL FlagError("Not implemented.",ERR,ERROR,*999)
              END IF
            CASE(GLOBAL_DERIV_S1)
-             CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+             CALL FlagError("Not implemented.",ERR,ERROR,*999)
            CASE(GLOBAL_DERIV_S2)
-             CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+             CALL FlagError("Not implemented.",ERR,ERROR,*999)
            CASE(GLOBAL_DERIV_S1_S2)
-             CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+             CALL FlagError("Not implemented.",ERR,ERROR,*999)
            CASE DEFAULT
              LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// " is invalid."
-             CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
            END SELECT
          CASE(FIELD_DELUDELN_VARIABLE_TYPE) 
            SELECT CASE(GLOBAL_DERIV_INDEX)
            CASE(NO_GLOBAL_DERIV)
              VALUE= 0.0_DP
            CASE(GLOBAL_DERIV_S1)
-             CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+             CALL FlagError("Not implemented.",ERR,ERROR,*999)
            CASE(GLOBAL_DERIV_S2)
-             CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)                                    
+             CALL FlagError("Not implemented.",ERR,ERROR,*999)                                    
            CASE(GLOBAL_DERIV_S1_S2)
-             CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+             CALL FlagError("Not implemented.",ERR,ERROR,*999)
            CASE DEFAULT
              LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
                & " is invalid."
-             CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
            END SELECT
          CASE DEFAULT
            LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
              & " is invalid."
-           CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
          END SELECT      
        ELSE 
          LOCAL_ERROR="The number of components does not correspond to the number of dimensions."
-         CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
        END IF
 
        CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_1)
@@ -10581,44 +10582,44 @@ CONTAINS
                      !calculate p
                      VALUE=2.0_DP/3.0_DP*X(1)*(3.0_DP*MU_PARAM*10.0_DP**2-RHO_PARAM*X(1)**2*X(2))/(10.0_DP ** 4)
                    ELSE
-                     CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                     CALL FlagError("Not implemented.",ERR,ERROR,*999)
                    END IF
                  CASE(GLOBAL_DERIV_S1)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE(GLOBAL_DERIV_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE(GLOBAL_DERIV_S1_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE DEFAULT
                    LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                      & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
                      & " is invalid."
-                   CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                END SELECT
              CASE(FIELD_DELUDELN_VARIABLE_TYPE)
                SELECT CASE(GLOBAL_DERIV_INDEX)
                  CASE(NO_GLOBAL_DERIV)
                    VALUE= 0.0_DP
                  CASE(GLOBAL_DERIV_S1)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE(GLOBAL_DERIV_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)                                    
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)                                    
                  CASE(GLOBAL_DERIV_S1_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE DEFAULT
                    LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                      & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
                      & " is invalid."
-                   CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                END SELECT
              CASE DEFAULT
                LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
                  & " is invalid."
-               CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
            END SELECT      
          ELSE 
            LOCAL_ERROR="The number of components does not correspond to the number of dimensions."
-           CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
          END IF
 
        CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_2)
@@ -10640,19 +10641,19 @@ CONTAINS
                      !calculate p
                      VALUE= 2.0_DP*MU_PARAM/10.0_DP*EXP((X(1)-X(2))/10.0_DP)
                    ELSE
-                     CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                     CALL FlagError("Not implemented.",ERR,ERROR,*999)
                    END IF
                  CASE(GLOBAL_DERIV_S1)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE(GLOBAL_DERIV_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE(GLOBAL_DERIV_S1_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE DEFAULT
                    LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                      & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
                      & " is invalid."
-                   CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                END SELECT
              CASE(FIELD_DELUDELN_VARIABLE_TYPE)
                SELECT CASE(GLOBAL_DERIV_INDEX)
@@ -10667,28 +10668,28 @@ CONTAINS
                      !calculate p
                      VALUE= 0.0_DP
                    ELSE
-                     CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                     CALL FlagError("Not implemented.",ERR,ERROR,*999)
                    END IF
                  CASE(GLOBAL_DERIV_S1)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE(GLOBAL_DERIV_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)                                    
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)                                    
                  CASE(GLOBAL_DERIV_S1_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE DEFAULT
                    LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                      & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
                      & " is invalid."
-                   CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                END SELECT
              CASE DEFAULT
                LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
                  & " is invalid."
-               CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
            END SELECT      
          ELSE 
            LOCAL_ERROR="The number of components does not correspond to the number of dimensions."
-           CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
          END IF
 
        CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_3)
@@ -10711,19 +10712,19 @@ CONTAINS
                      VALUE=4.0_DP*MU_PARAM*PI/10.0_DP*SIN(2.0_DP*PI*X(2)/10.0_DP)*COS(2.0_DP*PI*X(1)/10.0_DP)+ &
                        & 0.5_DP*RHO_PARAM*COS(2.0_DP*PI*X(1)/10.0_DP)*COS(2.0_DP*PI*X(1)/10.0_DP)
                    ELSE
-                     CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                     CALL FlagError("Not implemented.",ERR,ERROR,*999)
                    END IF
                  CASE(GLOBAL_DERIV_S1)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE(GLOBAL_DERIV_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE(GLOBAL_DERIV_S1_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE DEFAULT
                    LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                      & GLOBAL_DERIV_index,"*",ERR,ERROR))// &
                      & " is invalid."
-                   CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                END SELECT
              CASE(FIELD_DELUDELN_VARIABLE_TYPE)
                SELECT CASE(GLOBAL_DERIV_INDEX)
@@ -10738,28 +10739,28 @@ CONTAINS
                      !calculate p
                      VALUE=0.0_DP
                    ELSE
-                     CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                     CALL FlagError("Not implemented.",ERR,ERROR,*999)
                    END IF
                  CASE(GLOBAL_DERIV_S1)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE(GLOBAL_DERIV_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)                                    
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)                                    
                  CASE(GLOBAL_DERIV_S1_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE DEFAULT
                    LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                      & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
                      & " is invalid."
-                   CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                END SELECT
              CASE DEFAULT
                LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
                  & " is invalid."
-               CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
            END SELECT      
          ELSE 
            LOCAL_ERROR="The number of components does not correspond to the number of dimensions."
-           CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
          END IF
 
        CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_4,EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_5)
@@ -10789,19 +10790,19 @@ CONTAINS
                        & EXP(-4.0_DP*MU_PARAM/RHO_PARAM*CURRENT_TIME)                      
 !                      VALUE=RHO_PARAM/4.0_DP*(COS(2.0_DP*X(1))+COS(2.0_DP*X(2)))
                    ELSE
-                     CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                     CALL FlagError("Not implemented.",ERR,ERROR,*999)
                    END IF
                  CASE(GLOBAL_DERIV_S1)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE(GLOBAL_DERIV_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE(GLOBAL_DERIV_S1_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE DEFAULT
                    LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                      & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
                      & " is invalid."
-                   CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                END SELECT
              CASE(FIELD_DELUDELN_VARIABLE_TYPE)
                SELECT CASE(GLOBAL_DERIV_INDEX)
@@ -10816,28 +10817,28 @@ CONTAINS
                      !calculate p
                      VALUE=0.0_DP
                    ELSE
-                     CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                     CALL FlagError("Not implemented.",ERR,ERROR,*999)
                    END IF
                  CASE(GLOBAL_DERIV_S1)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE(GLOBAL_DERIV_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)                                    
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)                                    
                  CASE(GLOBAL_DERIV_S1_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE DEFAULT
                    LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                      & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
                      & " is invalid."
-                   CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                END SELECT
              CASE DEFAULT
                LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
                  & " is invalid."
-               CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
            END SELECT      
          ELSE 
            LOCAL_ERROR="The number of components does not correspond to the number of dimensions."
-           CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
          END IF
 
        CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_1)
@@ -10864,44 +10865,44 @@ CONTAINS
                        & RHO_PARAM*X(2)* &
                        & X(3)**2-RHO_PARAM*X(3)*X(1)**2-3.0_DP*RHO_PARAM*X(3)*X(2)**2)/(10.0_DP**4)
                    ELSE
-                     CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                     CALL FlagError("Not implemented.",ERR,ERROR,*999)
                    END IF
                  CASE(GLOBAL_DERIV_S1)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE(GLOBAL_DERIV_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE(GLOBAL_DERIV_S1_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE DEFAULT
                    LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                      & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
                      & " is invalid."
-                   CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                END SELECT   
              CASE(FIELD_DELUDELN_VARIABLE_TYPE)
                SELECT CASE(GLOBAL_DERIV_INDEX)
                  CASE(NO_GLOBAL_DERIV)
                    VALUE=0.0_DP
                  CASE(GLOBAL_DERIV_S1)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE(GLOBAL_DERIV_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)                                    
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)                                    
                  CASE(GLOBAL_DERIV_S1_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE DEFAULT
                    LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                      & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
                      & " is invalid."
-                   CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 END SELECT
               CASE DEFAULT
                 LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(variable_type,"*",ERR,ERROR))// &
                   & " is invalid."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
            END SELECT      
          ELSE 
            LOCAL_ERROR="The number of components does not correspond to the number of dimensions."
-           CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
          END IF
 
        CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_2)
@@ -10928,19 +10929,19 @@ CONTAINS
                        & 2.0_DP*MU_PARAM*EXP((X(3)-X(1))/10.0_DP)+RHO_PARAM*10.0_DP*EXP((X(1)-X(3))/10.0_DP)+ & 
                        & RHO_PARAM*10.0_DP*EXP((X(2)-X(1))/10.0_DP))
                    ELSE
-                     CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                     CALL FlagError("Not implemented.",ERR,ERROR,*999)
                    END IF
                  CASE(GLOBAL_DERIV_S1)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE(GLOBAL_DERIV_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE(GLOBAL_DERIV_S1_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE DEFAULT
                    LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                      & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
                      & " is invalid."
-                   CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                END SELECT   
              CASE(FIELD_DELUDELN_VARIABLE_TYPE)
                SELECT CASE(GLOBAL_DERIV_INDEX)
@@ -10958,28 +10959,28 @@ CONTAINS
                      !calculate p
                      VALUE=0.0_DP
                    ELSE
-                     CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                     CALL FlagError("Not implemented.",ERR,ERROR,*999)
                    END IF
                  CASE(GLOBAL_DERIV_S1)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE(GLOBAL_DERIV_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)                                    
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)                                    
                  CASE(GLOBAL_DERIV_S1_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE DEFAULT
                    LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                      & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
                      & " is invalid."
-                   CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                END SELECT
              CASE DEFAULT
                LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(variable_type,"*",ERR,ERROR))// &
                  & " is invalid."
-               CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
            END SELECT      
          ELSE 
            LOCAL_ERROR="The number of components does not correspond to the number of dimensions."
-           CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
          END IF
 
        CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_3)
@@ -11007,19 +11008,19 @@ CONTAINS
                        & 2.0_DP*RHO_PARAM*COS(2.0_DP*PI*X(1)/10.0_DP)*10.0_DP*COS(2.0_DP*PI*X(3)/10.0_DP)**2- &
                        & RHO_PARAM*COS(2.0_DP*PI*X(1)/10.0_DP)*10.0_DP*COS(2.0_DP*PI*X(2)/10.0_DP)**2)/10.0_DP/2.0_DP
                    ELSE
-                     CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                     CALL FlagError("Not implemented.",ERR,ERROR,*999)
                    END IF
                  CASE(GLOBAL_DERIV_S1)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE(GLOBAL_DERIV_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE(GLOBAL_DERIV_S1_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE DEFAULT
                    LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                      & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
                      & " is invalid."
-                   CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 END SELECT   
               CASE(FIELD_DELUDELN_VARIABLE_TYPE)
                 SELECT CASE(GLOBAL_DERIV_INDEX)
@@ -11038,28 +11039,28 @@ CONTAINS
                       !calculate p
                       VALUE=0.0_DP
                     ELSE
-                      CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                      CALL FlagError("Not implemented.",ERR,ERROR,*999)
                     END IF
                   CASE(GLOBAL_DERIV_S1)
-                    CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                    CALL FlagError("Not implemented.",ERR,ERROR,*999)
                   CASE(GLOBAL_DERIV_S2)
-                    CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)                                    
+                    CALL FlagError("Not implemented.",ERR,ERROR,*999)                                    
                   CASE(GLOBAL_DERIV_S1_S2)
-                    CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                    CALL FlagError("Not implemented.",ERR,ERROR,*999)
                   CASE DEFAULT
                     LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                       & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
                       & " is invalid."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 END SELECT
               CASE DEFAULT
                 LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(variable_type,"*",ERR,ERROR))// &
                   & " is invalid."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT      
           ELSE 
             LOCAL_ERROR="The number of components does not correspond to the number of dimensions."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END IF
 
        CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_4,EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_5)
@@ -11087,19 +11088,19 @@ CONTAINS
                        & EXP(-4.0_DP*MU_PARAM/RHO_PARAM*CURRENT_TIME)                      
 !                      VALUE=RHO_PARAM/4.0_DP*(COS(2.0_DP*X(1))+COS(2.0_DP*X(2)))
                    ELSE
-                     CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                     CALL FlagError("Not implemented.",ERR,ERROR,*999)
                    END IF
                  CASE(GLOBAL_DERIV_S1)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE(GLOBAL_DERIV_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE(GLOBAL_DERIV_S1_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE DEFAULT
                    LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                      & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
                      & " is invalid."
-                   CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                END SELECT
              CASE(FIELD_DELUDELN_VARIABLE_TYPE)
                SELECT CASE(GLOBAL_DERIV_INDEX)
@@ -11117,923 +11118,35 @@ CONTAINS
                      !calculate p
                      VALUE=0.0_DP
                    ELSE
-                     CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                     CALL FlagError("Not implemented.",ERR,ERROR,*999)
                    END IF
                  CASE(GLOBAL_DERIV_S1)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE(GLOBAL_DERIV_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)                                    
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)                                    
                  CASE(GLOBAL_DERIV_S1_S2)
-                   CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                  CASE DEFAULT
                    LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
                      & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
                      & " is invalid."
-                   CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                END SELECT
              CASE DEFAULT
                LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(variable_type,"*",ERR,ERROR))// &
                  & " is invalid."
-               CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
            END SELECT      
          ELSE 
            LOCAL_ERROR="The number of components does not correspond to the number of dimensions."
-           CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
          END IF
         CASE DEFAULT
-          LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The analytic function type of "// &
+            & TRIM(NUMBER_TO_VSTRING(ANALYTIC_FUNCTION_TYPE,"*",ERR,ERROR))// &
             & " is invalid."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ELSE 
-        LOCAL_ERROR="The number of components does not correspond to the number of dimensions."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END IF
-      
-    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_TAYLOR_GREEN)
-      !Exact solution to 2D laminar, dynamic, nonlinear Taylor-Green vortex decay  
-      IF(NUMBER_OF_DIMENSIONS==2.AND.NUMBER_OF_COMPONENTS==3) THEN
-        MU_PARAM = MATERIALS_PARAMETERS(1)
-        RHO_PARAM = MATERIALS_PARAMETERS(2)
-        NU_PARAM = MU_PARAM/RHO_PARAM ! kinematic viscosity
-        SELECT CASE(VARIABLE_TYPE)
-        CASE(FIELD_U_VARIABLE_TYPE)
-          U_PARAM = ANALYTIC_PARAMETERS(1) ! characteristic velocity (initial amplitude)
-          L_PARAM = ANALYTIC_PARAMETERS(2) ! length scale for square
-          K_PARAM = 2.0_DP*PI/L_PARAM   ! scale factor for equations
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE(NO_GLOBAL_DERIV)
-            IF(componentNumber==1) THEN
-              !calculate u
-              VALUE=-1.0_DP*U_PARAM*COS(K_PARAM*X(1))*SIN(K_PARAM*X(2))*EXP(-2.0_DP*(K_PARAM**2)*NU_PARAM*CURRENT_TIME)
-            ELSE IF(componentNumber==2) THEN
-              !calculate v
-              VALUE=U_PARAM*SIN(K_PARAM*X(1))*COS(K_PARAM*X(2))*EXP(-2.0_DP*(K_PARAM**2)*NU_PARAM*CURRENT_TIME)
-            ELSE IF(componentNumber==3) THEN
-              !calculate p
-              VALUE =-1.0_DP*(U_PARAM**2)*(RHO_PARAM/4.0_DP)*(COS(2.0_DP*K_PARAM*X(1))+ &
-                & COS(2.0_DP*K_PARAM*X(2)))*(EXP(-4.0_DP*(K_PARAM**2)*NU_PARAM*CURRENT_TIME))
-            ELSE
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
-            END IF
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
-              & " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE( NO_GLOBAL_DERIV)
-            VALUE= 0.0_DP
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)                                    
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
-              & " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE DEFAULT
-          LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
-            & " is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ELSE 
-        LOCAL_ERROR="The number of components does not correspond to the number of dimensions."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END IF
-      
-    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_FLOWRATE_AORTA)
-      SELECT CASE(NUMBER_OF_DIMENSIONS)
-      CASE(1)
-        SELECT CASE(VARIABLE_TYPE)
-        CASE(FIELD_U_VARIABLE_TYPE)
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE(NO_GLOBAL_DERIV)
-            IF(componentNumber==1) THEN
-              !Input function
-              period = 800
-              tt=MOD(TIME,period)
-              tmax=150.0_DP
-              Qo=100000.0_DP
-              VALUE=(Qo*tt/(tmax**2.0_DP))*EXP(-(tt**2.0_DP)/(2.0_DP*(tmax**2.0_DP)))
-            ELSE
-              CALL FlagError("Incorrect component specification for Aorta flow rate waveform ",ERR,ERROR,*999)
-            END IF
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE(FIELD_DELUDELN_VARIABLE_TYPE) 
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE(NO_GLOBAL_DERIV)
-            VALUE= 0.0_DP
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE(FIELD_V_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE,FIELD_U2_VARIABLE_TYPE)
-          ! Do nothing
-        CASE DEFAULT
-          LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
-            & " is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      CASE DEFAULT
-        LOCAL_ERROR="Aorta flowrate waveform for "//TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",ERR,ERROR))// &
-          & " dimension problem has not yet been implemented."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
-      
-    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_FLOWRATE_OLUFSEN)
-      SELECT CASE(NUMBER_OF_DIMENSIONS)
-      CASE(1)
-        SELECT CASE(VARIABLE_TYPE)
-        CASE(FIELD_U_VARIABLE_TYPE)
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE(NO_GLOBAL_DERIV)
-            IF(componentNumber==1) THEN
-              !Olufsen Aorta
-              t(1)= 0.0011660 ; q(1)= 17.39051
-              t(2)= 0.0215840 ; q(2)= 10.41978
-              t(3)= 0.0340860 ; q(3)= 18.75892
-              t(4)= 0.0731370 ; q(4)= 266.3842
-              t(5)= 0.0857710 ; q(5)= 346.3755
-              t(6)= 0.1029220 ; q(6)= 413.8419
-              t(7)= 0.1154270 ; q(7)= 424.2680
-              t(8)= 0.1483530 ; q(8)= 429.1147
-              t(9)= 0.1698860 ; q(9)= 411.0127
-              t(10)= 0.220794 ; q(10)= 319.151
-              t(11)= 0.264856 ; q(11)= 207.816
-              t(12)= 0.295415 ; q(12)= 160.490
-              t(13)= 0.325895 ; q(13)= 70.0342
-              t(14)= 0.346215 ; q(14)= 10.1939
-              t(15)= 0.363213 ; q(15)= -5.1222
-              t(16)= 0.383666 ; q(16)= 6.68963
-              t(17)= 0.405265 ; q(17)= 24.0659
-              t(18)= 0.427988 ; q(18)= 35.8762
-              t(19)= 0.455272 ; q(19)= 58.8137
-              t(20)= 0.477990 ; q(20)= 67.8414
-              t(21)= 0.502943 ; q(21)= 57.3893
-              t(22)= 0.535816 ; q(22)= 33.7142
-              t(23)= 0.577789 ; q(23)= 20.4676
-              t(24)= 0.602753 ; q(24)= 16.2763
-              t(25)= 0.639087 ; q(25)= 22.5119
-              t(26)= 0.727616 ; q(26)= 18.9721
-              t(27)= 0.783235 ; q(27)= 18.9334
-              t(28)= 0.800000 ; q(28)= 16.1121
-              
-              !Initialize variables
-              period = 800
-              m=1
-              n=28
-              !Compute derivation
-              DO i=1,n-1
-                delta(i)=(q(i+1)-q(i))/(t(i+1)-t(i))
-              END DO
-              delta(n)=delta(n-1)+(delta(n-1)-delta(n-2))/(t(n-1)-t(n-2))*(t(n)-t(n-1))
-              !Find subinterval
-              DO j=1,n-1
-                IF(t(j) <= (TIME/period)) THEN
-                  m=j
-                END IF
-              END DO
-              !Evaluate interpolant
-              s=(TIME/period)-t(m)
-              VALUE=(q(m)+s*delta(m))
-            ELSE
-              CALL FlagError("Incorrect component specification for Olufsen flow rate waveform ",ERR,ERROR,*999)
-            END IF
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE(FIELD_DELUDELN_VARIABLE_TYPE) 
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE(NO_GLOBAL_DERIV)
-            VALUE= 0.0_DP
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE(FIELD_V_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE,FIELD_U2_VARIABLE_TYPE)
-          ! Do nothing
-        CASE DEFAULT
-          LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
-            & " is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      CASE DEFAULT
-        LOCAL_ERROR="Olufsen flowrate waveform for "//TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",ERR,ERROR))// &
-          & " dimension problem has not yet been implemented."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-      
-    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_SINUSOID)
-      ! Returns a sinusoidal value for boundary nodes
-      SELECT CASE(NUMBER_OF_DIMENSIONS)
-      CASE(2,3)
-        componentCoeff(1) = ANALYTIC_PARAMETERS(1) 
-        componentCoeff(2) = ANALYTIC_PARAMETERS(2) 
-        componentCoeff(3) = ANALYTIC_PARAMETERS(3) 
-        componentCoeff(4) = ANALYTIC_PARAMETERS(4) 
-        amplitude = ANALYTIC_PARAMETERS(5) 
-        yOffset = ANALYTIC_PARAMETERS(6) 
-        frequency = ANALYTIC_PARAMETERS(7) 
-        phaseShift = ANALYTIC_PARAMETERS(8) 
-        startTime = ANALYTIC_PARAMETERS(9) 
-        stopTime = ANALYTIC_PARAMETERS(10) 
-        SELECT CASE(VARIABLE_TYPE)
-        CASE(FIELD_U_VARIABLE_TYPE)
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE(NO_GLOBAL_DERIV)
-            IF(CURRENT_TIME > startTime - ZERO_TOLERANCE .AND. &
-              &  CURRENT_TIME < stopTime + ZERO_TOLERANCE) THEN
-              VALUE= componentCoeff(componentNumber)*(yOffset + amplitude*SIN(frequency*CURRENT_TIME+phaseShift))
-            ELSE
-              VALUE= componentCoeff(componentNumber)*(yOffset + amplitude*SIN(frequency*stopTime+phaseShift))
-            END IF
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE(FIELD_DELUDELN_VARIABLE_TYPE) 
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE(NO_GLOBAL_DERIV)
-            VALUE= 0.0_DP
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE DEFAULT
-          LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
-            & " is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      CASE DEFAULT
-        LOCAL_ERROR="Sinusoidal analytic types for "//TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",ERR,ERROR))// &
-          & " dimensional problems have not yet been implemented."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-      
-    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_ONE_DIM_1)
-      IF(NUMBER_OF_DIMENSIONS==1.AND.NUMBER_OF_COMPONENTS==3) THEN
-        !Polynomial function
-        SELECT CASE(VARIABLE_TYPE)
-        CASE(FIELD_U_VARIABLE_TYPE)
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE(NO_GLOBAL_DERIV)
-            IF(componentNumber==1) THEN
-              !calculate Q
-              VALUE=X(1)**2/10.0_DP**2
-            ELSE IF(componentNumber==2) THEN
-              !calculate A
-              VALUE=X(1)**2/10.0_DP**2
-            ELSE IF(componentNumber==3) THEN
-              !calculate P
-              VALUE=X(1)**2/10.0_DP**2
-            ELSE
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
-            END IF
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE(FIELD_DELUDELN_VARIABLE_TYPE) 
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE(NO_GLOBAL_DERIV)
-            VALUE= 0.0_DP
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)                                    
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
-              & " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE DEFAULT
-          LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
-            & " is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ELSE 
-        LOCAL_ERROR="The number of components does not correspond to the number of dimensions."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END IF
-      
-    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_1)
-      IF(NUMBER_OF_DIMENSIONS==2.AND.NUMBER_OF_COMPONENTS==3) THEN
-        !Polynomial function
-        MU_PARAM = MATERIALS_PARAMETERS(1)
-        RHO_PARAM = MATERIALS_PARAMETERS(2)
-        SELECT CASE(VARIABLE_TYPE)
-        CASE(FIELD_U_VARIABLE_TYPE)
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE(NO_GLOBAL_DERIV)
-            IF(componentNumber==1) THEN
-              !calculate u
-              VALUE=X(2)**2/10.0_DP**2
-            ELSE IF(componentNumber==2) THEN
-              !calculate v
-              VALUE=X(1)**2/10.0_DP**2
-            ELSE IF(componentNumber==3) THEN
-              !calculate p
-              VALUE=2.0_DP/3.0_DP*X(1)*(3.0_DP*MU_PARAM*10.0_DP**2-RHO_PARAM*X(1)**2*X(2))/(10.0_DP ** 4)
-            ELSE
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
-            END IF
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
-              & " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE(NO_GLOBAL_DERIV)
-            VALUE= 0.0_DP
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)                                    
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
-              & " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE DEFAULT
-          LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
-            & " is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ELSE 
-        LOCAL_ERROR="The number of components does not correspond to the number of dimensions."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END IF
-      
-    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_2)
-      IF(NUMBER_OF_DIMENSIONS==2.AND.NUMBER_OF_COMPONENTS==3) THEN
-        !Exponential function
-        MU_PARAM = MATERIALS_PARAMETERS(1)
-        RHO_PARAM = MATERIALS_PARAMETERS(2)
-        SELECT CASE(VARIABLE_TYPE)
-        CASE(FIELD_U_VARIABLE_TYPE)
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE(NO_GLOBAL_DERIV)
-            IF(componentNumber==1) THEN
-              !calculate u
-              VALUE= EXP((X(1)-X(2))/10.0_DP)
-            ELSE IF(componentNumber==2) THEN
-              !calculate v
-              VALUE= EXP((X(1)-X(2))/10.0_DP)
-            ELSE IF(componentNumber==3) THEN
-              !calculate p
-              VALUE= 2.0_DP*MU_PARAM/10.0_DP*EXP((X(1)-X(2))/10.0_DP)
-            ELSE
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
-            END IF
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
-              & " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE(NO_GLOBAL_DERIV)
-            IF(componentNumber==1) THEN
-              !calculate u
-              VALUE= 0.0_DP
-            ELSE IF(componentNumber==2) THEN
-              !calculate v
-              VALUE= 0.0_DP
-            ELSE IF(componentNumber==3) THEN
-              !calculate p
-              VALUE= 0.0_DP
-            ELSE
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
-            END IF
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)                                    
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
-              & " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE DEFAULT
-          LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
-            & " is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ELSE 
-        LOCAL_ERROR="The number of components does not correspond to the number of dimensions."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END IF
-      
-    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_3)
-      IF(NUMBER_OF_DIMENSIONS==2.AND.NUMBER_OF_COMPONENTS==3) THEN
-        !Sine and cosine function
-        MU_PARAM = MATERIALS_PARAMETERS(1)
-        RHO_PARAM = MATERIALS_PARAMETERS(2)
-        SELECT CASE(VARIABLE_TYPE)
-        CASE(FIELD_U_VARIABLE_TYPE)
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE(NO_GLOBAL_DERIV)
-            IF(componentNumber==1) THEN
-              !calculate u
-              VALUE=SIN(2.0_DP*PI*X(1)/10.0_DP)*SIN(2.0_DP*PI*X(2)/10.0_DP)
-            ELSE IF(componentNumber==2) THEN
-              !calculate v
-              VALUE=COS(2.0_DP*PI*X(1)/10.0_DP)*COS(2.0_DP*PI*X(2)/10.0_DP)
-            ELSE IF(componentNumber==3) THEN
-              !calculate p
-              VALUE=4.0_DP*MU_PARAM*PI/10.0_DP*SIN(2.0_DP*PI*X(2)/10.0_DP)*COS(2.0_DP*PI*X(1)/10.0_DP)+ &
-                & 0.5_DP*RHO_PARAM*COS(2.0_DP*PI*X(1)/10.0_DP)*COS(2.0_DP*PI*X(1)/10.0_DP)
-            ELSE
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
-            END IF
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_index,"*",ERR,ERROR))// &
-              & " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE(NO_GLOBAL_DERIV)
-            IF(componentNumber==1) THEN
-              !calculate u
-              VALUE=0.0_DP
-            ELSE IF(componentNumber==2) THEN
-              !calculate v
-              VALUE=16.0_DP*MU_PARAM*PI**2/10.0_DP**2*COS(2.0_DP*PI*X(2)/ 10.0_DP)*COS(2.0_DP*PI*X(1)/10.0_DP)
-            ELSE IF(componentNumber==3) THEN
-              !calculate p
-              VALUE=0.0_DP
-            ELSE
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
-            END IF
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)                                    
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
-              & " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE DEFAULT
-          LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
-            & " is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ELSE 
-        LOCAL_ERROR="The number of components does not correspond to the number of dimensions."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END IF
-      
-    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_4,EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_5)
-      IF(NUMBER_OF_DIMENSIONS==2.AND.NUMBER_OF_COMPONENTS==3) THEN
-        !Taylor-Green vortex solution
-        MU_PARAM = MATERIALS_PARAMETERS(1)
-        RHO_PARAM = MATERIALS_PARAMETERS(2)
-        SELECT CASE(VARIABLE_TYPE)
-        CASE(FIELD_U_VARIABLE_TYPE)
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE(NO_GLOBAL_DERIV)
-            IF(componentNumber==1) THEN
-              !calculate u
-              VALUE=SIN(X(1)/10.0_DP*2.0_DP*PI)*COS(X(2)/10.0_DP*2.0_DP*PI)*EXP(-2.0_DP*MU_PARAM/RHO_PARAM*CURRENT_TIME)
-              VALUE=SIN(X(1)/10.0_DP*PI)*COS(X(2)/10.0_DP*PI)*EXP(-2.0_DP*MU_PARAM/RHO_PARAM*CURRENT_TIME)
-              !                      VALUE=SIN(X(1))*COS(X(2))
-            ELSE IF(componentNumber==2) THEN
-              !calculate v
-              VALUE=-COS(X(1)/10.0_DP*2.0_DP*PI)*SIN(X(2)/10.0_DP*2.0_DP*PI)*EXP(-2.0_DP*MU_PARAM/RHO_PARAM*CURRENT_TIME)
-              VALUE=-COS(X(1)/10.0_DP*PI)*SIN(X(2)/10.0_DP*PI)*EXP(-2.0_DP*MU_PARAM/RHO_PARAM*CURRENT_TIME)
-              !                      VALUE=-COS(X(1))*SIN(X(2))
-            ELSE IF(componentNumber==3) THEN
-              !calculate p
-              VALUE=RHO_PARAM/4.0_DP*(COS(2.0_DP*X(1)/10.0_DP*2.0_DP*PI)+COS(2.0_DP*X(2)/10.0_DP*2.0_DP*PI))* &
-                & EXP(-4.0_DP*MU_PARAM/RHO_PARAM*CURRENT_TIME)                      
-              VALUE=RHO_PARAM/4.0_DP*(COS(2.0_DP*X(1)/10.0_DP*PI)+COS(2.0_DP*X(2)/10.0_DP*PI))* &
-                & EXP(-4.0_DP*MU_PARAM/RHO_PARAM*CURRENT_TIME)                      
-              !                      VALUE=RHO_PARAM/4.0_DP*(COS(2.0_DP*X(1))+COS(2.0_DP*X(2)))
-            ELSE
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
-            END IF
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
-              & " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE(NO_GLOBAL_DERIV)
-            IF(componentNumber==1) THEN
-              !calculate u
-              VALUE=0.0_DP
-            ELSE IF(componentNumber==2) THEN
-              !calculate v
-              VALUE=0.0_DP         
-            ELSE IF(componentNumber==3) THEN
-              !calculate p
-              VALUE=0.0_DP
-            ELSE
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
-            END IF
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)                                    
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
-              & " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE DEFAULT
-          LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
-            & " is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ELSE 
-        LOCAL_ERROR="The number of components does not correspond to the number of dimensions."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END IF
-      
-    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_1)
-      IF(NUMBER_OF_DIMENSIONS==3.AND.NUMBER_OF_COMPONENTS==4) THEN
-        !Polynomial function
-        MU_PARAM = MATERIALS_PARAMETERS(1)
-        RHO_PARAM = MATERIALS_PARAMETERS(2)
-        SELECT CASE(variable_type)
-        CASE(FIELD_U_VARIABLE_TYPE)
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE(NO_GLOBAL_DERIV)
-            IF(componentNumber==1) THEN
-              !calculate u
-              VALUE=X(2)**2/10.0_DP**2+X(3)**2/10.0_DP**2
-            ELSE IF(componentNumber==2) THEN
-              !calculate v
-              VALUE=X(1)**2/10.0_DP**2+X(3)**2/10.0_DP** 2
-            ELSE IF(componentNumber==3) THEN
-              !calculate w
-              VALUE=X(1)**2/10.0_DP**2+X(2)**2/10.0_DP** 2
-            ELSE IF(componentNumber==4) THEN
-              !calculate p
-              VALUE=2.0_DP/3.0_DP*X(1)*(6.0_DP*MU_PARAM*10.0_DP**2-RHO_PARAM*X(2)*X(1)**2-3.0_DP* & 
-                & RHO_PARAM*X(2)* &
-                & X(3)**2-RHO_PARAM*X(3)*X(1)**2-3.0_DP*RHO_PARAM*X(3)*X(2)**2)/(10.0_DP**4)
-            ELSE
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
-            END IF
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
-              & " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE(NO_GLOBAL_DERIV)
-            VALUE=0.0_DP
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)                                    
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
-              & " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE DEFAULT
-          LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(variable_type,"*",ERR,ERROR))// &
-            & " is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ELSE 
-        LOCAL_ERROR="The number of components does not correspond to the number of dimensions."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END IF
-      
-    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_2)
-      IF(NUMBER_OF_DIMENSIONS==3.AND.NUMBER_OF_COMPONENTS==4) THEN
-        !Exponential function
-        MU_PARAM = MATERIALS_PARAMETERS(1)
-        RHO_PARAM = MATERIALS_PARAMETERS(2)
-        SELECT CASE(variable_type)
-        CASE(FIELD_U_VARIABLE_TYPE)
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE(NO_GLOBAL_DERIV)
-            IF(componentNumber==1) THEN
-              !calculate u
-              VALUE=EXP((X(1)-X(2))/10.0_DP)+EXP((X(3)-X(1))/10.0_DP)
-            ELSE IF(componentNumber==2) THEN
-              !calculate v
-              VALUE=EXP((X(1)-X(2))/10.0_DP)+EXP((X(2)-X(3))/10.0_DP)
-            ELSE IF(componentNumber==3) THEN
-              !calculate w
-              VALUE=EXP((X(3)-X(1))/10.0_DP)+EXP((X(2)-X(3))/10.0_DP)
-            ELSE IF(componentNumber==4) THEN
-              !calculate p
-              VALUE=1.0_DP/10.0_DP*(2.0_DP*MU_PARAM*EXP((X(1)-X(2))/10.0_DP)- & 
-                & 2.0_DP*MU_PARAM*EXP((X(3)-X(1))/10.0_DP)+RHO_PARAM*10.0_DP*EXP((X(1)-X(3))/10.0_DP)+ & 
-                & RHO_PARAM*10.0_DP*EXP((X(2)-X(1))/10.0_DP))
-            ELSE
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
-            END IF
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
-              & " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE(NO_GLOBAL_DERIV)
-            IF(componentNumber==1) THEN
-              !calculate u
-              VALUE=0.0_DP
-            ELSE IF(componentNumber==2) THEN
-              !calculate v
-              VALUE=-2.0_DP*MU_PARAM*(2.0_DP*EXP(X(1)-X(2))+EXP(X(2)-X(3)))
-            ELSE IF(componentNumber==3) THEN
-              !calculate w
-              VALUE=-2.0_DP*MU_PARAM*(2.0_DP*EXP(X(3)-X(1))+EXP(X(2)-X(3)))
-            ELSE IF(componentNumber==4) THEN
-              !calculate p
-              VALUE=0.0_DP
-            ELSE
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
-            END IF
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)                                    
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
-              & " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE DEFAULT
-          LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(variable_type,"*",ERR,ERROR))// &
-            & " is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ELSE 
-        LOCAL_ERROR="The number of components does not correspond to the number of dimensions."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END IF
-      
-    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_3)
-      IF(NUMBER_OF_DIMENSIONS==3.AND.NUMBER_OF_COMPONENTS==4) THEN
-        !Sine/cosine function
-        MU_PARAM = MATERIALS_PARAMETERS(1)
-        RHO_PARAM = MATERIALS_PARAMETERS(2)
-        SELECT CASE(variable_type)
-        CASE(FIELD_U_VARIABLE_TYPE)
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE(NO_GLOBAL_DERIV)
-            IF(componentNumber==1) THEN
-              !calculate u
-              VALUE=SIN(2.0_DP*PI*X(1)/10.0_DP)*SIN(2.0_DP*PI*X(2)/10.0_DP)*SIN(2.0_DP*PI*X(3)/10.0_DP)
-            ELSE IF(componentNumber==2) THEN
-              !calculate v
-              VALUE=2.0_DP*COS(2.0_DP*PI*x(1)/10.0_DP)*SIN(2.0_DP*PI*X(3)/10.0_DP)*COS(2.0_DP*PI*X(2)/10.0_DP)
-            ELSE IF(componentNumber==3) THEN
-              !calculate w
-              VALUE=-COS(2.0_DP*PI*X(1)/10.0_DP)*SIN(2.0_DP*PI*X(2)/10.0_DP)*COS(2.0_DP*PI*X(3)/10.0_DP)
-            ELSE IF(componentNumber==4) THEN
-              !calculate p
-              VALUE=-COS(2.0_DP*PI*X(1)/10.0_DP)*(-12.0_DP*MU_PARAM*PI*SIN(2.0_DP*PI*X(2)/10.0_DP)* & 
-                & SIN(2.0_DP*PI*X(3)/10.0_DP)-RHO_PARAM*COS(2.0_DP*PI*X(1)/10.0_DP)*10.0_DP+ &
-                & 2.0_DP*RHO_PARAM*COS(2.0_DP*PI*X(1)/10.0_DP)*10.0_DP*COS(2.0_DP*PI*X(3)/10.0_DP)**2- &
-                & RHO_PARAM*COS(2.0_DP*PI*X(1)/10.0_DP)*10.0_DP*COS(2.0_DP*PI*X(2)/10.0_DP)**2)/10.0_DP/2.0_DP
-            ELSE
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
-            END IF
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
-              & " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE(NO_GLOBAL_DERIV)
-            IF(componentNumber==1) THEN
-              !calculate u
-              VALUE=0.0_DP
-            ELSE IF(componentNumber==2) THEN
-              !calculate v
-              VALUE=36*MU_PARAM*PI**2/10.0_DP**2*COS(2.0_DP*PI*X(2)/10.0_DP)*SIN(2.0_DP*PI*X(3)/10.0_DP)* & 
-                & COS(2.0_DP*PI*X(1)/10.0_DP)
-            ELSE IF(componentNumber==3) THEN
-              !calculate w
-              VALUE=0.0_DP
-            ELSE IF(componentNumber==4) THEN
-              !calculate p
-              VALUE=0.0_DP
-            ELSE
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
-            END IF
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)                                    
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
-              & " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE DEFAULT
-          LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(variable_type,"*",ERR,ERROR))// &
-            & " is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ELSE 
-        LOCAL_ERROR="The number of components does not correspond to the number of dimensions."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END IF
-      
-    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_4,EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_5)
-      IF(NUMBER_OF_DIMENSIONS==3.AND.NUMBER_OF_COMPONENTS==4) THEN
-        !Taylor-Green vortex solution
-        MU_PARAM = MATERIALS_PARAMETERS(1)
-        RHO_PARAM = MATERIALS_PARAMETERS(2)
-        SELECT CASE(variable_type)
-        CASE(FIELD_U_VARIABLE_TYPE)
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE(NO_GLOBAL_DERIV)
-            IF(componentNumber==1) THEN
-              !calculate u
-              VALUE=SIN(X(1)/10.0_DP*PI)*COS(X(2)/10.0_DP*PI)*EXP(-2.0_DP*MU_PARAM/RHO_PARAM*CURRENT_TIME)
-            ELSE IF(componentNumber==2) THEN
-              !calculate v
-              VALUE=-COS(X(1)/10.0_DP*PI)*SIN(X(2)/10.0_DP*PI)*EXP(-2.0_DP*MU_PARAM/RHO_PARAM*CURRENT_TIME)
-            ELSE IF(componentNumber==3) THEN
-              !calculate v
-              VALUE=0.0_DP
-              !                      VALUE=-COS(X(1))*SIN(X(2))
-            ELSE IF(componentNumber==4) THEN
-              !calculate p
-              VALUE=RHO_PARAM/4.0_DP*(COS(2.0_DP*X(1)/10.0_DP*PI)+COS(2.0_DP*X(2)/10.0_DP*PI))* &
-                & EXP(-4.0_DP*MU_PARAM/RHO_PARAM*CURRENT_TIME)                      
-              !                      VALUE=RHO_PARAM/4.0_DP*(COS(2.0_DP*X(1))+COS(2.0_DP*X(2)))
-            ELSE
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
-            END IF
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
-              & " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-          SELECT CASE(GLOBAL_DERIV_INDEX)
-          CASE(NO_GLOBAL_DERIV)
-            IF(componentNumber==1) THEN
-              !calculate u
-              VALUE=0.0_DP
-            ELSE IF(componentNumber==2) THEN
-              !calculate v
-              VALUE=0.0_DP         
-            ELSE IF(componentNumber==3) THEN
-              !calculate p
-              VALUE=0.0_DP
-            ELSE IF(componentNumber==4) THEN
-              !calculate p
-              VALUE=0.0_DP
-            ELSE
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
-            END IF
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)                                    
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-              & GLOBAL_DERIV_INDEX,"*",ERR,ERROR))// &
-              & " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE DEFAULT
-          LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(variable_type,"*",ERR,ERROR))// &
-            & " is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ELSE 
-        LOCAL_ERROR="The number of components does not correspond to the number of dimensions."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END IF
-    CASE DEFAULT
-      LOCAL_ERROR="The analytic function type of "// &
-        & TRIM(NUMBER_TO_VSTRING(ANALYTIC_FUNCTION_TYPE,"*",ERR,ERROR))// &
-        & " is invalid."
-      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-    END SELECT
-    
     EXITS("NAVIER_STOKES_ANALYTIC_FUNCTIONS_EVALUATE")
     RETURN
 999 ERRORSEXITS("NAVIER_STOKES_ANALYTIC_FUNCTIONS_EVALUATE",ERR,ERROR)
@@ -12939,7 +12052,7 @@ CONTAINS
   !>Calculates the face integration term of the finite element formulation for Navier-Stokes equation,
   !>required for pressure and multidomain boundary conditions. 
   !>portions based on DarcyEquation_FiniteElementFaceIntegrate by Adam Reeve.
-  SUBROUTINE NavierStokes_FiniteElementFaceIntegrate(equationsSet,elementNumber,dependentVariable,err,error,*)
+  SUBROUTINE NavierStokes_FiniteElementFaceIntegrate(equationsSet,elementNumber,dependentVariable,jacobianFlag,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<The equations set to calculate the RHS term for
@@ -13101,7 +12214,6 @@ CONTAINS
         CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,ERR,ERROR,*999)
         !Get access to geometric coordinates
         CALL FIELD_VARIABLE_GET(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,ERR,ERROR,*999)
-        meshComponentNumber=geometricVariable%COMPONENTS(1)%MESH_COMPONENT_NUMBER
         !Get the geometric distributed vector
         CALL FIELD_PARAMETER_SET_DATA_GET(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
           & geometricParameters,ERR,ERROR,*999)
@@ -13178,7 +12290,8 @@ CONTAINS
               IF (componentIdx2/=normalComponentIdx) THEN
                 ni=ni+1
                 DO componentIdx=1,dependentVariable%NUMBER_OF_COMPONENTS-1
-                  tangentProjection(ni,componentIdx)=DOT_PRODUCT(pointMetrics%GU(componentIdx2,:),pointMetrics%DX_DXI(componentIdx,:))
+                  tangentProjection(ni,componentIdx)=DOT_PRODUCT(pointMetrics%GU(componentIdx2,:), &
+                    & pointMetrics%DX_DXI(componentIdx,:))
                 END DO
               END IF
             END DO
@@ -13198,7 +12311,7 @@ CONTAINS
             boundaryInPlaneVector2 = ABS(boundaryInPlaneVector2/L2NORM(boundaryInPlaneVector2))
 
             ! Get the constitutive law (non-Newtonian) viscosity based on shear rate if needed
-            IF(equationsSet%SUBTYPE==EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE) THEN
+            IF(equationsSet%Specification(3)==EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE) THEN
               ! Get the gauss point based value returned from the CellML solver
               CALL Field_ParameterSetGetLocalGaussPoint(equationsSet%MATERIALS%MATERIALS_FIELD,FIELD_V_VARIABLE_TYPE, &
                 & FIELD_VALUES_SET_TYPE,gaussIdx,elementNumber,1,viscosity,err,error,*999)
@@ -13452,7 +12565,7 @@ CONTAINS
     couple1DTo3D = .FALSE.
     couple3DTo1D = .FALSE.
     boundary3D0DFound = .FALSE.
-    SELECT CASE(equationsSet%SUBTYPE)
+    SELECT CASE(equationsSet%Specification(3))
     ! 3 D   t y p e s :   I n t e g r a t e   b o u n d a r y   v a l u e s
     ! ------------------------------------------------------------------------
     CASE(EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE, &
@@ -13498,7 +12611,7 @@ CONTAINS
       ! Get constant max Courant (CFL) number (default 1.0)
       CALL FIELD_PARAMETER_SET_GET_CONSTANT(equationsSetField3D,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
        & 2,toleranceCourant,err,error,*999)
-      IF(equationsSet%SUBTYPE==EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE) THEN
+      IF(equationsSet%Specification(3)==EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE) THEN
         CALL FIELD_PARAMETER_SET_GET_CONSTANT(equationsSet%MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
           & FIELD_VALUES_SET_TYPE,1,muScale,err,error,*999)
       ELSE
@@ -13538,7 +12651,7 @@ CONTAINS
               & "*",ERR,ERROR))//" has violated the CFL condition "//TRIM(NUMBER_TO_VSTRING(courant, &
               & "*",ERR,ERROR))//" <= "//TRIM(NUMBER_TO_VSTRING(toleranceCourant,"*",ERR,ERROR))// &
               & ". Decrease timestep or increase CFL tolerance for the 3D Navier-Stokes problem."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END IF
         END IF
 
@@ -13574,7 +12687,7 @@ CONTAINS
             IF(ALLOCATED(decompElement%ELEMENT_FACES)) THEN
               faceNumber=decompElement%ELEMENT_FACES(faceIdx)
             ELSE
-              CALL FLAG_ERROR("Decomposition element faces is not allocated.",err,error,*999)
+              CALL FlagError("Decomposition element faces is not allocated.",err,error,*999)
             END IF
             face=>decomposition3D%TOPOLOGY%FACES%FACES(faceNumber)
             !This speeds things up but is also important, as non-boundary faces have an XI_DIRECTION that might
@@ -13589,7 +12702,7 @@ CONTAINS
             CASE DEFAULT
               LOCAL_ERROR="Face integration for basis type "//TRIM(NUMBER_TO_VSTRING(dependentBasis%TYPE,"*",ERR,ERROR))// &
                 & " is not yet implemented for Navier-Stokes."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
 
             faceBasis=>decomposition3D%DOMAIN(meshComponentNumber)%PTR%TOPOLOGY%FACES%FACES(faceNumber)%BASIS
@@ -13639,7 +12752,7 @@ CONTAINS
                & boundaryType==BOUNDARY_CONDITION_COUPLING_FLOW) THEN
                 couple3DTo1D = .TRUE.
                 ! Get the constitutive law (non-Newtonian) viscosity based on shear rate if needed
-                IF(equationsSet%SUBTYPE==EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE) THEN
+                IF(equationsSet%Specification(3)==EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE) THEN
                   ! Get the gauss point based value returned from the CellML solver
                   CALL Field_ParameterSetGetLocalGaussPoint(equationsSet%MATERIALS%MATERIALS_FIELD,FIELD_V_VARIABLE_TYPE, &
                     & FIELD_VALUES_SET_TYPE,gaussIdx,elementIdx,1,mu,err,error,*999)
@@ -13699,7 +12812,8 @@ CONTAINS
                 facePressure=facePressure+pressureGauss*faceNormal(componentIdx)*gaussWeight*pointMetrics%JACOBIAN
                 IF(boundaryType==BOUNDARY_CONDITION_COUPLING_STRESS .OR. &
                  & boundaryType==BOUNDARY_CONDITION_COUPLING_FLOW) THEN
-                  faceTraction = faceTraction + (viscousTerm(componentIdx) - pressureGauss)*faceNormal(componentIdx)*gaussWeight*pointMetrics%JACOBIAN
+                  faceTraction = faceTraction + (viscousTerm(componentIdx) - pressureGauss)* &
+                    & faceNormal(componentIdx)*gaussWeight*pointMetrics%JACOBIAN
                   !faceTraction = faceTraction + traction(componentIdx)*faceNormal(componentIdx)*gaussWeight*pointMetrics%JACOBIAN
                 END IF
               END DO !componentIdx
@@ -13773,7 +12887,7 @@ CONTAINS
         ELSE
           LOCAL_ERROR="Zero or negative area boundary detected on boundary "// &
             & TRIM(NUMBER_TO_VSTRING(boundaryID,"*",ERR,ERROR))//"."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END IF
       END DO
 
@@ -13790,48 +12904,48 @@ CONTAINS
           IF(ASSOCIATED(dependentField3D)) THEN
             !CALL Field_ParameterSetEnsureCreated(dependentField3D,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,err,error,*999)
           ELSE
-            CALL FLAG_ERROR("Coupled 3D dependent field is not associated.",err,error,*999)
+            CALL FlagError("Coupled 3D dependent field is not associated.",err,error,*999)
           END IF
           decomposition3D=>equations3D%EQUATIONS_MAPPING%NONLINEAR_MAPPING%RESIDUAL_VARIABLES(1)%PTR%FIELD%DECOMPOSITION
           IF(ASSOCIATED(decomposition3D)) THEN
             elementsMapping3D=>decomposition3D%DOMAIN(decomposition3D%MESH_COMPONENT_NUMBER)%PTR%MAPPINGS%ELEMENTS
             IF(.NOT.ASSOCIATED(elementsMapping3D)) THEN
-              CALL FLAG_ERROR("Coupled 3D elements mapping not associated.",err,error,*999)
+              CALL FlagError("Coupled 3D elements mapping not associated.",err,error,*999)
             END IF
           ELSE
-            CALL FLAG_ERROR("Coupled 3D decomposition not associated.",err,error,*999)
+            CALL FlagError("Coupled 3D decomposition not associated.",err,error,*999)
           END IF
         ELSE
-          CALL FLAG_ERROR("Equations set equations is not associated.",err,error,*999)
+          CALL FlagError("Equations set equations is not associated.",err,error,*999)
         END IF
         equationsSetField3D=>coupledEquationsSet%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD
         IF(.NOT.ASSOCIATED(equationsSetField3D)) THEN
-          CALL FLAG_ERROR("Equations set field (EQUATIONS_SET_FIELD_FIELD) is not associated.",err,error,*999)
+          CALL FlagError("Equations set field (EQUATIONS_SET_FIELD_FIELD) is not associated.",err,error,*999)
         END IF
         dependentVariable3D=>equations3D%EQUATIONS_MAPPING%NONLINEAR_MAPPING%RESIDUAL_VARIABLES(1)%PTR
         IF(.NOT.ASSOCIATED(dependentVariable3D)) THEN
-          CALL FLAG_ERROR("Dependent Variable 3D is not associated.",err,error,*999)
+          CALL FlagError("Dependent Variable 3D is not associated.",err,error,*999)
         END IF
       ELSE
-        CALL FLAG_ERROR("Coupled 3D equations set is not associated.",err,error,*999)
+        CALL FlagError("Coupled 3D equations set is not associated.",err,error,*999)
       END IF
       ! Check for a 1D equations set
       IF(ASSOCIATED(equationsSet)) THEN
         dependentField1D=>equationsSet%DEPENDENT%DEPENDENT_FIELD
         IF(.NOT.ASSOCIATED(dependentField1D)) THEN
-          CALL FLAG_ERROR("Coupled 1D Dependent field is not associated.",err,error,*999)
+          CALL FlagError("Coupled 1D Dependent field is not associated.",err,error,*999)
         END IF
         independentField1D=>equationsSet%INDEPENDENT%INDEPENDENT_FIELD
         IF(.NOT.ASSOCIATED(independentField1D)) THEN
-          CALL FLAG_ERROR("Coupled 1D Independent field is not associated.",err,error,*999)
+          CALL FlagError("Coupled 1D Independent field is not associated.",err,error,*999)
         END IF
       ELSE
-        CALL FLAG_ERROR("1D equations set is not associated.",err,error,*999)
+        CALL FlagError("1D equations set is not associated.",err,error,*999)
       END IF
     CASE DEFAULT
-      LOCAL_ERROR="Boundary flux calcluation for equations type "//TRIM(NUMBER_TO_VSTRING(equationsSet%SUBTYPE,"*",ERR,ERROR))// &
-        & " is not yet implemented for Navier-Stokes."
-      CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)     
+      LOCAL_ERROR="Boundary flux calcluation for equations type "//TRIM(NUMBER_TO_VSTRING(equationsSet%Specification(3),"*", &
+        & ERR,ERROR))//" is not yet implemented for Navier-Stokes."
+      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)     
     END SELECT
 
     !CALL Field_ParameterSetEnsureCreated(equationsSetField3D,FIELD_U_VARIABLE_TYPE, &
@@ -13879,7 +12993,7 @@ CONTAINS
           IF(ABS(normal)<ZERO_TOLERANCE) THEN
             LOCAL_ERROR="Characteristic normal wave not specified for couping node " &
               & //TRIM(NUMBER_TO_VSTRING(coupledNodeNumber,"*",ERR,ERROR))//"."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END IF
           IF(couple3DTo1D) THEN
             ! Convert integrated 3D values to 1D flow and pressure.
@@ -13939,7 +13053,7 @@ CONTAINS
           IF(ALLOCATED(decompElement%ELEMENT_FACES)) THEN
             faceNumber=decompElement%ELEMENT_FACES(faceIdx)
           ELSE
-            CALL FLAG_ERROR("Decomposition element faces is not allocated.",err,error,*999)
+            CALL FlagError("Decomposition element faces is not allocated.",err,error,*999)
           END IF
           face=>decomposition3D%TOPOLOGY%FACES%FACES(faceNumber)
           IF(.NOT.(face%BOUNDARY_FACE)) CYCLE
@@ -13972,7 +13086,7 @@ CONTAINS
           CASE DEFAULT
             LOCAL_ERROR="Face integration for basis type "//TRIM(NUMBER_TO_VSTRING(dependentBasis2%TYPE,"*",ERR,ERROR))// &
               & " is not yet implemented for Navier-Stokes."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
           normalDifference=L2NORM(elementNormal-unitNormal)
           normalTolerance=0.1_DP
@@ -13996,7 +13110,7 @@ CONTAINS
                     & FIELD_PRESSURE_VALUES_SET_TYPE,1,1,nodeNumber,4,p3D,err,error,*999)
                 ELSE IF(boundaryType==BOUNDARY_CONDITION_COUPLING_FLOW) THEN
                   LOCAL_ERROR="Coupling flow boundary type not yet implemented for 3D side of coupled 3D-1D problems."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)                         
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)                         
                 END IF
               ELSE
                 IF(boundaryType==BOUNDARY_CONDITION_FIXED_CELLML) THEN
@@ -14043,7 +13157,7 @@ CONTAINS
     !allocate array for mpi communication
     IF(numberOfComputationalNodes>1) THEN !use mpi
       ALLOCATE(globalConverged(numberOfComputationalNodes),STAT=ERR) 
-      IF(ERR/=0) CALL FLAG_ERROR("Could not allocate global convergence check array.",ERR,ERROR,*999)
+      IF(ERR/=0) CALL FlagError("Could not allocate global convergence check array.",ERR,ERROR,*999)
       CALL MPI_ALLGATHER(convergedFlag,1,MPI_LOGICAL,globalConverged,1,MPI_LOGICAL, &
        & COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPI_IERROR,ERR,ERROR,*999)
@@ -14072,10 +13186,9 @@ CONTAINS
       CALL FIELD_PARAMETER_SET_UPDATE_FINISH(dependentField1D,FIELD_U2_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,err,error,*999)
     END IF
 
-    CALL EXITS("NavierStokes_CalculateBoundaryFlux")
+    EXITS("NavierStokes_CalculateBoundaryFlux")
     RETURN
-999 CALL ERRORS("NavierStokes_CalculateBoundaryFlux",err,error)
-    CALL EXITS("NavierStokes_CalculateBoundaryFlux")
+999 ERRORSEXITS("NavierStokes_CalculateBoundaryFlux",err,error)
     RETURN 1
   END SUBROUTINE
 
@@ -14135,7 +13248,7 @@ CONTAINS
       ELSE 
         localError="The solver number of "//TRIM(NUMBER_TO_VSTRING(solverNumber,"*",err,error))// &
          & " does not correspond with the Navier-Stokes solver number for 1D-0D fluid coupling."
-        CALL FLAG_ERROR(localError,ERR,ERROR,*999)
+        CALL FlagError(localError,ERR,ERROR,*999)
       END IF
     CASE(PROBLEM_MULTISCALE_NAVIER_STOKES_SUBTYPE)
       solverNumber = solver%GLOBAL_NUMBER
@@ -14151,7 +13264,7 @@ CONTAINS
       ELSE 
         localError="The solver number of "//TRIM(NUMBER_TO_VSTRING(solverNumber,"*",err,error))// &
          & " does not correspond with the Navier-Stokes solver number for 1D-0D fluid coupling."
-        CALL FLAG_ERROR(localError,ERR,ERROR,*999)
+        CALL FlagError(localError,ERR,ERROR,*999)
       END IF
     CASE DEFAULT
       localError="Problem subtype "//TRIM(NUMBER_TO_VSTRING(controlLoop%PROBLEM%specification(3),"*",err,error))// &
@@ -14325,7 +13438,7 @@ CONTAINS
       IF(numberOfComputationalNodes>1) THEN !use mpi
         !allocate array for mpi communication
         ALLOCATE(globalConverged(numberOfComputationalNodes),STAT=ERR) 
-        IF(ERR/=0) CALL FLAG_ERROR("Could not allocate global convergence check array.",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate global convergence check array.",ERR,ERROR,*999)
         CALL MPI_ALLGATHER(localConverged,1,MPI_LOGICAL,globalConverged,1,MPI_LOGICAL, &
          & COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPI_IERROR,ERR,ERROR,*999)
@@ -14359,8 +13472,7 @@ CONTAINS
 
     EXITS("NavierStokes_Couple1D0D")
     RETURN
-999 CALL ERRORS("NavierStokes_Couple1D0D",err,error)
-    CALL EXITS("NavierStokes_Couple1D0D")
+999 ERRORSEXITS("NavierStokes_Couple1D0D",err,error)
     RETURN 1
 
   END SUBROUTINE
@@ -14395,20 +13507,20 @@ CONTAINS
     REAL(DP) :: absoluteCouplingTolerance2,relativeCouplingTolerance
     LOGICAL :: boundaryNode,boundaryConverged(30),localConverged,globalConverged
 
-    CALL ENTERS("NavierStokes_Couple3D1D",ERR,ERROR,*999)
+    ENTERS("NavierStokes_Couple3D1D",ERR,ERROR,*999)
 
     !Get solvers based on the problem type
-    SELECT CASE(controlLoop%PROBLEM%SUBTYPE)
+    SELECT CASE(controlLoop%PROBLEM%SPECIFICATION(3))
     CASE(PROBLEM_MULTISCALE_NAVIER_STOKES_SUBTYPE)
       iterativeLoop=>controlLoop%WHILE_LOOP
       iteration = iterativeLoop%ITERATION_NUMBER
       timestep = controlLoop%PARENT_LOOP%TIME_LOOP%ITERATION_NUMBER
       absoluteCouplingTolerance = iterativeLoop%ABSOLUTE_TOLERANCE
-      absoluteCouplingTolerance2 = iterativeLoop%ABSOLUTE_TOLERANCE2
+      absoluteCouplingTolerance2 = iterativeLoop%ABSOLUTE_TOLERANCE
       relativeCouplingTolerance = iterativeLoop%RELATIVE_TOLERANCE
       IF(.NOT. ASSOCIATED(iterativeLoop)) THEN
         localError="Iterative loop is not associated for 3D-1D fluid coupling."
-        CALL FLAG_ERROR(localError,ERR,ERROR,*999)
+        CALL FlagError(localError,ERR,ERROR,*999)
       END IF
       ! 1D solver & equations pointers
       solver1dNavierStokesNumber=2
@@ -14426,21 +13538,21 @@ CONTAINS
               independentField=>equationsSet1D%INDEPENDENT%INDEPENDENT_FIELD
               IF(.NOT. ASSOCIATED(independentField)) THEN
                 localError="Independent field 1D is not associated."
-                CALL FLAG_ERROR(localError,ERR,ERROR,*999)
+                CALL FlagError(localError,ERR,ERROR,*999)
               END IF
             ELSE
-              CALL FLAG_ERROR("Dependent field 1D is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Dependent field 1D is not associated.",ERR,ERROR,*999)
             END IF
           ELSE
-            CALL FLAG_ERROR("Equations set 1D is not associated.",err,error,*999)
+            CALL FlagError("Equations set 1D is not associated.",err,error,*999)
           END IF
         ELSE
           localError="Boundary conditions are not associated for 3D-1D fluid coupling."
-          CALL FLAG_ERROR(localError,ERR,ERROR,*999)
+          CALL FlagError(localError,ERR,ERROR,*999)
         END IF
       ELSE
         localError="The 1D Navier-Stokes solver is not associated for 3D-1D fluid coupling."
-        CALL FLAG_ERROR(localError,ERR,ERROR,*999)
+        CALL FlagError(localError,ERR,ERROR,*999)
       END IF
       ! 3D equations pointers
       solver3dNavierStokesNumber = 1
@@ -14451,15 +13563,15 @@ CONTAINS
         dependentField3D=>equationsSet3D%DEPENDENT%DEPENDENT_FIELD
         IF(.NOT. ASSOCIATED(dependentField3D)) THEN
           localError="Dependent field 3D is not associated."
-          CALL FLAG_ERROR(localError,ERR,ERROR,*999)
+          CALL FlagError(localError,ERR,ERROR,*999)
         END IF
       ELSE
-        CALL FLAG_ERROR("Equations set 3D is not associated.",err,error,*999)
+        CALL FlagError("Equations set 3D is not associated.",err,error,*999)
       END IF
     CASE DEFAULT
-      localError="Problem subtype "//TRIM(NUMBER_TO_VSTRING(controlLoop%PROBLEM%SUBTYPE,"*",err,error))// &
+      localError="Problem subtype "//TRIM(NUMBER_TO_VSTRING(controlLoop%PROBLEM%SPECIFICATION(3),"*",err,error))// &
         & " is not valid for 3D-1D Navier-Stokes fluid coupling."
-      CALL FLAG_ERROR(localError,ERR,ERROR,*999)
+      CALL FlagError(localError,ERR,ERROR,*999)
     END SELECT
 
     !Get the number of local nodes
@@ -14468,7 +13580,7 @@ CONTAINS
     IF(ASSOCIATED(domainNodes)) THEN
       numberOfLocalNodes1D=domainNodes%NUMBER_OF_NODES
     ELSE
-      CALL FLAG_ERROR("Domain nodes are not associated.",err,error,*999)
+      CALL FlagError("Domain nodes are not associated.",err,error,*999)
     END IF
 
     boundaryNumber = 0
@@ -14508,7 +13620,7 @@ CONTAINS
           IF(boundaryType1D==BOUNDARY_CONDITION_COUPLING_FLOW) THEN
             localError="Boundary type for node number "//TRIM(NUMBER_TO_VSTRING(userNodeNumber,"*",err,error))// &
               & " is set as both FLOW and STRESS for 3D-1D Navier-Stokes fluid coupling."
-            CALL FLAG_ERROR(localError,ERR,ERROR,*999)
+            CALL FlagError(localError,ERR,ERROR,*999)
           END IF
           boundaryType1D = BOUNDARY_CONDITION_COUPLING_STRESS
         END IF
@@ -14598,7 +13710,7 @@ CONTAINS
     IF(numberOfComputationalNodes>1) THEN !use mpi
       !allocate array for mpi communication
 
-      IF(ERR/=0) CALL FLAG_ERROR("Could not allocate global convergence check array.",ERR,ERROR,*999)
+      IF(ERR/=0) CALL FlagError("Could not allocate global convergence check array.",ERR,ERROR,*999)
       CALL MPI_ALLREDUCE(localConverged,globalConverged,1,MPI_LOGICAL,MPI_LAND,COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
       IF(globalConverged) THEN
@@ -14644,10 +13756,9 @@ CONTAINS
        & DYNAMIC_VARIABLE_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE,FIELD_RESIDUAL_SET_TYPE,1.0_DP,ERR,ERROR,*999)
     END IF
 
-    CALL EXITS("NavierStokes_Couple3D1D")
+    EXITS("NavierStokes_Couple3D1D")
     RETURN
-999 CALL ERRORS("NavierStokes_Couple3D1D",err,error)
-    CALL EXITS("NavierStokes_Couple3D1D")
+999 ERRORSEXITS("NavierStokes_Couple3D1D",err,error)
     RETURN 1
 
   END SUBROUTINE
@@ -14686,9 +13797,9 @@ CONTAINS
     LOGICAL :: branchConverged(100),localConverged,MPI_LOGICAL,boundaryNode,fluxDiverged
     LOGICAL, ALLOCATABLE :: globalConverged(:)
 
-    CALL ENTERS("NavierStokes_CoupleCharacteristics",ERR,ERROR,*999)
+    ENTERS("NavierStokes_CoupleCharacteristics",ERR,ERROR,*999)
 
-    SELECT CASE(controlLoop%PROBLEM%SUBTYPE)
+    SELECT CASE(controlLoop%PROBLEM%SPECIFICATION(3))
     CASE(PROBLEM_TRANSIENT1D_NAVIER_STOKES_SUBTYPE, &
        & PROBLEM_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE, &
        & PROBLEM_MULTISCALE_NAVIER_STOKES_SUBTYPE)
@@ -14890,7 +14001,7 @@ CONTAINS
     IF(numberOfComputationalNodes>1) THEN !use mpi
       !allocate array for mpi communication
       ALLOCATE(globalConverged(numberOfComputationalNodes),STAT=ERR) 
-      IF(ERR/=0) CALL FLAG_ERROR("Could not allocate global convergence check array.",ERR,ERROR,*999)
+      IF(ERR/=0) CALL FlagError("Could not allocate global convergence check array.",ERR,ERROR,*999)
       CALL MPI_ALLGATHER(localConverged,1,MPI_LOGICAL,globalConverged,1,MPI_LOGICAL, &
        & COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPI_IERROR,ERR,ERROR,*999)
@@ -15193,8 +14304,6 @@ CONTAINS
         &  PROBLEM_PGM_NAVIER_STOKES_SUBTYPE, &
         &  PROBLEM_QUASISTATIC_NAVIER_STOKES_SUBTYPE, & 
         &  PROBLEM_TRANSIENT_NAVIER_STOKES_SUBTYPE, &
-        &  PROBLEM_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE, &
-        &  PROBLEM_MULTISCALE_NAVIER_STOKES_SUBTYPE, &
         &  PROBLEM_ALE_NAVIER_STOKES_SUBTYPE)
         ! Do nothing
       CASE(PROBLEM_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE, &
@@ -15211,12 +14320,12 @@ CONTAINS
             END IF
             CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(navierStokesSolver,err,error,*999)
           ELSE
-            CALL FLAG_ERROR("Navier-Stokes solver not associated.",ERR,ERROR,*999)
+            CALL FlagError("Navier-Stokes solver not associated.",ERR,ERROR,*999)
           END IF
         CASE DEFAULT
           localError="The control loop type of "//TRIM(NUMBER_TO_VSTRING(controlLoop%LOOP_TYPE,"*",err,error))// &
             & " is invalid for the specified Navier-Stokes problem type."
-          CALL FLAG_ERROR(localError,err,error,*999)
+          CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE(PROBLEM_TRANSIENT1D_NAVIER_STOKES_SUBTYPE, &
         &  PROBLEM_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE)
@@ -15282,7 +14391,7 @@ CONTAINS
                 DO equationsSetIdx = 1,solverMapping%NUMBER_OF_EQUATIONS_SETS
                   equationsSet=>solverMapping%EQUATIONS_SETS(equationsSetIdx)%PTR
                   IF(ASSOCIATED(equationsSet)) THEN
-                    SELECT CASE(equationsSet%SUBTYPE)
+                    SELECT CASE(equationsSet%Specification(3))
                     ! --- 3 D   T r a n s i e n t   N a v i e r - S t o k e s   E q u a t i o n s---
                     CASE(EQUATIONS_SET_LAPLACE_NAVIER_STOKES_SUBTYPE, &
                        & EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE, &
@@ -15297,12 +14406,12 @@ CONTAINS
                       ! 3D-1D iteration
                       iteration3D1D=controlLoop%PARENT_LOOP%WHILE_LOOP%ITERATION_NUMBER
                       ! 1D-0D
-                      IF (controlLoop%PROBLEM%SUBTYPE==PROBLEM_MULTISCALE_NAVIER_STOKES_SUBTYPE) THEN
+                      IF (controlLoop%PROBLEM%SPECIFICATION(3)==PROBLEM_MULTISCALE_NAVIER_STOKES_SUBTYPE) THEN
                         iterativeWhileLoop2=>controlLoop%PARENT_LOOP%SUB_LOOPS(1)%PTR                      
                         ! 1D
                         CALL CONTROL_LOOP_SUB_LOOP_GET(iterativeWhileLoop2,2,iterativeWhileLoop3,ERR,ERROR,*999)
                         IF (.NOT. ASSOCIATED(iterativeWhileLoop3)) THEN
-                          CALL FLAG_ERROR("Could not find 1D subloop!",err,error,*999)
+                          CALL FlagError("Could not find 1D subloop!",err,error,*999)
                         END IF
                         IF(iterativeWhileLoop3%NUMBER_OF_SUB_LOOPS==0) THEN
                           DO solverIdx2=1,iterativeWhileLoop3%SOLVERS%NUMBER_OF_SOLVERS
@@ -15311,12 +14420,12 @@ CONTAINS
                               DO equationsSetIdx2 = 1,solverMapping2%NUMBER_OF_EQUATIONS_SETS
                                 equationsSet2=>solverMapping2%EQUATIONS_SETS(equationsSetIdx)%PTR
                                 IF(ASSOCIATED(equationsSet2)) THEN
-                                  SELECT CASE(equationsSet2%SUBTYPE)
+                                  SELECT CASE(equationsSet2%SPECIFICATION(3))
                                   CASE(EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE, &
                                     &  EQUATIONS_SET_COUPLED1D0D_NAVIER_STOKES_SUBTYPE)
                                     IF(ASSOCIATED(coupledEquationsSet)) THEN
                                       localError="Coupled 3D-1D equations set already found for multiscale Navier-Stokes problem."
-                                      CALL FLAG_ERROR(localError,err,error,*999)                                     
+                                      CALL FlagError(localError,err,error,*999)                                     
                                     ELSE
                                       coupledEquationsSet=>equationsSet2
                                     END IF
@@ -15324,15 +14433,15 @@ CONTAINS
                                     ! Do nothing
                                   END SELECT
                                 ELSE
-                                  CALL FLAG_ERROR("Equations set 2 is not associated.",err,error,*999)
+                                  CALL FlagError("Equations set 2 is not associated.",err,error,*999)
                                 END IF
                               END DO ! equations set loop 2
                             ELSE
-                              CALL FLAG_ERROR("Solver mapping 2 is not associated.",ERR,ERROR,*999)
+                              CALL FlagError("Solver mapping 2 is not associated.",ERR,ERROR,*999)
                             END IF !
                           END DO ! solverIdx2
                         ELSE 
-                          CALL FLAG_ERROR("Unrecognized subloop pattern for 3D-1D-0D!.",ERR,ERROR,*999)
+                          CALL FlagError("Unrecognized subloop pattern for 3D-1D-0D!.",ERR,ERROR,*999)
                         END IF ! check for futher subloops
                       END IF
                       ! ! Have the 3D N-S equations set, now find the 1D from the parent loop
@@ -15351,7 +14460,7 @@ CONTAINS
                       !               &  EQUATIONS_SET_COUPLED1D0D_NAVIER_STOKES_SUBTYPE))
                       !               IF(ASSOCIATED(coupledEquationsSet)) THEN
                       !                 localError="Coupled 3D-1D equations set already found for multiscale Navier-Stokes problem."
-                      !                 CALL FLAG_ERROR(localError,err,error,*999)                                     
+                      !                 CALL FlagError(localError,err,error,*999)                                     
                       !               ELSE
                       !                 coupledEquationsSet=>equationsSet2
                       !               END IF
@@ -15359,11 +14468,11 @@ CONTAINS
                       !               ! Do nothing
                       !             END SELECT
                       !           ELSE
-                      !             CALL FLAG_ERROR("Equations set 2 is not associated.",err,error,*999)
+                      !             CALL FlagError("Equations set 2 is not associated.",err,error,*999)
                       !           END IF
                       !         END DO ! equations set loop 2
                       !       ELSE
-                      !         CALL FLAG_ERROR("Solver mapping 2 is not associated.",ERR,ERROR,*999)
+                      !         CALL FlagError("Solver mapping 2 is not associated.",ERR,ERROR,*999)
                       !       END IF !
                       !     END DO ! solverIdx2
                       !   ELSE IF(subloop%LOOP_TYPE==PROBLEM_CONTROL_WHILE_LOOP_TYPE) THEN
@@ -15375,7 +14484,7 @@ CONTAINS
                         CALL NavierStokes_CalculateBoundaryFlux(equationsSet,coupledEquationsSet,iteration3D1D, &
                           & convergedFlag,ERR,ERROR,*999)
                         ! Check for 3D-0D convergence
-                        IF (controlLoop%PROBLEM%SUBTYPE==PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE) THEN
+                        IF (controlLoop%PROBLEM%SPECIFICATION(3)==PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE) THEN
                           IF (convergedFlag) THEN
                             controlLoop%PARENT_LOOP%WHILE_LOOP%CONTINUE_LOOP=.FALSE.
                             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"3D-0D converged, iterations: ", &
@@ -15386,23 +14495,23 @@ CONTAINS
                         END IF
                       END IF
                     CASE DEFAULT  
-                      localError="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(equationsSet%SUBTYPE,"*",err,error))// &
+                      localError="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(equationsSet%Specification(3),"*",err,error))// &
                         & " is not valid for a dynamic solver in a simple loop for a multiscale Navier-Stokes problem."
-                      CALL FLAG_ERROR(localError,err,error,*999)
+                      CALL FlagError(localError,err,error,*999)
                     END SELECT
                   ELSE
-                    CALL FLAG_ERROR("Equations set is not associated.",err,error,*999)
+                    CALL FlagError("Equations set is not associated.",err,error,*999)
                   END IF
                 END DO ! equations set loop 
               ELSE
-                CALL FLAG_ERROR("Solver mapping is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
               END IF !
             CASE(SOLVER_DAE_TYPE)
               ! CellML solver simple loop- do nothing
             CASE DEFAULT
               localError="The solve type of "//TRIM(NUMBER_TO_VSTRING(solver%SOLVE_TYPE,"*",ERR,ERROR))// &
                 & " is invalid for a simple loop in a Navier-Stokes multiscale problem."
-              CALL FLAG_ERROR(localError,ERR,ERROR,*999)
+              CALL FlagError(localError,ERR,ERROR,*999)
             END SELECT   
           END DO ! solverIdx
         CASE(PROBLEM_CONTROL_TIME_LOOP_TYPE)
@@ -15423,7 +14532,7 @@ CONTAINS
                     DO subloopIdx3=1,subloop2%NUMBER_OF_SUB_LOOPS
                       subloop3=>subloop2%SUB_LOOPS(subloopIdx3)%PTR
                       IF(subloop3%NUMBER_OF_SUB_LOOPS>0) THEN
-                        CALL FLAG_ERROR("Unrecognized number of subloops in 3D-1D-0D.",ERR,ERROR,*999)
+                        CALL FlagError("Unrecognized number of subloops in 3D-1D-0D.",ERR,ERROR,*999)
                       ELSE
                         IF (ASSOCIATED(subloop3%SOLVERS)) THEN
                           DO solverIdx=1,subloop3%SOLVERS%NUMBER_OF_SOLVERS
@@ -15433,7 +14542,7 @@ CONTAINS
                               IF(ASSOCIATED(solverMapping)) THEN
                                 CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(solver,err,error,*999)
                               ELSE
-                                CALL FLAG_ERROR("1D Solver mapping is not associated where expected for multiscale.",ERR,ERROR,*999)
+                                CALL FlagError("1D Solver mapping is not associated where expected for multiscale.",ERR,ERROR,*999)
                               END IF
                             END IF !
                           END DO ! Solver loop
@@ -15451,7 +14560,7 @@ CONTAINS
                           IF(ASSOCIATED(solverMapping)) THEN
                             CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(solver,err,error,*999)
                           ELSE
-                            CALL FLAG_ERROR("3D Solver mapping is not associated where expected for multiscale.",ERR,ERROR,*999)
+                            CALL FlagError("3D Solver mapping is not associated where expected for multiscale.",ERR,ERROR,*999)
                           END IF
                         END IF !
                       END DO ! solverIdx
@@ -15459,11 +14568,11 @@ CONTAINS
                   END IF
                 END DO ! subloop2
               ELSE
-                CALL FLAG_ERROR("Navier-Stokes Multiscale problem level 2 loop has no subloops.",ERR,ERROR,*999)
+                CALL FlagError("Navier-Stokes Multiscale problem level 2 loop has no subloops.",ERR,ERROR,*999)
               END IF
             END DO ! subloop 1
           ELSE
-            CALL FLAG_ERROR("Navier-Stokes Multiscale problem time loop has no subloops.",ERR,ERROR,*999)
+            CALL FlagError("Navier-Stokes Multiscale problem time loop has no subloops.",ERR,ERROR,*999)
           END IF
         CASE(PROBLEM_CONTROL_WHILE_LOOP_TYPE)
           ! TODO: here we get loop type by label- may need to think of a more robust way to do this
@@ -15478,11 +14587,11 @@ CONTAINS
             CALL NavierStokes_Couple3D1D(controlLoop,err,error,*999)
           CASE("1D-0D Iterative Coupling Convergence Loop")
             NULLIFY(navierStokesSolver1D,navierStokesSolver3D)
-            ! TODO: make this more general!
+            ! TODO: make this more general!e
             navierStokesSolver1D=>controlLoop%SUB_LOOPS(2)%PTR%SOLVERS%SOLVERS(2)%PTR
             ! update 1D/0D coupling parameters and check convergence
             CALL NavierStokes_Couple1D0D(controlLoop,navierStokesSolver1D,err,error,*999)
-            IF (controlLoop%WHILE_LOOP%CONTINUE_LOOP==.FALSE.) THEN
+            IF (controlLoop%WHILE_LOOP%CONTINUE_LOOP .EQV. .FALSE.) THEN
               ! TODO: make this more general!
               navierStokesSolver3D=>controlLoop%PARENT_LOOP%SUB_LOOPS(2)%PTR%SOLVERS%SOLVERS(1)%PTR
               iteration3D1D = controlLoop%PARENT_LOOP%WHILE_LOOP%ITERATION_NUMBER
@@ -15492,7 +14601,7 @@ CONTAINS
                 CALL NavierStokes_CalculateBoundaryFlux(equationsSet,coupledEquationsSet,iteration3D1D, &
                   & convergedFlag,ERR,ERROR,*999)
               ELSE
-                CALL FLAG_ERROR("Could not locate 3D solver from 1d-0d subloop",ERR,ERROR,*999)
+                CALL FlagError("Could not locate 3D solver from 1d-0d subloop",ERR,ERROR,*999)
               END IF
             END IF
           CASE("1D Iterative Loop")
@@ -15514,12 +14623,12 @@ CONTAINS
           CASE DEFAULT
             localError="The iterative loop label of "//label// &
               & " does not correspond to a recognised loop type for a Navier-Stokes multiscale problem."
-            CALL FLAG_ERROR(localError,ERR,ERROR,*999)
+            CALL FlagError(localError,ERR,ERROR,*999)
           END SELECT   
         CASE DEFAULT
           localError="The control loop type of "//TRIM(NUMBER_TO_VSTRING(controlLoop%LOOP_TYPE,"*",err,error))// &
             & " is invalid for a Coupled 1D0D Navier-Stokes problem."
-          CALL FLAG_ERROR(localError,err,error,*999)
+          CALL FlagError(localError,err,error,*999)
         END SELECT
 
       CASE DEFAULT
@@ -15582,7 +14691,7 @@ CONTAINS
 
     ! Preliminary checks; get field and domain pointers
     IF(ASSOCIATED(equationsSet)) THEN
-      SELECT CASE(equationsSet%SUBTYPE)
+      SELECT CASE(equationsSet%Specification(3))
       CASE(EQUATIONS_SET_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE, &
         &  EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE, &
         &  EQUATIONS_SET_COUPLED1D0D_NAVIER_STOKES_SUBTYPE, &
@@ -15602,20 +14711,20 @@ CONTAINS
             dependentDomain=>dependentField%DECOMPOSITION%DOMAIN(dependentField% &
               & DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR
             IF(.NOT.ASSOCIATED(dependentDomain)) THEN
-              CALL FLAG_ERROR("Dependent domain is not associated.",err,error,*999)
+              CALL FlagError("Dependent domain is not associated.",err,error,*999)
             END IF
           ELSE
-            CALL FLAG_ERROR("Geometric field is not associated.",err,error,*999)
+            CALL FlagError("Geometric field is not associated.",err,error,*999)
           END IF
           materialsField=>equations%INTERPOLATION%MATERIALS_FIELD
           IF(.NOT.ASSOCIATED(materialsField)) THEN
-            CALL FLAG_ERROR("Materials field is not associated.",err,error,*999)
+            CALL FlagError("Materials field is not associated.",err,error,*999)
           END IF
         ELSE
           CALL FlagError("Problem is not associated.",err,error,*999)
         END IF
       CASE DEFAULT  
-        localError="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(equationsSet%SUBTYPE,"*",err,error))// &
+        localError="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(equationsSet%Specification(3),"*",err,error))// &
           & " is not valid for a Navier-Stokes multiscale boundary update."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -15701,7 +14810,7 @@ CONTAINS
                 IF(ABoundary < ZERO_TOLERANCE) THEN
                   localError="Negative area 1D non-reflecting boundary detected at node "//TRIM(NUMBER_TO_VSTRING(nodeIdx, &
                    & "*",err,error))//"."
-                  CALL FLAG_ERROR(localError,err,error,*999)                 
+                  CALL FlagError(localError,err,error,*999)                 
                 END IF
                 CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(dependentField,FIELD_U_VARIABLE_TYPE, &
                  & FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx,nodeIdx,2,ABoundary,err,error,*999)
@@ -15739,7 +14848,7 @@ CONTAINS
                 IF(ABoundary < ZERO_TOLERANCE) THEN
                   localError="Negative area coupled 1D0D boundary detected at node "//TRIM(NUMBER_TO_VSTRING(nodeIdx, &
                    & "*",err,error))//"."
-                  CALL FLAG_ERROR(localError,err,error,*999)                 
+                  CALL FlagError(localError,err,error,*999)                 
                 END IF
                 CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(dependentField,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx,nodeIdx,2,ABoundary,err,error,*999)
@@ -15785,7 +14894,7 @@ CONTAINS
                 IF(ABoundary < ZERO_TOLERANCE) THEN
                   localError="Negative area coupled 3D1D boundary detected at node "//TRIM(NUMBER_TO_VSTRING(nodeIdx, &
                    & "*",err,error))//"."
-                  CALL FLAG_ERROR(localError,err,error,*999)                 
+                  CALL FlagError(localError,err,error,*999)                 
                 END IF
                 ! Set new A value based on 3D boundary and update dof
                 CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(dependentField,FIELD_U_VARIABLE_TYPE, &

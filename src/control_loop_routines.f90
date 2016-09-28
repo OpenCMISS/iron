@@ -118,7 +118,7 @@ MODULE CONTROL_LOOP_ROUTINES
 
   PUBLIC CONTROL_LOOP_LOAD_OUTPUT_SET
 
-  PUBLIC ControlLoop_AbsoluteToleranceSet
+  PUBLIC ControlLoop_AbsoluteToleranceSet,ControlLoop_RelativeToleranceSet,ControlLoop_AbsoluteTolerance2Set
 
   PUBLIC CONTROL_LOOP_NUMBER_OF_SUB_LOOPS_GET,CONTROL_LOOP_NUMBER_OF_SUB_LOOPS_SET
 
@@ -939,6 +939,100 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE ControlLoop_AbsoluteToleranceSet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the absolute tolerance2 (convergence condition tolerance2) for a while control loop. \see OPENCMISS_CMISSControlLoopAbsoluteTolerance2Set
+  SUBROUTINE ControlLoop_AbsoluteTolerance2Set(controlLoop,absoluteTolerance2,err,error,*)
+
+    !Argument variables
+    TYPE(CONTROL_LOOP_TYPE), POINTER, INTENT(IN) :: controlLoop !<A pointer to while control loop to set the maximum iterations for
+    REAL(DP), INTENT(IN) :: absoluteTolerance2 !<The absolute tolerance2 value for a while control loop.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(CONTROL_LOOP_WHILE_TYPE), POINTER :: whileLoop
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("ControlLoop_AbsoluteTolerance2Set",err,error,*999)
+
+    IF(ASSOCIATED(controlLoop)) THEN
+      IF(controlLoop%CONTROL_LOOP_FINISHED) THEN
+        CALL FlagError("Control loop has been finished.",err,error,*999)
+      ELSE
+        IF(controlLoop%LOOP_TYPE==PROBLEM_CONTROL_WHILE_LOOP_TYPE) THEN
+          whileLoop=>controlLoop%WHILE_LOOP
+          IF(ASSOCIATED(whileLoop)) THEN
+            IF(absoluteTolerance2<=0) THEN
+              localError="The specified absolute tolerance2 of "// &
+                & TRIM(NUMBER_TO_VSTRING(absoluteTolerance2,"*",err,error))// &
+                & " is invalid for a while loop. The tolerance2 must be greater than zero."          
+              CALL FlagError(localError,err,error,*999)            
+            ENDIF
+            whileLoop%ABSOLUTE_TOLERANCE2=absoluteTolerance2
+          ELSE
+            CALL FlagError("Control loop while loop is not associated.",err,error,*999)
+          ENDIF
+        ENDIF
+      ENDIF          
+    ELSE
+      CALL FlagError("Control loop is not associated.",err,error,*999)
+    ENDIF
+       
+    EXITS("ControlLoop_AbsoluteTolerance2Set")
+    RETURN
+999 ERRORSEXITS("ControlLoop_AbsoluteTolerance2Set",err,error)
+    RETURN 1
+  END SUBROUTINE ControlLoop_AbsoluteTolerance2Set
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the relative tolerance (convergence condition tolerance) for a while control loop. \see OPENCMISS_CMISSControlLoopRelativeToleranceSet
+  SUBROUTINE ControlLoop_RelativeToleranceSet(controlLoop,relativeTolerance,err,error,*)
+
+    !Argument variables
+    TYPE(CONTROL_LOOP_TYPE), POINTER, INTENT(IN) :: controlLoop !<A pointer to while control loop to set the maximum iterations for
+    REAL(DP), INTENT(IN) :: relativeTolerance !<The relative tolerance value for a while control loop.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(CONTROL_LOOP_WHILE_TYPE), POINTER :: whileLoop
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("ControlLoop_RelativeToleranceSet",err,error,*999)
+
+    IF(ASSOCIATED(controlLoop)) THEN
+      IF(controlLoop%CONTROL_LOOP_FINISHED) THEN
+        CALL FlagError("Control loop has been finished.",err,error,*999)
+      ELSE
+        IF(controlLoop%LOOP_TYPE==PROBLEM_CONTROL_WHILE_LOOP_TYPE) THEN
+          whileLoop=>controlLoop%WHILE_LOOP
+          IF(ASSOCIATED(whileLoop)) THEN
+            IF(relativeTolerance<=0) THEN
+              localError="The specified relative tolerance of "// &
+                & TRIM(NUMBER_TO_VSTRING(relativeTolerance,"*",err,error))// &
+                & " is invalid for a while loop. The tolerance must be greater than zero."          
+              CALL FlagError(localError,err,error,*999)            
+            ENDIF
+            whileLoop%RELATIVE_TOLERANCE=relativeTolerance
+          ELSE
+            CALL FlagError("Control loop while loop is not associated.",err,error,*999)
+          ENDIF
+        ENDIF
+      ENDIF          
+    ELSE
+      CALL FlagError("Control loop is not associated.",err,error,*999)
+    ENDIF
+       
+    EXITS("ControlLoop_RelativeToleranceSet")
+    RETURN
+999 ERRORSEXITS("ControlLoop_RelativeToleranceSet",err,error)
+    RETURN 1
+  END SUBROUTINE ControlLoop_RelativeToleranceSet
 
   !
   !================================================================================================================================
