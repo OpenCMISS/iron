@@ -560,13 +560,13 @@ MODULE FIELD_ROUTINES
     MODULE PROCEDURE FIELD_MESH_DECOMPOSITION_SET_AND_LOCK
   END INTERFACE Field_MeshDecompositionSetAndLock
   
-  INTERFACE Field_NumberOfComponentsCheck
-    MODULE PROCEDURE FIELD_NUMBER_OF_COMPONENTS_CHECK
-  END INTERFACE Field_NumberOfComponentsCheck
+  INTERFACE FIELD_NUMBER_OF_COMPONENTS_CHECK
+    MODULE PROCEDURE Field_NumberOfComponentsCheck
+  END INTERFACE FIELD_NUMBER_OF_COMPONENTS_CHECK
   
-  INTERFACE Field_NumberOfComponentsGet
-    MODULE PROCEDURE FIELD_NUMBER_OF_COMPONENTS_GET
-  END INTERFACE Field_NumberOfComponentsGet
+  INTERFACE FIELD_NUMBER_OF_COMPONENTS_GET
+    MODULE PROCEDURE Field_NumberOfComponentsGet
+  END INTERFACE FIELD_NUMBER_OF_COMPONENTS_GET
   
   INTERFACE Field_NumberOfComponentsSet
     MODULE PROCEDURE FIELD_NUMBER_OF_COMPONENTS_SET
@@ -12703,108 +12703,139 @@ CONTAINS
   !
 
   !>Checks the number of field components for a field variable.
-  SUBROUTINE FIELD_NUMBER_OF_COMPONENTS_CHECK(FIELD,VARIABLE_TYPE,NUMBER_OF_COMPONENTS,ERR,ERROR,*)
+  SUBROUTINE Field_NumberOfComponentsCheck(field,variableType,numberOfComponents,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to check the number of components
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to check \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
-    INTEGER(INTG), INTENT(IN) :: NUMBER_OF_COMPONENTS !The number of components in the field variable to check
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to check the number of components
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to check \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
+    INTEGER(INTG), INTENT(IN) :: numberOfComponents !The number of components in the field variable to check
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("FIELD_NUMBER_OF_COMPONENTS_CHECK",ERR,ERROR,*999)
+    ENTERS("Field_NumberOfComponentsCheck",err,error,*999)
 
-    IF(ASSOCIATED(FIELD)) THEN
-      IF(FIELD%FIELD_FINISHED) THEN
-        IF(VARIABLE_TYPE>=1.AND.VARIABLE_TYPE<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-          FIELD_VARIABLE=>FIELD%VARIABLE_TYPE_MAP(VARIABLE_TYPE)%PTR
-          IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-            IF(FIELD_VARIABLE%NUMBER_OF_COMPONENTS/=NUMBER_OF_COMPONENTS) THEN
-              LOCAL_ERROR="Invalid number of components. The number components for variable type "// &
-                & TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))//" of field number "// &
-                & TRIM(NUMBER_TO_VSTRING(FIELD%USER_NUMBER,"*",ERR,ERROR))//" is "// &
-                & TRIM(NUMBER_TO_VSTRING(FIELD_VARIABLE%NUMBER_OF_COMPONENTS,"*",ERR,ERROR))// &
+    IF(ASSOCIATED(field)) THEN
+      IF(variableType>=1.AND.variableType<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+        IF(field%FIELD_FINISHED) THEN
+          fieldVariable=>field%VARIABLE_TYPE_MAP(variableType)%PTR
+          IF(ASSOCIATED(fieldVariable)) THEN
+            IF(fieldVariable%NUMBER_OF_COMPONENTS/=numberOfComponents) THEN
+              localError="Invalid number of components. The number components for variable type "// &
+                & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" is "// &
+                & TRIM(NumberToVString(fieldVariable%NUMBER_OF_COMPONENTS,"*",err,error))// &
                 & " which does not correspond to the specified number of components of "// &
-                & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_COMPONENTS,"*",ERR,ERROR))//"."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(numberOFComponents,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
             ENDIF
           ELSE
-            LOCAL_ERROR="The field variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
-              & " has not been defined on field number "//TRIM(NUMBER_TO_VSTRING(FIELD%USER_NUMBER,"*",ERR,ERROR))//"."
+            localError="The field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+              & " has not been defined on field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
           ENDIF
         ELSE
-          LOCAL_ERROR="The supplied variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
-            & " is invalid. The field variable type must be > 1 and <= "// &
-            & TRIM(NUMBER_TO_VSTRING(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          !Field has not been finished so check the create values cache.
+          IF(ASSOCIATED(field%CREATE_VALUES_CACHE)) THEN
+            IF(ALLOCATED(field%CREATE_VALUES_CACHE%NUMBER_OF_COMPONENTS)) THEN
+              IF(field%CREATE_VALUES_CACHE%NUMBER_OF_COMPONENTS(variableType)/=numberOfComponents) THEN
+                localError="Invalid number of components. The number components for variable type "// &
+                  & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                  & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" is "// &
+                  & TRIM(NumberToVString(fieldVariable%NUMBER_OF_COMPONENTS,"*",err,error))// &
+                  & " which does not correspond to the specified number of components of "// &
+                  & TRIM(NumberToVString(numberOFComponents,"*",err,error))//"."
+                CALL FlagError(localError,err,error,*999)
+              ENDIF
+            ELSE
+              localError="The create values cache number of components is not allocated for field number "// &
+                & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)
+            ENDIF
+          ELSE          
+            localError="Field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))// &
+              & " does not have a create values cache associated."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
         ENDIF
       ELSE
-        LOCAL_ERROR="Field number "//TRIM(NUMBER_TO_VSTRING(FIELD%USER_NUMBER,"*",ERR,ERROR))// &
-          & " has not been finished."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+        localError="The supplied variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+          & " is invalid. The field variable type must be > 1 and <= "// &
+          & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Field is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Field is not associated.",err,error,*999)
     ENDIF
 
-    EXITS("FIELD_NUMBER_OF_COMPONENTS_CHECK")
+    EXITS("Field_NumberOfComponentsCheck")
     RETURN
-999 ERRORSEXITS("FIELD_NUMBER_OF_COMPONENTS_CHECK",ERR,ERROR)
+999 ERRORSEXITS("Field_NumberOfComponentsCheck",err,error)
     RETURN 1
-  END SUBROUTINE FIELD_NUMBER_OF_COMPONENTS_CHECK
+    
+  END SUBROUTINE Field_NumberOfComponentsCheck
 
   !
   !================================================================================================================================
   !
 
   !>Gets the number of field components for a field variable. \see OpenCMISS::Iron::cmfe_FieldNumberOfComponentsGet
-  SUBROUTINE FIELD_NUMBER_OF_COMPONENTS_GET(FIELD,VARIABLE_TYPE,NUMBER_OF_COMPONENTS,ERR,ERROR,*)
+  SUBROUTINE Field_NumberOfComponentsGet(field,variableType,numberOfComponents,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the number of components
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
-    INTEGER(INTG), INTENT(OUT) :: NUMBER_OF_COMPONENTS !<On return, the number of components in the field variable
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to get the number of components
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
+    INTEGER(INTG), INTENT(OUT) :: numberOfComponents !<On return, the number of components in the field variable
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("FIELD_NUMBER_OF_COMPONENTS_GET",ERR,ERROR,*999)
+    ENTERS("Field_NumberOfComponentsGet",err,error,*999)
 
-    IF(ASSOCIATED(FIELD)) THEN
-      IF(FIELD%FIELD_FINISHED) THEN
-        IF(VARIABLE_TYPE>=1.AND.VARIABLE_TYPE<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-          FIELD_VARIABLE=>FIELD%VARIABLE_TYPE_MAP(VARIABLE_TYPE)%PTR
-          IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-            NUMBER_OF_COMPONENTS=FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+    IF(ASSOCIATED(field)) THEN
+      IF(variableType>=1.AND.variableType<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+        IF(field%FIELD_FINISHED) THEN
+          fieldVariable=>field%VARIABLE_TYPE_MAP(variableType)%ptr
+          IF(ASSOCIATED(fieldVariable)) THEN
+            numberOfComponents=fieldVariable%NUMBER_OF_COMPONENTS
           ELSE
-            LOCAL_ERROR="The field variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
-              & " has not been defined on field number "//TRIM(NUMBER_TO_VSTRING(FIELD%USER_NUMBER,"*",ERR,ERROR))//"."
+            localError="The field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+              & " has not been defined on field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
           ENDIF
         ELSE
-          LOCAL_ERROR="The supplied variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
-            & " is invalid. The field variable type must be > 1 and <= "// &
-            & TRIM(NUMBER_TO_VSTRING(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          !Field has not been finished so check the create values cache.
+          IF(ASSOCIATED(field%CREATE_VALUES_CACHE)) THEN
+            IF(ALLOCATED(field%CREATE_VALUES_CACHE%NUMBER_OF_COMPONENTS)) THEN
+              numberOfComponents=field%CREATE_VALUES_CACHE%NUMBER_OF_COMPONENTS(variableType)
+            ELSE
+              localError="The create values cache number of components is not allocated for field number "// &
+                & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)
+            ENDIF
+          ELSE          
+            localError="Field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))// &
+              & " does not have a create values cache associated."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
         ENDIF
       ELSE
-        LOCAL_ERROR="Field number "//TRIM(NUMBER_TO_VSTRING(FIELD%USER_NUMBER,"*",ERR,ERROR))// &
-          & " has not been finished."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+        localError="The supplied variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+          & " is invalid. The field variable type must be > 1 and <= "// &
+          & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Field is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Field is not associated.",err,error,*999)
     ENDIF
 
-    EXITS("FIELD_NUMBER_OF_COMPONENTS_GET")
+    EXITS("Field_NumberOfComponentsGet")
     RETURN
-999 ERRORSEXITS("FIELD_NUMBER_OF_COMPONENTS_GET",ERR,ERROR)
+999 ERRORSEXITS("Field_NumberOfComponentsGet",err,error)
     RETURN 1
-  END SUBROUTINE FIELD_NUMBER_OF_COMPONENTS_GET
+  END SUBROUTINE Field_NumberOfComponentsGet
 
   !
   !================================================================================================================================
