@@ -337,7 +337,7 @@ CONTAINS
                   tauParam=equations%interpolation%MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%ptr%values(1,NO_PART_DERIV)
                   kappaParam=equations%interpolation%MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%ptr%values(2,NO_PART_DERIV)
                   jacobianGaussWeight=equations%interpolation%GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%ptr%jacobian* &
-                    & quadratureScheme%GAUSS_WEIGHTS(ng)
+                    & quadratureScheme%GAUSS_WEIGHTS(gaussPointIdx)
                   
                   !Loop over field components
                   dependentParameterRowIdx=0          
