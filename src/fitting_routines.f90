@@ -283,20 +283,22 @@ CONTAINS
                     & projectionXi,err,error)
                   IF(equationsMatrix%UPDATE_MATRIX) THEN
                     !Loop over element columns
-                    !Treat each component as separate and independent so only calculate the diagonal blocks by
-                    !setting the column component to be the row component
-                    dependentComponentColumnIdx=dependentComponentRowIdx
-                    meshComponentColumn=dependentVariable%components(dependentComponentColumnIdx)%MESH_COMPONENT_NUMBER
-                    dependentBasisColumn=>dependentField%decomposition%domain(meshComponentColumn)%ptr% &
-                      & topology%elements%elements(elementNumber)%basis
-                    DO dependentElementParameterColumnIdx=1,dependentBasisColumn%NUMBER_OF_ELEMENT_PARAMETERS
-                      dependentParameterColumnIdx=dependentParameterColumnIdx+1
-                      basisFunctionColumn=Basis_EvaluateXi(dependentBasisColumn,dependentElementParameterColumnIdx,NO_PART_DERIV, &
-                        & projectionXi,err,error)
-                      sum = basisFunctionRow*basisFunctionColumn*dataPointWeight(dependentComponentRowIdx)
-                      equationsMatrix%ELEMENT_MATRIX%MATRIX(dependentParameterRowIdx,dependentParameterColumnIdx)= &
-                        & equationsMatrix%ELEMENT_MATRIX%MATRIX(dependentParameterRowIdx,dependentParameterColumnIdx)+sum
-                    ENDDO !dependentElementParameterColumnIdx
+                    DO dependentComponentColumnIdx=1,dependentVariable%NUMBER_OF_COMPONENTS
+                      meshComponentColumn=dependentVariable%components(dependentComponentColumnIdx)%MESH_COMPONENT_NUMBER
+                      dependentBasisColumn=>dependentField%decomposition%domain(meshComponentColumn)%ptr% &
+                        & topology%elements%elements(elementNumber)%basis
+                      DO dependentElementParameterColumnIdx=1,dependentBasisColumn%NUMBER_OF_ELEMENT_PARAMETERS
+                        dependentParameterColumnIdx=dependentParameterColumnIdx+1
+                        !Treat each component as separate and independent so only calculate the diagonal blocks 
+                        IF(dependentComponentColumnIdx==dependentComponentRowIdx) THEN
+                          basisFunctionColumn=Basis_EvaluateXi(dependentBasisColumn,dependentElementParameterColumnIdx, &
+                            & NO_PART_DERIV,projectionXi,err,error)
+                          sum = basisFunctionRow*basisFunctionColumn*dataPointWeight(dependentComponentRowIdx)
+                          equationsMatrix%ELEMENT_MATRIX%MATRIX(dependentParameterRowIdx,dependentParameterColumnIdx)= &
+                            & equationsMatrix%ELEMENT_MATRIX%MATRIX(dependentParameterRowIdx,dependentParameterColumnIdx)+sum
+                        ENDIF
+                      ENDDO !dependentElementParameterColumnIdx
+                    ENDDO !dependentComponentColumnIdx
                   ENDIF
                   IF(rhsVector%UPDATE_VECTOR) THEN
                     sum = basisFunctionRow*dataPointVector(dependentComponentRowIdx)*dataPointWeight(dependentComponentRowIdx)
@@ -1174,86 +1176,86 @@ CONTAINS
                   phiM=quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,NO_PART_DERIV,gaussPointIdx)
                   IF(equationsMatrix%UPDATE_MATRIX) THEN
                     !Loop over element columns
-                    !Treat each component as separate and independent so only calculate the diagonal blocks by
-                    !setting the column component to be the row component
-                    dependentComponentColumnIdx=dependentComponentRowIdx
-                    meshComponentColumn=mappingVariable%components(dependentComponentColumnIdx)%MESH_COMPONENT_NUMBER
-                    dependentBasisColumn=>dependentField%decomposition%domain(meshComponentColumn)%ptr% &
-                      & topology%elements%elements(elementNumber)%basis
-                    quadratureSchemeColumn=>dependentBasisColumn%quadrature%QUADRATURE_SCHEME_MAP( &
-                      & BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-                    DO dependentElementParameterColumnIdx=1,dependentBasisColumn%NUMBER_OF_ELEMENT_PARAMETERS
-                      dependentParameterColumnIdx=dependentParameterColumnIdx+1
-                      
-                      phiN=quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,NO_PART_DERIV, &
-                        & gaussPointIdx)
-                      sum=phiM*phiN*dataPointWeight(dependentComponentRowIdx)                        
-                      SELECT CASE(smoothingType)
-                      CASE(EQUATIONS_SET_FITTING_NO_SMOOTHING)
-                        !Do nothing
-                      CASE(EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING)
-                        !Calculate Sobolev surface tension and curvature smoothing terms                      
-                        tension = tauParam*2.0_DP* ( &
-                          & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1, &
-                          & gaussPointIdx)* &
-                          & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1, &
-                          & gaussPointIdx))
-                        curvature = kappaParam*2.0_DP* ( &
-                          & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S1, &
-                          & gaussPointIdx)* &
-                          & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1_S1, &
-                          & gaussPointIdx))
-                        IF(numberOfXi > 1) THEN
-                          tension = tension + tauParam*2.0_DP* ( &
-                            & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2, &
-                            & gaussPointIdx)* &
-                            & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S2, &
-                            & gaussPointIdx))
-                          curvature = curvature + kappaParam*2.0_DP* ( &
-                            & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2_S2, &
-                            & gaussPointIdx)* &
-                            & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S2_S2, &
-                            & gaussPointIdx) + &
-                            & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S2, &
-                            & gaussPointIdx)* &
-                            & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1_S2, &
-                            & gaussPointIdx))
-                          IF(numberOfXi > 2) THEN
-                            tension = tension + tauParam*2.0_DP* ( &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S3, &
+                    DO dependentComponentColumnIdx=1,mappingVariable%NUMBER_OF_COMPONENTS
+                      meshComponentColumn=mappingVariable%components(dependentComponentColumnIdx)%MESH_COMPONENT_NUMBER
+                      dependentBasisColumn=>dependentField%decomposition%domain(meshComponentColumn)%ptr% &
+                        & topology%elements%elements(elementNumber)%basis
+                      quadratureSchemeColumn=>dependentBasisColumn%quadrature%QUADRATURE_SCHEME_MAP( &
+                        & BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
+                      DO dependentElementParameterColumnIdx=1,dependentBasisColumn%NUMBER_OF_ELEMENT_PARAMETERS
+                        dependentParameterColumnIdx=dependentParameterColumnIdx+1
+                        !Treat each component as separate and independent so only calculate the diagonal blocks 
+                        IF(dependentComponentColumnIdx==dependentComponentRowIdx) THEN
+                          phiN=quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,NO_PART_DERIV, &
+                            & gaussPointIdx)
+                          sum=phiM*phiN*dataPointWeight(dependentComponentRowIdx)                        
+                          SELECT CASE(smoothingType)
+                          CASE(EQUATIONS_SET_FITTING_NO_SMOOTHING)
+                            !Do nothing
+                          CASE(EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING)
+                            !Calculate Sobolev surface tension and curvature smoothing terms                      
+                            tension = tauParam*2.0_DP* ( &
+                              & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1, &
                               & gaussPointIdx)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S3, &
+                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1, &
                               & gaussPointIdx))
-                            curvature = curvature + kappaParam*2.0_DP* ( &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S3_S3, &
+                            curvature = kappaParam*2.0_DP* ( &
+                              & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S1, &
                               & gaussPointIdx)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S3_S3, &
-                              & gaussPointIdx)+ &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S3, &
-                              & gaussPointIdx)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1_S3, &
-                              & gaussPointIdx)+ &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2_S3, &
-                              & gaussPointIdx)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S2_S3, &
+                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1_S1, &
                               & gaussPointIdx))
-                          ENDIF ! 3D
-                        ENDIF ! 2 or 3D
-                        sum = sum + (tension + curvature) * jacobianGaussWeight
-                      CASE(EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING)
-                        CALL FlagError("Not implemented.",err,error,*999)
-                      CASE(EQUATIONS_SET_FITTING_STRAIN_ENERGY_SMOOTHING)
-                        CALL FlagError("Not implemented.",err,error,*999)
-                      CASE DEFAULT
-                        localError="The fitting smoothing type of "//TRIM(NumberToVString(smoothingType,"*",err,error))// &
-                          & " is invalid."
-                        CALL FlagError(localError,err,error,*999)              
-                      END SELECT
-                      
-                      equationsMatrix%ELEMENT_MATRIX%matrix(dependentParameterRowIdx,dependentParameterColumnIdx)= &
-                        equationsMatrix%ELEMENT_MATRIX%matrix(dependentParameterRowIdx,dependentParameterColumnIdx)+sum
-                      
-                    ENDDO !dependentElementParameterColumnIdx
+                            IF(numberOfXi > 1) THEN
+                              tension = tension + tauParam*2.0_DP* ( &
+                                & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2, &
+                                & gaussPointIdx)* &
+                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S2, &
+                                & gaussPointIdx))
+                              curvature = curvature + kappaParam*2.0_DP* ( &
+                                & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2_S2, &
+                                & gaussPointIdx)* &
+                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S2_S2, &
+                                & gaussPointIdx) + &
+                                & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S2, &
+                                & gaussPointIdx)* &
+                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1_S2, &
+                                & gaussPointIdx))
+                              IF(numberOfXi > 2) THEN
+                                tension = tension + tauParam*2.0_DP* ( &
+                                  & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S3, &
+                                  & gaussPointIdx)* &
+                                  & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S3, &
+                                  & gaussPointIdx))
+                                curvature = curvature + kappaParam*2.0_DP* ( &
+                                  & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S3_S3, &
+                                  & gaussPointIdx)* &
+                                  & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S3_S3, &
+                                  & gaussPointIdx)+ &
+                                  & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S3, &
+                                  & gaussPointIdx)* &
+                                  & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1_S3, &
+                                  & gaussPointIdx)+ &
+                                  & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2_S3, &
+                                  & gaussPointIdx)* &
+                                  & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S2_S3, &
+                                  & gaussPointIdx))
+                              ENDIF ! 3D
+                            ENDIF ! 2 or 3D
+                            sum = sum + (tension + curvature) * jacobianGaussWeight
+                          CASE(EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING)
+                            CALL FlagError("Not implemented.",err,error,*999)
+                          CASE(EQUATIONS_SET_FITTING_STRAIN_ENERGY_SMOOTHING)
+                            CALL FlagError("Not implemented.",err,error,*999)
+                          CASE DEFAULT
+                            localError="The fitting smoothing type of "//TRIM(NumberToVString(smoothingType,"*",err,error))// &
+                              & " is invalid."
+                            CALL FlagError(localError,err,error,*999)              
+                          END SELECT
+                          
+                          equationsMatrix%ELEMENT_MATRIX%matrix(dependentParameterRowIdx,dependentParameterColumnIdx)= &
+                            equationsMatrix%ELEMENT_MATRIX%matrix(dependentParameterRowIdx,dependentParameterColumnIdx)+sum
+                        ENDIF
+                      ENDDO !dependentElementParameterColumnIdx
+                    ENDDO !dependentComponentColumnIdx
                   ENDIF
                   IF(rhsVector%UPDATE_VECTOR) THEN
                     rhsVector%ELEMENT_VECTOR%vector(dependentParameterRowIdx)= &
