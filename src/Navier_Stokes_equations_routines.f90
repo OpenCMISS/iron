@@ -6705,14 +6705,14 @@ CONTAINS
             !CASE(PROBLEM_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE)
               ! Do nothing
             CASE(PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE,PROBLEM_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE)
-              !CALL CONTROL_LOOP_TIMES_GET(CONTROL_LOOP,startTime,stopTime,currentTime,timeIncrement, &
-              ! & timestep,outputIteration,ERR,ERROR,*999)
-              IF(ASSOCIATED(SOLVER%SOLVER_EQUATIONS)) THEN
-                CALL NavierStokes_CalculateBoundaryFlux3D0D(SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING% &
-                  & EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS%EQUATIONS_SET,err,error,*999)
-              END IF
-              ! CALL NavierStokes_CalculateBoundaryFlux(SOLVER,ERR,ERROR,*999)
-              ! CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(SOLVER,err,error,*999)
+              ! !CALL CONTROL_LOOP_TIMES_GET(CONTROL_LOOP,startTime,stopTime,currentTime,timeIncrement, &
+              ! ! & timestep,outputIteration,ERR,ERROR,*999)
+              ! IF(ASSOCIATED(SOLVER%SOLVER_EQUATIONS)) THEN
+              !   CALL NavierStokes_CalculateBoundaryFlux3D0D(SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING% &
+              !     & EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS%EQUATIONS_SET,err,error,*999)
+              ! END IF
+              ! ! CALL NavierStokes_CalculateBoundaryFlux(SOLVER,ERR,ERROR,*999)
+              ! ! CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(SOLVER,err,error,*999)
             CASE(PROBLEM_CONSTITUTIVE_RBS_NAVIER_STOKES_SUBTYPE)
               DO equationsSetNumber=1,SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                 ! If this is a coupled constitutive (non-Newtonian) viscosity problem, update shear rate values
@@ -14353,6 +14353,8 @@ CONTAINS
             IF(dependentField%DECOMPOSITION%CALCULATE_FACES) THEN
               !CALL NavierStokes_CalculateBoundaryFlux(equationsSet,coupledEquationsSet,0,convergedFlag, &
               !  & absolute3D0DTolerance,relative3D0DTolerance,ERR,ERROR,*999)
+              CALL NavierStokes_CalculateBoundaryFlux3D0D(equationsSet,convergedFlag, &
+                & absolute3D0DTolerance,relative3D0DTolerance,ERR,ERROR,*999)
             END IF
             CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(navierStokesSolver,err,error,*999)
           ELSE
@@ -14521,22 +14523,25 @@ CONTAINS
                         absolute3D0DTolerance = controlLoop%PARENT_LOOP%WHILE_LOOP%ABSOLUTE_TOLERANCE
                         relative3D0DTolerance = controlLoop%PARENT_LOOP%WHILE_LOOP%RELATIVE_TOLERANCE
 
-                        CALL Petsc_SnesGetFunction(solver%DYNAMIC_SOLVER%NONLINEAR_SOLVER%NONLINEAR_SOLVER% &
-                          & NEWTON_SOLVER%LINESEARCH_SOLVER%snes,FUNCTION_VECTOR,ERR,ERROR,*999)
-                        CALL Petsc_VecNorm(FUNCTION_VECTOR,PETSC_NORM_2,FUNCTION_NORM,ERR,ERROR,*999)
-                        convergedFlag = .FALSE.
-                        IF (FUNCTION_NORM < absolute3D0DTolerance) THEN
-                          convergedFlag = .TRUE.
-                        END IF
+                        ! CALL Petsc_SnesGetFunction(solver%DYNAMIC_SOLVER%NONLINEAR_SOLVER%NONLINEAR_SOLVER% &
+                        !   & NEWTON_SOLVER%LINESEARCH_SOLVER%snes,FUNCTION_VECTOR,ERR,ERROR,*999)
+                        ! CALL Petsc_VecNorm(FUNCTION_VECTOR,PETSC_NORM_2,FUNCTION_NORM,ERR,ERROR,*999)
+                        ! convergedFlag = .FALSE.
+                        ! IF (FUNCTION_NORM < absolute3D0DTolerance) THEN
+                        !   convergedFlag = .TRUE.
+                        ! END IF
 
                         !CALL NavierStokes_CalculateBoundaryFlux(equationsSet,coupledEquationsSet,iteration3D1D, &
                         !  & convergedFlag,absolute3D0DTolerance,relative3D0DTolerance,ERR,ERROR,*999)
+                        convergedFlag = .FALSE.
+                        CALL NavierStokes_CalculateBoundaryFlux3D0D(equationsSet,convergedFlag, &
+                          & absolute3D0DTolerance,relative3D0DTolerance,ERR,ERROR,*999)
 
                         ! Check for 3D-0D convergence
                         IF (controlLoop%PROBLEM%SPECIFICATION(3)==PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE) THEN
                           IF (convergedFlag) THEN
                             controlLoop%PARENT_LOOP%WHILE_LOOP%CONTINUE_LOOP=.FALSE.
-                            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"3D-0D converged, iterations: ", &
+                            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"3D-0D converged. Iterations: ", &
                               & iteration3D1D,err,error,*999)
                           ELSE
                             controlLoop%PARENT_LOOP%WHILE_LOOP%CONTINUE_LOOP=.TRUE.                            
@@ -15035,10 +15040,14 @@ CONTAINS
   !
 
   !> Calculate the fluid flux through 3D boundaries for use in problems with coupled solutions (e.g. multidomain)
-  SUBROUTINE NavierStokes_CalculateBoundaryFlux3D0D(equationsSet,err,error,*) 
+  SUBROUTINE NavierStokes_CalculateBoundaryFlux3D0D(equationsSet,convergedFlag, &
+    &absolute3D0DTolerance,relative3D0DTolerance,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
+    REAL(DP), INTENT(IN) :: absolute3D0DTolerance !<absolute convergence criteria for 3D-0D coupling
+    REAL(DP), INTENT(IN) :: relative3D0DTolerance !<relative convergence criteria for 3D-0D coupling
+    LOGICAL, INTENT(INOUT) :: convergedFlag !<convergence flag for 3D-0D coupling
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -15085,7 +15094,7 @@ CONTAINS
     REAL(DP) :: localBoundaryNormalStress(10),globalBoundaryNormalStress(10),globalBoundaryMeanNormalStress(10)
     REAL(DP) :: couplingFlow,couplingStress,p1D,q1D,a1D,p3D,stress3DPrevious,stress1DPrevious,tolerance,p0D,q0D
     REAL(DP) :: flowError,pressureError
-    LOGICAL :: couple1DTo3D,couple3DTo1D,boundary3D0DFound(10),boundary3D0DConverged(10),convergedFlag
+    LOGICAL :: couple1DTo3D,couple3DTo1D,boundary3D0DFound(10),boundary3D0DConverged(10)
     LOGICAL, ALLOCATABLE :: globalConverged(:)
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
@@ -15456,17 +15465,27 @@ CONTAINS
                 CALL Field_ParameterSetGetLocalNode(equationsSetField3D,FIELD_U_VARIABLE_TYPE, &
                  & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,1,1,nodeNumber,2,p0D,err,error,*999)
                 flowError = globalBoundaryFlux(boundaryID)-q0D
-                pressureError = globalBoundaryMeanPressure(boundaryID)+p0D
-                IF (.NOT. boundary3D0DFound(boundaryID)) THEN
-                  CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"  0D boundary ",boundaryID,"  flow: ", &
-                    & q0D,err,error,*999)
-                  CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"  0D boundary ",boundaryID,"  pressure: ", &
-                    & p0D,err,error,*999)
-                  CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"  0D boundary ",boundaryID,"  flow error: ", &
-                    & flowError,err,error,*999)
-                  CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"  0D boundary ",boundaryID,"  pressure error: ", &
-                    & pressureError,err,error,*999)
-                  boundary3D0DFound(boundaryID) = .TRUE.
+                pressureError = globalBoundaryMeanPressure(boundaryID)-p0D
+                IF ((ABS(flowError) < absolute3D0DTolerance .AND. ABS(pressureError) < absolute3D0DTolerance)) THEN
+                  ! CONVERGED ABSOLUTE TOLERANCE
+                  !CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"3D-0D converged ABSOLUTE",err,error,*999)
+                ELSE IF (ABS(flowError/(globalBoundaryFlux(boundaryID)+ZERO_TOLERANCE)) < relative3D0DTolerance .AND. &
+                  &  ABS(pressureError/(globalBoundaryMeanPressure(boundaryID)+ZERO_TOLERANCE)) < relative3D0DTolerance) THEN
+                  ! CONVERGED RELATIVE TOLERANCE
+                  !CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"3D-0D converged RELATIVE",err,error,*999)
+                ELSE
+                  IF (.NOT. boundary3D0DFound(boundaryID)) THEN
+                    CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"  0D boundary ",boundaryID,"  flow: ", &
+                      & q0D,err,error,*999)
+                    CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"  0D boundary ",boundaryID,"  pressure: ", &
+                      & p0D,err,error,*999)
+                    CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"  0D boundary ",boundaryID,"  flow error: ", &
+                      & flowError,err,error,*999)
+                    CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"  0D boundary ",boundaryID,"  pressure error: ", &
+                      & pressureError,err,error,*999)
+                    boundary3D0DFound(boundaryID) = .TRUE.
+                  END IF
+                  convergedFlag = .FALSE.
                 END IF
                 ! Update flow rates on 3D boundary equations set field
                 CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(equationsSetField3D,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
