@@ -6483,6 +6483,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     INTEGER(INTG) :: iteration,timestep,outputIteration,equationsSetNumber
     REAL(DP) :: startTime,stopTime,currentTime,timeIncrement
+    LOGICAL :: convergedFlag
 
     ENTERS("NAVIER_STOKES_POST_SOLVE",ERR,ERROR,*999)
     NULLIFY(SOLVER2)
@@ -6707,10 +6708,14 @@ CONTAINS
             CASE(PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE,PROBLEM_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE)
               ! !CALL CONTROL_LOOP_TIMES_GET(CONTROL_LOOP,startTime,stopTime,currentTime,timeIncrement, &
               ! ! & timestep,outputIteration,ERR,ERROR,*999)
-              ! IF(ASSOCIATED(SOLVER%SOLVER_EQUATIONS)) THEN
-              !   CALL NavierStokes_CalculateBoundaryFlux3D0D(SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING% &
-              !     & EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS%EQUATIONS_SET,err,error,*999)
-              ! END IF
+              IF(ASSOCIATED(SOLVER%SOLVER_EQUATIONS)) THEN
+                ! CALL NavierStokes_CalculateBoundaryFlux3D0D(SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING% &
+                !   & EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS%EQUATIONS_SET,err,error,*999)
+                convergedFlag = .FALSE.
+                CALL NavierStokes_CalculateBoundaryFlux3D0D(SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING% &
+                  & EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS%EQUATIONS_SET,convergedFlag, &
+                  & 1.0E-8_DP,1.0E-8_DP,err,error,*999)
+              END IF
               ! ! CALL NavierStokes_CalculateBoundaryFlux(SOLVER,ERR,ERROR,*999)
               ! ! CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(SOLVER,err,error,*999)
             CASE(PROBLEM_CONSTITUTIVE_RBS_NAVIER_STOKES_SUBTYPE)
@@ -12428,7 +12433,7 @@ CONTAINS
               boundaryPressure=pressureInterpolatedPoint%VALUES(4,NO_PART_DERIV)
               pressure = -boundaryPressure
               IF(boundaryType==BOUNDARY_CONDITION_FIXED_CELLML) THEN
-                pressure = -ABS(boundaryPressure)
+                pressure = -(boundaryPressure)
               END IF
             END IF
 
@@ -14558,19 +14563,21 @@ CONTAINS
                         absolute3D0DTolerance = controlLoop%PARENT_LOOP%WHILE_LOOP%ABSOLUTE_TOLERANCE
                         relative3D0DTolerance = controlLoop%PARENT_LOOP%WHILE_LOOP%RELATIVE_TOLERANCE
 
-                        ! CALL Petsc_SnesGetFunction(solver%DYNAMIC_SOLVER%NONLINEAR_SOLVER%NONLINEAR_SOLVER% &
-                        !   & NEWTON_SOLVER%LINESEARCH_SOLVER%snes,FUNCTION_VECTOR,ERR,ERROR,*999)
-                        ! CALL Petsc_VecNorm(FUNCTION_VECTOR,PETSC_NORM_2,FUNCTION_NORM,ERR,ERROR,*999)
-                        ! convergedFlag = .FALSE.
-                        ! IF (FUNCTION_NORM < absolute3D0DTolerance) THEN
-                        !   convergedFlag = .TRUE.
-                        ! END IF
-
-                        !CALL NavierStokes_CalculateBoundaryFlux(equationsSet,coupledEquationsSet,iteration3D1D, &
-                        !  & convergedFlag,absolute3D0DTolerance,relative3D0DTolerance,ERR,ERROR,*999)
+                        CALL Petsc_SnesGetFunction(solver%DYNAMIC_SOLVER%NONLINEAR_SOLVER%NONLINEAR_SOLVER% &
+                          & NEWTON_SOLVER%LINESEARCH_SOLVER%snes,FUNCTION_VECTOR,ERR,ERROR,*999)
+                        CALL Petsc_VecNorm(FUNCTION_VECTOR,PETSC_NORM_2,FUNCTION_NORM,ERR,ERROR,*999)
                         convergedFlag = .FALSE.
-                        CALL NavierStokes_CalculateBoundaryFlux3D0D(equationsSet,convergedFlag, &
-                          & absolute3D0DTolerance,relative3D0DTolerance,ERR,ERROR,*999)
+                        IF (FUNCTION_NORM < absolute3D0DTolerance) THEN
+                          IF (iteration3D1D > 1) THEN
+                            convergedFlag = .TRUE.
+                          END IF
+                        END IF
+
+                        ! !CALL NavierStokes_CalculateBoundaryFlux(equationsSet,coupledEquationsSet,iteration3D1D, &
+                        ! !  & convergedFlag,absolute3D0DTolerance,relative3D0DTolerance,ERR,ERROR,*999)
+                        ! convergedFlag = .FALSE.
+                        ! CALL NavierStokes_CalculateBoundaryFlux3D0D(equationsSet,convergedFlag, &
+                        !   & absolute3D0DTolerance,relative3D0DTolerance,ERR,ERROR,*999)
 
                         ! Check for 3D-0D convergence
                         IF (controlLoop%PROBLEM%SPECIFICATION(3)==PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE) THEN

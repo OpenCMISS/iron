@@ -18933,8 +18933,8 @@ CONTAINS
                           CALL FlagError("Nonlinear line search solver did not converge. PETSc diverged function domain.", &
                             & ERR,ERROR,*999)
                         CASE(PETSC_SNES_DIVERGED_FUNCTION_COUNT)
-                          CALL FlagError("Nonlinear line search solver did not converge. PETSc diverged function count.", &
-                            & ERR,ERROR,*999)
+                          !CALL FlagError("Nonlinear line search solver did not converge. PETSc diverged function count.", &
+                          !  & ERR,ERROR,*999)
                         CASE(PETSC_SNES_DIVERGED_LINEAR_SOLVE)
                           CALL FlagError("Nonlinear line search solver did not converge. PETSc diverged linear solve.", &
                             & ERR,ERROR,*999)
