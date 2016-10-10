@@ -43,18 +43,18 @@
 
 !> This module handles all data point routines.
 
-MODULE DATA_POINT_ROUTINES
+MODULE DataPointRoutines
 
   USE BASE_ROUTINES
   USE COMP_ENVIRONMENT
   USE COORDINATE_ROUTINES
-  USE DATA_PROJECTION_ROUTINES
+  USE DataProjectionRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
-  USE KINDS
-  USE STRINGS
-  USE TREES
-  USE TYPES
+  USE Kinds
+  USE Strings
+  USE Trees
+  USE Types
 
 #include "macros.h"
 
@@ -71,44 +71,46 @@ MODULE DATA_POINT_ROUTINES
   !Interfaces
 
   !>Starts the process of creating data points for an interface or region
-  INTERFACE DATA_POINTS_CREATE_START
-    MODULE PROCEDURE DATA_POINTS_CREATE_START_REGION
-    MODULE PROCEDURE DATA_POINTS_CREATE_START_INTERFACE
-  END INTERFACE !DATA_POINTS_CREATE_START
+  INTERFACE DataPoints_CreateStart
+    MODULE PROCEDURE DataPoints_CreateStartRegion
+    MODULE PROCEDURE DataPoints_CreateStartInterface
+  END INTERFACE DataPoints_CreateStart
 
   !>Initialises data points for an interface or region
-  INTERFACE DATA_POINTS_INITIALISE
-    MODULE PROCEDURE DATA_POINTS_INITIALISE_REGION
-    MODULE PROCEDURE DATA_POINTS_INITIALISE_INTERFACE
-  END INTERFACE !DATA_POINTS_INITIALIES
+  INTERFACE DataPoints_Initialise
+    MODULE PROCEDURE DataPoints_InitialiseRegion
+    MODULE PROCEDURE DataPoints_InitialiseInterface
+  END INTERFACE DataPoints_Initialise
 
   !>Gets the label for a data point identified by a given global number.
-  INTERFACE DATA_POINTS_LABEL_GET
-    MODULE PROCEDURE DATA_POINTS_LABEL_GET_C
-    MODULE PROCEDURE DATA_POINTS_LABEL_GET_VS
-  END INTERFACE !DATA_POINTS_LABEL_SET
+  INTERFACE DataPoints_LabelGet
+    MODULE PROCEDURE DataPoints_LabelGetC
+    MODULE PROCEDURE DataPoints_LabelGetVS
+  END INTERFACE DataPoints_LabelGet
 
   !>Changes/sets the label for a data point identified by a given global number.
-  INTERFACE DATA_POINTS_LABEL_SET
-    MODULE PROCEDURE DATA_POINTS_LABEL_SET_C
-    MODULE PROCEDURE DATA_POINTS_LABEL_SET_VS
-  END INTERFACE !DATA_POINTS_LABEL_SET
+  INTERFACE DataPoints_LabelSet
+    MODULE PROCEDURE DataPoints_LabelSetC
+    MODULE PROCEDURE DataPoints_LabelSetVS
+  END INTERFACE DataPoints_LabelSet
 
-  PUBLIC DATA_POINT_CHECK_EXISTS
+  PUBLIC DataPoint_CheckExists
 
-  PUBLIC DATA_POINTS_CREATE_FINISH,DATA_POINTS_CREATE_START,DATA_POINTS_DESTROY
+  PUBLIC DataPoints_CreateFinish,DataPoints_CreateStart,DataPoints_Destroy
   
-  PUBLIC DATA_POINTS_DATA_PROJECTION_GET,DataPoints_DataProjectionGlobalNumberGet
+  PUBLIC DataPoints_DataProjectionGet,DataPoints_DataProjectionGlobalNumberGet
 
-  PUBLIC DATA_POINTS_GLOBAL_NUMBER_GET,DATA_POINTS_LABEL_GET,DATA_POINTS_LABEL_SET
-  
-  PUBLIC DATA_POINTS_VALUES_GET,DATA_POINTS_VALUES_SET
+  PUBLIC DataPoints_GlobalNumberGet
 
-  PUBLIC DATA_POINTS_NUMBER_OF_DATA_POINTS_GET
+  PUBLIC DataPoints_LabelGet,DataPoints_LabelSet
   
-  PUBLIC DATA_POINTS_USER_NUMBER_GET,DATA_POINTS_USER_NUMBER_SET
+  PUBLIC DataPoints_NumberOfDataPointsGet
   
-  PUBLIC DATA_POINTS_WEIGHTS_GET,DATA_POINTS_WEIGHTS_SET
+  PUBLIC DataPoints_PositionGet,DataPoints_PositionSet
+
+  PUBLIC DataPoints_UserNumberGet,DataPoints_UserNumberSet
+  
+  PUBLIC DataPoints_WeightsGet,DataPoints_WeightsSet
 
 CONTAINS
 
@@ -117,1086 +119,1105 @@ CONTAINS
   !
 
   !>Checks that a user data point number is defined on the specified region.
-  SUBROUTINE DATA_POINT_CHECK_EXISTS(DATA_POINTS,USER_NUMBER,DATA_POINT_EXISTS,GLOBAL_NUMBER,ERR,ERROR,*)
+  SUBROUTINE DataPoint_CheckExists(dataPoints,userNumber,dataPointExists,globalNumber,err,error,*)
 
     !Argument variables
-    TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS !<A pointer to the data points to check
-    INTEGER(INTG) :: USER_NUMBER !<The user data point number to check if it exists
-    LOGICAL, INTENT(OUT) :: DATA_POINT_EXISTS !<On exit, is .TRUE. if the data point user number exists in the region, .FALSE. if not
-    INTEGER(INTG), INTENT(OUT) :: GLOBAL_NUMBER !<On exit, if the data point exists the global number corresponding to the user data point number. If the data point does not exist then global number will be 0.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to check
+    INTEGER(INTG) :: userNumber !<The user data point number to check if it exists
+    LOGICAL, INTENT(OUT) :: dataPointExists !<On exit, is .TRUE. if the data point user number exists in the region, .FALSE. if not
+    INTEGER(INTG), INTENT(OUT) :: globalNumber !<On exit, if the data point exists the global number corresponding to the user data point number. If the data point does not exist then global number will be 0.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(TREE_NODE_TYPE), POINTER :: TREE_NODE
+    TYPE(TREE_NODE_TYPE), POINTER :: treeNode
    
-    ENTERS("DATA_POINT_CHECK_EXISTS",ERR,ERROR,*999)
+    ENTERS("DataPoint_CheckExists",err,error,*999)
 
-    DATA_POINT_EXISTS=.FALSE.
-    GLOBAL_NUMBER=0
-    IF(ASSOCIATED(DATA_POINTS)) THEN
-      NULLIFY(TREE_NODE)
-      CALL TREE_SEARCH(DATA_POINTS%DATA_POINTS_TREE,USER_NUMBER,TREE_NODE,ERR,ERROR,*999)
-      IF(ASSOCIATED(TREE_NODE)) THEN
-        CALL TREE_NODE_VALUE_GET(DATA_POINTS%DATA_POINTS_TREE,TREE_NODE,GLOBAL_NUMBER,ERR,ERROR,*999)
-        DATA_POINT_EXISTS=.TRUE.
+    dataPointExists=.FALSE.
+    globalNumber=0
+    IF(ASSOCIATED(dataPoints)) THEN
+      NULLIFY(treeNode)
+      CALL Tree_Search(dataPoints%dataPointsTree,userNumber,treeNode,err,error,*999)
+      IF(ASSOCIATED(treeNode)) THEN
+        CALL Tree_NodeValueGet(dataPoints%dataPointsTree,treeNode,globalNumber,err,error,*999)
+        dataPointExists=.TRUE.
       ENDIF
     ELSE
-      CALL FlagError("Data points is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Data points is not associated.",err,error,*999)
     ENDIF
 
-    EXITS("DATA_POINT_CHECK_EXISTS")
+    EXITS("DataPoint_CheckExists")
     RETURN
-999 ERRORSEXITS("DATA_POINT_CHECK_EXISTS",ERR,ERROR)
+999 ERRORSEXITS("DataPoint_CheckExists",err,error)
     RETURN 1
    
-  END SUBROUTINE DATA_POINT_CHECK_EXISTS
+  END SUBROUTINE DataPoint_CheckExists
 
   !
   !================================================================================================================================
   !
 
   !>Finalises a data point and deallocates all memory
-  SUBROUTINE DATA_POINT_FINALISE(DATA_POINT,ERR,ERROR,*)
+  SUBROUTINE DataPoint_Finalise(dataPoint,err,error,*)
     
     !Argument variables
-    TYPE(DATA_POINT_TYPE),INTENT(OUT) :: DATA_POINT !<The data point to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(DataPointType),INTENT(OUT) :: dataPoint !<The data point to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("DATA_POINT_FINALISE",ERR,ERROR,*999)
+    ENTERS("DataPoint_Finalise",err,error,*999)
 
-    DATA_POINT%GLOBAL_NUMBER=0
-    DATA_POINT%USER_NUMBER=0
-    IF(ALLOCATED(DATA_POINT%position)) DEALLOCATE(DATA_POINT%position)
-    IF(ALLOCATED(DATA_POINT%WEIGHTS)) DEALLOCATE(DATA_POINT%WEIGHTS)
+    dataPoint%globalNumber=0
+    dataPoint%userNumber=0
+    dataPoint%label=""
+    IF(ALLOCATED(dataPoint%position)) DEALLOCATE(dataPoint%position)
+    IF(ALLOCATED(dataPoint%weights)) DEALLOCATE(dataPoint%weights)
     
-    EXITS("DATA_POINT_FINALISE")
+    EXITS("DataPoint_Finalise")
     RETURN
-999 ERRORSEXITS("DATA_POINT_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("DataPoint_Finalise",err,error)
     RETURN 1  
  
-  END SUBROUTINE DATA_POINT_FINALISE
+  END SUBROUTINE DataPoint_Finalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises a data point
+  SUBROUTINE DataPoint_Initialise(dataPoint,err,error,*)
+    
+    !Argument variables
+    TYPE(DataPointType),INTENT(OUT) :: dataPoint !<The data point to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DataPoint_Initialise",err,error,*999)
+
+    dataPoint%globalNumber=0
+    dataPoint%userNumber=0
+    dataPoint%label=""
+    
+    EXITS("DataPoint_Initialise")
+    RETURN
+999 ERRORSEXITS("DataPoint_Initialise",err,error)
+    RETURN 1  
+ 
+  END SUBROUTINE DataPoint_Initialise
 
   !
   !================================================================================================================================
   !
 
   !>Finishes the process of creating data points in the region.
-  SUBROUTINE DATA_POINTS_CREATE_FINISH(DATA_POINTS,ERR,ERROR,*)
+  SUBROUTINE DataPoints_CreateFinish(dataPoints,err,error,*)
 
     !Argument variables
-    TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS !<A pointer to the data points to be finished
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to be finished
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: data_point_idx
+    INTEGER(INTG) :: dataPointIdx
     
-    ENTERS("DATA_POINTS_CREATE_FINISH",ERR,ERROR,*999)
+    ENTERS("DataPoints_CreateFinish",err,error,*999)
 
-    IF(ASSOCIATED(DATA_POINTS)) THEN
-      IF(DATA_POINTS%DATA_POINTS_FINISHED) THEN
-        CALL FlagError("Data points have already been finished.",ERR,ERROR,*999)
+    IF(ASSOCIATED(dataPoints)) THEN
+      IF(dataPoints%dataPointsFinished) THEN
+        CALL FlagError("Data points have already been finished.",err,error,*999)
       ELSE
-        DATA_POINTS%DATA_POINTS_FINISHED=.TRUE.
+        dataPoints%dataPointsFinished=.TRUE.
       ENDIF
     ELSE
-      CALL FlagError("Data points is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Data points is not associated.",err,error,*999)
     ENDIF
     
-    IF(DIAGNOSTICS1) THEN !<TODO Still Diagnostics 1??
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"Number of data points = ",DATA_POINTS%NUMBER_OF_DATA_POINTS,ERR,ERROR,*999)
-      DO data_point_idx=1,DATA_POINTS%NUMBER_OF_DATA_POINTS
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Data Points = ",data_point_idx,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Global number    = ",DATA_POINTS%DATA_POINTS(data_point_idx)% &
-          & GLOBAL_NUMBER,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    User number      = ",DATA_POINTS%DATA_POINTS(data_point_idx)% &
-          & USER_NUMBER,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Label            = ",DATA_POINTS%DATA_POINTS(data_point_idx)%LABEL, &
-          & ERR,ERROR,*999)
-      ENDDO !data_point_idx
-      CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Data points User->Global number tree",ERR,ERROR,*999)
-      CALL TREE_OUTPUT(DIAGNOSTIC_OUTPUT_TYPE,DATA_POINTS%DATA_POINTS_TREE,ERR,ERROR,*999)
+    IF(diagnostics1) THEN 
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,  "Data points:",err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,  "Number of dimensions  = ",dataPoints%numberOfDimensions,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,  "Number of data points = ",dataPoints%numberOfDataPoints,err,error,*999)
+      DO dataPointIdx=1,dataPoints%numberOfDataPoints
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Data Point : ",dataPointIdx,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Global number = ",dataPoints%dataPoints(dataPointIdx)% &
+          & globalNumber,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    User number   = ",dataPoints%dataPoints(dataPointIdx)% &
+          & userNumber,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Label         = ",dataPoints%dataPoints(dataPointIdx)%label, &
+          & err,error,*999)
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,dataPoints%numberOfDimensions,3,3,dataPoints%dataPoints(dataPointIdx)% &
+          & position,'("    Position      =",3(X,E13.6))','(19X,3(X,E13.6))',err,error,*999)
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,dataPoints%numberOfDimensions,3,3,dataPoints%dataPoints(dataPointIdx)% &
+          & weights,'("    Weights       =",3(X,E13.6))','(19X,3(X,E13.6))',err,error,*999)
+      ENDDO !dataPointIdx
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Data points User->Global number tree:",err,error,*999)
+      CALL Tree_Output(DIAGNOSTIC_OUTPUT_TYPE,dataPoints%dataPointsTree,err,error,*999)
     ENDIF
 
-    EXITS("DATA_POINTS_CREATE_FINISH")
+    EXITS("DataPoints_CreateFinish")
     RETURN
-999 ERRORSEXITS("DATA_POINTS_CREATE_FINISH",ERR,ERROR)
+999 ERRORSEXITS("DataPoints_CreateFinish",err,error)
     RETURN 1
    
-  END SUBROUTINE DATA_POINTS_CREATE_FINISH
+  END SUBROUTINE DataPoints_CreateFinish
 
   !
   !================================================================================================================================
   !
 
   !>Starts the process of creating generic data points
-  SUBROUTINE DATA_POINTS_CREATE_START_GENERIC(DATA_POINTS,NUMBER_OF_DATA_POINTS,NUMBER_OF_DIMENSIONS, &
-    & ERR,ERROR,*)
+  SUBROUTINE DataPoints_CreateStartGeneric(numberOfDataPoints,numberOfDimensions,dataPoints,err,error,*)
 
     !Argument variables
-    TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS !<On exit, a pointer to the created data points
-    INTEGER(INTG), INTENT(IN) :: NUMBER_OF_DATA_POINTS !<The number of data points to create
-    INTEGER(INTG), INTENT(IN) :: NUMBER_OF_DIMENSIONS !<The number of dimensions for data points values
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(IN) :: numberOfDataPoints !<The number of data points to create
+    INTEGER(INTG), INTENT(IN) :: numberOfDimensions !<The number of dimensions for data points values
+    TYPE(DataPointsType), POINTER :: dataPoints !<On exit, a pointer to the created data points
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: INSERT_STATUS,data_point_idx,coord_idx
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: insertStatus,dataPointIdx,coord_idx
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("DATA_POINTS_CREATE_START_GENERIC",ERR,ERROR,*999)
+    ENTERS("DataPoints_CreateStartGeneric",err,error,*999)
 
-    IF(ASSOCIATED(DATA_POINTS)) THEN
-      IF(NUMBER_OF_DATA_POINTS>0) THEN
-        ALLOCATE(DATA_POINTS%DATA_POINTS(NUMBER_OF_DATA_POINTS),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate data points data points.",ERR,ERROR,*999)
-        DATA_POINTS%NUMBER_OF_DATA_POINTS=NUMBER_OF_DATA_POINTS
-        DATA_POINTS%NUMBER_OF_DATA_PROJECTIONS=0
-        IF(ALLOCATED(DATA_POINTS%DATA_PROJECTIONS)) DEALLOCATE(DATA_POINTS%DATA_PROJECTIONS)
-        CALL TREE_CREATE_START(DATA_POINTS%DATA_PROJECTIONS_TREE,ERR,ERROR,*999)
-        CALL TREE_INSERT_TYPE_SET(DATA_POINTS%DATA_PROJECTIONS_TREE,TREE_NO_DUPLICATES_ALLOWED,ERR,ERROR,*999)
-        CALL TREE_CREATE_FINISH(DATA_POINTS%DATA_PROJECTIONS_TREE,ERR,ERROR,*999)
-        CALL TREE_CREATE_START(DATA_POINTS%DATA_POINTS_TREE,ERR,ERROR,*999)
-        CALL TREE_INSERT_TYPE_SET(DATA_POINTS%DATA_POINTS_TREE,TREE_NO_DUPLICATES_ALLOWED,ERR,ERROR,*999)
-        CALL TREE_CREATE_FINISH(DATA_POINTS%DATA_POINTS_TREE,ERR,ERROR,*999)
-        !Set default data point numbers
-        DO data_point_idx=1,DATA_POINTS%NUMBER_OF_DATA_POINTS
-          DATA_POINTS%DATA_POINTS(data_point_idx)%GLOBAL_NUMBER=data_point_idx
-          DATA_POINTS%DATA_POINTS(data_point_idx)%USER_NUMBER=data_point_idx
-          DATA_POINTS%DATA_POINTS(data_point_idx)%LABEL=""
-          ! initialise data points values to 0.0 and weights to 1.0
-          ALLOCATE(DATA_POINTS%DATA_POINTS(data_point_idx)%position(NUMBER_OF_DIMENSIONS),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate data points data points("//TRIM(NUMBER_TO_VSTRING &
-            & (data_point_idx,"*",ERR,ERROR))//") values.",ERR,ERROR,*999)
-          ALLOCATE(DATA_POINTS%DATA_POINTS(data_point_idx)%WEIGHTS(NUMBER_OF_DIMENSIONS),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate data points data points("//TRIM(NUMBER_TO_VSTRING &
-            & (data_point_idx,"*",ERR,ERROR))//") weights.",ERR,ERROR,*999)              
-          DO coord_idx=1,NUMBER_OF_DIMENSIONS
-            DATA_POINTS%DATA_POINTS(data_point_idx)%position(coord_idx)=0.0_DP
-            DATA_POINTS%DATA_POINTS(data_point_idx)%WEIGHTS(coord_idx)=1.0_DP
-          ENDDO
-          CALL TREE_ITEM_INSERT(DATA_POINTS%DATA_POINTS_TREE,data_point_idx,data_point_idx,INSERT_STATUS,ERR,ERROR,*999)
-        ENDDO !data_point_idx
+    IF(ASSOCIATED(dataPoints)) THEN
+      IF(numberOfDataPoints>0) THEN
+        IF(numberOfDimensions>=1.AND.numberOfDimensions<=3) THEN          
+          ALLOCATE(dataPoints%dataPoints(numberOfDataPoints),STAT=err)
+          IF(err/=0) CALL FlagError("Could not allocate data points data points.",err,error,*999)
+          dataPoints%numberOfDataPoints=numberOfDataPoints
+          dataPoints%numberOfDimensions=numberOfDimensions
+          dataPoints%numberOfDataProjections=0
+          IF(ALLOCATED(dataPoints%dataProjections)) DEALLOCATE(dataPoints%dataProjections)
+          CALL Tree_CreateStart(dataPoints%dataProjectionsTree,err,error,*999)
+          CALL Tree_InsertTypeSet(dataPoints%dataProjectionsTree,TREE_NO_DUPLICATES_ALLOWED,err,error,*999)
+          CALL Tree_CreateFinish(dataPoints%dataProjectionsTree,err,error,*999)
+          CALL Tree_CreateStart(dataPoints%dataPointsTree,err,error,*999)
+          CALL Tree_InsertTypeSet(dataPoints%dataPointsTree,TREE_NO_DUPLICATES_ALLOWED,err,error,*999)
+          CALL Tree_CreateFinish(dataPoints%dataPointsTree,err,error,*999)
+          !Set default data point numbers
+          DO dataPointIdx=1,dataPoints%numberOfDataPoints
+            CALL DataPoint_Initialise(dataPoints%dataPoints(dataPointIdx),err,error,*999)
+            !Default the user number to the global number
+            dataPoints%dataPoints(dataPointIdx)%globalNumber=dataPointIdx
+            dataPoints%dataPoints(dataPointIdx)%userNumber=dataPointIdx
+            ALLOCATE(dataPoints%dataPoints(dataPointIdx)%position(numberOfDimensions),STAT=err)
+            IF(err/=0) THEN
+              localError="Could not allocate data points data position for data point number "// &
+                & TRIM(NumberToVString(dataPointIdx,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+            ALLOCATE(dataPoints%dataPoints(dataPointIdx)%weights(numberOfDimensions),STAT=err)
+            IF(err/=0) THEN
+              localError="Could not allocate data points data weights for data point number "// &
+                & TRIM(NumberToVString(dataPointIdx,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+            !Initialise data points position to 0.0 and weights to 1.0
+            dataPoints%dataPoints(dataPointIdx)%position=0.0_DP
+            dataPoints%dataPoints(dataPointIdx)%weights=1.0_DP
+            CALL Tree_ItemInsert(dataPoints%dataPointsTree,dataPointIdx,dataPointIdx,insertStatus,err,error,*999)
+          ENDDO !dataPointIdx
+        ELSE
+          localError="The specified number of dimensions of "//TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
+            & " is invalid. The number of dimensions must be >= 1 and <= 3."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
       ELSE
-        LOCAL_ERROR="The specified number of data points of "//TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DATA_POINTS,"*",ERR,ERROR))// &
+        localError="The specified number of data points of "//TRIM(NumberToVString(numberOfDataPoints,"*",err,error))// &
           & " is invalid. The number of data points must be > 0."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+        CALL FlagError(localError,err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Data points is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Data points is not associated.",err,error,*999)
     ENDIF
 
-    EXITS("DATA_POINTS_CREATE_START_GENERIC")
+    EXITS("DataPoints_CreateStartGeneric")
     RETURN  
-999 ERRORSEXITS("DATA_POINTS_CREATE_START_GENERIC",ERR,ERROR)
+999 ERRORSEXITS("DataPoints_CreateStartGeneric",err,error)
     RETURN 1
    
-  END SUBROUTINE DATA_POINTS_CREATE_START_GENERIC
+  END SUBROUTINE DataPoints_CreateStartGeneric
 
   !
   !================================================================================================================================
   !
 
   !>Starts the process of creating data points in an interface.
-  SUBROUTINE DATA_POINTS_CREATE_START_INTERFACE(INTERFACE,NUMBER_OF_DATA_POINTS,DATA_POINTS,ERR,ERROR,*)
+  SUBROUTINE DataPoints_CreateStartInterface(interface,numberOfDataPoints,dataPoints,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE !<A pointer to the interface in which to create the data points
-    INTEGER(INTG), INTENT(IN) :: NUMBER_OF_DATA_POINTS !<The number of data points to create
-    TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS !<On exit, a pointer to the created data points. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer to the interface in which to create the data points
+    INTEGER(INTG), INTENT(IN) :: numberOfDataPoints !<The number of data points to create
+    TYPE(DataPointsType), POINTER :: dataPoints !<On exit, a pointer to the created data points. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
 
-    ENTERS("DATA_POINTS_CREATE_START_INTERFACE",ERR,ERROR,*998)
+    ENTERS("DataPoints_CreateStartInterface",err,error,*998)
 
     IF(ASSOCIATED(INTERFACE)) THEN
-      IF(ASSOCIATED(DATA_POINTS)) THEN
-        CALL FlagError("Data points is already associated.",ERR,ERROR,*999)
-      ELSE
-        IF(ASSOCIATED(INTERFACE%DATA_POINTS)) THEN
-          CALL FlagError("Interface already has data points associated.",ERR,ERROR,*998)
+      IF(ASSOCIATED(INTERFACE%COORDINATE_SYSTEM)) THEN
+        IF(ASSOCIATED(dataPoints)) THEN
+          CALL FlagError("Data points is already associated.",err,error,*999)
         ELSE
-          !Initialise the data points for the interface
-          CALL DATA_POINTS_INITIALISE(INTERFACE,ERR,ERROR,*999)
-          !Create the data points 
-          CALL DATA_POINTS_CREATE_START_GENERIC(INTERFACE%DATA_POINTS,NUMBER_OF_DATA_POINTS,INTERFACE% &
-            & COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
-          !Return the pointer        
-          DATA_POINTS=>INTERFACE%DATA_POINTS
+          IF(ASSOCIATED(INTERFACE%dataPoints)) THEN
+            CALL FlagError("Interface already has data points associated.",err,error,*998)
+          ELSE
+            !Initialise the data points for the interface
+            CALL DataPoints_Initialise(INTERFACE,err,error,*999)
+            !Create the data points 
+            CALL DataPoints_CreateStartGeneric(numberOfDataPoints,INTERFACE%COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS, &
+              & INTERFACE%dataPoints,err,error,*999)
+            !Return the pointer        
+            dataPoints=>interface%dataPoints
+          ENDIF
         ENDIF
+      ELSE
+        CALL FlagError("Interface coordinate system is not associated.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Interface is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Interface is not associated.",err,error,*998)
     ENDIF
     
-    EXITS("DATA_POINTS_CREATE_START_INTERFACE")
+    EXITS("DataPoints_CreateStartInterface")
     RETURN
-999 CALL DATA_POINTS_FINALISE(INTERFACE%DATA_POINTS,DUMMY_ERR,DUMMY_ERROR,*998)    
-998 ERRORSEXITS("DATA_POINTS_CREATE_START_INTERFACE",ERR,ERROR)
+999 CALL DataPoints_Finalise(interface%dataPoints,dummyErr,dummyError,*998)    
+998 ERRORSEXITS("DataPoints_CreateStartInterface",err,error)
     RETURN 1
    
-  END SUBROUTINE DATA_POINTS_CREATE_START_INTERFACE
+  END SUBROUTINE DataPoints_CreateStartInterface
 
   !
   !================================================================================================================================
   !
 
   !>Starts the process of creating data points in an region.
-  SUBROUTINE DATA_POINTS_CREATE_START_REGION(REGION,NUMBER_OF_DATA_POINTS,DATA_POINTS,ERR,ERROR,*)
+  SUBROUTINE DataPoints_CreateStartRegion(region,numberOfDataPoints,dataPoints,err,error,*)
 
     !Argument variables
-    TYPE(REGION_TYPE), POINTER :: REGION !<A pointer to the region in which to create the data points
-    INTEGER(INTG), INTENT(IN) :: NUMBER_OF_DATA_POINTS !<The number of data points to create
-    TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS !<On exit, a pointer to the created data points. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(region_TYPE), POINTER :: region !<A pointer to the region in which to create the data points
+    INTEGER(INTG), INTENT(IN) :: numberOfDataPoints !<The number of data points to create
+    TYPE(DataPointsType), POINTER :: dataPoints !<On exit, a pointer to the created data points. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
 
-    ENTERS("DATA_POINTS_CREATE_START_REGION",ERR,ERROR,*998)
+    ENTERS("DataPoints_CreateStartRegion",err,error,*998)
 
-    IF(ASSOCIATED(REGION)) THEN
-      IF(ASSOCIATED(DATA_POINTS)) THEN
-        CALL FlagError("Data points is already associated.",ERR,ERROR,*999)
-      ELSE
-        IF(ASSOCIATED(REGION%DATA_POINTS)) THEN
-          CALL FlagError("Region already has data points associated.",ERR,ERROR,*998)
+    IF(ASSOCIATED(region)) THEN
+      IF(ASSOCIATED(region%COORDINATE_SYSTEM)) THEN
+        IF(ASSOCIATED(dataPoints)) THEN
+          CALL FlagError("Data points is already associated.",err,error,*999)
         ELSE
-          !Initialise the data points for the region
-          CALL DATA_POINTS_INITIALISE(REGION,ERR,ERROR,*999)
-          !Create the data points 
-          CALL DATA_POINTS_CREATE_START_GENERIC(REGION%DATA_POINTS,NUMBER_OF_DATA_POINTS,REGION%COORDINATE_SYSTEM% &
-            & NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
-          !Return the pointer        
-          DATA_POINTS=>REGION%DATA_POINTS
+          IF(ASSOCIATED(region%dataPoints)) THEN
+            CALL FlagError("Region already has data points associated.",err,error,*998)
+          ELSE
+            !Initialise the data points for the region
+            CALL DataPoints_Initialise(region,err,error,*999)
+            !Create the data points 
+            CALL DataPoints_CreateStartGeneric(numberOfDataPoints,region%COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS, &
+              & region%dataPoints,err,error,*999)
+            !Return the pointer        
+            dataPoints=>region%dataPoints
+          ENDIF
         ENDIF
+      ELSE
+        CALL FlagError("Region coordinate system is not associated.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Region is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Region is not associated.",err,error,*998)
     ENDIF
     
-    EXITS("DATA_POINTS_CREATE_START_REGION")
+    EXITS("DataPoints_CreateStartRegion")
     RETURN
-999 CALL DATA_POINTS_FINALISE(REGION%DATA_POINTS,DUMMY_ERR,DUMMY_ERROR,*998)    
-998 ERRORSEXITS("DATA_POINTS_CREATE_START_REGION",ERR,ERROR)
+999 CALL DataPoints_Finalise(region%dataPoints,dummyErr,dummyError,*998)    
+998 ERRORSEXITS("DataPoints_CreateStartRegion",err,error)
     RETURN 1
    
-  END SUBROUTINE DATA_POINTS_CREATE_START_REGION
-
+  END SUBROUTINE DataPoints_CreateStartRegion
      
   !
   !================================================================================================================================
   !
 
-  !>Destroys data points. \see OPENCMISS::CMISSDataPointsDestroy
-  SUBROUTINE DATA_POINTS_DESTROY(DATA_POINTS,ERR,ERROR,*)
+  !>Destroys data points. \see OPENCMISS::Iron::cmfe_DataPointsDestroy
+  SUBROUTINE DataPoints_Destroy(dataPoints,err,error,*)
 
     !Argument variables
-    TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS !<A pointer to the data points to destroy
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to destroy
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     
-    ENTERS("DATA_POINTS_DESTROY",ERR,ERROR,*999)
+    ENTERS("DataPoints_Destroy",err,error,*999)
 
-    IF(ASSOCIATED(DATA_POINTS)) THEN
-      IF (ASSOCIATED(DATA_POINTS%REGION)) THEN
-        NULLIFY(DATA_POINTS%REGION%DATA_POINTS)
+    IF(ASSOCIATED(dataPoints)) THEN
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        NULLIFY(dataPoints%region%dataPoints)
       ELSE
-        CALL FLAG_ERROR("Data_points region is not associated.",ERR,ERROR,*999)
+        IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+          NULLIFY(dataPoints%interface%dataPoints)
+        ELSE
+          CALL FLAG_ERROR("Data_points region or interface is not associated.",err,error,*999)
+        ENDIF
       ENDIF
-      CALL DATA_POINTS_FINALISE(DATA_POINTS,ERR,ERROR,*999)
+      CALL DataPoints_Finalise(dataPoints,err,error,*999)
     ENDIF
    
-    EXITS("DATA_POINTS_DESTROY")
+    EXITS("DataPoints_Destroy")
     RETURN
-999 ERRORSEXITS("DATA_POINTS_DESTROY",ERR,ERROR)
+999 ERRORSEXITS("DataPoints_Destroy",err,error)
     RETURN 1
    
-  END SUBROUTINE DATA_POINTS_DESTROY
+  END SUBROUTINE DataPoints_Destroy
 
   !
   !===============================================================================================================================
   !
 
   !>Finalises the data points and deallocates any memory. 
-  SUBROUTINE DATA_POINTS_FINALISE(DATA_POINTS,ERR,ERROR,*)
+  SUBROUTINE DataPoints_Finalise(dataPoints,err,error,*)
 
     !Argument variables
-    TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS !<A pointer to the data points to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: data_point_idx,data_projection_idx
+    INTEGER(INTG) :: dataPointIdx,dataProjectionIdx
 
-    ENTERS("DATA_POINTS_FINALISE",ERR,ERROR,*999)
+    ENTERS("DataPoints_Finalise",err,error,*999)
 
-    IF(ASSOCIATED(DATA_POINTS)) THEN
-      IF(ALLOCATED(DATA_POINTS%DATA_POINTS)) THEN
-        DO data_point_idx=1,SIZE(DATA_POINTS%DATA_POINTS,1)
-          CALL DATA_POINT_FINALISE(DATA_POINTS%DATA_POINTS(data_point_idx),ERR,ERROR,*999)
-        ENDDO !data_point_idx
-        DEALLOCATE(DATA_POINTS%DATA_POINTS)
+    IF(ASSOCIATED(dataPoints)) THEN
+      IF(ALLOCATED(dataPoints%dataPoints)) THEN
+        DO dataPointIdx=1,SIZE(dataPoints%dataPoints,1)
+          CALL DataPoint_Finalise(dataPoints%dataPoints(dataPointIdx),err,error,*999)
+        ENDDO !dataPointIdx
+        DEALLOCATE(dataPoints%dataPoints)
       ENDIF
-      IF(ASSOCIATED(DATA_POINTS%DATA_POINTS_TREE)) CALL TREE_DESTROY(DATA_POINTS%DATA_POINTS_TREE,ERR,ERROR,*999)
-      DATA_POINTS%NUMBER_OF_DATA_PROJECTIONS=0
-      IF(ALLOCATED(DATA_POINTS%DATA_PROJECTIONS)) THEN
-        DO data_projection_idx=1,SIZE(DATA_POINTS%DATA_PROJECTIONS,1)
-          CALL DATA_PROJECTION_DESTROY(DATA_POINTS%DATA_PROJECTIONS(data_projection_idx)%PTR,ERR,ERROR,*999)
-        ENDDO !data_projection_idx
-        DEALLOCATE(DATA_POINTS%DATA_PROJECTIONS)
+      IF(ASSOCIATED(dataPoints%dataPointsTree)) CALL Tree_Destroy(dataPoints%dataPointsTree,err,error,*999)
+      dataPoints%numberOfDataProjections=0
+      IF(ALLOCATED(dataPoints%dataProjections)) THEN
+        DO dataProjectionIdx=1,SIZE(dataPoints%dataProjections,1)
+          CALL DataProjection_Destroy(dataPoints%dataProjections(dataProjectionIdx)%PTR,err,error,*999)
+        ENDDO !dataProjectionIdx
+        DEALLOCATE(dataPoints%dataProjections)
       ENDIF
-      IF(ASSOCIATED(DATA_POINTS%DATA_PROJECTIONS_TREE)) CALL TREE_DESTROY(DATA_POINTS%DATA_PROJECTIONS_TREE,ERR,ERROR,*999)
-      DEALLOCATE(DATA_POINTS)
+      IF(ASSOCIATED(dataPoints%dataProjectionsTree)) CALL Tree_Destroy(dataPoints%dataProjectionsTree,err,error,*999)
+      DEALLOCATE(dataPoints)
     ENDIF
     
-    EXITS("DATA_POINTS_FINALISE")
+    EXITS("DataPoints_Finalise")
     RETURN
-999 ERRORSEXITS("DATA_POINTS_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("DataPoints_Finalise",err,error)
     RETURN 1
 
-  END SUBROUTINE DATA_POINTS_FINALISE
+  END SUBROUTINE DataPoints_Finalise
 
   !
   !================================================================================================================================
   !
 
   !>Initialises the data points.
-  SUBROUTINE DATA_POINTS_INITIALISE_GENERIC(DATA_POINTS,ERR,ERROR,*)
+  SUBROUTINE DataPoints_InitialiseGeneric(dataPoints,err,error,*)
 
     !Argument variables
-    TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS !<A pointer to the data points to initialise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("DATA_POINTS_INITIALISE_GENERIC",ERR,ERROR,*999)
+    ENTERS("DataPoints_InitialiseGeneric",err,error,*999)
 
-    IF(ASSOCIATED(DATA_POINTS)) THEN
-      NULLIFY(DATA_POINTS%REGION)
-      NULLIFY(DATA_POINTS%INTERFACE)
-      DATA_POINTS%DATA_POINTS_FINISHED=.FALSE.
-      DATA_POINTS%NUMBER_OF_DATA_POINTS=0
-      NULLIFY(DATA_POINTS%DATA_POINTS_TREE)
-      DATA_POINTS%NUMBER_OF_DATA_PROJECTIONS=0
-      NULLIFY(DATA_POINTS%DATA_PROJECTIONS_TREE)
+    IF(ASSOCIATED(dataPoints)) THEN
+      NULLIFY(dataPoints%region)
+      NULLIFY(dataPoints%interface)
+      dataPoints%dataPointsFinished=.FALSE.
+      dataPoints%numberOfDimensions=0
+      dataPoints%numberOfDataPoints=0
+      NULLIFY(dataPoints%dataPointsTree)
+      dataPoints%numberOfDataProjections=0
+      NULLIFY(dataPoints%dataProjectionsTree)
     ELSE
-      CALL FlagError("Data points is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Data points is not associated.",err,error,*999)
     ENDIF
     
-    EXITS("DATA_POINTS_INITIALISE_GENERIC")
+    EXITS("DataPoints_InitialiseGeneric")
     RETURN
-999 ERRORSEXITS("DATA_POINTS_INITIALISE_GENERIC",ERR,ERROR)
+999 ERRORSEXITS("DataPoints_InitialiseGeneric",err,error)
     RETURN 1
-  END SUBROUTINE DATA_POINTS_INITIALISE_GENERIC
+  END SUBROUTINE DataPoints_InitialiseGeneric
 
   !
   !================================================================================================================================
   !
 
   !>Initialises the data points in a given interface.
-  SUBROUTINE DATA_POINTS_INITIALISE_INTERFACE(INTERFACE,ERR,ERROR,*)
+  SUBROUTINE DataPoints_InitialiseInterface(INTERFACE,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE !<A pointer to the interface to initialise the data points for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer to the interface to initialise the data points for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("DATA_POINTS_INITIALISE_INTERFACE",ERR,ERROR,*999)
+    ENTERS("DataPoints_InitialiseInterface",err,error,*999)
 
-    IF(ASSOCIATED(INTERFACE)) THEN
-      IF(ASSOCIATED(INTERFACE%DATA_POINTS)) THEN
-        CALL FlagError("Interface already has associated data points.",ERR,ERROR,*999)
+    IF(ASSOCIATED(interface)) THEN
+      IF(ASSOCIATED(interface%dataPoints)) THEN
+        CALL FlagError("Interface already has associated data points.",err,error,*999)
       ELSE
-        ALLOCATE(INTERFACE%DATA_POINTS,STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate interface data points.",ERR,ERROR,*999)
-        CALL DATA_POINTS_INITIALISE_GENERIC(INTERFACE%DATA_POINTS,ERR,ERROR,*999)
-        INTERFACE%DATA_POINTS%INTERFACE=>INTERFACE
+        ALLOCATE(INTERFACE%dataPoints,STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate interface data points.",err,error,*999)
+        CALL DataPoints_InitialiseGeneric(interface%dataPoints,err,error,*999)
+        interface%dataPoints%interface=>interface
       ENDIF
     ELSE
-      CALL FlagError("Interface is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Interface is not associated.",err,error,*999)
     ENDIF
     
-    EXITS("DATA_POINTS_INITIALISE_INTERFACE")
+    EXITS("DataPoints_InitialiseInterface")
     RETURN
-999 ERRORSEXITS("DATA_POINTS_INITIALISE_INTERFACE",ERR,ERROR)
+999 ERRORSEXITS("DataPoints_InitialiseInterface",err,error)
     RETURN 1
     
-  END SUBROUTINE DATA_POINTS_INITIALISE_INTERFACE
+  END SUBROUTINE DataPoints_InitialiseInterface
 
   !
   !================================================================================================================================
   !
 
   !>Initialises the data points in a given region.
-  SUBROUTINE DATA_POINTS_INITIALISE_REGION(REGION,ERR,ERROR,*)
+  SUBROUTINE DataPoints_InitialiseRegion(region,err,error,*)
 
     !Argument variables
-    TYPE(REGION_TYPE), POINTER :: REGION !<A pointer to the region to initialise the data points for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region to initialise the data points for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("DATA_POINTS_INITIALISE_REGION",ERR,ERROR,*999)
+    ENTERS("DataPoints_InitialiseRegion",err,error,*999)
 
-    IF(ASSOCIATED(REGION)) THEN
-      IF(ASSOCIATED(REGION%DATA_POINTS)) THEN
-        CALL FlagError("Region has associated data points.",ERR,ERROR,*999)
+    IF(ASSOCIATED(region)) THEN
+      IF(ASSOCIATED(region%dataPoints)) THEN
+        CALL FlagError("Region has associated data points.",err,error,*999)
       ELSE
-        ALLOCATE(REGION%DATA_POINTS,STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate region data points.",ERR,ERROR,*999)
-        CALL DATA_POINTS_INITIALISE_GENERIC(REGION%DATA_POINTS,ERR,ERROR,*999)
-        REGION%DATA_POINTS%REGION=>REGION
+        ALLOCATE(region%dataPoints,STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate region data points.",err,error,*999)
+        CALL DataPoints_InitialiseGeneric(region%dataPoints,err,error,*999)
+        region%dataPoints%region=>region
       ENDIF
     ELSE
-      CALL FlagError("Region is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Region is not associated.",err,error,*999)
     ENDIF
     
-    EXITS("DATA_POINTS_INITIALISE_REGION")
+    EXITS("DataPoints_InitialiseRegion")
     RETURN
-999 ERRORSEXITS("DATA_POINTS_INITIALISE_REGION",ERR,ERROR)
+999 ERRORSEXITS("DataPoints_InitialiseRegion",err,error)
     RETURN 1
-  END SUBROUTINE DATA_POINTS_INITIALISE_REGION
+    
+  END SUBROUTINE DataPoints_InitialiseRegion
 
   !
   !================================================================================================================================
   !  
 
-  !>Gets the user number for a data point identified by a given global number. 
-  SUBROUTINE DATA_POINTS_GLOBAL_NUMBER_GET(DATA_POINTS,USER_NUMBER,GLOBAL_NUMBER,ERR,ERROR,*)
+  !>Gets the global number for a data point identified by a given user number. 
+  SUBROUTINE DataPoints_GlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*)
 
     !Argument variables
-    TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS !<A pointer to the data points to get the number for
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number to get the global number foror
-    INTEGER(INTG), INTENT(OUT) :: GLOBAL_NUMBER !<On exit, the global number of the specified user data point
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to get the number for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number to get the global number for
+    INTEGER(INTG), INTENT(OUT) :: globalNumber !<On exit, the global number of the specified user data point
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-    TYPE(TREE_NODE_TYPE), POINTER :: TREE_NODE
+    LOGICAL :: dataPointExists
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("DATA_POINTS_GLOBAL_NUMBER_GET",ERR,ERROR,*999)
+    ENTERS("DataPoints_GlobalNumberGet",err,error,*999)
 
-    IF(ASSOCIATED(DATA_POINTS)) THEN
-      NULLIFY(TREE_NODE)
-      CALL TREE_SEARCH(DATA_POINTS%DATA_POINTS_TREE,USER_NUMBER,TREE_NODE,ERR,ERROR,*999)
-      IF(ASSOCIATED(TREE_NODE)) THEN
-        CALL TREE_NODE_VALUE_GET(DATA_POINTS%DATA_POINTS_TREE,TREE_NODE,GLOBAL_NUMBER,ERR,ERROR,*999)
-      ELSE
-        LOCAL_ERROR="Tree node is not associates (cannot find the user number "//TRIM(NUMBER_TO_VSTRING(USER_NUMBER,"*",ERR, &
-          & ERROR))//"."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+    IF(ASSOCIATED(dataPoints)) THEN
+      CALL DataPoint_CheckExists(dataPoints,userNumber,dataPointExists,globalNumber,err,error,*999)
+      IF(.NOT.dataPointExists) THEN
+        localError="The data point with user number "//TRIM(NumberToVString(userNumber,"*",err,error))//" does not exist."
+        CALL FlagError(localError,err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Data points is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Data points is not associated.",err,error,*999)
     ENDIF
     
-    EXITS("DATA_POINTS_GLOBAL_NUMBER_GET")
+    EXITS("DataPoints_GlobalNumberGet")
     RETURN
-999 ERRORSEXITS("DATA_POINST_GLOBAL_NUMBER_GET",ERR,ERROR)    
+999 ERRORSEXITS("DataPoints_GlobalNumberGet",err,error)    
     RETURN 1
    
-  END SUBROUTINE DATA_POINTS_GLOBAL_NUMBER_GET
+  END SUBROUTINE DataPoints_GlobalNumberGet
        
   !
   !================================================================================================================================
   !
 
-  !>Gets the character label for a data point identified by a given global number.
-  SUBROUTINE DATA_POINTS_LABEL_GET_C(DATA_POINTS,GLOBAL_NUMBER,LABEL,ERR,ERROR,*)
+  !>Gets the character label for a data point identified by a given user number.
+  SUBROUTINE DataPoints_LabelGetC(dataPoints,userNumber,label,err,error,*)
 
     !Argument variables
-    TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS !<A pointer to the data points to get the label for
-    INTEGER(INTG), INTENT(IN) :: GLOBAL_NUMBER !<The global number to get the label for
-    CHARACTER(LEN=*), INTENT(OUT) :: LABEL !<On exit, the label of the specified global data point
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to get the label for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number to get the label for
+    CHARACTER(LEN=*), INTENT(OUT) :: label !<On exit, the label of the specified user data point
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER :: C_LENGTH,VS_LENGTH
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER :: cLength,globalNumber,vsLength
     
-    ENTERS("DATA_POINTS_LABEL_GET_C",ERR,ERROR,*999)
+    ENTERS("DataPoints_LabelGetC",err,error,*999)
 
-    IF(ASSOCIATED(DATA_POINTS)) THEN
-      IF(DATA_POINTS%DATA_POINTS_FINISHED) THEN
-        IF(GLOBAL_NUMBER>=1.AND.GLOBAL_NUMBER<=DATA_POINTS%NUMBER_OF_DATA_POINTS) THEN
-          C_LENGTH=LEN(LABEL)
-          VS_LENGTH=LEN_TRIM(DATA_POINTS%DATA_POINTS(GLOBAL_NUMBER)%LABEL)
-          IF(C_LENGTH>VS_LENGTH) THEN
-            LABEL=CHAR(LEN_TRIM(DATA_POINTS%DATA_POINTS(GLOBAL_NUMBER)%LABEL))
-          ELSE
-            LABEL=CHAR(DATA_POINTS%DATA_POINTS(GLOBAL_NUMBER)%LABEL,C_LENGTH)
-          ENDIF
+    IF(ASSOCIATED(dataPoints)) THEN
+      IF(dataPoints%dataPointsFinished) THEN
+        CALL DataPoints_GlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*999)
+        cLength=LEN(label)
+        vsLength=LEN_TRIM(dataPoints%dataPoints(globalNumber)%label)
+        IF(cLength>vsLength) THEN
+          label=CHAR(LEN_TRIM(dataPoints%dataPoints(globalNumber)%label))
         ELSE
-          LOCAL_ERROR="The specified global data point number of "//TRIM(NUMBER_TO_VSTRING(GLOBAL_NUMBER,"*",ERR,ERROR))// &
-            & " is invalid. The global data point number should be between 1 and "// &
-            & TRIM(NUMBER_TO_VSTRING(DATA_POINTS%NUMBER_OF_DATA_POINTS,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          label=CHAR(dataPoints%dataPoints(globalNumber)%label,cLength)
         ENDIF
       ELSE
-        CALL FlagError("Data points have not been finished.",ERR,ERROR,*999)
+        CALL FlagError("Data points have not been finished.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Data points is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Data points is not associated.",err,error,*999)
     ENDIF
     
-    EXITS("DATA_POINTS_LABEL_GET_C")
+    EXITS("DataPoints_LabelGetC")
     RETURN
-999 ERRORSEXITS("DATA_POINTS_LABEL_GET_C",ERR,ERROR)    
+999 ERRORSEXITS("DataPoints_LabelGetC",err,error)    
     RETURN 1
    
-  END SUBROUTINE DATA_POINTS_LABEL_GET_C
+  END SUBROUTINE DataPoints_LabelGetC
         
   !
   !================================================================================================================================
   !
 
-  !>Gets the varying string label for a data point identified by a given global number. 
-  SUBROUTINE DATA_POINTS_LABEL_GET_VS(DATA_POINTS,GLOBAL_NUMBER,LABEL,ERR,ERROR,*)
+  !>Gets the varying string label for a data point identified by a given user number. 
+  SUBROUTINE DataPoints_LabelGetVS(dataPoints,userNumber,label,err,error,*)
 
     !Argument variables
-    TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS !<A pointer to the data points to get the label for
-    INTEGER(INTG), INTENT(IN) :: GLOBAL_NUMBER !<The global number to get the label for
-    TYPE(VARYING_STRING), INTENT(OUT) :: LABEL !<On exit, the label of the specified global data point
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to get the label for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number to get the label for
+    TYPE(VARYING_STRING), INTENT(OUT) :: label !<On exit, the label of the specified global data point
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: globalNumber
     
-    ENTERS("DATA_POINTS_LABEL_GET_VS",ERR,ERROR,*999)
+    ENTERS("DataPoints_LabelGetVS",err,error,*999)
 
-    IF(ASSOCIATED(DATA_POINTS)) THEN
-      IF(DATA_POINTS%DATA_POINTS_FINISHED) THEN
-        IF(GLOBAL_NUMBER>=1.AND.GLOBAL_NUMBER<=DATA_POINTS%NUMBER_OF_DATA_POINTS) THEN
-          LABEL=DATA_POINTS%DATA_POINTS(GLOBAL_NUMBER)%LABEL
-        ELSE
-          LOCAL_ERROR="The specified global data point number of "//TRIM(NUMBER_TO_VSTRING(GLOBAL_NUMBER,"*",ERR,ERROR))// &
-            & " is invalid. The global data point number should be between 1 and "// &
-            & TRIM(NUMBER_TO_VSTRING(DATA_POINTS%NUMBER_OF_DATA_POINTS,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
+    IF(ASSOCIATED(dataPoints)) THEN
+      IF(dataPoints%dataPointsFinished) THEN
+        CALL DataPoints_GlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*999)
+        label=dataPoints%dataPoints(globalNumber)%label
       ELSE
-        CALL FlagError("Data points have not been finished.",ERR,ERROR,*999)
+        CALL FlagError("Data points have not been finished.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Data points is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Data points is not associated.",err,error,*999)
     ENDIF
     
-    EXITS("DATA_POINTS_LABEL_GET_VS")
+    EXITS("DataPoints_LabelGetVS")
     RETURN
-999 ERRORSEXITS("DATA_POINTS_LABEL_GET_VS",ERR,ERROR)    
+999 ERRORSEXITS("DataPoints_LabelGetVS",err,error)    
     RETURN 1
    
-  END SUBROUTINE DATA_POINTS_LABEL_GET_VS
+  END SUBROUTINE DataPoints_LabelGetVS
 
   !
   !================================================================================================================================
   !
 
-  !>Changes/sets the character label for a data point identified by a given global number.
-  SUBROUTINE DATA_POINTS_LABEL_SET_C(DATA_POINTS,GLOBAL_NUMBER,LABEL,ERR,ERROR,*)
+  !>Changes/sets the character label for a data point identified by a given user number.
+  SUBROUTINE DataPoints_LabelSetC(dataPoints,userNumber,label,err,error,*)
 
     !Argument variables
-    TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS !<A pointer to the data points to set the label for
-    INTEGER(INTG), INTENT(IN) :: GLOBAL_NUMBER !<The global number to set the label for
-    CHARACTER(LEN=*), INTENT(IN) :: LABEL !<The label to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to set the label for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number to set the label for
+    CHARACTER(LEN=*), INTENT(IN) :: label !<The label to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: globalNumber
     
-    ENTERS("DATA_POINTS_LABEL_SET_C",ERR,ERROR,*999)
+    ENTERS("DataPoints_LabelSetC",err,error,*999)
 
-    IF(ASSOCIATED(DATA_POINTS)) THEN
-      IF(DATA_POINTS%DATA_POINTS_FINISHED) THEN
-        CALL FlagError("Data points have been finished.",ERR,ERROR,*999)
+    IF(ASSOCIATED(dataPoints)) THEN
+      IF(dataPoints%dataPointsFinished) THEN
+        CALL FlagError("Data points have been finished.",err,error,*999)
       ELSE
-        IF(GLOBAL_NUMBER>=1.AND.GLOBAL_NUMBER<=DATA_POINTS%NUMBER_OF_DATA_POINTS) THEN
-          DATA_POINTS%DATA_POINTS(GLOBAL_NUMBER)%LABEL=LABEL
-        ELSE
-          LOCAL_ERROR="The specified global data point number of "//TRIM(NUMBER_TO_VSTRING(GLOBAL_NUMBER,"*",ERR,ERROR))// &
-            & " is invalid. The global data point number should be between 1 and "// &
-            & TRIM(NUMBER_TO_VSTRING(DATA_POINTS%NUMBER_OF_DATA_POINTS,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
+        CALL DataPoints_GlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*999)
+        dataPoints%dataPoints(globalNumber)%label=label
       ENDIF
     ELSE
-      CALL FlagError("Data points is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Data points is not associated.",err,error,*999)
     ENDIF
     
-    EXITS("DATA_POINTS_LABEL_SET_C")
+    EXITS("DataPoints_LabelSetC")
     RETURN
-999 ERRORSEXITS("DATA_POINTS_LABEL_SET_C",ERR,ERROR)    
+999 ERRORSEXITS("DataPoints_LabelSetC",err,error)    
     RETURN 1
    
-  END SUBROUTINE DATA_POINTS_LABEL_SET_C    
+  END SUBROUTINE DataPoints_LabelSetC    
   
   !
   !================================================================================================================================
   !
 
 
-  !>Changes/sets the varying string label for a data point identified by a given global number.
-  SUBROUTINE DATA_POINTS_LABEL_SET_VS(DATA_POINTS,GLOBAL_NUMBER,LABEL,ERR,ERROR,*)
+  !>Changes/sets the varying string label for a data point identified by a given user number.
+  SUBROUTINE DataPoints_LabelSetVS(dataPoints,userNumber,label,err,error,*)
 
     !Argument variables
-    TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS !<A pointer to the data points to set the label for
-    INTEGER(INTG), INTENT(IN) :: GLOBAL_NUMBER !<The global number to set the label for
-    TYPE(VARYING_STRING), INTENT(IN) :: LABEL !<The label to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to set the label for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number to set the label for
+    TYPE(VARYING_STRING), INTENT(IN) :: label !<The label to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: globalNumber
     
-    ENTERS("DATA_POINTS_LABEL_SET_VS",ERR,ERROR,*999)
+    ENTERS("DataPoints_LabelSetVS",err,error,*999)
 
-    IF(ASSOCIATED(DATA_POINTS)) THEN
-      IF(DATA_POINTS%DATA_POINTS_FINISHED) THEN
-        CALL FlagError("Data points have been finished.",ERR,ERROR,*999)
+    IF(ASSOCIATED(dataPoints)) THEN
+      IF(dataPoints%dataPointsFinished) THEN
+        CALL FlagError("Data points have been finished.",err,error,*999)
       ELSE
-        IF(GLOBAL_NUMBER>=1.AND.GLOBAL_NUMBER<=DATA_POINTS%NUMBER_OF_DATA_POINTS) THEN
-          DATA_POINTS%DATA_POINTS(GLOBAL_NUMBER)%LABEL=LABEL
-        ELSE
-          LOCAL_ERROR="The specified global data point number of "//TRIM(NUMBER_TO_VSTRING(GLOBAL_NUMBER,"*",ERR,ERROR))// &
-            & " is invalid. The global data point number should be between 1 and "// &
-            & TRIM(NUMBER_TO_VSTRING(DATA_POINTS%NUMBER_OF_DATA_POINTS,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
+        CALL DataPoints_GlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*999)
+        dataPoints%dataPoints(globalNumber)%label=label
       ENDIF
     ELSE
-      CALL FlagError("Data points is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Data points is not associated.",err,error,*999)
     ENDIF
     
-    EXITS("DATA_POINTS_LABEL_SET_VS")
+    EXITS("DataPoints_LabelSetVS")
     RETURN
-999 ERRORSEXITS("DATA_POINTS_LABEL_SET_VS",ERR,ERROR)    
+999 ERRORSEXITS("DataPoints_LabelSetVS",err,error)    
     RETURN 1
    
-  END SUBROUTINE DATA_POINTS_LABEL_SET_VS
+  END SUBROUTINE DataPoints_LabelSetVS
         
   !
   !================================================================================================================================
   !
   
-  !>Gets the values for a data point identified by a given global number.
-  SUBROUTINE DATA_POINTS_VALUES_GET(DATA_POINTS,GLOBAL_NUMBER,VALUES,ERR,ERROR,*)
+  !>Gets the position for a data point identified by a given user number.
+  SUBROUTINE DataPoints_PositionGet(dataPoints,userNumber,position,err,error,*)
 
     !Argument variables
-    TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS !<A pointer to the data points to set the number for
-    INTEGER(INTG), INTENT(IN) :: GLOBAL_NUMBER !<The global number to get the values for
-    REAL(DP), INTENT(OUT) :: VALUES(:) !<On exit, the values of the specified global data point
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to set the number for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number to get the values for
+    REAL(DP), INTENT(OUT) :: position(:) !<position(coordinateIdx). On exit, the position of the specified data point
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: globalNumber
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("DATA_POINTS_VALUES_GET",ERR,ERROR,*999)
+    ENTERS("DataPoints_PositionGet",err,error,*999)
 
-    IF(ASSOCIATED(DATA_POINTS)) THEN
-      IF(DATA_POINTS%DATA_POINTS_FINISHED) THEN
-        !Check the data point global number exists
-        IF(GLOBAL_NUMBER>=1.AND.GLOBAL_NUMBER<=DATA_POINTS%NUMBER_OF_DATA_POINTS) THEN
-          IF(SIZE(VALUES,1)==SIZE(DATA_POINTS%DATA_POINTS(GLOBAL_NUMBER)%position,1)) THEN
-            VALUES=DATA_POINTS%DATA_POINTS(GLOBAL_NUMBER)%position
-          ELSE
-            CALL FlagError("array values has size of "//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))// &
-              & "but it needs to have size of "// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(DATA_POINTS%DATA_POINTS(GLOBAL_NUMBER)%position,1),"*",ERR,ERROR))// &
-              & "." ,ERR,ERROR,*999)
-          ENDIF
+    IF(ASSOCIATED(dataPoints)) THEN
+      IF(dataPoints%dataPointsFinished) THEN
+        IF(SIZE(position,1)>=dataPoints%numberOfDimensions) THEN
+          CALL DataPoints_GlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*999)
+          position(1:dataPoints%numberOfDimensions)=dataPoints%dataPoints(globalNumber)%position(1:dataPoints%numberOfDimensions)
         ELSE
-          LOCAL_ERROR="The specified global data point number of "//TRIM(NUMBER_TO_VSTRING(GLOBAL_NUMBER,"*",ERR,ERROR))// &
-            & " is invalid. The global data point number should be between 1 and "// &
-            & TRIM(NUMBER_TO_VSTRING(DATA_POINTS%NUMBER_OF_DATA_POINTS,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          localError="The size of the specified position array of "//TRIM(NumberToVString(SIZE(position,1),"*",err,error))// &
+            & " is too small. The array size needs to be >= "// &
+            & TRIM(NumberToVString(dataPoints%numberOfDimensions,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
         ENDIF
       ELSE
-        CALL FlagError("Data points have not been finished.",ERR,ERROR,*999)
+        CALL FlagError("Data points have not been finished.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Data points is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Data points is not associated.",err,error,*999)
     ENDIF
     
-    EXITS("DATA_POINTS_VALUES_GET")
+    EXITS("DataPoints_PositionGet")
     RETURN
-999 ERRORSEXITS("DATA_POINTS_VALUES_GET",ERR,ERROR)    
+999 ERRORSEXITS("DataPoints_PositionGet",err,error)    
     RETURN 1
 
-  END SUBROUTINE DATA_POINTS_VALUES_GET
+  END SUBROUTINE DataPoints_PositionGet
 
   !
   !================================================================================================================================
   !
 
-  !>Changes/sets the values for a data point identified by a given global number.
-  SUBROUTINE DATA_POINTS_VALUES_SET(DATA_POINTS,GLOBAL_NUMBER,VALUES,ERR,ERROR,*)
+  !>Changes/sets the position for a data point identified by a given user number.
+  SUBROUTINE DataPoints_PositionSet(dataPoints,userNumber,position,err,error,*)
 
     !Argument variables
-    TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS !<A pointer to the data points to set the number for
-    INTEGER(INTG), INTENT(IN) :: GLOBAL_NUMBER !<The global number to set the values for
-    REAL(DP), INTENT(IN) :: VALUES(:) !<The global number to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to set the number for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number to set the values for
+    REAL(DP), INTENT(IN) :: position(:) !<position(coordinateIdx). The data point position to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: globalNumber
+    TYPE(VARYING_STRING) :: localError
    
-    ENTERS("DATA_POINTS_VALUES_SET",ERR,ERROR,*999)
+    ENTERS("DataPoints_PositionSet",err,error,*999)
 
-    IF(ASSOCIATED(DATA_POINTS)) THEN   
-      IF(DATA_POINTS%DATA_POINTS_FINISHED) THEN
-        CALL FlagError("Data points have been finished.",ERR,ERROR,*999)
+    IF(ASSOCIATED(dataPoints)) THEN   
+      IF(dataPoints%dataPointsFinished) THEN
+        CALL FlagError("Data points have been finished.",err,error,*999)
       ELSE
-        IF(GLOBAL_NUMBER>=1.AND.GLOBAL_NUMBER<=DATA_POINTS%NUMBER_OF_DATA_POINTS) THEN
-          IF(SIZE(VALUES,1)==SIZE(DATA_POINTS%DATA_POINTS(GLOBAL_NUMBER)%position,1)) THEN
-            DATA_POINTS%DATA_POINTS(GLOBAL_NUMBER)%position(1:SIZE(VALUES,1))=VALUES(1:SIZE(VALUES,1))
-            !X=[1.0_DP,1.0_DP]
-            !CALL COORDINATE_CONVERT_COORDINATE_SYSTEMS(DATA_POINTS%INTERFACE%COORDINATE_SYSTEM, &
-            !& DATA_POINTS%INTERFACE%PARENT_REGION%COORDINATE_SYSTEM,VALUES,Y,ERR,ERROR,*999)
-          ELSE
-            CALL FlagError("The dimension of the input values does not match.",ERR,ERROR,*999)    
-          ENDIF
+        IF(SIZE(position,1)>=dataPoints%numberOfDimensions) THEN
+          CALL DataPoints_GlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*999)
+          dataPoints%dataPoints(globalNumber)%position(1:dataPoints%numberOfDimensions)=position(1:dataPoints%numberOfDimensions)
         ELSE
-          LOCAL_ERROR="The specified global data point number of "//TRIM(NUMBER_TO_VSTRING(GLOBAL_NUMBER,"*",ERR,ERROR))// &
-            & " is invalid. The global data point number should be between 1 and "// &
-            & TRIM(NUMBER_TO_VSTRING(DATA_POINTS%NUMBER_OF_DATA_POINTS,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          localError="The size of the specified position array of "//TRIM(NumberToVString(SIZE(position,1),"*",err,error))// &
+            & " is too small. The array size needs to be >= "// &
+            & TRIM(NumberToVString(dataPoints%numberOfDimensions,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FlagError("Data points is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Data points is not associated.",err,error,*999)
     ENDIF
     
-    EXITS("DATA_POINTS_VALUES_SET")
+    EXITS("DataPoints_PositionSet")
     RETURN
-999 ERRORSEXITS("DATA_POINTS_VALUES_SET",ERR,ERROR)    
+999 ERRORSEXITS("DataPoints_PositionSet",err,error)    
     RETURN 1
 
-  END SUBROUTINE DATA_POINTS_VALUES_SET
+  END SUBROUTINE DataPoints_PositionSet
 
   !
   !================================================================================================================================
   !
 
-  !>Returns the number of data points. \see OPENCMISS::CMISSDataPointsNumberOfDataPointsGet
-  SUBROUTINE DATA_POINTS_NUMBER_OF_DATA_POINTS_GET(DATA_POINTS,NUMBER_OF_DATA_POINTS,ERR,ERROR,*)
+  !>Returns the number of data points. \see OPENCMISS::Iron::cmfe_DataPointsNumberOfDataPointsGet
+  SUBROUTINE DataPoints_NumberOfDataPointsGet(dataPoints,numberOfDataPoints,err,error,*)
 
     !Argument variables
-    TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS !<A pointer to the data points to get the number of data points for
-    INTEGER(INTG), INTENT(OUT) :: NUMBER_OF_DATA_POINTS !<On return, the number of data points
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to get the number of data points for
+    INTEGER(INTG), INTENT(OUT) :: numberOfDataPoints !<On return, the number of data points
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     
-    ENTERS("DATA_POINTS_NUMBER_OF_DATA_POINTS_GET",ERR,ERROR,*999)
+    ENTERS("DataPoints_NumberOfDataPointsGet",err,error,*999)
 
-    IF(ASSOCIATED(DATA_POINTS)) THEN
-      IF(DATA_POINTS%DATA_POINTS_FINISHED) THEN
-        NUMBER_OF_DATA_POINTS=DATA_POINTS%NUMBER_OF_DATA_POINTS
+    IF(ASSOCIATED(dataPoints)) THEN
+      IF(dataPoints%dataPointsFinished) THEN
+        numberOfDataPoints=dataPoints%numberOfDataPoints
       ELSE
-        CALL FlagError("Data points have not been finished.",ERR,ERROR,*999)
+        CALL FlagError("Data points have not been finished.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Data points is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Data points is not associated.",err,error,*999)
     ENDIF
     
-    EXITS("DATA_POINTS_NUMBER_OF_DATA_POINTS_GET")
+    EXITS("DataPoints_NumberOfDataPointsGet")
     RETURN
-999 ERRORSEXITS("DATA_POINTS_NUMBER_OF_DATA_POINTS_GET",ERR,ERROR)    
+999 ERRORSEXITS("DataPoints_NumberOfDataPointsGet",err,error)    
     RETURN 1
    
-  END SUBROUTINE DATA_POINTS_NUMBER_OF_DATA_POINTS_GET
+  END SUBROUTINE DataPoints_NumberOfDataPointsGet
 
   !
   !================================================================================================================================
   !  
 
   !>Gets the user number for a data point identified by a given global number. 
-  SUBROUTINE DATA_POINTS_USER_NUMBER_GET(DATA_POINTS,GLOBAL_NUMBER,USER_NUMBER,ERR,ERROR,*)
+  SUBROUTINE DataPoints_UserNumberGet(dataPoints,globalNumber,userNumber,err,error,*)
 
     !Argument variables
-    TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS !<A pointer to the data points to get the number for
-    INTEGER(INTG), INTENT(IN) :: GLOBAL_NUMBER !<The global number to get the user number for
-    INTEGER(INTG), INTENT(OUT) :: USER_NUMBER !<On exit, the user number of the specified global data point
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to get the number for
+    INTEGER(INTG), INTENT(IN) :: globalNumber !<The global number to get the user number for
+    INTEGER(INTG), INTENT(OUT) :: userNumber !<On exit, the user number of the specified global data point
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("DATA_POINTS_USER_NUMBER_GET",ERR,ERROR,*999)
+    ENTERS("DataPoints_UserNumberGet",err,error,*999)
 
-    IF(ASSOCIATED(DATA_POINTS)) THEN
-      IF(DATA_POINTS%DATA_POINTS_FINISHED) THEN
-        IF(GLOBAL_NUMBER>=1.AND.GLOBAL_NUMBER<=DATA_POINTS%NUMBER_OF_DATA_POINTS) THEN
-          USER_NUMBER=DATA_POINTS%DATA_POINTS(GLOBAL_NUMBER)%USER_NUMBER
+    IF(ASSOCIATED(dataPoints)) THEN
+      IF(dataPoints%dataPointsFinished) THEN
+        IF(globalNumber>=1.AND.globalNumber<=dataPoints%numberOfDataPoints) THEN
+          userNumber=dataPoints%dataPoints(globalNumber)%userNumber
         ELSE
-          LOCAL_ERROR="The specified global data point number of "//TRIM(NUMBER_TO_VSTRING(GLOBAL_NUMBER,"*",ERR,ERROR))// &
+          localError="The specified global data point number of "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
             & " is invalid. The global data point number should be between 1 and "// &
-            & TRIM(NUMBER_TO_VSTRING(DATA_POINTS%NUMBER_OF_DATA_POINTS,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(dataPoints%numberOfDataPoints,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
         ENDIF
       ELSE
-        CALL FlagError("Data points have not been finished.",ERR,ERROR,*999)
+        CALL FlagError("Data points have not been finished.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Data points is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Data points is not associated.",err,error,*999)
     ENDIF
     
-    EXITS("DATA_POINTS_USER_NUMBER_GET")
+    EXITS("DataPoints_UserNumberGet")
     RETURN
-999 ERRORSEXITS("DATA_POINTS_USER_NUMBER_GET",ERR,ERROR)    
+999 ERRORSEXITS("DataPoints_UserNumberGet",err,error)    
     RETURN 1
    
-  END SUBROUTINE DATA_POINTS_USER_NUMBER_GET
+  END SUBROUTINE DataPoints_UserNumberGet
         
   !
   !================================================================================================================================
   !
 
   !>Changes/sets the user number for a data point identified by a given global number.
-  SUBROUTINE DATA_POINTS_USER_NUMBER_SET(DATA_POINTS,GLOBAL_NUMBER,USER_NUMBER,ERR,ERROR,*)
+  SUBROUTINE DataPoints_UserNumberSet(dataPoints,globalNumber,userNumber,err,error,*)
 
     !Argument variables
-    TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS !<A pointer to the data points to set the number for
-    INTEGER(INTG), INTENT(IN) :: GLOBAL_NUMBER !<The global number to set the user number for
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to set the number for
+    INTEGER(INTG), INTENT(IN) :: globalNumber !<The global number to set the user number for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: INSERT_STATUS,OLD_GLOBAL_NUMBER
-    LOGICAL :: DATA_POINT_EXISTS
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: insertStatus,otherGlobalNumber
+    LOGICAL :: dataPointExists
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("DATA_POINTS_USER_NUMBER_SET",ERR,ERROR,*999)
+    ENTERS("DataPoints_UserNumberSet",err,error,*999)
 
-    IF(ASSOCIATED(DATA_POINTS)) THEN
-      IF(DATA_POINTS%DATA_POINTS_FINISHED) THEN
-        CALL FlagError("Data points have been finished.",ERR,ERROR,*999)
+    IF(ASSOCIATED(dataPoints)) THEN
+      IF(dataPoints%dataPointsFinished) THEN
+        CALL FlagError("Data points have been finished.",err,error,*999)
       ELSE
-        IF(GLOBAL_NUMBER>=1.AND.GLOBAL_NUMBER<=DATA_POINTS%NUMBER_OF_DATA_POINTS) THEN
+        IF(globalNumber>=1.AND.globalNumber<=dataPoints%numberOfDataPoints) THEN
           !Check the data point user number is not already used
-          CALL DATA_POINT_CHECK_EXISTS(DATA_POINTS,USER_NUMBER,DATA_POINT_EXISTS,OLD_GLOBAL_NUMBER,ERR,ERROR,*999)
-          IF(DATA_POINT_EXISTS) THEN
-            IF(OLD_GLOBAL_NUMBER/=GLOBAL_NUMBER) THEN
-              LOCAL_ERROR="The specified data point user number of "//TRIM(NUMBER_TO_VSTRING(USER_NUMBER,"*",ERR,ERROR))// &
-                & " is already used by global data point number "//TRIM(NUMBER_TO_VSTRING(OLD_GLOBAL_NUMBER,"*",ERR,ERROR))// &
+          CALL DataPoint_CheckExists(dataPoints,userNumber,dataPointExists,otherGlobalNumber,err,error,*999)
+          IF(dataPointExists) THEN
+            IF(otherGlobalNumber/=globalNumber) THEN
+              localError="The specified data point user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
+                & " is already used by global data point number "//TRIM(NumberToVString(otherGlobalNumber,"*",err,error))// &
                 & ". User data point numbers must be unique."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(localError,err,error,*999)
             ENDIF
           ELSE
-            CALL TREE_ITEM_DELETE(DATA_POINTS%DATA_POINTS_TREE,DATA_POINTS%DATA_POINTS(GLOBAL_NUMBER)%USER_NUMBER,ERR,ERROR,*999)
-            CALL TREE_ITEM_INSERT(DATA_POINTS%DATA_POINTS_TREE,USER_NUMBER,GLOBAL_NUMBER,INSERT_STATUS,ERR,ERROR,*999)
-            IF(INSERT_STATUS/=TREE_NODE_INSERT_SUCESSFUL) CALL FlagError("Unsucessful data points tree insert.",ERR,ERROR,*999)
-            DATA_POINTS%DATA_POINTS(GLOBAL_NUMBER)%USER_NUMBER=USER_NUMBER
+            CALL Tree_ItemDelete(dataPoints%dataPointsTree,dataPoints%dataPoints(globalNumber)%userNumber,err,error,*999)
+            CALL Tree_ItemInsert(dataPoints%dataPointsTree,userNumber,globalNumber,insertStatus,err,error,*999)
+            IF(insertStatus/=TREE_NODE_INSERT_SUCESSFUL) CALL FlagError("Unsucessful data points tree insert.",err,error,*999)
+            dataPoints%dataPoints(globalNumber)%userNumber=userNumber
           ENDIF
         ELSE
-          LOCAL_ERROR="The specified global data point number of "//TRIM(NUMBER_TO_VSTRING(GLOBAL_NUMBER,"*",ERR,ERROR))// &
+          localError="The specified global data point number of "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
             & " is invalid. The global data point number should be between 1 and "// &
-            & TRIM(NUMBER_TO_VSTRING(DATA_POINTS%NUMBER_OF_DATA_POINTS,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(dataPoints%numberOfDataPoints,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FlagError("Data points is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Data points is not associated.",err,error,*999)
     ENDIF
     
-    EXITS("DATA_POINTS_USER_NUMBER_SET")
+    EXITS("DataPoints_UserNumberSet")
     RETURN
-999 ERRORSEXITS("DATA_POINTS_USER_NUMBER_SET",ERR,ERROR)    
+999 ERRORSEXITS("DataPoints_UserNumberSet",err,error)    
     RETURN 1
    
-  END SUBROUTINE DATA_POINTS_USER_NUMBER_SET
+  END SUBROUTINE DataPoints_UserNumberSet
   
   !
   !================================================================================================================================
   !
   
-  !>Gets the weights for a data point identified by a given global number.
-  SUBROUTINE DATA_POINTS_WEIGHTS_GET(DATA_POINTS,GLOBAL_NUMBER,WEIGHTS,ERR,ERROR,*)
+  !>Gets the weights for a data point identified by a given user number.
+  SUBROUTINE DataPoints_WeightsGet(dataPoints,userNumber,weights,err,error,*)
 
     !Argument variables
-    TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS !<A pointer to the data points to set the number for
-    INTEGER(INTG), INTENT(IN) :: GLOBAL_NUMBER !<The global number to get the weights for
-    REAL(DP), INTENT(OUT) :: WEIGHTS(:) !<On exit, the weights of the specified global data point
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to set the number for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number to get the weights for
+    REAL(DP), INTENT(OUT) :: weights(:) !<weights(coordinateIdx). On exit, the weights of the specified data point
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: globalNumber
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("DATA_POINTS_WEIGHTS_GET",ERR,ERROR,*999)
+    ENTERS("DataPoints_WeightsGet",err,error,*999)
 
-    IF(ASSOCIATED(DATA_POINTS)) THEN
-      IF(DATA_POINTS%DATA_POINTS_FINISHED) THEN
-        !Check the data point global number exists
-        IF(GLOBAL_NUMBER>=1.AND.GLOBAL_NUMBER<=DATA_POINTS%NUMBER_OF_DATA_POINTS) THEN
-          IF(SIZE(WEIGHTS,1)==SIZE(DATA_POINTS%DATA_POINTS(GLOBAL_NUMBER)%WEIGHTS,1)) THEN
-            WEIGHTS=DATA_POINTS%DATA_POINTS(GLOBAL_NUMBER)%WEIGHTS
-          ELSE
-            CALL FlagError("array weights has size of "//TRIM(NUMBER_TO_VSTRING(SIZE(WEIGHTS,1),"*",ERR,ERROR))// &
-              & "but it needs to have size of "// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(DATA_POINTS%DATA_POINTS(GLOBAL_NUMBER)%WEIGHTS,1),"*",ERR,ERROR))// &
-              & "." ,ERR,ERROR,*999)
-          ENDIF          
+    IF(ASSOCIATED(dataPoints)) THEN
+      IF(dataPoints%dataPointsFinished) THEN
+        IF(SIZE(weights,1)>=dataPoints%numberOfDimensions) THEN
+          CALL DataPoints_GlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*999)
+          weights(1:dataPoints%numberOfDimensions)=dataPoints%dataPoints(globalNumber)%weights(1:dataPoints%numberOfDimensions)
         ELSE
-          LOCAL_ERROR="The specified global data point number of "//TRIM(NUMBER_TO_VSTRING(GLOBAL_NUMBER,"*",ERR,ERROR))// &
-            & " is invalid. The global data point number should be between 1 and "// &
-            & TRIM(NUMBER_TO_VSTRING(DATA_POINTS%NUMBER_OF_DATA_POINTS,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF        
+          localError="The size of the specified weights array of "//TRIM(NumberToVString(SIZE(weights,1),"*",err,error))// &
+            & " is too small. The array size needs to be >= "// &
+            & TRIM(NumberToVString(dataPoints%numberOfDimensions,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
       ELSE
-        CALL FlagError("Data points have not been finished.",ERR,ERROR,*999)
+        CALL FlagError("Data points have not been finished.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Data points is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Data points is not associated.",err,error,*999)
     ENDIF
     
-    EXITS("DATA_POINTS_WEIGHTS_GET")
+    EXITS("DataPoints_WeightsGet")
     RETURN
-999 ERRORSEXITS("DATA_POINTS_WEIGHTS_GET",ERR,ERROR)    
+999 ERRORSEXITS("DataPoints_WeightsGet",err,error)    
     RETURN 1
 
-  END SUBROUTINE DATA_POINTS_WEIGHTS_GET
+  END SUBROUTINE DataPoints_WeightsGet
 
   !
   !================================================================================================================================
   !
 
-  !>Changes/sets the weights for a data point identified by a given global number.
-  SUBROUTINE DATA_POINTS_WEIGHTS_SET(DATA_POINTS,GLOBAL_NUMBER,WEIGHTS,ERR,ERROR,*)
+  !>Changes/sets the weights for a data point identified by a given user number.
+  SUBROUTINE DataPoints_WeightsSet(dataPoints,userNumber,weights,err,error,*)
 
     !Argument variables
-    TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS !<A pointer to the data points to set the number for
-    INTEGER(INTG), INTENT(IN) :: GLOBAL_NUMBER !<The global number to set the weights for
-    REAL(DP), INTENT(IN) :: WEIGHTS(:) !<The global number to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to set the number for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number to set the weights for
+    REAL(DP), INTENT(IN) :: weights(:) !<weights(coordinateIdx). The data point weights to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: globalNumber
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("DATA_POINTS_WEIGHTS_SET",ERR,ERROR,*999)
+    ENTERS("DataPoints_WeightsSet",err,error,*999)
 
-    IF(ASSOCIATED(DATA_POINTS)) THEN
-      IF(DATA_POINTS%DATA_POINTS_FINISHED) THEN
-        CALL FlagError("Data points have been finished.",ERR,ERROR,*999)
+    IF(ASSOCIATED(dataPoints)) THEN
+      IF(dataPoints%dataPointsFinished) THEN
+        CALL FlagError("Data points have been finished.",err,error,*999)
       ELSE
-        IF(GLOBAL_NUMBER>=1.AND.GLOBAL_NUMBER<=DATA_POINTS%NUMBER_OF_DATA_POINTS) THEN
-          IF(SIZE(WEIGHTS,1)==SIZE(DATA_POINTS%DATA_POINTS(GLOBAL_NUMBER)%WEIGHTS,1)) THEN
-            DATA_POINTS%DATA_POINTS(GLOBAL_NUMBER)%WEIGHTS(1:SIZE(WEIGHTS,1))=WEIGHTS(1:SIZE(WEIGHTS,1))
-          ELSE
-            CALL FlagError("The dimension of the input weights does not match.",ERR,ERROR,*999)    
-          ENDIF
+        IF(SIZE(weights,1)>=dataPoints%numberOfDimensions) THEN
+          CALL DataPoints_GlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*999)
+          dataPoints%dataPoints(globalNumber)%weights(1:dataPoints%numberOfDimensions)=weights(1:dataPoints%numberOfDimensions)
         ELSE
-          LOCAL_ERROR="The specified global data point number of "//TRIM(NUMBER_TO_VSTRING(GLOBAL_NUMBER,"*",ERR,ERROR))// &
-            & " is invalid. The global data point number should be between 1 and "// &
-            & TRIM(NUMBER_TO_VSTRING(DATA_POINTS%NUMBER_OF_DATA_POINTS,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          localError="The size of the specified weights array of "//TRIM(NumberToVString(SIZE(weights,1),"*",err,error))// &
+            & " is too small. The array size needs to be >= "// &
+            & TRIM(NumberToVString(dataPoints%numberOfDimensions,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FlagError("Data points is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Data points is not associated.",err,error,*999)
     ENDIF
     
-    EXITS("DATA_POINTS_WEIGHTS_SET")
+    EXITS("DataPoints_WeightsSet")
     RETURN
-999 ERRORSEXITS("DATA_POINTS_WEIGHTS_SET",ERR,ERROR)    
+999 ERRORSEXITS("DataPoints_WeightsSet",err,error)    
     RETURN 1
 
-  END SUBROUTINE DATA_POINTS_WEIGHTS_SET
+  END SUBROUTINE DataPoints_WeightsSet
 
   !
   !================================================================================================================================
   !  
 
-  !>Gets the data projection identified by a given global number. 
-  SUBROUTINE DATA_POINTS_DATA_PROJECTION_GET(DATA_POINTS,GLOBAL_NUMBER,DATA_PROJECTION,ERR,ERROR,*)
+  !>Gets the data projection identified by a given user number. 
+  SUBROUTINE DataPoints_DataProjectionGet(dataPoints,userNumber,dataProjection,err,error,*)
 
     !Argument variables
-    TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS !<A pointer to the data points to get the data projection for
-    INTEGER(INTG), INTENT(IN) :: GLOBAL_NUMBER !<The global number to get the data projection for
-    TYPE(DATA_PROJECTION_TYPE), POINTER :: DATA_PROJECTION !<On exit, a pointer to the data projection for the data points. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables    
-    ENTERS("DATA_POINTS_DATA_PROJECTION_GET",ERR,ERROR,*999)
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to get the data projection for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number to get the data projection for
+    TYPE(DataProjectionType), POINTER :: dataProjection !<On exit, a pointer to the data projection for the data points. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: globalNumber
+    TYPE(TREE_NODE_TYPE), POINTER :: treeNode
+    TYPE(VARYING_STRING) :: localError
     
-    IF(ASSOCIATED(DATA_POINTS)) THEN
-      IF(DATA_POINTS%DATA_POINTS_FINISHED) THEN 
-        IF(ASSOCIATED(DATA_PROJECTION)) THEN
-          CALL FlagError("Data projection is already associated.",ERR,ERROR,*999)
+    ENTERS("DataPoints_DataProjectionGet",err,error,*999)
+    
+    IF(ASSOCIATED(dataPoints)) THEN
+      IF(dataPoints%dataPointsFinished) THEN 
+        IF(ASSOCIATED(dataProjection)) THEN
+          CALL FlagError("Data projection is already associated.",err,error,*999)
         ELSE
-          DATA_PROJECTION=>DATA_POINTS%DATA_PROJECTIONS(GLOBAL_NUMBER)%PTR
-          IF(.NOT.ASSOCIATED(DATA_PROJECTION)) CALL FlagError("Data points data projections("//TRIM(NUMBER_TO_VSTRING( &
-            & GLOBAL_NUMBER,"*",ERR,ERROR))//") ptr is not associated.",ERR,ERROR,*999)
+          NULLIFY(treeNode)
+          CALL Tree_Search(dataPoints%dataProjectionsTree,userNumber,treeNode,err,error,*999)
+          IF(ASSOCIATED(treeNode)) THEN
+            CALL Tree_NodeValueGet(dataPoints%dataProjectionsTree,treeNode,globalNumber,err,error,*999)
+          ELSE
+            localError="The data point projection with user number "//TRIM(NumberToVString(userNumber,"*", &
+              & err,error))//" does not exist."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+          dataProjection=>dataPoints%dataProjections(globalNumber)%ptr
+          IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data points data projection is not associated.",err,error,*999)
         ENDIF
       ELSE
-        CALL FlagError("Data points has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("Data points has not been finished.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Data points is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Data points is not associated.",err,error,*999)
     ENDIF    
     
-    EXITS("DATA_POINTS_DATA_PROJECTION_GET")
+    EXITS("DataPoints_DataProjectionGet")
     RETURN
-999 ERRORSEXITS("DATA_POINTS_DATA_PROJECTION_GET",ERR,ERROR)    
+999 ERRORSEXITS("DataPoints_DataProjectionGet",err,error)    
     RETURN 1
    
-  END SUBROUTINE DATA_POINTS_DATA_PROJECTION_GET
+  END SUBROUTINE DataPoints_DataProjectionGet
 
   !
   !================================================================================================================================
   !  
 
-  !>Gets the user number for a data point identified by a given global number. 
-  SUBROUTINE DataPoints_DataProjectionGlobalNumberGet(DATA_POINTS,USER_NUMBER,GLOBAL_NUMBER,ERR,ERROR,*)
+  !>Gets the user number for a data point identified by a given global number. \todo Is this routine necessary?
+  SUBROUTINE DataPoints_DataProjectionGlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*)
 
     !Argument variables
-    TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS !<A pointer to the data points to get the number for
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number to get the global number foror
-    INTEGER(INTG), INTENT(OUT) :: GLOBAL_NUMBER !<On exit, the global number of the specified user data projection
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to get the number for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number to get the global number foror
+    INTEGER(INTG), INTENT(OUT) :: globalNumber !<On exit, the global number of the specified user data projection
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-    TYPE(TREE_NODE_TYPE), POINTER :: TREE_NODE
+    TYPE(VARYING_STRING) :: localError
+    TYPE(TREE_NODE_TYPE), POINTER :: treeNode
     
-    ENTERS("DataPoints_DataProjectionGlobalNumberGet",ERR,ERROR,*999)
+    ENTERS("DataPoints_DataProjectionGlobalNumberGet",err,error,*999)
 
-    IF(ASSOCIATED(DATA_POINTS)) THEN
-      IF(DATA_POINTS%DATA_POINTS_FINISHED) THEN
-        NULLIFY(TREE_NODE)
-        CALL TREE_SEARCH(DATA_POINTS%DATA_PROJECTIONS_TREE,USER_NUMBER,TREE_NODE,ERR,ERROR,*999)
-        IF(ASSOCIATED(TREE_NODE)) THEN
-          CALL TREE_NODE_VALUE_GET(DATA_POINTS%DATA_PROJECTIONS_TREE,TREE_NODE,GLOBAL_NUMBER,ERR,ERROR,*999)
+    IF(ASSOCIATED(dataPoints)) THEN
+      IF(dataPoints%dataPointsFinished) THEN
+        NULLIFY(treeNode)
+        CALL Tree_Search(dataPoints%dataProjectionsTree,userNumber,treeNode,err,error,*999)
+        IF(ASSOCIATED(treeNode)) THEN
+          CALL Tree_NodeValueGet(dataPoints%dataProjectionsTree,treeNode,globalNumber,err,error,*999)
         ELSE
-          LOCAL_ERROR="Tree node is not associates (cannot find the user number "//TRIM(NUMBER_TO_VSTRING(USER_NUMBER,"*",ERR, &
-            & ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          localError="The data point projection with user number "//TRIM(NumberToVString(userNumber,"*", &
+            & err,error))//" does not exist."
+          CALL FlagError(localError,err,error,*999)
         ENDIF
-
       ELSE
-        CALL FlagError("Data points have not been finished.",ERR,ERROR,*999)
+        CALL FlagError("Data points have not been finished.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Data points is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Data points is not associated.",err,error,*999)
     ENDIF
     
     EXITS("DataPoints_DataProjectionGlobalNumberGet")
     RETURN
-999 ERRORSEXITS("DataPoints_DataProjectionGlobalNumberGet",ERR,ERROR)    
+999 ERRORSEXITS("DataPoints_DataProjectionGlobalNumberGet",err,error)    
     RETURN 1
    
   END SUBROUTINE DataPoints_DataProjectionGlobalNumberGet
-
 
   !
   !================================================================================================================================
   !
 
-END MODULE DATA_POINT_ROUTINES
+END MODULE DataPointRoutines
 
 
 

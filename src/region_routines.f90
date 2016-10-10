@@ -47,7 +47,7 @@ MODULE REGION_ROUTINES
   USE BASE_ROUTINES
   USE COORDINATE_ROUTINES
   USE CMISS_CELLML
-  USE DATA_POINT_ROUTINES
+  USE DataPointRoutines
   USE EQUATIONS_SET_ROUTINES
   USE FIELD_ROUTINES
   USE GENERATED_MESH_ROUTINES
@@ -84,11 +84,21 @@ MODULE REGION_ROUTINES
   INTERFACE REGION_LABEL_SET
     MODULE PROCEDURE REGION_LABEL_SET_C
     MODULE PROCEDURE REGION_LABEL_SET_VS
-  END INTERFACE !REGION_LABEL_SET
+  END INTERFACE REGION_LABEL_SET !REGION_LABEL_SET
+
+  INTERFACE REGION_DATA_POINTS_GET
+    MODULE PROCEDURE Region_DataPointsGet
+  END INTERFACE REGION_DATA_POINTS_GET
+
+  INTERFACE Region_UserNumberFind
+    MODULE PROCEDURE REGION_USER_NUMBER_FIND
+  END INTERFACE Region_UserNumberFind
   
   PUBLIC REGION_COORDINATE_SYSTEM_GET,REGION_COORDINATE_SYSTEM_SET
 
   PUBLIC REGION_CREATE_START,REGION_CREATE_FINISH
+
+  PUBLIC Region_DataPointsGet
   
   PUBLIC REGION_DATA_POINTS_GET
 
@@ -99,6 +109,8 @@ MODULE REGION_ROUTINES
   PUBLIC REGION_LABEL_GET,REGION_LABEL_SET
   
   PUBLIC REGION_NODES_GET
+
+  PUBLIC Region_UserNumberFind
   
   PUBLIC REGION_USER_NUMBER_FIND, REGION_USER_NUMBER_TO_REGION
 
@@ -110,7 +122,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the coordinate system of region. \see OPENCMISS::CMISSRegionCoordinateSystemGet
+  !>Returns the coordinate system of region. \see OPENCMISS::Iron::cmfe_RegionCoordinateSystemGet
   SUBROUTINE REGION_COORDINATE_SYSTEM_GET(REGION,COORDINATE_SYSTEM,ERR,ERROR,*)
 
     !Argument variables
@@ -146,7 +158,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the coordinate system of region.  \see OPENCMISS::CMISSRegionCoordinateSystemSet
+  !>Sets the coordinate system of region.  \see OPENCMISS::Iron::cmfe_RegionCoordinateSystemSet
   SUBROUTINE REGION_COORDINATE_SYSTEM_SET(REGION,COORDINATE_SYSTEM,ERR,ERROR,*)
 
     !Argument variables
@@ -186,7 +198,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the creation of a region. \see OPENCMISS::CMISSRegionCreateFinish
+  !>Finishes the creation of a region. \see OPENCMISS::Iron::cmfe_RegionCreateFinish
   SUBROUTINE REGION_CREATE_FINISH(REGION,ERR,ERROR,*)
 
     !Argument variables
@@ -229,7 +241,7 @@ CONTAINS
   !
   
   !>Starts the creation a new region number USER_NUMBER as a sub region to the given PARENT_REGION, initialises all
-  !>variables and inherits the PARENT_REGIONS coordinate system. \see OPENCMISS::CMISSRegionCreateFinish
+  !>variables and inherits the PARENT_REGIONS coordinate system. \see OPENCMISS::Iron::cmfe_RegionCreateFinish
   !>Default values set for the REGION's attributes are:
   !>- COORDINATE_SYSTEM: parent coordinate system. See \ref COORDINATE_SYSTEM_TYPE
   !>- DATA_POINTS: null
@@ -318,47 +330,47 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the data points for a region. \see OPENCMISS::CMISSRegionDataPointsGet
-  SUBROUTINE REGION_DATA_POINTS_GET(REGION,DATA_POINTS,ERR,ERROR,*)
+  !>Returns a pointer to the data points for a region. \see OPENCMISS::Iron::cmfe_RegionDataPointsGet
+  SUBROUTINE Region_DataPointsGet(Region,dataPoints,err,error,*)
 
     !Argument variables
-    TYPE(REGION_TYPE), POINTER :: REGION !<A pointer to the region to get the data points for
-    TYPE(DATA_POINTS_TYPE), POINTER :: DATA_POINTS !<On exit, a pointer to the data points for the region. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region to get the data points for
+    TYPE(DataPointsType), POINTER :: dataPoints !<On exit, a pointer to the data points for the region. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("REGION_DATA_POINTS_GET",ERR,ERROR,*998)
+    ENTERS("Region_DataPointsGet",err,error,*998)
 
-    IF(ASSOCIATED(REGION)) THEN
-      IF(REGION%REGION_FINISHED) THEN 
-        IF(ASSOCIATED(DATA_POINTS)) THEN
-          CALL FlagError("Data points is already associated.",ERR,ERROR,*998)
+    IF(ASSOCIATED(region)) THEN
+      IF(region%REGION_FINISHED) THEN 
+        IF(ASSOCIATED(dataPoints)) THEN
+          CALL FlagError("Data points is already associated.",err,error,*998)
         ELSE
-          DATA_POINTS=>REGION%DATA_POINTS
-          IF(.NOT.ASSOCIATED(DATA_POINTS)) CALL FlagError("Data points is not associated.",ERR,ERROR,*999)
+          dataPoints=>region%dataPoints
+          IF(.NOT.ASSOCIATED(dataPoints)) CALL FlagError("Data points is not associated.",err,error,*999)
         ENDIF
       ELSE
-        CALL FlagError("Region has not been finished.",ERR,ERROR,*998)
+        CALL FlagError("Region has not been finished.",err,error,*998)
       ENDIF
     ELSE
-      CALL FlagError("Region is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Region is not associated.",err,error,*998)
     ENDIF
        
-    EXITS("REGION_DATA_POINTS_GET")
+    EXITS("Region_DataPointsGet")
     RETURN
-999 NULLIFY(DATA_POINTS)
-998 ERRORSEXITS("REGION_DATA_POINTS_GET",ERR,ERROR)
+999 NULLIFY(dataPoints)
+998 ERRORSEXITS("Region_DataPointsGet",err,error)
     RETURN 1
     
-  END SUBROUTINE REGION_DATA_POINTS_GET  
+  END SUBROUTINE Region_DataPointsGet
 
 
   !
   !================================================================================================================================
   !
 
-  !>Destroys a region given by USER_NUMBER and all sub-regions under it. \todo create destroy by pointer method. \see OPENCMISS::CMISSRegionDestroy
+  !>Destroys a region given by USER_NUMBER and all sub-regions under it. \todo create destroy by pointer method. \see OPENCMISS::Iron::cmfe_RegionDestroy
   RECURSIVE SUBROUTINE REGION_DESTROY_NUMBER(USER_NUMBER,ERR,ERROR,*)
 
     !Argument variables
@@ -427,7 +439,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys a region identified by a pointer and all sub-regions under it. \see OPENCMISS::CMISSRegionDestroy
+  !>Destroys a region identified by a pointer and all sub-regions under it. \see OPENCMISS::Iron::cmfe_RegionDestroy
   SUBROUTINE REGION_DESTROY(REGION,ERR,ERROR,*)
 
     !Argument variables
@@ -473,7 +485,7 @@ CONTAINS
       CALL EQUATIONS_SETS_FINALISE(REGION,ERR,ERROR,*999)
       CALL FIELDS_FINALISE(REGION%FIELDS,ERR,ERROR,*999)
       CALL MESHES_FINALISE(REGION%MESHES,ERR,ERROR,*999)
-      IF(ASSOCIATED(REGION%DATA_POINTS)) CALL DATA_POINTS_DESTROY(REGION%DATA_POINTS,ERR,ERROR,*999)
+      IF(ASSOCIATED(REGION%dataPoints)) CALL DataPoints_Destroy(REGION%dataPoints,ERR,ERROR,*999)
       IF(ASSOCIATED(REGION%NODES)) CALL NODES_DESTROY(REGION%NODES,ERR,ERROR,*999)
       IF(ASSOCIATED(REGION%SUB_REGIONS)) DEALLOCATE(REGION%SUB_REGIONS)
       IF(ASSOCIATED(REGION%INTERFACES)) CALL INTERFACES_FINALISE(REGION%INTERFACES,ERR,ERROR,*999)
@@ -513,7 +525,7 @@ CONTAINS
       REGION%REGION_FINISHED=.FALSE.
       REGION%LABEL=""
       NULLIFY(REGION%COORDINATE_SYSTEM)
-      NULLIFY(REGION%DATA_POINTS)
+      NULLIFY(REGION%dataPoints)
       NULLIFY(REGION%NODES)
       NULLIFY(REGION%MESHES)
       NULLIFY(REGION%GENERATED_MESHES)
@@ -544,7 +556,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the label of a region. \see OPENCMISS::CMISSRegionLabelGet
+  !>Returns the label of a region. \see OPENCMISS::Iron::cmfe_RegionLabelGet
   SUBROUTINE REGION_LABEL_GET_C(REGION,LABEL,ERR,ERROR,*)
 
     !Argument variables
@@ -580,7 +592,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the label of a region. \see OPENCMISS::CMISSRegionLabelGet
+  !>Returns the label of a region. \see OPENCMISS::Iron::cmfe_RegionLabelGet
   SUBROUTINE REGION_LABEL_GET_VS(REGION,LABEL,ERR,ERROR,*)
 
     !Argument variables
@@ -610,7 +622,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the label of a region. \see OPENCMISS::CMISSRegionLabelSet
+  !>Sets the label of a region. \see OPENCMISS::Iron::cmfe_RegionLabelSet
   SUBROUTINE REGION_LABEL_SET_C(REGION,LABEL,ERR,ERROR,*)
 
     !Argument variables
@@ -642,7 +654,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the label of a region. \see OPENCMISS::CMISSRegionLabelSet
+  !>Sets the label of a region. \see OPENCMISS::Iron::cmfe_RegionLabelSet
   SUBROUTINE REGION_LABEL_SET_VS(REGION,LABEL,ERR,ERROR,*)
 
     !Argument variables
@@ -674,7 +686,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the nodes for a region. \see OPENCMISS::CMISSRegionNodesGet
+  !>Returns a pointer to the nodes for a region. \see OPENCMISS::Iron::cmfe_RegionNodesGet
   SUBROUTINE REGION_NODES_GET(REGION,NODES,ERR,ERROR,*)
 
     !Argument variables

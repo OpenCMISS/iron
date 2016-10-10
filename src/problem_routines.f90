@@ -3625,8 +3625,8 @@ CONTAINS
     TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: interpolatedPoints(:)
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: interpolatedPoint
     TYPE(DecompositionElementDataPointsType), POINTER :: decompositionElementData !<A pointer to the decomposition data point topology
-    TYPE(DATA_POINTS_TYPE), POINTER :: interfaceDatapoints
-    TYPE(DATA_PROJECTION_TYPE), POINTER :: dataProjection
+    TYPE(DataPointsType), POINTER :: interfaceDatapoints
+    TYPE(DataProjectionType), POINTER :: dataProjection
 
     TYPE(PROBLEM_TYPE), POINTER :: problem
 
@@ -3736,7 +3736,7 @@ CONTAINS
               interfaceCondition=>solverMapping%INTERFACE_CONDITIONS(interfaceConditionIdx)%PTR
               interface=>solverMapping%INTERFACE_CONDITIONS(interfaceConditionIdx)%PTR%interface
               pointsConnectivity=>interface%pointsConnectivity
-              interfaceDatapoints=>interface%DATA_POINTS
+              interfaceDatapoints=>interface%dataPoints
               IF(ASSOCIATED(pointsConnectivity)) THEN
                 DO coupledMeshIdx=1,interface%NUMBER_OF_COUPLED_MESHES
                   filenameOutput=directory//"PointsConnectivity"//TRIM(NUMBER_TO_VSTRING(coupledMeshIdx,"*",err,error))// &
@@ -3770,7 +3770,7 @@ CONTAINS
                   CALL FIELD_INTERPOLATED_POINTS_INITIALISE(interpolationParameters,interpolatedPoints,err,error,*999, &
                     & FIELD_GEOMETRIC_COMPONENTS_TYPE)
                   interpolatedPoint=>interpolatedPoints(FIELD_U_VARIABLE_TYPE)%PTR
-                  dataProjection=>interfaceDatapoints%DATA_PROJECTIONS(coupledMeshIdx+1)%PTR
+                  dataProjection=>interfaceDatapoints%dataProjections(coupledMeshIdx+1)%PTR
                   DO interfaceElementNumber=1,SIZE(pointsConnectivity%coupledElements,1)
                     decompositionElementData=>interfaceCondition%LAGRANGE%LAGRANGE_FIELD%DECOMPOSITION%TOPOLOGY%dataPoints% &
                       & elementDataPoint(interfaceElementNumber)
@@ -3778,7 +3778,7 @@ CONTAINS
                       globalDataPointNumber=decompositionElementData%dataIndices(dataPointIdx)%globalNumber
                       WRITE(IUNIT,'(1X,''Node:'',I4)') globalDataPointNumber
                       DO component=1,3
-                        WRITE(IUNIT,'(1X,3E25.15)') interfaceDatapoints%DATA_POINTS(globalDataPointNumber)%position(component)
+                        WRITE(IUNIT,'(1X,3E25.15)') interfaceDatapoints%dataPoints(globalDataPointNumber)%position(component)
                       ENDDO !component
                       coupledMeshElementNumber=pointsConnectivity%pointsConnectivity(globalDataPointNumber,coupledMeshIdx)% &
                         & coupledMeshElementNumber
@@ -3792,12 +3792,12 @@ CONTAINS
                         & coupledMeshIdx)%reducedXi(:),interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE) !Interpolate contact data points on each surface
                       DO component=1,3
                         WRITE(IUNIT,'(1X,3E25.15)') interpolatedPoint%VALUES(component,NO_PART_DERIV) - &
-                          & interfaceDatapoints%DATA_POINTS(globalDataPointNumber)%position(component)
+                          & interfaceDatapoints%dataPoints(globalDataPointNumber)%position(component)
                       ENDDO !component
                       DO component=1,3
                         WRITE(IUNIT,'(1X,3E25.15)') interpolatedPoint%VALUES(component,NO_PART_DERIV)
                       ENDDO !component
-                      WRITE(IUNIT,'(1X,I2)') dataProjection%DATA_PROJECTION_RESULTS(globalDataPointNumber)%EXIT_TAG
+                      WRITE(IUNIT,'(1X,I2)') dataProjection%dataProjectionResults(globalDataPointNumber)%exitTag
                     ENDDO !dataPointIdx
                   ENDDO !interfaceElementNumber
                   CALL FIELD_INTERPOLATION_PARAMETERS_FINALISE(interpolationParameters,err,error,*999)

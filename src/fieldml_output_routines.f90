@@ -1621,7 +1621,7 @@ CONTAINS
       DO J = 1, COMPONENT_COUNT
         DVALUE = 0
         IF( IS_NODE_BASED(J) ) THEN
-          CALL MeshTopologyNodeCheckExists( MESH, MESH_COMPONENT_NUMBERS(J), I, NODE_EXISTS, GLOBAL_NODE_NUMBER, &
+          CALL MeshTopology_NodeCheckExists( MESH, MESH_COMPONENT_NUMBERS(J), I, NODE_EXISTS, GLOBAL_NODE_NUMBER, &
             & ERR, ERROR, *999 )
           IF( NODE_EXISTS ) THEN
             !Default to version 1 of each node derivative (value hardcoded in loop)

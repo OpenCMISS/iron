@@ -119,7 +119,7 @@ CONTAINS
     REAL(DP) :: basisFunctionRow,basisFunctionColumn,PGM,PGN,PGMSI(3),PGNSI(3)
     REAL(DP) :: uValue(3)
     REAL(DP) :: phiM,phiN
-    TYPE(DATA_PROJECTION_TYPE), POINTER :: dataProjection
+    TYPE(DataProjectionType), POINTER :: dataProjection
     TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology
     TYPE(DecompositionDataPointsType), POINTER :: dataPoints
     TYPE(BASIS_TYPE), POINTER :: dependentBasis,geometricBasis,sourceBasis,dependentBasisRow,dependentBasisColumn
@@ -253,7 +253,7 @@ CONTAINS
               dataPointLocalNumber = dataPoints%elementDataPoint(elementNumber)%dataIndices(dataPointIdx)%localNumber
               dataPointGlobalNumber = dataPoints%elementDataPoint(elementNumber)%dataIndices(dataPointIdx)%globalNumber
               ! Need to use global number to get the correct projection results
-              projectionXi(1:numberOfXi) = dataProjection%data_projection_results(dataPointGlobalNumber)%xi(1:numberOfXi)
+              projectionXi(1:numberOfXi) = dataProjection%dataProjectionResults(dataPointGlobalNumber)%xi(1:numberOfXi)
               CALL Field_InterpolateXi(FIRST_PART_DERIV,projectionXi,equations%interpolation% &
                 & GEOMETRIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
               CALL Field_InterpolateXi(FIRST_PART_DERIV,projectionXi,equations%interpolation% &
@@ -488,7 +488,7 @@ CONTAINS
               dataPointLocalNumber = dataPoints%elementDataPoint(elementNumber)%dataIndices(dataPointIdx)%localNumber
               dataPointGlobalNumber = dataPoints%elementDataPoint(elementNumber)%dataIndices(dataPointIdx)%globalNumber
               ! Need to use global number to get the correct projection results
-              projectionXi(1:numberOfXi) = dataProjection%data_projection_results(dataPointGlobalNumber)%xi(1:numberOfXi)
+              projectionXi(1:numberOfXi) = dataProjection%dataprojectionresults(dataPointGlobalNumber)%xi(1:numberOfXi)
               CALL Field_InterpolateXi(FIRST_PART_DERIV,projectionXi,equations%interpolation% &
                 & GEOMETRIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
               CALL Field_InterpolateXi(FIRST_PART_DERIV,projectionXi,equations%interpolation% &

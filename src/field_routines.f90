@@ -12657,7 +12657,7 @@ CONTAINS
 
     !Argument variables
     TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to set the decomposition for
-    TYPE(DATA_PROJECTION_TYPE), POINTER :: dataProjection !<A pointer to the data projection to set
+    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     TYPE(VARYING_STRING) :: localError
@@ -23773,7 +23773,7 @@ CONTAINS
     LOGICAL :: ghostElement,userElementExists
     TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
     TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology
-    TYPE(DATA_PROJECTION_TYPE), POINTER :: dataProjection
+    TYPE(DataProjectionType), POINTER :: dataProjection
     TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
