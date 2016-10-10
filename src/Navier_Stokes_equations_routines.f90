@@ -12092,7 +12092,7 @@ CONTAINS
     TYPE(EQUATIONS_MATRICES_DYNAMIC_TYPE), POINTER :: dynamicMatrices
     TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: stiffnessMatrix
     TYPE(EQUATIONS_JACOBIAN_TYPE), POINTER :: jacobianMatrix
-    INTEGER(INTG) :: faceIdx, faceNumber
+    INTEGER(INTG) :: faceIdx, faceNumber, xiDirection(3), orientation
     INTEGER(INTG) :: componentIdx, componentIdx2, gaussIdx
     INTEGER(INTG) :: elementBaseDofIdx, faceNodeIdx, elementNodeIdx
     INTEGER(INTG) :: faceNodeDerivativeIdx, meshComponentNumber1, nodeDerivativeIdx,elementParameterIdx
@@ -12264,7 +12264,8 @@ CONTAINS
 
           SELECT CASE(dependentBasis1%TYPE)
           CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
-            normalComponentIdx=ABS(face%XI_DIRECTION)
+            xiDirection(3)=ABS(face%XI_DIRECTION)
+            !normalComponentIdx=ABS(face%XI_DIRECTION)
           CASE DEFAULT
             LOCAL_ERROR="Face integration for basis type "//TRIM(NUMBER_TO_VSTRING(dependentBasis1%TYPE,"*",ERR,ERROR))// &
               & " is not yet implemented for Navier-Stokes."
@@ -12275,38 +12276,63 @@ CONTAINS
           faceBasis2=>decomposition%DOMAIN(meshComponentNumber2)%PTR%TOPOLOGY%FACES%FACES(faceNumber)%BASIS
           faceQuadratureScheme1=>faceBasis1%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
           faceQuadratureScheme2=>faceBasis2%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
+
+          CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_VALUES_SET_TYPE,faceNumber, &
+            & geometricInterpolationParameters,err,error,*999)
+          CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_VALUES_SET_TYPE,faceNumber, &
+            & dependentInterpolationParameters,err,error,*999)
+
+          xiDirection(1)=OTHER_XI_DIRECTIONS3(xiDirection(3),2,1)
+          xiDirection(2)=OTHER_XI_DIRECTIONS3(xiDirection(3),3,1)
+          orientation=SIGN(1,OTHER_XI_ORIENTATIONS3(xiDirection(1),xiDirection(2))*face%XI_DIRECTION)
+
+          pointMetrics=>equations%INTERPOLATION%GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR
           ! Loop over face gauss points
           DO gaussIdx=1,faceQuadratureScheme1%NUMBER_OF_GAUSS
-            CALL FIELD_INTERPOLATE_LOCAL_FACE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,faceIdx,gaussIdx, &
+            CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx, &
               & geometricInterpolatedPoint,err,error,*999)
-            !Calculate point metrics 
-            pointMetrics=>equations%INTERPOLATION%GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR
-            CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(COORDINATE_JACOBIAN_VOLUME_TYPE,pointMetrics,err,error,*999)
+            CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(COORDINATE_JACOBIAN_AREA_TYPE,pointMetrics,err,error,*999)
 
-            ! TODO: this sort of thing should be moved to a more general Basis_FaceNormalGet (or similar) routine
-            !Get face normal projection
-            DO componentIdx=1,dependentVariable%NUMBER_OF_COMPONENTS-1
-              normalProjection(componentIdx)=DOT_PRODUCT(pointMetrics%GU(normalComponentIdx,:),pointMetrics%DX_DXI(componentIdx,:))
-              IF(face%XI_DIRECTION<0) THEN
-                normalProjection(componentIdx)=-normalProjection(componentIdx)
-              END IF
-            END DO
-            IF(L2NORM(normalProjection)>ZERO_TOLERANCE) THEN
-               unitNormal=normalProjection/L2NORM(normalProjection)
-            ELSE
-               unitNormal=0.0_DP
-            END IF
+            ! Make sure this is the boundary face that corresponds with boundaryID (could be a wall rather than inlet/outlet)
+            CALL CROSS_PRODUCT(pointMetrics%DX_DXI(:,1),pointMetrics%DX_DXI(:,2),normalProjection,ERR,ERROR,*999)
+            normalProjection = normalProjection*orientation
+            unitNormal=normalProjection/L2NORM(normalProjection)
+            normalDifference=L2NORM(boundaryNormal-unitNormal)
+            normalTolerance=0.1_DP
+            IF(normalDifference>normalTolerance) EXIT
+            tangentProjection(1,:)=pointMetrics%DX_DXI(:,1)
+            tangentProjection(2,:)=pointMetrics%DX_DXI(:,2)
 
-            ni=0
-            DO componentIdx2=1,dependentVariable%NUMBER_OF_COMPONENTS-1
-              IF (componentIdx2/=normalComponentIdx) THEN
-                ni=ni+1
-                DO componentIdx=1,dependentVariable%NUMBER_OF_COMPONENTS-1
-                  tangentProjection(ni,componentIdx)=DOT_PRODUCT(pointMetrics%GU(componentIdx2,:), &
-                    & pointMetrics%DX_DXI(componentIdx,:))
-                END DO
-              END IF
-            END DO
+            ! CALL FIELD_INTERPOLATE_LOCAL_FACE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,faceIdx,gaussIdx, &
+            !   & geometricInterpolatedPoint,err,error,*999)
+            ! !Calculate point metrics 
+            ! pointMetrics=>equations%INTERPOLATION%GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR
+            ! CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(COORDINATE_JACOBIAN_VOLUME_TYPE,pointMetrics,err,error,*999)
+
+            ! ! TODO: this sort of thing should be moved to a more general Basis_FaceNormalGet (or similar) routine
+            ! !Get face normal projection
+            ! DO componentIdx=1,dependentVariable%NUMBER_OF_COMPONENTS-1
+            !   normalProjection(componentIdx)=DOT_PRODUCT(pointMetrics%GU(normalComponentIdx,:),pointMetrics%DX_DXI(componentIdx,:))
+            !   IF(face%XI_DIRECTION<0) THEN
+            !     normalProjection(componentIdx)=-normalProjection(componentIdx)
+            !   END IF
+            ! END DO
+            ! IF(L2NORM(normalProjection)>ZERO_TOLERANCE) THEN
+            !    unitNormal=normalProjection/L2NORM(normalProjection)
+            ! ELSE
+            !    unitNormal=0.0_DP
+            ! END IF
+
+            ! ni=0
+            ! DO componentIdx2=1,dependentVariable%NUMBER_OF_COMPONENTS-1
+            !   IF (componentIdx2/=normalComponentIdx) THEN
+            !     ni=ni+1
+            !     DO componentIdx=1,dependentVariable%NUMBER_OF_COMPONENTS-1
+            !       tangentProjection(ni,componentIdx)=DOT_PRODUCT(pointMetrics%GU(componentIdx2,:), &
+            !         & pointMetrics%DX_DXI(componentIdx,:))
+            !     END DO
+            !   END IF
+            ! END DO
 
             ! Find in plane boundary vectors
             tempVector(1) = unitNormal(3)
@@ -12329,30 +12355,35 @@ CONTAINS
                 & FIELD_VALUES_SET_TYPE,gaussIdx,elementNumber,1,viscosity,err,error,*999)
               viscosity=viscosity*muScale
             END IF
-            
 
-            ! Keep this here for now: not using for Pressure BC but may want for traction BC
-            ! Interpolate current solution velocity/pressure field values
-            pressure=0.0_DP
-            velocity=0.0_DP
-            CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementNumber,equations%INTERPOLATION% &
-             & DEPENDENT_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)              
-            !Get interpolated velocity and pressure 
-            !CALL FIELD_INTERPOLATE_LOCAL_FACE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,faceIdx,gaussIdx, &
-            !  & dependentInterpolatedPoint,err,error,*999)
-            CALL FIELD_INTERPOLATE_LOCAL_FACE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,faceIdx,gaussIdx, &
-              & dependentInterpolatedPoint,err,error,*999)
-            velocity(1)=dependentInterpolatedPoint%values(1,NO_PART_DERIV) 
-            velocity(2)=dependentInterpolatedPoint%values(2,NO_PART_DERIV) 
-            velocity(3)=dependentInterpolatedPoint%values(3,NO_PART_DERIV) 
-            ! dUDXi(1:3,1)=dependentInterpolatedPoint%VALUES(1:3,PART_DERIV_S1)
-            ! dUDXi(1:3,2)=dependentInterpolatedPoint%VALUES(1:3,PART_DERIV_S2)
-            ! dUDXi(1:3,3)=dependentInterpolatedPoint%VALUES(1:3,PART_DERIV_S3)
-            pressure=dependentInterpolatedPoint%values(4,NO_PART_DERIV) 
-            ! Calculate viscous term
-            dXiDX=0.0_DP
-            dXiDX=pointMetrics%DXI_DX(:,:)
-            !CALL MATRIX_PRODUCT(dUDXi,dXiDX,gradU,err,error,*999)
+            !Get interpolated velocity and pressure
+            CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx, &
+              & dependentInterpolatedPoint,ERR,ERROR,*999)
+            velocity=dependentInterpolatedPoint%values(1:3,NO_PART_DERIV)
+            pressure=dependentInterpolatedPoint%values(4,NO_PART_DERIV)            
+
+            ! ! Keep this here for now: not using for Pressure BC but may want for traction BC
+            ! ! Interpolate current solution velocity/pressure field values
+            ! pressure=0.0_DP
+            ! velocity=0.0_DP
+            ! CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementNumber,equations%INTERPOLATION% &
+            !  & DEPENDENT_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)              
+            ! !Get interpolated velocity and pressure 
+            ! !CALL FIELD_INTERPOLATE_LOCAL_FACE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,faceIdx,gaussIdx, &
+            ! !  & dependentInterpolatedPoint,err,error,*999)
+            ! CALL FIELD_INTERPOLATE_LOCAL_FACE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,faceIdx,gaussIdx, &
+            !   & dependentInterpolatedPoint,err,error,*999)
+            ! velocity(1)=dependentInterpolatedPoint%values(1,NO_PART_DERIV) 
+            ! velocity(2)=dependentInterpolatedPoint%values(2,NO_PART_DERIV) 
+            ! velocity(3)=dependentInterpolatedPoint%values(3,NO_PART_DERIV) 
+            ! ! dUDXi(1:3,1)=dependentInterpolatedPoint%VALUES(1:3,PART_DERIV_S1)
+            ! ! dUDXi(1:3,2)=dependentInterpolatedPoint%VALUES(1:3,PART_DERIV_S2)
+            ! ! dUDXi(1:3,3)=dependentInterpolatedPoint%VALUES(1:3,PART_DERIV_S3)
+            ! pressure=dependentInterpolatedPoint%values(4,NO_PART_DERIV) 
+            ! ! Calculate viscous term
+            ! dXiDX=0.0_DP
+            ! dXiDX=pointMetrics%DXI_DX(:,:)
+            ! !CALL MATRIX_PRODUCT(dUDXi,dXiDX,gradU,err,error,*999)
 
             ! Stabilisation term to correct for possible retrograde flow divergence.
             ! See: Moghadam et al 2011 “A comparison of outlet boundary treatments for prevention of backflow divergence..." and
@@ -12386,15 +12417,18 @@ CONTAINS
                & FIELD_U_VARIABLE_TYPE)%PTR
               pressureInterpolatedPoint=>equations%INTERPOLATION%DEPENDENT_INTERP_POINT( &
                & FIELD_U_VARIABLE_TYPE)%PTR
-              CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_PRESSURE_VALUES_SET_TYPE,elementNumber, &
-               & pressureInterpolationParameters,ERR,ERROR,*999)
-              CALL FIELD_INTERPOLATE_LOCAL_FACE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,faceIdx,gaussIdx, &
-               & pressureInterpolatedPoint,ERR,ERROR,*999)
+              CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_PRESSURE_VALUES_SET_TYPE,faceNumber, &
+                & pressureInterpolationParameters,err,error,*999)
+              CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx, &
+                & pressureInterpolatedPoint,ERR,ERROR,*999)
+              ! CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_PRESSURE_VALUES_SET_TYPE,elementNumber, &
+              !  & pressureInterpolationParameters,ERR,ERROR,*999)
+              ! CALL FIELD_INTERPOLATE_LOCAL_FACE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,faceIdx,gaussIdx, &
+              !  & pressureInterpolatedPoint,ERR,ERROR,*999)
               boundaryPressure=pressureInterpolatedPoint%VALUES(4,NO_PART_DERIV)
               pressure = -boundaryPressure
-              ! DEBUG watchpoint
-              IF (boundaryID==3) THEN
-                 pressure = -boundaryPressure
+              IF(boundaryType==BOUNDARY_CONDITION_FIXED_CELLML) THEN
+                pressure = -ABS(boundaryPressure)
               END IF
             END IF
 
@@ -12419,9 +12453,10 @@ CONTAINS
                       & boundaryType==BOUNDARY_CONDITION_FIXED_CELLML .OR. &
                       & boundaryType==BOUNDARY_CONDITION_COUPLING_STRESS) THEN
                       ! RHS contribution is integrated pressure term
-                      rhsVector%ELEMENT_VECTOR%VECTOR(elementDof) = rhsVector%ELEMENT_VECTOR%VECTOR(elementDof) + &
-!                       &  pressure*unitNormal(componentIdx)*phim*jacobianGaussWeights
-                       &  pressure*normalProjection(componentIdx)*phim*jacobianGaussWeights
+                      !rhsVector%ELEMENT_VECTOR%VECTOR(elementDof) = rhsVector%ELEMENT_VECTOR%VECTOR(elementDof) + &
+                      nonlinearMatrices%ELEMENT_RESIDUAL%VECTOR(elementDof)=nonlinearMatrices%ELEMENT_RESIDUAL%VECTOR(elementDof)-&
+                       &  pressure*unitNormal(componentIdx)*phim*jacobianGaussWeights
+!                       &  pressure*normalProjection(componentIdx)*phim*jacobianGaussWeights
                     END IF
                     ! nonlinear contribution is boundary stabilisation (if necessary )
                     IF (beta > ZERO_TOLERANCE) THEN
@@ -14541,9 +14576,18 @@ CONTAINS
                         IF (controlLoop%PROBLEM%SPECIFICATION(3)==PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE) THEN
                           IF (convergedFlag) THEN
                             controlLoop%PARENT_LOOP%WHILE_LOOP%CONTINUE_LOOP=.FALSE.
+                            CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"---------------------------",err,error,*999)
                             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"3D-0D converged. Iterations: ", &
                               & iteration3D1D,err,error,*999)
+                            CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"---------------------------",err,error,*999)
                           ELSE
+                            ! Reset 3D values if not converged
+                            CALL FIELD_PARAMETER_SETS_COPY(dependentField,equationsSet%EQUATIONS%EQUATIONS_MAPPING% &
+                              & DYNAMIC_MAPPING%DYNAMIC_VARIABLE_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_VALUES_SET_TYPE, &
+                              & 1.0_DP,ERR,ERROR,*999)
+                            CALL FIELD_PARAMETER_SETS_COPY(dependentField,equationsSet%EQUATIONS%EQUATIONS_MAPPING% &
+                              & DYNAMIC_MAPPING%DYNAMIC_VARIABLE_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE,FIELD_RESIDUAL_SET_TYPE,&
+                              & 1.0_DP,ERR,ERROR,*999)
                             controlLoop%PARENT_LOOP%WHILE_LOOP%CONTINUE_LOOP=.TRUE.                            
                           END IF
                         END IF
@@ -15460,10 +15504,16 @@ CONTAINS
               versionNumber=1
               IF(boundaryType==BOUNDARY_CONDITION_FIXED_CELLML) THEN
                 ! Check current values against those passed to the CellML solver
+                !CALL Field_ParameterSetGetLocalNode(equationsSetField3D,FIELD_U_VARIABLE_TYPE, &
+                !  & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,1,1,nodeNumber,1,q0D,err,error,*999)
                 CALL Field_ParameterSetGetLocalNode(equationsSetField3D,FIELD_U_VARIABLE_TYPE, &
-                 & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,1,1,nodeNumber,1,q0D,err,error,*999)
-                CALL Field_ParameterSetGetLocalNode(equationsSetField3D,FIELD_U_VARIABLE_TYPE, &
-                 & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,1,1,nodeNumber,2,p0D,err,error,*999)
+                  & FIELD_VALUES_SET_TYPE,1,1,nodeNumber,1,q0D,err,error,*999)
+                !CALL Field_ParameterSetGetLocalNode(equationsSetField3D,FIELD_U_VARIABLE_TYPE, &
+                ! & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,1,1,nodeNumber,2,p0D,err,error,*999)
+                !CALL Field_ParameterSetGetLocalNode(dependentField3D,FIELD_U_VARIABLE_TYPE, &
+                !  & FIELD_PRESSURE_VALUES_SET_TYPE,1,1,nodeNumber,1,q0D,err,error,*999)
+                CALL Field_ParameterSetGetLocalNode(dependentField3D,FIELD_U_VARIABLE_TYPE, &
+                  & FIELD_PRESSURE_VALUES_SET_TYPE,1,1,nodeNumber,4,p0D,err,error,*999)
                 flowError = globalBoundaryFlux(boundaryID)-q0D
                 pressureError = globalBoundaryMeanPressure(boundaryID)-p0D
                 IF ((ABS(flowError) < absolute3D0DTolerance .AND. ABS(pressureError) < absolute3D0DTolerance)) THEN
@@ -15488,16 +15538,30 @@ CONTAINS
                   convergedFlag = .FALSE.
                 END IF
                 ! Update flow rates on 3D boundary equations set field
+                !CALL Field_ParameterSetGetLocalNode(equationsSetField3D,FIELD_U_VARIABLE_TYPE, &
+                ! & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,1,1,nodeNumber,1,q0D,err,error,*999)
+                !CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(equationsSetField3D,FIELD_U_VARIABLE_TYPE, &
+                !  & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,versionNumber,faceNodeDerivativeIdx,nodeNumber,1, &
+                !  & globalBoundaryFlux(boundaryID),err,error,*999) 
                 CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(equationsSetField3D,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                   & versionNumber,faceNodeDerivativeIdx,nodeNumber,1,globalBoundaryFlux(boundaryID),err,error,*999) 
-                CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(equationsSetField3D,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                  & versionNumber,faceNodeDerivativeIdx,nodeNumber,2,globalBoundaryMeanPressure(boundaryID),err,error,*999) 
+                !CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(equationsSetField3D,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                !  & versionNumber,faceNodeDerivativeIdx,nodeNumber,2,globalBoundaryMeanPressure(boundaryID),err,error,*999) 
               END IF
             END DO !nodeDerivativeIdx
           END DO !faceNodeIdx
         END DO !faceIdx
       END IF !boundaryIdentifier
-    END DO !elementIdx                 
+    END DO !elementIdx
+
+    ! ! Check global mass conservation
+    ! flowError = 0.0_DP
+    ! DO boundaryID=1,SIZE(globalBoundaryFlux)
+    !   flowError = flowError + globalBoundaryFlux(boundaryID)
+    ! END DO
+    ! IF (ABS(flowError) > absolute3D0DTolerance) THEN
+    !   convergedFlag = .FALSE.
+    ! END IF
 
     !allocate array for mpi communication
     IF(numberOfComputationalNodes>1) THEN !use mpi
