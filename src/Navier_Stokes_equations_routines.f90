@@ -14588,13 +14588,13 @@ CONTAINS
                               & iteration3D1D,err,error,*999)
                             CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"---------------------------",err,error,*999)
                           ELSE
-                            ! Reset 3D values if not converged
-                            CALL FIELD_PARAMETER_SETS_COPY(dependentField,equationsSet%EQUATIONS%EQUATIONS_MAPPING% &
-                              & DYNAMIC_MAPPING%DYNAMIC_VARIABLE_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_VALUES_SET_TYPE, &
-                              & 1.0_DP,ERR,ERROR,*999)
-                            CALL FIELD_PARAMETER_SETS_COPY(dependentField,equationsSet%EQUATIONS%EQUATIONS_MAPPING% &
-                              & DYNAMIC_MAPPING%DYNAMIC_VARIABLE_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE,FIELD_RESIDUAL_SET_TYPE,&
-                              & 1.0_DP,ERR,ERROR,*999)
+                            ! ! Reset 3D values if not converged
+                            ! CALL FIELD_PARAMETER_SETS_COPY(dependentField,equationsSet%EQUATIONS%EQUATIONS_MAPPING% &
+                            !   & DYNAMIC_MAPPING%DYNAMIC_VARIABLE_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_VALUES_SET_TYPE, &
+                            !   & 1.0_DP,ERR,ERROR,*999)
+                            ! CALL FIELD_PARAMETER_SETS_COPY(dependentField,equationsSet%EQUATIONS%EQUATIONS_MAPPING% &
+                            !   & DYNAMIC_MAPPING%DYNAMIC_VARIABLE_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE,FIELD_RESIDUAL_SET_TYPE,&
+                            !   & 1.0_DP,ERR,ERROR,*999)
                             controlLoop%PARENT_LOOP%WHILE_LOOP%CONTINUE_LOOP=.TRUE.                            
                           END IF
                         END IF
