@@ -18915,11 +18915,12 @@ CONTAINS
 !!==================================================================================================================================
 
   !>Finishes the process of creating data points in a region for data points identified by user number.
-  SUBROUTINE cmfe_DataPoints_CreateFinishNumber(regionUserNumber,err)
+  SUBROUTINE cmfe_DataPoints_CreateFinishNumber(regionUserNumber,dataPointsUserNumber,err)
     !DLLEXPORT(cmfe_DataPoints_CreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to finish the creation of.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points in the region.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(DataPointsType), POINTER :: dataPoints
@@ -18932,7 +18933,7 @@ CONTAINS
     NULLIFY(dataPoints)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_CreateFinish(dataPoints,err,error,*999)
     ELSE
       localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
@@ -18978,10 +18979,11 @@ CONTAINS
   !
 
   !>Starts the process of creating data points in a region for data points identified by user number.
-  SUBROUTINE cmfe_DataPoints_CreateStartNumber(regionUserNumber,numberOfDataPoints,err)
+  SUBROUTINE cmfe_DataPoints_CreateStartNumber(dataPointsUserNumber,regionUserNumber,numberOfDataPoints,err)
     !DLLEXPORT(cmfe_DataPoints_CreateStartNumber)
 
     !Argument variables
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points to create in the region.
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to start the creation of.
     INTEGER(INTG), INTENT(IN) :: numberOfDataPoints !<The number of data points to create.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -18996,7 +18998,7 @@ CONTAINS
     NULLIFY(dataPoints)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL DataPoints_CreateStart(region,numberOfDataPoints,dataPoints,err,error,*999)
+      CALL DataPoints_CreateStart(dataPointsUserNumber,region,numberOfDataPoints,dataPoints,err,error,*999)
     ELSE
       localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
         & " does not exist."
@@ -19016,10 +19018,11 @@ CONTAINS
   !
 
   !>Starts the creation of a data points in a region for data points identified by an object.
-  SUBROUTINE cmfe_DataPoints_CreateStartObj(region,numberOfDataPoints,dataPoints,err)
+  SUBROUTINE cmfe_DataPoints_CreateStartObj(dataPointsUserNumber,region,numberOfDataPoints,dataPoints,err)
     !DLLEXPORT(cmfe_DataPoints_CreateStartObj)
 
     !Argument variables
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points to create in the region.
     TYPE(cmfe_RegionType), INTENT(IN) :: region !<The region to start the creation of data points on.
     INTEGER(INTG), INTENT(IN) :: numberOfDataPoints !<The number of data points to create.
     TYPE(cmfe_DataPointsType), INTENT(INOUT) :: dataPoints !<On return, the created data points.
@@ -19028,7 +19031,7 @@ CONTAINS
 
     ENTERS("cmfe_DataPoints_CreateStartObj",err,error,*999)
 
-    CALL DataPoints_CreateStart(region%region,numberOfDataPoints,dataPoints%dataPoints,err,error,*999)
+    CALL DataPoints_CreateStart(dataPointsUserNumber,region%region,numberOfDataPoints,dataPoints%dataPoints,err,error,*999)
 
     EXITS("cmfe_DataPoints_CreateStartObj")
     RETURN
@@ -19043,10 +19046,11 @@ CONTAINS
   !
 
   !>Starts the creation of a data points in a region for data points identified by an object.
-  SUBROUTINE cmfe_DataPoints_CreateStartInterfaceObj(interface,numberOfDataPoints,dataPoints,err)
+  SUBROUTINE cmfe_DataPoints_CreateStartInterfaceObj(dataPointsUserNumber,INTERFACE,numberOfDataPoints,dataPoints,err)
     !DLLEXPORT(cmfe_DataPoints_CreateStartInterfaceObj)
 
     !Argument variables
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points to create in the interface.
     TYPE(cmfe_InterfaceType), INTENT(IN) :: interface !<The interface to start the creation of data points on.
     INTEGER(INTG), INTENT(IN) :: numberOfDataPoints !<The number of data points to create.
     TYPE(cmfe_DataPointsType), INTENT(IN) :: dataPoints !<On return, the created data points.
@@ -19059,7 +19063,7 @@ CONTAINS
     CALL TAU_STATIC_PHASE_START('dataPoints Create')
 #endif
 
-    CALL DataPoints_CreateStart(interface%interface,numberOfDataPoints,dataPoints%dataPoints,err,error,*999)
+    CALL DataPoints_CreateStart(dataPointsUserNumber,INTERFACE%INTERFACE,numberOfDataPoints,dataPoints%dataPoints,err,error,*999)
 
     EXITS("cmfe_DataPoints_CreateStartInterfaceObj")
     RETURN
@@ -19075,11 +19079,12 @@ CONTAINS
   !
 
   !>Destroys the data points in a region for data points identified by user number.
-  SUBROUTINE cmfe_DataPoints_DestroyNumber(regionUserNumber,err)
+  SUBROUTINE cmfe_DataPoints_DestroyNumber(regionUserNumber,dataPointsUserNumber,err)
     !DLLEXPORT(cmfe_DataPoints_DestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to destroy.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points in the region to destroy.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(DataPointsType), POINTER :: dataPoints
@@ -19092,7 +19097,7 @@ CONTAINS
     NULLIFY(dataPoints)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_Destroy(dataPoints,err,error,*999)
     ELSE
       localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
@@ -19138,11 +19143,12 @@ CONTAINS
   !
 
   !>Returns the number of data points
-  SUBROUTINE cmfe_DataPoints_NumberOfDataPointsGetNumber(regionUserNumber,numberOfDataPoints,err)
+  SUBROUTINE cmfe_DataPoints_NumberOfDataPointsGetNumber(regionUserNumber,dataPointsUserNumber,numberOfDataPoints,err)
     !DLLEXPORT(cmfe_DataPoints_NumberOfDataPointsGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get data point count for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points in the region.
     INTEGER(INTG), INTENT(OUT) :: numberOfDataPoints !<On return, the number of data points
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -19156,7 +19162,7 @@ CONTAINS
     NULLIFY(dataPoints)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_NumberOfDataPointsGet(dataPoints,numberOfDataPoints,err,error,*999)
     ELSE
       localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
@@ -19204,11 +19210,12 @@ CONTAINS
   !
 
   !>Returns the character label for a data point in a set of data points identified by user number.
-  SUBROUTINE cmfe_DataPoints_LabelGetCNumber(regionUserNumber,dataPointUserNumber,label,err)
+  SUBROUTINE cmfe_DataPoints_LabelGetCNumber(regionUserNumber,dataPointsUserNumber,dataPointUserNumber,label,err)
     !DLLEXPORT(cmfe_DataPoints_LabelGetCNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get the label for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points in the region.
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data point to get the label for.
     CHARACTER(LEN=*), INTENT(OUT) :: label !<On return, the label for the data point.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -19223,7 +19230,7 @@ CONTAINS
     NULLIFY(dataPoints)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_LabelGet(dataPoints,dataPointUserNumber,label,err,error,*999)
     ELSE
       localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
@@ -19271,11 +19278,12 @@ CONTAINS
   !
 
   !>Returns the varying string label for a data point in a set of data points identified by user number.
-  SUBROUTINE cmfe_DataPoints_LabelGetVSNumber(regionUserNumber,dataPointUserNumber,label,err)
+  SUBROUTINE cmfe_DataPoints_LabelGetVSNumber(regionUserNumber,dataPointsUserNumber,dataPointUserNumber,label,err)
     !DLLEXPORT(cmfe_DataPoints_LabelGetVSNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get the label for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points in the region.
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data point to get the label for.
     TYPE(VARYING_STRING), INTENT(OUT) :: label !<On return, the label for the data point.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -19290,7 +19298,7 @@ CONTAINS
     NULLIFY(dataPoints)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_LabelGet(dataPoints,dataPointUserNumber,label,err,error,*999)
     ELSE
       localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
@@ -19338,11 +19346,12 @@ CONTAINS
   !
 
   !>Sets/changes the character label for a data point in a set of data points identified by user number.
-  SUBROUTINE cmfe_DataPoints_LabelSetCNumber(regionUserNumber,dataPointUserNumber,label,err)
+  SUBROUTINE cmfe_DataPoints_LabelSetCNumber(regionUserNumber,dataPointsUserNumber,dataPointUserNumber,label,err)
     !DLLEXPORT(cmfe_DataPoints_LabelSetCNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to set the label for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points in the region.
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data point to set the label for.
     CHARACTER(LEN=*), INTENT(IN) :: label !<The label for the data point to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -19357,7 +19366,7 @@ CONTAINS
     NULLIFY(dataPoints)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_LabelSet(dataPoints,dataPointUserNumber,label,err,error,*999)
     ELSE
       localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
@@ -19405,11 +19414,12 @@ CONTAINS
   !
 
   !>Sets/changes the varying string label for a data point in a set of data points identified by user number.
-  SUBROUTINE cmfe_DataPoints_LabelSetVSNumber(regionUserNumber,dataPointUserNumber,label,err)
+  SUBROUTINE cmfe_DataPoints_LabelSetVSNumber(regionUserNumber,dataPointsUserNumber,dataPointUserNumber,label,err)
     !DLLEXPORT(cmfe_DataPoints_LabelSetVSNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to set the label for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points in the region.
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data point to set the label for.
     TYPE(VARYING_STRING), INTENT(IN) :: label !<The label for the data point to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -19424,7 +19434,7 @@ CONTAINS
     NULLIFY(dataPoints)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_LabelSet(dataPoints,dataPointUserNumber,label,err,error,*999)
     ELSE
       localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
@@ -19472,11 +19482,13 @@ CONTAINS
   !
 
   !>Returns the user number for a data point in a set of data points identified by user number.
-  SUBROUTINE cmfe_DataPoints_UserNumberGetNumber(regionUserNumber,dataPointGlobalNumber,dataPointUserNumber,err)
+  SUBROUTINE cmfe_DataPoints_UserNumberGetNumber(regionUserNumber,dataPointsUserNumber,dataPointGlobalNumber, &
+    & dataPointUserNumber,err)
     !DLLEXPORT(cmfe_DataPoints_UserNumberGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get the data point user number for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points in the region.
     INTEGER(INTG), INTENT(IN) :: dataPointGlobalNumber !<The global number of the data points to get the data point user number for.
     INTEGER(INTG), INTENT(OUT) :: dataPointUserNumber !<On return, the user number for the data point.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -19491,7 +19503,7 @@ CONTAINS
     NULLIFY(dataPoints)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_UserNumberGet(dataPoints,dataPointGlobalNumber,dataPointUserNumber,err,error,*999)
     ELSE
       localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
@@ -19539,11 +19551,13 @@ CONTAINS
   !
 
   !>Sets/changes the user number for a data point in a set of data points identified by user number.
-  SUBROUTINE cmfe_DataPoints_UserNumberSetNumber(regionUserNumber,dataPointGlobalNumber,dataPointUserNumber,err)
+  SUBROUTINE cmfe_DataPoints_UserNumberSetNumber(regionUserNumber,dataPointsUserNumber,dataPointGlobalNumber, &
+    & dataPointUserNumber,err)
     !DLLEXPORT(cmfe_DataPoints_UserNumberSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to set the data point user number for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points in the region.
     INTEGER(INTG), INTENT(IN) :: dataPointGlobalNumber !<The global number of the data points to set the data point user number for.
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number for the data point to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -19558,7 +19572,7 @@ CONTAINS
     NULLIFY(dataPoints)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_UserNumberSet(dataPoints,dataPointGlobalNumber,dataPointUserNumber,err,error,*999)
     ELSE
       localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
@@ -19606,11 +19620,12 @@ CONTAINS
   !
 
   !>Returns the position for a data point in a set of data points identified by user number.
-  SUBROUTINE cmfe_DataPoints_PositionGetNumber(regionUserNumber,dataPointUserNumber,dataPointPosition,err)
+  SUBROUTINE cmfe_DataPoints_PositionGetNumber(regionUserNumber,dataPointsUserNumber,dataPointUserNumber,dataPointPosition,err)
     !DLLEXPORT(cmfe_DataPoints_PositionGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get the data point user number for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points in the region.
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data point to get the data point position for.
     REAL(DP), INTENT(OUT) :: dataPointPosition(:) !<On return, the values for the data point.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -19625,7 +19640,7 @@ CONTAINS
     NULLIFY(dataPoints)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_PositionGet(dataPoints,dataPointUserNumber,dataPointPosition,err,error,*999)
     ELSE
       localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
@@ -19673,11 +19688,12 @@ CONTAINS
   !
 
   !>Sets/changes the position for a data point in a set of data points identified by user number.
-  SUBROUTINE cmfe_DataPoints_PositionSetNumber(regionUserNumber,dataPointUserNumber,dataPointPosition,err)
+  SUBROUTINE cmfe_DataPoints_PositionSetNumber(regionUserNumber,dataPointsUserNumber,dataPointUserNumber,dataPointPosition,err)
     !DLLEXPORT(cmfe_DataPoints_PositionSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to set the data point user number for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points in the region.
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data point to set the data point position for.
     REAL(DP), INTENT(IN) :: dataPointPosition(:) !<The position for the data point to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -19692,7 +19708,7 @@ CONTAINS
     NULLIFY(dataPoints)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_PositionSet(dataPoints,dataPointUserNumber,dataPointPosition,err,error,*999)
     ELSE
       localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
@@ -19740,11 +19756,12 @@ CONTAINS
   !
 
   !>Returns the weights for a data point in a set of data points identified by user number.
-  SUBROUTINE cmfe_DataPoints_WeightsGetNumber(regionUserNumber,dataPointUserNumber,dataPointWeights,err)
+  SUBROUTINE cmfe_DataPoints_WeightsGetNumber(regionUserNumber,dataPointsUserNumber,dataPointUserNumber,dataPointWeights,err)
     !DLLEXPORT(cmfe_DataPoints_WeightsGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get the data point user number for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points in the region.
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to get the data point weights for.
     REAL(DP), INTENT(OUT) :: dataPointWeights(:) !<On return, the weights for the data point.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -19759,7 +19776,7 @@ CONTAINS
     NULLIFY(dataPoints)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_WeightsGet(dataPoints,dataPointUserNumber,dataPointWeights,err,error,*999)
     ELSE
       localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
@@ -19807,11 +19824,12 @@ CONTAINS
   !
 
   !>Sets/changes the weights for a data point in a set of data points identified by user number.
-  SUBROUTINE cmfe_DataPoints_WeightsSetNumber(regionUserNumber,dataPointUserNumber,dataPointWeights,err)
+  SUBROUTINE cmfe_DataPoints_WeightsSetNumber(regionUserNumber,dataPointsUserNumber,dataPointUserNumber,dataPointWeights,err)
     !DLLEXPORT(cmfe_DataPoints_WeightsSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to set the data point user number for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points in the region.
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to set the data point weights for.
     REAL(DP), INTENT(IN) :: dataPointWeights(:) !<The weights for the data point to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -19826,7 +19844,7 @@ CONTAINS
     NULLIFY(dataPoints)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_WeightsSet(dataPoints,dataPointUserNumber,dataPointWeights,err,error,*999)
     ELSE
       localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
@@ -19876,11 +19894,13 @@ CONTAINS
 !!==================================================================================================================================
 
   !>Returns the absolute tolerance of data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_AbsoluteToleranceGetNumber(regionUserNumber,dataProjectionUserNumber,absoluteTolerance,err)
+  SUBROUTINE cmfe_DataProjection_AbsoluteToleranceGetNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
+    & absoluteTolerance,err)
     !DLLEXPORT(cmfe_DataProjection_AbsoluteToleranceGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection to get tolerance for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
     REAL(DP), INTENT(OUT) :: absoluteTolerance !<On exit, the absolute tolerance of the specified data projection
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -19897,7 +19917,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_AbsoluteToleranceGet(dataProjection,absoluteTolerance,err,error,*999)
     ELSE
@@ -19946,11 +19966,13 @@ CONTAINS
   !
 
   !>Sets/changes the absolute tolerance of data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_AbsoluteToleranceSetNumber(regionUserNumber,dataProjectionUserNumber,absoluteTolerance,err)
+  SUBROUTINE cmfe_DataProjection_AbsoluteToleranceSetNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
+    & absoluteTolerance,err)
     !DLLEXPORT(cmfe_DataProjection_AbsoluteToleranceSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region use number of data projection to set tolerance for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
     REAL(DP), INTENT(IN) :: absoluteTolerance !<the absolute tolerance to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -19967,7 +19989,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_AbsoluteToleranceSet(dataProjection,absoluteTolerance,err,error,*999)
     ELSE
@@ -20016,11 +20038,12 @@ CONTAINS
   !
 
   !>Finishes the creation of a new data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_CreateFinishNumber(regionUserNumber,dataProjectionUserNumber,err)
+  SUBROUTINE cmfe_DataProjection_CreateFinishNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber,err)
     !DLLEXPORT(cmfe_DataProjection_CreateFinishNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points which associates to the data projection to finish the creation of.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     !Local variables
@@ -20036,7 +20059,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_CreateFinish(dataProjection,err,error,*999)
     ELSE
@@ -20083,12 +20106,13 @@ CONTAINS
   !
 
   !>Starts the creation of a new data projection for a data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_CreateStartNumber(dataPointRegionUserNumber,dataProjectionUserNumber, &
+  SUBROUTINE cmfe_DataProjection_CreateStartNumber(dataPointRegionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
     & decompositionRegionUserNumber,decompositionMeshUserNumber,decompositionUserNumber,err)
     !DLLEXPORT(cmfe_DataProjection_CreateStartNumber)
   
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataPointRegionUserNumber !<The region user number of the data points to be projected.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number.
     INTEGER(INTG), INTENT(IN) :: decompositionRegionUserNumber !<The region user number of the decomposition
     INTEGER(INTG), INTENT(IN) :: decompositionMeshUserNumber !<The mesh user number of the decomposition
@@ -20119,7 +20143,7 @@ CONTAINS
         IF(ASSOCIATED(mesh)) THEN
           CALL DECOMPOSITION_USER_NUMBER_FIND(decompositionUserNumber,mesh,decomposition,err,error,*999)
           IF(ASSOCIATED(decomposition)) THEN
-            CALL Region_DataPointsGet(dataPointsRegion,dataPoints,err,error,*999)
+            CALL Region_DataPointsGet(dataPointsRegion,dataPointsUserNumber,dataPoints,err,error,*999)
             CALL DataProjection_CreateStart(dataProjectionUserNumber,dataPoints,decomposition,dataProjection,err, &
               & ERROR,*999)
           ELSE
@@ -20187,11 +20211,12 @@ CONTAINS
   !
 
   !>Destroys a data projection identified by region user number.
-  SUBROUTINE cmfe_DataProjection_DestroyNumber(regionUserNumber,dataProjectionUserNumber,err)
+  SUBROUTINE cmfe_DataProjection_DestroyNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber,err)
     !DLLEXPORT(cmfe_DataProjection_DestroyNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection to destroy.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -20207,7 +20232,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_Destroy(dataProjection,err,error,*999)
     ELSE
@@ -20254,12 +20279,13 @@ CONTAINS
   !
 
   !>Evaluate the data points position in a field based on data projection in a region, identified by user number
-  SUBROUTINE cmfe_DataProjection_DataPointsPositionEvaluateRegionNumber(regionUserNumber,dataProjectionUserNumber, &
-    & fieldUserNumber,fieldVariableType,fieldParameterSetType,err)
+  SUBROUTINE cmfe_DataProjection_DataPointsPositionEvaluateRegionNumber(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,fieldUserNumber,fieldVariableType,fieldParameterSetType,err)
     !DLLEXPORT(cmfe_DataProjection_DataPointsPositionEvaluateRegionNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection and field
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The field user number of the field to be interpolated
     INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type to be interpolated
@@ -20280,7 +20306,7 @@ CONTAINS
     NULLIFY(region)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL FIELD_USER_NUMBER_FIND(fieldUserNumber,region,field,err,error,*999)
       IF(ASSOCIATED(field)) THEN
@@ -20310,14 +20336,15 @@ CONTAINS
   !
 
   !>Evaluate the data points position in a field based on data projection in an interface, identified by user number
-  SUBROUTINE cmfe_DataProjection_DataPointsPositionEvaluateInterfaceNumber(parentRegionUserNumber,dataProjectionUserNumber, &
-      & interfaceUserNumber,fieldUserNumber,fieldVariableType,fieldParameterSetType,err)
+  SUBROUTINE cmfe_DataProjection_DataPointsPositionEvaluateInterfaceNumber(parentRegionUserNumber,interfaceUserNumber, &
+    & dataPointsUserNumber,dataProjectionUserNumber,fieldUserNumber,fieldVariableType,fieldParameterSetType,err)
     !DLLEXPORT(cmfe_DataProjection_DataPointsPositionEvaluateInterfaceNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The parent region number of the interface for the data projection 
-    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The field user number of the field to be interpolated
     INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type to be interpolated
     INTEGER(INTG), INTENT(IN) :: fieldParameterSetType !<The field parameter set type to be interpolated
@@ -20341,7 +20368,7 @@ CONTAINS
     IF(ASSOCIATED(parentRegion)) THEN
       CALL Interface_UserNumberFind(interfaceUserNumber,parentRegion,interface,err,error,*999)
       IF(ASSOCIATED(interface)) THEN
-        CALL Interface_DataPointsGet(interface,dataPoints,err,error,*999)
+        CALL Interface_DataPointsGet(INTERFACE,dataPointsUserNumber,dataPoints,err,error,*999)
         CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
         CALL FIELD_USER_NUMBER_FIND(fieldUserNumber,interface,field,err,error,*999)
         IF(ASSOCIATED(field)) THEN
@@ -20407,12 +20434,13 @@ CONTAINS
   !
 
   !>Evaluate the data points position in a field based on data projection in a region, identified by user number
-  SUBROUTINE cmfe_DataProjection_ProjectionCandidatesSetRegionNumber(regionUserNumber,dataProjectionUserNumber, &
-    & candidateElements,localFaceLineNumbers,err)
+  SUBROUTINE cmfe_DataProjection_ProjectionCandidatesSetRegionNumber(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,candidateElements,localFaceLineNumbers,err)
     !DLLEXPORT(cmfe_DataProjection_ProjectionCandidatesSetRegionNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection and field
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
     INTEGER(INTG), INTENT(IN) :: candidateElements(:) !<The candidate element for the projection
     INTEGER(INTG), INTENT(IN) :: localFaceLineNumbers(:) !<The local face/line number for the candidate elements
@@ -20431,7 +20459,7 @@ CONTAINS
     NULLIFY(region)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_ProjectionCandidatesSet(dataProjection,candidateElements,localFaceLineNumbers,err,error,*999)
     ELSE
@@ -20454,14 +20482,15 @@ CONTAINS
   !
 
   !>Evaluate the data points position in a field based on data projection in an interface, identified by user number
-  SUBROUTINE cmfe_DataProjection_ProjectionCandidatesSetInterfaceNumber(parentRegionUserNumber,dataProjectionUserNumber, &
-      & interfaceUserNumber,candidateElements,localFaceLineNumbers,err)
+  SUBROUTINE cmfe_DataProjection_ProjectionCandidatesSetInterfaceNumber(parentRegionUserNumber,interfaceUserNumber, &
+    & dataPointsUserNumber,dataProjectionUserNumber,candidateElements,localFaceLineNumbers,err)
     !DLLEXPORT(cmfe_DataProjection_ProjectionCandidatesSetInterfaceNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The parent region number of the interface for the data projection 
-    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
     INTEGER(INTG), INTENT(IN) :: candidateElements(:) !<The candidate element for the projection
     INTEGER(INTG), INTENT(IN) :: localFaceLineNumbers(:) !<The local face/line number for the candidate elements
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -20482,7 +20511,7 @@ CONTAINS
     IF(ASSOCIATED(parentRegion)) THEN
       CALL Interface_UserNumberFind(interfaceUserNumber,parentRegion,interface,err,error,*999)
       IF(ASSOCIATED(interface)) THEN
-        CALL Interface_DataPointsGet(interface,dataPoints,err,error,*999)
+        CALL Interface_DataPointsGet(INTERFACE,dataPointsUserNumber,dataPoints,err,error,*999)
         CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
         CALL DataProjection_ProjectionCandidatesSet(dataProjection,candidateElements,localFaceLineNumbers,err,error,*999)
       ELSE
@@ -20539,12 +20568,13 @@ CONTAINS
   !
 
   !>Evaluate a data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_DataPointsProjectionEvaluateNumber(dataPointsRegionUserNumber,dataProjectionUserNumber, &
-    & projectionFieldUserNumber,projectionFieldRegionUserNumber,err)
+  SUBROUTINE cmfe_DataProjection_DataPointsProjectionEvaluateNumber(dataPointsRegionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,projectionFieldUserNumber,projectionFieldRegionUserNumber,err)
     !DLLEXPORT(cmfe_DataProjection_DataPointsProjectionEvaluateNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataPointsRegionUserNumber !<The region user number of the data projection to evaluate.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
     INTEGER(INTG), INTENT(IN) :: projectionFieldUserNumber !<The field user number of the field data points are be projected on.
     INTEGER(INTG), INTENT(IN) :: projectionFieldRegionUserNumber !<The region user number of the field data points are be projected on.  
@@ -20567,7 +20597,7 @@ CONTAINS
     CALL Region_UserNumberFind(dataPointsRegionUserNumber,DATA_POINTS_region,err,error,*999)
     CALL Region_UserNumberFind(projectionFieldRegionUserNumber,PROJECTION_FIELD_region,err,error,*999)
     IF(ASSOCIATED(DATA_POINTS_region)) THEN
-      CALL Region_DataPointsGet(DATA_POINTS_region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(DATA_POINTS_region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       IF(ASSOCIATED(PROJECTION_FIELD_region)) THEN
         CALL FIELD_USER_NUMBER_FIND(projectionFieldUserNumber,PROJECTION_FIELD_region,PROJECTION_FIELD,err,error,*999)
@@ -20631,12 +20661,13 @@ CONTAINS
   !
 
   !>Returns the relative tolerance of data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_MaximumIterationUpdateGetNumber(regionUserNumber,dataProjectionUserNumber, &
+  SUBROUTINE cmfe_DataProjection_MaximumIterationUpdateGetNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
       & maximumIterationUpdate,err)
     !DLLEXPORT(cmfe_DataProjection_MaximumIterationUpdateGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection to get tolerance for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
     REAL(DP), INTENT(OUT) :: maximumIterationUpdate !<On exit, the maximum iteration update of the specified data projection
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -20653,7 +20684,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_MaximumInterationUpdateGet(dataProjection,maximumIterationUpdate,err,error,*999)
     ELSE
@@ -20703,12 +20734,13 @@ CONTAINS
   !
 
   !>Sets/changes the relative tolerance of data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_MaximumIterationUpdateSetNumber(regionUserNumber,dataProjectionUserNumber, &
+  SUBROUTINE cmfe_DataProjection_MaximumIterationUpdateSetNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
       & maximumIterationUpdate,err)
     !DLLEXPORT(cmfe_DataProjection_MaximumIterationUpdateSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region use number of data projection to set tolerance for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
     REAL(DP), INTENT(IN) :: maximumIterationUpdate !<the maximum iteration update to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -20725,7 +20757,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_MaximumInterationUpdateSet(dataProjection,maximumIterationUpdate,err,error,*999)
     ELSE
@@ -20775,12 +20807,13 @@ CONTAINS
   !
 
   !>Returns the maximum number of iterations of data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_MaximumNumberOfIterationsGetNumber(regionUserNumber,dataProjectionUserNumber, &
-      & maximumNumberOfIterations,err)
+  SUBROUTINE cmfe_DataProjection_MaximumNumberOfIterationsGetNumber(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,maximumNumberOfIterations,err)
     !DLLEXPORT(cmfe_DataProjection_MaximumNumberOfIterationsGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection to get maximum number of iterations for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
     INTEGER(INTG), INTENT(OUT) :: maximumNumberOfIterations !<On exit, the maximum number of iterations of the specified data projection
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -20797,7 +20830,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_MaximumNumberOfIterationsGet(dataProjection,maximumNumberOfIterations,err,error,*999)
     ELSE
@@ -20819,16 +20852,44 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the maximum number of iterations of data projection identified an object.
+  SUBROUTINE cmfe_DataProjection_MaximumNumberOfIterationsGetObj(dataProjection,maximumNumberOfIterations,err)
+    !DLLEXPORT(cmfe_DataProjection_MaximumNumberOfIterationsGetObj)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to get maximum number of iterations for.
+    INTEGER(INTG), INTENT(OUT) :: maximumNumberOfIterations !<On exit, the maximum number of iterations of the specified data projection
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_DataProjection_MaximumNumberOfIterationsGetObj",err,error,*999)
+
+    CALL DataProjection_MaximumNumberOfIterationsGet(dataProjection%dataProjection,maximumNumberOfIterations,err,error,*999)
+
+    EXITS("cmfe_DataProjection_MaximumNumberOfIterationsGetObj")
+    RETURN
+999 ERRORS("cmfe_DataProjection_MaximumNumberOfIterationsGetObj",err,error)
+    EXITS("cmfe_DataProjection_MaximumNumberOfIterationsGetObj")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_MaximumNumberOfIterationsGetObj
+
+ !
+  !================================================================================================================================
+  !
+
   !>Returns the projection distance for a data point in a set of data points identified by user number.
-  SUBROUTINE cmfe_DataProjection_ResultDistanceGetNumber(regionUserNumber,dataProjectionUserNumber,dataPointUserNumber, &
-    & ProjectionDistance,err)
+  SUBROUTINE cmfe_DataProjection_ResultDistanceGetNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
+    & dataPointUserNumber,projectionDistance,err)
     !DLLEXPORT(cmfe_DataProjection_ResultDistanceGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get attributes for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The user number of the data projection containing the data points to get attributes for.
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to get attributes for.
-    REAL(DP), INTENT(OUT) :: ProjectionDistance !<On return, the projection distance for the data point.
+    REAL(DP), INTENT(OUT) :: projectionDistance !<On return, the projection distance for the data point.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(DataPointsType), POINTER :: dataPoints
@@ -20843,7 +20904,7 @@ CONTAINS
     NULLIFY(dataProjection) 
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_ResultDistanceGet(dataProjection,dataPointUserNumber,ProjectionDistance,err,error,*999)
     ELSE
@@ -20894,12 +20955,13 @@ CONTAINS
   !
 
   !>Returns the projection element number for a data point in a set of data points identified by user number.
-  SUBROUTINE cmfe_DataProjection_ResultElementNumberGetNumber(regionUserNumber,dataProjectionUserNumber,dataPointUserNumber, &
-    & projectionElementNumber,err)
+  SUBROUTINE cmfe_DataProjection_ResultElementNumberGetNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
+    & dataPointUserNumber,projectionElementNumber,err)
     !DLLEXPORT(cmfe_DataProjection_ResultElementNumberGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get attributes for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The user number of the data projection containing the data points to get attributes for.
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to get attributes for.
     INTEGER(INTG), INTENT(OUT) :: projectionElementNumber !<On return, the projection element number for the data point.
@@ -20917,7 +20979,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_ResultElementNumberGet(dataProjection,dataPointUserNumber,projectionElementNumber,err,error,*999)
     ELSE
@@ -20969,12 +21031,13 @@ CONTAINS
   !
 
   !>Returns the projection element face number for a data point in a set of data points identified by user number.
-  SUBROUTINE cmfe_DataProjection_ResultElementFaceNumberGetNumber(regionUserNumber,dataProjectionUserNumber,dataPointUserNumber, &
-    & projectionElementFaceNumber,err)
+  SUBROUTINE cmfe_DataProjection_ResultElementFaceNumberGetNumber(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,dataPointUserNumber,projectionElementFaceNumber,err)
     !DLLEXPORT(cmfe_DataProjection_ResultElementFaceNumberGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get attributes for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The user number of the data projection containing the data points to get attributes for.
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to get attributes for.
     INTEGER(INTG), INTENT(OUT) :: projectionElementFaceNumber !<On return, the projection element face number for the data point.
@@ -20992,7 +21055,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_ResultElementFaceNumberGet(dataProjection,dataPointUserNumber,projectionElementFaceNumber,err, &
         & error,*999)
@@ -21046,12 +21109,13 @@ CONTAINS
   !
 
   !>Returns the projection element line number for a data point in a set of data points identified by user number.
-  SUBROUTINE cmfe_DataProjection_ResultElementLineNumberGetNumber(regionUserNumber,dataProjectionUserNumber,dataPointUserNumber, &
-    & projectionElementLineNumber,err)
+  SUBROUTINE cmfe_DataProjection_ResultElementLineNumberGetNumber(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,dataPointUserNumber,projectionElementLineNumber,err)
     !DLLEXPORT(cmfe_DataProjection_ResultElementLineNumberGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get attributes for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The user number of the data projection containing the data points to get attributes for.
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to get attributes for.
     INTEGER(INTG), INTENT(OUT) :: projectionElementLineNumber !<On return, the projection element line number for the data point.
@@ -21069,7 +21133,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_ResultElementLineNumberGet(dataProjection,dataPointUserNumber,projectionElementLineNumber,err, &
         & error,*999)
@@ -21123,12 +21187,13 @@ CONTAINS
   !
 
   !>Returns the projection exit tag for a data point in a set of data points identified by user number.
-  SUBROUTINE cmfe_DataProjection_ResultExitTagGetNumber(regionUserNumber,dataProjectionUserNumber,dataPointUserNumber, &
-    & projectionExitTag,err)
+  SUBROUTINE cmfe_DataProjection_ResultExitTagGetNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
+    & dataPointUserNumber,projectionExitTag,err)
     !DLLEXPORT(cmfe_DataProjection_ResultExitTagGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get attributes for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The user number of the data projection containing the data points to get attributes for.
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to get attributes for.
     INTEGER(INTG), INTENT(OUT) :: projectionExitTag !<On return, the projection exit tag for the data point.
@@ -21146,7 +21211,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_ResultExitTagGet(dataProjection,dataPointUserNumber,projectionExitTag,err,error,*999)
     ELSE
@@ -21196,11 +21261,13 @@ CONTAINS
   !
 
   !>Returns the projection xi for a data point in a set of data points identified by user number.
-  SUBROUTINE cmfe_DataProjection_ResultXiGetNumber(regionUserNumber,dataProjectionUserNumber,dataPointUserNumber,projectionXi,err)
+  SUBROUTINE cmfe_DataProjection_ResultXiGetNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
+    & dataPointUserNumber,projectionXi,err)
     !DLLEXPORT(cmfe_DataProjection_ResultXiGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get attributes for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The user number of the data projection containing the data points to get attributes for.
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to get attributes for.
     REAL(DP), INTENT(OUT) :: projectionXi(:) !<On return, the projection xi for the data point.
@@ -21218,7 +21285,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_ResultXiGet(dataProjection,dataPointUserNumber,projectionXi,err,error,*999)
     ELSE
@@ -21267,11 +21334,13 @@ CONTAINS
   !
 
   !>Sets the projection xi for a data point in a set of data points identified by user number.
-  SUBROUTINE cmfe_DataProjection_ResultXiSetNumber(regionUserNumber,dataProjectionUserNumber,dataPointUserNumber,projectionXi,err)
+  SUBROUTINE cmfe_DataProjection_ResultXiSetNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
+    & dataPointUserNumber,projectionXi,err)
     !DLLEXPORT(cmfe_DataProjection_ResultXiSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to set attributes for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The user number of the data projection containing the data points to set attributes for.
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to set attributes for.
     REAL(DP), INTENT(IN) :: ProjectionXi(:) !<On return, the projection xi for the data point.
@@ -21289,7 +21358,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_ResultXiSet(dataProjection,dataPointUserNumber,ProjectionXi,err,error,*999)
     ELSE
@@ -21338,12 +21407,13 @@ CONTAINS
   !
 
   !>Returns the projection vector for a data point in a set of data points identified by user number.
-  SUBROUTINE cmfe_DataProjection_ResultProjectionVectorGetNumber(regionUserNumber,dataProjectionUserNumber, &
-      & dataPointUserNumber,projectionVector,err)
+  SUBROUTINE cmfe_DataProjection_ResultProjectionVectorGetNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
+    & dataPointUserNumber,projectionVector,err)
     !DLLEXPORT(cmfe_DataProjection_ResultProjectionVectorGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get attributes for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The user number of the data projection containing the data points to get attributes for.
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to get attributes for.
     REAL(DP), INTENT(OUT) :: projectionVector(:) !<On return, the projection vector for the data point.
@@ -21361,7 +21431,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_ResultProjectionVectorGet(dataProjection,dataPointUserNumber,projectionVector,err,error,*999)
     ELSE
@@ -21412,40 +21482,14 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the maximum number of iterations of data projection identified an object.
-  SUBROUTINE cmfe_DataProjection_MaximumNumberOfIterationsGetObj(dataProjection,maximumNumberOfIterations,err)
-    !DLLEXPORT(cmfe_DataProjection_MaximumNumberOfIterationsGetObj)
-
-    !Argument variables
-    TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to get maximum number of iterations for.
-    INTEGER(INTG), INTENT(OUT) :: maximumNumberOfIterations !<On exit, the maximum number of iterations of the specified data projection
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables
-
-    ENTERS("cmfe_DataProjection_MaximumNumberOfIterationsGetObj",err,error,*999)
-
-    CALL DataProjection_MaximumNumberOfIterationsGet(dataProjection%dataProjection,maximumNumberOfIterations,err,error,*999)
-
-    EXITS("cmfe_DataProjection_MaximumNumberOfIterationsGetObj")
-    RETURN
-999 ERRORS("cmfe_DataProjection_MaximumNumberOfIterationsGetObj",err,error)
-    EXITS("cmfe_DataProjection_MaximumNumberOfIterationsGetObj")
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_DataProjection_MaximumNumberOfIterationsGetObj
-
-  !
-  !================================================================================================================================
-  !
-
   !>Sets/changes the maximum number of iterations of data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_MaximumNumberOfIterationsSetNumber(regionUserNumber,dataProjectionUserNumber, &
+  SUBROUTINE cmfe_DataProjection_MaximumNumberOfIterationsSetNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
       & maximumNumberOfIterations,err)
     !DLLEXPORT(cmfe_DataProjection_MaximumNumberOfIterationsSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region use number of data projection to set maximum number of iterations for
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
     INTEGER(INTG), INTENT(IN) :: maximumNumberOfIterations !<the maximum number of iterations to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -21462,7 +21506,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_MaximumNumberOfIterationsSet(dataProjection,maximumNumberOfIterations,err,error,*999)
     ELSE
@@ -21512,12 +21556,13 @@ CONTAINS
   !
 
   !>Returns the number of closest elements of data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_NumberOfClosestElementsGetNumber(regionUserNumber,dataProjectionUserNumber, &
+  SUBROUTINE cmfe_DataProjection_NumberOfClosestElementsGetNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
       & numberOfClosestElements,err)
     !DLLEXPORT(cmfe_DataProjection_NumberOfClosestElementsGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection to get number of closest elements for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
     INTEGER(INTG), INTENT(OUT) :: numberOfClosestElements !<On exit, the number of closest elements of the specified data projection
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -21534,7 +21579,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_NumberOfClosestElementsGet(dataProjection,numberOfClosestElements,err,error,*999)
     ELSE
@@ -21584,12 +21629,13 @@ CONTAINS
   !
 
   !>Sets/changes the number of closest elements of data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_NumberOfClosestElementsSetNumber(regionUserNumber,dataProjectionUserNumber, &
+  SUBROUTINE cmfe_DataProjection_NumberOfClosestElementsSetNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
       & numberOfClosestElements,err)
     !DLLEXPORT(cmfe_DataProjection_NumberOfClosestElementsSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region use number of data projection to set number of closest elements for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
     INTEGER(INTG), INTENT(IN) :: numberOfClosestElements !<the number of closest elements to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -21606,7 +21652,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_NumberOfClosestElementsSet(dataProjection,numberOfClosestElements,err,error,*999)
     ELSE
@@ -21656,11 +21702,13 @@ CONTAINS
   !
 
   !>Returns the projection type of data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_ProjectionTypeGetNumber(regionUserNumber,dataProjectionUserNumber,projectionType,err)
+  SUBROUTINE cmfe_DataProjection_ProjectionTypeGetNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
+    & projectionType,err)
     !DLLEXPORT(cmfe_DataProjection_ProjectionTypeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection to get projection type for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
     INTEGER(INTG), INTENT(OUT) :: projectionType !<On exit, the projection type of the specified data projection
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -21677,7 +21725,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_ProjectionTypeGet(dataProjection,projectionType,err,error,*999)
     ELSE
@@ -21725,11 +21773,13 @@ CONTAINS
   !
 
   !>Sets/changes the projection type of data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_ProjectionTypeSetNumber(regionUserNumber,dataProjectionUserNumber,projectionType,err)
+  SUBROUTINE cmfe_DataProjection_ProjectionTypeSetNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
+    & projectionType,err)
     !DLLEXPORT(cmfe_DataProjection_ProjectionTypeSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region use number of data projection to set projection type for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
     INTEGER(INTG), INTENT(IN) :: projectionType !<the projection type to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -21746,7 +21796,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_ProjectionTypeSet(dataProjection,projectionType,err,error,*999)
     ELSE
@@ -21794,11 +21844,13 @@ CONTAINS
   !
 
   !>Returns the relative tolerance of data projection identified by a data projection user number and a region user number.
-  SUBROUTINE cmfe_DataProjection_RelativeToleranceGetNumber(regionUserNumber,dataProjectionUserNumber,relativeTolerance,err)
+  SUBROUTINE cmfe_DataProjection_RelativeToleranceGetNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
+    & relativeTolerance,err)
     !DLLEXPORT(cmfe_DataProjection_RelativeToleranceGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection to get relative tolerance for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
     REAL(DP), INTENT(OUT) :: relativeTolerance !<On exit, the absolute relative tolerance of the specified data projection
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -21815,7 +21867,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_RelativeToleranceGet(dataProjection,relativeTolerance,err,error,*999)
     ELSE
@@ -21864,11 +21916,13 @@ CONTAINS
   !
 
   !>Sets/changes the relative tolerance of data projection identified by a data projection user number and a region user number.
-  SUBROUTINE cmfe_DataProjection_RelativeToleranceSetNumber(regionUserNumber,dataProjectionUserNumber,relativeTolerance,err)
+  SUBROUTINE cmfe_DataProjection_RelativeToleranceSetNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
+    & relativeTolerance,err)
     !DLLEXPORT(cmfe_DataProjection_RelativeToleranceSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of data projection to set relative tolerance for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
     REAL(DP), INTENT(IN) :: relativeTolerance !<the absolute relative tolerance to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -21885,7 +21939,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_RelativeToleranceSet(dataProjection,relativeTolerance,err,error,*999)
     ELSE
@@ -21934,11 +21988,12 @@ CONTAINS
   !
 
   !>Returns the starting xi of data projection identified by a data projection user number and region user number.
-  SUBROUTINE cmfe_DataProjection_StartingXiGetNumber(regionUserNumber,dataProjectionUserNumber,startingXi,err)
+  SUBROUTINE cmfe_DataProjection_StartingXiGetNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber,startingXi,err)
     !DLLEXPORT(cmfe_DataProjection_StartingXiGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection to get starting xi for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
     REAL(DP), INTENT(OUT) :: startingXi(:) !<On exit, the absolute starting xi of the specified data projection
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -21955,7 +22010,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_StartingXiGet(dataProjection,startingXi,err,error,*999)
     ELSE
@@ -22004,11 +22059,12 @@ CONTAINS
   !
 
   !>Sets/changes the starting xi of data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_StartingXiSetNumber(regionUserNumber,dataProjectionUserNumber,startingXi,err)
+  SUBROUTINE cmfe_DataProjection_StartingXiSetNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber,startingXi,err)
     !DLLEXPORT(cmfe_DataProjection_StartingXiSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region use number of data projection to set starting xi for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
     REAL(DP), INTENT(IN) :: startingXi(:) !<the absolute starting xi to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -22025,7 +22081,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_StartingXiSet(dataProjection,startingXi,err,error,*999)
     ELSE
@@ -22073,14 +22129,15 @@ CONTAINS
   !
 
   !>Sets/changes the starting xi of data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_ElementSetInterfaceNumber(parentRegionUserNumber,dataProjectionUserNumber,interfaceUserNumber, &
-      & dataPointNumber,elementNumber,err)
+  SUBROUTINE cmfe_DataProjection_ElementSetInterfaceNumber(parentRegionUserNumber,interfaceUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,dataPointNumber,elementNumber,err)
     !DLLEXPORT(cmfe_DataProjection_ElementSetInterfaceNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region.
-    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
     INTEGER(INTG), INTENT(IN) :: dataPointNumber !<The data point number to set xi position for
     INTEGER(INTG), INTENT(IN) :: elementNumber !<the element number to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -22101,7 +22158,7 @@ CONTAINS
     IF(ASSOCIATED(PARENT_region)) THEN
       CALL Interface_UserNumberFind(interfaceUserNumber,PARENT_region,INTERFACE,err,error,*999)
       IF(ASSOCIATED(INTERFACE)) THEN
-        CALL Interface_DataPointsGet(interface,dataPoints,err,error,*999)
+        CALL Interface_DataPointsGet(INTERFACE,dataPointsUserNumber,dataPoints,err,error,*999)
         CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
         CALL DataProjection_ElementSet(dataProjection,dataPointNumber,elementNumber,err,error,*999)
       ELSE
@@ -22129,11 +22186,13 @@ CONTAINS
   !
 
   !>Sets/changes the starting xi of data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_ElementSetRegionNumber(regionUserNumber,dataProjectionUserNumber,dataPointNumber,elementNumber,err)
+  SUBROUTINE cmfe_DataProjection_ElementSetRegionNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
+    & dataPointNumber,elementNumber,err)
     !DLLEXPORT(cmfe_DataProjection_ElementSetRegionNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of data projection to set starting xi for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
     INTEGER(INTG), INTENT(IN) :: dataPointNumber !<The data point number to set xi position for
     INTEGER(INTG), INTENT(IN) :: elementNumber !<the element number to set
@@ -22151,7 +22210,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_ElementSet(dataProjection,dataPointNumber,elementNumber,err,error,*999)
     ELSE
@@ -22200,14 +22259,15 @@ CONTAINS
   !
 
   !>Get the character string label of a data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_LabelGetCInterfaceNumber(parentRegionUserNumber,dataProjectionUserNumber,interfaceUserNumber, &
-    & label,err)
+  SUBROUTINE cmfe_DataProjection_LabelGetCInterfaceNumber(parentRegionUserNumber,interfaceUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,label,err)
     !DLLEXPORT(cmfe_DataProjection_LabelGetCInterfaceNumber)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get the label for.
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get the label for.
     CHARACTER(LEN=*), INTENT(OUT) :: label !<the label to get
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -22227,7 +22287,7 @@ CONTAINS
     IF(ASSOCIATED(PARENT_region)) THEN
       CALL Interface_UserNumberFind(interfaceUserNumber,PARENT_region,INTERFACE,err,error,*999)
       IF(ASSOCIATED(INTERFACE)) THEN
-        CALL Interface_DataPointsGet(INTERFACE,dataPoints,err,error,*999)
+        CALL Interface_DataPointsGet(INTERFACE,dataPointsUserNumber,dataPoints,err,error,*999)
         CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
         CALL DataProjection_LabelGet(dataProjection,label,err,error,*999)
       ELSE
@@ -22255,14 +22315,15 @@ CONTAINS
   !
 
   !>Get the varying string label of a data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_LabelGetVSInterfaceNumber(parentRegionUserNumber,dataProjectionUserNumber,interfaceUserNumber, &
-    & label,err)
+  SUBROUTINE cmfe_DataProjection_LabelGetVSInterfaceNumber(parentRegionUserNumber,interfaceUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,label,err)
     !DLLEXPORT(cmfe_DataProjection_LabelGetVSInterfaceNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region.
-    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get the label for.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get the label for.
     TYPE(VARYING_STRING), INTENT(OUT) :: label !<the label to get
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -22282,7 +22343,7 @@ CONTAINS
     IF(ASSOCIATED(PARENT_region)) THEN
       CALL Interface_UserNumberFind(interfaceUserNumber,PARENT_region,INTERFACE,err,error,*999)
       IF(ASSOCIATED(INTERFACE)) THEN
-        CALL Interface_DataPointsGet(INTERFACE,dataPoints,err,error,*999)
+        CALL Interface_DataPointsGet(INTERFACE,dataPointsUserNumber,dataPoints,err,error,*999)
         CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
         CALL DataProjection_LabelGet(dataProjection,label,err,error,*999)
       ELSE
@@ -22310,11 +22371,12 @@ CONTAINS
   !
 
   !>Get the character string label of a data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_LabelGetCRegionNumber(regionUserNumber,dataProjectionUserNumber,label,err)
+  SUBROUTINE cmfe_DataProjection_LabelGetCRegionNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber,label,err)
     !DLLEXPORT(cmfe_DataProjection_LabelGetCRegionNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of data projection to get the label for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get the label for.
     CHARACTER(LEN=*), INTENT(OUT) :: label !<the label to get
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -22331,7 +22393,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_LabelGet(dataProjection,label,err,error,*999)
     ELSE
@@ -22353,11 +22415,12 @@ CONTAINS
   !
 
   !>Get the varying string label of a data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_LabelGetVSRegionNumber(regionUserNumber,dataProjectionUserNumber,label,err)
+  SUBROUTINE cmfe_DataProjection_LabelGetVSRegionNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber,label,err)
     !DLLEXPORT(cmfe_DataProjection_LabelGetVSRegionNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of data projection to get the label for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get the label for.
     TYPE(VARYING_STRING), INTENT(OUT) :: label !<the label to get
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -22374,7 +22437,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_LabelGet(dataProjection,label,err,error,*999)
     ELSE
@@ -22448,14 +22511,15 @@ CONTAINS
   !
 
   !>Sets/changes the character string label of a data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_LabelSetCInterfaceNumber(parentRegionUserNumber,dataProjectionUserNumber,interfaceUserNumber, &
-    & label,err)
+  SUBROUTINE cmfe_DataProjection_LabelSetCInterfaceNumber(parentRegionUserNumber,interfaceUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,label,err)
     !DLLEXPORT(cmfe_DataProjection_LabelSetCInterfaceNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region.
-    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to set the label for.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to set the label for.
     CHARACTER(LEN=*), INTENT(IN) :: label !<the label to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -22475,7 +22539,7 @@ CONTAINS
     IF(ASSOCIATED(PARENT_region)) THEN
       CALL Interface_UserNumberFind(interfaceUserNumber,PARENT_region,INTERFACE,err,error,*999)
       IF(ASSOCIATED(INTERFACE)) THEN
-        CALL Interface_DataPointsGet(INTERFACE,dataPoints,err,error,*999)
+        CALL Interface_DataPointsGet(INTERFACE,dataPointsUserNumber,dataPoints,err,error,*999)
         CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
         CALL DataProjection_LabelSet(dataProjection,label,err,error,*999)
       ELSE
@@ -22503,14 +22567,15 @@ CONTAINS
   !
 
   !>Sets/changes the varying string label of a data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_LabelSetVSInterfaceNumber(parentRegionUserNumber,dataProjectionUserNumber,interfaceUserNumber, &
-    & label,err)
+  SUBROUTINE cmfe_DataProjection_LabelSetVSInterfaceNumber(parentRegionUserNumber,interfaceUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,label,err)
     !DLLEXPORT(cmfe_DataProjection_LabelSetVSInterfaceNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region.
-    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to set the label for.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to set the label for.
     TYPE(VARYING_STRING), INTENT(IN) :: label !<the label to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -22530,7 +22595,7 @@ CONTAINS
     IF(ASSOCIATED(PARENT_region)) THEN
       CALL Interface_UserNumberFind(interfaceUserNumber,PARENT_region,INTERFACE,err,error,*999)
       IF(ASSOCIATED(INTERFACE)) THEN
-        CALL Interface_DataPointsGet(INTERFACE,dataPoints,err,error,*999)
+        CALL Interface_DataPointsGet(INTERFACE,dataPointsUserNumber,dataPoints,err,error,*999)
         CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
         CALL DataProjection_LabelSet(dataProjection,label,err,error,*999)
       ELSE
@@ -22558,11 +22623,12 @@ CONTAINS
   !
 
   !>Sets/changes the character string label of a data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_LabelSetCRegionNumber(regionUserNumber,dataProjectionUserNumber,label,err)
+  SUBROUTINE cmfe_DataProjection_LabelSetCRegionNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber,label,err)
     !DLLEXPORT(cmfe_DataProjection_LabelSetCRegionNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of data projection to set the label for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to set the label for.
     CHARACTER(LEN=*), INTENT(IN) :: label !<the label to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -22579,7 +22645,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_LabelSet(dataProjection,label,err,error,*999)
     ELSE
@@ -22601,11 +22667,12 @@ CONTAINS
   !
 
   !>Sets/changes the varying string label of a data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_LabelSetVSRegionNumber(regionUserNumber,dataProjectionUserNumber,label,err)
+  SUBROUTINE cmfe_DataProjection_LabelSetVSRegionNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber,label,err)
     !DLLEXPORT(cmfe_DataProjection_LabelSetVSRegionNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of data projection to set the label for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to set the label for.
     TYPE(VARYING_STRING), INTENT(IN) :: label !<the label to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -22622,7 +22689,7 @@ CONTAINS
     NULLIFY(dataProjection)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
-      CALL Region_DataPointsGet(region,dataPoints,err,error,*999)
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
       CALL DataProjection_LabelSet(dataProjection,label,err,error,*999)
     ELSE
@@ -29254,12 +29321,13 @@ CONTAINS
   !
 
   !>Sets/changes the data projection for a field identified by a user number.
-  SUBROUTINE cmfe_Field_DataProjectionSetNumber(regionUserNumber,fieldUserNumber,dataProjectionUserNumber,err)
+  SUBROUTINE cmfe_Field_DataProjectionSetNumber(regionUserNumber,fieldUserNumber,dataPointsUserNumber,dataProjectionUserNumber,err)
     !DLLEXPORT(cmfe_Field_DataProjectionSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the mesh decomposition for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to set the mesh decomposition for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The field data projection user number to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -29279,7 +29347,7 @@ CONTAINS
     IF(ASSOCIATED(REGION)) THEN
       CALL FIELD_USER_NUMBER_FIND(fieldUserNumber,REGION,FIELD,err,error,*999)
       IF(ASSOCIATED(FIELD)) THEN
-        CALL Region_DataPointsGet(REGION,dataPoints,err,error,*999)
+        CALL Region_DataPointsGet(REGION,dataPointsUserNumber,dataPoints,err,error,*999)
         IF(ASSOCIATED(dataPoints)) THEN
           CALL DataPoints_DataProjectionGlobalNumberGet(dataPoints,dataProjectionUserNumber,dataProjection_NUMBER,&
            & err,error,*999)
@@ -39955,15 +40023,18 @@ CONTAINS
   !   
   
   !>Starts the creation of an interface points connectivity identified by a user number.
-  SUBROUTINE cmfe_InterfacePointsConnectivity_CreateStartNumber(regionUserNumber,interfaceUserNumber,MeshNumber,err)
+  SUBROUTINE cmfe_InterfacePointsConnectivity_CreateStartNumber(regionUserNumber,interfaceUserNumber,meshUserNumber, &
+    & dataPointsUserNumber,err)
     !DLLEXPORT(cmfe_InterfacePointsConnectivity_CreateStartNumber)
   
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface to start the creation of the meshes connectivity.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface to start the creation of the meshes connectivity for.
-    INTEGER(INTG), INTENT(IN) :: MeshNumber !<The user number of the interface mesh
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the interface mesh
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
+    TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(INTERFACE_TYPE), POINTER :: interface
     TYPE(MESH_TYPE), POINTER :: mesh
     TYPE(InterfacePointsConnectivityType), POINTER :: interfacePointsConnectivity
@@ -39975,13 +40046,16 @@ CONTAINS
     NULLIFY(region)
     NULLIFY(interface)
     NULLIFY(interfacePointsConnectivity)
+    NULLIFY(mesh)
+    NULLIFY(dataPoints)
     CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
     IF(ASSOCIATED(region)) THEN
       CALL Interface_UserNumberFind(interfaceUserNumber,region,interface,err,error,*999)
       IF(ASSOCIATED(interface)) THEN
-        CALL MESH_USER_NUMBER_FIND(MeshNumber,interface,mesh,ERR,error,*999)
+        CALL MESH_USER_NUMBER_FIND(meshUserNumber,interface,mesh,ERR,error,*999)
         IF(ASSOCIATED(mesh)) THEN
-          CALL InterfacePointsConnectivity_CreateStart(interface,mesh,interfacePointsConnectivity,err,error,*999)
+          CALL Interface_DataPointsGet(INTERFACE,dataPointsUserNumber,dataPoints,err,error,*999)
+          CALL InterfacePointsConnectivity_CreateStart(INTERFACE,mesh,dataPoints,interfacePointsConnectivity,err,error,*999)
         ELSE
           localError="A mesh with an user number of "//TRIM(NumberToVString(interfaceUserNumber,"*",err,error))// &
            & " does not exist on the interface with user number "//TRIM(NumberToVString(regionUserNumber,"*",err,error))//"."
@@ -40012,19 +40086,20 @@ CONTAINS
   !  
  
   !>Starts the creation of an interface points connectivity identified by an object.
-  SUBROUTINE cmfe_InterfacePointsConnectivity_CreateStartObj(interface,interfaceMesh,interfacePointsConnectivity,err)
+  SUBROUTINE cmfe_InterfacePointsConnectivity_CreateStartObj(INTERFACE,interfaceMesh,dataPoints,interfacePointsConnectivity,err)
     !DLLEXPORT(cmfe_InterfacePointsConnectivity_CreateStartObj)
   
     !Argument variables
     TYPE(cmfe_InterfaceType), INTENT(IN) :: interface !<The interface to start the creation of the meshes connectivity for
     TYPE(cmfe_MeshType), INTENT(IN) :: interfaceMesh
+    TYPE(cmfe_DataPointsType), INTENT(IN) :: dataPoints
     TYPE(cmfe_InterfacePointsConnectivityType), INTENT(INOUT) :: interfacePointsConnectivity !<On return, the created meshes connectivity
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_InterfacePointsConnectivity_CreateStartObj",err,error,*999)
 
-    CALL InterfacePointsConnectivity_CreateStart(interface%interface,interfaceMesh%mesh, &
+    CALL InterfacePointsConnectivity_CreateStart(INTERFACE%INTERFACE,interfaceMesh%mesh,dataPoints%dataPoints, &
       & InterfacePointsConnectivity%pointsConnectivity,err,error,*999)
 
     EXITS("cmfe_InterfacePointsConnectivity_CreateStartObj")
@@ -40444,13 +40519,14 @@ CONTAINS
 
   !>Update points connectivity with projection results, data projection identified by region user number
   SUBROUTINE cmfe_InterfacePointsConnectivity_UpdateFromProjectionRNumber(regionUserNumber,interfaceUserNumber, &
-      & dataPointsRegionUserNumber,dataProjectionUserNumber,coupledMeshIndex,err)
+      & dataPointsRegionUserNumber,dataPointsUserNumber,dataProjectionUserNumber,coupledMeshIndex,err)
     !DLLEXPORT(cmfe_InterfacePointsConnectivity_UpdateFromProjectionRNumber)
   
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface 
     INTEGER(INTG), INTENT(IN) :: dataPointsRegionUserNumber !<The region number of the data points which the data projection is associated with
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points .
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to update points connectivity with
     INTEGER(INTG), INTENT(IN) :: coupledMeshIndex !<The index number of the coupled mesh
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -40474,7 +40550,7 @@ CONTAINS
       CALL Interface_UserNumberFind(interfaceUserNumber,ParentRegion,interface,err,error,*999)
       IF(ASSOCIATED(interface)) THEN
         CALL Region_UserNumberFind(dataPointsRegionUserNumber,dataPointsRegion,err,error,*999)
-        CALL Region_DataPointsGet(dataPointsRegion,dataPoints,err,error,*999)
+        CALL Region_DataPointsGet(dataPointsRegion,dataPointsUserNumber,dataPoints,err,error,*999)
         CALL DataPoints_DataProjectionGlobalNumberGet(dataPoints,DataProjectionUserNumber,dataProjectionGlobalNumber, &
           & err,error,*999)
         CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionGlobalNumber,dataProjection,err,error,*999)
@@ -40506,7 +40582,7 @@ CONTAINS
 
   !>Update points connectivity with projection results, data projection identified by interface user number
   SUBROUTINE cmfe_InterfacePointsConnectivity_UpdateFromProjectionINumber(regionUserNumber,interfaceUserNumber, &
-    & dataPointsRegionUserNumber,dataPointsInterfaceUserNumber,dataProjectionUserNumber,coupledMeshIndex,err)
+    & dataPointsRegionUserNumber,dataPointsInterfaceUserNumber,dataPointsUserNumber,dataProjectionUserNumber,coupledMeshIndex,err)
     !DLLEXPORT(cmfe_InterfacePointsConnectivity_UpdateFromProjectionINumber)
   
     !Argument variables
@@ -40514,6 +40590,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface 
     INTEGER(INTG), INTENT(IN) :: dataPointsRegionUserNumber !<The parent region number of the interface for the data points which the data projection is associated with
     INTEGER(INTG), INTENT(IN) :: dataPointsInterfaceUserNumber !<The interface number of the data points which the data projection is associated with
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to update points connectivity with
     INTEGER(INTG), INTENT(IN) :: coupledMeshIndex !<The index number of the coupled mesh
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -40539,7 +40616,7 @@ CONTAINS
       IF(ASSOCIATED(interface)) THEN
         CALL Region_UserNumberFind(dataPointsRegionUserNumber,dataPointsRegion,err,error,*999)
         CALL Interface_UserNumberFind(dataPointsInterfaceUserNumber,dataPointsRegion,dataPointsInterface,err,error,*999)
-        CALL Interface_DataPointsGet(dataPointsInterface,dataPoints,err,error,*999)
+        CALL Interface_DataPointsGet(dataPointsInterface,dataPointsUserNumber,dataPoints,err,error,*999)
         CALL DataPoints_DataProjectionGlobalNumberGet(dataPoints,DataProjectionUserNumber,dataProjectionGlobalNumber, &
           & err,error,*999)
         CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionGlobalNumber,dataProjection,err,error,*999)
@@ -49663,18 +49740,19 @@ CONTAINS
   !
 
   !>Returns the data points for a region identified by an object.
-  SUBROUTINE cmfe_Region_DataPointsGetObj(region,dataPoints,err)
+  SUBROUTINE cmfe_Region_DataPointsGetObj(region,dataPointsUserNumber,dataPoints,err)
     !DLLEXPORT(cmfe_Region_DataPointsGetObj)
 
     !Argument variables
     TYPE(cmfe_RegionType), INTENT(IN) :: region !<The region to get the data points for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points to get.
     TYPE(cmfe_DataPointsType), INTENT(INOUT) :: dataPoints !<On return, the regions data points.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_Region_DataPointsGetObj",err,error,*999)
 
-    CALL Region_DataPointsGet(region%region,dataPoints%dataPoints,err,error,*999)
+    CALL Region_DataPointsGet(region%region,dataPointsUserNumber,dataPoints%dataPoints,err,error,*999)
 
     EXITS("cmfe_Region_DataPointsGetObj")
     RETURN

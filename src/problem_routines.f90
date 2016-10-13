@@ -3736,7 +3736,7 @@ CONTAINS
               interfaceCondition=>solverMapping%INTERFACE_CONDITIONS(interfaceConditionIdx)%PTR
               interface=>solverMapping%INTERFACE_CONDITIONS(interfaceConditionIdx)%PTR%interface
               pointsConnectivity=>interface%pointsConnectivity
-              interfaceDatapoints=>interface%dataPoints
+              interfaceDatapoints=>pointsConnectivity%dataPoints
               IF(ASSOCIATED(pointsConnectivity)) THEN
                 DO coupledMeshIdx=1,interface%NUMBER_OF_COUPLED_MESHES
                   filenameOutput=directory//"PointsConnectivity"//TRIM(NUMBER_TO_VSTRING(coupledMeshIdx,"*",err,error))// &
@@ -3770,7 +3770,7 @@ CONTAINS
                   CALL FIELD_INTERPOLATED_POINTS_INITIALISE(interpolationParameters,interpolatedPoints,err,error,*999, &
                     & FIELD_GEOMETRIC_COMPONENTS_TYPE)
                   interpolatedPoint=>interpolatedPoints(FIELD_U_VARIABLE_TYPE)%PTR
-                  dataProjection=>interfaceDatapoints%dataProjections(coupledMeshIdx+1)%PTR
+                  dataProjection=>interfaceDatapoints%dataProjections%dataProjections(coupledMeshIdx+1)%PTR
                   DO interfaceElementNumber=1,SIZE(pointsConnectivity%coupledElements,1)
                     decompositionElementData=>interfaceCondition%LAGRANGE%LAGRANGE_FIELD%DECOMPOSITION%TOPOLOGY%dataPoints% &
                       & elementDataPoint(interfaceElementNumber)

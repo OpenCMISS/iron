@@ -286,6 +286,7 @@ MODULE TYPES
     REAL(DP), ALLOCATABLE :: projectionVector(:) !<The projection vector from data point to the projected point. 
   END TYPE DataProjectionResultType
 
+  !>Contains information on a data point projection
   TYPE DataProjectionType
     INTEGER(INTG) :: globalNumber !<The global number of data projection. 
     INTEGER(INTG) :: userNumber !<The user defined number of data projection. 
@@ -293,7 +294,9 @@ MODULE TYPES
     LOGICAL :: dataProjectionFinished !<Is .TRUE. if the data projection has finished being created, .FALSE. if not.
     LOGICAL :: dataProjectionProjected !<Is .TRUE. if the data projection have been projected, .FALSE. if not.
     TYPE(DataPointsType), POINTER :: dataPoints !<The pointer to the data points for this data projection.
+    TYPE(DataProjectionsType), POINTER :: dataProjections !<A pointer back to the data projections
     TYPE(FIELD_TYPE), POINTER :: projectionField !<The pointer to the geometric/dependent field for this data projection.
+    INTEGER(INTG) :: projectionVariableType !<The variable type of the geometric/dependent field for this data projection.
     TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition !<The pointer to the decomposition where data points are projected
     INTEGER(INTG) :: numberOfCoordinates !<The number of coordinates of this data projection.
     INTEGER(INTG) :: numberOfXi !<The number of xi of the mesh, ie. the mesh dimension
@@ -314,6 +317,13 @@ MODULE TYPES
     TYPE(DataProjectionType), POINTER :: ptr !<The pointer to the data projection.
   END TYPE DataProjectionPtrType
 
+  !>Contains information on the data point projectiosn defined on data points
+  TYPE DataProjectionsType
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer back to the data points
+    INTEGER(INTG) :: numberOfDataProjections !<The number of data projections defined.
+    TYPE(DataProjectionPtrType), ALLOCATABLE :: dataProjections(:) !<dataProjections(projectionIdx). A pointer to the projection_idx'th data projection for the data points.
+  END TYPE DataProjectionsType
+
   !
   !================================================================================================================================
   !
@@ -331,6 +341,10 @@ MODULE TYPES
 
   !>Contains information on the data points defined on a region. \see OPENCMISS::Iron::cmfe_DataPointsType
   TYPE DataPointsType
+    INTEGER(INTG) :: globalNumber !<The global number of data points
+    INTEGER(INTG) :: userNumber !<The user number of the data points
+    TYPE(VARYING_STRING) :: label !<A string label for the data points.
+    TYPE(DataPointSetsType), POINTER :: dataPointSets !<The pointer to the data point sets containing these data points.
     TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region containing the data points. If the data points are in an interface rather than a region then this pointer will be NULL and the interface pointer should be used.
     TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer to the interface containing the data points. If the data points are in a region rather than an interface then this pointer will be NULL and the interface pointer should be used.
     LOGICAL :: dataPointsFinished !<Is .TRUE. if the data points have finished being created, .FALSE. if not.
@@ -338,10 +352,22 @@ MODULE TYPES
     INTEGER(INTG) :: numberOfDataPoints !<The number of data points defined on the region/interface.
     TYPE(DataPointType), ALLOCATABLE :: dataPoints(:) !<dataPoints(dataPointIdx). The data point information for the dataPointIdx'th global data point.
     TYPE(TREE_TYPE), POINTER :: dataPointsTree !<The tree for user to global data point mapping.
-    INTEGER(INTG) :: numberOfDataProjections !<The number of data projections defined on the data points.
-    TYPE(DataProjectionPtrType), ALLOCATABLE :: dataProjections(:) !<dataProjections(projection_idx). A pointer to the projection_idx'th data projection for the data points.
-    TYPE(TREE_TYPE), POINTER :: dataProjectionsTree !<The tree for user to global data projections mapping.
+    TYPE(DataProjectionsType), POINTER :: dataProjections !<dataProjections(projection_idx). A pointer to the projection_idx'th data projection for the data points.
   END TYPE DataPointsType
+
+  !>A buffer type to allow for an array of pointers to a DataPointsType.
+  TYPE DataPointsPtrType
+    TYPE(DataPointsType), POINTER :: ptr !<The pointer to the data points.
+  END TYPE DataPointsPtrType
+
+  !>Contains information on the data point sets defined on a region.
+  TYPE DataPointSetsType
+    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region containg the data points. If the data points are in an interface rather than a region then this pointer will be NULL and the interface pointer should be used.
+    TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer to the interface containg the data points. If the data points are in a region rather than an interface then this pointer will be NULL and the region pointer should be used.
+    INTEGER(INTG) :: numberOfDataPointSets !<The number of data point sets defined on the region.
+    TYPE(DataPointsPtrType), ALLOCATABLE :: dataPointSets(:) !<dataPointSets(setIdx). The array of pointers to the data points.
+    TYPE(TREE_TYPE), POINTER :: dataPointSetsTree !<The tree for user to global data point sets mapping.
+  END TYPE DataPointSetsType
 
   !
   !================================================================================================================================
@@ -2225,6 +2251,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer back to the interface for the coupled mesh connectivity
     TYPE(MESH_TYPE), POINTER :: interfaceMesh !<A pointer to the interface mesh where the xi locations of data points are defined
     LOGICAL :: pointsConnectivityFinished !<Is .TRUE. if the data points connectivity has finished being created, .FALSE. if not.
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points defined on the interface for the connectivity
     TYPE(InterfacePointConnectivityType), ALLOCATABLE :: pointsConnectivity(:,:) !<pointsConnectivity(dataPointIndex,coupledMeshIdx). The points connectivity information for each data point in each coupled mesh. 
     TYPE(InterfaceCoupledElementsType), ALLOCATABLE :: coupledElements(:,:) !<coupledElements(interfaceElementIdx,coupledMeshIdx). The coupled mesh elements that are connected to each interface element.
     INTEGER(INTG), ALLOCATABLE :: maxNumberOfCoupledElements(:) !<maxNumberOfCoupledElements(coupledMeshIdx). The maximum number of coupled elements to an interface element in coupledMeshIdx'th mesh
@@ -2243,7 +2270,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(MESH_PTR_TYPE), POINTER :: COUPLED_MESHES(:) !<COUPLED_MESHES(mesh_idx). COUPLED_MESHES(mesh_idx)%PTR is the pointer to the mesh_idx'th mesh involved in the interface.
     TYPE(INTERFACE_MESH_CONNECTIVITY_TYPE), POINTER :: MESH_CONNECTIVITY !<A pointer to the meshes connectivity the interface.
     TYPE(InterfacePointsConnectivityType), POINTER :: pointsConnectivity !<A pointer to the points connectivity the interface.
-    TYPE(DataPointsType), POINTER :: dataPoints  !<A pointer to the data points defined in an interface.
+    TYPE(DataPointSetsType), POINTER :: dataPointSets  !<A pointer to the data points defined in an interface.
     TYPE(NODES_TYPE), POINTER :: NODES !<A pointer to the nodes in an interface
     TYPE(MESHES_TYPE), POINTER :: MESHES !<A pointer to the mesh in an interface.
     TYPE(GENERATED_MESHES_TYPE), POINTER :: GENERATED_MESHES !<A pointer to the generated meshes in an interface.
@@ -3259,7 +3286,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     LOGICAL :: REGION_FINISHED !<Is .TRUE. if the region has finished being created, .FALSE. if not.
     TYPE(VARYING_STRING) :: LABEL !<A user defined label for the region.
     TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system used by the region.
-    TYPE(DataPointsType), POINTER :: dataPoints  !<A pointer to the data points defined on the region.          
+    TYPE(DataPointSetsType), POINTER :: dataPointSets !<A pointer to the data point sets defined on the region.          
     TYPE(NODES_TYPE), POINTER :: NODES !<A pointer to the nodes defined on the region.
     TYPE(MESHES_TYPE), POINTER :: MESHES !<A pointer to the meshes defined on the region.
     TYPE(GENERATED_MESHES_TYPE), POINTER :: GENERATED_MESHES !<A pointer to the generated meshes defined on the region.

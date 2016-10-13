@@ -151,8 +151,12 @@ MODULE DataProjectionRoutines
   PUBLIC DataProjection_ResultElementLineNumberGet
   
   PUBLIC DataProjection_ResultExitTagGet
+
+  PUBLIC DataProjection_UserNumberFind
   
   PUBLIC DataProjection_LabelGet,DataProjection_LabelSet
+
+  PUBLIC DataProjections_Initialise,DataProjections_Finalise
   
 CONTAINS
 
@@ -628,8 +632,6 @@ CONTAINS
               NULLIFY(dataProjection)
               CALL DataProjection_Initialise(dataProjection,err,error,*999)
               dataProjection%userNumber=dataProjectionUserNumber
-              CALL Tree_ItemInsert(dataPoints%dataProjectionsTree,dataProjectionUserNumber,dataPoints%numberOfDataProjections+1, &
-                & insertStatus,err,error,*999)
               dataProjection%dataPoints=>dataPoints
               dataProjection%decomposition=>decomposition
               dataProjection%numberOfCoordinates=numberOfCoordinates
@@ -672,18 +674,18 @@ CONTAINS
               ALLOCATE(dataProjection%startingXi(dataProjection%numberOfXi),STAT=err)
               IF(err/=0) CALL FlagError("Could not allocate data points data projection starting xi.",err,error,*999)
               dataProjection%startingXi=0.5_DP !<initialised to 0.5 in each xi direction
-              ALLOCATE(newDataProjections(dataPoints%numberOfDataProjections+1),STAT=err)
+              ALLOCATE(newDataProjections(dataPoints%dataProjections%numberOfDataProjections+1),STAT=err)
               IF(err/=0) CALL FlagError("Could not allocate new data projections.",err,error,*999)
-              IF(dataPoints%numberOfDataProjections>0) THEN
-                DO dataProjectionIdx=1,dataPoints%numberOfDataProjections
-                  newDataProjections(dataProjectionIdx)%ptr=>dataPoints%dataProjections(dataProjectionIdx)%ptr
+              IF(dataPoints%dataProjections%numberOfDataProjections>0) THEN
+                DO dataProjectionIdx=1,dataPoints%dataProjections%numberOfDataProjections
+                  newDataProjections(dataProjectionIdx)%ptr=>dataPoints%dataProjections%dataProjections(dataProjectionIdx)%ptr
                 ENDDO !xiIdx
               ENDIF
               !Return the pointer
-              newDataProjections(dataPoints%numberOfDataProjections+1)%ptr=>dataProjection
-              dataPoints%numberOfDataProjections=dataPoints%numberOfDataProjections+1
-              dataProjection%globalNumber=dataPoints%numberOfDataProjections
-              CALL MOVE_ALLOC(newDataProjections,dataPoints%dataProjections)
+              newDataProjections(dataPoints%dataProjections%numberOfDataProjections+1)%ptr=>dataProjection
+              dataPoints%dataProjections%numberOfDataProjections=dataPoints%dataProjections%numberOfDataProjections+1
+              dataProjection%globalNumber=dataPoints%dataProjections%numberOfDataProjections
+              CALL MOVE_ALLOC(newDataProjections,dataPoints%dataProjections%dataProjections)
             ELSE
               CALL FlagError("Dimensions bewtween the mesh region/interface and data points region/interface do not match.", &
                 & err,error,*998)        
@@ -927,18 +929,79 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: position,projectionIdx
+    LOGICAL :: found
+    TYPE(DataProjectionType), POINTER :: listDataProjection
+    TYPE(DataProjectionPtrType), ALLOCATABLE :: newDataProjections(:)
+    TYPE(DataProjectionsType), POINTER :: dataProjections
+    TYPE(VARYING_STRING) :: localError
        
     ENTERS("DataProjection_Destroy",err,error,*999)
 
     IF(ASSOCIATED(dataProjection)) THEN
-      CALL DataProjection_Finalise(dataProjection,err,error,*999)
+      dataProjections=>dataProjection%dataProjections
+      IF(ASSOCIATED(dataProjections)) THEN
+        !Find the data projection in the list of data projections
+        found=.FALSE.
+        position=0
+        DO WHILE(position<dataProjections%numberOfDataProjections.AND..NOT.found)
+          position=position+1
+          listDataProjection=>dataProjections%dataProjections(position)%ptr
+          IF(ASSOCIATED(listDataProjection)) THEN
+            IF(dataProjection%userNumber==listDataProjection%userNumber) THEN
+              found=.TRUE.
+              EXIT
+            ENDIF
+          ELSE
+            localError="The data projection is not associated for data projections position "// &
+              & TRIM(NumberToVString(position,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+        ENDDO
+        IF(found) THEN
+          !The data projection to destroy has been found. Finalise this projection.
+          CALL DataProjection_Finalise(dataProjection,err,error,*999)
+          !Remove the data projection from the list of data projections
+          IF(dataProjections%numberOfDataProjections>1) THEN
+            ALLOCATE(newDataProjections(dataProjections%numberOfDataProjections-1),STAT=err)
+            IF(err/=0) CALL FlagError("Could not allocate new data projections.",err,error,*999)
+            DO projectionIdx=1,dataProjections%numberOfDataProjections
+              IF(projectionIdx<position) THEN
+                newDataProjections(projectionIdx)%ptr=>dataProjections%dataProjections(projectionIdx)%ptr
+              ELSE IF(projectionIdx>position) THEN
+                IF(ASSOCIATED(dataProjections%dataProjections(projectionIdx)%ptr)) THEN
+                  dataProjections%dataProjections(projectionIdx)%ptr%globalNumber= &
+                    & dataProjections%dataProjections(projectionIdx)%ptr%globalNumber-1
+                ELSE
+                  localError="The data projection is not associated for data projection index "// &
+                    & TRIM(NumberToVString(projectionIdx,"*",err,error))//"."
+                  CALL FlagError(localError,err,error,*999)
+                ENDIF
+                newDataProjections(projectionIdx-1)%ptr=>dataProjections%dataProjections(projectionIdx)%ptr
+              ENDIF
+            ENDDO !projectionIdx
+            CALL MOVE_ALLOC(newDataProjections,dataProjections%dataProjections)
+            dataProjections%numberOfDataProjections=dataProjections%numberOfDataProjections-1
+          ELSE
+            DEALLOCATE(dataProjections%dataProjections)
+            dataProjections%numberOfDataProjections=0
+          ENDIF
+        ELSE
+          localError="The data projection with user number "//TRIM(NumberToVString(dataProjection%userNumber,"*",err,error))// &
+            & " could not be found."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ELSE
+        CALL FlagError("Data projection data projections is not associated.",err,error,*999)
+      ENDIF
     ELSE
       CALL FlagError("Data projection is not associated.",err,error,*999)
     ENDIF
     
     EXITS("DataProjection_Destroy")
     RETURN
-999 ERRORSEXITS("DataProjection_Destroy",err,error)
+999 IF(ALLOCATED(newDataProjections)) DEALLOCATE(newDataProjections)
+    ERRORSEXITS("DataProjection_Destroy",err,error)
     RETURN 1
     
   END SUBROUTINE DataProjection_Destroy
@@ -1002,6 +1065,9 @@ CONTAINS
       dataProjection%dataProjectionFinished=.FALSE.
       dataProjection%dataProjectionProjected=.FALSE.
       NULLIFY(dataProjection%dataPoints)
+      NULLIFY(dataProjection%dataProjections)
+      NULLIFY(dataProjection%projectionField)
+      dataProjection%projectionVariableType=0
       NULLIFY(dataProjection%decomposition)
       dataProjection%numberOfCoordinates=0
       dataProjection%numberOfXi=0
@@ -4023,6 +4089,131 @@ CONTAINS
 
   END SUBROUTINE DataProjection_ResultProjectionVectorGet
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Finds an returns a pointer to a data projection identified by a user number.
+  SUBROUTINE DataProjection_UserNumberFind(dataPoints,userNumber,dataProjection,err,error,*)
+
+    !Argument variables
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to find the user number for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number to find
+    TYPE(DataProjectionType), POINTER :: dataProjection !<On exit, the pointer to the data projection with the specified user number. If no data projection with the specified user number exists the pointer is returned NULL. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: projectionIdx
+    TYPE(DataProjectionType), POINTER :: listDataProjection
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DataProjection_UserNumberFind",err,error,*998)
+
+    IF(ASSOCIATED(dataPoints)) THEN
+      IF(ASSOCIATED(dataProjection)) THEN
+        CALL FlagError("Data projection is already associated.",err,error,*998)
+      ELSE
+        NULLIFY(dataProjection)
+        IF(ASSOCIATED(dataPoints%dataProjections)) THEN
+          IF(ALLOCATED(dataPoints%dataProjections%dataProjections)) THEN
+            projectionIdx=1
+            DO WHILE(projectionIdx<=dataPoints%dataProjections%numberOfDataProjections)
+              listDataProjection=>dataPoints%dataProjections%dataProjections(projectionIdx)%ptr
+              IF(ASSOCIATED(listDataProjection)) THEN
+                IF(listDataProjection%userNumber==userNumber) THEN
+                  dataProjection=>dataPoints%dataProjections%dataProjections(projectionIdx)%ptr
+                  EXIT
+                ENDIF
+              ELSE
+                localError="The data points data projections is not associated for projection index "// &
+                  & TRIM(NumberToVString(projectionIdx,"*",err,error))//"."
+                CALL FlagError(localError,err,error,*999)
+              ENDIF
+            ENDDO
+          ENDIF
+        ELSE
+          CALL FlagError("Data points data projections is not associated.",err,error,*999)
+        ENDIF
+      ENDIF
+    ELSE
+      CALL FlagError("Data points is not associated.",err,error,*999)
+    ENDIF
+    
+    EXITS("DataProjection_UserNumberFind")
+    RETURN
+999 NULLIFY(dataProjection)
+998 ERRORSEXITS("DataProjection_UserNumberFind",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE DataProjection_UserNumberFind
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalise a data projections.
+  SUBROUTINE DataProjections_Finalise(dataProjections,err,error,*)
+
+    !Argument variables
+    TYPE(DataProjectionsType), POINTER :: dataProjections !<A pointer to the data projections to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: projectionIdx
+       
+    ENTERS("DataProjections_Finalise",err,error,*999)
+
+    IF(ASSOCIATED(dataProjections)) THEN
+      IF(ALLOCATED(dataProjections%dataProjections)) THEN
+        DO projectionIdx=1,SIZE(dataProjections%dataProjections,1)
+          CALL DataProjection_Finalise(dataProjections%dataProjections(projectionIdx)%ptr,err,error,*999)
+        ENDDO !projectionIdx
+        DEALLOCATE(dataProjections%dataProjections)
+      ENDIF
+      DEALLOCATE(dataProjections)
+    ENDIF
+    
+    EXITS("DataProjections_Finalise")
+    RETURN
+999 ERRORSEXITS("DataProjections_Finalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DataProjections_Finalise
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialise a data projections.
+  SUBROUTINE DataProjections_Initialise(dataProjections,err,error,*)
+
+    !Argument variables
+    TYPE(DataProjectionsType), POINTER :: dataProjections !<A pointer to the data projections to initialise. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
+       
+    ENTERS("DataProjections_Initialise",err,error,*998)
+
+    IF(ASSOCIATED(dataProjections)) THEN
+      CALL FlagError("Data projections is already associated.",err,error,*998)
+    ELSE
+      ALLOCATE(dataProjections,STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate data projections.",err,error,*999)
+      NULLIFY(dataProjections%dataPoints)
+      dataProjections%numberOfDataProjections=0
+   ENDIF
+    
+    EXITS("DataProjections_Initialise")
+    RETURN
+999 CALL DataProjections_Finalise(dataProjections,dummyErr,dummyError,*998)
+998 ERRORSEXITS("DataProjections_Initialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DataProjections_Initialise
+  
   !
   !================================================================================================================================
   !

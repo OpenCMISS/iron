@@ -330,15 +330,17 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the data points for a region. \see OPENCMISS::Iron::cmfe_RegionDataPointsGet
-  SUBROUTINE Region_DataPointsGet(Region,dataPoints,err,error,*)
+  !>Returns a pointer to the data points for a given user number in a region. \see OPENCMISS::Iron::cmfe_Region_DataPointsGet
+  SUBROUTINE Region_DataPointsGet(region,userNumber,dataPoints,err,error,*)
 
     !Argument variables
     TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region to get the data points for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the data points to get.
     TYPE(DataPointsType), POINTER :: dataPoints !<On exit, a pointer to the data points for the region. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(VARYING_STRING) :: localError
  
     ENTERS("Region_DataPointsGet",err,error,*998)
 
@@ -347,8 +349,17 @@ CONTAINS
         IF(ASSOCIATED(dataPoints)) THEN
           CALL FlagError("Data points is already associated.",err,error,*998)
         ELSE
-          dataPoints=>region%dataPoints
-          IF(.NOT.ASSOCIATED(dataPoints)) CALL FlagError("Data points is not associated.",err,error,*999)
+          NULLIFY(dataPoints)
+          IF(ASSOCIATED(region%dataPointSets)) THEN
+            CALL DataPointSets_UserNumberFind(region%dataPointSets,userNumber,dataPoints,err,error,*999)
+            IF(.NOT.ASSOCIATED(dataPoints)) THEN
+              localError="Data points with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
+                & " do not exist on region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+          ELSE
+            CALL FlagError("Region data point sets is not associated.",err,error,*999)
+          ENDIF
         ENDIF
       ELSE
         CALL FlagError("Region has not been finished.",err,error,*998)
@@ -485,7 +496,7 @@ CONTAINS
       CALL EQUATIONS_SETS_FINALISE(REGION,ERR,ERROR,*999)
       CALL FIELDS_FINALISE(REGION%FIELDS,ERR,ERROR,*999)
       CALL MESHES_FINALISE(REGION%MESHES,ERR,ERROR,*999)
-      IF(ASSOCIATED(REGION%dataPoints)) CALL DataPoints_Destroy(REGION%dataPoints,ERR,ERROR,*999)
+      CALL DataPointSets_Finalise(region%dataPointSets,err,error,*999)
       IF(ASSOCIATED(REGION%NODES)) CALL NODES_DESTROY(REGION%NODES,ERR,ERROR,*999)
       IF(ASSOCIATED(REGION%SUB_REGIONS)) DEALLOCATE(REGION%SUB_REGIONS)
       IF(ASSOCIATED(REGION%INTERFACES)) CALL INTERFACES_FINALISE(REGION%INTERFACES,ERR,ERROR,*999)
@@ -525,7 +536,7 @@ CONTAINS
       REGION%REGION_FINISHED=.FALSE.
       REGION%LABEL=""
       NULLIFY(REGION%COORDINATE_SYSTEM)
-      NULLIFY(REGION%dataPoints)
+      NULLIFY(region%dataPointSets)
       NULLIFY(REGION%NODES)
       NULLIFY(REGION%MESHES)
       NULLIFY(REGION%GENERATED_MESHES)
@@ -536,6 +547,7 @@ CONTAINS
       REGION%NUMBER_OF_SUB_REGIONS=0
       NULLIFY(REGION%SUB_REGIONS)
       NULLIFY(REGION%INTERFACES)
+      CALL DataPointSets_Initialise(region,err,error,*999)
       CALL MESHES_INITIALISE(REGION,ERR,ERROR,*999)
       CALL GENERATED_MESHES_INITIALISE(REGION,ERR,ERROR,*999)
       CALL FIELDS_INITIALISE(REGION,ERR,ERROR,*999)

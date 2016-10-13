@@ -366,6 +366,7 @@ CONTAINS
                 newDecomposition%region=>mesh%region
                 newDecomposition%INTERFACE=>mesh%INTERFACE
                 newDecomposition%numberOfDimensions=mesh%NUMBER_OF_DIMENSIONS
+                newDecomposition%numberOfComponents=mesh%NUMBER_OF_COMPONENTS
                 !By default, the process of decompostion was done on the first mesh components. But the decomposition is the
                 !same for all mesh components, since the decomposition is element-based.
                 newDecomposition%MESH_COMPONENT_NUMBER=1
@@ -3939,7 +3940,7 @@ CONTAINS
     IF(ASSOCIATED(DECOMPOSITION)) THEN
       IF(ASSOCIATED(DECOMPOSITION%MESH)) THEN
         IF(ASSOCIATED(DECOMPOSITION%DOMAIN)) THEN
-          DO component_idx=1,DECOMPOSITION%numberOfComponents
+          DO component_idx=1,SIZE(DECOMPOSITION%DOMAIN,1)
             IF(ALLOCATED(DECOMPOSITION%DOMAIN(component_idx)%PTR%NODE_DOMAIN))  &
               & DEALLOCATE(DECOMPOSITION%DOMAIN(component_idx)%PTR%NODE_DOMAIN)
             CALL DOMAIN_MAPPINGS_FINALISE(DECOMPOSITION%DOMAIN(component_idx)%PTR,ERR,ERROR,*999)        
