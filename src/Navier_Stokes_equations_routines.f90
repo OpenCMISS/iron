@@ -6846,7 +6846,7 @@ CONTAINS
     INTEGER(INTG) :: componentNumberVelocity,numberOfDimensions,numberOfNodes,numberOfGlobalNodes
     INTEGER(INTG) :: dependentVariableType,independentVariableType,dependentDof,independentDof,userNodeNumber,localNodeNumber
     INTEGER(INTG) :: EquationsSetIndex,SolidNodeNumber,FluidNodeNumber,equationsSetIdx
-    INTEGER(INTG) :: currentTimeLoopIteration,outputIterationNumber
+    INTEGER(INTG) :: currentTimeLoopIteration,outputIterationNumber,numberOfFittedNodes
     INTEGER(INTG), ALLOCATABLE :: InletNodes(:)
     REAL(DP) :: CURRENT_TIME,TIME_INCREMENT,DISPLACEMENT_VALUE,VALUE,XI_COORDINATES(3),timeData,QP,QPP,componentValues(3)
     REAL(DP) :: T_COORDINATES(20,3),MU_PARAM,RHO_PARAM,X(3),FluidGFValue,SolidDFValue,NewLaplaceBoundaryValue,Lref,Tref,Mref
@@ -6854,7 +6854,7 @@ CONTAINS
     REAL(DP), POINTER :: MESH_VELOCITY_VALUES(:), GEOMETRIC_PARAMETERS(:), BOUNDARY_VALUES(:)
     REAL(DP), POINTER :: TANGENTS(:,:),NORMAL(:),TIME,ANALYTIC_PARAMETERS(:),MATERIALS_PARAMETERS(:)
     REAL(DP), POINTER :: independentParameters(:),dependentParameters(:) 
-    REAL(DP), ALLOCATABLE :: nodeData(:,:),qSpline(:),qValues(:),tValues(:),BoundaryValues(:)
+    REAL(DP), ALLOCATABLE :: nodeData(:,:),qSpline(:),qValues(:),tValues(:),BoundaryValues(:),fittedNodes(:)
     LOGICAL :: ghostNode,nodeExists,importDataFromFile,ALENavierStokesEquationsSetFound=.FALSE.
     LOGICAL :: SolidEquationsSetFound=.FALSE.,SolidNodeFound=.FALSE.,FluidEquationsSetFound=.FALSE.,parameterSetCreated
     CHARACTER(70) :: inputFile,tempString
@@ -7747,27 +7747,23 @@ CONTAINS
                                 !Read fitted data from input file (if exists)
                                 CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Updating independent field and boundary nodes from " &
                                   & //inputFile,ERR,ERROR,*999)
-                                OPEN(UNIT=10, FILE=inputFile, STATUS='OLD')                  
-                                !Loop over local nodes and update independent field 
-                                ! (and dependent field for any FIXED_FITTED nodes)
-                                previousNodeNumber=0
-                                DO nodeIdx=1,numberOfNodes
-                                  userNodeNumber=DOMAIN_NODES%NODES(nodeIdx)%USER_NUMBER
+                                OPEN(UNIT=10, FILE=inputFile, STATUS='OLD')       
+           
+                                READ(10,*) numberOfFittedNodes
+                                ALLOCATE(fittedNodes(numberOfFittedNodes))
+                                READ(10,*) fittedNodes
+                                DO nodeIdx=1, numberOfFittedNodes
+                                  userNodeNumber=fittedNodes(nodeIdx)
                                   CALL DOMAIN_TOPOLOGY_NODE_CHECK_EXISTS(domain%Topology,userNodeNumber,nodeExists, &
                                     & localNodeNumber,ghostNode,err,error,*999)
                                   IF(nodeExists .AND. .NOT. ghostNode) THEN
-                                    ! Move to line in file for this node (dummy read)
-                                    ! NOTE: this takes advantage of the user number increasing ordering of domain nodes 
-                                    DO search_idx=1,userNodeNumber-previousNodeNumber-1
-                                      READ(10,*)
-                                    END DO
-                                    ! Read in the node data for this timestep file
+                                    ! Node found on this computational node
                                     READ(10,*) (componentValues(componentIdx), componentIdx=1,numberOfDimensions)
                                     DO componentIdx=1,numberOfDimensions
                                       dependentDof = dependentFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP% &
-                                        & NODE_PARAM2DOF_MAP%NODES(nodeIdx)%DERIVATIVES(1)%VERSIONS(1)
+                                        & NODE_PARAM2DOF_MAP%NODES(localNodeNumber)%DERIVATIVES(1)%VERSIONS(1)
                                       independentDof = independentFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP% &
-                                        & NODE_PARAM2DOF_MAP%NODES(nodeIdx)%DERIVATIVES(1)%VERSIONS(1)
+                                        & NODE_PARAM2DOF_MAP%NODES(localNodeNumber)%DERIVATIVES(1)%VERSIONS(1)
                                       VALUE = componentValues(componentIdx)
                                       CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(INDEPENDENT_FIELD,independentVariableType, &
                                         & FIELD_VALUES_SET_TYPE,independentDof,VALUE,ERR,ERROR,*999)
@@ -7779,9 +7775,48 @@ CONTAINS
                                           & FIELD_VALUES_SET_TYPE,localDof,VALUE,ERR,ERROR,*999)
                                       END IF
                                     END DO !componentIdx
-                                    previousNodeNumber=userNodeNumber
-                                  END IF ! ghost/exist check
-                                END DO !nodeIdx
+                                  ELSE
+                                    ! Dummy read if this node not on this computational node
+                                    READ(10,*)
+                                  END IF
+                                END DO
+                                DEALLOCATE(fittedNodes)
+
+                                ! !Loop over local nodes and update independent field 
+                                ! ! (and dependent field for any FIXED_FITTED nodes)
+                                ! previousNodeNumber=0
+                                ! DO nodeIdx=1,numberOfNodes
+                                !   userNodeNumber=DOMAIN_NODES%NODES(nodeIdx)%USER_NUMBER
+                                !   CALL DOMAIN_TOPOLOGY_NODE_CHECK_EXISTS(domain%Topology,userNodeNumber,nodeExists, &
+                                !     & localNodeNumber,ghostNode,err,error,*999)
+                                !   IF(nodeExists .AND. .NOT. ghostNode) THEN
+                                !     ! Move to line in file for this node (dummy read)
+                                !     ! NOTE: this takes advantage of the user number increasing ordering of domain nodes 
+                                !     DO search_idx=1,userNodeNumber-previousNodeNumber-1
+                                !       READ(10,*)
+                                !     END DO
+                                !     ! Read in the node data for this timestep file
+                                !     READ(10,*) (componentValues(componentIdx), componentIdx=1,numberOfDimensions)
+                                !     DO componentIdx=1,numberOfDimensions
+                                !       dependentDof = dependentFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP% &
+                                !         & NODE_PARAM2DOF_MAP%NODES(nodeIdx)%DERIVATIVES(1)%VERSIONS(1)
+                                !       independentDof = independentFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP% &
+                                !         & NODE_PARAM2DOF_MAP%NODES(nodeIdx)%DERIVATIVES(1)%VERSIONS(1)
+                                !       VALUE = componentValues(componentIdx)
+                                !       CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(INDEPENDENT_FIELD,independentVariableType, &
+                                !         & FIELD_VALUES_SET_TYPE,independentDof,VALUE,ERR,ERROR,*999)
+                                !       CALL FIELD_COMPONENT_DOF_GET_USER_NODE(DEPENDENT_FIELD,dependentVariableType,1,1, &
+                                !         & userNodeNumber,componentIdx,localDof,globalDof,err,error,*999)
+                                !       BOUNDARY_CONDITION_CHECK_VARIABLE=BOUNDARY_CONDITIONS_VARIABLE%CONDITION_TYPES(globalDof)
+                                !       IF(BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_FIXED_FITTED) THEN
+                                !         CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(DEPENDENT_FIELD,dependentVariableType, &
+                                !           & FIELD_VALUES_SET_TYPE,localDof,VALUE,ERR,ERROR,*999)
+                                !       END IF
+                                !     END DO !componentIdx
+                                !     previousNodeNumber=userNodeNumber
+                                !   END IF ! ghost/exist check
+                                ! END DO !nodeIdx
+
                                 CLOSE(UNIT=10)
                                 ! Update any distributed field values
                                 CALL FIELD_PARAMETER_SET_UPDATE_START(DEPENDENT_FIELD,dependentVariableType, &
