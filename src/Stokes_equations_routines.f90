@@ -3635,7 +3635,6 @@ CONTAINS
                     ELSE
                       CALL FlagError("Only node based interpolation is implemented.",ERR,ERROR,*999)
                     ENDIF
-  WRITE(*,*)'NUMBER OF BOUNDARIES SET ',BOUND_COUNT
                   ENDDO !component_idx
                   CALL FIELD_PARAMETER_SET_UPDATE_START(DEPENDENT_FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE, &
                     & ERR,ERROR,*999)
