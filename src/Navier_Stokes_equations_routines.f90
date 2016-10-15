@@ -2626,8 +2626,15 @@ CONTAINS
                            & EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE, &
                            & EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE, &
                            & EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE)
-                          !Update boundary conditions and any analytic values
-                          CALL NavierStokes_PreSolveUpdateBoundaryConditions(SOLVER,ERR,ERROR,*999)
+                          IF (CONTROL_LOOP%PROBLEM%SPECIFICATION(3) == PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE) THEN
+                            IF (CONTROL_LOOP%PARENT_LOOP%WHILE_LOOP%ITERATION_NUMBER == 1) THEN
+                              ! Only update fixed BCs once per timestep
+                              CALL NavierStokes_PreSolveUpdateBoundaryConditions(SOLVER,ERR,ERROR,*999)
+                            END IF
+                          ELSE
+                            !Update boundary conditions and any analytic values
+                            CALL NavierStokes_PreSolveUpdateBoundaryConditions(SOLVER,ERR,ERROR,*999)
+                          END IF
                         ! --- 1 D    N a v i e r - S t o k e s   E q u a t i o n s ---
                         CASE(EQUATIONS_SET_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE, &
                            & EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE, &
@@ -12433,8 +12440,8 @@ CONTAINS
             normalDifference=L2NORM(boundaryNormal-unitNormal)
             normalTolerance=0.1_DP
             IF(normalDifference < normalTolerance) THEN
-              normalFlow = DOT_PRODUCT(velocity,normalProjection)
-              !normalFlow = DOT_PRODUCT(velocity,unitNormal)
+              !normalFlow = DOT_PRODUCT(velocity,normalProjection)
+              normalFlow = DOT_PRODUCT(velocity,unitNormal)
               IF(normalFlow < -ZERO_TOLERANCE) THEN
                 stabilisationTerm = normalFlow - ABS(normalFlow)
                 !DO componentIdx=1,dependentVariable%NUMBER_OF_COMPONENTS-1
@@ -14390,7 +14397,7 @@ CONTAINS
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: numberOfSolvers,solverIdx,solverIdx2,equationsSetIdx,equationsSetIdx2
-    INTEGER(INTG) :: subloopIdx,subloopIdx2,subloopIdx3,iteration3D1D
+    INTEGER(INTG) :: subloopIdx,subloopIdx2,subloopIdx3,iteration3D1D,CONVERGED_REASON
     REAL(DP) :: absolute3D0DTolerance,relative3D0DTolerance
     REAL(DP) :: FUNCTION_NORM
     TYPE(PetscVecType) :: FUNCTION_VECTOR
@@ -14595,18 +14602,26 @@ CONTAINS
                       dependentField=>equationsSet%DEPENDENT%DEPENDENT_FIELD
                       
                       IF(dependentField%DECOMPOSITION%CALCULATE_FACES) THEN
-                        absolute3D0DTolerance = controlLoop%PARENT_LOOP%WHILE_LOOP%ABSOLUTE_TOLERANCE
-                        relative3D0DTolerance = controlLoop%PARENT_LOOP%WHILE_LOOP%RELATIVE_TOLERANCE
+                        !absolute3D0DTolerance = controlLoop%PARENT_LOOP%WHILE_LOOP%ABSOLUTE_TOLERANCE
+                        !relative3D0DTolerance = controlLoop%PARENT_LOOP%WHILE_LOOP%RELATIVE_TOLERANCE
 
-                        CALL Petsc_SnesGetFunction(solver%DYNAMIC_SOLVER%NONLINEAR_SOLVER%NONLINEAR_SOLVER% &
-                          & NEWTON_SOLVER%LINESEARCH_SOLVER%snes,FUNCTION_VECTOR,ERR,ERROR,*999)
-                        CALL Petsc_VecNorm(FUNCTION_VECTOR,PETSC_NORM_2,FUNCTION_NORM,ERR,ERROR,*999)
+                        !CALL Petsc_SnesGetFunction(solver%DYNAMIC_SOLVER%NONLINEAR_SOLVER%NONLINEAR_SOLVER% &
+                        !  & NEWTON_SOLVER%LINESEARCH_SOLVER%snes,FUNCTION_VECTOR,ERR,ERROR,*999)
+                        !CALL Petsc_VecNorm(FUNCTION_VECTOR,PETSC_NORM_2,FUNCTION_NORM,ERR,ERROR,*999)
+                        CALL Petsc_SnesGetConvergedReason(solver%DYNAMIC_SOLVER%NONLINEAR_SOLVER%NONLINEAR_SOLVER% &
+                          & NEWTON_SOLVER%LINESEARCH_SOLVER%snes,CONVERGED_REASON,ERR,ERROR,*999)
                         convergedFlag = .FALSE.
-                        IF (FUNCTION_NORM < absolute3D0DTolerance) THEN
-                          IF (iteration3D1D > 1) THEN
+                        IF (iteration3D1D > 1) THEN
+                          IF (CONVERGED_REASON > 0) THEN
                             convergedFlag = .TRUE.
                           END IF
                         END IF
+
+                        ! IF (FUNCTION_NORM < absolute3D0DTolerance) THEN
+                        !   IF (iteration3D1D > 1) THEN
+                        !     convergedFlag = .TRUE.
+                        !   END IF
+                        ! END IF
 
                         ! !CALL NavierStokes_CalculateBoundaryFlux(equationsSet,coupledEquationsSet,iteration3D1D, &
                         ! !  & convergedFlag,absolute3D0DTolerance,relative3D0DTolerance,ERR,ERROR,*999)
@@ -14621,8 +14636,25 @@ CONTAINS
                             CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"---------------------------",err,error,*999)
                             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"3D-0D converged. Iterations: ", &
                               & iteration3D1D,err,error,*999)
+                            SELECT CASE(CONVERGED_REASON)
+                            CASE(PETSC_SNES_CONVERGED_FNORM_ABS)
+                              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged F Norm absolute.", &
+                                & ERR,ERROR,*999)
+                            CASE(PETSC_SNES_CONVERGED_FNORM_RELATIVE)
+                              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged F Norm relative.", &
+                                & ERR,ERROR,*999)
+                            CASE(PETSC_SNES_CONVERGED_SNORM_RELATIVE)
+                              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged S Norm relative.", &
+                                & ERR,ERROR,*999)
+                            CASE(PETSC_SNES_CONVERGED_ITS)
+                              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged its.",ERR,ERROR,*999)
+                            CASE(PETSC_SNES_CONVERGED_ITERATING)
+                              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged iterating.",ERR,ERROR,*999)
+                            END SELECT
                             CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"---------------------------",err,error,*999)
                           ELSE
+                            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"3D-0D iteration: ", &
+                              & iteration3D1D,err,error,*999)
                             ! ! Reset 3D values if not converged
                             ! CALL FIELD_PARAMETER_SETS_COPY(dependentField,equationsSet%EQUATIONS%EQUATIONS_MAPPING% &
                             !   & DYNAMIC_MAPPING%DYNAMIC_VARIABLE_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_VALUES_SET_TYPE, &
@@ -14647,7 +14679,32 @@ CONTAINS
                 CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
               END IF !
             CASE(SOLVER_DAE_TYPE)
-              ! CellML solver simple loop- do nothing
+              ! CellML solver simple loop
+              iteration3D1D=controlLoop%PARENT_LOOP%WHILE_LOOP%ITERATION_NUMBER
+              ! DEBUG: Only use cellml values from the first newton iteration (we won't have the new boundary flux before, and don't want to cause
+              !  the 3D solver to diverge after...)
+              IF (iteration3D1D /= 2) THEN
+               equationsSet=>controlLoop%PARENT_LOOP%SUB_LOOPS(2)%PTR%SOLVERS%SOLVERS(1)%PTR% &
+                 & SOLVER_EQUATIONS%SOLVER_MAPPING%EQUATIONS_SETS(1)%PTR
+               ! P0D is previous value
+               CALL FIELD_PARAMETER_SETS_COPY(equationsSet%DEPENDENT%DEPENDENT_FIELD,equationsSet%EQUATIONS% &
+                 & EQUATIONS_MAPPING%DYNAMIC_MAPPING%DYNAMIC_VARIABLE_TYPE,FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE, &
+                 & FIELD_PRESSURE_VALUES_SET_TYPE,1.0_DP,ERR,ERROR,*999)
+               ! Q0D is previous value
+               CALL FIELD_PARAMETER_SETS_COPY(equationsSet%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD,equationsSet%EQUATIONS% &
+                 & EQUATIONS_MAPPING%DYNAMIC_MAPPING%DYNAMIC_VARIABLE_TYPE,FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE, &
+                 & FIELD_VALUES_SET_TYPE,1.0_DP,ERR,ERROR,*999)
+              ELSE 
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"----- Updating 0D boundary values, iteration: ", &
+                  & iteration3D1D,err,error,*999)
+                ! ! Reset 3D values to resolve with new 
+                ! CALL FIELD_PARAMETER_SETS_COPY(dependentField,equationsSet%EQUATIONS%EQUATIONS_MAPPING% &
+                !      & DYNAMIC_MAPPING%DYNAMIC_VARIABLE_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_VALUES_SET_TYPE, &
+                !      & 1.0_DP,ERR,ERROR,*999)
+                ! CALL FIELD_PARAMETER_SETS_COPY(dependentField,equationsSet%EQUATIONS%EQUATIONS_MAPPING% &
+                !      & DYNAMIC_MAPPING%DYNAMIC_VARIABLE_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE,FIELD_RESIDUAL_SET_TYPE,&
+                !      & 1.0_DP,ERR,ERROR,*999)
+              END IF
             CASE DEFAULT
               localError="The solve type of "//TRIM(NUMBER_TO_VSTRING(solver%SOLVE_TYPE,"*",ERR,ERROR))// &
                 & " is invalid for a simple loop in a Navier-Stokes multiscale problem."
@@ -15582,11 +15639,17 @@ CONTAINS
                 ! Update flow rates on 3D boundary equations set field
                 !CALL Field_ParameterSetGetLocalNode(equationsSetField3D,FIELD_U_VARIABLE_TYPE, &
                 ! & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,1,1,nodeNumber,1,q0D,err,error,*999)
-                !CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(equationsSetField3D,FIELD_U_VARIABLE_TYPE, &
-                !  & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,versionNumber,faceNodeDerivativeIdx,nodeNumber,1, &
-                !  & globalBoundaryFlux(boundaryID),err,error,*999) 
+                CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(dependentField3D,FIELD_U_VARIABLE_TYPE, &
+                  & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,versionNumber,faceNodeDerivativeIdx,nodeNumber,4, &
+                  & p0D,err,error,*999) 
+                CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(equationsSetField3D,FIELD_U_VARIABLE_TYPE, &
+                  & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,versionNumber,faceNodeDerivativeIdx,nodeNumber,1, &
+                  & q0D,err,error,*999) 
                 CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(equationsSetField3D,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                   & versionNumber,faceNodeDerivativeIdx,nodeNumber,1,globalBoundaryFlux(boundaryID),err,error,*999) 
+                ! CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(equationsSetField3D,FIELD_U_VARIABLE_TYPE, &
+                !   & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,versionNumber,faceNodeDerivativeIdx,nodeNumber,1, &
+                !   & q0D,err,error,*999) 
                 !CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(equationsSetField3D,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                 !  & versionNumber,faceNodeDerivativeIdx,nodeNumber,2,globalBoundaryMeanPressure(boundaryID),err,error,*999) 
               END IF
