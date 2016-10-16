@@ -175,8 +175,8 @@ MODULE COORDINATE_ROUTINES
 
   PUBLIC COORDINATE_SYSTEM_FOCUS_GET,COORDINATE_SYSTEM_FOCUS_SET
 
-  PUBLIC COORDINATE_SYSTEM_RADIAL_INTERPOLATION_TYPE_GET,COORDINATE_SYSTEM_RADIAL_INTERPOLATION_TYPE_SET
-  
+  PUBLIC Coordinates_RadialInterpolationTypeGet,Coordinates_RadialInterpolationTypeSet
+
   PUBLIC COORDINATE_SYSTEM_TYPE_GET,COORDINATE_SYSTEM_TYPE_SET
 
   PUBLIC COORDINATE_SYSTEM_ORIGIN_GET,COORDINATE_SYSTEM_ORIGIN_SET
@@ -193,7 +193,7 @@ MODULE COORDINATE_ROUTINES
   
   PUBLIC COORDINATE_SYSTEMS_INITIALISE,COORDINATE_SYSTEMS_FINALISE
 
-  PUBLIC CoordinateMaterialSystemCalculate
+  PUBLIC Coordinates_MaterialSystemCalculate
   
 CONTAINS
 
@@ -219,7 +219,7 @@ CONTAINS
     COORDINATE_CONVERT_FROM_RC_DP=0.0_DP
 
     IF(SIZE(Z,1)<COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS) &
-      & CALL FLAG_ERROR("Size of Z is less than the number of dimensions.",ERR,ERROR,*999)
+      & CALL FlagError("Size of Z is less than the number of dimensions.",ERR,ERROR,*999)
     
     SELECT CASE(COORDINATE_SYSTEM%TYPE)
     CASE(COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
@@ -234,7 +234,7 @@ CONTAINS
         COORDINATE_CONVERT_FROM_RC_DP(2)=ATAN2(Z(1),Z(2))
         COORDINATE_CONVERT_FROM_RC_DP(3)=Z(3)
       CASE DEFAULT
-        CALL FLAG_ERROR("Invalid number of coordinates.",ERR,ERROR,*999)
+        CALL FlagError("Invalid number of coordinates.",ERR,ERROR,*999)
       END SELECT
       IF(COORDINATE_CONVERT_FROM_RC_DP(2)<0.0_DP) &
         & COORDINATE_CONVERT_FROM_RC_DP(2)=COORDINATE_CONVERT_FROM_RC_DP(2)+2.0_DP*PI !reference coordinate 0->2*pi
@@ -253,7 +253,7 @@ CONTAINS
           COORDINATE_CONVERT_FROM_RC_DP(3)=0.0_DP
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Invalid number of coordinates.",ERR,ERROR,*999)
+        CALL FlagError("Invalid number of coordinates.",ERR,ERROR,*999)
       ENDIF
     CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
       FOCUS=COORDINATE_SYSTEM%FOCUS
@@ -300,12 +300,12 @@ CONTAINS
           COORDINATE_CONVERT_FROM_RC_DP(3)=PI-A9
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Invalid number of coordinates.",ERR,ERROR,*999)
+        CALL FlagError("Invalid number of coordinates.",ERR,ERROR,*999)
       ENDIF
     CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
-      CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+      CALL FlagError("Not implemented.",ERR,ERROR,*999)
     CASE DEFAULT
-      CALL FLAG_ERROR("Invalid coordinate type.",ERR,ERROR,*999)
+      CALL FlagError("Invalid coordinate type.",ERR,ERROR,*999)
     END SELECT
 
     EXITS("COORDINATE_CONVERT_FROM_RC_DP")
@@ -338,7 +338,7 @@ CONTAINS
     COORDINATE_CONVERT_FROM_RC_SP=0.0_SP
     
     IF(SIZE(Z,1)<COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS) &
-      & CALL FLAG_ERROR("Size of Z is less than the number of dimensions.",ERR,ERROR,*999)
+      & CALL FlagError("Size of Z is less than the number of dimensions.",ERR,ERROR,*999)
     
     SELECT CASE(COORDINATE_SYSTEM%TYPE)
     CASE(COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
@@ -353,7 +353,7 @@ CONTAINS
         COORDINATE_CONVERT_FROM_RC_SP(2)=ATAN2(Z(1),Z(2))
         COORDINATE_CONVERT_FROM_RC_SP(3)=Z(3)
       CASE DEFAULT
-        CALL FLAG_ERROR("Invalid number of coordinates.",ERR,ERROR,*999)
+        CALL FlagError("Invalid number of coordinates.",ERR,ERROR,*999)
       END SELECT
       IF(COORDINATE_CONVERT_FROM_RC_SP(2)<0.0_SP)  &
         & COORDINATE_CONVERT_FROM_RC_SP(2)=COORDINATE_CONVERT_FROM_RC_SP(2)+2.0_SP*REAL(PI,SP) !reference coordinate 0->2*pi
@@ -372,7 +372,7 @@ CONTAINS
           COORDINATE_CONVERT_FROM_RC_SP(3)=0.0_SP
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Invalid number of coordinates.",ERR,ERROR,*999)
+        CALL FlagError("Invalid number of coordinates.",ERR,ERROR,*999)
       ENDIF
     CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
       FOCUS=REAL(COORDINATE_SYSTEM%FOCUS,SP)
@@ -420,12 +420,12 @@ CONTAINS
           COORDINATE_CONVERT_FROM_RC_SP(3)=REAL(PI,SP)-A9
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Invalid number of coordinates.",ERR,ERROR,*999)
+        CALL FlagError("Invalid number of coordinates.",ERR,ERROR,*999)
       ENDIF
     CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
-      CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+      CALL FlagError("Not implemented.",ERR,ERROR,*999)
     CASE DEFAULT
-      CALL FLAG_ERROR("Invalid coordinate type.",ERR,ERROR,*999)
+      CALL FlagError("Invalid coordinate type.",ERR,ERROR,*999)
     END SELECT
 
     EXITS("COORDINATE_CONVERT_FROM_RC_SP")
@@ -458,7 +458,7 @@ CONTAINS
     COORDINATE_CONVERT_TO_RC_DP=0.0_DP
 
     IF(SIZE(X,1)<COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS) &
-      & CALL FLAG_ERROR("Size of X is less than the number of dimensions.",ERR,ERROR,*999)
+      & CALL FlagError("Size of X is less than the number of dimensions.",ERR,ERROR,*999)
 
     SELECT CASE(COORDINATE_SYSTEM%TYPE)
     CASE(COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
@@ -473,7 +473,7 @@ CONTAINS
         COORDINATE_CONVERT_TO_RC_DP(2)=X(1)*SIN(X(2))
         COORDINATE_CONVERT_TO_RC_DP(3)=X(3)
       CASE DEFAULT
-        CALL FLAG_ERROR("Invalid number of coordinates.",ERR,ERROR,*999)
+        CALL FlagError("Invalid number of coordinates.",ERR,ERROR,*999)
       END SELECT
     CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
       IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN  
@@ -481,7 +481,7 @@ CONTAINS
         COORDINATE_CONVERT_TO_RC_DP(2)=X(1)*SIN(X(2))*COS(X(3))
         COORDINATE_CONVERT_TO_RC_DP(3)=X(1)*SIN(X(3))
       ELSE
-        CALL FLAG_ERROR("Invalid number of coordinates.",ERR,ERROR,*999)
+        CALL FlagError("Invalid number of coordinates.",ERR,ERROR,*999)
       ENDIF
     CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
       IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
@@ -490,7 +490,7 @@ CONTAINS
         COORDINATE_CONVERT_TO_RC_DP(2)=FOCUS*SINH(X(1))*SIN(X(2))*COS(X(3))
         COORDINATE_CONVERT_TO_RC_DP(3)=FOCUS*SINH(X(1))*SIN(X(2))*SIN(X(3))
       ELSE
-        CALL FLAG_ERROR("Invalid number of coordinates.",ERR,ERROR,*999)
+        CALL FlagError("Invalid number of coordinates.",ERR,ERROR,*999)
       ENDIF
     CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
       IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
@@ -499,10 +499,10 @@ CONTAINS
         COORDINATE_CONVERT_TO_RC_DP(2)=FOCUS*SINH(X(1))*SIN(X(2))
         COORDINATE_CONVERT_TO_RC_DP(3)=FOCUS*COSH(X(1))*COS(X(2))*SIN(X(3))
       ELSE
-        CALL FLAG_ERROR("Invalid number of coordinates.",ERR,ERROR,*999)
+        CALL FlagError("Invalid number of coordinates.",ERR,ERROR,*999)
       ENDIF
     CASE DEFAULT
-      CALL FLAG_ERROR("Invalid coordinate type.",ERR,ERROR,*999)
+      CALL FlagError("Invalid coordinate type.",ERR,ERROR,*999)
     END SELECT
 
     EXITS("COORDINATE_CONVERT_TO_RC_DP")
@@ -535,7 +535,7 @@ CONTAINS
     COORDINATE_CONVERT_TO_RC_SP=0.0_SP
 
     IF(SIZE(X,1)<COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS) &
-      & CALL FLAG_ERROR("Size of X is less than the number of dimensions.",ERR,ERROR,*999)
+      & CALL FlagError("Size of X is less than the number of dimensions.",ERR,ERROR,*999)
 
     SELECT CASE(COORDINATE_SYSTEM%TYPE)
     CASE(COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
@@ -550,7 +550,7 @@ CONTAINS
         COORDINATE_CONVERT_TO_RC_SP(2)=X(1)*SIN(X(2))
         COORDINATE_CONVERT_TO_RC_SP(3)=X(3)
       CASE DEFAULT
-        CALL FLAG_ERROR("Invalid number of coordinates.",ERR,ERROR,*999)
+        CALL FlagError("Invalid number of coordinates.",ERR,ERROR,*999)
       END SELECT
     CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
       IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN  
@@ -558,7 +558,7 @@ CONTAINS
         COORDINATE_CONVERT_TO_RC_SP(2)=X(1)*SIN(X(2))*COS(X(3))
         COORDINATE_CONVERT_TO_RC_SP(3)=X(1)*SIN(X(3))
       ELSE
-        CALL FLAG_ERROR("Invalid number of coordinates.",ERR,ERROR,*999)
+        CALL FlagError("Invalid number of coordinates.",ERR,ERROR,*999)
       ENDIF
     CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
       IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
@@ -567,7 +567,7 @@ CONTAINS
         COORDINATE_CONVERT_TO_RC_SP(2)=FOCUS*SINH(X(1))*SIN(X(2))*COS(X(3))
         COORDINATE_CONVERT_TO_RC_SP(3)=FOCUS*SINH(X(1))*SIN(X(2))*SIN(X(3))
       ELSE
-        CALL FLAG_ERROR("Invalid number of coordinates.",ERR,ERROR,*999)
+        CALL FlagError("Invalid number of coordinates.",ERR,ERROR,*999)
       ENDIF
     CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
       IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
@@ -576,10 +576,10 @@ CONTAINS
         COORDINATE_CONVERT_TO_RC_SP(2)=FOCUS*SINH(X(1))*SIN(X(2))
         COORDINATE_CONVERT_TO_RC_SP(3)=FOCUS*COSH(X(1))*COS(X(2))*SIN(X(3))
       ELSE
-        CALL FLAG_ERROR("Invalid number of coordinates.",ERR,ERROR,*999)
+        CALL FlagError("Invalid number of coordinates.",ERR,ERROR,*999)
       ENDIF
     CASE DEFAULT
-      CALL FLAG_ERROR("Invalid coordinate type.",ERR,ERROR,*999)
+      CALL FlagError("Invalid coordinate type.",ERR,ERROR,*999)
     END SELECT
 
     EXITS("COORDINATE_CONVERT_TO_RC_SP")
@@ -611,10 +611,10 @@ CONTAINS
     COORDINATE_DELTA_CALCULATE_DP=0.0_DP
 
     IF(SIZE(X,1)<COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS) &
-      & CALL FLAG_ERROR("Size of X is less than the number of dimensions.",ERR,ERROR,*999)
+      & CALL FlagError("Size of X is less than the number of dimensions.",ERR,ERROR,*999)
 
     IF(SIZE(X,1)/=SIZE(Y,1)) &
-      & CALL FLAG_ERROR("Size of X is different to the size of Y.",ERR,ERROR,*999)
+      & CALL FlagError("Size of X is different to the size of Y.",ERR,ERROR,*999)
    
     COORDINATE_DELTA_CALCULATE_DP(1:COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)=Y(1:COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)- &
       & X(1:COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
@@ -622,15 +622,15 @@ CONTAINS
     CASE(COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
       !Do nothing
     CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE)
-      CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+      CALL FlagError("Not implemented.",ERR,ERROR,*999)
     CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
-      CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+      CALL FlagError("Not implemented.",ERR,ERROR,*999)
     CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
-      CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+      CALL FlagError("Not implemented.",ERR,ERROR,*999)
     CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
-      CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+      CALL FlagError("Not implemented.",ERR,ERROR,*999)
     CASE DEFAULT
-      CALL FLAG_ERROR("Invalid coordinate type.",ERR,ERROR,*999)
+      CALL FlagError("Invalid coordinate type.",ERR,ERROR,*999)
     END SELECT
 
     EXITS("COORDINATE_DELTA_CALCULATE_DP")
@@ -705,7 +705,7 @@ CONTAINS
               METRICS%GL(3,2)=0.0_DP
               METRICS%GL(3,3)=1.0_DP
             CASE DEFAULT
-              CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",ERR,ERROR,*999)
             END SELECT
                         
             !Calculate the covariant metric tensor GL(i,j)
@@ -736,7 +736,7 @@ CONTAINS
               CASE DEFAULT
                 LOCAL_ERROR=TRIM(NUMBER_TO_VSTRING(METRICS%NUMBER_OF_X_DIMENSIONS,"*",ERR,ERROR))// &
                   & " is an invalid number of dimensions for a rectangular cartesian coordinate system."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
             CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE)
               R=INTERPOLATED_POINT%VALUES(1,1)
@@ -757,7 +757,7 @@ CONTAINS
               ELSE
                 LOCAL_ERROR=TRIM(NUMBER_TO_VSTRING(METRICS%NUMBER_OF_X_DIMENSIONS,"*",ERR,ERROR))// &
                   & " is an invalid number of dimensions for a cylindrical polar coordinate system."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
               R=INTERPOLATED_POINT%VALUES(1,1)
@@ -795,15 +795,15 @@ CONTAINS
                 ELSE
                   LOCAL_ERROR=TRIM(NUMBER_TO_VSTRING(METRICS%NUMBER_OF_X_DIMENSIONS,"*",ERR,ERROR))// &
                     & " is an invalid number of dimensions for a prolate spheroidal coordinate system."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 ENDIF
               ENDIF
             CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
-              CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",ERR,ERROR,*999)
             CASE DEFAULT
               LOCAL_ERROR="The coordinate system type of "//TRIM(NUMBER_TO_VSTRING(COORDINATE_SYSTEM%TYPE,"*",ERR,ERROR))// &
                 & " is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
             
             !Calcualte the contravariant metric tensor
@@ -832,7 +832,7 @@ CONTAINS
             CASE DEFAULT
               LOCAL_ERROR="The Jacobian type of "//TRIM(NUMBER_TO_VSTRING(JACOBIAN_TYPE,"*",ERR,ERROR))// &
                 & " is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
             
             !Calculate the derivatives of Xi with respect to X - DXI_DX
@@ -902,7 +902,7 @@ CONTAINS
                     METRICS%DXI_DX(1,1:3)=SCALE*METRICS%DXI_DX(1,1:3)
                   ENDIF
                 CASE DEFAULT
-                  CALL FLAG_ERROR("Invalid embedding of a line in space.",ERR,ERROR,*999)
+                  CALL FlagError("Invalid embedding of a line in space.",ERR,ERROR,*999)
                 END SELECT
               CASE(2)
                 !Surface in space
@@ -942,33 +942,34 @@ CONTAINS
                       METRICS%DXI_DX(1:2,3)=METRICS%DXI_DX(1:2,3)*G3
                     ENDIF
                   CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
-                    CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                    CALL FlagError("Not implemented.",ERR,ERROR,*999)
                   CASE DEFAULT
                     LOCAL_ERROR="The coordinate system type of "//TRIM(NUMBER_TO_VSTRING(COORDINATE_SYSTEM%TYPE,"*",ERR,ERROR))// &
                       & " is invalid."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   END SELECT
                 ELSE
-                  CALL FLAG_ERROR("Invalid embedding of a surface in space.",ERR,ERROR,*999)
+                  CALL FlagError("Invalid embedding of a surface in space.",ERR,ERROR,*999)
                 ENDIF
               CASE DEFAULT
-                CALL FLAG_ERROR("Invalid embedding in space.",ERR,ERROR,*999)
+                CALL FlagError("Invalid embedding in space.",ERR,ERROR,*999)
               END SELECT
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Metrics interpolated point has not been interpolated to include first derivatives.",ERR,ERROR,*999)
+            CALL FlagError("Metrics interpolated point has not been interpolated to include first derivatives.",ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Metrics interpolated point is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Metrics interpolated point is not associated.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Metrics is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Metrics is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Coordinate system is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Coordinate system is not associated.",ERR,ERROR,*999)
     ENDIF
     
     IF(DIAGNOSTICS1) THEN
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
       CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Coordinate system metrics:",ERR,ERROR,*999)
       CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Coordinate system type = ",TRIM(COORDINATE_SYSTEM_TYPE_STRING( &
         & COORDINATE_SYSTEM%TYPE)),ERR,ERROR,*999)
@@ -996,7 +997,7 @@ CONTAINS
             CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,METRICS%NUMBER_OF_X_DIMENSIONS,3,3,DX_DXI3, &
               & '("    dX_dXi(:,3) :",3(X,E13.6))','(17X,3(X,E13.6))',ERR,ERROR,*999)      
           CASE DEFAULT
-            CALL FLAG_ERROR("Invalid embedding of a line in space.",ERR,ERROR,*999)
+            CALL FlagError("Invalid embedding of a line in space.",ERR,ERROR,*999)
           END SELECT
         CASE(2)
           !Surface in space
@@ -1005,10 +1006,10 @@ CONTAINS
             CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,METRICS%NUMBER_OF_X_DIMENSIONS,3,3,DX_DXI3, &
               & '("    dX_dXi(:,3) :",3(X,E13.6))','(17X,3(X,E13.6))',ERR,ERROR,*999)      
           CASE DEFAULT
-            CALL FLAG_ERROR("Invalid embedding of a surface in space.",ERR,ERROR,*999)
+            CALL FlagError("Invalid embedding of a surface in space.",ERR,ERROR,*999)
           END SELECT
         CASE DEFAULT
-          CALL FLAG_ERROR("Invalid embedding in space.",ERR,ERROR,*999)
+          CALL FlagError("Invalid embedding in space.",ERR,ERROR,*999)
         END SELECT
       ENDIF
       CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  det dX_dXi    = ",DET_DX_DXI,ERR,ERROR,*999)
@@ -1057,7 +1058,7 @@ CONTAINS
 
     IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
       IF(COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED) THEN
-        CALL FLAG_ERROR("Coordinate system has been finished.",ERR,ERROR,*999)
+        CALL FlagError("Coordinate system has been finished.",ERR,ERROR,*999)
       ELSE
         NUMBER_OF_X_DIMENSIONS=COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS
         d_s1=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(1)
@@ -1078,7 +1079,7 @@ CONTAINS
           ELSE
             LOCAL_ERROR=TRIM(NUMBER_TO_VSTRING(NUMBER_OF_X_DIMENSIONS,"*",ERR,ERROR))// &
               & " is an invalid number of dimensions to calculate a normal from in a rectangular cartesian coordinate system."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE)
           R=X(1,1)
@@ -1095,7 +1096,7 @@ CONTAINS
            ELSE
             LOCAL_ERROR=TRIM(NUMBER_TO_VSTRING(NUMBER_OF_X_DIMENSIONS,"*",ERR,ERROR))// &
               & " is an invalid number of dimensions to calculate a normal from in a rectangular cartesian coordinate system."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF          
         CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
           R=X(1,1)
@@ -1114,19 +1115,19 @@ CONTAINS
             &                 R*COS(X(1,d2_s1))*COS(X(1,d_s1))*X(2,d_s2)
           TANGENT2(3)=X(1,d_s2)*SIN(X(1,d2_s1))+R*COS(X(1,d2_s1))*X(3,d_s2)
         CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE DEFAULT
           LOCAL_ERROR="The coordinate system type of "//TRIM(NUMBER_TO_VSTRING(COORDINATE_SYSTEM%TYPE,"*",ERR,ERROR))// &
             & " is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
         IF(NUMBER_OF_X_DIMENSIONS==2) THEN
           N(1)=-TANGENT1(2)
           N(2)=TANGENT1(1)
           LENGTH=SQRT(N(1)*N(1)+N(2)*N(2))
-          IF(ABS(LENGTH)<ZERO_TOLERANCE) CALL FLAG_ERROR("Zero normal vector length.",ERR,ERROR,*999)
+          IF(ABS(LENGTH)<ZERO_TOLERANCE) CALL FlagError("Zero normal vector length.",ERR,ERROR,*999)
           IF(REVERSE) THEN
             N(1)=-N(1)/LENGTH
             N(2)=-N(2)/LENGTH
@@ -1151,7 +1152,7 @@ CONTAINS
         ENDIF        
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Coordinate system is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Coordinate system is not associated.",ERR,ERROR,*999)
     ENDIF
 
     IF(DIAGNOSTICS1) THEN
@@ -1197,10 +1198,10 @@ CONTAINS
       IF(COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED) THEN
         NUMBER_OF_DIMENSIONS=COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS
       ELSE
-        CALL FLAG_ERROR("Coordinate system has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("Coordinate system has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Coordinate system is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Coordinate system is not associated.",ERR,ERROR,*999)
     ENDIF
    
     EXITS("COORDINATE_SYSTEM_DIMENSION_GET")
@@ -1258,13 +1259,13 @@ CONTAINS
         CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE,COORDINATE_OBLATE_SPHEROIDAL_TYPE)
           FOCUS=COORDINATE_SYSTEM%FOCUS
         CASE DEFAULT
-          CALL FLAG_ERROR("No focus defined for this coordinate system type.",ERR,ERROR,*999)
+          CALL FlagError("No focus defined for this coordinate system type.",ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("Coordinate system has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("Coordinate system has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Coordinate system is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Coordinate system is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("COORDINATE_SYSTEM_FOCUS_GET")
@@ -1280,38 +1281,38 @@ CONTAINS
 
 
   !>Gets the coordinate system radial interpolation type. 
-  SUBROUTINE COORDINATE_SYSTEM_RADIAL_INTERPOLATION_TYPE_GET(COORDINATE_SYSTEM,RADIAL_INTERP_TYPE,ERR,ERROR,*)
+  SUBROUTINE Coordinates_RadialInterpolationTypeGet(coordinateSystem,radialInterpolationType,err,error,*)
 
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<The coordinate system to get the radial interpolation for
-    INTEGER(INTG), INTENT(OUT) :: RADIAL_INTERP_TYPE !<On return, the radial interpolation type for the coordinate system.
+    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem !<The coordinate system to get the radial interpolation for
+    INTEGER(INTG), INTENT(OUT) :: radialInterpolationType !<On return, the radial interpolation type for the coordinate system \see COORDINATE_ROUTINES_RadialInterpolations,COORDINATE_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     
-    ENTERS("COORDINATE_SYSTEM_RADIAL_INTERPOLATION_TYPE_GET",ERR,ERROR,*999)
+    ENTERS("Coordinates_RadialInterpolationTypeGet",ERR,ERROR,*999)
 
-    IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
-      IF(COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED) THEN
-        SELECT CASE(COORDINATE_SYSTEM%TYPE)
+    IF(ASSOCIATED(coordinateSystem)) THEN
+      IF(coordinateSystem%COORDINATE_SYSTEM_FINISHED) THEN
+        SELECT CASE(coordinateSystem%TYPE)
         CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE,COORDINATE_SPHERICAL_POLAR_TYPE)
-          RADIAL_INTERP_TYPE=COORDINATE_SYSTEM%RADIAL_INTERPOLATION_TYPE
+          radialInterpolationType=coordinateSystem%RADIAL_INTERPOLATION_TYPE
         CASE DEFAULT
-          CALL FLAG_ERROR("No radial interpolation type defined for this coordinate system interpolation.",ERR,ERROR,*999)
+          CALL FlagError("No radial interpolation type defined for this coordinate system interpolation.",err,error,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("Coordinate system has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("Coordinate system has not been finished.",err,error,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Coordinate system is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Coordinate system is not associated.",err,error,*999)
     ENDIF
     
-    EXITS("COORDINATE_SYSTEM_RADIAL_INTERPOLATION_TYPE_GET")
+    EXITS("Coordinates_RadialInterpolationTypeGet")
     RETURN
-999 ERRORSEXITS("COORDINATE_SYSTEM_RADIAL_INTERPOLATION_TYPE_GET",ERR,ERROR)
+999 ERRORSEXITS("Coordinates_RadialInterpolationTypeGet",err,error)
     RETURN 1
     
-  END SUBROUTINE COORDINATE_SYSTEM_RADIAL_INTERPOLATION_TYPE_GET
+  END SUBROUTINE Coordinates_RadialInterpolationTypeGet
 
   !
   !================================================================================================================================
@@ -1333,10 +1334,10 @@ CONTAINS
       IF(COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED) THEN
         SYSTEM_TYPE=COORDINATE_SYSTEM%TYPE
       ELSE
-        CALL FLAG_ERROR("Coordinate system has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("Coordinate system has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Coordinate system is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Coordinate system is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("COORDINATE_SYSTEM_TYPE_GET")
@@ -1364,45 +1365,45 @@ CONTAINS
 
     IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
       IF(COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED) THEN
-        CALL FLAG_ERROR("Coordinate system has been finished.",ERR,ERROR,*999)
+        CALL FlagError("Coordinate system has been finished.",ERR,ERROR,*999)
       ELSE
         SELECT CASE(COORDINATE_SYSTEM%TYPE)
         CASE(COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
           IF(DIMENSION>=1.AND.DIMENSION<=3) THEN
             COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS=DIMENSION
           ELSE
-            CALL FLAG_ERROR("Invalid number of dimensions.",ERR,ERROR,*999)
+            CALL FlagError("Invalid number of dimensions.",ERR,ERROR,*999)
           ENDIF
         CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE)
           IF(DIMENSION>=2.AND.DIMENSION<=3) THEN
             COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS=DIMENSION
           ELSE
-            CALL FLAG_ERROR("Invalid number of dimensions.",ERR,ERROR,*999)
+            CALL FlagError("Invalid number of dimensions.",ERR,ERROR,*999)
           ENDIF
         CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
           IF(DIMENSION==3) THEN
             COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS=DIMENSION
           ELSE
-            CALL FLAG_ERROR("Invalid number of dimensions.",ERR,ERROR,*999)
+            CALL FlagError("Invalid number of dimensions.",ERR,ERROR,*999)
           ENDIF
         CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
           IF(DIMENSION==3) THEN
             COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS=DIMENSION
           ELSE
-            CALL FLAG_ERROR("Invalid number of dimensions.",ERR,ERROR,*999)
+            CALL FlagError("Invalid number of dimensions.",ERR,ERROR,*999)
           ENDIF
         CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
           IF(DIMENSION==3) THEN
             COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS=DIMENSION
           ELSE
-            CALL FLAG_ERROR("Invalid number of dimensions.",ERR,ERROR,*999)
+            CALL FlagError("Invalid number of dimensions.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
-          CALL FLAG_ERROR("Invalid coordinate system type.",ERR,ERROR,*999)
+          CALL FlagError("Invalid coordinate system type.",ERR,ERROR,*999)
         END SELECT
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Coordinate system is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Coordinate system is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("COORDINATE_SYSTEM_DIMENSION_SET")
@@ -1429,27 +1430,27 @@ CONTAINS
 
     IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
       IF(COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED) THEN
-        CALL FLAG_ERROR("Coordinate system has been finished.",ERR,ERROR,*999)
+        CALL FlagError("Coordinate system has been finished.",ERR,ERROR,*999)
       ELSE
         SELECT CASE(COORDINATE_SYSTEM%TYPE)
         CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
           IF(FOCUS>ZERO_TOLERANCE) THEN
             COORDINATE_SYSTEM%FOCUS=FOCUS
           ELSE
-            CALL FLAG_ERROR("Focus is less than zero.",ERR,ERROR,*999)
+            CALL FlagError("Focus is less than zero.",ERR,ERROR,*999)
           ENDIF
         CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
           IF(FOCUS>ZERO_TOLERANCE) THEN
             COORDINATE_SYSTEM%FOCUS=FOCUS
           ELSE
-            CALL FLAG_ERROR("Focus is less than zero.",ERR,ERROR,*999)
+            CALL FlagError("Focus is less than zero.",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
-          CALL FLAG_ERROR("Invalid coordinate system type.",ERR,ERROR,*999)
+          CALL FlagError("Invalid coordinate system type.",ERR,ERROR,*999)
         END SELECT
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Coordinate system is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Coordinate system is not associated.",ERR,ERROR,*999)
     ENDIF
       
     EXITS("COORDINATE_SYSTEM_FOCUS_SET")
@@ -1463,71 +1464,71 @@ CONTAINS
   !
 
   !>Sets/changes the radial interpolation type of a coordinate system. \see OPENCMISS::CMISSCoordinateSystemRadialInterpolationTypeSet
-  SUBROUTINE COORDINATE_SYSTEM_RADIAL_INTERPOLATION_TYPE_SET(COORDINATE_SYSTEM,RADIAL_INTERPOLATION_TYPE,ERR,ERROR,*)
+  SUBROUTINE Coordinates_RadialInterpolationTypeSet(coordinateSystem,radialInterpolationType,err,error,*)
 
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<The coordinate system to set the interpolation type for
-    INTEGER(INTG), INTENT(IN) :: RADIAL_INTERPOLATION_TYPE !<The interpolation type to set \see COORDINATE_ROUTINES_RadialInterpolations,COORDINATE_ROUTINES
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem !<The coordinate system to set the interpolation type for
+    INTEGER(INTG), INTENT(IN) :: radialInterpolationType !<The interpolation type to set \see COORDINATE_ROUTINES_RadialInterpolations,COORDINATE_ROUTINES
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("COORDINATE_SYSTEM_INTERPOLATION_TYPE_SET",ERR,ERROR,*999)
+    ENTERS("Coordinates_RadialInterpolationTypeSet",err,error,*999)
 
-    IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
-      IF(COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED) THEN
-        CALL FLAG_ERROR("Coordinate system has been finished.",ERR,ERROR,*999)
+    IF(ASSOCIATED(coordinateSystem)) THEN
+      IF(coordinateSystem%COORDINATE_SYSTEM_FINISHED) THEN
+        CALL FlagError("Coordinate system has been finished.",err,error,*999)
       ELSE
-        SELECT CASE(COORDINATE_SYSTEM%TYPE)
+        SELECT CASE(coordinateSystem%TYPE)
         CASE(COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
-          SELECT CASE(RADIAL_INTERPOLATION_TYPE)
+          SELECT CASE(radialInterpolationType)
           CASE(COORDINATE_NO_RADIAL_INTERPOLATION_TYPE)
-            COORDINATE_SYSTEM%RADIAL_INTERPOLATION_TYPE=COORDINATE_NO_RADIAL_INTERPOLATION_TYPE
+            coordinateSystem%RADIAL_INTERPOLATION_TYPE=COORDINATE_NO_RADIAL_INTERPOLATION_TYPE
           CASE DEFAULT
-            LOCAL_ERROR="The radial interpolation type of "//TRIM(NUMBER_TO_VSTRING(RADIAL_INTERPOLATION_TYPE,"*",ERR,ERROR))// &
+            localERROR="The radial interpolation type of "//TRIM(NUMBER_TO_VSTRING(radialInterpolationType,"*",err,error))// &
               & " is invalid for a rectangular cartesian coordinate system."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(localERROR,err,error,*999)
           END SELECT
         CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE,COORDINATE_SPHERICAL_POLAR_TYPE)
-          SELECT CASE(RADIAL_INTERPOLATION_TYPE)
+          SELECT CASE(radialInterpolationType)
           CASE(COORDINATE_RADIAL_INTERPOLATION_TYPE)
-            COORDINATE_SYSTEM%RADIAL_INTERPOLATION_TYPE=COORDINATE_RADIAL_INTERPOLATION_TYPE
+            coordinateSystem%RADIAL_INTERPOLATION_TYPE=COORDINATE_RADIAL_INTERPOLATION_TYPE
           CASE(COORDINATE_RADIAL_SQUARED_INTERPOLATION_TYPE)
-            COORDINATE_SYSTEM%RADIAL_INTERPOLATION_TYPE=COORDINATE_RADIAL_SQUARED_INTERPOLATION_TYPE
+            coordinateSystem%RADIAL_INTERPOLATION_TYPE=COORDINATE_RADIAL_SQUARED_INTERPOLATION_TYPE
           CASE DEFAULT
-            LOCAL_ERROR="The radial interpolation type of "//TRIM(NUMBER_TO_VSTRING(RADIAL_INTERPOLATION_TYPE,"*",ERR,ERROR))// &
+            localERROR="The radial interpolation type of "//TRIM(NUMBER_TO_VSTRING(radialInterpolationType,"*",err,error))// &
               & " is invalid for a cylindrical/spherical coordinate system."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(localERROR,err,error,*999)
           END SELECT
         CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
-          SELECT CASE(RADIAL_INTERPOLATION_TYPE)
+          SELECT CASE(radialInterpolationType)
           CASE(COORDINATE_RADIAL_INTERPOLATION_TYPE)
-            COORDINATE_SYSTEM%RADIAL_INTERPOLATION_TYPE=COORDINATE_RADIAL_INTERPOLATION_TYPE
+            coordinateSystem%RADIAL_INTERPOLATION_TYPE=COORDINATE_RADIAL_INTERPOLATION_TYPE
           CASE(COORDINATE_RADIAL_SQUARED_INTERPOLATION_TYPE)
-            COORDINATE_SYSTEM%RADIAL_INTERPOLATION_TYPE=COORDINATE_RADIAL_SQUARED_INTERPOLATION_TYPE
+            coordinateSystem%RADIAL_INTERPOLATION_TYPE=COORDINATE_RADIAL_SQUARED_INTERPOLATION_TYPE
           CASE(COORDINATE_RADIAL_CUBED_INTERPOLATION_TYPE)
-            COORDINATE_SYSTEM%RADIAL_INTERPOLATION_TYPE=COORDINATE_RADIAL_CUBED_INTERPOLATION_TYPE
+            coordinateSystem%RADIAL_INTERPOLATION_TYPE=COORDINATE_RADIAL_CUBED_INTERPOLATION_TYPE
           CASE DEFAULT
-            LOCAL_ERROR="The radial interpolation type of "//TRIM(NUMBER_TO_VSTRING(RADIAL_INTERPOLATION_TYPE,"*",ERR,ERROR))// &
+            localERROR="The radial interpolation type of "//TRIM(NumberToVString(radialInterpolationType,"*",err,error))// &
               & " is invalid for a prolate spheroidal coordinate system."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(localERROR,err,error,*999)
           END SELECT
         CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          CALL FLAG_ERROR("Invalid coordinate system type.",ERR,ERROR,*999)
+          CALL FlagError("Invalid coordinate system type.",err,error,*999)
         END SELECT
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Coordinate system is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Coordinate system is not associated.",err,error,*999)
     ENDIF
     
-    EXITS("COORDINATE_SYSTEM_RADIAL_INTERPOLATION_TYPE_SET")
+    EXITS("Coordinates_RadialInterpolationTypeSet")
     RETURN
-999 ERRORSEXITS("COORDINATE_SYSTEM_RADIAL_INTERPOLATION_TYPE_SET",ERR,ERROR)
+999 ERRORSEXITS("Coordinates_RadialInterpolationTypeSet",err,error)
     RETURN 1
-  END SUBROUTINE COORDINATE_SYSTEM_RADIAL_INTERPOLATION_TYPE_SET
+  END SUBROUTINE Coordinates_RadialInterpolationTypeSet
 
   !
   !================================================================================================================================
@@ -1547,7 +1548,7 @@ CONTAINS
 
     IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
       IF(COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED) THEN
-        CALL FLAG_ERROR("Coordinate system has been finished.",ERR,ERROR,*999)
+        CALL FlagError("Coordinate system has been finished.",ERR,ERROR,*999)
       ELSE
         SELECT CASE(TYPE)
         CASE(COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
@@ -1561,11 +1562,11 @@ CONTAINS
         CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
           COORDINATE_SYSTEM%TYPE=COORDINATE_OBLATE_SPHEROIDAL_TYPE
         CASE DEFAULT
-          CALL FLAG_ERROR("Invalid coordinate system type.",ERR,ERROR,*999)
+          CALL FlagError("Invalid coordinate system type.",ERR,ERROR,*999)
         END SELECT
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Coordinate system is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Coordinate system is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("COORDINATE_SYSTEM_TYPE_SET")
@@ -1595,13 +1596,13 @@ CONTAINS
         IF(SIZE(ORIGIN)>=3) THEN
           ORIGIN(1:3)=COORDINATE_SYSTEM%ORIGIN
         ELSE
-          CALL FLAG_ERROR("The origin must have >= 3 components.",ERR,ERROR,*999)
+          CALL FlagError("The origin must have >= 3 components.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Coordinate system has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("Coordinate system has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Coordinate system is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Coordinate system is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("COORDINATE_SYSTEM_ORIGIN_GET")
@@ -1629,16 +1630,16 @@ CONTAINS
 
     IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
       IF(COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED) THEN
-        CALL FLAG_ERROR("Coordinate system has been finished.",ERR,ERROR,*999)
+        CALL FlagError("Coordinate system has been finished.",ERR,ERROR,*999)
       ELSE
         IF(SIZE(ORIGIN)==3) THEN
           COORDINATE_SYSTEM%ORIGIN=ORIGIN
         ELSE
-          CALL FLAG_ERROR("The origin must have exactly 3 components.",ERR,ERROR,*999)
+          CALL FlagError("The origin must have exactly 3 components.",ERR,ERROR,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Coordinate system is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Coordinate system is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("COORDINATE_SYSTEM_ORIGIN_SET")
@@ -1668,13 +1669,13 @@ CONTAINS
         IF(SIZE(ORIENTATION,1)>=3.AND.SIZE(ORIENTATION,2)>=3) THEN
           ORIENTATION(1:3,1:3)=COORDINATE_SYSTEM%ORIENTATION
         ELSE
-          CALL FLAG_ERROR("The orientation matrix must have >= 3x3 components.",ERR,ERROR,*999)
+          CALL FlagError("The orientation matrix must have >= 3x3 components.",ERR,ERROR,*999)
         ENDIF
       ELSE
-         CALL FLAG_ERROR("Coordinate system has not been finished.",ERR,ERROR,*999)
+         CALL FlagError("Coordinate system has not been finished.",ERR,ERROR,*999)
        ENDIF
     ELSE
-      CALL FLAG_ERROR("Coordinate system is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Coordinate system is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("COORDINATE_SYSTEM_ORIENTATION_GET")
@@ -1701,17 +1702,17 @@ CONTAINS
 
     IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
       IF(COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED) THEN
-        CALL FLAG_ERROR("Coordinate system has been finished.",ERR,ERROR,*999)
+        CALL FlagError("Coordinate system has been finished.",ERR,ERROR,*999)
       ELSE
         IF(SIZE(ORIENTATION,1)==3.AND.SIZE(ORIENTATION,2)==3) THEN
 !!TODO: \todo Check orientation matrix vectors are orthogonal to each other etc.
           COORDINATE_SYSTEM%ORIENTATION=ORIENTATION
         ELSE
-          CALL FLAG_ERROR("The orientation matrix must have exactly 3x3 components.",ERR,ERROR,*999)
+          CALL FlagError("The orientation matrix must have exactly 3x3 components.",ERR,ERROR,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Coordinate system is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Coordinate system is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("COORDINATE_SYSTEM_ORIENTATION_SET")
@@ -1755,14 +1756,14 @@ CONTAINS
     IF(ASSOCIATED(NEW_COORDINATE_SYSTEM)) THEN
       LOCAL_ERROR="Coordinate system number "//TRIM(NUMBER_TO_VSTRING(USER_NUMBER,"*",ERR,ERROR))// &
         & " has already been created."
-      CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*998)
+      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*998)
     ELSE
       IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
-        CALL FLAG_ERROR("Coordinate system is already associated.",ERR,ERROR,*999)
+        CALL FlagError("Coordinate system is already associated.",ERR,ERROR,*999)
       ELSE
         NULLIFY(NEW_COORDINATE_SYSTEM)
         ALLOCATE(NEW_COORDINATE_SYSTEM,STAT=ERR)
-        IF(ERR/=0) CALL FLAG_ERROR("Could not allocate new coordinate system.",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate new coordinate system.",ERR,ERROR,*999)
       
         NEW_COORDINATE_SYSTEM%USER_NUMBER=USER_NUMBER
         NEW_COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED=.FALSE.
@@ -1778,7 +1779,7 @@ CONTAINS
           & (/3,3/))
         
         ALLOCATE(NEW_COORDINATE_SYSTEMS(COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS+1),STAT=ERR)
-        IF(ERR/=0) CALL FLAG_ERROR("Could not allocate new coordinate systems.",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate new coordinate systems.",ERR,ERROR,*999)
         DO coord_system_idx=1,COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS
           NEW_COORDINATE_SYSTEMS(coord_system_idx)%PTR=>COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(coord_system_idx)%PTR
         ENDDO !coord_system_idx
@@ -1819,7 +1820,7 @@ CONTAINS
     IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
       COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED=.TRUE.
     ELSE
-      CALL FLAG_ERROR("Coordinate system is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Coordinate system is not associated.",ERR,ERROR,*999)
     ENDIF
     
     IF(DIAGNOSTICS1) THEN
@@ -1862,12 +1863,12 @@ CONTAINS
 
     IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
       IF(COORDINATE_SYSTEM%USER_NUMBER==0) THEN
-        CALL FLAG_ERROR("Cannot destroy the world coordinate system.",ERR,ERROR,*999)
+        CALL FlagError("Cannot destroy the world coordinate system.",ERR,ERROR,*999)
       ELSE
         FOUND=.FALSE.
         new_coord_system_no=0
         ALLOCATE(NEW_COORDINATE_SYSTEMS(COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS-1),STAT=ERR)
-        IF(ERR/=0) CALL FLAG_ERROR("Could not allocate new coordianate systems.",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate new coordianate systems.",ERR,ERROR,*999)
         DO coord_system_no=1,COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS
           IF(COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(coord_system_no)%PTR%USER_NUMBER==COORDINATE_SYSTEM%USER_NUMBER) THEN
             FOUND=.TRUE.
@@ -1883,11 +1884,11 @@ CONTAINS
           COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS=COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS-1
         ELSE
           DEALLOCATE(NEW_COORDINATE_SYSTEMS)
-          CALL FLAG_ERROR("Coordinate system number to destroy does not exist.",ERR,ERROR,*999)
+          CALL FlagError("Coordinate system number to destroy does not exist.",ERR,ERROR,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Coordinate system is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Coordinate system is not associated.",ERR,ERROR,*999)
     ENDIF
       
     EXITS("COORDINATE_SYSTEM_DESTROY")
@@ -1919,7 +1920,7 @@ CONTAINS
     DXZ_DP=0.0_DP
 
     IF(SIZE(X,1)<COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS) &
-      & CALL FLAG_ERROR("Size of X is less than the number of dimensions", &
+      & CALL FlagError("Size of X is less than the number of dimensions", &
       & ERR,ERROR,*999)
    
     SELECT CASE(COORDINATE_SYSTEM%TYPE)
@@ -1927,7 +1928,7 @@ CONTAINS
       IF(I>0.AND.I<=COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS) THEN
         DXZ_DP(I)=1.0_DP
       ELSE
-        CALL FLAG_ERROR("Invalid i value",ERR,ERROR,*999)
+        CALL FlagError("Invalid i value",ERR,ERROR,*999)
       ENDIF
     CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE)
       SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
@@ -1940,7 +1941,7 @@ CONTAINS
           DXZ_DP(1)=SIN(X(2))
           DXZ_DP(2)=COS(X(2))/X(1)
         CASE DEFAULT
-          CALL FLAG_ERROR("Invalid i value",ERR,ERROR,*999)
+          CALL FlagError("Invalid i value",ERR,ERROR,*999)
         END SELECT
       CASE(3)
         SELECT CASE(I)
@@ -1957,10 +1958,10 @@ CONTAINS
           DXZ_DP(2)=0.0_DP
           DXZ_DP(3)=1.0_DP
         CASE DEFAULT
-          CALL FLAG_ERROR("Invalid i value",ERR,ERROR,*999)
+          CALL FlagError("Invalid i value",ERR,ERROR,*999)
         END SELECT
       CASE DEFAULT
-        CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+        CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
       END SELECT
     CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
       IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
@@ -1978,10 +1979,10 @@ CONTAINS
           DXZ_DP(2)=0.0_DP
           DXZ_DP(3)=COS(X(3))/X(1)
         CASE DEFAULT
-          CALL FLAG_ERROR("Invalid i value",ERR,ERROR,*999)
+          CALL FlagError("Invalid i value",ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+        CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
       ENDIF
     CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
       IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
@@ -2001,15 +2002,15 @@ CONTAINS
           DXZ_DP(2)=SINH(X(1))*COS(X(2))*SIN(X(3))/RD
           DXZ_DP(3)=COS(X(3))/(FOCUS*SINH(X(1))*SIN(X(2)))
         CASE DEFAULT
-          CALL FLAG_ERROR("Invalid i value",ERR,ERROR,*999)
+          CALL FlagError("Invalid i value",ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+        CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
       ENDIF
     CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
-      CALL FLAG_ERROR("Not implemented",ERR,ERROR,*999)
+      CALL FlagError("Not implemented",ERR,ERROR,*999)
     CASE DEFAULT
-      CALL FLAG_ERROR("Invalid coordinate type",ERR,ERROR,*999)
+      CALL FlagError("Invalid coordinate type",ERR,ERROR,*999)
     END SELECT
 
     EXITS("DXZ_DP")
@@ -2059,7 +2060,7 @@ CONTAINS
     D2ZX_DP=0.0_DP
 
     IF(SIZE(X,1)<COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS) &
-      & CALL FLAG_ERROR("Size of X is less than the number of dimensions", &
+      & CALL FlagError("Size of X is less than the number of dimensions", &
       & ERR,ERROR,*999)
    
     SELECT CASE(COORDINATE_SYSTEM%TYPE)
@@ -2078,7 +2079,7 @@ CONTAINS
             D2ZX_DP(1)=-SIN(X(2))
             D2ZX_DP(2)=COS(X(2))
           CASE DEFAULT
-            CALL FLAG_ERROR("Invalid j value",ERR,ERROR,*999)
+            CALL FlagError("Invalid j value",ERR,ERROR,*999)
           END SELECT
         CASE(2)
           SELECT CASE(J)
@@ -2089,10 +2090,10 @@ CONTAINS
             D2ZX_DP(1)=-X(1)*COS(X(2))
             D2ZX_DP(2)=-X(1)*SIN(X(2))
           CASE DEFAULT
-            CALL FLAG_ERROR("Invalid j value",ERR,ERROR,*999)
+            CALL FlagError("Invalid j value",ERR,ERROR,*999)
           END SELECT
         CASE DEFAULT
-          CALL FLAG_ERROR("Invalid i value",ERR,ERROR,*999)
+          CALL FlagError("Invalid i value",ERR,ERROR,*999)
         END SELECT
       CASE(3)
         SELECT CASE(I)
@@ -2111,7 +2112,7 @@ CONTAINS
             D2ZX_DP(2)=0.0_DP
             D2ZX_DP(3)=0.0_DP
           CASE DEFAULT
-            CALL FLAG_ERROR("Invalid j value",ERR,ERROR,*999)
+            CALL FlagError("Invalid j value",ERR,ERROR,*999)
           END SELECT
         CASE(2)
           SELECT CASE(J)
@@ -2128,7 +2129,7 @@ CONTAINS
             D2ZX_DP(2)=0.0_DP
             D2ZX_DP(3)=0.0_DP
           CASE DEFAULT
-            CALL FLAG_ERROR("Invalid j value",ERR,ERROR,*999)
+            CALL FlagError("Invalid j value",ERR,ERROR,*999)
           END SELECT
         CASE(3)
           SELECT CASE(J)
@@ -2145,13 +2146,13 @@ CONTAINS
             D2ZX_DP(2)=0.0_DP
             D2ZX_DP(3)=0.0_DP
           CASE DEFAULT
-            CALL FLAG_ERROR("Invalid j value",ERR,ERROR,*999)
+            CALL FlagError("Invalid j value",ERR,ERROR,*999)
           END SELECT
         CASE DEFAULT
-          CALL FLAG_ERROR("Invalid i value",ERR,ERROR,*999)
+          CALL FlagError("Invalid i value",ERR,ERROR,*999)
         END SELECT
       CASE DEFAULT
-        CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+        CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
       END SELECT
     CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
       IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
@@ -2171,7 +2172,7 @@ CONTAINS
             D2ZX_DP(2)=-SIN(X(2))*SIN(X(3))
             D2ZX_DP(3)=COS(X(3))
           CASE DEFAULT
-            CALL FLAG_ERROR("Invalid j value",ERR,ERROR,*999)
+            CALL FlagError("Invalid j value",ERR,ERROR,*999)
           END SELECT
         CASE(2)
           SELECT CASE(J)
@@ -2188,7 +2189,7 @@ CONTAINS
             D2ZX_DP(2)=-X(1)*COS(X(2))*SIN(X(3))
             D2ZX_DP(3)=0.0_DP
           CASE DEFAULT
-            CALL FLAG_ERROR("Invalid j value",ERR,ERROR,*999)
+            CALL FlagError("Invalid j value",ERR,ERROR,*999)
           END SELECT
         CASE(3)
           SELECT CASE(J)
@@ -2205,13 +2206,13 @@ CONTAINS
             D2ZX_DP(2)=-X(1)*SIN(X(2))*COS(X(3))
             D2ZX_DP(3)=-X(1)*SIN(X(3))
           CASE DEFAULT
-            CALL FLAG_ERROR("Invalid j value",ERR,ERROR,*999)
+            CALL FlagError("Invalid j value",ERR,ERROR,*999)
           END SELECT
         CASE DEFAULT
-          CALL FLAG_ERROR("Invalid i value",ERR,ERROR,*999)
+          CALL FlagError("Invalid i value",ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+        CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
       ENDIF
     CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
       IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
@@ -2232,7 +2233,7 @@ CONTAINS
             D2ZX_DP(2)=-FOCUS*COSH(X(1))*SIN(X(2))*SIN(X(3))
             D2ZX_DP(3)=FOCUS*COSH(X(1))*SIN(X(2))*COS(X(3))
           CASE DEFAULT
-            CALL FLAG_ERROR("Invalid j value",ERR,ERROR,*999)
+            CALL FlagError("Invalid j value",ERR,ERROR,*999)
           END SELECT
         CASE(2)
           SELECT CASE(J)
@@ -2249,7 +2250,7 @@ CONTAINS
             D2ZX_DP(2)=-FOCUS*SINH(X(1))*COS(X(2))*SIN(X(3))
             D2ZX_DP(3)=FOCUS*SINH(X(1))*COS(X(2))*COS(X(3))
           CASE DEFAULT
-            CALL FLAG_ERROR("Invalid j value",ERR,ERROR,*999)
+            CALL FlagError("Invalid j value",ERR,ERROR,*999)
           END SELECT
         CASE(3)
           SELECT CASE(J)
@@ -2266,18 +2267,18 @@ CONTAINS
             D2ZX_DP(2)=-FOCUS*SINH(X(1))*SIN(X(2))*COS(X(3))
             D2ZX_DP(3)=-FOCUS*SINH(X(1))*SIN(X(2))*SIN(X(3))
           CASE DEFAULT
-            CALL FLAG_ERROR("Invalid j value",ERR,ERROR,*999)
+            CALL FlagError("Invalid j value",ERR,ERROR,*999)
           END SELECT
         CASE DEFAULT
-          CALL FLAG_ERROR("Invalid i value",ERR,ERROR,*999)
+          CALL FlagError("Invalid i value",ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+        CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
       ENDIF
     CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
-      CALL FLAG_ERROR("Not implemented",ERR,ERROR,*999)
+      CALL FlagError("Not implemented",ERR,ERROR,*999)
     CASE DEFAULT
-      CALL FLAG_ERROR("Invalid coordinate type",ERR,ERROR,*999)
+      CALL FlagError("Invalid coordinate type",ERR,ERROR,*999)
     END SELECT
 
     EXITS("D2ZX_DP")
@@ -2327,7 +2328,7 @@ CONTAINS
     DZX_DP=0.0_DP
 
     IF(SIZE(X,1)<COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS) &
-      & CALL FLAG_ERROR("Size of X is less than the number of dimensions", &
+      & CALL FlagError("Size of X is less than the number of dimensions", &
       & ERR,ERROR,*999)
    
    SELECT CASE(COORDINATE_SYSTEM%TYPE)
@@ -2335,7 +2336,7 @@ CONTAINS
       IF(I>0.AND.I<=COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS) THEN
         DZX_DP(I)=1.0_DP
       ELSE
-        CALL FLAG_ERROR("Invalid i value",ERR,ERROR,*999)
+        CALL FlagError("Invalid i value",ERR,ERROR,*999)
       ENDIF
     CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE)
       SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
@@ -2348,7 +2349,7 @@ CONTAINS
           DZX_DP(1)=-X(1)*SIN(X(2))
           DZX_DP(2)=X(1)*COS(X(2))
         CASE DEFAULT
-          CALL FLAG_ERROR("Invalid i value",ERR,ERROR,*999)
+          CALL FlagError("Invalid i value",ERR,ERROR,*999)
         END SELECT
       CASE(3)
         SELECT CASE(I)
@@ -2365,10 +2366,10 @@ CONTAINS
           DZX_DP(2)=0.0_DP
           DZX_DP(3)=1.0_DP
         CASE DEFAULT
-          CALL FLAG_ERROR("Invalid i value",ERR,ERROR,*999)
+          CALL FlagError("Invalid i value",ERR,ERROR,*999)
         END SELECT
       CASE DEFAULT
-        CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+        CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
       END SELECT
     CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
       IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
@@ -2386,10 +2387,10 @@ CONTAINS
           DZX_DP(2)=-X(1)*SIN(X(2))*SIN(X(3))
           DZX_DP(3)=X(1)*COS(X(3))
         CASE DEFAULT
-          CALL FLAG_ERROR("Invalid i value",ERR,ERROR,*999)
+          CALL FlagError("Invalid i value",ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+        CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
       ENDIF
     CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
       IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
@@ -2408,10 +2409,10 @@ CONTAINS
           DZX_DP(2)=-FOCUS*SINH(X(1))*SIN(X(2))*SIN(X(3))
           DZX_DP(3)=FOCUS*SINH(X(1))*SIN(X(2))*COS(X(3))
         CASE DEFAULT
-          CALL FLAG_ERROR("Invalid i value",ERR,ERROR,*999)
+          CALL FlagError("Invalid i value",ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+        CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
       ENDIF
     CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
       IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
@@ -2430,13 +2431,13 @@ CONTAINS
           DZX_DP(2)=0.0_DP
           DZX_DP(3)=FOCUS*COSH(X(1))*COS(X(2))*COS(X(3))
         CASE DEFAULT
-          CALL FLAG_ERROR("Invalid i value",ERR,ERROR,*999)
+          CALL FlagError("Invalid i value",ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+        CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
       ENDIF
     CASE DEFAULT
-      CALL FLAG_ERROR("Invalid coordinate type",ERR,ERROR,*999)
+      CALL FlagError("Invalid coordinate type",ERR,ERROR,*999)
     END SELECT
 
     EXITS("DZX_DP")
@@ -2491,7 +2492,7 @@ CONTAINS
 !!as defined in constants e.g. X(1,2) == X(1,PART_DERIV_S1)
     
     IF(SIZE(X,1)<COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS) &
-      & CALL FLAG_ERROR("Size of X is less than the number of dimensions", &
+      & CALL FlagError("Size of X is less than the number of dimensions", &
       & ERR,ERROR,*999)
     
     IF(SIZE(X,1)==SIZE(Z,1)) THEN
@@ -2500,7 +2501,7 @@ CONTAINS
         IF(SIZE(X,2)>=PART_DERIV_TYPE) THEN
           Z=X(:,PART_DERIV_TYPE)
         ELSE
-          CALL FLAG_ERROR("Invalid derivative type",ERR,ERROR,*999)
+          CALL FlagError("Invalid derivative type",ERR,ERROR,*999)
         ENDIF
       CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE)
         SELECT CASE(PART_DERIV_TYPE)
@@ -2518,13 +2519,13 @@ CONTAINS
               Z(2)=SIN(X(2,1))*X(1,2)+X(1,1)*COS(X(2,1))*X(2,2) !d(y)/d(s1)
               Z(3)=X(3,2) !d(z)/d(s1)
             CASE DEFAULT
-              CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+              CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
             END SELECT
           ELSE
-            CALL FLAG_ERROR("Not enough X derivatives supplied",ERR,ERROR,*999)
+            CALL FlagError("Not enough X derivatives supplied",ERR,ERROR,*999)
           ENDIF
         CASE(PART_DERIV_S1_S1)
-          CALL FLAG_ERROR("Not implemented",ERR,ERROR,*999)
+          CALL FlagError("Not implemented",ERR,ERROR,*999)
         CASE(PART_DERIV_S2)
           IF(SIZE(X,2)>=4) THEN
             SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
@@ -2536,13 +2537,13 @@ CONTAINS
               Z(2)=SIN(X(2,1))*X(1,4)+X(1,1)*COS(X(2,1))*X(2,4) !d(y)/d(s2)
               Z(3)=X(3,4) !d(z)/d(s2)
             CASE DEFAULT
-              CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+              CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
             END SELECT
           ELSE
-            CALL FLAG_ERROR("Not enough X derivatives supplied",ERR,ERROR,*999)
+            CALL FlagError("Not enough X derivatives supplied",ERR,ERROR,*999)
           ENDIF
         CASE(PART_DERIV_S2_S2)
-          CALL FLAG_ERROR("Not implemented",ERR,ERROR,*999)
+          CALL FlagError("Not implemented",ERR,ERROR,*999)
         CASE(PART_DERIV_S1_S2)
           IF(SIZE(X,2)>=6) THEN
             SELECT CASE(SIZE(X,1))
@@ -2562,10 +2563,10 @@ CONTAINS
                 & X(2,2)*X(2,4)+X(1,1)*COS(X(2,1))*X(2,6)) !d2(y)/d(s1)d(s2)
               Z(3)=X(3,6) !d2(z)/d(s1)d(s2)
             CASE DEFAULT
-              CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+              CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
             END SELECT
           ELSE
-            CALL FLAG_ERROR("Not enough X derivatives supplied",ERR,ERROR,*999)
+            CALL FlagError("Not enough X derivatives supplied",ERR,ERROR,*999)
           ENDIF
         CASE(PART_DERIV_S3)
           IF(SIZE(X,2)>=7) THEN
@@ -2578,13 +2579,13 @@ CONTAINS
               Z(2)=SIN(X(2,1))*X(1,7)+X(1,1)*COS(X(2,1))*X(2,7) !d(y)/d(s3)
               Z(3)=X(3,7) !d(z)/d(s3)
             CASE DEFAULT
-              CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+              CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
             END SELECT
           ELSE
-            CALL FLAG_ERROR("Not enough X derivatives supplied",ERR,ERROR,*999)
+            CALL FlagError("Not enough X derivatives supplied",ERR,ERROR,*999)
           ENDIF
         CASE(PART_DERIV_S3_S3)
-          CALL FLAG_ERROR("Not implemented",ERR,ERROR,*999)
+          CALL FlagError("Not implemented",ERR,ERROR,*999)
         CASE(PART_DERIV_S1_S3)
           IF(SIZE(X,2)>=9) THEN
             SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
@@ -2600,10 +2601,10 @@ CONTAINS
                 & X(2,2)*X(2,7)+X(1,1)*COS(X(2,1))*X(2,9)) !d2(y)/d(s1)d(s3)
               Z(3)=X(3,9) !d2(z)/d(s1)d(s3)
             CASE DEFAULT
-              CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+              CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
             END SELECT
           ELSE
-            CALL FLAG_ERROR("Not enough X derivatives supplied",ERR,ERROR,*999)
+            CALL FlagError("Not enough X derivatives supplied",ERR,ERROR,*999)
           ENDIF
         CASE(PART_DERIV_S2_S3)
           IF(SIZE(X,2)>=10) THEN
@@ -2620,10 +2621,10 @@ CONTAINS
                 & X(2,4)*X(2,7)+X(1,1)*COS(X(2,1))*X(2,10)) !d2(y)/d(s2)d(s3)
               Z(3)=X(3,10) !d2(z)/d(s2)d(s3)
             CASE DEFAULT
-              CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+              CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
             END SELECT
           ELSE
-            CALL FLAG_ERROR("Not enough X derivatives supplied",ERR,ERROR,*999)
+            CALL FlagError("Not enough X derivatives supplied",ERR,ERROR,*999)
           ENDIF
         CASE(PART_DERIV_S1_S2_S3)
           IF(SIZE(X,2)>=11) THEN
@@ -2654,13 +2655,13 @@ CONTAINS
                 & COS(X(2,1))*X(2,11) !d3(y)/d(s1)d(s2)d(s3)
               Z(3)=X(3,11) !d3(z)/d(s1)d(s2)d(s3)
             CASE DEFAULT
-              CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+              CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
             END SELECT
           ELSE
-            CALL FLAG_ERROR("Not enough X derivatives supplied",ERR,ERROR,*999)
+            CALL FlagError("Not enough X derivatives supplied",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
-          CALL FLAG_ERROR("Invalid partial derivative type",ERR,ERROR,*999)
+          CALL FlagError("Invalid partial derivative type",ERR,ERROR,*999)
         END SELECT
       CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
         IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
@@ -2671,12 +2672,12 @@ CONTAINS
           CASE(PART_DERIV_S1,PART_DERIV_S1_S1,PART_DERIV_S2,PART_DERIV_S2_S2,&
             & PART_DERIV_S1_S2,PART_DERIV_S3,PART_DERIV_S3_S3,&
             & PART_DERIV_S1_S3,PART_DERIV_S2_S3,PART_DERIV_S1_S2_S3)
-            CALL FLAG_ERROR("Not implemented",ERR,ERROR,*999)
+            CALL FlagError("Not implemented",ERR,ERROR,*999)
           CASE DEFAULT
-            CALL FLAG_ERROR("Invalid partial derivative type",ERR,ERROR,*999)
+            CALL FlagError("Invalid partial derivative type",ERR,ERROR,*999)
           END SELECT
         ELSE
-          CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+          CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
         ENDIF
       CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
         IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
@@ -2698,10 +2699,10 @@ CONTAINS
                 & FOCUS*SINH(X(1,1))*SIN(X(2,1))*COS(X(3,1))*&
                 & X(3,2) !d(z)/d(s1)
             ELSE
-              CALL FLAG_ERROR("Invalid derivative type",ERR,ERROR,*999)
+              CALL FlagError("Invalid derivative type",ERR,ERROR,*999)
             ENDIF
           CASE(PART_DERIV_S1_S1)
-            CALL FLAG_ERROR("Not implemented",ERR,ERROR,*999)
+            CALL FlagError("Not implemented",ERR,ERROR,*999)
           CASE(PART_DERIV_S2)
             IF(SIZE(X,2)>=4) THEN
               Z(1)=FOCUS*SINH(X(1,1))*COS(X(2,1))*X(1,4)-&
@@ -2715,11 +2716,11 @@ CONTAINS
                 & FOCUS*SINH(X(1,1))*SIN(X(2,1))*COS(X(3,1))*&
                 & X(3,4) !d(z)/d(s2)
             ELSE
-              CALL FLAG_ERROR("Not enough X derivatives supplied",&
+              CALL FlagError("Not enough X derivatives supplied",&
                 & ERR,ERROR,*999)
             ENDIF
           CASE(PART_DERIV_S2_S2)
-            CALL FLAG_ERROR("Not implemented",ERR,ERROR,*999)
+            CALL FlagError("Not implemented",ERR,ERROR,*999)
           CASE(PART_DERIV_S1_S2)
             IF(SIZE(X,2)>=6) THEN
               Z(1)=FOCUS*(SINH(X(1,1))*COS(X(2,1))*X(1,6)+&
@@ -2755,7 +2756,7 @@ CONTAINS
                 & X(2,4)-SINH(X(1,1))*SIN(X(2,1))*SIN(X(3,1))*&
                 & X(3,4))) !d2(z)/d(s1)d(s2)
             ELSE
-              CALL FLAG_ERROR("Not enough X derivatives supplied",&
+              CALL FlagError("Not enough X derivatives supplied",&
                 & ERR,ERROR,*999)
             ENDIF
           CASE(PART_DERIV_S3)
@@ -2771,11 +2772,11 @@ CONTAINS
                 & FOCUS*SINH(X(1,1))*SIN(X(2,1))*COS(X(3,1))*&
                 & X(3,7) !d(z)/d(s3)
             ELSE
-              CALL FLAG_ERROR("Not enough X derivatives supplied",&
+              CALL FlagError("Not enough X derivatives supplied",&
                 & ERR,ERROR,*999)
             ENDIF
           CASE(PART_DERIV_S3_S3)
-            CALL FLAG_ERROR("Not implemented",ERR,ERROR,*999)
+            CALL FlagError("Not implemented",ERR,ERROR,*999)
           CASE(PART_DERIV_S1_S3)
             IF(SIZE(X,2)>=9) THEN
               Z(1)=FOCUS*(SINH(X(1,1))*COS(X(2,1))*X(1,9)+&
@@ -2811,7 +2812,7 @@ CONTAINS
                 & SINH(X(1,1))*SIN(X(2,1))*SIN(X(3,1))*&
                 & X(3,7))) !d2(z)/d(s1)d(s3)
             ELSE
-              CALL FLAG_ERROR("Not enough X derivatives supplied",&
+              CALL FlagError("Not enough X derivatives supplied",&
                 & ERR,ERROR,*999)
             ENDIF
           CASE(PART_DERIV_S2_S3)
@@ -2849,7 +2850,7 @@ CONTAINS
                 & SINH(X(1,1))*SIN(X(2,1))*SIN(X(3,1))*&
                 & X(3,7))) !d2(z)/d(s2)d(s3)
             ELSE
-              CALL FLAG_ERROR("Not enough X derivatives supplied",&
+              CALL FlagError("Not enough X derivatives supplied",&
                 & ERR,ERROR,*999)
             ENDIF
           CASE(PART_DERIV_S1_S2_S3)
@@ -2989,11 +2990,11 @@ CONTAINS
                 & SINH(X(1,1))*SIN(X(2,1))*COS(X(3,1))*&
                 & X(3,11)) !d3(z)/d(s1)d(s2)d(s3)
             ELSE
-              CALL FLAG_ERROR("Not enough X derivatives supplied",&
+              CALL FlagError("Not enough X derivatives supplied",&
                 & ERR,ERROR,*999)
             ENDIF
           CASE DEFAULT
-            CALL FLAG_ERROR("Invalid partial derivative type",ERR,ERROR,*999)
+            CALL FlagError("Invalid partial derivative type",ERR,ERROR,*999)
           END SELECT
         ENDIF
       CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
@@ -3006,18 +3007,18 @@ CONTAINS
           CASE(PART_DERIV_S1,PART_DERIV_S1_S1,PART_DERIV_S2,PART_DERIV_S2_S2,&
             & PART_DERIV_S1_S2,PART_DERIV_S3,PART_DERIV_S3_S3,&
             & PART_DERIV_S1_S3,PART_DERIV_S2_S3,PART_DERIV_S1_S2_S3)
-            CALL FLAG_ERROR("Not implemented",ERR,ERROR,*999)
+            CALL FlagError("Not implemented",ERR,ERROR,*999)
           CASE DEFAULT
-            CALL FLAG_ERROR("Invalid partial derivative type",ERR,ERROR,*999)
+            CALL FlagError("Invalid partial derivative type",ERR,ERROR,*999)
           END SELECT
         ELSE
-          CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+          CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
         ENDIF
       CASE DEFAULT
-        CALL FLAG_ERROR("Invalid coordinate type",ERR,ERROR,*999)
+        CALL FlagError("Invalid coordinate type",ERR,ERROR,*999)
       END SELECT
     ELSE
-      CALL FLAG_ERROR("The sizes of the vectors X and Z do not match",&
+      CALL FlagError("The sizes of the vectors X and Z do not match",&
         & ERR,ERROR,*999)
     ENDIF
 
@@ -3059,7 +3060,7 @@ CONTAINS
 !!as defined in constants e.g. X(1,2) == X(1,PART_DERIV_S1)
 
     IF(SIZE(X,1)<COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS) &
-      & CALL FLAG_ERROR("Size of X is less than the number of dimensions", &
+      & CALL FlagError("Size of X is less than the number of dimensions", &
       & ERR,ERROR,*999)
     
     IF(SIZE(X,1)==SIZE(Z,1)) THEN
@@ -3068,7 +3069,7 @@ CONTAINS
         IF(SIZE(X,2)>=PART_DERIV_TYPE) THEN
           Z=X(:,PART_DERIV_TYPE)
         ELSE
-          CALL FLAG_ERROR("Invalid partial derivative type",ERR,ERROR,*999)
+          CALL FlagError("Invalid partial derivative type",ERR,ERROR,*999)
         ENDIF
       CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE)
         SELECT CASE(PART_DERIV_TYPE)
@@ -3086,13 +3087,13 @@ CONTAINS
               Z(2)=SIN(X(2,1))*X(1,2)+X(1,1)*COS(X(2,1))*X(2,2) !d(y)/d(s1)
               Z(3)=X(3,2) !d(z)/d(s1)
             CASE DEFAULT
-              CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+              CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
             END SELECT
           ELSE
-            CALL FLAG_ERROR("Not enough X derivatives supplied",ERR,ERROR,*999)
+            CALL FlagError("Not enough X derivatives supplied",ERR,ERROR,*999)
           ENDIF
         CASE(PART_DERIV_S1_S1)
-          CALL FLAG_ERROR("Not implemented",ERR,ERROR,*999)
+          CALL FlagError("Not implemented",ERR,ERROR,*999)
         CASE(PART_DERIV_S2)
           IF(SIZE(X,2)>=4) THEN
             SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
@@ -3104,13 +3105,13 @@ CONTAINS
               Z(2)=SIN(X(2,1))*X(1,4)+X(1,1)*COS(X(2,1))*X(2,4) !d(y)/d(s2)
               Z(3)=X(3,4) !d(z)/d(s2)
             CASE DEFAULT
-              CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+              CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
             END SELECT
           ELSE
-            CALL FLAG_ERROR("Not enough X derivatives supplied",ERR,ERROR,*999)
+            CALL FlagError("Not enough X derivatives supplied",ERR,ERROR,*999)
           ENDIF
         CASE(PART_DERIV_S2_S2)
-          CALL FLAG_ERROR("Not implemented",ERR,ERROR,*999)
+          CALL FlagError("Not implemented",ERR,ERROR,*999)
         CASE(PART_DERIV_S1_S2)
           IF(SIZE(X,2)>=6) THEN
             SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
@@ -3130,10 +3131,10 @@ CONTAINS
                 & X(2,2)*X(2,4)+X(1,1)*COS(X(2,1))*X(2,6)) !d2(y)/d(s1)d(s2)
               Z(3)=X(3,6) !d2(z)/d(s1)d(s2)
             CASE DEFAULT
-              CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+              CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
             END SELECT
           ELSE
-            CALL FLAG_ERROR("Not enough X derivatives supplied",ERR,ERROR,*999)
+            CALL FlagError("Not enough X derivatives supplied",ERR,ERROR,*999)
           ENDIF
         CASE(PART_DERIV_S3)
           IF(SIZE(X,2)>=7) THEN
@@ -3146,13 +3147,13 @@ CONTAINS
               Z(2)=SIN(X(2,1))*X(1,7)+X(1,1)*COS(X(2,1))*X(2,7) !d(y)/d(s3)
               Z(3)=X(3,7) !d(z)/d(s3)
             CASE DEFAULT
-              CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+              CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
             END SELECT
           ELSE
-            CALL FLAG_ERROR("Not enough X derivatives supplied",ERR,ERROR,*999)
+            CALL FlagError("Not enough X derivatives supplied",ERR,ERROR,*999)
           ENDIF
         CASE(PART_DERIV_S3_S3)
-          CALL FLAG_ERROR("Not implemented",ERR,ERROR,*999)
+          CALL FlagError("Not implemented",ERR,ERROR,*999)
         CASE(PART_DERIV_S1_S3)
           IF(SIZE(X,2)>=9) THEN
             SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
@@ -3168,10 +3169,10 @@ CONTAINS
                 & X(2,2)*X(2,7)+X(1,1)*COS(X(2,1))*X(2,9)) !d2(y)/d(s1)d(s3)
               Z(3)=X(3,9) !d2(z)/d(s1)d(s3)
             CASE DEFAULT
-              CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+              CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
             END SELECT
           ELSE
-            CALL FLAG_ERROR("Not enough X derivatives supplied",ERR,ERROR,*999)
+            CALL FlagError("Not enough X derivatives supplied",ERR,ERROR,*999)
           ENDIF
         CASE(PART_DERIV_S2_S3)
           IF(SIZE(X,2)>=10) THEN
@@ -3188,10 +3189,10 @@ CONTAINS
                 & X(2,4)*X(2,7)+X(1,1)*COS(X(2,1))*X(2,10)) !d2(y)/d(s2)d(s3)
               Z(3)=X(3,10) !d2(z)/d(s2)d(s3)
             CASE DEFAULT
-              CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+              CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
             END SELECT
           ELSE
-            CALL FLAG_ERROR("Not enough X derivatives supplied",ERR,ERROR,*999)
+            CALL FlagError("Not enough X derivatives supplied",ERR,ERROR,*999)
           ENDIF
         CASE(PART_DERIV_S1_S2_S3)
           IF(SIZE(X,2)>=11) THEN
@@ -3222,13 +3223,13 @@ CONTAINS
                 & COS(X(2,1))*X(2,11) !d3(y)/d(s1)d(s2)d(s3)
               Z(3)=X(3,11) !d3(z)/d(s1)d(s2)d(s3)
             CASE DEFAULT
-              CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+              CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
             END SELECT
           ELSE
-            CALL FLAG_ERROR("Not enough X derivatives supplied",ERR,ERROR,*999)
+            CALL FlagError("Not enough X derivatives supplied",ERR,ERROR,*999)
           ENDIF
         CASE DEFAULT
-          CALL FLAG_ERROR("Invalid partial derivative type",ERR,ERROR,*999)
+          CALL FlagError("Invalid partial derivative type",ERR,ERROR,*999)
         END SELECT
       CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
         IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
@@ -3239,12 +3240,12 @@ CONTAINS
           CASE(PART_DERIV_S1,PART_DERIV_S1_S1,PART_DERIV_S2,PART_DERIV_S2_S2,&
             & PART_DERIV_S1_S2,PART_DERIV_S3,PART_DERIV_S3_S3,&
             & PART_DERIV_S1_S3,PART_DERIV_S2_S3,PART_DERIV_S1_S2_S3)
-            CALL FLAG_ERROR("Not implemented",ERR,ERROR,*999)
+            CALL FlagError("Not implemented",ERR,ERROR,*999)
           CASE DEFAULT
-            CALL FLAG_ERROR("Invalid partial derivative type",ERR,ERROR,*999)
+            CALL FlagError("Invalid partial derivative type",ERR,ERROR,*999)
           END SELECT
         ELSE
-          CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+          CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
         ENDIF
       CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
         IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
@@ -3266,11 +3267,11 @@ CONTAINS
                 & FOCUS*SINH(X(1,1))*SIN(X(2,1))*COS(X(3,1))*&
                 & X(3,2) !d(z)/d(s1)
             ELSE
-              CALL FLAG_ERROR("Not enough X derivatives supplied", &
+              CALL FlagError("Not enough X derivatives supplied", &
                 & ERR,ERROR,*999)
             ENDIF
           CASE(PART_DERIV_S1_S1)
-            CALL FLAG_ERROR("Not implemented",ERR,ERROR,*999)
+            CALL FlagError("Not implemented",ERR,ERROR,*999)
           CASE(PART_DERIV_S2)
             IF(SIZE(X,2)>=4) THEN
               Z(1)=FOCUS*SINH(X(1,1))*COS(X(2,1))*X(1,4)-&
@@ -3284,11 +3285,11 @@ CONTAINS
                 & FOCUS*SINH(X(1,1))*SIN(X(2,1))*COS(X(3,1))*&
                 & X(3,4) !d(z)/d(s2)
             ELSE
-              CALL FLAG_ERROR("Not enough X derivatives supplied",&
+              CALL FlagError("Not enough X derivatives supplied",&
                 & ERR,ERROR,*999)
             ENDIF
           CASE(PART_DERIV_S2_S2)
-            CALL FLAG_ERROR("Not implemented",ERR,ERROR,*999)
+            CALL FlagError("Not implemented",ERR,ERROR,*999)
           CASE(PART_DERIV_S1_S2)
             IF(SIZE(X,2)>=6) THEN
               Z(1)=FOCUS*(SINH(X(1,1))*COS(X(2,1))*X(1,6)+&
@@ -3324,7 +3325,7 @@ CONTAINS
                 & X(2,4)-SINH(X(1,1))*SIN(X(2,1))*SIN(X(3,1))*&
                 & X(3,4))) !d2(z)/d(s1)d(s2)
             ELSE
-              CALL FLAG_ERROR("Not enough X derivatives supplied",&
+              CALL FlagError("Not enough X derivatives supplied",&
                 & ERR,ERROR,*999)
             ENDIF
           CASE(PART_DERIV_S3)
@@ -3340,11 +3341,11 @@ CONTAINS
                 & FOCUS*SINH(X(1,1))*SIN(X(2,1))*COS(X(3,1))*&
                 & X(3,7) !d(z)/d(s3)
             ELSE
-              CALL FLAG_ERROR("Not enough X derivatives supplied",&
+              CALL FlagError("Not enough X derivatives supplied",&
                 & ERR,ERROR,*999)
             ENDIF
           CASE(PART_DERIV_S3_S3)
-            CALL FLAG_ERROR("Not implemented",ERR,ERROR,*999)
+            CALL FlagError("Not implemented",ERR,ERROR,*999)
           CASE(PART_DERIV_S1_S3)
             IF(SIZE(X,2)>=9) THEN
               Z(1)=FOCUS*(SINH(X(1,1))*COS(X(2,1))*X(1,9)+&
@@ -3380,7 +3381,7 @@ CONTAINS
                 & SINH(X(1,1))*SIN(X(2,1))*SIN(X(3,1))*&
                 & X(3,7))) !d2(z)/d(s1)d(s3)
             ELSE
-              CALL FLAG_ERROR("Not enough X derivatives supplied",&
+              CALL FlagError("Not enough X derivatives supplied",&
                 & ERR,ERROR,*999)
             ENDIF
           CASE(PART_DERIV_S2_S3)
@@ -3418,7 +3419,7 @@ CONTAINS
                 & SINH(X(1,1))*SIN(X(2,1))*SIN(X(3,1))*&
                 & X(3,7))) !d2(z)/d(s2)d(s3)
             ELSE
-              CALL FLAG_ERROR("Not enough X derivatives supplied",&
+              CALL FlagError("Not enough X derivatives supplied",&
                 & ERR,ERROR,*999)
             ENDIF
           CASE(PART_DERIV_S1_S2_S3)
@@ -3558,11 +3559,11 @@ CONTAINS
                 & SINH(X(1,1))*SIN(X(2,1))*COS(X(3,1))*&
                 & X(3,11)) !d3(z)/d(s1)d(s2)d(s3)
             ELSE
-              CALL FLAG_ERROR("Not enough X derivatives supplied",&
+              CALL FlagError("Not enough X derivatives supplied",&
                 & ERR,ERROR,*999)
             ENDIF
           CASE DEFAULT
-            CALL FLAG_ERROR("Invalid partial derivative type",ERR,ERROR,*999)
+            CALL FlagError("Invalid partial derivative type",ERR,ERROR,*999)
           END SELECT
         ENDIF
       CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
@@ -3574,18 +3575,18 @@ CONTAINS
           CASE(PART_DERIV_S1,PART_DERIV_S1_S1,PART_DERIV_S2,PART_DERIV_S2_S2,&
             & PART_DERIV_S1_S2,PART_DERIV_S3,PART_DERIV_S3_S3,&
             & PART_DERIV_S1_S3,PART_DERIV_S2_S3,PART_DERIV_S1_S2_S3)
-            CALL FLAG_ERROR("Not implemented",ERR,ERROR,*999)
+            CALL FlagError("Not implemented",ERR,ERROR,*999)
           CASE DEFAULT
-            CALL FLAG_ERROR("Invalid partial derivative type",ERR,ERROR,*999)
+            CALL FlagError("Invalid partial derivative type",ERR,ERROR,*999)
           END SELECT
         ELSE
-          CALL FLAG_ERROR("Invalid number of coordinates",ERR,ERROR,*999)
+          CALL FlagError("Invalid number of coordinates",ERR,ERROR,*999)
         ENDIF
       CASE DEFAULT
-        CALL FLAG_ERROR("Invalid coordinate type",ERR,ERROR,*999)
+        CALL FlagError("Invalid coordinate type",ERR,ERROR,*999)
       END SELECT
     ELSE
-      CALL FLAG_ERROR("The sizes of the vectors X and Z do not match",&
+      CALL FlagError("The sizes of the vectors X and Z do not match",&
         & ERR,ERROR,*999)
     ENDIF
 
@@ -3642,7 +3643,7 @@ CONTAINS
                   LOCAL_ERROR="The number of components for the interpolated point of "// &
                     & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_COMPONENTS,"*",ERR,ERROR))// &
                     & " is invalid for a cylindrical polar coordinate system."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 ENDIF
               CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
                 DERIV_NORM=INTERPOLATED_POINT%VALUES(1,PART_DERIV_INDEX)**2+(INTERPOLATED_POINT%VALUES(1,1)* &
@@ -3655,32 +3656,32 @@ CONTAINS
                 DERIV_NORM=FOCUS*FOCUS*((SL*SL+SM*SM)*(INTERPOLATED_POINT%VALUES(1,PART_DERIV_INDEX)**2+ &
                   & INTERPOLATED_POINT%VALUES(2,PART_DERIV_INDEX))**2)+(SL*SM*INTERPOLATED_POINT%VALUES(3,PART_DERIV_INDEX))**2
               CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE DEFAULT
                 LOCAL_ERROR="The coordinate system type of "//TRIM(NUMBER_TO_VSTRING(COORDINATE_SYSTEM%TYPE,"*",ERR,ERROR))// &
                   & " is invalid."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
               DERIV_NORM=SQRT(DERIV_NORM)
             CASE DEFAULT
               LOCAL_ERROR="The partial derivative index of "//TRIM(NUMBER_TO_VSTRING(PART_DERIV_INDEX,"*",ERR,ERROR))// &
                 & " is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ELSE
             LOCAL_ERROR="The partial derivative index of "//TRIM(NUMBER_TO_VSTRING(PART_DERIV_INDEX,"*",ERR,ERROR))// &
               & " is invalid. The interpolated point has a maximum number of partial derivatives of "// &
               & TRIM(NUMBER_TO_VSTRING(INTERPOLATED_POINT%MAX_PARTIAL_DERIVATIVE_INDEX,"*",ERR,ERROR))//"."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("The point has not been interpolated to include first derivative values.",ERR,ERROR,*999)
+          CALL FlagError("The point has not been interpolated to include first derivative values.",ERR,ERROR,*999)
         ENDIF          
       ELSE
-        CALL FLAG_ERROR("Interpolated point is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Interpolated point is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Coordinate system is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Coordinate system is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("COORDINATE_DERIVATIVE_NORM")
@@ -3726,7 +3727,7 @@ CONTAINS
         CASE DEFAULT
           LOCAL_ERROR="The radial interpolation type of "//TRIM(NUMBER_TO_VSTRING(COORDINATE_SYSTEM% &
             & RADIAL_INTERPOLATION_TYPE,"*",ERR,ERROR))//" is invalid for a cylindrical coordinate system."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
         SELECT CASE(COORDINATE_SYSTEM%RADIAL_INTERPOLATION_TYPE)
@@ -3742,7 +3743,7 @@ CONTAINS
         CASE DEFAULT
           LOCAL_ERROR="The radial interpolation type of "//TRIM(NUMBER_TO_VSTRING(COORDINATE_SYSTEM% &
             & RADIAL_INTERPOLATION_TYPE,"*",ERR,ERROR))//" is invalid for a cylindrical/spherical coordinate system."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
         SELECT CASE(COORDINATE_SYSTEM%RADIAL_INTERPOLATION_TYPE)
@@ -3778,17 +3779,17 @@ CONTAINS
         CASE DEFAULT
           LOCAL_ERROR="The radial interpolation type of "//TRIM(NUMBER_TO_VSTRING(COORDINATE_SYSTEM% &
             & RADIAL_INTERPOLATION_TYPE,"*",ERR,ERROR))//" is invalid for a prolate spheroidal coordinate system."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
-        CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+        CALL FlagError("Not implemented.",ERR,ERROR,*999)
       CASE DEFAULT
         LOCAL_ERROR="The coordinate system type of "//TRIM(NUMBER_TO_VSTRING(COORDINATE_SYSTEM%TYPE,"*",ERR,ERROR))// &
           & " is invalid."
-        CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
     ELSE
-      CALL FLAG_ERROR("Coordinate system is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Coordinate system is not associated.",ERR,ERROR,*999)
     ENDIF
       
     EXITS("COORDINATE_INTERPOLATION_ADJUST")
@@ -3829,9 +3830,9 @@ CONTAINS
           CASE DEFAULT
             LOCAL_ERROR="The radial interpolation type of "//TRIM(NUMBER_TO_VSTRING(COORDINATE_SYSTEM% &
               & RADIAL_INTERPOLATION_TYPE,"*",ERR,ERROR))//" is invalid for a cylindrical coordinate system."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
-          CALL FLAG_ERROR("Not implemented",ERR,ERROR,*999)
+          CALL FlagError("Not implemented",ERR,ERROR,*999)
         CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
           SELECT CASE(COORDINATE_SYSTEM%RADIAL_INTERPOLATION_TYPE)
           CASE(COORDINATE_RADIAL_INTERPOLATION_TYPE)
@@ -3840,9 +3841,9 @@ CONTAINS
           CASE DEFAULT
             LOCAL_ERROR="The radial interpolation type of "//TRIM(NUMBER_TO_VSTRING(COORDINATE_SYSTEM% &
               & RADIAL_INTERPOLATION_TYPE,"*",ERR,ERROR))//" is invalid for a spherical coordinate system."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
           SELECT CASE(COORDINATE_SYSTEM%RADIAL_INTERPOLATION_TYPE)
           CASE(COORDINATE_RADIAL_INTERPOLATION_TYPE)
@@ -3852,21 +3853,21 @@ CONTAINS
           CASE DEFAULT
             LOCAL_ERROR="The radial interpolation type of "//TRIM(NUMBER_TO_VSTRING(COORDINATE_SYSTEM% &
               & RADIAL_INTERPOLATION_TYPE,"*",ERR,ERROR))//" is invalid for a prolate spheroidal coordinate system."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE DEFAULT
           LOCAL_ERROR="The coordinate system type of "//TRIM(NUMBER_TO_VSTRING(COORDINATE_SYSTEM%TYPE,"*",ERR,ERROR))// &
             & " is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ELSE
-        CALL FLAG_ERROR("Interpolation parameters is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Interpolation parameters is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Coordinate system is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Coordinate system is not associated.",ERR,ERROR,*999)
     ENDIF
       
     EXITS("COORDINATE_INTERPOLATION_PARAMETERS_ADJUST")
@@ -3880,21 +3881,23 @@ CONTAINS
   !
  
   !>Calculates the tensor to get from material coordinate system, nu, to local coordinate system, xi.
-  SUBROUTINE CoordinateMaterialSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint,dNudXi,dXidNu,err,error,*)
+  SUBROUTINE Coordinates_MaterialSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint,dNudX,dXdNu,dNudXi,dXidNu,err,error,*)
   
     !Argument variables
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: geometricInterpPointMetrics !<The geometric interpolation point metrics at the point to calculate the material coordinate system from.
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: fibreInterpPoint !<The fibre interpolation point at the point to calculate the material coordinate system from
+    REAL(DP), INTENT(OUT) :: dNudX(:,:) !<dNudX(nuIdx,xIdx). On return, the tensor to transform from the material system to the geometric coordinate system
+    REAL(DP), INTENT(OUT) :: dXdNu(:,:) !<dXdNu(xIdx,nuIdx). On return, the tensor to transform from the geometric coordinate system to the material coordinate system
     REAL(DP), INTENT(OUT) :: dNudXi(:,:) !<dNudXi(nuIdx,xiIdx). On return, the tensor to transform from the material system to the xi coordinate system
     REAL(DP), INTENT(OUT) :: dXidNu(:,:) !<dXidNu(xiIdx,nuIdx). On return, the tensor to transform from the xi coordinate system to the material coordinate system
     INTEGER(INTG), INTENT(OUT) :: err   !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) ::  error   !<The error string
     !Local variables
-    INTEGER(INTG) :: numberOfXDimensions,numberOfXiDimensions,numberOfNuDimensions
-    REAL(DP) :: dXdNu(3,3),dNudX(3,3),dNudXiTemp(3,3),Jnuxi
+    INTEGER(INTG) :: numberOfXDimensions,numberOfXiDimensions,numberOfNuDimensions,xiIdx
+    REAL(DP) :: dNudXiTemp(3,3),Jnuxi
     TYPE(VARYING_STRING) :: localError 
      
-    ENTERS("CoordinateMaterialSystemCalculate",err,error,*999)
+    ENTERS("Coordinates_MaterialSystemCalculate",err,error,*999)
     
     IF(ASSOCIATED(geometricInterpPointMetrics)) THEN
       
@@ -3911,10 +3914,10 @@ CONTAINS
         CASE(1)
           dXdNu(1,1)=1.0_DP
         CASE(2)
-          CALL CoordinateMaterialSystemCalculatedXdNu2D(geometricInterpPointMetrics,fibreInterpPoint%values(1: &
+          CALL Coordinates_MaterialSystemCalculatedXdNu2D(geometricInterpPointMetrics,fibreInterpPoint%values(1: &
             & numberOfNuDimensions,1),dXdNu(1:numberOfXDimensions,1:numberOfXDimensions),err,error,*999)
         CASE(3)
-          CALL CoordinateMaterialSystemCalculatedXdNu3D(geometricInterpPointMetrics,fibreInterpPoint%values(1: &
+          CALL Coordinates_MaterialSystemCalculatedXdNu3D(geometricInterpPointMetrics,fibreInterpPoint%values(1: &
             & numberOfNuDimensions,1),dXdNu(1:numberOfXDimensions,1:numberOfXDimensions),err,error,*999)
         CASE DEFAULT
           localError="The number of dimensions in the geometric interpolated point of "// &
@@ -3922,20 +3925,22 @@ CONTAINS
             & " is invalid. The number of dimensions must be >= 1 and <= 3."
           CALL FlagError(localError,err,error,*999)
         END SELECT
-        !Calculate dNu/dX the inverse of dX/dNu (same as transpose due to orthogonality)
-        CALL MATRIX_TRANSPOSE(dXdNu(1:numberOfXDimensions,1:numberOfXDimensions),dNudX(1:numberOfXDimensions,1: &
-          & numberOfXDimensions),err,error,*999)
-        !Calculate dNu/dXi = dNu/dX * dX/dXi and its inverse dXi/dNu
-        CALL MATRIX_PRODUCT(dNudX(1:numberOfXDimensions,1:numberOfXDimensions), &
-          & geometricInterpPointMetrics%DX_DXI(1:numberOfXDimensions,1:numberOfXiDimensions), &
-          & dNudXiTemp(1:numberOfXDimensions,1:numberOfXiDimensions),err,error,*999)
       ELSE
         !No fibre field
         numberOfNuDimensions=0
-        dNudXiTemp(1:numberOfXDimensions,1:numberOfXiDimensions)=geometricInterpPointMetrics%DX_DXI(1:numberOfXDimensions, &
-          & 1:numberOfXiDimensions)
+        DO xiIdx=1,numberOfXiDimensions
+          dNudXiTemp(1:numberOfXDimensions,xiIdx)=geometricInterpPointMetrics%DX_DXI(1:numberOfXDimensions,xiIdx)
+          dXdNu(1:numberOfXDimensions,xiIdx)=Normalise(dNudXiTemp(1:numberOfXDimensions,xiIdx),err,error)
+        ENDDO !xiIdx
       ENDIF
-
+      !Calculate dNu/dX the inverse of dX/dNu (same as transpose due to orthogonality)
+      CALL MatrixTranspose(dXdNu(1:numberOfXDimensions,1:numberOfXDimensions),dNudX(1:numberOfXDimensions,1: &
+        & numberOfXDimensions),err,error,*999)
+      !Calculate dNu/dXi = dNu/dX * dX/dXi and its inverse dXi/dNu
+      CALL MatrixProduct(dNudX(1:numberOfXDimensions,1:numberOfXDimensions), &
+        & geometricInterpPointMetrics%DX_DXI(1:numberOfXDimensions,1:numberOfXiDimensions), &
+        & dNudXiTemp(1:numberOfXDimensions,1:numberOfXiDimensions),err,error,*999)
+      !Setup dNudXi
       CALL IdentityMatrix(dNudXi,err,error,*999)
       dNudXi(1:numberOfXDimensions,1:numberOfXiDimensions)=dNudXiTemp(1:numberOfXDimensions,1:numberOfXiDimensions)
 
@@ -3952,40 +3957,44 @@ CONTAINS
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of X dimensions  = ",numberOfXDimensions,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi dimensions = ",numberOfXiDimensions,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Nu dimensions = ",numberOfNuDimensions,err,error,*999)
-        IF(numberOfNuDimensions>0) THEN
-          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,1,1,numberOfXDimensions, &
-            & numberOfXDimensions,numberOfXDimensions,dXdNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-            & '("  dXdNu','(",I1,",:)','  :",3(X,E13.6))','(15X,3(X,E13.6))',err,error,*999)
-          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,1,1,numberOfXDimensions, &
-            & numberOfXDimensions,numberOfXDimensions,dNudX,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-            & '("  dNudX','(",I1,",:)','  :",3(X,E13.6))','(15X,3(X,E13.6))',err,error,*999)
-        ENDIF
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of X wrt Nu:",err,error,*999)
+        CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,1,1,numberOfXDimensions, &
+          & numberOfXDimensions,numberOfXDimensions,dXdNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+          & '("    dX_dNu','(",I1,",:)','  :",3(X,E13.6))','(18X,3(X,E13.6))',err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of Nu wrt X:",err,error,*999)
+        CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,1,1,numberOfXDimensions, &
+          & numberOfXDimensions,numberOfXDimensions,dNudX,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+          & '("    dNu_dX','(",I1,",:)','  :",3(X,E13.6))','(18X,3(X,E13.6))',err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Determinant dNu_dX, JNuX = ", &
+          & Determinant(dNudX(1:numberOfXDimensions,1:numberOfXDimensions),err,error),err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of Nu wrt Xi:",err,error,*999)
         CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,1,1,numberOfXiDimensions, &
           & numberOfXiDimensions,numberOfXiDimensions,dNudXi,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-          & '("  dNudXi','(",I1,",:)',' :",3(X,E13.6))','(15X,3(X,E13.6))',err,error,*999)
+          & '("    dNu_dXi','(",I1,",:)',' :",3(X,E13.6))','(18X,3(X,E13.6))',err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of Xi wrt Nu:",err,error,*999)
         CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXiDimensions,1,1,numberOfXDimensions, &
           & numberOfXDimensions,numberOfXDimensions,dXidNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-          & '("  dXidNu','(",I1,",:)',' :",3(X,E13.6))','(15X,3(X,E13.6))',err,error,*999)
-        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Determinant JNuXi = ",JNuXi,err,error,*999)
+          & '("    dXi_dNu','(",I1,",:)',' :",3(X,E13.6))','(18X,3(X,E13.6))',err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Determinant dNu_dXi, JNuXi = ",JNuXi,err,error,*999)
       ENDIF
       
     ELSE
       CALL FlagError("Geometric interpolated point metrics is not associated.",err,error,*999)
     ENDIF    
     
-    EXITS("CoordinateMaterialSystemCalculate")
+    EXITS("Coordinates_MaterialSystemCalculate")
     RETURN
-999 ERRORSEXITS("CoordinateMaterialSystemCalculate",err,error)
+999 ERRORSEXITS("Coordinates_MaterialSystemCalculate",err,error)
     RETURN 1
     
-  END SUBROUTINE CoordinateMaterialSystemCalculate
+  END SUBROUTINE Coordinates_MaterialSystemCalculate
   
   !
   !================================================================================================================================
   !
 
   !>Calculates transformation between spatial CS and rotated reference orthogonal material CS in 2D space
-  SUBROUTINE CoordinateMaterialSystemCalculatedXdNu2D(geometricInterpPointMetrics,angle,dXdNu,err,error,*)
+  SUBROUTINE Coordinates_MaterialSystemCalculatedXdNu2D(geometricInterpPointMetrics,angle,dXdNu,err,error,*)
 
     !Argument variables
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to calculate dXdNu at. 
@@ -3994,23 +4003,23 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP) :: dXdNuR(2,2),R(2,2)
+    REAL(DP) :: det,dXdNuR(2,2),R(2,2),f(2),g(2)
 
-    ENTERS("CoordinateMaterialSystemCalculatedXdNu2D",err,error,*999)
+    ENTERS("Coordinates_MaterialSystemCalculatedXdNu2D",err,error,*999)
 
     IF(ASSOCIATED(geometricInterpPointMetrics)) THEN
     
       !First calculate reference material CS
       
       !Reference material direction 1.
-      dXdNuR(:,1) = [ geometricInterpPointMetrics%DX_DXI(1,1),geometricInterpPointMetrics%DX_DXI(2,1) ]
+      f(1:2) = [ geometricInterpPointMetrics%DX_DXI(1,1),geometricInterpPointMetrics%DX_DXI(2,1) ]
       
       !Compute (normalised) vector orthogonal to material direction 1 to form material direction 2
-      dXdNuR(:,2) = [ -1.0_DP*dXdNuR(2,1),dXdNuR(1,1) ]
+      g(1:2) = [ -1.0_DP*f(2),f(1) ]
       
-      dXdNuR(1:2,1) = Normalise(dXdNuR(1:2,1),err,error)
+      dXdNuR(1:2,1) = Normalise(f(1:2),err,error)
       IF(err/=0) GOTO 999
-      dXdNuR(1:2,2) = Normalise(dXdNuR(1:2,2),err,error)
+      dXdNuR(1:2,2) = Normalise(g(1:2),err,error)
       IF(err/=0) GOTO 999
       
       !Rotate by multiply with rotation matrix
@@ -4024,22 +4033,48 @@ CONTAINS
       dXdNu(1:2,2) = Normalise(dXdNu(1:2,2),err,error)
       IF(err/=0) GOTO 999
 
+      IF(diagnostics1) THEN
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"2D material system calculation:",err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Reference material directions:",err,error,*999)
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,2,2,f,'("    f              :",2(X,E13.6))','(20X,2(X,E13.6))', &
+          & err,error,*999)      
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,2,2,g,'("    g              :",2(X,E13.6))','(20X,2(X,E13.6))', &
+          & err,error,*999)      
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Derivative of X wrt Nu (reference):",err,error,*999)
+        CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,1,1,2,2,2,dXdNuR,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+          & '("      dX_dNuR','(",I1,",:)',' :",2(X,E13.6))','(20X,2(X,E13.6))',err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Fibre calculation:",err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Fibre angle = ",angle(1),err,error,*999)
+        IF(diagnostics2) THEN
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Rotation matrix:",err,error,*999)
+          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,1,1,2,2,2,R,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+            & '("      R','(",I1,",:)','       :",2(X,E13.6))','(20X,2(X,E13.6))',err,error,*999)
+        ENDIF
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Derivative of X wrt Nu (material):",err,error,*999)
+        CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,1,1,2,2,2,dXdNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+          & '("      dX_dNu','(",I1,",:)','   :",2(X,E13.6))','(20X,2(X,E13.6))',err,error,*999)
+        det=Determinant(dXdNu,err,error)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Determinant dX_dNu = ",det,err,error,*999)
+      ENDIF
+      
     ELSE
       CALL FlagError("Geometry interpolated point metrics is not associated.",err,error,*999)
     ENDIF
         
-    EXITS("CoordinateMaterialSystemCalculatedXdNu2D")
+    EXITS("Coordinates_MaterialSystemCalculatedXdNu2D")
     RETURN
-999 ERRORSEXITS("CoordinateMaterialSystemCalculatedXdNu2D",err,error)
+999 ERRORSEXITS("Coordinates_MaterialSystemCalculatedXdNu2D",err,error)
     RETURN 1
-  END SUBROUTINE CoordinateMaterialSystemCalculatedXdNu2D
+    
+  END SUBROUTINE Coordinates_MaterialSystemCalculatedXdNu2D
 
   !
   !================================================================================================================================
   !
 
   !>Calculates transformation between spatial CS and rotated reference orthogonal material CS in 3D space
-  SUBROUTINE CoordinateMaterialSystemCalculatedXdNu3D(geometricInterpPointMetrics,angle,dXdNu,err,error,*)
+  SUBROUTINE Coordinates_MaterialSystemCalculatedXdNu3D(geometricInterpPointMetrics,angle,dXdNu,err,error,*)
 
     !Argument variables
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to calculate dXdNu at. 
@@ -4048,9 +4083,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP) :: angles(3),dXdNu2(3,3),dXdNu3(3,3),dXdNuR(3,3),f(3),g(3),h(3),Ra(3,3),Rb(3,3)
+    REAL(DP) :: angles(3),det,dXdNu2(3,3),dXdNu3(3,3),dXdNuR(3,3),f(3),g(3),h(3), &
+      & Raf(3,3),Rbf(3,3),Rai(3,3),Rbi(3,3),Ras(3,3),Rbs(3,3)
     
-    ENTERS("CoordinateMaterialSystemCalculatedXdNu3D",err,error,*999)
+    ENTERS("Coordinates_MaterialSystemCalculatedXdNu3D",err,error,*999)
     
     IF(ASSOCIATED(geometricInterpPointMetrics)) THEN
 
@@ -4070,6 +4106,9 @@ CONTAINS
       dXdNuR(1:3,3)=Normalise(h,err,error)
       IF(err/=0) GOTO 999
       
+      IF(diagnostics1) THEN
+      ENDIF
+
       !FIBRE ANGLE(alpha) - angles(1) 
       !In order to rotate reference material CS by alpha(fibre angle) in anti-clockwise  
       !direction about its axis 3, following steps are performed.
@@ -4080,18 +4119,18 @@ CONTAINS
       !rotation in (a) by rotation in (b). i.e. Ra*Rb  
       
       !The normalised reference material CS contains the transformation(rotation) between 
-      !the spatial CS -> reference material CS. i.e. Ra
-      Ra=dXdNuR
+      !the spatial CS -> reference material CS. i.e. Raf
+      Raf=dXdNuR
         
-      !Initialise rotation matrix Rb
-      CALL IdentityMatrix(Rb,err,error,*999)
-      !Populate rotation matrix Rb about axis 3 (Z)
-      Rb(1,1)=COS(angles(1))
-      Rb(1,2)=-1.0_DP*SIN(angles(1))
-      Rb(2,1)=SIN(angles(1))
-      Rb(2,2)=COS(angles(1))
+      !Initialise rotation matrix Rbf
+      CALL IdentityMatrix(Rbf,err,error,*999)
+      !Populate rotation matrix Rbf about axis 3 (Z)
+      Rbf(1,1)=COS(angles(1))
+      Rbf(1,2)=-1.0_DP*SIN(angles(1))
+      Rbf(2,1)=SIN(angles(1))
+      Rbf(2,2)=COS(angles(1))
         
-      CALL MatrixProduct(Ra,Rb,dXdNu3,err,error,*999)  
+      CALL MatrixProduct(Raf,Rbf,dXdNu3,err,error,*999)  
 
       !IMBRICATION ANGLE (beta) - angles(2)     
       !In order to rotate alpha-rotated material CS by beta(imbrication angle) in anti-clockwise  
@@ -4100,20 +4139,20 @@ CONTAINS
       !(b) then rotate the aligned CS by beta about Y axis in anti-clockwise direction
       !(c) apply the inverse of step(a) to the CS in (b)
       !As mentioned above, (a),(b) and (c) are equivalent to post-multiplying
-      !rotation in (a) by rotation in (b). i.e. Ra*Rb  
+      !rotation in (a) by rotation in (b). i.e. Rai*Rbi  
       
       !dXdNu3 contains the transformation(rotation) between 
-      !the spatial CS -> alpha-rotated reference material CS. i.e. Ra
-      Ra=dXdNu3
-      !Initialise rotation matrix Rb
-      CALL IdentityMatrix(Rb,err,error,*999)
-      !Populate rotation matrix Rb about axis 2 (Y). Note the sign change
-      Rb(1,1)=COS(angles(2))
-      Rb(1,3)=SIN(angles(2))
-      Rb(3,1)=-1.0_DP*SIN(angles(2))
-      Rb(3,3)=COS(angles(2))
+      !the spatial CS -> alpha-rotated reference material CS. i.e. Rai
+      Rai=dXdNu3
+      !Initialise rotation matrix Rbi
+      CALL IdentityMatrix(Rbi,err,error,*999)
+      !Populate rotation matrix Rbi about axis 2 (Y). Note the sign change
+      Rbi(1,1)=COS(angles(2))
+      Rbi(1,3)=SIN(angles(2))
+      Rbi(3,1)=-1.0_DP*SIN(angles(2))
+      Rbi(3,3)=COS(angles(2))
         
-      CALL MatrixProduct(Ra,Rb,dXdNu2,err,error,*999)  
+      CALL MatrixProduct(Rai,Rbi,dXdNu2,err,error,*999)  
 
       !SHEET ANGLE (gamma) - angles(3)    
       !In order to rotate alpha-beta-rotated material CS by gama(sheet angle) in anti-clockwise  
@@ -4122,31 +4161,87 @@ CONTAINS
       !(b) then rotate the aligned CS by gama about X axis in anti-clockwise direction
       !(c) apply the inverse of step(a) to the CS in (b)
       !Again steps (a),(b) and (c) are equivalent to post-multiplying
-      !rotation in (a) by rotation in (b). i.e. Ra*Rb  
+      !rotation in (a) by rotation in (b). i.e. Ras*Rbs  
       
       !dXdNu2 contains the transformation(rotation) between 
-      !the spatial CS -> alpha-beta-rotated reference material CS. i.e. Ra
-      Ra=dXdNu2
-      !Initialise rotation matrix Rb
-      CALL IdentityMatrix(Rb,err,error,*999)
-      !Populate rotation matrix Rb about axis 1 (X). 
-      Rb(2,2)=COS(angles(3))
-      Rb(2,3)=-1.0_DP*SIN(angles(3))
-      Rb(3,2)=SIN(angles(3))
-      Rb(3,3)=COS(angles(3))
+      !the spatial CS -> alpha-beta-rotated reference material CS. i.e. Ras
+      Ras=dXdNu2
+      !Initialise rotation matrix Rbs
+      CALL IdentityMatrix(Rbs,err,error,*999)
+      !Populate rotation matrix Rbs about axis 1 (X). 
+      Rbs(2,2)=COS(angles(3))
+      Rbs(2,3)=-1.0_DP*SIN(angles(3))
+      Rbs(3,2)=SIN(angles(3))
+      Rbs(3,3)=COS(angles(3))
       
-      CALL MatrixProduct(Ra,Rb,dXdNu,err,error,*999)  
-      
+      CALL MatrixProduct(Ras,Rbs,dXdNu,err,error,*999)  
+
+      IF(diagnostics1) THEN
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"3D material system calculation:",err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Reference material directions:",err,error,*999)
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,3,3,f,'("    f              :",3(X,E13.6))','(20X,3(X,E13.6))', &
+          & err,error,*999)      
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,3,3,g,'("    g              :",3(X,E13.6))','(20X,3(X,E13.6))', &
+          & err,error,*999)      
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,3,3,h,'("    h              :",3(X,E13.6))','(20X,3(X,E13.6))', &
+          & err,error,*999)      
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Derivative of X wrt Nu (reference):",err,error,*999)
+        CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,dXdNuR,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+          & '("      dX_dNuR','(",I1,",:)',' :",3(X,E13.6))','(20X,3(X,E13.6))',err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Fibre calculation:",err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Fibre angle = ",angles(1),err,error,*999)
+        IF(diagnostics2) THEN
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Rotation matrix A:",err,error,*999)
+          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,Raf,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+            & '("      Ra','(",I1,",:)','      :",3(X,E13.6))','(20X,3(X,E13.6))',err,error,*999)
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Rotation matrix B:",err,error,*999)
+          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,Rbf,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+            & '("      Rb','(",I1,",:)','      :",3(X,E13.6))','(20X,3(X,E13.6))',err,error,*999)
+        ENDIF
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Derivative of X wrt Nu (after alpha rotation):",err,error,*999)
+        CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,dXdNu3,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+          & '("      dX_dNu3','(",I1,",:)',' :",3(X,E13.6))','(20X,3(X,E13.6))',err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Imbrication calculation:",err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Imbrication angle = ",angles(2),err,error,*999)
+        IF(diagnostics2) THEN
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Rotation matrix A:",err,error,*999)
+          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,Rai,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+            & '("      Ra','(",I1,",:)','      :",3(X,E13.6))','(20X,3(X,E13.6))',err,error,*999)
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Rotation matrix B:",err,error,*999)
+          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,Rbi,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+            & '("      Rb','(",I1,",:)','      :",3(X,E13.6))','(20X,3(X,E13.6))',err,error,*999)
+        ENDIF
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Derivative of X wrt Nu (after alpha-beta rotation):",err,error,*999)
+        CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,dXdNu2,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+          & '("      dX_dNu2','(",I1,",:)',' :",3(X,E13.6))','(20X,3(X,E13.6))',err,error,*999)
+         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Sheet calculation:",err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Sheet angle = ",angles(3),err,error,*999)
+        IF(diagnostics2) THEN
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Rotation matrix A:",err,error,*999)
+          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,Ras,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+            & '("      Ra','(",I1,",:)','      :",3(X,E13.6))','(20X,3(X,E13.6))',err,error,*999)
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Rotation matrix B:",err,error,*999)
+          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,Rbs,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+            & '("      Rb','(",I1,",:)','      :",3(X,E13.6))','(20X,3(X,E13.6))',err,error,*999)
+        ENDIF
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Derivative of X wrt Nu (material):",err,error,*999)
+        CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,dXdNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+          & '("      dX_dNu','(",I1,",:)','  :",3(X,E13.6))','(20X,3(X,E13.6))',err,error,*999)
+        det=Determinant(dXdNu,err,error)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Determinant dX_dNu = ",det,err,error,*999)
+      ENDIF
+            
     ELSE
       CALL FlagError("Geometry interpolated point metrics is not associated.",err,error,*999)
     ENDIF
     
-    EXITS("CoordinateMaterialSystemCalculatedXdNu3D")
-
+    EXITS("Coordinates_MaterialSystemCalculatedXdNu3D")
     RETURN
-999 ERRORSEXITS("CoordinateMaterialSystemCalculatedXdNu3D",err,error)
+999 ERRORSEXITS("Coordinates_MaterialSystemCalculatedXdNu3D",err,error)
     RETURN 1
-  END SUBROUTINE CoordinateMaterialSystemCalculatedXdNu3D
+    
+  END SUBROUTINE Coordinates_MaterialSystemCalculatedXdNu3D
 
   !
   !================================================================================================================================
@@ -4167,7 +4262,7 @@ CONTAINS
     ENTERS("COORDINATE_SYSTEM_USER_NUMBER_FIND",ERR,ERROR,*999)
 
     IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
-      CALL FLAG_ERROR("Coordinate_system is already associated.",ERR,ERROR,*999)
+      CALL FlagError("Coordinate_system is already associated.",ERR,ERROR,*999)
     ELSE
       NULLIFY(COORDINATE_SYSTEM)
       coord_system_idx=1
@@ -4229,10 +4324,10 @@ CONTAINS
 
     !Allocate the coordinate systems
     ALLOCATE(COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(1),STAT=ERR)
-    IF(ERR/=0) CALL FLAG_ERROR("Could not allocate coordinate systems.",ERR,ERROR,*999)
+    IF(ERR/=0) CALL FlagError("Could not allocate coordinate systems.",ERR,ERROR,*999)
     !Create the default RC World cooordinate system
     ALLOCATE(COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(1)%PTR,STAT=ERR)
-    IF(ERR/=0) CALL FLAG_ERROR("Could not allocate world coordinate system.",ERR,ERROR,*999)
+    IF(ERR/=0) CALL FlagError("Could not allocate world coordinate system.",ERR,ERROR,*999)
     COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(1)%PTR%USER_NUMBER=0
     COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(1)%PTR%TYPE=COORDINATE_RECTANGULAR_CARTESIAN_TYPE
     COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(1)%PTR%NUMBER_OF_DIMENSIONS=3

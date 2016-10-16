@@ -1,0 +1,4 @@
+add_executable(StaticAdvectionDiffusion_FieldML StaticAdvectionDiffusion_FieldML.f90)
+set_target_properties(StaticAdvectionDiffusion_FieldML PROPERTIES LINKER_LANGUAGE Fortran)
+target_link_libraries(StaticAdvectionDiffusion_FieldML iron fieldml-api)
+oc_add_test(StaticAdvectionDiffusion_FieldML StaticAdvectionDiffusion_FieldML)

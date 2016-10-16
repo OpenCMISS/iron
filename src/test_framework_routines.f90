@@ -50,7 +50,8 @@ MODULE TEST_FRAMEWORK_ROUTINES
   USE MATRIX_VECTOR
   USE STRINGS
 
-#include "macros.h"  
+#include "macros.h"
+#include "dllexport.h"
 
   IMPLICIT NONE
 
@@ -81,6 +82,7 @@ CONTAINS
   
   !>Check if the actual integer value is as expected.
   SUBROUTINE TEST_FRAMEWORK_ASSERT_EQUALS_INTG(EXPECTED_VALUE,ACTUAL_VALUE,ERR)
+    !DLLEXPORT(TEST_FRAMEWORK_ASSERT_EQUALS_INTG)
   
     !Argument variables 
     INTEGER(INTG), INTENT(IN) :: EXPECTED_VALUE !<expected value
@@ -92,7 +94,7 @@ CONTAINS
     ENTERS("TEST_FRAMEWORK_ASSERT_EQUALS_INTG",ERR,ERROR,*999)
     
     IF(EXPECTED_VALUE/=ACTUAL_VALUE) THEN
-       CALL FLAG_ERROR("Not equal",ERR,ERROR,*999)
+       CALL FlagError("Not equal",ERR,ERROR,*999)
     ENDIF
           
     EXITS("TEST_FRAMEWORK_ASSERT_EQUALS_INTG")
@@ -107,7 +109,7 @@ CONTAINS
   
   !>Check if the actual real(DP) value is as expected.
   SUBROUTINE TEST_FRAMEWORK_ASSERT_EQUALS_DP1(EXPECTED_VALUE,ACTUAL_VALUE,ERR)
-  
+    !DLLEXPORT(TEST_FRAMEWORK_ASSERT_EQUALS_DP1)
     !Argument variables 
     REAL(DP), INTENT(IN) :: EXPECTED_VALUE !<expected value
     REAL(DP), INTENT(IN) :: ACTUAL_VALUE !<actual value
@@ -131,6 +133,7 @@ CONTAINS
   
   !>Check if the actual real(DP) value is as expected.
   SUBROUTINE TEST_FRAMEWORK_ASSERT_EQUALS_DP2(EXPECTED_VALUE,ACTUAL_VALUE,TOLERANCE,ERR)
+    !DLLEXPORT(TEST_FRAMEWORK_ASSERT_EQUALS_DP2)
   
     !Argument variables 
     REAL(DP), INTENT(IN) :: EXPECTED_VALUE !<expected value
@@ -143,7 +146,7 @@ CONTAINS
     ENTERS("TEST_FRAMEWORK_ASSERT_EQUALS_DP2",ERR,ERROR,*999)
     
     IF(ABS(EXPECTED_VALUE-ACTUAL_VALUE)>TOLERANCE) THEN
-       CALL FLAG_ERROR("Not Equal",ERR,ERROR,*999)
+       CALL FlagError("Not Equal",ERR,ERROR,*999)
     ENDIF
           
     EXITS("TEST_FRAMEWORK_ASSERT_EQUALS_DP2")
@@ -158,7 +161,7 @@ CONTAINS
   
   !>Check if the actual real(DP) values is as expected.
   SUBROUTINE TEST_FRAMEWORK_ASSERT_EQUALS_DP(EXPECTED_VALUE,ACTUAL_VALUE,ERR)
-  
+    !DLLEXPORT(TEST_FRAMEWORK_ASSERT_EQUALS_DP)
     !Argument variables 
     REAL(DP), INTENT(IN) :: EXPECTED_VALUE(:) !<expected value
     REAL(DP), INTENT(IN) :: ACTUAL_VALUE(:) !<actual value
@@ -174,7 +177,7 @@ CONTAINS
         CALL TEST_FRAMEWORK_ASSERT_EQUALS(EXPECTED_VALUE(i),ACTUAL_VALUE(i),ERR)
       ENDDO !i
     ELSE
-       CALL FLAG_ERROR("Not Equal",ERR,ERROR,*999)
+       CALL FlagError("Not Equal",ERR,ERROR,*999)
     ENDIF
           
     EXITS("TEST_FRAMEWORK_ASSERT_EQUALS_DP")
@@ -189,6 +192,7 @@ CONTAINS
   
   !>Get the gradient value of two array.
   SUBROUTINE TEST_FRAMEWORK_GRADIENT_VALUE_GET(X_VALUES,Y_VALUES,GRADIENT_VALUE)
+    !DLLEXPORT(TEST_FRAMEWORK_GRADIENT_VALUE_GET)
   
     !Argument variables 
     REAL(DP), INTENT(IN) :: X_VALUES(:) !<expected value
@@ -210,7 +214,7 @@ CONTAINS
         ENDIF
       ENDDO !i
     ELSE
-       CALL FLAG_ERROR('Size of x and Size of y do not match',ERR,ERROR,*999)     
+       CALL FlagError('Size of x and Size of y do not match',ERR,ERROR,*999)     
     ENDIF
 
     EXITS("TEST_FRAMEWORK_GRADIENT_VALUE_GET")

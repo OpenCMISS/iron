@@ -2,7 +2,7 @@
 %module iron_python
 %{
 #include "stdlib.h"
-#include "opencmiss.h"
+#include "opencmiss/iron.h"
 #define MAX_OUTPUT_STRING_SIZE 300
 %}
 
@@ -47,19 +47,19 @@
 
 /**** Macros ****/
 
-/**** CMISS*Type typemaps ****/
+/**** cmfe_*Type typemaps ****/
 
-/* Typemaps for passing CMISS types to CMISS...Type initialise routines
+/* Typemaps for passing CMFE types to cmfe_...Type initialise routines
    We don't need to pass an input value, we can create a NULL
    pointer within the C wrapper */
-%typemap(in,numinputs=0) CMISSDummyInitialiseType *CMISSDummy($*1_ltype temp) {
+%typemap(in,numinputs=0) cmfe_DummyInitialiseType *cmfe_Dummy($*1_ltype temp) {
   temp = ($*1_ltype)NULL;
   $1 = &temp;
 }
 
 /* Typemap to convert the output pointer to a SWIG pointer we can then
    pass it into other routines from Python */
-%typemap(argout) CMISSDummyInitialiseType *CMISSDummy {
+%typemap(argout) cmfe_DummyInitialiseType *cmfe_Dummy {
   PyObject *output_pointer;
 
   output_pointer = SWIG_NewPointerObj(*$1, $*1_descriptor, 0);
@@ -67,10 +67,10 @@
   $result = SWIG_Python_AppendOutput($result,output_pointer);
 }
 
-/* CMISS*TypeFinalise routines. Convert SWIG pointer input. Can't modify the input pointer to nullify it though */
-%typemap(in) CMISSDummyFinaliseType *CMISSDummy ($*1_ltype type_pointer) {
+/* cmfe_*TypeFinalise routines. Convert SWIG pointer input. Can't modify the input pointer to nullify it though */
+%typemap(in) cmfe_DummyFinaliseType *cmfe_Dummy ($*1_ltype type_pointer) {
   if (SWIG_ConvertPtr($input, (void **) (&type_pointer), $*1_descriptor, SWIG_POINTER_EXCEPTION) == -1) {
-    PyErr_SetString(PyExc_TypeError,"Input must be a SWIG pointer to the correct CMISS type.");
+    PyErr_SetString(PyExc_TypeError,"Input must be a SWIG pointer to the correct CMFE type.");
     return NULL;
   }
   $1 = &type_pointer;
@@ -80,12 +80,27 @@
 
 /* String input */
 %typemap(in,numinputs=1) (const int Size, const char *DummyInputString) {
-  if (!PyString_Check($input)) {
+  PyObject *temp_obj;
+  if (PyString_Check($input)) {
+    $1 = PyString_Size($input)+1;
+    $2 = PyString_AsString($input);
+  } else if (PyUnicode_Check($input)) {
+%#if PY_VERSION_HEX < 0x03030000
+    $1 = PyUnicode_GetSize($input)+1;
+%#else
+    $1 = PyUnicode_GetLength($input)+1;
+%#endif
+    temp_obj = PyUnicode_AsUTF8String($input);
+    if (temp_obj != NULL) {
+      $2 = PyString_AsString(temp_obj);
+    } else {
+      PyErr_SetString(PyExc_ValueError,"Expected a UTF8 compatible string");
+      return NULL;
+    }
+  } else {
     PyErr_SetString(PyExc_ValueError,"Expected a string");
     return NULL;
   }
-  $1 = PyString_Size($input)+1;
-  $2 = PyString_AsString($input);
 }
 
 /* String output */
@@ -135,15 +150,15 @@
 }
 
 /* Boolean input */
-%typemap(in) (const CMISSBool DummyInputBool) {
+%typemap(in) (const cmfe_Bool DummyInputBool) {
   $1 = PyObject_IsTrue($input);
 }
 
 /* Boolean output */
-%typemap(in,numinputs=0) (CMISSBool *DummyOutputScalar)(int temp) {
+%typemap(in,numinputs=0) (cmfe_Bool *DummyOutputScalar)(int temp) {
   $1 = &temp;
 }
-%typemap(argout) (CMISSBool *DummyOutputScalar) {
+%typemap(argout) (cmfe_Bool *DummyOutputScalar) {
   PyObject *output_bool;
 
   output_bool = PyBool_FromLong((long) *$1);
@@ -152,8 +167,8 @@
 
 /**** Arrays ****/
 
-/* Array of CMISS types */
-%typemap(in,numinputs=1) (const int ArraySize, const CMISSDummyType *DummyTypes)(int len, int i, PyObject *o) {
+/* Array of CMFE types */
+%typemap(in,numinputs=1) (const int ArraySize, const cmfe_DummyType *DummyTypes)(int len, int i, PyObject *o) {
   if (!PySequence_Check($input)) {
     PyErr_SetString(PyExc_TypeError,"Expected a sequence");
     return NULL;
@@ -167,7 +182,7 @@
     for (i=0; i < len; i++) {
       o = PySequence_GetItem($input,i);
       if (SWIG_ConvertPtr(o, (void **) ($2+i), $*2_descriptor, SWIG_POINTER_EXCEPTION) == -1) {
-        PyErr_SetString(PyExc_TypeError,"Expected a sequence of CMISS types.");
+        PyErr_SetString(PyExc_TypeError,"Expected a sequence of CMFE types.");
         free($2);
         return NULL;
       }
@@ -176,7 +191,7 @@
   }
   $1 = len;
 }
-%typemap(freearg) (const int ArraySize, const CMISSDummyType *DummyTypes) {
+%typemap(freearg) (const int ArraySize, const cmfe_DummyType *DummyTypes) {
     free($2);
 }
 

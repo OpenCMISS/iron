@@ -54,7 +54,7 @@ MODULE EQUATIONS_SET_ROUTINES
   USE CONSTANTS
   USE COORDINATE_ROUTINES
   USE FIELD_ROUTINES
-  USE FITTING_ROUTINES
+  USE FittingRoutines
   USE DISTRIBUTED_MATRIX_VECTOR
   USE DOMAIN_MAPPINGS
   USE ELASTICITY_ROUTINES
@@ -144,7 +144,7 @@ MODULE EQUATIONS_SET_ROUTINES
 
   PUBLIC EQUATIONS_SET_SOURCE_DESTROY
 
-  PUBLIC EQUATIONS_SET_SPECIFICATION_GET,EQUATIONS_SET_SPECIFICATION_SET
+  PUBLIC EquationsSet_SpecificationGet,EquationsSet_SpecificationSizeGet
 
   PUBLIC EquationsSet_StrainInterpolateXi
 
@@ -178,7 +178,7 @@ CONTAINS
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
         IF(EQUATIONS_SET%ANALYTIC%ANALYTIC_FINISHED) THEN
-          CALL FLAG_ERROR("Equations set analytic has already been finished.",ERR,ERROR,*999)
+          CALL FlagError("Equations set analytic has already been finished.",ERR,ERROR,*999)
         ELSE
           !Initialise the setup
           CALL EQUATIONS_SET_SETUP_INITIALISE(EQUATIONS_SET_SETUP_INFO,ERR,ERROR,*999)
@@ -197,10 +197,10 @@ CONTAINS
           EQUATIONS_SET%ANALYTIC%ANALYTIC_FINISHED=.TRUE.
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The equations set analytic is not associated.",ERR,ERROR,*999)
+        CALL FlagError("The equations set analytic is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_ANALYTIC_CREATE_FINISH")
@@ -235,7 +235,7 @@ CONTAINS
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
-        CALL FLAG_ERROR("The equations set analytic is already associated.",ERR,ERROR,*998)
+        CALL FlagError("The equations set analytic is already associated.",ERR,ERROR,*998)
       ELSE
         REGION=>EQUATIONS_SET%REGION
         IF(ASSOCIATED(REGION)) THEN
@@ -248,7 +248,7 @@ CONTAINS
                   & TRIM(NUMBER_TO_VSTRING(ANALYTIC_FIELD_USER_NUMBER,"*",ERR,ERROR))// &
                   & " does not match the user number of the specified analytic field of "// &
                   & TRIM(NUMBER_TO_VSTRING(ANALYTIC_FIELD%USER_NUMBER,"*",ERR,ERROR))//"."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
               ANALYTIC_FIELD_REGION=>ANALYTIC_FIELD%REGION
               IF(ASSOCIATED(ANALYTIC_FIELD_REGION)) THEN                
@@ -258,23 +258,23 @@ CONTAINS
                     & TRIM(NUMBER_TO_VSTRING(ANALYTIC_FIELD_REGION%USER_NUMBER,"*",ERR,ERROR))// &
                     & " and the specified equations set has been created on region number "// &
                     & TRIM(NUMBER_TO_VSTRING(REGION%USER_NUMBER,"*",ERR,ERROR))//"."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 ENDIF
                 !Check the specified analytic field has the same decomposition as the geometric field
                 GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
                 IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
                   IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD%DECOMPOSITION,ANALYTIC_FIELD%DECOMPOSITION)) THEN
-                    CALL FLAG_ERROR("The specified analytic field does not have the same decomposition as the geometric "// &
+                    CALL FlagError("The specified analytic field does not have the same decomposition as the geometric "// &
                       & "field for the specified equations set.",ERR,ERROR,*999)
                   ENDIF
                 ELSE
-                  CALL FLAG_ERROR("The geometric field is not associated for the specified equations set.",ERR,ERROR,*999)
+                  CALL FlagError("The geometric field is not associated for the specified equations set.",ERR,ERROR,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("The specified analytic field region is not associated.",ERR,ERROR,*999)
+                CALL FlagError("The specified analytic field region is not associated.",ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("The specified analytic field has not been finished.",ERR,ERROR,*999)
+              CALL FlagError("The specified analytic field has not been finished.",ERR,ERROR,*999)
             ENDIF
           ELSE
             !Check the user number has not already been used for a field in this region.
@@ -285,7 +285,7 @@ CONTAINS
                 & TRIM(NUMBER_TO_VSTRING(ANALYTIC_FIELD_USER_NUMBER,"*",ERR,ERROR))// &
                 & "has already been used to create a field on region number "// &
                 & TRIM(NUMBER_TO_VSTRING(REGION%USER_NUMBER,"*",ERR,ERROR))//"."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             ENDIF
           ENDIF
           !Initialise the equations set analytic
@@ -309,11 +309,11 @@ CONTAINS
             EQUATIONS_SET%ANALYTIC%ANALYTIC_FIELD=>ANALYTIC_FIELD
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Equations set region is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Equations set region is not associated.",ERR,ERROR,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*998)
     ENDIF
        
     EXITS("EQUATIONS_SET_ANALYTIC_CREATE_START")
@@ -342,10 +342,10 @@ CONTAINS
       IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN        
         CALL EQUATIONS_SET_ANALYTIC_FINALISE(EQUATIONS_SET%ANALYTIC,ERR,ERROR,*999)
       ELSE
-        CALL FLAG_ERROR("Equations set analytic is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Equations set analytic is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_ANALYTIC_DESTROY")
@@ -396,28 +396,28 @@ CONTAINS
           IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
             GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
             IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN            
-              CALL FIELD_NUMBER_OF_COMPONENTS_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
-              CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(GEOMETRIC_FIELD,GEOMETRIC_INTERP_PARAMETERS,ERR,ERROR,*999)
-              CALL FIELD_INTERPOLATED_POINTS_INITIALISE(GEOMETRIC_INTERP_PARAMETERS,GEOMETRIC_INTERP_POINT,ERR,ERROR,*999)
-              CALL FIELD_INTERPOLATED_POINTS_METRICS_INITIALISE(GEOMETRIC_INTERP_POINT,GEOMETRIC_INTERPOLATED_POINT_METRICS, &
+              CALL Field_NumberOfComponentsGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
+              CALL Field_InterpolationParametersInitialise(GEOMETRIC_FIELD,GEOMETRIC_INTERP_PARAMETERS,ERR,ERROR,*999)
+              CALL Field_InterpolatedPointsInitialise(GEOMETRIC_INTERP_PARAMETERS,GEOMETRIC_INTERP_POINT,ERR,ERROR,*999)
+              CALL Field_InterpolatedPointsMetricsInitialise(GEOMETRIC_INTERP_POINT,GEOMETRIC_INTERPOLATED_POINT_METRICS, &
                 & ERR,ERROR,*999)
               ANALYTIC_FIELD=>EQUATIONS_SET%ANALYTIC%ANALYTIC_FIELD
               IF(ASSOCIATED(ANALYTIC_FIELD)) THEN
-                CALL FIELD_NUMBER_OF_COMPONENTS_GET(ANALYTIC_FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_ANALYTIC_COMPONENTS, &
+                CALL Field_NumberOfComponentsGet(ANALYTIC_FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_ANALYTIC_COMPONENTS, &
                   & ERR,ERROR,*999)
-                CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(ANALYTIC_FIELD,ANALYTIC_INTERP_PARAMETERS,ERR,ERROR,*999)
-                CALL FIELD_INTERPOLATED_POINTS_INITIALISE(ANALYTIC_INTERP_PARAMETERS,ANALYTIC_INTERP_POINT,ERR,ERROR,*999)
-                CALL FIELD_PHYSICAL_POINTS_INITIALISE(ANALYTIC_INTERP_POINT,GEOMETRIC_INTERP_POINT,ANALYTIC_PHYSICAL_POINT, &
+                CALL Field_InterpolationParametersInitialise(ANALYTIC_FIELD,ANALYTIC_INTERP_PARAMETERS,ERR,ERROR,*999)
+                CALL Field_InterpolatedPointsInitialise(ANALYTIC_INTERP_PARAMETERS,ANALYTIC_INTERP_POINT,ERR,ERROR,*999)
+                CALL Field_PhysicalPointsInitialise(ANALYTIC_INTERP_POINT,GEOMETRIC_INTERP_POINT,ANALYTIC_PHYSICAL_POINT, &
                   & ERR,ERROR,*999)
               ENDIF
               NULLIFY(MATERIALS_FIELD)
               IF(ASSOCIATED(EQUATIONS_SET%MATERIALS)) THEN
                 MATERIALS_FIELD=>EQUATIONS_SET%MATERIALS%MATERIALS_FIELD
-                CALL FIELD_NUMBER_OF_COMPONENTS_GET(MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_ANALYTIC_COMPONENTS, &
+                CALL Field_NumberOfComponentsGet(MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_ANALYTIC_COMPONENTS, &
                   & ERR,ERROR,*999)
-                CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(MATERIALS_FIELD,MATERIALS_INTERP_PARAMETERS,ERR,ERROR,*999)
-                CALL FIELD_INTERPOLATED_POINTS_INITIALISE(MATERIALS_INTERP_PARAMETERS,MATERIALS_INTERP_POINT,ERR,ERROR,*999)
-                CALL FIELD_PHYSICAL_POINTS_INITIALISE(MATERIALS_INTERP_POINT,GEOMETRIC_INTERP_POINT,MATERIALS_PHYSICAL_POINT, &
+                CALL Field_InterpolationParametersInitialise(MATERIALS_FIELD,MATERIALS_INTERP_PARAMETERS,ERR,ERROR,*999)
+                CALL Field_InterpolatedPointsInitialise(MATERIALS_INTERP_PARAMETERS,MATERIALS_INTERP_POINT,ERR,ERROR,*999)
+                CALL Field_PhysicalPointsInitialise(MATERIALS_INTERP_POINT,GEOMETRIC_INTERP_POINT,MATERIALS_PHYSICAL_POINT, &
                   & ERR,ERROR,*999)
               ENDIF
               DO variable_idx=1,DEPENDENT_FIELD%NUMBER_OF_VARIABLES
@@ -430,7 +430,7 @@ CONTAINS
                       IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
                         SELECT CASE(FIELD_VARIABLE%COMPONENTS(component_idx)%INTERPOLATION_TYPE)
                         CASE(FIELD_CONSTANT_INTERPOLATION)
-                          CALL FLAG_ERROR("Cannot evaluate an analytic solution for a constant interpolation components.", &
+                          CALL FlagError("Cannot evaluate an analytic solution for a constant interpolation components.", &
                             & ERR,ERROR,*999)
                         CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
                           DOMAIN_ELEMENTS=>DOMAIN%TOPOLOGY%ELEMENTS
@@ -438,21 +438,21 @@ CONTAINS
                             !Loop over the local elements excluding the ghosts
                             DO element_idx=1,DOMAIN_ELEMENTS%NUMBER_OF_ELEMENTS
                               BASIS=>DOMAIN_ELEMENTS%ELEMENTS(element_idx)%BASIS
-                              CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,element_idx, &
+                              CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,element_idx, &
                                 & GEOMETRIC_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
                               IF(ASSOCIATED(ANALYTIC_FIELD)) THEN
-                                CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,element_idx, &
+                                CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,element_idx, &
                                   & ANALYTIC_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
                               ENDIF
                               IF(ASSOCIATED(MATERIALS_FIELD)) THEN
-                                CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,element_idx, &
+                                CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,element_idx, &
                                   & MATERIALS_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
                               ENDIF
                               CALL FIELD_INTERPOLATE_XI(FIRST_PART_DERIV,[0.5_DP,0.5_DP,0.5_DP], &
                                 & GEOMETRIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-                              CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(COORDINATE_JACOBIAN_NO_TYPE, &
+                              CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_NO_TYPE, &
                                 & GEOMETRIC_INTERPOLATED_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-                              CALL FIELD_POSITION_NORMAL_TANGENTS_CALCULATE_INT_PT_METRIC( &
+                              CALL Field_PositionNormalTangentsCalculateIntPtMetric( &
                                 & GEOMETRIC_INTERPOLATED_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR,reverseNormal, &
                                 & POSITION,NORMAL,TANGENTS,ERR,ERROR,*999)
                               IF(ASSOCIATED(ANALYTIC_FIELD)) THEN
@@ -495,18 +495,18 @@ CONTAINS
                               ENDIF
                               local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
                                 & ELEMENT_PARAM2DOF_MAP%ELEMENTS(element_idx)
-                              CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(DEPENDENT_FIELD,variable_type, &
+                              CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD,variable_type, &
                                 & FIELD_ANALYTIC_VALUES_SET_TYPE,local_ny,VALUE,ERR,ERROR,*999)
                             ENDDO !element_idx
                           ELSE
-                            CALL FLAG_ERROR("Domain topology elements is not associated.",ERR,ERROR,*999)
+                            CALL FlagError("Domain topology elements is not associated.",ERR,ERROR,*999)
                           ENDIF
                         CASE(FIELD_NODE_BASED_INTERPOLATION)
                           DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
                           IF(ASSOCIATED(DOMAIN_NODES)) THEN
                             !Loop over the local nodes excluding the ghosts.
                             DO node_idx=1,DOMAIN_NODES%NUMBER_OF_NODES
-                              CALL FIELD_POSITION_NORMAL_TANGENTS_CALCULATE_NODE(DEPENDENT_FIELD,variable_type,component_idx, &
+                              CALL Field_PositionNormalTangentsCalculateNode(DEPENDENT_FIELD,variable_type,component_idx, &
                                 & node_idx,POSITION,NORMAL,TANGENTS,ERR,ERROR,*999)
                               IF(ASSOCIATED(ANALYTIC_FIELD)) THEN
                                 CALL FIELD_INTERPOLATE_FIELD_NODE(NO_PHYSICAL_DERIV,FIELD_VALUES_SET_TYPE,ANALYTIC_FIELD, &
@@ -554,48 +554,48 @@ CONTAINS
                                 DO version_idx=1,DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
                                   local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
                                     & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(derivative_idx)%VERSIONS(version_idx)
-                                  CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(DEPENDENT_FIELD,variable_type, &
+                                  CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD,variable_type, &
                                     & FIELD_ANALYTIC_VALUES_SET_TYPE,local_ny,VALUE,ERR,ERROR,*999)
                                 ENDDO !version_idx
                               ENDDO !deriv_idx
                             ENDDO !node_idx
                           ELSE
-                            CALL FLAG_ERROR("Domain topology nodes is not associated.",ERR,ERROR,*999)
+                            CALL FlagError("Domain topology nodes is not associated.",ERR,ERROR,*999)
                           ENDIF
                         CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                          CALL FlagError("Not implemented.",ERR,ERROR,*999)
                         CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
                           DOMAIN_ELEMENTS=>DOMAIN%TOPOLOGY%ELEMENTS
                           IF(ASSOCIATED(DOMAIN_ELEMENTS)) THEN
                             !Loop over the local elements excluding the ghosts
                             DO element_idx=1,DOMAIN_ELEMENTS%NUMBER_OF_ELEMENTS
                               BASIS=>DOMAIN_ELEMENTS%ELEMENTS(element_idx)%BASIS
-                              CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,element_idx, &
+                              CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,element_idx, &
                                 & GEOMETRIC_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
                               IF(ASSOCIATED(ANALYTIC_FIELD)) THEN
-                                CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,element_idx, &
+                                CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,element_idx, &
                                   & ANALYTIC_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
                               ENDIF
                               IF(ASSOCIATED(MATERIALS_FIELD)) THEN
-                                CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,element_idx, &
+                                CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,element_idx, &
                                   & MATERIALS_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
                               ENDIF
                               !Loop over the Gauss points in the element
                               DO gauss_idx=1,BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR% &
                                 & NUMBER_OF_GAUSS
-                                CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
+                                CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
                                   & GEOMETRIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-                                CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(COORDINATE_JACOBIAN_NO_TYPE, &
+                                CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_NO_TYPE, &
                                   & GEOMETRIC_INTERPOLATED_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-                                CALL FIELD_POSITION_NORMAL_TANGENTS_CALCULATE_INT_PT_METRIC( &
+                                CALL Field_PositionNormalTangentsCalculateIntPtMetric( &
                                   & GEOMETRIC_INTERPOLATED_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR,reverseNormal, &
                                   & POSITION,NORMAL,TANGENTS,ERR,ERROR,*999)
                                 IF(ASSOCIATED(ANALYTIC_FIELD)) THEN
-                                  CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
+                                  CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
                                     & ANALYTIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
                                 ENDIF
                                 IF(ASSOCIATED(MATERIALS_FIELD)) THEN
-                                  CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
+                                  CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
                                     & MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
                                 ENDIF
 !! \todo Maybe do this with optional arguments?
@@ -630,33 +630,33 @@ CONTAINS
                                 ENDIF
                                 local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
                                   & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(Gauss_idx,element_idx)
-                                CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(DEPENDENT_FIELD,variable_type, &
+                                CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD,variable_type, &
                                   & FIELD_ANALYTIC_VALUES_SET_TYPE,local_ny,VALUE,ERR,ERROR,*999)
                               ENDDO !Gauss_idx
                             ENDDO !element_idx
                           ELSE
-                            CALL FLAG_ERROR("Domain topology elements is not associated.",ERR,ERROR,*999)
+                            CALL FlagError("Domain topology elements is not associated.",ERR,ERROR,*999)
                           ENDIF
                         CASE DEFAULT
                           LOCAL_ERROR="The interpolation type of "//TRIM(NUMBER_TO_VSTRING(FIELD_VARIABLE% &
                             & COMPONENTS(component_idx)%INTERPOLATION_TYPE,"*",ERR,ERROR))// &
                             & " for component "//TRIM(NUMBER_TO_VSTRING(component_idx,"*",ERR,ERROR))//" of variable type "// &
                             & TRIM(NUMBER_TO_VSTRING(variable_type,"*",ERR,ERROR))//" is invalid."
-                          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                         END SELECT
                       ELSE
-                        CALL FLAG_ERROR("Domain topology is not associated.",ERR,ERROR,*999)
+                        CALL FlagError("Domain topology is not associated.",ERR,ERROR,*999)
                       ENDIF
                     ELSE
-                      CALL FLAG_ERROR("Domain is not associated.",ERR,ERROR,*999)
+                      CALL FlagError("Domain is not associated.",ERR,ERROR,*999)
                     ENDIF
                   ENDDO !component_idx
-                  CALL FIELD_PARAMETER_SET_UPDATE_START(DEPENDENT_FIELD,variable_type, &
+                  CALL Field_ParameterSetUpdateStart(DEPENDENT_FIELD,variable_type, &
                     & FIELD_ANALYTIC_VALUES_SET_TYPE,ERR,ERROR,*999)
-                  CALL FIELD_PARAMETER_SET_UPDATE_FINISH(DEPENDENT_FIELD,variable_type, &
+                  CALL Field_ParameterSetUpdateFinish(DEPENDENT_FIELD,variable_type, &
                     & FIELD_ANALYTIC_VALUES_SET_TYPE,ERR,ERROR,*999)
                 ELSE
-                  CALL FLAG_ERROR("Field variable is not associated.",ERR,ERROR,*999)
+                  CALL FlagError("Field variable is not associated.",ERR,ERROR,*999)
                 ENDIF
               ENDDO !variable_idx
               IF(ASSOCIATED(MATERIALS_FIELD)) THEN
@@ -669,24 +669,24 @@ CONTAINS
                 CALL FIELD_INTERPOLATED_POINTS_FINALISE(ANALYTIC_INTERP_POINT,ERR,ERROR,*999)
                 CALL FIELD_INTERPOLATION_PARAMETERS_FINALISE(ANALYTIC_INTERP_PARAMETERS,ERR,ERROR,*999)
               ENDIF
-              CALL FIELD_INTERPOLATED_POINTS_METRICS_FINALISE(GEOMETRIC_INTERPOLATED_POINT_METRICS,ERR,ERROR,*999)
+              CALL Field_InterpolatedPointsMetricsFinalise(GEOMETRIC_INTERPOLATED_POINT_METRICS,ERR,ERROR,*999)
               CALL FIELD_INTERPOLATED_POINTS_FINALISE(GEOMETRIC_INTERP_POINT,ERR,ERROR,*999)
               CALL FIELD_INTERPOLATION_PARAMETERS_FINALISE(GEOMETRIC_INTERP_PARAMETERS,ERR,ERROR,*999)
               
             ELSE
-              CALL FLAG_ERROR("Equations set geometric field is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Equations set geometric field is not associated.",ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Equations set dependent field is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Equations set dependent field is not associated.",ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Equations set analytic has not been finished.",ERR,ERROR,*999)
+          CALL FlagError("Equations set analytic has not been finished.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Equations set analytic is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Equations set analytic is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_ANALYTIC_EVALUATE")
@@ -750,37 +750,48 @@ CONTAINS
     ENTERS("EQUATIONS_SET_ANALYTIC_FUNCTIONS_EVALUATE",ERR,ERROR,*999)
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      SELECT CASE(EQUATIONS_SET%CLASS)
+      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
+        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<1) THEN
+        CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
+      END IF
+      SELECT CASE(EQUATIONS_SET%SPECIFICATION(1))
       CASE(EQUATIONS_SET_ELASTICITY_CLASS)
-        CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+        CALL FlagError("Not implemented.",ERR,ERROR,*999)
       CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
-        CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+        CALL FlagError("Not implemented.",ERR,ERROR,*999)
       CASE(EQUATIONS_SET_ELECTROMAGNETICS_CLASS)
-        CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+        CALL FlagError("Not implemented.",ERR,ERROR,*999)
       CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
-        CALL CLASSICAL_FIELD_ANALYTIC_FUNCTIONS_EVALUATE(EQUATIONS_SET,EQUATIONS_SET%TYPE,ANALYTIC_FUNCTION_TYPE,POSITION, &
-          & TANGENTS,NORMAL,TIME,VARIABLE_TYPE,GLOBAL_DERIVATIVE,COMPONENT_NUMBER,ANALYTIC_PARAMETERS,MATERIALS_PARAMETERS, &
-          & VALUE,ERR,ERROR,*999)
+        IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
+          CALL FlagError("Equations set specification must have at least two entries for a "// &
+            & "classical field equations set.",err,error,*999)
+        END IF
+        CALL CLASSICAL_FIELD_ANALYTIC_FUNCTIONS_EVALUATE(EQUATIONS_SET,EQUATIONS_SET%SPECIFICATION(2), &
+          & ANALYTIC_FUNCTION_TYPE,POSITION,TANGENTS,NORMAL,TIME,VARIABLE_TYPE,GLOBAL_DERIVATIVE, &
+          & COMPONENT_NUMBER,ANALYTIC_PARAMETERS,MATERIALS_PARAMETERS,VALUE,ERR,ERROR,*999)
       CASE(EQUATIONS_SET_FITTING_CLASS)
-        CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+        CALL FlagError("Not implemented.",ERR,ERROR,*999)
       CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
-        CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+        CALL FlagError("Not implemented.",ERR,ERROR,*999)
       CASE(EQUATIONS_SET_MODAL_CLASS)
-        CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+        CALL FlagError("Not implemented.",ERR,ERROR,*999)
       CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
-        CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+        CALL FlagError("Not implemented.",ERR,ERROR,*999)
       CASE DEFAULT
-        LOCAL_ERROR="Equations set class "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%CLASS,"*",ERR,ERROR))//" is not valid."
+        LOCAL_ERROR="The first equations set specification of "// &
+          & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(1),"*",ERR,ERROR))//" is not valid."
         CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_ANALYTIC_FUNCTIONS_EVALUATE")
     RETURN
 999 ERRORSEXITS("EQUATIONS_SET_ANALYTIC_FUNCTIONS_EVALUATE",ERR,ERROR)
     RETURN 1
+    
   END SUBROUTINE EQUATIONS_SET_ANALYTIC_FUNCTIONS_EVALUATE
 
   !
@@ -802,10 +813,10 @@ CONTAINS
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
-        CALL FLAG_ERROR("Analytic is already associated for this equations set.",ERR,ERROR,*998)
+        CALL FlagError("Analytic is already associated for this equations set.",ERR,ERROR,*998)
       ELSE
         ALLOCATE(EQUATIONS_SET%ANALYTIC,STAT=ERR)
-        IF(ERR/=0) CALL FLAG_ERROR("Could not allocate equations set analytic.",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate equations set analytic.",ERR,ERROR,*999)
         EQUATIONS_SET%ANALYTIC%EQUATIONS_SET=>EQUATIONS_SET
         EQUATIONS_SET%ANALYTIC%ANALYTIC_FINISHED=.FALSE.
         EQUATIONS_SET%ANALYTIC%ANALYTIC_FIELD_AUTO_CREATED=.FALSE.
@@ -813,7 +824,7 @@ CONTAINS
         EQUATIONS_SET%ANALYTIC%ANALYTIC_TIME=0.0_DP
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*998)
     ENDIF
        
     EXITS("EQUATIONS_SET_ANALYTIC_INITIALISE")
@@ -844,10 +855,10 @@ CONTAINS
       IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
         TIME=EQUATIONS_SET%ANALYTIC%ANALYTIC_TIME
       ELSE
-        CALL FLAG_ERROR("Equations set analytic is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Equations set analytic is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_ANALYTIC_TIME_GET")
@@ -877,10 +888,10 @@ CONTAINS
       IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
         EQUATIONS_SET%ANALYTIC%ANALYTIC_TIME=TIME
       ELSE
-        CALL FLAG_ERROR("Equations set analytic is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Equations set analytic is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_ANALYTIC_TIME_SET")
@@ -914,13 +925,13 @@ CONTAINS
           !Set the value
           ANALYTIC%ANALYTIC_USER_PARAMS(PARAM_IDX)=PARAM
         ELSE
-          CALL FLAG_ERROR("Invalid parameter index.",ERR,ERROR,*999)
+          CALL FlagError("Invalid parameter index.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Equations set analytic is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Equations set analytic is not associated.",ERR,ERROR,*999)
       ENDIF    
     ELSE 
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
 
     EXITS("EQUATIONS_SET_ANALYTIC_USER_PARAM_SET")
@@ -953,13 +964,13 @@ CONTAINS
           !Set the value
           PARAM=ANALYTIC%ANALYTIC_USER_PARAMS(PARAM_IDX)
         ELSE
-          CALL FLAG_ERROR("Invalid parameter index.",ERR,ERROR,*999)
+          CALL FlagError("Invalid parameter index.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Equations set analytic is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Equations set analytic is not associated.",ERR,ERROR,*999)
       ENDIF    
     ELSE 
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
 
     EXITS("EQUATIONS_SET_ANALYTIC_USER_PARAM_GET")
@@ -997,22 +1008,22 @@ CONTAINS
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                 CALL EQUATIONS_SET_ASSEMBLE_STATIC_LINEAR_FEM(EQUATIONS_SET,ERR,ERROR,*999)
               CASE(EQUATIONS_SET_NODAL_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE DEFAULT
                 LOCAL_ERROR="The equations set solution method of "// &
                   & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
                   & " is invalid."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
             CASE(EQUATIONS_NONLINEAR)
               SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
@@ -1021,27 +1032,27 @@ CONTAINS
               CASE(EQUATIONS_SET_NODAL_SOLUTION_METHOD)
                 CALL EquationsSet_AssembleStaticNonlinearNodal(EQUATIONS_SET,ERR,ERROR,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE DEFAULT
                 LOCAL_ERROR="The equations set solution method of "// &
                   & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
                   & " is invalid."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
             CASE(EQUATIONS_NONLINEAR_BCS)
-              CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",ERR,ERROR,*999)
             CASE DEFAULT
               LOCAL_ERROR="The equations linearity of "// &
                 & TRIM(NUMBER_TO_VSTRING(EQUATIONS%LINEARITY,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           CASE(EQUATIONS_QUASISTATIC)
 ! chrm, 17/09/09
@@ -1049,31 +1060,31 @@ CONTAINS
             CASE(EQUATIONS_LINEAR)
               SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-                CALL EQUATIONS_SET_ASSEMBLE_QUASISTATIC_LINEAR_FEM(EQUATIONS_SET,ERR,ERROR,*999)
+                CALL EquationsSet_AssembleQuasistaticLinearFEM(EQUATIONS_SET,ERR,ERROR,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE DEFAULT
                 LOCAL_ERROR="The equations set solution method of "// &
                   & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
                   & " is invalid."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
             CASE(EQUATIONS_NONLINEAR)
-                CALL EQUATIONS_SET_ASSEMBLE_QUASISTATIC_NONLINEAR_FEM(EQUATIONS_SET,ERR,ERROR,*999)
+                CALL EquationsSet_AssembleQuasistaticNonlinearFEM(EQUATIONS_SET,ERR,ERROR,*999)
             CASE(EQUATIONS_NONLINEAR_BCS)
-              CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",ERR,ERROR,*999)
             CASE DEFAULT
               LOCAL_ERROR="The equations linearity of "// &
                 & TRIM(NUMBER_TO_VSTRING(EQUATIONS%LINEARITY,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           CASE(EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
             SELECT CASE(EQUATIONS%LINEARITY)
@@ -1082,45 +1093,45 @@ CONTAINS
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                 CALL EQUATIONS_SET_ASSEMBLE_DYNAMIC_LINEAR_FEM(EQUATIONS_SET,ERR,ERROR,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE DEFAULT
                 LOCAL_ERROR="The equations set solution method of "// &
                   & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
                   & " is invalid."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
             CASE(EQUATIONS_NONLINEAR)
-              CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",ERR,ERROR,*999)
             CASE(EQUATIONS_NONLINEAR_BCS)
-              CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",ERR,ERROR,*999)
             CASE DEFAULT
               LOCAL_ERROR="The equations set linearity of "// &
                 & TRIM(NUMBER_TO_VSTRING(EQUATIONS%LINEARITY,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           CASE(EQUATIONS_TIME_STEPPING)
-            CALL FLAG_ERROR("Time stepping equations are not assembled.",ERR,ERROR,*999)
+            CALL FlagError("Time stepping equations are not assembled.",ERR,ERROR,*999)
           CASE DEFAULT
             LOCAL_ERROR="The equations time dependence type of "// &
               & TRIM(NUMBER_TO_VSTRING(EQUATIONS%TIME_DEPENDENCE,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
-          CALL FLAG_ERROR("Equations have not been finished.",ERR,ERROR,*999)
+          CALL FlagError("Equations have not been finished.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Equations set equations is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Equations set equations is not associated.",ERR,ERROR,*999)
       ENDIF      
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_ASSEMBLE")
@@ -1264,16 +1275,16 @@ CONTAINS
                 & ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Equations matrices is not associated",ERR,ERROR,*999)
+            CALL FlagError("Equations matrices is not associated",ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Equations is not associated",ERR,ERROR,*999)
+          CALL FlagError("Equations is not associated",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Dependent field is not associated",ERR,ERROR,*999)
+        CALL FlagError("Dependent field is not associated",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_ASSEMBLE_DYNAMIC_LINEAR_FEM")
@@ -1462,16 +1473,16 @@ CONTAINS
                 & ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Equations matrices is not associated",ERR,ERROR,*999)
+            CALL FlagError("Equations matrices is not associated",ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Equations is not associated",ERR,ERROR,*999)
+          CALL FlagError("Equations is not associated",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Dependent field is not associated",ERR,ERROR,*999)
+        CALL FlagError("Dependent field is not associated",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_ASSEMBLE_STATIC_LINEAR_FEM")
@@ -1540,7 +1551,7 @@ CONTAINS
               ne=ELEMENTS_MAPPING%DOMAIN_LIST(element_idx)
               NUMBER_OF_TIMES=NUMBER_OF_TIMES+1
               CALL EQUATIONS_MATRICES_ELEMENT_CALCULATE(EQUATIONS_MATRICES,ne,ERR,ERROR,*999)
-              CALL EQUATIONS_SET_FINITE_ELEMENT_RESIDUAL_EVALUATE(EQUATIONS_SET,ne,ERR,ERROR,*999)
+              CALL EquationsSet_FiniteElementResidualEvaluate(EQUATIONS_SET,ne,ERR,ERROR,*999)
               CALL EQUATIONS_MATRICES_ELEMENT_ADD(EQUATIONS_MATRICES,ERR,ERROR,*999)
             ENDDO !element_idx
             !Output timing information if required
@@ -1573,7 +1584,7 @@ CONTAINS
               ne=ELEMENTS_MAPPING%DOMAIN_LIST(element_idx)
               NUMBER_OF_TIMES=NUMBER_OF_TIMES+1
               CALL EQUATIONS_MATRICES_ELEMENT_CALCULATE(EQUATIONS_MATRICES,ne,ERR,ERROR,*999)
-              CALL EQUATIONS_SET_FINITE_ELEMENT_RESIDUAL_EVALUATE(EQUATIONS_SET,ne,ERR,ERROR,*999)
+              CALL EquationsSet_FiniteElementResidualEvaluate(EQUATIONS_SET,ne,ERR,ERROR,*999)
               CALL EQUATIONS_MATRICES_ELEMENT_ADD(EQUATIONS_MATRICES,ERR,ERROR,*999)
             ENDDO !element_idx
             !Output timing information if required
@@ -1614,16 +1625,16 @@ CONTAINS
                 & ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Equations matrices is not associated",ERR,ERROR,*999)
+            CALL FlagError("Equations matrices is not associated",ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Equations is not associated",ERR,ERROR,*999)
+          CALL FlagError("Equations is not associated",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Dependent field is not associated",ERR,ERROR,*999)
+        CALL FlagError("Dependent field is not associated",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_ASSEMBLE_STATIC_NONLINEAR_FEM")
@@ -1638,26 +1649,30 @@ CONTAINS
 
   !>Assembles the equations stiffness matrix, residuals and rhs for a nonlinear quasistatic equations set using the finite element method.
   !> currently the same as the static nonlinear case
-  SUBROUTINE EQUATIONS_SET_ASSEMBLE_QUASISTATIC_NONLINEAR_FEM(EQUATIONS_SET,ERR,ERROR,*)
+  SUBROUTINE EquationsSet_AssembleQuasistaticNonlinearFEM(EQUATIONS_SET,ERR,ERROR,*)
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to assemble the equations for
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
-    ENTERS("EQUATIONS_SET_ASSEMBLE_QUASISTATIC_NONLINEAR_FEM",ERR,ERROR,*999)
+    ENTERS("EquationsSet_AssembleQuasistaticNonlinearFEM",ERR,ERROR,*999)
+
     ! currently no difference
     CALL EQUATIONS_SET_ASSEMBLE_STATIC_NONLINEAR_FEM(EQUATIONS_SET,ERR,ERROR,*999)
+    
     RETURN
-999 ERRORSEXITS("EQUATIONS_SET_ASSEMBLE_QUASISTATIC_NONLINEAR_FEM",ERR,ERROR)
+999 ERRORS("EquationsSet_AssembleQuasistaticNonlinearFEM",ERR,ERROR)
+    EXITS("EquationsSet_AssembleQuasistaticNonlinearFEM")
     RETURN 1
-  END  SUBROUTINE EQUATIONS_SET_ASSEMBLE_QUASISTATIC_NONLINEAR_FEM
+    
+  END  SUBROUTINE EquationsSet_AssembleQuasistaticNonlinearFEM
 
   !
   !================================================================================================================================
   !
 
   !>Assembles the equations stiffness matrix and rhs for a linear quasistatic equations set using the finite element method.
-  SUBROUTINE EQUATIONS_SET_ASSEMBLE_QUASISTATIC_LINEAR_FEM(EQUATIONS_SET,ERR,ERROR,*)
+  SUBROUTINE EquationsSet_AssembleQuasistaticLinearFEM(EQUATIONS_SET,ERR,ERROR,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to assemble the equations for
@@ -1673,7 +1688,7 @@ CONTAINS
     TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES
     TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD
     
-    ENTERS("EQUATIONS_SET_ASSEMBLE_QUASISTATIC_LINEAR_FEM",ERR,ERROR,*999)
+    ENTERS("EquationsSet_AssembleQuasistaticLinearFEM",ERR,ERROR,*999)
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
@@ -1786,23 +1801,23 @@ CONTAINS
                 & ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Equations matrices is not associated",ERR,ERROR,*999)
+            CALL FlagError("Equations matrices is not associated",ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Equations is not associated",ERR,ERROR,*999)
+          CALL FlagError("Equations is not associated",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Dependent field is not associated",ERR,ERROR,*999)
+        CALL FlagError("Dependent field is not associated",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated",ERR,ERROR,*999)
     ENDIF
        
-    EXITS("EQUATIONS_SET_ASSEMBLE_QUASISTATIC_LINEAR_FEM")
+    EXITS("EquationsSet_AssembleQuasistaticLinearFEM")
     RETURN
-999 ERRORSEXITS("EQUATIONS_SET_ASSEMBLE_QUASISTATIC_LINEAR_FEM",ERR,ERROR)
+999 ERRORSEXITS("EquationsSet_AssembleQuasistaticLinearFEM",ERR,ERROR)
     RETURN 1
-  END SUBROUTINE EQUATIONS_SET_ASSEMBLE_QUASISTATIC_LINEAR_FEM
+  END SUBROUTINE EquationsSet_AssembleQuasistaticLinearFEM
 
   !
   !================================================================================================================================
@@ -1856,7 +1871,7 @@ CONTAINS
             IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
               DYNAMIC_MATRICES=>EQUATIONS_MATRICES%DYNAMIC_MATRICES
               IF(ASSOCIATED(DYNAMIC_MATRICES)) THEN
-                !CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                !CALL FlagError("Not implemented.",ERR,ERROR,*999)
               ELSE
                 LINEAR_MATRICES=>EQUATIONS_MATRICES%LINEAR_MATRICES
                 IF(ASSOCIATED(LINEAR_MATRICES)) THEN
@@ -1875,10 +1890,10 @@ CONTAINS
                               IF(ASSOCIATED(SOURCE_DISTRIBUTED_VECTOR)) THEN
                                 CALL DISTRIBUTED_VECTOR_DATA_GET(SOURCE_DISTRIBUTED_VECTOR,SOURCE_VECTOR_DATA,ERR,ERROR,*999)
                               ELSE
-                                CALL FLAG_ERROR("Source distributed vector is not associated.",ERR,ERROR,*999)
+                                CALL FlagError("Source distributed vector is not associated.",ERR,ERROR,*999)
                               ENDIF
                             ELSE
-                              CALL FLAG_ERROR("Source vector is not associated.",ERR,ERROR,*999)
+                              CALL FlagError("Source vector is not associated.",ERR,ERROR,*999)
                             ENDIF
                           ENDIF
                           RHS_VARIABLE=>RHS_MAPPING%RHS_VARIABLE
@@ -1895,7 +1910,7 @@ CONTAINS
                                   IF(ASSOCIATED(DEPENDENT_VARIABLE)) THEN
                                     VARIABLE_TYPE=DEPENDENT_VARIABLE%VARIABLE_TYPE
                                     !Get the dependent field variable parameters
-                                    CALL FIELD_PARAMETER_SET_DATA_GET(DEPENDENT_FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                                    CALL Field_ParameterSetDataGet(DEPENDENT_FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                                       & DEPENDENT_PARAMETERS,ERR,ERROR,*999)
                                     EQUATIONS_MATRIX=>LINEAR_MATRICES%MATRICES(equations_matrix_idx)%PTR
                                     IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
@@ -1935,27 +1950,27 @@ CONTAINS
                                                 !Do nothing
                                               CASE(BOUNDARY_CONDITION_DOF_MIXED)
                                                 !Robin or is it Cauchy??? boundary conditions
-                                                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                                                CALL FlagError("Not implemented.",ERR,ERROR,*999)
                                               CASE DEFAULT
                                                 LOCAL_ERROR="The RHS variable boundary condition of "// &
                                                   & TRIM(NUMBER_TO_VSTRING(rhs_boundary_condition,"*",ERR,ERROR))// &
                                                   & " for RHS variable dof number "// &
                                                   & TRIM(NUMBER_TO_VSTRING(rhs_variable_dof,"*",ERR,ERROR))//" is invalid."
-                                                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                                                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                                               END SELECT
                                               IF(ASSOCIATED(SOURCE_MAPPING)) THEN
                                                 SOURCE_VALUE=SOURCE_VECTOR_DATA(equations_row_number)
                                                 RHS_VALUE=RHS_VALUE-SOURCE_VALUE
                                               ENDIF
-                                              CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(DEPENDENT_FIELD,RHS_VARIABLE_TYPE, &
+                                              CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD,RHS_VARIABLE_TYPE, &
                                                 & FIELD_VALUES_SET_TYPE,rhs_variable_dof,RHS_VALUE,ERR,ERROR,*999)
                                             ENDDO !equations_row_number
                                           CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
-                                            CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                                            CALL FlagError("Not implemented.",ERR,ERROR,*999)
                                           CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-                                            CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                                            CALL FlagError("Not implemented.",ERR,ERROR,*999)
                                           CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
-                                            CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                                            CALL FlagError("Not implemented.",ERR,ERROR,*999)
                                           CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
                                             CALL DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_GET(EQUATIONS_DISTRIBUTED_MATRIX, &
                                               & ROW_INDICES,COLUMN_INDICES,ERR,ERROR,*999)
@@ -1981,96 +1996,96 @@ CONTAINS
                                                 !Do nothing
                                               CASE(BOUNDARY_CONDITION_DOF_MIXED)
                                                 !Robin or is it Cauchy??? boundary conditions
-                                                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                                                CALL FlagError("Not implemented.",ERR,ERROR,*999)
                                               CASE DEFAULT
                                                 LOCAL_ERROR="The global boundary condition of "// &
                                                   & TRIM(NUMBER_TO_VSTRING(rhs_boundary_condition,"*",ERR,ERROR))// &
                                                   & " for RHS variable dof number "// &
                                                   & TRIM(NUMBER_TO_VSTRING(rhs_variable_dof,"*",ERR,ERROR))//" is invalid."
-                                                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                                                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                                               END SELECT
                                               IF(ASSOCIATED(SOURCE_MAPPING)) THEN
                                                 SOURCE_VALUE=SOURCE_VECTOR_DATA(equations_row_number)
                                                 RHS_VALUE=RHS_VALUE-SOURCE_VALUE
                                               ENDIF
-                                              CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(DEPENDENT_FIELD,RHS_VARIABLE_TYPE, &
+                                              CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD,RHS_VARIABLE_TYPE, &
                                                 & FIELD_VALUES_SET_TYPE,rhs_variable_dof,RHS_VALUE,ERR,ERROR,*999)
                                             ENDDO !equations_row_number
                                           CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-                                            CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                                            CALL FlagError("Not implemented.",ERR,ERROR,*999)
                                           CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
-                                            CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                                            CALL FlagError("Not implemented.",ERR,ERROR,*999)
                                           CASE DEFAULT
                                             LOCAL_ERROR="The matrix storage type of "// &
                                               & TRIM(NUMBER_TO_VSTRING(EQUATIONS_STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
-                                            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                                            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                                           END SELECT
                                           CALL DISTRIBUTED_MATRIX_DATA_RESTORE(EQUATIONS_DISTRIBUTED_MATRIX,EQUATIONS_MATRIX_DATA, &
                                             & ERR,ERROR,*999)
                                         ELSE
-                                          CALL FLAG_ERROR("Equations matrix distributed matrix is not associated.",ERR,ERROR,*999)
+                                          CALL FlagError("Equations matrix distributed matrix is not associated.",ERR,ERROR,*999)
                                         ENDIF
                                       ELSE
-                                        CALL FLAG_ERROR("Equations column domain mapping is not associated.",ERR,ERROR,*999)
+                                        CALL FlagError("Equations column domain mapping is not associated.",ERR,ERROR,*999)
                                       ENDIF
                                     ELSE
-                                      CALL FLAG_ERROR("Equations equations matrix is not associated.",ERR,ERROR,*999)
+                                      CALL FlagError("Equations equations matrix is not associated.",ERR,ERROR,*999)
                                     ENDIF
                                     !Restore the dependent field variable parameters
-                                    CALL FIELD_PARAMETER_SET_DATA_RESTORE(DEPENDENT_FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                                    CALL Field_ParameterSetDataRestore(DEPENDENT_FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                                       & DEPENDENT_PARAMETERS,ERR,ERROR,*999)
                                   ELSE
-                                    CALL FLAG_ERROR("Dependent variable is not associated.",ERR,ERROR,*999)
+                                    CALL FlagError("Dependent variable is not associated.",ERR,ERROR,*999)
                                   ENDIF
                                 ENDDO !equations_matrix_idx
                                 !Start the update of the field parameters
-                                CALL FIELD_PARAMETER_SET_UPDATE_START(DEPENDENT_FIELD,RHS_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                                CALL Field_ParameterSetUpdateStart(DEPENDENT_FIELD,RHS_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                                   & ERR,ERROR,*999)
                                 !Finish the update of the field parameters
-                                CALL FIELD_PARAMETER_SET_UPDATE_FINISH(DEPENDENT_FIELD,RHS_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                                CALL Field_ParameterSetUpdateFinish(DEPENDENT_FIELD,RHS_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                                   & ERR,ERROR,*999)
                               ELSE
-                                CALL FLAG_ERROR("RHS boundary conditions variable is not associated.",ERR,ERROR,*999)
+                                CALL FlagError("RHS boundary conditions variable is not associated.",ERR,ERROR,*999)
                               ENDIF
                             ELSE
-                              CALL FLAG_ERROR("RHS variable domain mapping is not associated.",ERR,ERROR,*999)
+                              CALL FlagError("RHS variable domain mapping is not associated.",ERR,ERROR,*999)
                             ENDIF
                           ELSE
-                            CALL FLAG_ERROR("RHS variable is not associated.",ERR,ERROR,*999)
+                            CALL FlagError("RHS variable is not associated.",ERR,ERROR,*999)
                           ENDIF
                           IF(ASSOCIATED(SOURCE_MAPPING)) THEN
                             CALL DISTRIBUTED_VECTOR_DATA_RESTORE(SOURCE_DISTRIBUTED_VECTOR,SOURCE_VECTOR_DATA,ERR,ERROR,*999)
                           ENDIF
                         ELSE
-                          CALL FLAG_ERROR("Boundary conditions are not associated.",ERR,ERROR,*999)
+                          CALL FlagError("Boundary conditions are not associated.",ERR,ERROR,*999)
                         ENDIF
                       ELSE
-                        CALL FLAG_ERROR("Equations mapping RHS mappings is not associated.",ERR,ERROR,*999)
+                        CALL FlagError("Equations mapping RHS mappings is not associated.",ERR,ERROR,*999)
                       ENDIF
                     ELSE
-                      CALL FLAG_ERROR("Equations mapping linear mapping is not associated.",ERR,ERROR,*999)
+                      CALL FlagError("Equations mapping linear mapping is not associated.",ERR,ERROR,*999)
                     ENDIF
                   ELSE
-                    CALL FLAG_ERROR("Equations mapping is not associated.",ERR,ERROR,*999)
+                    CALL FlagError("Equations mapping is not associated.",ERR,ERROR,*999)
                   ENDIF
                 ELSE
-                  CALL FLAG_ERROR("Equations matrices linear matrices is not associated.",ERR,ERROR,*999)
+                  CALL FlagError("Equations matrices linear matrices is not associated.",ERR,ERROR,*999)
                 ENDIF
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Equations matrices is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Equations is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Equations is not associated.",ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Dependent field is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Dependent field is not associated.",ERR,ERROR,*999)
         ENDIF
       ELSE            
-        CALL FLAG_ERROR("Equations set has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("Equations set has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated",ERR,ERROR,*999)
     ENDIF
           
     EXITS("EQUATIONS_SET_BACKSUBSTITUTE")
@@ -2123,10 +2138,10 @@ CONTAINS
               RHS_FIELD=>RHS_VARIABLE%FIELD
               VARIABLE_TYPE=RHS_VARIABLE%VARIABLE_TYPE
             ELSE
-              CALL FLAG_ERROR("RHS mapping RHS variable is not associated.",ERR,ERROR,*999)
+              CALL FlagError("RHS mapping RHS variable is not associated.",ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Equations mapping RHS mapping is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Equations mapping RHS mapping is not associated.",ERR,ERROR,*999)
           ENDIF
           IF(ASSOCIATED(RHS_FIELD)) THEN
             IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
@@ -2156,58 +2171,58 @@ CONTAINS
                                 CASE(BOUNDARY_CONDITION_DOF_FREE)
                                   !Add residual to field value
                                   CALL DISTRIBUTED_VECTOR_VALUES_GET(RESIDUAL_VECTOR,row_idx,VALUE,ERR,ERROR,*999)
-                                  CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(RHS_FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                                  CALL Field_ParameterSetUpdateLocalDOF(RHS_FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                                     & variable_dof,VALUE,ERR,ERROR,*999)
                                 CASE(BOUNDARY_CONDITION_DOF_FIXED)
                                   !Do nothing
                                 CASE(BOUNDARY_CONDITION_DOF_MIXED)
-                                  CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                                  CALL FlagError("Not implemented.",ERR,ERROR,*999)
                                 CASE DEFAULT
                                   LOCAL_ERROR="The RHS variable boundary condition of "// &
                                     & TRIM(NUMBER_TO_VSTRING(rhs_boundary_condition,"*",ERR,ERROR))// &
                                     & " for RHS variable dof number "// &
                                     & TRIM(NUMBER_TO_VSTRING(variable_dof,"*",ERR,ERROR))//" is invalid."
-                                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                                 END SELECT
                               ENDDO
                             ELSE
-                              CALL FLAG_ERROR("Residual variable is not associated.",ERR,ERROR,*999)
+                              CALL FlagError("Residual variable is not associated.",ERR,ERROR,*999)
                             ENDIF
                           ENDDO !equations_matrix_idx
                         ELSE
-                          CALL FLAG_ERROR("Nonlinear mapping is not associated.",ERR,ERROR,*999)
+                          CALL FlagError("Nonlinear mapping is not associated.",ERR,ERROR,*999)
                         ENDIF
                       ELSE
-                        CALL FLAG_ERROR("Residual vector is not associated.",ERR,ERROR,*999)
+                        CALL FlagError("Residual vector is not associated.",ERR,ERROR,*999)
                       ENDIF
                     ELSE
-                      CALL FLAG_ERROR("Nonlinear matrices is not associated.",ERR,ERROR,*999)
+                      CALL FlagError("Nonlinear matrices is not associated.",ERR,ERROR,*999)
                     ENDIF
                   ELSE
-                    CALL FLAG_ERROR("Equations matrices is not associated.",ERR,ERROR,*999)
+                    CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*999)
                   ENDIF
                 ELSE
-                  CALL FLAG_ERROR("RHS boundary conditions variable is not associated.",ERR,ERROR,*999)
+                  CALL FlagError("RHS boundary conditions variable is not associated.",ERR,ERROR,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("RHS variable domain mapping is not associated.",ERR,ERROR,*999)
+                CALL FlagError("RHS variable domain mapping is not associated.",ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Boundary conditions are not associated.",ERR,ERROR,*999)
+              CALL FlagError("Boundary conditions are not associated.",ERR,ERROR,*999)
             ENDIF
-            CALL FIELD_PARAMETER_SET_UPDATE_START(RHS_FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
-            CALL FIELD_PARAMETER_SET_UPDATE_FINISH(RHS_FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
+            CALL Field_ParameterSetUpdateStart(RHS_FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
+            CALL Field_ParameterSetUpdateFinish(RHS_FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("RHS variable field is not associated.",ERR,ERROR,*999)
+            CALL FlagError("RHS variable field is not associated.",ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Equations mapping is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Equations mapping is not associated.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Equations set equations is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Equations set equations is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
 
     EXITS("EQUATIONS_SET_NONLINEAR_RHS_UPDATE")
@@ -2235,39 +2250,45 @@ CONTAINS
     ENTERS("EQUATIONS_SET_BOUNDARY_CONDITIONS_ANALYTIC",ERR,ERROR,*999)
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
+      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
+        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<1) THEN
+        CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
+      END IF
       IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FINISHED) THEN
         IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
           IF(EQUATIONS_SET%ANALYTIC%ANALYTIC_FINISHED) THEN
-            SELECT CASE(EQUATIONS_SET%CLASS)
+            SELECT CASE(EQUATIONS_SET%SPECIFICATION(1))
             CASE(EQUATIONS_SET_ELASTICITY_CLASS)
-              CALL ELASTICITY_EQUATIONS_SET_BOUNDARY_CONDITIONS_ANALYTIC(EQUATIONS_SET,BOUNDARY_CONDITIONS,ERR,ERROR,*999)
+              CALL Elasticity_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,ERR,ERROR,*999)
             CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
-              CALL FLUID_MECHANICS_EQUATIONS_BOUNDARY_CONDITIONS_ANALYTIC(EQUATIONS_SET,BOUNDARY_CONDITIONS,ERR,ERROR,*999)
+              CALL FluidMechanics_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,ERR,ERROR,*999)
             CASE(EQUATIONS_SET_ELECTROMAGNETICS_CLASS)
-              CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",ERR,ERROR,*999)
             CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
-              CALL CLASSICAL_FIELD_EQUATIONS_BOUNDARY_CONDITIONS_ANALYTIC(EQUATIONS_SET,BOUNDARY_CONDITIONS,ERR,ERROR,*999)
+              CALL ClassicalField_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,ERR,ERROR,*999)
             CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
-              CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",ERR,ERROR,*999)
             CASE(EQUATIONS_SET_MODAL_CLASS)
-              CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",ERR,ERROR,*999)
             CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
-              CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",ERR,ERROR,*999)
             CASE DEFAULT
-              LOCAL_ERROR="Equations set class "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%CLASS,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              LOCAL_ERROR="The first equations set specification of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(1),"*", &
+                & ERR,ERROR))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ELSE
-            CALL FLAG_ERROR("Equations set analytic has not been finished.",ERR,ERROR,*999)
+            CALL FlagError("Equations set analytic has not been finished.",ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Equations set analytic is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Equations set analytic is not associated.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Equations set dependent has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("Equations set dependent has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
 
     EXITS("EQUATIONS_SET_BOUNDARY_CONDITIONS_ANALYTIC")
@@ -2294,7 +2315,7 @@ CONTAINS
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(EQUATIONS_SET%EQUATIONS_SET_FINISHED) THEN
-        CALL FLAG_ERROR("Equations set has already been finished.",ERR,ERROR,*999)
+        CALL FlagError("Equations set has already been finished.",ERR,ERROR,*999)
       ELSE            
         EQUATIONS_SET_SETUP_INFO%SETUP_TYPE=EQUATIONS_SET_SETUP_INITIAL_TYPE
         EQUATIONS_SET_SETUP_INFO%ACTION_TYPE=EQUATIONS_SET_SETUP_FINISH_ACTION
@@ -2310,7 +2331,7 @@ CONTAINS
         EQUATIONS_SET%EQUATIONS_SET_FINISHED=.TRUE.
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_CREATE_FINISH")
@@ -2326,9 +2347,6 @@ CONTAINS
 
   !>Starts the process of creating an equations set defined by USER_NUMBER in the region identified by REGION. \see OPENCMISS::CMISSEquationsSetCreateStart
   !>Default values set for the EQUATIONS_SET's attributes are:
-  !>- CLASS: 4 (EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
-  !>- TYPE: 1 (EQUATIONS_SET_LAPLACE_EQUATION_TYPE)
-  !>- SUBTYPE: 1 (EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE)
   !>- LINEARITY: 1 (EQUATIONS_SET_LINEAR)
   !>- TIME_DEPENDENCE: 1 (EQUATIONS_SET_STATIC)
   !>- SOLUTION_METHOD: 1 (EQUATIONS_SET_FEM_SOLUTION_METHOD)
@@ -2339,21 +2357,17 @@ CONTAINS
   !>- ANALYTIC
   !>- FIXED_CONDITIONS 
   !>- EQUATIONS 
-!   SUBROUTINE EQUATIONS_SET_CREATE_START(USER_NUMBER,REGION,GEOM_FIBRE_FIELD,EQUATIONS_SET,ERR,ERROR,*)
-
-  SUBROUTINE EQUATIONS_SET_CREATE_START(USER_NUMBER,REGION,GEOM_FIBRE_FIELD,EQUATIONS_SET_CLASS,EQUATIONS_SET_TYPE_,&
-    & EQUATIONS_SET_SUBTYPE,EQUATIONS_SET_FIELD_USER_NUMBER,EQUATIONS_SET_FIELD_FIELD,EQUATIONS_SET,ERR,ERROR,*)
+  SUBROUTINE EQUATIONS_SET_CREATE_START(USER_NUMBER,REGION,GEOM_FIBRE_FIELD,EQUATIONS_SET_SPECIFICATION,&
+      & EQUATIONS_SET_FIELD_USER_NUMBER,EQUATIONS_SET_FIELD_FIELD,EQUATIONS_SET,ERR,ERROR,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the equations set
     TYPE(REGION_TYPE), POINTER :: REGION !<A pointer to the region to create the equations set on
     TYPE(FIELD_TYPE), POINTER :: GEOM_FIBRE_FIELD !<A pointer to the either the geometry or, if appropriate, the fibre field for the equation set
+    INTEGER(INTG), INTENT(IN) :: EQUATIONS_SET_SPECIFICATION(:) !<The equations set specification array to set
     INTEGER(INTG), INTENT(IN) :: EQUATIONS_SET_FIELD_USER_NUMBER !<The user number of the equations set field
     TYPE(FIELD_TYPE), POINTER :: EQUATIONS_SET_FIELD_FIELD !<On return, a pointer to the equations set field
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<On return, a pointer to the equations set
-    INTEGER(INTG), INTENT(IN) :: EQUATIONS_SET_CLASS !<The equations set class to set
-    INTEGER(INTG), INTENT(IN) :: EQUATIONS_SET_TYPE_ !<The equations set type to set
-    INTEGER(INTG), INTENT(IN) :: EQUATIONS_SET_SUBTYPE !<The equations set subtype to set
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -2378,7 +2392,7 @@ CONTAINS
         IF(ASSOCIATED(NEW_EQUATIONS_SET)) THEN
           LOCAL_ERROR="Equations set user number "//TRIM(NUMBER_TO_VSTRING(USER_NUMBER,"*",ERR,ERROR))// &
             & " has already been created on region number "//TRIM(NUMBER_TO_VSTRING(REGION%USER_NUMBER,"*",ERR,ERROR))//"."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*997)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*997)
         ELSE
           NULLIFY(NEW_EQUATIONS_SET)
           IF(ASSOCIATED(GEOM_FIBRE_FIELD)) THEN
@@ -2396,7 +2410,7 @@ CONTAINS
                               & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_FIELD_USER_NUMBER,"*",ERR,ERROR))// &
                               & " does not match the user number of the specified equations set field of "// &
                               & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_FIELD_FIELD%USER_NUMBER,"*",ERR,ERROR))//"."
-                            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                           ENDIF
                           EQUATIONS_SET_FIELD_REGION=>EQUATIONS_SET_FIELD_FIELD%REGION
                           IF(ASSOCIATED(EQUATIONS_SET_FIELD_REGION)) THEN                
@@ -2406,23 +2420,23 @@ CONTAINS
                                 & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_FIELD_REGION%USER_NUMBER,"*",ERR,ERROR))// &
                                 & " and the specified equations set has been created on region number "// &
                                 & TRIM(NUMBER_TO_VSTRING(REGION%USER_NUMBER,"*",ERR,ERROR))//"."
-                              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                             ENDIF
                             !Check the specified equations set field has the same decomposition as the geometric field
                             IF(ASSOCIATED(GEOM_FIBRE_FIELD)) THEN
                               IF(.NOT.ASSOCIATED(GEOM_FIBRE_FIELD%DECOMPOSITION,EQUATIONS_SET_FIELD_FIELD%DECOMPOSITION)) THEN
-                                CALL FLAG_ERROR("The specified equations set field does not have the same decomposition "// &
+                                CALL FlagError("The specified equations set field does not have the same decomposition "// &
                                   & "as the geometric field for the specified equations set.",ERR,ERROR,*999)
                               ENDIF
                             ELSE
-                              CALL FLAG_ERROR("The geom. field is not associated for the specified equations set.",ERR,ERROR,*999)
+                              CALL FlagError("The geom. field is not associated for the specified equations set.",ERR,ERROR,*999)
                             ENDIF
                               
                           ELSE
-                            CALL FLAG_ERROR("The specified equations set field region is not associated.",ERR,ERROR,*999)
+                            CALL FlagError("The specified equations set field region is not associated.",ERR,ERROR,*999)
                           ENDIF
                         ELSE
-                          CALL FLAG_ERROR("The specified equations set field has not been finished.",ERR,ERROR,*999)
+                          CALL FlagError("The specified equations set field has not been finished.",ERR,ERROR,*999)
                         ENDIF
                       ELSE
                         !Check the user number has not already been used for a field in this region.
@@ -2433,7 +2447,7 @@ CONTAINS
                             & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_FIELD_USER_NUMBER,"*",ERR,ERROR))// &
                             & "has already been used to create a field on region number "// &
                             & TRIM(NUMBER_TO_VSTRING(REGION%USER_NUMBER,"*",ERR,ERROR))//"."
-                          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                         ENDIF
                       ENDIF
                       !Initalise equations set
@@ -2444,8 +2458,7 @@ CONTAINS
                       NEW_EQUATIONS_SET%EQUATIONS_SETS=>REGION%EQUATIONS_SETS
                       NEW_EQUATIONS_SET%REGION=>REGION
                       !Set the equations set class, type and subtype
-                      CALL EQUATIONS_SET_SPECIFICATION_SET(NEW_EQUATIONS_SET,EQUATIONS_SET_CLASS,EQUATIONS_SET_TYPE_, &
-                        & EQUATIONS_SET_SUBTYPE,ERR,ERROR,*999)
+                      CALL EquationsSet_SpecificationSet(NEW_EQUATIONS_SET,EQUATIONS_SET_SPECIFICATION,ERR,ERROR,*999)
                       NEW_EQUATIONS_SET%EQUATIONS_SET_FINISHED=.FALSE.
                       !Initialise the setup
                       CALL EQUATIONS_SET_SETUP_INITIALISE(EQUATIONS_SET_SETUP_INFO,ERR,ERROR,*999)
@@ -2476,7 +2489,7 @@ CONTAINS
                       CALL EQUATIONS_SET_SETUP_FINALISE(EQUATIONS_SET_SETUP_INFO,ERR,ERROR,*999)
                       !Add new equations set into list of equations set in the region
                       ALLOCATE(NEW_EQUATIONS_SETS(REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS+1),STAT=ERR)
-                      IF(ERR/=0) CALL FLAG_ERROR("Could not allocate new equations sets.",ERR,ERROR,*999)
+                      IF(ERR/=0) CALL FlagError("Could not allocate new equations sets.",ERR,ERROR,*999)
                       DO equations_set_idx=1,REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS
                         NEW_EQUATIONS_SETS(equations_set_idx)%PTR=>REGION%EQUATIONS_SETS%EQUATIONS_SETS(equations_set_idx)%PTR
                       ENDDO !equations_set_idx
@@ -2498,28 +2511,28 @@ CONTAINS
                       & TRIM(NUMBER_TO_VSTRING(GEOM_FIBRE_FIELD_REGION%USER_NUMBER,"*",ERR,ERROR))// &
                       & " and the specified region number is "// &
                       & TRIM(NUMBER_TO_VSTRING(REGION%USER_NUMBER,"*",ERR,ERROR))//"."
-                    CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*997)
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*997)
                   ENDIF
                 ELSE
-                  CALL FLAG_ERROR("The specified geometric fields region is not associated.",ERR,ERROR,*997)
+                  CALL FlagError("The specified geometric fields region is not associated.",ERR,ERROR,*997)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("The specified geometric field is not a geometric or fibre field.",ERR,ERROR,*997)
+                CALL FlagError("The specified geometric field is not a geometric or fibre field.",ERR,ERROR,*997)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("The specified geometric field is not finished.",ERR,ERROR,*997)
+              CALL FlagError("The specified geometric field is not finished.",ERR,ERROR,*997)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("The specified geometric field is not associated.",ERR,ERROR,*997)
+            CALL FlagError("The specified geometric field is not associated.",ERR,ERROR,*997)
           ENDIF
         ENDIF
       ELSE
         LOCAL_ERROR="The equations sets on region number "//TRIM(NUMBER_TO_VSTRING(REGION%USER_NUMBER,"*",ERR,ERROR))// &
           & " are not associated."
-        CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*997)
+        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*997)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Region is not associated.",ERR,ERROR,*997)
+      CALL FlagError("Region is not associated.",ERR,ERROR,*997)
     ENDIF
     
     EXITS("EQUATIONS_SET_CREATE_START")
@@ -2574,7 +2587,7 @@ CONTAINS
           !Remove the equations set from the list of equations set
           IF(REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS>1) THEN
             ALLOCATE(NEW_EQUATIONS_SETS(REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS-1),STAT=ERR)
-            IF(ERR/=0) CALL FLAG_ERROR("Could not allocate new equations sets.",ERR,ERROR,*999)
+            IF(ERR/=0) CALL FlagError("Could not allocate new equations sets.",ERR,ERROR,*999)
             DO equations_set_idx=1,REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS
               IF(equations_set_idx<equations_set_position) THEN
                 NEW_EQUATIONS_SETS(equations_set_idx)%PTR=>REGION%EQUATIONS_SETS%EQUATIONS_SETS(equations_set_idx)%PTR
@@ -2595,15 +2608,15 @@ CONTAINS
         ELSE
           LOCAL_ERROR="Equations set number "//TRIM(NUMBER_TO_VSTRING(USER_NUMBER,"*",ERR,ERROR))// &
             & " has not been created on region number "//TRIM(NUMBER_TO_VSTRING(REGION%USER_NUMBER,"*",ERR,ERROR))//"."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
         LOCAL_ERROR="The equations sets on region number "//TRIM(NUMBER_TO_VSTRING(REGION%USER_NUMBER,"*",ERR,ERROR))// &
           & " are not associated."
-        CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Region is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Region is not associated.",ERR,ERROR,*998)
     ENDIF    
 
     EXITS("EQUATIONS_SET_DESTROY_NUMBER")
@@ -2644,7 +2657,7 @@ CONTAINS
         !Remove the equations set from the list of equations set
         IF(EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS>1) THEN
           ALLOCATE(NEW_EQUATIONS_SETS(EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS-1),STAT=ERR)
-          IF(ERR/=0) CALL FLAG_ERROR("Could not allocate new equations sets.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate new equations sets.",ERR,ERROR,*999)
           DO equations_set_idx=1,EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS
             IF(equations_set_idx<equations_set_position) THEN
               NEW_EQUATIONS_SETS(equations_set_idx)%PTR=>EQUATIONS_SETS%EQUATIONS_SETS(equations_set_idx)%PTR
@@ -2663,17 +2676,18 @@ CONTAINS
         ENDIF
         
       ELSE
-        CALL FLAG_ERROR("Equations set equations set is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Equations set equations set is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*998)
     ENDIF    
 
     EXITS("EQUATIONS_SET_DESTROY")
     RETURN
 999 IF(ASSOCIATED(NEW_EQUATIONS_SETS)) DEALLOCATE(NEW_EQUATIONS_SETS)
 998 ERRORSEXITS("EQUATIONS_SET_DESTROY",ERR,ERROR)
-    RETURN 1   
+    RETURN 1
+    
   END SUBROUTINE EQUATIONS_SET_DESTROY
   
   !
@@ -2701,6 +2715,7 @@ CONTAINS
       CALL EQUATIONS_SET_EQUATIONS_SET_FIELD_FINALISE(EQUATIONS_SET%EQUATIONS_SET_FIELD,ERR,ERROR,*999)
       CALL EquationsSet_DerivedFinalise(EQUATIONS_SET%derived,ERR,ERROR,*999)
       IF(ASSOCIATED(EQUATIONS_SET%EQUATIONS)) CALL EQUATIONS_DESTROY(EQUATIONS_SET%EQUATIONS,ERR,ERROR,*999)
+      IF(ALLOCATED(EQUATIONS_SET%SPECIFICATION)) DEALLOCATE(EQUATIONS_SET%SPECIFICATION)
       DEALLOCATE(EQUATIONS_SET)
     ENDIF
        
@@ -2708,6 +2723,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("EQUATIONS_SET_FINALISE",ERR,ERROR)
     RETURN 1
+    
   END SUBROUTINE EQUATIONS_SET_FINALISE
 
   !
@@ -2741,30 +2757,40 @@ CONTAINS
     ENTERS("EQUATIONS_SET_FINITE_ELEMENT_CALCULATE",ERR,ERROR,*999)
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      SELECT CASE(EQUATIONS_SET%CLASS)
+      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
+        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<1) THEN
+        CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
+      END IF
+      SELECT CASE(EQUATIONS_SET%SPECIFICATION(1))
       CASE(EQUATIONS_SET_ELASTICITY_CLASS)
         CALL ELASTICITY_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
       CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
        CALL FLUID_MECHANICS_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
       CASE(EQUATIONS_SET_ELECTROMAGNETICS_CLASS)
-        CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+        CALL FlagError("Not implemented.",ERR,ERROR,*999)
       CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
         CALL CLASSICAL_FIELD_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
       CASE(EQUATIONS_SET_FITTING_CLASS)
-        CALL FITTING_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
+        CALL Fitting_FiniteElementCalculate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
       CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
-        IF(EQUATIONS_SET%TYPE == EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE) THEN
-          CALL MONODOMAIN_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
+        IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
+          CALL FlagError("Equations set specification must have at least two entries for a bioelectrics equation class.", &
+            & err,error,*999)
+        END IF
+        IF(EQUATIONS_SET%SPECIFICATION(2) == EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE) THEN
+          CALL Monodomain_FiniteElementCalculate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
         ELSE
           CALL BIOELECTRIC_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
         END IF
       CASE(EQUATIONS_SET_MODAL_CLASS)
-        CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+        CALL FlagError("Not implemented.",ERR,ERROR,*999)
       CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
        CALL MULTI_PHYSICS_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
       CASE DEFAULT
-        LOCAL_ERROR="Equations set class "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%CLASS,"*",ERR,ERROR))//" is not valid."
-        CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+        LOCAL_ERROR="The first equations set specification of "// &
+          & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(1),"*",ERR,ERROR))//" is not valid."
+        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
       EQUATIONS=>EQUATIONS_SET%EQUATIONS
       IF(ASSOCIATED(EQUATIONS)) THEN
@@ -2862,14 +2888,14 @@ CONTAINS
               ENDIF
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Equation matrices is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Equation matrices is not associated.",ERR,ERROR,*999)
           ENDIF
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Equations is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Equations is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF    
 
 #ifdef TAUPROF
@@ -2888,7 +2914,7 @@ CONTAINS
   !
 
   !>Evaluates the element Jacobian for the given element number for a finite element equations set.
-  SUBROUTINE EQUATIONS_SET_FINITE_ELEMENT_JACOBIAN_EVALUATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*)
+  SUBROUTINE EquationsSet_FiniteElementJacobianEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
@@ -2903,9 +2929,14 @@ CONTAINS
     TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: NONLINEAR_MATRICES
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("EQUATIONS_SET_FINITE_ELEMENT_JACOBIAN_EVALUATE",ERR,ERROR,*999)
+    ENTERS("EquationsSet_FiniteElementJacobianEvaluate",ERR,ERROR,*999)
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
+      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
+        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<1) THEN
+        CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
+      END IF
       EQUATIONS=>EQUATIONS_SET%EQUATIONS
       IF(ASSOCIATED(EQUATIONS)) THEN
         EQUATIONS_MATRICES=>EQUATIONS%EQUATIONS_MATRICES
@@ -2918,40 +2949,42 @@ CONTAINS
                 ! None of these routines currently support calculating off diagonal terms for coupled problems,
                 ! but when one does we will have to pass through the matrix_idx parameter
                 IF(matrix_idx>1) THEN
-                  CALL FLAG_ERROR("Analytic off-diagonal Jacobian calculation not implemented.",ERR,ERROR,*999)
+                  CALL FlagError("Analytic off-diagonal Jacobian calculation not implemented.",ERR,ERROR,*999)
                 END IF
-                SELECT CASE(EQUATIONS_SET%CLASS)
+                SELECT CASE(EQUATIONS_SET%SPECIFICATION(1))
                 CASE(EQUATIONS_SET_ELASTICITY_CLASS)
                   CALL ELASTICITY_FINITE_ELEMENT_JACOBIAN_EVALUATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
                 CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
-                  CALL FLUID_MECHANICS_FINITE_ELEMENT_JACOBIAN_EVALUATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
+                  CALL FluidMechanics_FiniteElementJacobianEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
                 CASE(EQUATIONS_SET_ELECTROMAGNETICS_CLASS)
-                  CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                  CALL FlagError("Not implemented.",ERR,ERROR,*999)
                 CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
-                  CALL CLASSICAL_FIELD_FINITE_ELEMENT_JACOBIAN_EVALUATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
+                  CALL ClassicalField_FiniteElementJacobianEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
                 CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
-                  CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                  CALL FlagError("Not implemented.",ERR,ERROR,*999)
                 CASE(EQUATIONS_SET_MODAL_CLASS)
-                  CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                  CALL FlagError("Not implemented.",ERR,ERROR,*999)
                 CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
-                  CALL MULTI_PHYSICS_FINITE_ELEMENT_JACOBIAN_EVALUATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
+                  CALL MultiPhysics_FiniteElementJacobianEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
                 CASE DEFAULT
-                  LOCAL_ERROR="Equations set class "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%CLASS,"*",ERR,ERROR))//" is not valid."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  LOCAL_ERROR="The first equations set specification of"// &
+                    & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(1),"*", &
+                    & ERR,ERROR))//" is not valid."
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 END SELECT
               CASE(EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED)
                 CALL EquationsSet_FiniteElementJacobianEvaluateFD(EQUATIONS_SET,ELEMENT_NUMBER,matrix_idx,ERR,ERROR,*999)
               CASE DEFAULT
                 LOCAL_ERROR="Jacobian calculation type "//TRIM(NUMBER_TO_VSTRING(NONLINEAR_MATRICES%JACOBIANS(matrix_idx)%PTR% &
                   & JACOBIAN_CALCULATION_TYPE,"*",ERR,ERROR))//" is not valid."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
             END DO
           ELSE
-            CALL FLAG_ERROR("Equations nonlinear matrices is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Equations nonlinear matrices is not associated.",ERR,ERROR,*999)
           END IF
         ELSE
-          CALL FLAG_ERROR("Equations matrices is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*999)
         END IF
         IF(EQUATIONS%OUTPUT_TYPE>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) THEN
           CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
@@ -2984,18 +3017,18 @@ CONTAINS
           END DO
         END IF
       ELSE
-        CALL FLAG_ERROR("Equations is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Equations is not associated.",ERR,ERROR,*999)
       END IF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     END IF
 
-    EXITS("EQUATIONS_SET_FINITE_ELEMENT_JACOBIAN_EVALUATE")
+    EXITS("EquationsSet_FiniteElementJacobianEvaluate")
     RETURN
-999 ERRORSEXITS("EQUATIONS_SET_FINITE_ELEMENT_JACOBIAN_EVALUATE",ERR,ERROR)
+999 ERRORSEXITS("EquationsSet_FiniteElementJacobianEvaluate",ERR,ERROR)
     RETURN 1
 
-  END SUBROUTINE EQUATIONS_SET_FINITE_ELEMENT_JACOBIAN_EVALUATE
+  END SUBROUTINE EquationsSet_FiniteElementJacobianEvaluate
 
   !
   !================================================================================================================================
@@ -3040,7 +3073,7 @@ CONTAINS
         ! differencing, so make sure we only calculate the residual vector once, to save time and because
         ! it would otherwise add together
         IF(nonlinearMatrices%ELEMENT_RESIDUAL_CALCULATED/=elementNumber) THEN
-          CALL EQUATIONS_SET_FINITE_ELEMENT_RESIDUAL_EVALUATE(equationsSet,elementNumber,err,error,*999)
+          CALL EquationsSet_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*999)
         END IF
         ! make a temporary copy of the unperturbed residuals
         elementVector=nonlinearMatrices%ELEMENT_RESIDUAL
@@ -3079,7 +3112,7 @@ CONTAINS
                   CALL DISTRIBUTED_VECTOR_VALUES_GET(parameters,localNy,origDepVar,err,error,*999)
                   CALL DISTRIBUTED_VECTOR_VALUES_SET(parameters,localNy,origDepVar+delta,err,error,*999)
                   nonlinearMatrices%ELEMENT_RESIDUAL%VECTOR=0.0_DP ! must remember to flush existing results, otherwise they're added
-                  CALL EQUATIONS_SET_FINITE_ELEMENT_RESIDUAL_EVALUATE(equationsSet,elementNumber,err,error,*999)
+                  CALL EquationsSet_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*999)
                   CALL DISTRIBUTED_VECTOR_VALUES_SET(parameters,localNy,origDepVar,err,error,*999)
                   column=column+1
                   nonlinearMatrices%JACOBIANS(jacobianNumber)%PTR%ELEMENT_JACOBIAN%MATRIX(1:numberOfRows,column)= &
@@ -3092,32 +3125,33 @@ CONTAINS
               CALL DISTRIBUTED_VECTOR_VALUES_GET(parameters,localNy,origDepVar,err,error,*999)
               CALL DISTRIBUTED_VECTOR_VALUES_SET(parameters,localNy,origDepVar+delta,err,error,*999)
               nonlinearMatrices%ELEMENT_RESIDUAL%VECTOR=0.0_DP ! must remember to flush existing results, otherwise they're added
-              CALL EQUATIONS_SET_FINITE_ELEMENT_RESIDUAL_EVALUATE(equationsSet,elementNumber,err,error,*999)
+              CALL EquationsSet_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*999)
               CALL DISTRIBUTED_VECTOR_VALUES_SET(parameters,localNy,origDepVar,err,error,*999)
               column=column+1
               nonlinearMatrices%JACOBIANS(jacobianNumber)%PTR%ELEMENT_JACOBIAN%MATRIX(1:numberOfRows,column)= &
                   & (nonlinearMatrices%ELEMENT_RESIDUAL%VECTOR(1:numberOfRows)-elementVector%VECTOR(1:numberOfRows))/delta
             CASE DEFAULT
-              CALL FLAG_ERROR("Unsupported type of interpolation.",err,error,*999)
+              CALL FlagError("Unsupported type of interpolation.",err,error,*999)
             END SELECT
           END DO
           ! put the original residual back in
           nonlinearMatrices%ELEMENT_RESIDUAL=elementVector
         ELSE
-          CALL FLAG_ERROR("Invalid Jacobian number of "//TRIM(NUMBER_TO_VSTRING(jacobianNumber,"*",err,error))// &
+          CALL FlagError("Invalid Jacobian number of "//TRIM(NUMBER_TO_VSTRING(jacobianNumber,"*",err,error))// &
             & ". The number should be <= "//TRIM(NUMBER_TO_VSTRING(nonlinearMatrices%NUMBER_OF_JACOBIANS,"*",err,error))// &
             & ".",err,error,*999)
         END IF
       ELSE
-        CALL FLAG_ERROR("Equations set equations is not associated.",err,error,*999)
+        CALL FlagError("Equations set equations is not associated.",err,error,*999)
       END IF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",err,error,*999)
+      CALL FlagError("Equations set is not associated.",err,error,*999)
     END IF
 
     EXITS("EquationsSet_FiniteElementJacobianEvaluateFD")
     RETURN
-999 ERRORSEXITS("EquationsSet_FiniteElementJacobianEvaluateFD",err,error)
+999 ERRORS("EquationsSet_FiniteElementJacobianEvaluateFD",err,error)
+    EXITS("EquationsSet_FiniteElementJacobianEvaluateFD")
     RETURN 1
   END SUBROUTINE EquationsSet_FiniteElementJacobianEvaluateFD
 
@@ -3126,7 +3160,7 @@ CONTAINS
   !
 
   !>Evaluates the element residual and rhs vector for the given element number for a finite element equations set.
-  SUBROUTINE EQUATIONS_SET_FINITE_ELEMENT_RESIDUAL_EVALUATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*)
+  SUBROUTINE EquationsSet_FiniteElementResidualEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
@@ -3146,27 +3180,33 @@ CONTAINS
     TYPE(EQUATIONS_MATRICES_SOURCE_TYPE), POINTER :: SOURCE_VECTOR
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("EQUATIONS_SET_FINITE_ELEMENT_RESIDUAL_EVALUATE",ERR,ERROR,*999)
+    ENTERS("EquationsSet_FiniteElementResidualEvaluate",ERR,ERROR,*999)
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      SELECT CASE(EQUATIONS_SET%CLASS)
+      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
+        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<1) THEN
+        CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
+      END IF
+      SELECT CASE(EQUATIONS_SET%SPECIFICATION(1))
       CASE(EQUATIONS_SET_ELASTICITY_CLASS)
         CALL ELASTICITY_FINITE_ELEMENT_RESIDUAL_EVALUATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
       CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
-        CALL FLUID_MECHANICS_FINITE_ELEMENT_RESIDUAL_EVALUATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
+        CALL FluidMechanics_FiniteElementResidualEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
       CASE(EQUATIONS_SET_ELECTROMAGNETICS_CLASS)
-        CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+        CALL FlagError("Not implemented.",ERR,ERROR,*999)
       CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
-        CALL CLASSICAL_FIELD_FINITE_ELEMENT_RESIDUAL_EVALUATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
+        CALL ClassicalField_FiniteElementResidualEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
       CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
-        CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+        CALL FlagError("Not implemented.",ERR,ERROR,*999)
       CASE(EQUATIONS_SET_MODAL_CLASS)
-        CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+        CALL FlagError("Not implemented.",ERR,ERROR,*999)
       CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
-        CALL MULTI_PHYSICS_FINITE_ELEMENT_RESIDUAL_EVALUATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
+        CALL MultiPhysics_FiniteElementResidualEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
       CASE DEFAULT
-        LOCAL_ERROR="Equations set class "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%CLASS,"*",ERR,ERROR))//" is not valid."
-        CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+        LOCAL_ERROR="The first equations set specification of "// &
+          & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(1),"*",ERR,ERROR))//" is not valid."
+        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
       EQUATIONS=>EQUATIONS_SET%EQUATIONS
       IF(ASSOCIATED(EQUATIONS)) THEN
@@ -3281,24 +3321,24 @@ CONTAINS
               ENDIF
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Equation nonlinear matrices not associated.",ERR,ERROR,*999)
+            CALL FlagError("Equation nonlinear matrices not associated.",ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Equation matrices is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Equation matrices is not associated.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Equations is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Equations is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF    
        
-    EXITS("EQUATIONS_SET_FINITE_ELEMENT_RESIDUAL_EVALUATE")
+    EXITS("EquationsSet_FiniteElementResidualEvaluate")
     RETURN
-999 ERRORSEXITS("EQUATIONS_SET_FINITE_ELEMENT_RESIDUAL_EVALUATE",ERR,ERROR)
+999 ERRORSEXITS("EquationsSet_FiniteElementResidualEvaluate",ERR,ERROR)
     RETURN 1
     
-  END SUBROUTINE EQUATIONS_SET_FINITE_ELEMENT_RESIDUAL_EVALUATE
+  END SUBROUTINE EquationsSet_FiniteElementResidualEvaluate
 
   !
   !================================================================================================================================
@@ -3320,7 +3360,7 @@ CONTAINS
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(ASSOCIATED(EQUATIONS_SET%INDEPENDENT)) THEN
         IF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FINISHED) THEN
-          CALL FLAG_ERROR("Equations set independent field has already been finished.",ERR,ERROR,*999)
+          CALL FlagError("Equations set independent field has already been finished.",ERR,ERROR,*999)
         ELSE
           !Initialise the setup
           CALL EQUATIONS_SET_SETUP_INITIALISE(EQUATIONS_SET_SETUP_INFO,ERR,ERROR,*999)
@@ -3333,7 +3373,7 @@ CONTAINS
             !Finish equations set specific startup
             CALL EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Equations set independent independent field is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Equations set independent independent field is not associated.",ERR,ERROR,*999)
           ENDIF
           !Finalise the setup
           CALL EQUATIONS_SET_SETUP_FINALISE(EQUATIONS_SET_SETUP_INFO,ERR,ERROR,*999)
@@ -3341,10 +3381,10 @@ CONTAINS
           EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FINISHED=.TRUE.
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The equations set independent is not associated",ERR,ERROR,*999)
+        CALL FlagError("The equations set independent is not associated",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_INDEPENDENT_CREATE_FINISH")
@@ -3377,7 +3417,7 @@ CONTAINS
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(ASSOCIATED(EQUATIONS_SET%INDEPENDENT)) THEN
-        CALL FLAG_ERROR("The equations set independent is already associated",ERR,ERROR,*998)
+        CALL FlagError("The equations set independent is already associated",ERR,ERROR,*998)
       ELSE
         REGION=>EQUATIONS_SET%REGION
         IF(ASSOCIATED(REGION)) THEN
@@ -3390,7 +3430,7 @@ CONTAINS
                   & TRIM(NUMBER_TO_VSTRING(INDEPENDENT_FIELD_USER_NUMBER,"*",ERR,ERROR))// &
                   & " does not match the user number of the specified independent field of "// &
                   & TRIM(NUMBER_TO_VSTRING(INDEPENDENT_FIELD%USER_NUMBER,"*",ERR,ERROR))//"."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
               INDEPENDENT_FIELD_REGION=>INDEPENDENT_FIELD%REGION
               IF(ASSOCIATED(INDEPENDENT_FIELD_REGION)) THEN                
@@ -3400,23 +3440,23 @@ CONTAINS
                     & TRIM(NUMBER_TO_VSTRING(INDEPENDENT_FIELD_REGION%USER_NUMBER,"*",ERR,ERROR))// &
                     & " and the specified equations set has been created on region number "// &
                     & TRIM(NUMBER_TO_VSTRING(REGION%USER_NUMBER,"*",ERR,ERROR))//"."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 ENDIF
                 !Check the specified independent field has the same decomposition as the geometric field
                 GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
                 IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
                   IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD%DECOMPOSITION,INDEPENDENT_FIELD%DECOMPOSITION)) THEN
-                    CALL FLAG_ERROR("The specified independent field does not have the same decomposition as the geometric "// &
+                    CALL FlagError("The specified independent field does not have the same decomposition as the geometric "// &
                       & "field for the specified equations set.",ERR,ERROR,*999)
                   ENDIF
                 ELSE
-                  CALL FLAG_ERROR("The geometric field is not associated for the specified equations set.",ERR,ERROR,*999)
+                  CALL FlagError("The geometric field is not associated for the specified equations set.",ERR,ERROR,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("The specified independent field region is not associated.",ERR,ERROR,*999)
+                CALL FlagError("The specified independent field region is not associated.",ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("The specified independent field has not been finished.",ERR,ERROR,*999)
+              CALL FlagError("The specified independent field has not been finished.",ERR,ERROR,*999)
             ENDIF
           ELSE
             !Check the user number has not already been used for a field in this region.
@@ -3427,7 +3467,7 @@ CONTAINS
                 & TRIM(NUMBER_TO_VSTRING(INDEPENDENT_FIELD_USER_NUMBER,"*",ERR,ERROR))// &
                 & "has already been used to create a field on region number "// &
                 & TRIM(NUMBER_TO_VSTRING(REGION%USER_NUMBER,"*",ERR,ERROR))//"."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             ENDIF
           ENDIF
           !Initialise the equations set independent
@@ -3450,11 +3490,11 @@ CONTAINS
             EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD=>INDEPENDENT_FIELD
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Equation set region is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Equation set region is not associated.",ERR,ERROR,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated",ERR,ERROR,*998)
+      CALL FlagError("Equations set is not associated",ERR,ERROR,*998)
     ENDIF
        
     EXITS("EQUATIONS_SET_INDEPENDENT_CREATE_START")
@@ -3483,10 +3523,10 @@ CONTAINS
       IF(ASSOCIATED(EQUATIONS_SET%INDEPENDENT)) THEN
         CALL EQUATIONS_SET_INDEPENDENT_FINALISE(EQUATIONS_SET%INDEPENDENT,ERR,ERROR,*999)
       ELSE
-        CALL FLAG_ERROR("Equations set indpendent is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Equations set indpendent is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_INDEPENDENT_DESTROY")
@@ -3539,17 +3579,17 @@ CONTAINS
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(ASSOCIATED(EQUATIONS_SET%INDEPENDENT)) THEN
-        CALL FLAG_ERROR("Independent field is already associated for these equations sets.",ERR,ERROR,*998)
+        CALL FlagError("Independent field is already associated for these equations sets.",ERR,ERROR,*998)
       ELSE
         ALLOCATE(EQUATIONS_SET%INDEPENDENT,STAT=ERR)
-        IF(ERR/=0) CALL FLAG_ERROR("Could not allocate equations set independent field.",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate equations set independent field.",ERR,ERROR,*999)
         EQUATIONS_SET%INDEPENDENT%EQUATIONS_SET=>EQUATIONS_SET
         EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FINISHED=.FALSE.
         EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD_AUTO_CREATED=.FALSE.
         NULLIFY(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*998)
     ENDIF
        
     EXITS("EQUATIONS_SET_INDEPENDENT_INITIALISE")
@@ -3577,22 +3617,19 @@ CONTAINS
     ENTERS("EQUATIONS_SET_INITIALISE",ERR,ERROR,*998)
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      CALL FLAG_ERROR("Equations set is already associated.",ERR,ERROR,*998)
+      CALL FlagError("Equations set is already associated.",ERR,ERROR,*998)
     ELSE
       ALLOCATE(EQUATIONS_SET,STAT=ERR)
-      IF(ERR/=0) CALL FLAG_ERROR("Could not allocate equations set.",ERR,ERROR,*999)
+      IF(ERR/=0) CALL FlagError("Could not allocate equations set.",ERR,ERROR,*999)
       EQUATIONS_SET%USER_NUMBER=0
       EQUATIONS_SET%GLOBAL_NUMBER=0
       EQUATIONS_SET%EQUATIONS_SET_FINISHED=.FALSE.
       NULLIFY(EQUATIONS_SET%EQUATIONS_SETS)
       NULLIFY(EQUATIONS_SET%REGION)
-      EQUATIONS_SET%CLASS=EQUATIONS_SET_NO_CLASS
-      EQUATIONS_SET%TYPE=EQUATIONS_SET_NO_TYPE
-      EQUATIONS_SET%SUBTYPE=EQUATIONS_SET_NO_SUBTYPE
       EQUATIONS_SET%SOLUTION_METHOD=0
       CALL EQUATIONS_SET_GEOMETRY_INITIALISE(EQUATIONS_SET,ERR,ERROR,*999)
       CALL EQUATIONS_SET_DEPENDENT_INITIALISE(EQUATIONS_SET,ERR,ERROR,*999)
-      CALL EQUATIONS_SET_EQUATIONS_SET_FIELD_INITIALISE(EQUATIONS_SET,ERR,ERROR,*999)
+      CALL EquationsSet_EquationsSetFieldInitialise(EQUATIONS_SET,ERR,ERROR,*999)
       NULLIFY(EQUATIONS_SET%INDEPENDENT)
       NULLIFY(EQUATIONS_SET%MATERIALS)
       NULLIFY(EQUATIONS_SET%SOURCE)
@@ -3653,7 +3690,7 @@ CONTAINS
       NULLIFY(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD)
       NULLIFY(EQUATIONS_SET%GEOMETRY%FIBRE_FIELD)
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_GEOMETRY_INITIALISE")
@@ -3682,7 +3719,7 @@ CONTAINS
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(ASSOCIATED(EQUATIONS_SET%MATERIALS)) THEN
         IF(EQUATIONS_SET%MATERIALS%MATERIALS_FINISHED) THEN
-          CALL FLAG_ERROR("Equations set materials has already been finished.",ERR,ERROR,*999)
+          CALL FlagError("Equations set materials has already been finished.",ERR,ERROR,*999)
         ELSE
           !Initialise the setup
           CALL EQUATIONS_SET_SETUP_INITIALISE(EQUATIONS_SET_SETUP_INFO,ERR,ERROR,*999)
@@ -3695,7 +3732,7 @@ CONTAINS
             !Finish equations set specific startup
             CALL EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Equations set materials materials field is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Equations set materials materials field is not associated.",ERR,ERROR,*999)
           ENDIF
           !Finalise the setup
           CALL EQUATIONS_SET_SETUP_FINALISE(EQUATIONS_SET_SETUP_INFO,ERR,ERROR,*999)
@@ -3703,10 +3740,10 @@ CONTAINS
           EQUATIONS_SET%MATERIALS%MATERIALS_FINISHED=.TRUE.
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The equations set materials is not associated",ERR,ERROR,*999)
+        CALL FlagError("The equations set materials is not associated",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_MATERIALS_CREATE_FINISH")
@@ -3739,7 +3776,7 @@ CONTAINS
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(ASSOCIATED(EQUATIONS_SET%MATERIALS)) THEN
-        CALL FLAG_ERROR("The equations set materials is already associated",ERR,ERROR,*998)
+        CALL FlagError("The equations set materials is already associated",ERR,ERROR,*998)
       ELSE
         REGION=>EQUATIONS_SET%REGION
         IF(ASSOCIATED(REGION)) THEN
@@ -3752,7 +3789,7 @@ CONTAINS
                   & TRIM(NUMBER_TO_VSTRING(MATERIALS_FIELD_USER_NUMBER,"*",ERR,ERROR))// &
                   & " does not match the user number of the specified materials field of "// &
                   & TRIM(NUMBER_TO_VSTRING(MATERIALS_FIELD%USER_NUMBER,"*",ERR,ERROR))//"."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
               MATERIALS_FIELD_REGION=>MATERIALS_FIELD%REGION
               IF(ASSOCIATED(MATERIALS_FIELD_REGION)) THEN                
@@ -3762,23 +3799,23 @@ CONTAINS
                     & TRIM(NUMBER_TO_VSTRING(MATERIALS_FIELD_REGION%USER_NUMBER,"*",ERR,ERROR))// &
                     & " and the specified equations set has been created on region number "// &
                     & TRIM(NUMBER_TO_VSTRING(REGION%USER_NUMBER,"*",ERR,ERROR))//"."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 ENDIF
                 !Check the specified materials field has the same decomposition as the geometric field
                 GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
                 IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
                   IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD%DECOMPOSITION,MATERIALS_FIELD%DECOMPOSITION)) THEN
-                    CALL FLAG_ERROR("The specified materials field does not have the same decomposition as the geometric "// &
+                    CALL FlagError("The specified materials field does not have the same decomposition as the geometric "// &
                       & "field for the specified equations set.",ERR,ERROR,*999)
                   ENDIF
                 ELSE
-                  CALL FLAG_ERROR("The geometric field is not associated for the specified equations set.",ERR,ERROR,*999)
+                  CALL FlagError("The geometric field is not associated for the specified equations set.",ERR,ERROR,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("The specified materials field region is not associated.",ERR,ERROR,*999)
+                CALL FlagError("The specified materials field region is not associated.",ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("The specified materials field has not been finished.",ERR,ERROR,*999)
+              CALL FlagError("The specified materials field has not been finished.",ERR,ERROR,*999)
             ENDIF
           ELSE
             !Check the user number has not already been used for a field in this region.
@@ -3789,7 +3826,7 @@ CONTAINS
                 & TRIM(NUMBER_TO_VSTRING(MATERIALS_FIELD_USER_NUMBER,"*",ERR,ERROR))// &
                 & "has already been used to create a field on region number "// &
                 & TRIM(NUMBER_TO_VSTRING(REGION%USER_NUMBER,"*",ERR,ERROR))//"."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             ENDIF
           ENDIF
           !Initialise the equations set materials
@@ -3812,11 +3849,11 @@ CONTAINS
             EQUATIONS_SET%MATERIALS%MATERIALS_FIELD=>MATERIALS_FIELD
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Equation set region is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Equation set region is not associated.",ERR,ERROR,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated",ERR,ERROR,*998)
+      CALL FlagError("Equations set is not associated",ERR,ERROR,*998)
     ENDIF
        
     EXITS("EQUATIONS_SET_MATERIALS_CREATE_START")
@@ -3845,10 +3882,10 @@ CONTAINS
       IF(ASSOCIATED(EQUATIONS_SET%MATERIALS)) THEN
         CALL EQUATIONS_SET_MATERIALS_FINALISE(EQUATIONS_SET%MATERIALS,ERR,ERROR,*999)
       ELSE
-        CALL FLAG_ERROR("Equations set materials is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Equations set materials is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_MATERIALS_DESTROY")
@@ -3901,17 +3938,17 @@ CONTAINS
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(ASSOCIATED(EQUATIONS_SET%MATERIALS)) THEN
-        CALL FLAG_ERROR("Materials is already associated for these equations sets.",ERR,ERROR,*998)
+        CALL FlagError("Materials is already associated for these equations sets.",ERR,ERROR,*998)
       ELSE
         ALLOCATE(EQUATIONS_SET%MATERIALS,STAT=ERR)
-        IF(ERR/=0) CALL FLAG_ERROR("Could not allocate equations set materials.",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate equations set materials.",ERR,ERROR,*999)
         EQUATIONS_SET%MATERIALS%EQUATIONS_SET=>EQUATIONS_SET
         EQUATIONS_SET%MATERIALS%MATERIALS_FINISHED=.FALSE.
         EQUATIONS_SET%MATERIALS%MATERIALS_FIELD_AUTO_CREATED=.FALSE.
         NULLIFY(EQUATIONS_SET%MATERIALS%MATERIALS_FIELD)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated",ERR,ERROR,*998)
+      CALL FlagError("Equations set is not associated",ERR,ERROR,*998)
     ENDIF
        
     EXITS("EQUATIONS_SET_MATERIALS_INITIALISE")
@@ -3941,7 +3978,7 @@ CONTAINS
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FINISHED) THEN
-        CALL FLAG_ERROR("Equations set dependent has already been finished",ERR,ERROR,*999)
+        CALL FlagError("Equations set dependent has already been finished",ERR,ERROR,*999)
       ELSE
         !Initialise the setup
         CALL EQUATIONS_SET_SETUP_INITIALISE(EQUATIONS_SET_SETUP_INFO,ERR,ERROR,*999)
@@ -3954,7 +3991,7 @@ CONTAINS
           !Finish equations set specific setup
           CALL EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,ERR,ERROR,*999)
         ELSE
-          CALL FLAG_ERROR("Equations set dependent dependent field is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Equations set dependent dependent field is not associated.",ERR,ERROR,*999)
         ENDIF
         !Finalise the setup
         CALL EQUATIONS_SET_SETUP_FINALISE(EQUATIONS_SET_SETUP_INFO,ERR,ERROR,*999)
@@ -3962,7 +3999,7 @@ CONTAINS
         EQUATIONS_SET%DEPENDENT%DEPENDENT_FINISHED=.TRUE.
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_DEPENDENT_CREATE_FINISH")
@@ -3995,7 +4032,7 @@ CONTAINS
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FINISHED) THEN
-        CALL FLAG_ERROR("The equations set dependent has been finished.",ERR,ERROR,*999)
+        CALL FlagError("The equations set dependent has been finished.",ERR,ERROR,*999)
       ELSE
         REGION=>EQUATIONS_SET%REGION
         IF(ASSOCIATED(REGION)) THEN
@@ -4008,7 +4045,7 @@ CONTAINS
                   & TRIM(NUMBER_TO_VSTRING(DEPENDENT_FIELD_USER_NUMBER,"*",ERR,ERROR))// &
                   & " does not match the user number of the specified dependent field of "// &
                   & TRIM(NUMBER_TO_VSTRING(DEPENDENT_FIELD%USER_NUMBER,"*",ERR,ERROR))//"."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
               DEPENDENT_FIELD_REGION=>DEPENDENT_FIELD%REGION
               IF(ASSOCIATED(DEPENDENT_FIELD_REGION)) THEN                
@@ -4018,23 +4055,23 @@ CONTAINS
                     & TRIM(NUMBER_TO_VSTRING(DEPENDENT_FIELD_REGION%USER_NUMBER,"*",ERR,ERROR))// &
                     & " and the specified equations set has been created on region number "// &
                     & TRIM(NUMBER_TO_VSTRING(REGION%USER_NUMBER,"*",ERR,ERROR))//"."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 ENDIF
                 !Check the specified dependent field has the same decomposition as the geometric field
                 GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
                 IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
                   IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD%DECOMPOSITION,DEPENDENT_FIELD%DECOMPOSITION)) THEN
-                    CALL FLAG_ERROR("The specified dependent field does not have the same decomposition as the geometric "// &
+                    CALL FlagError("The specified dependent field does not have the same decomposition as the geometric "// &
                       & "field for the specified equations set.",ERR,ERROR,*999)
                   ENDIF
                 ELSE
-                  CALL FLAG_ERROR("The geometric field is not associated for the specified equations set.",ERR,ERROR,*999)
+                  CALL FlagError("The geometric field is not associated for the specified equations set.",ERR,ERROR,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("The specified dependent field region is not associated.",ERR,ERROR,*999)
+                CALL FlagError("The specified dependent field region is not associated.",ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("The specified dependent field has not been finished.",ERR,ERROR,*999)
+              CALL FlagError("The specified dependent field has not been finished.",ERR,ERROR,*999)
             ENDIF
           ELSE
             !Check the user number has not already been used for a field in this region.
@@ -4045,7 +4082,7 @@ CONTAINS
                 & TRIM(NUMBER_TO_VSTRING(DEPENDENT_FIELD_USER_NUMBER,"*",ERR,ERROR))// &
                 & " has already been used to create a field on region number "// &
                 & TRIM(NUMBER_TO_VSTRING(REGION%USER_NUMBER,"*",ERR,ERROR))//"."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             ENDIF
             EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED=.TRUE.
           ENDIF
@@ -4066,11 +4103,11 @@ CONTAINS
             EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD=>DEPENDENT_FIELD
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Equation set region is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Equation set region is not associated.",ERR,ERROR,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations_set is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Equations_set is not associated.",ERR,ERROR,*998)
     ENDIF
        
     EXITS("EQUATIONS_SET_DEPENDENT_CREATE_START")
@@ -4098,7 +4135,7 @@ CONTAINS
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       CALL EQUATIONS_SET_DEPENDENT_FINALISE(EQUATIONS_SET%DEPENDENT,ERR,ERROR,*999)
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated",ERR,ERROR,*999)
     ENDIF
     
     EXITS("EQUATIONS_SET_DEPENDENT_DESTROY")
@@ -4154,7 +4191,7 @@ CONTAINS
       EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED=.FALSE.
       NULLIFY(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD)
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_DEPENDENT_INITIALISE")
@@ -4183,7 +4220,7 @@ CONTAINS
     IF(ASSOCIATED(equationsSet)) THEN
       IF(ASSOCIATED(equationsSet%derived)) THEN
         IF(equationsSet%derived%derivedFinished) THEN
-          CALL FLAG_ERROR("Equations set derived field information has already been finished",err,error,*999)
+          CALL FlagError("Equations set derived field information has already been finished",err,error,*999)
         ELSE
           !Initialise the setup
           CALL EQUATIONS_SET_SETUP_INITIALISE(equationsSetSetupInfo,err,error,*999)
@@ -4196,7 +4233,7 @@ CONTAINS
             !Finish equations set specific setup
             CALL EQUATIONS_SET_SETUP(equationsSet,equationsSetSetupInfo,err,error,*999)
           ELSE
-            CALL FLAG_ERROR("Equations set derived field is not associated.",err,error,*999)
+            CALL FlagError("Equations set derived field is not associated.",err,error,*999)
           END IF
           !Finalise the setup
           CALL EQUATIONS_SET_SETUP_FINALISE(equationsSetSetupInfo,err,error,*999)
@@ -4204,10 +4241,10 @@ CONTAINS
           equationsSet%derived%derivedFinished=.TRUE.
         END IF
       ELSE
-        CALL FLAG_ERROR("Equations set derived is not associated",err,error,*999)
+        CALL FlagError("Equations set derived is not associated",err,error,*999)
       END IF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated",err,error,*999)
+      CALL FlagError("Equations set is not associated",err,error,*999)
     END IF
 
     EXITS("EquationsSet_DerivedCreateFinish")
@@ -4240,7 +4277,7 @@ CONTAINS
 
     IF(ASSOCIATED(equationsSet)) THEN
       IF(ASSOCIATED(equationsSet%derived)) THEN
-        CALL FLAG_ERROR("Equations set derived is already associated.",err,error,*998)
+        CALL FlagError("Equations set derived is already associated.",err,error,*998)
       ELSE
         region=>equationsSet%REGION
         IF(ASSOCIATED(region)) THEN
@@ -4253,7 +4290,7 @@ CONTAINS
                   & TRIM(NUMBER_TO_VSTRING(derivedFieldUserNumber,"*",err,error))// &
                   & " does not match the user number of the specified derived field of "// &
                   & TRIM(NUMBER_TO_VSTRING(derivedField%USER_NUMBER,"*",err,error))//"."
-                CALL FLAG_ERROR(localError,err,error,*999)
+                CALL FlagError(localError,err,error,*999)
               END IF
               derivedFieldRegion=>derivedField%REGION
               IF(ASSOCIATED(derivedFieldRegion)) THEN
@@ -4263,23 +4300,23 @@ CONTAINS
                     & TRIM(NUMBER_TO_VSTRING(derivedFieldRegion%USER_NUMBER,"*",err,error))// &
                     & " and the specified equations set has been created on region number "// &
                     & TRIM(NUMBER_TO_VSTRING(region%USER_NUMBER,"*",err,error))//"."
-                  CALL FLAG_ERROR(localError,err,error,*999)
+                  CALL FlagError(localError,err,error,*999)
                 END IF
                 !Check the specified derived field has the same decomposition as the geometric field
                 geometricField=>equationsSet%GEOMETRY%GEOMETRIC_FIELD
                 IF(ASSOCIATED(geometricField)) THEN
                   IF(.NOT.ASSOCIATED(geometricField%DECOMPOSITION,derivedField%DECOMPOSITION)) THEN
-                    CALL FLAG_ERROR("The specified derived field does not have the same decomposition as the geometric "// &
+                    CALL FlagError("The specified derived field does not have the same decomposition as the geometric "// &
                       & "field for the specified equations set.",err,error,*999)
                   END IF
                 ELSE
-                  CALL FLAG_ERROR("The geometric field is not associated for the specified equations set.",err,error,*999)
+                  CALL FlagError("The geometric field is not associated for the specified equations set.",err,error,*999)
                 END IF
               ELSE
-                CALL FLAG_ERROR("The specified derived field region is not associated.",err,error,*999)
+                CALL FlagError("The specified derived field region is not associated.",err,error,*999)
               END IF
             ELSE
-              CALL FLAG_ERROR("The specified derived field has not been finished.",err,error,*999)
+              CALL FlagError("The specified derived field has not been finished.",err,error,*999)
             END IF
           ELSE
             !Check the user number has not already been used for a field in this region.
@@ -4290,7 +4327,7 @@ CONTAINS
                 & TRIM(NUMBER_TO_VSTRING(derivedFieldUserNumber,"*",err,error))// &
                 & " has already been used to create a field on region number "// &
                 & TRIM(NUMBER_TO_VSTRING(region%USER_NUMBER,"*",err,error))//"."
-              CALL FLAG_ERROR(localError,err,error,*999)
+              CALL FlagError(localError,err,error,*999)
             END IF
             equationsSet%derived%derivedFieldAutoCreated=.TRUE.
           END IF
@@ -4310,11 +4347,11 @@ CONTAINS
             equationsSet%derived%derivedField=>derivedField
           END IF
         ELSE
-          CALL FLAG_ERROR("Equation set region is not associated.",err,error,*999)
+          CALL FlagError("Equation set region is not associated.",err,error,*999)
         END IF
       END IF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",err,error,*998)
+      CALL FlagError("Equations set is not associated.",err,error,*998)
     END IF
 
     EXITS("EquationsSet_DerivedCreateStart")
@@ -4342,7 +4379,7 @@ CONTAINS
     IF(ASSOCIATED(equationsSet)) THEN
       CALL EquationsSet_DerivedFinalise(equationsSet%derived,err,error,*999)
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated",err,error,*999)
+      CALL FlagError("Equations set is not associated",err,error,*999)
     END IF
 
     EXITS("EquationsSet_DerivedDestroy")
@@ -4392,12 +4429,12 @@ CONTAINS
 
     IF(ASSOCIATED(equationsSet)) THEN
       IF(ASSOCIATED(equationsSet%derived)) THEN
-        CALL FLAG_ERROR("Derived information is already associated for this equations set.",err,error,*998)
+        CALL FlagError("Derived information is already associated for this equations set.",err,error,*998)
       ELSE
         ALLOCATE(equationsSet%derived,stat=err)
-        IF(err/=0) CALL FLAG_ERROR("Could not allocate equations set derived information.",err,error,*998)
+        IF(err/=0) CALL FlagError("Could not allocate equations set derived information.",err,error,*998)
         ALLOCATE(equationsSet%derived%variableTypes(EQUATIONS_SET_NUMBER_OF_DERIVED_TYPES),stat=err)
-        IF(err/=0) CALL FLAG_ERROR("Could not allocate equations set derived variable types.",err,error,*999)
+        IF(err/=0) CALL FlagError("Could not allocate equations set derived variable types.",err,error,*999)
         equationsSet%derived%variableTypes=0
         equationsSet%derived%numberOfVariables=0
         equationsSet%derived%equationsSet=>equationsSet
@@ -4406,7 +4443,7 @@ CONTAINS
         NULLIFY(equationsSet%derived%derivedField)
       END IF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",err,error,*999)
+      CALL FlagError("Equations set is not associated.",err,error,*999)
     END IF
 
     EXITS("EquationsSet_DerivedInitialise")
@@ -4446,7 +4483,7 @@ CONTAINS
   !================================================================================================================================
   !
   !>Initialises the equations set field for a equations set.
-  SUBROUTINE EQUATIONS_SET_EQUATIONS_SET_FIELD_INITIALISE(EQUATIONS_SET,ERR,ERROR,*)
+  SUBROUTINE EquationsSet_EquationsSetFieldInitialise(EQUATIONS_SET,ERR,ERROR,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to initialise the dependent field for
@@ -4454,7 +4491,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
  
-    ENTERS("EQUATIONS_SET_EQUATIONS_SET_FIELD_INITIALISE",ERR,ERROR,*999)
+    ENTERS("EquationsSet_EquationsSetFieldInitialise",ERR,ERROR,*999)
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       EQUATIONS_SET%EQUATIONS_SET_FIELD%EQUATIONS_SET=>EQUATIONS_SET
@@ -4462,14 +4499,15 @@ CONTAINS
       EQUATIONS_SET%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_AUTO_CREATED=.TRUE.
       NULLIFY(EQUATIONS_SET%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD)
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
-    EXITS("EQUATIONS_SET_EQUATIONS_SET_FIELD_INITIALISE")
+    EXITS("EquationsSet_EquationsSetFieldInitialise")
     RETURN
-999 ERRORSEXITS("EQUATIONS_SET_EQUATIONS_SET_FIELD_INITIALISE",ERR,ERROR)
+999 ERRORSEXITS("EquationsSet_EquationsSetFieldInitialise",ERR,ERROR)
     RETURN 1
-  END SUBROUTINE EQUATIONS_SET_EQUATIONS_SET_FIELD_INITIALISE
+    
+  END SUBROUTINE EquationsSet_EquationsSetFieldInitialise
 
   !
   !================================================================================================================================
@@ -4491,33 +4529,43 @@ CONTAINS
     ENTERS("EQUATIONS_SET_SETUP",ERR,ERROR,*999)
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      SELECT CASE(EQUATIONS_SET%CLASS)
+      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
+        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<1) THEN
+        CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
+      END IF
+      SELECT CASE(EQUATIONS_SET%SPECIFICATION(1))
       CASE(EQUATIONS_SET_ELASTICITY_CLASS)
         CALL ELASTICITY_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,ERR,ERROR,*999)
       CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
         CALL FLUID_MECHANICS_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,ERR,ERROR,*999)
       CASE(EQUATIONS_SET_ELECTROMAGNETICS_CLASS)
-        CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+        CALL FlagError("Not implemented.",ERR,ERROR,*999)
       CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
         CALL CLASSICAL_FIELD_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,ERR,ERROR,*999)
       CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
-        IF(EQUATIONS_SET%TYPE == EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE) THEN
+        IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
+          CALL FlagError("Equations set specification must have at least two entries for a bioelectrics equation class.", &
+            & err,error,*999)
+        END IF
+        IF(EQUATIONS_SET%SPECIFICATION(2) == EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE) THEN
           CALL MONODOMAIN_EQUATION_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,ERR,ERROR,*999)
         ELSE
           CALL BIOELECTRIC_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,ERR,ERROR,*999)
         END IF
       CASE(EQUATIONS_SET_FITTING_CLASS)
-        CALL FITTING_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,ERR,ERROR,*999)
+        CALL Fitting_EquationsSetSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,ERR,ERROR,*999)
       CASE(EQUATIONS_SET_MODAL_CLASS)
-        CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+        CALL FlagError("Not implemented.",ERR,ERROR,*999)
       CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
         CALL MULTI_PHYSICS_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,ERR,ERROR,*999)
       CASE DEFAULT
-        LOCAL_ERROR="Equations set class "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%CLASS,"*",ERR,ERROR))//" is not valid."
-        CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+        LOCAL_ERROR="The first equations set specification of "// &
+          & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(1),"*",ERR,ERROR))//" is not valid."
+        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       END SELECT
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_SETUP")
@@ -4552,7 +4600,7 @@ CONTAINS
       !Finalise the setup
       CALL EQUATIONS_SET_SETUP_FINALISE(EQUATIONS_SET_SETUP_INFO,ERR,ERROR,*999)
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_EQUATIONS_CREATE_FINISH")
@@ -4590,7 +4638,7 @@ CONTAINS
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(ASSOCIATED(EQUATIONS)) THEN
-        CALL FLAG_ERROR("Equations is already associated.",ERR,ERROR,*999)
+        CALL FlagError("Equations is already associated.",ERR,ERROR,*999)
       ELSE
         !Initialise the setup
         CALL EQUATIONS_SET_SETUP_INITIALISE(EQUATIONS_SET_SETUP_INFO,ERR,ERROR,*999)
@@ -4604,7 +4652,7 @@ CONTAINS
         EQUATIONS=>EQUATIONS_SET%EQUATIONS
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_EQUATIONS_CREATE_START")
@@ -4632,10 +4680,10 @@ CONTAINS
       IF(ASSOCIATED(EQUATIONS_SET%EQUATIONS)) THEN
         CALL EQUATIONS_FINALISE(EQUATIONS_SET%EQUATIONS,ERR,ERROR,*999)
       ELSE
-        CALL FLAG_ERROR("Equations set equations is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Equations set equations is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_EQUATIONS_DESTROY")
@@ -4673,65 +4721,65 @@ CONTAINS
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                 CALL EQUATIONS_SET_ASSEMBLE_STATIC_LINEAR_FEM(EQUATIONS_SET,ERR,ERROR,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE DEFAULT
                 LOCAL_ERROR="The equations set solution method of "// &
                   & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
                   & " is invalid."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
             CASE(EQUATIONS_QUASISTATIC)
               SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
-                CALL EQUATIONS_SET_ASSEMBLE_QUASISTATIC_LINEAR_FEM(EQUATIONS_SET,ERR,ERROR,*999)
+                CALL EquationsSet_AssembleQuasistaticLinearFEM(EQUATIONS_SET,ERR,ERROR,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE DEFAULT
                 LOCAL_ERROR="The equations set solution method of "// &
                   & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
                   & " is invalid."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
             CASE(EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
               SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                 CALL EQUATIONS_SET_ASSEMBLE_DYNAMIC_LINEAR_FEM(EQUATIONS_SET,ERR,ERROR,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE DEFAULT
                 LOCAL_ERROR="The equations set solution method of "// &
                   & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
                   & " is invalid."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
             CASE DEFAULT
               LOCAL_ERROR="The equations time dependence type of "// &
                 & TRIM(NUMBER_TO_VSTRING(EQUATIONS%TIME_DEPENDENCE,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           CASE(EQUATIONS_NONLINEAR)
             SELECT CASE(EQUATIONS%TIME_DEPENDENCE)
@@ -4742,40 +4790,40 @@ CONTAINS
               CASE(EQUATIONS_SET_NODAL_SOLUTION_METHOD)
                 CALL EquationsSet_JacobianEvaluateStaticNodal(EQUATIONS_SET,ERR,ERROR,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE DEFAULT
                 LOCAL_ERROR="The equations set solution method  of "// &
                   & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
                   & " is invalid."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
             CASE(EQUATIONS_QUASISTATIC)
               SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                 CALL EQUATIONS_SET_JACOBIAN_EVALUATE_STATIC_FEM(EQUATIONS_SET,ERR,ERROR,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE DEFAULT
                 LOCAL_ERROR="The equations set solution method  of "// &
                   & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
                   & " is invalid."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
             CASE(EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
 ! sebk 15/09/09
@@ -4783,43 +4831,43 @@ CONTAINS
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                 CALL EQUATIONS_SET_JACOBIAN_EVALUATE_DYNAMIC_FEM(EQUATIONS_SET,ERR,ERROR,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE DEFAULT
                 LOCAL_ERROR="The equations set solution method  of "// &
                   & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
                   & " is invalid."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
             CASE(EQUATIONS_TIME_STEPPING)
-              CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",ERR,ERROR,*999)
             CASE DEFAULT
               LOCAL_ERROR="The equations set time dependence type of "// &
                 & TRIM(NUMBER_TO_VSTRING(EQUATIONS%TIME_DEPENDENCE,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           CASE(EQUATIONS_NONLINEAR_BCS)
-            CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+            CALL FlagError("Not implemented.",ERR,ERROR,*999)
           CASE DEFAULT
             LOCAL_ERROR="The equations linearity of "// &
               & TRIM(NUMBER_TO_VSTRING(EQUATIONS%LINEARITY,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
-          CALL FLAG_ERROR("Equations have not been finished.",ERR,ERROR,*999)
+          CALL FlagError("Equations have not been finished.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Equations set equations is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Equations set equations is not associated.",ERR,ERROR,*999)
       ENDIF      
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_JACOBIAN_EVALUATE")
@@ -4889,7 +4937,7 @@ CONTAINS
               ne=ELEMENTS_MAPPING%DOMAIN_LIST(element_idx)
               NUMBER_OF_TIMES=NUMBER_OF_TIMES+1
               CALL EQUATIONS_MATRICES_ELEMENT_CALCULATE(EQUATIONS_MATRICES,ne,ERR,ERROR,*999)
-              CALL EQUATIONS_SET_FINITE_ELEMENT_JACOBIAN_EVALUATE(EQUATIONS_SET,ne,ERR,ERROR,*999)
+              CALL EquationsSet_FiniteElementJacobianEvaluate(EQUATIONS_SET,ne,ERR,ERROR,*999)
               CALL EQUATIONS_MATRICES_JACOBIAN_ELEMENT_ADD(EQUATIONS_MATRICES,ERR,ERROR,*999)
             ENDDO !element_idx                  
             !Output timing information if required
@@ -4922,7 +4970,7 @@ CONTAINS
               ne=ELEMENTS_MAPPING%DOMAIN_LIST(element_idx)
               NUMBER_OF_TIMES=NUMBER_OF_TIMES+1
               CALL EQUATIONS_MATRICES_ELEMENT_CALCULATE(EQUATIONS_MATRICES,ne,ERR,ERROR,*999)
-              CALL EQUATIONS_SET_FINITE_ELEMENT_JACOBIAN_EVALUATE(EQUATIONS_SET,ne,ERR,ERROR,*999)
+              CALL EquationsSet_FiniteElementJacobianEvaluate(EQUATIONS_SET,ne,ERR,ERROR,*999)
               CALL EQUATIONS_MATRICES_JACOBIAN_ELEMENT_ADD(EQUATIONS_MATRICES,ERR,ERROR,*999)
             ENDDO !element_idx
             !Output timing information if required
@@ -4963,16 +5011,16 @@ CONTAINS
                 & ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Equations matrices is not associated",ERR,ERROR,*999)
+            CALL FlagError("Equations matrices is not associated",ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Equations is not associated",ERR,ERROR,*999)
+          CALL FlagError("Equations is not associated",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Dependent field is not associated",ERR,ERROR,*999)
+        CALL FlagError("Dependent field is not associated",ERR,ERROR,*999)
       ENDIF            
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_JACOBIAN_EVALUATE_STATIC_FEM")
@@ -5042,7 +5090,7 @@ CONTAINS
               ne=ELEMENTS_MAPPING%DOMAIN_LIST(element_idx)
               NUMBER_OF_TIMES=NUMBER_OF_TIMES+1
               CALL EQUATIONS_MATRICES_ELEMENT_CALCULATE(EQUATIONS_MATRICES,ne,ERR,ERROR,*999)
-              CALL EQUATIONS_SET_FINITE_ELEMENT_JACOBIAN_EVALUATE(EQUATIONS_SET,ne,ERR,ERROR,*999)
+              CALL EquationsSet_FiniteElementJacobianEvaluate(EQUATIONS_SET,ne,ERR,ERROR,*999)
               CALL EQUATIONS_MATRICES_JACOBIAN_ELEMENT_ADD(EQUATIONS_MATRICES,ERR,ERROR,*999)
             ENDDO !element_idx
             !Output timing information if required
@@ -5075,7 +5123,7 @@ CONTAINS
               ne=ELEMENTS_MAPPING%DOMAIN_LIST(element_idx)
               NUMBER_OF_TIMES=NUMBER_OF_TIMES+1
               CALL EQUATIONS_MATRICES_ELEMENT_CALCULATE(EQUATIONS_MATRICES,ne,ERR,ERROR,*999)
-              CALL EQUATIONS_SET_FINITE_ELEMENT_JACOBIAN_EVALUATE(EQUATIONS_SET,ne,ERR,ERROR,*999)
+              CALL EquationsSet_FiniteElementJacobianEvaluate(EQUATIONS_SET,ne,ERR,ERROR,*999)
               CALL EQUATIONS_MATRICES_JACOBIAN_ELEMENT_ADD(EQUATIONS_MATRICES,ERR,ERROR,*999)
             ENDDO !element_idx
             !Output timing information if required
@@ -5116,16 +5164,16 @@ CONTAINS
                 & ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Equations matrices is not associated",ERR,ERROR,*999)
+            CALL FlagError("Equations matrices is not associated",ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Equations is not associated",ERR,ERROR,*999)
+          CALL FlagError("Equations is not associated",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Dependent field is not associated",ERR,ERROR,*999)
+        CALL FlagError("Dependent field is not associated",ERR,ERROR,*999)
       ENDIF            
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_JACOBIAN_EVALUATE_DYNAMIC_FEM")
@@ -5164,7 +5212,7 @@ CONTAINS
         IF(EQUATIONS%EQUATIONS_FINISHED) THEN
           SELECT CASE(EQUATIONS%LINEARITY)
           CASE(EQUATIONS_LINEAR)
-            CALL FLAG_ERROR("Can not evaluate a residual for linear equations.",ERR,ERROR,*999)
+            CALL FlagError("Can not evaluate a residual for linear equations.",ERR,ERROR,*999)
           CASE(EQUATIONS_NONLINEAR)
             SELECT CASE(EQUATIONS%TIME_DEPENDENCE)
             CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC)!Quasistatic handled like static
@@ -5174,52 +5222,52 @@ CONTAINS
               CASE(EQUATIONS_SET_NODAL_SOLUTION_METHOD)
                 CALL EquationsSet_ResidualEvaluateStaticNodal(EQUATIONS_SET,ERR,ERROR,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE DEFAULT
                 LOCAL_ERROR="The equations set solution method  of "// &
                   & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
                   & " is invalid."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
             CASE(EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
               SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                 CALL EQUATIONS_SET_RESIDUAL_EVALUATE_DYNAMIC_FEM(EQUATIONS_SET,ERR,ERROR,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",ERR,ERROR,*999)
               CASE DEFAULT
                 LOCAL_ERROR="The equations set solution method  of "// &
                   & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
                   & " is invalid."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
             CASE DEFAULT
               LOCAL_ERROR="The equations set time dependence type of "// &
                 & TRIM(NUMBER_TO_VSTRING(EQUATIONS%TIME_DEPENDENCE,"*",ERR,ERROR))//" is invalid."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           CASE(EQUATIONS_NONLINEAR_BCS)
-            CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+            CALL FlagError("Not implemented.",ERR,ERROR,*999)
           CASE DEFAULT
             LOCAL_ERROR="The equations linearity of "// &
               & TRIM(NUMBER_TO_VSTRING(EQUATIONS%LINEARITY,"*",ERR,ERROR))//" is invalid."
-            CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
           !Update the residual parameter set if it exists
           EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
@@ -5240,32 +5288,32 @@ CONTAINS
                         CALL DISTRIBUTED_VECTOR_COPY(NONLINEAR_MATRICES%RESIDUAL,RESIDUAL_PARAMETER_SET%PARAMETERS,1.0_DP, &
                           & ERR,ERROR,*999)
                       ELSE
-                        CALL FLAG_ERROR("Equations matrices nonlinear matrices is not associated.",ERR,ERROR,*999)
+                        CALL FlagError("Equations matrices nonlinear matrices is not associated.",ERR,ERROR,*999)
                       ENDIF
                     ELSE
-                      CALL FLAG_ERROR("Equations equations matrices is not associated.",ERR,ERROR,*999)
+                      CALL FlagError("Equations equations matrices is not associated.",ERR,ERROR,*999)
                     ENDIF
                   ENDIF
                 ELSE
                   LOCAL_ERROR="Nonlinear mapping residual variable for residual variable index "// &
                     & TRIM(NUMBER_TO_VSTRING(residual_variable_idx,"*",ERR,ERROR))//" is not associated."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 ENDIF
               ENDDO !residual_variable_idx
             ELSE
-              CALL FLAG_ERROR("Equations mapping nonlinear mapping is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Equations mapping nonlinear mapping is not associated.",ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Equations equations mapping is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Equations equations mapping is not associated.",ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Equations have not been finished.",ERR,ERROR,*999)
+          CALL FlagError("Equations have not been finished.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Equations set equations is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Equations set equations is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_RESIDUAL_EVALUATE")
@@ -5341,7 +5389,7 @@ CONTAINS
               ne=ELEMENTS_MAPPING%DOMAIN_LIST(element_idx)
               NUMBER_OF_TIMES=NUMBER_OF_TIMES+1
               CALL EQUATIONS_MATRICES_ELEMENT_CALCULATE(EQUATIONS_MATRICES,ne,ERR,ERROR,*999)
-              CALL EQUATIONS_SET_FINITE_ELEMENT_RESIDUAL_EVALUATE(EQUATIONS_SET,ne,ERR,ERROR,*999)
+              CALL EquationsSet_FiniteElementResidualEvaluate(EQUATIONS_SET,ne,ERR,ERROR,*999)
               CALL EQUATIONS_MATRICES_ELEMENT_ADD(EQUATIONS_MATRICES,ERR,ERROR,*999)
             ENDDO !element_idx                  
             !Output timing information if required
@@ -5374,7 +5422,7 @@ CONTAINS
               ne=ELEMENTS_MAPPING%DOMAIN_LIST(element_idx)
               NUMBER_OF_TIMES=NUMBER_OF_TIMES+1
               CALL EQUATIONS_MATRICES_ELEMENT_CALCULATE(EQUATIONS_MATRICES,ne,ERR,ERROR,*999)
-              CALL EQUATIONS_SET_FINITE_ELEMENT_RESIDUAL_EVALUATE(EQUATIONS_SET,ne,ERR,ERROR,*999)
+              CALL EquationsSet_FiniteElementResidualEvaluate(EQUATIONS_SET,ne,ERR,ERROR,*999)
               CALL EQUATIONS_MATRICES_ELEMENT_ADD(EQUATIONS_MATRICES,ERR,ERROR,*999)
             ENDDO !element_idx
             !Output timing information if required
@@ -5415,16 +5463,16 @@ CONTAINS
                 & ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Equations matrices is not associated",ERR,ERROR,*999)
+            CALL FlagError("Equations matrices is not associated",ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Equations is not associated",ERR,ERROR,*999)
+          CALL FlagError("Equations is not associated",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Dependent field is not associated",ERR,ERROR,*999)
+        CALL FlagError("Dependent field is not associated",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_RESIDUAL_EVALUATE_DYNAMIC_FEM")
@@ -5494,7 +5542,7 @@ CONTAINS
               ne=ELEMENTS_MAPPING%DOMAIN_LIST(element_idx)
               NUMBER_OF_TIMES=NUMBER_OF_TIMES+1
               CALL EQUATIONS_MATRICES_ELEMENT_CALCULATE(EQUATIONS_MATRICES,ne,ERR,ERROR,*999)
-              CALL EQUATIONS_SET_FINITE_ELEMENT_RESIDUAL_EVALUATE(EQUATIONS_SET,ne,ERR,ERROR,*999)
+              CALL EquationsSet_FiniteElementResidualEvaluate(EQUATIONS_SET,ne,ERR,ERROR,*999)
               CALL EQUATIONS_MATRICES_ELEMENT_ADD(EQUATIONS_MATRICES,ERR,ERROR,*999)
             ENDDO !element_idx
             !Output timing information if required
@@ -5527,7 +5575,7 @@ CONTAINS
               ne=ELEMENTS_MAPPING%DOMAIN_LIST(element_idx)
               NUMBER_OF_TIMES=NUMBER_OF_TIMES+1
               CALL EQUATIONS_MATRICES_ELEMENT_CALCULATE(EQUATIONS_MATRICES,ne,ERR,ERROR,*999)
-              CALL EQUATIONS_SET_FINITE_ELEMENT_RESIDUAL_EVALUATE(EQUATIONS_SET,ne,ERR,ERROR,*999)
+              CALL EquationsSet_FiniteElementResidualEvaluate(EQUATIONS_SET,ne,ERR,ERROR,*999)
               CALL EQUATIONS_MATRICES_ELEMENT_ADD(EQUATIONS_MATRICES,ERR,ERROR,*999)
             ENDDO !element_idx
             !Output timing information if required
@@ -5568,16 +5616,16 @@ CONTAINS
                 & ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Equations matrices is not associated",ERR,ERROR,*999)
+            CALL FlagError("Equations matrices is not associated",ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Equations is not associated",ERR,ERROR,*999)
+          CALL FlagError("Equations is not associated",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Dependent field is not associated",ERR,ERROR,*999)
+        CALL FlagError("Dependent field is not associated",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_RESIDUAL_EVALUATE_STATIC_FEM")
@@ -5659,40 +5707,51 @@ CONTAINS
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(EQUATIONS_SET%EQUATIONS_SET_FINISHED) THEN
-        CALL FLAG_ERROR("Equations set has already been finished.",ERR,ERROR,*999)
+        CALL FlagError("Equations set has already been finished.",ERR,ERROR,*999)
       ELSE
-        SELECT CASE(EQUATIONS_SET%CLASS)
+        IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
+          CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+        ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<1) THEN
+          CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
+        END IF
+        SELECT CASE(EQUATIONS_SET%SPECIFICATION(1))
         CASE(EQUATIONS_SET_ELASTICITY_CLASS)
-          CALL ELASTICITY_EQUATIONS_SET_SOLUTION_METHOD_SET(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*999)
+          CALL Elasticity_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*999)
         CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
-          CALL FLUID_MECHANICS_EQUATIONS_SET_SOLUTION_METHOD_SET(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*999)
+          CALL FluidMechanics_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*999)
         CASE(EQUATIONS_SET_ELECTROMAGNETICS_CLASS)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
-          CALL CLASSICAL_FIELD_EQUATIONS_SET_SOLUTION_METHOD_SET(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*999)
+          CALL ClassicalField_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*999)
         CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
-          IF(EQUATIONS_SET%TYPE == EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE) THEN
-            CALL MONODOMAIN_EQUATION_EQUATIONS_SET_SOLUTION_METHOD_SET(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*999)
+          IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
+            CALL FlagError("Equations set specification must have at least two entries for a bioelectrics equation set.", &
+              & err,error,*999)
+          END IF
+          IF(EQUATIONS_SET%SPECIFICATION(2) == EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE) THEN
+            CALL Monodomain_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*999)
           ELSE
-            CALL BIOELECTRIC_EQUATIONS_SET_SOLUTION_METHOD_SET(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*999)
+            CALL Bioelectric_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*999)
           END IF
         CASE(EQUATIONS_SET_MODAL_CLASS)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
-          CALL MULTI_PHYSICS_EQUATIONS_SET_SOLUTION_METHOD_SET(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*999)
+          CALL MultiPhysics_EquationsSetSolnMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*999)
         CASE DEFAULT
-          LOCAL_ERROR="Equations set class "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%CLASS,"*",ERR,ERROR))//" is invalid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          LOCAL_ERROR="The first equations set specification of "// &
+            & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(1),"*",ERR,ERROR))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("EQUATIONS_SET_SOLUTION_METHOD_SET")
     RETURN
 999 ERRORSEXITS("EQUATIONS_SET_SOLUTION_METHOD_SET",ERR,ERROR)
     RETURN 1
+    
   END SUBROUTINE EQUATIONS_SET_SOLUTION_METHOD_SET
   
   !
@@ -5715,10 +5774,10 @@ CONTAINS
       IF(EQUATIONS_SET%EQUATIONS_SET_FINISHED) THEN
         SOLUTION_METHOD=EQUATIONS_SET%SOLUTION_METHOD
       ELSE
-        CALL FLAG_ERROR("Equations set has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("Equations set has not been finished.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("EQUATIONS_SET_SOLUTION_METHOD_GET")
@@ -5747,7 +5806,7 @@ CONTAINS
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(ASSOCIATED(EQUATIONS_SET%SOURCE)) THEN
         IF(EQUATIONS_SET%SOURCE%SOURCE_FINISHED) THEN
-          CALL FLAG_ERROR("Equations set source has already been finished.",ERR,ERROR,*999)
+          CALL FlagError("Equations set source has already been finished.",ERR,ERROR,*999)
         ELSE
           !Initialise the setup
           CALL EQUATIONS_SET_SETUP_INITIALISE(EQUATIONS_SET_SETUP_INFO,ERR,ERROR,*999)
@@ -5760,7 +5819,7 @@ CONTAINS
             !Finish the equation set specific source setup
             CALL EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,ERR,ERROR,*999)
           ELSE
-            CALL FLAG_ERROR("Equations set source source field is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Equations set source source field is not associated.",ERR,ERROR,*999)
           ENDIF
           !Finalise the setup
           CALL EQUATIONS_SET_SETUP_FINALISE(EQUATIONS_SET_SETUP_INFO,ERR,ERROR,*999)
@@ -5768,10 +5827,10 @@ CONTAINS
           EQUATIONS_SET%SOURCE%SOURCE_FINISHED=.TRUE.
         ENDIF
       ELSE
-        CALL FLAG_ERROR("The equations set source is not associated.",ERR,ERROR,*999)
+        CALL FlagError("The equations set source is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_SOURCE_CREATE_FINISH")
@@ -5804,7 +5863,7 @@ CONTAINS
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(ASSOCIATED(EQUATIONS_SET%SOURCE)) THEN
-        CALL FLAG_ERROR("The equations set source is already associated.",ERR,ERROR,*998)
+        CALL FlagError("The equations set source is already associated.",ERR,ERROR,*998)
       ELSE
         REGION=>EQUATIONS_SET%REGION
         IF(ASSOCIATED(REGION)) THEN
@@ -5817,7 +5876,7 @@ CONTAINS
                   & TRIM(NUMBER_TO_VSTRING(SOURCE_FIELD_USER_NUMBER,"*",ERR,ERROR))// &
                   & " does not match the user number of the specified source field of "// &
                   & TRIM(NUMBER_TO_VSTRING(SOURCE_FIELD%USER_NUMBER,"*",ERR,ERROR))//"."
-                CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
               SOURCE_FIELD_REGION=>SOURCE_FIELD%REGION
               IF(ASSOCIATED(SOURCE_FIELD_REGION)) THEN                
@@ -5827,23 +5886,23 @@ CONTAINS
                     & TRIM(NUMBER_TO_VSTRING(SOURCE_FIELD_REGION%USER_NUMBER,"*",ERR,ERROR))// &
                     & " and the specified equations set has been created on region number "// &
                     & TRIM(NUMBER_TO_VSTRING(REGION%USER_NUMBER,"*",ERR,ERROR))//"."
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 ENDIF
                 !Check the specified source field has the same decomposition as the geometric field
                 GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
                 IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
                   IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD%DECOMPOSITION,SOURCE_FIELD%DECOMPOSITION)) THEN
-                    CALL FLAG_ERROR("The specified source field does not have the same decomposition as the geometric "// &
+                    CALL FlagError("The specified source field does not have the same decomposition as the geometric "// &
                       & "field for the specified equations set.",ERR,ERROR,*999)
                   ENDIF
                 ELSE
-                  CALL FLAG_ERROR("The geometric field is not associated for the specified equations set.",ERR,ERROR,*999)
+                  CALL FlagError("The geometric field is not associated for the specified equations set.",ERR,ERROR,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("The specified source field region is not associated.",ERR,ERROR,*999)
+                CALL FlagError("The specified source field region is not associated.",ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("The specified source field has not been finished.",ERR,ERROR,*999)
+              CALL FlagError("The specified source field has not been finished.",ERR,ERROR,*999)
             ENDIF
           ELSE
             !Check the user number has not already been used for a field in this region.
@@ -5854,7 +5913,7 @@ CONTAINS
                 & TRIM(NUMBER_TO_VSTRING(SOURCE_FIELD_USER_NUMBER,"*",ERR,ERROR))// &
                 & "has already been used to create a field on region number "// &
                 & TRIM(NUMBER_TO_VSTRING(REGION%USER_NUMBER,"*",ERR,ERROR))//"."
-              CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             ENDIF
           ENDIF
           !Initialise the equations set source
@@ -5877,11 +5936,11 @@ CONTAINS
             EQUATIONS_SET%SOURCE%SOURCE_FIELD=>SOURCE_FIELD
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Equation set region is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Equation set region is not associated.",ERR,ERROR,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*998)
     ENDIF
        
     EXITS("EQUATIONS_SET_SOURCE_CREATE_START")
@@ -5910,10 +5969,10 @@ CONTAINS
       IF(ASSOCIATED(EQUATIONS_SET%SOURCE)) THEN
         CALL EQUATIONS_SET_SOURCE_FINALISE(EQUATIONS_SET%SOURCE,ERR,ERROR,*999)
       ELSE
-        CALL FLAG_ERROR("Equations set source is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Equations set source is not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated",ERR,ERROR,*999)
     ENDIF
        
     EXITS("EQUATIONS_SET_SOURCE_DESTROY")
@@ -5966,17 +6025,17 @@ CONTAINS
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(ASSOCIATED(EQUATIONS_SET%SOURCE)) THEN
-        CALL FLAG_ERROR("Source is already associated for this equations set.",ERR,ERROR,*998)
+        CALL FlagError("Source is already associated for this equations set.",ERR,ERROR,*998)
       ELSE
         ALLOCATE(EQUATIONS_SET%SOURCE,STAT=ERR)
-        IF(ERR/=0) CALL FLAG_ERROR("Could not allocate equations set source.",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate equations set source.",ERR,ERROR,*999)
         EQUATIONS_SET%SOURCE%EQUATIONS_SET=>EQUATIONS_SET
         EQUATIONS_SET%SOURCE%SOURCE_FINISHED=.FALSE.
         EQUATIONS_SET%SOURCE%SOURCE_FIELD_AUTO_CREATED=.FALSE.
         NULLIFY(EQUATIONS_SET%SOURCE%SOURCE_FIELD)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*998)
     ENDIF
        
     EXITS("EQUATIONS_SET_SOURCE_INITIALISE")
@@ -5984,6 +6043,7 @@ CONTAINS
 999 CALL EQUATIONS_SET_SOURCE_FINALISE(EQUATIONS_SET%SOURCE,DUMMY_ERR,DUMMY_ERROR,*998)
 998 ERRORSEXITS("EQUATIONS_SET_SOURCE_INITIALISE",ERR,ERROR)
     RETURN 1
+    
   END SUBROUTINE EQUATIONS_SET_SOURCE_INITIALISE
 
   !
@@ -5991,37 +6051,85 @@ CONTAINS
   !
 
   !>Returns the equations set specification i.e., equations set class, type and subtype for an equations set. \see OPENCMISS::CMISSEquationsSetSpecificationGet
-  SUBROUTINE EQUATIONS_SET_SPECIFICATION_GET(EQUATIONS_SET,EQUATIONS_SET_CLASS,EQUATIONS_SET_TYPE_,EQUATIONS_SET_SUBTYPE, &
-    & ERR,ERROR,*)
+  SUBROUTINE EquationsSet_SpecificationGet(equationsSet,equationsSetSpecification,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to get the specification for
-    INTEGER(INTG), INTENT(OUT) :: EQUATIONS_SET_CLASS !<On return, the equations set class.
-    INTEGER(INTG), INTENT(OUT) :: EQUATIONS_SET_TYPE_ !<On return, the equations set type.
-    INTEGER(INTG), INTENT(OUT) :: EQUATIONS_SET_SUBTYPE !<On return, the equations set subtype.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the specification for
+    INTEGER(INTG), INTENT(INOUT) :: equationsSetSpecification(:) !<On return, The equations set specifcation array. Must be allocated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: specificationLength,specificationIdx
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("EquationsSet_SpecificationGet",err,error,*999)
+
+    IF(ASSOCIATED(equationsSet)) THEN
+      IF(equationsSet%equations_set_finished) THEN
+        specificationLength=0
+        DO specificationIdx=1,SIZE(equationsSet%specification,1)
+          IF(equationsSet%specification(specificationIdx)>0) THEN
+            specificationLength=specificationIdx
+          END IF
+        END DO
+        IF(SIZE(equationsSetSpecification,1)>=specificationLength) THEN
+          equationsSetSpecification(1:specificationLength)=equationsSet%specification(1:specificationLength)
+        ELSE
+          localError="The equations set specification array size is "//TRIM(NumberToVstring(specificationLength,"*",err,error))// &
+            & " and it needs to be >= "//TRIM(NumberToVstring(SIZE(equationsSetSpecification,1),"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        END IF
+      ELSE
+        CALL FlagError("Equations set has not been finished.",err,error,*999)
+      END IF
+    ELSE
+      CALL FlagError("Equations set is not associated.",err,error,*999)
+    END IF
+
+    EXITS("EquationsSet_SpecificationGet")
+    RETURN
+999 ERRORS("EquationsSet_SpecificationGet",err,error)
+    EXITS("EquationsSet_SpecificationGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_SpecificationGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the size of the equations set specification array for a problem identified by a pointer. \see OPENCMISS::cmfe_EquationsSetSpecificationSizeGet
+  SUBROUTINE EquationsSet_SpecificationSizeGet(equationsSet,specificationSize,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations Set to get the specification for.
+    INTEGER(INTG), INTENT(OUT) :: specificationSize !<On return, the size of the problem specifcation array.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("EQUATIONS_SET_SPECIFICATION_GET",ERR,ERROR,*999)
+    ENTERS("EquationsSet_SpecificationSizeGet",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(EQUATIONS_SET%EQUATIONS_SET_FINISHED) THEN
-        EQUATIONS_SET_CLASS=EQUATIONS_SET%CLASS
-        EQUATIONS_SET_TYPE_=EQUATIONS_SET%TYPE
-        EQUATIONS_SET_SUBTYPE=EQUATIONS_SET%SUBTYPE
+    specificationSize=0
+    IF(ASSOCIATED(equationsSet)) THEN
+      IF(equationsSet%equations_set_finished) THEN
+        IF(.NOT.ALLOCATED(equationsSet%specification)) THEN
+          CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+        END IF
+        specificationSize=SIZE(equationsSet%specification,1)
       ELSE
-        CALL FLAG_ERROR("Equations set has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("Equations set has not been finished.",err,error,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",err,error,*999)
     ENDIF
-    
-    EXITS("EQUATIONS_SET_SPECIFICATION_GET")
+
+    EXITS("EquationsSet_SpecificationSizeGet")
     RETURN
-999 ERRORSEXITS("EQUATIONS_SET_SPECIFICATION_GET",ERR,ERROR)
+999 ERRORSEXITS("EquationsSet_SpecificationSizeGet",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_SET_SPECIFICATION_GET
+    
+  END SUBROUTINE EquationsSet_SpecificationSizeGet
 
   !
   !================================================================================================================================
@@ -6040,32 +6148,38 @@ CONTAINS
 
     IF(ASSOCIATED(equationsSet)) THEN
       IF(.NOT.equationsSet%EQUATIONS_SET_FINISHED) THEN
-        CALL FLAG_ERROR("Equations set has not been finished.",err,error,*999)
+        CALL FlagError("Equations set has not been finished.",err,error,*999)
       ELSE
-        SELECT CASE(equationsSet%CLASS)
+        IF(.NOT.ALLOCATED(equationsSet%specification)) THEN
+          CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+        ELSE IF(SIZE(equationsSet%specification,1)<1) THEN
+          CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
+        END IF
+        SELECT CASE(equationsSet%specification(1))
         CASE(EQUATIONS_SET_ELASTICITY_CLASS)
-          CALL ElasticityEquationsSet_DerivedVariableCalculate(equationsSet,derivedType,err,error,*999)
+          CALL Elasticity_EquationsSetDerivedVariableCalculate(equationsSet,derivedType,err,error,*999)
         CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(EQUATIONS_SET_ELECTROMAGNETICS_CLASS)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(EQUATIONS_SET_FITTING_CLASS)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(EQUATIONS_SET_MODAL_CLASS)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE DEFAULT
-          CALL FLAG_ERROR("Equations set class "//TRIM(NUMBER_TO_VSTRING(equationsSet%CLASS,"*",ERR,ERROR))// &
+          CALL FlagError("The first equations set specification of "// &
+            & TRIM(NUMBER_TO_VSTRING(equationsSet%specification(1),"*",ERR,ERROR))// &
             & " is not valid.",ERR,ERROR,*999)
         END SELECT
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",err,error,*999)
+      CALL FlagError("Equations set is not associated.",err,error,*999)
     ENDIF
 
     EXITS("EquationsSet_DerivedVariableCalculate")
@@ -6095,16 +6209,16 @@ CONTAINS
       IF(equationsSet%EQUATIONS_SET_FINISHED) THEN
         IF(ASSOCIATED(equationsSet%derived)) THEN
           IF(equationsSet%derived%derivedFinished) THEN
-            CALL FLAG_ERROR("Equations set derived information is already finished.",err,error,*999)
+            CALL FlagError("Equations set derived information is already finished.",err,error,*999)
           END IF
         ELSE
-          CALL FLAG_ERROR("Equations set derived information is not associated.",err,error,*999)
+          CALL FlagError("Equations set derived information is not associated.",err,error,*999)
         END IF
       ELSE
-        CALL FLAG_ERROR("Equations set has not been finished.",err,error,*999)
+        CALL FlagError("Equations set has not been finished.",err,error,*999)
       END IF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",err,error,*999)
+      CALL FlagError("Equations set is not associated.",err,error,*999)
     ENDIF
 
     IF(derivedType>0.AND.derivedType<=EQUATIONS_SET_NUMBER_OF_DERIVED_TYPES) THEN
@@ -6114,12 +6228,12 @@ CONTAINS
         END IF
         equationsSet%derived%variableTypes(derivedType)=fieldVariableType
       ELSE
-        CALL FLAG_ERROR("The field variable type of "//TRIM(NUMBER_TO_VSTRING(fieldVariableType,"*",err,error))// &
+        CALL FlagError("The field variable type of "//TRIM(NUMBER_TO_VSTRING(fieldVariableType,"*",err,error))// &
           & " is invalid. It should be between 1 and "//TRIM(NUMBER_TO_VSTRING(FIELD_NUMBER_OF_VARIABLE_TYPES,"*", &
           & err,error))//" inclusive.",err,error,*999)
       END IF
     ELSE
-      CALL FLAG_ERROR("The derived variable type of "//TRIM(NUMBER_TO_VSTRING(derivedType,"*",err,error))// &
+      CALL FlagError("The derived variable type of "//TRIM(NUMBER_TO_VSTRING(derivedType,"*",err,error))// &
         & " is invalid. It should be between 1 and "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_NUMBER_OF_DERIVED_TYPES,"*", &
         & err,error))//" inclusive.",err,error,*999)
     END IF
@@ -6129,69 +6243,75 @@ CONTAINS
 999 ERRORSEXITS("EquationsSet_DerivedVariableSet",err,error)
     RETURN 1
   END SUBROUTINE EquationsSet_DerivedVariableSet
-
   !
   !================================================================================================================================
   !
 
   !>Sets/changes the equations set specification i.e., equations set class, type and subtype for an equations set. \see OPENCMISS::CMISSEquationsSetSpecificationSet
-  SUBROUTINE EQUATIONS_SET_SPECIFICATION_SET(EQUATIONS_SET,EQUATIONS_SET_CLASS,EQUATIONS_SET_TYPE_,EQUATIONS_SET_SUBTYPE, &
-    & ERR,ERROR,*)
+  SUBROUTINE EquationsSet_SpecificationSet(equationsSet,specification,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the specification for
-    INTEGER(INTG), INTENT(IN) :: EQUATIONS_SET_CLASS !<The equations set class to set
-    INTEGER(INTG), INTENT(IN) :: EQUATIONS_SET_TYPE_ !<The equations set type to set
-    INTEGER(INTG), INTENT(IN) :: EQUATIONS_SET_SUBTYPE !<The equations set subtype to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the specification for
+    INTEGER(INTG), INTENT(IN) :: specification(:) !<The equations set specification array to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("EQUATIONS_SET_SPECIFICATION_SET",ERR,ERROR,*999)
+    ENTERS("EquationsSet_SpecificationSet",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(EQUATIONS_SET%EQUATIONS_SET_FINISHED) THEN
-        CALL FLAG_ERROR("Equations set has been finished.",ERR,ERROR,*999)
+    IF(ASSOCIATED(equationsSet)) THEN
+      IF(equationsSet%equations_set_finished) THEN
+        CALL FlagError("Equations set has been finished.",err,error,*999)
       ELSE
-        SELECT CASE(EQUATIONS_SET_CLASS)
+        IF(SIZE(specification,1)<1) THEN
+          CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
+        END IF
+        SELECT CASE(specification(1))
         CASE(EQUATIONS_SET_ELASTICITY_CLASS)
-          CALL ELASTICITY_EQUATIONS_SET_CLASS_TYPE_SET(EQUATIONS_SET,EQUATIONS_SET_TYPE_,EQUATIONS_SET_SUBTYPE,ERR,ERROR,*999)
+          CALL Elasticity_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
         CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
-          CALL FLUID_MECHANICS_EQUATIONS_SET_CLASS_TYPE_SET(EQUATIONS_SET,EQUATIONS_SET_TYPE_,EQUATIONS_SET_SUBTYPE,ERR,ERROR,*999)
+          CALL FluidMechanics_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
         CASE(EQUATIONS_SET_ELECTROMAGNETICS_CLASS)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
-          CALL CLASSICAL_FIELD_EQUATIONS_SET_CLASS_TYPE_SET(EQUATIONS_SET,EQUATIONS_SET_TYPE_,EQUATIONS_SET_SUBTYPE,ERR,ERROR,*999)
+          CALL ClassicalField_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
         CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
-          IF(EQUATIONS_SET_TYPE_ == EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE) THEN
-            CALL MONODOMAIN_EQUATIONS_SET_CLASS_TYPE_SET(EQUATIONS_SET,EQUATIONS_SET_TYPE_,EQUATIONS_SET_SUBTYPE,ERR,ERROR,*999)
+          IF(SIZE(specification,1)<2) THEN
+            CALL FlagError("Equations set specification must have at least two entries for a bioelectrics equation class.", &
+              & err,error,*999)
+          END IF
+          IF(specification(2)==EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE) THEN
+            CALL Monodomain_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
           ELSE
-            CALL BIOELECTRIC_EQUATIONS_SET_CLASS_TYPE_SET(EQUATIONS_SET,EQUATIONS_SET_TYPE_,EQUATIONS_SET_SUBTYPE,ERR,ERROR,*999)
+            CALL Bioelectric_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
           END IF
         CASE(EQUATIONS_SET_MODAL_CLASS)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
-          CALL MULTI_PHYSICS_EQUATIONS_SET_CLASS_TYPE_SET(EQUATIONS_SET,EQUATIONS_SET_TYPE_,EQUATIONS_SET_SUBTYPE,ERR,ERROR,*999)
+          CALL MultiPhysics_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
         CASE(EQUATIONS_SET_FITTING_CLASS)
-          CALL FITTING_EQUATIONS_SET_CLASS_TYPE_SET(EQUATIONS_SET,EQUATIONS_SET_TYPE_,EQUATIONS_SET_SUBTYPE,ERR,ERROR,*999)
+          CALL Fitting_EquationsSetSpecificationSet(equationsSet,specification,err,error,*999)
         CASE(EQUATIONS_SET_OPTIMISATION_CLASS)
-          CALL FLAG_ERROR("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          LOCAL_ERROR="Equations set class "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_CLASS,"*",ERR,ERROR))//" is not valid."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          localError="The first equations set specification of "// &
+            & TRIM(NumberToVstring(specification(1),"*",err,error))//" is not valid."
+          CALL FlagError(localError,err,error,*999)
         END SELECT
       END IF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",err,error,*999)
     END IF
-    
-    EXITS("EQUATIONS_SET_SPECIFICATION_SET")
-    RETURN
-999 ERRORSEXITS("EQUATIONS_SET_SPECIFICATION_SET",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE EQUATIONS_SET_SPECIFICATION_SET
 
+    EXITS("EquationsSet_SpecificationSet")
+    RETURN
+999 ERRORS("EquationsSet_SpecificationSet",err,error)
+    EXITS("EquationsSet_SpecificationSet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_SpecificationSet
+  
   !
   !================================================================================================================================
   !
@@ -6215,8 +6335,13 @@ CONTAINS
     IF(.NOT.equationsSet%equations_set_finished) THEN
       CALL FlagError("Equations set has not been finished.",err,error,*999)
     END IF
+    IF(.NOT.ALLOCATED(equationsSet%specification)) THEN
+      CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    ELSE IF(SIZE(equationsSet%specification,1)<1) THEN
+      CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
+    END IF
 
-    SELECT CASE(equationsSet%class)
+    SELECT CASE(equationsSet%specification(1))
     CASE(EQUATIONS_SET_ELASTICITY_CLASS)
       CALL Elasticity_StrainInterpolateXi(equationsSet,userElementNumber,xi,values,err,error,*999)
     CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
@@ -6234,7 +6359,8 @@ CONTAINS
     CASE(EQUATIONS_SET_OPTIMISATION_CLASS)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
-      CALL FlagError("Equations set class "//TRIM(NumberToVstring(equationsSet%class,"*",err,error))// &
+      CALL FlagError("The first equations set specification of "// &
+        & TRIM(NumberToVstring(equationsSet%specification(1),"*",err,error))// &
         & " is not valid.",err,error,*999)
     END SELECT
 
@@ -6242,6 +6368,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("EquationsSet_StrainInterpolateXi",err,error)
     RETURN 1
+    
   END SUBROUTINE EquationsSet_StrainInterpolateXi
 
   !
@@ -6265,7 +6392,7 @@ CONTAINS
 
     IF(ASSOCIATED(REGION)) THEN
       IF(ASSOCIATED(EQUATIONS_SET)) THEN
-        CALL FLAG_ERROR("Equations set is already associated.",ERR,ERROR,*999)
+        CALL FlagError("Equations set is already associated.",ERR,ERROR,*999)
       ELSE
         NULLIFY(EQUATIONS_SET)
         IF(ASSOCIATED(REGION%EQUATIONS_SETS)) THEN
@@ -6280,11 +6407,11 @@ CONTAINS
         ELSE
           LOCAL_ERROR="The equations sets on region number "//TRIM(NUMBER_TO_VSTRING(REGION%USER_NUMBER,"*",ERR,ERROR))// &
             & " are not associated."
-          CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Region is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Region is not associated.",ERR,ERROR,*999)
     ENDIF
     
     EXITS("EQUATIONS_SET_USER_NUMBER_FIND")
@@ -6316,7 +6443,7 @@ CONTAINS
         DEALLOCATE(REGION%EQUATIONS_SETS)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Region is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Region is not associated.",ERR,ERROR,*999)
     ENDIF
 
     EXITS("EQUATIONS_SETS_FINALISE")
@@ -6342,17 +6469,17 @@ CONTAINS
 
     IF(ASSOCIATED(REGION)) THEN
       IF(ASSOCIATED(REGION%EQUATIONS_SETS)) THEN
-        CALL FLAG_ERROR("Region already has associated equations sets",ERR,ERROR,*998)
+        CALL FlagError("Region already has associated equations sets",ERR,ERROR,*998)
       ELSE
 !!TODO: Inherit any equations sets from the parent region???
         ALLOCATE(REGION%EQUATIONS_SETS,STAT=ERR)
-        IF(ERR/=0) CALL FLAG_ERROR("Could not allocate region equations sets",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate region equations sets",ERR,ERROR,*999)
         REGION%EQUATIONS_SETS%REGION=>REGION
         REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS=0
         NULLIFY(REGION%EQUATIONS_SETS%EQUATIONS_SETS)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Region is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Region is not associated.",ERR,ERROR,*998)
     ENDIF
 
     EXITS("EQUATIONS_SETS_INITIALISE")
@@ -6431,12 +6558,12 @@ CONTAINS
                       !Get the pointer to vector holding the full and current loads
                       !   full load: FIELD_BOUNDARY_CONDITIONS_SET_TYPE - holds the target load values
                       !   current load: FIELD_VALUES_SET_TYPE - holds the current increment values
-                      CALL FIELD_PARAMETER_SET_DATA_GET(DEPENDENT_FIELD,variable_type,FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
+                      CALL Field_ParameterSetDataGet(DEPENDENT_FIELD,variable_type,FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
                         & FULL_LOADS,ERR,ERROR,*999)
                       !chrm 22/06/2010: 'FIELD_BOUNDARY_CONDITIONS_SET_TYPE' does not get updated with time (update_BCs)
                       !\ToDo: How can this be achieved ???
   !                     write(*,*)'FULL_LOADS = ',FULL_LOADS
-                      CALL FIELD_PARAMETER_SET_DATA_GET(DEPENDENT_FIELD,variable_type,FIELD_VALUES_SET_TYPE, &
+                      CALL Field_ParameterSetDataGet(DEPENDENT_FIELD,variable_type,FIELD_VALUES_SET_TYPE, &
                         & CURRENT_LOADS,ERR,ERROR,*999)
   !                     write(*,*)'CURRENT_LOADS = ',CURRENT_LOADS
                       !Get full increment, calculate new load, then apply to dependent field
@@ -6454,13 +6581,13 @@ CONTAINS
                               FULL_LOAD=FULL_LOADS(dirichlet_dof_idx)
                               ! Apply full load if last step, or fixed BC
                               IF(ITERATION_NUMBER==MAXIMUM_NUMBER_OF_ITERATIONS) THEN
-                                CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(DEPENDENT_FIELD,variable_type,FIELD_VALUES_SET_TYPE, &
+                                CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD,variable_type,FIELD_VALUES_SET_TYPE, &
                                   & dirichlet_dof_idx,FULL_LOAD,ERR,ERROR,*999)
                               ELSE
                                 !Calculate new load and apply to dependent field
                                 CURRENT_LOAD=CURRENT_LOADS(dirichlet_dof_idx)
                                 NEW_LOAD=CURRENT_LOAD+(FULL_LOAD-CURRENT_LOAD)/(MAXIMUM_NUMBER_OF_ITERATIONS-ITERATION_NUMBER+1)
-                                CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(DEPENDENT_FIELD,variable_type,FIELD_VALUES_SET_TYPE, &
+                                CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD,variable_type,FIELD_VALUES_SET_TYPE, &
                                   & dirichlet_dof_idx,NEW_LOAD,ERR,ERROR,*999)
                                 IF(DIAGNOSTICS1) THEN
                                   CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  dof idx",dirichlet_dof_idx,ERR,ERROR,*999)
@@ -6477,20 +6604,20 @@ CONTAINS
   !---tob
                       !\ToDo: What happens if the call below is issued
                       !without actually that the dependent field has been modified in above conditional ?
-                      CALL FIELD_PARAMETER_SET_UPDATE_START(DEPENDENT_FIELD, &
+                      CALL Field_ParameterSetUpdateStart(DEPENDENT_FIELD, &
                         & variable_type, FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
-                      CALL FIELD_PARAMETER_SET_UPDATE_FINISH(DEPENDENT_FIELD, &
+                      CALL Field_ParameterSetUpdateFinish(DEPENDENT_FIELD, &
                         & variable_type, FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
   !---toe
                       !Restore the vector handles
-                      CALL FIELD_PARAMETER_SET_DATA_RESTORE(DEPENDENT_FIELD,variable_type,FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
+                      CALL Field_ParameterSetDataRestore(DEPENDENT_FIELD,variable_type,FIELD_BOUNDARY_CONDITIONS_SET_TYPE, &
                         & FULL_LOADS,ERR,ERROR,*999)
-                      CALL FIELD_PARAMETER_SET_DATA_RESTORE(DEPENDENT_FIELD,variable_type,FIELD_VALUES_SET_TYPE, &
+                      CALL Field_ParameterSetDataRestore(DEPENDENT_FIELD,variable_type,FIELD_VALUES_SET_TYPE, &
                         & CURRENT_LOADS,ERR,ERROR,*999)
                     ELSE
                       LOCAL_ERROR="Dirichlet boundary condition for variable type "// &
                         & TRIM(NUMBER_TO_VSTRING(variable_type,"*",ERR,ERROR))//" is not associated."
-                      CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     ENDIF
                   ENDIF
 
@@ -6524,7 +6651,7 @@ CONTAINS
                         & TRIM(NUMBER_TO_VSTRING(BOUNDARY_CONDITIONS_VARIABLE%DOF_COUNTS( &
                         & BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED), &
                         & '*',ERR,ERROR))//" conditions of this type has been counted."
-                      CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     END IF
                   END IF
 
@@ -6539,9 +6666,9 @@ CONTAINS
                       !   current: FIELD_PRESSURE_VALUES_SET_TYPE - always holds the current increment, even if not incremented
                       !   previous: FIELD_PREVIOUS_PRESSURE_SET_TYPE - holds the previously applied increment
                       !Grab the pointers for both
-                      CALL FIELD_PARAMETER_SET_DATA_GET(DEPENDENT_FIELD,variable_type,FIELD_PREVIOUS_PRESSURE_SET_TYPE, &
+                      CALL Field_ParameterSetDataGet(DEPENDENT_FIELD,variable_type,FIELD_PREVIOUS_PRESSURE_SET_TYPE, &
                         & PREV_LOADS,ERR,ERROR,*999)
-                      CALL FIELD_PARAMETER_SET_DATA_GET(DEPENDENT_FIELD,variable_type,FIELD_PRESSURE_VALUES_SET_TYPE, &
+                      CALL Field_ParameterSetDataGet(DEPENDENT_FIELD,variable_type,FIELD_PRESSURE_VALUES_SET_TYPE, &
                         & CURRENT_LOADS,ERR,ERROR,*999)
                       !Calculate the new load, update the old load
                       IF(ITERATION_NUMBER==1) THEN
@@ -6561,9 +6688,9 @@ CONTAINS
                               NEW_LOAD=NEW_LOAD/MAXIMUM_NUMBER_OF_ITERATIONS
 !if (condition_idx==1) write(*,*) "new load=",new_load
                               !Update current and previous loads
-                              CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(DEPENDENT_FIELD,variable_type, &
+                              CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD,variable_type, &
                                 & FIELD_PRESSURE_VALUES_SET_TYPE,condition_local_dof,NEW_LOAD,ERR,ERROR,*999)
-                              CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(DEPENDENT_FIELD,variable_type, &
+                              CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD,variable_type, &
                                 & FIELD_PREVIOUS_PRESSURE_SET_TYPE,condition_local_dof,0.0_dp,ERR,ERROR,*999)
                               IF(DIAGNOSTICS1) THEN
                                 CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  dof idx", &
@@ -6593,9 +6720,9 @@ CONTAINS
                               NEW_LOAD=CURRENT_LOAD+(CURRENT_LOAD-PREV_LOAD)  !This may be subject to numerical errors...
 !if (condition_idx==1) write(*,*) "new load=",new_load
                               !Update current and previous loads
-                              CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(DEPENDENT_FIELD,variable_type, &
+                              CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD,variable_type, &
                                 & FIELD_PRESSURE_VALUES_SET_TYPE,condition_local_dof,NEW_LOAD,ERR,ERROR,*999)
-                              CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(DEPENDENT_FIELD,variable_type, &
+                              CALL Field_ParameterSetUpdateLocalDOF(DEPENDENT_FIELD,variable_type, &
                                 & FIELD_PREVIOUS_PRESSURE_SET_TYPE,condition_local_dof,CURRENT_LOAD,ERR,ERROR,*999)
                               IF(DIAGNOSTICS1) THEN
                                 CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  dof idx", &
@@ -6609,48 +6736,48 @@ CONTAINS
                         ENDDO !condition_idx
                       ENDIF
                       !Start transfer of dofs to neighbouring domains
-                      CALL FIELD_PARAMETER_SET_UPDATE_START(DEPENDENT_FIELD,variable_type,FIELD_PREVIOUS_PRESSURE_SET_TYPE, &
+                      CALL Field_ParameterSetUpdateStart(DEPENDENT_FIELD,variable_type,FIELD_PREVIOUS_PRESSURE_SET_TYPE, &
                         & ERR,ERROR,*999)
-                      CALL FIELD_PARAMETER_SET_UPDATE_START(DEPENDENT_FIELD,variable_type,FIELD_PRESSURE_VALUES_SET_TYPE, &
+                      CALL Field_ParameterSetUpdateStart(DEPENDENT_FIELD,variable_type,FIELD_PRESSURE_VALUES_SET_TYPE, &
                         & ERR,ERROR,*999)
                       !Restore the vector handles
-                      CALL FIELD_PARAMETER_SET_DATA_RESTORE(DEPENDENT_FIELD,variable_type,FIELD_PREVIOUS_PRESSURE_SET_TYPE, &
+                      CALL Field_ParameterSetDataRestore(DEPENDENT_FIELD,variable_type,FIELD_PREVIOUS_PRESSURE_SET_TYPE, &
                         & PREV_LOADS,ERR,ERROR,*999)
-                      CALL FIELD_PARAMETER_SET_DATA_RESTORE(DEPENDENT_FIELD,variable_type,FIELD_PRESSURE_VALUES_SET_TYPE, &
+                      CALL Field_ParameterSetDataRestore(DEPENDENT_FIELD,variable_type,FIELD_PRESSURE_VALUES_SET_TYPE, &
                         & CURRENT_LOADS,ERR,ERROR,*999)
                       !Finish transfer of dofs to neighbouring domains
-                      CALL FIELD_PARAMETER_SET_UPDATE_FINISH(DEPENDENT_FIELD,variable_type,FIELD_PREVIOUS_PRESSURE_SET_TYPE, &
+                      CALL Field_ParameterSetUpdateFinish(DEPENDENT_FIELD,variable_type,FIELD_PREVIOUS_PRESSURE_SET_TYPE, &
                         & ERR,ERROR,*999)
-                      CALL FIELD_PARAMETER_SET_UPDATE_FINISH(DEPENDENT_FIELD,variable_type,FIELD_PRESSURE_VALUES_SET_TYPE, &
+                      CALL Field_ParameterSetUpdateFinish(DEPENDENT_FIELD,variable_type,FIELD_PRESSURE_VALUES_SET_TYPE, &
                         & ERR,ERROR,*999)
                     ELSE
                       LOCAL_ERROR="Pressure incremented boundary condition for variable type "// &
                         & TRIM(NUMBER_TO_VSTRING(variable_type,"*",ERR,ERROR))//" is not associated even though"// &
                         & TRIM(NUMBER_TO_VSTRING(BOUNDARY_CONDITIONS_VARIABLE%DOF_COUNTS(BOUNDARY_CONDITION_PRESSURE_INCREMENTED), &
                         & '*',ERR,ERROR))//" conditions of this type has been counted."
-                      CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     ENDIF
                   ENDIF !Pressure incremented bc block
                 ELSE
                   LOCAL_ERROR="Domain mapping is not associated for variable "// &
                     & TRIM(NUMBER_TO_VSTRING(variable_type,"*",ERR,ERROR))//" of dependent field"
-                  CALL FLAG_ERROR(LOCAL_ERROR,ERR,ERROR,*999)
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 ENDIF !Domain mapping test
               ELSE
                 ! do nothing - no boundary conditions variable type associated?
               ENDIF
             ENDDO !variable_idx
           ELSE
-            CALL FLAG_ERROR("Dependent field variables are not allocated.",ERR,ERROR,*999)
+            CALL FlagError("Dependent field variables are not allocated.",ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Dependent field is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Dependent field is not associated.",ERR,ERROR,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Boundary conditions are not associated.",ERR,ERROR,*999)
+        CALL FlagError("Boundary conditions are not associated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
 
     EXITS("EQUATIONS_SET_BOUNDARY_CONDITIONS_INCREMENT")
@@ -6684,14 +6811,19 @@ CONTAINS
         & MAXIMUM_NUMBER_OF_ITERATIONS,ERR,ERROR,*999)
 
       !Apply any other equation set specific increments
-      SELECT CASE(EQUATIONS_SET%CLASS)
+      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
+        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<1) THEN
+        CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
+      END IF
+      SELECT CASE(EQUATIONS_SET%SPECIFICATION(1))
       CASE(EQUATIONS_SET_ELASTICITY_CLASS)
         CALL ELASTICITY_LOAD_INCREMENT_APPLY(EQUATIONS_SET,ITERATION_NUMBER,MAXIMUM_NUMBER_OF_ITERATIONS,ERR,ERROR,*999)
       CASE DEFAULT
         !Do nothing
       END SELECT
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
 
 
@@ -6836,16 +6968,16 @@ CONTAINS
                 & err,error,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Equations matrices is not associated",err,error,*999)
+            CALL FlagError("Equations matrices is not associated",err,error,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Equations is not associated",err,error,*999)
+          CALL FlagError("Equations is not associated",err,error,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Dependent field is not associated",err,error,*999)
+        CALL FlagError("Dependent field is not associated",err,error,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated",err,error,*999)
+      CALL FlagError("Equations set is not associated",err,error,*999)
     ENDIF
        
     EXITS("EquationsSet_AssembleStaticNonlinearNodal")
@@ -6889,40 +7021,47 @@ CONTAINS
                 ! None of these routines currently support calculating off diagonal terms for coupled problems,
                 ! but when one does we will have to pass through the matrixIdx parameter
                 IF(matrixIdx>1) THEN
-                  CALL FLAG_ERROR("Analytic off-diagonal Jacobian calculation not implemented.",err,error,*999)
+                  CALL FlagError("Analytic off-diagonal Jacobian calculation not implemented.",err,error,*999)
                 END IF
-                SELECT CASE(equationsSet%CLASS)
+                IF(.NOT.ALLOCATED(equationsSet%specification)) THEN
+                  CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+                ELSE IF(SIZE(equationsSet%specification,1)<1) THEN
+                  CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
+                END IF
+                SELECT CASE(equationsSet%specification(1))
                 CASE(EQUATIONS_SET_ELASTICITY_CLASS)
-                  CALL FLAG_ERROR("Not implemented.",err,error,*999)
+                  CALL FlagError("Not implemented.",err,error,*999)
                 CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
                   CALL FluidMechanics_NodalJacobianEvaluate(equationsSet,nodeNumber,err,error,*999)
                 CASE(EQUATIONS_SET_ELECTROMAGNETICS_CLASS)
-                  CALL FLAG_ERROR("Not implemented.",err,error,*999)
+                  CALL FlagError("Not implemented.",err,error,*999)
                 CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
-                  CALL FLAG_ERROR("Not implemented.",err,error,*999)
+                  CALL FlagError("Not implemented.",err,error,*999)
                 CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
-                  CALL FLAG_ERROR("Not implemented.",err,error,*999)
+                  CALL FlagError("Not implemented.",err,error,*999)
                 CASE(EQUATIONS_SET_MODAL_CLASS)
-                  CALL FLAG_ERROR("Not implemented.",err,error,*999)
+                  CALL FlagError("Not implemented.",err,error,*999)
                 CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
-                  CALL FLAG_ERROR("Not implemented.",err,error,*999)
+                  CALL FlagError("Not implemented.",err,error,*999)
                 CASE DEFAULT
-                  localError="Equations set class "//TRIM(NUMBER_TO_VSTRING(equationsSet%CLASS,"*",err,error))//" is not valid."
-                  CALL FLAG_ERROR(localError,err,error,*999)
+                  localError="The first equations set specification of "// &
+                    & TRIM(NUMBER_TO_VSTRING(equationsSet%specification(1),"*", &
+                    & err,error))//" is not valid."
+                  CALL FlagError(localError,err,error,*999)
                 END SELECT
               CASE(EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED)
-                CALL FLAG_ERROR("Not implemented.",err,error,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
                 localError="Jacobian calculation type "//TRIM(NUMBER_TO_VSTRING(nonlinearMatrices%JACOBIANS(matrixIdx)%PTR% &
                   & JACOBIAN_CALCULATION_TYPE,"*",err,error))//" is not valid."
-                CALL FLAG_ERROR(localError,err,error,*999)
+                CALL FlagError(localError,err,error,*999)
               END SELECT
             END DO
           ELSE
-            CALL FLAG_ERROR("Equations nonlinear matrices is not associated.",err,error,*999)
+            CALL FlagError("Equations nonlinear matrices is not associated.",err,error,*999)
           END IF
         ELSE
-          CALL FLAG_ERROR("Equations matrices is not associated.",err,error,*999)
+          CALL FlagError("Equations matrices is not associated.",err,error,*999)
         END IF
         IF(equations%OUTPUT_TYPE>=EQUATIONS_NODAL_MATRIX_OUTPUT) THEN
           CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"",err,error,*999)
@@ -6954,10 +7093,10 @@ CONTAINS
           END DO
         END IF
       ELSE
-        CALL FLAG_ERROR("Equations is not associated.",err,error,*999)
+        CALL FlagError("Equations is not associated.",err,error,*999)
       END IF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",err,error,*999)
+      CALL FlagError("Equations set is not associated.",err,error,*999)
     END IF
 
     EXITS("EquationsSet_NodalJacobianEvaluate")
@@ -6994,24 +7133,30 @@ CONTAINS
     ENTERS("EquationsSet_NodalResidualEvaluate",err,error,*999)
 
     IF(ASSOCIATED(equationsSet)) THEN
-      SELECT CASE(equationsSet%CLASS)
+      IF(.NOT.ALLOCATED(equationsSet%specification)) THEN
+        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+      ELSE IF(SIZE(equationsSet%specification,1)<1) THEN
+        CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
+      END IF
+      SELECT CASE(equationsSet%specification(1))
       CASE(EQUATIONS_SET_ELASTICITY_CLASS)
-        CALL FLAG_ERROR("Not implemented.",err,error,*999)
+        CALL FlagError("Not implemented.",err,error,*999)
       CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
         CALL FluidMechanics_NodalResidualEvaluate(equationsSet,nodeNumber,err,error,*999)
       CASE(EQUATIONS_SET_ELECTROMAGNETICS_CLASS)
-        CALL FLAG_ERROR("Not implemented.",err,error,*999)
+        CALL FlagError("Not implemented.",err,error,*999)
       CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
-        CALL FLAG_ERROR("Not implemented.",err,error,*999)
+        CALL FlagError("Not implemented.",err,error,*999)
       CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
-        CALL FLAG_ERROR("Not implemented.",err,error,*999)
+        CALL FlagError("Not implemented.",err,error,*999)
       CASE(EQUATIONS_SET_MODAL_CLASS)
-        CALL FLAG_ERROR("Not implemented.",err,error,*999)
+        CALL FlagError("Not implemented.",err,error,*999)
       CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
-        CALL FLAG_ERROR("Not implemented.",err,error,*999)
+        CALL FlagError("Not implemented.",err,error,*999)
       CASE DEFAULT
-        localError="Equations set class "//TRIM(NUMBER_TO_VSTRING(equationsSet%CLASS,"*",err,error))//" is not valid."
-        CALL FLAG_ERROR(localError,err,error,*999)
+        localError="The first equations set specification of "// &
+          & TRIM(NUMBER_TO_VSTRING(equationsSet%specification(1),"*",err,error))//" is not valid."
+        CALL FlagError(localError,err,error,*999)
       END SELECT
       equations=>equationsSet%EQUATIONS
       IF(ASSOCIATED(equations)) THEN
@@ -7097,16 +7242,16 @@ CONTAINS
               ENDIF
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Equation nonlinear matrices not associated.",err,error,*999)
+            CALL FlagError("Equation nonlinear matrices not associated.",err,error,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Equation matrices is not associated.",err,error,*999)
+          CALL FlagError("Equation matrices is not associated.",err,error,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Equations is not associated.",err,error,*999)
+        CALL FlagError("Equations is not associated.",err,error,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",err,error,*999)
+      CALL FlagError("Equations set is not associated.",err,error,*999)
     ENDIF    
        
     EXITS("EquationsSet_NodalResidualEvaluate")
@@ -7252,16 +7397,16 @@ CONTAINS
                 & err,error,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Equations matrices is not associated",err,error,*999)
+            CALL FlagError("Equations matrices is not associated",err,error,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Equations is not associated",err,error,*999)
+          CALL FlagError("Equations is not associated",err,error,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Dependent field is not associated",err,error,*999)
+        CALL FlagError("Dependent field is not associated",err,error,*999)
       ENDIF            
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",err,error,*999)
+      CALL FlagError("Equations set is not associated.",err,error,*999)
     ENDIF
        
     EXITS("EquationsSet_JacobianEvaluateStaticNodal")
@@ -7405,16 +7550,16 @@ CONTAINS
                 & err,error,*999)
             ENDIF
           ELSE
-            CALL FLAG_ERROR("Equations matrices is not associated",err,error,*999)
+            CALL FlagError("Equations matrices is not associated",err,error,*999)
           ENDIF
         ELSE
-          CALL FLAG_ERROR("Equations is not associated",err,error,*999)
+          CALL FlagError("Equations is not associated",err,error,*999)
         ENDIF
       ELSE
-        CALL FLAG_ERROR("Dependent field is not associated",err,error,*999)
+        CALL FlagError("Dependent field is not associated",err,error,*999)
       ENDIF
     ELSE
-      CALL FLAG_ERROR("Equations set is not associated.",err,error,*999)
+      CALL FlagError("Equations set is not associated.",err,error,*999)
     ENDIF
        
     EXITS("EquationsSet_ResidualEvaluateStaticNodal")

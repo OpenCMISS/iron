@@ -42,6 +42,9 @@
 !>
 
 !> This module contains all Fortran and C data conversion routines.
+
+#include "dllexport.h"
+
 MODULE CMISS_FORTRAN_C
 
   USE ISO_C_BINDING
@@ -72,6 +75,7 @@ CONTAINS
 
   !>Copys/converts a C string (array of characters) to a Fortran String (length of characters)
   SUBROUTINE CMISSC2FString(Cstring,Fstring)
+  	!DLLEXPORT(CMISSC2FString)
     !Argument variables
     CHARACTER(LEN=1,KIND=C_CHAR), INTENT(IN) :: Cstring(:)
     CHARACTER(LEN=*), INTENT(OUT) :: Fstring
@@ -102,6 +106,7 @@ CONTAINS
 
   !>Copys/converts a Fortran String (length of characters) to a C string (array of characters)
   SUBROUTINE CMISSF2CString(Fstring,Cstring)
+  	!DLLEXPORT(CMISSF2CString)
     !Argument variables
     CHARACTER(LEN=*), INTENT(IN) :: Fstring
     CHARACTER(LEN=1,KIND=C_CHAR), INTENT(OUT) :: Cstring(:)
@@ -129,6 +134,7 @@ CONTAINS
 
   !>Copys/converts a list of C strings (2D array of characters) to an array of Fortran Strings
   SUBROUTINE CMISSC2FStrings(Cstrings,Fstrings)
+  	!DLLEXPORT(CMISSC2FStrings)
     !Argument variables
     CHARACTER(LEN=1,KIND=C_CHAR), INTENT(IN) :: Cstrings(:,:)
     CHARACTER(LEN=*), INTENT(INOUT) :: Fstrings(:)

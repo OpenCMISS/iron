@@ -9,6 +9,8 @@ set(IRON_HEADERS
     external_dae_solver_routines.h
     FieldExport.h
     FieldExportConstants.h
+    macros.h
+    dllexport.h
 )
 set(IRON_Fortran_SRC
     advection_diffusion_equation_routines.f90
@@ -93,6 +95,7 @@ set(IRON_Fortran_SRC
     Navier_Stokes_equations_routines.f90
     node_routines.f90
     opencmiss.f90
+    opencmiss_iron.f90
     Poiseuille_equations_routines.f90
     Poisson_equations_routines.f90
     problem_constants.f90
