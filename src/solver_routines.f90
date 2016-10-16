@@ -18942,8 +18942,8 @@ CONTAINS
                           CALL FlagError("Nonlinear line search solver did not converge. PETSc diverged F Norm NaN.", &
                             & ERR,ERROR,*999)
                         CASE(PETSC_SNES_DIVERGED_MAX_IT)
-                          CALL FlagError("Nonlinear line search solver did not converge. PETSc diverged maximum iterations.", &
-                            & ERR,ERROR,*999)
+                          !CALL FlagError("Nonlinear line search solver did not converge. PETSc diverged maximum iterations.", &
+                          !  & ERR,ERROR,*999)
                         CASE(PETSC_SNES_DIVERGED_LINE_SEARCH)
                           CALL FlagError("Nonlinear line search solver did not converge. PETSc diverged line search.", &
                             & ERR,ERROR,*999)
