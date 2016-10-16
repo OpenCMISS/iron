@@ -3246,9 +3246,22 @@ CONTAINS
                       & TRIM(NumberToVString(numberOfDependentComponents,"*",err,error))//"."
                     CALL FlagError(localError,err,error,*999)
                   ENDIF
+                  CALL Field_NumberOfComponentsGet(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,numberOfComponents2,err,error,*999)
+                  IF(numberOfComponents /= numberOfComponents2) THEN
+                    localError="The number of components for the U variable of the specified independent field of "// &
+                      & TRIM(NumberToVString(numberOfComponents,"*",err,error))// &
+                      & " does not match the number of components for the V variable of the field of "// &
+                      & TRIM(NumberToVString(numberOfComponents2,"*",err,error))//"."
+                    CALL FlagError(localError,err,error,*999)
+                  ENDIF
                 ENDIF
                 !Specify finish action
                 CALL Field_CreateFinish(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,err,error,*999)
+                !Initialise the weights to 1.0
+                DO componentIdx=1,numberOfComponents
+                  CALL Field_ComponentValuesInitialise(equationsSet%independent%INDEPENDENT_FIELD,FIELD_V_VARIABLE_TYPE, &
+                    & FIELD_VALUES_SET_TYPE,componentIdx,1.0_DP,err,error,*999)
+                ENDDO !componentIdx
               ENDIF
             CASE DEFAULT
               localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%ACTION_TYPE,"*",err,error))// &
