@@ -1935,6 +1935,12 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_DataProjection_LabelSetVSObj
   END INTERFACE cmfe_DataProjection_LabelSet
 
+  !>Outputs an analysis of the data projection results
+  INTERFACE cmfe_DataProjection_ResultAnalysisOutput
+    MODULE PROCEDURE cmfe_DataProjection_ResultAnalysisOutputNumber
+    MODULE PROCEDURE cmfe_DataProjection_ResultAnalysisOutputObj
+  END INTERFACE cmfe_DataProjection_ResultAnalysisOutput
+
   !>Returns the projection distance for a data point identified by a given user number.
   INTERFACE cmfe_DataProjection_ResultDistanceGet
     MODULE PROCEDURE cmfe_DataProjection_ResultDistanceGetNumber
@@ -2014,6 +2020,8 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_DataProjection_ElementSet
 
   PUBLIC cmfe_DataProjection_LabelGet,cmfe_DataProjection_LabelSet
+
+  PUBLIC cmfe_DataProjection_ResultAnalysisOutput
 
   PUBLIC cmfe_DataProjection_ResultDistanceGet,cmfe_DataProjection_ResultElementNumberGet
 
@@ -20875,7 +20883,78 @@ CONTAINS
 
   END SUBROUTINE cmfe_DataProjection_MaximumNumberOfIterationsGetObj
 
- !
+  !
+  !================================================================================================================================
+  !
+
+  !>Outputs the analysis of data projection results for a data projection identified by user number.
+  SUBROUTINE cmfe_DataProjection_ResultAnalysisOutputNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
+    & filename,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultAnalysisOutputNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to output the analysis for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The user number of the data projection containing the data points to output the analysis for.
+    CHARACTER(LEN=*), INTENT(IN) :: filename !<If not empty, the filename to output the data projection result analysis to. If empty, the analysis will be output to the standard output.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(DataPointsType), POINTER :: dataPoints
+    TYPE(DataProjectionType), POINTER :: dataProjection
+    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(VARYING_STRING) :: localError 
+
+    ENTERS("cmfe_DataProjection_ResultAnalysisOutputNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(dataPoints)    
+    NULLIFY(dataProjection) 
+    CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
+    IF(ASSOCIATED(region)) THEN
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
+      CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+      CALL DataProjection_ResultAnalysisOutput(dataProjection,filename,err,error,*999)
+    ELSE
+      localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
+        & " does not exist."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    EXITS("cmfe_DataProjection_ResultAnalysisOutputNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_DataProjection_ResultAnalysisOutputNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ResultAnalysisOutputNumber
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Outputs the analysis of data projection results for a data projection identified by an object.
+  SUBROUTINE cmfe_DataProjection_ResultAnalysisOutputObj(dataProjection,filename,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultDistanceGetObj)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(IN) :: dataProjection !<A pointer to the data projection to output the result analysis for.
+    CHARACTER(LEN=*), INTENT(IN) :: filename !<If not empty, the filename to output the data projection result analysis to. If empty, the analysis will be output to the standard output.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_DataProjection_ResultAnalysisOutputObj",err,error,*999)
+
+    CALL DataProjection_ResultAnalysisOutput(dataProjection%dataProjection,filename,err,error,*999)
+
+    EXITS("cmfe_DataProjection_ResultAnalysisOutputObj")
+    RETURN
+999 ERRORSEXITS("cmfe_DataProjection_ResultAnalysisOutputObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ResultAnalysisOutputObj
+
+  !
   !================================================================================================================================
   !
 

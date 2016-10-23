@@ -45,6 +45,7 @@
 MODULE DataProjectionRoutines
 
   USE BASE_ROUTINES
+  USE BASIS_ROUTINES
   USE CMISS_MPI  
   USE COMP_ENVIRONMENT
   USE CONSTANTS
@@ -78,19 +79,19 @@ MODULE DataProjectionRoutines
   !> \brief Datapoint projection definition type parameters
   !> \see DataProjectionRoutines,OPENCMISS_DataProjectionTypes
   !>@{ 
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE=1 !<The boundary line projection type for data projection, only projects to boundary lines of the mesh. \see DataProjectionRoutines 
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE=2 !<The boundary face projection type for data projection, only projects to boundary faces of the mesh. \see DataProjectionRoutines 
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE=3 !<The element projection type for data projection, projects to all elements in mesh. \see DataProjectionRoutines 
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE=1 !<The boundary line projection type for data projection, only projects to boundary lines of the mesh. \see DataProjectionRoutines,OPENCMISS_DataProjectionTypes
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE=2 !<The boundary face projection type for data projection, only projects to boundary faces of the mesh. \see DataProjectionRoutines,OPENCMISS_DataProjectionTypes
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE=3 !<The element projection type for data projection, projects to all elements in mesh. \see DataProjectionRoutines,OPENCMISS_DataProjectionTypes
   !>@}
 
   !> \addtogroup DataProjectionRoutines_DataProjectionExitTags DataProjectionRoutines::DataProjectionExitTags
   !> \brief Datapoint projection exit tags
   !> \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
   !>@{ 
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_CONVERGED=1 !<Data projection exited due to it being converged \see DataProjectionRoutines 
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_BOUNDS=2 !<Data projection exited due to it hitting the bound and continue to travel out of the element. \see DataProjectionRoutines 
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_MAX_ITERATION=3 !<Data projection exited due to it attaining maximum number of iteration specified by user. \see DataProjectionRoutines 
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_NO_ELEMENT=4 !<Data projection exited due to no local element found, this happens when none of the candidate elements are within this computational node, and before MPI communication with other nodes. \see DataProjectionRoutines     
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_CONVERGED=1 !<Data projection exited due to it being converged \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_BOUNDS=2 !<Data projection exited due to it hitting the bound and continue to travel out of the element. \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_MAX_ITERATION=3 !<Data projection exited due to it attaining maximum number of iteration specified by user. \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_NO_ELEMENT=4 !<Data projection exited due to no local element found, this happens when none of the candidate elements are within this computational node, and before MPI communication with other nodes. \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
   !>@}
 
   !Module types
@@ -113,6 +114,9 @@ MODULE DataProjectionRoutines
 
   PUBLIC DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE,DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE, &
     & DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE
+
+  PUBLIC DATA_PROJECTION_EXIT_TAG_CONVERGED,DATA_PROJECTION_EXIT_TAG_BOUNDS,DATA_PROJECTION_EXIT_TAG_MAX_ITERATION, &
+    & DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
   
   PUBLIC DataProjection_AbsoluteToleranceGet,DataProjection_AbsoluteToleranceSet
 
@@ -124,6 +128,10 @@ MODULE DataProjectionRoutines
   
   PUBLIC DataProjection_DataPointsPositionEvaluate
   
+  PUBLIC DataProjection_ElementSet
+  
+  PUBLIC DataProjection_LabelGet,DataProjection_LabelSet
+
   PUBLIC DataProjection_MaximumInterationUpdateGet,DataProjection_MaximumInterationUpdateSet
   
   PUBLIC DataProjection_MaximumNumberOfIterationsGet,DataProjection_MaximumNumberOfIterationsSet
@@ -135,14 +143,8 @@ MODULE DataProjectionRoutines
   PUBLIC DataProjection_ProjectionTypeGet,DataProjection_ProjectionTypeSet
   
   PUBLIC DataProjection_RelativeToleranceGet,DataProjection_RelativeToleranceSet
-  
-  PUBLIC DataProjection_StartingXiGet,DataProjection_StartingXiSet
 
-  PUBLIC DataProjection_ResultXiGet, DataProjection_ResultXiSet
-
-  PUBLIC DataProjection_ResultProjectionVectorGet
-
-  PUBLIC DataProjection_ElementSet
+  PUBLIC DataProjection_ResultAnalysisOutput
   
   PUBLIC DataProjection_ResultDistanceGet
   
@@ -150,12 +152,20 @@ MODULE DataProjectionRoutines
   
   PUBLIC DataProjection_ResultElementLineNumberGet
   
+  !PUBLIC DataProjection_ResultMaximumErrorGet,DataProjection_ResultMinimumErrorGet
+  
+  !PUBLIC DataProjection_ResultRMSErrorGet
+
   PUBLIC DataProjection_ResultExitTagGet
+
+  PUBLIC DataProjection_ResultProjectionVectorGet
+  
+  PUBLIC DataProjection_ResultXiGet,DataProjection_ResultXiSet
+
+  PUBLIC DataProjection_StartingXiGet,DataProjection_StartingXiSet
 
   PUBLIC DataProjection_UserNumberFind
   
-  PUBLIC DataProjection_LabelGet,DataProjection_LabelSet
-
   PUBLIC DataProjections_Initialise,DataProjections_Finalise
   
 CONTAINS
@@ -635,6 +645,7 @@ CONTAINS
               dataProjection%dataPoints=>dataPoints
               dataProjection%decomposition=>decomposition
               dataProjection%numberOfCoordinates=numberOfCoordinates
+              dataProjection%numberOfElementXi=decomposition%numberOfDimensions
               !Default always project to boundaries faces/lines when decomposition dimension is equal to region dimension.
               !If decomposition dimension is less, project to all elements            
               IF(decomposition%numberOfDimensions<numberOfCoordinates) THEN !decomposition dimension < data dimension
@@ -774,10 +785,10 @@ CONTAINS
     dataProjectionResult%userNumber=0
     dataProjectionResult%distance=0.0
     dataProjectionResult%elementNumber=0
-    dataProjectionResult%elementFaceNumber=0
-    dataProjectionResult%elementLineNumber=0
+    dataProjectionResult%elementLineFaceNumber=0
     dataProjectionResult%exitTag=0
     IF(ALLOCATED(dataProjectionResult%xi)) DEALLOCATE(dataProjectionResult%xi)
+    IF(ALLOCATED(dataProjectionResult%elementXi)) DEALLOCATE(dataProjectionResult%elementXi)
     IF(ALLOCATED(dataProjectionResult%projectionVector)) DEALLOCATE(dataProjectionResult%projectionVector)
     
     EXITS("DataProjection_DataProjectionResultFinalise")
@@ -806,8 +817,7 @@ CONTAINS
     dataProjectionResult%userNumber=0
     dataProjectionResult%distance=0.0_DP
     dataProjectionResult%elementNumber=0
-    dataProjectionResult%elementFaceNumber=0
-    dataProjectionResult%elementLineNumber=0
+    dataProjectionResult%elementLineFaceNumber=0
     dataProjectionResult%exitTag=DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
     
     EXITS("DataProjection_DataProjectionResultInitialise")
@@ -884,6 +894,12 @@ CONTAINS
                   & TRIM(NumberToVString(dataPointIdx,"*",err,error))//"."
                 CALL FlagError(localError,err,error,*999)
               ENDIF
+              ALLOCATE(dataProjection%dataProjectionResults(dataPointIdx)%elementXi(dataProjection%numberOfElementXi),STAT=err)
+              IF(err/=0) THEN
+                localError="Could not allocate data projection results element xi for data point index "// &
+                  & TRIM(NumberToVString(dataPointIdx,"*",err,error))//"."
+                CALL FlagError(localError,err,error,*999)
+              ENDIF
 	      ALLOCATE(dataProjection%dataProjectionResults(dataPointIdx)%projectionVector(dataProjection%numberOfCoordinates), &
                 & STAT=err)
               IF(err/=0) THEN
@@ -893,6 +909,7 @@ CONTAINS
               ENDIF
               dataProjection%dataProjectionResults(dataPointIdx)%xi(1:dataProjection%numberOfXi)= &
                 & dataProjection%startingXi(1:dataProjection%numberOfXi)
+              dataProjection%dataProjectionResults(dataPointIdx)%elementXi=0.0_DP
 	      dataProjection%dataProjectionResults(dataPointIdx)%projectionVector(1:dataProjection%numberOfCoordinates)=0.0_DP
             ENDDO !dataPointIdx
           ELSE
@@ -1077,6 +1094,11 @@ CONTAINS
       dataProjection%numberOfClosestElements=0
       dataProjection%absoluteTolerance=1.0E-8_DP
       dataProjection%relativeTolerance=1.0E-6_DP
+      dataProjection%rmsError=0.0_DP
+      dataProjection%maximumError=0.0_DP
+      dataProjection%maximumErrorDataPoint=0
+      dataProjection%minimumError=0.0_DP
+      dataProjection%minimumErrorDataPoint=0
     ENDIF
     
     EXITS("DataProjection_Initialise")
@@ -1146,12 +1168,23 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(BASIS_TYPE), POINTER :: basis
     TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: interpolationParameters(:)
     TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: interpolatedPoints(:)
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: interpolatedPoint
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
+    TYPE(DECOMPOSITION_ELEMENTS_TYPE), POINTER :: decompositionElements
+    TYPE(DECOMPOSITION_FACES_TYPE), POINTER :: decompositionFaces
+    TYPE(DECOMPOSITION_LINES_TYPE), POINTER :: decompositionLines
+    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology    
     TYPE(DOMAIN_TYPE), POINTER :: domain
+    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: domainElements
+    TYPE(DOMAIN_FACES_TYPE), POINTER :: domainFaces
+    TYPE(DOMAIN_LINES_TYPE), POINTER :: domainLines
+    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainMappingElements
+    TYPE(DOMAIN_MAPPINGS_TYPE), POINTER :: domainMappings
+    TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology
     INTEGER(INTG) :: myComputationalNode,numberOfComputationalNodes !<computational node/rank of the current process    
     INTEGER(INTG) :: meshComponentNumber,numberOfDataPoints
     INTEGER(INTG) :: numberOfElements,numberOfFaces,numberOfLines,numberOfCandidates
@@ -1164,10 +1197,12 @@ CONTAINS
     INTEGER(INTG) :: MPIClosestDistances,dataProjectionGlobalNumber
     INTEGER(INTG) :: MPIIError
     INTEGER(INTG), ALLOCATABLE :: projectedElement(:),projectedLineFace(:),projectionExitTag(:)
+    REAL(DP) :: distance,maxError,minError,rmsError
     REAL(DP), ALLOCATABLE :: closestDistances(:,:),globalClosestDistances(:,:)
     REAL(DP), ALLOCATABLE :: projectedDistance(:,:),projectedXi(:,:),projectionVectors(:,:)   
-    INTEGER(INTG) :: elementIdx,lineFaceIdx,lineFaceNumber,computationalNodeIdx,xiIdx,localElementNumber
-    INTEGER(INTG) :: tempNumber,startIdx,finishIdx,dataPointIdx    
+    INTEGER(INTG) :: elementIdx,elementNumber,lineFaceIdx,lineFaceNumber,computationalNodeIdx,xiIdx,localElementNumber, &
+      & localLineFaceNumber
+    INTEGER(INTG) :: tempNumber,startIdx,finishIdx,dataPointIdx,maxDataPoint,minDataPoint
     LOGICAL :: boundaryProjection,elementExists,ghostElement
     TYPE(VARYING_STRING) :: localError
     
@@ -1188,527 +1223,600 @@ CONTAINS
               CALL Field_InterpolatedPointsInitialise(interpolationParameters,interpolatedPoints,err,error,*998, &
                 & FIELD_GEOMETRIC_COMPONENTS_TYPE)
               interpolatedPoint=>interpolatedPoints(FIELD_U_VARIABLE_TYPE)%ptr
-              decomposition=>projectionField%decomposition  
-              meshComponentNumber=projectionField%decomposition%MESH_COMPONENT_NUMBER
-              domain=>projectionField%decomposition%domain(meshComponentNumber)%ptr
-              numberOfDataPoints=dataPoints%numberOfDataPoints
-              myComputationalNode=Computational_NodeNumberGet(err,error)
-              IF(err/=0) GOTO 999
-              numberOfComputationalNodes=Computational_NumberOfNodesGet(err,error)
-              IF(err/=0) GOTO 999
-              boundaryProjection=(dataProjection%projectionType==DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE).OR. &
-                & (dataProjection%projectionType==DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE)          
-              !####################################################################################################################
-              !Find elements/faces/lines inside the current computational node, get the boundary faces/lines only if asked
-              !the elements/faces/lines are required to perform projection of points in the current computational node
-              !the are all pre-allocated to the maximum array length (i.e. numberOfElements), but only up to the
-              !numberOfCandidates'th index are assigned
-              numberOfElements=domain%topology%elements%NUMBER_OF_ELEMENTS
-              numberOfFaces=domain%topology%faces%NUMBER_OF_FACES
-              numberOfLines=domain%topology%lines%NUMBER_OF_LINES        
-              numberOfCandidates=0
-              IF(ALLOCATED(dataProjection%candidateElementNumbers).AND.ALLOCATED(dataProjection%localFaceLineNumbers)) THEN
-                SELECT CASE(dataProjection%projectionType)
-                CASE (DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE)
-                  !Identify all non-ghost boundary lines
-                  ALLOCATE(candidateElements(numberOfLines),STAT=err)
-                  IF(err/=0) CALL FlagError("Could not allocate candidate elements.",err,error,*999)
-                  ALLOCATE(candidateLinesFaces(numberOfLines),STAT=err)
-                  IF(err/=0) CALL FlagError("Could not allocate candidate lines faces.",err,error,*999)
-                  !Loop through all candidate element defined by user number
-                  DO elementIdx=1,SIZE(dataProjection%candidateElementNumbers,1)
-                    !Check if element exists on current domain, get local number
-                    CALL DecompositionTopology_ElementCheckExists(decomposition%topology,dataProjection% &
-                      & candidateElementNumbers(elementIdx),elementExists,localElementNumber,ghostElement, &
-                      & err,error,*999) 
-                    IF((elementExists).AND.(.NOT.ghostElement)) THEN
-                      !Get non-ghost elements
-                      numberOfCandidates=numberOfCandidates+1
-                      candidateElements(numberOfCandidates)=localElementNumber
-                      !Store element line number for line projection type                      
-                      candidateLinesFaces(numberOfCandidates)=dataProjection%localFaceLineNumbers(elementIdx) 
-                    ENDIF
-                  ENDDO !elementIdx
-                CASE (DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE)
-                   !identify all non-ghost boundary faces
-                  IF(decomposition%numberOfDimensions>=2) THEN
-                    ALLOCATE(candidateElements(numberOfFaces),STAT=err)
+              NULLIFY(decomposition)
+              CALL Field_DecompositionGet(projectionField,decomposition,err,error,*999)
+              NULLIFY(decompositionTopology)
+              CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*999)
+              NULLIFY(domain)
+              CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
+              NULLIFY(domainTopology)
+              CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
+              NULLIFY(domainElements)
+              CALL DomainTopology_ElementsGet(domainTopology,domainElements,err,error,*999)
+              NULLIFY(domainFaces)
+              CALL DomainTopology_FacesGet(domainTopology,domainFaces,err,error,*999)
+              NULLIFY(domainLines)
+              CALL DomainTopology_LinesGet(domainTopology,domainLines,err,error,*999)
+              NULLIFY(domainMappings)
+              CALL Domain_MappingsGet(domain,domainMappings,err,error,*999)
+              NULLIFY(domainMappingElements)
+              CALL DomainMappings_ElementsGet(domainMappings,domainMappingElements,err,error,*999)
+              IF(ASSOCIATED(domainElements%elements)) THEN                        
+                numberOfDataPoints=dataPoints%numberOfDataPoints
+                myComputationalNode=Computational_NodeNumberGet(err,error)
+                IF(err/=0) GOTO 999
+                numberOfComputationalNodes=Computational_NumberOfNodesGet(err,error)
+                IF(err/=0) GOTO 999
+                boundaryProjection=(dataProjection%projectionType==DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE).OR. &
+                  & (dataProjection%projectionType==DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE)          
+                !#########################################################################################################
+                !Find elements/faces/lines inside the current computational node, get the boundary faces/lines only if
+                !asked the elements/faces/lines are required to perform projection of points in the current computational
+                !node the are all pre-allocated to the maximum array length (i.e., numberOfElements), but only up to the
+                !numberOfCandidates'th index are assigned
+                numberOfElements=domainElements%NUMBER_OF_ELEMENTS
+                numberOfFaces=domainFaces%NUMBER_OF_FACES
+                numberOfLines=domainLines%NUMBER_OF_LINES        
+                numberOfCandidates=0
+                IF(ALLOCATED(dataProjection%candidateElementNumbers).AND. &
+                  & ALLOCATED(dataProjection%localFaceLineNumbers)) THEN
+                  SELECT CASE(dataProjection%projectionType)
+                  CASE (DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE)
+                    !Identify all non-ghost boundary lines
+                    ALLOCATE(candidateElements(numberOfLines),STAT=err)
                     IF(err/=0) CALL FlagError("Could not allocate candidate elements.",err,error,*999)
-                    ALLOCATE(candidateLinesFaces(numberOfFaces),STAT=err)
+                    ALLOCATE(candidateLinesFaces(numberOfLines),STAT=err)
                     IF(err/=0) CALL FlagError("Could not allocate candidate lines faces.",err,error,*999)
-                    !Loop through all candidate elements defined by user number
-                    DO elementIdx=1,SIZE(dataProjection%candidateElementNumbers,1)
-                      !Check if element exists on current domain, get local number                      
-                      CALL DecompositionTopology_ElementCheckExists(decomposition%topology,dataProjection% &
-                        & candidateElementNumbers(elementIdx),elementExists,localElementNumber,ghostElement, &
-                        & err,error,*999)
-                      IF((elementExists).AND.(.NOT.ghostElement)) THEN
-                        !Get non-ghost elements
-                        numberOfCandidates=numberOfCandidates+1
-                        candidateElements(numberOfCandidates)=localElementNumber
-                        !Store element face number for face projection type
-                        candidateLinesFaces(numberOfCandidates)=dataProjection%localFaceLineNumbers(elementIdx)
-                      ENDIF
-                    ENDDO !elementIdx
-                  ELSE
-                    CALL FlagError("Decomposition number of dimensions has to be >= 2 for a faces projection type.", &
-                      & err,error,*999)        
-                  ENDIF
-                CASE (DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE)
-                  !Identify all non-ghost elements
-                  IF(dataProjection%numberOfXi==decomposition%numberOfDimensions) THEN
-                    ALLOCATE(candidateElements(numberOfElements),STAT=err)
-                    IF(err/=0) CALL FlagError("Could not allocate candidate elements.",err,error,*999)
-                    !Loop through all candidate elements defined by user number                    
+                    !Loop through all candidate element defined by user number
                     DO elementIdx=1,SIZE(dataProjection%candidateElementNumbers,1)
                       !Check if element exists on current domain, get local number
-                      CALL DecompositionTopology_ElementCheckExists(decomposition%topology,dataProjection% &
+                      CALL DecompositionTopology_ElementCheckExists(decompositionTopology,dataProjection% &
                         & candidateElementNumbers(elementIdx),elementExists,localElementNumber,ghostElement, &
-                        & err,error,*999)
+                        & err,error,*999) 
                       IF((elementExists).AND.(.NOT.ghostElement)) THEN
                         !Get non-ghost elements
                         numberOfCandidates=numberOfCandidates+1
                         candidateElements(numberOfCandidates)=localElementNumber
+                        !Store element line number for line projection type                      
+                        candidateLinesFaces(numberOfCandidates)=dataProjection%localFaceLineNumbers(elementIdx) 
                       ENDIF
                     ENDDO !elementIdx
-                  ELSE
-                    CALL FlagError("Data projection number of xi has to equal to decomposition number of dimensions", &
-                      & err,error,*999)
-                  ENDIF
-                CASE DEFAULT
-                  localError="The data projection type of "//TRIM(NumberToVString(dataProjection%projectionType,"*",err,error))// &
-                    & " is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT      
-              ELSE
-                !If user didn't define candidate element number
-                SELECT CASE(dataProjection%projectionType)
-                CASE(DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE)
-                  !identify all non-ghost boundary lines
-                  ALLOCATE(candidateElements(numberOfLines),STAT=err)
-                  IF(err/=0) CALL FlagError("Could not allocate candidate elements.",err,error,*999)
-                  ALLOCATE(candidateLinesFaces(numberOfLines),STAT=err)
-                  IF(err/=0) CALL FlagError("Could not allocate candidate lines faces.",err,error,*999)
-                  DO elementIdx=1,domain%mappings%elements%NUMBER_OF_LOCAL
-                    IF(decomposition%topology%elements%elements(elementIdx)%BOUNDARY_ELEMENT) THEN
-                      DO lineFaceIdx=1,SIZE(decomposition%topology%elements%elements(elementIdx)%ELEMENT_LINES,1)
-                        lineFaceNumber=decomposition%topology%elements%elements(elementIdx)%ELEMENT_LINES(lineFaceIdx)
-                        IF(decomposition%topology%lines%lines(lineFaceNumber)%BOUNDARY_LINE) THEN
+                  CASE (DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE)
+                    !identify all non-ghost boundary faces
+                    IF(decomposition%numberOfDimensions>=2) THEN
+                      ALLOCATE(candidateElements(numberOfFaces),STAT=err)
+                      IF(err/=0) CALL FlagError("Could not allocate candidate elements.",err,error,*999)
+                      ALLOCATE(candidateLinesFaces(numberOfFaces),STAT=err)
+                      IF(err/=0) CALL FlagError("Could not allocate candidate lines faces.",err,error,*999)
+                      !Loop through all candidate elements defined by user number
+                      DO elementIdx=1,SIZE(dataProjection%candidateElementNumbers,1)
+                        !Check if element exists on current domain, get local number                      
+                        CALL DecompositionTopology_ElementCheckExists(decompositionTopology,dataProjection% &
+                          & candidateElementNumbers(elementIdx),elementExists,localElementNumber,ghostElement, &
+                          & err,error,*999)
+                        IF((elementExists).AND.(.NOT.ghostElement)) THEN
+                          !Get non-ghost elements
                           numberOfCandidates=numberOfCandidates+1
-                          candidateLinesFaces(numberOfCandidates)=lineFaceIdx
-                          candidateElements(numberOfCandidates)=elementIdx
-                        END IF
-                      ENDDO !lineFaceIdx
+                          candidateElements(numberOfCandidates)=localElementNumber
+                          !Store element face number for face projection type
+                          candidateLinesFaces(numberOfCandidates)=dataProjection%localFaceLineNumbers(elementIdx)
+                        ENDIF
+                      ENDDO !elementIdx
+                    ELSE
+                      CALL FlagError("Decomposition number of dimensions has to be >= 2 for a faces projection type.", &
+                        & err,error,*999)        
                     ENDIF
-                  ENDDO !elementIdx
-                CASE(DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE)
-                  !Identify all non-ghost boundary faces
-                  IF(decomposition%numberOfDimensions>=2) THEN
-                    ALLOCATE(candidateElements(numberOfFaces),STAT=err)
+                  CASE (DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE)
+                    !Identify all non-ghost elements
+                    IF(dataProjection%numberOfXi==decomposition%numberOfDimensions) THEN
+                      ALLOCATE(candidateElements(numberOfElements),STAT=err)
+                      IF(err/=0) CALL FlagError("Could not allocate candidate elements.",err,error,*999)
+                      !Loop through all candidate elements defined by user number                    
+                      DO elementIdx=1,SIZE(dataProjection%candidateElementNumbers,1)
+                        !Check if element exists on current domain, get local number
+                        CALL DecompositionTopology_ElementCheckExists(decompositionTopology,dataProjection% &
+                          & candidateElementNumbers(elementIdx),elementExists,localElementNumber,ghostElement, &
+                          & err,error,*999)
+                        IF((elementExists).AND.(.NOT.ghostElement)) THEN
+                          !Get non-ghost elements
+                          numberOfCandidates=numberOfCandidates+1
+                          candidateElements(numberOfCandidates)=localElementNumber
+                        ENDIF
+                      ENDDO !elementIdx
+                    ELSE
+                      CALL FlagError("Data projection number of xi has to equal to decomposition number of dimensions", &
+                        & err,error,*999)
+                    ENDIF
+                  CASE DEFAULT
+                    localError="The data projection type of "// &
+                      & TRIM(NumberToVString(dataProjection%projectionType,"*",err,error))// &
+                      & " is invalid."
+                    CALL FlagError(localError,err,error,*999)
+                  END SELECT
+                ELSE
+                  !If user didn't define candidate element number
+                  NULLIFY(decompositionElements)
+                  CALL DecompositionTopology_ElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+                  SELECT CASE(dataProjection%projectionType)
+                  CASE(DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE)
+                    NULLIFY(decompositionLines)
+                    CALL DecompositionTopology_LinesGet(decompositionTopology,decompositionLines,err,error,*999)
+                    !identify all non-ghost boundary lines
+                    ALLOCATE(candidateElements(numberOfLines),STAT=err)
                     IF(err/=0) CALL FlagError("Could not allocate candidate elements.",err,error,*999)
-                    ALLOCATE(candidateLinesFaces(numberOfFaces),STAT=err)
+                    ALLOCATE(candidateLinesFaces(numberOfLines),STAT=err)
                     IF(err/=0) CALL FlagError("Could not allocate candidate lines faces.",err,error,*999)
-                    DO elementIdx=1,domain%mappings%elements%NUMBER_OF_LOCAL
-                      IF(decomposition%topology%elements%elements(elementIdx)%BOUNDARY_ELEMENT) THEN
-                        DO lineFaceIdx=1,SIZE(decomposition%topology%elements%elements(elementIdx)%ELEMENT_FACES,1)
-                          lineFaceNumber=decomposition%topology%elements%elements(elementIdx)%ELEMENT_FACES(lineFaceIdx)
-                          IF(decomposition%topology%faces%faces(lineFaceNumber)%BOUNDARY_FACE) THEN
+                    DO elementIdx=1,domainMappingElements%NUMBER_OF_LOCAL
+                      IF(decompositionElements%elements(elementIdx)%BOUNDARY_ELEMENT) THEN
+                        DO lineFaceIdx=1,SIZE(decompositionElements%elements(elementIdx)%ELEMENT_LINES,1)
+                          lineFaceNumber=decompositionElements%elements(elementIdx)%ELEMENT_LINES(lineFaceIdx)
+                          IF(decompositionLines%lines(lineFaceNumber)%BOUNDARY_LINE) THEN
                             numberOfCandidates=numberOfCandidates+1
                             candidateLinesFaces(numberOfCandidates)=lineFaceIdx
                             candidateElements(numberOfCandidates)=elementIdx
-                          ENDIF
+                          END IF
                         ENDDO !lineFaceIdx
                       ENDIF
                     ENDDO !elementIdx
-                  ELSE
-                    CALL FlagError("Decomposition number of dimensions has to be >= 2 for a faces projection type.", &
-                      & err,error,*999)        
-                  ENDIF
+                  CASE(DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE)
+                    NULLIFY(decompositionFaces)
+                    CALL DecompositionTopology_FacesGet(decompositionTopology,decompositionFaces,err,error,*999)                    
+                    !Identify all non-ghost boundary faces
+                    IF(decomposition%numberOfDimensions>=2) THEN
+                      ALLOCATE(candidateElements(numberOfFaces),STAT=err)
+                      IF(err/=0) CALL FlagError("Could not allocate candidate elements.",err,error,*999)
+                      ALLOCATE(candidateLinesFaces(numberOfFaces),STAT=err)
+                      IF(err/=0) CALL FlagError("Could not allocate candidate lines faces.",err,error,*999)
+                      DO elementIdx=1,domainMappingElements%NUMBER_OF_LOCAL
+                        IF(decompositionElements%elements(elementIdx)%BOUNDARY_ELEMENT) THEN
+                          DO lineFaceIdx=1,SIZE(decompositionElements%elements(elementIdx)%ELEMENT_FACES,1)
+                            lineFaceNumber=decompositionElements%elements(elementIdx)%ELEMENT_FACES(lineFaceIdx)
+                            IF(decompositionFaces%faces(lineFaceNumber)%BOUNDARY_FACE) THEN
+                              numberOfCandidates=numberOfCandidates+1
+                              candidateLinesFaces(numberOfCandidates)=lineFaceIdx
+                              candidateElements(numberOfCandidates)=elementIdx
+                            ENDIF
+                          ENDDO !lineFaceIdx
+                        ENDIF
+                      ENDDO !elementIdx
+                    ELSE
+                      CALL FlagError("Decomposition number of dimensions has to be >= 2 for a faces projection type.", &
+                        & err,error,*999)        
+                    ENDIF
+                  CASE(DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE)
+                    !Identify all non-ghost elements
+                    IF(dataProjection%numberOfXi==decomposition%numberOfDimensions) THEN
+                      ALLOCATE(candidateElements(numberOfElements),STAT=err)
+                      IF(err/=0) CALL FlagError("Could not allocate candidate elements.",err,error,*999)
+                      DO elementIdx=1,domainMappingElements%NUMBER_OF_LOCAL
+                        numberOfCandidates=numberOfCandidates+1
+                        candidateElements(numberOfCandidates)=elementIdx
+                      ENDDO !elementIdx
+                    ELSE
+                      CALL FlagError("Data projection number of xi has to equal to decomposition mesh number of dimensions", &
+                        & err,error,*999)
+                    ENDIF
+                  CASE DEFAULT
+                    localError="The data projection type of "// &
+                      & TRIM(NumberToVString(dataProjection%projectionType,"*",err,error))// &
+                      & " is invalid."
+                    CALL FlagError(localError,err,error,*999)
+                  END SELECT
+                ENDIF
+                !##############################################################################################################
+                !find the clostest elements/faces/lines for each point in the current computational node base on starting xi
+                !the clostest elements/faces/lines are required to shrink down on the list of possible projection candiates
+                numberOfClosestCandidates=MIN(dataProjection%numberOfClosestElements,numberOfCandidates)
+                !Allocated and store he information for each data point. The information has to be stored in the corresponding
+                !rows for them to be contiguous in memory for easy MPI access
+                ALLOCATE(closestElements(numberOfDataPoints,numberOfClosestCandidates),STAT=err)
+                IF(err/=0) CALL FlagError("Could not allocate closest elements.",err,error,*999)
+                IF(boundaryProjection) THEN
+                  ALLOCATE(closestLinesFaces(numberOfDataPoints,numberOfClosestCandidates),STAT=err)
+                  IF(err/=0) CALL FlagError("Could not allocate closest lines faces.",err,error,*999)          
+                ENDIF
+                !Allocate and store the information for each data point. The information has to be stored in the corresponding
+                !rows for them to be contiguous in memory for easy MPI access
+                ALLOCATE(closestDistances(numberOfDataPoints,numberOfClosestCandidates),STAT=err)
+                IF(err/=0) CALL FlagError("Could not allocate closest distances.",err,error,*999) 
+                SELECT CASE(dataProjection%projectionType)
+                CASE(DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE)
+                  !Find closest candidate lines
+                  DO dataPointIdx=1,numberOfDataPoints
+                    CALL DataProjection_ClosestLinesFind(dataProjection,interpolatedPoint, &
+                      & dataPoints%dataPoints(dataPointIdx)%position,numberOfCandidates,candidateElements, &
+                      & candidateLinesFaces,closestElements(dataPointIdx,:),closestLinesFaces(dataPointIdx,:), &
+                      & closestDistances(dataPointIdx,:),err,error,*999)
+                  ENDDO !dataPointIdx
+                CASE(DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE)
+                  !Find closest candidate faces      
+                  DO dataPointIdx=1,numberOfDataPoints
+                    CALL DataProjection_ClosestFacesFind(dataProjection,interpolatedPoint, &
+                      & dataPoints%dataPoints(dataPointIdx)%position,numberOfCandidates,candidateElements, &
+                      & candidateLinesFaces,closestElements(dataPointIdx,:),closestLinesFaces(dataPointIdx,:), &
+                      & closestDistances(dataPointIdx,:),err,error,*999)
+                  ENDDO !dataPointIdx
                 CASE(DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE)
-                  !Identify all non-ghost elements
-                  IF(dataProjection%numberOfXi==decomposition%numberOfDimensions) THEN
-                    ALLOCATE(candidateElements(numberOfElements),STAT=err)
-                    IF(err/=0) CALL FlagError("Could not allocate candidate elements.",err,error,*999)
-                    DO elementIdx=1,domain%mappings%elements%NUMBER_OF_LOCAL
-                      numberOfCandidates=numberOfCandidates+1
-                      candidateElements(numberOfCandidates)=elementIdx
-                    ENDDO !elementIdx
-                  ELSE
-                    CALL FlagError("Data projection number of xi has to equal to decomposition mesh number of dimensions", &
-                      & err,error,*999)
-                  ENDIF
+                  !Find closest candidate elements
+                  DO dataPointIdx=1,numberOfDataPoints
+                    CALL DataProjection_ClosestElementsFind(dataProjection,interpolatedPoint, &
+                      & dataPoints%dataPoints(dataPointIdx)%position,numberOfCandidates,candidateElements, &
+                      & closestElements(dataPointIdx,:),closestDistances(dataPointIdx,:),err,error,*999)
+                  ENDDO !dataPointIdx
                 CASE DEFAULT
                   localError="The data projection type of "//TRIM(NumberToVString(dataProjection%projectionType,"*",err,error))// &
                     & " is invalid."
                   CALL FlagError(localError,err,error,*999)
                 END SELECT
-              ENDIF
-              !##############################################################################################################
-              !find the clostest elements/faces/lines for each point in the current computational node base on starting xi
-              !the clostest elements/faces/lines are required to shrink down on the list of possible projection candiates
-              numberOfClosestCandidates=MIN(dataProjection%numberOfClosestElements,numberOfCandidates)
-              !Allocated and store he information for each data point. The information has to be stored in the corresponding
-              !rows for them to be contiguous in memory for easy MPI access
-              ALLOCATE(closestElements(numberOfDataPoints,numberOfClosestCandidates),STAT=err)
-              IF(err/=0) CALL FlagError("Could not allocate closest elements.",err,error,*999)
-              IF(boundaryProjection) THEN
-                ALLOCATE(closestLinesFaces(numberOfDataPoints,numberOfClosestCandidates),STAT=err)
-                IF(err/=0) CALL FlagError("Could not allocate closest lines faces.",err,error,*999)          
-              ENDIF
-              !Allocate and store the information for each data point. The information has to be stored in the corresponding
-              !rows for them to be contiguous in memory for easy MPI access
-              ALLOCATE(closestDistances(numberOfDataPoints,numberOfClosestCandidates),STAT=err)
-              IF(err/=0) CALL FlagError("Could not allocate closest distances.",err,error,*999) 
-              SELECT CASE(dataProjection%projectionType)
-              CASE(DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE)
-                !Find closest candidate lines
-                DO dataPointIdx=1,numberOfDataPoints
-                  CALL DataProjection_ClosestLinesFind(dataProjection,interpolatedPoint, &
-                    & dataPoints%dataPoints(dataPointIdx)%position,numberOfCandidates,candidateElements, &
-                    & candidateLinesFaces,closestElements(dataPointIdx,:),closestLinesFaces(dataPointIdx,:), &
-                    & closestDistances(dataPointIdx,:),err,error,*999)
-                ENDDO !dataPointIdx
-              CASE(DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE)
-                !Find closest candidate faces      
-                DO dataPointIdx=1,numberOfDataPoints
-                  CALL DataProjection_ClosestFacesFind(dataProjection,interpolatedPoint, &
-                    & dataPoints%dataPoints(dataPointIdx)%position,numberOfCandidates,candidateElements, &
-                    & candidateLinesFaces,closestElements(dataPointIdx,:),closestLinesFaces(dataPointIdx,:), &
-                    & closestDistances(dataPointIdx,:),err,error,*999)
-                ENDDO !dataPointIdx
-              CASE(DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE)
-                !Find closest candidate elements
-                DO dataPointIdx=1,numberOfDataPoints
-                  CALL DataProjection_ClosestElementsFind(dataProjection,interpolatedPoint, &
-                    & dataPoints%dataPoints(dataPointIdx)%position,numberOfCandidates,candidateElements, &
-                    & closestElements(dataPointIdx,:),closestDistances(dataPointIdx,:),err,error,*999)
-                ENDDO !dataPointIdx
-              CASE DEFAULT
-                localError="The data projection type of "//TRIM(NumberToVString(dataProjection%projectionType,"*",err,error))// &
-                  & " is invalid."
-                CALL FlagError(localError,err,error,*999)
-              END SELECT
-              !###################################################################################################################
-              !Newton project data point to the list of closest elements, faces or lines
-              !project the data points to each of the closest elements,
-              !use MPI if number of computational nodes is greater than 1
-              IF(numberOfComputationalNodes>1) THEN
-                !Use MPI
-                !Allocate arrays for MPI communication
-                ALLOCATE(globalToLocalNumberOfClosestCandidates(numberOfDataPoints),STAT=err)
-                IF(err/=0) CALL FlagError("Could not allocate global to local number of closest elements.",err,error,*999)
-                ALLOCATE(globalNumberOfClosestCandidates(numberOfComputationalNodes),STAT=err) 
-                IF(err/=0) CALL FlagError("Could not allocate global number of closest candidates.",err,error,*999)
-                ALLOCATE(globalMPIDisplacements(numberOfComputationalNodes),STAT=err) 
-                IF(err/=0) CALL FlagError("Could not allocate global MPI displacements.",err,error,*999)
-                ALLOCATE(globalNumberOfProjectedPoints(numberOfComputationalNodes),STAT=err) 
-                IF(err/=0) CALL FlagError("Could not allocate all number of projected points.",err,error,*999)
-                ALLOCATE(projectionExitTag(numberOfDataPoints),STAT=err)
-                IF(err/=0) CALL FlagError("Could not allocate projected.",err,error,*999)
-                ALLOCATE(projectedElement(numberOfDataPoints),STAT=err)
-                IF(err/=0) CALL FlagError("Could not allocate projected element.",err,error,*999)
-                IF(boundaryProjection) THEN
-                  ALLOCATE(projectedLineFace(numberOfDataPoints),STAT=err)
-                  IF(err/=0) CALL FlagError("Could not allocate projected sub element.",err,error,*999)
-                ENDIF
-                !projectedDistance(2,:) stores the compuational node number, the information for each data point has to be stored
-                !in the corresponding column for MPI_ALLREDUCE with location return to work
-                ALLOCATE(projectedDistance(2,numberOfDataPoints),STAT=err) 
-                IF(err/=0) CALL FlagError("Could not allocate projected distance.",err,error,*999)
-                !the information for each data point is stored in the corresponding column to be consistent with projectedDistance
-                ALLOCATE(projectedXi(dataProjection%numberOfXi,numberOfDataPoints),STAT=err)
-                !ZJW: The projection vector for each data point is stored in the corresponding colum to be consistent with
-                !projectedDistance. 
-                ALLOCATE(projectionVectors(dataProjection%numberOfCoordinates,numberOfDataPoints), STAT=err) 
-                IF(err/=0) CALL FlagError("Could not allocate projected vectors.",err,error,*999)
-                ALLOCATE(sortingIndices2(numberOfDataPoints),STAT=err) 
-                IF(err/=0) CALL FlagError("Could not allocate sorting indices 2.",err,error,*999)          
-                !gather and distribute the number of closest elements from all computational nodes
-                CALL MPI_ALLGATHER(numberOfClosestCandidates,1,MPI_INTEGER,globalNumberOfClosestCandidates,1,MPI_INTEGER, &
-                  & COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPIIError)
-                CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPIIError,err,error,*999)
-                !Sum all number of closest candidates from all computational nodes
-                totalNumberOfClosestCandidates=SUM(globalNumberOfClosestCandidates,1) 
-                !Allocate arrays to store information gathered from all computational node
-                !The information for each data point is stored in the corresponding row so they are contiguous in memory for
-                !easy MPI access
-                ALLOCATE(globalClosestDistances(numberOfDataPoints,totalNumberOfClosestCandidates),STAT=err) 
-                IF(err/=0) CALL FlagError("Could not allocate all closest distances.",err,error,*999)
-                ALLOCATE(sortingIndices1(totalNumberOfClosestCandidates),STAT=err) 
-                IF(err/=0) CALL FlagError("Could not allocate sorting indices 1.",err,error,*999)
-                !MPI:create and commit MPI_TYPE_CONTIGUOUS      
-                CALL MPI_TYPE_CONTIGUOUS(numberOfDataPoints,MPI_DOUBLE_PRECISION,MPIClosestDistances,MPIIError)
-                CALL MPI_ERROR_CHECK("MPI_TYPE_CONTIGUOUS",MPIIError,err,error,*999)        
-                CALL MPI_TYPE_COMMIT(MPIClosestDistances,MPIIError)
-                CALL MPI_ERROR_CHECK("MPI_TYPE_COMMIT",MPIIError,err,error,*999)
-                !Create displacement vectors for MPI_ALLGATHERV
-                globalMPIDisplacements(1)=0
-                DO computationalNodeIdx=1,(numberOfComputationalNodes-1)
-                  globalMPIDisplacements(computationalNodeIdx+1)=globalMPIDisplacements(computationalNodeIdx)+ &
-                    & globalNumberOfClosestCandidates(computationalNodeIdx)
-                ENDDO !computationalNodeIdx
-                !Share closest element distances between all domains
-                CALL MPI_ALLGATHERV(closestDistances(1,1),numberOfClosestCandidates,MPIClosestDistances, &
-                  & globalClosestDistances,globalNumberOfClosestCandidates,globalMPIDisplacements, &
-                  & MPIClosestDistances,COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPIIError)
-                CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
-                reducedNumberOfCLosestCandidates=MIN(dataProjection%numberOfClosestElements,totalNumberOfClosestCandidates)
-                projectedDistance(2,:)=myComputationalNode
-                !Find the globally closest distance in the current domain
-                DO dataPointIdx=1,numberOfDataPoints
-                  CALL Sorting_BubbleIndexSort(globalClosestDistances(dataPointIdx,:),sortingIndices1,err,error,*999)
-                  sortingIndices1(1:totalNumberOfClosestCandidates)=sortingIndices1(1:totalNumberOfClosestCandidates)- &
-                    & globalMPIDisplacements(myComputationalNode+1) !shift the index to current computational node
-                  globalToLocalNumberOfClosestCandidates(dataPointIdx)=0
-                  DO elementIdx=1,reducedNumberOfCLosestCandidates
-                    !Sorted index indicates it is in the current computational domain
-                    IF((sortingIndices1(elementIdx)>=1).AND. &
-                      & (sortingIndices1(elementIdx)<=globalNumberOfClosestCandidates(myComputationalNode+1))) &
-                      & globalToLocalNumberOfClosestCandidates(dataPointIdx)= &
-                      & globalToLocalNumberOfClosestCandidates(dataPointIdx)+1
-                  ENDDO !elementIdx
-                  !Assign initial distance to something large                           
-                  projectedDistance(1,dataPointIdx)=globalClosestDistances(dataPointIdx,totalNumberOfClosestCandidates) 
-                ENDDO !dataPointIdx
-                SELECT CASE(dataProjection%projectionType)
-                CASE(DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE)
-                  !Newton project to closest lines, and find miminum projection
+                !###################################################################################################################
+                !Newton project data point to the list of closest elements, faces or lines
+                !project the data points to each of the closest elements,
+                !use MPI if number of computational nodes is greater than 1
+                IF(numberOfComputationalNodes>1) THEN
+                  !Use MPI
+                  !Allocate arrays for MPI communication
+                  ALLOCATE(globalToLocalNumberOfClosestCandidates(numberOfDataPoints),STAT=err)
+                  IF(err/=0) CALL FlagError("Could not allocate global to local number of closest elements.",err,error,*999)
+                  ALLOCATE(globalNumberOfClosestCandidates(numberOfComputationalNodes),STAT=err) 
+                  IF(err/=0) CALL FlagError("Could not allocate global number of closest candidates.",err,error,*999)
+                  ALLOCATE(globalMPIDisplacements(numberOfComputationalNodes),STAT=err) 
+                  IF(err/=0) CALL FlagError("Could not allocate global MPI displacements.",err,error,*999)
+                  ALLOCATE(globalNumberOfProjectedPoints(numberOfComputationalNodes),STAT=err) 
+                  IF(err/=0) CALL FlagError("Could not allocate all number of projected points.",err,error,*999)
+                  ALLOCATE(projectionExitTag(numberOfDataPoints),STAT=err)
+                  IF(err/=0) CALL FlagError("Could not allocate projected.",err,error,*999)
+                  ALLOCATE(projectedElement(numberOfDataPoints),STAT=err)
+                  IF(err/=0) CALL FlagError("Could not allocate projected element.",err,error,*999)
+                  IF(boundaryProjection) THEN
+                    ALLOCATE(projectedLineFace(numberOfDataPoints),STAT=err)
+                    IF(err/=0) CALL FlagError("Could not allocate projected sub element.",err,error,*999)
+                  ENDIF
+                  !projectedDistance(2,:) stores the compuational node number, the information for each data point has to be stored
+                  !in the corresponding column for MPI_ALLREDUCE with location return to work
+                  ALLOCATE(projectedDistance(2,numberOfDataPoints),STAT=err) 
+                  IF(err/=0) CALL FlagError("Could not allocate projected distance.",err,error,*999)
+                  !the information for each data point is stored in the corresponding column to be consistent with projectedDistance
+                  ALLOCATE(projectedXi(dataProjection%numberOfXi,numberOfDataPoints),STAT=err)
+                  !ZJW: The projection vector for each data point is stored in the corresponding colum to be consistent with
+                  !projectedDistance. 
+                  ALLOCATE(projectionVectors(dataProjection%numberOfCoordinates,numberOfDataPoints), STAT=err) 
+                  IF(err/=0) CALL FlagError("Could not allocate projected vectors.",err,error,*999)
+                  ALLOCATE(sortingIndices2(numberOfDataPoints),STAT=err) 
+                  IF(err/=0) CALL FlagError("Could not allocate sorting indices 2.",err,error,*999)          
+                  !gather and distribute the number of closest elements from all computational nodes
+                  CALL MPI_ALLGATHER(numberOfClosestCandidates,1,MPI_INTEGER,globalNumberOfClosestCandidates,1,MPI_INTEGER, &
+                    & COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPIIError)
+                  CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPIIError,err,error,*999)
+                  !Sum all number of closest candidates from all computational nodes
+                  totalNumberOfClosestCandidates=SUM(globalNumberOfClosestCandidates,1) 
+                  !Allocate arrays to store information gathered from all computational node
+                  !The information for each data point is stored in the corresponding row so they are contiguous in memory for
+                  !easy MPI access
+                  ALLOCATE(globalClosestDistances(numberOfDataPoints,totalNumberOfClosestCandidates),STAT=err) 
+                  IF(err/=0) CALL FlagError("Could not allocate all closest distances.",err,error,*999)
+                  ALLOCATE(sortingIndices1(totalNumberOfClosestCandidates),STAT=err) 
+                  IF(err/=0) CALL FlagError("Could not allocate sorting indices 1.",err,error,*999)
+                  !MPI:create and commit MPI_TYPE_CONTIGUOUS      
+                  CALL MPI_TYPE_CONTIGUOUS(numberOfDataPoints,MPI_DOUBLE_PRECISION,MPIClosestDistances,MPIIError)
+                  CALL MPI_ERROR_CHECK("MPI_TYPE_CONTIGUOUS",MPIIError,err,error,*999)        
+                  CALL MPI_TYPE_COMMIT(MPIClosestDistances,MPIIError)
+                  CALL MPI_ERROR_CHECK("MPI_TYPE_COMMIT",MPIIError,err,error,*999)
+                  !Create displacement vectors for MPI_ALLGATHERV
+                  globalMPIDisplacements(1)=0
+                  DO computationalNodeIdx=1,(numberOfComputationalNodes-1)
+                    globalMPIDisplacements(computationalNodeIdx+1)=globalMPIDisplacements(computationalNodeIdx)+ &
+                      & globalNumberOfClosestCandidates(computationalNodeIdx)
+                  ENDDO !computationalNodeIdx
+                  !Share closest element distances between all domains
+                  CALL MPI_ALLGATHERV(closestDistances(1,1),numberOfClosestCandidates,MPIClosestDistances, &
+                    & globalClosestDistances,globalNumberOfClosestCandidates,globalMPIDisplacements, &
+                    & MPIClosestDistances,COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPIIError)
+                  CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
+                  reducedNumberOfCLosestCandidates=MIN(dataProjection%numberOfClosestElements,totalNumberOfClosestCandidates)
+                  projectedDistance(2,:)=myComputationalNode
+                  !Find the globally closest distance in the current domain
                   DO dataPointIdx=1,numberOfDataPoints
-                    numberOfClosestCandidates=globalToLocalNumberOfClosestCandidates(dataPointIdx)
-                    IF(numberOfClosestCandidates>0) THEN 
-                      CALL DataProjection_NewtonLinesEvaluate(dataProjection,interpolatedPoint, &
-                        & dataPoints%dataPoints(dataPointIdx)%position,closestElements( &
-                        & dataPointIdx,1:numberOfClosestCandidates),closestLinesFaces(dataPointIdx,1: &
-                        & numberOfClosestCandidates),projectionExitTag(dataPointIdx),projectedElement(dataPointIdx),  &
-                        & projectedLineFace(dataPointIdx),projectedDistance(1,dataPointIdx),projectedXi(:,dataPointIdx), &
-                        & projectionVectors(:,dataPointIdx),err,error,*999)
-                      !Map the element number to global number
-                      projectedElement(dataPointIdx)=domain%mappings%elements%LOCAL_TO_GLOBAL_MAP(projectedElement(dataPointIdx))
-                    ENDIF
+                    CALL Sorting_BubbleIndexSort(globalClosestDistances(dataPointIdx,:),sortingIndices1,err,error,*999)
+                    sortingIndices1(1:totalNumberOfClosestCandidates)=sortingIndices1(1:totalNumberOfClosestCandidates)- &
+                      & globalMPIDisplacements(myComputationalNode+1) !shift the index to current computational node
+                    globalToLocalNumberOfClosestCandidates(dataPointIdx)=0
+                    DO elementIdx=1,reducedNumberOfCLosestCandidates
+                      !Sorted index indicates it is in the current computational domain
+                      IF((sortingIndices1(elementIdx)>=1).AND. &
+                        & (sortingIndices1(elementIdx)<=globalNumberOfClosestCandidates(myComputationalNode+1))) &
+                        & globalToLocalNumberOfClosestCandidates(dataPointIdx)= &
+                        & globalToLocalNumberOfClosestCandidates(dataPointIdx)+1
+                    ENDDO !elementIdx
+                    !Assign initial distance to something large                           
+                    projectedDistance(1,dataPointIdx)=globalClosestDistances(dataPointIdx,totalNumberOfClosestCandidates) 
                   ENDDO !dataPointIdx
-                CASE(DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE)
-                  !Newton project to closest faces, and find miminum projection
-                  DO dataPointIdx=1,numberOfDataPoints
-                    numberOfClosestCandidates=globalToLocalNumberOfClosestCandidates(dataPointIdx)
-                    IF(numberOfClosestCandidates>0) THEN 
-                      CALL DataProjection_NewtonFacesEvaluate(dataProjection,interpolatedPoint, &
-                        & dataPoints%dataPoints(dataPointIdx)%position,closestElements( &
-                        & dataPointIdx,1:numberOfClosestCandidates),closestLinesFaces(dataPointIdx, &
-                        & 1:numberOfClosestCandidates),projectionExitTag(dataPointIdx),projectedElement(dataPointIdx), &
-                        & projectedLineFace(dataPointIdx),projectedDistance(1,dataPointIdx),projectedXi(:,dataPointIdx), &
-                        & projectionVectors(:,dataPointIdx),err,error,*999)
-                      !Map the element number to global number
-                      projectedElement(dataPointIdx)=domain%mappings%elements%LOCAL_TO_GLOBAL_MAP(projectedElement(dataPointIdx))
-                    ENDIF
-                  ENDDO !dataPointIdx
-                CASE(DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE)
-                  !Newton project to closest elements, and find miminum projection
-                  SELECT CASE(dataProjection%numberOfXi)
-                  CASE(1) !1D element
+                  SELECT CASE(dataProjection%projectionType)
+                  CASE(DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE)
+                    !Newton project to closest lines, and find miminum projection
                     DO dataPointIdx=1,numberOfDataPoints
                       numberOfClosestCandidates=globalToLocalNumberOfClosestCandidates(dataPointIdx)
                       IF(numberOfClosestCandidates>0) THEN 
+                        CALL DataProjection_NewtonLinesEvaluate(dataProjection,interpolatedPoint, &
+                          & dataPoints%dataPoints(dataPointIdx)%position,closestElements( &
+                          & dataPointIdx,1:numberOfClosestCandidates),closestLinesFaces(dataPointIdx,1: &
+                          & numberOfClosestCandidates),projectionExitTag(dataPointIdx),projectedElement(dataPointIdx),  &
+                          & projectedLineFace(dataPointIdx),projectedDistance(1,dataPointIdx),projectedXi(:,dataPointIdx), &
+                          & projectionVectors(:,dataPointIdx),err,error,*999)
+                        !Map the element number to global number
+                        projectedElement(dataPointIdx)=domainMappingElements%LOCAL_TO_GLOBAL_MAP(projectedElement(dataPointIdx))
+                      ENDIF
+                    ENDDO !dataPointIdx
+                  CASE(DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE)
+                    !Newton project to closest faces, and find miminum projection
+                    DO dataPointIdx=1,numberOfDataPoints
+                      numberOfClosestCandidates=globalToLocalNumberOfClosestCandidates(dataPointIdx)
+                      IF(numberOfClosestCandidates>0) THEN 
+                        CALL DataProjection_NewtonFacesEvaluate(dataProjection,interpolatedPoint, &
+                          & dataPoints%dataPoints(dataPointIdx)%position,closestElements( &
+                          & dataPointIdx,1:numberOfClosestCandidates),closestLinesFaces(dataPointIdx, &
+                          & 1:numberOfClosestCandidates),projectionExitTag(dataPointIdx),projectedElement(dataPointIdx), &
+                          & projectedLineFace(dataPointIdx),projectedDistance(1,dataPointIdx),projectedXi(:,dataPointIdx), &
+                          & projectionVectors(:,dataPointIdx),err,error,*999)
+                        !Map the element number to global number
+                        projectedElement(dataPointIdx)=domainMappingElements%LOCAL_TO_GLOBAL_MAP(projectedElement(dataPointIdx))
+                      ENDIF
+                    ENDDO !dataPointIdx
+                  CASE(DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE)
+                    !Newton project to closest elements, and find miminum projection
+                    SELECT CASE(dataProjection%numberOfXi)
+                    CASE(1) !1D element
+                      DO dataPointIdx=1,numberOfDataPoints
+                        numberOfClosestCandidates=globalToLocalNumberOfClosestCandidates(dataPointIdx)
+                        IF(numberOfClosestCandidates>0) THEN 
+                          CALL DataProjection_NewtonElementsEvaluate_1(dataProjection,interpolatedPoint,dataPoints% &
+                            & dataPoints(dataPointIdx)%position,closestElements(dataPointIdx, &
+                            & 1:numberOfClosestCandidates),projectionExitTag(dataPointIdx), &
+                            & projectedElement(dataPointIdx),projectedDistance(1,dataPointIdx), &
+                            & projectedXi(:,dataPointIdx),projectionVectors(:,dataPointIdx),err,error,*999)
+                          !Map the element number to global number
+                          projectedElement(dataPointIdx)=domainMappingElements%LOCAL_TO_GLOBAL_MAP(projectedElement(dataPointIdx))
+                        ENDIF
+                      ENDDO !dataPointIdx
+                    CASE(2) !2D element
+                      DO dataPointIdx=1,numberOfDataPoints
+                        numberOfClosestCandidates=globalToLocalNumberOfClosestCandidates(dataPointIdx)
+                        IF(numberOfClosestCandidates>0) THEN 
+                          CALL DataProjection_NewtonElementsEvaluate_2(dataProjection,interpolatedPoint,dataPoints% &
+                            & dataPoints(dataPointIdx)%position,closestElements(dataPointIdx, &
+                            & 1:numberOfClosestCandidates),projectionExitTag(dataPointIdx), &
+                            & projectedElement(dataPointIdx),projectedDistance(1,dataPointIdx), &
+                            & projectedXi(:,dataPointIdx),projectionVectors(:,dataPointIdx), &
+                            & err,error,*999)
+                          !Map the element number to global number                        
+                          projectedElement(dataPointIdx)=domainMappingElements%LOCAL_TO_GLOBAL_MAP(projectedElement(dataPointIdx))
+                        ENDIF
+                      ENDDO !dataPointIdx
+                    CASE(3) !3D element
+                      DO dataPointIdx=1,numberOfDataPoints
+                        numberOfClosestCandidates=globalToLocalNumberOfClosestCandidates(dataPointIdx)
+                        IF(numberOfClosestCandidates>0) THEN 
+                          CALL DataProjection_NewtonElementsEvaluate_3(dataProjection,interpolatedPoint,dataPoints% &
+                            & dataPoints(dataPointIdx)%position,closestElements(dataPointIdx, &
+                            & 1:numberOfClosestCandidates),projectionExitTag(dataPointIdx), &
+                            & projectedElement(dataPointIdx),projectedDistance(1,dataPointIdx), &
+                            & projectedXi(:,dataPointIdx),projectionVectors(:,dataPointIdx),err,error,*999)
+                          !Map the element number to global number
+                          projectedElement(dataPointIdx)=domainMappingElements%LOCAL_TO_GLOBAL_MAP(projectedElement(dataPointIdx))
+                        ENDIF
+                      ENDDO !dataPointIdx
+                    CASE DEFAULT
+                      localError="The data projection number of xi directions of "// &
+                        & TRIM(NumberToVString(dataProjection%numberOfXi,"*",err,error))// &
+                        & " is invalid. The number of directions should be >= 1 and <= 3."
+                      CALL FlagError(localError,err,error,*999)
+                    END SELECT
+                  CASE DEFAULT
+                    localError="The data projection type of "// &
+                      & TRIM(NumberToVString(dataProjection%projectionType,"*",err,error))//" is invalid."
+                    CALL FlagError(localError,err,error,*999)
+                  END SELECT
+                  !Find the shortest projected distance in all domains
+                  CALL MPI_ALLREDUCE(MPI_IN_PLACE,projectedDistance,numberOfDataPoints,MPI_2DOUBLE_PRECISION,MPI_MINLOC, &
+                    & COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPIIError)
+                  CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPIIError,err,error,*999)
+                  !Sort the computational node/rank from 0 to number of computational node
+                  CALL Sorting_BubbleIndexSort(projectedDistance(2,:),sortingIndices2,err,error,*999)
+                  DO computationalNodeIdx=0,(numberOfComputationalNodes-1)
+                    globalNumberOfProjectedPoints(computationalNodeIdx+1)=COUNT(ABS(projectedDistance(2,:)- &
+                      & REAL(computationalNodeIdx))<ZERO_TOLERANCE)
+                  ENDDO !computationalNodeIdx
+                  startIdx=SUM(globalNumberOfProjectedPoints(1:myComputationalNode))+1
+                  finishIdx=startIdx+globalNumberOfProjectedPoints(myComputationalNode+1)-1
+                  !create displacement vectors for MPI_ALLGATHERV          
+                  DO computationalNodeIdx=1,(numberOfComputationalNodes-1)
+                    globalMPIDisplacements(computationalNodeIdx+1)=globalMPIDisplacements(computationalNodeIdx)+ &
+                      & globalNumberOfProjectedPoints(computationalNodeIdx)
+                  ENDDO !computationalNodeIdx  
+                  !Shares minimum projection information between all domains
+                  CALL MPI_ALLGATHERV(projectedElement(sortingIndices2(startIdx:finishIdx)),globalNumberOfProjectedPoints( &
+                    & myComputationalNode+1),MPI_INTEGER,projectedElement,globalNumberOfProjectedPoints, &
+                    & globalMPIDisplacements,MPI_INTEGER,COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPIIError) !projectedElement
+                  CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
+                  IF(boundaryProjection) THEN
+                    CALL MPI_ALLGATHERV(projectedLineFace(sortingIndices2(startIdx:finishIdx)),globalNumberOfProjectedPoints( &
+                      & myComputationalNode+1),MPI_INTEGER,projectedLineFace,globalNumberOfProjectedPoints, &
+                      & globalMPIDisplacements,MPI_INTEGER,COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPIIError) !projectedLineFace
+                    CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999) 
+                  ENDIF
+                  DO xiIdx=1,dataProjection%numberOfXi
+                    CALL MPI_ALLGATHERV(projectedXi(xiIdx,sortingIndices2(startIdx:finishIdx)),globalNumberOfProjectedPoints( &
+                      & myComputationalNode+1),MPI_DOUBLE_PRECISION,projectedXi(xiIdx,:),globalNumberOfProjectedPoints, &
+                      & globalMPIDisplacements,MPI_DOUBLE_PRECISION,COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPIIError) !projectedXi
+                    CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
+                  ENDDO !xiIdx
+                  CALL MPI_ALLGATHERV(projectionExitTag(sortingIndices2(startIdx:finishIdx)),globalNumberOfProjectedPoints( &
+                    & myComputationalNode+1),MPI_INTEGER,projectionExitTag,globalNumberOfProjectedPoints, &
+                    & globalMPIDisplacements,MPI_INTEGER,COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPIIError) !projectionExitTag
+                  CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
+                  DO xiIdx=1,dataProjection%numberOfCoordinates
+                    CALL MPI_ALLGATHERV(projectionVectors(xiIdx, sortingIndices2(startIdx:finishIdx)), &
+                      & globalNumberOfProjectedPoints(myComputationalNode+1),MPI_DOUBLE_PRECISION,projectionVectors(xiIdx,:), &
+                      & globalNumberOfProjectedPoints,globalMPIDisplacements,MPI_DOUBLE_PRECISION,COMPUTATIONAL_ENVIRONMENT% &
+                      & MPI_COMM,MPIIError)  !projectionVectors
+                    CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
+                  ENDDO
+                  !Assign projection information to projected points
+                  DO dataPointIdx=1,numberOfDataPoints
+                    dataProjection%dataProjectionResults(sortingIndices2(dataPointIdx))%exitTag=projectionExitTag(dataPointIdx)
+                    dataProjection%dataProjectionResults(sortingIndices2(dataPointIdx))%elementNumber=projectedElement(dataPointIdx)
+                    dataProjection%dataProjectionResults(dataPointIdx)%DISTANCE=projectedDistance(1,dataPointIdx)
+                    dataProjection%dataProjectionResults(sortingIndices2(dataPointIdx))%xi(1:dataProjection%numberOfXi)= &
+                      & projectedXi(1:dataProjection%numberOfXi,dataPointIdx)
+                    dataProjection%dataProjectionResults(sortingIndices2(dataPointIdx))%projectionVector( &
+                      & 1:dataProjection%numberOfCoordinates)=projectionVectors( &
+                      & 1:dataProjection%numberOfCoordinates,dataPointIdx)
+                  ENDDO !dataPointIdx
+                  projectedXi(:,sortingIndices2)=projectedXi
+                  projectionVectors(:, sortingIndices2)=projectionVectors
+                  projectedElement(sortingIndices2)=projectedElement       
+                  IF(dataProjection%projectionType==DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE) THEN
+                    DO dataPointIdx=1,numberOfDataPoints          
+                      dataProjection%dataProjectionResults(sortingIndices2(dataPointIdx))%elementLineFaceNumber=projectedLineFace( &
+                        & dataPointIdx)
+                    ENDDO !dataPointIdx
+                  ELSE IF(dataProjection%projectionType==DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE) THEN
+                    DO dataPointIdx=1,numberOfDataPoints          
+                      dataProjection%dataProjectionResults(sortingIndices2(dataPointIdx))%elementLineFaceNumber=projectedLineFace( &
+                        & dataPointIdx)
+                    ENDDO !dataPointIdx
+                  ENDIF
+                ELSE
+                  !No need to use mpi
+                  SELECT CASE(dataProjection%projectionType)
+                  CASE(DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE)
+                    !Newton project to closest lines, and find miminum projection
+                    DO dataPointIdx=1,numberOfDataPoints
+                      CALL DataProjection_NewtonLinesEvaluate(dataProjection,interpolatedPoint,dataPoints%dataPoints( &
+                        & dataPointIdx)%position,closestElements(dataPointIdx,:),closestLinesFaces(dataPointIdx,:), &
+                        & dataProjection%dataProjectionResults(dataPointIdx)%exitTag,dataProjection% &
+                        & dataProjectionResults(dataPointIdx)%elementNumber,dataProjection% &
+                        & dataProjectionResults(dataPointIdx)%elementLineFaceNumber,dataProjection%dataProjectionResults( &
+                        & dataPointIdx)%DISTANCE,dataProjection%dataProjectionResults(dataPointIdx)%xi, &
+                        & dataProjection%dataProjectionResults(dataPointIdx)%projectionVector,err,error,*999)
+                    ENDDO !dataPointIdx
+                  CASE(DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE) 
+                    !Newton project to closest faces, and find miminum projection
+                    DO dataPointIdx=1,numberOfDataPoints
+                      CALL DataProjection_NewtonFacesEvaluate(dataProjection,interpolatedPoint,dataPoints%dataPoints( &
+                        & dataPointIdx)%position,closestElements(dataPointIdx,:),closestLinesFaces(dataPointIdx,:), &
+                        & dataProjection%dataProjectionResults(dataPointIdx)%exitTag,dataProjection% &
+                        & dataProjectionResults(dataPointIdx)%elementNumber,dataProjection% &
+                        & dataProjectionResults(dataPointIdx)%elementLineFaceNumber,dataProjection%dataProjectionResults( &
+                        & dataPointIdx)%DISTANCE,dataProjection%dataProjectionResults(dataPointIdx)%xi, &
+                        & dataProjection%dataProjectionResults(dataPointIdx)%projectionVector,err,error,*999)
+                    ENDDO !dataPointIdx
+                  CASE(DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE)        
+                    !Newton project to closest elements, and find miminum projection
+                    SELECT CASE(dataProjection%numberOfXi)
+                    CASE(1) !1D mesh
+                      DO dataPointIdx=1,numberOfDataPoints
                         CALL DataProjection_NewtonElementsEvaluate_1(dataProjection,interpolatedPoint,dataPoints% &
-                          & dataPoints(dataPointIdx)%position,closestElements(dataPointIdx, &
-                          & 1:numberOfClosestCandidates),projectionExitTag(dataPointIdx), &
-                          & projectedElement(dataPointIdx),projectedDistance(1,dataPointIdx), &
-                          & projectedXi(:,dataPointIdx),projectionVectors(:,dataPointIdx),err,error,*999)
-                        !Map the element number to global number
-                        projectedElement(dataPointIdx)=domain%MAPPINGS%ELEMENTS%LOCAL_TO_GLOBAL_MAP(projectedElement(dataPointIdx))
-                      ENDIF
-                    ENDDO !dataPointIdx
-                  CASE(2) !2D element
-                    DO dataPointIdx=1,numberOfDataPoints
-                      numberOfClosestCandidates=globalToLocalNumberOfClosestCandidates(dataPointIdx)
-                      IF(numberOfClosestCandidates>0) THEN 
-                        CALL DataProjection_NewtonElementsEvaluate_2(dataProjection,interpolatedPoint,dataPoints% &
-                          & dataPoints(dataPointIdx)%position,closestElements(dataPointIdx, &
-                          & 1:numberOfClosestCandidates),projectionExitTag(dataPointIdx), &
-                          & projectedElement(dataPointIdx),projectedDistance(1,dataPointIdx), &
-                          & projectedXi(:,dataPointIdx),projectionVectors(:,dataPointIdx), &
+                          & dataPoints(dataPointIdx)%position,closestElements(dataPointIdx,:),dataProjection% &
+                          & dataProjectionResults(dataPointIdx)%exitTag,dataProjection%dataProjectionResults( &
+                          & dataPointIdx)%elementNumber, dataProjection%dataProjectionResults(dataPointIdx)%DISTANCE, &
+                          & dataProjection%dataProjectionResults(dataPointIdx)%xi, &
+                          & dataProjection%dataProjectionResults(dataPointIdx)%projectionVector,&
                           & err,error,*999)
-                        !Map the element number to global number                        
-                        projectedElement(dataPointIdx)=domain%MAPPINGS%ELEMENTS%LOCAL_TO_GLOBAL_MAP(projectedElement(dataPointIdx))
-                      ENDIF
-                    ENDDO !dataPointIdx
-                  CASE(3) !3D element
-                    DO dataPointIdx=1,numberOfDataPoints
-                      numberOfClosestCandidates=globalToLocalNumberOfClosestCandidates(dataPointIdx)
-                      IF(numberOfClosestCandidates>0) THEN 
+                      ENDDO !dataPointIdx
+                    CASE(2) !2D mesh
+                      DO dataPointIdx=1,numberOfDataPoints
+                        CALL DataProjection_NewtonElementsEvaluate_2(dataProjection,interpolatedPoint,dataPoints% &
+                          & dataPoints(dataPointIdx)%position,closestElements(dataPointIdx,:),dataProjection% &
+                          & dataProjectionResults(dataPointIdx)%exitTag,dataProjection%dataProjectionResults( &
+                          & dataPointIdx)%elementNumber,dataProjection%dataProjectionResults(dataPointIdx)%DISTANCE, &
+                          & dataProjection%dataProjectionResults(dataPointIdx)%xi, &
+                          & dataProjection%dataProjectionResults(dataPointIdx)%projectionVector, &
+                          & err,error,*999)
+                      ENDDO !dataPointIdx
+                    CASE(3) !3D mesh
+                      DO dataPointIdx=1,numberOfDataPoints
                         CALL DataProjection_NewtonElementsEvaluate_3(dataProjection,interpolatedPoint,dataPoints% &
-                          & dataPoints(dataPointIdx)%position,closestElements(dataPointIdx, &
-                          & 1:numberOfClosestCandidates),projectionExitTag(dataPointIdx), &
-                          & projectedElement(dataPointIdx),projectedDistance(1,dataPointIdx), &
-                          & projectedXi(:,dataPointIdx),projectionVectors(:,dataPointIdx),err,error,*999)
-                        !Map the element number to global number
-                        projectedElement(dataPointIdx)=domain%MAPPINGS%ELEMENTS%LOCAL_TO_GLOBAL_MAP(projectedElement(dataPointIdx))
-                      ENDIF
-                    ENDDO !dataPointIdx
+                          & dataPoints(dataPointIdx)%position,closestElements(dataPointIdx,:),dataProjection% &
+                          & dataProjectionResults(dataPointIdx)%exitTag,dataProjection%dataProjectionResults( &
+                          & dataPointIdx)%elementNumber,dataProjection%dataProjectionResults(dataPointIdx)%DISTANCE, &
+                          & dataProjection%dataProjectionResults(dataPointIdx)%xi, &
+                          & dataProjection%dataProjectionResults(dataPointIdx)%projectionVector, &
+                          & err,error,*999)
+                      ENDDO !dataPointIdx
+                    CASE DEFAULT
+                      localError="The data projection number of xi of "// &
+                        & TRIM(NumberToVString(dataProjection%numberOfXi,"*",err,error))//" is invalid."
+                      CALL FlagError(localError,err,error,*999)
+                    END SELECT
                   CASE DEFAULT
-                    localError="The data projection number of xi directions of "// &
-                      & TRIM(NumberToVString(dataProjection%numberOfXi,"*",err,error))// &
-                      & " is invalid. The number of directions should be >= 1 and <= 3."
+                    localError="The data projection type of "// &
+                      & TRIM(NumberToVString(dataProjection%projectionType,"*",err,error))//" is invalid."
                     CALL FlagError(localError,err,error,*999)
                   END SELECT
-                CASE DEFAULT
-                  localError="The data projection type of "// &
-                    & TRIM(NumberToVString(dataProjection%projectionType,"*",err,error))//" is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-                !Find the shortest projected distance in all domains
-                CALL MPI_ALLREDUCE(MPI_IN_PLACE,projectedDistance,numberOfDataPoints,MPI_2DOUBLE_PRECISION,MPI_MINLOC, &
-                  & COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPIIError)
-                CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPIIError,err,error,*999)
-                !Sort the computational node/rank from 0 to number of computational node
-                CALL Sorting_BubbleIndexSort(projectedDistance(2,:),sortingIndices2,err,error,*999)
-                DO computationalNodeIdx=0,(numberOfComputationalNodes-1)
-                  globalNumberOfProjectedPoints(computationalNodeIdx+1)=COUNT(ABS(projectedDistance(2,:)- &
-                    & REAL(computationalNodeIdx))<ZERO_TOLERANCE)
-                ENDDO !computationalNodeIdx
-                startIdx=SUM(globalNumberOfProjectedPoints(1:myComputationalNode))+1
-                finishIdx=startIdx+globalNumberOfProjectedPoints(myComputationalNode+1)-1
-                !create displacement vectors for MPI_ALLGATHERV          
-                DO computationalNodeIdx=1,(numberOfComputationalNodes-1)
-                  globalMPIDisplacements(computationalNodeIdx+1)=globalMPIDisplacements(computationalNodeIdx)+ &
-                    & globalNumberOfProjectedPoints(computationalNodeIdx)
-                ENDDO !computationalNodeIdx  
-                !Shares minimum projection information between all domains
-                CALL MPI_ALLGATHERV(projectedElement(sortingIndices2(startIdx:finishIdx)),globalNumberOfProjectedPoints( &
-                  & myComputationalNode+1),MPI_INTEGER,projectedElement,globalNumberOfProjectedPoints, &
-                  & globalMPIDisplacements,MPI_INTEGER,COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPIIError) !projectedElement
-                CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
-                IF(boundaryProjection) THEN
-                  CALL MPI_ALLGATHERV(projectedLineFace(sortingIndices2(startIdx:finishIdx)),globalNumberOfProjectedPoints( &
-                    & myComputationalNode+1),MPI_INTEGER,projectedLineFace,globalNumberOfProjectedPoints, &
-                    & globalMPIDisplacements,MPI_INTEGER,COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPIIError) !projectedLineFace
-                  CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999) 
+                ENDIF !numberOfComputationalNodes>1
+                !Compute full elemental xi
+                IF(dataProjection%numberOfXi==dataProjection%numberOfElementXi) THEN
+                  DO dataPointIdx=1,numberOfDataPoints
+                    dataProjection%dataProjectionResults(dataPointIdx)%elementXi= &
+                      & dataProjection%dataProjectionResults(dataPointIdx)%xi
+                  ENDDO !dataPointIdx
+                ELSE
+                  DO dataPointIdx=1,numberOfDataPoints
+                    elementNumber=dataProjection%dataProjectionResults(dataPointIdx)%elementNumber
+                    localLineFaceNumber=dataProjection%dataProjectionResults(dataPointIdx)%elementLineFaceNumber
+                    basis=>domainElements%elements(elementNumber)%basis
+                    CALL Basis_BoundaryXiToXi(basis,localLineFaceNumber,dataProjection% &
+                      & dataProjectionResults(dataPointIdx)%xi(1:dataProjection%numberOfXi),dataProjection% &
+                      & dataProjectionResults(dataPointIdx)%elementXi,err,error,*999)
+                  ENDDO !dataPointIdx
                 ENDIF
-                DO xiIdx=1,dataProjection%numberOfXi
-                  CALL MPI_ALLGATHERV(projectedXi(xiIdx,sortingIndices2(startIdx:finishIdx)),globalNumberOfProjectedPoints( &
-                    & myComputationalNode+1),MPI_DOUBLE_PRECISION,projectedXi(xiIdx,:),globalNumberOfProjectedPoints, &
-                    & globalMPIDisplacements,MPI_DOUBLE_PRECISION,COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPIIError) !projectedXi
-                  CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
-                ENDDO !xiIdx
-                CALL MPI_ALLGATHERV(projectionExitTag(sortingIndices2(startIdx:finishIdx)),globalNumberOfProjectedPoints( &
-                  & myComputationalNode+1),MPI_INTEGER,projectionExitTag,globalNumberOfProjectedPoints, &
-                  & globalMPIDisplacements,MPI_INTEGER,COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPIIError) !projectionExitTag
-                CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
-		DO xiIdx=1,dataProjection%numberOfCoordinates
-		  CALL MPI_ALLGATHERV(projectionVectors(xiIdx, sortingIndices2(startIdx:finishIdx)),globalNumberOfProjectedPoints( &
-                    & myComputationalNode+1),MPI_DOUBLE_PRECISION,projectionVectors(xiIdx,:),globalNumberOfProjectedPoints, &
-                    & globalMPIDisplacements,MPI_DOUBLE_PRECISION,COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPIIError)  !projectionVectors
-                  CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
-		ENDDO
-                !Assign projection information to projected points
+                !Evaluate errors
+                rmsError=0.0_DP
+                maxError=0.0_DP
+                minError=HUGE(1.0_DP)
+                maxDataPoint=0
+                minDataPoint=0
                 DO dataPointIdx=1,numberOfDataPoints
-                  dataProjection%dataProjectionResults(sortingIndices2(dataPointIdx))%exitTag=projectionExitTag(dataPointIdx)
-                  dataProjection%dataProjectionResults(sortingIndices2(dataPointIdx))%elementNumber=projectedElement(dataPointIdx)
-                  dataProjection%dataProjectionResults(dataPointIdx)%DISTANCE=projectedDistance(1,dataPointIdx)
-                  dataProjection%dataProjectionResults(sortingIndices2(dataPointIdx))%xi(1:dataProjection%numberOfXi)= &
-                    & projectedXi(1:dataProjection%numberOfXi,dataPointIdx)
-		  dataProjection%dataProjectionResults(sortingIndices2(dataPointIdx))%projectionVector( &
-                    & 1:dataProjection%numberOfCoordinates)=projectionVectors( &
-                    & 1:dataProjection%numberOfCoordinates,dataPointIdx)
+                  distance=dataProjection%dataProjectionResults(dataPointIdx)%distance
+                  rmsError=rmsError+distance*distance
+                  IF(distance>maxError) THEN
+                    maxError=distance
+                    maxDataPoint=dataPointIdx
+                  ENDIF
+                  IF(distance<minError) THEN
+                    minError=distance
+                    minDataPoint=dataPointIdx
+                  ENDIF
                 ENDDO !dataPointIdx
-                projectedXi(:,sortingIndices2)=projectedXi
-		projectionVectors(:, sortingIndices2)=projectionVectors
-                projectedElement(sortingIndices2)=projectedElement       
-                IF(dataProjection%projectionType==DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE) THEN
-                  DO dataPointIdx=1,numberOfDataPoints          
-                    dataProjection%dataProjectionResults(sortingIndices2(dataPointIdx))%elementLineNumber=projectedLineFace( &
-                      & dataPointIdx)
-                  ENDDO !dataPointIdx
-                ELSE IF(dataProjection%projectionType==DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE) THEN
-                  DO dataPointIdx=1,numberOfDataPoints          
-                    dataProjection%dataProjectionResults(sortingIndices2(dataPointIdx))%elementFaceNumber=projectedLineFace( &
-                      & dataPointIdx)
-                  ENDDO !dataPointIdx
-                ENDIF            
+                IF(numberOfDataPoints>0) THEN
+                  rmsError=SQRT(rmsError/REAL(numberOfDataPoints,DP))
+                ELSE
+                  rmsError=SQRT(rmsError)
+                ENDIF
+                dataProjection%rmsError=rmsError
+                dataProjection%maximumError=maxError
+                dataProjection%maximumErrorDataPoint=maxDataPoint
+                dataProjection%minimumError=minError
+                dataProjection%minimumErrorDataPoint=minDataPoint
+                dataProjection%dataProjectionProjected=.TRUE.
               ELSE
-                !No need to use mpi
-                SELECT CASE(dataProjection%projectionType)
-                CASE(DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE)
-                  !Newton project to closest lines, and find miminum projection
-                  DO dataPointIdx=1,numberOfDataPoints
-                    CALL DataProjection_NewtonLinesEvaluate(dataProjection,interpolatedPoint,dataPoints%dataPoints( &
-                      & dataPointIdx)%position,closestElements(dataPointIdx,:),closestLinesFaces(dataPointIdx,:), &
-                      & dataProjection%dataProjectionResults(dataPointIdx)%exitTag,dataProjection% &
-                      & dataProjectionResults(dataPointIdx)%elementNumber,dataProjection% &
-                      & dataProjectionResults(dataPointIdx)%elementLineNumber,dataProjection%dataProjectionResults( &
-                      & dataPointIdx)%DISTANCE,dataProjection%dataProjectionResults(dataPointIdx)%xi, &
-                      & dataProjection%dataProjectionResults(dataPointIdx)%projectionVector,err,error,*999)
-                  ENDDO !dataPointIdx
-                CASE(DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE) 
-                  !Newton project to closest faces, and find miminum projection
-                  DO dataPointIdx=1,numberOfDataPoints
-                    CALL DataProjection_NewtonFacesEvaluate(dataProjection,interpolatedPoint,dataPoints%dataPoints( &
-                      & dataPointIdx)%position,closestElements(dataPointIdx,:),closestLinesFaces(dataPointIdx,:), &
-                      & dataProjection%dataProjectionResults(dataPointIdx)%exitTag,dataProjection% &
-                      & dataProjectionResults(dataPointIdx)%elementNumber,dataProjection% &
-                      & dataProjectionResults(dataPointIdx)%elementFaceNumber,dataProjection%dataProjectionResults( &
-                      & dataPointIdx)%DISTANCE,dataProjection%dataProjectionResults(dataPointIdx)%xi, &
-                      & dataProjection%dataProjectionResults(dataPointIdx)%projectionVector,err,error,*999)
-                  ENDDO !dataPointIdx
-                CASE(DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE)        
-                  !Newton project to closest elements, and find miminum projection
-                  SELECT CASE(dataProjection%numberOfXi)
-                  CASE(1) !1D mesh
-                    DO dataPointIdx=1,numberOfDataPoints
-                      CALL DataProjection_NewtonElementsEvaluate_1(dataProjection,interpolatedPoint,dataPoints% &
-                        & dataPoints(dataPointIdx)%position,closestElements(dataPointIdx,:),dataProjection% &
-                        & dataProjectionResults(dataPointIdx)%exitTag,dataProjection%dataProjectionResults( &
-                        & dataPointIdx)%elementNumber, dataProjection%dataProjectionResults(dataPointIdx)%DISTANCE, &
-                        & dataProjection%dataProjectionResults(dataPointIdx)%xi, &
-                        & dataProjection%dataProjectionResults(dataPointIdx)%projectionVector,&
-                        & err,error,*999)
-                    ENDDO !dataPointIdx
-                  CASE(2) !2D mesh
-                    DO dataPointIdx=1,numberOfDataPoints
-                      CALL DataProjection_NewtonElementsEvaluate_2(dataProjection,interpolatedPoint,dataPoints% &
-                        & dataPoints(dataPointIdx)%position,closestElements(dataPointIdx,:),dataProjection% &
-                        & dataProjectionResults(dataPointIdx)%exitTag,dataProjection%dataProjectionResults( &
-                        & dataPointIdx)%elementNumber,dataProjection%dataProjectionResults(dataPointIdx)%DISTANCE, &
-                        & dataProjection%dataProjectionResults(dataPointIdx)%xi, &
-                        & dataProjection%dataProjectionResults(dataPointIdx)%projectionVector, &
-                        & err,error,*999)
-                    ENDDO !dataPointIdx
-                  CASE(3) !3D mesh
-                    DO dataPointIdx=1,numberOfDataPoints
-                      CALL DataProjection_NewtonElementsEvaluate_3(dataProjection,interpolatedPoint,dataPoints% &
-                        & dataPoints(dataPointIdx)%position,closestElements(dataPointIdx,:),dataProjection% &
-                        & dataProjectionResults(dataPointIdx)%exitTag,dataProjection%dataProjectionResults( &
-                        & dataPointIdx)%elementNumber,dataProjection%dataProjectionResults(dataPointIdx)%DISTANCE, &
-                        & dataProjection%dataProjectionResults(dataPointIdx)%xi, &
-                        & dataProjection%dataProjectionResults(dataPointIdx)%projectionVector, &
-                        & err,error,*999)
-                    ENDDO !dataPointIdx
-                  CASE DEFAULT
-                    localError="The data projection number of xi of "// &
-                      & TRIM(NumberToVString(dataProjection%numberOfXi,"*",err,error))//" is invalid."
-                    CALL FlagError(localError,err,error,*999)
-                  END SELECT
-                CASE DEFAULT
-                  localError="The data projection type of "// &
-                    & TRIM(NumberToVString(dataProjection%projectionType,"*",err,error))//" is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-              ENDIF !numberOfComputationalNodes>1
-              dataProjection%dataProjectionProjected=.TRUE.
+                CALL FlagError("Domain elements elements is not associated.",err,error,*999)
+              ENDIF
             ELSE
               CALL FlagError("Data projection and projection field are not sharing the same decomposition.",err,error,*999)
-            ENDIF 
+            ENDIF
           ELSE
             CALL FlagError("Projection field has not been finished.",err,error,*999)
-          ENDIF 
+          ENDIF
         ELSE
           CALL FlagError("Projection field is not associated.",err,error,*999)
-        ENDIF 
+        ENDIF
       ELSE
         CALL FlagError("Data projection has not been finished.",err,error,*999)
       ENDIF
     ELSE
       CALL FlagError("Data projection is not associated.",err,error,*999)
-    ENDIF 
+    ENDIF
 
     !Deallocate arrays used within this routine
     IF(ALLOCATED(candidateElements)) DEALLOCATE(candidateElements)
@@ -1729,7 +1837,7 @@ CONTAINS
     IF(ALLOCATED(globalClosestDistances)) DEALLOCATE(globalClosestDistances)
     IF(ALLOCATED(sortingIndices1)) DEALLOCATE(sortingIndices1)
     IF(ALLOCATED(sortingIndices2)) DEALLOCATE(sortingIndices2)
-
+    
     EXITS("DataProjection_DataPointsProjectionEvaluate")
     RETURN
 999 IF(ALLOCATED(candidateElements)) DEALLOCATE(candidateElements)
@@ -1752,7 +1860,7 @@ CONTAINS
     IF(ALLOCATED(sortingIndices2)) DEALLOCATE(sortingIndices2)
 998 ERRORSEXITS("DataProjection_DataPointsProjectionEvaluate",err,error)
     RETURN 1
-
+    
   END SUBROUTINE DataProjection_DataPointsProjectionEvaluate
   
   !
@@ -3649,7 +3757,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the label for a data projection for varying string labels. \see OPENCMISS::Iron::cmfe_DataProjectionLabelGet
+  !>Gets the label for a data projection for varying string labels. \see OpenCMISS::Iron::cmfe_DataProjection_LabelGet
   SUBROUTINE DataProjection_LabelGetVS(dataProjection,label,err,error,*)
 
     !Argument variables
@@ -3678,7 +3786,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the label for a data projection for character labels. \see OPENCMISS::Iron::cmfe_DataProjectionLabelGet
+  !>Gets the label for a data projection for character labels. \see OpenCMISS::Iron::cmfe_DataProjection_LabelGet
   SUBROUTINE DataProjection_LabelGetC(dataProjection,label,err,error,*)
 
     !Argument variables
@@ -3714,7 +3822,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Sets the label for a data projection for varying string labels. \see OPENCMISS::Iron::cmfe_DataProjectionLabelSet
+  !>Sets the label for a data projection for varying string labels. \see OpenCMISS::Iron::cmfe_DataProjection_LabelSet
   SUBROUTINE DataProjection_LabelSetC(dataProjection,label,err,error,*)
 
     !Argument variables
@@ -3743,7 +3851,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the label for a data projection for varying string labels. \see OPENCMISS::Iron::cmfe_DataProjectionLabelSet
+  !>Sets the label for a data projection for varying string labels. \see OpenCMISS::Iron::cmfe_DataProjection_LabelSet
   SUBROUTINE DataProjection_LabelSetVS(dataProjection,label,err,error,*)
 
     !Argument variables
@@ -3767,6 +3875,142 @@ CONTAINS
     RETURN 1
 
   END SUBROUTINE DataProjection_LabelSetVS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Outputs the analysis of data projection results. \see OpenCMISS::Iron::cmfe_DataProjection_ResultAnalysisOutput
+  SUBROUTINE DataProjection_ResultAnalysisOutput(dataProjection,filename,err,error,*)
+
+    !Argument variables
+    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to output the result analysis for.
+    CHARACTER(LEN=*), INTENT(IN) :: filename !<If not empty, the filename to output the data projection result analysis to. If empty, the analysis will be output to the standard output.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dataPointExitTag,dataPointIdx,dataPointUserNumber,elementUserNumber,filenameLength,localElementNumber, &
+      & localLineFaceNumber,myComputationalNodeNumber,numberOfComputationalNodes,outputID
+    REAL(DP) :: distance
+    CHARACTER(LEN=MAXSTRLEN) :: analFilename,localString
+    TYPE(DataPointsType), POINTER :: dataPoints
+    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
+    TYPE(DECOMPOSITION_ELEMENTS_TYPE), POINTER :: decompositionElements
+    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology
+    TYPE(FIELD_TYPE), POINTER :: projectionField
+        
+    ENTERS("DataProjection_ResultAnalysisOutput",err,error,*999)
+
+    IF(ASSOCIATED(dataProjection)) THEN
+      IF(dataProjection%dataProjectionFinished) THEN
+        IF(dataProjection%dataProjectionProjected) THEN
+          dataPoints=>dataProjection%dataPoints
+          IF(ASSOCIATED(dataPoints)) THEN
+            projectionField=>dataProjection%projectionField
+            NULLIFY(decomposition)
+            CALL Field_DecompositionGet(projectionField,decomposition,err,error,*999)
+            NULLIFY(decompositionTopology)
+            CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*999)
+            NULLIFY(decompositionElements)
+            CALL DecompositionTopology_ElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+            numberOfComputationalNodes=Computational_NumberOfNodesGet(err,error)
+            IF(err/=0) GOTO 999
+            myComputationalNodeNumber=Computational_NodeNumberGet(err,error)
+            IF(err/=0) GOTO 999
+            !Find the correct output ID and open a file if necessary
+            filenameLength=LEN_TRIM(filename)
+            IF(filenameLength>=1) THEN
+              IF(numberOfComputationalNodes>1) THEN
+                WRITE(analFilename,('(A,A,I0)')) filename(1:filenameLength),".opdataproj.",myComputationalNodeNumber              
+              ELSE
+                analFilename=filename(1:filenameLength)//".opdataproj"
+              ENDIF
+              outputID=IO1_FILE_UNIT
+              OPEN(UNIT=outputId,FILE=analFileName(1:LEN_TRIM(analFilename)),STATUS="REPLACE",FORM="FORMATTED",IOSTAT=err)
+              IF(ERR/=0) CALL FlagError("Error opening data projection analysis output file.",err,error,*999)            
+            ELSE
+              outputID=GENERAL_OUTPUT_TYPE
+            ENDIF
+          
+            CALL WriteString(outputID,"Data projection result analysis:",err,error,*999)
+            CALL WriteString(outputID,"",err,error,*999)
+            CALL WriteStringValue(outputID,"  Data projection number = ",dataProjection%userNumber,err,error,*999)
+            CALL WriteStringValue(outputID,"  Data points number = ",dataPoints%userNumber,err,error,*999)
+            CALL WriteStringValue(outputID,"  Data projection type = ",dataProjection%projectionType,err,error,*999)
+            CALL WriteStringValue(outputID,"  Projection field number = ",dataProjection%projectionField%USER_NUMBER,err,error,*999)
+            CALL WriteString(outputID,"",err,error,*999)
+            CALL WriteStringValue(outputID,"  Number of data points = ",dataPoints%numberOfDataPoints,err,error,*999)
+            CALL WriteString(outputID,"",err,error,*999)
+            IF(dataPoints%numberOfDataPoints>0) THEN
+              localString="  Data pt#     User#  Exit tag  Element#  Line/Face#            Xi        Vector      Distance"
+              CALL WriteString(outputID,localString,err,error,*999)
+              DO dataPointIdx=1,dataPoints%numberOfDataPoints
+                dataPointUserNumber=dataProjection%dataProjectionResults(dataPointIdx)%userNumber
+                dataPointExitTag=dataProjection%dataProjectionResults(dataPointIdx)%exitTag
+                localElementNumber=dataProjection%dataProjectionResults(dataPointIdx)%elementNumber
+                elementUserNumber=decompositionElements%elements(localElementNumber)%USER_NUMBER
+                localLineFaceNumber=dataProjection%dataProjectionResults(dataPointIdx)%elementLineFaceNumber
+                distance=dataProjection%dataProjectionResults(dataPointIdx)%distance
+                WRITE(localString,'(2X,I8,2X,I8,8X,I2,2X,I8,10X,I2,2X,E12.5,2X,E12.5,2X,E12.5)') dataPointIdx, &
+                  & dataPointUserNumber,dataPointExitTag,elementUserNumber,localLineFaceNumber, &
+                  & dataProjection%dataProjectionResults(dataPointIdx)%elementXi(1), &
+                  & dataProjection%dataProjectionResults(dataPointIdx)%projectionVector(1),distance
+                CALL WriteString(outputID,localString,err,error,*999)
+                IF(dataProjection%numberOfElementXi>1) THEN
+                  WRITE(localString,'(54X,E12.5,2X,E12.5)') &
+                    & dataProjection%dataProjectionResults(dataPointIdx)%elementXi(2), &
+                    & dataProjection%dataProjectionResults(dataPointIdx)%projectionVector(2)
+                  CALL WriteString(outputID,localString,err,error,*999)
+                ENDIF
+                IF(dataProjection%numberOfElementXi>2) THEN
+                  WRITE(localString,'(54X,E12.5,2X,E12.5)') &
+                    & dataProjection%dataProjectionResults(dataPointIdx)%elementXi(3), &
+                    & dataProjection%dataProjectionResults(dataPointIdx)%projectionVector(3)
+                  CALL WriteString(outputID,localString,err,error,*999)
+                ENDIF
+                IF(dataProjection%numberOfCoordinates>dataProjection%numberOfElementXi) THEN
+                  WRITE(localString,'(68X,E12.5)') &
+                    & dataProjection%dataProjectionResults(dataPointIdx)%projectionVector(3)
+                  CALL WriteString(outputID,localString,err,error,*999)
+                ENDIF
+              ENDDO !dataPointIdx
+              CALL WriteString(outputID,"",err,error,*999)
+              CALL WriteString(outputID,"  Errors:",err,error,*999)
+              CALL WriteString(outputID,"",err,error,*999)
+              CALL WriteString(outputID,"  Error type            Value  Data user#",err,error,*999)
+              WRITE(localString,'("  RMS error    ",2X,E12.5)') dataProjection%rmsError
+              CALL WriteString(outputID,localString,err,error,*999)
+              WRITE(localString,'("  Maximum error",2X,E12.5,4X,I8)') dataProjection%maximumError, &
+                & dataProjection%dataProjectionResults(dataProjection%maximumErrorDataPoint)%userNumber
+              CALL WriteString(outputID,localString,err,error,*999)
+              WRITE(localString,'("  Minimum error",2X,E12.5,4X,I8)') dataProjection%minimumError, &
+                & dataProjection%dataProjectionResults(dataProjection%minimumErrorDataPoint)%userNumber
+              CALL WriteString(outputID,localString,err,error,*999)
+              CALL WriteString(outputID,"",err,error,*999)
+            ENDIF
+            IF(filenameLength>=1) THEN
+              CLOSE(UNIT=outputID,IOSTAT=err)
+              IF(ERR/=0) CALL FlagError("Error closing data projection analysis output file.",err,error,*999)
+            ENDIF
+          ELSE
+            CALL FlagError("Data projection data points is not associated.",err,error,*999)
+          ENDIF
+        ELSE
+          CALL FlagError("Data projection has not been projected.",err,error,*999)
+        ENDIF
+      ELSE
+        CALL FlagError("Data projection has not been finished.",err,error,*999)
+      ENDIF
+    ELSE
+      CALL FlagError("Data projection is not associated.",err,error,*999)
+    ENDIF
+
+    EXITS("DataProjection_ResultAnalysisOutput")
+    RETURN
+999 ERRORSEXITS("DataProjection_ResultAnalysisOutput",err,error)
+    RETURN 1
+
+  END SUBROUTINE DataProjection_ResultAnalysisOutput
 
   !
   !================================================================================================================================
@@ -3833,7 +4077,7 @@ CONTAINS
           !Check if boundary faces projection type was set
           IF(dataProjection%projectionType==DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE) THEN
             CALL DataProjection_DataPointGlobalNumberGet(dataProjection,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
-            projectionElementFaceNumber=dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementFaceNumber
+            projectionElementFaceNumber=dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementLineFaceNumber
           ELSE
             CALL FlagError("Data projection type is not set to a boundary faces projection type.",err,error,*999)
           ENDIF
@@ -3879,7 +4123,7 @@ CONTAINS
           !Check if boundary lines projection type was set
           IF(dataProjection%projectionType==DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE) THEN
             CALL DataProjection_DataPointGlobalNumberGet(dataProjection,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
-            projectionElementLineNumber=dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementLineNumber
+            projectionElementLineNumber=dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementLineFaceNumber
           ELSE
             CALL FlagError("Data projection type is not set to a boundary lines projection type.",err,error,*999)
           ENDIF

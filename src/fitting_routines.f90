@@ -253,7 +253,7 @@ CONTAINS
               dataPointLocalNumber = dataPoints%elementDataPoint(elementNumber)%dataIndices(dataPointIdx)%localNumber
               dataPointGlobalNumber = dataPoints%elementDataPoint(elementNumber)%dataIndices(dataPointIdx)%globalNumber
               ! Need to use global number to get the correct projection results
-              projectionXi(1:numberOfXi) = dataProjection%dataProjectionResults(dataPointGlobalNumber)%xi(1:numberOfXi)
+              projectionXi(1:numberOfXi) = dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementXi(1:numberOfXi)
               CALL Field_InterpolateXi(FIRST_PART_DERIV,projectionXi,equations%interpolation% &
                 & GEOMETRIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
               CALL Field_InterpolateXi(FIRST_PART_DERIV,projectionXi,equations%interpolation% &
@@ -488,7 +488,7 @@ CONTAINS
               dataPointLocalNumber = dataPoints%elementDataPoint(elementNumber)%dataIndices(dataPointIdx)%localNumber
               dataPointGlobalNumber = dataPoints%elementDataPoint(elementNumber)%dataIndices(dataPointIdx)%globalNumber
               ! Need to use global number to get the correct projection results
-              projectionXi(1:numberOfXi) = dataProjection%dataprojectionresults(dataPointGlobalNumber)%xi(1:numberOfXi)
+              projectionXi(1:numberOfXi) = dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementXi(1:numberOfXi)
               CALL Field_InterpolateXi(FIRST_PART_DERIV,projectionXi,equations%interpolation% &
                 & GEOMETRIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
               CALL Field_InterpolateXi(FIRST_PART_DERIV,projectionXi,equations%interpolation% &

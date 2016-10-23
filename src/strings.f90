@@ -904,20 +904,28 @@ CONTAINS
   !
 
   !>Converts an integer number to its equivalent character string representation as determined by the supplied format. The format is of the form of a standard Fortran integer format e.g. "I3".
-  FUNCTION NUMBER_TO_CHARACTER_INTG(NUMBER,FORMAT,ERR,ERROR)
+  FUNCTION NUMBER_TO_CHARACTER_INTG(NUMBER,FORMAT,ERR,ERROR,ADJUST)
   
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: NUMBER !<The number to convert
     CHARACTER(LEN=*), INTENT(IN) :: FORMAT !<The format to use in the conversion
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    LOGICAL, OPTIONAL, INTENT(IN) :: ADJUST !<Optional argument. If .TRUE. (default) the leading white space is stripped. 
     !Function variable
     CHARACTER(LEN=MAXSTRLEN) :: NUMBER_TO_CHARACTER_INTG !<On exit, the character equivalent of the number
     !Local variables
     CHARACTER(LEN=MAXSTRLEN) :: LOCAL_FORMAT
+    LOGICAL :: ADJUST_LEFT
     
     ENTERS("NUMBER_TO_CHARACTER_INTG",ERR,ERROR,*999)
 
+    IF(PRESENT(ADJUST)) THEN
+      ADJUST_LEFT=ADJUST
+    ELSE
+      ADJUST_LEFT=.TRUE.
+    ENDIF
+    
     IF(FORMAT(1:1)=="*") THEN
       LOCAL_FORMAT="(I12)"
     ELSE
@@ -925,8 +933,10 @@ CONTAINS
     ENDIF
     WRITE(NUMBER_TO_CHARACTER_INTG,LOCAL_FORMAT,ERR=999) NUMBER
 
-    !Trim leading blanks
-    NUMBER_TO_CHARACTER_INTG=ADJUSTL(NUMBER_TO_CHARACTER_INTG)
+    IF(ADJUST_LEFT) THEN
+      !Trim leading blanks
+      NUMBER_TO_CHARACTER_INTG=ADJUSTL(NUMBER_TO_CHARACTER_INTG)
+    ENDIF
 
     EXITS("NUMBER_TO_CHARACTER_INTG")
     RETURN
@@ -940,19 +950,27 @@ CONTAINS
   !
 
   !>Converts a long integer number to its equivalent character string representation as determined by the supplied format. The format is of the form of a standard Fortran integer format e.g. "I3".
-  FUNCTION NUMBER_TO_CHARACTER_LINTG(NUMBER,FORMAT,ERR,ERROR)
+  FUNCTION NUMBER_TO_CHARACTER_LINTG(NUMBER,FORMAT,ERR,ERROR,ADJUST)
   
     !Argument variables
     INTEGER(LINTG), INTENT(IN) :: NUMBER !<The number to convert
     CHARACTER(LEN=*), INTENT(IN) :: FORMAT !<The format to use in the conversion
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    LOGICAL, OPTIONAL, INTENT(IN) :: ADJUST !<Optional argument. If .TRUE. (default) the leading white space is stripped. 
     !Function variable
     CHARACTER(LEN=MAXSTRLEN) :: NUMBER_TO_CHARACTER_LINTG !<On exit, the character equivalent of the number
     !Local variables
     CHARACTER(LEN=MAXSTRLEN) :: LOCAL_FORMAT
-    
+    LOGICAL :: ADJUST_LEFT
+   
     ENTERS("NUMBER_TO_CHARACTER_LINTG",ERR,ERROR,*999)
+
+    IF(PRESENT(ADJUST)) THEN
+      ADJUST_LEFT=ADJUST
+    ELSE
+      ADJUST_LEFT=.TRUE.
+    ENDIF
 
     IF(FORMAT(1:1)=="*") THEN
       LOCAL_FORMAT="(I18)"
@@ -961,9 +979,11 @@ CONTAINS
     ENDIF
     WRITE(NUMBER_TO_CHARACTER_LINTG,LOCAL_FORMAT,ERR=999) NUMBER
 
-    !Trim leading blanks
-    NUMBER_TO_CHARACTER_LINTG=ADJUSTL(NUMBER_TO_CHARACTER_LINTG)
-
+    IF(ADJUST_LEFT) THEN
+      !Trim leading blanks
+      NUMBER_TO_CHARACTER_LINTG=ADJUSTL(NUMBER_TO_CHARACTER_LINTG)
+    ENDIF
+      
     EXITS("NUMBER_TO_CHARACTER_LINTG")
     RETURN
 999 CALL FlagError("Error converting a long integer to a character string",ERR,ERROR,*998)
@@ -976,21 +996,29 @@ CONTAINS
   !
 
   !>Converts a single precision number to its equivalent character string representation as determined by the supplied format string. NOTE: If FORMAT is an asterisk followed by a number between 1 and 32 the format will be chosen to maximise the number of significant digits, e.g., FORMAT="*8" will return a string of 8 characters representing the supplied number in either F8.? or E8.? format depending on its magnitude.
-  FUNCTION NUMBER_TO_CHARACTER_SP(NUMBER, FORMAT, ERR, ERROR)
+  FUNCTION NUMBER_TO_CHARACTER_SP(NUMBER, FORMAT, ERR, ERROR, ADJUST)
   
     !Argument variables
     REAL(SP), INTENT(IN) :: NUMBER !<The number to convert
     CHARACTER(LEN=*), INTENT(IN) :: FORMAT !<The format to use in the conversion
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    LOGICAL, OPTIONAL, INTENT(IN) :: ADJUST !<Optional argument. If .TRUE. (default) the leading white space is stripped. 
     !Function variable
     CHARACTER(LEN=MAXSTRLEN) :: NUMBER_TO_CHARACTER_SP !<On exit, the character equivalent of the number
     !Local variables
     INTEGER(INTG) :: ASTERISK_POS,i0,i1,LENGTH
     CHARACTER(LEN=MAXSTRLEN) :: CI0,CI1
     CHARACTER(LEN=MAXSTRLEN) :: LOCAL_FORMAT
+    LOGICAL :: ADJUST_LEFT
     
     ENTERS("NUMBER_TO_CHARACTER_SP",ERR,ERROR,*999)
+
+   IF(PRESENT(ADJUST)) THEN
+      ADJUST_LEFT=ADJUST
+    ELSE
+      ADJUST_LEFT=.TRUE.
+    ENDIF
 
     ASTERISK_POS=INDEX(FORMAT,"*")
     LENGTH=LEN_TRIM(FORMAT)
@@ -1053,8 +1081,11 @@ CONTAINS
     !Add an extra zero if required
     IF(NUMBER_TO_CHARACTER_SP(LEN_TRIM(NUMBER_TO_CHARACTER_SP):LEN_TRIM(NUMBER_TO_CHARACTER_SP))==".") &
       & NUMBER_TO_CHARACTER_SP=NUMBER_TO_CHARACTER_SP(1:LEN_TRIM(NUMBER_TO_CHARACTER_SP))//"0"
-    !Trim leading blanks
-    NUMBER_TO_CHARACTER_SP=ADJUSTL(NUMBER_TO_CHARACTER_SP)
+
+    IF(ADJUST_LEFT) THEN
+      !Trim leading blanks
+      NUMBER_TO_CHARACTER_SP=ADJUSTL(NUMBER_TO_CHARACTER_SP)
+    ENDIF
 
     EXITS("NUMBER_TO_CHARACTER_SP")
     RETURN
@@ -1068,22 +1099,30 @@ CONTAINS
   !
 
   !>Converts a double precision number to its equivalent character string representation as determined by the supplied format string. Note If FORMAT is an asterisk followed by a number between 1 and 32 the format will be chosen to maximise the number of significant digits, e.g., FORMAT="*8" will return a string of 8 characters representing the supplied number in either F8.? or E8.? format depending on its magnitude.
-  FUNCTION NUMBER_TO_CHARACTER_DP(NUMBER, FORMAT, ERR, ERROR)
+  FUNCTION NUMBER_TO_CHARACTER_DP(NUMBER, FORMAT, ERR, ERROR, ADJUST)
   
     !Argument variables
     REAL(DP), INTENT(IN) :: NUMBER !<The number to convert
     CHARACTER(LEN=*), INTENT(IN) :: FORMAT !<The format to use in the conversion
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    LOGICAL, OPTIONAL, INTENT(IN) :: ADJUST !<Optional argument. If .TRUE. (default) the leading white space is stripped. 
     !Function variable
     CHARACTER(LEN=MAXSTRLEN) :: NUMBER_TO_CHARACTER_DP !<On exit, the character equivalent of the number
     !Local variables
     INTEGER(INTG) :: ASTERISK_POS,i0,i1,LENGTH
     CHARACTER(LEN=2) :: CI0,CI1
     CHARACTER(LEN=MAXSTRLEN) :: LOCAL_FORMAT
+    LOGICAL :: ADJUST_LEFT
     
     ENTERS("NUMBER_TO_CHARACTER_DP",ERR,ERROR,*999)
 
+    IF(PRESENT(ADJUST)) THEN
+      ADJUST_LEFT=ADJUST
+    ELSE
+      ADJUST_LEFT=.TRUE.
+    ENDIF
+    
     ASTERISK_POS=INDEX(FORMAT,"*")
     LENGTH=LEN_TRIM(FORMAT)
     IF(ASTERISK_POS==1.AND.LENGTH==1) THEN !Free format
@@ -1144,8 +1183,11 @@ CONTAINS
     !Add an extra zero if required
     IF(NUMBER_TO_CHARACTER_DP(LEN_TRIM(NUMBER_TO_CHARACTER_DP):LEN_TRIM(NUMBER_TO_CHARACTER_DP))==".") &
       & NUMBER_TO_CHARACTER_DP=NUMBER_TO_CHARACTER_DP(1:LEN_TRIM(NUMBER_TO_CHARACTER_DP))//"0"
-    !Trim leading blanks
-    NUMBER_TO_CHARACTER_DP=ADJUSTL(NUMBER_TO_CHARACTER_DP)
+
+    IF(ADJUST_LEFT) THEN
+      !Trim leading blanks
+      NUMBER_TO_CHARACTER_DP=ADJUSTL(NUMBER_TO_CHARACTER_DP)
+    ENDIF
 
     EXITS("NUMBER_TO_CHARACTER_DP")
     RETURN
@@ -1159,16 +1201,18 @@ CONTAINS
   !
 
   !>Converts an integer number to its equivalent varying string representation as determined by the supplied format. The format is of the form of a standard Fortran integer format e.g. "I3".
-  FUNCTION NUMBER_TO_VSTRING_INTG(NUMBER,FORMAT,ERR,ERROR)
+  FUNCTION NUMBER_TO_VSTRING_INTG(NUMBER,FORMAT,ERR,ERROR,ADJUST)
   
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: NUMBER !<The number to convert
     CHARACTER(LEN=*), INTENT(IN) :: FORMAT !<The format to use in the conversion
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    LOGICAL, OPTIONAL, INTENT(IN) :: ADJUST !<Optional argument. If .TRUE. (default) the leading white space is stripped. 
     !Function variable
     TYPE(VARYING_STRING) :: NUMBER_TO_VSTRING_INTG !<On exit, the varying string equivalent of the number
     !Local variables
+    LOGICAL :: ADJUST_LEFT
     CHARACTER(LEN=MAXSTRLEN) :: LOCAL_FORMAT,LOCAL_STRING
     
 !!TODO: put back enters,exits.
@@ -1179,6 +1223,12 @@ CONTAINS
     
     NUMBER_TO_VSTRING_INTG=""
     
+    IF(PRESENT(ADJUST)) THEN
+      ADJUST_LEFT=ADJUST
+    ELSE
+      ADJUST_LEFT=.TRUE.
+    ENDIF
+    
     IF(FORMAT(1:1)=="*") THEN
       LOCAL_FORMAT="(I12)"
     ELSE
@@ -1186,8 +1236,12 @@ CONTAINS
     ENDIF
     WRITE(LOCAL_STRING,LOCAL_FORMAT,ERR=999) NUMBER
 
-    !Trim leading blanks
-    NUMBER_TO_VSTRING_INTG=ADJUSTL(LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING)))
+    IF(ADJUST_LEFT) THEN
+      !Trim leading blanks
+      NUMBER_TO_VSTRING_INTG=ADJUSTL(LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING)))
+    ELSE
+      NUMBER_TO_VSTRING_INTG=LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING))
+    ENDIF
 
 !    EXITS("NUMBER_TO_VSTRING_INTG")
     RETURN
@@ -1201,18 +1255,20 @@ CONTAINS
   !
 
   !>Converts a long integer number to its equivalent varying string representation as determined by the supplied format. The format is of the form of a standard Fortran integer format e.g., "I3".
-  FUNCTION NUMBER_TO_VSTRING_LINTG(NUMBER,FORMAT,ERR,ERROR)
+  FUNCTION NUMBER_TO_VSTRING_LINTG(NUMBER,FORMAT,ERR,ERROR,ADJUST)
   
     !Argument variables
     INTEGER(LINTG), INTENT(IN) :: NUMBER !<The number to convert
     CHARACTER(LEN=*), INTENT(IN) :: FORMAT !<The format to use in the conversion
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    LOGICAL, OPTIONAL, INTENT(IN) :: ADJUST !<Optional argument. If .TRUE. (default) the leading white space is stripped. 
     !Function variable
     TYPE(VARYING_STRING) :: NUMBER_TO_VSTRING_LINTG !<On exit, the varying string equivalent of the number
     !Local variables
     CHARACTER(LEN=MAXSTRLEN) :: LOCAL_FORMAT,LOCAL_STRING
-    
+    LOGICAL :: ADJUST_LEFT
+   
 !!TODO: put back enters,exits.
 
 !    ENTERS("NUMBER_TO_VSTRING_LINTG",ERR,ERROR,*999)
@@ -1221,6 +1277,12 @@ CONTAINS
     
     NUMBER_TO_VSTRING_LINTG=""
     
+    IF(PRESENT(ADJUST)) THEN
+      ADJUST_LEFT=ADJUST
+    ELSE
+      ADJUST_LEFT=.TRUE.
+    ENDIF
+    
     IF(FORMAT(1:1)=="*") THEN
       LOCAL_FORMAT="(I18)"
     ELSE
@@ -1228,8 +1290,12 @@ CONTAINS
     ENDIF
     WRITE(LOCAL_STRING,LOCAL_FORMAT,ERR=999) NUMBER
 
-    !Trim leading blanks
-    NUMBER_TO_VSTRING_LINTG=ADJUSTL(LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING)))
+    IF(ADJUST_LEFT) THEN
+      !Trim leading blanks
+      NUMBER_TO_VSTRING_LINTG=ADJUSTL(LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING)))
+    ELSE
+      NUMBER_TO_VSTRING_LINTG=LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING))
+    ENDIF
 
 !    EXITS("NUMBER_TO_VSTRING_LINTG")
     RETURN
@@ -1244,25 +1310,33 @@ CONTAINS
   !
 
   !>Converts a single precision number to its equivalent varying string representation as determined by the supplied format string. Note If FORMAT is an asterisk followed by a number between 1 and 32 the format will be chosen to maximise the number of significant digits, e.g., FORMAT="*8" will return a string of 8 characters representing the supplied number in either F8.? or E8.? format depending on its magnitude.
-  FUNCTION NUMBER_TO_VSTRING_SP(NUMBER, FORMAT, ERR, ERROR)
+  FUNCTION NUMBER_TO_VSTRING_SP(NUMBER, FORMAT, ERR, ERROR, ADJUST)
   
     !Argument variables
     REAL(SP), INTENT(IN) :: NUMBER !<The number to convert
     CHARACTER(LEN=*), INTENT(IN) :: FORMAT !<The format to use in the conversion
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    LOGICAL, OPTIONAL, INTENT(IN) :: ADJUST !<Optional argument. If .TRUE. (default) the leading white space is stripped. 
     !Function variable
     TYPE(VARYING_STRING) :: NUMBER_TO_VSTRING_SP !<On exit, the varying string equivalent of the number
     !Local variables
     INTEGER(INTG) :: ASTERISK_POS,i0,i1,LENGTH
     CHARACTER(LEN=MAXSTRLEN) :: CI0,CI1
     CHARACTER(LEN=MAXSTRLEN) :: LOCAL_FORMAT,LOCAL_STRING
+    LOGICAL :: ADJUST_LEFT
     
     ENTERS("NUMBER_TO_VSTRING_SP",ERR,ERROR,*999)
 
 !!TODO: remove dependance on LOCAL_STRING
     
     NUMBER_TO_VSTRING_SP=""    
+
+    IF(PRESENT(ADJUST)) THEN
+      ADJUST_LEFT=ADJUST
+    ELSE
+      ADJUST_LEFT=.TRUE.
+    ENDIF
 
     ASTERISK_POS=INDEX(FORMAT,"*")
     LENGTH=LEN_TRIM(FORMAT)
@@ -1325,8 +1399,12 @@ CONTAINS
     !Add an extra zero if required
     IF(LOCAL_STRING(LEN_TRIM(LOCAL_STRING):LEN_TRIM(LOCAL_STRING))==".") LOCAL_STRING=LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING))//"0"
     
-    !Trim leading blanks
-    NUMBER_TO_VSTRING_SP=ADJUSTL(LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING)))
+    IF(ADJUST_LEFT) THEN
+      !Trim leading blanks
+      NUMBER_TO_VSTRING_SP=ADJUSTL(LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING)))
+    ELSE
+      NUMBER_TO_VSTRING_SP=LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING))
+    ENDIF
 
     EXITS("NUMBER_TO_VSTRING_SP")
     RETURN
@@ -1340,20 +1418,22 @@ CONTAINS
   !
 
   !>Converts a double precision number to its equivalent varying string representation as determined by the supplied format string. Note If FORMAT is an asterisk followed by a number between 1 and 32 the format will be chosen to maximise the number of significant digits, e.g., FORMAT="*8" will return a string of 8 characters representing the supplied number in either F8.? or E8.? format depending on its magnitude.
-  FUNCTION NUMBER_TO_VSTRING_DP(NUMBER, FORMAT, ERR, ERROR)
+  FUNCTION NUMBER_TO_VSTRING_DP(NUMBER, FORMAT, ERR, ERROR, ADJUST)
       
     !Argument variables
     REAL(DP), INTENT(IN) :: NUMBER !<The number to convert
     CHARACTER(LEN=*), INTENT(IN) :: FORMAT !<The format to use in the conversion
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    LOGICAL, OPTIONAL, INTENT(IN) :: ADJUST !<Optional argument. If .TRUE. (default) the leading white space is stripped. 
     !Function variable
     TYPE(VARYING_STRING) :: NUMBER_TO_VSTRING_DP !<On exit, the varying string equivalent of the number
     !Local variables
     INTEGER(INTG) :: ASTERISK_POS,i0,i1,LENGTH
     CHARACTER(LEN=2) :: CI0,CI1
     CHARACTER(LEN=MAXSTRLEN) :: LOCAL_FORMAT,LOCAL_STRING
-    
+     LOGICAL :: ADJUST_LEFT
+     
 !!TODO: put back enters,exits.
 
 !    ENTERS("NUMBER_TO_VSTRING_DP",ERR,ERROR,*999)
@@ -1362,6 +1442,12 @@ CONTAINS
     
     NUMBER_TO_VSTRING_DP=""    
 
+    IF(PRESENT(ADJUST)) THEN
+      ADJUST_LEFT=ADJUST
+    ELSE
+      ADJUST_LEFT=.TRUE.
+    ENDIF
+    
     ASTERISK_POS=INDEX(FORMAT,"*")
     LENGTH=LEN_TRIM(FORMAT)
     IF(ASTERISK_POS==1.AND.LENGTH==1) THEN !Free format
@@ -1422,10 +1508,14 @@ CONTAINS
     !Add an extra zero if required
     IF(LOCAL_STRING(LEN_TRIM(LOCAL_STRING):LEN_TRIM(LOCAL_STRING))==".") LOCAL_STRING=LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING))//"0"
 
-    !!Do you really want to do this???
-    !Trim leading blanks
-    !NUMBER_TO_VSTRING_DP=ADJUSTL(LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING)))
-    NUMBER_TO_VSTRING_DP=LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING))
+    IF(ADJUST_LEFT) THEN
+!!Do you really want to do this???
+      !Trim leading blanks
+      !NUMBER_TO_VSTRING_DP=ADJUSTL(LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING)))
+      NUMBER_TO_VSTRING_DP=LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING))
+    ELSE
+      NUMBER_TO_VSTRING_DP=LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING))
+    ENDIF
 
 !    EXITS("NUMBER_TO_VSTRING_DP")
     RETURN

@@ -217,20 +217,22 @@ MODULE TYPES
     INTEGER(INTG), ALLOCATABLE :: ELEMENT_PARAMETER_INDEX_INV(:,:) !<ELEMENT_PARAMETER_INDEX_INV(1..2,ns). Gives the inverse fo the element parameter index. ELEMENT_PARAMETER_INDEX_INV(1,ns) gives the local node number corresponding to the ns'th element parameter. ELEMENT_PARAMETER_INDEX_INV(2,ns) gives the local derivative number corresponding to the ns'th element parameter.
     !Line information
     INTEGER(INTG) :: NUMBER_OF_LOCAL_LINES !<The number of local lines in the basis.
-    INTEGER(INTG), ALLOCATABLE :: LOCAL_LINE_XI_DIRECTION(:) !<LOCAL_LINE_XI_DIRECTION(nae). The Xi direction of the nae'th local line for the basis.
+    INTEGER(INTG), ALLOCATABLE :: localLineXiDirection(:) !<localLineXiDirection(localLineIdx). The xi direction of the localLineIdx'th local line for the basis.
+    INTEGER(INTG), ALLOCATABLE :: localLineXiNormals(:,:) !<localLineXiNormals(xicIdx,localLineIdx). The xicIdx'th xi directions that are "normal" to the localLineIdx'th local line. There are number of xic directions - 2 normal xi directions. Not allocated for bases with only 1 xi direction. Note: Normals are always outward.
+    INTEGER(INTG), ALLOCATABLE :: xiNormalsLocalLine(:,:) !<xiNormalLocalLine(xicIdx1,xicIdx2). The local line number corresponding to the intersection of the xicIdx1'th and xicIdx2'th normal direction. xicIdx1 and xicIdx2 vary from -numberOfXiC to + numberOfXiC. For bases with 2 xi directions xicIdx2 is only 1. Not allocated for bases with only 1 xi direction.
     INTEGER(INTG), ALLOCATABLE :: NUMBER_OF_NODES_IN_LOCAL_LINE(:) !<NUMBER_OF_NODES_IN_LOCAL_LINE(nae). The the number of nodes in the nae'th local line for the basis. Old CMISS name NNL(0,nae,nb).
     INTEGER(INTG), ALLOCATABLE :: NODE_NUMBERS_IN_LOCAL_LINE(:,:) !<NODE_NUMBERS_IN_LOCAL_LINE(nnl,nae). The local node numbers (nn) for the nnl'th line node in the nae'th local line for the basis. Old CMISS name NNL(1..,nae,nb).
     INTEGER(INTG), ALLOCATABLE :: DERIVATIVE_NUMBERS_IN_LOCAL_LINE(:,:) !<DERIVATIVE_NUMBERS_IN_LOCAL_LINE(nnl,nae). The derivative numbers (nk) for the nnl'th line node in the nae'th local line for the basis.
     INTEGER(INTG), ALLOCATABLE :: ELEMENT_PARAMETERS_IN_LOCAL_LINE(:,:) !<ELEMENT_PARAMETERS_IN_LOCAL_LINE(lineParameterIdx,elementLineIdx). The local element parameter for the lineParameterIdx'th line parameter in the elementLineIdx'th local line for the basis.
     !Face information
     INTEGER(INTG) :: NUMBER_OF_LOCAL_FACES !<The number of local faces in the basis.
-    INTEGER(INTG), ALLOCATABLE :: LOCAL_FACE_XI_DIRECTION(:) !<LOCAL_FACE_XI_DIRECTION(nae). The Xi direction of the nae'th local face for the basis.
+    INTEGER(INTG), ALLOCATABLE :: localFaceXiDirections(:,:) !<localFaceXiDirections(xicIdx,localFaceIdx). The xicIdx'th Xi direction in the localFaceIdx'th local face for the basis. There are numberOfXic - 1 face xi directions. Not allocated for bases with only 2 xi directions. 
+    INTEGER(INTG), ALLOCATABLE :: localFaceXiNormal(:) !localFaceXiNormal(localFaceIdx). The xic direction normal to the localFaceIdx'th local face for the basis. Not allocated for bases with only 2 xi directions. Note: Normals are always outward.
+    INTEGER(INTG), ALLOCATABLE :: xiNormalLocalFace(:) !xiNormalLocalFace(xicIdx). The local face number of that corresponds to the xiIdx'th normal direction. xicIdx varies from -numberOfXiC to + numberOfXiC. Not allocated for bases with only 2 xi directions. 
     INTEGER(INTG), ALLOCATABLE :: NUMBER_OF_NODES_IN_LOCAL_FACE(:) !<NUMBER_OF_NODES_IN_LOCAL_FACE(nae). The the number of nodes in the nae'th local face for the basis. Old CMISS name NNL(0,nae,nb).
     INTEGER(INTG), ALLOCATABLE :: NODE_NUMBERS_IN_LOCAL_FACE(:,:) !<NODE_NUMBERS_IN_LOCAL_FACE(nnl,nae). The local element node numbers (nn) for the nnl'th face node in the nae'th local face for the basis. Old CMISS name NNL(1..,nae,nb).
     INTEGER(INTG), ALLOCATABLE :: DERIVATIVE_NUMBERS_IN_LOCAL_FACE(:,:,:) !<DERIVATIVES_NUMBERS_IN_LOCAL_FACE(0:derivativeIdx,faceNodeIdx,elementFaceIdx). The element derivative numbers for the derivativeIdx'th face derivative's of the faceNodeIdx'th face node in the elementFaceIdx'th local face for the basis. The number of derivatives at the faceNodeIdx'th face node in the elementFaceIdx'th local face is given by DERIVATIVES_NUMBERS_IN_LOCAL_FACE(0,faceNodeIdx,elementFaceIdx).
     INTEGER(INTG), ALLOCATABLE :: ELEMENT_PARAMETERS_IN_LOCAL_FACE(:,:) !<ELEMENT_PARAMETERS_IN_LOCAL_FACE(faceParameterIdx,elementFaceIdx). The local element parameter for the faceParameterIdx'th face parameter in the elementFaceIdx'th local face for the basis.
-    !\todo What is the difference between LOCAL_XI_NORMAL and LOCAL_FACE_XI_DIRECTION ? They're the same
-    INTEGER(INTG), ALLOCATABLE :: LOCAL_XI_NORMAL(:) !<LOCAL_XI_NORMAL(nae). The Xi direction that is normal to either the nae'th local line for bases with 2 xi directions or the nae'th local face for bases with 3 xi directions. For bases with 1 xi direction the array is not allocated. Note: Normals are always outward.
     !Sub-basis information
     TYPE(BASIS_PTR_TYPE), POINTER :: LINE_BASES(:) !<LINE_BASES(nae). The pointer to the basis for the nae'th line for the basis.
     TYPE(BASIS_PTR_TYPE), POINTER :: FACE_BASES(:) !<FACE_BASES(naf). The pointer to the basis for the naf'th face for the basis.
@@ -279,10 +281,10 @@ MODULE TYPES
     INTEGER(INTG) :: userNumber !<The user number of the data point to which the projection result corresponds to.   
     REAL(DP) :: distance !<The distances between the data point and the projection. Assigned only if dataPointsProjected is .TRUE.
     INTEGER(INTG) :: elementNumber !<The element of the mesh the data point projects onto. Assigned only if dataPointsProjected is .TRUE.
-    INTEGER(INTG) :: elementFaceNumber !<The element face of the mesh the data point projects onto. Assigned only if dataPointsProjected is .TRUE. and DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE is chosen    
-    INTEGER(INTG) :: elementLineNumber !<The element line of the mesh the data point projects onto. Assigned only if dataPointsProjected is .TRUE. and DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE is chosen
-    INTEGER(INTG) :: exitTag !<The exit tage of the data projection. \See DATA_PROJECTION_ROUTINES. Assigned only if dataPointsProjected is .TRUE. 
+    INTEGER(INTG) :: elementLineFaceNumber !<The element line/face of the mesh the data point projects onto. Assigned only if dataPointsProjected is .TRUE. and DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE or DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE is chosen    
+    INTEGER(INTG) :: exitTag !<The exit tage of the data projection. Assigned only if dataPointsProjected is .TRUE. \See DataProtectionRoutines,DataProjectionRoutines_DataProjectionTypes 
     REAL(DP), ALLOCATABLE :: xi(:) !<The xi coordinate of the projection. Assigned only if dataPointsProjected is .TRUE.
+    REAL(DP), ALLOCATABLE :: elementXi(:) !<The xi coordinates in the element of the projection i.e., the full xi rather than the projected face or line xi. Assigned only if dataPointsProjected is .TRUE.
     REAL(DP), ALLOCATABLE :: projectionVector(:) !<The projection vector from data point to the projected point. 
   END TYPE DataProjectionResultType
 
@@ -299,8 +301,9 @@ MODULE TYPES
     INTEGER(INTG) :: projectionVariableType !<The variable type of the geometric/dependent field for this data projection.
     TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition !<The pointer to the decomposition where data points are projected
     INTEGER(INTG) :: numberOfCoordinates !<The number of coordinates of this data projection.
-    INTEGER(INTG) :: numberOfXi !<The number of xi of the mesh, ie. the mesh dimension
-    INTEGER(INTG) :: projectionType !<type of projection to perform. \See DATA_PROJECTION_ROUTINES     
+    INTEGER(INTG) :: numberOfElementXi !<The number of xi of the mesh, ie. the mesh dimension
+    INTEGER(INTG) :: numberOfXi !<The number of projection xi.
+    INTEGER(INTG) :: projectionType !<type of projection to perform. \See DataProjectionRoutines_DataProjectionTypes
     REAL(DP) :: maximumIterationUpdate !<The maximum xi update allowed at each newton iteration, analogous to maximum trust region size in the trust region model approach.
     INTEGER(INTG) :: maximumNumberOfIterations !<The maximum number of iterations
     INTEGER(INTG) :: numberOfClosestElements !<The number of closest elements to perform full projection on. The algorithm first find the distance of the data point to each elements base on starting xi, full projection is only performed on the first few elements sorted by the distance
@@ -309,7 +312,12 @@ MODULE TYPES
     REAL(DP), ALLOCATABLE :: startingXi(:) !<The starting value of the element xi
     INTEGER(INTG), ALLOCATABLE :: candidateElementNumbers(:) !<candidateElementNumbers(candidateElementIdx). The user specified user (get convert to local element number in PROJECTION_EVALUATE routines) candidate element numbers
     INTEGER(INTG), ALLOCATABLE :: localFaceLineNumbers(:) !<localFaceLineNumbers(candidateElementIdx). The user specified corresponding element face/line numbers for the candidate elements
-    TYPE(DataProjectionResultType), ALLOCATABLE :: dataProjectionResults(:) !<dataProjectionResults(dataIdx). The data projection results for the dataIdx'th data point. 
+    TYPE(DataProjectionResultType), ALLOCATABLE :: dataProjectionResults(:) !<dataProjectionResults(dataIdx). The data projection results for the dataIdx'th data point.
+    REAL(DP) :: rmsError !<The RMS error for the data projection.
+    REAL(DP) :: maximumError !<The maximum error for the data projection.
+    INTEGER(INTG) :: maximumErrorDataPoint !<The global data point number where the maximum error occurs.
+    REAL(DP) :: minimumError !<The minimum error for the data projection.
+    INTEGER(INTG) :: minimumErrorDataPoint !<The global data point number where the minimum error occurs.
   END TYPE DataProjectionType
 
   !>A buffer type to allow for an array of pointers to a DataProjectionType.

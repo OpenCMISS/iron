@@ -2232,20 +2232,15 @@ CONTAINS
       IF(ASSOCIATED(dataProjection)) THEN
         IF(dataProjection%dataProjectionFinished) THEN
           WRITE(*,*) "InterfacePointsConnectivity_UpdateFromProjection"
-          DO dataPointIdx=1,SIZE(dataProjection%dataProjectionResults,1) !Update reduced xi location, projection element number and element face/line number with projection result
+          DO dataPointIdx=1,SIZE(dataProjection%dataProjectionResults,1) !Update reduced xi location, projection element number and element face/line number with projection results
             dataProjectionResult=>dataProjection%dataProjectionResults(dataPointIdx)
             InterfacePointsConnectivity%pointsConnectivity(dataPointIdx,coupledMeshIndex)%reducedXi(:)= &
               & dataProjectionResult%xi
             InterfacePointsConnectivity%pointsConnectivity(dataPointIdx,coupledMeshIndex)%coupledMeshElementNumber= &
               & dataProjectionResult%elementNumber
-            IF(dataProjectionResult%elementLineNumber/=0) THEN
-              InterfacePointsConnectivity%pointsConnectivity(dataPointIdx,coupledMeshIndex)%elementLineFaceNumber= &
-                & dataProjectionResult%elementLineNumber
-            ELSEIF(dataProjectionResult%elementFaceNumber/=0) THEN
-              InterfacePointsConnectivity%pointsConnectivity(dataPointIdx,coupledMeshIndex)%elementLineFaceNumber= &
-                & dataProjectionResult%elementFaceNumber
-            ENDIF
-          ENDDO
+            InterfacePointsConnectivity%pointsConnectivity(dataPointIdx,coupledMeshIndex)%elementLineFaceNumber= &
+              & dataProjectionResult%elementLineFaceNumber
+          ENDDO !dataPointIdx
           CALL InterfacePointsConnectivity_FullXiCalculate(InterfacePointsConnectivity,coupledMeshIndex, &
             & err,error,*999) 
           !Update points connectivity coupledElement information

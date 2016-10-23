@@ -1280,9 +1280,9 @@ MODULE FIELD_ROUTINES
 
   PUBLIC Field_DataTypeCheck,Field_DataTypeGet,Field_DataTypeSet,Field_DataTypeSetAndLock
 
-  PUBLIC Field_Destroy
+  PUBLIC Field_DecompositionGet
 
-  PUBLIC Field_GeometricGeneralFieldGet
+  PUBLIC Field_Destroy
 
   PUBLIC FIELD_DEPENDENT_TYPE_CHECK,FIELD_DEPENDENT_TYPE_GET,FIELD_DEPENDENT_TYPE_SET,FIELD_DEPENDENT_TYPE_SET_AND_LOCK
 
@@ -1295,6 +1295,8 @@ MODULE FIELD_ROUTINES
   PUBLIC FIELD_DOF_ORDER_TYPE_CHECK,FIELD_DOF_ORDER_TYPE_GET,FIELD_DOF_ORDER_TYPE_SET,FIELD_DOF_ORDER_TYPE_SET_AND_LOCK
 
   PUBLIC Field_DOFOrderTypeCheck,Field_DOFOrderTypeGet,Field_DOFOrderTypeSet,Field_DOFOrderTypeSetAndLock
+
+  PUBLIC Field_GeometricGeneralFieldGet
 
   PUBLIC FIELD_GEOMETRIC_FIELD_GET,FIELD_GEOMETRIC_FIELD_SET,FIELD_GEOMETRIC_FIELD_SET_AND_LOCK
 
@@ -5594,6 +5596,48 @@ CONTAINS
 999 ERRORSEXITS("FIELD_DEPENDENT_TYPE_SET_AND_LOCK",ERR,ERROR)
     RETURN 1
   END SUBROUTINE FIELD_DEPENDENT_TYPE_SET_AND_LOCK
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a decomposition from a field.
+  SUBROUTINE Field_DecompositionGet(field,decomposition,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_TYPE), POINTER :: field !<The field to get the decomposition for.
+    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition !<On exit, a pointer to the decomposition for the field. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Field_DecompositionGet",err,error,*999)
+
+    !Check input arguments
+    IF(.NOT.ASSOCIATED(field)) THEN
+      CALL FlagError("Field is not associated.",err,error,*999)
+    ENDIF
+    IF(ASSOCIATED(decomposition)) THEN
+      CALL FlagError("Decomposition is already associated.",err,error,*999)
+    ENDIF
+
+    !Get the field decomposition
+    decomposition=>field%decomposition
+
+    !Check field decomposition is associated.
+    IF(.NOT.ASSOCIATED(decomposition)) THEN
+      localError="Field decomposition is not associated for decomposition "// &
+        & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Field_DecompositionGet")
+    RETURN
+999 ERRORSEXITS("Field_DecompositionGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Field_DecompositionGet
 
   !
   !================================================================================================================================
