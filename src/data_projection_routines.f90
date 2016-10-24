@@ -3890,14 +3890,19 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dataPointExitTag,dataPointIdx,dataPointUserNumber,elementUserNumber,filenameLength,localElementNumber, &
-      & localLineFaceNumber,myComputationalNodeNumber,numberOfComputationalNodes,outputID
+      & localLineFaceNumber,myComputationalNodeNumber,normalIdx1,normalIdx2,numberOfComputationalNodes,outputID
     REAL(DP) :: distance
-    CHARACTER(LEN=MAXSTRLEN) :: analFilename,localString
+    CHARACTER(LEN=MAXSTRLEN) :: analFilename,format1,format2,localString
+    TYPE(BASIS_TYPE), POINTER :: basis
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
     TYPE(DECOMPOSITION_ELEMENTS_TYPE), POINTER :: decompositionElements
     TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology
+    TYPE(DOMAIN_TYPE), POINTER :: domain
+    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: domainElements
+    TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology
     TYPE(FIELD_TYPE), POINTER :: projectionField
+    TYPE(VARYING_STRING) :: localError
         
     ENTERS("DataProjection_ResultAnalysisOutput",err,error,*999)
 
@@ -3913,6 +3918,12 @@ CONTAINS
             CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*999)
             NULLIFY(decompositionElements)
             CALL DecompositionTopology_ElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+            NULLIFY(domain)
+            CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
+            NULLIFY(domainTopology)
+            CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
+            NULLIFY(domainElements)
+            CALL DomainTopology_ElementsGet(domainTopology,domainElements,err,error,*999)
             numberOfComputationalNodes=Computational_NumberOfNodesGet(err,error)
             IF(err/=0) GOTO 999
             myComputationalNodeNumber=Computational_NodeNumberGet(err,error)
@@ -3935,6 +3946,7 @@ CONTAINS
             CALL WriteString(outputID,"Data projection result analysis:",err,error,*999)
             CALL WriteString(outputID,"",err,error,*999)
             CALL WriteStringValue(outputID,"  Data projection number = ",dataProjection%userNumber,err,error,*999)
+            CALL WriteStringValue(outputID,"  Data projection label = ",dataProjection%label,err,error,*999)
             CALL WriteStringValue(outputID,"  Data points number = ",dataPoints%userNumber,err,error,*999)
             CALL WriteStringValue(outputID,"  Data projection type = ",dataProjection%projectionType,err,error,*999)
             CALL WriteStringValue(outputID,"  Projection field number = ",dataProjection%projectionField%USER_NUMBER,err,error,*999)
@@ -3942,7 +3954,18 @@ CONTAINS
             CALL WriteStringValue(outputID,"  Number of data points = ",dataPoints%numberOfDataPoints,err,error,*999)
             CALL WriteString(outputID,"",err,error,*999)
             IF(dataPoints%numberOfDataPoints>0) THEN
-              localString="  Data pt#     User#  Exit tag  Element#  Line/Face#            Xi        Vector      Distance"
+              SELECT CASE(dataProjection%projectionType)
+              CASE(DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE)
+                localString="  Data pt#     User#  Exit tag  Element#  Line normals            Xi        Vector      Distance"
+              CASE(DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE)
+                localString="  Data pt#     User#  Exit tag  Element#  Face normal            Xi        Vector      Distance"
+              CASE(DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE)
+                localString="  Data pt#     User#  Exit tag  Element#            Xi        Vector      Distance"
+               CASE DEFAULT
+                localError="The data projection type of "// &
+                  & TRIM(NumberToVString(dataProjection%projectionType,"*",err,error))//" is invalid."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT
               CALL WriteString(outputID,localString,err,error,*999)
               DO dataPointIdx=1,dataPoints%numberOfDataPoints
                 dataPointUserNumber=dataProjection%dataProjectionResults(dataPointIdx)%userNumber
@@ -3951,27 +3974,56 @@ CONTAINS
                 elementUserNumber=decompositionElements%elements(localElementNumber)%USER_NUMBER
                 localLineFaceNumber=dataProjection%dataProjectionResults(dataPointIdx)%elementLineFaceNumber
                 distance=dataProjection%dataProjectionResults(dataPointIdx)%distance
-                WRITE(localString,'(2X,I8,2X,I8,8X,I2,2X,I8,10X,I2,2X,E12.5,2X,E12.5,2X,E12.5)') dataPointIdx, &
-                  & dataPointUserNumber,dataPointExitTag,elementUserNumber,localLineFaceNumber, &
-                  & dataProjection%dataProjectionResults(dataPointIdx)%elementXi(1), &
-                  & dataProjection%dataProjectionResults(dataPointIdx)%projectionVector(1),distance
-                CALL WriteString(outputID,localString,err,error,*999)
-                IF(dataProjection%numberOfElementXi>1) THEN
-                  WRITE(localString,'(54X,E12.5,2X,E12.5)') &
-                    & dataProjection%dataProjectionResults(dataPointIdx)%elementXi(2), &
-                    & dataProjection%dataProjectionResults(dataPointIdx)%projectionVector(2)
+                basis=>domainElements%elements(localElementNumber)%basis
+                IF(ASSOCIATED(basis)) THEN
+                  SELECT CASE(dataProjection%projectionType)
+                  CASE(DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE)
+                    normalIdx1=basis%localLineXiNormals(1,localLineFaceNumber)
+                    normalIdx2=basis%localLineXiNormals(2,localLineFaceNumber)
+                    WRITE(localString,'(2X,I8,2X,I8,8X,I2,2X,I8,9X,I2,X,I2,2X,E12.5,2X,E12.5,2X,E12.5)') dataPointIdx, &
+                      & dataPointUserNumber,dataPointExitTag,elementUserNumber,normalIdx1,normalIdx2, &
+                      & dataProjection%dataProjectionResults(dataPointIdx)%elementXi(1), &
+                      & dataProjection%dataProjectionResults(dataPointIdx)%projectionVector(1),distance
+                    format1="(56X,E12.5,2X,E12.5)"
+                    format2="(70X,E12.5)"
+                  CASE(DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE)
+                    normalIdx1=basis%localFaceXiNormal(localLineFaceNumber)
+                    WRITE(localString,'(2X,I8,2X,I8,8X,I2,2X,I8,11X,I2,2X,E12.5,2X,E12.5,2X,E12.5)') dataPointIdx, &
+                      & dataPointUserNumber,dataPointExitTag,elementUserNumber,normalIdx1, &
+                      & dataProjection%dataProjectionResults(dataPointIdx)%elementXi(1), &
+                      & dataProjection%dataProjectionResults(dataPointIdx)%projectionVector(1),distance
+                    format1="(55X,E12.5,2X,E12.5)"
+                    format2="(69X,E12.5)"
+                  CASE(DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE)
+                    WRITE(localString,'(2X,I8,2X,I8,8X,I2,2X,I8,2X,E12.5,2X,E12.5,2X,E12.5)') dataPointIdx, &
+                      & dataPointUserNumber,dataPointExitTag,elementUserNumber, &
+                      & dataProjection%dataProjectionResults(dataPointIdx)%elementXi(1), &
+                      & dataProjection%dataProjectionResults(dataPointIdx)%projectionVector(1),distance
+                    format1="(42X,E12.5,2X,E12.5)"
+                    format2="(56X,E12.5)"
+                  CASE DEFAULT
+                    localError="The data projection type of "// &
+                      & TRIM(NumberToVString(dataProjection%projectionType,"*",err,error))//" is invalid."
+                    CALL FlagError(localError,err,error,*999)
+                  END SELECT
                   CALL WriteString(outputID,localString,err,error,*999)
-                ENDIF
-                IF(dataProjection%numberOfElementXi>2) THEN
-                  WRITE(localString,'(54X,E12.5,2X,E12.5)') &
-                    & dataProjection%dataProjectionResults(dataPointIdx)%elementXi(3), &
-                    & dataProjection%dataProjectionResults(dataPointIdx)%projectionVector(3)
-                  CALL WriteString(outputID,localString,err,error,*999)
-                ENDIF
-                IF(dataProjection%numberOfCoordinates>dataProjection%numberOfElementXi) THEN
-                  WRITE(localString,'(68X,E12.5)') &
-                    & dataProjection%dataProjectionResults(dataPointIdx)%projectionVector(3)
-                  CALL WriteString(outputID,localString,err,error,*999)
+                  IF(dataProjection%numberOfElementXi>1) THEN
+                    WRITE(localString,format1) &
+                      & dataProjection%dataProjectionResults(dataPointIdx)%elementXi(2), &
+                      & dataProjection%dataProjectionResults(dataPointIdx)%projectionVector(2)
+                    CALL WriteString(outputID,localString,err,error,*999)
+                  ENDIF
+                  IF(dataProjection%numberOfElementXi>2) THEN
+                    WRITE(localString,format1) &
+                      & dataProjection%dataProjectionResults(dataPointIdx)%elementXi(3), &
+                      & dataProjection%dataProjectionResults(dataPointIdx)%projectionVector(3)
+                    CALL WriteString(outputID,localString,err,error,*999)
+                  ENDIF
+                  IF(dataProjection%numberOfCoordinates>dataProjection%numberOfElementXi) THEN
+                    WRITE(localString,format2) &
+                      & dataProjection%dataProjectionResults(dataPointIdx)%projectionVector(3)
+                    CALL WriteString(outputID,localString,err,error,*999)
+                  ENDIF
                 ENDIF
               ENDDO !dataPointIdx
               CALL WriteString(outputID,"",err,error,*999)
