@@ -115,10 +115,10 @@ CONTAINS
           & "Bioelectric-finite elasticity type equations set.",err,error,*999)
       END IF
       SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-        !\todo what are problem constants doing here???
-      CASE(EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE,EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE, &
-        & EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
-!        & PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
+      CASE(EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE, &
+        & EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE, &
+        & EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE, &
+        & EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
         & EQUATIONS_SET_1D3D_MONODOMAIN_ACTIVE_STRAIN_SUBTYPE)
         SELECT CASE(SOLUTION_METHOD)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
@@ -2007,13 +2007,13 @@ CONTAINS
                           CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
                             & FIELD_VALUES_SET_TYPE,dof_idx,OLD_DIST_2,ERR,ERROR,*999)
 			    
-			  !get the distance between the 2 nodes before three time step
+                  			  !get the distance between the 2 nodes before three time step
                           dof_idx=FIELD_VAR_IND_M_2%COMPONENTS(5)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)% &
                             & DERIVATIVES(1)%VERSIONS(1)
                           CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
                             & FIELD_VALUES_SET_TYPE,dof_idx,OLD_DIST_3,ERR,ERROR,*999)
 			  
-			  !get the distance between the 2 nodes before four time step
+                  			  !get the distance between the 2 nodes before four time step
                           dof_idx=FIELD_VAR_IND_M_2%COMPONENTS(6)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)% &
                             & DERIVATIVES(1)%VERSIONS(1)
                           CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
@@ -2022,7 +2022,7 @@ CONTAINS
                           !compute the new contraction velocity
                           !VELOCITY=(DIST-OLD_DIST)/TIME_STEP
                           VELOCITY=0.25_DP*((DIST-OLD_DIST)/TIME_STEP+(DIST-OLD_DIST_2)/(2.0_DP*TIME_STEP)+ &
-			    & (DIST-OLD_DIST_3)/(3.0_DP*TIME_STEP)+(DIST-OLD_DIST_4)/(4.0_DP*TIME_STEP))
+                  			    & (DIST-OLD_DIST_3)/(3.0_DP*TIME_STEP)+(DIST-OLD_DIST_4)/(4.0_DP*TIME_STEP))
                           IF(.NOT. CALC_CLOSEST_GAUSS_POINT) THEN
                             !NOTE: VELOCITY_MAX is the max shortening velocity, and hence negative!!!
                             IF(VELOCITY<VELOCITY_MAX) THEN
@@ -2047,11 +2047,11 @@ CONTAINS
                           CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
                             & FIELD_VALUES_SET_TYPE,1,1,node_idx,4,OLD_DIST,ERR,ERROR,*999)
 			    
-			  !store the node distance for contraction velocity calculation
+                  			  !store the node distance for contraction velocity calculation
                           CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
                             & FIELD_VALUES_SET_TYPE,1,1,node_idx,5,OLD_DIST_2,ERR,ERROR,*999)
 			    
-			  !store the node distance for contraction velocity calculation
+                  			  !store the node distance for contraction velocity calculation
                           CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
                             & FIELD_VALUES_SET_TYPE,1,1,node_idx,6,OLD_DIST_3,ERR,ERROR,*999)
 
