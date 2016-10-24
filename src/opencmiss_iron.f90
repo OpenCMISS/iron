@@ -13172,7 +13172,7 @@ CONTAINS
 
     !Argument variables
     CHARACTER(LEN=*), INTENT(OUT) :: errorMessage !<On return, the extracted error message.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    INTEGER(INTG), INTENT(IN) :: err !<The error code.
     !Local variables
 
     CALL ExtractErrorMessage(errorMessage,err,error,*999)
@@ -13192,7 +13192,7 @@ CONTAINS
 
     !Argument variables
     TYPE(VARYING_STRING), INTENT(OUT) :: errorMessage !<On return, the extracted error message.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    INTEGER(INTG), INTENT(IN) :: err !<The error code.
     !Local variables
 
     CALL ExtractErrorMessage(errorMessage,err,error,*999)

@@ -660,7 +660,7 @@ CONTAINS
                     & "XB_state_variables",ERR,ERROR,*999)
                 ELSE                
                   CALL FIELD_VARIABLE_LABEL_SET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & "Active stress",ERR,ERROR,*999)
+                    & "Active_stress",ERR,ERROR,*999)
                 ENDIF
                 CALL FIELD_VARIABLE_LABEL_SET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
                   & "sarcomere half length",ERR,ERROR,*999)
@@ -1556,10 +1556,7 @@ CONTAINS
         SELECT CASE(equationsSetSubtype)
         CASE(EQUATIONS_SET_NO_SUBTYPE)
           !ok
-          !\todo What are problem types doing setting up an equations set????
         CASE(EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE, &
-!          & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE, &
-!          & PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
           & EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE, &
           & EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
           & EQUATIONS_SET_1D3D_MONODOMAIN_ACTIVE_STRAIN_SUBTYPE)
