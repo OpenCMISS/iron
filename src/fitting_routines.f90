@@ -111,7 +111,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: fieldVariableType,ng,mh,mhs,ms,nh,nhs,ns,mi,ni
+    INTEGER(INTG) :: ng,mh,mhs,ms,nh,nhs,ns,mi,ni
     INTEGER(INTG) :: dependentComponentColumnIdx,dependentComponentRowIdx,dependentElementParameterColumnIdx, &
       & dependentElementParameterRowIdx,dependentParameterColumnIdx,dependentParameterRowIdx,gaussPointIdx, &
       & meshComponentRow,meshComponentColumn,numberOfDataComponents
@@ -133,7 +133,7 @@ CONTAINS
     TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: equationsMatrix
     TYPE(FIELD_TYPE), POINTER :: dependentField,geometricField,independentField,materialsField,sourceField
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: dataVariable,dataWeightVariable,dependentVariable,fieldVariable, &
-      & independentVariable,mappingVariable
+      & independentVariable
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: materialsInterpolatedPoint
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: geometricInterpolatedPoint
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: referenceGeometricInterpolatedPoint
@@ -175,7 +175,7 @@ CONTAINS
     NULLIFY(independentVectorParameters)
     NULLIFY(independentWeightParameters)
     NULLIFY(fieldVariable)
-    NULLIFY(mappingVariable)
+    NULLIFY(dependentVariable)
     NULLIFY(quadratureScheme)
     NULLIFY(geometricInterpolatedPoint,materialsInterpolatedPoint)
 
@@ -353,70 +353,69 @@ CONTAINS
                       dependentParameterRowIdx=dependentParameterRowIdx+1
                       dependentParameterColumnIdx=0
                       !Loop over element columns
-                      !Treat each component as separate and independent so only calculate the diagonal blocks by
-                      !setting the column component to be the row component
-                      dependentComponentColumnIdx=dependentComponentRowIdx
-                      meshComponentColumn=dependentVariable%components(dependentComponentColumnIdx)%MESH_COMPONENT_NUMBER
-                      dependentBasisColumn=>dependentField%decomposition%domain(meshComponentColumn)%ptr% &
-                        & topology%elements%elements(elementNumber)%basis
-                      quadratureSchemeColumn=>dependentBasisColumn%quadrature%QUADRATURE_SCHEME_MAP( &
-                        & BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-                      DO dependentElementParameterColumnIdx=1,dependentBasisColumn%NUMBER_OF_ELEMENT_PARAMETERS
-                        dependentParameterColumnIdx=dependentParameterColumnIdx+1
-                        
-                        !Calculate Sobolev surface tension and curvature smoothing terms                      
-                        tension = tauParam*2.0_DP* ( &
-                          & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1, &
-                          & gaussPointIdx)* &
-                          & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1, &
-                          & gaussPointIdx))
-                        curvature = kappaParam*2.0_DP* ( &
-                          & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S1, &
-                          & gaussPointIdx)* &
-                          & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1_S1, &
-                          & gaussPointIdx))
-                        IF(numberOfXi > 1) THEN
-                          tension = tension + tauParam*2.0_DP* ( &
-                            & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2, &
+                      DO dependentComponentColumnIdx=1,dependentVariable%NUMBER_OF_COMPONENTS
+                        meshComponentColumn=dependentVariable%components(dependentComponentColumnIdx)%MESH_COMPONENT_NUMBER
+                        dependentBasisColumn=>dependentField%decomposition%domain(meshComponentColumn)%ptr% &
+                          & topology%elements%elements(elementNumber)%basis
+                        quadratureSchemeColumn=>dependentBasisColumn%quadrature%QUADRATURE_SCHEME_MAP( &
+                          & BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
+                        DO dependentElementParameterColumnIdx=1,dependentBasisColumn%NUMBER_OF_ELEMENT_PARAMETERS
+                          dependentParameterColumnIdx=dependentParameterColumnIdx+1
+                          
+                          !Calculate Sobolev surface tension and curvature smoothing terms                      
+                          tension = tauParam*2.0_DP* ( &
+                            & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1, &
                             & gaussPointIdx)* &
-                            & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S2, &
+                            & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1, &
                             & gaussPointIdx))
-                          curvature = curvature + kappaParam*2.0_DP* ( &
-                            & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2_S2, &
+                          curvature = kappaParam*2.0_DP* ( &
+                            & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S1, &
                             & gaussPointIdx)* &
-                            & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S2_S2, &
-                            & gaussPointIdx) + &
-                            & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S2, &
-                            & gaussPointIdx)* &
-                            & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1_S2, &
+                            & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1_S1, &
                             & gaussPointIdx))
-                          IF(numberOfXi > 2) THEN
+                          IF(numberOfXi > 1) THEN
                             tension = tension + tauParam*2.0_DP* ( &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S3, &
+                              & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2, &
                               & gaussPointIdx)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S3, &
+                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S2, &
                               & gaussPointIdx))
                             curvature = curvature + kappaParam*2.0_DP* ( &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S3_S3, &
+                              & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2_S2, &
                               & gaussPointIdx)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S3_S3, &
-                              & gaussPointIdx)+ &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S3, &
+                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S2_S2, &
+                              & gaussPointIdx) + &
+                              & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S2, &
                               & gaussPointIdx)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1_S3, &
-                              & gaussPointIdx)+ &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2_S3, &
-                              & gaussPointIdx)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S2_S3, &
+                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1_S2, &
                               & gaussPointIdx))
-                          ENDIF ! 3D
-                        ENDIF ! 2 or 3D
-                        sum = (tension + curvature) * jacobianGaussWeight
-
-                        equationsMatrix%ELEMENT_MATRIX%matrix(dependentParameterRowIdx,dependentParameterColumnIdx)= &
-                          equationsMatrix%ELEMENT_MATRIX%matrix(dependentParameterRowIdx,dependentParameterColumnIdx)+sum
-                      
-                      ENDDO !dependentElementParameterColumnIdx
+                            IF(numberOfXi > 2) THEN
+                              tension = tension + tauParam*2.0_DP* ( &
+                                & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S3, &
+                                & gaussPointIdx)* &
+                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S3, &
+                                & gaussPointIdx))
+                              curvature = curvature + kappaParam*2.0_DP* ( &
+                                & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S3_S3, &
+                                & gaussPointIdx)* &
+                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S3_S3, &
+                                & gaussPointIdx)+ &
+                                & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S3, &
+                                & gaussPointIdx)* &
+                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1_S3, &
+                                & gaussPointIdx)+ &
+                                & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2_S3, &
+                                & gaussPointIdx)* &
+                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S2_S3, &
+                                & gaussPointIdx))
+                            ENDIF ! 3D
+                          ENDIF ! 2 or 3D
+                          sum = (tension + curvature) * jacobianGaussWeight
+                          
+                          equationsMatrix%ELEMENT_MATRIX%matrix(dependentParameterRowIdx,dependentParameterColumnIdx)= &
+                            equationsMatrix%ELEMENT_MATRIX%matrix(dependentParameterRowIdx,dependentParameterColumnIdx)+sum
+                          
+                        ENDDO !dependentElementParameterColumnIdx
+                      ENDDO !dependentComponentColumnIdx
                     ENDDO !dependentElementParameterRowIdx
                   ENDDO !dependentComponentRowIdx
                 ENDDO !gaussPointIdx            
@@ -456,8 +455,8 @@ CONTAINS
             rhsVector=>equationsMatrices%RHS_VECTOR
             equationsMapping=>equations%EQUATIONS_MAPPING
             linearMapping=>equationsMapping%LINEAR_MAPPING
-            mappingVariable=>linearMapping%equations_MATRIX_TO_VAR_MAPS(1)%variable
-            fieldVariableType=mappingVariable%VARIABLE_TYPE
+            dependentVariable=>linearMapping%equations_MATRIX_TO_VAR_MAPS(1)%variable
+            dependentVariableType=dependentVariable%VARIABLE_TYPE
             dependentBasis=>dependentField%decomposition%domain(dependentField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
               & topology%elements%elements(elementNumber)%basis
             geometricBasis=>geometricField%decomposition%domain(geometricField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
@@ -466,7 +465,7 @@ CONTAINS
             CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,equations%interpolation% &
               & GEOMETRIC_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
             CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,equations%interpolation% &
-              & DEPENDENT_INTERP_PARAMETERS(fieldVariableType)%ptr,err,error,*999)
+              & DEPENDENT_INTERP_PARAMETERS(dependentVariableType)%ptr,err,error,*999)
             CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,equations%interpolation% &
               & MATERIALS_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
             CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
@@ -513,8 +512,8 @@ CONTAINS
               
               mhs=0          
               !Loop over element rows
-              DO mh=1,mappingVariable%NUMBER_OF_COMPONENTS
-                meshComponent1=mappingVariable%components(mh)%MESH_COMPONENT_NUMBER
+              DO mh=1,dependentVariable%NUMBER_OF_COMPONENTS
+                meshComponent1=dependentVariable%components(mh)%MESH_COMPONENT_NUMBER
                 dependentBasisRow=>dependentField%decomposition%domain(meshComponent1)%ptr%topology%elements% &
                   & elements(elementNumber)%basis
                 DO ms=1,dependentBasisRow%NUMBER_OF_ELEMENT_PARAMETERS
@@ -523,8 +522,8 @@ CONTAINS
                   PGM=Basis_EvaluateXi(dependentBasisRow,ms,NO_PART_DERIV,projectionXi,err,error)
                   IF(equationsMatrix%UPDATE_MATRIX) THEN
                     !Loop over element columns
-                    DO nh=1,mappingVariable%NUMBER_OF_COMPONENTS
-                      meshComponent2=mappingVariable%components(nh)%MESH_COMPONENT_NUMBER
+                    DO nh=1,dependentVariable%NUMBER_OF_COMPONENTS
+                      meshComponent2=dependentVariable%components(nh)%MESH_COMPONENT_NUMBER
                       dependentBasisColumn=>dependentField%decomposition%domain(meshComponent2)%ptr% &
                         & topology%elements%elements(elementNumber)%basis
                       DO ns=1,dependentBasisColumn%NUMBER_OF_ELEMENT_PARAMETERS
@@ -566,7 +565,7 @@ CONTAINS
               CALL Field_InterpolateGauss(SECOND_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
                 & GEOMETRIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
               CALL Field_InterpolateGauss(SECOND_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
-                & DEPENDENT_INTERP_POINT(fieldVariableType)%ptr,err,error,*999)
+                & DEPENDENT_INTERP_POINT(dependentVariableType)%ptr,err,error,*999)
               CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
                 & MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
               CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%NUMBER_OF_XI,equations%interpolation% &
@@ -578,9 +577,9 @@ CONTAINS
                 & quadratureScheme%GAUSS_WEIGHTS(ng)
               
               mhs=0          
-              DO mh=1,mappingVariable%NUMBER_OF_COMPONENTS
+              DO mh=1,dependentVariable%NUMBER_OF_COMPONENTS
                 !Loop over element rows
-                meshComponent1=mappingVariable%components(mh)%MESH_COMPONENT_NUMBER
+                meshComponent1=dependentVariable%components(mh)%MESH_COMPONENT_NUMBER
                 dependentBasisRow=>dependentField%decomposition%domain(meshComponent1)%ptr% &
                   & topology%elements%elements(elementNumber)%basis
                 quadratureSchemeRow=>dependentBasisRow%quadrature%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
@@ -589,8 +588,8 @@ CONTAINS
                   nhs=0
                   IF(equationsMatrix%UPDATE_MATRIX) THEN
                     !Loop over element columns
-                    DO nh=1,mappingVariable%NUMBER_OF_COMPONENTS
-                      meshComponent2=mappingVariable%components(nh)%MESH_COMPONENT_NUMBER
+                    DO nh=1,dependentVariable%NUMBER_OF_COMPONENTS
+                      meshComponent2=dependentVariable%components(nh)%MESH_COMPONENT_NUMBER
                       dependentBasisColumn=>dependentField%decomposition%domain(meshComponent2)%ptr% &
                         & topology%elements%elements(elementNumber)%basis
                       quadratureSchemeColumn=>dependentBasisColumn%quadrature%QUADRATURE_SCHEME_MAP( &
@@ -607,7 +606,7 @@ CONTAINS
                           & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1_S1,ng)* &
                           & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S1,ng))
                         
-                        IF(mappingVariable%NUMBER_OF_COMPONENTS > 1) THEN
+                        IF(dependentVariable%NUMBER_OF_COMPONENTS > 1) THEN
                           tension = tension + tauParam*2.0_DP* ( &
                             & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S2,ng)* &
                             & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S2,ng))
@@ -617,7 +616,7 @@ CONTAINS
                             & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1_S2,ng)* &
                             & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S2,ng))
                           
-                          IF(mappingVariable%NUMBER_OF_COMPONENTS > 2) THEN
+                          IF(dependentVariable%NUMBER_OF_COMPONENTS > 2) THEN
                             tension = tension + tauParam*2.0_DP* ( &
                               & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S3,ng)* &
                               & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S3,ng))
@@ -666,7 +665,7 @@ CONTAINS
             equationsMapping=>equations%EQUATIONS_MAPPING
             linearMapping=>equationsMapping%LINEAR_MAPPING
             fieldVariable=>linearMapping%EQUATIONS_MATRIX_TO_VAR_MAPS(1)%VARIABLE
-            fieldVariableType=fieldVariable%VARIABLE_TYPE
+            dependentVariableType=fieldVariable%VARIABLE_TYPE
             
             dependentBasis=>dependentField%decomposition%domain(dependentField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
               & topology%elements%elements(elementNumber)%basis
@@ -840,7 +839,7 @@ CONTAINS
             equationsMapping=>equations%EQUATIONS_MAPPING
             linearMapping=>equationsMapping%LINEAR_MAPPING
             fieldVariable=>linearMapping%EQUATIONS_MATRIX_TO_VAR_MAPS(1)%VARIABLE
-            fieldVariableType=fieldVariable%VARIABLE_TYPE
+            dependentVariableType=fieldVariable%VARIABLE_TYPE
             dependentBasis=>dependentField%decomposition%domain(dependentField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
               & topology%elements%elements(elementNumber)%basis
             geometricBasis=>geometricField%decomposition%domain(geometricField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
@@ -851,7 +850,7 @@ CONTAINS
             CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,equations%interpolation% &
               & GEOMETRIC_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
             CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,equations%interpolation% &
-              & DEPENDENT_INTERP_PARAMETERS(fieldVariableType)%ptr,err,error,*999)
+              & DEPENDENT_INTERP_PARAMETERS(dependentVariableType)%ptr,err,error,*999)
             CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,equations%interpolation% &
               & MATERIALS_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
             CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
@@ -861,7 +860,7 @@ CONTAINS
               CALL Field_InterpolateGauss(SECOND_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
                 & GEOMETRIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
               CALL Field_InterpolateGauss(SECOND_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
-                & DEPENDENT_INTERP_POINT(fieldVariableType)%ptr,err,error,*999)
+                & DEPENDENT_INTERP_POINT(dependentVariableType)%ptr,err,error,*999)
               CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
                 & MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
               CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%NUMBER_OF_XI,equations%interpolation% &
@@ -1079,8 +1078,8 @@ CONTAINS
             rhsVector=>equationsMatrices%RHS_VECTOR
             equationsMapping=>equations%EQUATIONS_MAPPING
             linearMapping=>equationsMapping%LINEAR_MAPPING
-            mappingVariable=>linearMapping%EQUATIONS_MATRIX_TO_VAR_MAPS(1)%VARIABLE
-            fieldVariableType=mappingVariable%VARIABLE_TYPE
+            dependentVariable=>linearMapping%EQUATIONS_MATRIX_TO_VAR_MAPS(1)%VARIABLE
+            dependentVariableType=dependentVariable%VARIABLE_TYPE
             dependentBasis=>dependentField%decomposition%domain(dependentField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
               & topology%elements%elements(elementNumber)%basis
             geometricBasis=>geometricField%decomposition%domain(geometricField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
@@ -1089,7 +1088,7 @@ CONTAINS
             CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,equations%interpolation% &
               & GEOMETRIC_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
             CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,equations%interpolation% &
-              & DEPENDENT_INTERP_PARAMETERS(fieldVariableType)%ptr,err,error,*999)
+              & DEPENDENT_INTERP_PARAMETERS(dependentVariableType)%ptr,err,error,*999)
             CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,equations%interpolation% &
               & INDEPENDENT_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
             CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,equations%interpolation% &
@@ -1125,7 +1124,7 @@ CONTAINS
               CALL Field_InterpolateGauss(SECOND_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
                 & equations%interpolation%GEOMETRIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
               CALL Field_InterpolateGauss(SECOND_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
-                & equations%interpolation%DEPENDENT_INTERP_POINT(fieldVariableType)%ptr,err,error,*999)
+                & equations%interpolation%DEPENDENT_INTERP_POINT(dependentVariableType)%ptr,err,error,*999)
               CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
                 & equations%interpolation%INDEPENDENT_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
               CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
@@ -1165,8 +1164,8 @@ CONTAINS
               
               dependentParameterRowIdx=0          
               !Loop over element rows
-              DO dependentComponentRowIdx=1,mappingVariable%NUMBER_OF_COMPONENTS
-                meshComponentRow=mappingVariable%components(dependentComponentRowIdx)%MESH_COMPONENT_NUMBER
+              DO dependentComponentRowIdx=1,dependentVariable%NUMBER_OF_COMPONENTS
+                meshComponentRow=dependentVariable%components(dependentComponentRowIdx)%MESH_COMPONENT_NUMBER
                 dependentBasisRow=>dependentField%decomposition%domain(meshComponentRow)%ptr% &
                   & topology%elements%elements(elementNumber)%basis
                 quadratureSchemeRow=>dependentBasisRow%quadrature%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
@@ -1176,8 +1175,8 @@ CONTAINS
                   phiM=quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,NO_PART_DERIV,gaussPointIdx)
                   IF(equationsMatrix%UPDATE_MATRIX) THEN
                     !Loop over element columns
-                    DO dependentComponentColumnIdx=1,mappingVariable%NUMBER_OF_COMPONENTS
-                      meshComponentColumn=mappingVariable%components(dependentComponentColumnIdx)%MESH_COMPONENT_NUMBER
+                    DO dependentComponentColumnIdx=1,dependentVariable%NUMBER_OF_COMPONENTS
+                      meshComponentColumn=dependentVariable%components(dependentComponentColumnIdx)%MESH_COMPONENT_NUMBER
                       dependentBasisColumn=>dependentField%decomposition%domain(meshComponentColumn)%ptr% &
                         & topology%elements%elements(elementNumber)%basis
                       quadratureSchemeColumn=>dependentBasisColumn%quadrature%QUADRATURE_SCHEME_MAP( &
@@ -1272,51 +1271,53 @@ CONTAINS
             CALL FlagError(localError,err,error,*999)
           END SELECT
           
-          !Scale factor adjustment
-          IF(dependentField%SCALINGS%SCALING_TYPE/=FIELD_NO_SCALING) THEN
-            CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,equations%interpolation% &
-              & DEPENDENT_INTERP_PARAMETERS(fieldVariableType)%ptr,err,error,*999)
-            dependentParameterRowIdx=0          
-            !Loop over element rows
-            DO dependentComponentRowIdx=1,mappingVariable%NUMBER_OF_COMPONENTS
-              meshComponentRow=mappingVariable%components(dependentComponentRowIdx)%MESH_COMPONENT_NUMBER
-              dependentBasisRow=>dependentField%decomposition%domain(meshComponentRow)%ptr% &
-                & topology%elements%elements(elementNumber)%basis
-              DO dependentElementParameterRowIdx=1,dependentBasisRow%NUMBER_OF_ELEMENT_PARAMETERS
-                dependentParameterRowIdx=dependentParameterRowIdx+1                    
-                dependentParameterColumnIdx=0
-                IF(equationsMatrix%UPDATE_MATRIX) THEN
-                  !Loop over element columns
-                  DO dependentComponentColumnIdx=1,mappingVariable%NUMBER_OF_COMPONENTS
-                    meshComponentColumn=mappingVariable%components(dependentComponentColumnIdx)%MESH_COMPONENT_NUMBER
-                    dependentBasisColumn=>dependentField%decomposition%domain(meshComponentColumn)%ptr% &
-                      & topology%elements%elements(elementNumber)%basis
-                    DO dependentElementParameterColumnIdx=1,dependentBasisColumn%NUMBER_OF_ELEMENT_PARAMETERS
-                      dependentParameterColumnIdx=dependentParameterColumnIdx+1
-                      equationsMatrix%ELEMENT_MATRIX%matrix(dependentParameterRowIdx,dependentParameterColumnIdx)= &
-                        & equationsMatrix%ELEMENT_MATRIX%matrix(dependentParameterRowIdx,dependentParameterColumnIdx)* &
-                        & equations%interpolation%DEPENDENT_INTERP_PARAMETERS(fieldVariableType)%ptr% &
-                        & SCALE_FACTORS(dependentElementParameterRowIdx,dependentComponentRowIdx)* &
-                        & equations%interpolation%DEPENDENT_INTERP_PARAMETERS(fieldVariableType)%ptr% &
-                        & SCALE_FACTORS(dependentElementParameterColumnIdx,dependentComponentColumnIdx)
-                    ENDDO !dependentElementParameterColumnIdx
-                  ENDDO !dependentComponentColumnIdx
-                ENDIF
-                IF(rhsVector%UPDATE_VECTOR) THEN
-                  rhsVector%ELEMENT_VECTOR%vector(dependentParameterRowIdx)= &
-                    & rhsVector%ELEMENT_VECTOR%vector(dependentParameterRowIdx)* &
-                    & equations%interpolation%DEPENDENT_INTERP_PARAMETERS(fieldVariableType)%ptr% &
-                    & SCALE_FACTORS(dependentElementParameterRowIdx,dependentComponentRowIdx)
-                ENDIF
-              ENDDO !dependentElementParameterRowIdx
-            ENDDO !dependentComponentRowIdx
-          ENDIF
           
         CASE DEFAULT
           localError="Equations set type "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
             & " is not valid for a fitting equations set class."
           CALL FlagError(localError,err,error,*999)
-        END SELECT        
+        END SELECT
+        
+        !Scale factor adjustment
+        IF(dependentField%SCALINGS%SCALING_TYPE/=FIELD_NO_SCALING) THEN
+          CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,equations%interpolation% &
+            & DEPENDENT_INTERP_PARAMETERS(dependentVariableType)%ptr,err,error,*999)
+          dependentParameterRowIdx=0          
+          !Loop over element rows
+          DO dependentComponentRowIdx=1,dependentVariable%NUMBER_OF_COMPONENTS
+            meshComponentRow=dependentVariable%components(dependentComponentRowIdx)%MESH_COMPONENT_NUMBER
+            dependentBasisRow=>dependentField%decomposition%domain(meshComponentRow)%ptr% &
+              & topology%elements%elements(elementNumber)%basis
+            DO dependentElementParameterRowIdx=1,dependentBasisRow%NUMBER_OF_ELEMENT_PARAMETERS
+              dependentParameterRowIdx=dependentParameterRowIdx+1                    
+              dependentParameterColumnIdx=0
+              IF(equationsMatrix%UPDATE_MATRIX) THEN
+                !Loop over element columns
+                DO dependentComponentColumnIdx=1,dependentVariable%NUMBER_OF_COMPONENTS
+                  meshComponentColumn=dependentVariable%components(dependentComponentColumnIdx)%MESH_COMPONENT_NUMBER
+                  dependentBasisColumn=>dependentField%decomposition%domain(meshComponentColumn)%ptr% &
+                    & topology%elements%elements(elementNumber)%basis
+                  DO dependentElementParameterColumnIdx=1,dependentBasisColumn%NUMBER_OF_ELEMENT_PARAMETERS
+                    dependentParameterColumnIdx=dependentParameterColumnIdx+1
+                    equationsMatrix%ELEMENT_MATRIX%matrix(dependentParameterRowIdx,dependentParameterColumnIdx)= &
+                      & equationsMatrix%ELEMENT_MATRIX%matrix(dependentParameterRowIdx,dependentParameterColumnIdx)* &
+                      & equations%interpolation%DEPENDENT_INTERP_PARAMETERS(dependentVariableType)%ptr% &
+                      & SCALE_FACTORS(dependentElementParameterRowIdx,dependentComponentRowIdx)* &
+                      & equations%interpolation%DEPENDENT_INTERP_PARAMETERS(dependentVariableType)%ptr% &
+                      & SCALE_FACTORS(dependentElementParameterColumnIdx,dependentComponentColumnIdx)
+                  ENDDO !dependentElementParameterColumnIdx
+                ENDDO !dependentComponentColumnIdx
+              ENDIF
+              IF(rhsVector%UPDATE_VECTOR) THEN
+                rhsVector%ELEMENT_VECTOR%vector(dependentParameterRowIdx)= &
+                  & rhsVector%ELEMENT_VECTOR%vector(dependentParameterRowIdx)* &
+                  & equations%interpolation%DEPENDENT_INTERP_PARAMETERS(dependentVariableType)%ptr% &
+                  & SCALE_FACTORS(dependentElementParameterRowIdx,dependentComponentRowIdx)
+              ENDIF
+            ENDDO !dependentElementParameterRowIdx
+          ENDDO !dependentComponentRowIdx
+        ENDIF
+        
       ELSE
         CALL FlagError("Equations set equations is not associated.",err,error,*999)
       ENDIF

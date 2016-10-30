@@ -612,9 +612,9 @@ MODULE FIELD_ROUTINES
     MODULE PROCEDURE FIELD_PARAMETER_SET_DESTROY
   END INTERFACE Field_ParameterSetDestroy
   
-  INTERFACE Field_ParameterSetGet
-    MODULE PROCEDURE FIELD_PARAMETER_SET_GET
-  END INTERFACE Field_ParameterSetGet
+  INTERFACE FIELD_PARAMETER_SET_GET
+    MODULE PROCEDURE Field_ParameterSetGet
+  END INTERFACE FIELD_PARAMETER_SET_GET
   
   !>Adds the given value to the given parameter set for the constant of the field variable component.
   INTERFACE FIELD_PARAMETER_SET_ADD_CONSTANT
@@ -1461,6 +1461,8 @@ MODULE FIELD_ROUTINES
   PUBLIC FIELD_VARIABLE_TYPES_CHECK,FIELD_VARIABLE_TYPES_GET,FIELD_VARIABLE_TYPES_SET,FIELD_VARIABLE_TYPES_SET_AND_LOCK
 
   PUBLIC Field_VariableTypesCheck,Field_VariableTypesGet,Field_VariableTypesSet,Field_VariableTypesSetAndLock
+
+  PUBLIC FieldVariable_ParameterSetGet
 
   PUBLIC Fields_Finalise,Fields_Initialise
 
@@ -19179,74 +19181,33 @@ CONTAINS
   !
 
   !>Returns a pointer to the specified parameter set for the field variable.
-  SUBROUTINE FIELD_PARAMETER_SET_GET(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,PARAMETER_SET,ERR,ERROR,*)
+  SUBROUTINE Field_ParameterSetGet(field,variableType,fieldSetType,parameterSet,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the parameter set for
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get the parameter set for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-    INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier to get \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET !<On return, a pointer to the specified parameter set. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-
+    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to get the parameter set for
+    INTEGER(INTG), INTENT(IN) :: variableType!<The field variable type to get the parameter set for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier to get \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet !<On return, a pointer to the specified parameter set. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+ 
+    ENTERS("Field_ParameterSetGet",ERR,ERROR,*999)
 
-    ENTERS("FIELD_PARAMETER_SET_GET",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+    IF(.NOT.field%FIELD_FINISHED) CALL FlagError("Field has not been finished.",err,error,*999)
 
-    IF(ASSOCIATED(FIELD)) THEN
-      IF(FIELD%FIELD_FINISHED) THEN
-        IF(VARIABLE_TYPE>0.AND.VARIABLE_TYPE<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-          FIELD_VARIABLE=>FIELD%VARIABLE_TYPE_MAP(VARIABLE_TYPE)%PTR
-          IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-            IF(ASSOCIATED(PARAMETER_SET)) THEN
-              CALL FlagError("Parameter set is already associated.",ERR,ERROR,*999)
-            ELSE
-              IF(FIELD_SET_TYPE>0.AND.FIELD_SET_TYPE<=FIELD_NUMBER_OF_SET_TYPES) THEN
-                PARAMETER_SET=>FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_SET_TYPE)%PTR
-                IF(.NOT.ASSOCIATED(PARAMETER_SET)) THEN
-                  LOCAL_ERROR="The field parameter set type of "// &
-                    & TRIM(NUMBER_TO_VSTRING(FIELD_SET_TYPE,"*",ERR,ERROR))// &
-                    & " has not been created on variable type "// &
-                    & TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
-                    & " for field number "//TRIM(NUMBER_TO_VSTRING(FIELD%USER_NUMBER,"*",ERR,ERROR))//"."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                LOCAL_ERROR="The field parameter set type of "// &
-                  & TRIM(NUMBER_TO_VSTRING(FIELD_SET_TYPE,"*",ERR,ERROR))// &
-                  & " is invalid. The field parameter set type must be between 1 and "// &
-                  & TRIM(NUMBER_TO_VSTRING(FIELD_NUMBER_OF_SET_TYPES,"*",ERR,ERROR))//"."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              ENDIF
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The field variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
-              & " has not been created on field number "// &
-              & TRIM(NUMBER_TO_VSTRING(FIELD%USER_NUMBER,"*",ERR,ERROR))//"."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The field variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
-            & " is invalid. The variable type must be between 1 and "// &
-            & TRIM(NUMBER_TO_VSTRING(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        LOCAL_ERROR="Field number "//TRIM(NUMBER_TO_VSTRING(FIELD%USER_NUMBER,"*",ERR,ERROR))// &
-          & " has not been finished."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Field is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("FIELD_PARAMETER_SET_GET")
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
+    CALL FieldVariable_ParameterSetGet(fieldVariable,fieldSetType,parameterSet,err,error,*999)
+         
+    EXITS("Field_ParameterSetGet")
     RETURN
-999 ERRORSEXITS("FIELD_PARAMETER_SET_GET",ERR,ERROR)
+999 ERRORSEXITS("Field_ParameterSetGet",err,error)
     RETURN 1
-  END SUBROUTINE FIELD_PARAMETER_SET_GET
+    
+  END SUBROUTINE Field_ParameterSetGet
 
   !
   !================================================================================================================================
@@ -31935,6 +31896,54 @@ CONTAINS
   END SUBROUTINE FIELD_VARIABLES_INITIALISE
 
   !
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the specified parameter set for the field variable.
+  SUBROUTINE FieldVariable_ParameterSetGet(fieldVariable,fieldSetType,parameterSet,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable to get the parameter set for
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier to get \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet !<On return, a pointer to the specified parameter set. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FieldVariable_ParameterSetGet",ERR,ERROR,*999)
+
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+    IF(ASSOCIATED(parameterSet)) CALL FlagError("Parameter set is already associated.",err,error,*999)
+    IF(fieldSetType<=0.OR.fieldSetType>FIELD_NUMBER_OF_SET_TYPES) THEN
+      LocalError="The field parameter set type of "//TRIM(NumberToVString(fieldSetType,"*",err,error))// &
+        & " is invalid. The field parameter set type must be between 1 and "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_SET_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    parameterSet=>fieldVariable%PARAMETER_SETS%SET_TYPE(fieldSetType)%ptr
+    
+    IF(.NOT.ASSOCIATED(parameterSet)) THEN
+      IF(ASSOCIATED(fieldVariable%field)) THEN
+        localError="The field parameter set type of "//TRIM(NumberToVstring(fieldSetType,"*",err,error))// &
+          & " has not been created on variable type "//TRIM(NumberToVstring(fieldVariable%VARIABLE_TYPE,"*",err,error))// &
+          & " of field number "//TRIM(NumberToVString(fieldVariable%field%USER_NUMBER,"*",err,error))//"."
+      ELSE
+        localError="The field parameter set type of "//TRIM(NumberToVstring(fieldSetType,"*",err,error))// &
+          & " has not been created on variable type "//TRIM(NumberToVstring(fieldVariable%VARIABLE_TYPE,"*",err,error))//"."
+      ENDIF
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("FieldVariable_ParameterSetGet")
+    RETURN
+999 ERRORSEXITS("FieldVariable_ParameterSetGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_ParameterSetGet
+
   !================================================================================================================================
   !
 
