@@ -44,6 +44,7 @@ set(IRON_Fortran_SRC
     data_point_routines.f90
     data_point_access_routines.f90
     data_projection_routines.f90
+    data_projection_access_routines.f90
     diffusion_advection_diffusion_routines.f90
     diffusion_diffusion_routines.f90
     diffusion_equation_routines.f90

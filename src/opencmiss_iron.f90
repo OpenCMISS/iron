@@ -70,6 +70,7 @@ MODULE OpenCMISS_Iron
   USE DataPointRoutines
   USE DataPointAccessRoutines
   USE DataProjectionRoutines
+  USE DataProjectionAccessRoutines
   USE DISTRIBUTED_MATRIX_VECTOR
   USE EQUATIONS_ROUTINES
   USE EQUATIONS_SET_CONSTANTS
@@ -1976,6 +1977,24 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_DataProjection_ResultExitTagGetObj
   END INTERFACE cmfe_DataProjection_ResultExitTagGet
 
+  !>Returns the maximum error for a data projection.
+  INTERFACE cmfe_DataProjection_ResultMaximumErrorGet
+    MODULE PROCEDURE cmfe_DataProjection_ResultMaximumErrorGetNumber
+    MODULE PROCEDURE cmfe_DataProjection_ResultMaximumErrorGetObj
+  END INTERFACE cmfe_DataProjection_ResultMaximumErrorGet
+
+  !>Returns the minimum error for a data projection.
+  INTERFACE cmfe_DataProjection_ResultMinimumErrorGet
+    MODULE PROCEDURE cmfe_DataProjection_ResultMinimumErrorGetNumber
+    MODULE PROCEDURE cmfe_DataProjection_ResultMinimumErrorGetObj
+  END INTERFACE cmfe_DataProjection_ResultMinimumErrorGet
+
+  !>Returns the RMS error for a data projection.
+  INTERFACE cmfe_DataProjection_ResultRMSErrorGet
+    MODULE PROCEDURE cmfe_DataProjection_ResultRMSErrorGetNumber
+    MODULE PROCEDURE cmfe_DataProjection_ResultRMSErrorGetObj
+  END INTERFACE cmfe_DataProjection_ResultRMSErrorGet
+
   !>Returns the projection xi for a data point identified by a given user number.
   INTERFACE cmfe_DataProjection_ResultXiGet
     MODULE PROCEDURE cmfe_DataProjection_ResultXiGetNumber
@@ -2033,6 +2052,10 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_DataProjection_ResultElementFaceNumberGet,cmfe_DataProjection_ResultElementLineNumberGet
 
   PUBLIC cmfe_DataProjection_ResultExitTagGet
+
+  PUBLIC cmfe_DataProjection_ResultMaximumErrorGet,cmfe_DataProjection_ResultMinimumErrorGet
+
+  PUBLIC cmfe_DataProjection_ResultRMSErrorGet
 
   PUBLIC cmfe_DataProjection_ResultXiGet,cmfe_DataProjection_ResultXiSet
 
@@ -21295,6 +21318,225 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_DataProjection_ResultExitTagGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the maximum error for a data projection given by numbers.
+  SUBROUTINE cmfe_DataProjection_ResultMaximumErrorGetNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
+    & maximumDataPointUserNumber,maximumError,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultMaximumErrorGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get the maximum error for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The user number of the data projection containing the data points to get the maximum error for.
+    INTEGER(INTG), INTENT(OUT) :: maximumDataPointUserNumber !<On return, the user number of the data point that has the maximum error.
+    REAL(DP), INTENT(OUT) :: maximumError !<On return, the maximum error for the data projection
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(DataPointsType), POINTER :: dataPoints
+    TYPE(DataProjectionType), POINTER :: dataProjection
+    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("cmfe_DataProjection_ResultMaximumErrorGetNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(dataPoints)    
+    NULLIFY(dataProjection)
+    CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
+    IF(ASSOCIATED(region)) THEN
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
+      CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+      CALL DataProjection_ResultMaximumErrorGet(dataProjection,maximumDataPointUserNumber,maximumError,err,error,*999)
+    ELSE
+      localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
+        & " does not exist."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF    
+
+    EXITS("cmfe_DataProjection_ResultMaximumErrorGetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_DataProjection_ResultMaximumErrorGetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ResultMaximumErrorGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the maximum error for a data projection given by an object.
+  SUBROUTINE cmfe_DataProjection_ResultMaximumErrorGetObj(dataProjection,maximumDataPointUserNumber,maximumError,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultMaximumErrorGetObj)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(IN) :: dataProjection !<The data projection to get the maximum error for.
+    INTEGER(INTG), INTENT(OUT) :: maximumDataPointUserNumber !<On return, the user number of the data point that has the maximum error.
+    REAL(DP), INTENT(OUT) :: maximumError !<On return, the maximum error for the data projection
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_DataProjection_ResultMaximumErrorGetObj",err,error,*999)
+
+    CALL DataProjection_ResultMaximumErrorGet(dataProjection%dataProjection,maximumDataPointUserNumber,maximumError, &
+      & err,error,*999)
+
+    EXITS("cmfe_DataProjection_ResultMaximumErrorGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_DataProjection_ResultMaximumErrorGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ResultMaximumErrorGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the minimum error for a data projection given by numbers.
+  SUBROUTINE cmfe_DataProjection_ResultMinimumErrorGetNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
+    & minimumDataPointUserNumber,minimumError,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultMinimumErrorGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get the minimum error for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The user number of the data projection containing the data points to get the minimum error for.
+    INTEGER(INTG), INTENT(OUT) :: minimumDataPointUserNumber !<On return, the user number of the data point that has the minimum error.
+    REAL(DP), INTENT(OUT) :: minimumError !<On return, the minimum error for the data projection
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(DataPointsType), POINTER :: dataPoints
+    TYPE(DataProjectionType), POINTER :: dataProjection
+    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("cmfe_DataProjection_ResultMinimumErrorGetNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(dataPoints)    
+    NULLIFY(dataProjection)
+    CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
+    IF(ASSOCIATED(region)) THEN
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
+      CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+      CALL DataProjection_ResultMinimumErrorGet(dataProjection,minimumDataPointUserNumber,minimumError,err,error,*999)
+    ELSE
+      localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
+        & " does not exist."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF    
+
+    EXITS("cmfe_DataProjection_ResultMinimumErrorGetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_DataProjection_ResultMinimumErrorGetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ResultMinimumErrorGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the minimum error for a data projection given by an object.
+  SUBROUTINE cmfe_DataProjection_ResultMinimumErrorGetObj(dataProjection,minimumDataPointUserNumber,minimumError,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultMinimumErrorGetObj)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(IN) :: dataProjection !<The data projection to get the minimum error for.
+    INTEGER(INTG), INTENT(OUT) :: minimumDataPointUserNumber !<On return, the user number of the data point that has the minimum error.
+    REAL(DP), INTENT(OUT) :: minimumError !<On return, the minimum error for the data projection
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_DataProjection_ResultMinimumErrorGetObj",err,error,*999)
+
+    CALL DataProjection_ResultMinimumErrorGet(dataProjection%dataProjection,minimumDataPointUserNumber,minimumError, &
+      & err,error,*999)
+
+    EXITS("cmfe_DataProjection_ResultMinimumErrorGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_DataProjection_ResultMinimumErrorGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ResultMinimumErrorGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the RMS error for a data projection given by numbers.
+  SUBROUTINE cmfe_DataProjection_ResultRMSErrorGetNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
+    & rmsError,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultRmsErrorGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get the RMS error for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The user number of the data projection containing the data points to get the RMS error for.
+    REAL(DP), INTENT(OUT) :: rmsError !<On return, the RMS error for the data projection
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(DataPointsType), POINTER :: dataPoints
+    TYPE(DataProjectionType), POINTER :: dataProjection
+    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("cmfe_DataProjection_ResultRMSErrorGetNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(dataPoints)    
+    NULLIFY(dataProjection)
+    CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
+    IF(ASSOCIATED(region)) THEN
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
+      CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+      CALL DataProjection_ResultRMSErrorGet(dataProjection,rmsError,err,error,*999)
+    ELSE
+      localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
+        & " does not exist."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF    
+
+    EXITS("cmfe_DataProjection_ResultRMSErrorGetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_DataProjection_ResultRMSErrorGetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ResultRMSErrorGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the RMS error for a data projection given by an object.
+  SUBROUTINE cmfe_DataProjection_ResultRMSErrorGetObj(dataProjection,rmsError,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultRmsErrorGetObj)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(IN) :: dataProjection !<The data projection to get the RMS error for.
+    REAL(DP), INTENT(OUT) :: rmsError !<On return, the RMS error for the data projection
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_DataProjection_ResultRMSErrorGetObj",err,error,*999)
+
+    CALL DataProjection_ResultRMSErrorGet(dataProjection%dataProjection,rmsError,err,error,*999)
+
+    EXITS("cmfe_DataProjection_ResultRMSErrorGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_DataProjection_ResultRMSErrorGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ResultRMSErrorGetObj
 
   !
   !================================================================================================================================

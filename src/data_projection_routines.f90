@@ -155,10 +155,6 @@ MODULE DataProjectionRoutines
   
   PUBLIC DataProjection_ResultElementLineNumberGet
   
-  !PUBLIC DataProjection_ResultMaximumErrorGet,DataProjection_ResultMinimumErrorGet
-  
-  !PUBLIC DataProjection_ResultRMSErrorGet
-
   PUBLIC DataProjection_ResultExitTagGet
 
   PUBLIC DataProjection_ResultProjectionVectorGet
