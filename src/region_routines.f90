@@ -57,6 +57,7 @@ MODULE REGION_ROUTINES
   USE KINDS
   USE MESH_ROUTINES
   USE NODE_ROUTINES
+  USE RegionAccessRoutines
   USE STRINGS
   USE TYPES
 
@@ -72,35 +73,21 @@ MODULE REGION_ROUTINES
 
   !Module variables
 
-  TYPE(REGIONS_TYPE) :: REGIONS
-  
   !Interfaces
 
   INTERFACE REGION_LABEL_GET
     MODULE PROCEDURE REGION_LABEL_GET_C
     MODULE PROCEDURE REGION_LABEL_GET_VS
-  END INTERFACE !REGION_LABEL_GET
+  END INTERFACE REGION_LABEL_GET
   
   INTERFACE REGION_LABEL_SET
     MODULE PROCEDURE REGION_LABEL_SET_C
     MODULE PROCEDURE REGION_LABEL_SET_VS
-  END INTERFACE REGION_LABEL_SET !REGION_LABEL_SET
+  END INTERFACE REGION_LABEL_SET
 
-  INTERFACE REGION_DATA_POINTS_GET
-    MODULE PROCEDURE Region_DataPointsGet
-  END INTERFACE REGION_DATA_POINTS_GET
-
-  INTERFACE Region_UserNumberFind
-    MODULE PROCEDURE REGION_USER_NUMBER_FIND
-  END INTERFACE Region_UserNumberFind
-  
-  PUBLIC REGION_COORDINATE_SYSTEM_GET,REGION_COORDINATE_SYSTEM_SET
+  PUBLIC REGION_COORDINATE_SYSTEM_SET
 
   PUBLIC REGION_CREATE_START,REGION_CREATE_FINISH
-
-  PUBLIC Region_DataPointsGet
-  
-  PUBLIC REGION_DATA_POINTS_GET
 
   PUBLIC REGION_DESTROY
 
@@ -108,52 +95,12 @@ MODULE REGION_ROUTINES
 
   PUBLIC REGION_LABEL_GET,REGION_LABEL_SET
   
-  PUBLIC REGION_NODES_GET
-
-  PUBLIC Region_UserNumberFind
-  
-  PUBLIC REGION_USER_NUMBER_FIND, REGION_USER_NUMBER_TO_REGION
+  PUBLIC REGION_USER_NUMBER_TO_REGION
 
   PUBLIC REGIONS_INITIALISE,REGIONS_FINALISE
 
 CONTAINS
 
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns the coordinate system of region. \see OPENCMISS::Iron::cmfe_RegionCoordinateSystemGet
-  SUBROUTINE REGION_COORDINATE_SYSTEM_GET(REGION,COORDINATE_SYSTEM,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(REGION_TYPE), POINTER :: REGION !<A pointer to the region to get the coordinate system for
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<On exit, the coordinate system for the specified region. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    
-    ENTERS("REGION_COORDINATE_SYSTEM_GET",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(REGION)) THEN
-      IF(REGION%REGION_FINISHED) THEN
-        IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
-          CALL FlagError("Coordinate system is already associated.",ERR,ERROR,*999)
-        ELSE
-          COORDINATE_SYSTEM=>REGION%COORDINATE_SYSTEM
-        ENDIF
-      ELSE
-        CALL FlagError("Region has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Region is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("REGION_COORDINATE_SYSTEM_GET")
-    RETURN
-999 ERRORSEXITS("REGION_COORDINATE_SYSTEM_GET",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE REGION_COORDINATE_SYSTEM_GET
-  
   !
   !================================================================================================================================
   !
@@ -325,57 +272,6 @@ CONTAINS
 997 ERRORSEXITS("REGION_CREATE_START",ERR,ERROR)
     RETURN 1
   END SUBROUTINE REGION_CREATE_START
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns a pointer to the data points for a given user number in a region. \see OPENCMISS::Iron::cmfe_Region_DataPointsGet
-  SUBROUTINE Region_DataPointsGet(region,userNumber,dataPoints,err,error,*)
-
-    !Argument variables
-    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region to get the data points for
-    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the data points to get.
-    TYPE(DataPointsType), POINTER :: dataPoints !<On exit, a pointer to the data points for the region. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: localError
- 
-    ENTERS("Region_DataPointsGet",err,error,*998)
-
-    IF(ASSOCIATED(region)) THEN
-      IF(region%REGION_FINISHED) THEN 
-        IF(ASSOCIATED(dataPoints)) THEN
-          CALL FlagError("Data points is already associated.",err,error,*998)
-        ELSE
-          NULLIFY(dataPoints)
-          IF(ASSOCIATED(region%dataPointSets)) THEN
-            CALL DataPointSets_UserNumberFind(region%dataPointSets,userNumber,dataPoints,err,error,*999)
-            IF(.NOT.ASSOCIATED(dataPoints)) THEN
-              localError="Data points with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-                & " do not exist on region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
-              CALL FlagError(localError,err,error,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Region data point sets is not associated.",err,error,*999)
-          ENDIF
-        ENDIF
-      ELSE
-        CALL FlagError("Region has not been finished.",err,error,*998)
-      ENDIF
-    ELSE
-      CALL FlagError("Region is not associated.",err,error,*998)
-    ENDIF
-       
-    EXITS("Region_DataPointsGet")
-    RETURN
-999 NULLIFY(dataPoints)
-998 ERRORSEXITS("Region_DataPointsGet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE Region_DataPointsGet
-
 
   !
   !================================================================================================================================
@@ -693,131 +589,6 @@ CONTAINS
 999 ERRORSEXITS("REGION_LABEL_SET_VS",ERR,ERROR)
     RETURN 1
   END SUBROUTINE REGION_LABEL_SET_VS
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns a pointer to the nodes for a region. \see OPENCMISS::Iron::cmfe_RegionNodesGet
-  SUBROUTINE REGION_NODES_GET(REGION,NODES,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(REGION_TYPE), POINTER :: REGION !<A pointer to the region to get the nodes for
-    TYPE(NODES_TYPE), POINTER :: NODES !<On exit, a pointer to the nodes for the region. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
- 
-    ENTERS("REGION_NODES_GET",ERR,ERROR,*998)
-
-    IF(ASSOCIATED(REGION)) THEN
-      IF(REGION%REGION_FINISHED) THEN 
-        IF(ASSOCIATED(NODES)) THEN
-          CALL FlagError("Nodes is already associated.",ERR,ERROR,*998)
-        ELSE
-          NODES=>REGION%NODES
-          IF(.NOT.ASSOCIATED(NODES)) CALL FlagError("Nodes is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Region has not been finished.",ERR,ERROR,*998)
-      ENDIF
-    ELSE
-      CALL FlagError("Region is not associated.",ERR,ERROR,*998)
-    ENDIF
-       
-    EXITS("REGION_NODES_GET")
-    RETURN
-999 NULLIFY(NODES)
-998 ERRORSEXITS("REGION_NODES_GET",ERR,ERROR)
-    RETURN 1
-    
-  END SUBROUTINE REGION_NODES_GET
-  
-  !
-  !================================================================================================================================
-  !
-
-  !>Finds and returns in REGION a pointer to the region with the number given in USER_NUMBER. If no region with that number
-  !>exits REGION is left nullified.
-  SUBROUTINE REGION_USER_NUMBER_FIND(USER_NUMBER,REGION,ERR,ERROR,*)
-
-     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the region to find
-    TYPE(REGION_TYPE), POINTER :: REGION !<On exit, a pointer to the region with the specified user number if it exists. If no region exists with the specified user number a NULL pointer is returned. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    INTEGER(INTG) :: nr
-    TYPE(REGION_TYPE), POINTER :: WORLD_REGION
-    
-    ENTERS("REGION_USER_NUMBER_FIND",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(REGION)) THEN
-      CALL FlagError("Region is already associated.",ERR,ERROR,*999)
-    ELSE
-      NULLIFY(REGION)
-      WORLD_REGION=>REGIONS%WORLD_REGION
-      IF(ASSOCIATED(WORLD_REGION)) THEN
-        IF(USER_NUMBER==0) THEN
-          REGION=>WORLD_REGION
-        ELSE
-          nr=1
-          DO WHILE(nr<=WORLD_REGION%NUMBER_OF_SUB_REGIONS.AND..NOT.ASSOCIATED(REGION))
-            CALL REGION_USER_NUMBER_FIND_PTR(USER_NUMBER,WORLD_REGION%SUB_REGIONS(nr)%PTR,REGION,ERR,ERROR,*999)
-            IF(.NOT.ASSOCIATED(REGION)) nr=nr+1        
-          END DO
-        ENDIF
-      ELSE
-        CALL FlagError("World region is not associated.",ERR,ERROR,*999)
-      ENDIF
-    ENDIF
-  
-    EXITS("REGION_USER_NUMBER_FIND")
-    RETURN
-999 ERRORSEXITS("REGION_USER_NUMBER_FIND",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE REGION_USER_NUMBER_FIND
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Finds and returns in REGION a pointer to the region with the number given in USER_NUMBER starting from the
-  !>START_REGION and searching all sub-regions under the START_REGION. If no region with that number exit REGION is
-  !>left nullified.
-  RECURSIVE SUBROUTINE REGION_USER_NUMBER_FIND_PTR(USER_NUMBER,START_REGION,REGION,ERR,ERROR,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number to find
-    TYPE(REGION_TYPE), POINTER :: START_REGION !<A pointer to the region to start the search from
-    TYPE(REGION_TYPE), POINTER :: REGION !<On exit, a pointer to the region with the specified user number if it exists. If no region exists with the specified user number a NULL pointer is returned.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    INTEGER(INTG) :: nr
-
-    ENTERS("REGION_USER_NUMBER_FIND_PTR",ERR,ERROR,*999)
-
-    NULLIFY(REGION)
-    IF(ASSOCIATED(START_REGION)) THEN
-      IF(START_REGION%USER_NUMBER==USER_NUMBER) THEN
-        REGION=>START_REGION
-      ELSE
-        nr=1
-        DO WHILE(nr<=START_REGION%NUMBER_OF_SUB_REGIONS.AND..NOT.ASSOCIATED(REGION))
-          CALL REGION_USER_NUMBER_FIND_PTR(USER_NUMBER,REGION,START_REGION%SUB_REGIONS(nr)%PTR,ERR,ERROR,*999)
-          IF(.NOT.ASSOCIATED(REGION)) nr=nr+1
-        END DO
-      ENDIF
-    ELSE
-      CALL FlagError("Start region is not associated",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("REGION_USER_NUMBER_FIND_PTR")
-    RETURN
-999 ERRORSEXITS("REGION_USER_NUMBER_FIND_PTR",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE REGION_USER_NUMBER_FIND_PTR
 
   !
   !================================================================================================================================

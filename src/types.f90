@@ -299,6 +299,7 @@ MODULE TYPES
     TYPE(DataProjectionsType), POINTER :: dataProjections !<A pointer back to the data projections
     TYPE(FIELD_TYPE), POINTER :: projectionField !<The pointer to the geometric/dependent field for this data projection.
     INTEGER(INTG) :: projectionVariableType !<The variable type of the geometric/dependent field for this data projection.
+    INTEGER(INTG) :: projectionSetType !<The parameter set type of the geometric/dependent field for this data projection. 
     TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition !<The pointer to the decomposition where data points are projected
     INTEGER(INTG) :: numberOfCoordinates !<The number of coordinates of this data projection.
     INTEGER(INTG) :: numberOfElementXi !<The number of xi of the mesh, ie. the mesh dimension

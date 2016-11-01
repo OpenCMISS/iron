@@ -46,6 +46,7 @@ MODULE COORDINATE_ROUTINES
 
   USE BASE_ROUTINES
   USE CONSTANTS
+  USE CoordinateSystemAccessRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE KINDS
@@ -1178,40 +1179,7 @@ CONTAINS
     RETURN 1
   END SUBROUTINE COORDINATE_SYSTEM_NORMAL_CALCULATE
 
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the coordinate system dimension. 
-  SUBROUTINE COORDINATE_SYSTEM_DIMENSION_GET(COORDINATE_SYSTEM,NUMBER_OF_DIMENSIONS,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to get the dimension for
-    INTEGER(INTG), INTENT(OUT) :: NUMBER_OF_DIMENSIONS !<On return, the number of dimensions in the coordinate system.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-
-    ENTERS("COORDINATE_SYSTEM_DIMENSION_GET",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
-      IF(COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED) THEN
-        NUMBER_OF_DIMENSIONS=COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS
-      ELSE
-        CALL FlagError("Coordinate system has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Coordinate system is not associated.",ERR,ERROR,*999)
-    ENDIF
-   
-    EXITS("COORDINATE_SYSTEM_DIMENSION_GET")
-    RETURN
-999 ERRORSEXITS("COORDINATE_SYSTEM_DIMENSION_GET",ERR,ERROR)
-    RETURN 1
-
-  END SUBROUTINE COORDINATE_SYSTEM_DIMENSION_GET
-
-  !
+   !
   !================================================================================================================================
   !
 

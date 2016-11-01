@@ -63,16 +63,19 @@ MODULE OpenCMISS_Iron
   USE Cmiss
   USE CMISS_CELLML
   USE COMP_ENVIRONMENT
-  USE CONSTANTS
+  USE Constants
   USE CONTROL_LOOP_ROUTINES
   USE COORDINATE_ROUTINES
+  USE CoordinateSystemAccessRoutines
   USE DataPointRoutines
+  USE DataPointAccessRoutines
   USE DataProjectionRoutines
   USE DISTRIBUTED_MATRIX_VECTOR
   USE EQUATIONS_ROUTINES
   USE EQUATIONS_SET_CONSTANTS
   USE EQUATIONS_SET_ROUTINES
   USE FIELD_ROUTINES
+  USE FieldAccessRoutines
 #ifdef WITH_FIELDML
   USE FIELDML_TYPES
   USE FIELDML_INPUT_ROUTINES
@@ -86,6 +89,7 @@ MODULE OpenCMISS_Iron
   USE HISTORY_ROUTINES
   USE INPUT_OUTPUT
   USE INTERFACE_ROUTINES
+  USE InterfaceAccessRoutines
   USE INTERFACE_CONDITIONS_CONSTANTS
   USE INTERFACE_CONDITIONS_ROUTINES
   USE INTERFACE_EQUATIONS_ROUTINES
@@ -93,15 +97,16 @@ MODULE OpenCMISS_Iron
   USE INTERFACE_MATRICES_ROUTINES
   USE ISO_C_BINDING
   USE ISO_VARYING_STRING
-  USE KINDS
+  USE Kinds
   USE MESH_ROUTINES
   USE NODE_ROUTINES
   USE PROBLEM_CONSTANTS
   USE PROBLEM_ROUTINES
   USE REGION_ROUTINES
+  USE RegionAccessRoutines
   USE SOLVER_ROUTINES
-  USE STRINGS
-  USE TYPES
+  USE Strings
+  USE Types
 
 #include "macros.h"
 #include "dllexport.h"
@@ -20114,65 +20119,38 @@ CONTAINS
   !
 
   !>Starts the creation of a new data projection for a data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_CreateStartNumber(dataPointRegionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
-    & decompositionRegionUserNumber,decompositionMeshUserNumber,decompositionUserNumber,err)
+  SUBROUTINE cmfe_DataProjection_CreateStartNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
+    & projectionFieldUserNumber,projectionFieldVariableType,err)
     !DLLEXPORT(cmfe_DataProjection_CreateStartNumber)
   
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: dataPointRegionUserNumber !<The region user number of the data points to be projected.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data points to be projected.
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number.
-    INTEGER(INTG), INTENT(IN) :: decompositionRegionUserNumber !<The region user number of the decomposition
-    INTEGER(INTG), INTENT(IN) :: decompositionMeshUserNumber !<The mesh user number of the decomposition
-    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The field user number of the decomposition
+    INTEGER(INTG), INTENT(IN) :: projectionFieldUserNumber !<The user number of the field for the data projection
+    INTEGER(INTG), INTENT(IN) :: projectionFieldVariableType !<The variable type of the projection field
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(DataProjectionType), POINTER :: dataProjection
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: dataPointsRegion
-    TYPE(REGION_TYPE), POINTER :: decompositionRegion
+    TYPE(FIELD_TYPE), POINTER :: projectionField
+    TYPE(REGION_TYPE), POINTER :: region
     TYPE(VARYING_STRING) :: localError    
 
     ENTERS("cmfe_DataProjection_CreateStartNumber",err,error,*999)
 
     NULLIFY(dataProjection)
     NULLIFY(dataPoints) 
-    NULLIFY(decomposition)   
-    NULLIFY(dataPointsRegion)
-    NULLIFY(decompositionRegion)
-    NULLIFY(mesh)
-    CALL Region_UserNumberFind(dataPointRegionUserNumber,dataPointsRegion,err,error,*999)
-    CALL Region_UserNumberFind(decompositionRegionUserNumber,decompositionRegion,err,error,*999)
-    IF(ASSOCIATED(dataPointsRegion)) THEN
-      IF(ASSOCIATED(decompositionRegion)) THEN
-        CALL MESH_USER_NUMBER_FIND(decompositionMeshUserNumber,decompositionRegion,mesh,err,error,*999)
-        IF(ASSOCIATED(mesh)) THEN
-          CALL DECOMPOSITION_USER_NUMBER_FIND(decompositionUserNumber,mesh,decomposition,err,error,*999)
-          IF(ASSOCIATED(decomposition)) THEN
-            CALL Region_DataPointsGet(dataPointsRegion,dataPointsUserNumber,dataPoints,err,error,*999)
-            CALL DataProjection_CreateStart(dataProjectionUserNumber,dataPoints,decomposition,dataProjection,err, &
-              & ERROR,*999)
-          ELSE
-            localError="A decomposition with an user number of "// &
-              & TRIM(NumberToVString(decompositionUserNumber,"*",err,error))// &
-              & " does not exist for a mesh with a user number of "// &
-              & TRIM(NumberToVString(decompositionMeshUserNumber,"*",err,error))//"."
-            CALL FlagError(localError,err,error,*999)
-          ENDIF
-        ELSE
-          localError="A mesh with an user number of "//TRIM(NumberToVString(decompositionMeshUserNumber,"*",err,error))// &
-            & " does not exist."
-          CALL FlagError(localError,err,error,*999)
-        ENDIF
-      ELSE
-        localError="A region with an user number of "//TRIM(NumberToVString(decompositionRegionUserNumber,"*",err,error))// &
-          & " does not exist."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
+    NULLIFY(projectionField)   
+    NULLIFY(region)
+    CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
+    IF(ASSOCIATED(region)) THEN
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
+      CALL Region_FieldGet(region,projectionFieldUserNumber,projectionField,err,error,*999)
+      CALL DataProjection_CreateStart(dataProjectionUserNumber,dataPoints,projectionField,projectionFieldVariableType, &
+        & dataProjection,err,error,*999)
     ELSE
-      localError="A region with an user number of "//TRIM(NumberToVString(dataPointRegionUserNumber,"*",err,error))// &
+      localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
         & " does not exist."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -20190,20 +20168,22 @@ CONTAINS
   !
 
   !>Starts the creation of a new data projection for a data projection identified by an object.
-  SUBROUTINE cmfe_DataProjection_CreateStartObj(dataProjectionUserNumber,dataPoints,decomposition,dataProjection,err)
+  SUBROUTINE cmfe_DataProjection_CreateStartObj(dataProjectionUserNumber,dataPoints,projectionField,projectionVariableType, &
+    & dataProjection,err)
     !DLLEXPORT(cmfe_DataProjection_CreateStartObj)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number.
     TYPE(cmfe_DataPointsType), INTENT(IN) :: dataPoints !<The data points to be projected
-    TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition where data points is projected on
+    TYPE(cmfe_FieldType), INTENT(IN) :: projectionField !<The field where the data points are projected.
+    INTEGER(INTG), INTENT(IN) :: projectionVariableType !<The variable type of the field where the data points are projected.
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<On exit, the newly created data projection.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_DataProjection_CreateStartObj",err,error,*999)
 
-    CALL DataProjection_CreateStart(dataProjectionUserNumber,dataPoints%dataPoints,decomposition%decomposition, &
+    CALL DataProjection_CreateStart(dataProjectionUserNumber,dataPoints%dataPoints,projectionField%field,projectionVariableType, &
       & dataProjection%dataProjection,err,error,*999)
 
     EXITS("cmfe_DataProjection_CreateStartObj")
@@ -20576,53 +20556,34 @@ CONTAINS
   !
 
   !>Evaluate a data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_DataPointsProjectionEvaluateNumber(dataPointsRegionUserNumber,dataPointsUserNumber, &
-    & dataProjectionUserNumber,projectionFieldUserNumber,projectionFieldRegionUserNumber,err)
+  SUBROUTINE cmfe_DataProjection_DataPointsProjectionEvaluateNumber(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,projectionFieldSetType,err)
     !DLLEXPORT(cmfe_DataProjection_DataPointsProjectionEvaluateNumber)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: dataPointsRegionUserNumber !<The region user number of the data projection to evaluate.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection to evaluate.
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
-    INTEGER(INTG), INTENT(IN) :: projectionFieldUserNumber !<The field user number of the field data points are be projected on.
-    INTEGER(INTG), INTENT(IN) :: projectionFieldRegionUserNumber !<The region user number of the field data points are be projected on.  
+    INTEGER(INTG), INTENT(IN) :: projectionFieldSetType !<The parameter set type of the field data points are be projected on.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables  
     TYPE(DataProjectionType), POINTER :: dataProjection
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(FIELD_TYPE), POINTER :: PROJECTION_FIELD
-    TYPE(REGION_TYPE), POINTER :: DATA_POINTS_region
-    TYPE(REGION_TYPE), POINTER :: PROJECTION_FIELD_region
+    TYPE(REGION_TYPE), POINTER :: region
     TYPE(VARYING_STRING) :: localError      
 
     ENTERS("cmfe_DataProjection_DataPointsProjectionEvaluateNumber",err,error,*999)
     
     NULLIFY(dataProjection)
     NULLIFY(dataPoints) 
-    NULLIFY(PROJECTION_FIELD)   
-    NULLIFY(DATA_POINTS_region)
-    NULLIFY(PROJECTION_FIELD_region)
-    CALL Region_UserNumberFind(dataPointsRegionUserNumber,DATA_POINTS_region,err,error,*999)
-    CALL Region_UserNumberFind(projectionFieldRegionUserNumber,PROJECTION_FIELD_region,err,error,*999)
-    IF(ASSOCIATED(DATA_POINTS_region)) THEN
-      CALL Region_DataPointsGet(DATA_POINTS_region,dataPointsUserNumber,dataPoints,err,error,*999)
+    NULLIFY(region)
+    CALL Region_UserNumberFind(regionUserNumber,region,err,error,*999)
+    IF(ASSOCIATED(region)) THEN
+      CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
       CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
-      IF(ASSOCIATED(PROJECTION_FIELD_region)) THEN
-        CALL FIELD_USER_NUMBER_FIND(projectionFieldUserNumber,PROJECTION_FIELD_region,PROJECTION_FIELD,err,error,*999)
-        IF(ASSOCIATED(PROJECTION_FIELD)) THEN
-          CALL DataProjection_DataPointsProjectionEvaluate(dataProjection,PROJECTION_FIELD,err,error,*999)
-        ELSE
-          localError="A field with an user number of "//TRIM(NumberToVString(projectionFieldUserNumber,"*",err,error))// &
-            & " does not exist."
-          CALL FlagError(localError,err,error,*999)
-        ENDIF
-      ELSE
-        localError="A region with an user number of "//TRIM(NumberToVString(projectionFieldRegionUserNumber,"*",err,error))// &
-          & " does not exist."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
+      CALL DataProjection_DataPointsProjectionEvaluate(dataProjection,projectionFieldSetType,err,error,*999)
     ELSE
-      localError="A region with an user number of "//TRIM(NumberToVString(dataPointsRegionUserNumber,"*",err,error))// &
+      localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))// &
         & " does not exist."
       CALL FlagError(localError,err,error,*999)
     END IF
@@ -20642,18 +20603,18 @@ CONTAINS
   !
 
   !>Evaluate a data projection identified by an object.
-  SUBROUTINE cmfe_DataProjection_DataPointsProjectionEvaluateObj(dataProjection,projectionField,err)
+  SUBROUTINE cmfe_DataProjection_DataPointsProjectionEvaluateObj(dataProjection,projectionFieldSetType,err)
     !DLLEXPORT(cmfe_DataProjection_DataPointsProjectionEvaluateObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to evaluate.
-    TYPE(cmfe_FieldType), INTENT(IN) :: projectionField !<The field data points is projected on
+    INTEGER(INTG), INTENT(IN) :: projectionFieldSetType !<The parameter set type of the field data points are be projected on.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_DataProjection_DataPointsProjectionEvaluateObj",err,error,*999)
 
-    CALL DataProjection_DataPointsProjectionEvaluate(dataProjection%dataProjection,projectionField%field,err,error,*999)
+    CALL DataProjection_DataPointsProjectionEvaluate(dataProjection%dataProjection,projectionFieldSetType,err,error,*999)
 
     EXITS("cmfe_DataProjection_DataPointsProjectionEvaluateObj")
     RETURN

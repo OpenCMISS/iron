@@ -50,14 +50,15 @@ MODULE INTERFACE_ROUTINES
   USE FIELD_ROUTINES
   USE GENERATED_MESH_ROUTINES
   USE INPUT_OUTPUT
+  USE InterfaceAccessRoutines
   USE INTERFACE_CONDITIONS_ROUTINES
   USE ISO_VARYING_STRING
-  USE KINDS
-  USE LISTS
+  USE Kinds
+  USE Lists
   USE MESH_ROUTINES
   USE NODE_ROUTINES
-  USE STRINGS
-  USE TYPES
+  USE Strings
+  USE Types
 
 #include "macros.h"  
 
@@ -83,35 +84,17 @@ MODULE INTERFACE_ROUTINES
     MODULE PROCEDURE INTERFACE_LABEL_SET_VS
   END INTERFACE INTERFACE_LABEL_SET
 
-  INTERFACE INTERFACE_DATA_POINTS_GET
-    MODULE PROCEDURE Interface_DataPointsGet
-  END INTERFACE INTERFACE_DATA_POINTS_GET
-
-  INTERFACE Interface_UserNumberFind
-    MODULE PROCEDURE INTERFACE_USER_NUMBER_FIND
-  END INTERFACE Interface_UserNumberFind
-  
   PUBLIC INTERFACE_MESH_ADD
 
   PUBLIC INTERFACE_CREATE_START, INTERFACE_CREATE_FINISH
-  
-  PUBLIC INTERFACE_COORDINATE_SYSTEM_SET,INTERFACE_COORDINATE_SYSTEM_GET
 
-  PUBLIC Interface_DataPointsGet
-  
-  PUBLIC INTERFACE_DATA_POINTS_GET
+  PUBLIC INTERFACE_COORDINATE_SYSTEM_SET
 
   PUBLIC INTERFACE_DESTROY, INTERFACE_MESH_CONNECTIVITY_DESTROY, InterfacePointsConnectivity_Destroy
 
   PUBLIC INTERFACE_LABEL_GET,INTERFACE_LABEL_SET
 
-  PUBLIC INTERFACE_NODES_GET
-
   PUBLIC INTERFACE_MESH_CONNECTIVITY_CREATE_START, INTERFACE_MESH_CONNECTIVITY_CREATE_FINISH
-
-  PUBLIC Interface_UserNumberFind
-
-  PUBLIC INTERFACE_USER_NUMBER_FIND
 
   PUBLIC INTERFACES_FINALISE,INTERFACES_INITIALISE
 
@@ -361,43 +344,6 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
-  !>Returns the coordinate system of an interface. \see OPENCMISS::Iron::cmfe_Interface_CoordinateSystemGet
-  SUBROUTINE INTERFACE_COORDINATE_SYSTEM_GET(INTERFACE,COORDINATE_SYSTEM,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE !<A pointer to the interface to get the coordinate system for
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<On exit, the coordinate system for the specified interface. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    
-    ENTERS("INTERFACE_COORDINATE_SYSTEM_GET",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(INTERFACE)) THEN
-      IF(INTERFACE%INTERFACE_FINISHED) THEN
-        IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
-          CALL FlagError("Coordinate system is already associated.",ERR,ERROR,*999)
-        ELSE
-          COORDINATE_SYSTEM=>INTERFACE%COORDINATE_SYSTEM
-        ENDIF
-      ELSE
-        CALL FlagError("Interface has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Interface is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("INTERFACE_COORDINATE_SYSTEM_GET")
-    RETURN
-999 ERRORSEXITS("INTERFACE_COORDINATE_SYSTEM_GET",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE INTERFACE_COORDINATE_SYSTEM_GET
-  
-  
-  !
-  !================================================================================================================================
-  !
 
   !>Sets the coordinate system of an interface.  \see OPENCMISS::Iron::cmfe_Interface_CoordinateSystemSet
   SUBROUTINE INTERFACE_COORDINATE_SYSTEM_SET(INTERFACE,COORDINATE_SYSTEM,ERR,ERROR,*)
@@ -435,57 +381,7 @@ CONTAINS
     RETURN 1
   END SUBROUTINE INTERFACE_COORDINATE_SYSTEM_SET
   
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns a pointer to the data points for a given user number in an interface. \see OPENCMISS::Iron::cmfe_Interface_DataPointsGet
-  SUBROUTINE Interface_DataPointsGet(interface,userNumber,dataPoints,err,error,*)
-
-    !Argument variables
-    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE !<A pointer to the region to get the data points for
-    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the data points to get.
-    TYPE(DataPointsType), POINTER :: dataPoints !<On exit, a pointer to the data points for the region. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: localError
- 
-    ENTERS("Interface_DataPointsGet",err,error,*998)
-
-    IF(ASSOCIATED(interface)) THEN
-      IF(interface%INTERFACE_FINISHED) THEN 
-        IF(ASSOCIATED(dataPoints)) THEN
-          CALL FlagError("Data points is already associated.",err,error,*998)
-        ELSE
-          NULLIFY(dataPoints)
-          IF(ASSOCIATED(interface%dataPointSets)) THEN
-            CALL DataPointSets_UserNumberFind(interface%dataPointSets,userNumber,dataPoints,err,error,*999)
-            IF(.NOT.ASSOCIATED(dataPoints)) THEN
-              localError="Data points with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-                & " do not exist on interface number "//TRIM(NumberToVString(interface%USER_NUMBER,"*",err,error))//"."
-              CALL FlagError(localError,err,error,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Interface data point sets is not associated.",err,error,*999)
-          ENDIF
-        ENDIF
-      ELSE
-        CALL FlagError("Interface has not been finished.",err,error,*998)
-      ENDIF
-    ELSE
-      CALL FlagError("Interface is not associated.",err,error,*998)
-    ENDIF
-       
-    EXITS("Interface_DataPointsGet")
-    RETURN
-999 NULLIFY(dataPoints)
-998 ERRORSEXITS("Interface_DataPointsGet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE Interface_DataPointsGet    
-
-  !
+!
   !================================================================================================================================
   !
 
@@ -760,45 +656,6 @@ CONTAINS
 999 ERRORSEXITS("INTERFACE_LABEL_SET_VS",ERR,ERROR)
     RETURN 1
   END SUBROUTINE INTERFACE_LABEL_SET_VS
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns a pointer to the nodes for a interface. \see OPENCMISS::Iron::cmfe_InterfaceNodesGet
-  SUBROUTINE INTERFACE_NODES_GET(INTERFACE,NODES,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE !<A pointer to the interface to get the nodes for
-    TYPE(NODES_TYPE), POINTER :: NODES !<On exit, a pointer to the nodes for the interface. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
- 
-    ENTERS("INTERFACE_NODES_GET",ERR,ERROR,*998)
-
-    IF(ASSOCIATED(INTERFACE)) THEN
-      IF(INTERFACE%INTERFACE_FINISHED) THEN 
-        IF(ASSOCIATED(NODES)) THEN
-          CALL FlagError("Nodes is already associated.",ERR,ERROR,*998)
-        ELSE
-          NODES=>INTERFACE%NODES
-          IF(.NOT.ASSOCIATED(NODES)) CALL FlagError("Nodes is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Interface has not been finished.",ERR,ERROR,*998)
-      ENDIF
-    ELSE
-      CALL FlagError("Interface is not associated.",ERR,ERROR,*998)
-    ENDIF
-       
-    EXITS("INTERFACE_NODES_GET")
-    RETURN
-999 NULLIFY(NODES)
-998 ERRORSEXITS("INTERFACE_NODES_GET",ERR,ERROR)
-    RETURN 1
-    
-  END SUBROUTINE INTERFACE_NODES_GET
 
   !
   !================================================================================================================================
@@ -1629,7 +1486,7 @@ CONTAINS
                 dependentFieldProjection=>interfaceCondition%DEPENDENT%FIELD_VARIABLES(projectionBodyIdx)%PTR%FIELD
                 IF(ASSOCIATED(dependentFieldProjection)) THEN
                   !Projection the data points (with know spatial positions) on the projection dependent field 
-                  CALL DataProjection_DataPointsProjectionEvaluate(dataProjection,dependentFieldProjection,err,error,*999)
+                  CALL DataProjection_DataPointsProjectionEvaluate(dataProjection,FIELD_VALUES_SET_TYPE,err,error,*999)
                   CALL InterfacePointsConnectivity_UpdateFromProjection(InterfacePointsConnectivity,dataProjection, &
                     & projectionBodyIdx,err,error,*999) 
                 ELSE
@@ -2365,55 +2222,6 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfacePointsConnectivity_ReducedXiCalculate
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Finds and returns in INTERFACE a pointer to the interface identified by USER_NUMBER in the given PARENT_REGION. If no interface with that USER_NUMBER exists INTERFACE is left nullified.
-  SUBROUTINE INTERFACE_USER_NUMBER_FIND(USER_NUMBER,PARENT_REGION,INTERFACE,ERR,ERROR,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number to find.
-    TYPE(REGION_TYPE), POINTER :: PARENT_REGION !<The parent region to find the interface in    
-    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE !<On return a pointer to the interface with the given user number. If no interface with that user number exists then the pointer is returned as NULL. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    INTEGER(INTG) :: interface_idx
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("INTERFACE_USER_NUMBER_FIND",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(PARENT_REGION)) THEN
-      IF(ASSOCIATED(INTERFACE)) THEN
-        CALL FlagError("Interface is already associated.",ERR,ERROR,*999)
-      ELSE
-        NULLIFY(INTERFACE)
-        IF(ASSOCIATED(PARENT_REGION%INTERFACES)) THEN
-          interface_idx=1
-          DO WHILE(interface_idx<=PARENT_REGION%INTERFACES%NUMBER_OF_INTERFACES.AND..NOT.ASSOCIATED(INTERFACE))
-            IF(PARENT_REGION%INTERFACES%INTERFACES(interface_idx)%PTR%USER_NUMBER==USER_NUMBER) THEN
-              INTERFACE=>PARENT_REGION%INTERFACES%INTERFACES(interface_idx)%PTR
-            ELSE
-              interface_idx=interface_idx+1
-            ENDIF
-          ENDDO
-        ELSE
-          LOCAL_ERROR="The interfaces on parent region number "// &
-            & TRIM(NUMBER_TO_VSTRING(PARENT_REGION%USER_NUMBER,"*",ERR,ERROR))//" are not associated."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Parent region is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("INTERFACE_USER_NUMBER_FIND")
-    RETURN
-999 ERRORSEXITS("INTERFACE_USER_NUMBER_FIND",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE INTERFACE_USER_NUMBER_FIND
 
   !
   !================================================================================================================================

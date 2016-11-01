@@ -51,18 +51,19 @@ MODULE FIELD_ROUTINES
   USE CMISS_MPI
   USE DISTRIBUTED_MATRIX_VECTOR
   USE DOMAIN_MAPPINGS
-  USE KINDS
+  USE FieldAccessRoutines
+  USE Kinds
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
-  USE LISTS
-  USE MATHS
+  USE Lists
+  USE Maths
 #ifndef NOMPIMOD
   USE MPI
 #endif
   USE MESH_ROUTINES
   USE NODE_ROUTINES
-  USE STRINGS
-  USE TYPES
+  USE Strings
+  USE Types
 
 #include "macros.h"  
 
@@ -360,10 +361,6 @@ MODULE FIELD_ROUTINES
     MODULE PROCEDURE FIELD_COMPONENT_VALUES_INITIALISE_L
   END INTERFACE Field_ComponentValuesInitialise
 
-  INTERFACE Field_CoordinateSystemGet
-    MODULE PROCEDURE FIELD_COORDINATE_SYSTEM_GET
-  END INTERFACE Field_CoordinateSystemGet
-  
   INTERFACE Field_CreateFinish
     MODULE PROCEDURE FIELD_CREATE_FINISH
   END INTERFACE Field_CreateFinish
@@ -1067,10 +1064,6 @@ MODULE FIELD_ROUTINES
     MODULE PROCEDURE FIELD_PHYSICAL_POINTS_INITIALISE
   END INTERFACE Field_PhysicalPointsInitialise
 
-  INTERFACE Field_RegionGet
-    MODULE PROCEDURE FIELD_REGION_GET
-  END INTERFACE Field_RegionGet
-
   INTERFACE Field_ScalingTypeCheck
     MODULE PROCEDURE FIELD_SCALING_TYPE_CHECK
   END INTERFACE Field_ScalingTypeCheck
@@ -1103,18 +1096,6 @@ MODULE FIELD_ROUTINES
     MODULE PROCEDURE FIELD_TYPE_SET_AND_LOCK
   END INTERFACE Field_TypeSetAndLock
 
-  !>Finds and returns a field identified by a user number. If no field  with that number exits field is left nullified.
-  INTERFACE FIELD_USER_NUMBER_FIND
-    MODULE PROCEDURE FIELD_USER_NUMBER_FIND_INTERFACE
-    MODULE PROCEDURE FIELD_USER_NUMBER_FIND_REGION
-  END INTERFACE FIELD_USER_NUMBER_FIND
-  
-  !>Finds and returns a field identified by a user number. If no field  with that number exits field is left nullified.
-  INTERFACE Field_UserNumberFind
-    MODULE PROCEDURE FIELD_USER_NUMBER_FIND_INTERFACE
-    MODULE PROCEDURE FIELD_USER_NUMBER_FIND_REGION
-  END INTERFACE Field_UserNumberFind
-  
   !> Find the field with the given user number, or throw an error if it does not exist.
   INTERFACE FIELD_USER_NUMBER_TO_FIELD
     MODULE PROCEDURE FIELD_USER_NUMBER_TO_FIELD_INTERFACE
@@ -1243,10 +1224,6 @@ MODULE FIELD_ROUTINES
     
   PUBLIC FIELD_ALL_COMPONENTS_TYPE,FIELD_GEOMETRIC_COMPONENTS_TYPE,FIELD_NONGEOMETRIC_COMPONENTS_TYPE
 
-  PUBLIC FIELD_COORDINATE_SYSTEM_GET
-
-  PUBLIC Field_CoordinateSystemGet
-
   PUBLIC FIELD_COMPONENT_DOF_GET_CONSTANT,FIELD_COMPONENT_DOF_GET_USER_ELEMENT,FIELD_COMPONENT_DOF_GET_USER_NODE, &
     & Field_componentDofGetUserDataPoint
 
@@ -1279,8 +1256,6 @@ MODULE FIELD_ROUTINES
   PUBLIC FIELD_DATA_TYPE_CHECK,FIELD_DATA_TYPE_GET,FIELD_DATA_TYPE_SET,FIELD_DATA_TYPE_SET_AND_LOCK
 
   PUBLIC Field_DataTypeCheck,Field_DataTypeGet,Field_DataTypeSet,Field_DataTypeSetAndLock
-
-  PUBLIC Field_DecompositionGet
 
   PUBLIC Field_Destroy
 
@@ -1430,10 +1405,6 @@ MODULE FIELD_ROUTINES
 
   PUBLIC Field_PhysicalPointsFinalise,Field_PhysicalPointsInitialise
 
-  PUBLIC FIELD_REGION_GET
-
-  PUBLIC Field_RegionGet
-
   PUBLIC FIELD_SCALING_TYPE_CHECK,FIELD_SCALING_TYPE_GET,FIELD_SCALING_TYPE_SET,FIELD_SCALING_TYPE_SET_AND_LOCK
 
   PUBLIC Field_ScalingTypeCheck,Field_ScalingTypeGet,Field_ScalingTypeSet,Field_ScalingTypeSetAndLock
@@ -1441,11 +1412,9 @@ MODULE FIELD_ROUTINES
   PUBLIC FIELD_TYPE_CHECK,FIELD_TYPE_GET,FIELD_TYPE_SET,FIELD_TYPE_SET_AND_LOCK
 
   PUBLIC Field_TypeCheck,Field_TypeGet,Field_TypeSet,Field_TypeSetAndLock
+
+  PUBLIC FIELD_USER_NUMBER_TO_FIELD
   
-  PUBLIC FIELD_USER_NUMBER_FIND, FIELD_USER_NUMBER_TO_FIELD
-
-  PUBLIC Field_UserNumberFind,Field_UserNumberToField
-
   PUBLIC FIELD_VARIABLE_GET
 
   PUBLIC Field_VariableGet
@@ -3828,67 +3797,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the coordinate system for a field accounting for regions and interfaces
-  SUBROUTINE FIELD_COORDINATE_SYSTEM_GET(FIELD,COORDINATE_SYSTEM,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the coordinate system for
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<On return, the fields coordinate system. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE
-    TYPE(REGION_TYPE), POINTER :: REGION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("FIELD_COORDINATE_SYSTEM_GET",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(FIELD)) THEN
-      IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
-        CALL FlagError("Coordinate system is already associated.",ERR,ERROR,*999)
-      ELSE
-        NULLIFY(COORDINATE_SYSTEM)
-        NULLIFY(INTERFACE)
-        REGION=>FIELD%REGION
-        IF(ASSOCIATED(REGION)) THEN
-          COORDINATE_SYSTEM=>REGION%COORDINATE_SYSTEM
-          IF(.NOT.ASSOCIATED(COORDINATE_SYSTEM)) THEN
-            LOCAL_ERROR="The coordinate system is not associated for field number "// &
-              & TRIM(NUMBER_TO_VSTRING(FIELD%USER_NUMBER,"*",ERR,ERROR))//" of region number "// &
-              & TRIM(NUMBER_TO_VSTRING(REGION%USER_NUMBER,"*",ERR,ERROR))//"."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          INTERFACE=>FIELD%INTERFACE
-          IF(ASSOCIATED(INTERFACE)) THEN
-            COORDINATE_SYSTEM=>INTERFACE%COORDINATE_SYSTEM
-            IF(.NOT.ASSOCIATED(COORDINATE_SYSTEM)) THEN
-              LOCAL_ERROR="The coordinate system is not associated for field number "// &
-                & TRIM(NUMBER_TO_VSTRING(FIELD%USER_NUMBER,"*",ERR,ERROR))//" of interface number "// &
-                & TRIM(NUMBER_TO_VSTRING(INTERFACE%USER_NUMBER,"*",ERR,ERROR))//"."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF         
-          ELSE
-            LOCAL_ERROR="The region or interface is not associated for field number "// &
-              & TRIM(NUMBER_TO_VSTRING(FIELD%USER_NUMBER,"*",ERR,ERROR))//"."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Field is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("FIELD_COORDINATE_SYSTEM_GET")
-    RETURN
-999 ERRORSEXITS("FIELD_COORDINATE_SYSTEM_GET",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE FIELD_COORDINATE_SYSTEM_GET
-
-  !
-  !================================================================================================================================
-  !
-
   !>Checks the data type for a field variable.
   SUBROUTINE FIELD_DATA_TYPE_CHECK(FIELD,VARIABLE_TYPE,DATA_TYPE,ERR,ERROR,*)
 
@@ -4958,21 +4866,15 @@ CONTAINS
         CALL FlagError("Field is already associated.",ERR,ERROR,*999)
       ELSE
         NULLIFY(FIELD)
-        IF(ASSOCIATED(INTERFACE%FIELDS)) THEN
-          CALL FIELD_USER_NUMBER_FIND_GENERIC(USER_NUMBER,INTERFACE%FIELDS,FIELD,ERR,ERROR,*999)
-          IF(ASSOCIATED(FIELD)) THEN
-            LOCAL_ERROR="Field number "//TRIM(NUMBER_TO_VSTRING(USER_NUMBER,"*",ERR,ERROR))// &
-              & " has already been created on interface number "//TRIM(NUMBER_TO_VSTRING(INTERFACE%USER_NUMBER,"*",ERR,ERROR))//"."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ELSE
-            CALL FIELD_CREATE_START_GENERIC(INTERFACE%FIELDS,USER_NUMBER,FIELD,ERR,ERROR,*999)
-            FIELD%INTERFACE=>INTERFACE
-            CALL FIELD_CREATE_VALUES_CACHE_INITIALISE(FIELD,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The fields on interface number "//TRIM(NUMBER_TO_VSTRING(INTERFACE%USER_NUMBER,"*",ERR,ERROR))// &
-            & " are not associated."
+        CALL FIELD_USER_NUMBER_FIND(USER_NUMBER,INTERFACE,FIELD,ERR,ERROR,*999)
+        IF(ASSOCIATED(FIELD)) THEN
+          LOCAL_ERROR="Field number "//TRIM(NUMBER_TO_VSTRING(USER_NUMBER,"*",ERR,ERROR))// &
+            & " has already been created on interface number "//TRIM(NUMBER_TO_VSTRING(INTERFACE%USER_NUMBER,"*",ERR,ERROR))//"."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+        ELSE
+          CALL FIELD_CREATE_START_GENERIC(INTERFACE%FIELDS,USER_NUMBER,FIELD,ERR,ERROR,*999)
+          FIELD%INTERFACE=>INTERFACE
+          CALL FIELD_CREATE_VALUES_CACHE_INITIALISE(FIELD,ERR,ERROR,*999)
         ENDIF
       ENDIF
     ELSE
@@ -5017,21 +4919,15 @@ CONTAINS
         CALL FlagError("Field is already associated.",ERR,ERROR,*999)
       ELSE
         NULLIFY(FIELD)
-        IF(ASSOCIATED(REGION%FIELDS)) THEN
-          CALL FIELD_USER_NUMBER_FIND_GENERIC(USER_NUMBER,REGION%FIELDS,FIELD,ERR,ERROR,*999)
-          IF(ASSOCIATED(FIELD)) THEN
-            LOCAL_ERROR="Field number "//TRIM(NUMBER_TO_VSTRING(USER_NUMBER,"*",ERR,ERROR))// &
-              & " has already been created on region number "//TRIM(NUMBER_TO_VSTRING(REGION%USER_NUMBER,"*",ERR,ERROR))//"."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ELSE
-            CALL FIELD_CREATE_START_GENERIC(REGION%FIELDS,USER_NUMBER,FIELD,ERR,ERROR,*999)
-            FIELD%REGION=>REGION
-            CALL FIELD_CREATE_VALUES_CACHE_INITIALISE(FIELD,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The fields on region number "//TRIM(NUMBER_TO_VSTRING(REGION%USER_NUMBER,"*",ERR,ERROR))// &
-            & " are not associated."
+        CALL FIELD_USER_NUMBER_FIND(USER_NUMBER,REGION,FIELD,ERR,ERROR,*999)
+        IF(ASSOCIATED(FIELD)) THEN
+          LOCAL_ERROR="Field number "//TRIM(NUMBER_TO_VSTRING(USER_NUMBER,"*",ERR,ERROR))// &
+            & " has already been created on region number "//TRIM(NUMBER_TO_VSTRING(REGION%USER_NUMBER,"*",ERR,ERROR))//"."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+        ELSE
+          CALL FIELD_CREATE_START_GENERIC(REGION%FIELDS,USER_NUMBER,FIELD,ERR,ERROR,*999)
+          FIELD%REGION=>REGION
+          CALL FIELD_CREATE_VALUES_CACHE_INITIALISE(FIELD,ERR,ERROR,*999)
         ENDIF
       ENDIF
     ELSE
@@ -5598,48 +5494,6 @@ CONTAINS
 999 ERRORSEXITS("FIELD_DEPENDENT_TYPE_SET_AND_LOCK",ERR,ERROR)
     RETURN 1
   END SUBROUTINE FIELD_DEPENDENT_TYPE_SET_AND_LOCK
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets a decomposition from a field.
-  SUBROUTINE Field_DecompositionGet(field,decomposition,err,error,*)
-
-    !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<The field to get the decomposition for.
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition !<On exit, a pointer to the decomposition for the field. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: localError
- 
-    ENTERS("Field_DecompositionGet",err,error,*999)
-
-    !Check input arguments
-    IF(.NOT.ASSOCIATED(field)) THEN
-      CALL FlagError("Field is not associated.",err,error,*999)
-    ENDIF
-    IF(ASSOCIATED(decomposition)) THEN
-      CALL FlagError("Decomposition is already associated.",err,error,*999)
-    ENDIF
-
-    !Get the field decomposition
-    decomposition=>field%decomposition
-
-    !Check field decomposition is associated.
-    IF(.NOT.ASSOCIATED(decomposition)) THEN
-      localError="Field decomposition is not associated for decomposition "// &
-        & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    
-    EXITS("Field_DecompositionGet")
-    RETURN
-999 ERRORSEXITS("Field_DecompositionGet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE Field_DecompositionGet
 
   !
   !================================================================================================================================
@@ -29844,61 +29698,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the region for a field accounting for regions and interfaces
-  SUBROUTINE FIELD_REGION_GET(FIELD,REGION,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the region for
-    TYPE(REGION_TYPE), POINTER :: REGION !<On return, the fields region. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE
-    TYPE(REGION_TYPE), POINTER :: PARENT_REGION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("FIELD_REGION_GET",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(FIELD)) THEN
-      IF(ASSOCIATED(REGION)) THEN
-        CALL FlagError("Region is already associated.",ERR,ERROR,*999)
-      ELSE
-        NULLIFY(REGION)
-        NULLIFY(INTERFACE)
-        REGION=>FIELD%REGION
-        IF(.NOT.ASSOCIATED(REGION)) THEN          
-          INTERFACE=>FIELD%INTERFACE
-          IF(ASSOCIATED(INTERFACE)) THEN
-            PARENT_REGION=>INTERFACE%PARENT_REGION
-            IF(ASSOCIATED(PARENT_REGION)) THEN
-              REGION=>PARENT_REGION              
-            ELSE
-              LOCAL_ERROR="The parent region not associated for field number "// &
-                & TRIM(NUMBER_TO_VSTRING(FIELD%USER_NUMBER,"*",ERR,ERROR))//" of interface number "// &
-                & TRIM(NUMBER_TO_VSTRING(INTERFACE%USER_NUMBER,"*",ERR,ERROR))//"."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The region or interface is not associated for field number "// &
-              & TRIM(NUMBER_TO_VSTRING(FIELD%USER_NUMBER,"*",ERR,ERROR))//"."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Field is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("FIELD_REGION_GET")
-    RETURN
-999 ERRORSEXITS("FIELD_REGION_GET",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE FIELD_REGION_GET
-
-  !
-  !================================================================================================================================
-  !
-
   !>Finalises the scaling for a field scaling index and deallocates all memory.
   SUBROUTINE FIELD_SCALING_FINALISE(FIELD,SCALING_INDEX,ERR,ERROR,*)
 
@@ -30829,106 +30628,6 @@ CONTAINS
 999 ERRORSEXITS("FIELD_TYPE_SET_AND_LOCK",ERR,ERROR)
     RETURN 1
   END SUBROUTINE FIELD_TYPE_SET_AND_LOCK
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Finds and returns in FIELD a pointer to the field identified by USER_NUMBER in the given list of FIELDS. If no field with that USER_NUMBER exists FIELD is left nullified.
-  SUBROUTINE FIELD_USER_NUMBER_FIND_GENERIC(USER_NUMBER,FIELDS,FIELD,ERR,ERROR,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The field user number to find
-    TYPE(FIELDS_TYPE), POINTER :: FIELDS !<The list of fields containing the field
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<On return, a pointer to the field with the given user number. If no field with that user number exists in the region the FIELD is null. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    INTEGER(INTG) :: field_idx
-
-    ENTERS("FIELD_USER_NUMBER_FIND_GENERIC",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(FIELDS)) THEN
-      IF(ASSOCIATED(FIELD)) THEN
-        CALL FlagError("Field is already associated.",ERR,ERROR,*999)
-      ELSE
-        NULLIFY(FIELD)
-        field_idx=1
-        DO WHILE(field_idx<=FIELDS%NUMBER_OF_FIELDS.AND..NOT.ASSOCIATED(FIELD))
-          IF(FIELDS%FIELDS(field_idx)%PTR%USER_NUMBER==USER_NUMBER) THEN
-            FIELD=>FIELDS%FIELDS(field_idx)%PTR
-          ELSE
-            field_idx=field_idx+1
-          ENDIF
-        ENDDO
-      ENDIF
-    ELSE
-      CALL FlagError("Fields is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("FIELD_USER_NUMBER_FIND_GENERIC")
-    RETURN
-999 ERRORSEXITS("FIELD_USER_NUMBER_FIND_GENERIC",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE FIELD_USER_NUMBER_FIND_GENERIC
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Finds and returns in FIELD a pointer to the field identified by USER_NUMBER in the given INTERFACE. If no field with that USER_NUMBER exists FIELD is left nullified.
-  SUBROUTINE FIELD_USER_NUMBER_FIND_INTERFACE(USER_NUMBER,INTERFACE,FIELD,ERR,ERROR,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The field user number to find
-    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE !<A pointer to the interface containing the field
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<On exit, a pointer to the field with the given user number. If no field with that user number exists in the region the FIELD is null. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
- 
-    ENTERS("FIELD_USER_NUMBER_FIND_INTERFACE",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(INTERFACE)) THEN
-      CALL FIELD_USER_NUMBER_FIND_GENERIC(USER_NUMBER,INTERFACE%FIELDS,FIELD,ERR,ERROR,*999)
-    ELSE
-      CALL FlagError("Interface is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("FIELD_USER_NUMBER_FIND_INTERFACE")
-    RETURN
-999 ERRORSEXITS("FIELD_USER_NUMBER_FIND_INTERFACE",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE FIELD_USER_NUMBER_FIND_INTERFACE
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Finds and returns in FIELD a pointer to the field identified by USER_NUMBER in the given REGION. If no field with that USER_NUMBER exists FIELD is left nullified.
-  SUBROUTINE FIELD_USER_NUMBER_FIND_REGION(USER_NUMBER,REGION,FIELD,ERR,ERROR,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The field user number to find
-    TYPE(REGION_TYPE), POINTER :: REGION !<A pointer to the region containing the field
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<On exit, a pointer to the field with the given user number. If no field with that user number exists in the region the FIELD is null. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-
-    ENTERS("FIELD_USER_NUMBER_FIND_REGION",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(REGION)) THEN
-      CALL FIELD_USER_NUMBER_FIND_GENERIC(USER_NUMBER,REGION%FIELDS,FIELD,ERR,ERROR,*999)
-    ELSE
-      CALL FlagError("Region is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("FIELD_USER_NUMBER_FIND_REGION")
-    RETURN
-999 ERRORSEXITS("FIELD_USER_NUMBER_FIND_REGION",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE FIELD_USER_NUMBER_FIND_REGION
 
   !
   !================================================================================================================================

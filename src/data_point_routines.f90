@@ -48,11 +48,13 @@ MODULE DataPointRoutines
   USE BASE_ROUTINES
   USE COMP_ENVIRONMENT
   USE COORDINATE_ROUTINES
+  USE DataPointAccessRoutines
   USE DataProjectionRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE Kinds
   USE Strings
+  USE RegionAccessRoutines
   USE Trees
   USE Types
 
@@ -113,8 +115,6 @@ MODULE DataPointRoutines
   PUBLIC DataPoints_WeightsGet,DataPoints_WeightsSet
 
   PUBLIC DataPointSets_Finalise,DataPointSets_Initialise
-
-  PUBLIC DataPointSets_UserNumberFind
 
 CONTAINS
 
@@ -1405,56 +1405,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finds an returns a pointer to data points identified by a user number in the data point sets. 
-  SUBROUTINE DataPointSets_UserNumberFind(dataPointSets,userNumber,dataPoints,err,error,*)
-
-    !Argument variables
-    TYPE(DataPointSetsType), POINTER :: dataPointSets !<A pointer to the data point sets to find the user number for
-    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number to find
-    TYPE(DataPointsType), POINTER :: dataPoints !<On exit, the pointer to the data points with the specified user number. If no data points with the specified user number exists the pointer is returned NULL. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: setIdx
-    TYPE(DataPointsType), POINTER :: setDataPoints
-    TYPE(VARYING_STRING) :: localError
-    
-    ENTERS("DataPointSets_UserNumberFind",err,error,*998)
-
-    IF(ASSOCIATED(dataPointSets)) THEN
-      IF(ASSOCIATED(dataPoints)) THEN
-        CALL FlagError("Data points is already associated.",err,error,*998)
-      ELSE
-        NULLIFY(dataPoints)
-        IF(ALLOCATED(dataPointSets%dataPointSets)) THEN
-          setIdx=1
-          DO WHILE(setIdx<=SIZE(dataPointSets%dataPointSets,1))
-            setDataPoints=>dataPointSets%dataPointSets(setIdx)%ptr
-            IF(ASSOCIATED(setDataPoints)) THEN
-              IF(setDataPoints%userNumber==userNumber) THEN
-                dataPoints=>dataPointSets%dataPointSets(setIdx)%ptr
-                EXIT
-              ENDIF
-            ELSE
-              localError="The data point sets data points is not associated for set index "// &
-                & TRIM(NumberToVString(setIdx,"*",err,error))//"."
-              CALL FlagError(localError,err,error,*999)
-            ENDIF
-          ENDDO
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Data point sets is not associated.",err,error,*999)
-    ENDIF
-    
-    EXITS("DataPointSets_UserNumberFind")
-    RETURN
-999 NULLIFY(dataPoints)
-998 ERRORSEXITS("DataPointSets_UserNumberFind",err,error)    
-    RETURN 1
-   
-  END SUBROUTINE DataPointSets_UserNumberFind
-  
   !
   !================================================================================================================================
   !

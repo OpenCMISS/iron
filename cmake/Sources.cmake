@@ -38,9 +38,11 @@ set(IRON_Fortran_SRC
     constants.f90
     control_loop_routines.f90
     coordinate_routines.f90
+    coordinate_access_routines.f90
     Darcy_equations_routines.f90
     Darcy_pressure_equations_routines.f90
     data_point_routines.f90
+    data_point_access_routines.f90
     data_projection_routines.f90
     diffusion_advection_diffusion_routines.f90
     diffusion_diffusion_routines.f90
@@ -58,6 +60,7 @@ set(IRON_Fortran_SRC
     equations_set_routines.f90
     field_IO_routines.f90
     field_routines.f90
+    field_access_routines.f90
     finite_elasticity_Darcy_routines.f90
     finite_elasticity_fluid_pressure_routines.f90
     finite_elasticity_routines.f90
@@ -79,6 +82,7 @@ set(IRON_Fortran_SRC
     interface_matrices_routines.f90
     interface_operators_routines.f90
     interface_routines.f90
+    interface_access_routines.f90
     iso_varying_string.f90
     kinds.f90
     lapack.f90
@@ -103,6 +107,7 @@ set(IRON_Fortran_SRC
     reaction_diffusion_equation_routines.f90
     reaction_diffusion_IO_routines.f90
     region_routines.f90
+    region_access_routines.f90
     solver_mapping_routines.f90
     solver_matrices_routines.f90
     solver_routines.f90

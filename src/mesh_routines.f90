@@ -125,6 +125,8 @@ MODULE MESH_ROUTINES
 
   PUBLIC DECOMPOSITIONS_INITIALISE,DECOMPOSITIONS_FINALISE
 
+  PUBLIC Decomposition_CoordinateSystemGet
+
   PUBLIC DECOMPOSITION_CREATE_START,DECOMPOSITION_CREATE_FINISH
 
   PUBLIC DECOMPOSITION_DESTROY
@@ -286,6 +288,44 @@ CONTAINS
     RETURN 1
    
   END SUBROUTINE DECOMPOSITION_ADJACENT_ELEMENT_INITIALISE
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the coordinate system for a decomposition accounting for regions and interfaces. 
+  SUBROUTINE Decomposition_CoordinateSystemGet(decomposition,coordinateSystem,err,error,*)
+
+    !Argument variables
+    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition !<The decomposition to get the coordinate system for.
+    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem !<On exit, a pointer to the coordinate system of decomposition. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Decomposition_CoordinateSystemGet",err,error,*999)
+
+    !Check input arguments
+    IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+    IF(ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is already associated.",err,error,*999)
+
+    IF(ASSOCIATED(decomposition%region)) THEN
+      coordinateSystem=>decomposition%region%COORDINATE_SYSTEM
+    ELSE IF(ASSOCIATED(decomposition%INTERFACE)) THEN
+      coordinateSystem=>decomposition%interface%COORDINATE_SYSTEM
+    ELSE
+      CALL FlagError("Decomposition is not associated with a region or an interface.",err,error,*999)
+    ENDIF
+ 
+    !Check coordinate system is associated.
+    IF(.NOT.ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is not associated.",err,error,*999)
+    
+    EXITS("Decomposition_CoordinateSystemGet")
+    RETURN
+999 ERRORSEXITS("Decomposition_CoordinateSystemGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Decomposition_CoordinateSystemGet
 
   !
   !================================================================================================================================
