@@ -55,6 +55,7 @@ MODULE MESH_ROUTINES
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE Lists
+  USE MeshAccessRoutines
 #ifndef NOMPIMOD
   USE MPI
 #endif
@@ -101,11 +102,6 @@ MODULE MESH_ROUTINES
     MODULE PROCEDURE MESHES_INITIALISE_INTERFACE
     MODULE PROCEDURE MESHES_INITIALISE_REGION
   END INTERFACE !MESHES_INITIALISE
-
-  INTERFACE MESH_USER_NUMBER_FIND
-    MODULE PROCEDURE MESH_USER_NUMBER_FIND_INTERFACE
-    MODULE PROCEDURE MESH_USER_NUMBER_FIND_REGION
-  END INTERFACE !MESH_USER_NUMBER_FIND
 
   INTERFACE MeshTopology_NodeCheckExists
     MODULE PROCEDURE MeshTopology_NodeCheckExistsMesh
@@ -163,8 +159,6 @@ MODULE MESH_ROUTINES
   
   PUBLIC DECOMPOSITION_TYPE_GET,DECOMPOSITION_TYPE_SET
   
-  PUBLIC DECOMPOSITION_USER_NUMBER_FIND, DECOMPOSITION_USER_NUMBER_TO_DECOMPOSITION
-  
   PUBLIC DECOMPOSITION_NODE_DOMAIN_GET
 
   PUBLIC DECOMPOSITION_CALCULATE_LINES_SET,DECOMPOSITION_CALCULATE_FACES_SET
@@ -209,8 +203,6 @@ MODULE MESH_ROUTINES
 
   PUBLIC MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET,MeshElements_ElementNodeVersionSet
 
-  PUBLIC MESH_TOPOLOGY_ELEMENTS_GET
-
   PUBLIC MeshElements_ElementUserNumberGet,MeshElements_ElementUserNumberSet
   
   PUBLIC MeshTopology_ElementsUserNumbersAllSet
@@ -227,10 +219,6 @@ MODULE MESH_ROUTINES
 
   PUBLIC MeshTopology_NodesDestroy
   
-  PUBLIC MeshTopology_NodesGet
-
-  PUBLIC MESH_USER_NUMBER_FIND, MESH_USER_NUMBER_TO_MESH
-
   PUBLIC MESH_SURROUNDING_ELEMENTS_CALCULATE_SET
 
   PUBLIC MESH_EMBEDDING_CREATE,MESH_EMBEDDING_SET_CHILD_NODE_POSITION
@@ -414,7 +402,7 @@ CONTAINS
               CALL FlagError("Decomposition is already associated.",err,error,*999)
             ELSE
               NULLIFY(decomposition)
-              CALL DECOMPOSITION_USER_NUMBER_FIND(USER_NUMBER,MESH,decomposition,ERR,ERROR,*999)
+              CALL Decomposition_UserNumberFind(USER_NUMBER,MESH,decomposition,ERR,ERROR,*999)
               IF(ASSOCIATED(DECOMPOSITION)) THEN
                 LOCAL_ERROR="Decomposition number "//TRIM(NUMBER_TO_VSTRING(USER_NUMBER,"*",ERR,ERROR))// &
                   & " has already been created on mesh number "//TRIM(NUMBER_TO_VSTRING(MESH%USER_NUMBER,"*",ERR,ERROR))//"."
@@ -4172,51 +4160,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finds and returns in DECOMPOSITION a pointer to the decomposition identified by USER_NUMBER in the given MESH. If no decomposition with that USER_NUMBER exists DECOMPOSITION is left nullified.
-  SUBROUTINE DECOMPOSITION_USER_NUMBER_FIND(USER_NUMBER,MESH,DECOMPOSITION,ERR,ERROR,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the decomposition to find
-    TYPE(MESH_TYPE), POINTER :: MESH !<A pointer to the mesh containing the decomposition to find
-    TYPE(DECOMPOSITION_TYPE), POINTER :: DECOMPOSITION !<On return a pointer to the decomposition with the specified user number. If no decomposition with that user number exists then DECOMPOSITION is returned NULL.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    INTEGER(INTG) :: decomposition_idx
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("DECOMPOSITION_USER_NUMBER_FIND",ERR,ERROR,*999)
-
-    NULLIFY(DECOMPOSITION)
-    IF(ASSOCIATED(MESH)) THEN
-      IF(ASSOCIATED(MESH%DECOMPOSITIONS)) THEN
-        decomposition_idx=1
-        DO WHILE(decomposition_idx<=MESH%DECOMPOSITIONS%NUMBER_OF_DECOMPOSITIONS.AND..NOT.ASSOCIATED(DECOMPOSITION))
-          IF(MESH%DECOMPOSITIONS%DECOMPOSITIONS(decomposition_idx)%PTR%USER_NUMBER==USER_NUMBER) THEN
-            DECOMPOSITION=>MESH%DECOMPOSITIONS%DECOMPOSITIONS(decomposition_idx)%PTR
-          ELSE
-            decomposition_idx=decomposition_idx+1
-          ENDIF
-        ENDDO
-      ELSE
-        LOCAL_ERROR="The decompositions on mesh number "//TRIM(NUMBER_TO_VSTRING(MESH%USER_NUMBER,"*",ERR,ERROR))// &
-          & " are not associated."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Mesh is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("DECOMPOSITION_USER_NUMBER_FIND")
-    RETURN
-999 ERRORSEXITS("DECOMPOSITION_USER_NUMBER_FIND",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE DECOMPOSITION_USER_NUMBER_FIND
-
-  !
-  !================================================================================================================================
-  !
-
   !>Finalises the domain decompositions for a given mesh. \todo Pass in a pointer to the decompositions.
   SUBROUTINE DECOMPOSITIONS_FINALISE(MESH,ERR,ERROR,*)
 
@@ -6860,7 +6803,7 @@ CONTAINS
       ELSE
         NULLIFY(MESH)
         IF(ASSOCIATED(INTERFACE%MESHES)) THEN
-          CALL MESH_USER_NUMBER_FIND_GENERIC(USER_NUMBER,INTERFACE%MESHES,MESH,ERR,ERROR,*999)
+          CALL Mesh_UserNumberFindGeneric(USER_NUMBER,INTERFACE%MESHES,MESH,ERR,ERROR,*999)
           IF(ASSOCIATED(MESH)) THEN
             LOCAL_ERROR="Mesh number "//TRIM(NUMBER_TO_VSTRING(USER_NUMBER,"*",ERR,ERROR))// &
               & " has already been created on interface number "// &
@@ -6938,7 +6881,7 @@ CONTAINS
       ELSE
         NULLIFY(MESH)
         IF(ASSOCIATED(REGION%MESHES)) THEN
-          CALL MESH_USER_NUMBER_FIND_GENERIC(USER_NUMBER,REGION%MESHES,MESH,ERR,ERROR,*999)
+          CALL Mesh_UserNumberFindGeneric(USER_NUMBER,REGION%MESHES,MESH,ERR,ERROR,*999)
           IF(ASSOCIATED(MESH)) THEN
             LOCAL_ERROR="Mesh number "//TRIM(NUMBER_TO_VSTRING(USER_NUMBER,"*",ERR,ERROR))// &
               & " has already been created on region number "//TRIM(NUMBER_TO_VSTRING(REGION%USER_NUMBER,"*",ERR,ERROR))//"."
@@ -8035,57 +7978,6 @@ CONTAINS
 999 ERRORSEXITS("MESH_TOPOLOGY_ELEMENT_FINALISE",ERR,ERROR)
     RETURN 1
   END SUBROUTINE MESH_TOPOLOGY_ELEMENT_FINALISE
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns a pointer to the mesh elements for a given mesh component.
-  SUBROUTINE MESH_TOPOLOGY_ELEMENTS_GET(MESH,MESH_COMPONENT_NUMBER,ELEMENTS,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MESH_TYPE), POINTER :: MESH !<A pointer to the mesh to get the elements for
-    INTEGER(INTG), INTENT(IN) :: MESH_COMPONENT_NUMBER !<The mesh component number to get the elements for
-    TYPE(MeshElementsType), POINTER :: ELEMENTS !<On return, a pointer to the mesh elements
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
- 
-    ENTERS("MESH_TOPOLOGY_ELEMENTS_GET",ERR,ERROR,*998)
-    
-    IF(ASSOCIATED(MESH)) THEN
-      IF(MESH_COMPONENT_NUMBER>0.AND.MESH_COMPONENT_NUMBER<=MESH%NUMBER_OF_COMPONENTS) THEN
-        IF(ASSOCIATED(ELEMENTS)) THEN
-          CALL FlagError("Elements is already associated.",ERR,ERROR,*998)
-        ELSE
-          IF(ASSOCIATED(MESH%TOPOLOGY(MESH_COMPONENT_NUMBER)%PTR)) THEN
-            IF(ASSOCIATED(MESH%TOPOLOGY(MESH_COMPONENT_NUMBER)%PTR%ELEMENTS)) THEN
-              ELEMENTS=>MESH%TOPOLOGY(MESH_COMPONENT_NUMBER)%PTR%ELEMENTS
-            ELSE
-              CALL FlagError("Mesh topology elements is not associated",ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Mesh topology is not associated",ERR,ERROR,*999)
-          ENDIF
-        ENDIF
-      ELSE
-        LOCAL_ERROR="The specified mesh component number of "//TRIM(NUMBER_TO_VSTRING(MESH_COMPONENT_NUMBER,"*",ERR,ERROR))// &
-          & " is invalid. The component number must be between 1 and "// &
-          & TRIM(NUMBER_TO_VSTRING(MESH%NUMBER_OF_COMPONENTS,"*",ERR,ERROR))
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Mesh is not associated",ERR,ERROR,*998)
-    ENDIF
-
-    EXITS("MESH_TOPOLOGY_ELEMENTS_GET")
-    RETURN
-999 NULLIFY(ELEMENTS)
-998 ERRORSEXITS("MESH_TOPOLOGY_ELEMENTS_GET",ERR,ERROR)
-    RETURN 1
-    
-  END SUBROUTINE MESH_TOPOLOGY_ELEMENTS_GET
 
   !
   !================================================================================================================================
@@ -9795,57 +9687,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the mesh nodes for a given mesh component.
-  SUBROUTINE MeshTopology_NodesGet(mesh,meshComponentNumber,nodes,err,error,*)
-
-    !Argument variables
-    TYPE(MESH_TYPE), POINTER :: mesh !<A pointer to the mesh to get the nodes for
-    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to get the nodes for
-    TYPE(MeshNodesType), POINTER :: nodes !<On return, a pointer to the mesh nodes. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: localError
- 
-    ENTERS("MeshTopology_NodesGet",err,error,*998)
-    
-    IF(ASSOCIATED(mesh)) THEN
-      IF(meshComponentNumber>0.AND.meshComponentNumber<=mesh%NUMBER_OF_COMPONENTS) THEN
-        IF(ASSOCIATED(nodes)) THEN
-          CALL FlagError("Nodes is already associated.",err,error,*998)
-        ELSE
-          IF(ASSOCIATED(mesh%topology(meshComponentNumber)%ptr)) THEN
-            IF(ASSOCIATED(mesh%topology(meshComponentNumber)%ptr%nodes)) THEN
-              nodes=>mesh%topology(meshComponentNumber)%ptr%nodes
-            ELSE
-              CALL FlagError("Mesh topology nodes is not associated.",err,error,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Mesh topology is not associated.",err,error,*999)
-          ENDIF
-        ENDIF
-      ELSE
-        localError="The specified mesh component number of "//TRIM(NumberToVString(meshComponentNumber,"*",err,error))// &
-          & " is invalid. The component number must be between 1 and "// &
-          & TRIM(NumberToVString(mesh%NUMBER_OF_COMPONENTS,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Mesh is not associated",err,error,*998)
-    ENDIF
-
-    EXITS("MeshTopology_NodesGet")
-    RETURN
-999 NULLIFY(nodes)
-998 ERRORSEXITS("MeshTopology_NodesGet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE MeshTopology_NodesGet
-
-  !
-  !================================================================================================================================
-  !
-
   !>Finalises the given mesh topology node. 
   SUBROUTINE MeshTopology_NodeDerivativeFinalise(nodeDerivative,err,error,*)
 
@@ -10497,107 +10338,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finds and returns in MESH a pointer to the mesh identified by USER_NUMBER in the given list of MESHES. If no mesh with that number exits MESH is left nullified.
-  SUBROUTINE MESH_USER_NUMBER_FIND_GENERIC(USER_NUMBER,MESHES,MESH,ERR,ERROR,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the mesh to find
-    TYPE(MESHES_TYPE), POINTER :: MESHES !<The list of meshes containing the mesh.
-    TYPE(MESH_TYPE), POINTER :: MESH !<On return, a pointer to the mesh of the specified user number. In no mesh with the specified user number exists the pointer is returned NULL. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    INTEGER(INTG) :: mesh_idx
-
-    ENTERS("MESH_USER_NUMBER_FIND_GENERIC",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MESHES)) THEN
-      IF(ASSOCIATED(MESH)) THEN
-        CALL FlagError("Mesh is already associated.",ERR,ERROR,*999)
-      ELSE
-        NULLIFY(MESH)
-        mesh_idx=1
-        DO WHILE(mesh_idx<=MESHES%NUMBER_OF_MESHES.AND..NOT.ASSOCIATED(MESH))
-          IF(MESHES%MESHES(mesh_idx)%PTR%USER_NUMBER==USER_NUMBER) THEN
-            MESH=>MESHES%MESHES(mesh_idx)%PTR
-          ELSE
-            mesh_idx=mesh_idx+1
-          ENDIF
-        ENDDO
-      ENDIF
-    ELSE
-      CALL FlagError("Meshes is not associated",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("MESH_USER_NUMBER_FIND_GENERIC")
-    RETURN
-999 ERRORSEXITS("MESH_USER_NUMBER_FIND_GENERIC",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MESH_USER_NUMBER_FIND_GENERIC
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Finds and returns in MESH a pointer to the mesh identified by USER_NUMBER in the given INTERFACE. If no mesh with that number exits MESH is left nullified.
-  SUBROUTINE MESH_USER_NUMBER_FIND_INTERFACE(USER_NUMBER,INTERFACE,MESH,ERR,ERROR,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the mesh to find
-    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE !<A pointer to the interface containing the mesh
-    TYPE(MESH_TYPE), POINTER :: MESH !<On return, a pointer to the mesh of the specified user number. In no mesh with the specified user number exists the pointer is returned NULL. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-  
-    ENTERS("MESH_USER_NUMBER_FIND_INTERFACE",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(INTERFACE)) THEN
-      CALL MESH_USER_NUMBER_FIND_GENERIC(USER_NUMBER,INTERFACE%MESHES,MESH,ERR,ERROR,*999)
-    ELSE
-      CALL FlagError("Interface is not associated",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("MESH_USER_NUMBER_FIND_INTERFACE")
-    RETURN
-999 ERRORSEXITS("MESH_USER_NUMBER_FIND_INTERFACE",ERR,ERROR)
-    RETURN 1
-    
-  END SUBROUTINE MESH_USER_NUMBER_FIND_INTERFACE
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Finds and returns in MESH a pointer to the mesh identified by USER_NUMBER in the given REGION. If no mesh with that number exits MESH is left nullified.
-  SUBROUTINE MESH_USER_NUMBER_FIND_REGION(USER_NUMBER,REGION,MESH,ERR,ERROR,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the mesh to find
-    TYPE(REGION_TYPE), POINTER :: REGION !<The region containing the mesh
-    TYPE(MESH_TYPE), POINTER :: MESH !<On return, a pointer to the mesh of the specified user number. In no mesh with the specified user number exists the pointer is returned NULL.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    
-    ENTERS("MESH_USER_NUMBER_FIND_REGION",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(REGION)) THEN
-      CALL MESH_USER_NUMBER_FIND_GENERIC(USER_NUMBER,REGION%MESHES,MESH,ERR,ERROR,*999)
-    ELSE
-      CALL FlagError("Region is not associated",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("MESH_USER_NUMBER_FIND_REGION")
-    RETURN
-999 ERRORSEXITS("MESH_USER_NUMBER_FIND_REGION",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MESH_USER_NUMBER_FIND_REGION
-
-  !
-  !================================================================================================================================
-  !
-
   !>Finalises the meshes and deallocates all memory
   SUBROUTINE MESHES_FINALISE(MESHES,ERR,ERROR,*)
 
@@ -10964,74 +10704,6 @@ CONTAINS
     RETURN 1
   END SUBROUTINE MESH_EMBEDDING_SET_GAUSS_POINT_DATA
 
-
-  !
-  !================================================================================================================================
-  !
-
-  !> Find the mesh with the given user number, or throw an error if it does not exist.
-  SUBROUTINE MESH_USER_NUMBER_TO_MESH( USER_NUMBER, REGION, MESH, ERR, ERROR, * )
-    !Arguments
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the mesh to find
-    TYPE(REGION_TYPE), POINTER :: REGION !<The region containing the mesh
-    TYPE(MESH_TYPE), POINTER :: MESH !<On exit, a pointer to the mesh with the specified user number.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code.
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-
-    !Locals
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MESH_USER_NUMBER_TO_MESH", ERR, ERROR, *999 )
-
-    NULLIFY( MESH )
-    CALL MESH_USER_NUMBER_FIND( USER_NUMBER, REGION, MESH, ERR, ERROR, *999 )
-    IF( .NOT.ASSOCIATED( MESH ) ) THEN
-      LOCAL_ERROR = "A mesh with an user number of "//TRIM(NumberToVString( USER_NUMBER, "*", ERR, ERROR ))// &
-        & " does not exist on region number "//TRIM(NumberToVString( REGION%USER_NUMBER, "*", ERR, ERROR ))//"."
-      CALL FlagError( LOCAL_ERROR, ERR, ERROR, *999 )
-    ENDIF
-
-    EXITS( "MESH_USER_NUMBER_TO_MESH" )
-    RETURN
-999 ERRORSEXITS( "MESH_USER_NUMBER_TO_MESH", ERR, ERROR )
-    RETURN 1
-
-  END SUBROUTINE MESH_USER_NUMBER_TO_MESH
-
-  !
-  !================================================================================================================================
-  !
-!!\todo THIS SHOULD REALLY BE MESH_USER_NUMBER_TO_DECOMPOSITION
-  
-  !> Find the decomposition with the given user number, or throw an error if it does not exist.
-  SUBROUTINE DECOMPOSITION_USER_NUMBER_TO_DECOMPOSITION( USER_NUMBER, MESH, DECOMPOSITION, ERR, ERROR, * )
-    !Arguments
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the decomposition to find
-    TYPE(MESH_TYPE), POINTER :: MESH !<The mesh containing the decomposition
-    TYPE(DECOMPOSITION_TYPE), POINTER :: DECOMPOSITION !<On exit, a pointer to the decomposition with the specified user number.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code.
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-
-    !Locals
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("DECOMPOSITION_USER_NUMBER_TO_DECOMPOSITION", ERR, ERROR, *999 )
-
-    NULLIFY( DECOMPOSITION )
-    CALL DECOMPOSITION_USER_NUMBER_FIND( USER_NUMBER, MESH, DECOMPOSITION, ERR, ERROR, *999 )
-    IF( .NOT.ASSOCIATED( DECOMPOSITION ) ) THEN
-      LOCAL_ERROR = "A decomposition with an user number of "//TRIM(NumberToVString( USER_NUMBER, "*", ERR, ERROR ))// &
-        & " does not exist on mesh number "//TRIM(NumberToVString( MESH%USER_NUMBER, "*", ERR, ERROR ))//"."
-      CALL FlagError( LOCAL_ERROR, ERR, ERROR, *999 )
-    ENDIF
-
-    EXITS( "DECOMPOSITION_USER_NUMBER_TO_DECOMPOSITION" )
-    RETURN
-999 ERRORS( "DECOMPOSITION_USER_NUMBER_TO_DECOMPOSITION", ERR, ERROR )
-    EXITS( "DECOMPOSITION_USER_NUMBER_TO_DECOMPOSITION")
-    RETURN 1
-
-  END SUBROUTINE DECOMPOSITION_USER_NUMBER_TO_DECOMPOSITION
 
   !
   !================================================================================================================================

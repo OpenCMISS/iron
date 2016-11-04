@@ -48,6 +48,7 @@ MODULE CMISS_CELLML
   USE ISO_C_BINDING
 
   USE BASE_ROUTINES
+  USE CellMLAccessRoutines
   
 #ifdef WITH_CELLML
   USE CELLML_MODEL_DEFINITION
@@ -191,8 +192,6 @@ MODULE CMISS_CELLML
 
   PUBLIC CELLML_GENERATE
 
-  PUBLIC CELLML_USER_NUMBER_FIND
-
   PUBLIC CELLML_ENVIRONMENTS_FINALISE,CELLML_ENVIRONMENTS_INITIALISE
   
 CONTAINS
@@ -221,8 +220,6 @@ CONTAINS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
     ENTERS("CELLML_CELLML_TO_FIELD_UPDATE",ERR,ERROR,*999)
-
-#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       IF(ASSOCIATED(CELLML%MODELS_FIELD)) THEN
@@ -553,12 +550,6 @@ CONTAINS
       CALL FlagError("CellML environment is not associated.",ERR,ERROR,*999)
     END IF
 
-#else
-
-    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
-
-#endif
-
     EXITS("CELLML_CELLML_TO_FIELD_UPDATE")
     RETURN
 999 ERRORSEXITS("CELLML_CELLML_TO_FIELD_UPDATE",ERR,ERROR)
@@ -589,8 +580,6 @@ CONTAINS
     NULLIFY(NEW_CELLML)
 
     ENTERS("CELLML_CREATE_START",ERR,ERROR,*999)
-
-#ifdef WITH_CELLML
 
     IF(ASSOCIATED(REGION)) THEN
       IF(ASSOCIATED(CELLML)) THEN
@@ -632,12 +621,6 @@ CONTAINS
       CALL FlagError("Region is not associated.",ERR,ERROR,*999)
     ENDIF
 
-#else
-
-    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
-
-#endif
-
     EXITS("CELLML_CREATE_START")
     RETURN
 999 IF(ALLOCATED(NEW_CELLML_ENVIRONMENTS)) DEALLOCATE(NEW_CELLML_ENVIRONMENTS)
@@ -664,8 +647,6 @@ CONTAINS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
     ENTERS("CELLML_CREATE_FINISH",ERR,ERROR,*999)
-
-#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       IF(CELLML%CELLML_FINISHED) THEN
@@ -701,12 +682,6 @@ CONTAINS
       CALL FlagError("CellML is not associated.",ERR,ERROR,*999)
     ENDIF
 
-#else
-
-    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
-
-#endif
-
     EXITS("CELLML_CREATE_FINISH")
     RETURN
 999 ERRORSEXITS("CELLML_CREATE_FINISH",ERR,ERROR)
@@ -728,8 +703,6 @@ CONTAINS
     TYPE(CELLML_PTR_TYPE), ALLOCATABLE :: NEW_CELLML_ENVIRONMENTS(:)
     
     ENTERS("CELLML_DESTROY",ERR,ERROR,*999)
-
-#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
 
@@ -761,12 +734,6 @@ CONTAINS
     ELSE
       CALL FlagError("CellML is not associated.",ERR,ERROR,*999)
     END IF
-
-#else
-
-    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
-
-#endif
 
     EXITS("CELLML_DESTROY")
     RETURN
@@ -800,8 +767,6 @@ CONTAINS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
     ENTERS("CELLML_FIELD_TO_CELLML_UPDATE",ERR,ERROR,*999)
-
-#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       IF(ASSOCIATED(CELLML%MODELS_FIELD)) THEN
@@ -1131,12 +1096,6 @@ CONTAINS
       CALL FlagError("CellML environment is not associated.",ERR,ERROR,*999)
     END IF
 
-#else
-
-    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
-
-#endif
-
     EXITS("CELLML_FIELD_TO_CELLML_UPDATE")
     RETURN
 999 ERRORSEXITS("CELLML_FIELD_TO_CELLML_UPDATE",ERR,ERROR)
@@ -1158,8 +1117,6 @@ CONTAINS
     
     ENTERS("CELLML_FINALISE",ERR,ERROR,*999)
 
-#ifdef WITH_CELLML
-
     IF(ASSOCIATED(CELLML)) THEN
       IF(ALLOCATED(CELLML%MODELS)) THEN
         DO model_idx=1,SIZE(CELLML%MODELS,1)
@@ -1174,12 +1131,6 @@ CONTAINS
       CALL CELLML_PARAMETERS_FIELD_FINALISE(CELLML%PARAMETERS_FIELD,ERR,ERROR,*999)
       DEALLOCATE(CELLML)
     ENDIF
-
-#else
-
-    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
-
-#endif
 
     EXITS("CELLML_FINALISE")
     RETURN
@@ -4321,62 +4272,6 @@ CONTAINS
 999 ERRORSEXITS("CELLML_GENERATE",ERR,ERROR)
     RETURN 1
   END SUBROUTINE CELLML_GENERATE
-
-  !
-  !=================================================================================================================================
-  !
-
-  !>Finds and returns in CELLML a pointer to the CellML environment identified by USER_NUMBER on a region. If no CellML environment with that USER_NUMBER exists CELLML is left nullified.
-  SUBROUTINE CELLML_USER_NUMBER_FIND(USER_NUMBER,REGION,CELLML,ERR,ERROR,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number to find.
-    TYPE(REGION_TYPE), POINTER :: REGION !<A pointer to the region to find the CellML user number.
-    TYPE(CELLML_TYPE), POINTER :: CELLML !<On return a pointer to the CellML environment with the given user number. If no CellML environment with that user number exists then the pointer is returned as NULL. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    INTEGER(INTG) :: cellml_idx
-    TYPE(CELLML_ENVIRONMENTS_TYPE), POINTER :: CELLML_ENVIRONMENTS
-
-    ENTERS("CELLML_USER_NUMBER_FIND",ERR,ERROR,*999)
-
-#ifdef WITH_CELLML
-
-    IF(ASSOCIATED(REGION)) THEN
-      IF(ASSOCIATED(CELLML)) THEN
-        CALL FlagError("CellML is already associated.",ERR,ERROR,*999)
-      ELSE
-        NULLIFY(CELLML)
-        CELLML_ENVIRONMENTS=>REGION%CELLML_ENVIRONMENTS        
-        IF(ASSOCIATED(CELLML_ENVIRONMENTS)) THEN
-          cellml_idx=1
-          DO WHILE(cellml_idx<=CELLML_ENVIRONMENTS%NUMBER_OF_ENVIRONMENTS.AND..NOT.ASSOCIATED(CELLML))
-            IF(CELLML_ENVIRONMENTS%ENVIRONMENTS(cellml_idx)%PTR%USER_NUMBER==USER_NUMBER) THEN
-              CELLML=>CELLML_ENVIRONMENTS%ENVIRONMENTS(cellml_idx)%PTR
-            ELSE
-              cellml_idx=cellml_idx+1
-            ENDIF
-          ENDDO
-        ELSE
-          CALL FlagError("Region CellML environments is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Region is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-#else
-
-    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
-
-#endif
-
-    EXITS("CELLML_USER_NUMBER_FIND")
-    RETURN
-999 ERRORSEXITS("CELLML_USER_NUMBER_FIND",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE CELLML_USER_NUMBER_FIND
 
   !
   !=================================================================================================================================

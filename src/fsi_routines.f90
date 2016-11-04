@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -42,14 +42,13 @@
 !>
 
 !>This module handles all routines pertaining to finite elasticity coupled with navier stokes for fsi problems
-
-
 MODULE FSI_ROUTINES
 
   USE BASE_ROUTINES
   USE BASIS_ROUTINES
   USE CONSTANTS
   USE CONTROL_LOOP_ROUTINES
+  USE ControlLoopAccessRoutines
   USE EQUATIONS_ROUTINES
   USE EQUATIONS_MAPPING_ROUTINES
   USE EQUATIONS_MATRICES_ROUTINES

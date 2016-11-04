@@ -53,6 +53,7 @@ MODULE EQUATIONS_SET_ROUTINES
   USE COMP_ENVIRONMENT
   USE CONSTANTS
   USE COORDINATE_ROUTINES
+  USE EquationsSetAccessRoutines
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
   USE FittingRoutines
@@ -151,8 +152,6 @@ MODULE EQUATIONS_SET_ROUTINES
 
   PUBLIC EquationsSet_DerivedVariableCalculate,EquationsSet_DerivedVariableSet
 
-  PUBLIC EQUATIONS_SET_USER_NUMBER_FIND
-  
   PUBLIC EQUATIONS_SET_LOAD_INCREMENT_APPLY
   
   PUBLIC EQUATIONS_SET_ANALYTIC_USER_PARAM_SET,EQUATIONS_SET_ANALYTIC_USER_PARAM_GET
@@ -6371,55 +6370,6 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsSet_StrainInterpolateXi
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Finds and returns in EQUATIONS_SET a pointer to the equations set identified by USER_NUMBER in the given REGION. If no equations set with that USER_NUMBER exists EQUATIONS_SET is left nullified.
-  SUBROUTINE EQUATIONS_SET_USER_NUMBER_FIND(USER_NUMBER,REGION,EQUATIONS_SET,ERR,ERROR,*)
-
-    !Argument variables 
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number to find the equation set
-    TYPE(REGION_TYPE), POINTER :: REGION !<The region to find the equations set in
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<On return, a pointer to the equations set if an equations set with the specified user number exists in the given region. If no equation set with the specified number exists a NULL pointer is returned. The pointer must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    INTEGER(INTG) :: equations_set_idx
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("EQUATIONS_SET_USER_NUMBER_FIND",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(REGION)) THEN
-      IF(ASSOCIATED(EQUATIONS_SET)) THEN
-        CALL FlagError("Equations set is already associated.",ERR,ERROR,*999)
-      ELSE
-        NULLIFY(EQUATIONS_SET)
-        IF(ASSOCIATED(REGION%EQUATIONS_SETS)) THEN
-          equations_set_idx=1
-          DO WHILE(equations_set_idx<=REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS.AND..NOT.ASSOCIATED(EQUATIONS_SET))
-            IF(REGION%EQUATIONS_SETS%EQUATIONS_SETS(equations_set_idx)%PTR%USER_NUMBER==USER_NUMBER) THEN
-              EQUATIONS_SET=>REGION%EQUATIONS_SETS%EQUATIONS_SETS(equations_set_idx)%PTR
-            ELSE
-              equations_set_idx=equations_set_idx+1
-            ENDIF
-          ENDDO
-        ELSE
-          LOCAL_ERROR="The equations sets on region number "//TRIM(NUMBER_TO_VSTRING(REGION%USER_NUMBER,"*",ERR,ERROR))// &
-            & " are not associated."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Region is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("EQUATIONS_SET_USER_NUMBER_FIND")
-    RETURN
-999 ERRORSEXITS("EQUATIONS_SET_USER_NUMBER_FIND",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE EQUATIONS_SET_USER_NUMBER_FIND
 
   !
   !================================================================================================================================

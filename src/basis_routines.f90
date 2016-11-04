@@ -45,6 +45,7 @@
 MODULE BASIS_ROUTINES
 
   USE BASE_ROUTINES
+  USE BasisAccessRoutines
   USE CONSTANTS
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
@@ -156,8 +157,6 @@ MODULE BASIS_ROUTINES
   
   !Module variables
 
-  TYPE(BASIS_FUNCTIONS_TYPE) :: BASIS_FUNCTIONS !<The tree of defined basis functions
-  
   !Interfaces
 
   INTERFACE Basis_CollapsedXiGet
@@ -367,11 +366,6 @@ MODULE BASIS_ROUTINES
     MODULE PROCEDURE BASIS_LHTP_BASIS_EVALUATE_DP
   END INTERFACE Basis_LHTPBasisEvaluate
 
-  INTERFACE Basis_UserNumberFind
-    MODULE PROCEDURE BASIS_USER_NUMBER_FIND
-  END INTERFACE Basis_UserNumberFind
-
-
   PUBLIC BASIS_LAGRANGE_HERMITE_TP_TYPE,BASIS_SIMPLEX_TYPE,BASIS_SERENDIPITY_TYPE,BASIS_AUXILLIARY_TYPE,BASIS_B_SPLINE_TP_TYPE, &
     & BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE,BASIS_EXTENDED_LAGRANGE_TP_TYPE
 
@@ -387,7 +381,7 @@ MODULE BASIS_ROUTINES
   PUBLIC BASIS_GAUSS_LEGENDRE_QUADRATURE,BASIS_GAUSS_LAGUERRE_QUADRATURE,BASIS_GUASS_HERMITE_QUADRATURE,&
     & BASIS_ADAPTIVE_GAUSS_LEGENDRE_QUADRATURE,BASIS_GAUSS_SIMPLEX_QUADRATURE
 
-  PUBLIC BASIS_XI_COLLAPSED,BASIS_COLLAPSED_AT_XI0,BASIS_COLLAPSED_AT_XI1,BASIS_NOT_COLLAPSED, BASIS_FUNCTIONS
+  PUBLIC BASIS_XI_COLLAPSED,BASIS_COLLAPSED_AT_XI0,BASIS_COLLAPSED_AT_XI1,BASIS_NOT_COLLAPSED
 
   PUBLIC Basis_BoundaryXiToXi
   
@@ -445,10 +439,6 @@ MODULE BASIS_ROUTINES
 
   PUBLIC Bases_Finalise,Bases_Initialise
 
-  PUBLIC BASIS_USER_NUMBER_FIND
-
-  PUBLIC Basis_UserNumberFind
-
   PUBLIC BASIS_COLLAPSED_XI_GET
 
   PUBLIC Basis_CollapsedXiGet
@@ -499,12 +489,12 @@ CONTAINS
     ENTERS("BASES_FINALISE",ERR,ERROR,*999)
 
     !Destroy any created basis functions
-    DO WHILE(BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS>0)
-      CALL BASIS_DESTROY(BASIS_FUNCTIONS%BASES(1)%PTR,ERR,ERROR,*999)
+    DO WHILE(basisFunctions%NUMBER_BASIS_FUNCTIONS>0)
+      CALL BASIS_DESTROY(basisFunctions%BASES(1)%PTR,ERR,ERROR,*999)
     ENDDO !nb
     !Destroy basis functions and deallocated any memory allocated
-    BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS=0
-    IF(ASSOCIATED(BASIS_FUNCTIONS%BASES)) DEALLOCATE(BASIS_FUNCTIONS%BASES)
+    basisFunctions%NUMBER_BASIS_FUNCTIONS=0
+    IF(ASSOCIATED(basisFunctions%BASES)) DEALLOCATE(basisFunctions%BASES)
     
     EXITS("BASES_FINALISE")
     RETURN
@@ -527,8 +517,8 @@ CONTAINS
 
     ENTERS("BASES_INITIALISE",ERR,ERROR,*999)
 
-    BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS=0    
-    NULLIFY(BASIS_FUNCTIONS%BASES)
+    basisFunctions%NUMBER_BASIS_FUNCTIONS=0    
+    NULLIFY(basisFunctions%BASES)
    
     EXITS("BASES_INITIALISE")
     RETURN
@@ -789,18 +779,18 @@ CONTAINS
         CALL FlagError("Basis number is already defined",ERR,ERROR,*999)
       ELSE
         !Allocate new basis function and add it to the basis functions
-        ALLOCATE(NEW_BASES(BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS+1),STAT=ERR)
+        ALLOCATE(NEW_BASES(basisFunctions%NUMBER_BASIS_FUNCTIONS+1),STAT=ERR)
         IF(ERR/=0) CALL FlagError("Could not allocate NEW_BASES",ERR,ERROR,*999)
         ALLOCATE(NEW_BASIS,STAT=ERR)
         IF(ERR/=0) CALL FlagError("Could not allocate NEW_BASIS",ERR,ERROR,*999)
         CALL BASIS_INITIALISE(NEW_BASIS,ERR,ERROR,*999)
-        DO nb=1,BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS
-          NEW_BASES(nb)%PTR=>BASIS_FUNCTIONS%BASES(nb)%PTR
+        DO nb=1,basisFunctions%NUMBER_BASIS_FUNCTIONS
+          NEW_BASES(nb)%PTR=>basisFunctions%BASES(nb)%PTR
         ENDDO !nb
-        BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS=BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS+1
-        NEW_BASES(BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS)%PTR=>NEW_BASIS
-        IF(ASSOCIATED(BASIS_FUNCTIONS%BASES)) DEALLOCATE(BASIS_FUNCTIONS%BASES)
-        BASIS_FUNCTIONS%BASES=>NEW_BASES
+        basisFunctions%NUMBER_BASIS_FUNCTIONS=basisFunctions%NUMBER_BASIS_FUNCTIONS+1
+        NEW_BASES(basisFunctions%NUMBER_BASIS_FUNCTIONS)%PTR=>NEW_BASIS
+        IF(ASSOCIATED(basisFunctions%BASES)) DEALLOCATE(basisFunctions%BASES)
+        basisFunctions%BASES=>NEW_BASES
         !Initialise the new basis function pointers
         NEW_BASIS%NUMBER_OF_SUB_BASES=0
         NULLIFY(NEW_BASIS%SUB_BASES)
@@ -809,7 +799,7 @@ CONTAINS
         NEW_BASIS%BASIS_FINISHED=.FALSE.
         NEW_BASIS%USER_NUMBER=USER_NUMBER
         NEW_BASIS%FAMILY_NUMBER=0
-        NEW_BASIS%GLOBAL_NUMBER=BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS
+        NEW_BASIS%GLOBAL_NUMBER=basisFunctions%NUMBER_BASIS_FUNCTIONS
         !Set the default basis parameters
         NEW_BASIS%TYPE=BASIS_LAGRANGE_HERMITE_TP_TYPE
         NEW_BASIS%NUMBER_OF_XI=3
@@ -1587,24 +1577,24 @@ CONTAINS
           IF(ASSOCIATED(BASIS%PARENT_BASIS%SUB_BASES)) DEALLOCATE(BASIS%PARENT_BASIS%SUB_BASES)
           BASIS%PARENT_BASIS%SUB_BASES=>NEW_SUB_BASES
         ELSE
-          !Master basis function - delete this instance from BASIS_FUNCTIONS
+          !Master basis function - delete this instance from basisFunctions
           NULLIFY(NEW_SUB_BASES)
-          IF(BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS>1) THEN
+          IF(basisFunctions%NUMBER_BASIS_FUNCTIONS>1) THEN
             !If there is more than one basis defined then remove this instance from the basis functions
-            ALLOCATE(NEW_SUB_BASES(BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS-1),STAT=ERR)
+            ALLOCATE(NEW_SUB_BASES(basisFunctions%NUMBER_BASIS_FUNCTIONS-1),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate new sub-bases",ERR,ERROR,*999)
             count=0
-            DO nb=1,BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS
-              IF(BASIS_FUNCTIONS%BASES(nb)%PTR%USER_NUMBER/=BASIS%USER_NUMBER.AND. &
-                & BASIS_FUNCTIONS%BASES(nb)%PTR%FAMILY_NUMBER==0) THEN
+            DO nb=1,basisFunctions%NUMBER_BASIS_FUNCTIONS
+              IF(basisFunctions%BASES(nb)%PTR%USER_NUMBER/=BASIS%USER_NUMBER.AND. &
+                & basisFunctions%BASES(nb)%PTR%FAMILY_NUMBER==0) THEN
                 count=count+1
-                NEW_SUB_BASES(count)%PTR=>BASIS_FUNCTIONS%BASES(nb)%PTR
+                NEW_SUB_BASES(count)%PTR=>basisFunctions%BASES(nb)%PTR
               ENDIF
             ENDDO
           ENDIF
-          IF(ASSOCIATED(BASIS_FUNCTIONS%BASES)) DEALLOCATE(BASIS_FUNCTIONS%BASES)
-          BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS=BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS-1
-          BASIS_FUNCTIONS%BASES=>NEW_SUB_BASES
+          IF(ASSOCIATED(basisFunctions%BASES)) DEALLOCATE(basisFunctions%BASES)
+          basisFunctions%NUMBER_BASIS_FUNCTIONS=basisFunctions%NUMBER_BASIS_FUNCTIONS-1
+          basisFunctions%BASES=>NEW_SUB_BASES
         ENDIF
 
         CALL BASIS_FINALISE(BASIS,ERR,ERROR,*999)
@@ -1627,55 +1617,6 @@ CONTAINS
 999 ERRORSEXITS("BASIS_FAMILY_DESTROY",ERR,ERROR)
     RETURN 1
   END SUBROUTINE BASIS_FAMILY_DESTROY
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Finds and returns in BASIS a pointer to the basis with the given USER_NUMBER and FAMILY_NUMBER. If no basis with that
-  !>number and family number exists then BASIS is returned nullified \see BASIS_ROUTINES::BASIS_USER_NUMBER_FIND
-  RECURSIVE SUBROUTINE BASIS_FAMILY_NUMBER_FIND(USER_NUMBER,FAMILY_NUMBER,BASIS,ERR,ERROR,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the basis to find
-    INTEGER(INTG), INTENT(IN) :: FAMILY_NUMBER !<The family number of the basis to find
-    TYPE(BASIS_TYPE), POINTER :: BASIS !<On exit, A pointer to the basis. If no basis with the specified user and family numbers can be found the pointer is not associated.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    INTEGER(INTG) :: nb,nsb
-    TYPE(BASIS_TYPE), POINTER :: SUB_BASIS
-
-    ENTERS("BASIS_FAMILY_NUMBER_FIND",ERR,ERROR,*999)
-    
-    NULLIFY(BASIS)      
-    nb=1
-    DO WHILE(nb<=BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS.AND..NOT.ASSOCIATED(BASIS))
-      IF(BASIS_FUNCTIONS%BASES(nb)%PTR%USER_NUMBER==USER_NUMBER) THEN
-        IF(FAMILY_NUMBER==0) THEN
-          BASIS=>BASIS_FUNCTIONS%BASES(nb)%PTR
-        ELSE
-!!TODO: \todo This only works for one level of sub-bases at the moment
-          nsb=1
-          DO WHILE(nsb<=BASIS_FUNCTIONS%BASES(nb)%PTR%NUMBER_OF_SUB_BASES.AND..NOT.ASSOCIATED(BASIS))
-            SUB_BASIS=>BASIS_FUNCTIONS%BASES(nb)%PTR%SUB_BASES(nsb)%PTR
-            IF(SUB_BASIS%FAMILY_NUMBER==FAMILY_NUMBER) THEN
-              BASIS=>SUB_BASIS
-            ELSE
-              nsb=nsb+1
-            ENDIF
-          ENDDO
-        ENDIF
-      ELSE
-        nb=nb+1
-      ENDIF
-    END DO
-  
-    EXITS("BASIS_FAMILY_NUMBER_FIND")
-    RETURN
-999 ERRORSEXITS("BASIS_FAMILY_NUMBER_FIND",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE BASIS_FAMILY_NUMBER_FIND
 
   !
   !================================================================================================================================
@@ -6521,31 +6462,6 @@ CONTAINS
 999 ERRORSEXITS("BASIS_COLLAPSED_XI_SET_PTR",ERR,ERROR)
     RETURN 1
   END SUBROUTINE BASIS_COLLAPSED_XI_SET_PTR
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Finds and returns in BASIS a pointer to the basis with the number given in USER_NUMBER. If no basis with that number
-  !>exits BASIS is left nullified.
-  SUBROUTINE BASIS_USER_NUMBER_FIND(USER_NUMBER,BASIS,ERR,ERROR,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the basis to find.
-    TYPE(BASIS_TYPE), POINTER :: BASIS !<On exit, a pointer to the found basis. If no basis with the given user number exists the pointer is NULL.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-
-    ENTERS("BASIS_USER_NUMBER_FIND",ERR,ERROR,*999)
-    
-    CALL BASIS_FAMILY_NUMBER_FIND(USER_NUMBER,0,BASIS,ERR,ERROR,*999)
-  
-    EXITS("BASIS_USER_NUMBER_FIND")
-    RETURN
-999 ERRORSEXITS("BASIS_USER_NUMBER_FIND",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE BASIS_USER_NUMBER_FIND
 
   !
   !================================================================================================================================

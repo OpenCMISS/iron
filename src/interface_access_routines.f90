@@ -47,7 +47,9 @@ MODULE InterfaceAccessRoutines
   USE BASE_ROUTINES
   USE DataPointAccessRoutines
   USE FieldAccessRoutines
+  USE InterfaceConditionAccessRoutines
   USE Kinds
+  USE MeshAccessRoutines
   USE Strings
   USE Types
   
@@ -90,6 +92,10 @@ MODULE InterfaceAccessRoutines
   PUBLIC INTERFACE_DATA_POINTS_GET
 
   PUBLIC Interface_FieldGet
+
+  PUBLIC Interface_InterfaceConditionGet
+
+  PUBLIC Interface_MeshGet
 
   PUBLIC Interface_NodesGet
 
@@ -213,6 +219,84 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Interface_FieldGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to a interface condition for a given user number in an interface. \see OPENCMISS::Iron::cmfe_Interface_InterfaceConditionGet
+  SUBROUTINE Interface_InterfaceConditionGet(interface,userNumber,interfaceCondition,err,error,*)
+
+    !Argument variables
+    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE !<A pointer to the interface to get the interface condition for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the interface condition to get.
+    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<On exit, a pointer to the interface condition for the interface. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Interface_InterfaceConditionGet",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*998)
+    IF(.NOT.interface%INTERFACE_FINISHED) CALL FlagError("Interface has not been finished.",err,error,*998)
+    IF(ASSOCIATED(interfaceCondition)) CALL FlagError("InterfaceCondition is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(INTERFACE%INTERFACE_CONDITIONS)) &
+      & CALL FlagError("Interface interface conditions is not associated.",err,error,*998)
+
+    NULLIFY(interfaceCondition)
+    CALL InterfaceCondition_UserNumberFind(userNumber,interface,interfaceCondition,err,error,*999)
+    IF(.NOT.ASSOCIATED(interfaceCondition)) THEN
+      localError="An interface Condition with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
+        & " do not exist on interface number "//TRIM(NumberToVString(interface%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("Interface_InterfaceConditionGet")
+    RETURN
+999 NULLIFY(interfaceCondition)
+998 ERRORSEXITS("Interface_InterfaceConditionGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Interface_InterfaceConditionGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the mesh for a given user number in a interface. \see OPENCMISS::Iron::cmfe_Interface_MeshGet
+  SUBROUTINE Interface_MeshGet(interface,userNumber,mesh,err,error,*)
+
+    !Argument variables
+    TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer to the interface to get the mesh for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the mesh to get.
+    TYPE(MESH_TYPE), POINTER :: mesh !<On exit, a pointer to the mesh for the interface. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Interface_MeshGet",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*998)
+    IF(.NOT.interface%INTERFACE_FINISHED) CALL FlagError("Interface has not been finished.",err,error,*998)
+    IF(ASSOCIATED(mesh)) CALL FlagError("Mesh is already associated.",err,error,*998)
+    
+    NULLIFY(mesh)
+    CALL Mesh_UserNumberFind(userNumber,interface,mesh,err,error,*999)
+    IF(.NOT.ASSOCIATED(mesh)) THEN
+      localError="A mesh with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
+        & " does not exist on interface number "//TRIM(NumberToVString(interface%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Interface_MeshGet")
+    RETURN
+999 NULLIFY(mesh)
+998 ERRORSEXITS("Interface_MeshGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Interface_MeshGet
 
   !
   !================================================================================================================================

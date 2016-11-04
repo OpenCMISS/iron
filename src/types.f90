@@ -270,6 +270,12 @@ MODULE TYPES
     TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: PTR !<A pointer to the coordinate system
   END TYPE COORDINATE_SYSTEM_PTR_TYPE
 
+  !>Contains information on the list of coordinate systems
+  TYPE CoordinateSystemsType
+    INTEGER(INTG) :: numberOfCoordinateSystems !<The number of coordinate systems defined
+    TYPE(COORDINATE_SYSTEM_PTR_TYPE), POINTER :: coordinateSystems(:) !<coordinateSystems(coordinateSystemIdx). The coordinateSystemIdx'th coordinate system.
+  END TYPE CoordinateSystemsType
+  
   !
   !================================================================================================================================
   !
@@ -615,7 +621,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE GENERATED_MESH_TYPE
     INTEGER(INTG) :: USER_NUMBER !<The user number of the generated mesh. The user number must be unique.
     INTEGER(INTG) :: GLOBAL_NUMBER !<The corresponding global number for the generated mesh.
-    TYPE(GENERATED_MESHES_TYPE), POINTER :: GENERATED_MESHES !<Is .TRUE. if the generated mesh has finished being created, .FALSE. if not.
+    TYPE(GeneratedMeshesType), POINTER :: generatedMeshes !<Is .TRUE. if the generated mesh has finished being created, .FALSE. if not.
     LOGICAL :: GENERATED_MESH_FINISHED !<Is .TRUE. if the generated mesh has finished being created, .FALSE. if not.
     TYPE(REGION_TYPE), POINTER :: REGION !<A pointer to the region containing the generated mesh. If the generated mesh is in an interface rather than a region then this pointer will be NULL and the interface pointer should be used.
     TYPE(INTERFACE_TYPE), POINTER :: INTERFACE !<A pointer to the interface containing the generated mesh. If the generated mesh is in a region rather than an interface then this pointer will be NULL and the interface pointer should be used.
@@ -632,12 +638,12 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   END TYPE GENERATED_MESH_PTR_TYPE
        
   !>Contains information on the generated meshes defined on a region.
-  TYPE GENERATED_MESHES_TYPE
-    TYPE(REGION_TYPE), POINTER :: REGION !<A pointer to the region containing the generated meshes. If the generated meshes are in an interface rather than a region then this pointer will be NULL and the interface pointer should be used.
-    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE !<A pointer to the interface containing the generated meshes. If the generated meshes are in a region rather than an interface then this pointer will be NULL and the interface pointer should be used.
-    INTEGER(INTG) :: NUMBER_OF_GENERATED_MESHES !<The number of generated meshes defined.
-    TYPE(GENERATED_MESH_PTR_TYPE), POINTER :: GENERATED_MESHES(:) !<The array of pointers to the generated meshes.
-   END TYPE GENERATED_MESHES_TYPE
+  TYPE GeneratedMeshesType
+    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region containing the generated meshes. If the generated meshes are in an interface rather than a region then this pointer will be NULL and the interface pointer should be used.
+    TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer to the interface containing the generated meshes. If the generated meshes are in a region rather than an interface then this pointer will be NULL and the interface pointer should be used.
+    INTEGER(INTG) :: numberOfGeneratedMeshes !<The number of generated meshes defined.
+    TYPE(GENERATED_MESH_PTR_TYPE), POINTER :: generatedMeshes(:) !<The array of pointers to the generated meshes.
+  END TYPE GeneratedMeshesType
   
   !
   !================================================================================================================================
@@ -2282,7 +2288,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(DataPointSetsType), POINTER :: dataPointSets  !<A pointer to the data points defined in an interface.
     TYPE(NODES_TYPE), POINTER :: NODES !<A pointer to the nodes in an interface
     TYPE(MESHES_TYPE), POINTER :: MESHES !<A pointer to the mesh in an interface.
-    TYPE(GENERATED_MESHES_TYPE), POINTER :: GENERATED_MESHES !<A pointer to the generated meshes in an interface.
+    TYPE(GeneratedMeshesType), POINTER :: generatedMeshes !<A pointer to the generated meshes in an interface.
     TYPE(FIELDS_TYPE), POINTER :: FIELDS !<A pointer to the fields defined over an interface.
     TYPE(INTERFACE_CONDITIONS_TYPE), POINTER :: INTERFACE_CONDITIONS !<The pointer to the interface conditions for this interface
   END TYPE INTERFACE_TYPE
@@ -3298,7 +3304,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(DataPointSetsType), POINTER :: dataPointSets !<A pointer to the data point sets defined on the region.          
     TYPE(NODES_TYPE), POINTER :: NODES !<A pointer to the nodes defined on the region.
     TYPE(MESHES_TYPE), POINTER :: MESHES !<A pointer to the meshes defined on the region.
-    TYPE(GENERATED_MESHES_TYPE), POINTER :: GENERATED_MESHES !<A pointer to the generated meshes defined on the region.
+    TYPE(GeneratedMeshesType), POINTER :: generatedMeshes !<A pointer to the generated meshes defined on the region.
     TYPE(FIELDS_TYPE), POINTER :: FIELDS !<A pointer to the fields defined on the region.
     TYPE(EQUATIONS_SETS_TYPE), POINTER :: EQUATIONS_SETS !<A pointer to the equation sets defined on the region.
     TYPE(CELLML_ENVIRONMENTS_TYPE), POINTER :: CELLML_ENVIRONMENTS !<A pointer to the CellML environments for the region.

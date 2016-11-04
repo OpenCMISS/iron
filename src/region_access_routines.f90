@@ -45,9 +45,14 @@
 MODULE RegionAccessRoutines
   
   USE BASE_ROUTINES
+  USE CellMLAccessRoutines
   USE DataPointAccessRoutines
+  USE EquationsSetAccessRoutines
   USE FieldAccessRoutines
+  USE GeneratedMeshAccessRoutines
+  USE InterfaceAccessRoutines
   USE Kinds
+  USE MeshAccessRoutines
   USE Strings
   USE Types
   
@@ -61,10 +66,10 @@ MODULE RegionAccessRoutines
 
   !Module types
 
-  TYPE(REGIONS_TYPE) :: regions
-  
   !Module variables
 
+  TYPE(REGIONS_TYPE) :: regions
+  
   !Interfaces
 
   INTERFACE REGION_COORDINATE_SYSTEM_GET
@@ -81,13 +86,25 @@ MODULE RegionAccessRoutines
 
   PUBLIC regions
 
+  PUBLIC Region_CellMLGet
+
   PUBLIC Region_CoordinateSystemGet
 
   PUBLIC REGION_COORDINATE_SYSTEM_GET
   
   PUBLIC Region_DataPointsGet
 
+  PUBLIC Region_EquationsSetGet
+
   PUBLIC Region_FieldGet
+
+  PUBLIC Region_GeneratedMeshGet
+
+  PUBLIC Region_Get
+
+  PUBLIC Region_InterfaceGet
+
+  PUBLIC Region_MeshGet
 
   PUBLIC Region_NodesGet
 
@@ -97,9 +114,49 @@ MODULE RegionAccessRoutines
 
   PUBLIC REGION_USER_NUMBER_FIND
 
+  PUBLIC Region_UserNumberGet
+
 CONTAINS
 
   !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the cellml for a given user number in a region. \see OPENCMISS::Iron::cmfe_Region_CellMLGet
+  SUBROUTINE Region_CellMLGet(region,userNumber,cellml,err,error,*)
+
+    !Argument variables
+    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region to get the cellml for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the cellml to get.
+    TYPE(CELLML_TYPE), POINTER :: cellml !<On exit, a pointer to the cellml for the region. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Region_CellMLGet",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*998)
+    IF(.NOT.region%REGION_FINISHED) CALL FlagError("Region has not been finished.",err,error,*998)
+    IF(ASSOCIATED(cellml)) CALL FlagError("CellML is already associated.",err,error,*998)
+    
+    NULLIFY(cellml)
+    CALL CellML_UserNumberFind(userNumber,region,cellml,err,error,*999)
+    IF(.NOT.ASSOCIATED(cellml)) THEN
+      localError="A cellml environment with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
+        & " do not exist on region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Region_CellMLGet")
+    RETURN
+999 NULLIFY(cellml)
+998 ERRORSEXITS("Region_CellMLGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Region_CellMLGet
+
+   !
   !================================================================================================================================
   !
 
@@ -162,7 +219,7 @@ CONTAINS
     CALL DataPointSets_UserNumberFind(region%dataPointSets,userNumber,dataPoints,err,error,*999)
     IF(.NOT.ASSOCIATED(dataPoints)) THEN
       localError="Data points with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-        & " do not exist on region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+        & " does not exist on region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -173,6 +230,44 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Region_DataPointsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the equations set for a given user number in a region. \see OPENCMISS::Iron::cmfe_Region_EquationsSetGet
+  SUBROUTINE Region_EquationsSetGet(region,userNumber,equationsSet,err,error,*)
+
+    !Argument variables
+    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region to get the equationsSet for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the equations set to get.
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<On exit, a pointer to the equations set for the region. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Region_EquationsSetGet",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*998)
+    IF(.NOT.region%REGION_FINISHED) CALL FlagError("Region has not been finished.",err,error,*998)
+    IF(ASSOCIATED(equationsSet)) CALL FlagError("Equations set is already associated.",err,error,*998)
+    
+    NULLIFY(equationsSet)
+    CALL EquationsSet_UserNumberFind(userNumber,region,equationsSet,err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsSet)) THEN
+      localError="An equations set with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
+        & " does not exist on region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Region_EquationsSetGet")
+    RETURN
+999 NULLIFY(equationsSet)
+998 ERRORSEXITS("Region_EquationsSetGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Region_EquationsSetGet
 
   !
   !================================================================================================================================
@@ -195,13 +290,12 @@ CONTAINS
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*998)
     IF(.NOT.region%REGION_FINISHED) CALL FlagError("Region has not been finished.",err,error,*998)
     IF(ASSOCIATED(field)) CALL FlagError("Field is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(region%fields)) CALL FlagError("Region fields is not associated.",err,error,*998)
     
     NULLIFY(field)
     CALL Field_UserNumberFind(userNumber,region,field,err,error,*999)
     IF(.NOT.ASSOCIATED(field)) THEN
       localError="A field with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-        & " do not exist on region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+        & " does not exist on region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -212,6 +306,150 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Region_FieldGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the generated mesh for a given user number in a region. \see OPENCMISS::Iron::cmfe_Region_GeneratedMeshGet
+  SUBROUTINE Region_GeneratedMeshGet(region,userNumber,generatedMesh,err,error,*)
+
+    !Argument variables
+    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region to get the generated mesh for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the generated mesh to get.
+    TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh !<On exit, a pointer to the generated mesh for the region. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Region_GeneratedMeshGet",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*998)
+    IF(.NOT.region%REGION_FINISHED) CALL FlagError("Region has not been finished.",err,error,*998)
+    IF(ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is already associated.",err,error,*998)
+    
+    NULLIFY(generatedMesh)
+    CALL GeneratedMesh_UserNumberFind(userNumber,region,generatedMesh,err,error,*999)
+    IF(.NOT.ASSOCIATED(generatedMesh)) THEN
+      localError="A generated mesh with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
+        & " does not exist on region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Region_GeneratedMeshGet")
+    RETURN
+999 NULLIFY(generatedMesh)
+998 ERRORSEXITS("Region_GeneratedMeshGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Region_GeneratedMeshGet
+
+   !
+  !================================================================================================================================
+  !
+
+  !>Finds and returns a pointer to the region with the given user number. 
+  SUBROUTINE Region_Get(userNumber,region,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the region to find
+    TYPE(REGION_TYPE), POINTER :: region !<On exit, a pointer to the region with the specified user number if it exists. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("Region_Get",err,error,*999)
+
+    CALL Region_UserNumberFind(userNumber,region,err,error,*999)
+    IF(.NOT.ASSOCIATED(region)) THEN
+      localError="A region with an user number of "//TRIM(NumberToVString(userNumber,"*",err,error))//" does not exist."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+  
+    EXITS("Region_Get")
+    RETURN
+999 ERRORSEXITS("Region_Get",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Region_Get
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the interface for a given user number in a (parent) region. \see OPENCMISS::Iron::cmfe_Region_InterfaceGet
+  SUBROUTINE Region_InterfaceGet(region,userNumber,interface,err,error,*)
+
+    !Argument variables
+    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the parent region to get the interface for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the interface to get.
+    TYPE(INTERFACE_TYPE), POINTER :: interface !<On exit, a pointer to the interface for the parent region. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Region_InterfaceGet",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*998)
+    IF(.NOT.region%REGION_FINISHED) CALL FlagError("Region has not been finished.",err,error,*998)
+    IF(ASSOCIATED(interface)) CALL FlagError("Interface is already associated.",err,error,*998)
+    
+    NULLIFY(interface)
+    CALL Interface_UserNumberFind(userNumber,region,interface,err,error,*999)
+    IF(.NOT.ASSOCIATED(interface)) THEN
+      localError="An interface with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
+        & " does not exist on region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Region_InterfaceGet")
+    RETURN
+999 NULLIFY(interface)
+998 ERRORSEXITS("Region_InterfaceGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Region_InterfaceGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the mesh for a given user number in a region. \see OPENCMISS::Iron::cmfe_Region_MeshGet
+  SUBROUTINE Region_MeshGet(region,userNumber,mesh,err,error,*)
+
+    !Argument variables
+    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region to get the mesh for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the mesh to get.
+    TYPE(MESH_TYPE), POINTER :: mesh !<On exit, a pointer to the mesh for the region. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Region_MeshGet",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*998)
+    IF(.NOT.region%REGION_FINISHED) CALL FlagError("Region has not been finished.",err,error,*998)
+    IF(ASSOCIATED(mesh)) CALL FlagError("Mesh is already associated.",err,error,*998)
+    
+    NULLIFY(mesh)
+    CALL Mesh_UserNumberFind(userNumber,region,mesh,err,error,*999)
+    IF(.NOT.ASSOCIATED(mesh)) THEN
+      localError="A mesh with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
+        & " does not exist on region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Region_MeshGet")
+    RETURN
+999 NULLIFY(mesh)
+998 ERRORSEXITS("Region_MeshGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Region_MeshGet
 
   !
   !================================================================================================================================
@@ -324,6 +562,33 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Region_UserNumberFindPtr
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the user number for a region.
+  SUBROUTINE Region_UserNumberGet(region,userNumber,err,error,*)
+
+    !Argument variables
+    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region to get the user number for
+    INTEGER(INTG), INTENT(OUT) :: userNumber !<On exit, the user number of the region.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Region_UserNumberGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
+
+    userNumber=region%USER_NUMBER
+  
+    EXITS("Region_UserNumberGet")
+    RETURN
+999 ERRORSEXITS("Region_UserNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Region_UserNumberGet
 
   !
   !================================================================================================================================

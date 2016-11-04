@@ -142,10 +142,6 @@ MODULE EQUATIONS_ROUTINES
     MODULE PROCEDURE EQUATIONS_TIME_DEPENDENCE_TYPE_SET
   END INTERFACE Equations_TimeDependenceTypeSet
 
-  INTERFACE EquationsSet_EquationsGet
-    MODULE PROCEDURE EQUATIONS_SET_EQUATIONS_GET
-  END INTERFACE EquationsSet_EquationsGet
-
   PUBLIC EQUATIONS_NO_OUTPUT,EQUATIONS_TIMING_OUTPUT,EQUATIONS_MATRIX_OUTPUT,EQUATIONS_ELEMENT_MATRIX_OUTPUT
 
   PUBLIC EQUATIONS_NODAL_MATRIX_OUTPUT
@@ -181,11 +177,6 @@ MODULE EQUATIONS_ROUTINES
   PUBLIC EQUATIONS_TIME_DEPENDENCE_TYPE_GET,EQUATIONS_TIME_DEPENDENCE_TYPE_SET
 
   PUBLIC Equations_TimeDependenceTypeGet,Equations_TimeDependenceTypeSet
-
-  PUBLIC EQUATIONS_SET_EQUATIONS_GET
-  
-!!TODO: Should this be moved to equations_set_routines.f90???
-  PUBLIC EquationsSet_EquationsGet
 
   PUBLIC Equations_DerivedVariableGet
 
@@ -959,44 +950,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the equations for an equations set.
-  SUBROUTINE EQUATIONS_SET_EQUATIONS_GET(EQUATIONS_SET,EQUATIONS,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to get the equations for
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS !<On exit, a pointer to the equations in the specified equations set. Must not be associated on entry
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
- 
-    ENTERS("EQUATIONS_SET_EQUATIONS_GET",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(EQUATIONS_SET%EQUATIONS_SET_FINISHED) THEN
-        IF(ASSOCIATED(EQUATIONS)) THEN
-          CALL FlagError("Equations is already associated.",ERR,ERROR,*999)
-        ELSE
-          EQUATIONS=>EQUATIONS_SET%EQUATIONS
-          IF(.NOT.ASSOCIATED(EQUATIONS)) CALL FlagError("Equations set equations is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Equations set has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
-    ENDIF
-       
-    EXITS("EQUATIONS_SET_EQUATIONS_GET")
-    RETURN
-999 ERRORSEXITS("EQUATIONS_SET_EQUATIONS_GET",ERR,ERROR)
-    RETURN 1
-    
-  END SUBROUTINE EQUATIONS_SET_EQUATIONS_GET
-
-  !
-  !================================================================================================================================
-  !
-
   !>Gets the field variable for the derived variable type
   SUBROUTINE Equations_DerivedVariableGet(equations,derivedType,fieldVariable,err,error,*)
 
@@ -1006,7 +959,6 @@ CONTAINS
     TYPE(FIELD_VARIABLE_TYPE), POINTER, INTENT(INOUT) :: fieldVariable !<On return, the field variable for the derived variable type.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-
     !Local variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(FIELD_TYPE), POINTER :: derivedField

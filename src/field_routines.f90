@@ -1096,18 +1096,6 @@ MODULE FIELD_ROUTINES
     MODULE PROCEDURE FIELD_TYPE_SET_AND_LOCK
   END INTERFACE Field_TypeSetAndLock
 
-  !> Find the field with the given user number, or throw an error if it does not exist.
-  INTERFACE FIELD_USER_NUMBER_TO_FIELD
-    MODULE PROCEDURE FIELD_USER_NUMBER_TO_FIELD_INTERFACE
-    MODULE PROCEDURE FIELD_USER_NUMBER_TO_FIELD_REGION
-  END INTERFACE FIELD_USER_NUMBER_TO_FIELD
-  
-  !> Find the field with the given user number, or throw an error if it does not exist.
-  INTERFACE Field_UserNumberToField
-    MODULE PROCEDURE FIELD_USER_NUMBER_TO_FIELD_INTERFACE
-    MODULE PROCEDURE FIELD_USER_NUMBER_TO_FIELD_REGION
-  END INTERFACE Field_UserNumberToField
-  
   INTERFACE Field_VariableGet
     MODULE PROCEDURE FIELD_VARIABLE_GET
   END INTERFACE Field_VariableGet
@@ -1413,8 +1401,6 @@ MODULE FIELD_ROUTINES
 
   PUBLIC Field_TypeCheck,Field_TypeGet,Field_TypeSet,Field_TypeSetAndLock
 
-  PUBLIC FIELD_USER_NUMBER_TO_FIELD
-  
   PUBLIC FIELD_VARIABLE_GET
 
   PUBLIC Field_VariableGet
@@ -31911,74 +31897,6 @@ CONTAINS
 999 ERRORSEXITS("FIELD_PARAMETER_SET_GET_GAUSS_POINT_COORD",ERR,ERROR)
     RETURN 1
   END SUBROUTINE FIELD_PARAMETER_SET_GET_GAUSS_POINT_COORD
-
-  !
-  !================================================================================================================================
-  !
-
-  !> Find the field with the given user number, or throw an error if it does not exist.
-  SUBROUTINE FIELD_USER_NUMBER_TO_FIELD_REGION( USER_NUMBER, REGION, FIELD, ERR, ERROR, * )
-    !Arguments
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the field to find
-    TYPE(REGION_TYPE), POINTER :: REGION !<The region containing the field
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<On exit, a pointer to the field with the specified user number.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code.
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-
-    !Locals
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("FIELD_USER_NUMBER_TO_FIELD_REGION", ERR, ERROR, *999 )
-
-    NULLIFY( FIELD )
-    CALL FIELD_USER_NUMBER_FIND( USER_NUMBER, REGION, FIELD, ERR, ERROR, *999 )
-      CALL FIELD_USER_NUMBER_FIND( USER_NUMBER, REGION, FIELD, ERR, ERROR, *999 )
-    IF( .NOT.ASSOCIATED( FIELD ) ) THEN
-      LOCAL_ERROR = "A field with an user number of "//TRIM(NUMBER_TO_VSTRING( USER_NUMBER, "*", ERR, ERROR ))// &
-        & " does not exist on region number "//TRIM(NUMBER_TO_VSTRING( REGION%USER_NUMBER, "*", ERR, ERROR ))//"."
-      CALL FlagError( LOCAL_ERROR, ERR, ERROR, *999 )
-    ENDIF
-
-    EXITS( "FIELD_USER_NUMBER_TO_FIELD_REGION" )
-    RETURN
-999 ERRORSEXITS( "FIELD_USER_NUMBER_TO_FIELD_REGION", ERR, ERROR )
-    RETURN 1
-
-  END SUBROUTINE FIELD_USER_NUMBER_TO_FIELD_REGION
-
-  !
-  !================================================================================================================================
-  !
-
-  !> Find the field with the given user number, or throw an error if it does not exist.
-  SUBROUTINE FIELD_USER_NUMBER_TO_FIELD_INTERFACE( USER_NUMBER, INTERFACE, FIELD, ERR, ERROR, * )
-    !Arguments
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the field to find
-    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE !<A pointer to the interface containing the field
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<On exit, a pointer to the field with the specified user number.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code.
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-
-    !Locals
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("FIELD_USER_NUMBER_TO_FIELD_INTERFACE", ERR, ERROR, *999 )
-
-    NULLIFY( FIELD )
-    CALL FIELD_USER_NUMBER_FIND( USER_NUMBER, INTERFACE, FIELD, ERR, ERROR, *999 )
-      CALL FIELD_USER_NUMBER_FIND( USER_NUMBER, INTERFACE, FIELD, ERR, ERROR, *999 )
-    IF( .NOT.ASSOCIATED( FIELD ) ) THEN
-      LOCAL_ERROR = "A field with an user number of "//TRIM(NUMBER_TO_VSTRING( USER_NUMBER, "*", ERR, ERROR ))// &
-        & " does not exist on region number "//TRIM(NUMBER_TO_VSTRING( INTERFACE%USER_NUMBER, "*", ERR, ERROR ))//"."
-      CALL FlagError( LOCAL_ERROR, ERR, ERROR, *999 )
-    ENDIF
-
-    EXITS( "FIELD_USER_NUMBER_TO_FIELD_INTERFACE" )
-    RETURN
-999 ERRORSEXITS( "FIELD_USER_NUMBER_TO_FIELD_INTERFACE", ERR, ERROR )
-    RETURN 1
-
-  END SUBROUTINE FIELD_USER_NUMBER_TO_FIELD_INTERFACE
 
   !
   !================================================================================================================================
