@@ -81,6 +81,10 @@ MODULE BasisAccessRoutines
 
   PUBLIC Basis_Get
 
+  PUBLIC Basis_LocalFaceNumberGet
+
+  PUBLIC Basis_LocalLineNumberGet
+
   PUBLIC Basis_UserNumberFind
 
   PUBLIC BASIS_USER_NUMBER_FIND
@@ -182,6 +186,107 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Basis_Get
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finds the local face number that corresponds to a normal xi direction for the basis. 
+  SUBROUTINE Basis_LocalFaceNumberGet(basis,normalXiDirection,localFaceNumber,err,error,*)
+
+    !Argument variables
+    TYPE(BASIS_TYPE), POINTER :: basis !<A pointer to the basis to get the local face number for
+    INTEGER(INTG), INTENT(IN) :: normalXiDirection !<The normal xi direction of the face.
+    INTEGER(INTG), INTENT(OUT) :: localFaceNumber !<On exit, the local face number corresponding to the normal xi direction.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("Basis_LocalFaceNumberGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(.NOT.basis%BASIS_FINISHED) CALL FlagError("Basis has not been finished.",err,error,*999)
+    IF(normalXiDirection < -basis%NUMBER_OF_XI_COORDINATES .OR. normalXiDirection > basis%NUMBER_OF_XI_COORDINATES) THEN
+      localError="The specified normal xi direction of "//TRIM(NumberToVString(normalXiDirection,"*",err,error))// &
+        & " is invalid the normal xi direction must be >= "// &
+        & TRIM(NumberToVString(-basis%NUMBER_OF_XI_COORDINATES,"*",err,error))// &
+        & " and <= "//TRIM(NumberToVString(basis%NUMBER_OF_XI_COORDINATES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    localFaceNumber=basis%xiNormalLocalFace(normalXiDirection)
+    IF(localFaceNumber<1.OR.localFaceNumber>basis%NUMBER_OF_LOCAL_FACES) THEN
+      localError="The local face number of "//TRIM(NumberToVString(localFaceNumber,"*",err,error))//" for xi normal direction "// &
+        & TRIM(NumberToVString(normalXiDirection,"*",err,error))//" of basis number "// &
+        & TRIM(NumberToVString(basis%USER_NUMBER,"*",err,error))//" is invalid. The local face number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%NUMBER_OF_LOCAL_FACES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+      
+    EXITS("Basis_LocalFaceNumberGet")
+    RETURN
+999 ERRORSEXITS("Basis_LocalFaceNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_LocalFaceNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finds the local line number that corresponds to the normal xi directions for the basis. 
+  SUBROUTINE Basis_LocalLineNumberGet(basis,normalXiDirections,localLineNumber,err,error,*)
+
+    !Argument variables
+    TYPE(BASIS_TYPE), POINTER :: basis !<A pointer to the basis to get the local face number for
+    INTEGER(INTG), INTENT(IN) :: normalXiDirections(:) !<The normal xi directions of the line.
+    INTEGER(INTG), INTENT(OUT) :: localLineNumber !<On exit, the local line number corresponding to the normal xi directions.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("Basis_LocalLineNumberGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(.NOT.basis%BASIS_FINISHED) CALL FlagError("Basis has not been finished.",err,error,*999)
+    IF(.NOT.SIZE(normalXiDirections,1)==2) THEN
+      localError="The specified number of normal xi directions of "// &
+        & TRIM(NumberToVString(SIZE(normalXiDirections,1),"*",err,error))//" is invalid. There should be 2 normal xi directions."
+      CALL FlagError(localError,err,error,*999)
+    END IF
+    IF(normalXiDirections(1) < -basis%NUMBER_OF_XI_COORDINATES .OR. normalXiDirections(1) > basis%NUMBER_OF_XI_COORDINATES) THEN
+      localError="The first specified normal xi direction of "//TRIM(NumberToVString(normalXiDirections(1),"*",err,error))// &
+        & " is invalid the normal xi direction must be >= "// &
+        & TRIM(NumberToVString(-basis%NUMBER_OF_XI_COORDINATES,"*",err,error))// &
+        & " and <= "//TRIM(NumberToVString(basis%NUMBER_OF_XI_COORDINATES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(normalXiDirections(2) < -basis%NUMBER_OF_XI_COORDINATES .OR. normalXiDirections(2) > basis%NUMBER_OF_XI_COORDINATES) THEN
+      localError="The second specified normal xi direction of "//TRIM(NumberToVString(normalXiDirections(2),"*",err,error))// &
+        & " is invalid the normal xi direction must be >= "// &
+        & TRIM(NumberToVString(-basis%NUMBER_OF_XI_COORDINATES,"*",err,error))// &
+        & " and <= "//TRIM(NumberToVString(basis%NUMBER_OF_XI_COORDINATES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    localLineNumber=basis%xiNormalsLocalLine(normalXiDirections(1),normalXiDirections(2))
+    IF(localLineNumber<1.OR.localLineNumber>basis%NUMBER_OF_LOCAL_LINES) THEN
+      localError="The local line number of "//TRIM(NumberToVString(localLineNumber,"*",err,error))//" for xi normal directions "// &
+        & TRIM(NumberToVString(normalXiDirections(1),"*",err,error))//","// &
+        & TRIM(NumberToVString(normalXiDirections(2),"*",err,error))//" of basis number "// &
+        & TRIM(NumberToVString(basis%USER_NUMBER,"*",err,error))//" is invalid. The local line number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%NUMBER_OF_LOCAL_LINES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+      
+    EXITS("Basis_LocalLineNumberGet")
+    RETURN
+999 ERRORSEXITS("Basis_LocalLineNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_LocalLineNumberGet
 
   !
   !================================================================================================================================

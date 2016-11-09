@@ -46,11 +46,13 @@ MODULE DataProjectionRoutines
 
   USE BASE_ROUTINES
   USE BASIS_ROUTINES
+  USE BasisAccessRoutines
   USE CMISS_MPI  
   USE COMP_ENVIRONMENT
   USE CONSTANTS
   USE CoordinateSystemAccessRoutines
   USE DataPointAccessRoutines
+  USE DataProjectionAccessRoutines
   USE DOMAIN_MAPPINGS
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
@@ -58,6 +60,7 @@ MODULE DataProjectionRoutines
   USE ISO_VARYING_STRING
   USE Kinds
   USE MESH_ROUTINES
+  USE MeshAccessRoutines
 #ifndef NOMPIMOD
   USE MPI
 #endif
@@ -141,7 +144,11 @@ MODULE DataProjectionRoutines
   
   PUBLIC DataProjection_NumberOfClosestElementsGet,DataProjection_NumberOfClosestElementsSet
   
-  PUBLIC DataProjection_ProjectionCandidatesSet
+  PUBLIC DataProjection_ProjectionCandidateElementsSet
+  
+  PUBLIC DataProjection_ProjectionCandidateFacesSet
+  
+  PUBLIC DataProjection_ProjectionCandidateLinesSet
   
   PUBLIC DataProjection_ProjectionTypeGet,DataProjection_ProjectionTypeSet
   
@@ -3343,64 +3350,251 @@ CONTAINS
 
   END SUBROUTINE DataProjection_NumberOfClosestElementsSet
   
-  !
+   !
   !================================================================================================================================
   !
   
-  !>Sets the candidates element numbers and local line/face numbers for a data projection.
-  SUBROUTINE DataProjection_ProjectionCandidatesSet(dataProjection,elementUserNumbers,localFaceLineNumbers,err,error,*)
+  !>Sets the candidates element numbers numbers for a data projection.
+  SUBROUTINE DataProjection_ProjectionCandidateElementsSet(dataProjection,elementUserNumbers,err,error,*)
 
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to set the projection type for
-    INTEGER(INTG), INTENT(IN) :: elementUserNumbers(:) !<the projection candidate user element numbers
-    INTEGER(INTG), INTENT(IN) :: localFaceLineNumbers(:) !<the projection candidate element face/line numbers
+    INTEGER(INTG), INTENT(IN) :: elementUserNumbers(:) !<elementUserNumbers(elementIdx). The projection candidate user element numbers
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: elementIdx,elementLocalNumber
-    INTEGER(INTG) :: meshComponentNumber=1 !<TODO:mesh component is harded coded to be 1, need to be removed once MeshComponentsElementsType is moved under MeshTopologyType
     LOGICAL :: elementExists,ghostElement
+    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
+    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology
     TYPE(VARYING_STRING) :: localError
     
-    ENTERS("DataProjection_ProjectionCandidatesSet",err,error,*999)
+    ENTERS("DataProjection_ProjectionCandidateElementsSet",err,error,*999)
 
-    IF(ASSOCIATED(dataProjection)) THEN
-      IF(SIZE(elementUserNumbers,1)==SIZE(localFaceLineNumbers,1)) THEN
-        ALLOCATE(dataProjection%candidateElementNumbers(SIZE(elementUserNumbers,1)),STAT=err)
-        IF(err/=0) CALL FlagError("Could not allocate candidiate element numbers.",err,error,*998)
-        ALLOCATE(dataProjection%localFaceLineNumbers(SIZE(localFaceLineNumbers,1)),STAT=err)
-        IF(err/=0) CALL FlagError("Could not allocate candidiate local face/line numbers.",err,error,*999)
-        DO elementIdx=1,SIZE(elementUserNumbers,1)
-          CALL DecompositionTopology_ElementCheckExists(dataProjection%decomposition%topology,elementUserNumbers(elementIdx), &
-            & elementExists,elementLocalNumber,ghostElement,err,error,*999)       
-          IF(elementExists) THEN
-            dataProjection%candidateElementNumbers(elementIdx)=elementUserNumberS(elementIdx)
-            dataProjection%localFaceLineNumbers(elementIdx)=localFaceLineNumbers(elementIdx)
-          ELSE
-            localError="Element user number "//TRIM(NumberToVString(elementUserNumbers(elementIdx),"*",err,error))// &
-              & " does not exist."
-            CALL FlagError(localError,err,error,*999)
-          ENDIF
-        ENDDO !elementIdx
-      ELSE
-        CALL FlagError("Input user element numbers and face numbers sizes do not match.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Data projection is not associated.",err,error,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
     
-    EXITS("DataProjection_ProjectionCandidatesSet")
+    SELECT CASE(dataProjection%projectionType)
+    CASE(DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE)
+      CALL FlagError("Use the candidate lines routine not the candidate elements routine for a boundary lines projection.", &
+        & err,error,*999)
+    CASE(DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE)
+      CALL FlagError("Use the candidate faces routine not the candidate elements routine for a boundary faces projection.", &
+        & err,error,*999)
+    CASE(DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE)
+      NULLIFY(decomposition)
+      CALL DataProjection_DecompositionGet(dataProjection,decomposition,err,error,*999)
+      NULLIFY(decompositionTopology)
+      CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*999)
+      IF(ALLOCATED(dataProjection%candidateElementNumbers)) DEALLOCATE(dataProjection%candidateElementNumbers)
+      ALLOCATE(dataProjection%candidateElementNumbers(SIZE(elementUserNumbers,1)),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate candidiate element numbers.",err,error,*998)
+      DO elementIdx=1,SIZE(elementUserNumbers,1)
+        CALL DecompositionTopology_ElementCheckExists(decompositionTopology,elementUserNumbers(elementIdx), &
+          & elementExists,elementLocalNumber,ghostElement,err,error,*999)       
+        IF(elementExists) THEN
+          dataProjection%candidateElementNumbers(elementIdx)=elementUserNumbers(elementIdx)
+        ELSE
+          localError="Element user number "//TRIM(NumberToVString(elementUserNumbers(elementIdx),"*",err,error))// &
+            & " does not exist."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ENDDO !elementIdx
+    CASE DEFAULT
+      localError="The data projection type of "//TRIM(NumberToVString(dataProjection%projectionType,"",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("DataProjection_ProjectionCandidateElementsSet")
     RETURN
-999 IF(ALLOCATED(dataProjection%candidateElementNumbers)) THEN
-      DEALLOCATE(dataProjection%candidateElementNumbers)
-    END IF
-    IF(ALLOCATED(dataProjection%localFaceLineNumbers)) THEN
-      DEALLOCATE(dataProjection%localFaceLineNumbers)
-    END IF
-998 ERRORSEXITS("DataProjection_ProjectionCandidatesSet",err,error)
+999 IF(ALLOCATED(dataProjection%candidateElementNumbers)) DEALLOCATE(dataProjection%candidateElementNumbers)
+998 ERRORSEXITS("DataProjection_ProjectionCandidateElementsSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DataProjection_ProjectionCandidateElementsSet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Sets the candidates element numbers and local faces for a data projection.
+  SUBROUTINE DataProjection_ProjectionCandidateFacesSet(dataProjection,elementUserNumbers,localFaceNormals,err,error,*)
+
+    !Argument variables
+    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to set the projection type for
+    INTEGER(INTG), INTENT(IN) :: elementUserNumbers(:) !<elementUserNumbers(elementIdx). The projection candidate user element numbers
+    INTEGER(INTG), INTENT(IN) :: localFaceNormals(:) !<localFaceNormals(elementIdx). The projection candidate element face normals
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: elementIdx,elementLocalNumber,localFaceNumber
+    LOGICAL :: elementExists,ghostElement
+    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
+    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology
+    TYPE(DOMAIN_TYPE), POINTER :: domain
+    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: domainElements
+    TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DataProjection_ProjectionCandidatesFacesSet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
+    
+    SELECT CASE(dataProjection%projectionType)
+    CASE(DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE)
+      CALL FlagError("Use the candidate lines routine not the candidate faces routine for a boundary lines projection.", &
+        & err,error,*999)
+    CASE(DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE)
+      CALL FlagError("Use the candidate elements routine not the candidate faces routine for an all elements projection.", &
+        & err,error,*999)
+    CASE(DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE)
+      IF(SIZE(elementUserNumbers,1)/=SIZE(localFaceNormals,1)) THEN
+        localError="The size of the element user numbers array of "// &
+          & TRIM(NumberToVString(SIZE(elementUserNumbers,1),"*",err,error))// &
+          & " does not match the size of the face normals array of "// &
+          & TRIM(NumberToVString(SIZE(localFaceNormals,1),"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      NULLIFY(decomposition)
+      CALL DataProjection_DecompositionGet(dataProjection,decomposition,err,error,*999)
+      NULLIFY(decompositionTopology)
+      CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*999)
+      NULLIFY(domain)
+      CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
+      NULLIFY(domainTopology)
+      CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
+      NULLIFY(domainElements)
+      CALL DomainTopology_ElementsGet(domainTopology,domainElements,err,error,*999)
+      IF(ALLOCATED(dataProjection%candidateElementNumbers)) DEALLOCATE(dataProjection%candidateElementNumbers)
+      IF(ALLOCATED(dataProjection%localFaceLineNumbers)) DEALLOCATE(dataProjection%localFaceLineNumbers)
+      ALLOCATE(dataProjection%candidateElementNumbers(SIZE(elementUserNumbers,1)),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate candidiate element numbers.",err,error,*998)
+      ALLOCATE(dataProjection%localFaceLineNumbers(SIZE(localFaceNormals,1)),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate candidiate local face/line numbers.",err,error,*999)
+      DO elementIdx=1,SIZE(elementUserNumbers,1)
+        CALL DecompositionTopology_ElementCheckExists(decompositionTopology,elementUserNumbers(elementIdx), &
+          & elementExists,elementLocalNumber,ghostElement,err,error,*999)       
+        IF(elementExists) THEN
+          NULLIFY(basis)
+          CALL DomainElements_BasisGet(domainElements,elementLocalNumber,basis,err,error,*999)
+          CALL Basis_LocalFaceNumberGet(basis,localFaceNormals(elementIdx),localFaceNumber,err,error,*999)
+          dataProjection%candidateElementNumbers(elementIdx)=elementUserNumbers(elementIdx)
+          dataProjection%localFaceLineNumbers(elementIdx)=localFaceNumber
+        ELSE
+          localError="Element user number "//TRIM(NumberToVString(elementUserNumbers(elementIdx),"*",err,error))// &
+            & " does not exist."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ENDDO !elementIdx
+    CASE DEFAULT
+      localError="The data projection type of "//TRIM(NumberToVString(dataProjection%projectionType,"",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+     
+    EXITS("DataProjection_ProjectionCandidatesFacesSet")
+    RETURN
+999 IF(ALLOCATED(dataProjection%candidateElementNumbers)) DEALLOCATE(dataProjection%candidateElementNumbers)
+    IF(ALLOCATED(dataProjection%localFaceLineNumbers)) DEALLOCATE(dataProjection%localFaceLineNumbers)
+998 ERRORSEXITS("DataProjection_ProjectionCandidatesFacesSet",err,error)
     RETURN 1
 
-  END SUBROUTINE DataProjection_ProjectionCandidatesSet
+  END SUBROUTINE DataProjection_ProjectionCandidateFacesSet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Sets the candidates element numbers and local lines for a data projection.
+  SUBROUTINE DataProjection_ProjectionCandidateLinesSet(dataProjection,elementUserNumbers,localLineNormals,err,error,*)
+
+    !Argument variables
+    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to set the projection type for
+    INTEGER(INTG), INTENT(IN) :: elementUserNumbers(:) !<elementUserNumbers(elementIdx). The projection candidate user element numbers
+    INTEGER(INTG), INTENT(IN) :: localLineNormals(:,:) !<localLineNormals(normalIdx,elementIdx). The projection candidate line xi normals
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: elementIdx,elementLocalNumber,localLineNumber
+    LOGICAL :: elementExists,ghostElement
+    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
+    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology
+    TYPE(DOMAIN_TYPE), POINTER :: domain
+    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: domainElements
+    TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DataProjection_ProjectionCandidatesLinesSet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
+    
+    SELECT CASE(dataProjection%projectionType)
+    CASE(DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE)
+      CALL FlagError("Use the candidate faces routine not the candidate lines routine for a boundary faces projection.", &
+        & err,error,*999)
+    CASE(DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE)
+      CALL FlagError("Use the candidate elements routine not the candidate lines routine for an all elements projection.", &
+        & err,error,*999)
+    CASE(DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE)
+      IF(SIZE(elementUserNumbers,1)/=SIZE(localLineNormals,2)) THEN
+        localError="The size of the element user numbers array of "// &
+          & TRIM(NumberToVString(SIZE(elementUserNumbers,1),"*",err,error))// &
+          & " does not match the second size of the line normals array of "// &
+          & TRIM(NumberToVString(SIZE(localLineNormals,2),"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      IF(SIZE(localLineNormals,1)/=2) THEN
+        localError="The first size of the line normals array of "// &
+          & TRIM(NumberToVString(SIZE(localLineNormals,1),"*",err,error))//" is invalid. The size should be 2."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      NULLIFY(decomposition)
+      CALL DataProjection_DecompositionGet(dataProjection,decomposition,err,error,*999)
+      NULLIFY(decompositionTopology)
+      CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*999)
+      NULLIFY(domain)
+      CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
+      NULLIFY(domainTopology)
+      CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
+      NULLIFY(domainElements)
+      CALL DomainTopology_ElementsGet(domainTopology,domainElements,err,error,*999)
+      IF(ALLOCATED(dataProjection%candidateElementNumbers)) DEALLOCATE(dataProjection%candidateElementNumbers)
+      IF(ALLOCATED(dataProjection%localFaceLineNumbers)) DEALLOCATE(dataProjection%localFaceLineNumbers)
+      ALLOCATE(dataProjection%candidateElementNumbers(SIZE(elementUserNumbers,1)),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate candidiate element numbers.",err,error,*998)
+      ALLOCATE(dataProjection%localFaceLineNumbers(SIZE(localLineNormals,1)),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate candidiate local face/line numbers.",err,error,*999)
+      DO elementIdx=1,SIZE(elementUserNumbers,1)
+        CALL DecompositionTopology_ElementCheckExists(decompositionTopology,elementUserNumbers(elementIdx), &
+          & elementExists,elementLocalNumber,ghostElement,err,error,*999)       
+        IF(elementExists) THEN
+          NULLIFY(basis)
+          CALL DomainElements_BasisGet(domainElements,elementLocalNumber,basis,err,error,*999)
+          CALL Basis_LocalLineNumberGet(basis,localLineNormals(:,elementIdx),localLineNumber,err,error,*999)
+          dataProjection%candidateElementNumbers(elementIdx)=elementUserNumbers(elementIdx)
+          dataProjection%localFaceLineNumbers(elementIdx)=localLineNumber
+        ELSE
+          localError="Element user number "//TRIM(NumberToVString(elementUserNumbers(elementIdx),"*",err,error))// &
+            & " does not exist."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ENDDO !elementIdx
+    CASE DEFAULT
+      localError="The data projection type of "//TRIM(NumberToVString(dataProjection%projectionType,"",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+     
+    EXITS("DataProjection_ProjectionCandidatesLinesSet")
+    RETURN
+999 IF(ALLOCATED(dataProjection%candidateElementNumbers)) DEALLOCATE(dataProjection%candidateElementNumbers)
+    IF(ALLOCATED(dataProjection%localFaceLineNumbers)) DEALLOCATE(dataProjection%localFaceLineNumbers)
+998 ERRORSEXITS("DataProjection_ProjectionCandidatesLinesSet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DataProjection_ProjectionCandidateLinesSet
   
   !
   !================================================================================================================================

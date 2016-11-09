@@ -63,6 +63,8 @@ MODULE DataProjectionAccessRoutines
 
   !Interfaces
 
+  PUBLIC DataProjection_DecompositionGet
+
   PUBLIC DataProjection_ResultMaximumErrorGet
 
   PUBLIC DataProjection_ResultMinimumErrorGet
@@ -70,6 +72,35 @@ MODULE DataProjectionAccessRoutines
   PUBLIC DataProjection_ResultRMSErrorGet
 
 CONTAINS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the decompositon for a data projection.
+  SUBROUTINE DataProjection_DecompositionGet(dataProjection,decomposition,err,error,*)
+
+    !Argument variables
+    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to get the maximum error for
+    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition !<On exit, the decomposition of the data projection. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+   
+    ENTERS("DataProjection_DecompositionGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
+    IF(ASSOCIATED(decomposition)) CALL FlagError("Decomposition is already associated.",err,error,*999)
+    
+    decomposition=>dataProjection%decomposition
+    IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Data projection decomposition is not associated.",err,error,*999)
+ 
+    EXITS("DataProjection_DecompositionGet")
+    RETURN
+999 ERRORSEXITS("DataProjection_DecompositionGet",err,error)    
+    RETURN 1
+
+  END SUBROUTINE DataProjection_DecompositionGet
 
   !
   !================================================================================================================================
