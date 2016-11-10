@@ -285,7 +285,7 @@ CONTAINS
             & interpolatedPoint%INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
           CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%startingXi,interpolatedPoint,err,error,*999, &
             & FIELD_GEOMETRIC_COMPONENTS_TYPE)
-          distanceVector(1:numberOfCoordinates) = dataPointLocation-interpolatedPoint%values(:,1)
+          distanceVector(1:numberOfCoordinates) = interpolatedPoint%values(:,1)-dataPointLocation
           distance2 = DOT_PRODUCT(distanceVector(1:numberOfCoordinates),distanceVector(1:numberOfCoordinates))
           DO insertIdx=closestElementIdx,1,-1
             IF(insertIdx>1) THEN
@@ -308,7 +308,7 @@ CONTAINS
             & interpolatedPoint%INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
           CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%startingXi,interpolatedPoint,err,error,*999, &
             & FIELD_GEOMETRIC_COMPONENTS_TYPE) 
-          distanceVector(1:numberOfCoordinates)=dataPointLocation - interpolatedPoint%values(:,1)
+          distanceVector(1:numberOfCoordinates)=interpolatedPoint%values(:,1)-dataPointLocation
           distance2 = DOT_PRODUCT(distanceVector(1:numberOfCoordinates),distanceVector(1:numberOfCoordinates))
           IF(distance2<closestDistances(numberOfClosestCandidates))THEN
             DO insertIdx=numberOfClosestCandidates,1,-1
@@ -385,7 +385,7 @@ CONTAINS
             & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
           CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%startingXi,interpolatedPoint,err,error,*999, &
             & FIELD_GEOMETRIC_COMPONENTS_TYPE)
-          distanceVector(1:numberOfCoordinates) = dataPointLocation-interpolatedPoint%values(:,1)
+          distanceVector(1:numberOfCoordinates) = interpolatedPoint%values(:,1)-dataPointLocation
           distance2 = DOT_PRODUCT(distanceVector(1:numberOfCoordinates),distanceVector(1:numberOfCoordinates))
           DO insertIdx=closestElementIdx,1,-1
             IF(insertIdx>1) THEN
@@ -413,7 +413,7 @@ CONTAINS
             & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
           CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%startingXi,interpolatedPoint,err,error,*999, &
             & FIELD_GEOMETRIC_COMPONENTS_TYPE) 
-          distanceVector(1:numberOfCoordinates)=dataPointLocation - interpolatedPoint%values(:,1)
+          distanceVector(1:numberOfCoordinates)=interpolatedPoint%values(:,1)-dataPointLocation
           distance2 = DOT_PRODUCT(distanceVector(1:numberOfCoordinates),distanceVector(1:numberOfCoordinates))
           IF(distance2<closestDistances(numberOfClosestCandidates))THEN
             DO insertIdx=numberOfClosestCandidates,1,-1
@@ -493,7 +493,7 @@ CONTAINS
             & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
           CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%startingXi,interpolatedPoint,err,error,*999, &
             & FIELD_GEOMETRIC_COMPONENTS_TYPE)
-          distanceVector(1:numberOfCoordinates) = dataPointLocation-interpolatedPoint%values(:,1)
+          distanceVector(1:numberOfCoordinates) = interpolatedPoint%values(:,1)-dataPointLocation
           distance2 = DOT_PRODUCT(distanceVector(1:numberOfCoordinates),distanceVector(1:numberOfCoordinates))
           DO insertIdx=closestElementIdx,1,-1
             IF(insertIdx>1) THEN
@@ -521,7 +521,7 @@ CONTAINS
             & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
           CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%startingXi,interpolatedPoint,err,error,*999, &
             & FIELD_GEOMETRIC_COMPONENTS_TYPE) 
-          distanceVector(1:numberOfCoordinates)=dataPointLocation - interpolatedPoint%values(:,1)
+          distanceVector(1:numberOfCoordinates)=interpolatedPoint%values(:,1)-dataPointLocation 
           distance2 = DOT_PRODUCT(distanceVector(1:numberOfCoordinates),distanceVector(1:numberOfCoordinates))
           IF(distance2<closestDistances(numberOfClosestCandidates))THEN
             DO insertIdx=numberOfClosestCandidates,1,-1
@@ -2148,7 +2148,7 @@ CONTAINS
             & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
           xi=dataProjection%startingXi
           CALL Field_InterpolateXi(SECOND_PART_DERIV,xi,interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-          distanceVector(1:numberOfCoordinates)=dataPointLocation-interpolatedPoint%values(:,NO_PART_DERIV)
+          distanceVector(1:numberOfCoordinates)=interpolatedPoint%values(:,NO_PART_DERIV)-dataPointLocation
           functionValue=DOT_PRODUCT(distanceVector(1:numberOfCoordinates),distanceVector(1:numberOfCoordinates))       
           main_loop: DO iterationIdx1=1,dataProjection%maximumNumberOfIterations !(outer loop)
             !Check for bounds [0,1]
@@ -2160,10 +2160,10 @@ CONTAINS
               bound=0
             ENDIF              
             !functionGradient 
-            functionGradient=-2.0_DP* &
+            functionGradient=2.0_DP* &
               & (DOT_PRODUCT(distanceVector(1:numberOfCoordinates),interpolatedPoint%values(:,FIRST_PART_DERIV)))
             !functionHessian 
-            functionHessian=-2.0_DP* &
+            functionHessian=2.0_DP* &
               & (DOT_PRODUCT(distanceVector(1:numberOfCoordinates),interpolatedPoint%values(:,SECOND_PART_DERIV))- &
               & DOT_PRODUCT(interpolatedPoint%values(:,FIRST_PART_DERIV),interpolatedPoint%values(:,FIRST_PART_DERIV)))
             !A model trust region approach, directly taken from CMISS CLOS22: V = -(H + EIGEN_SHIFT*I)g
@@ -2192,7 +2192,7 @@ CONTAINS
                 newXi(1)=1.0_DP  
               ENDIF
               CALL Field_InterpolateXi(SECOND_PART_DERIV,newXi,interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-              distanceVector=dataPointLocation-interpolatedPoint%values(:,NO_PART_DERIV)
+              distanceVector=interpolatedPoint%values(:,NO_PART_DERIV)-dataPointLocation
               newFunctionValue=DOT_PRODUCT(distanceVector(1:numberOfCoordinates),distanceVector(1:numberOfCoordinates))
               !second half of the convergence test
               converged=converged.AND.(DABS(newFunctionValue-functionValue)/(1.0_DP+functionValue)<relativeTolerance) 
@@ -2314,8 +2314,8 @@ CONTAINS
             & interpolatedPoint%INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
           xi=dataProjection%startingXi
           CALL Field_InterpolateXi(SECOND_PART_DERIV,xi,interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-          distanceVector(1:numberOfCoordinates)=dataPointLocation(1:numberOfCoordinates)- &
-            & interpolatedPoint%values(1:numberOfCoordinates,NO_PART_DERIV)
+          distanceVector(1:numberOfCoordinates)=interpolatedPoint%values(1:numberOfCoordinates,NO_PART_DERIV)- &
+            & dataPointLocation(1:numberOfCoordinates)
           functionValue=DOT_PRODUCT(distanceVector(1:numberOfCoordinates),distanceVector(1:numberOfCoordinates))
           !Outer loop
           main_loop: DO iterationIdx1=1,dataProjection%maximumNumberOfIterations 
@@ -2330,20 +2330,20 @@ CONTAINS
               ENDIF
             ENDDO !xiIdx              
             !functionGradient 
-            functionGradient(1)=-2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
+            functionGradient(1)=2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S1)))
-            functionGradient(2)=-2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
+            functionGradient(2)=2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S2)))
             !functionHessian 
-            functionHessian(1,1)=-2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
+            functionHessian(1,1)=2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S1_S1))- &
               & DOT_PRODUCT(interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S1), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S1))) 
-            functionHessian(1,2)=-2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
+            functionHessian(1,2)=2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S1_S2))- &         
               & DOT_PRODUCT(interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S1), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S2)))
-            functionHessian(2,2)=-2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
+            functionHessian(2,2)=2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S2_S2))- &
               & DOT_PRODUCT(interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S2), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S2)))
@@ -2422,7 +2422,7 @@ CONTAINS
                 ENDIF
               ENDDO
               CALL Field_InterpolateXi(SECOND_PART_DERIV,newXi,interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-              distanceVector(1:numberOfCoordinates)=dataPointLocation-interpolatedPoint%values(:,NO_PART_DERIV)
+              distanceVector(1:numberOfCoordinates)=interpolatedPoint%values(:,NO_PART_DERIV)-dataPointLocation
               newFunctionValue=DOT_PRODUCT(distanceVector(1:numberOfCoordinates),distanceVector(1:numberOfCoordinates))
               !Second half of the convergence test (before collision detection)
               converged=converged.AND.(DABS(newFunctionValue-functionValue)/(1.0_DP+functionValue)<relativeTolerance) 
@@ -2550,8 +2550,8 @@ CONTAINS
             & interpolatedPoint%INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
           xi=dataProjection%startingXi
           CALL Field_InterpolateXi(SECOND_PART_DERIV,xi,interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-          distanceVector(1:numberOfCoordinates)=dataPointLocation(1:numberOfCoordinates)- &
-            & interpolatedPoint%values(1:numberOfCoordinates,NO_PART_DERIV)
+          distanceVector(1:numberOfCoordinates)=interpolatedPoint%values(1:numberOfCoordinates,NO_PART_DERIV)- &
+            & dataPointLocation(1:numberOfCoordinates)
           functionValue=DOT_PRODUCT(distanceVector,distanceVector)
           !Outer loop
           main_loop: DO iterationIdx1=1,dataProjection%maximumNumberOfIterations 
@@ -2566,34 +2566,34 @@ CONTAINS
               ENDIF
             ENDDO !xiIdx              
             !functionGradient 
-            functionGradient(1)=-2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
+            functionGradient(1)=2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S1)))
-            functionGradient(2)=-2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
+            functionGradient(2)=2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S2)))
-            functionGradient(3)=-2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
+            functionGradient(3)=2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S3)))
             !functionHessian 
-            functionHessian(1,1)=-2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
+            functionHessian(1,1)=2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S1_S1))- &
               & DOT_PRODUCT(interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S1), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S1))) 
-            functionHessian(1,2)=-2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
+            functionHessian(1,2)=2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S1_S2))- &         
               & DOT_PRODUCT(interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S1), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S2)))
-            functionHessian(1,3)=-2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
+            functionHessian(1,3)=2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S1_S3))- &         
               & DOT_PRODUCT(interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S1), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S3)))
-            functionHessian(2,2)=-2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
+            functionHessian(2,2)=2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S2_S2))- &
               & DOT_PRODUCT(interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S2), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S2)))
-            functionHessian(2,3)=-2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
+            functionHessian(2,3)=2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S2_S3))- &
               & DOT_PRODUCT(interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S2), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S3)))
-            functionHessian(3,3)=-2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
+            functionHessian(3,3)=2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S3_S3))- &
               & DOT_PRODUCT(interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S3), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S3)))    
@@ -2781,7 +2781,7 @@ CONTAINS
                 ENDIF
               ENDDO !xiIdx
               CALL Field_InterpolateXi(SECOND_PART_DERIV,newXi,interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-              distanceVector=dataPointLocation-interpolatedPoint%values(1:numberOfCoordinates,NO_PART_DERIV)
+              distanceVector=interpolatedPoint%values(1:numberOfCoordinates,NO_PART_DERIV)-dataPointLocation
               newFunctionValue=DOT_PRODUCT(distanceVector,distanceVector)
               !Second half of the convergence test (before collision detection)
               converged=converged.AND.(DABS(newFunctionValue-functionValue)/(1.0_DP+functionValue)<relativeTolerance) 
@@ -2918,8 +2918,8 @@ CONTAINS
             & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
           xi=dataProjection%startingXi
           CALL Field_InterpolateXi(SECOND_PART_DERIV,xi,interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-          distanceVector(1:numberOfCoordinates)=dataPointLocation(1:numberOfCoordinates)- &
-             interpolatedPoint%values(1:numberOfCoordinates,NO_PART_DERIV)
+          distanceVector(1:numberOfCoordinates)=interpolatedPoint%values(1:numberOfCoordinates,NO_PART_DERIV)- &
+            & dataPointLocation(1:numberOfCoordinates)
           functionValue=DOT_PRODUCT(distanceVector(1:numberOfCoordinates),distanceVector(1:numberOfCoordinates))
           !Outer loop
           main_loop: DO iterationIdx1=1,dataProjection%maximumNumberOfIterations
@@ -2934,20 +2934,20 @@ CONTAINS
               ENDIF
             ENDDO !xiIdx              
             !functionGradient 
-            functionGradient(1)=-2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
+            functionGradient(1)=2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S1)))
-            functionGradient(2)=-2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
+            functionGradient(2)=2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S2)))
             !functionHessian 
-            functionHessian(1,1)=-2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
+            functionHessian(1,1)=2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S1_S1))- &
               & DOT_PRODUCT(interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S1), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S1))) 
-            functionHessian(1,2)=-2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
+            functionHessian(1,2)=2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S1_S2))- &         
               & DOT_PRODUCT(interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S1), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S2)))
-            functionHessian(2,2)= -2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
+            functionHessian(2,2)=2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S2_S2))- &
               & DOT_PRODUCT(interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S2), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S2)))
@@ -3027,7 +3027,7 @@ CONTAINS
                 ENDIF
               ENDDO
               CALL Field_InterpolateXi(SECOND_PART_DERIV,newXi,interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-              distanceVector=dataPointLocation-interpolatedPoint%values(1:numberOfCoordinates,NO_PART_DERIV)
+              distanceVector=interpolatedPoint%values(1:numberOfCoordinates,NO_PART_DERIV)-dataPointLocation
               newFunctionValue=DOT_PRODUCT(distanceVector(1:numberOfCoordinates),distanceVector(1:numberOfCoordinates))
               !Second half of the convergence test (before collision detection)
               converged=converged.AND.(DABS(newFunctionValue-functionValue)/(1.0_DP+functionValue)<relativeTolerance) 
@@ -3161,8 +3161,8 @@ CONTAINS
             & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
           xi=dataProjection%startingXi
           CALL Field_InterpolateXi(SECOND_PART_DERIV,xi,interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-          distanceVector(1:numberOfCoordinates)=dataPointLocation(1:numberOfCoordinates)- &
-            & interpolatedPoint%values(1:numberOfCoordinates,NO_PART_DERIV)
+          distanceVector(1:numberOfCoordinates)=interpolatedPoint%values(1:numberOfCoordinates,NO_PART_DERIV)- &
+            & dataPointLocation(1:numberOfCoordinates)
           functionValue=DOT_PRODUCT(distanceVector(1:numberOfCoordinates),distanceVector(1:numberOfCoordinates))
           !Outer loop
           main_loop: DO iterationIdx1=1,dataProjection%maximumNumberOfIterations 
@@ -3175,10 +3175,10 @@ CONTAINS
               bound=0 !inside the bounds
             ENDIF              
             !functionGradient 
-            functionGradient=-2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
+            functionGradient=2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
               & interpolatedPoint%values(1:numberOfCoordinates,FIRST_PART_DERIV)))
             !functionHessian 
-            functionHessian=-2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
+            functionHessian=2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
               & interpolatedPoint%values(1:numberOfCoordinates,SECOND_PART_DERIV))- &
               & DOT_PRODUCT(interpolatedPoint%values(1:numberOfCoordinates,FIRST_PART_DERIV), &
               & interpolatedPoint%values(1:numberOfCoordinates,FIRST_PART_DERIV)))
@@ -3213,8 +3213,8 @@ CONTAINS
                 newXi(1)=1.0_DP  
               ENDIF
               CALL Field_InterpolateXi(SECOND_PART_DERIV,newXi,interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-              distanceVector(1:numberOfCoordinates)=dataPointLocation(1:numberOfCoordinates)- &
-                & interpolatedPoint%values(1:numberOfCoordinates,NO_PART_DERIV)
+              distanceVector(1:numberOfCoordinates)=interpolatedPoint%values(1:numberOfCoordinates,NO_PART_DERIV)- &
+                & dataPointLocation(1:numberOfCoordinates)
               newFunctionValue=DOT_PRODUCT(distanceVector(1:numberOfCoordinates),distanceVector(1:numberOfCoordinates))
               !Second half of the convergence test
               converged=converged.AND.(DABS(newFunctionValue-functionValue)/(1.0_DP+functionValue)<relativeTolerance) 
