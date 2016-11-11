@@ -57,11 +57,27 @@ MODULE DataProjectionAccessRoutines
 
   !Module parameters
 
+  !> \addtogroup DataProjectionRoutines_DataProjectionExitTags DataProjectionRoutines::DataProjectionExitTags
+  !> \brief Datapoint projection exit tags
+  !> \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
+  !>@{ 
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_CANCELLED=0 !<Data projection has been cancelled. \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_CONVERGED=1 !<Data projection exited due to it being converged \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_BOUNDS=2 !<Data projection exited due to it hitting the bound and continue to travel out of the element. \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_MAX_ITERATION=3 !<Data projection exited due to it attaining maximum number of iteration specified by user. \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_NO_ELEMENT=4 !<Data projection exited due to no local element found, this happens when none of the candidate elements are within this computational node, and before MPI communication with other nodes. \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
+  !>@}
+
   !Module types
 
   !Module variables
 
   !Interfaces
+
+  PUBLIC DATA_PROJECTION_CANCELLED,DATA_PROJECTION_EXIT_TAG_CONVERGED,DATA_PROJECTION_EXIT_TAG_BOUNDS, &
+    & DATA_PROJECTION_EXIT_TAG_MAX_ITERATION,DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
+
+  PUBLIC DataProjection_DataPointsGet
 
   PUBLIC DataProjection_DecompositionGet
 
@@ -77,11 +93,40 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the data points for a data projection.
+  SUBROUTINE DataProjection_DataPointsGet(dataProjection,dataPoints,err,error,*)
+
+    !Argument variables
+    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to get the data points for
+    TYPE(DataPointsType), POINTER :: dataPoints !<On exit, the data points of the data projection. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+   
+    ENTERS("DataProjection_DataPointsGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
+    IF(ASSOCIATED(dataPoints)) CALL FlagError("Data points is already associated.",err,error,*999)
+    
+    dataPoints=>dataProjection%dataPoints
+    IF(.NOT.ASSOCIATED(dataPoints)) CALL FlagError("Data projection data points is not associated.",err,error,*999)
+ 
+    EXITS("DataProjection_DataPointsGet")
+    RETURN
+999 ERRORSEXITS("DataProjection_DataPointsGet",err,error)    
+    RETURN 1
+
+  END SUBROUTINE DataProjection_DataPointsGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the decompositon for a data projection.
   SUBROUTINE DataProjection_DecompositionGet(dataProjection,decomposition,err,error,*)
 
     !Argument variables
-    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to get the maximum error for
+    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to get the decomposition for
     TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition !<On exit, the decomposition of the data projection. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string

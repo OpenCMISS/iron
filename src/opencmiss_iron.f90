@@ -1807,6 +1807,25 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE = DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE!<The boundary face projection type for data projection, only projects to boundary faces of the mesh. \see OPENCMISS_DataProjectionProjectionTypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE = DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE !<The element projection type for data projection, projects to all elements in mesh. \see OPENCMISS_DataProjectionProjectionTypes,OPENCMISS
   !>@}
+  !> \addtogroup OPENCMISS_DataProjectionExitTags OpenCMISS::Iron::DataProjection::DataProjectionExitTags
+  !> \brief Datapoint projection exit tags
+  !> \see OpenCMISS::Iron::DataProjection,OPENCMISS
+  !>@{ 
+  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_CANCELLED = DATA_PROJECTION_CANCELLED !<Data projection has been cancelled. \see OPENCMISS_DataProjectionExitTags,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_EXIT_TAG_CONVERGED = DATA_PROJECTION_EXIT_TAG_CONVERGED !<Data projection exited due to it being converged. \see OPENCMISS_DataProjectionExitTags,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_EXIT_TAG_BOUNDS = DATA_PROJECTION_EXIT_TAG_BOUNDS !<Data projection exited due to it hitting the bound and continue to travel out of the element. \see OPENCMISS_DataProjectionExitTags,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_EXIT_TAG_MAX_ITERATION = DATA_PROJECTION_EXIT_TAG_MAX_ITERATION !<Data projection exited due to it attaining maximum number of iteration specified by user. \see OPENCMISS_DataProjectionExitTags,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_EXIT_TAG_NO_ELEMENT = DATA_PROJECTION_EXIT_TAG_NO_ELEMENT !<Data projection exited due to no local element found, this happens when none of the candidate elements are within this computational node, and before MPI communication with other nodes. \see OPENCMISS_DataProjectionExitTags,OPENCMISS
+  !>@}
+  !> \addtogroup OPENCMISS_DataProjectionDistanceRelations OpenCMISS::Iron::DataProjection::DataProjectionDistanceRelations
+  !> \brief Datapoint projection distance relations to select data points based on distance.
+  !> \see OpenCMISS::Iron::DataProjection,OPENCMISS
+  !>@{ 
+  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_DISTANCE_GREATER = DATA_PROJECTION_DISTANCE_GREATER !<Data projection distance relation is greater than. \see OPENCMISS_DataProjectionDistanceRelations,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_DISTANCE_GREATER_EQUAL = DATA_PROJECTION_DISTANCE_GREATER_EQUAL !<Data projection distance relation is greater than or equal. \see OPENCMISS_DataProjectionDistanceRelations,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_DISTANCE_LESS = DATA_PROJECTION_DISTANCE_LESS !<Data projection distance relation is less than. \see OPENCMISS_DataProjectionDistanceRelations,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_DISTANCE_LESS_EQUAL = DATA_PROJECTION_DISTANCE_LESS_EQUAL !<Data projection distance relation is less than or equal. \see OPENCMISS_DataProjectionDistanceRelations,OPENCMISS
+  !>@}
   !>@}
 
   !Module types
@@ -1894,6 +1913,33 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_DataProjection_NumberOfClosestElementsSetObj
   END INTERFACE cmfe_DataProjection_NumberOfClosestElementsSet
   
+  !>Cancel the data projection for data points based on the data point user numbers.
+  INTERFACE cmfe_DataProjection_ProjectionCancelByDataPoints
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionCancelByDataPointsRegionNumber0
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionCancelByDataPointsRegionNumber1
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionCancelByDataPointsInterNum0
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionCancelByDataPointsInterNum1
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionCancelByDataPointsObj0
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionCancelByDataPointsObj1
+  END INTERFACE cmfe_DataProjection_ProjectionCancelByDataPoints
+
+  !>Cancel the data projection for data points based on the projection distance.
+  INTERFACE cmfe_DataProjection_ProjectionCancelByDistance
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionCancelByDistanceRegionNumber
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionCancelByDistanceInterfaceNumber
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionCancelByDistanceObj
+  END INTERFACE cmfe_DataProjection_ProjectionCancelByDistance
+
+  !>Cancel the data projection for data points based on the projection exit tag.
+  INTERFACE cmfe_DataProjection_ProjectionCancelByExitTags
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionCancelByExitTagsRegionNumber0
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionCancelByExitTagsRegionNumber1
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionCancelByExitTagsInterfaceNumber0
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionCancelByExitTagsInterfaceNumber1
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionCancelByExitTagsObj0
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionCancelByExitTagsObj1
+  END INTERFACE cmfe_DataProjection_ProjectionCancelByExitTags
+
   !>Set the data projection candidate elements for an all elements projection type.
   INTERFACE cmfe_DataProjection_ProjectionCandidateElementsSet
     MODULE PROCEDURE cmfe_DataProjection_ProjectionCandidateElementsSetRegionNumber
@@ -2050,9 +2096,14 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_DataProjection_ResultProjectionVectorGetObj
   END INTERFACE cmfe_DataProjection_ResultProjectionVectorGet
 
-  PUBLIC CMFE_DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE,CMFE_DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE
+  PUBLIC CMFE_DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE,CMFE_DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE, &
+    & CMFE_DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE
 
-  PUBLIC CMFE_DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE
+  PUBLIC CMFE_DATA_PROJECTION_CANCELLED,CMFE_DATA_PROJECTION_EXIT_TAG_CONVERGED,CMFE_DATA_PROJECTION_EXIT_TAG_BOUNDS, &
+    & CMFE_DATA_PROJECTION_EXIT_TAG_MAX_ITERATION,CMFE_DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
+
+  PUBLIC CMFE_DATA_PROJECTION_DISTANCE_GREATER,CMFE_DATA_PROJECTION_DISTANCE_GREATER_EQUAL,CMFE_DATA_PROJECTION_DISTANCE_LESS, &
+    & CMFE_DATA_PROJECTION_DISTANCE_LESS_EQUAL
 
   PUBLIC cmfe_DataProjection_AbsoluteToleranceGet,cmfe_DataProjection_AbsoluteToleranceSet
 
@@ -2062,6 +2113,12 @@ MODULE OpenCMISS_Iron
   
   PUBLIC cmfe_DataProjection_DataPointsPositionEvaluate
   
+  PUBLIC cmfe_DataProjection_ProjectionCancelByDataPoints
+
+  PUBLIC cmfe_DataProjection_ProjectionCancelByDistance
+
+  PUBLIC cmfe_DataProjection_ProjectionCancelByExitTags
+
   PUBLIC cmfe_DataProjection_ProjectionCandidateElementsSet
 
   PUBLIC cmfe_DataProjection_ProjectionCandidateFacesSet
@@ -19450,6 +19507,516 @@ CONTAINS
 
   END SUBROUTINE cmfe_DataProjection_DataPointsPositionEvaluateObj
   
+  !
+  !================================================================================================================================
+  !
+
+  !>Cancel the data projection for data points based on a data point user number in a region specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionCancelByDataPointsRegionNumber0(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,dataPointUserNumber,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionCancelByDataPointsRegionNumber0)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection.
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number to use to cancel projections.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+
+    ENTERS("cmfe_DataProjection_ProjectionCancelByDataPointsRegionNumber0",err,error,*999)
+
+    CALL cmfe_DataProjection_ProjectionCancelByDataPointsRegionNumber1(regionUserNumber,dataPointsUserNumber, &
+      & dataProjectionUserNumber,[dataPointUserNumber],err)
+
+    EXITS("cmfe_DataProjection_ProjectionCancelByDataPointsRegionNumber0")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionCancelByDataPointsRegionNumber0",err,error)
+    EXITS("cmfe_DataProjection_ProjectionCancelByDataPointsRegionNumber0")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionCancelByDataPointsRegionNumber0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Cancel the data projection for data points based on the projection exit tag in a region specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionCancelByDataPointsRegionNumber1(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,dataPointUserNumbers,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionCancelByDataPointsRegionNumber1)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection.
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers to use to cancel projections.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+    TYPE(DataProjectionType), POINTER :: dataProjection
+    TYPE(DataPointsType), POINTER :: dataPoints
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_DataProjection_ProjectionCancelByDataPointsRegionNumber1",err,error,*999)
+    
+    NULLIFY(dataProjection)
+    NULLIFY(dataPoints) 
+    NULLIFY(region)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
+    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataProjection_ProjectionCancelByDataPoints(dataProjection,dataPointUserNumbers,err,error,*999)
+
+    EXITS("cmfe_DataProjection_ProjectionCancelByDataPointsRegionNumber1")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionCancelByDataPointsRegionNumber1",err,error)
+    EXITS("cmfe_DataProjection_ProjectionCancelByDataPointsRegionNumber1")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionCancelByDataPointsRegionNumber1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Cancel the data projection for data points based on the projection exit tag in an interface specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionCancelByDataPointsInterNum0(parentRegionUserNumber,interfaceUserNumber, &
+    & dataPointsUserNumber,dataProjectionUserNumber,dataPointUserNumber,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionCancelByDataPointsInterNum0)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The parent region number of the interface for the data projection 
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number to use to cancel projections.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+
+    ENTERS("cmfe_DataProjection_ProjectionCancelByDataPointsInterNum0",err,error,*999)
+    
+    CALL cmfe_DataProjection_ProjectionCancelByDataPointsInterNum1(parentRegionUserNumber,interfaceUserNumber, &
+      & dataPointsUserNumber,dataProjectionUserNumber,[dataPointUserNumber],err)
+    
+    EXITS("cmfe_DataProjection_ProjectionCancelByDataPointsInterNum0")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionCancelByDataPointsInterNum0",err,error)
+    EXITS("cmfe_DataProjection_ProjectionCancelByDataPointsInterNum0")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionCancelByDataPointsInterNum0
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Cancel the data projection for data points based on the projection exit tag in an interface specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionCancelByDataPointsInterNum1(parentRegionUserNumber,interfaceUserNumber, &
+    & dataPointsUserNumber,dataProjectionUserNumber,dataPointUserNumbers,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionCancelByDataPointsInterNum1)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The parent region number of the interface for the data projection 
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers to use to cancel projections.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+    TYPE(DataProjectionType), POINTER :: dataProjection
+    TYPE(DataPointsType), POINTER :: dataPoints
+    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(INTERFACE_TYPE), POINTER :: interface
+
+    ENTERS("cmfe_DataProjection_ProjectionCancelByDataPointsInterNum1",err,error,*999)
+    
+    NULLIFY(dataProjection)
+    NULLIFY(dataPoints)  
+    NULLIFY(parentRegion)
+    NULLIFY(interface)  
+    CALL Region_Get(parentRegionUserNumber,parentRegion,err,error,*999)
+    CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
+    CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
+    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataProjection_ProjectionCancelByDataPoints(dataProjection,dataPointUserNumbers,err,error,*999)
+    
+    EXITS("cmfe_DataProjection_ProjectionCancelByDataPointsInterNum1")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionCancelByDataPointsInterNum1",err,error)
+    EXITS("cmfe_DataProjection_ProjectionCancelByDataPointsInterNum1")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionCancelByDataPointsInterNum1
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Cancel the data projection for data points based on the projection exit tag as specified by object
+  SUBROUTINE cmfe_DataProjection_ProjectionCancelByDataPointsObj0(dataProjection,dataPointUserNumber,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionCancelByDataPointsObj0)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number to use to cancel projections.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables 
+
+    ENTERS("cmfe_DataProjection_ProjectionCancelByDataPointsObj0",err,error,*999)
+    
+    CALL cmfe_DataProjection_ProjectionCancelByDataPointsObj1(dataProjection,[dataPointUserNumber],err)
+    
+    EXITS("cmfe_DataProjection_ProjectionCancelByDataPointsObj0")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionCancelByDataPointsObj0",err,error)
+    EXITS("cmfe_DataProjection_ProjectionCancelByDataPointsObj0")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionCancelByDataPointsObj0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Cancel the data projection for data points based on the projection exit tag as specified by object
+  SUBROUTINE cmfe_DataProjection_ProjectionCancelByDataPointsObj1(dataProjection,dataPointUserNumbers,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionCancelByDataPointsObj1)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers to use to cancel projections.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables 
+
+    ENTERS("cmfe_DataProjection_ProjectionCancelByDataPointsObj1",err,error,*999)
+    
+    CALL DataProjection_ProjectionCancelByDataPoints(dataProjection%dataProjection,dataPointUserNumbers,err,error,*999)
+    
+    EXITS("cmfe_DataProjection_ProjectionCancelByDataPointsObj1")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionCancelByDataPointsObj1",err,error)
+    EXITS("cmfe_DataProjection_ProjectionCancelByDataPointsObj1")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionCancelByDataPointsObj1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Cancel the data projection for data points based on the projection distance in a region specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionCancelByDistanceRegionNumber(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,distanceRelation,distance,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionCancelByDistanceRegionNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: distanceRelation !<The distance relation to use to cancel projections \see OPENCMISS_DataProjectionDistanceRelations
+    REAL(DP), INTENT(IN) :: distance !<The distance by which to select the data points to cancel.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+    TYPE(DataProjectionType), POINTER :: dataProjection
+    TYPE(DataPointsType), POINTER :: dataPoints
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_DataProjection_ProjectionCancelByDistanceRegionNumber",err,error,*999)
+    
+    NULLIFY(dataProjection)
+    NULLIFY(dataPoints) 
+    NULLIFY(region)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
+    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataProjection_ProjectionCancelByDistance(dataProjection,distanceRelation,distance,err,error,*999)
+
+    EXITS("cmfe_DataProjection_ProjectionCancelByDistanceRegionNumber")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionCancelByDistanceRegionNumber",err,error)
+    EXITS("cmfe_DataProjection_ProjectionCancelByDistanceRegionNumber")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionCancelByDistanceRegionNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Cancel the data projection for data points based on the projection distance in an interface specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionCancelByDistanceInterfaceNumber(parentRegionUserNumber,interfaceUserNumber, &
+    & dataPointsUserNumber,dataProjectionUserNumber,distanceRelation,distance,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionCancelByDistanceInterfaceNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The parent region number of the interface for the data projection 
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: distanceRelation !<The distance relation to use to cancel projections \see OPENCMISS_DataProjectionDistanceRelations
+    REAL(DP), INTENT(IN) :: distance !<The distance by which to select the data points to cancel.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+    TYPE(DataProjectionType), POINTER :: dataProjection
+    TYPE(DataPointsType), POINTER :: dataPoints
+    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(INTERFACE_TYPE), POINTER :: interface
+
+    ENTERS("cmfe_DataProjection_ProjectionCancelByDistanceInterfaceNumber",err,error,*999)
+    
+    NULLIFY(dataProjection)
+    NULLIFY(dataPoints)  
+    NULLIFY(parentRegion)
+    NULLIFY(interface)  
+    CALL Region_Get(parentRegionUserNumber,parentRegion,err,error,*999)
+    CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
+    CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
+    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataProjection_ProjectionCancelByDistance(dataProjection,distanceRelation,distance,err,error,*999)
+    
+    EXITS("cmfe_DataProjection_ProjectionCancelByDistanceInterfaceNumber")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionCancelByDistanceInterfaceNumber",err,error)
+    EXITS("cmfe_DataProjection_ProjectionCancelByDistanceInterfaceNumber")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionCancelByDistanceInterfaceNumber
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Cancel the data projection for data points based on the projection distance as specified by object
+  SUBROUTINE cmfe_DataProjection_ProjectionCancelByDistanceObj(dataProjection,distanceRelation,distance,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionCancelByDistanceObj)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
+    INTEGER(INTG), INTENT(IN) :: distanceRelation !<The distance relation to use to cancel projections \see OPENCMISS_DataProjectionDistanceRelations
+    REAL(DP), INTENT(IN) :: distance !<The distance by which to select the data points to cancel.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables 
+
+    ENTERS("cmfe_DataProjection_ProjectionCancelByDistanceObj",err,error,*999)
+    
+    CALL DataProjection_ProjectionCancelByDistance(dataProjection%dataProjection,distanceRelation,distance,err,error,*999)
+    
+    EXITS("cmfe_DataProjection_ProjectionCancelByDistanceObj")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionCancelByDistanceObj",err,error)
+    EXITS("cmfe_DataProjection_ProjectionCancelByDistanceObj")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionCancelByDistanceObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Cancel the data projection for data points based on the projection exit tag in a region specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionCancelByExitTagsRegionNumber0(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,exitTag,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionCancelByExitTagsRegionNumber0)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: exitTag !<The exit tags to use to cancel projections \see OPENCMISS_DataProjectionExitTags
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+
+    ENTERS("cmfe_DataProjection_ProjectionCancelByExitTagsRegionNumber0",err,error,*999)
+
+    CALL cmfe_DataProjection_ProjectionCancelByExitTagsRegionNumber1(regionUserNumber,dataPointsUserNumber, &
+      & dataProjectionUserNumber,[exitTag],err)
+
+    EXITS("cmfe_DataProjection_ProjectionCancelByExitTagsRegionNumber0")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionCancelByExitTagsRegionNumber0",err,error)
+    EXITS("cmfe_DataProjection_ProjectionCancelByExitTagsRegionNumber0")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionCancelByExitTagsRegionNumber0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Cancel the data projection for data points based on the projection exit tag in a region specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionCancelByExitTagsRegionNumber1(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,exitTags,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionCancelByExitTagsRegionNumber1)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: exitTags(:) !<exitTags(tagIdx). The exit tags to use to cancel projections \see OPENCMISS_DataProjectionExitTags
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+    TYPE(DataProjectionType), POINTER :: dataProjection
+    TYPE(DataPointsType), POINTER :: dataPoints
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_DataProjection_ProjectionCancelByExitTagsRegionNumber1",err,error,*999)
+    
+    NULLIFY(dataProjection)
+    NULLIFY(dataPoints) 
+    NULLIFY(region)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
+    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataProjection_ProjectionCancelByExitTags(dataProjection,exitTags,err,error,*999)
+
+    EXITS("cmfe_DataProjection_ProjectionCancelByExitTagsRegionNumber1")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionCancelByExitTagsRegionNumber1",err,error)
+    EXITS("cmfe_DataProjection_ProjectionCancelByExitTagsRegionNumber1")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionCancelByExitTagsRegionNumber1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Cancel the data projection for data points based on the projection exit tag in an interface specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionCancelByExitTagsInterfaceNumber0(parentRegionUserNumber,interfaceUserNumber, &
+    & dataPointsUserNumber,dataProjectionUserNumber,exitTag,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionCancelByExitTagsInterfaceNumber0)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The parent region number of the interface for the data projection 
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: exitTag !<The exit tags to use to cancel projections \see OPENCMISS_DataProjectionExitTags
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+
+    ENTERS("cmfe_DataProjection_ProjectionCancelByExitTagsInterfaceNumber0",err,error,*999)
+    
+    CALL cmfe_DataProjection_ProjectionCancelByExitTagsInterfaceNumber1(parentRegionUserNumber,interfaceUserNumber, &
+      & dataPointsUserNumber,dataProjectionUserNumber,[exitTag],err)
+    
+    EXITS("cmfe_DataProjection_ProjectionCancelByExitTagsInterfaceNumber0")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionCancelByExitTagsInterfaceNumber0",err,error)
+    EXITS("cmfe_DataProjection_ProjectionCancelByExitTagsInterfaceNumber0")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionCancelByExitTagsInterfaceNumber0
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Cancel the data projection for data points based on the projection exit tag in an interface specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionCancelByExitTagsInterfaceNumber1(parentRegionUserNumber,interfaceUserNumber, &
+    & dataPointsUserNumber,dataProjectionUserNumber,exitTags,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionCancelByExitTagsInterfaceNumber1)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The parent region number of the interface for the data projection 
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: exitTags(:) !<exitTags(tagIdx). The exit tags to use to cancel projections \see OPENCMISS_DataProjectionExitTags
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+    TYPE(DataProjectionType), POINTER :: dataProjection
+    TYPE(DataPointsType), POINTER :: dataPoints
+    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(INTERFACE_TYPE), POINTER :: interface
+
+    ENTERS("cmfe_DataProjection_ProjectionCancelByExitTagsInterfaceNumber1",err,error,*999)
+    
+    NULLIFY(dataProjection)
+    NULLIFY(dataPoints)  
+    NULLIFY(parentRegion)
+    NULLIFY(interface)  
+    CALL Region_Get(parentRegionUserNumber,parentRegion,err,error,*999)
+    CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
+    CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
+    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataProjection_ProjectionCancelByExitTags(dataProjection,exitTags,err,error,*999)
+    
+    EXITS("cmfe_DataProjection_ProjectionCancelByExitTagsInterfaceNumber1")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionCancelByExitTagsInterfaceNumber1",err,error)
+    EXITS("cmfe_DataProjection_ProjectionCancelByExitTagsInterfaceNumber1")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionCancelByExitTagsInterfaceNumber1
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Cancel the data projection for data points based on the projection exit tag as specified by object
+  SUBROUTINE cmfe_DataProjection_ProjectionCancelByExitTagsObj0(dataProjection,exitTag,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionCancelByExitTagsObj0)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
+    INTEGER(INTG), INTENT(IN) :: exitTag !<The exit tags to use to cancel projections \see OPENCMISS_DataProjectionExitTags
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables 
+
+    ENTERS("cmfe_DataProjection_ProjectionCancelByExitTagsObj0",err,error,*999)
+    
+    CALL cmfe_DataProjection_ProjectionCancelByExitTagsObj1(dataProjection,[exitTag],err)
+    
+    EXITS("cmfe_DataProjection_ProjectionCancelByExitTagsObj0")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionCancelByExitTagsObj0",err,error)
+    EXITS("cmfe_DataProjection_ProjectionCancelByExitTagsObj0")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionCancelByExitTagsObj0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Cancel the data projection for data points based on the projection exit tag as specified by object
+  SUBROUTINE cmfe_DataProjection_ProjectionCancelByExitTagsObj1(dataProjection,exitTags,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionCancelByExitTagsObj1)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
+    INTEGER(INTG), INTENT(IN) :: exitTags(:) !<exitTags(tagIdx). The exit tags to use to cancel projections \see OPENCMISS_DataProjectionExitTags
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables 
+
+    ENTERS("cmfe_DataProjection_ProjectionCancelByExitTagsObj1",err,error,*999)
+    
+    CALL DataProjection_ProjectionCancelByExitTags(dataProjection%dataProjection,exitTags,err,error,*999)
+    
+    EXITS("cmfe_DataProjection_ProjectionCancelByExitTagsObj1")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionCancelByExitTagsObj1",err,error)
+    EXITS("cmfe_DataProjection_ProjectionCancelByExitTagsObj1")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionCancelByExitTagsObj1
+
   !
   !================================================================================================================================
   !

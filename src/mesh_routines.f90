@@ -50,6 +50,7 @@ MODULE MESH_ROUTINES
   USE CMISS_PARMETIS
   USE COMP_ENVIRONMENT
   USE COORDINATE_ROUTINES
+  USE DataProjectionAccessRoutines
   USE DOMAIN_MAPPINGS
   USE Kinds
   USE INPUT_OUTPUT
@@ -8458,7 +8459,7 @@ CONTAINS
     TYPE(MeshDataPointsType), POINTER :: dataPointsTopology
     TYPE(DataProjectionResultType), POINTER :: dataProjectionResult
     TYPE(MeshElementsType), POINTER :: elements
-    INTEGER(INTG) :: dataPointIdx,elementIdx,countIdx,projectionNumber,globalCountIdx,elementNumber
+    INTEGER(INTG) :: dataPointIdx,elementIdx,exitTag,countIdx,projectionNumber,globalCountIdx,elementNumber
 
     ENTERS("MeshTopology_DataPointsCalculateProjection",ERR,ERROR,*999)
 
@@ -8482,13 +8483,16 @@ CONTAINS
         DO dataPointIdx=1,dataPoints%numberOfDataPoints
           dataProjectionResult=>dataProjection%dataProjectionResults(dataPointIdx)
           elementNumber=dataProjectionResult%elementNumber
-          DO elementIdx=1,elements%NUMBER_OF_ELEMENTS
-            IF(dataPointsTopology%elementDataPoint(elementIdx)%elementNumber==elementNumber) THEN
-              dataPointsTopology%elementDataPoint(elementIdx)%numberOfProjectedData= &
-                & dataPointsTopology%elementDataPoint(elementIdx)%numberOfProjectedData+1;
-            ENDIF
-          ENDDO !elementIdx
-        ENDDO       
+          exitTag=dataProjectionResult%exitTag
+          IF(exitTag/=DATA_PROJECTION_CANCELLED) THEN
+            DO elementIdx=1,elements%NUMBER_OF_ELEMENTS
+              IF(dataPointsTopology%elementDataPoint(elementIdx)%elementNumber==elementNumber) THEN
+                dataPointsTopology%elementDataPoint(elementIdx)%numberOfProjectedData= &
+                  & dataPointsTopology%elementDataPoint(elementIdx)%numberOfProjectedData+1;
+              ENDIF
+            ENDDO !elementIdx
+          ENDIF
+        ENDDO !dataPointIdx      
         !Allocate memory to store data indices and initialise them to be zero   
         DO elementIdx=1,elements%NUMBER_OF_ELEMENTS
           ALLOCATE(dataPointsTopology%elementDataPoint(elementIdx)%dataIndices(dataPointsTopology% &
@@ -8505,19 +8509,22 @@ CONTAINS
         DO dataPointIdx=1,dataPoints%numberOfDataPoints 
           dataProjectionResult=>dataProjection%dataProjectionResults(dataPointIdx)
           elementNumber=dataProjectionResult%elementNumber
-          DO elementIdx=1,elements%NUMBER_OF_ELEMENTS
-            countIdx=1         
-            IF(dataPointsTopology%elementDataPoint(elementIdx)%elementNumber==elementNumber) THEN
-              globalCountIdx=globalCountIdx+1
-              !Find the next data point index in this element
-              DO WHILE(dataPointsTopology%elementDataPoint(elementIdx)%dataIndices(countIdx)%globalNumber/=0)
-                countIdx=countIdx+1
-              ENDDO
-              dataPointsTopology%elementDataPoint(elementIdx)%dataIndices(countIdx)%userNumber=dataPointIdx
-              dataPointsTopology%elementDataPoint(elementIdx)%dataIndices(countIdx)%globalNumber=dataPointIdx!globalCountIdx (used this if only projected data are taken into account)
-              dataPointsTopology%totalNumberOfProjectedData=dataPointsTopology%totalNumberOfProjectedData+1
-            ENDIF             
-          ENDDO !elementIdx
+          exitTag=dataProjectionResult%exitTag
+          IF(exitTag/=DATA_PROJECTION_CANCELLED) THEN
+            DO elementIdx=1,elements%NUMBER_OF_ELEMENTS
+              countIdx=1         
+              IF(dataPointsTopology%elementDataPoint(elementIdx)%elementNumber==elementNumber) THEN
+                globalCountIdx=globalCountIdx+1
+                !Find the next data point index in this element
+                DO WHILE(dataPointsTopology%elementDataPoint(elementIdx)%dataIndices(countIdx)%globalNumber/=0)
+                  countIdx=countIdx+1
+                ENDDO
+                dataPointsTopology%elementDataPoint(elementIdx)%dataIndices(countIdx)%userNumber=dataPointIdx
+                dataPointsTopology%elementDataPoint(elementIdx)%dataIndices(countIdx)%globalNumber=dataPointIdx!globalCountIdx (used this if only projected data are taken into account)
+                dataPointsTopology%totalNumberOfProjectedData=dataPointsTopology%totalNumberOfProjectedData+1
+              ENDIF
+            ENDDO !elementIdx
+          ENDIF
         ENDDO !dataPointIdx
         !Allocate memory to store total data indices in ascending order and element map
         ALLOCATE(dataPointsTopology%dataPoints(dataPointsTopology%totalNumberOfProjectedData),STAT=ERR)

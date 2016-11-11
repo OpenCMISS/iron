@@ -90,14 +90,14 @@ MODULE DataProjectionRoutines
   INTEGER(INTG), PARAMETER :: DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE=3 !<The element projection type for data projection, projects to all elements in mesh. \see DataProjectionRoutines,OPENCMISS_DataProjectionTypes
   !>@}
 
-  !> \addtogroup DataProjectionRoutines_DataProjectionExitTags DataProjectionRoutines::DataProjectionExitTags
-  !> \brief Datapoint projection exit tags
+  !> \addtogroup DataProjectionRoutines_DataProjectionDistanceRelations DataProjectionRoutines::DataProjectionDistanceRelations
+  !> \brief Datapoint projection distance relations to select data points based on distance.
   !> \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
   !>@{ 
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_CONVERGED=1 !<Data projection exited due to it being converged \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_BOUNDS=2 !<Data projection exited due to it hitting the bound and continue to travel out of the element. \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_MAX_ITERATION=3 !<Data projection exited due to it attaining maximum number of iteration specified by user. \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
-  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_EXIT_TAG_NO_ELEMENT=4 !<Data projection exited due to no local element found, this happens when none of the candidate elements are within this computational node, and before MPI communication with other nodes. \see DataProjectionRoutines,OPENCMISS_DataProjectionExitTags
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_DISTANCE_GREATER=1 !<Data projection distance relation is greater than \see DataProjectionRoutines,OPENCMISS_DataProjectionDistanceRelations
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_DISTANCE_GREATER_EQUAL=2 !<Data projection distance relation is greater than or equal \see DataProjectionRoutines,OPENCMISS_DataProjectionDistanceRelations
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_DISTANCE_LESS=3 !<Data projection distance relation is less than \see DataProjectionRoutines,OPENCMISS_DataProjectionDistanceRelations
+  INTEGER(INTG), PARAMETER :: DATA_PROJECTION_DISTANCE_LESS_EQUAL=4 !<Data projection distance relation is less than or equal \see DataProjectionRoutines,OPENCMISS_DataProjectionDistanceRelations
   !>@}
 
   !Module types
@@ -118,11 +118,23 @@ MODULE DataProjectionRoutines
     MODULE PROCEDURE DataProjection_LabelSetVS
   END INTERFACE DataProjection_LabelSet
 
+  !>Cancels the data pojection for data points based on the data point user numbers
+  INTERFACE DataProjection_ProjectionCancelByDataPoints
+    MODULE PROCEDURE DataProjection_ProjectionCancelByDataPoints0
+    MODULE PROCEDURE DataProjection_ProjectionCancelByDataPoints1
+  END INTERFACE DataProjection_ProjectionCancelByDataPoints
+
+  !>Cancels the data pojection for data points based on the projection exit tag
+  INTERFACE DataProjection_ProjectionCancelByExitTags
+    MODULE PROCEDURE DataProjection_ProjectionCancelByExitTags0
+    MODULE PROCEDURE DataProjection_ProjectionCancelByExitTags1
+  END INTERFACE DataProjection_ProjectionCancelByExitTags
+
   PUBLIC DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE,DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE, &
     & DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE
 
-  PUBLIC DATA_PROJECTION_EXIT_TAG_CONVERGED,DATA_PROJECTION_EXIT_TAG_BOUNDS,DATA_PROJECTION_EXIT_TAG_MAX_ITERATION, &
-    & DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
+  PUBLIC DATA_PROJECTION_DISTANCE_GREATER,DATA_PROJECTION_DISTANCE_GREATER_EQUAL,DATA_PROJECTION_DISTANCE_LESS, &
+    & DATA_PROJECTION_DISTANCE_LESS_EQUAL
   
   PUBLIC DataProjection_AbsoluteToleranceGet,DataProjection_AbsoluteToleranceSet
 
@@ -144,6 +156,12 @@ MODULE DataProjectionRoutines
   
   PUBLIC DataProjection_NumberOfClosestElementsGet,DataProjection_NumberOfClosestElementsSet
   
+  PUBLIC DataProjection_ProjectionCancelByDataPoints
+  
+  PUBLIC DataProjection_ProjectionCancelByDistance
+  
+  PUBLIC DataProjection_ProjectionCancelByExitTags
+  
   PUBLIC DataProjection_ProjectionCandidateElementsSet
   
   PUBLIC DataProjection_ProjectionCandidateFacesSet
@@ -158,9 +176,7 @@ MODULE DataProjectionRoutines
   
   PUBLIC DataProjection_ResultDistanceGet
   
-  PUBLIC DataProjection_ResultElementNumberGet,DataProjection_ResultElementFaceNumberGet
-  
-  PUBLIC DataProjection_ResultElementLineNumberGet
+  PUBLIC DataProjection_ResultElementNumberGet,DataProjection_ResultElementFaceNumberGet,DataProjection_ResultElementLineNumberGet
   
   PUBLIC DataProjection_ResultExitTagGet
 
@@ -3350,7 +3366,208 @@ CONTAINS
 
   END SUBROUTINE DataProjection_NumberOfClosestElementsSet
   
-   !
+  !
+  !================================================================================================================================
+  !
+  
+  !>Cancel the data projection for data points based on a data point user number.
+  SUBROUTINE DataProjection_ProjectionCancelByDataPoints0(dataProjection,dataPointUserNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to cancel projections for
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number to use to cancel projections 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("DataProjection_ProjectionCancelByDataPoints0",err,error,*999)
+
+    CALL DataProjection_ProjectionCancelByDataPoints1(dataProjection,[dataPointUserNumber],err,error,*999)
+    
+    EXITS("DataProjection_ProjectionCancelByDataPoints0")
+    RETURN
+999 ERRORSEXITS("DataProjection_ProjectionCancelByDataPoints0",err,error)    
+    RETURN 1
+
+  END SUBROUTINE DataProjection_ProjectionCancelByDataPoints0
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Cancel the data projection for data points based on data point user numbers.
+  SUBROUTINE DataProjection_ProjectionCancelByDataPoints1(dataProjection,dataPointUserNumbers,err,error,*)
+
+    !Argument variables
+    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to cancel projections for
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers to use to cancel projections.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dataPointIdx,dataPointGlobalNumber
+   
+    ENTERS("DataProjection_ProjectionCancelByDataPoints1",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
+    IF(dataProjection%dataProjectionFinished) CALL FlagError("Data projection has been finished.",err,error,*999)
+    IF(dataProjection%dataProjectionProjected) CALL FlagError("Data projection has been evaluated.",err,error,*999)
+    IF(.NOT.ALLOCATED(dataProjection%dataProjectionResults)) &
+       CALL FlagError("Data projection projection results is not allocated.",err,error,*999)
+
+    DO dataPointIdx=1,SIZE(dataPointUserNumbers,1)
+      CALL DataProjection_DataPointGlobalNumberGet(dataProjection,dataPointUserNumbers(dataPointIdx),dataPointGlobalNumber, &
+        & err,error,*999)
+      dataProjection%dataProjectionResults(dataPointGlobalNumber)%exitTag=DATA_PROJECTION_CANCELLED
+    ENDDO !dataPointIdx
+    
+    EXITS("DataProjection_ProjectionCancelByDataPoints1")
+    RETURN
+999 ERRORSEXITS("DataProjection_ProjectionCancelByDataPoints1",err,error)    
+    RETURN 1
+
+  END SUBROUTINE DataProjection_ProjectionCancelByDataPoints1
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Cancel the data projection for data points based on the projection distance.
+  SUBROUTINE DataProjection_ProjectionCancelByDistance(dataProjection,distanceRelation,distance,err,error,*)
+
+    !Argument variables
+    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to cancel projections for
+    INTEGER(INTG), INTENT(IN) :: distanceRelation !<The distance relation to use to cancel projections \see OPENCMISS_DataProjectionDistanceRelations
+    REAL(DP), INTENT(IN) :: distance !<The distance by which to select the data points to cancel.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dataPointIdx
+    TYPE(DataPointsType), POINTER :: dataPoints
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DataProjection_ProjectionCancelByDistance",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
+    IF(dataProjection%dataProjectionFinished) CALL FlagError("Data projection has been finished.",err,error,*999)
+    IF(dataProjection%dataProjectionProjected) CALL FlagError("Data projection has been evaluated.",err,error,*999)
+    IF(.NOT.ALLOCATED(dataProjection%dataProjectionResults)) &
+       CALL FlagError("Data projection projection results is not allocated.",err,error,*999)
+
+    NULLIFY(dataPoints)
+    CALL DataProjection_DataPointsGet(dataProjection,dataPoints,err,error,*999)
+    SELECT CASE(distanceRelation)
+    CASE(DATA_PROJECTION_DISTANCE_GREATER)
+      DO dataPointIdx=1,dataPoints%numberOfDataPoints
+        IF(dataProjection%dataProjectionResults(dataPointIdx)%distance>distance) &
+          & dataProjection%dataProjectionResults(dataPointIdx)%exitTag=DATA_PROJECTION_CANCELLED
+      ENDDO !dataPointIdx
+    CASE(DATA_PROJECTION_DISTANCE_GREATER_EQUAL)
+      DO dataPointIdx=1,dataPoints%numberOfDataPoints
+        IF(dataProjection%dataProjectionResults(dataPointIdx)%distance>=distance) &
+          & dataProjection%dataProjectionResults(dataPointIdx)%exitTag=DATA_PROJECTION_CANCELLED
+      ENDDO !dataPointIdx
+    CASE(DATA_PROJECTION_DISTANCE_LESS)
+      DO dataPointIdx=1,dataPoints%numberOfDataPoints
+        IF(dataProjection%dataProjectionResults(dataPointIdx)%distance<distance) &
+          & dataProjection%dataProjectionResults(dataPointIdx)%exitTag=DATA_PROJECTION_CANCELLED
+      ENDDO !dataPointIdx
+    CASE(DATA_PROJECTION_DISTANCE_LESS_EQUAL)
+      DO dataPointIdx=1,dataPoints%numberOfDataPoints
+        IF(dataProjection%dataProjectionResults(dataPointIdx)%distance<=distance) &
+          & dataProjection%dataProjectionResults(dataPointIdx)%exitTag=DATA_PROJECTION_CANCELLED
+      ENDDO !dataPointIdx
+    CASE DEFAULT
+      localError="The specified distance relation of "//TRIM(NumberToVString(distanceRelation,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("DataProjection_ProjectionCancelByDistance")
+    RETURN
+999 ERRORSEXITS("DataProjection_ProjectionCancelByDistance",err,error)    
+    RETURN 1
+
+  END SUBROUTINE DataProjection_ProjectionCancelByDistance
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Cancel the data projection for data points based on the projection exit tag.
+  SUBROUTINE DataProjection_ProjectionCancelByExitTags0(dataProjection,exitTag,err,error,*)
+
+    !Argument variables
+    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to cancel projections for
+    INTEGER(INTG), INTENT(IN) :: exitTag !<The exit tag to use to cancel projections \see DataProjectionExitTags
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("DataProjection_ProjectionCancelByExitTags0",err,error,*999)
+
+    CALL DataProjection_ProjectionCancelByExitTags1(dataProjection,[exitTag],err,error,*999)
+    
+    EXITS("DataProjection_ProjectionCancelByExitTags0")
+    RETURN
+999 ERRORSEXITS("DataProjection_ProjectionCancelByExitTags0",err,error)    
+    RETURN 1
+
+  END SUBROUTINE DataProjection_ProjectionCancelByExitTags0
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Cancel the data projection for data points based on the projection exit tags.
+  SUBROUTINE DataProjection_ProjectionCancelByExitTags1(dataProjection,exitTags,err,error,*)
+
+    !Argument variables
+    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to cancel projections for
+    INTEGER(INTG), INTENT(IN) :: exitTags(:) !<exitTags(tagIdx). The exit tags to use to cancel projections \see DataProjectionExitTags
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dataPointIdx,tagIdx
+    TYPE(DataPointsType), POINTER :: dataPoints
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DataProjection_ProjectionCancelByExitTags1",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
+    IF(dataProjection%dataProjectionFinished) CALL FlagError("Data projection has been finished.",err,error,*999)
+    IF(dataProjection%dataProjectionProjected) CALL FlagError("Data projection has been evaluated.",err,error,*999)
+    IF(.NOT.ALLOCATED(dataProjection%dataProjectionResults)) &
+       CALL FlagError("Data projection projection results is not allocated.",err,error,*999)
+    DO tagIdx=1,SIZE(exitTags,1)
+      SELECT CASE(exitTags(tagIdx))
+      CASE(DATA_PROJECTION_CANCELLED)
+        !Do nothing or should this be an error?
+      CASE(DATA_PROJECTION_EXIT_TAG_CONVERGED,DATA_PROJECTION_EXIT_TAG_BOUNDS,DATA_PROJECTION_EXIT_TAG_MAX_ITERATION, &
+        & DATA_PROJECTION_EXIT_TAG_NO_ELEMENT)
+        !Do nothing
+      CASE DEFAULT
+        localError="The specified exit tag of "//TRIM(NumberToVString(exitTags(tagIdx),"*",err,error))// &
+          & " at position "//TRIM(NumberToVString(tagIdx,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    ENDDO !tagIdx
+    
+    NULLIFY(dataPoints)
+    CALL DataProjection_DataPointsGet(dataProjection,dataPoints,err,error,*999)
+    DO dataPointIdx=1,dataPoints%numberOfDataPoints
+      DO tagIdx=1,SIZE(exitTags,1)
+        IF(dataProjection%dataProjectionResults(dataPointIdx)%exitTag>exitTags(tagIdx)) &
+          & dataProjection%dataProjectionResults(dataPointIdx)%exitTag=DATA_PROJECTION_CANCELLED
+      ENDDO !tagIdx
+    ENDDO !dataPointIdx
+    
+    EXITS("DataProjection_ProjectionCancelByExitTags1")
+    RETURN
+999 ERRORSEXITS("DataProjection_ProjectionCancelByExitTags1",err,error)    
+    RETURN 1
+
+  END SUBROUTINE DataProjection_ProjectionCancelByExitTags1
+  
+  !
   !================================================================================================================================
   !
   
