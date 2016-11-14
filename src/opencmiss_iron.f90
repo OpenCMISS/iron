@@ -1947,6 +1947,22 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_DataProjection_ProjectionCandidateElementsSetObj
   END INTERFACE cmfe_DataProjection_ProjectionCandidateElementsSet
 
+  !>Set the data projection candidate elements for data points for an all elements projection type.
+  INTERFACE cmfe_DataProjection_ProjectionDataCandidateElementsSet
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum00
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum01
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum10
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum11
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum00
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum01
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum10
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum11
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateElementsSetObj00
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateElementsSetObj01
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateElementsSetObj10
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateElementsSetObj11
+  END INTERFACE cmfe_DataProjection_ProjectionDataCandidateElementsSet
+
   !>Set the data projection candidate faces for a boundary faces projection type.
   INTERFACE cmfe_DataProjection_ProjectionCandidateFacesSet
     MODULE PROCEDURE cmfe_DataProjection_ProjectionCandidateFacesSetRegionNumber
@@ -1954,12 +1970,44 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_DataProjection_ProjectionCandidateFacesSetObj
   END INTERFACE cmfe_DataProjection_ProjectionCandidateFacesSet
 
+  !>Set the data projection candidate faces for data points for a boundary faces projection type.
+  INTERFACE cmfe_DataProjection_ProjectionDataCandidateFacesSet
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum000
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum011
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum100
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum111
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum000
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum011
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum100
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum111
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateFacesSetObj000
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateFacesSetObj011
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateFacesSetObj100
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateFacesSetObj111
+  END INTERFACE cmfe_DataProjection_ProjectionDataCandidateFacesSet
+
   !>Set the data projection candidate lines for a boundary lines projection type.
   INTERFACE cmfe_DataProjection_ProjectionCandidateLinesSet
     MODULE PROCEDURE cmfe_DataProjection_ProjectionCandidateLinesSetRegionNumber
     MODULE PROCEDURE cmfe_DataProjection_ProjectionCandidateLinesSetInterfaceNumber
     MODULE PROCEDURE cmfe_DataProjection_ProjectionCandidateLinesSetObj
   END INTERFACE cmfe_DataProjection_ProjectionCandidateLinesSet
+
+  !>Set the data projection candidate lines for data points for a boundary lines projection type.
+  INTERFACE cmfe_DataProjection_ProjectionDataCandidateLinesSet
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum000
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum011
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum100
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum111
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum000
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum011
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum100
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum111
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateLinesSetObj000
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateLinesSetObj011
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateLinesSetObj100
+    MODULE PROCEDURE cmfe_DataProjection_ProjectionDataCandidateLinesSetObj111
+  END INTERFACE cmfe_DataProjection_ProjectionDataCandidateLinesSet
 
   !>Returns the projection type for a data projection.
   INTERFACE cmfe_DataProjection_ProjectionTypeGet
@@ -2121,9 +2169,15 @@ MODULE OpenCMISS_Iron
 
   PUBLIC cmfe_DataProjection_ProjectionCandidateElementsSet
 
+  PUBLIC cmfe_DataProjection_ProjectionDataCandidateElementsSet
+
   PUBLIC cmfe_DataProjection_ProjectionCandidateFacesSet
 
+  PUBLIC cmfe_DataProjection_ProjectionDataCandidateFacesSet
+
   PUBLIC cmfe_DataProjection_ProjectionCandidateLinesSet
+
+  PUBLIC cmfe_DataProjection_ProjectionDataCandidateLinesSet
 
   PUBLIC cmfe_DataProjection_DataPointsProjectionEvaluate
 
@@ -20023,14 +20077,14 @@ CONTAINS
 
   !>Set the data projection candidate elements for an all elements projection type in a region specified by user number
   SUBROUTINE cmfe_DataProjection_ProjectionCandidateElementsSetRegionNumber(regionUserNumber,dataPointsUserNumber, &
-    & dataProjectionUserNumber,candidateElements,err)
+    & dataProjectionUserNumber,candidateElementUserNumbers,err)
     !DLLEXPORT(cmfe_DataProjection_ProjectionCandidateElementsSetRegionNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
-    INTEGER(INTG), INTENT(IN) :: candidateElements(:) !<candidateElements(elementIdx). The candidate elements for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables  
     TYPE(DataProjectionType), POINTER :: dataProjection
@@ -20045,7 +20099,7 @@ CONTAINS
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
     CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
-    CALL DataProjection_ProjectionCandidateElementsSet(dataProjection,candidateElements,err,error,*999)
+    CALL DataProjection_ProjectionCandidateElementsSet(dataProjection,candidateElementUserNumbers,err,error,*999)
 
     EXITS("cmfe_DataProjection_ProjectionCandidateElementsSetRegionNumber")
     RETURN
@@ -20062,7 +20116,7 @@ CONTAINS
 
   !>ESet the data projection candidate elements for an all elements projection type in an interface specified by user number
   SUBROUTINE cmfe_DataProjection_ProjectionCandidateElementsSetIntNum(parentRegionUserNumber,interfaceUserNumber, &
-    & dataPointsUserNumber,dataProjectionUserNumber,candidateElements,err)
+    & dataPointsUserNumber,dataProjectionUserNumber,candidateElementUserNumbers,err)
     !DLLEXPORT(cmfe_DataProjection_ProjectionCandidateElementsSetIntNum)
 
     !Argument variables
@@ -20070,7 +20124,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
-    INTEGER(INTG), INTENT(IN) :: candidateElements(:) !<candidateElements(elementIdx). The candidate element for the projection
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables  
     TYPE(DataProjectionType), POINTER :: dataProjection
@@ -20088,7 +20142,7 @@ CONTAINS
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
     CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
-    CALL DataProjection_ProjectionCandidateElementsSet(dataProjection,candidateElements,err,error,*999)
+    CALL DataProjection_ProjectionCandidateElementsSet(dataProjection,candidateElementUserNumbers,err,error,*999)
     
     EXITS("cmfe_DataProjection_ProjectionCandidateElementsSetIntNum")
     RETURN
@@ -20104,18 +20158,18 @@ CONTAINS
   !
 
   !>Set the data projection candidate elements for an all elements projection type in a region specified by object
-  SUBROUTINE cmfe_DataProjection_ProjectionCandidateElementsSetObj(dataProjection,candidateElements,err)
+  SUBROUTINE cmfe_DataProjection_ProjectionCandidateElementsSetObj(dataProjection,candidateElementUserNumbers,err)
     !DLLEXPORT(cmfe_DataProjection_ProjectionCandidateElementsSetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
-    INTEGER(INTG), INTENT(IN) :: candidateElements(:) !<candidateElements(elementIdx). The candidate element for the projection
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables 
 
     ENTERS("cmfe_DataProjection_ProjectionCandidateElementsSetObj",err,error,*999)
     
-    CALL DataProjection_ProjectionCandidateElementsSet(dataProjection%dataProjection,candidateElements,err,error,*999)
+    CALL DataProjection_ProjectionCandidateElementsSet(dataProjection%dataProjection,candidateElementUserNumbers,err,error,*999)
     
     EXITS("cmfe_DataProjection_ProjectionCandidateElementsSetObj")
     RETURN
@@ -20130,16 +20184,416 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Set the data projection candidate element for a data point for an all elements projection type in a region specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum00(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,dataPointUserNumber,candidateElementUserNumber,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum00)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element number
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+ 
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum00",err,error,*999)
+    
+    CALL cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum11(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,[dataPointUserNumber],[candidateElementUserNumber],err)
+    
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum00")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum00",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum00")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum00
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate elements for a data point for an all elements projection type in a region specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum01(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,dataPointUserNumber,candidateElementUserNumbers,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum01)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element numbers
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate elements user numbers for the projection.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+ 
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum01",err,error,*999)
+    
+    CALL cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum11(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,[dataPointUserNumber],candidateElementUserNumbers,err)
+    
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum01")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum01",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum01")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum01
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate element for data points for an all elements projection type in a region specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum10(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,dataPointUserNumbers,candidateElementUserNumber,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum10)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element number
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+ 
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum10",err,error,*999)
+    
+    CALL cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum11(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,dataPointUserNumbers,[candidateElementUserNumber],err)
+    
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum10")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum10",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum10")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum10
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate elements for data points for an all elements projection type in a region specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum11(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,dataPointUserNumbers,candidateElementUserNumbers,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum11)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element numbers
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+    TYPE(DataProjectionType), POINTER :: dataProjection
+    TYPE(DataPointsType), POINTER :: dataPoints
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum11",err,error,*999)
+    
+    NULLIFY(dataProjection)
+    NULLIFY(dataPoints) 
+    NULLIFY(region)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
+    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataProjection_ProjectionDataCandidateElementsSet(dataProjection,dataPointUserNumbers,candidateElementUserNumbers, &
+      & err,error,*999)
+
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum11")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum11",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum11")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum11
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate element for a data point for an all elements projection type in an interface specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum00(parentRegionUserNumber,interfaceUserNumber, &
+    & dataPointsUserNumber,dataProjectionUserNumber,dataPointUserNumber,candidateElementUserNumber,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum00)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The parent region number of the interface for the data projection 
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element number.
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum00",err,error,*999)
+    
+    CALL cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum11(parentRegionUserNumber,interfaceUserNumber, &
+      & dataPointsUserNumber,dataProjectionUserNumber,[dataPointUserNumber],[candidateElementUserNumber],err)
+    
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum00")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum00",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum00")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum00
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate elements for a data point for an all elements projection type in an interface specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum01(parentRegionUserNumber,interfaceUserNumber, &
+    & dataPointsUserNumber,dataProjectionUserNumber,dataPointUserNumber,candidateElementUserNumbers,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum01)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The parent region number of the interface for the data projection 
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element numbers.
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum01",err,error,*999)
+    
+    CALL cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum11(parentRegionUserNumber,interfaceUserNumber, &
+      & dataPointsUserNumber,dataProjectionUserNumber,[dataPointUserNumber],candidateElementUserNumbers,err)
+    
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum01")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum01",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum01")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum01
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate element for data points for an all elements projection type in an interface specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum10(parentRegionUserNumber,interfaceUserNumber, &
+    & dataPointsUserNumber,dataProjectionUserNumber,dataPointUserNumbers,candidateElementUserNumber,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum10)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The parent region number of the interface for the data projection 
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element numbers
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum10",err,error,*999)
+    
+    CALL cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum11(parentRegionUserNumber,interfaceUserNumber, &
+      & dataPointsUserNumber,dataProjectionUserNumber,dataPointUserNumbers,[candidateElementUserNumber],err)
+    
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum10")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum10",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum10")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum10
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate elements for data points for an all elements projection type in an interface specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum11(parentRegionUserNumber,interfaceUserNumber, &
+    & dataPointsUserNumber,dataProjectionUserNumber,dataPointUserNumbers,candidateElementUserNumbers,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum11)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The parent region number of the interface for the data projection 
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element numbers
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+    TYPE(DataProjectionType), POINTER :: dataProjection
+    TYPE(DataPointsType), POINTER :: dataPoints
+    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(INTERFACE_TYPE), POINTER :: interface
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum11",err,error,*999)
+    
+    NULLIFY(dataProjection)
+    NULLIFY(dataPoints)  
+    NULLIFY(parentRegion)
+    NULLIFY(interface)  
+    CALL Region_Get(parentRegionUserNumber,parentRegion,err,error,*999)
+    CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
+    CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
+    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataProjection_ProjectionDataCandidateElementsSet(dataProjection,dataPointUserNumbers,candidateElementUserNumbers, &
+      & err,error,*999)
+    
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum11")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum11",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum11")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum11
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate element for a data point for an all elements projection type in a region specified by object
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateElementsSetObj00(dataProjection,dataPointUserNumber, &
+    & candidateElementUserNumber,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateElementsSetObj00)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element number
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables 
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj00",err,error,*999)
+    
+    CALL cmfe_DataProjection_ProjectionDataCandidateElementsSetObj11(dataProjection,[dataPointUserNumber], &
+      & [candidateElementUserNumber],err)
+    
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj00")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj00",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj00")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateElementsSetObj00
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate elements for a data point for an all elements projection type in a region specified by object
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateElementsSetObj01(dataProjection,dataPointUserNumber, &
+    & candidateElementUserNumbers,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateElementsSetObj01)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element numbers
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables 
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj01",err,error,*999)
+    
+    CALL cmfe_DataProjection_ProjectionDataCandidateElementsSetObj11(dataProjection,[dataPointUserNumber], &
+      & candidateElementUserNumbers,err)
+    
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj01")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj01",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj01")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateElementsSetObj01
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate element for data points for an all elements projection type in a region specified by object
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateElementsSetObj10(dataProjection,dataPointUserNumbers, &
+    & candidateElementUserNumber,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateElementsSetObj10)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element numbers
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables 
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj10",err,error,*999)
+    
+    CALL cmfe_DataProjection_ProjectionDataCandidateElementsSetObj11(dataProjection,dataPointUserNumbers, &
+      & [candidateElementUserNumber],err)
+    
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj10")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj10",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj10")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateElementsSetObj10
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate elements for data points for an all elements projection type in a region specified by object
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateElementsSetObj11(dataProjection,dataPointUserNumbers, &
+    & candidateElementUserNumbers,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateElementsSetObj11)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element numbers
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables 
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj11",err,error,*999)
+    
+    CALL DataProjection_ProjectionCandidateElementsSet(dataProjection%dataProjection,candidateElementUserNumbers,err,error,*999)
+    
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj11")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj11",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj11")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateElementsSetObj11
+
+  !
+  !================================================================================================================================
+  !
+
   !>Set the data projection candidate faces for a boundary faces projection type in a region specified by user number
   SUBROUTINE cmfe_DataProjection_ProjectionCandidateFacesSetRegionNumber(regionUserNumber,dataPointsUserNumber, &
-    & dataProjectionUserNumber,candidateElements,candidateFaceNormals,err)
+    & dataProjectionUserNumber,candidateElementUserNumbers,candidateFaceNormals,err)
     !DLLEXPORT(cmfe_DataProjection_ProjectionCandidateFacesSetRegionNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
-    INTEGER(INTG), INTENT(IN) :: candidateElements(:) !<candidateElements(elementIdx). The candidate elements for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
     INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables  
@@ -20155,7 +20609,7 @@ CONTAINS
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
     CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
-    CALL DataProjection_ProjectionCandidateFacesSet(dataProjection,candidateElements,candidateFaceNormals,err,error,*999)
+    CALL DataProjection_ProjectionCandidateFacesSet(dataProjection,candidateElementUserNumbers,candidateFaceNormals,err,error,*999)
 
     EXITS("cmfe_DataProjection_ProjectionCandidateFacesSetRegionNumber")
     RETURN
@@ -20172,7 +20626,7 @@ CONTAINS
 
   !>Set the data projection candidate faces for a boundary faces projection type in an interface specified by user number
   SUBROUTINE cmfe_DataProjection_ProjectionCandidateFacesSetInterfaceNumber(parentRegionUserNumber,interfaceUserNumber, &
-    & dataPointsUserNumber,dataProjectionUserNumber,candidateElements,candidateFaceNormals,err)
+    & dataPointsUserNumber,dataProjectionUserNumber,candidateElementUserNumbers,candidateFaceNormals,err)
     !DLLEXPORT(cmfe_DataProjection_ProjectionCandidateFacesSetInterfaceNumber)
 
     !Argument variables
@@ -20180,7 +20634,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
-    INTEGER(INTG), INTENT(IN) :: candidateElements(:) !<candidateElements(elementIdx). The candidate elements for the projection
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection
     INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables  
@@ -20199,7 +20653,7 @@ CONTAINS
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
     CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
-    CALL DataProjection_ProjectionCandidateFacesSet(dataProjection,candidateElements,candidateFaceNormals,err,error,*999)
+    CALL DataProjection_ProjectionCandidateFacesSet(dataProjection,candidateElementUserNumbers,candidateFaceNormals,err,error,*999)
     
     EXITS("cmfe_DataProjection_ProjectionCandidateFacesSetInterfaceNumber")
     RETURN
@@ -20215,20 +20669,20 @@ CONTAINS
   !
 
   !>Set the data projection candidate faces for a boundary faces projection type in a region specified by object
-  SUBROUTINE cmfe_DataProjection_ProjectionCandidateFacesSetObj(dataProjection,candidateElements,candidateFaceNormals,err)
+  SUBROUTINE cmfe_DataProjection_ProjectionCandidateFacesSetObj(dataProjection,candidateElementUserNumbers,candidateFaceNormals,err)
     !DLLEXPORT(cmfe_DataProjection_ProjectionCandidateFacesSetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
-    INTEGER(INTG), INTENT(IN) :: candidateElements(:) !<candidateElements(elementIdx). The candidate element for the projection
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection
     INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables 
 
     ENTERS("cmfe_DataProjection_ProjectionCandidateFacesSetObj",err,error,*999)
     
-    CALL DataProjection_ProjectionCandidateFacesSet(dataProjection%dataProjection,candidateElements,candidateFaceNormals, &
-      & err,error,*999)
+    CALL DataProjection_ProjectionCandidateFacesSet(dataProjection%dataProjection,candidateElementUserNumbers, &
+      & candidateFaceNormals,err,error,*999)
     
     EXITS("cmfe_DataProjection_ProjectionCandidateFacesSetObj")
     RETURN
@@ -20243,16 +20697,429 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Set the data projection candidate face for a data point in a boundary faces projection type in a region specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum000(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,dataPointUserNumber,candidateElementUserNumber,candidateFaceNormal,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionCandidateFacesSetRegNum000)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element number
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormal !<The xi normal of the candidate face for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum000",err,error,*999)
+
+    CALL cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum111(regionUserNumber,dataPointsUserNumber, &
+      & dataProjectionUserNumber,[dataPointUserNumber],[candidateElementUserNumber],[candidateFaceNormal],err)
+
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum000")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum000",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum000")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum000
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate faces for a data point in a boundary faces projection type in a region specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum011(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,dataPointUserNumber,candidateElementUserNumbers,candidateFaceNormals,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionCandidateFacesSetRegNum011)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element number
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum011",err,error,*999)
+
+    CALL cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum111(regionUserNumber,dataPointsUserNumber, &
+      & dataProjectionUserNumber,[dataPointUserNumber],candidateElementUserNumbers,candidateFaceNormals,err)
+
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum011")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum011",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum011")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum011
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate face for data points in a boundary faces projection type in a region specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum100(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,dataPointUserNumbers,candidateElementUserNumber,candidateFaceNormal,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionCandidateFacesSetRegNum100)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element number
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormal !<The xi normal of the candidate face for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum100",err,error,*999)
+
+    CALL cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum111(regionUserNumber,dataPointsUserNumber, &
+      & dataProjectionUserNumber,dataPointUserNumbers,[candidateElementUserNumber],[candidateFaceNormal],err)
+
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum100")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum100",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum100")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum100
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate faces for data points in a boundary faces projection type in a region specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum111(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,dataPointUserNumbers,candidateElementUserNumbers,candidateFaceNormals,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionCandidateFacesSetRegNum111)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element numbers
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+    TYPE(DataProjectionType), POINTER :: dataProjection
+    TYPE(DataPointsType), POINTER :: dataPoints
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum111",err,error,*999)
+    
+    NULLIFY(dataProjection)
+    NULLIFY(dataPoints) 
+    NULLIFY(region)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
+    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataProjection_ProjectionDataCandidateFacesSet(dataProjection,dataPointUserNumbers,candidateElementUserNumbers, &
+      & candidateFaceNormals,err,error,*999)
+
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum111")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum111",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum111")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum111
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate face for a data point for a boundary faces projection type in an interface specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum000(parentRegionUserNumber,interfaceUserNumber, &
+    & dataPointsUserNumber,dataProjectionUserNumber,dataPointUserNumber,candidateElementUserNumber,candidateFaceNormal,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum000)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The parent region number of the interface for the data projection 
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element number
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormal !<The xi normal of the candidate faces for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum000",err,error,*999)
+    
+    CALL cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum111(parentRegionUserNumber,interfaceUserNumber, &
+      & dataPointsUserNumber,dataProjectionUserNumber,[dataPointUserNumber],[candidateElementUserNumber],[candidateFaceNormal],err)
+    
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum000")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum000",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum000")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum000
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate faces for a data point for a boundary faces projection type in an interface specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum011(parentRegionUserNumber,interfaceUserNumber, &
+    & dataPointsUserNumber,dataProjectionUserNumber,dataPointUserNumber,candidateElementUserNumbers,candidateFaceNormals,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum011)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The parent region number of the interface for the data projection 
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element numbers
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum011",err,error,*999)
+    
+    CALL cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum111(parentRegionUserNumber,interfaceUserNumber, &
+      & dataPointsUserNumber,dataProjectionUserNumber,[dataPointUserNumber],candidateElementUserNumbers,candidateFaceNormals,err)
+    
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum011")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum011",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum011")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum011
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate face for data points for a boundary faces projection type in an interface specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum100(parentRegionUserNumber,interfaceUserNumber, &
+    & dataPointsUserNumber,dataProjectionUserNumber,dataPointUserNumbers,candidateElementUserNumber,candidateFaceNormal,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum100)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The parent region number of the interface for the data projection 
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element number
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormal !<The xi normal of the candidate faces for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum100",err,error,*999)
+    
+    CALL cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum111(parentRegionUserNumber,interfaceUserNumber, &
+      & dataPointsUserNumber,dataProjectionUserNumber,dataPointUserNumbers,[candidateElementUserNumber],[candidateFaceNormal],err)
+    
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum100")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum100",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum100")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum100
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate faces for data points for a boundary faces projection type in an interface specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum111(parentRegionUserNumber,interfaceUserNumber, &
+    & dataPointsUserNumber,dataProjectionUserNumber,dataPointUserNumbers,candidateElementUserNumbers,candidateFaceNormals,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum111)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The parent region number of the interface for the data projection 
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element numbers
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+    TYPE(DataProjectionType), POINTER :: dataProjection
+    TYPE(DataPointsType), POINTER :: dataPoints
+    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(INTERFACE_TYPE), POINTER :: interface
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum111",err,error,*999)
+    
+    NULLIFY(dataProjection)
+    NULLIFY(dataPoints)  
+    NULLIFY(parentRegion)
+    NULLIFY(interface)  
+    CALL Region_Get(parentRegionUserNumber,parentRegion,err,error,*999)
+    CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
+    CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
+    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataProjection_ProjectionDataCandidateFacesSet(dataProjection,dataPointUserNumbers,candidateElementUserNumbers, &
+      & candidateFaceNormals,err,error,*999)
+    
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum111")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum111",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum111")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum111
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate face for a data point for a boundary faces projection type in a region specified by object
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetObj000(dataProjection,dataPointUserNumber, &
+    & candidateElementUserNumber,candidateFaceNormal,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateFacesSetObj000)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element number
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormal !<The xi normal of the candidate face for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables 
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateFacesSetObj000",err,error,*999)
+
+    CALL cmfe_DataProjection_ProjectionDataCandidateFacesSetObj111(dataProjection,[dataPointUserNumber], &
+    & [candidateElementUserNumber],[candidateFaceNormal],err)
+    
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateFacesSetObj000")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateFacesSetObj000",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateFacesSetObj000")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetObj000
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate faces for a data point for a boundary faces projection type in a region specified by object
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetObj011(dataProjection,dataPointUserNumber, &
+    & candidateElementUserNumbers,candidateFaceNormals,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateFacesSetObj011)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element numbers
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables 
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateFacesSetObj011",err,error,*999)
+
+    CALL cmfe_DataProjection_ProjectionDataCandidateFacesSetObj111(dataProjection,[dataPointUserNumber], &
+    & candidateElementUserNumbers,candidateFaceNormals,err)
+    
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateFacesSetObj011")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateFacesSetObj011",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateFacesSetObj011")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+    
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetObj011
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate face for data points for a boundary faces projection type in a region specified by object
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetObj100(dataProjection,dataPointUserNumbers, &
+    & candidateElementUserNumber,candidateFaceNormal,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateFacesSetObj100)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element number
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormal !<The xi normal of the candidate face for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables 
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateFacesSetObj100",err,error,*999)
+
+    CALL cmfe_DataProjection_ProjectionDataCandidateFacesSetObj111(dataProjection,dataPointUserNumbers, &
+    & [candidateElementUserNumber],[candidateFaceNormal],err)
+    
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateFacesSetObj100")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateFacesSetObj100",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateFacesSetObj100")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetObj100
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate faces for data points for a boundary faces projection type in a region specified by object
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetObj111(dataProjection,dataPointUserNumbers, &
+    & candidateElementUserNumbers,candidateFaceNormals,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateFacesSetObj111)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element numbers
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables 
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateFacesSetObj111",err,error,*999)
+    
+    CALL DataProjection_ProjectionDataCandidateFacesSet(dataProjection%dataProjection,dataPointUserNumbers, &
+      & candidateElementUserNumbers,candidateFaceNormals,err,error,*999)
+    
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateFacesSetObj111")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateFacesSetObj111",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateFacesSetObj111")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetObj111
+
+  !
+  !================================================================================================================================
+  !
+
   !>Set the data projection candidate lines for a boundary lines projection type in a region specified by user number
   SUBROUTINE cmfe_DataProjection_ProjectionCandidateLinesSetRegionNumber(regionUserNumber,dataPointsUserNumber, &
-    & dataProjectionUserNumber,candidateElements,candidateLineNormals,err)
+    & dataProjectionUserNumber,candidateElementUserNumbers,candidateLineNormals,err)
     !DLLEXPORT(cmfe_DataProjection_ProjectionCandidateLinesSetRegionNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
-    INTEGER(INTG), INTENT(IN) :: candidateElements(:) !<candidateElements(elementIdx). The candidate elements for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
     INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables  
@@ -20268,7 +21135,7 @@ CONTAINS
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
     CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
-    CALL DataProjection_ProjectionCandidateLinesSet(dataProjection,candidateElements,candidateLineNormals,err,error,*999)
+    CALL DataProjection_ProjectionCandidateLinesSet(dataProjection,candidateElementUserNumbers,candidateLineNormals,err,error,*999)
 
     EXITS("cmfe_DataProjection_ProjectionCandidateLinesSetRegionNumber")
     RETURN
@@ -20285,7 +21152,7 @@ CONTAINS
 
   !>Set the data projection candidate lines for a boundary lines projection type in an interface specified by user number
   SUBROUTINE cmfe_DataProjection_ProjectionCandidateLinesSetInterfaceNumber(parentRegionUserNumber,interfaceUserNumber, &
-    & dataPointsUserNumber,dataProjectionUserNumber,candidateElements,candidateLineNormals,err)
+    & dataPointsUserNumber,dataProjectionUserNumber,candidateElementUserNumbers,candidateLineNormals,err)
     !DLLEXPORT(cmfe_DataProjection_ProjectionCandidateLinesSetInterfaceNumber)
 
     !Argument variables
@@ -20293,7 +21160,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
-    INTEGER(INTG), INTENT(IN) :: candidateElements(:) !<candidateElements(elementIdx). The candidate elements for the projection
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
     INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables  
@@ -20312,7 +21179,7 @@ CONTAINS
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
     CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
-    CALL DataProjection_ProjectionCandidateLinesSet(dataProjection,candidateElements,candidateLineNormals,err,error,*999)
+    CALL DataProjection_ProjectionCandidateLinesSet(dataProjection,candidateElementUserNumbers,candidateLineNormals,err,error,*999)
     
     EXITS("cmfe_DataProjection_ProjectionCandidateLinesSetInterfaceNumber")
     RETURN
@@ -20328,20 +21195,20 @@ CONTAINS
   !
 
   !>Set the data projection candidate lines for a boundary lines projection type in a region specified by object
-  SUBROUTINE cmfe_DataProjection_ProjectionCandidateLinesSetObj(dataProjection,candidateElements,candidateLineNormals,err)
+  SUBROUTINE cmfe_DataProjection_ProjectionCandidateLinesSetObj(dataProjection,candidateElementUserNumbers,candidateLineNormals,err)
     !DLLEXPORT(cmfe_DataProjection_ProjectionCandidateLineSetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
-    INTEGER(INTG), INTENT(IN) :: candidateElements(:) !<candidateElements(elementIdx). The candidate element for the projection
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
     INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables 
 
     ENTERS("cmfe_DataProjection_ProjectionCandidateLinesSetObj",err,error,*999)
     
-    CALL DataProjection_ProjectionCandidateLinesSet(dataProjection%dataProjection,candidateElements,candidateLineNormals, &
-      & err,error,*999)
+    CALL DataProjection_ProjectionCandidateLinesSet(dataProjection%dataProjection,candidateElementUserNumbers, &
+      & candidateLineNormals,err,error,*999)
     
     EXITS("cmfe_DataProjection_ProjectionCandidateLinesSetObj")
     RETURN
@@ -20351,6 +21218,423 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_DataProjection_ProjectionCandidateLinesSetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate line for a data point for a boundary lines projection type in a region specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum000(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,dataPointUserNumber,candidateElementUserNumber,candidateLineNormals,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum000)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element number
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:) !<candidateLineNormals(normalIdx). The xi normals of the candidate line for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum000",err,error,*999)
+
+    CALL cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum111(regionUserNumber,dataPointsUserNumber, &
+      & dataProjectionUserNumber,[dataPointUserNumber],[candidateElementUserNumber], &
+      & RESHAPE(candidateLineNormals,[SIZE(candidateLineNormals,1),1]),err)
+
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum000")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum000",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum000")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum000
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate lines for a data point for a boundary lines projection type in a region specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum011(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,dataPointUserNumber,candidateElementUserNumbers,candidateLineNormals,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum011)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element numbers
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum011",err,error,*999)
+
+    CALL cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum111(regionUserNumber,dataPointsUserNumber, &
+      & dataProjectionUserNumber,[dataPointUserNumber],candidateElementUserNumbers,candidateLineNormals,err)
+
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum011")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum011",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum011")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+    
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum011
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate line for data points for a boundary lines projection type in a region specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum100(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,dataPointUserNumbers,candidateElementUserNumber,candidateLineNormals,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum100)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element number
+     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:) !<candidateLineNormals(normalIdx). The xi normals of the candidate line for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum100",err,error,*999)
+
+    CALL cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum111(regionUserNumber,dataPointsUserNumber, &
+      & dataProjectionUserNumber,dataPointUserNumbers,[candidateElementUserNumber], &
+      & RESHAPE(candidateLineNormals,[SIZE(candidateLineNormals,1),1]),err)
+
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum100")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum100",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum100")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum100
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate lines for data points for a boundary lines projection type in a region specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum111(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,dataPointUserNumbers,candidateElementUserNumbers,candidateLineNormals,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum111)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element numbers
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+    TYPE(DataProjectionType), POINTER :: dataProjection
+    TYPE(DataPointsType), POINTER :: dataPoints
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum111",err,error,*999)
+    
+    NULLIFY(dataProjection)
+    NULLIFY(dataPoints) 
+    NULLIFY(region)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
+    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataProjection_ProjectionDataCandidateLinesSet(dataProjection,dataPointUserNumbers,candidateElementUserNumbers, &
+      & candidateLineNormals,err,error,*999)
+
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum111")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum111",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum111")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum111
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate line for a data point for a boundary lines projection type in an interface specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum000(parentRegionUserNumber,interfaceUserNumber, &
+    & dataPointsUserNumber,dataProjectionUserNumber,dataPointUserNumber,candidateElementUserNumber,candidateLineNormals,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum000)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The parent region number of the interface for the data projection 
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element number
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:) !<candidateLineNormals(normalIdx). The xi normals of the candidate line for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum000",err,error,*999)
+
+    CALL cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum111(parentRegionUserNumber,interfaceUserNumber, &
+      & dataPointsUserNumber,dataProjectionUserNumber,[dataPointUserNumber],[candidateElementUserNumber], &
+      & RESHAPE(candidateLineNormals,[SIZE(candidateLineNormals,1),1]),err)
+   
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum000")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum000",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum000")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum000
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate lines for a data point for a boundary lines projection type in an interface specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum011(parentRegionUserNumber,interfaceUserNumber, &
+    & dataPointsUserNumber,dataProjectionUserNumber,dataPointUserNumber,candidateElementUserNumbers,candidateLineNormals,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum011)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The parent region number of the interface for the data projection 
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element number
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum011",err,error,*999)
+
+    CALL cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum111(parentRegionUserNumber,interfaceUserNumber, &
+      & dataPointsUserNumber,dataProjectionUserNumber,[dataPointUserNumber],candidateElementUserNumbers,candidateLineNormals,err)
+   
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum011")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum011",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum011")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum011
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate line for data points for a boundary lines projection type in an interface specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum100(parentRegionUserNumber,interfaceUserNumber, &
+    & dataPointsUserNumber,dataProjectionUserNumber,dataPointUserNumbers,candidateElementUserNumber,candidateLineNormals,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum100)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The parent region number of the interface for the data projection 
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element number
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:) !<candidateLineNormals(normalIdx). The xi normals of the candidate line for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum100",err,error,*999)
+
+    CALL cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum111(parentRegionUserNumber,interfaceUserNumber, &
+      & dataPointsUserNumber,dataProjectionUserNumber,dataPointUserNumbers,[candidateElementUserNumber], &
+      & RESHAPE(candidateLineNormals,[SIZE(candidateLineNormals,1),1]),err)
+   
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum100")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum100",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum100")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum100
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate lines for data points for a boundary lines projection type in an interface specified by user number
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum111(parentRegionUserNumber,interfaceUserNumber, &
+    & dataPointsUserNumber,dataProjectionUserNumber,dataPointUserNumbers,candidateElementUserNumbers,candidateLineNormals,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum111)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The parent region number of the interface for the data projection 
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection 
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element numbers
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables  
+    TYPE(DataProjectionType), POINTER :: dataProjection
+    TYPE(DataPointsType), POINTER :: dataPoints
+    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(INTERFACE_TYPE), POINTER :: interface
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum111",err,error,*999)
+    
+    NULLIFY(dataProjection)
+    NULLIFY(dataPoints)  
+    NULLIFY(parentRegion)
+    NULLIFY(interface)  
+    CALL Region_Get(parentRegionUserNumber,parentRegion,err,error,*999)
+    CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
+    CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
+    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataProjection_ProjectionDataCandidateLinesSet(dataProjection,dataPointUserNumbers,candidateElementUserNumbers, &
+      & candidateLineNormals,err,error,*999)
+    
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum111")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum111",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum111")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum111
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate line for a data point for a boundary lines projection type in a region specified by object
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetObj000(dataProjection,dataPointUserNumber, &
+    & candidateElementUserNumber,candidateLineNormals,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateLineSetObj000)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element number
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:) !<The xi normals of the candidate line for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables 
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateLinesSetObj000",err,error,*999)
+    
+    CALL cmfe_DataProjection_ProjectionDataCandidateLinesSetObj111(dataProjection,[dataPointUserNumber], &
+    & [candidateElementUserNumber],RESHAPE(candidateLineNormals,[SIZE(candidateLineNormals,1),1]),err)
+    
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateLinesSetObj000")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateLinesSetObj000",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateLinesSetObj000")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetObj000
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate lines for a data point for a boundary lines projection type in a region specified by object
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetObj011(dataProjection,dataPointUserNumber, &
+    & candidateElementUserNumbers,candidateLineNormals,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateLineSetObj011)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element number
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables 
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateLinesSetObj011",err,error,*999)
+    
+    CALL cmfe_DataProjection_ProjectionDataCandidateLinesSetObj111(dataProjection,[dataPointUserNumber], &
+      & candidateElementUserNumbers,candidateLineNormals,err)
+    
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateLinesSetObj011")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateLinesSetObj011",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateLinesSetObj011")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetObj011
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate line for data points for a boundary lines projection type in a region specified by object
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetObj100(dataProjection,dataPointUserNumbers, &
+    & candidateElementUserNumber,candidateLineNormals,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateLineSetObj100)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element number
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:) !<The xi normals of the candidate line for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables 
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateLinesSetObj100",err,error,*999)
+    
+    CALL cmfe_DataProjection_ProjectionDataCandidateLinesSetObj111(dataProjection,dataPointUserNumbers, &
+      & [candidateElementUserNumber],RESHAPE(candidateLineNormals,[SIZE(candidateLineNormals,1),1]),err)
+    
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateLinesSetObj100")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateLinesSetObj100",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateLinesSetObj100")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetObj100
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Set the data projection candidate lines for data points for a boundary lines projection type in a region specified by object
+  SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetObj111(dataProjection,dataPointUserNumbers, &
+    & candidateElementUserNumbers,candidateLineNormals,err)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateLineSetObj111)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element numbers
+    INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables 
+
+    ENTERS("cmfe_DataProjection_ProjectionDataCandidateLinesSetObj111",err,error,*999)
+    
+    CALL DataProjection_ProjectionDataCandidateLinesSet(dataProjection%dataProjection,dataPointUserNumbers, &
+      & candidateElementUserNumbers,candidateLineNormals,err,error,*999)
+    
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateLinesSetObj111")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ProjectionDataCandidateLinesSetObj111",err,error)
+    EXITS("cmfe_DataProjection_ProjectionDataCandidateLinesSetObj111")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetObj111
 
   !
   !================================================================================================================================

@@ -81,6 +81,8 @@ MODULE DataProjectionAccessRoutines
 
   PUBLIC DataProjection_DecompositionGet
 
+  PUBLIC DataProjection_ProjectionFieldGet
+
   PUBLIC DataProjection_ResultMaximumErrorGet
 
   PUBLIC DataProjection_ResultMinimumErrorGet
@@ -146,6 +148,35 @@ CONTAINS
     RETURN 1
 
   END SUBROUTINE DataProjection_DecompositionGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the projection field for a data projection.
+  SUBROUTINE DataProjection_ProjectionFieldGet(dataProjection,projectionField,err,error,*)
+
+    !Argument variables
+    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to get the projectionField for
+    TYPE(FIELD_TYPE), POINTER :: projectionField !<On exit, the projection field of the data projection. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+   
+    ENTERS("DataProjection_ProjectionFieldGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
+    IF(ASSOCIATED(projectionField)) CALL FlagError("Projection field is already associated.",err,error,*999)
+    
+    projectionField=>dataProjection%projectionField
+    IF(.NOT.ASSOCIATED(projectionField)) CALL FlagError("Data projection projection field is not associated.",err,error,*999)
+ 
+    EXITS("DataProjection_ProjectionFieldGet")
+    RETURN
+999 ERRORSEXITS("DataProjection_ProjectionFieldGet",err,error)    
+    RETURN 1
+
+  END SUBROUTINE DataProjection_ProjectionFieldGet
 
   !
   !================================================================================================================================

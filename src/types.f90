@@ -294,6 +294,12 @@ MODULE TYPES
     REAL(DP), ALLOCATABLE :: projectionVector(:) !<The projection vector from data point to the projected point. 
   END TYPE DataProjectionResultType
 
+  !>Contains information on projection candidates
+  TYPE DataProjectionCandidateType
+    INTEGER(INTG), ALLOCATABLE :: candidateElementNumbers(:) !<candidateElementNumbers(candidateElementIdx). The user specified user (get convert to local element number in PROJECTION_EVALUATE routines) candidate element numbers
+    INTEGER(INTG), ALLOCATABLE :: localFaceLineNumbers(:) !<localFaceLineNumbers(candidateElementIdx). The user specified corresponding element face/line numbers for the candidate elements
+  END TYPE DataProjectionCandidateType
+
   !>Contains information on a data point projection
   TYPE DataProjectionType
     INTEGER(INTG) :: globalNumber !<The global number of data projection. 
@@ -317,8 +323,8 @@ MODULE TYPES
     REAL(DP) :: absoluteTolerance !<The absolute tolerance of the iteration update
     REAL(DP) :: relativeTolerance !<The relative tolerance of the iteration update
     REAL(DP), ALLOCATABLE :: startingXi(:) !<The starting value of the element xi
-    INTEGER(INTG), ALLOCATABLE :: candidateElementNumbers(:) !<candidateElementNumbers(candidateElementIdx). The user specified user (get convert to local element number in PROJECTION_EVALUATE routines) candidate element numbers
-    INTEGER(INTG), ALLOCATABLE :: localFaceLineNumbers(:) !<localFaceLineNumbers(candidateElementIdx). The user specified corresponding element face/line numbers for the candidate elements
+    INTEGER(INTG) :: maxNumberOfCandidates !<The maximum number of projection candidate elements.
+    TYPE(DataProjectionCandidateType), ALLOCATABLE :: dataProjectionCandidates(:) !<projectionCandidates(dataIdx). The projection candidates for the dataIdx'th data point. The 0'th index contains the default projection candidates which can then be overridden for specific data points.
     TYPE(DataProjectionResultType), ALLOCATABLE :: dataProjectionResults(:) !<dataProjectionResults(dataIdx). The data projection results for the dataIdx'th data point.
     REAL(DP) :: rmsError !<The RMS error for the data projection.
     REAL(DP) :: maximumError !<The maximum error for the data projection.
