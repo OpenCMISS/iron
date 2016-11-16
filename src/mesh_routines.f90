@@ -994,7 +994,7 @@ CONTAINS
       NULLIFY(decomposition%topology)
       NULLIFY(decomposition%domain)
       decomposition%CALCULATE_LINES=.TRUE. 
-      decomposition%CALCULATE_FACES=.FALSE.
+      decomposition%CALCULATE_FACES=.TRUE.
     ENDIF
     
     EXITS("Decomposition_Initialise")
