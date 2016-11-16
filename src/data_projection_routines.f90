@@ -566,6 +566,7 @@ CONTAINS
     !Local Variables
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("DataProjection_CreateFinish",err,error,*999)
 
@@ -578,6 +579,26 @@ CONTAINS
     NULLIFY(decomposition)
     CALL DataProjection_DecompositionGet(dataProjection,decomposition,err,error,*999)
 
+    !Perform various checks
+    SELECT CASE(dataProjection%projectionType)
+    CASE(DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE)
+      !Check we have lines calculated
+      IF(.NOT.decomposition%CALCULATE_LINES) &
+        & CALL FlagError("Need to set the decomposition calculate lines to true for a boundary lines projection type.", &
+        & err,error,*999)
+    CASE(DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE)
+      !Check we have faces calculated
+      IF(.NOT.decomposition%CALCULATE_FACES) &
+        & CALL FlagError("Need to set the decomposition calculate faces to true for a boundary faces projection type.", &
+        & err,error,*999)
+    CASE(DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE)
+      !Do nothing
+    CASE DEFAULT
+      localError="The data projection type of "//TRIM(NumberToVString(dataProjection%projectionType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+
+    !Finish the data projection
     dataProjection%dataProjectionFinished=.TRUE.
     !Initialise data projection part in data points
     CALL DataProjection_DataProjectionResultsInitialise(dataProjection,err,error,*999) 
