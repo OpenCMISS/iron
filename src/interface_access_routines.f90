@@ -356,23 +356,23 @@ CONTAINS
         & TRIM(NumberToVString(parentRegion%USER_NUMBER,"*",err,error))//" are not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(.NOT.ASSOCIATED(parentRegion%interfaces%interfaces)) &
-      & CALL FlagError("Interfaces interfaces is not associated.",err,error,*999)
     
     !Get the interface from the user number
-    NULLIFY(interface)
-    DO interfaceIdx=1,parentRegion%interfaces%NUMBER_OF_INTERFACES
-      IF(ASSOCIATED(parentRegion%interfaces%interfaces(interfaceIdx)%ptr)) THEN
-        IF(parentRegion%interfaces%interfaces(interfaceIdx)%ptr%USER_NUMBER==userNumber) THEN
-          interface=>parentRegion%interfaces%interfaces(interfaceIdx)%ptr
-          EXIT
+    NULLIFY(INTERFACE)
+    IF(ASSOCIATED(parentRegion%interfaces%interfaces)) THEN
+      DO interfaceIdx=1,parentRegion%interfaces%NUMBER_OF_INTERFACES
+        IF(ASSOCIATED(parentRegion%interfaces%interfaces(interfaceIdx)%ptr)) THEN
+          IF(parentRegion%interfaces%interfaces(interfaceIdx)%ptr%USER_NUMBER==userNumber) THEN
+            INTERFACE=>parentRegion%interfaces%interfaces(interfaceIdx)%ptr
+            EXIT
+          ENDIF
+        ELSE
+          localError="The interface pointer in interfaces is not associated for interface index "// &
+            & TRIM(NumberToVString(interfaceIdx,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
         ENDIF
-      ELSE
-        localError="The interface pointer in interfaces is not associated for interface index "// &
-          & TRIM(NumberToVString(interfaceIdx,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
-    ENDDO !interfaceIdx
+      ENDDO !interfaceIdx
+    ENDIF
    
     EXITS("Interface_UserNumberFind")
     RETURN
