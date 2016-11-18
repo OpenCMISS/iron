@@ -72,6 +72,7 @@ set(IRON_Fortran_SRC
     interface_conditions_constants.f90
     interface_conditions_routines.f90
     interface_equations_routines.f90
+    interface_equations_access_routines.f90
     interface_mapping_routines.f90
     interface_matrices_constants.f90
     interface_matrices_routines.f90
