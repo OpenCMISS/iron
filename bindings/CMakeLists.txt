@@ -177,8 +177,6 @@ if (WITH_Python_BINDINGS)
         INPUT ${UTILS_PY})
     file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/__init__.py"
         INPUT ${CMAKE_CURRENT_SOURCE_DIR}/python/opencmiss/__init__.py)
-    file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/zinc/__init__.py"
-        CONTENT "")
     
     set(IRON_PY ${CMAKE_CURRENT_BINARY_DIR}/iron.py) # see python.py script in generate_bindings for iron.py name
     add_custom_command(OUTPUT ${IRON_PY}
