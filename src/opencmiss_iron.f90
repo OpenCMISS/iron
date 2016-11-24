@@ -10541,8 +10541,16 @@ CONTAINS
     !Local variables
 
     ENTERS("cmfe_DiagnosticsSetOn",err,error,*999)
-
+    
+#ifdef WITH_DIAGNOSTICS
+    
     CALL DIAGNOSTICS_SET_ON(diagType,levelList,diagFilename,routineList,err,error,*999)
+
+#else
+
+    CALL FlagWarning("Can not turn diagnostics on as WITH_DIAGNOSTICS is set to OFF. Set WITH_DIAGNOSTICS to ON.",err,error,*999)
+    
+#endif
 
     EXITS("cmfe_DiagnosticsSetOn")
     RETURN
@@ -10643,7 +10651,15 @@ CONTAINS
 
     ENTERS("cmfe_TimingSetOn",err,error,*999)
 
+#ifdef WITH_DIAGNOSTICS
+    
     CALL TIMING_SET_ON(timingType,timingSummaryFlag,timingFilename,routineList,err,error,*999)
+
+#else
+
+    CALL FlagWarning("Can not turn timing on as WITH_DIAGNOSTICS is set to OFF. Set WITH_DIAGNOSTICS to ON.",err,error,*999)
+    
+#endif
 
     EXITS("cmfe_TimingSetOn")
     RETURN
