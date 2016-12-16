@@ -27,6 +27,9 @@ CMAKE_DEPENDENT_OPTION(WITH_DIAGNOSTICS "Build iron with diagnostics support" ON
 option(PRINT_CONFIG_SUMMARY "Show a summary of the configuration." TRUE)
 set(PACKAGE_CONFIG_DIR "cmake" CACHE STRING "Directory for package config files (relative to CMAKE_INSTALL_PREFIX)")
 # Bindings options
+find_program(VIRTUALENV_EXEC virtualenv)
+mark_as_advanced(VIRTUALENV_EXEC)
+
 option(WITH_C_BINDINGS "Build iron C bindings" ON)
 option(WITH_Python_BINDINGS "Build iron Python bindings" ON)
 set(IRON_VIRTUALENV_INSTALL_PREFIX "${IRON_VIRTUALENV_INSTALL_PREFIX}" CACHE PATH "Install prefix for the virtualenv Iron library.")
@@ -35,8 +38,8 @@ if (DEFINED FE_VIRTUALENV_INSTALL_PREFIX)
 endif ()
 
 set(IRON_USE_VIRTUALENV TRUE CACHE BOOL "Install Iron into virtual environment.")
-if (DEFINED ZN_USE_VIRTUALENV)
-    set(IRON_USE_VIRTUALENV ${ZN_USE_VIRTUALENV} CACHE BOOL "Install Iron into virtual environment." FORCE)
+if (DEFINED FE_USE_VIRTUALENV)
+    set(IRON_USE_VIRTUALENV ${FE_USE_VIRTUALENV} CACHE BOOL "Install Iron into virtual environment." FORCE)
 endif ()
 if (NOT EXISTS "${VIRTUALENV_EXEC}")
     set(IRON_USE_VIRTUALENV FALSE CACHE BOOL "Install Iron into virtual environment." FORCE)
@@ -57,10 +60,8 @@ if(NOT IRON_BUILD_SHARED_LIBRARY AND NOT IRON_BUILD_STATIC_LIBRARY )
   message(FATAL_ERROR "You have to build at least one of the types of libraries (shared or static)." )
 endif()
 
-# Config
-if (MSVC)
-    set(HAVE_MULTICONFIG_ENV YES)
-endif()
+include(OCMiscFunctions)
+include(OCMultiConfigEnvironment)
 
 # See http://cmake.3232098.n2.nabble.com/How-to-install-Fortran-module-files-td7584399.html
 SET(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/fortran_modules)
@@ -221,7 +222,7 @@ if (BUILD_TESTS)
         # Load system environment - on windows its separated by semicolon, so we need to protect those 
         string(REPLACE ";" "\\;" LD_PATH "$ENV{${LD_VARNAME}}")
         foreach(_PATH ${ARGN})
-            if (HAVE_MULTICONFIG_ENV)
+            if (OPENCMISS_HAVE_MULTICONFIG_ENV)
                 file(TO_NATIVE_PATH "${_PATH}/$<CONFIG>" _PATH)
             else()
                 file(TO_NATIVE_PATH "${_PATH}" _PATH)

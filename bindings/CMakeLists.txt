@@ -71,6 +71,7 @@ if (WITH_Python_BINDINGS)
     if(NOT PYTHONLIBS_FOUND)
         message(FATAL_ERROR "No Python development libraries found. Unable to generate Python bindings for Iron.")
     endif()
+    three_part_version_to_vars(${PYTHONLIBS_VERSION_STRING} PYTHONLIBS_MAJOR_VERSION PYTHONLIBS_MINOR_VERSION PYTHONLIBS_PATCH_VERSION)
     # I know there's also a UseSWIG.cmake file (http://www.cmake.org/cmake/help/v3.3/module/UseSWIG.html)
     # This did not seem to be very flexible at the time of writing this.
     find_package(SWIG QUIET)
