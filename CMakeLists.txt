@@ -26,6 +26,14 @@ CMAKE_DEPENDENT_OPTION(WITH_DIAGNOSTICS "Build iron with diagnostics support" ON
                        "IS_DEBUG_BUILD" OFF)
 option(PRINT_CONFIG_SUMMARY "Show a summary of the configuration." TRUE)
 set(PACKAGE_CONFIG_DIR "cmake" CACHE STRING "Directory for package config files (relative to CMAKE_INSTALL_PREFIX)")
+
+# Handle instrumentation choices.
+set(IRON_INSTRUMENTATION "none" CACHE STRING "Specify the instrumentation to use.")
+if (DEFINED FE_INSTRUMENTATION)
+    set(IRON_INSTRUMENTATION "${FE_INSTRUMENTATION}" CACHE STRING "Specify the instrumentation to use.")
+endif ()
+set(OPENCMISS_INSTRUMENTATION ${IRON_INSTRUMENTATION})
+
 # Bindings options
 find_program(VIRTUALENV_EXEC virtualenv)
 mark_as_advanced(VIRTUALENV_EXEC)
