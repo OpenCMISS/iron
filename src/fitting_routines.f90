@@ -900,9 +900,9 @@ CONTAINS
             ENDDO
 
             !--- Compute deformation gradient tensor DXDY and its Jacobian Jxy
-            CALL INVERT(DYDXI,DXIDY,Jyxi,ERR,ERROR,*999) !dy/dxi -> dxi/dy 
-            CALL MATRIX_PRODUCT(DXDXI,DXIDY,DXDY,ERR,ERROR,*999) !dx/dxi * dxi/dy = dx/dy (deformation gradient tensor, F)
-            Jxy=DETERMINANT(DXDY,ERR,ERROR)
+            CALL Invert(DYDXI,DXIDY,Jyxi,ERR,ERROR,*999) !dy/dxi -> dxi/dy 
+            CALL MatrixProduct(DXDXI,DXIDY,DXDY,ERR,ERROR,*999) !dx/dxi * dxi/dy = dx/dy (deformation gradient tensor, F)
+            CALL Determinant(DXDY,Jxy,ERR,ERROR,*999)
 
             !--- Interpolation of Materials Field
             MATERIALS_INTERPOLATED_POINT => EQUATIONS%INTERPOLATION%MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR
@@ -4121,11 +4121,11 @@ CONTAINS
     ENDDO
 
 
-    CALL INVERT(DYDXI,DXIDY,Jyxi,ERR,ERROR,*999) !dy/dxi -> dxi/dy 
+    CALL Invert(DYDXI,DXIDY,Jyxi,ERR,ERROR,*999) !dy/dxi -> dxi/dy 
 
-    CALL MATRIX_PRODUCT(DXDXI,DXIDY,DXDY,ERR,ERROR,*999) !dx/dxi * dxi/dy = dx/dy (deformation gradient tensor, F)
+    CALL MatrixProduct(DXDXI,DXIDY,DXDY,ERR,ERROR,*999) !dx/dxi * dxi/dy = dx/dy (deformation gradient tensor, F)
 
-    Jxy=DETERMINANT(DXDY,ERR,ERROR)
+    CALL Determinant(DXDY,Jxy,ERR,ERROR,*999)
 
 
     EXITS("FITTING_GAUSS_DEFORMATION_GRADIENT_TENSOR")

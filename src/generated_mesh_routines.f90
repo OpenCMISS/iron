@@ -860,6 +860,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     INTEGER(INTG) :: COORDINATE_DIMENSION
+    REAL(DP) :: norm
     TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
@@ -876,7 +877,8 @@ CONTAINS
         CASE(GENERATED_MESH_REGULAR_MESH_TYPE)
           IF(SIZE(EXTENT,1)==COORDINATE_DIMENSION) THEN
             IF(ASSOCIATED(GENERATED_MESH%REGULAR_MESH)) THEN
-              IF(L2NORM(EXTENT)>ZERO_TOLERANCE) THEN
+              CALL L2Norm(extent,norm,err,error,*999)
+              IF(norm>ZERO_TOLERANCE) THEN
                 IF(ALLOCATED(GENERATED_MESH%REGULAR_MESH%MAXIMUM_EXTENT)) &
                     & DEALLOCATE(GENERATED_MESH%REGULAR_MESH%MAXIMUM_EXTENT)
                 ALLOCATE(GENERATED_MESH%REGULAR_MESH%MAXIMUM_EXTENT(COORDINATE_DIMENSION),STAT=ERR)
@@ -3329,7 +3331,7 @@ CONTAINS
       & component_node,MESH_COMPONENT, &
       & node_idx,node_position_idx(3), &
       & TOTAL_NUMBER_OF_NODES_XI(3),xi_idx,NODE_USER_NUMBER
-    REAL(DP) :: DELTA_COORD(3,3),MY_ORIGIN(3),VALUE
+    REAL(DP) :: DELTA_COORD(3,3),MY_ORIGIN(3),VALUE,norm
     REAL(DP) :: DERIVATIVE_VALUES(MAXIMUM_GLOBAL_DERIV_NUMBER)
     TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM
     TYPE(DOMAIN_TYPE), POINTER :: DOMAIN
@@ -3391,19 +3393,19 @@ CONTAINS
                     !Arc length or arithmetic mean scaling
                     DERIVATIVE_VALUES=0.0_DP
                     IF(REGULAR_MESH%NUMBER_OF_ELEMENTS_XI(1)>0) THEN
-                      DERIVATIVE_VALUES(GLOBAL_DERIV_S1)=REGULAR_MESH%BASE_VECTORS(component_idx,1)/ &
-                        & L2NORM(REGULAR_MESH%BASE_VECTORS(:,1))
+                      CALL L2Norm(REGULAR_MESH%BASE_VECTORS(:,1),norm,err,error,*999)
+                      DERIVATIVE_VALUES(GLOBAL_DERIV_S1)=REGULAR_MESH%BASE_VECTORS(component_idx,1)/norm
                     END IF
                     IF(REGULAR_MESH%MESH_DIMENSION>1) THEN
                       IF(REGULAR_MESH%NUMBER_OF_ELEMENTS_XI(2)>0) THEN
-                        DERIVATIVE_VALUES(GLOBAL_DERIV_S2)=REGULAR_MESH%BASE_VECTORS(component_idx,2)/ &
-                          & L2NORM(REGULAR_MESH%BASE_VECTORS(:,2))
+                        CALL L2Norm(REGULAR_MESH%BASE_VECTORS(:,2),norm,err,error,*999)
+                        DERIVATIVE_VALUES(GLOBAL_DERIV_S2)=REGULAR_MESH%BASE_VECTORS(component_idx,2)/norm
                       END IF
                     ENDIF
                     IF(REGULAR_MESH%MESH_DIMENSION>2) THEN
                       IF(REGULAR_MESH%NUMBER_OF_ELEMENTS_XI(3)>0) THEN
-                        DERIVATIVE_VALUES(GLOBAL_DERIV_S3)=REGULAR_MESH%BASE_VECTORS(component_idx,3)/ &
-                          & L2NORM(REGULAR_MESH%BASE_VECTORS(:,3))
+                        CALL L2Norm(REGULAR_MESH%BASE_VECTORS(:,3),norm,err,error,*999)
+                        DERIVATIVE_VALUES(GLOBAL_DERIV_S3)=REGULAR_MESH%BASE_VECTORS(component_idx,3)/norm
                       END IF
                     ENDIF
                   END SELECT

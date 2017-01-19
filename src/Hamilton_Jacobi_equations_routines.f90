@@ -2328,15 +2328,15 @@ CONTAINS
             CALL VECTOR_VECTOR_PRODUCT(A,B,DOT_PRODUCT_VALUE,Err)
 
             IF (DOT_PRODUCT_VALUE .LT. 0.8_DP) THEN
-              CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+              CALL CrossProduct(A,B,C,Err,Error,*999)
             ELSE
               B=(/0.0_DP,1.0_DP,0.0_DP/)
               CALL VECTOR_VECTOR_PRODUCT(A,B,DOT_PRODUCT_VALUE,Err)
               IF (DOT_PRODUCT_VALUE .LT. 0.8_DP) THEN
-                CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+                CALL CrossProduct(A,B,C,Err,Error,*999)
               ELSE
                 B=(/1.0_DP,0.0_DP,0.0_DP/)
-                CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+                CALL CrossProduct(A,B,C,Err,Error,*999)
               ENDIF
             ENDIF
 
@@ -2349,7 +2349,7 @@ CONTAINS
             ENDIF
 
             B=(/CONDUCTIVITY_TENSOR(I,4),CONDUCTIVITY_TENSOR(I,5),CONDUCTIVITY_TENSOR(I,6)/)
-            CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+            CALL CrossProduct(A,B,C,Err,Error,*999)
 
             IF (ABS(SQRT(C(1)**2+C(2)**2+C(3)**2))>ZERO_TOLERANCE) THEN
 
@@ -2607,15 +2607,15 @@ CONTAINS
             CALL VECTOR_VECTOR_PRODUCT(A,B,DOT_PRODUCT_VALUE,Err)
 
             IF (DOT_PRODUCT_VALUE .LT. 0.8_DP) THEN
-              CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+              CALL CrossProduct(A,B,C,Err,Error,*999)
             ELSE
               B=(/0.0_DP,1.0_DP,0.0_DP/)
               CALL VECTOR_VECTOR_PRODUCT(A,B,DOT_PRODUCT_VALUE,Err)
               IF (DOT_PRODUCT_VALUE .LT. 0.8_DP) THEN
-                CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+                CALL CrossProduct(A,B,C,Err,Error,*999)
               ELSE
                 B=(/1.0_DP,0.0_DP,0.0_DP/)
-                CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+                CALL CrossProduct(A,B,C,Err,Error,*999)
               ENDIF
             ENDIF
 
@@ -2628,7 +2628,7 @@ CONTAINS
             ENDIF
 
             B=(/CONDUCTIVITY_TENSOR(I,4),CONDUCTIVITY_TENSOR(I,5),CONDUCTIVITY_TENSOR(I,6)/)
-            CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+            CALL CrossProduct(A,B,C,Err,Error,*999)
 
             IF (ABS(SQRT(C(1)**2+C(2)**2+C(3)**2))>=ZERO_TOLERANCE) THEN
 
@@ -2937,15 +2937,15 @@ CONTAINS
             CALL VECTOR_VECTOR_PRODUCT(A,B,DOT_PRODUCT_VALUE,Err)
 
             IF (DOT_PRODUCT_VALUE .LT. 0.8_DP) THEN
-              CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+              CALL CrossProduct(A,B,C,Err,Error,*999)
             ELSE
               B=(/0.0_DP,1.0_DP,0.0_DP/)
               CALL VECTOR_VECTOR_PRODUCT(A,B,DOT_PRODUCT_VALUE,Err)
               IF (DOT_PRODUCT_VALUE .LT. 0.8_DP) THEN
-                CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+                CALL CrossProduct(A,B,C,Err,Error,*999)
               ELSE
                 B=(/1.0_DP,0.0_DP,0.0_DP/)
-                CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+                CALL CrossProduct(A,B,C,Err,Error,*999)
               ENDIF
             ENDIF
 
@@ -2958,7 +2958,7 @@ CONTAINS
             ENDIF
 
             B=(/CONDUCTIVITY_TENSOR(I,4),CONDUCTIVITY_TENSOR(I,5),CONDUCTIVITY_TENSOR(I,6)/)
-            CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+            CALL CrossProduct(A,B,C,Err,Error,*999)
 
             IF (ABS(SQRT(C(1)**2+C(2)**2+C(3)**2))>=ZERO_TOLERANCE) THEN
 
@@ -3199,15 +3199,15 @@ CONTAINS
             CALL VECTOR_VECTOR_PRODUCT(A,B,DOT_PRODUCT_VALUE,Err)
 
             IF (DOT_PRODUCT_VALUE .LT. 0.8_DP) THEN
-              CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+              CALL CrossProduct(A,B,C,Err,Error,*999)
             ELSE
               B=(/0.0_DP,1.0_DP,0.0_DP/)
               CALL VECTOR_VECTOR_PRODUCT(A,B,DOT_PRODUCT_VALUE,Err)
               IF (DOT_PRODUCT_VALUE .LT. 0.8_DP) THEN
-                CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+                CALL CrossProduct(A,B,C,Err,Error,*999)
               ELSE
                 B=(/1.0_DP,0.0_DP,0.0_DP/)
-                CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+                CALL CrossProduct(A,B,C,Err,Error,*999)
               ENDIF
             ENDIF
 
@@ -3221,7 +3221,7 @@ CONTAINS
 
             B=(/CONDUCTIVITY_TENSOR(ELEMENT_LIST(I,1),4),CONDUCTIVITY_TENSOR(ELEMENT_LIST(I,1),5), &
              & CONDUCTIVITY_TENSOR(ELEMENT_LIST(I,1),6)/)
-            CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+            CALL CrossProduct(A,B,C,Err,Error,*999)
 
             IF (ABS(SQRT(C(1)**2+C(2)**2+C(3)**2))>=ZERO_TOLERANCE) THEN
 
@@ -3473,16 +3473,16 @@ CONTAINS
             CALL VECTOR_VECTOR_PRODUCT(A,B,DOT_PRODUCT_VALUE,Err)
 
             IF (DOT_PRODUCT_VALUE .LT. 0.8_DP) THEN
-              CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+              CALL CrossProduct(A,B,C,Err,Error,*999)
             ELSE
               B=(/0.0_DP,1.0_DP,0.0_DP/)
               CALL VECTOR_VECTOR_PRODUCT(A,B,DOT_PRODUCT_VALUE,Err)
               IF (DOT_PRODUCT_VALUE .LT. 0.8_DP) THEN
-                CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+                CALL CrossProduct(A,B,C,Err,Error,*999)
               ELSE
 
                 B=(/1.0_DP,0.0_DP,0.0_DP/)
-                CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+                CALL CrossProduct(A,B,C,Err,Error,*999)
               ENDIF
             ENDIF
 
@@ -3495,7 +3495,7 @@ CONTAINS
             ENDIF
 
             B=(/CONDUCTIVITY_TENSOR(I,4),CONDUCTIVITY_TENSOR(I,5),CONDUCTIVITY_TENSOR(I,6)/)
-            CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+            CALL CrossProduct(A,B,C,Err,Error,*999)
 
             IF (ABS(SQRT(C(1)**2+C(2)**2+C(3)**2))>ZERO_TOLERANCE) THEN
 
@@ -3723,14 +3723,14 @@ CONTAINS
                                &CONDUCTIVITY_TENSOR(CONNECTIVITY_LIST(CONNECTIVITY_LIST(MIN_TRIAL_NODE,I),J),9)/&
                                &),SHAPE = (/3,3/))
 
-            CALL MATRIX_TRANSPOSE(F,FT,Err,Error,*999)
-            CALL MATRIX_PRODUCT(CONDUCTIVITY_MATRIX,FT,MFT,Err,Error,*999)
-            CALL MATRIX_PRODUCT(F,MFT,FMFT,Err,Error,*999)
+            CALL MatrixTranspose(F,FT,Err,Error,*999)
+            CALL MatrixProduct(CONDUCTIVITY_MATRIX,FT,MFT,Err,Error,*999)
+            CALL MatrixProduct(F,MFT,FMFT,Err,Error,*999)
 !            CALL INVERT(FMFT,INV_FMFT,DET,Err,Error,*999)
 
 !	    PRINT *,F(1,1),F(1,2),F(1,3),F(2,1),F(2,2),F(2,3),F(3,1),F(3,2),F(3,3)
 
-            CALL MATRIX_VECTOR_PRODUCT(FMFT,DISTANCE_VECTOR,MV,Err,Error,*999)
+            CALL MatrixVectorProduct(FMFT,DISTANCE_VECTOR,MV,Err,Error,*999)
             CALL VECTOR_VECTOR_PRODUCT(DISTANCE_VECTOR,MV,VMV,Err)
 
             TIME_ITER=SEED_VALUE(CONNECTIVITY_LIST(CONNECTIVITY_LIST(MIN_TRIAL_NODE,I),J))+SQRT(ABS(VMV))*&
@@ -3875,12 +3875,12 @@ CONTAINS
                                &CONDUCTIVITY_TENSOR_ON_CONNECTIVITY(J,8),&
                                &CONDUCTIVITY_TENSOR_ON_CONNECTIVITY(J,9)/),SHAPE = (/3,3/))
 
-            CALL MATRIX_TRANSPOSE(F,FT,Err,Error,*999)
-            CALL MATRIX_PRODUCT(CONDUCTIVITY_MATRIX,FT,MFT,Err,Error,*999)
-            CALL MATRIX_PRODUCT(F,MFT,FMFT,Err,Error,*999)
+            CALL MatrixTranspose(F,FT,Err,Error,*999)
+            CALL MatrixProduct(CONDUCTIVITY_MATRIX,FT,MFT,Err,Error,*999)
+            CALL MatrixProduct(F,MFT,FMFT,Err,Error,*999)
 !            CALL INVERT(FMFT,INV_FMFT,DET,Err,Error,*999)
 
-            CALL MATRIX_VECTOR_PRODUCT(FMFT,DISTANCE_VECTOR,MV,Err,Error,*999)
+            CALL MatrixVectorProduct(FMFT,DISTANCE_VECTOR,MV,Err,Error,*999)
             CALL VECTOR_VECTOR_PRODUCT(DISTANCE_VECTOR,MV,VMV,Err)
 
             TIME_ITER=SEED_VALUE(COLUMN_INDEX(J))+SQRT(ABS(VMV))*SPEED_FUNCTION_TABLE_ON_CONNECTIVITY(J,1)
@@ -3994,11 +3994,11 @@ CONTAINS
                            &CONDUCTIVITY_TENSOR_ON_CONNECTIVITY(J,8),&
                            &CONDUCTIVITY_TENSOR_ON_CONNECTIVITY(J,9)/),SHAPE = (/3,3/))
 
-        CALL MATRIX_TRANSPOSE(F,FT,Err,Error,*999)
-        CALL MATRIX_PRODUCT(CONDUCTIVITY_MATRIX,FT,MFT,Err,Error,*999)
-        CALL MATRIX_PRODUCT(F,MFT,FMFT,Err,Error,*999)
+        CALL MatrixTranspose(F,FT,Err,Error,*999)
+        CALL MatrixProduct(CONDUCTIVITY_MATRIX,FT,MFT,Err,Error,*999)
+        CALL MatrixProduct(F,MFT,FMFT,Err,Error,*999)
 
-        CALL MATRIX_VECTOR_PRODUCT(FMFT,DISTANCE_VECTOR,MV,Err,Error,*999)
+        CALL MatrixVectorProduct(FMFT,DISTANCE_VECTOR,MV,Err,Error,*999)
         CALL VECTOR_VECTOR_PRODUCT(DISTANCE_VECTOR,MV,VMV,Err)
 
         CONNECTIVITY_WEIGHT(J)=SQRT(ABS(VMV))*SPEED_FUNCTION_TABLE_ON_CONNECTIVITY(J,1)
@@ -4182,11 +4182,11 @@ CONTAINS
                                &CONDUCTIVITY_TENSOR(CONNECTIVITY_LIST(CONNECTIVITY_LIST(MIN_TRIAL_NODE,I),J),9)/&
                                &),SHAPE = (/3,3/))
 
-            CALL MATRIX_TRANSPOSE(F,FT,Err,Error,*999)
-            CALL MATRIX_PRODUCT(CONDUCTIVITY_MATRIX,FT,MFT,Err,Error,*999)
-            CALL MATRIX_PRODUCT(F,MFT,FMFT,Err,Error,*999)
+            CALL MatrixTranspose(F,FT,Err,Error,*999)
+            CALL MatrixProduct(CONDUCTIVITY_MATRIX,FT,MFT,Err,Error,*999)
+            CALL MatrixProduct(F,MFT,FMFT,Err,Error,*999)
 
-            CALL MATRIX_VECTOR_PRODUCT(FMFT,DISTANCE_VECTOR,MV,Err,Error,*999)
+            CALL MatrixVectorProduct(FMFT,DISTANCE_VECTOR,MV,Err,Error,*999)
             CALL VECTOR_VECTOR_PRODUCT(DISTANCE_VECTOR,MV,VMV,Err)
 
             TIME_ITER=SEED_VALUE(CONNECTIVITY_LIST(CONNECTIVITY_LIST(MIN_TRIAL_NODE,I),J))+&

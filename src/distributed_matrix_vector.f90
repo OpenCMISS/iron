@@ -52,6 +52,7 @@ MODULE DISTRIBUTED_MATRIX_VECTOR
   USE ISO_VARYING_STRING
   USE ISO_C_BINDING
   USE KINDS
+  USE Maths
   USE MATRIX_VECTOR
 #ifndef NOMPIMOD
   USE MPI
@@ -8338,12 +8339,8 @@ CONTAINS
           SELECT CASE(distributedVector%DATA_TYPE)
           CASE(MATRIX_VECTOR_DP_TYPE)
               IF(ASSOCIATED(distributedVector%CMISS)) THEN
-                norm=0.0_DP
-                DO i=1,distributedVector%CMISS%DATA_SIZE
-                  norm=norm+(distributedVector%CMISS%DATA_DP(i)**2)
-                ENDDO !i
-                norm=SQRT(norm)
-              ELSE
+                CALL L2Norm(distributedVector%CMISS%DATA_DP(1:distributedVector%CMISS%DATA_SIZE),norm,err,error,*999)
+             ELSE
                 CALL FlagError("Distributed vector CMISS is not associated.",err,error,*999)
               ENDIF
           CASE(MATRIX_VECTOR_SP_TYPE)

@@ -930,8 +930,8 @@ CONTAINS
                 & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,dZdXi,DZDNU,ERR,ERROR,*999)
               
               !compute C=F^T F
-              CALL MATRIX_TRANSPOSE(DZDNU,DZDNUT,ERR,ERROR,*999)
-              CALL MATRIX_PRODUCT(DZDNUT,DZDNU,AZL,ERR,ERROR,*999)
+              CALL MatrixTranspose(DZDNU,DZDNUT,ERR,ERROR,*999)
+              CALL MatrixProduct(DZDNUT,DZDNU,AZL,ERR,ERROR,*999)
 
               !store the fibre stretch lambda_f, i.e., sqrt(C_11) or AZL(1,1)
               dof_idx=FIELD_VAR_U1%COMPONENTS(1)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gauss_idx,element_idx)

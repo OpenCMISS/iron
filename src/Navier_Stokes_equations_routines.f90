@@ -10903,7 +10903,7 @@ CONTAINS
               END IF
               DEALLOCATE(WORK)
 
-              velocityNorm = L2NORM(avgVelocity)
+              CALL L2Norm(avgVelocity,velocityNorm,err,error,*999)
               cellReynoldsNumber = 0.0_DP
               cellCourantNumber = 0.0_DP
               IF(velocityNorm > ZERO_TOLERANCE) THEN
@@ -11148,18 +11148,14 @@ CONTAINS
                 normalProjection(componentIdx)=-normalProjection(componentIdx)
               END IF
             END DO
-            IF(L2NORM(normalProjection)>ZERO_TOLERANCE) THEN
-               unitNormal=normalProjection/L2NORM(normalProjection)
-            ELSE
-               unitNormal=0.0_DP
-            END IF
+            CALL Normalise(normalProjection,unitNormal,err,error,*999)
 
             ! Stabilisation term to correct for possible retrograde flow divergence.
             ! See: Moghadam et al 2011 A comparison of outlet boundary treatments for prevention of backflow divergence..." and
             !      Ismail et al 2014 "A stable approach for coupling multidimensional cardiovascular and pulmonary networks..."
             ! Note: beta is a relative scaling factor 0 <= beta <= 1; default 1.0
             stabilisationTerm = 0.0_DP
-            normalDifference=L2NORM(boundaryNormal-unitNormal)
+            CALL L2Norm(boundaryNormal-unitNormal,normalDifference,err,error,*999)
             normalTolerance=0.1_DP
             IF(normalDifference < normalTolerance) THEN
               normalFlow = DOT_PRODUCT(velocity,normalProjection)
@@ -11206,7 +11202,7 @@ CONTAINS
             ! ! Calculate viscous term
             ! dXiDX=0.0_DP
             ! dXiDX=pointMetrics%DXI_DX(:,:)
-            ! CALL MATRIX_PRODUCT(dUDXi,dXiDX,gradU,err,error,*999)
+            ! CALL MatrixProduct(dUDXi,dXiDX,gradU,err,error,*999)
             ! DO i=1,numberOfDimensions 
             !   SUM1 = 0.0_DP
             !   SUM2 = 0.0_DP
@@ -11527,8 +11523,8 @@ CONTAINS
                   END IF
                   faceNormal(componentIdx)=normalProjection
                 END DO !componentIdx
-                unitNormal=faceNormal/L2NORM(faceNormal)
-                normalDifference=L2NORM(elementNormal-unitNormal)
+                CALL Normalise(faceNormal,unitNormal,err,error,*999)
+                CALL L2Norm(elementNormal-unitNormal,normalDifference,err,error,*999)
                 normalTolerance=0.1_DP
                 IF(normalDifference>normalTolerance) EXIT
               CASE(BASIS_SIMPLEX_TYPE)
@@ -11623,7 +11619,7 @@ CONTAINS
                 END IF
                 faceNormal(componentIdx)=normalProjection
               END DO !componentIdx
-              unitNormal=faceNormal/L2NORM(faceNormal)
+              CALL Normalise(faceNormal,unitNormal,err,error,*999)
             CASE(BASIS_SIMPLEX_TYPE)
               !still have faceNormal/unitNormal
             CASE DEFAULT
@@ -11631,7 +11627,7 @@ CONTAINS
                 & " is not yet implemented for Navier-Stokes."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
-            normalDifference=L2NORM(elementNormal-unitNormal)
+            CALL L2Norm(elementNormal-unitNormal,normalDifference,err,error,*999)
             normalTolerance=0.1_DP
             IF(normalDifference>normalTolerance) CYCLE
 
@@ -12097,8 +12093,8 @@ CONTAINS
 
         ! Evaluate error between current and previous Q,A values
         IF(numberOfVersions > 1 ) THEN
-          l2ErrorQ(branchNumber) = L2NORM(qNavierStokes-qCharacteristic)
-          l2ErrorA(branchNumber) = L2NORM(aNavierStokes-aCharacteristic)
+          CALL L2Norm(qNavierStokes-qCharacteristic,l2ErrorQ(branchNumber),err,error,*999)
+          CALL L2Norm(aNavierStokes-aCharacteristic,l2ErrorA(branchNumber),err,error,*999)
         END IF
         ! Check if the branch values have converged
         IF((ABS(l2ErrorQ(branchNumber)) < couplingTolerance) .AND. (ABS(l2ErrorA(branchNumber)) < couplingTolerance)) THEN
@@ -12300,8 +12296,8 @@ CONTAINS
             dUdXTrans=0.0_DP
             strainRate=0.0_DP
 
-            CALL MATRIX_PRODUCT(dUdXi,dXidX,dUdX,ERR,ERROR,*999) !dU/dX = dU/dxi * dxi/dX (deformation gradient tensor)
-            CALL MATRIX_TRANSPOSE(dUdX,dUdXTrans,ERR,ERROR,*999)
+            CALL MatrixProduct(dUdXi,dXidX,dUdX,ERR,ERROR,*999) !dU/dX = dU/dxi * dxi/dX (deformation gradient tensor)
+            CALL MatrixTranspose(dUdX,dUdXTrans,ERR,ERROR,*999)
             DO i=1,3
               DO j=1,3
                 strainRate = strainRate + (dUdX(i,j)*dUdXTrans(i,j))
@@ -12530,7 +12526,7 @@ CONTAINS
     TYPE(SOLVER_TYPE), POINTER :: streeSolver
     TYPE(VARYING_STRING) :: localError
     REAL(DP) :: rho,A0,H0,E,beta,pExternal,lengthScale,timeScale,massScale,currentTime,timeIncrement
-    REAL(DP) :: pCellml,qCellml,ABoundary,W1,W2,ACellML,normalWave(2,4)
+    REAL(DP) :: pCellml,qCellml,ABoundary,W1,W2,ACellML,normalWave(2,4),norm
     REAL(DP), POINTER :: Impedance(:),Flow(:)
     INTEGER(INTG) :: nodeIdx,versionIdx,derivativeIdx,componentIdx,numberOfVersions,numberOfLocalNodes
     INTEGER(INTG) :: dependentDof,boundaryConditionType,k
@@ -12696,7 +12692,8 @@ CONTAINS
         END DO
         !!!-- F i n d   b o u n d a r y    n o d e s --!!!
         IF(ABS(normalWave(1,1)) > ZERO_TOLERANCE .OR. ABS(normalWave(2,1))> ZERO_TOLERANCE) THEN
-          IF(numberOfVersions == 1 .AND. L2NORM(normalWave(:,1)) > ZERO_TOLERANCE) THEN
+          CALL L2Norm(normalWave(:,1),norm,err,error,*999)
+          IF(numberOfVersions == 1 .AND. norm > ZERO_TOLERANCE) THEN
             versionIdx = 1
             !Get material parameters
             CALL Field_ParameterSetGetLocalNode(materialsField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,versionIdx, &

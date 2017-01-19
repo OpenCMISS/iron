@@ -2102,9 +2102,9 @@ CONTAINS
               ENDDO
 
               !--- Compute deformation gradient tensor DXDY and its Jacobian Jxy
-              CALL INVERT(DYDXI,DXIDY,Jyxi,ERR,ERROR,*999) !dy/dxi -> dxi/dy
-              CALL MATRIX_PRODUCT(DXDXI,DXIDY,DXDY,ERR,ERROR,*999) !dx/dxi * dxi/dy = dx/dy (deformation gradient tensor, F)
-              Jxy=DETERMINANT(DXDY,ERR,ERROR)
+              CALL Invert(DYDXI,DXIDY,Jyxi,ERR,ERROR,*999) !dy/dxi -> dxi/dy
+              CALL MatrixProduct(DXDXI,DXIDY,DXDY,ERR,ERROR,*999) !dx/dxi * dxi/dy = dx/dy (deformation gradient tensor, F)
+              CALL Determinant(DXDY,Jxy,ERR,ERROR,*999)
 
               IF( ABS(Jxy) < 1.0E-10_DP ) THEN
                 LOCAL_ERROR="DARCY_EQUATION_FINITE_ELEMENT_CALCULATE: Jacobian Jxy is smaller than 1.0E-10_DP."
@@ -2190,7 +2190,7 @@ CONTAINS
               ENDIF
             ENDIF
 
-            Jmat = DETERMINANT(PERM_TENSOR_OVER_VIS,ERR,ERROR)
+            CALL Determinant(PERM_TENSOR_OVER_VIS,Jmat,ERR,ERROR,*999)
             IF(Jmat>ZERO_TOLERANCE) THEN
               CALL INVERT(PERM_TENSOR_OVER_VIS,VIS_OVER_PERM_TENSOR,Jmat,ERR,ERROR,*999)
             ELSE
@@ -7930,15 +7930,15 @@ CONTAINS
 !             write(*,*)'GAUSS_COORDS = ',GEOMETRIC_INTERPOLATED_POINT%VALUES(1:3,NO_PART_DERIV) !(component,derivative)
 
             !Calculate covariant metric tensor
-            CALL MATRIX_TRANSPOSE(DZDXI,DZDXIT,ERR,ERROR,*999)
-            CALL MATRIX_PRODUCT(DZDXIT,DZDXI,GIJL,ERR,ERROR,*999) !g_ij = dZdXI' * dZdXI
-            CALL INVERT(GIJL,GIJU,G,ERR,ERROR,*999) !g^ij = inv(g_ij), G=DET(GIJL)
+            CALL MatrixTranspose(DZDXI,DZDXIT,ERR,ERROR,*999)
+            CALL MatrixProduct(DZDXIT,DZDXI,GIJL,ERR,ERROR,*999) !g_ij = dZdXI' * dZdXI
+            CALL Invert(GIJL,GIJU,G,ERR,ERROR,*999) !g^ij = inv(g_ij), G=DET(GIJL)
             SQRT_G=SQRT(G)
 
             !--- L o o p   1 : over element rows (3 velocity components) -----------------------------------
             DO component_idx_1=1,3
               !Calculate g^{normal_component_idx}M*dZ_j/dxi_M; this apparently includes the face Jacobian
-              NORMAL_PROJECTION_1=dot_product(GIJU(normal_component_idx,:),DZDXI(component_idx_1,:))
+              CALL DotProduct(GIJU(normal_component_idx,:),DZDXI(component_idx_1,:),NORMAL_PROJECTION_1,err,error,*999)
 
               IF(DECOMP_FACE%XI_DIRECTION<0) NORMAL_PROJECTION_1=-NORMAL_PROJECTION_1  !always outward normal
 
@@ -7963,7 +7963,7 @@ CONTAINS
                   !--- L o o p   2 : over element columns (3 velocity components) -----------------------------------
                   DO component_idx_2=1,3
                     !Calculate g^3M*dZ_j/dxi_M
-                    NORMAL_PROJECTION_2=dot_product(GIJU(normal_component_idx,:),DZDXI(component_idx_2,:))
+                    CALL DotProduct(GIJU(normal_component_idx,:),DZDXI(component_idx_2,:),NORMAL_PROJECTION_2,err,error,*999)
 
                     IF(DECOMP_FACE%XI_DIRECTION<0) NORMAL_PROJECTION_2=-NORMAL_PROJECTION_2  !always outward normal
 

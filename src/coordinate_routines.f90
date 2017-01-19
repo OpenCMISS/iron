@@ -849,8 +849,7 @@ CONTAINS
                     !We have curvature information. Form the frenet vector frame.
                     !Calculate the normal vector from the normalised second derivative of the position vector.
                     nu=PARTIAL_DERIVATIVE_SECOND_DERIVATIVE_MAP(1)
-                    DX_DXI2=NORMALISE(INTERPOLATED_POINT%VALUES(1:2,nu),ERR,ERROR)
-                    IF(ERR/=0) GOTO 999
+                    CALL Normalise(INTERPOLATED_POINT%VALUES(1:2,nu),DX_DXI2,ERR,ERROR,*999)
                   ELSE
                     !No curvature information but obtain other normal frenet vector by rotating tangent vector 90 deg.
                     DX_DXI2(1)=-1.0_DP*METRICS%DX_DXI(2,1)
@@ -861,7 +860,7 @@ CONTAINS
                     METRICS%DXI_DX(1,1)=DX_DXI2(2)/DET_DX_DXI
                     METRICS%DXI_DX(1,2)=-1.0_DP*DX_DXI2(1)/DET_DX_DXI
                     !Normalise to ensure that g^11=g^1.g^1
-                    LENGTH=L2NORM(METRICS%DXI_DX(1,1:2))
+                    CALL L2Norm(METRICS%DXI_DX(1,1:2),LENGTH,err,error,*999)
                     SCALE=SQRT(ABS(METRICS%GU(1,1)))/LENGTH
                     METRICS%DXI_DX(1,1:2)=SCALE*METRICS%DXI_DX(1,1:2)
                   ELSE
@@ -873,10 +872,9 @@ CONTAINS
                     !We have curvature information. Form the frenet vector frame.
                     !Calculate the normal vector from the normalised second derivative of the position vector.
                     nu=PARTIAL_DERIVATIVE_SECOND_DERIVATIVE_MAP(1)
-                    DX_DXI2=NORMALISE(INTERPOLATED_POINT%VALUES(1:3,nu),ERR,ERROR)
-                    IF(ERR/=0) GOTO 999
+                    CALL Normalise(INTERPOLATED_POINT%VALUES(1:3,nu),DX_DXI2,ERR,ERROR,*999)
                     !Calculate the bi-normal vector from the normalised cross product of the tangent and normal vectors
-                    CALL NORM_CROSS_PRODUCT(METRICS%DX_DXI(1:3,1),DX_DXI2,DX_DXI3,ERR,ERROR,*999)
+                    CALL NormaliseCrossProduct(METRICS%DX_DXI(1:3,1),DX_DXI2,DX_DXI3,ERR,ERROR,*999)
                     DET_DX_DXI=METRICS%DX_DXI(1,1)*(DX_DXI2(2)*DX_DXI3(3)-DX_DXI2(3)*DX_DXI3(2))+ &
                       & DX_DXI2(1)*(METRICS%DX_DXI(3,1)*DX_DXI3(2)-DX_DXI3(3)*METRICS%DX_DXI(2,1))+ &
                       & DX_DXI3(1)*(METRICS%DX_DXI(2,1)*DX_DXI2(3)-METRICS%DX_DXI(3,1)*DX_DXI2(2))
@@ -885,7 +883,7 @@ CONTAINS
                       METRICS%DXI_DX(1,2)=-1.0_DP*(DX_DXI3(3)*DX_DXI2(1)-DX_DXI2(3)*DX_DXI3(1))/DET_DX_DXI
                       METRICS%DXI_DX(1,3)=(DX_DXI3(2)*DX_DXI2(1)-DX_DXI2(2)*DX_DXI3(1))/DET_DX_DXI
                       !Normalise to ensure that g^11=g^1.g^1
-                      LENGTH=L2NORM(METRICS%DXI_DX(1,1:3))
+                      CALL L2Norm(METRICS%DXI_DX(1,1:3),LENGTH,err,error,*999)
                       SCALE=SQRT(ABS(METRICS%GU(1,1)))/LENGTH
                       METRICS%DXI_DX(1,1:3)=SCALE*METRICS%DX_DXI(1,1:3)
                     ELSE
@@ -897,7 +895,7 @@ CONTAINS
                     METRICS%DXI_DX(1,2)=METRICS%DX_DXI(2,1)
                     METRICS%DXI_DX(1,3)=METRICS%DX_DXI(3,1)
                     !Normalise to ensure that g^11=g^1.g^1
-                    LENGTH=L2NORM(METRICS%DXI_DX(1,1:3))
+                    CALL L2Norm(METRICS%DXI_DX(1,1:3),LENGTH,err,error,*999)
                     SCALE=SQRT(ABS(METRICS%GU(1,1)))/LENGTH
                     METRICS%DXI_DX(1,1:3)=SCALE*METRICS%DXI_DX(1,1:3)
                   ENDIF
@@ -3894,7 +3892,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) ::  error   !<The error string
     !Local variables
     INTEGER(INTG) :: numberOfXDimensions,numberOfXiDimensions,numberOfNuDimensions,xiIdx
-    REAL(DP) :: dNudXiTemp(3,3),Jnuxi
+    REAL(DP) :: dNudXiTemp(3,3),Jnuxi,JNuX
     TYPE(VARYING_STRING) :: localError 
      
     ENTERS("Coordinates_MaterialSystemCalculate",err,error,*999)
@@ -3930,7 +3928,7 @@ CONTAINS
         numberOfNuDimensions=0
         DO xiIdx=1,numberOfXiDimensions
           dNudXiTemp(1:numberOfXDimensions,xiIdx)=geometricInterpPointMetrics%DX_DXI(1:numberOfXDimensions,xiIdx)
-          dXdNu(1:numberOfXDimensions,xiIdx)=Normalise(dNudXiTemp(1:numberOfXDimensions,xiIdx),err,error)
+          CALL Normalise(dNudXiTemp(1:numberOfXDimensions,xiIdx),dXdNu(1:numberOfXDimensions,xiIdx),err,error,*999)
         ENDDO !xiIdx
       ENDIF
       !Calculate dNu/dX the inverse of dX/dNu (same as transpose due to orthogonality)
@@ -3965,8 +3963,8 @@ CONTAINS
         CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,1,1,numberOfXDimensions, &
           & numberOfXDimensions,numberOfXDimensions,dNudX,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
           & '("    dNu_dX','(",I1,",:)','  :",3(X,E13.6))','(18X,3(X,E13.6))',err,error,*999)
-        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Determinant dNu_dX, JNuX = ", &
-          & Determinant(dNudX(1:numberOfXDimensions,1:numberOfXDimensions),err,error),err,error,*999)
+        CALL Determinant(dNudX(1:numberOfXDimensions,1:numberOfXDimensions),JNuX,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Determinant dNu_dX, JNuX = ", JNuX,err,error,*999)
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of Nu wrt Xi:",err,error,*999)
         CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,1,1,numberOfXiDimensions, &
           & numberOfXiDimensions,numberOfXiDimensions,dNudXi,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
@@ -4017,10 +4015,8 @@ CONTAINS
       !Compute (normalised) vector orthogonal to material direction 1 to form material direction 2
       g(1:2) = [ -1.0_DP*f(2),f(1) ]
       
-      dXdNuR(1:2,1) = Normalise(f(1:2),err,error)
-      IF(err/=0) GOTO 999
-      dXdNuR(1:2,2) = Normalise(g(1:2),err,error)
-      IF(err/=0) GOTO 999
+      CALL Normalise(f(1:2),dXdNuR(1:2,1),err,error,*999)
+      CALL Normalise(g(1:2),dXdNuR(1:2,2),err,error,*999)
       
       !Rotate by multiply with rotation matrix
       R(:,1) = [ COS(angle(1)),-1.0_DP*SIN(angle(1)) ]
@@ -4028,10 +4024,8 @@ CONTAINS
       
       CALL MatrixProduct(R,dXdNuR,dXdNu,err,error,*999)
       
-      dXdNu(1:2,1) = Normalise(dXdNu(1:2,1),err,error)
-      IF(ERR/=0) GOTO 999
-      dXdNu(1:2,2) = Normalise(dXdNu(1:2,2),err,error)
-      IF(err/=0) GOTO 999
+      CALL Normalise(dXdNu(1:2,1),dXdNu(1:2,1),err,error,*999)
+      CALL Normalise(dXdNu(1:2,2),dXdNu(1:2,2),err,error,*999)
 
       IF(diagnostics1) THEN
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
@@ -4054,7 +4048,7 @@ CONTAINS
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Derivative of X wrt Nu (material):",err,error,*999)
         CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,1,1,2,2,2,dXdNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
           & '("      dX_dNu','(",I1,",:)','   :",2(X,E13.6))','(20X,2(X,E13.6))',err,error,*999)
-        det=Determinant(dXdNu,err,error)
+        CALL Determinant(dXdNu,det,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Determinant dX_dNu = ",det,err,error,*999)
       ENDIF
       
@@ -4099,12 +4093,9 @@ CONTAINS
       CALL CrossProduct(geometricInterpPointMetrics%DX_DXI(1:3,1),geometricInterpPointMetrics%DX_DXI(1:3,2),h,err,error,*999) !reference material direction 3.    
       CALL CrossProduct(h,f,g,err,error,*999) !reference material direction 2.      
 
-      dXdNuR(1:3,1)=Normalise(f,err,error)
-      IF(err/=0) GOTO 999
-      dXdNuR(1:3,2)=Normalise(g,err,error)
-      IF(err/=0) GOTO 999
-      dXdNuR(1:3,3)=Normalise(h,err,error)
-      IF(err/=0) GOTO 999
+      CALL Normalise(f,dXdNuR(1:3,1),err,error,*999)
+      CALL Normalise(g,dXdNuR(1:3,2),err,error,*999)
+      CALL Normalise(h,dXdNuR(1:3,3),err,error,*999)
       
       IF(diagnostics1) THEN
       ENDIF
@@ -4228,7 +4219,7 @@ CONTAINS
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Derivative of X wrt Nu (material):",err,error,*999)
         CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,dXdNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
           & '("      dX_dNu','(",I1,",:)','  :",3(X,E13.6))','(20X,3(X,E13.6))',err,error,*999)
-        det=Determinant(dXdNu,err,error)
+        CALL Determinant(dXdNu,det,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Determinant dX_dNu = ",det,err,error,*999)
       ENDIF
             

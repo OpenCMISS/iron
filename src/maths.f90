@@ -62,12 +62,11 @@ MODULE Maths
 
   !Interfaces
 
-  !>Calculates the vector cross product of two vectors
-  INTERFACE CROSS_PRODUCT
-    MODULE PROCEDURE CrossProductIntg
-    MODULE PROCEDURE CrossProductSP
-    MODULE PROCEDURE CrossProductDP
-  END INTERFACE CROSS_PRODUCT
+  !>Returns hyperbolic cotangent of an argument
+  INTERFACE Coth
+    MODULE PROCEDURE CothSP
+    MODULE PROCEDURE CothDP
+  END INTERFACE Coth 
 
   !>Calculates the vector cross product of two vectors
   INTERFACE CrossProduct
@@ -76,13 +75,6 @@ MODULE Maths
     MODULE PROCEDURE CrossProductDP
   END INTERFACE CrossProduct
 
-  !>Calculates the the vector cross product of A*B in C and the N derivatives, D_C, of the vector cross product given the derivatives D_A and D_B of A and B
-  INTERFACE D_CROSS_PRODUCT
-    MODULE PROCEDURE dCrossProductIntg
-    MODULE PROCEDURE dCrossProductSP
-    MODULE PROCEDURE dCrossProductDP
-  END INTERFACE D_CROSS_PRODUCT
-
   !>Calculates the the vector cross product of a x b in c and the n derivatives, dc, of the vector cross product given the derivatives da and db of a and b
   INTERFACE dCrossProduct
     MODULE PROCEDURE dCrossProductIntg
@@ -90,6 +82,18 @@ MODULE Maths
     MODULE PROCEDURE dCrossProductDP
   END INTERFACE dCrossProduct
 
+  !>Decomposes a matrix/tensor into its spherical and deviatoric parts
+  INTERFACE DecomposeSphericalDeviatoric
+    MODULE PROCEDURE DecomposeSphericalDeviatoricMatrix2SP
+    MODULE PROCEDURE DecomposeSphericalDeviatoricMatrix2DP
+  END INTERFACE DecomposeSphericalDeviatoric
+  
+  !>Decomposes a matrix/tensor into its symmetric and skew-symmetric parts
+  INTERFACE DecomposeSymmetricSkew
+    MODULE PROCEDURE DecomposeSymmetricSkewMatrix2SP
+    MODULE PROCEDURE DecomposeSymmetricSkewMatrix2DP
+  END INTERFACE DecomposeSymmetricSkew
+  
   !>Returns the determinant of a matrix
   INTERFACE Determinant
     MODULE PROCEDURE DeterminantFullIntg
@@ -97,6 +101,40 @@ MODULE Maths
     MODULE PROCEDURE DeterminantFullDP
   END INTERFACE Determinant
         
+  !>Calculates and returns the dot product between matrices and vectors i.e., C=A.B
+  INTERFACE DotProduct
+    MODULE PROCEDURE DotProductMatrix2Matrix2SP
+    MODULE PROCEDURE DotProductMatrix2Matrix2DP
+    MODULE PROCEDURE DotProductMatrixVectorSP
+    MODULE PROCEDURE DotProductMatrixVectorDP
+    MODULE PROCEDURE DotProductVectorVectorSP
+    MODULE PROCEDURE DotProductVectorVectorDP
+  END INTERFACE DotProduct
+  
+  !>Calculates and returns the dot product between a transposed matrices and vectors i.e., C=A.B^T
+  INTERFACE DotProductTranspose
+    MODULE PROCEDURE DotProductTransposeMatrix2Matrix2SP
+    MODULE PROCEDURE DotProductTransposeMatrix2Matrix2DP
+  END INTERFACE DotProductTranspose
+  
+  !>Calculates and returns the dot product between a transposed matrices and vectors i.e., C=A^T.B
+  INTERFACE DotTransposeProduct
+    MODULE PROCEDURE DotTransposeProductMatrix2Matrix2SP
+    MODULE PROCEDURE DotTransposeProductMatrix2Matrix2DP
+    MODULE PROCEDURE DotTransposeProductMatrixVectorSP
+    MODULE PROCEDURE DotTransposeProductMatrixVectorDP
+  END INTERFACE DotTransposeProduct
+  
+  !>Calculates and returns the double dot product between matrices and vectors i.e., C=A:B
+  INTERFACE DoubleDotProduct
+    MODULE PROCEDURE DoubleDotProductMatrix2Matrix2SP
+    MODULE PROCEDURE DoubleDotProductMatrix2Matrix2DP
+    MODULE PROCEDURE DoubleDotProductMatrix2Matrix4SP
+    MODULE PROCEDURE DoubleDotProductMatrix2Matrix4DP
+    MODULE PROCEDURE DoubleDotProductMatrix4Matrix2SP
+    MODULE PROCEDURE DoubleDotProductMatrix4Matrix2DP
+  END INTERFACE DoubleDotProduct
+
   !>Calculates the elliptic integral of the second kind - E(m).
   INTERFACE Edp
     MODULE PROCEDURE EdpSP
@@ -157,89 +195,73 @@ MODULE Maths
     MODULE PROCEDURE IdentityMatrixDP
   END INTERFACE IdentityMatrix
 
-  !>Returns the L2 norm of a vector.
+  !>Returns the L1 norm of a matrix or vector.
+  INTERFACE L1Norm
+    MODULE PROCEDURE L1NormMatrixSP
+    MODULE PROCEDURE L1NormMatrixDP
+    MODULE PROCEDURE L1NormVectorSP
+    MODULE PROCEDURE L1NormVectorDP
+  END INTERFACE L1Norm
+    
+  !>Returns the L2 norm of a matrix or vector.
   INTERFACE L2Norm
-    MODULE PROCEDURE L2NormSP
-    MODULE PROCEDURE L2NormDP
+    MODULE PROCEDURE L2NormMatrixSP
+    MODULE PROCEDURE L2NormMatrixDP
+    MODULE PROCEDURE L2NormVectorSP
+    MODULE PROCEDURE L2NormVectorDP
   END INTERFACE L2Norm
     
-  !>Calculates and returns the matrix-product A*B in the matrix C.
-  INTERFACE MATRIX_PRODUCT
-    MODULE PROCEDURE MatrixProductSP
-    MODULE PROCEDURE MatrixProductDP
-  END INTERFACE MATRIX_PRODUCT
-  
-  !>Calculates and returns the matrix-product A*B in the matrix C.
+  !>Returns the Linf norm of a matrix or vector.
+  INTERFACE LInfNorm
+    MODULE PROCEDURE LInfNormMatrixSP
+    MODULE PROCEDURE LInfNormMatrixDP
+    MODULE PROCEDURE LInfNormVectorSP
+    MODULE PROCEDURE LInfNormVectorDP
+  END INTERFACE LInfNorm
+    
+  !>Calculates and returns the matrix product between matrices and vectors i.e., C=A.B
   INTERFACE MatrixProduct
-    MODULE PROCEDURE MatrixProductSP
-    MODULE PROCEDURE MatrixProductDP
+    MODULE PROCEDURE DotProductMatrix2Matrix2SP
+    MODULE PROCEDURE DotProductMatrix2Matrix2DP
   END INTERFACE MatrixProduct
   
-  !>Calculates and returns the matrix-transpose product A^T*B in the matrix C.
-  INTERFACE MatrixTransposeProduct
-    MODULE PROCEDURE MatrixTransposeProductSP
-    MODULE PROCEDURE MatrixTransposeProductDP
-  END INTERFACE MatrixTransposeProduct
-  
-  !>Calculates and returns the matrix-product-transpose A*B^T in the matrix C.
-  INTERFACE MatrixProductTranspose
-    MODULE PROCEDURE MatrixProductTransposeSP
-    MODULE PROCEDURE MatrixProductTransposeDP
-  END INTERFACE MatrixProductTranspose
-  
-  !>Returns the transpose of a matrix A in A^T.
-  INTERFACE MATRIX_TRANSPOSE
-    MODULE PROCEDURE MatrixTransposeSP
-    MODULE PROCEDURE MatrixTransposeDP
-  END INTERFACE MATRIX_TRANSPOSE
-
-  !>Returns the transpose of a matrix A in A^T.
-  INTERFACE MatrixTranspose
-    MODULE PROCEDURE MatrixTransposeSP
-    MODULE PROCEDURE MatrixTransposeDP
-  END INTERFACE MatrixTranspose
-
-  !>Calculates and returns the matrix-vector-product A*b in the vector c.
-  INTERFACE MATRIX_VECTOR_PRODUCT
-    MODULE PROCEDURE MatrixVectorProductSP
-    MODULE PROCEDURE MatrixVectorProductDP
-  END INTERFACE MATRIX_VECTOR_PRODUCT
-
-  !>Calculates and returns the matrix-vector-product A*b in the vector c.
+  !>Calculates and returns the matrix product between a matrix and a vector i.e., C=A.b
   INTERFACE MatrixVectorProduct
-    MODULE PROCEDURE MatrixVectorProductSP
-    MODULE PROCEDURE MatrixVectorProductDP
+    MODULE PROCEDURE DotProductMatrixVectorSP
+    MODULE PROCEDURE DotProductMatrixVectorDP
   END INTERFACE MatrixVectorProduct
   
-  !>Calculates and returns the matrix-transpose vector-product A^T*b in the vector c.
+  !>Calculates and returns the matrix product between a transposed matrices and vectors i.e., C=A.B^T
+  INTERFACE MatrixProductTranspose
+    MODULE PROCEDURE DotProductTransposeMatrix2Matrix2SP
+    MODULE PROCEDURE DotProductTransposeMatrix2Matrix2DP
+  END INTERFACE MatrixProductTranspose
+  
+  !>Calculates and returns the matrix product between a transposed matrices and vectors i.e., C=A^T.B
+  INTERFACE MatrixTransposeProduct
+    MODULE PROCEDURE DotTransposeProductMatrix2Matrix2SP
+    MODULE PROCEDURE DotTransposeProductMatrix2Matrix2DP
+  END INTERFACE MatrixTransposeProduct
+  
+  !>Calculates and returns the matrix product between a transposed matrix and a vector i.e., C=A^T.b
   INTERFACE MatrixTransposeVectorProduct
-    MODULE PROCEDURE MatrixTransposeVectorProductSP
-    MODULE PROCEDURE MatrixTransposeVectorProductDP
+    MODULE PROCEDURE DotTransposeProductMatrixVectorSP
+    MODULE PROCEDURE DotTransposeProductMatrixVectorDP
   END INTERFACE MatrixTransposeVectorProduct
   
-  !>Normalises a vector
+  !>Normalises matrices and vectors
   INTERFACE Normalise
-    MODULE PROCEDURE NormaliseSP
-    MODULE PROCEDURE NormaliseDP
+    MODULE PROCEDURE NormaliseMatrixSP
+    MODULE PROCEDURE NormaliseMatrixDP
+    MODULE PROCEDURE NormaliseVectorSP
+    MODULE PROCEDURE NormaliseVectorDP
   END INTERFACE Normalise
 
   !>Calculates the normalised vector cross product of two vectors
-  INTERFACE NORM_CROSS_PRODUCT
-    MODULE PROCEDURE NormCrossProductSP
-    MODULE PROCEDURE NormCrossProductDP
-  END INTERFACE NORM_CROSS_PRODUCT
-
-  !>Calculates the normalised vector cross product of two vectors
-  INTERFACE NormCrossProduct
-    MODULE PROCEDURE NormCrossProductSP
-    MODULE PROCEDURE NormCrossProductDP
-  END INTERFACE NormCrossProduct
-
-  !>Solves a small linear system Ax=b.
-  INTERFACE SOLVE_SMALL_LINEAR_SYSTEM
-    MODULE PROCEDURE SolveSmallLinearSystemSP
-    MODULE PROCEDURE SolveSmallLinearSystemDP
-  END INTERFACE SOLVE_SMALL_LINEAR_SYSTEM
+  INTERFACE NormaliseCrossProduct
+    MODULE PROCEDURE NormaliseCrossProductSP
+    MODULE PROCEDURE NormaliseCrossProductDP
+  END INTERFACE NormaliseCrossProduct
 
   !>Solves a small linear system Ax=b.
   INTERFACE SolveSmallLinearSystem
@@ -247,19 +269,139 @@ MODULE Maths
     MODULE PROCEDURE SolveSmallLinearSystemDP
   END INTERFACE SolveSmallLinearSystem
 
-  !>Returns hyperbolic cotangent of argument
-  INTERFACE Coth
-    MODULE PROCEDURE CothSP
-    MODULE PROCEDURE CothDP
-  END INTERFACE Coth 
-
-  PUBLIC CROSS_PRODUCT,CrossProduct,D_CROSS_PRODUCT,dCrossProduct,Determinant,Eigenvalue,Eigenvector,IdentityMatrix,Invert, &
-    & L2Norm,MATRIX_PRODUCT,MatrixProduct,MatrixTransposeProduct,MatrixProductTranspose,MATRIX_TRANSPOSE,MatrixTranspose, &
-    & Normalise,NORM_CROSS_PRODUCT,NormCrossProduct,SOLVE_SMALL_LINEAR_SYSTEM,SolveSmallLinearSystem,Coth,spline_cubic_set, &
-    & s3_fs,spline_cubic_val,MATRIX_VECTOR_PRODUCT,MatrixVectorProduct,MatrixTransposeVectorProduct
+  !>Calculates and returns the tensor product between matrices and vectors.
+  INTERFACE TensorProduct
+    MODULE PROCEDURE TensorProductMatrix2Matrix2SP
+    MODULE PROCEDURE TensorProductMatrix2Matrix2DP
+    MODULE PROCEDURE TensorProductVectorVectorSP
+    MODULE PROCEDURE TensorProductVectorVectorDP
+  END INTERFACE TensorProduct
   
+  !>Calculates and returns the trace of a matrix
+  INTERFACE Trace
+    MODULE PROCEDURE TraceSP
+    MODULE PROCEDURE TraceDP
+  END INTERFACE Trace
+  
+  !>Returns the transpose of a matrix A in A^T.
+  INTERFACE MatrixTranspose
+    MODULE PROCEDURE TransposeMatrixSP
+    MODULE PROCEDURE TransposeMatrixDP
+  END INTERFACE MatrixTranspose
+
+  !>Calculates and returns the unimodular form of a matrix/tensor
+  INTERFACE Unimodular
+    MODULE PROCEDURE UnimodularMatrixSP
+    MODULE PROCEDURE UnimodularMatrixDP
+  END INTERFACE Unimodular
+  
+  !>Zeros a matrix
+  INTERFACE ZeroMatrix
+    MODULE PROCEDURE ZeroMatrixSP
+    MODULE PROCEDURE ZeroMatrixDP
+  END INTERFACE ZeroMatrix
+
+  PUBLIC Coth
+
+  PUBLIC CrossProduct
+  
+  PUBLIC dCrossProduct
+
+  PUBLIC DecomposeSphericalDeviatoric
+
+  PUBLIC DecomposeSymmetricSkew
+
+  PUBLIC DotProduct
+
+  PUBLIC DotProductTranspose
+
+  PUBLIC DotTransposeProduct
+
+  PUBLIC DoubleDotProduct
+
+  PUBLIC Determinant
+
+  PUBLIC Eigenvalue,Eigenvector
+
+  PUBLIC I0,I1
+
+  PUBLIC IdentityMatrix
+
+  PUBLIC Invert
+
+  PUBLIC K0,K1,Kdp
+
+  PUBLIC L1Norm
+
+  PUBLIC L2Norm
+
+  PUBLIC LInfNorm
+
+  PUBLIC MatrixProduct
+
+  PUBLIC MatrixProductTranspose
+
+  PUBLIC MatrixTranspose
+
+  PUBLIC MatrixTransposeProduct
+
+  PUBLIC MatrixTransposeVectorProduct
+
+  PUBLIC MatrixVectorProduct
+
+  PUBLIC Normalise
+
+  PUBLIC NormaliseCrossProduct
+
+  PUBLIC SolveSmallLinearSystem
+
+  PUBLIC spline_cubic_set,s3_fs,spline_cubic_val
+
+  PUBLIC TensorProduct
+
+  PUBLIC Trace
+
+  PUBLIC Unimodular
+
+  PUBLIC ZeroMatrix
   
 CONTAINS
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Calculates single precision hyperbolic cotangent function
+  FUNCTION CothSP(a)
+
+    !Argument variables
+    REAL(SP), INTENT(IN) :: a !<argument to perform coth() on
+    !Function variable
+    REAL(SP) :: CothSP
+    
+    CothSP=(EXP(a)+EXP(-1.0_SP*a))/(EXP(a)-EXP(-1.0_SP*a))
+
+    RETURN
+    
+  END FUNCTION CothSP
+
+  !
+  !================================================================================================================================
+  !
+
+  !> Calculates double precision hyperbolic cotangent function
+  FUNCTION CothDP(a)
+
+    !Argument variables
+    REAL(DP), INTENT(IN) :: a !<argument to perform coth() on
+    !Function variable
+    REAL(DP) :: CothDP
+
+    CothDP=(EXP(a)+EXP(-1.0_DP*a))/(EXP(a)-EXP(-1.0_DP*a))
+
+    RETURN
+    
+  END FUNCTION CothDP
 
   !
   !================================================================================================================================
@@ -278,23 +420,18 @@ CONTAINS
     
     ENTERS("CrossProductIntg",err,error,*999)
 
-    IF(SIZE(a,1)==SIZE(b,1)) THEN
-      IF(SIZE(c,1)==3) THEN
-        SELECT CASE(SIZE(a,1))
-        CASE(3)
-          c(1)=a(2)*b(3)-a(3)*b(2)
-          c(2)=a(3)*b(1)-a(1)*b(3)
-          c(3)=a(1)*b(2)-a(2)*b(1)
-        CASE DEFAULT
-          CALL FlagError("Invalid vector size.",err,error,*999)
-        END SELECT
-      ELSE
-        CALL FlagError("The vector c is not the correct size.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("The vectors a and b are not the same size.",err,error,*999)
-    ENDIF
-
+    IF(SIZE(a,1)/=SIZE(b,1)) CALL FlagError("The vectors a and b are not the same size.",err,error,*999)
+    IF(SIZE(c,1)==3) CALL FlagError("The vector c is not the correct size.",err,error,*999)
+    
+    SELECT CASE(SIZE(a,1))
+    CASE(3)
+      c(1)=a(2)*b(3)-a(3)*b(2)
+      c(2)=a(3)*b(1)-a(1)*b(3)
+      c(3)=a(1)*b(2)-a(2)*b(1)
+    CASE DEFAULT
+      CALL FlagError("Invalid vector size.",err,error,*999)
+    END SELECT
+ 
     EXITS("CrossProductIntg")
     RETURN
 999 ERRORSEXITS("CrossProductIntg",err,error)
@@ -306,7 +443,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Calculates and returns the vector cross-product of the single precision vectors a x b in c.
+  !>Calculates and returns the vector cross-product of the single precision vectors axb in c.
   SUBROUTINE CrossProductSP(a,b,c,err,error,*)
   
     !Argument variables
@@ -319,22 +456,17 @@ CONTAINS
     
     ENTERS("CrossProductSP",err,error,*999)
 
-    IF(SIZE(a,1)==SIZE(b,1)) THEN
-      IF(SIZE(c,1)==3) THEN
-        SELECT CASE(SIZE(A,1))
-        CASE(3)
-          c(1)=a(2)*b(3)-a(3)*b(2)
-          c(2)=a(3)*b(1)-a(1)*b(3)
-          c(3)=a(1)*b(2)-a(2)*b(1)
-        CASE DEFAULT
-          CALL FlagError("Invalid vector size.",err,error,*999)
-        END SELECT
-      ELSE
-        CALL FlagError("The vector c is not the correct size.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("The vectors a and b are not the same size.",err,error,*999)
-    ENDIF
+    IF(SIZE(a,1)/=SIZE(b,1)) CALL FlagError("The vectors a and b are not the same size.",err,error,*999)
+    IF(SIZE(c,1)/=3) CALL FlagError("The vector c is not the correct size.",err,error,*999)
+    
+    SELECT CASE(SIZE(A,1))
+    CASE(3)
+      c(1)=a(2)*b(3)-a(3)*b(2)
+      c(2)=a(3)*b(1)-a(1)*b(3)
+      c(3)=a(1)*b(2)-a(2)*b(1)
+    CASE DEFAULT
+      CALL FlagError("Invalid vector size.",err,error,*999)
+    END SELECT
 
     EXITS("CrossProductSP")
     RETURN
@@ -347,7 +479,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Calculates and returns the vector cross-product of the double precision vectors a x b in c.
+  !>Calculates and returns the vector cross-product of the double precision vectors axb in c.
   SUBROUTINE CrossProductDP(a,b,c,err,error,*)
   
     !Argument variables
@@ -360,22 +492,17 @@ CONTAINS
     
     ENTERS("CrossProductDP",err,error,*999)
 
-    IF(SIZE(a,1)==SIZE(b,1)) THEN
-      IF(SIZE(c,1)==3) THEN
-        SELECT CASE(SIZE(a,1))
-        CASE(3)
-          c(1)=a(2)*b(3)-a(3)*b(2)
-          c(2)=a(3)*b(1)-a(1)*b(3)
-          c(3)=a(1)*b(2)-a(2)*b(1)
-        CASE DEFAULT
-          CALL FlagError("Invalid vector size.",err,error,*999)
-        END SELECT
-      ELSE
-        CALL FlagError("The vector C is not the correct size.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("The vectors A and B are not the same size.",err,error,*999)
-    ENDIF
+    IF(SIZE(a,1)/=SIZE(b,1)) CALL FlagError("The vectors a and b are not the same size.",err,error,*999)
+    IF(SIZE(c,1)/=3) CALL FlagError("The vector c is not the correct size.",err,error,*999)
+    
+    SELECT CASE(SIZE(a,1))
+    CASE(3)
+      c(1)=a(2)*b(3)-a(3)*b(2)
+      c(2)=a(3)*b(1)-a(1)*b(3)
+      c(3)=a(1)*b(2)-a(2)*b(1)
+    CASE DEFAULT
+      CALL FlagError("Invalid vector size.",err,error,*999)
+    END SELECT
 
     EXITS("CrossProductDP")
     RETURN
@@ -388,7 +515,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Calculates the the vector cross product of a x b in c and the n derivatives, dc, of the vector cross product given the 
+  !>Calculates the the vector cross product of axb in c and the n derivatives, dc, of the vector cross product given the 
   !>derivatives da and db of a and b for integer vectors.
   SUBROUTINE dCrossProductIntg(n,a,b,c,da,db,dc,err,error,*)
     
@@ -407,29 +534,22 @@ CONTAINS
     
     ENTERS("dCrossProductIntg",err,error,*999)
 
+    IF(SIZE(da,1)/=SIZE(db,1).OR.SIZE(a,1)/=SIZE(da,1).OR.SIZE(b,1)/=SIZE(db,1)) &
+      & CALL FlagError("The vectors for da and db are not the same size.",err,error,*999)
+    IF(SIZE(da,2)<n.OR.SIZE(db,2)<n) CALL FlagError("The number of derivative vectors is too small.",err,error,*999)
+    IF(SIZE(c,1)/=3) CALL FlagError("The vector c is not the correct size.",err,error,*999)
+    
     CALL CrossProduct(a,b,c,err,error,*999)
-    IF(SIZE(da,1)==SIZE(db,1).AND.SIZE(a,1)==SIZE(da,1).AND.SIZE(b,1)==SIZE(db,1)) THEN
-      IF(SIZE(da,2)==n.AND.SIZE(db,2)==n) THEN
-        IF(SIZE(c,1)==3) THEN
-          SELECT CASE(SIZE(a,1))
-          CASE(3)
-            DO derivIdx=1,n
-              dc(1,derivIdx)=da(2,derivIdx)*b(3)-da(3,derivIdx)*b(2)+a(2)*db(3,derivIdx)-a(3)*db(2,derivIdx)
-              dc(2,derivIdx)=da(3,derivIdx)*b(1)-da(1,derivIdx)*b(3)+a(3)*db(1,derivIdx)-a(1)*db(3,derivIdx)
-              dc(3,derivIdx)=da(1,derivIdx)*b(2)-da(2,derivIdx)*b(1)+a(1)*db(2,derivIdx)-a(2)*db(1,derivIdx)
-            ENDDO !derivIdx
-          CASE DEFAULT
-            CALL FlagError("Invalid vector size.",err,error,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("The vector c is not the correct size.",err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The number of derivative vectors is too small.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("The vectors for da and db are not the same size.",err,error,*999)
-    ENDIF
+    SELECT CASE(SIZE(a,1))
+    CASE(3)
+      DO derivIdx=1,n
+        dc(1,derivIdx)=da(2,derivIdx)*b(3)-da(3,derivIdx)*b(2)+a(2)*db(3,derivIdx)-a(3)*db(2,derivIdx)
+        dc(2,derivIdx)=da(3,derivIdx)*b(1)-da(1,derivIdx)*b(3)+a(3)*db(1,derivIdx)-a(1)*db(3,derivIdx)
+        dc(3,derivIdx)=da(1,derivIdx)*b(2)-da(2,derivIdx)*b(1)+a(1)*db(2,derivIdx)-a(2)*db(1,derivIdx)
+      ENDDO !derivIdx
+    CASE DEFAULT
+      CALL FlagError("Invalid vector size.",err,error,*999)
+    END SELECT
 
     EXITS("dCrossProductIntg")
     RETURN
@@ -442,7 +562,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Calculates the the vector cross product of a x b in c and the n derivatives, dc, of the vector cross product given the 
+  !>Calculates the the vector cross product of axb in c and the n derivatives, dc, of the vector cross product given the 
   !>derivatives da and db of a and b for single precision vectors.
   SUBROUTINE dCrossProductSP(n,a,b,c,da,db,dc,err,error,*)
   
@@ -461,29 +581,22 @@ CONTAINS
     
     ENTERS("dCrossProductSP",err,error,*999)
 
+    IF(SIZE(da,1)/=SIZE(db,1).OR.SIZE(a,1)/=SIZE(da,1).OR.SIZE(b,1)/=SIZE(db,1)) &
+      & CALL FlagError("The vectors for da and db are not the same size.",err,error,*999)
+    IF(SIZE(da,2)<n.OR.SIZE(db,2)<n) CALL FlagError("The number of derivative vectors is too small.",err,error,*999)
+    IF(SIZE(c,1)/=3) CALL FlagError("The vector c is not the correct size.",err,error,*999)
+    
     CALL CrossProduct(a,b,c,err,error,*999)
-    IF(SIZE(da,1)==SIZE(db,1).AND.SIZE(a,1)==SIZE(da,1).AND.SIZE(b,1)==SIZE(db,1)) THEN
-      IF(SIZE(da,2)==n.AND.SIZE(db,2)==n) THEN
-        IF(SIZE(c,1)==3) THEN
-          SELECT CASE(SIZE(a,1))
-          CASE(3)
-            DO derivIdx=1,n
-              dc(1,derivIdx)=da(2,derivIdx)*b(3)-da(3,derivIdx)*b(2)+a(2)*db(3,derivIdx)-a(3)*db(2,derivIdx)
-              dc(2,derivIdx)=da(3,derivIdx)*b(1)-da(1,derivIdx)*b(3)+a(3)*db(1,derivIdx)-a(1)*db(3,derivIdx)
-              dc(3,derivIdx)=da(1,derivIdx)*b(2)-da(2,derivIdx)*b(1)+a(1)*db(2,derivIdx)-a(2)*db(1,derivIdx)
-            ENDDO !derivIdx
-          CASE DEFAULT
-            CALL FlagError("Invalid vector size.",err,error,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("The vector c is not the correct size.",err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The number of derivative vectors is too small.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("The vectors for da and db are not the same size.",err,error,*999)
-    ENDIF
+    SELECT CASE(SIZE(a,1))
+    CASE(3)
+      DO derivIdx=1,n
+        dc(1,derivIdx)=da(2,derivIdx)*b(3)-da(3,derivIdx)*b(2)+a(2)*db(3,derivIdx)-a(3)*db(2,derivIdx)
+        dc(2,derivIdx)=da(3,derivIdx)*b(1)-da(1,derivIdx)*b(3)+a(3)*db(1,derivIdx)-a(1)*db(3,derivIdx)
+        dc(3,derivIdx)=da(1,derivIdx)*b(2)-da(2,derivIdx)*b(1)+a(1)*db(2,derivIdx)-a(2)*db(1,derivIdx)
+      ENDDO !derivIdx
+    CASE DEFAULT
+      CALL FlagError("Invalid vector size.",err,error,*999)
+    END SELECT
 
     EXITS("dCrossProductSP")
     RETURN
@@ -496,7 +609,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Calculates the the vector cross product of a x b in c and the n derivatives, dc, of the vector cross product given the 
+  !>Calculates the the vector cross product of axb in c and the n derivatives, dc, of the vector cross product given the 
   !>derivatives da and db of a and b for double precision vectors.
   SUBROUTINE dCrossProductDP(n,a,b,c,da,db,dc,err,error,*)
   
@@ -515,29 +628,22 @@ CONTAINS
     
     ENTERS("dCrossProductDP",err,error,*999)
 
+    IF(SIZE(da,1)/=SIZE(db,1).OR.SIZE(a,1)/=SIZE(da,1).OR.SIZE(b,1)/=SIZE(db,1)) &
+      & CALL FlagError("The vectors for da and db are not the same size.",err,error,*999)
+    IF(SIZE(da,2)<n.OR.SIZE(db,2)<n) CALL FlagError("The number of derivative vectors is too small.",err,error,*999)
+    IF(SIZE(c,1)/=3) CALL FlagError("The vector c is not the correct size.",err,error,*999)
+
     CALL CrossProduct(a,b,c,err,error,*999)
-    IF(SIZE(da,1)==SIZE(db,1).AND.SIZE(a,1)==SIZE(da,1).AND.SIZE(b,1)==SIZE(db,1)) THEN
-      IF(SIZE(da,2)==n.AND.SIZE(db,2)==n) THEN
-        IF(SIZE(c,1)==3) THEN
-          SELECT CASE(SIZE(a,1))
-          CASE(3)
-            DO derivIdx=1,n
-              dc(1,derivIdx)=da(2,derivIdx)*b(3)-da(3,derivIdx)*b(2)+a(2)*db(3,derivIdx)-a(3)*db(2,derivIdx)
-              dc(2,derivIdx)=da(3,derivIdx)*b(1)-da(1,derivIdx)*b(3)+a(3)*db(1,derivIdx)-a(1)*db(3,derivIdx)
-              dc(3,derivIdx)=da(1,derivIdx)*b(2)-da(2,derivIdx)*b(1)+a(1)*db(2,derivIdx)-a(2)*db(1,derivIdx)
-            ENDDO !derivIdx
-          CASE DEFAULT
-            CALL FlagError("Invalid vector size.",err,error,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("The vector c is not the correct size.",err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The number of derivative vectors is too small.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("The vectors for da and db are not the same size.",err,error,*999)
-    ENDIF
+    SELECT CASE(SIZE(a,1))
+    CASE(3)
+      DO derivIdx=1,n
+        dc(1,derivIdx)=da(2,derivIdx)*b(3)-da(3,derivIdx)*b(2)+a(2)*db(3,derivIdx)-a(3)*db(2,derivIdx)
+        dc(2,derivIdx)=da(3,derivIdx)*b(1)-da(1,derivIdx)*b(3)+a(3)*db(1,derivIdx)-a(1)*db(3,derivIdx)
+        dc(3,derivIdx)=da(1,derivIdx)*b(2)-da(2,derivIdx)*b(1)+a(1)*db(2,derivIdx)-a(2)*db(1,derivIdx)
+      ENDDO !derivIdx
+    CASE DEFAULT
+      CALL FlagError("Invalid vector size.",err,error,*999)
+    END SELECT
 
     EXITS("dCrossProductDP")
     RETURN
@@ -550,289 +656,1429 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Calculates and returns the matrix-vector product of the single precision vector A*b in c.
-  SUBROUTINE MatrixVectorProductSP(A,b,c,err,error,*)
-
-    !Argument variables
-    REAL(SP), INTENT(IN) :: A(:,:) !<The A matrix
-    REAL(SP), INTENT(IN) :: b(:)   !<The b vector
-    REAL(SP), INTENT(OUT) :: c(:)  !<On exit, the product vector c=A*b
-    INTEGER(INTG) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-
-    ENTERS("MatrixVectorProductSP",err,error,*999)
-
-    IF(SIZE(A,2)==SIZE(b,1).AND.SIZE(A,1)==SIZE(c,1)) THEN
-      SELECT CASE(SIZE(A,1))
-      CASE(1)
-        c(1)=A(1,1)*b(1)
-      CASE(2)
-        c(1)=A(1,1)*b(1)+A(1,2)*b(2)
-        c(2)=A(2,1)*b(1)+A(2,2)*b(2)
-      CASE(3)
-        c(1)=A(1,1)*b(1)+A(1,2)*b(2)+A(1,3)*b(3)
-        c(2)=A(2,1)*b(1)+A(2,2)*b(2)+A(2,3)*b(3)
-        c(3)=A(3,1)*b(1)+A(3,2)*b(2)+A(3,3)*b(3)
-      CASE DEFAULT
-        CALL FlagError("Invalid matrix and/or vector size.",err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Invalid matrix sizes.",err,error,*999)
-    ENDIF
-    
-    EXITS("MatrixVectorProductSP")
-    RETURN
-999 ERRORSEXITS("MatrixVectorProductSP",err,error)
-    RETURN 1
-    
-  END SUBROUTINE MatrixVectorProductSP
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Calculates and returns the matrix-vector product of the double precision vectir A*b in c.
-  SUBROUTINE MatrixVectorProductDP(A,b,c,err,error,*)
-
-    !Argument variables
-    REAL(DP), INTENT(IN) :: A(:,:) !<The A matrix
-    REAL(DP), INTENT(IN) :: B(:)   !<The b vector
-    REAL(DP), INTENT(OUT) :: C(:)  !<On exit, the product vector c=A*b
-    INTEGER(INTG) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-
-    ENTERS("MatrixVectorProductDP",err,error,*999)
-
-    IF(SIZE(A,2)==SIZE(b,1).AND.SIZE(A,1)==SIZE(c,1)) THEN
-      SELECT CASE(SIZE(A,1))
-      CASE(1)
-        c(1)=A(1,1)*b(1)
-      CASE(2)
-        c(1)=A(1,1)*b(1)+A(1,2)*b(2)
-        c(2)=A(2,1)*b(1)+A(2,2)*b(2)
-      CASE(3)
-        c(1)=A(1,1)*b(1)+A(1,2)*b(2)+A(1,3)*b(3)
-        c(2)=A(2,1)*b(1)+A(2,2)*b(2)+A(2,3)*b(3)
-        c(3)=A(3,1)*b(1)+A(3,2)*b(2)+A(3,3)*b(3)
-      CASE DEFAULT
-        CALL FlagError("Invalid matrix and/or vector size.",err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Invalid matrix sizes.",err,error,*999)
-    ENDIF
-    
-    EXITS("MatrixVectorProductDP")
-    RETURN
-999 ERRORSEXITS("MatrixVectorProductDP",err,error)
-    RETURN 1
-     
-  END SUBROUTINE MatrixVectorProductDP
+  !>Calculates and returns the spherical and deviatoric parts of a single precision matrix2 matrix A i.e., sphA in B and devA in C.
+  SUBROUTINE DecomposeSphericalDeviatoricMatrix2SP(A,B,C,err,error,*)
   
+    !Argument variables
+    REAL(SP), INTENT(IN) :: A(:,:) !<The matrix A to decompose
+    REAL(SP), INTENT(OUT) :: B(:,:) !<On exit, the spherical part of A i.e., B=sphA
+    REAL(SP), INTENT(OUT) :: C(:,:) !<On exit, the deviatoric part of A i.e., C=devA
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j
+    REAL(SP) :: factor
+    
+    ENTERS("DecomposeSphericalDeviatoricMatrix2SP",err,error,*999)
+
+    IF(SIZE(A,1)/=SIZE(B,1).OR.SIZE(A,1)/=SIZE(C,1).OR.SIZE(A,2)/=SIZE(B,2).OR.SIZE(A,2)/=SIZE(C,2)) &
+      & CALL FlagError("The sizes of the A, B & C matrices are not the same.",err,error,*999)
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("The A matrix is not square.",err,error,*999)
+    
+    SELECT CASE(SIZE(A,1))
+    CASE(1)
+      !Spherical part
+      B(1,1)=A(1,1)
+      !Deviatoric part
+      C(1,1)=0.0_SP
+    CASE(2)
+      factor=(A(1,1)+A(2,2))/2.0_SP
+      !Spherical part
+      B(1,1)=factor
+      B(1,2)=0.0_SP
+      B(2,1)=0.0_SP
+      B(2,2)=factor
+      !Deviatoric part
+      C(1,1)=A(1,1)-factor
+      C(1,2)=A(1,2)
+      C(2,1)=A(2,1)
+      C(2,2)=A(2,2)-factor
+    CASE(3)
+      factor=(A(1,1)+A(2,2)+A(3,3))/3.0_SP
+      !Spherical part
+      B(1,1)=factor
+      B(1,2)=0.0_SP
+      B(1,3)=0.0_SP
+      B(2,1)=0.0_SP
+      B(2,2)=factor
+      B(2,3)=0.0_SP
+      B(3,1)=0.0_SP
+      B(3,2)=0.0_SP
+      B(3,3)=factor
+      !Deviatoric part
+      C(1,1)=A(1,1)-factor
+      C(1,2)=A(1,2)
+      C(1,3)=A(1,3)
+      C(2,1)=A(2,1)
+      C(2,2)=A(2,2)-factor
+      C(2,3)=A(2,3)
+      C(3,1)=A(3,1)
+      C(3,2)=A(3,2)
+      C(3,3)=A(3,3)-factor
+    CASE DEFAULT
+      CALL Trace(A,factor,err,error,*999)
+      factor=factor/SIZE(A,1)
+      DO i=1,SIZE(A,1)
+        DO j=1,SIZE(A,1)
+          B(i,j) = 0.0_SP
+          C(i,j) = A(i,j)
+        ENDDO !j
+        B(i,i) = factor
+        C(i,i) = C(i,i)-factor
+      ENDDO !i
+    END SELECT
+ 
+    EXITS("DecomposeSphericalDeviatoricMatrix2SP")
+    RETURN
+999 ERRORSEXITS("DecomposeSphericalDeviatoricMatrix2SP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DecomposeSphericalDeviatoricMatrix2SP
+
   !
   !================================================================================================================================
   !
 
-  !>Calculates and returns the matrix-transpose vector product of the single precision vector A^T*b in c.
-  SUBROUTINE MatrixTransposeVectorProductSP(A,b,c,err,error,*)
-
+  !>Calculates and returns the spherical and deviatoric parts of a double precision matrix2 matrix A i.e., sphA in B and devA in C.
+  SUBROUTINE DecomposeSphericalDeviatoricMatrix2DP(A,B,C,err,error,*)
+  
     !Argument variables
-    REAL(SP), INTENT(IN) :: A(:,:) !<The A matrix
-    REAL(SP), INTENT(IN) :: b(:)   !<The b vector
-    REAL(SP), INTENT(OUT) :: c(:)  !<On exit, the product vector c=A^T*b
-    INTEGER(INTG) :: err !<The error code
+    REAL(DP), INTENT(IN) :: A(:,:) !<The matrix A to decompose
+    REAL(DP), INTENT(OUT) :: B(:,:) !<On exit, the spherical part of A i.e., B=sphA
+    REAL(DP), INTENT(OUT) :: C(:,:) !<On exit, the deviatoric part of A i.e., C=devA
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j
+    REAL(DP) :: factor
+    
+    ENTERS("DecomposeSphericalDeviatoricMatrix2DP",err,error,*999)
 
-    ENTERS("MatrixTransposeVectorProductSP",err,error,*999)
-
-    IF(SIZE(A,1)==SIZE(b,1).AND.SIZE(A,2)==SIZE(c,1)) THEN
-       SELECT CASE(SIZE(A,2))
-       CASE(1)
-         c(1)=A(1,1)*b(1)
-       CASE(2)
-         c(1)=A(1,1)*b(1)+A(2,1)*b(2)
-         c(2)=A(1,2)*b(1)+A(2,2)*b(2)
-       CASE(3)
-         c(1)=A(1,1)*b(1)+A(2,1)*b(2)+A(3,1)*b(3)
-         c(2)=A(1,2)*b(1)+A(2,2)*b(2)+A(3,2)*b(3)
-         c(3)=A(1,3)*b(1)+A(2,3)*b(2)+A(3,3)*b(3)
-       CASE DEFAULT
-         CALL FlagError("Invalid matrix and/or vector size.",err,error,*999)
-       END SELECT
-     ELSE
-       CALL FlagError("Invalid matrix sizes.",err,error,*999)
-     ENDIF
-
-     EXITS("MatrixTransposeVectorProductSP")
-     RETURN
- 999 ERRORSEXITS("MatrixTransposeVectorProductSP",err,error)
-     RETURN 1
-     
-  END SUBROUTINE MatrixTransposeVectorProductSP
+    IF(SIZE(A,1)/=SIZE(B,1).OR.SIZE(A,1)/=SIZE(C,1).OR.SIZE(A,2)/=SIZE(B,2).OR.SIZE(A,2)/=SIZE(C,2)) &
+      & CALL FlagError("The sizes of the A, B & C matrices are not the same.",err,error,*999)
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("The A matrix is not square.",err,error,*999)
+    
+    SELECT CASE(SIZE(A,1))
+    CASE(1)
+      !Spherical part
+      B(1,1)=A(1,1)
+      !Deviatoric part
+      C(1,1)=0.0_DP
+    CASE(2)
+      factor=(A(1,1)+A(2,2))/2.0_DP
+      !Spherical part
+      B(1,1)=factor
+      B(1,2)=0.0_DP
+      B(2,1)=0.0_DP
+      B(2,2)=factor
+      !Deviatoric part
+      C(1,1)=A(1,1)-factor
+      C(1,2)=A(1,2)
+      C(2,1)=A(2,1)
+      C(2,2)=A(2,2)-factor
+    CASE(3)
+      factor=(A(1,1)+A(2,2)+A(3,3))/3.0_DP
+      !Spherical part
+      B(1,1)=factor
+      B(1,2)=0.0_DP
+      B(1,3)=0.0_DP
+      B(2,1)=0.0_DP
+      B(2,2)=factor
+      B(2,3)=0.0_DP
+      B(3,1)=0.0_DP
+      B(3,2)=0.0_DP
+      B(3,3)=factor
+      !Deviatoric part
+      C(1,1)=A(1,1)-factor
+      C(1,2)=A(1,2)
+      C(1,3)=A(1,3)
+      C(2,1)=A(2,1)
+      C(2,2)=A(2,2)-factor
+      C(2,3)=A(2,3)
+      C(3,1)=A(3,1)
+      C(3,2)=A(3,2)
+      C(3,3)=A(3,3)-factor
+    CASE DEFAULT
+      CALL Trace(A,factor,err,error,*999)
+      factor=factor/SIZE(A,1)
+      DO i=1,SIZE(A,1)
+        DO j=1,SIZE(A,1)
+          B(i,j) = 0.0_DP
+          C(i,j) = A(i,j)
+        ENDDO !j
+        B(i,i) = factor
+        C(i,i) = C(i,i)-factor
+      ENDDO !i
+    END SELECT
+ 
+    EXITS("DecomposeSphericalDeviatoricMatrix2DP")
+    RETURN
+999 ERRORSEXITS("DecomposeSphericalDeviatoricMatrix2DP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DecomposeSphericalDeviatoricMatrix2DP
 
   !
   !================================================================================================================================
   !
 
-  !>Calculates and returns the matrix-transpose vector product of the double precision vector A^T*b in c.
-  SUBROUTINE MatrixTransposeVectorProductDP(A,b,c,err,error,*)
-
+  !>Calculates and returns the symmetric and skew-symmetric parts of a single precision matrix2 matrix A i.e., symA in B and skwA in C.
+  SUBROUTINE DecomposeSymmetricSkewMatrix2SP(A,B,C,err,error,*)
+  
     !Argument variables
-    REAL(DP), INTENT(IN) :: A(:,:) !<The A matrix
-    REAL(DP), INTENT(IN) :: b(:)   !<The b vector
-    REAL(DP), INTENT(OUT) :: c(:)  !<On exit, the product vector c=A^T*b
-    INTEGER(INTG) :: err !<The error code
+    REAL(SP), INTENT(IN) :: A(:,:) !<The matrix A to decompose
+    REAL(SP), INTENT(OUT) :: B(:,:) !<On exit, the symmetric part of A i.e., B=symA
+    REAL(SP), INTENT(OUT) :: C(:,:) !<On exit, the skew-symmetric part of A i.e., C=skwA
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j
+    
+    ENTERS("DecomposeSymmetricSkewMatrix2SP",err,error,*999)
 
-    ENTERS("MatrixTransposeVectorProductDP",err,error,*999)
+    IF(SIZE(A,1)/=SIZE(B,1).OR.SIZE(A,1)/=SIZE(C,1).OR.SIZE(A,2)/=SIZE(B,2).OR.SIZE(A,2)/=SIZE(C,2)) &
+      & CALL FlagError("The sizes of the A, B & C matrices are not the same.",err,error,*999)
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("The A matrix is not square.",err,error,*999)
+    
+    SELECT CASE(SIZE(A,1))
+    CASE(1)
+      !Symmetric part
+      B(1,1)=A(1,1)
+      !Skew-symmetric part
+      C(1,1)=0.0_SP
+    CASE(2)
+      !Symmetric part
+      B(1,1)=A(1,1)
+      B(1,2)=(A(1,2)+A(2,1))/2.0_SP
+      B(2,1)=B(1,2)
+      B(2,2)=A(2,2)
+      !Skew-symmetric part
+      C(1,1)=0.0_SP
+      C(1,2)=(A(1,2)-A(2,1))/2.0_SP
+      C(2,1)=(A(2,1)-A(1,2))/2.0_SP
+      C(2,2)=0.0_SP
+    CASE(3)
+      !Symmetric part
+      B(1,1)=A(1,1)
+      B(1,2)=(A(1,2)+A(2,1))/2.0_SP
+      B(1,3)=(A(1,3)+A(3,1))/2.0_SP
+      B(2,1)=B(1,2)
+      B(2,2)=A(2,2)
+      B(2,3)=(A(2,3)+A(3,2))/2.0_SP
+      B(3,1)=B(1,3)
+      B(3,2)=B(2,3)
+      B(3,3)=A(3,3)
+      !Skew-symmetric part
+      C(1,1)=0.0_SP
+      C(1,2)=(A(1,2)-A(2,1))/2.0_SP
+      C(1,3)=(A(1,3)-A(3,1))/2.0_SP
+      C(2,1)=(A(2,1)-A(2,1))/2.0_SP
+      C(2,2)=0.0_SP
+      C(2,3)=(A(2,3)-A(3,2))/2.0_SP
+      C(3,1)=(A(3,1)-A(1,3))/2.0_SP
+      C(3,2)=(A(3,2)-A(2,3))/2.0_SP
+      C(3,3)=0.0_SP
+    CASE DEFAULT
+      DO i=1,SIZE(A,1)
+        DO j=1,SIZE(A,2)
+          !Symmetric part
+          B(i,j)=(A(i,j)+A(j,i))/2.0_SP
+          !Skew-symmetric part
+          C(i,j)=(A(i,j)-A(j,i))/2.0_SP
+        ENDDO !j
+      ENDDO !i
+    END SELECT
+ 
+    EXITS("DecomposeSymmetricSkewMatrix2SP")
+    RETURN
+999 ERRORSEXITS("DecomposeSymmetricSkewMatrix2SP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DecomposeSymmetricSkewMatrix2SP
 
-    IF(SIZE(A,1)==SIZE(b,1).AND.SIZE(A,2)==SIZE(c,1)) THEN
-       SELECT CASE(SIZE(A,2))
-       CASE(1)
-         c(1)=A(1,1)*b(1)
-       CASE(2)
-         c(1)=A(1,1)*b(1)+A(2,1)*b(2)
-         c(2)=A(1,2)*b(1)+A(2,2)*b(2)
-       CASE(3)
-         c(1)=A(1,1)*b(1)+A(2,1)*b(2)+A(3,1)*b(3)
-         c(2)=A(1,2)*b(1)+A(2,2)*b(2)+A(3,2)*b(3)
-         c(3)=A(1,3)*b(1)+A(2,3)*b(2)+A(3,3)*b(3)
-       CASE DEFAULT
-         CALL FlagError("Invalid matrix and/or vector size.",err,error,*999)
-       END SELECT
-     ELSE
-       CALL FlagError("Invalid matrix sizes.",err,error,*999)
-     ENDIF
+  !
+  !================================================================================================================================
+  !
 
-     EXITS("MatrixTransposeVectorProductDP")
-     RETURN
- 999 ERRORSEXITS("MatrixTransposeVectorProductDP",err,error)
-     RETURN 1
-     
-  END SUBROUTINE MatrixTransposeVectorProductDP
+  !>Calculates and returns the symmetric and skew-symmetric parts of a double precision matrix2 matrix A i.e., symA in B and skwA in C.
+  SUBROUTINE DecomposeSymmetricSkewMatrix2DP(A,B,C,err,error,*)
+  
+    !Argument variables
+    REAL(DP), INTENT(IN) :: A(:,:) !<The matrix A to decompose
+    REAL(DP), INTENT(OUT) :: B(:,:) !<On exit, the symmetric part of A i.e., B=symA
+    REAL(DP), INTENT(OUT) :: C(:,:) !<On exit, the skew-symmetric part of A i.e., C=skwA
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j
+    
+    ENTERS("DecomposeSymmetricSkewMatrix2DP",err,error,*999)
+
+    IF(SIZE(A,1)/=SIZE(B,1).OR.SIZE(A,1)/=SIZE(C,1).OR.SIZE(A,2)/=SIZE(B,2).OR.SIZE(A,2)/=SIZE(C,2)) &
+      & CALL FlagError("The sizes of the A, B & C matrices are not the same.",err,error,*999)
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("The A matrix is not square.",err,error,*999)
+    
+    SELECT CASE(SIZE(A,1))
+    CASE(1)
+      !Symmetric part
+      B(1,1)=A(1,1)
+      !Skew-symmetric part
+      C(1,1)=0.0_DP
+    CASE(2)
+      !Symmetric part
+      B(1,1)=A(1,1)
+      B(1,2)=(A(1,2)+A(2,1))/2.0_DP
+      B(2,1)=B(1,2)
+      B(2,2)=A(2,2)
+      !Skew-symmetric part
+      C(1,1)=0.0_DP
+      C(1,2)=(A(1,2)-A(2,1))/2.0_DP
+      C(2,1)=(A(2,1)-A(1,2))/2.0_DP
+      C(2,2)=0.0_DP
+    CASE(3)
+      !Symmetric part
+      B(1,1)=A(1,1)
+      B(1,2)=(A(1,2)+A(2,1))/2.0_DP
+      B(1,3)=(A(1,3)+A(3,1))/2.0_DP
+      B(2,1)=B(1,2)
+      B(2,2)=A(2,2)
+      B(2,3)=(A(2,3)+A(3,2))/2.0_DP
+      B(3,1)=B(1,3)
+      B(3,2)=B(2,3)
+      B(3,3)=A(3,3)
+      !Skew-symmetric part
+      C(1,1)=0.0_DP
+      C(1,2)=(A(1,2)-A(2,1))/2.0_DP
+      C(1,3)=(A(1,3)-A(3,1))/2.0_DP
+      C(2,1)=(A(2,1)-A(2,1))/2.0_DP
+      C(2,2)=0.0_DP
+      C(2,3)=(A(2,3)-A(3,2))/2.0_DP
+      C(3,1)=(A(3,1)-A(1,3))/2.0_DP
+      C(3,2)=(A(3,2)-A(2,3))/2.0_DP
+      C(3,3)=0.0_DP
+    CASE DEFAULT
+      DO i=1,SIZE(A,1)
+        DO j=1,SIZE(A,2)
+          !Symmetric part
+          B(i,j)=(A(i,j)+A(j,i))/2.0_DP
+          !Skew-symmetric part
+          C(i,j)=(A(i,j)-A(j,i))/2.0_DP
+        ENDDO !j
+      ENDDO !i
+    END SELECT
+ 
+    EXITS("DecomposeSymmetricSkewMatrix2DP")
+    RETURN
+999 ERRORSEXITS("DecomposeSymmetricSkewMatrix2DP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DecomposeSymmetricSkewMatrix2DP
 
   !
   !================================================================================================================================
   !
 
   !>Returns the determinant of a full integer matrix A.
-  FUNCTION DeterminantFullIntg(A,err,error)
+  SUBROUTINE DeterminantFullIntg(A,detA,err,error,*)
   
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: A(:,:) !<The matrix to find the determinant of
+    INTEGER(INTG), INTENT(OUT) :: detA !<On exit, the determinant of A
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Function variable
-    INTEGER(INTG) :: DeterminantFullIntg
+    !Local variables
     
     ENTERS("DeterminantFullIntg",err,error,*999)
 
-    DeterminantFullIntg=0
+    detA=0_INTG
     
-    IF(SIZE(A,1)==SIZE(A,2)) THEN
-      SELECT CASE(SIZE(A,1))
-      CASE(1)
-        DeterminantFullIntg=A(1,1)
-      CASE(2)
-        DeterminantFullIntg=A(1,1)*A(2,2)-A(2,1)*A(1,2)
-      CASE(3)
-        DeterminantFullIntg=A(1,1)*A(2,2)*A(3,3)+A(1,2)*A(2,3)*A(3,1)+A(1,3)*A(2,1)*A(3,2)-A(1,1)*A(3,2)*A(2,3)- &
-          A(2,1)*A(1,2)*A(3,3)-A(3,1)*A(2,2)*A(1,3)
-      CASE DEFAULT
-        CALL FlagError("Matrix size not implemented.",err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Matrix is not square.",err,error,*999)
-    ENDIF
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)
+    
+    SELECT CASE(SIZE(A,1))
+    CASE(1)
+      detA=A(1,1)
+    CASE(2)
+      detA=A(1,1)*A(2,2)-A(2,1)*A(1,2)
+    CASE(3)
+      detA=A(1,1)*A(2,2)*A(3,3)+A(1,2)*A(2,3)*A(3,1)+ &
+        &  A(1,3)*A(2,1)*A(3,2)-A(1,1)*A(3,2)*A(2,3)- &
+        &  A(2,1)*A(1,2)*A(3,3)-A(3,1)*A(2,2)*A(1,3)
+    CASE DEFAULT
+      CALL FlagError("Matrix size not implemented.",err,error,*999)
+    END SELECT
 
     EXITS("DeterminantFullIntg")
     RETURN
 999 ERRORSEXITS("DeterminantFullIntg",err,error)
-    RETURN
+    RETURN 1
     
-  END FUNCTION DeterminantFullIntg
+  END SUBROUTINE DeterminantFullIntg
   
   !
   !================================================================================================================================
   !
 
   !>Returns the determinant of a full single precision matrix A.
-  FUNCTION DeterminantFullSP(A,err,error)
+  SUBROUTINE DeterminantFullSP(A,detA,err,error,*)
     
     !Argument variables
     REAL(SP), INTENT(IN) :: A(:,:) !<The matrix to find the determinant of
+    REAL(SP), INTENT(OUT) :: detA !<On exit, the determinant of A
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Function variable
-    REAL(SP) :: DeterminantFullSP
+    !Local variables
 
     ENTERS("DeterminantFullSP",err,error,*999)
 
-    DeterminantFullSP=0.0_SP
+    detA=0.0_SP
     
-    IF(SIZE(A,1)==SIZE(A,2)) THEN
-      SELECT CASE(SIZE(A,1))
-      CASE(1)
-        DeterminantFullSP=A(1,1)
-      CASE(2)
-        DeterminantFullSP=A(1,1)*A(2,2)-A(2,1)*A(1,2)
-      CASE(3)
-        DeterminantFullSP=A(1,1)*A(2,2)*A(3,3)+A(1,2)*A(2,3)*A(3,1)+A(1,3)*A(2,1)*A(3,2)-A(1,1)*A(3,2)*A(2,3)- &
-          A(2,1)*A(1,2)*A(3,3)-A(3,1)*A(2,2)*A(1,3)
-      CASE DEFAULT
-        CALL FlagError("Matrix size not implemented.",err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Matrix is not square.",err,error,*999)
-    ENDIF
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)
+    
+    SELECT CASE(SIZE(A,1))
+    CASE(1)
+      detA=A(1,1)
+    CASE(2)
+      detA=A(1,1)*A(2,2)-A(2,1)*A(1,2)
+    CASE(3)
+      detA=A(1,1)*A(2,2)*A(3,3)+A(1,2)*A(2,3)*A(3,1)+ &
+        &  A(1,3)*A(2,1)*A(3,2)-A(1,1)*A(3,2)*A(2,3)- &
+        &  A(2,1)*A(1,2)*A(3,3)-A(3,1)*A(2,2)*A(1,3)
+    CASE DEFAULT
+      CALL FlagError("Matrix size not implemented.",err,error,*999)
+    END SELECT
 
     EXITS("DeterminantFullSP")
     RETURN
 999 ERRORSEXITS("DeterminantFullSP",err,error)
-    RETURN
+    RETURN 1
     
-  END FUNCTION DeterminantFullSP
+  END SUBROUTINE DeterminantFullSP
   
   !
   !================================================================================================================================
   !
 
   !>Returns the determinant of a full double precision matrix A
-  FUNCTION DeterminantFullDP(A,err,error)
+  SUBROUTINE DeterminantFullDP(A,detA,err,error,*)
   
     !Argument variables
     REAL(DP), INTENT(IN) :: A(:,:) !<The matrix to find the determinant of
+    REAL(DP), INTENT(OUT) :: detA !<On exit, the determinant of A
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Function variable
-    REAL(DP) :: DeterminantFullDP
+    !Local variables
     
     ENTERS("DeterminantFullDP",err,error,*999)
 
-    DeterminantFullDP=0.0_DP
+    detA=0.0_DP
     
-    IF(SIZE(A,1)==SIZE(A,2)) THEN
-      SELECT CASE(SIZE(A,1))
-      CASE(1)
-        DeterminantFullDP=A(1,1)
-      CASE(2)
-        DeterminantFullDP=A(1,1)*A(2,2)-A(2,1)*A(1,2)
-      CASE(3)
-        DeterminantFullDP=A(1,1)*A(2,2)*A(3,3)+A(1,2)*A(2,3)*A(3,1)+A(1,3)*A(2,1)*A(3,2)-A(1,1)*A(3,2)*A(2,3)- &
-          A(2,1)*A(1,2)*A(3,3)-A(3,1)*A(2,2)*A(1,3)
-      CASE DEFAULT
-        CALL FlagError("Matrix size not implemented.",err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Matrix is not square.",err,error,*999)
-    ENDIF
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)
+    
+    SELECT CASE(SIZE(A,1))
+    CASE(1)
+      detA=A(1,1)
+    CASE(2)
+      detA=A(1,1)*A(2,2)-A(2,1)*A(1,2)
+    CASE(3)
+      detA=A(1,1)*A(2,2)*A(3,3)+A(1,2)*A(2,3)*A(3,1)+ &
+        &  A(1,3)*A(2,1)*A(3,2)-A(1,1)*A(3,2)*A(2,3)- &
+        &  A(2,1)*A(1,2)*A(3,3)-A(3,1)*A(2,2)*A(1,3)
+    CASE DEFAULT
+      CALL FlagError("Matrix size not implemented.",err,error,*999)
+    END SELECT
 
     EXITS("DeterminantFullDP")
     RETURN
 999 ERRORSEXITS("DeterminantFullDP",err,error)
-    RETURN
+    RETURN 1
     
-  END FUNCTION DeterminantFullDP
+  END SUBROUTINE DeterminantFullDP
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates and returns the matrix2-matrix2 dot (matrix) product of the single precision matrix A*B in C.
+  SUBROUTINE DotProductMatrix2Matrix2SP(A,B,C,err,error,*)
+  
+    !Argument variables
+    REAL(SP), INTENT(IN) :: A(:,:) !<The first matrix A
+    REAL(SP), INTENT(IN) :: B(:,:) !<The second matrix B
+    REAL(SP), INTENT(OUT) :: C(:,:) !<On exit, the dot product matrix C=A*B
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j,k
+    
+    ENTERS("DotProductMatrix2Matrix2SP",err,error,*999)
+
+    IF(SIZE(A,2)/=SIZE(B,1).OR.SIZE(A,1)/=SIZE(C,1).OR.SIZE(B,2)/=SIZE(C,2)) CALL FlagError("Invalid matrix sizes.",err,error,*999)
+    
+    IF(SIZE(A,1)==SIZE(A,2).AND.SIZE(A,1)==SIZE(B,2)) THEN
+      !A and B matrices are square and the same size
+      SELECT CASE(SIZE(A,1))
+      CASE(1)
+        C(1,1)=A(1,1)*B(1,1)
+      CASE(2)
+        C(1,1)=A(1,1)*B(1,1)+A(1,2)*B(2,1)
+        C(1,2)=A(1,1)*B(1,2)+A(1,2)*B(2,2)
+        C(2,1)=A(2,1)*B(1,1)+A(2,2)*B(2,1)
+        C(2,2)=A(2,1)*B(1,2)+A(2,2)*B(2,2)
+      CASE(3)
+        C(1,1)=A(1,1)*B(1,1)+A(1,2)*B(2,1)+A(1,3)*B(3,1)
+        C(1,2)=A(1,1)*B(1,2)+A(1,2)*B(2,2)+A(1,3)*B(3,2)
+        C(1,3)=A(1,1)*B(1,3)+A(1,2)*B(2,3)+A(1,3)*B(3,3)        
+        C(2,1)=A(2,1)*B(1,1)+A(2,2)*B(2,1)+A(2,3)*B(3,1)
+        C(2,2)=A(2,1)*B(1,2)+A(2,2)*B(2,2)+A(2,3)*B(3,2)
+        C(2,3)=A(2,1)*B(1,3)+A(2,2)*B(2,3)+A(2,3)*B(3,3)
+        C(3,1)=A(3,1)*B(1,1)+A(3,2)*B(2,1)+A(3,3)*B(3,1)
+        C(3,2)=A(3,1)*B(1,2)+A(3,2)*B(2,2)+A(3,3)*B(3,2)
+        C(3,3)=A(3,1)*B(1,3)+A(3,2)*B(2,3)+A(3,3)*B(3,3)
+      CASE DEFAULT
+        DO i=1,SIZE(A,1)
+          DO j=1,SIZE(A,1)
+            C(i,j) = 0.0_SP
+            DO k=1,SIZE(A,1)
+              C(i,j) = C(i,j) + A(i,k)*B(k,j)
+            ENDDO !k
+          ENDDO !j
+        ENDDO !i
+      END SELECT
+    ELSE
+      !A and B matrices are not square or not the same size
+      DO i=1,SIZE(A,1)
+        DO j=1,SIZE(B,2)
+          C(i,j) = 0.0_SP
+          DO k=1,SIZE(A,2)
+            C(i,j) = C(i,j) + A(i,k)*B(k,j)
+          ENDDO !k
+        ENDDO !j
+      ENDDO !i
+    ENDIF
+ 
+    EXITS("DotProductMatrix2Matrix2SP")
+    RETURN
+999 ERRORSEXITS("DotProductMatrix2Matrix2SP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DotProductMatrix2Matrix2SP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates and returns the matrix2-matrix2 dot(matrix) product of the double precision matrix A*B in C.
+  SUBROUTINE DotProductMatrix2Matrix2DP(A,B,C,err,error,*)
+  
+    !Argument variables
+    REAL(DP), INTENT(IN) :: A(:,:) !<The A matrix
+    REAL(DP), INTENT(IN) :: B(:,:) !<The B matrix
+    REAL(DP), INTENT(OUT) :: C(:,:) !<On exit, the product matrix C=A*B
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j,k
+        
+    ENTERS("DotProductMatrix2Matrix2DP",err,error,*999)
+    
+    IF(SIZE(A,2)/=SIZE(B,1).OR.SIZE(A,1)/=SIZE(C,1).OR.SIZE(B,2)/=SIZE(C,2)) CALL FlagError("Invalid matrix sizes.",err,error,*999)
+    
+    IF(SIZE(A,1)==SIZE(A,2).AND.SIZE(A,1)==SIZE(B,2)) THEN
+      !A and B matrices are square and the same size
+      SELECT CASE(SIZE(A,1))
+      CASE(1)
+        C(1,1)=A(1,1)*B(1,1)
+      CASE(2)
+        C(1,1)=A(1,1)*B(1,1)+A(1,2)*B(2,1)
+        C(1,2)=A(1,1)*B(1,2)+A(1,2)*B(2,2)
+        C(2,1)=A(2,1)*B(1,1)+A(2,2)*B(2,1)
+        C(2,2)=A(2,1)*B(1,2)+A(2,2)*B(2,2)
+      CASE(3)
+        C(1,1)=A(1,1)*B(1,1)+A(1,2)*B(2,1)+A(1,3)*B(3,1)
+        C(1,2)=A(1,1)*B(1,2)+A(1,2)*B(2,2)+A(1,3)*B(3,2)
+        C(1,3)=A(1,1)*B(1,3)+A(1,2)*B(2,3)+A(1,3)*B(3,3)        
+        C(2,1)=A(2,1)*B(1,1)+A(2,2)*B(2,1)+A(2,3)*B(3,1)
+        C(2,2)=A(2,1)*B(1,2)+A(2,2)*B(2,2)+A(2,3)*B(3,2)
+        C(2,3)=A(2,1)*B(1,3)+A(2,2)*B(2,3)+A(2,3)*B(3,3)
+        C(3,1)=A(3,1)*B(1,1)+A(3,2)*B(2,1)+A(3,3)*B(3,1)
+        C(3,2)=A(3,1)*B(1,2)+A(3,2)*B(2,2)+A(3,3)*B(3,2)
+        C(3,3)=A(3,1)*B(1,3)+A(3,2)*B(2,3)+A(3,3)*B(3,3)
+      CASE DEFAULT
+        DO i=1,SIZE(A,1)
+          DO j=1,SIZE(A,1)
+            C(i,j) = 0.0_DP
+            DO k=1,SIZE(A,1)
+              C(i,j) = C(i,j) + A(i,k)*B(k,j)
+            ENDDO !k
+          ENDDO !j
+        ENDDO !i
+      END SELECT
+    ELSE
+      !A and B matrices are not square or not the same size
+      DO i=1,SIZE(A,1)
+        DO j=1,SIZE(B,2)
+          C(i,j) = 0.0_DP
+          DO k=1,SIZE(A,2)
+            C(i,j) = C(i,j) + A(i,k)*B(k,j)
+          ENDDO !k
+        ENDDO !j
+      ENDDO !i      
+    ENDIF
+
+    EXITS("DotProductMatrix2Matrix2DP")
+    RETURN
+999 ERRORSEXITS("DotProductMatrix2Matrix2DP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DotProductMatrix2Matrix2DP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates and returns the matrix-vector dot product of the single precision matrice and vector, A.b in c.
+  SUBROUTINE DotProductMatrixVectorSP(A,b,c,err,error,*)
+
+    !Argument variables
+    REAL(SP), INTENT(IN) :: A(:,:) !<The A matrix
+    REAL(SP), INTENT(IN) :: b(:) !<The b vector
+    REAL(SP), INTENT(OUT) :: c(:) !<On exit, the dot product vector c=A.b
+    INTEGER(INTG) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j
+
+    ENTERS("DotProductMatrixVectorSP",err,error,*999)
+
+    IF(SIZE(A,2)/=SIZE(b,1)) CALL FlagError("The number of columns in A does not match the number of rows in b.",err,error,*999)
+    IF(SIZE(A,1)/=SIZE(c,1)) CALL FlagError("The number of rows of A does not match the number of rows in c.",err,error,*999)
+    
+    IF(SIZE(A,1)==SIZE(A,2)) THEN
+      !A matrix is square
+      SELECT CASE(SIZE(A,1))
+      CASE(1)
+        c(1)=A(1,1)*b(1)
+      CASE(2)
+        c(1)=A(1,1)*b(1)+A(1,2)*b(2)
+        c(2)=A(2,1)*b(1)+A(2,2)*b(2)
+      CASE(3)
+        c(1)=A(1,1)*b(1)+A(1,2)*b(2)+A(1,3)*b(3)
+        c(2)=A(2,1)*b(1)+A(2,2)*b(2)+A(2,3)*b(3)
+        c(3)=A(3,1)*b(1)+A(3,2)*b(2)+A(3,3)*b(3)
+      CASE DEFAULT
+        DO i=1,SIZE(A,1)
+          c(i) = 0.0_SP
+          DO j=1,SIZE(A,1)
+            c(i) = c(i) + A(i,j)*b(j)
+          ENDDO !j
+        ENDDO !i
+      END SELECT
+    ELSE
+      !A matrix is not square
+      DO i=1,SIZE(A,1)
+        c(i) = 0.0_SP
+        DO j=1,SIZE(A,2)
+          c(i) = c(i) + A(i,j)*b(j)
+        ENDDO !j
+      ENDDO !i
+    ENDIF
+    
+    EXITS("DotProductMatrixVectorSP")
+    RETURN
+999 ERRORSEXITS("DotProductMatrixVectorSP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DotProductMatrixVectorSP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates and returns the matrix-vector dot product of the double precision matrice and vector, A.b in c.
+  SUBROUTINE DotProductMatrixVectorDP(A,b,c,err,error,*)
+
+    !Argument variables
+    REAL(DP), INTENT(IN) :: A(:,:) !<The A matrix
+    REAL(DP), INTENT(IN) :: b(:)   !<The b vector
+    REAL(DP), INTENT(OUT) :: c(:)  !<On exit, the inner product vector c=A*b
+    INTEGER(INTG) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j
+
+    ENTERS("DotProductMatrixVectorDP",err,error,*999)
+
+    IF(SIZE(A,2)/=SIZE(b,1)) CALL FlagError("The number of columns in A does not match the number of rows in b.",err,error,*999)
+    IF(SIZE(A,1)/=SIZE(c,1)) CALL FlagError("The number of rows of A does not match the number of rows in c.",err,error,*999)
+    
+    IF(SIZE(A,1)==SIZE(A,2)) THEN
+      !A matrix is square
+      SELECT CASE(SIZE(A,1))
+      CASE(1)
+        c(1)=A(1,1)*b(1)
+      CASE(2)
+        c(1)=A(1,1)*b(1)+A(1,2)*b(2)
+        c(2)=A(2,1)*b(1)+A(2,2)*b(2)
+      CASE(3)
+        c(1)=A(1,1)*b(1)+A(1,2)*b(2)+A(1,3)*b(3)
+        c(2)=A(2,1)*b(1)+A(2,2)*b(2)+A(2,3)*b(3)
+        c(3)=A(3,1)*b(1)+A(3,2)*b(2)+A(3,3)*b(3)
+      CASE DEFAULT
+        DO i=1,SIZE(A,1)
+          c(i) = 0.0_DP
+          DO j=1,SIZE(A,1)
+            c(i) = c(i) + A(i,j)*b(j)
+          ENDDO !j
+        ENDDO !i
+      END SELECT
+    ELSE
+      !A matrix is not square
+      DO i=1,SIZE(A,1)
+        c(i) = 0.0_DP
+        DO j=1,SIZE(A,2)
+          c(i) = c(i) + A(i,j)*b(j)
+        ENDDO !j
+      ENDDO !i
+    ENDIF
+    
+    EXITS("DotProductMatrixVectorDP")
+    RETURN
+999 ERRORSEXITS("DotProductMatrixVectorDP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DotProductMatrixVectorDP
+
+  !
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates and returns the vector-vector dot product of the single precision vectors a.b in c.
+  SUBROUTINE DotProductVectorVectorSP(a,b,c,err,error,*)
+
+    !Argument variables
+    REAL(SP), INTENT(IN) :: a(:) !<The a vector
+    REAL(SP), INTENT(IN) :: b(:) !<The b vector
+    REAL(SP), INTENT(OUT) :: c !<On exit, the vector dot product c=a.b
+    INTEGER(INTG) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+
+    ENTERS("DotProductVectorVectorSP",err,error,*999)
+
+    IF(SIZE(a,1)/=SIZE(b,1)) CALL FlagError("The a and b vectors are of different lengths.",err,error,*999)
+    
+    SELECT CASE(SIZE(a,1))
+    CASE(1)
+      c = a(1)*b(1)
+    CASE(2)
+      c = a(1)*b(1)+a(2)*b(2)
+    CASE(3)
+      c = a(1)*b(1)+a(2)*b(2)+a(3)*b(3) 
+    CASE DEFAULT
+      c = DOT_PRODUCT(a,b)
+    END SELECT
+    
+    EXITS("DotProductVectorVectorSP")
+    RETURN
+999 ERRORSEXITS("DotProductVectorVectorSP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DotProductVectorVectorSP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates and returns the vector-vector dot product of the double precision vectors a.b in c.
+  SUBROUTINE DotProductVectorVectorDP(a,b,c,err,error,*)
+
+    !Argument variables
+    REAL(DP), INTENT(IN) :: a(:) !<The a vector
+    REAL(DP), INTENT(IN) :: b(:) !<The b vector
+    REAL(DP), INTENT(OUT) :: c !<On exit, the vector dot product c=a.b
+    INTEGER(INTG) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+
+    ENTERS("DotProductVectorVectorDP",err,error,*999)
+
+    IF(SIZE(a,1)/=SIZE(b,1)) CALL FlagError("The a and b vectors are of different lengths.",err,error,*999)
+    
+    SELECT CASE(SIZE(a,1))
+    CASE(1)
+      c = a(1)*b(1)
+    CASE(2)
+      c = a(1)*b(1)+a(2)*b(2)
+    CASE(3)
+      c = a(1)*b(1)+a(2)*b(2)+a(3)*b(3) 
+    CASE DEFAULT
+      c = DOT_PRODUCT(a,b)
+    END SELECT
+    
+    EXITS("DotProductVectorVectorDP")
+    RETURN
+999 ERRORSEXITS("DotProductVectorVectorDP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DotProductVectorVectorDP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates and returns the matrix-transpose dot(matrix) product of the single precision matrix A^T*B in C.
+  SUBROUTINE DotTransposeProductMatrix2Matrix2SP(A,B,C,err,error,*)
+  
+    !Argument variables
+    REAL(SP), INTENT(IN) :: A(:,:) !<The first matrix A
+    REAL(SP), INTENT(IN) :: B(:,:) !<The second matrix B
+    REAL(SP), INTENT(OUT) :: C(:,:) !<On exit, the dot product matrix C=A^T*B
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j,k
+    
+    ENTERS("DotTransposeProductMatrix2Matrix2SP",err,error,*999)
+
+    IF(SIZE(A,2)/=SIZE(B,1).OR.SIZE(A,1)/=SIZE(C,1).OR.SIZE(B,2)/=SIZE(C,2)) CALL FlagError("Invalid matrix sizes.",err,error,*999)
+
+    IF(SIZE(A,1)==SIZE(A,2).AND.SIZE(A,1)==SIZE(B,2)) THEN
+      !A and B matrices are square and the same size
+      SELECT CASE(SIZE(A,1))
+      CASE(1)
+        C(1,1)=A(1,1)*B(1,1)
+      CASE(2)
+        C(1,1)=A(1,1)*B(1,1)+A(2,1)*B(2,1)
+        C(1,2)=A(1,1)*B(1,2)+A(2,1)*B(2,2)
+        C(2,1)=A(1,2)*B(1,1)+A(2,2)*B(2,1)
+        C(2,2)=A(1,2)*B(1,2)+A(2,2)*B(2,2)
+      CASE(3)
+        C(1,1)=A(1,1)*B(1,1)+A(2,1)*B(2,1)+A(3,1)*B(3,1)
+        C(1,2)=A(1,1)*B(1,2)+A(2,1)*B(2,2)+A(3,1)*B(3,2)
+        C(1,3)=A(1,1)*B(1,3)+A(2,1)*B(2,3)+A(3,1)*B(3,3)        
+        C(2,1)=A(1,2)*B(1,1)+A(2,2)*B(2,1)+A(3,2)*B(3,1)
+        C(2,2)=A(1,2)*B(1,2)+A(2,2)*B(2,2)+A(3,2)*B(3,2)
+        C(2,3)=A(1,2)*B(1,3)+A(2,2)*B(2,3)+A(3,2)*B(3,3)
+        C(3,1)=A(1,3)*B(1,1)+A(2,3)*B(2,1)+A(3,3)*B(3,1)
+        C(3,2)=A(1,3)*B(1,2)+A(2,3)*B(2,2)+A(3,3)*B(3,2)
+        C(3,3)=A(1,3)*B(1,3)+A(2,3)*B(2,3)+A(3,3)*B(3,3)
+      CASE DEFAULT
+        DO i=1,SIZE(A,1)
+          DO j=1,SIZE(A,1)
+            C(i,j) = 0.0_SP
+            DO k=1,SIZE(A,1)
+              C(i,j) = C(i,j) + A(k,i)*B(k,j)
+            ENDDO !k
+          ENDDO !j
+        ENDDO !i
+      END SELECT
+    ELSE
+      !A and B matrices are not square or not the same size
+      DO i=1,SIZE(A,2)
+        DO j=1,SIZE(B,2)
+          C(i,j) = 0.0_SP
+          DO k=1,SIZE(A,1)
+            C(i,j) = C(i,j) + A(k,i)*B(k,j)
+          ENDDO !k
+        ENDDO !j
+      ENDDO !i      
+    ENDIF
+
+    EXITS("DotTransposeProductMatrix2Matrix2SP")
+    RETURN
+999 ERRORSEXITS("DotTransposeProductMatrix2Matrix2SP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DotTransposeProductMatrix2Matrix2SP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates and returns the matrix-transpose dot(matrix) product of the double precision matrix A^T*B in C.
+  SUBROUTINE DotTransposeProductMatrix2Matrix2DP(A,B,C,err,error,*)
+  
+    !Argument variables
+    REAL(DP), INTENT(IN) :: A(:,:) !<The first matrix A
+    REAL(DP), INTENT(IN) :: B(:,:) !<The second matrix B
+    REAL(DP), INTENT(OUT) :: C(:,:) !<On exit, the product matrix C=A^T*B
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j,k
+    
+    ENTERS("DotTransposeProductMatrix2Matrix2DP",err,error,*999)
+
+    IF(SIZE(A,2)/=SIZE(B,1).OR.SIZE(A,1)/=SIZE(C,1).OR.SIZE(B,2)/=SIZE(C,2)) CALL FlagError("Invalid matrix sizes.",err,error,*999)
+
+    IF(SIZE(A,1)==SIZE(A,2).AND.SIZE(A,1)==SIZE(B,2)) THEN
+      !A and B matrices are square and the same size
+      SELECT CASE(SIZE(A,1))
+      CASE(1)
+        C(1,1)=A(1,1)*B(1,1)
+      CASE(2)
+        C(1,1)=A(1,1)*B(1,1)+A(2,1)*B(2,1)
+        C(1,2)=A(1,1)*B(1,2)+A(2,1)*B(2,2)
+        C(2,1)=A(1,2)*B(1,1)+A(2,2)*B(2,1)
+        C(2,2)=A(1,2)*B(1,2)+A(2,2)*B(2,2)
+      CASE(3)
+        C(1,1)=A(1,1)*B(1,1)+A(2,1)*B(2,1)+A(3,1)*B(3,1)
+        C(1,2)=A(1,1)*B(1,2)+A(2,1)*B(2,2)+A(3,1)*B(3,2)
+        C(1,3)=A(1,1)*B(1,3)+A(2,1)*B(2,3)+A(3,1)*B(3,3)        
+        C(2,1)=A(1,2)*B(1,1)+A(2,2)*B(2,1)+A(3,2)*B(3,1)
+        C(2,2)=A(1,2)*B(1,2)+A(2,2)*B(2,2)+A(3,2)*B(3,2)
+        C(2,3)=A(1,2)*B(1,3)+A(2,2)*B(2,3)+A(3,2)*B(3,3)
+        C(3,1)=A(1,3)*B(1,1)+A(2,3)*B(2,1)+A(3,3)*B(3,1)
+        C(3,2)=A(1,3)*B(1,2)+A(2,3)*B(2,2)+A(3,3)*B(3,2)
+        C(3,3)=A(1,3)*B(1,3)+A(2,3)*B(2,3)+A(3,3)*B(3,3)
+      CASE DEFAULT
+        DO i=1,SIZE(A,1)
+          DO j=1,SIZE(A,1)
+            C(i,j) = 0.0_SP
+            DO k=1,SIZE(A,1)
+              C(i,j) = C(i,j) + A(k,i)*B(k,j)
+            ENDDO !k
+          ENDDO !j
+        ENDDO !i
+      END SELECT
+    ELSE
+      !A and B matrices are not square or not the same size
+      DO i=1,SIZE(A,2)
+        DO j=1,SIZE(B,2)
+          C(i,j) = 0.0_SP
+          DO k=1,SIZE(A,1)
+            C(i,j) = C(i,j) + A(k,i)*B(k,j)
+          ENDDO !k
+        ENDDO !j
+      ENDDO !i      
+    ENDIF
+
+    EXITS("DotTransposeProductMatrix2Matrix2DP")
+    RETURN
+999 ERRORSEXITS("DotTransposeProductMatrix2Matrix2DP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DotTransposeProductMatrix2Matrix2DP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates and returns the matrix-transpose vector dot product of the single precision matrix and vector A^T*b in c.
+  SUBROUTINE DotTransposeProductMatrixVectorSP(A,b,c,err,error,*)
+
+    !Argument variables
+    REAL(SP), INTENT(IN) :: A(:,:) !<The A matrix
+    REAL(SP), INTENT(IN) :: b(:) !<The b vector
+    REAL(SP), INTENT(OUT) :: c(:) !<On exit, the dot product vector c=A^T.b
+    INTEGER(INTG) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j
+
+    ENTERS("",err,error,*999)
+
+    IF(SIZE(A,1)/=SIZE(b,1)) CALL FlagError("The number of rows in A does not match the number of rows in b.",err,error,*999)
+    IF(SIZE(A,2)/=SIZE(c,1)) CALL FlagError("The number of columns in A does not match the number of rows in c.",err,error,*999)
+  
+    IF(SIZE(A,1)==SIZE(A,2)) THEN
+      !A matrix is square
+      SELECT CASE(SIZE(A,2))
+      CASE(1)
+        c(1)=A(1,1)*b(1)
+      CASE(2)
+        c(1)=A(1,1)*b(1)+A(2,1)*b(2)
+        c(2)=A(1,2)*b(1)+A(2,2)*b(2)
+      CASE(3)
+        c(1)=A(1,1)*b(1)+A(2,1)*b(2)+A(3,1)*b(3)
+        c(2)=A(1,2)*b(1)+A(2,2)*b(2)+A(3,2)*b(3)
+        c(3)=A(1,3)*b(1)+A(2,3)*b(2)+A(3,3)*b(3)
+      CASE DEFAULT
+        DO i=1,SIZE(A,1)
+          c(i) = 0.0_SP
+          DO j=1,SIZE(A,1)
+            c(i) = c(i) + A(j,i)*b(j)
+          ENDDO !j
+        ENDDO !i
+      END SELECT
+    ELSE
+      !A matrix is not square
+      DO i=1,SIZE(A,2)
+        c(i) = 0.0_SP
+        DO j=1,SIZE(A,1)
+          c(i) = c(i) + A(j,i)*b(j)
+        ENDDO !j
+      ENDDO !i
+    ENDIF
+
+    EXITS("DotTransposeProductMatrixVectorSP")
+    RETURN
+999 ERRORSEXITS("DotTransposeProductMatrixVectorSP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DotTransposeProductMatrixVectorSP
+   
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates and returns the matrix-transpose vector dot product of the double precision matrix and vector A^T.b in c.
+  SUBROUTINE DotTransposeProductMatrixVectorDP(A,b,c,err,error,*)
+
+    !Argument variables
+    REAL(DP), INTENT(IN) :: A(:,:) !<The A matrix
+    REAL(DP), INTENT(IN) :: b(:) !<The b vector
+    REAL(DP), INTENT(OUT) :: c(:) !<On exit, the inner product vector c=A^T.b
+    INTEGER(INTG) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j
+
+    ENTERS("DotTransposeProductMatrixVectorDP",err,error,*999)
+
+    IF(SIZE(A,1)/=SIZE(b,1)) CALL FlagError("The number of rows in A does not match the number of rows in b.",err,error,*999)
+    IF(SIZE(A,2)/=SIZE(c,1)) CALL FlagError("The number of columns in A does not match the number of rows in c.",err,error,*999)
+  
+    IF(SIZE(A,1)==SIZE(A,2)) THEN
+      !A matrix is square
+      SELECT CASE(SIZE(A,2))
+      CASE(1)
+        c(1)=A(1,1)*b(1)
+      CASE(2)
+        c(1)=A(1,1)*b(1)+A(2,1)*b(2)
+        c(2)=A(1,2)*b(1)+A(2,2)*b(2)
+      CASE(3)
+        c(1)=A(1,1)*b(1)+A(2,1)*b(2)+A(3,1)*b(3)
+        c(2)=A(1,2)*b(1)+A(2,2)*b(2)+A(3,2)*b(3)
+        c(3)=A(1,3)*b(1)+A(2,3)*b(2)+A(3,3)*b(3)
+      CASE DEFAULT
+        DO i=1,SIZE(A,1)
+          c(i) = 0.0_DP
+          DO j=1,SIZE(A,1)
+            c(i) = c(i) + A(j,i)*b(j)
+          ENDDO !j
+        ENDDO !i
+      END SELECT
+    ELSE
+      !A matrix is not square
+      DO i=1,SIZE(A,2)
+        c(i) = 0.0_DP
+        DO j=1,SIZE(A,1)
+          c(i) = c(i) + A(j,i)*b(j)
+        ENDDO !j
+      ENDDO !i
+    ENDIF
+
+    EXITS("DotTransposeProductMatrixVectorDP")
+    RETURN
+999 ERRORSEXITS("DotTransposeProductMatrixVectorDP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DotTransposeProductMatrixVectorDP
+   
+  !
+  !================================================================================================================================
+  !
+  
+  !>Calculates and returns the matrix-product-transpose of the single precision matrix A*B^T in C.
+  SUBROUTINE DotProductTransposeMatrix2Matrix2SP(A,B,C,err,error,*)
+  
+    !Argument variables
+    REAL(SP), INTENT(IN) :: A(:,:) !<The first matrix A
+    REAL(SP), INTENT(IN) :: B(:,:) !<The second matrix B
+    REAL(SP), INTENT(OUT) :: C(:,:) !<On exit, the product matrix C=A*B^T
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j,k
+    
+    ENTERS("DotProductTransposeMatrix2Matrix2SP",err,error,*999)
+
+    IF(SIZE(A,2)/=SIZE(B,2).OR.SIZE(A,1)/=SIZE(C,1).OR.SIZE(B,1)/=SIZE(C,2)) CALL FlagError("Invalid matrix sizes.",err,error,*999)
+
+    IF(SIZE(A,1)==SIZE(A,2).AND.SIZE(A,1)==SIZE(B,1)) THEN
+      !A and B matrices are square and the same size
+      SELECT CASE(SIZE(A,1))
+      CASE(1)
+        C(1,1)=A(1,1)*B(1,1)
+      CASE(2)
+        C(1,1)=A(1,1)*B(1,1)+A(1,2)*B(1,2)
+        C(1,2)=A(1,1)*B(2,1)+A(1,2)*B(2,2)
+        C(2,1)=A(2,1)*B(1,1)+A(2,2)*B(1,2)
+        C(2,2)=A(2,1)*B(2,1)+A(2,2)*B(2,2)
+      CASE(3)
+        C(1,1)=A(1,1)*B(1,1)+A(1,2)*B(1,2)+A(1,3)*B(1,3)
+        C(1,2)=A(1,1)*B(2,1)+A(1,2)*B(2,2)+A(1,3)*B(2,3)
+        C(1,3)=A(1,1)*B(3,1)+A(1,2)*B(3,2)+A(1,3)*B(3,3)        
+        C(2,1)=A(2,1)*B(1,1)+A(2,2)*B(1,2)+A(2,3)*B(1,3)
+        C(2,2)=A(2,1)*B(2,1)+A(2,2)*B(2,2)+A(2,3)*B(2,3)
+        C(2,3)=A(2,1)*B(3,1)+A(2,2)*B(3,2)+A(2,3)*B(3,3)
+        C(3,1)=A(3,1)*B(1,1)+A(3,2)*B(1,2)+A(3,3)*B(1,3)
+        C(3,2)=A(3,1)*B(2,1)+A(3,2)*B(2,2)+A(3,3)*B(2,3)
+        C(3,3)=A(3,1)*B(3,1)+A(3,2)*B(3,2)+A(3,3)*B(3,3)
+      CASE DEFAULT
+        DO i=1,SIZE(A,1)
+          DO j=1,SIZE(A,1)
+            C(i,j) = 0.0_SP
+            DO k=1,SIZE(A,1)
+              C(i,j) = C(i,j) + A(i,k)*B(j,k)
+            ENDDO !k
+          ENDDO !j
+        ENDDO !i            
+      END SELECT
+    ELSE
+      !A and B matrices are not square or not the same size
+      DO i=1,SIZE(A,1)
+        DO j=1,SIZE(B,1)
+          C(i,j) = 0.0_SP
+          DO k=1,SIZE(A,2)
+            C(i,j) = C(i,j) + A(i,k)*B(j,k)
+          ENDDO !k
+        ENDDO !j
+      ENDDO !i            
+    ENDIF
+
+    EXITS("DotProductTransposeMatrix2Matrix2SP")
+    RETURN
+999 ERRORSEXITS("DotProductTransposeMatrix2Matrix2SP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DotProductTransposeMatrix2Matrix2SP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates and returns the matrix-product-transpose of the double precision matrix A*B^T in C.
+  SUBROUTINE DotProductTransposeMatrix2Matrix2DP(A,B,C,err,error,*)
+  
+    !Argument variables
+    REAL(DP), INTENT(IN) :: A(:,:) !<The A matrix
+    REAL(DP), INTENT(IN) :: B(:,:) !<The B matrix
+    REAL(DP), INTENT(OUT) :: C(:,:) !<On exit, the product matrix C=A*B^T
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j,k
+       
+    ENTERS("DotProductTransposeMatrix2Matrix2DP",err,error,*999)
+    
+    IF(SIZE(A,2)/=SIZE(B,2).OR.SIZE(A,1)/=SIZE(C,1).OR.SIZE(B,1)/=SIZE(C,2)) CALL FlagError("Invalid matrix sizes.",err,error,*999)
+
+    IF(SIZE(A,1)==SIZE(A,2).AND.SIZE(A,1)==SIZE(B,1)) THEN
+      !A and B matrices are square and the same size
+      SELECT CASE(SIZE(A,1))
+      CASE(1)
+        C(1,1)=A(1,1)*B(1,1)
+      CASE(2)
+        C(1,1)=A(1,1)*B(1,1)+A(1,2)*B(1,2)
+        C(1,2)=A(1,1)*B(2,1)+A(1,2)*B(2,2)
+        C(2,1)=A(2,1)*B(1,1)+A(2,2)*B(1,2)
+        C(2,2)=A(2,1)*B(2,1)+A(2,2)*B(2,2)
+      CASE(3)
+        C(1,1)=A(1,1)*B(1,1)+A(1,2)*B(1,2)+A(1,3)*B(1,3)
+        C(1,2)=A(1,1)*B(2,1)+A(1,2)*B(2,2)+A(1,3)*B(2,3)
+        C(1,3)=A(1,1)*B(3,1)+A(1,2)*B(3,2)+A(1,3)*B(3,3)        
+        C(2,1)=A(2,1)*B(1,1)+A(2,2)*B(1,2)+A(2,3)*B(1,3)
+        C(2,2)=A(2,1)*B(2,1)+A(2,2)*B(2,2)+A(2,3)*B(2,3)
+        C(2,3)=A(2,1)*B(3,1)+A(2,2)*B(3,2)+A(2,3)*B(3,3)
+        C(3,1)=A(3,1)*B(1,1)+A(3,2)*B(1,2)+A(3,3)*B(1,3)
+        C(3,2)=A(3,1)*B(2,1)+A(3,2)*B(2,2)+A(3,3)*B(2,3)
+        C(3,3)=A(3,1)*B(3,1)+A(3,2)*B(3,2)+A(3,3)*B(3,3)
+      CASE DEFAULT
+        DO i=1,SIZE(A,1)
+          DO j=1,SIZE(A,1)
+            C(i,j) = 0.0_DP
+            DO k=1,SIZE(A,1)
+              C(i,j) = C(i,j) + A(i,k)*B(j,k)
+            ENDDO !k
+          ENDDO !j
+        ENDDO !i            
+      END SELECT
+    ELSE
+      !A and B matrices are not square or not the same size
+      DO i=1,SIZE(A,1)
+        DO j=1,SIZE(B,1)
+          C(i,j) = 0.0_DP
+          DO k=1,SIZE(A,2)
+            C(i,j) = C(i,j) + A(i,k)*B(j,k)
+          ENDDO !k
+        ENDDO !j
+      ENDDO !i            
+    ENDIF
+
+    EXITS("DotProductTransposeMatrix2Matrix2DP")
+    RETURN
+999 ERRORSEXITS("DotProductTransposeMatrix2Matrix2DP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DotProductTransposeMatrix2Matrix2DP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates and returns the matrix2-matrix2 double dot product of the single precision matrices A:B in c.
+  SUBROUTINE DoubleDotProductMatrix2Matrix2SP(A,B,c,err,error,*)
+
+    !Argument variables
+    REAL(SP), INTENT(IN) :: A(:,:) !<The A matrix
+    REAL(SP), INTENT(IN) :: B(:,:) !<The B matrix
+    REAL(SP), INTENT(OUT) :: c !<On exit, the matrix double dot product c=A:B
+    INTEGER(INTG) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j
+    
+    ENTERS("DoubleDotProductMatrix2Matrix2SP",err,error,*999)
+
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("The A matrix is not square.",err,error,*999)
+    IF(SIZE(A,1)/=SIZE(B,1).OR.SIZE(A,2)/=SIZE(B,2)) &
+      & CALL FlagError("The B matrix is not the same size as the A matrix.",err,error,*999)
+    
+    SELECT CASE(SIZE(A,1))
+    CASE(1)
+      c = A(1,1)*B(1,1)
+    CASE(2)
+      c = A(1,1)*B(1,1)+A(2,1)*B(2,1)+ &
+        & A(1,2)*B(1,2)+A(2,2)*B(2,2)
+    CASE(3)
+      c = A(1,1)*B(1,1)+A(2,1)*B(2,1)+A(3,1)*B(3,1) + &
+        & A(1,2)*B(1,2)+A(2,2)*B(2,2)+A(3,2)*B(3,2) + &
+        & A(1,3)*B(1,3)+A(2,3)*B(2,3)+A(3,3)*B(3,3)
+    CASE DEFAULT
+      c = 0.0_SP
+      DO i=1,SIZE(A,1)
+        DO j=1,SIZE(A,2)
+          c = c + A(i,j)*B(i,j)
+        ENDDO !j
+      ENDDO !i
+    END SELECT
+    
+    EXITS("DoubleDotProductMatrix2Matrix2SP")
+    RETURN
+999 ERRORSEXITS("DoubleDotProductMatrix2Matrix2SP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DoubleDotProductMatrix2Matrix2SP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates and returns the matrix2-matrix2 double dot product of the double precision matrices A:B in c.
+  SUBROUTINE DoubleDotProductMatrix2Matrix2DP(A,B,c,err,error,*)
+
+    !Argument variables
+    REAL(DP), INTENT(IN) :: A(:,:) !<The A matrix
+    REAL(DP), INTENT(IN) :: B(:,:) !<The B matrix
+    REAL(DP), INTENT(OUT) :: c !<On exit, the inner product c=A:B
+    INTEGER(INTG) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j
+
+    ENTERS("DoubleDotProductMatrix2Matrix2DP",err,error,*999)
+
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("The A matrix is not square.",err,error,*999)
+    IF(SIZE(A,1)/=SIZE(B,1).OR.SIZE(A,2)/=SIZE(B,2)) &
+      & CALL FlagError("The B matrix is not the same size as the A matrix.",err,error,*999)
+    
+    SELECT CASE(SIZE(A,1))
+    CASE(1)
+      c = A(1,1)*B(1,1)
+    CASE(2)
+      c = A(1,1)*B(1,1)+A(2,1)*B(2,1)+ &
+        & A(1,2)*B(1,2)+A(2,2)*B(2,2)
+    CASE(3)
+      c = A(1,1)*B(1,1)+A(2,1)*B(2,1)+A(3,1)*B(3,1) + &
+        & A(1,2)*B(1,2)+A(2,2)*B(2,2)+A(3,2)*B(3,2) + &
+        & A(1,3)*B(1,3)+A(2,3)*B(2,3)+A(3,3)*B(3,3)
+    CASE DEFAULT
+      c = 0.0_DP
+      DO i=1,SIZE(A,1)
+        DO j=1,SIZE(A,2)
+          c = c + A(i,j)*B(i,j)
+        ENDDO !j
+      ENDDO !i
+    END SELECT
+    
+    EXITS("DoubleDotProductMatrix2Matrix2DP")
+    RETURN
+999 ERRORSEXITS("DoubleDotProductMatrix2Matrix2DP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DoubleDotProductMatrix2Matrix2DP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates and returns the matrix2-matrix4 double dot product of the single precision matrices A:B in C.
+  SUBROUTINE DoubleDotProductMatrix2Matrix4SP(A,B,C,err,error,*)
+
+    !Argument variables
+    REAL(SP), INTENT(IN) :: A(:,:) !<The A matrix
+    REAL(SP), INTENT(IN) :: B(:,:,:,:) !<The B matrix
+    REAL(SP), INTENT(OUT) :: C(:,:) !<On exit, the matrix double dot product C=A:B
+    INTEGER(INTG) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j,k,l
+    
+    ENTERS("DoubleDotProductMatrix2Matrix4SP",err,error,*999)
+
+    IF(SIZE(A,1)/=SIZE(B,1).OR.SIZE(A,2)/=SIZE(B,2)) &
+      & CALL FlagError("The number of dimensions of the A matrix to no conform to the first two dimensions of the B matrix.", &
+      & err,error,*999)
+    IF(SIZE(C,1)/=SIZE(B,3).OR.SIZE(C,2)/=SIZE(B,4))  &
+      & CALL FlagError("The C matrix is not the same size as the last two dimensions of the B matrix.",err,error,*999)
+    
+    DO i=1,SIZE(B,3)
+      DO j=1,SIZE(B,4)
+        C(i,j) = 0.0_SP
+        DO k=1,SIZE(B,1)
+          DO l=1,SIZE(B,2)
+            C(i,j) = C(i,j) + A(k,l)*B(k,l,i,j)
+          ENDDO !l
+        ENDDO !k
+      ENDDO !j
+    ENDDO !i
+    
+    EXITS("DoubleDotProductMatrix2Matrix4SP")
+    RETURN
+999 ERRORSEXITS("DoubleDotProductMatrix2Matrix4SP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DoubleDotProductMatrix2Matrix4SP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates and returns the matrix2-matrix4 double dot product of the double precision matrices A:B in C.
+  SUBROUTINE DoubleDotProductMatrix2Matrix4DP(A,B,C,err,error,*)
+
+    !Argument variables
+    REAL(DP), INTENT(IN) :: A(:,:) !<The A matrix
+    REAL(DP), INTENT(IN) :: B(:,:,:,:) !<The B matrix
+    REAL(DP), INTENT(OUT) :: C(:,:) !<On exit, the matrix double dot product C=A:B
+    INTEGER(INTG) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j,k,l
+    
+    ENTERS("DoubleDotProductMatrix2Matrix4DP",err,error,*999)
+
+    IF(SIZE(A,1)/=SIZE(B,1).OR.SIZE(A,2)/=SIZE(B,2)) &
+      & CALL FlagError("The number of dimensions of the A matrix to no conform to the first two dimensions of the B matrix.", &
+      & err,error,*999)
+    IF(SIZE(C,1)/=SIZE(B,3).OR.SIZE(C,2)/=SIZE(B,4))  &
+      & CALL FlagError("The C matrix is not the same size as the last two dimensions of the B matrix.",err,error,*999)
+    
+    DO i=1,SIZE(B,3)
+      DO j=1,SIZE(B,4)
+        C(i,j) = 0.0_DP
+        DO k=1,SIZE(B,1)
+          DO l=1,SIZE(B,2)
+            C(i,j) = C(i,j) + A(k,l)*B(k,l,i,j)
+          ENDDO !l
+        ENDDO !k
+      ENDDO !j
+    ENDDO !i
+    
+    EXITS("DoubleDotProductMatrix2Matrix4DP")
+    RETURN
+999 ERRORSEXITS("DoubleDotProductMatrix2Matrix4DP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DoubleDotProductMatrix2Matrix4DP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates and returns the matrix4-matrix2 double dot product of the single precision matrices A:B in C.
+  SUBROUTINE DoubleDotProductMatrix4Matrix2SP(A,B,C,err,error,*)
+
+    !Argument variables
+    REAL(SP), INTENT(IN) :: A(:,:,:,:) !<The A matrix
+    REAL(SP), INTENT(IN) :: B(:,:) !<The B matrix
+    REAL(SP), INTENT(OUT) :: C(:,:) !<On exit, the matrix double dot product C=A:B
+    INTEGER(INTG) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j,k,l
+    
+    ENTERS("DoubleDotProductMatrix4Matrix2SP",err,error,*999)
+
+    IF(SIZE(A,3)/=SIZE(B,1).OR.SIZE(A,4)/=SIZE(B,2)) &
+      & CALL FlagError("The last two dimensions of the A matrix does not conform to the number of dimensions of the B matrix.", &
+      & err,error,*999)
+    IF(SIZE(C,1)/=SIZE(A,1).OR.SIZE(C,2)/=SIZE(A,2))  &
+      & CALL FlagError("The C matrix is not the same size as the first two dimensions of the A matrix.",err,error,*999)
+    
+    DO i=1,SIZE(A,1)
+      DO j=1,SIZE(A,2)
+        C(i,j) = 0.0_SP
+        DO k=1,SIZE(A,3)
+          DO l=1,SIZE(A,4)
+            C(i,j) = C(i,j) + A(i,j,k,l)*B(k,l)
+          ENDDO !l
+        ENDDO !k
+      ENDDO !j
+    ENDDO !i
+    
+    EXITS("DoubleDotProductMatrix4Matrix2SP")
+    RETURN
+999 ERRORSEXITS("DoubleDotProductMatrix4Matrix2SP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DoubleDotProductMatrix4Matrix2SP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates and returns the matrix4-matrix2 double dot product of the double precision matrices A:B in C.
+  SUBROUTINE DoubleDotProductMatrix4Matrix2DP(A,B,C,err,error,*)
+
+    !Argument variables
+    REAL(DP), INTENT(IN) :: A(:,:,:,:) !<The A matrix
+    REAL(DP), INTENT(IN) :: B(:,:) !<The B matrix
+    REAL(DP), INTENT(OUT) :: C(:,:) !<On exit, the matrix double dot product C=A:B
+    INTEGER(INTG) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j,k,l
+    
+    ENTERS("DoubleDotProductMatrix4Matrix2DP",err,error,*999)
+
+    IF(SIZE(A,3)/=SIZE(B,1).OR.SIZE(A,4)/=SIZE(B,2)) &
+      & CALL FlagError("The last two dimensions of the A matrix does not conform to the number of dimensions of the B matrix.", &
+      & err,error,*999)
+    IF(SIZE(C,1)/=SIZE(A,1).OR.SIZE(C,2)/=SIZE(A,2))  &
+      & CALL FlagError("The C matrix is not the same size as the first two dimensions of the A matrix.",err,error,*999)
+    
+    DO i=1,SIZE(A,1)
+      DO j=1,SIZE(A,2)
+        C(i,j) = 0.0_DP
+        DO k=1,SIZE(A,3)
+          DO l=1,SIZE(A,4)
+            C(i,j) = C(i,j) + A(i,j,k,l)*B(k,l)
+          ENDDO !l
+        ENDDO !k
+      ENDDO !j
+    ENDDO !i
+    
+    EXITS("DoubleDotProductMatrix4Matrix2DP")
+    RETURN
+999 ERRORSEXITS("DoubleDotProductMatrix4Matrix2DP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DoubleDotProductMatrix4Matrix2DP
+  
   !
   !================================================================================================================================
   !
@@ -861,7 +2107,8 @@ CONTAINS
     term2=(b1+(b2+(b3+b4*x1)*x1)*x1)*x1
     EdpDP=term1+term2*LOG(1.0_DP/x1)
     
-    RETURN 
+    RETURN
+    
   END FUNCTION EdpDP
   
   !
@@ -942,8 +2189,7 @@ CONTAINS
         CASE(3)
           ri1=A(1,1)+A(2,2)+A(3,3)
           ri2=A(1,1)*A(2,2)+A(2,2)*A(3,3)+A(3,3)*A(1,1)-(A(1,2)**2+A(2,3)**2+A(3,1)**2)
-          ri3=Determinant(A,err,error)
-          IF(err/=0) GOTO 999
+          CALL Determinant(A,ri3,err,error,*999)
           ri4=ri1/3.0_SP
           q=ri4*ri4-ri2/3.0_SP   
           r=ri4*(ri4*ri4-ri2/2.0_SP)+ri3/2.0_SP
@@ -1030,8 +2276,7 @@ CONTAINS
         CASE(3)
           ri1=A(1,1)+A(2,2)+A(3,3)
           ri2=A(1,1)*A(2,2)+A(2,2)*A(3,3)+A(3,3)*A(1,1)-(A(1,2)**2+A(2,3)**2+A(3,1)**2)
-          ri3=Determinant(A,err,error)
-          IF(err/=0) GOTO 999
+          CALL Determinant(A,ri3,err,error,*999)
           ri4=ri1/3.0_DP
           q=ri4*ri4-ri2/3.0_DP   
           r=ri4*(ri4*ri4-ri2/2.0_DP)+ri3/2.0_DP
@@ -1137,8 +2382,7 @@ CONTAINS
               CALL SolveSmallLinearSystem(U(i1:i2:i3,i1:i2:i3),x,b,err,error,*999)
               sum=DOT_PRODUCT(U(i,:),x)
               IF(ABS(sum)<ZERO_TOLERANCE_SP) THEN
-                eVector=Normalise(x,err,error)
-                IF(err /= 0) GOTO 999
+                CALL Normalise(x,eVector,err,error,*999)
               ENDIF
             ENDDO !i
           ENDIF
@@ -1224,7 +2468,7 @@ CONTAINS
               CALL SolveSmallLinearSystem(U(i1:i2:i3,i1:i2:i3),x,b,err,error,*999)
               sum=DOT_PRODUCT(U(i,:),x)
               IF(ABS(sum)<ZERO_TOLERANCE_DP) THEN
-                eVector=Normalise(x,err,error)
+                CALL Normalise(x,eVector,err,error,*999)
                 IF(err /= 0) GOTO 999
               ENDIF
             ENDDO !i
@@ -1386,34 +2630,32 @@ CONTAINS
     
     ENTERS("IdentityMatrixSP",err,error,*999)
 
-    IF(SIZE(A,1)==SIZE(A,2)) THEN
-      SELECT CASE(SIZE(A,1)) 
-      CASE(1)
-        A(1,1)=1.0_SP
-      CASE(2)
-        A(1,1)=1.0_SP
-        A(2,1)=0.0_SP
-        A(1,2)=0.0_SP
-        A(2,2)=1.0_SP
-      CASE(3)
-        A(1,1)=1.0_SP
-        A(2,1)=0.0_SP
-        A(3,1)=0.0_SP
-        A(1,2)=0.0_SP
-        A(2,2)=1.0_SP
-        A(3,2)=0.0_SP
-        A(1,3)=0.0_SP
-        A(2,3)=0.0_SP
-        A(3,3)=1.0_SP
-      CASE DEFAULT
-        A=0.0_DP
-        DO i=1,SIZE(A,1)
-          A(i,i)=1.0_SP
-        ENDDO !i
-      END SELECT
-    ELSE
-      CALL FlagError("Matrix A is not square.",err,error,*999)
-    ENDIF
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix A is not square.",err,error,*999)
+    
+    SELECT CASE(SIZE(A,1)) 
+    CASE(1)
+      A(1,1)=1.0_SP
+    CASE(2)
+      A(1,1)=1.0_SP
+      A(2,1)=0.0_SP
+      A(1,2)=0.0_SP
+      A(2,2)=1.0_SP
+    CASE(3)
+      A(1,1)=1.0_SP
+      A(2,1)=0.0_SP
+      A(3,1)=0.0_SP
+      A(1,2)=0.0_SP
+      A(2,2)=1.0_SP
+      A(3,2)=0.0_SP
+      A(1,3)=0.0_SP
+      A(2,3)=0.0_SP
+      A(3,3)=1.0_SP
+    CASE DEFAULT
+      A=0.0_DP
+      DO i=1,SIZE(A,1)
+        A(i,i)=1.0_SP
+      ENDDO !i
+    END SELECT
 
     EXITS("IdentityMatrixSP")
     RETURN
@@ -1438,34 +2680,32 @@ CONTAINS
     
     ENTERS("IdentityMatrixDP",err,error,*999)
 
-    IF(SIZE(A,1)==SIZE(A,2)) THEN
-      SELECT CASE(SIZE(A,1)) 
-      CASE(1)
-        A(1,1)=1.0_DP
-      CASE(2)
-        A(1,1)=1.0_DP
-        A(2,1)=0.0_DP
-        A(1,2)=0.0_DP
-        A(2,2)=1.0_DP
-      CASE(3)
-        A(1,1)=1.0_DP
-        A(2,1)=0.0_DP
-        A(3,1)=0.0_DP
-        A(1,2)=0.0_DP
-        A(2,2)=1.0_DP
-        A(3,2)=0.0_DP
-        A(1,3)=0.0_DP
-        A(2,3)=0.0_DP
-        A(3,3)=1.0_DP
-      CASE DEFAULT
-        A=0.0_DP
-        DO i=1,SIZE(A,1)
-          A(i,i)=1.0_DP
-        ENDDO !i
-      END SELECT
-    ELSE
-      CALL FlagError("Matrix A is not square.",err,error,*999)
-    ENDIF
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix A is not square.",err,error,*999)
+    
+    SELECT CASE(SIZE(A,1)) 
+    CASE(1)
+      A(1,1)=1.0_DP
+    CASE(2)
+      A(1,1)=1.0_DP
+      A(2,1)=0.0_DP
+      A(1,2)=0.0_DP
+      A(2,2)=1.0_DP
+    CASE(3)
+      A(1,1)=1.0_DP
+      A(2,1)=0.0_DP
+      A(3,1)=0.0_DP
+      A(1,2)=0.0_DP
+      A(2,2)=1.0_DP
+      A(3,2)=0.0_DP
+      A(1,3)=0.0_DP
+      A(2,3)=0.0_DP
+      A(3,3)=1.0_DP
+    CASE DEFAULT
+      A=0.0_DP
+      DO i=1,SIZE(A,1)
+        A(i,i)=1.0_DP
+      ENDDO !i
+    END SELECT
 
     EXITS("IdentityMatrixDP")
     RETURN
@@ -1491,54 +2731,49 @@ CONTAINS
 
     ENTERS("InvertFullSP",err,error,*999)
 
-    IF(SIZE(A,1)==SIZE(A,2)) THEN
-      IF(SIZE(B,1)==SIZE(A,1).AND.SIZE(B,2)==SIZE(A,2)) THEN
-        SELECT CASE(SIZE(A,1)) 
-        CASE(1)
-          det=A(1,1)
-          IF(ABS(det)>ZERO_TOLERANCE_SP) THEN
-            B(1,1)=1.0_SP/A(1,1)
-          ELSE
-            CALL FlagWarning("Matrix A is zero and cannot be inverted.",err,error,*999)
-            B(1,1)=0.0_DP
-          ENDIF
-        CASE(2)
-          det=A(1,1)*A(2,2)-A(1,2)*A(2,1)
-          IF(ABS(det)>ZERO_TOLERANCE_SP) THEN
-            B(1,1)=A(2,2)/det
-            B(1,2)=-A(1,2)/det
-            B(2,1)=-A(2,1)/det
-            B(2,2)=A(1,1)/det
-          ELSE
-            CALL FlagWarning("Zero Determinant for matrix A.",err,error,*999)
-            B=0.0_DP
-          ENDIF
-        CASE(3)
-          det=A(1,1)*A(2,2)*A(3,3)+A(1,2)*A(2,3)*A(3,1)+A(1,3)*A(2,1)*A(3,2)-A(1,1)*A(3,2)*A(2,3)-A(2,1)*A(1,2)*A(3,3)- &
-            & A(3,1)*A(2,2)*A(1,3)
-          IF(ABS(det)>ZERO_TOLERANCE_SP) THEN
-            B(1,1)=(A(2,2)*A(3,3)-A(3,2)*A(2,3))/det
-            B(2,1)=(A(2,3)*A(3,1)-A(3,3)*A(2,1))/det
-            B(3,1)=(A(2,1)*A(3,2)-A(3,1)*A(2,2))/det
-            B(1,2)=(A(3,2)*A(1,3)-A(1,2)*A(3,3))/det
-            B(2,2)=(A(3,3)*A(1,1)-A(1,3)*A(3,1))/det
-            B(3,2)=(A(3,1)*A(1,2)-A(1,1)*A(3,2))/det
-            B(1,3)=(A(1,2)*A(2,3)-A(2,2)*A(1,3))/det
-            B(2,3)=(A(1,3)*A(2,1)-A(2,3)*A(1,1))/det
-            B(3,3)=(A(1,1)*A(2,2)-A(2,1)*A(1,2))/det
-          ELSE
-            CALL FlagWarning("Zero Determinant for matrix A.",err,error,*999)
-            B=0.0_DP
-          ENDIF
-        CASE DEFAULT
-          CALL FlagError("Matrix size is not implemented.",err,error,*999)
-        END SELECT
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix A is not square.",err,error,*999)
+    IF(SIZE(B,1)/=SIZE(A,1).OR.SIZE(B,2)/=SIZE(A,2)) CALL FlagError("Matrix B is not the same size as matrix A.",err,error,*999)
+    
+    SELECT CASE(SIZE(A,1)) 
+    CASE(1)
+      det=A(1,1)
+      IF(ABS(det)>ZERO_TOLERANCE_SP) THEN
+        B(1,1)=1.0_SP/A(1,1)
       ELSE
-        CALL FlagError("Matrix B is not the same size as matrix A.",err,error,*999)
+        CALL FlagWarning("Matrix A is zero and cannot be inverted.",err,error,*999)
+        B(1,1)=0.0_DP
       ENDIF
-    ELSE
-      CALL FlagError("Matrix A is not square.",err,error,*999)
-    ENDIF
+    CASE(2)
+      det=A(1,1)*A(2,2)-A(1,2)*A(2,1)
+      IF(ABS(det)>ZERO_TOLERANCE_SP) THEN
+        B(1,1)=A(2,2)/det
+        B(1,2)=-A(1,2)/det
+        B(2,1)=-A(2,1)/det
+        B(2,2)=A(1,1)/det
+      ELSE
+        CALL FlagWarning("Zero Determinant for matrix A.",err,error,*999)
+        B=0.0_DP
+      ENDIF
+    CASE(3)
+      det=A(1,1)*A(2,2)*A(3,3)+A(1,2)*A(2,3)*A(3,1)+A(1,3)*A(2,1)*A(3,2)-A(1,1)*A(3,2)*A(2,3)-A(2,1)*A(1,2)*A(3,3)- &
+        & A(3,1)*A(2,2)*A(1,3)
+      IF(ABS(det)>ZERO_TOLERANCE_SP) THEN
+        B(1,1)=(A(2,2)*A(3,3)-A(3,2)*A(2,3))/det
+        B(2,1)=(A(2,3)*A(3,1)-A(3,3)*A(2,1))/det
+        B(3,1)=(A(2,1)*A(3,2)-A(3,1)*A(2,2))/det
+        B(1,2)=(A(3,2)*A(1,3)-A(1,2)*A(3,3))/det
+        B(2,2)=(A(3,3)*A(1,1)-A(1,3)*A(3,1))/det
+        B(3,2)=(A(3,1)*A(1,2)-A(1,1)*A(3,2))/det
+        B(1,3)=(A(1,2)*A(2,3)-A(2,2)*A(1,3))/det
+        B(2,3)=(A(1,3)*A(2,1)-A(2,3)*A(1,1))/det
+        B(3,3)=(A(1,1)*A(2,2)-A(2,1)*A(1,2))/det
+      ELSE
+        CALL FlagWarning("Zero Determinant for matrix A.",err,error,*999)
+        B=0.0_DP
+      ENDIF
+    CASE DEFAULT
+      CALL FlagError("Matrix size is not implemented.",err,error,*999)
+    END SELECT
 
     EXITS("InvertFullSP")
     RETURN
@@ -1564,54 +2799,49 @@ CONTAINS
 
     ENTERS("InvertFullDP",err,error,*999)
 
-    IF(SIZE(A,1)==SIZE(A,2)) THEN
-      IF(SIZE(B,1)==SIZE(A,1).AND.SIZE(B,2)==SIZE(A,2)) THEN
-        SELECT CASE(SIZE(A,1)) 
-        CASE(1)
-          det=A(1,1)
-          IF(ABS(det)>ZERO_TOLERANCE_DP) THEN
-            B(1,1)=1.0_DP/A(1,1)
-          ELSE
-            CALL FlagWarning("Matrix A is zero and cannot be inverted",err,error,*999)
-            B(1,1)=0.0_DP
-          ENDIF
-        CASE(2)
-          det=A(1,1)*A(2,2)-A(2,1)*A(1,2)
-          IF(ABS(det)>ZERO_TOLERANCE_DP) THEN
-            B(1,1)=A(2,2)/det
-            B(1,2)=-A(1,2)/det
-            B(2,1)=-A(2,1)/det
-            B(2,2)=A(1,1)/det
-          ELSE
-            CALL FlagWarning("Zero Determinant for matrix A.",err,error,*999)
-            B=0.0_DP
-          ENDIF
-        CASE(3)
-          det=A(1,1)*A(2,2)*A(3,3)+A(1,2)*A(2,3)*A(3,1)+A(1,3)*A(2,1)*A(3,2)-A(1,1)*A(3,2)*A(2,3)-A(2,1)*A(1,2)*A(3,3)- &
-            & A(3,1)*A(2,2)*A(1,3)
-          IF(ABS(det)>ZERO_TOLERANCE_DP) THEN
-            B(1,1)=(A(2,2)*A(3,3)-A(3,2)*A(2,3))/det
-            B(2,1)=(A(2,3)*A(3,1)-A(3,3)*A(2,1))/det
-            B(3,1)=(A(2,1)*A(3,2)-A(3,1)*A(2,2))/det
-            B(1,2)=(A(3,2)*A(1,3)-A(1,2)*A(3,3))/det
-            B(2,2)=(A(3,3)*A(1,1)-A(1,3)*A(3,1))/det
-            B(3,2)=(A(3,1)*A(1,2)-A(1,1)*A(3,2))/det
-            B(1,3)=(A(1,2)*A(2,3)-A(2,2)*A(1,3))/det
-            B(2,3)=(A(1,3)*A(2,1)-A(2,3)*A(1,1))/det
-            B(3,3)=(A(1,1)*A(2,2)-A(2,1)*A(1,2))/det
-          ELSE
-            CALL FlagWarning("Zero Determinant for matrix A.",err,error,*999)
-            B=0.0_DP
-          ENDIF
-        CASE DEFAULT
-          CALL FlagError("Matrix size is not implemented.",err,error,*999)
-        END SELECT
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix A is not square.",err,error,*999)
+    IF(SIZE(B,1)/=SIZE(A,1).OR.SIZE(B,2)/=SIZE(A,2)) CALL FlagError("Matrix B is not the same size as matrix A.",err,error,*999)
+    
+    SELECT CASE(SIZE(A,1)) 
+    CASE(1)
+      det=A(1,1)
+      IF(ABS(det)>ZERO_TOLERANCE_DP) THEN
+        B(1,1)=1.0_DP/A(1,1)
       ELSE
-        CALL FlagError("Matrix B is not the same size as matrix A.",err,error,*999)
+        CALL FlagWarning("Matrix A is zero and cannot be inverted.",err,error,*999)
+        B(1,1)=0.0_DP
       ENDIF
-    ELSE
-      CALL FlagError("Matrix A is not square.",err,error,*999)
-    ENDIF
+    CASE(2)
+      det=A(1,1)*A(2,2)-A(2,1)*A(1,2)
+      IF(ABS(det)>ZERO_TOLERANCE_DP) THEN
+        B(1,1)=A(2,2)/det
+        B(1,2)=-A(1,2)/det
+        B(2,1)=-A(2,1)/det
+        B(2,2)=A(1,1)/det
+      ELSE
+        CALL FlagWarning("Zero Determinant for matrix A.",err,error,*999)
+        B=0.0_DP
+      ENDIF
+    CASE(3)
+      det=A(1,1)*A(2,2)*A(3,3)+A(1,2)*A(2,3)*A(3,1)+A(1,3)*A(2,1)*A(3,2)-A(1,1)*A(3,2)*A(2,3)-A(2,1)*A(1,2)*A(3,3)- &
+        & A(3,1)*A(2,2)*A(1,3)
+      IF(ABS(det)>ZERO_TOLERANCE_DP) THEN
+        B(1,1)=(A(2,2)*A(3,3)-A(3,2)*A(2,3))/det
+        B(2,1)=(A(2,3)*A(3,1)-A(3,3)*A(2,1))/det
+        B(3,1)=(A(2,1)*A(3,2)-A(3,1)*A(2,2))/det
+        B(1,2)=(A(3,2)*A(1,3)-A(1,2)*A(3,3))/det
+        B(2,2)=(A(3,3)*A(1,1)-A(1,3)*A(3,1))/det
+        B(3,2)=(A(3,1)*A(1,2)-A(1,1)*A(3,2))/det
+        B(1,3)=(A(1,2)*A(2,3)-A(2,2)*A(1,3))/det
+        B(2,3)=(A(1,3)*A(2,1)-A(2,3)*A(1,1))/det
+        B(3,3)=(A(1,1)*A(2,2)-A(2,1)*A(1,2))/det
+      ELSE
+        CALL FlagWarning("Zero Determinant for matrix A.",err,error,*999)
+        B=0.0_DP
+      ENDIF
+    CASE DEFAULT
+      CALL FlagError("Matrix size is not implemented.",err,error,*999)
+    END SELECT
 
     EXITS("InvertFullDP")
     RETURN
@@ -1882,513 +3112,512 @@ CONTAINS
   !================================================================================================================================
   !
   
+  !>Returns the L1-norm of the single precision matrix A.
+  SUBROUTINE L1NormMatrixSP(A,L1Norm,err,error,*)
+
+    !Argument variables
+    REAL(SP), INTENT(IN) :: A(:,:) !<The matrix to calculate the L1 norm of
+    REAL(SP), INTENT(OUT) :: L1Norm !<On exit, the L1 norm of A
+    INTEGER(INTG) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j
+    REAL(SP) :: columnSum
+
+    ENTERS("L1NormMatrixSP",err,error,*999)
+
+    L1Norm=0.0_SP
+    DO j=1,SIZE(A,2)
+      columnSum=0.0_SP
+      DO i=1,SIZE(A,1)
+        columnSum=columnSum+ABS(A(i,j))
+      ENDDO !i
+      IF(columnSum>L1Norm) L1Norm=columnSum
+    ENDDO !j
+
+    EXITS("L1NormMatrixSP")
+    RETURN
+999 ERRORSEXITS("L1NormMatrixSP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE L1NormMatrixSP
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the L1-norm of the double precision matrix A.
+  SUBROUTINE L1NormMatrixDP(A,L1Norm,err,error,*)
+
+    !Argument variables
+    REAL(DP), INTENT(IN) :: A(:,:) !<The matrix to calculate the L1 norm of
+    REAL(DP), INTENT(OUT) :: L1Norm !<On exit, the L1 norm of A
+    INTEGER(INTG) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j
+    REAL(SP) :: columnSum
+
+    ENTERS("L1NormMatrixDP",err,error,*999)
+
+    L1Norm=0.0_DP
+    DO j=1,SIZE(A,2)
+      columnSum=0.0_DP
+      DO i=1,SIZE(A,1)
+        columnSum=columnSum+ABS(A(i,j))
+      ENDDO !i
+      IF(columnSum>L1Norm) L1Norm=columnSum
+    ENDDO !j
+
+    EXITS("L1NormMatrixDP")
+    RETURN
+999 ERRORSEXITS("L1NormMatrixDP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE L1NormMatrixDP
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the L1-norm of the single precision vector a.
+  SUBROUTINE L1NormVectorSP(a,L1Norm,err,error,*)
+
+    !Argument variables
+    REAL(SP), INTENT(IN) :: a(:) !<The vector to calculate the L1 norm of
+    REAL(SP), INTENT(OUT) :: L1Norm !<On exit, the L1 norm of a
+    INTEGER(INTG) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i
+
+    ENTERS("L1NormVectorSP",err,error,*999)
+
+    L1Norm=0.0_SP
+    DO i=1,SIZE(a,1)
+      L1Norm=L1Norm+ABS(a(i))
+    ENDDO !i
+
+    EXITS("L1NormVectorSP")
+    RETURN
+999 ERRORSEXITS("L1NormVectorSP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE L1NormVectorSP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the L1-norm of the double precision vector a.
+  SUBROUTINE L1NormVectorDP(a,L1Norm,err,error,*)
+
+    !Argument variables
+    REAL(DP), INTENT(IN) :: a(:) !<The vector to calculate the L1 norm of
+    REAL(DP), INTENT(OUT) :: L1Norm !<On exit, the L1 norm of a
+    INTEGER(INTG) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i
+
+    ENTERS("L1NormVectorDP",err,error,*999)
+
+    L1Norm=0.0_DP
+    DO i=1,SIZE(a,1)
+      L1Norm=L1Norm+ABS(a(i))
+    ENDDO !i
+
+    EXITS("L1NormVectorDP")
+    RETURN
+999 ERRORSEXITS("L1NormVectorDP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE L1NormVectorDP
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the L2-norm of the single precision matrix A.
+  SUBROUTINE L2NormMatrixSP(a,L2Norm,err,error,*)
+
+    !Argument variables
+    REAL(SP), INTENT(IN) :: A(:,:) !<The matrix to calculate the L2 norm of
+    REAL(SP), INTENT(OUT) :: L2Norm !<On exit, the L2 norm of A
+    INTEGER(INTG) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i
+    REAL(SP) :: ATA(SIZE(A,2),SIZE(A,2)),eValues(SIZE(A,2))
+
+    ENTERS("L2NormMatrixSP",err,error,*999)
+
+    CALL MatrixTransposeProduct(A,A,ATA,err,error,*999)
+    CALL Eigenvalue(ATA,eValues,err,error,*999)
+    L2Norm=0.0_SP
+    DO i=1,SIZE(eValues,1)
+      IF(eValues(i)>L2Norm) L2Norm=eValues(i)
+    ENDDO !i
+    
+    EXITS("L2NormMatrixSP")
+    RETURN
+999 ERRORSEXITS("L2NormMatrixSP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE L2NormMatrixSP
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the L2-norm of the double precision matrix A.
+  SUBROUTINE L2NormMatrixDP(A,L2Norm,err,error,*)
+
+    !Argument variables
+    REAL(DP), INTENT(IN) :: A(:,:) !<The matrix to calculate the L2 norm of
+    REAL(DP), INTENT(OUT) :: L2Norm !<On exit, the L2 norm of A
+    INTEGER(INTG) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i
+    REAL(DP) :: ATA(SIZE(A,2),SIZE(A,2)),eValues(SIZE(A,2))
+
+    ENTERS("L2NormMatrixDP",err,error,*999)
+
+    CALL MatrixTransposeProduct(A,A,ATA,err,error,*999)
+    CALL Eigenvalue(ATA,eValues,err,error,*999)
+    L2Norm=0.0_DP
+    DO i=1,SIZE(eValues,1)
+      IF(eValues(i)>L2Norm) L2Norm=eValues(i)
+    ENDDO !i
+    
+    EXITS("L2NormMatrixDP")
+    RETURN
+999 ERRORSEXITS("L2NormMatrixDP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE L2NormMatrixDP
+
+  !
+  !================================================================================================================================
+  !
+  
   !>Returns the L2-norm of the single precision vector a.
-  PURE FUNCTION L2NormSP(a)
+  SUBROUTINE L2NormVectorSP(a,L2Norm,err,error,*)
 
     !Argument variables
     REAL(SP), INTENT(IN) :: a(:) !<The vector to calculate the L2 norm of
-    !Function variable
-    REAL(SP) :: L2NormSP
+    REAL(SP), INTENT(OUT) :: L2Norm !<On exit, the L2 norm of a
+    INTEGER(INTG) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     REAL(SP) :: asum
     
-    asum=SUM(a*a,1)
-    L2NormSP=SQRT(asum)
+    ENTERS("L2NormVectorSP",err,error,*999)
 
+    asum=SUM(a*a,1)
+    L2Norm=SQRT(asum)
+
+    EXITS("L2NormVectorSP")
     RETURN
+999 ERRORSEXITS("L2NormVectorSP",err,error)
+    RETURN 1
     
-  END FUNCTION L2NormSP
+  END SUBROUTINE L2NormVectorSP
 
   !
   !================================================================================================================================
   !
 
   !>Returns the L2-norm of the double precision vector a.
-  FUNCTION L2NormDP(A)
+  SUBROUTINE L2NormVectorDP(a,L2Norm,err,error,*)
 
     !Argument variables
     REAL(DP), INTENT(IN) :: a(:) !<The vector to calculate the L2 norm of
-    !Function variable
-    REAL(DP) :: L2NormDP
+    REAL(DP), INTENT(OUT) :: L2Norm !<On exit, the L2 norm of a
+    INTEGER(INTG) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     REAL(DP) :: asum
 
+    ENTERS("L2NormVectorDP",err,error,*999)
+
     asum=SUM(a*a,1)
-    L2NormDP=SQRT(asum)
+    L2Norm=SQRT(asum)
 
+    EXITS("L2NormVectorDP")
     RETURN
-    
-  END FUNCTION L2NormDP
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Calculates and returns the matrix-product of the single precision matrix A*B in C for single precision arguments.
-  SUBROUTINE MatrixProductSP(A,B,C,err,error,*)
-  
-    !Argument variables
-    REAL(SP), INTENT(IN) :: A(:,:) !<The first matrix A
-    REAL(SP), INTENT(IN) :: B(:,:) !<The second matrix B
-    REAL(SP), INTENT(OUT) :: C(:,:) !<On exit, the product matrix C=A*B
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local variables
-    
-    ENTERS("MatrixProductSP",err,error,*999)
-
-    IF(SIZE(A,2)==SIZE(B,1).AND.SIZE(A,1)==SIZE(C,1).AND.SIZE(B,2)==SIZE(C,2)) THEN
-      SELECT CASE(SIZE(A,1))
-      CASE(1)
-        C(1,1)=A(1,1)*B(1,1)
-      CASE(2)
-        C(1,1)=A(1,1)*B(1,1)+A(1,2)*B(2,1)
-        C(1,2)=A(1,1)*B(1,2)+A(1,2)*B(2,2)
-        C(2,1)=A(2,1)*B(1,1)+A(2,2)*B(2,1)
-        C(2,2)=A(2,1)*B(1,2)+A(2,2)*B(2,2)
-      CASE(3)
-        C(1,1)=A(1,1)*B(1,1)+A(1,2)*B(2,1)+A(1,3)*B(3,1)
-        C(1,2)=A(1,1)*B(1,2)+A(1,2)*B(2,2)+A(1,3)*B(3,2)
-        C(1,3)=A(1,1)*B(1,3)+A(1,2)*B(2,3)+A(1,3)*B(3,3)        
-        C(2,1)=A(2,1)*B(1,1)+A(2,2)*B(2,1)+A(2,3)*B(3,1)
-        C(2,2)=A(2,1)*B(1,2)+A(2,2)*B(2,2)+A(2,3)*B(3,2)
-        C(2,3)=A(2,1)*B(1,3)+A(2,2)*B(2,3)+A(2,3)*B(3,3)
-        C(3,1)=A(3,1)*B(1,1)+A(3,2)*B(2,1)+A(3,3)*B(3,1)
-        C(3,2)=A(3,1)*B(1,2)+A(3,2)*B(2,2)+A(3,3)*B(3,2)
-        C(3,3)=A(3,1)*B(1,3)+A(3,2)*B(2,3)+A(3,3)*B(3,3)
-      CASE DEFAULT
-        CALL FlagError("Invalid matrix size.",err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Invalid matrix sizes.",err,error,*999)
-    ENDIF
-
-    EXITS("MatrixProductSP")
-    RETURN
-999 ERRORSEXITS("MatrixProductSP",err,error)
+999 ERRORSEXITS("L2NormVectorDP",err,error)
     RETURN 1
     
-  END SUBROUTINE MatrixProductSP
+  END SUBROUTINE L2NormVectorDP
 
   !
   !================================================================================================================================
   !
-
-  !>Calculates and returns the matrix-product of the double precision matrix A*B in C.
-  SUBROUTINE MatrixProductDP(A,B,C,err,error,*)
   
+  !>Returns the Linf-norm of the single precision matrix A.
+  SUBROUTINE LInfNormMatrixSP(A,LInfNorm,err,error,*)
+
     !Argument variables
-    REAL(DP), INTENT(IN) :: A(:,:) !<The A matrix
-    REAL(DP), INTENT(IN) :: B(:,:) !<The B matrix
-    REAL(DP), INTENT(OUT) :: C(:,:) !<On exit, the product matrix C=A*B
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    REAL(SP), INTENT(IN) :: A(:,:) !<The matrix to calculate the Linf norm of
+    REAL(SP), INTENT(OUT) :: LInfNorm !<On exit, the Linf norm of A
+    INTEGER(INTG) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-        
-    ENTERS("MatrixProductDP",err,error,*999)
-    
-   IF(SIZE(A,2)==SIZE(B,1).AND.SIZE(A,1)==SIZE(C,1).AND.SIZE(B,2)==SIZE(C,2)) THEN
-      SELECT CASE(SIZE(A,1))
-      CASE(1)
-        C(1,1)=A(1,1)*B(1,1)
-      CASE(2)
-        C(1,1)=A(1,1)*B(1,1)+A(1,2)*B(2,1)
-        C(1,2)=A(1,1)*B(1,2)+A(1,2)*B(2,2)
-        C(2,1)=A(2,1)*B(1,1)+A(2,2)*B(2,1)
-        C(2,2)=A(2,1)*B(1,2)+A(2,2)*B(2,2)
-      CASE(3)
-        C(1,1)=A(1,1)*B(1,1)+A(1,2)*B(2,1)+A(1,3)*B(3,1)
-        C(1,2)=A(1,1)*B(1,2)+A(1,2)*B(2,2)+A(1,3)*B(3,2)
-        C(1,3)=A(1,1)*B(1,3)+A(1,2)*B(2,3)+A(1,3)*B(3,3)        
-        C(2,1)=A(2,1)*B(1,1)+A(2,2)*B(2,1)+A(2,3)*B(3,1)
-        C(2,2)=A(2,1)*B(1,2)+A(2,2)*B(2,2)+A(2,3)*B(3,2)
-        C(2,3)=A(2,1)*B(1,3)+A(2,2)*B(2,3)+A(2,3)*B(3,3)
-        C(3,1)=A(3,1)*B(1,1)+A(3,2)*B(2,1)+A(3,3)*B(3,1)
-        C(3,2)=A(3,1)*B(1,2)+A(3,2)*B(2,2)+A(3,3)*B(3,2)
-        C(3,3)=A(3,1)*B(1,3)+A(3,2)*B(2,3)+A(3,3)*B(3,3)
-      CASE DEFAULT
-        CALL FlagError("Invalid matrix size.",err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Invalid matrix sizes.",err,error,*999)
-    ENDIF
+    INTEGER(INTG) :: i,j
+    REAL(SP) :: rowSum
 
-    EXITS("MatrixProductDP")
+    ENTERS("LInfNormMatrixSP",err,error,*999)
+
+    LInfNorm=0.0_SP
+    DO i=1,SIZE(A,1)
+      rowSum=0.0_SP
+      DO j=1,SIZE(A,2)
+        rowSum=rowSum+ABS(A(i,j))
+      ENDDO !i
+      IF(rowSum>LInfNorm) LInfNorm=rowSum
+    ENDDO !j
+
+    EXITS("LInfNormMatrixSP")
     RETURN
-999 ERRORSEXITS("MatrixProductDP",err,error)
+999 ERRORSEXITS("LInfNormMatrixSP",err,error)
     RETURN 1
     
-  END SUBROUTINE MatrixProductDP
+  END SUBROUTINE LInfNormMatrixSP
 
   !
   !================================================================================================================================
   !
-
-  !>Calculates and returns the matrix-transpose product of the single precision matrix A^T*B in C for single precision arguments.
-  SUBROUTINE MatrixTransposeProductSP(A,B,C,err,error,*)
   
+  !>Returns the Linf-norm of the double precision matrix A.
+  SUBROUTINE LInfNormMatrixDP(A,LInfNorm,err,error,*)
+
     !Argument variables
-    REAL(SP), INTENT(IN) :: A(:,:) !<The first matrix A
-    REAL(SP), INTENT(IN) :: B(:,:) !<The second matrix B
-    REAL(SP), INTENT(OUT) :: C(:,:) !<On exit, the product matrix C=A^T*B
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    REAL(DP), INTENT(IN) :: A(:,:) !<The matrix to calculate the Linf norm of
+    REAL(DP), INTENT(OUT) :: LInfNorm !<On exit, the Linf norm of A
+    INTEGER(INTG) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    
-    ENTERS("MatrixTransposeProductSP",err,error,*999)
+    INTEGER(INTG) :: i,j
+    REAL(SP) :: rowSum
 
-    IF(SIZE(A,2)==SIZE(B,1).AND.SIZE(A,1)==SIZE(C,1).AND.SIZE(B,2)==SIZE(C,2)) THEN
-      SELECT CASE(SIZE(A,1))
-      CASE(1)
-        C(1,1)=A(1,1)*B(1,1)
-      CASE(2)
-        C(1,1)=A(1,1)*B(1,1)+A(2,1)*B(2,1)
-        C(1,2)=A(1,1)*B(1,2)+A(2,1)*B(2,2)
-        C(2,1)=A(1,2)*B(1,1)+A(2,2)*B(2,1)
-        C(2,2)=A(1,2)*B(1,2)+A(2,2)*B(2,2)
-      CASE(3)
-        C(1,1)=A(1,1)*B(1,1)+A(2,1)*B(2,1)+A(3,1)*B(3,1)
-        C(1,2)=A(1,1)*B(1,2)+A(2,1)*B(2,2)+A(3,1)*B(3,2)
-        C(1,3)=A(1,1)*B(1,3)+A(2,1)*B(2,3)+A(3,1)*B(3,3)        
-        C(2,1)=A(1,2)*B(1,1)+A(2,2)*B(2,1)+A(3,2)*B(3,1)
-        C(2,2)=A(1,2)*B(1,2)+A(2,2)*B(2,2)+A(3,2)*B(3,2)
-        C(2,3)=A(1,2)*B(1,3)+A(2,2)*B(2,3)+A(3,2)*B(3,3)
-        C(3,1)=A(1,3)*B(1,1)+A(2,3)*B(2,1)+A(3,3)*B(3,1)
-        C(3,2)=A(1,3)*B(1,2)+A(2,3)*B(2,2)+A(3,3)*B(3,2)
-        C(3,3)=A(1,3)*B(1,3)+A(2,3)*B(2,3)+A(3,3)*B(3,3)
-      CASE DEFAULT
-        CALL FlagError("Invalid matrix size.",err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Invalid matrix sizes.",err,error,*999)
-    ENDIF
+    ENTERS("LInfNormMatrixDP",err,error,*999)
 
-    EXITS("MatrixTransposeProductSP")
+    LInfNorm=0.0_DP
+    DO i=1,SIZE(A,1)
+      rowSum=0.0_DP
+      DO j=1,SIZE(A,2)
+        rowSum=rowSum+ABS(A(i,j))
+      ENDDO !i
+      IF(rowSum>LInfNorm) LInfNorm=rowSum
+    ENDDO !j
+
+    EXITS("LInfNormMatrixDP")
     RETURN
-999 ERRORSEXITS("MatrixTransposeProductSP",err,error)
+999 ERRORSEXITS("LInfNormMatrixDP",err,error)
     RETURN 1
     
-  END SUBROUTINE MatrixTransposeProductSP
+  END SUBROUTINE LInfNormMatrixDP
 
   !
   !================================================================================================================================
   !
-
-  !>Calculates and returns the matrix-transpose product of the double precision matrix A^T*B in C for double precision arguments.
-  SUBROUTINE MatrixTransposeProductDP(A,B,C,err,error,*)
   
+  !>Returns the Linf-norm of the single precision vector a.
+  SUBROUTINE LInfNormVectorSP(a,LInfNorm,err,error,*)
+
     !Argument variables
-    REAL(DP), INTENT(IN) :: A(:,:) !<The first matrix A
-    REAL(DP), INTENT(IN) :: B(:,:) !<The second matrix B
-    REAL(DP), INTENT(OUT) :: C(:,:) !<On exit, the product matrix C=A^T*B
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    REAL(SP), INTENT(IN) :: a(:) !<The vector to calculate the Linf norm of
+    REAL(SP), INTENT(OUT) :: LInfNorm !<On exit, the Linf norm of a
+    INTEGER(INTG) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
+    INTEGER(INTG) :: i
+
+    ENTERS("LInfNormVectorSP",err,error,*999)
+
+    LInfNorm=0.0_SP
+    DO i=1,SIZE(a,1)
+      IF(ABS(a(i))>LInfNorm) LInfNorm=ABS(a(i))
+    ENDDO !i
     
-    ENTERS("MatrixTransposeProductDP",err,error,*999)
-
-    IF(SIZE(A,2)==SIZE(B,1).AND.SIZE(A,1)==SIZE(C,1).AND.SIZE(B,2)==SIZE(C,2)) THEN
-      SELECT CASE(SIZE(A,1))
-      CASE(1)
-        C(1,1)=A(1,1)*B(1,1)
-      CASE(2)
-        C(1,1)=A(1,1)*B(1,1)+A(2,1)*B(2,1)
-        C(1,2)=A(1,1)*B(1,2)+A(2,1)*B(2,2)
-        C(2,1)=A(1,2)*B(1,1)+A(2,2)*B(2,1)
-        C(2,2)=A(1,2)*B(1,2)+A(2,2)*B(2,2)
-      CASE(3)
-        C(1,1)=A(1,1)*B(1,1)+A(2,1)*B(2,1)+A(3,1)*B(3,1)
-        C(1,2)=A(1,1)*B(1,2)+A(2,1)*B(2,2)+A(3,1)*B(3,2)
-        C(1,3)=A(1,1)*B(1,3)+A(2,1)*B(2,3)+A(3,1)*B(3,3)        
-        C(2,1)=A(1,2)*B(1,1)+A(2,2)*B(2,1)+A(3,2)*B(3,1)
-        C(2,2)=A(1,2)*B(1,2)+A(2,2)*B(2,2)+A(3,2)*B(3,2)
-        C(2,3)=A(1,2)*B(1,3)+A(2,2)*B(2,3)+A(3,2)*B(3,3)
-        C(3,1)=A(1,3)*B(1,1)+A(2,3)*B(2,1)+A(3,3)*B(3,1)
-        C(3,2)=A(1,3)*B(1,2)+A(2,3)*B(2,2)+A(3,3)*B(3,2)
-        C(3,3)=A(1,3)*B(1,3)+A(2,3)*B(2,3)+A(3,3)*B(3,3)
-      CASE DEFAULT
-        CALL FlagError("Invalid matrix size.",err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Invalid matrix sizes.",err,error,*999)
-    ENDIF
-
-    EXITS("MatrixTransposeProductDP")
+    EXITS("LInfNormVectorSP")
     RETURN
-999 ERRORSEXITS("MatrixTransposeProductDP",err,error)
+999 ERRORSEXITS("LInfNormVectorSP",err,error)
     RETURN 1
     
-  END SUBROUTINE MatrixTransposeProductDP
-
-  !
-  !================================================================================================================================
-  !
-  !>Calculates and returns the matrix-product-transpose of the single precision matrix A*B^T in C for single precision arguments.
-  SUBROUTINE MatrixProductTransposeSP(A,B,C,err,error,*)
-  
-    !Argument variables
-    REAL(SP), INTENT(IN) :: A(:,:) !<The first matrix A
-    REAL(SP), INTENT(IN) :: B(:,:) !<The second matrix B
-    REAL(SP), INTENT(OUT) :: C(:,:) !<On exit, the product matrix C=A*B^T
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local variables
-    
-    ENTERS("MatrixProductTransposeSP",err,error,*999)
-
-    IF(SIZE(A,2)==SIZE(B,2).AND.SIZE(A,1)==SIZE(C,1).AND.SIZE(B,1)==SIZE(C,2)) THEN
-      SELECT CASE(SIZE(A,1))
-      CASE(1)
-        C(1,1)=A(1,1)*B(1,1)
-      CASE(2)
-        C(1,1)=A(1,1)*B(1,1)+A(1,2)*B(1,2)
-        C(1,2)=A(1,1)*B(2,1)+A(1,2)*B(2,2)
-        C(2,1)=A(2,1)*B(1,1)+A(2,2)*B(1,2)
-        C(2,2)=A(2,1)*B(2,1)+A(2,2)*B(2,2)
-      CASE(3)
-        C(1,1)=A(1,1)*B(1,1)+A(1,2)*B(1,2)+A(1,3)*B(1,3)
-        C(1,2)=A(1,1)*B(2,1)+A(1,2)*B(2,2)+A(1,3)*B(2,3)
-        C(1,3)=A(1,1)*B(3,1)+A(1,2)*B(3,2)+A(1,3)*B(3,3)        
-        C(2,1)=A(2,1)*B(1,1)+A(2,2)*B(1,2)+A(2,3)*B(1,3)
-        C(2,2)=A(2,1)*B(2,1)+A(2,2)*B(2,2)+A(2,3)*B(2,3)
-        C(2,3)=A(2,1)*B(3,1)+A(2,2)*B(3,2)+A(2,3)*B(3,3)
-        C(3,1)=A(3,1)*B(1,1)+A(3,2)*B(1,2)+A(3,3)*B(1,3)
-        C(3,2)=A(3,1)*B(2,1)+A(3,2)*B(2,2)+A(3,3)*B(2,3)
-        C(3,3)=A(3,1)*B(3,1)+A(3,2)*B(3,2)+A(3,3)*B(3,3)
-      CASE DEFAULT
-        CALL FlagError("Invalid matrix size.",err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Invalid matrix sizes.",err,error,*999)
-    ENDIF
-
-    EXITS("MatrixProductTransposeSP")
-    RETURN
-999 ERRORSEXITS("MatrixProductTransposeSP",err,error)
-    RETURN 1
-    
-  END SUBROUTINE MatrixProductTransposeSP
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Calculates and returns the matrix-product-transpose of the double precision matrix A*B^T in C.
-  SUBROUTINE MatrixProductTransposeDP(A,B,C,err,error,*)
-  
-    !Argument variables
-    REAL(DP), INTENT(IN) :: A(:,:) !<The A matrix
-    REAL(DP), INTENT(IN) :: B(:,:) !<The B matrix
-    REAL(DP), INTENT(OUT) :: C(:,:) !<On exit, the product matrix C=A*B^T
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local variables
-        
-    ENTERS("MatrixProductTranposeDP",err,error,*999)
-    
-   IF(SIZE(A,2)==SIZE(B,2).AND.SIZE(A,1)==SIZE(C,1).AND.SIZE(B,1)==SIZE(C,2)) THEN
-      SELECT CASE(SIZE(A,1))
-      CASE(1)
-        C(1,1)=A(1,1)*B(1,1)
-      CASE(2)
-        C(1,1)=A(1,1)*B(1,1)+A(1,2)*B(1,2)
-        C(1,2)=A(1,1)*B(2,1)+A(1,2)*B(2,2)
-        C(2,1)=A(2,1)*B(1,1)+A(2,2)*B(1,2)
-        C(2,2)=A(2,1)*B(2,1)+A(2,2)*B(2,2)
-      CASE(3)
-        C(1,1)=A(1,1)*B(1,1)+A(1,2)*B(1,2)+A(1,3)*B(1,3)
-        C(1,2)=A(1,1)*B(2,1)+A(1,2)*B(2,2)+A(1,3)*B(2,3)
-        C(1,3)=A(1,1)*B(3,1)+A(1,2)*B(3,2)+A(1,3)*B(3,3)        
-        C(2,1)=A(2,1)*B(1,1)+A(2,2)*B(1,2)+A(2,3)*B(1,3)
-        C(2,2)=A(2,1)*B(2,1)+A(2,2)*B(2,2)+A(2,3)*B(2,3)
-        C(2,3)=A(2,1)*B(3,1)+A(2,2)*B(3,2)+A(2,3)*B(3,3)
-        C(3,1)=A(3,1)*B(1,1)+A(3,2)*B(1,2)+A(3,3)*B(1,3)
-        C(3,2)=A(3,1)*B(2,1)+A(3,2)*B(2,2)+A(3,3)*B(2,3)
-        C(3,3)=A(3,1)*B(3,1)+A(3,2)*B(3,2)+A(3,3)*B(3,3)
-      CASE DEFAULT
-        CALL FlagError("Invalid matrix size.",err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Invalid matrix sizes.",err,error,*999)
-    ENDIF
-
-    EXITS("MatrixProductTransposeDP")
-    RETURN
-999 ERRORSEXITS("MatrixProductTransposeDP",err,error)
-    RETURN 1
-    
-  END SUBROUTINE MatrixProductTransposeDP
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns the transpose of a single precision matrix A in AT.
-  SUBROUTINE MatrixTransposeSP(A,AT,err,error,*)
-          
-    !Argument variables
-    REAL(SP), INTENT(IN) :: A(:,:) !<The matrix to take the transpose of
-    REAL(SP), INTENT(OUT) :: AT(:,:) !<On exit, the transpose of the matrix
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local variables
-    
-    ENTERS("MatrixTransposeSP",err,error,*999)
-
-    IF(SIZE(A,1)==SIZE(AT,2).AND.SIZE(A,2)==SIZE(AT,1)) THEN
-      SELECT CASE(SIZE(A,1))
-      CASE(1)
-        AT(1,1)=A(1,1)
-      CASE(2)
-        AT(1,1)=A(1,1)
-        AT(1,2)=A(2,1)
-        AT(2,1)=A(1,2)
-        AT(2,2)=A(2,2)
-      CASE(3)
-        AT(1,1)=A(1,1)
-        AT(1,2)=A(2,1)
-        AT(1,3)=A(3,1)
-        AT(2,1)=A(1,2)
-        AT(2,2)=A(2,2)
-        AT(2,3)=A(3,2)
-        AT(3,1)=A(1,3)
-        AT(3,2)=A(2,3)
-        AT(3,3)=A(3,3)
-      CASE DEFAULT
-        CALL FlagError("Invalid matrix size.",err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Invalid matrix size.",err,error,*999)
-    ENDIF
+  END SUBROUTINE LInfNormVectorSP
  
-    EXITS("MatrixTransposeSP")
-    RETURN
-999 ERRORSEXITS("MatrixTransposeSP",err,error)
-    RETURN 1
-    
-  END SUBROUTINE MatrixTransposeSP
-
   !
   !================================================================================================================================
   !
 
-  !>Returns the transpose of a double precision matrix A in AT.
-  SUBROUTINE MatrixTransposeDP(A,AT,err,error,*)
-    
+  !>Returns the Linf-norm of the double precision vector a.
+  SUBROUTINE LInfNormVectorDP(a,LInfNorm,err,error,*)
+
     !Argument variables
-    REAL(DP), INTENT(IN) :: A(:,:) !<The matrix to take the transpose of
-    REAL(DP), INTENT(OUT) :: AT(:,:) !<On exit, the transpose of the matrix
+    REAL(DP), INTENT(IN) :: a(:) !<The vector to calculate the Linf norm of
+    REAL(DP), INTENT(OUT) :: LInfNorm !<On exit, the Linf norm of a
+    INTEGER(INTG) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i
+
+    ENTERS("LInfNormVectorDP",err,error,*999)
+
+    LInfNorm=0.0_DP
+    DO i=1,SIZE(a,1)
+      IF(ABS(a(i))>LInfNorm) LInfNorm=ABS(a(i))
+    ENDDO !i
+    
+    EXITS("LInfNormVectorDP")
+    RETURN
+999 ERRORSEXITS("LInfNormVectorDP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE LInfNormVectorDP
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Normalises a real single precision matrix A.
+  SUBROUTINE NormaliseMatrixSP(A,normA,err,error,*)
+
+    !Argument variables
+    REAL(SP), INTENT(IN) :: A(:,:) !<The matrix to normalise
+    REAL(SP), INTENT(OUT) :: normA(:,:) !<On exit, the normalised matrix
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-        
-    ENTERS("MatrixTransposeDP",err,error,*999)
-
-    IF(SIZE(A,1)==SIZE(AT,2).AND.SIZE(A,2)==SIZE(AT,1)) THEN
-      SELECT CASE(SIZE(A,1))
-      CASE(1)
-        AT(1,1)=A(1,1)
-      CASE(2)
-        AT(1,1)=A(1,1)
-        AT(1,2)=A(2,1)
-        AT(2,1)=A(1,2)
-        AT(2,2)=A(2,2)
-      CASE(3)
-        AT(1,1)=A(1,1)
-        AT(1,2)=A(2,1)
-        AT(1,3)=A(3,1)
-        AT(2,1)=A(1,2)
-        AT(2,2)=A(2,2)
-        AT(2,3)=A(3,2)
-        AT(3,1)=A(1,3)
-        AT(3,2)=A(2,3)
-        AT(3,3)=A(3,3)
-      CASE DEFAULT
-        CALL FlagError("Invalid matrix size.",err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Invalid matrix size.",err,error,*999)
-    ENDIF
+    REAL(SP) :: detA
     
-    EXITS("MatrixTransposeDP")
+    ENTERS("NormaliseMatrixSP",err,error,*999)
+
+    IF(SIZE(A,1)/=SIZE(normA,1).OR.SIZE(A,2)/=SIZE(normA,2)) CALL FlagError("Invalid matrix sizes.",err,error,*999)
+    
+    CALL Determinant(A,detA,err,error,*999)
+    IF(ABS(detA)<ZERO_TOLERANCE_SP) THEN
+      normA=A
+      CALL FlagError("Can not normalise A as it has a zero determinant.",err,error,*999)
+    ELSE
+      normA=A/detA
+    ENDIF
+
+    EXITS("NormaliseMatrixSP")
     RETURN
-999 ERRORSEXITS("MatrixTransposeDP",err,error)
+999 ERRORSEXITS("NormaliseMatrixSP",err,error)
     RETURN 1
     
-  END SUBROUTINE MatrixTransposeDP
+  END SUBROUTINE NormaliseMatrixSP
+
+ !
+  !================================================================================================================================
+  !
+  
+  !>Normalises a real double precision matrix A.
+  SUBROUTINE NormaliseMatrixDP(A,normA,err,error,*)
+
+    !Argument variables
+    REAL(DP), INTENT(IN) :: A(:,:) !<The matrix to normalise
+    REAL(DP), INTENT(OUT) :: normA(:,:) !<On exit, the normalised matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    REAL(DP) :: detA
+    
+    ENTERS("NormaliseMatrixDP",err,error,*999)
+
+    IF(SIZE(A,1)/=SIZE(normA,1).OR.SIZE(A,2)/=SIZE(normA,2)) CALL FlagError("Invalid matrix sizes.",err,error,*999)
+    
+    CALL Determinant(A,detA,err,error,*999)
+    IF(ABS(detA)<ZERO_TOLERANCE) THEN
+      normA=A
+      CALL FlagError("Can not normalise A as it has a zero determinant.",err,error,*999)
+    ELSE
+      normA=A/detA
+    ENDIF
+
+    EXITS("NormaliseMatrixDP")
+    RETURN
+999 ERRORSEXITS("NormaliseMatrixDP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE NormaliseMatrixDP
 
   !
   !================================================================================================================================
   !
   
   !>Normalises a real single precision vector a.
-  FUNCTION NormaliseSP(a,err,error)
+  SUBROUTINE NormaliseVectorSP(a,norma,err,error,*)
 
     !Argument variables
     REAL(SP), INTENT(IN) :: a(:) !<The vector to normalise
+    REAL(SP), INTENT(OUT) :: norma(:) !<On exit, the normalised vector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Function variable
-    REAL(SP) :: NormaliseSP(SIZE(a,1))
     !Local variables
     REAL(SP) :: length
     
-    ENTERS("",err,error,*999)
+    ENTERS("NormaliseVectorSP",err,error,*999)
 
-    length=L2Norm(a)
+    IF(SIZE(a,1)/=SIZE(normA,1)) CALL FlagError("Invalid vector sizes.",err,error,*999)
+    
+    CALL L2Norm(a,length,err,error,*999)
     IF(ABS(length)<ZERO_TOLERANCE_SP) THEN
-      NormaliseSP=a
-      CALL FlagError("Length of the vector to normalise is zero.",err,error,*999)
+      norma=0.0_SP
     ELSE
-      NormaliseSP=a/length
+      norma=a/length
     ENDIF
 
-    EXITS("NormaliseSP")
+    EXITS("NormaliseVectorSP")
     RETURN
-999 ERRORSEXITS("NormaliseSP",err,error)
-    RETURN
+999 ERRORSEXITS("NormaliseVectorSP",err,error)
+    RETURN 1
     
-  END FUNCTION NormaliseSP
+  END SUBROUTINE NormaliseVectorSP
 
   !
   !================================================================================================================================
   !
 
   !>Normalises a real double precision vector a.
-  FUNCTION NormaliseDP(a,err,error)
+  SUBROUTINE NormaliseVectorDP(a,norma,err,error,*)
 
     !Argument variables
     REAL(DP), INTENT(IN) :: a(:) !<The vector to normalise
+    REAL(DP), INTENT(OUT) :: norma(:) !<On exit, the vector to normalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Function variable
-    REAL(DP) :: NormaliseDP(SIZE(a,1))
     !Local variables
     REAL(DP) :: length
     
-    ENTERS("NormaliseDP",err,error,*999)
+    ENTERS("NormaliseVectorDP",err,error,*999)
 
-    length=L2Norm(a)
+    IF(SIZE(a,1)/=SIZE(normA,1)) CALL FlagError("Invalid vector sizes.",err,error,*999)
+    
+    CALL L2Norm(a,length,err,error,*999)
     IF(ABS(length)<ZERO_TOLERANCE_DP) THEN
-      NormaliseDP=a
-      CALL FlagError("Length of the vector to normalise is zero.",err,error,*999)
+      norma=0.0_DP
     ELSE
-      NormaliseDP=a/length
+      norma=a/length
     ENDIF
 
-    EXITS("NormaliseDP")
+    EXITS("NormaliseVectorDP")
     RETURN
-999 ERRORSEXITS("NormaliseDP",err,error)
-    RETURN
+999 ERRORSEXITS("NormaliseVectorDP",err,error)
+    RETURN 1
     
-  END FUNCTION NormaliseDP
+  END SUBROUTINE NormaliseVectorDP
 
   !
   !================================================================================================================================
   !
 
   !>Calculates and returns the normalised vector cross-prouct of the single precision vectors a x b in c.
-  SUBROUTINE NormCrossProductSP(a,b,c,err,error,*)
+  SUBROUTINE NormaliseCrossProductSP(a,b,c,err,error,*)
   
     !Argument variables
     REAL(SP), INTENT(IN) :: a(:) !<The first vector in the cross product
@@ -2397,26 +3626,27 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
+    REAL(SP) :: temp(SIZE(c,1))
     
-    ENTERS("NormCrossProductSP",err,error,*999)
+    ENTERS("NormaliseCrossProductSP",err,error,*999)
 
-    CALL CrossProduct(a,b,c,err,error,*999)
-    c=Normalise(c,err,error)
+    CALL CrossProduct(a,b,temp,err,error,*999)
+    CALL Normalise(temp,c,err,error,*999)
     IF(err/=0) GOTO 999
 
-    EXITS("NormCrossProductSP")
+    EXITS("NormaliseCrossProductSP")
     RETURN
-999 ERRORSEXITS("NormCrossProductSP",err,error)
+999 ERRORSEXITS("NormaliseCrossProductSP",err,error)
     RETURN 1
     
-  END SUBROUTINE NormCrossProductSP
+  END SUBROUTINE NormaliseCrossProductSP
   
   !
   !================================================================================================================================
   !
 
   !>Calculates and returns the normalised vector cross-prouct of the double precision vectors a x b in c.
-  SUBROUTINE NormCrossProductDP(a,b,c,err,error,*)
+  SUBROUTINE NormaliseCrossProductDP(a,b,c,err,error,*)
   
     !Argument variables
     REAL(DP), INTENT(IN) :: a(:) !<The first vector in the cross product
@@ -2425,19 +3655,19 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
+    REAL(DP) :: temp(SIZE(c,1))
     
-    ENTERS("NormCrossProductDP",err,error,*999)
+    ENTERS("NormaliseCrossProductDP",err,error,*999)
 
-    CALL CrossProduct(a,b,c,err,error,*999)
-    c=Normalise(c,err,error)
-    IF(err/=0) GOTO 999
+    CALL CrossProduct(a,b,temp,err,error,*999)
+    CALL Normalise(temp,c,err,error,*999)
 
-    EXITS("NormCrossProductDP")
+    EXITS("NormaliseCrossProductDP")
     RETURN
-999 ERRORSEXITS("NormCrossProductDP",err,error)
+999 ERRORSEXITS("NormaliseCrossProductDP",err,error)
     RETURN 1
     
-  END SUBROUTINE NormCrossProductDP
+  END SUBROUTINE NormaliseCrossProductDP
   
   !
   !================================================================================================================================
@@ -2457,25 +3687,17 @@ CONTAINS
     
     ENTERS("SolveSmallLinearSystemSP",err,error,*999)
 
-    IF(SIZE(A,1)==SIZE(A,2)) THEN
-      IF(SIZE(A,1)==SIZE(b,1)) THEN
-        IF(SIZE(A,1)<=SIZE(x,1)) THEN
-          SELECT CASE(SIZE(A,1))
-          CASE(1:3)
-            CALL Invert(A,AInv,det,err,error,*999)
-            x=MATMUL(AInv,b)
-          CASE DEFAULT
-            CALL FlagError("Matrix size not implemented.",err,error,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("x is too small.",err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Size of b is not the same as the number of rows in A.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not square.",err,error,*999)
-    ENDIF
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)
+    IF(SIZE(A,1)/=SIZE(b,1)) CALL FlagError("Size of b is not the same as the number of rows in A.",err,error,*999)    
+    IF(SIZE(A,1)>SIZE(x,1)) CALL FlagError("x is too small.",err,error,*999)
+    
+    SELECT CASE(SIZE(A,1))
+    CASE(1:3)
+      CALL Invert(A,AInv,det,err,error,*999)
+      x=MATMUL(AInv,b)
+    CASE DEFAULT
+      CALL FlagError("Matrix size not implemented.",err,error,*999)
+    END SELECT
 
     EXITS("SolveSmallLinearSystemSP")
     RETURN
@@ -2502,25 +3724,17 @@ CONTAINS
     
     ENTERS("SolveSmallLinearSystemDP",err,error,*999)
 
-    IF(SIZE(A,1)==SIZE(A,2)) THEN
-      IF(SIZE(A,1)==SIZE(b,1)) THEN
-        IF(SIZE(A,1)<=SIZE(x,1)) THEN
-          SELECT CASE(SIZE(A,1))
-          CASE(1:3)
-            CALL Invert(A,AInv,det,err,error,*999)
-            x=MATMUL(AInv,b)
-          CASE DEFAULT
-            CALL FlagError("Matrix size not implemented.",err,error,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("x is too small.",err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Size of b is not the same as the number of rows in A.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not square.",err,error,*999)
-    ENDIF
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)
+    IF(SIZE(A,1)/=SIZE(b,1)) CALL FlagError("Size of b is not the same as the number of rows in A.",err,error,*999)    
+    IF(SIZE(A,1)>SIZE(x,1)) CALL FlagError("x is too small.",err,error,*999)
+
+    SELECT CASE(SIZE(A,1))
+    CASE(1:3)
+      CALL Invert(A,AInv,det,err,error,*999)
+      x=MATMUL(AInv,b)
+    CASE DEFAULT
+      CALL FlagError("Matrix size not implemented.",err,error,*999)
+    END SELECT
 
     EXITS("SolveSmallLinearSystemDP")
     RETURN
@@ -2532,38 +3746,531 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
-  !>Calculates single precision hyperbolic cotangent function
-  FUNCTION CothSP(a)
+
+  !>Calculates and returns the matrix-matrix tensor product of the single precision matrices AxoB in C.
+  SUBROUTINE TensorProductMatrix2Matrix2SP(A,B,C,err,error,*)
 
     !Argument variables
-    REAL(SP), INTENT(IN) :: a !<argument to perform coth() on
-    !Function variable
-    REAL(SP) :: CothSP
-    
-    CothSP=(EXP(a)+EXP(-1.0_SP*a))/(EXP(a)-EXP(-1.0_SP*a))
+    REAL(SP), INTENT(IN) :: A(:,:) !<The A matrix
+    REAL(SP), INTENT(IN) :: B(:,:) !<The B matrix
+    REAL(SP), INTENT(OUT) :: C(:,:,:,:) !<On exit, the matrix tensor product C=AxoB
+    INTEGER(INTG) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j,k,l
 
-    RETURN
+    ENTERS("TensorProductMatrix2Matrix2SP",err,error,*999)
+
+    IF(SIZE(A,1)/=SIZE(B,1).OR.SIZE(A,2)/=SIZE(B,2)) &
+      & CALL FlagError("The B matrix is not the same size as the A matrix.",err,error,*999)
+    IF(SIZE(C,1)/=SIZE(A,1).OR.SIZE(C,2)/=SIZE(A,1).OR.SIZE(C,3)/=SIZE(A,1).OR.SIZE(C,4)/=SIZE(A,1)) &
+      & CALL FlagError("The C matrix is not of the same dimension as the A and B matrices.",err,error,*999)
     
-  END FUNCTION CothSP
+    DO i=1,SIZE(A,1)
+      DO j=1,SIZE(A,2)
+        DO k=1,SIZE(B,1)
+          DO l=1,SIZE(B,2)
+            C(i,j,k,l)=A(i,j)*B(k,j)
+          ENDDO !l
+        ENDDO !k
+      ENDDO !j
+    ENDDO !i
+    
+    EXITS("TensorProductMatrix2Matrix2SP")
+    RETURN
+999 ERRORSEXITS("TensorProductMatrix2Matrix2SP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE TensorProductMatrix2Matrix2SP
 
   !
   !================================================================================================================================
   !
 
-  !> Calculates double precision hyperbolic cotangent function
-  FUNCTION CothDP(a)
+  !>Calculates and returns the matrix-matrix tensor product of the double precision matrices AxoB in C.
+  SUBROUTINE TensorProductMatrix2Matrix2DP(A,B,C,err,error,*)
 
     !Argument variables
-    REAL(DP), INTENT(IN) :: a !<argument to perform coth() on
-    !Function variable
-    REAL(DP) :: CothDP
+    REAL(DP), INTENT(IN) :: A(:,:) !<The A matrix
+    REAL(DP), INTENT(IN) :: B(:,:) !<The B matrix
+    REAL(DP), INTENT(OUT) :: C(:,:,:,:) !<On exit, the matrix tensor product C=AxoB
+    INTEGER(INTG) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j,k,l
 
-    CothDP=(EXP(a)+EXP(-1.0_DP*a))/(EXP(a)-EXP(-1.0_DP*a))
+    ENTERS("TensorProductMatrix2Matrix2DP",err,error,*999)
 
-    RETURN
+    IF(SIZE(A,1)/=SIZE(B,1).OR.SIZE(A,2)/=SIZE(B,2)) &
+      & CALL FlagError("The B matrix is not the same size as the A matrix.",err,error,*999)
+    IF(SIZE(C,1)/=SIZE(A,1).OR.SIZE(C,2)/=SIZE(A,1).OR.SIZE(C,3)/=SIZE(A,1).OR.SIZE(C,4)/=SIZE(A,1)) &
+      & CALL FlagError("The C matrix is not of the same dimension as the A and B matrices.",err,error,*999)
     
-  END FUNCTION CothDP
+    DO i=1,SIZE(A,1)
+      DO j=1,SIZE(A,2)
+        DO k=1,SIZE(B,1)
+          DO l=1,SIZE(B,2)
+            C(i,j,k,l)=A(i,j)*B(k,j)
+          ENDDO !l
+        ENDDO !k
+      ENDDO !j
+    ENDDO !i
+    
+    EXITS("TensorProductMatrix2Matrix2DP")
+    RETURN
+999 ERRORSEXITS("TensorProductMatrix2Matrix2DP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE TensorProductMatrix2Matrix2DP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates and returns the vector-vector tensor product of the single precision vectors axob in C.
+  SUBROUTINE TensorProductVectorVectorSP(a,b,C,err,error,*)
+
+    !Argument variables
+    REAL(SP), INTENT(IN) :: a(:) !<The a vector
+    REAL(SP), INTENT(IN) :: b(:) !<The b vector
+    REAL(SP), INTENT(OUT) :: C(:,:) !<On exit, the vector-vector tensor product C=axob
+    INTEGER(INTG) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j
+
+    ENTERS("TensorProductVectorVectorSP",err,error,*999)
+
+    IF(SIZE(C,1)/=SIZE(a,1).OR.SIZE(C,2)/=SIZE(b,1)) &
+      & CALL FlagError("The C matrix is not of the same dimension as the a and b vectors.",err,error,*999)
+    
+    DO i=1,SIZE(a,1)
+      DO j=1,SIZE(b,1)
+        C(i,j)=a(i)*b(j)
+      ENDDO !j
+    ENDDO !i
+   
+    EXITS("TensorProductVectorVectorSP")
+    RETURN
+999 ERRORSEXITS("TensorProductVectorVectorSP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE TensorProductVectorVectorSP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates and returns the vector-vector tensor product of the double precision vectors axob in C.
+  SUBROUTINE TensorProductVectorVectorDP(a,b,C,err,error,*)
+
+    !Argument variables
+    REAL(DP), INTENT(IN) :: a(:) !<The a vector
+    REAL(DP), INTENT(IN) :: b(:) !<The b vector
+    REAL(DP), INTENT(OUT) :: C(:,:) !<On exit, the vector-vector tensor product C=axob
+    INTEGER(INTG) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j
+
+    ENTERS("TensorProductVectorVectorDP",err,error,*999)
+
+    IF(SIZE(C,1)/=SIZE(a,1).OR.SIZE(C,2)/=SIZE(b,1)) &
+      & CALL FlagError("The C matrix is not of the same dimension as the a and b vectors.",err,error,*999)
+    
+    DO i=1,SIZE(a,1)
+      DO j=1,SIZE(b,1)
+        C(i,j)=a(i)*b(j)
+      ENDDO !j
+    ENDDO !i
+   
+    EXITS("TensorProductVectorVectorDP")
+    RETURN
+999 ERRORSEXITS("TensorProductVectorVectorDP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE TensorProductVectorVectorDP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the trace of an integer matrix A.
+  SUBROUTINE TraceIntg(A,traceA,err,error,*)
+  
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: A(:,:) !<The matrix to find the trace of
+    INTEGER(INTG), INTENT(OUT) :: traceA !<On exit, the trace of the A matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i
+    
+    ENTERS("TraceIntg",err,error,*999)
+
+    traceA=0_INTG
+    
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)
+    
+    SELECT CASE(SIZE(A,1))
+    CASE(1)
+      traceA = A(1,1)
+    CASE(2)
+      traceA = A(1,1)+A(2,2)
+    CASE(3)
+      traceA = A(1,1)+A(2,2)+A(3,3)
+    CASE DEFAULT
+      DO i=1,SIZE(A,1)
+        traceA = traceA + A(i,i)
+      ENDDO !i
+    END SELECT
+
+    EXITS("TraceIntg")
+    RETURN
+999 ERRORSEXITS("TraceIntg",err,error)
+    RETURN 1
+    
+  END SUBROUTINE TraceIntg
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the trace of a single precision matrix A.
+  SUBROUTINE TraceSP(A,traceA,err,error,*)
+  
+    !Argument variables
+    REAL(SP), INTENT(IN) :: A(:,:) !<The matrix to find the trace of
+    REAL(SP), INTENT(OUT) :: traceA !<On exit, the trace of the A matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i
+    
+    ENTERS("TraceSP",err,error,*999)
+
+    traceA = 0.0_SP
+    
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)
+    
+    SELECT CASE(SIZE(A,1))
+    CASE(1)
+      traceA = A(1,1)
+    CASE(2)
+      traceA = A(1,1)+A(2,2)
+    CASE(3)
+      traceA = A(1,1)+A(2,2)+A(3,3)
+    CASE DEFAULT
+      DO i=1,SIZE(A,1)
+        traceA = traceA + A(i,i)
+      ENDDO !i
+    END SELECT
+
+    EXITS("TraceSP")
+    RETURN
+999 ERRORSEXITS("TraceSP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE TraceSP
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the trace of a double precision matrix A.
+  SUBROUTINE TraceDP(A,traceA,err,error,*)
+  
+    !Argument variables
+    REAL(DP), INTENT(IN) :: A(:,:) !<The matrix to find the trace of
+    REAL(DP), INTENT(OUT) :: traceA !<On exit, the trace of the A matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i
+    
+    ENTERS("TraceDP",err,error,*999)
+
+    traceA = 0.0_DP
+    
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix is not square.",err,error,*999)
+    
+    SELECT CASE(SIZE(A,1))
+    CASE(1)
+      traceA = A(1,1)
+    CASE(2)
+      traceA = A(1,1)+A(2,2)
+    CASE(3)
+      traceA = A(1,1)+A(2,2)+A(3,3)
+    CASE DEFAULT
+      DO i=1,SIZE(A,1)
+        traceA = traceA + A(i,i)
+      ENDDO !i
+    END SELECT
+
+    EXITS("TraceDP")
+    RETURN
+999 ERRORSEXITS("TraceDP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE TraceDP
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the transpose of a single precision matrix A in AT.
+  SUBROUTINE TransposeMatrixSP(A,AT,err,error,*)
+          
+    !Argument variables
+    REAL(SP), INTENT(IN) :: A(:,:) !<The matrix to take the transpose of
+    REAL(SP), INTENT(OUT) :: AT(:,:) !<On exit, the transpose of the matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j
+    
+    ENTERS("TransposeMatrixSP",err,error,*999)
+
+    IF(SIZE(A,1)/=SIZE(AT,2).OR.SIZE(A,2)/=SIZE(AT,1)) CALL FlagError("Invalid matrix sizes.",err,error,*999)
+    
+    IF(SIZE(A,1)==SIZE(A,2)) THEN
+      !A matrix is square
+      SELECT CASE(SIZE(A,1))
+      CASE(1)
+        AT(1,1)=A(1,1)
+      CASE(2)
+        AT(1,1)=A(1,1)
+        AT(1,2)=A(2,1)
+        AT(2,1)=A(1,2)
+        AT(2,2)=A(2,2)
+      CASE(3)
+        AT(1,1)=A(1,1)
+        AT(1,2)=A(2,1)
+        AT(1,3)=A(3,1)
+        AT(2,1)=A(1,2)
+        AT(2,2)=A(2,2)
+        AT(2,3)=A(3,2)
+        AT(3,1)=A(1,3)
+        AT(3,2)=A(2,3)
+        AT(3,3)=A(3,3)
+      CASE DEFAULT
+        DO i=1,SIZE(A,1)
+          DO j=1,SIZE(A,1)
+            AT(j,i)=A(i,j)
+          ENDDO !j
+        ENDDO !i
+      END SELECT
+    ELSE
+      !A matrix is not square
+      DO i=1,SIZE(A,1)
+        DO j=1,SIZE(A,2)
+          AT(j,i)=A(i,j)
+        ENDDO !j
+      ENDDO !i
+    ENDIF
+ 
+    EXITS("TransposeMatrixSP")
+    RETURN
+999 ERRORSEXITS("TransposeMatrixSP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE TransposeMatrixSP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the transpose of a double precision matrix A in AT.
+  SUBROUTINE TransposeMatrixDP(A,AT,err,error,*)
+    
+    !Argument variables
+    REAL(DP), INTENT(IN) :: A(:,:) !<The matrix to take the transpose of
+    REAL(DP), INTENT(OUT) :: AT(:,:) !<On exit, the transpose of the matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j
+            
+    ENTERS("TransposeMatrixDP",err,error,*999)
+
+    IF(SIZE(A,1)/=SIZE(AT,2).OR.SIZE(A,2)/=SIZE(AT,1)) CALL FlagError("Invalid matrix sizes.",err,error,*999)
+    
+    IF(SIZE(A,1)==SIZE(A,2)) THEN
+      !A matrix is square
+      SELECT CASE(SIZE(A,1))
+      CASE(1)
+        AT(1,1)=A(1,1)
+      CASE(2)
+        AT(1,1)=A(1,1)
+        AT(1,2)=A(2,1)
+        AT(2,1)=A(1,2)
+        AT(2,2)=A(2,2)
+      CASE(3)
+        AT(1,1)=A(1,1)
+        AT(1,2)=A(2,1)
+        AT(1,3)=A(3,1)
+        AT(2,1)=A(1,2)
+        AT(2,2)=A(2,2)
+        AT(2,3)=A(3,2)
+        AT(3,1)=A(1,3)
+        AT(3,2)=A(2,3)
+        AT(3,3)=A(3,3)
+      CASE DEFAULT
+        DO i=1,SIZE(A,1)
+          DO j=1,SIZE(A,1)
+            AT(j,i)=A(i,j)
+          ENDDO !j
+        ENDDO !i
+      END SELECT
+    ELSE
+      !A matrix is not square
+      DO i=1,SIZE(A,1)
+        DO j=1,SIZE(A,2)
+          AT(j,i)=A(i,j)
+        ENDDO !j
+      ENDDO !i
+    ENDIF
+    
+    EXITS("TransposeMatrixDP")
+    RETURN
+999 ERRORSEXITS("TransposeMatrixDP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE TransposeMatrixDP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the unimodular part of a single precision matrix/tensor A.
+  SUBROUTINE UnimodularMatrixSP(A,unimodA,err,error,*)
+  
+    !Argument variables
+    REAL(SP), INTENT(IN) :: A(:,:) !<The matrix to find the unimodular part of
+    REAL(SP), INTENT(OUT) :: unimodA(:,:) !<On exit, the unimodular part of the A matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    REAL(SP) :: detA,factor
+    
+    ENTERS("UnimodularMatrixSP",err,error,*999)
+
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("The A matrix is not square.",err,error,*999)
+    IF(SIZE(A,1)/=SIZE(unimodA,1).OR.SIZE(A,2)/=SIZE(unimodA,2)) &
+      & CALL FlagError("The size of the unimodular matrix is not the same size as the A matrix.",err,error,*999)
+
+    SELECT CASE(SIZE(A,1))
+    CASE(1)
+      unimodA(1,1) = 1.0_SP
+    CASE(2)
+      CALL Determinant(A,detA,err,error,*999)
+      factor = SIGN(SQRT(ABS(detA)),detA)
+      unimodA = factor*A
+    CASE(3)
+      CALL Determinant(A,detA,err,error,*999)
+      factor = SIGN(ABS(detA)**1.0_SP/3.0_SP,detA)
+      unimodA = factor*A      
+    CASE DEFAULT
+      CALL FlagError("Matrix size not implemented.",err,error,*999)
+    END SELECT
+
+    EXITS("UnimodularMatrixSP")
+    RETURN
+999 ERRORSEXITS("UnimodularMatrixSP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE UnimodularMatrixSP
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the unimodular part of a double precision matrix/tensor A.
+  SUBROUTINE UnimodularMatrixDP(A,unimodA,err,error,*)
+  
+    !Argument variables
+    REAL(DP), INTENT(IN) :: A(:,:) !<The matrix to find the unimodular part of
+    REAL(DP), INTENT(OUT) :: unimodA(:,:) !<On exit, the unimodular part of the A matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    REAL(DP) :: detA,factor
+    
+    ENTERS("UnimodularMatrixDP",err,error,*999)
+
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("The A matrix is not square.",err,error,*999)
+    IF(SIZE(A,1)/=SIZE(unimodA,1).OR.SIZE(A,2)/=SIZE(unimodA,2)) &
+      & CALL FlagError("The size of the unimodular matrix is not the same size as the A matrix.",err,error,*999)
+
+    SELECT CASE(SIZE(A,1))
+    CASE(1)
+      unimodA(1,1) = 1.0_DP
+    CASE(2)
+      CALL Determinant(A,detA,err,error,*999)
+      factor = SIGN(SQRT(ABS(detA)),detA)
+      unimodA = factor*A
+    CASE(3)
+      CALL Determinant(A,detA,err,error,*999)
+      factor = SIGN(ABS(detA)**1.0_DP/3.0_DP,detA)
+      unimodA = factor*A      
+    CASE DEFAULT
+      CALL FlagError("Matrix size not implemented.",err,error,*999)
+    END SELECT
+
+    EXITS("UnimodularMatrixDP")
+    RETURN
+999 ERRORSEXITS("UnimodularMatrixDP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE UnimodularMatrixDP
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a zero matrix
+  SUBROUTINE ZeroMatrixSP(A,err,error,*)
+    
+    !Argument variables
+    REAL(SP), INTENT(OUT) :: A(:,:) !<On exit, the zero matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+
+    ENTERS("ZeroMatrixSP",err,error,*999)
+
+    A=0.0_SP
+
+    EXITS("ZeroMatrixSP")
+    RETURN
+999 ERRORSEXITS("ZeroMatrixSP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ZeroMatrixSP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a zero matrix
+  SUBROUTINE ZeroMatrixDP(A,err,error,*)
+    
+    !Argument variables
+    REAL(DP), INTENT(OUT) :: A(:,:) !<On exit, the zero matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+   
+    ENTERS("IdentityMatrixDP",err,error,*999)
+
+    A=0.0_DP
+
+    EXITS("ZeroMatrixDP")
+    RETURN
+999 ERRORSEXITS("ZeroMatrixDP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ZeroMatrixDP
 
   !
   !================================================================================================================================
@@ -2793,5 +4500,5 @@ CONTAINS
   !================================================================================================================================
   !
 
-END MODULE MATHS
+END MODULE Maths
 

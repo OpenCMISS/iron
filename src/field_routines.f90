@@ -7339,8 +7339,8 @@ CONTAINS
                     TANGENTS(dimension_idx,1)=INTERPOLATED_POINT_METRICS%DX_DXI &
                       & (dimension_idx,1)
                   ENDDO !dimension_idx 
-                  TANGENTS(1:INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS,1)= &
-                    & NORMALISE(TANGENTS(1:INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS,1),ERR,ERROR)
+                  CALL Normalise(TANGENTS(1:INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS,1), &
+                    TANGENTS(1:INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS,1),ERR,ERROR,*999)
                   NORMAL(1)=TANGENTS(2,1)
                   NORMAL(2)=TANGENTS(1,1)
                   IF(ERR/=0) GOTO 999     
@@ -7350,11 +7350,11 @@ CONTAINS
                     DO dimension_idx=1,INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS
                       TANGENTS(dimension_idx,xi_idx)=INTERPOLATED_POINT_METRICS%DX_DXI(dimension_idx,xi_idx)
                     ENDDO !dimension_idx
-                    TANGENTS(1:INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS,xi_idx)= &
-                      & NORMALISE(TANGENTS(1:INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS,xi_idx),ERR,ERROR)
+                    CALL Normalise(TANGENTS(1:INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS,xi_idx), &
+                       TANGENTS(1:INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS,xi_idx),ERR,ERROR,*999)
                     IF(ERR/=0) GOTO 999
                   ENDDO !xi_idx
-                  CALL CROSS_PRODUCT(TANGENTS(1:INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS,1), &
+                  CALL CrossProduct(TANGENTS(1:INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS,1), &
                     & TANGENTS(1:INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS,2),NORMAL,ERR,ERROR,*999)
                   IF(reverseNormal) NORMAL=-NORMAL
                 CASE DEFAULT
@@ -7440,7 +7440,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: DIMS,INDEX_MATCH
     INTEGER(INTG) :: nic,component_idx,derivative_idx,xi_idx,element,element_idx,local_node,local_node_idx
-    REAL(DP) :: XI(3), VEC(3), DXDXI(3,3) ! Note VEC, DXDXI sizes are fixed, but it doesn't matter so much
+    REAL(DP) :: XI(3), VEC(3), DXDXI(3,3), NORMVEC(3) ! Note VEC, DXDXI sizes are fixed, but it doesn't matter so much
     INTEGER(INTG) :: tangent_idx,tangent_xi_idx
     TYPE(BASIS_TYPE), POINTER :: BASIS
     TYPE(DOMAIN_TYPE), POINTER :: DOMAIN
@@ -7568,34 +7568,36 @@ CONTAINS
                                                           !1D/2D/3D: tangents and normal
                                                           SELECT CASE(BASIS%NUMBER_OF_XI)
                                                           CASE(1)
-                                                            !There are no tangents. We can provide a normal, but no need to sum and average,
-                                                            ! since in a 1D mesh, a boundary node won't be share with other elements.
+                                                            !There are no tangents. We can provide a normal, but no need to sum
+                                                            !and average, since in a 1D mesh, a boundary node won't be share
+                                                            !with other elements.
                                                             NORMAL(1:DIMS)=DXDXI(1:DIMS,1)
                                                           CASE(2)
                                                             !One tangent vector, one normal vector
                                                             TANGENTS=0.0_DP
                                                             tangent_xi_idx=OTHER_XI_DIRECTIONS2(ABS(nic))
                                                             VEC(1:DIMS)=DXDXI(1:DIMS,tangent_xi_idx)
-                                                            VEC(1:DIMS)=NORMALISE(VEC(1:DIMS),ERR,ERROR)
+                                                            CALL Normalise(VEC(1:DIMS),VEC(1:DIMS),ERR,ERROR,*999)
                                                             TANGENTS(1:DIMS,1)=TANGENTS(1:DIMS,1)+ &
                                                               & VEC(1:DIMS)
-                                                            !Normal is the other component in DXDXI (correct?) Ensure the direction is outward
+                                                            !Normal is the other component in DXDXI (correct?) Ensure the
+                                                            !direction is outward
                                                             VEC(1:DIMS)=DXDXI(1:DIMS,ABS(nic))
                                                             IF(nic<0) VEC=-VEC
-                                                            NORMAL(1:DIMS)=NORMAL(1:DIMS)+ &
-                                                              & NORMALISE(VEC(1:DIMS),ERR,ERROR)
+                                                            CALL Normalise(VEC(1:DIMS),NORMVEC(1:DIMS),ERR,ERROR,*999)
+                                                            NORMAL(1:DIMS)=NORMAL(1:DIMS)+ NORMVEC(1:DIMS)
                                                           CASE(3)
                                                             !Two tangent vectors, one normal vector
                                                             TANGENTS=0.0_DP
                                                             DO tangent_idx=1,2
                                                               tangent_xi_idx=OTHER_XI_DIRECTIONS3(ABS(nic),tangent_idx+1,1)
                                                               VEC(1:DIMS)=DXDXI(1:DIMS,tangent_xi_idx)
-                                                              VEC(1:DIMS)=NORMALISE(VEC(1:DIMS),ERR,ERROR)
+                                                              CALL Normalise(VEC(1:DIMS),VEC(1:DIMS),ERR,ERROR,*999)
                                                               TANGENTS(1:DIMS,tangent_idx)= &
                                                                 & TANGENTS(1:DIMS,tangent_idx)+VEC(1:DIMS)
                                                             ENDDO
                                                             !Calculate the normal vector
-                                                            CALL CROSS_PRODUCT(TANGENTS(1:DIMS,1),TANGENTS(1:DIMS,2), &
+                                                            CALL CrossProduct(TANGENTS(1:DIMS,1),TANGENTS(1:DIMS,2), &
                                                               & VEC(1:DIMS),ERR,ERROR,*999)
                                                             !Yes below is compicated, but that's what it takes to get the normals pointing outwards
                                                             IF(nic<0) VEC=-VEC
@@ -7652,10 +7654,11 @@ CONTAINS
                                               CALL FIELD_INTERPOLATION_PARAMETERS_FINALISE(INTERPOLATION_PARAMETERS,ERR,ERROR,*999)
 
                                               !Normalise the normal vector
-                                              NORMAL(1:DIMS)=NORMALISE(NORMAL(1:DIMS),ERR,ERROR)
+                                              CALL Normalise(NORMAL(1:DIMS),NORMAL(1:DIMS),ERR,ERROR,*999)
                                               !Normalise the tangent vectors
                                               DO tangent_idx=1,BASIS%NUMBER_OF_XI-1
-                                                TANGENTS(1:DIMS,tangent_idx)=NORMALISE(TANGENTS(1:DIMS,tangent_idx),ERR,ERROR)
+                                                CALL Normalise(TANGENTS(1:DIMS,tangent_idx),TANGENTS(1:DIMS,tangent_idx), &
+                                                  & ERR,ERROR,*999)
                                               ENDDO
                                             ELSE
                                               LOCAL_ERROR="The local node number of "// &

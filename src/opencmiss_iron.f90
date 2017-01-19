@@ -2905,7 +2905,6 @@ MODULE OpenCMISS_Iron
     & CMFE_EQUATIONS_SET_MULTI_COMP_DIFFUSION_TWO_COMP_THREE_DIM,CMFE_EQUATIONS_SET_MULTI_COMP_DIFFUSION_THREE_COMP_THREE_DIM, &
     & CMFE_EQUATIONS_SET_MULTI_COMP_DIFFUSION_FOUR_COMP_THREE_DIM
 
-
   PUBLIC CMFE_EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TWO_DIM_1
 
   PUBLIC CMFE_EQUATIONS_SET_POISEUILLE_EQUATION_TWO_DIM_1
@@ -3839,7 +3838,7 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_Field_ParameterSetInterpolateSingleGaussDPObj
     MODULE PROCEDURE cmfe_Field_ParameterSetInterpolateMultipleGaussDPNumber
     MODULE PROCEDURE cmfe_Field_ParameterSetInterpolateMultipleGaussDPObj
-  END INTERFACE CMFE_FIELD_PARAMETERSETINTERPOLATEGAUSS
+  END INTERFACE cmfe_Field_ParameterSetInterpolateGauss
 
   !>Updates the given parameter set with the given value for a particular data point of a field variable component.
   INTERFACE cmfe_Field_ParameterSetUpdateElementDataPoint
