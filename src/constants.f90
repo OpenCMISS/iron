@@ -278,7 +278,22 @@ MODULE CONSTANTS
         
   INTEGER(INTG) :: OTHER_XI_ORIENTATIONS2(2) = [1,-1] !<OTHER_XI_ORIENTATIONSS2(ni) gives the orientation of the given xi direction and the other xi direction. Is equal to leviCivita(ni,OTHER_XI_DIRECTIONS2(ni)) where leviCivita is the Levi-Civita or alternating symbol
   INTEGER(INTG) :: OTHER_XI_ORIENTATIONS3(3,3) = RESHAPE([0,-1,1,1,0,-1,-1,1,0],[3,3]) !<OTHER_XI_ORIENTATIONSS3(ni,nii) gives the orientation of the given two xi directions. Is equal to leviCivita(ni,nii,OTHER_XI_DIRECTIONS3(ni,nii,2)) where leviCivita is the Levi-Civita or alternating symbol
+  !>
 
+  !> \addtogroup CONSTANTS_ElementNormalXiDirections CONSTANTS::ElementNormalXiDirections
+  !> \brief Xi normal directions
+  !> \see CONSTANTS
+  !>@{ 
+  INTEGER(INTG), PARAMETER :: ELEMENT_NORMAL_MINUS_XI1=-1 !<Negative xi 1 normal 
+  INTEGER(INTG), PARAMETER :: ELEMENT_NORMAL_MINUS_XI2=-2 !<Negative xi 2 normal 
+  INTEGER(INTG), PARAMETER :: ELEMENT_NORMAL_MINUS_XI3=-3 !<Negative xi 3 normal 
+  INTEGER(INTG), PARAMETER :: ELEMENT_NORMAL_MINUS_XI4=-4 !<Negative xi 4 normal 
+  INTEGER(INTG), PARAMETER :: ELEMENT_NORMAL_PLUS_XI1=1 !<Positive xi 1 normal 
+  INTEGER(INTG), PARAMETER :: ELEMENT_NORMAL_PLUS_XI2=2 !<Positive xi 2 normal 
+  INTEGER(INTG), PARAMETER :: ELEMENT_NORMAL_PLUS_XI3=3 !<Positive xi 3 normal 
+  INTEGER(INTG), PARAMETER :: ELEMENT_NORMAL_PLUS_XI4=4 !<Positive xi 4 normal 
+  !>@}
+    
   !Tensor to voigt indices and voigt to tensor indices maps.
   !>
   INTEGER(INTG), PARAMETER :: TENSOR_TO_VOIGT2(2,2)=RESHAPE([1,3,3,2],[2,2]) !TENSOR_TO_VOIGT2(i,j) converts a pair (i,j) of rank 2 symmetric tensor indices to Voigt index (a) in 2 dimensions.

@@ -49,7 +49,8 @@ MODULE FINITE_ELASTICITY_ROUTINES
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE COMP_ENVIRONMENT
   USE CONSTANTS
-  USE CONTROL_LOOP_ROUTINES  
+  USE CONTROL_LOOP_ROUTINES
+  USE ControlLoopAccessRoutines
   USE COORDINATE_ROUTINES  
   USE DISTRIBUTED_MATRIX_VECTOR
   USE DOMAIN_MAPPINGS
@@ -57,6 +58,7 @@ MODULE FINITE_ELASTICITY_ROUTINES
   USE EQUATIONS_MAPPING_ROUTINES
   USE EQUATIONS_MATRICES_ROUTINES
   USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetAccessRoutines
   USE FIELD_ROUTINES
   USE FIELD_IO_ROUTINES
   USE FLUID_MECHANICS_IO_ROUTINES
@@ -67,11 +69,13 @@ MODULE FINITE_ELASTICITY_ROUTINES
   USE MATHS  
   USE MATRIX_VECTOR
   USE MESH_ROUTINES
+  USE MeshAccessRoutines
 #ifndef NOMPIMOD
   USE MPI
 #endif
   USE PROBLEM_CONSTANTS
   USE SOLVER_ROUTINES
+  USE SolverAccessRoutines
   USE STRINGS
   USE TIMER
   USE TYPES
@@ -231,7 +235,7 @@ CONTAINS
                         !Need to test if this node is in current decomposition
                         CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,user_node,1,DOMAIN_NUMBER,ERR,ERROR,*999)
                         IF(DOMAIN_NUMBER==MY_COMPUTATIONAL_NODE_NUMBER) THEN
-                          CALL MeshTopologyNodeCheckExists(MESH,1,user_node,NODE_EXISTS,global_node,ERR,ERROR,*999)
+                          CALL MeshTopology_NodeCheckExists(MESH,1,user_node,NODE_EXISTS,global_node,ERR,ERROR,*999)
                           IF(.NOT.NODE_EXISTS) CYCLE
                           CALL DOMAIN_MAPPINGS_GLOBAL_TO_LOCAL_GET(NODES_MAPPING,global_node,NODE_EXISTS,local_node,ERR,ERROR,*999)
                           !Default to version 1 of each node derivative
@@ -262,14 +266,14 @@ CONTAINS
                         user_node=BOTTOM_SURFACE_NODES(node_idx)
                         CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,user_node,1,DOMAIN_NUMBER,ERR,ERROR,*999)
                         IF(DOMAIN_NUMBER==MY_COMPUTATIONAL_NODE_NUMBER) THEN
-                          CALL MeshTopologyNodeCheckExists(MESH,1,user_node,NODE_EXISTS,global_node,ERR,ERROR,*999)
+                          CALL MeshTopology_NodeCheckExists(MESH,1,user_node,NODE_EXISTS,global_node,ERR,ERROR,*999)
                           IF(.NOT.NODE_EXISTS) CYCLE
                           CALL DOMAIN_MAPPINGS_GLOBAL_TO_LOCAL_GET(NODES_MAPPING,global_node,NODE_EXISTS,local_node,ERR,ERROR,*999)
                           !Default to version 1 of each node derivative
                           local_ny=GEOMETRIC_VARIABLE%COMPONENTS(1)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(local_node)% &
                             & DERIVATIVES(1)%VERSIONS(1)
                           X(1)=GEOMETRIC_PARAMETERS(local_ny)
-                            CALL MeshTopologyNodeCheckExists(MESH,1,user_node,NODE_EXISTS,global_node,ERR,ERROR,*999)
+                            CALL MeshTopology_NodeCheckExists(MESH,1,user_node,NODE_EXISTS,global_node,ERR,ERROR,*999)
                             IF(.NOT.NODE_EXISTS) CYCLE
                             CALL DOMAIN_MAPPINGS_GLOBAL_TO_LOCAL_GET(NODES_MAPPING,global_node,NODE_EXISTS,local_node, &
                               & ERR,ERROR,*999)
@@ -408,7 +412,7 @@ CONTAINS
                                       ENDDO
                                       !Don't forget the pressure component
                                       user_node=DOMAIN_NODES%NODES(node_idx)%USER_NUMBER
-                                      CALL MeshTopologyNodeCheckExists(MESH,DOMAIN_PRESSURE%MESH_COMPONENT_NUMBER,user_node, &
+                                      CALL MeshTopology_NodeCheckExists(MESH,DOMAIN_PRESSURE%MESH_COMPONENT_NUMBER,user_node, &
                                         & NODE_EXISTS,global_node,ERR,ERROR,*999)
                                       IF(NODE_EXISTS) THEN
                                         CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,user_node, &

@@ -47,8 +47,10 @@ MODULE INTERFACE_CONDITIONS_ROUTINES
   USE BASE_ROUTINES
   USE BASIS_ROUTINES
   USE FIELD_ROUTINES
+  USE FieldAccessRoutines
   USE INPUT_OUTPUT
   USE INTERFACE_CONDITIONS_CONSTANTS
+  USE InterfaceConditionAccessRoutines
   USE INTERFACE_EQUATIONS_ROUTINES
   USE INTERFACE_MAPPING_ROUTINES
   USE INTERFACE_MATRICES_ROUTINES
@@ -89,8 +91,6 @@ MODULE INTERFACE_CONDITIONS_ROUTINES
   PUBLIC INTERFACE_CONDITION_OPERATOR_GET,INTERFACE_CONDITION_OPERATOR_SET
 
   PUBLIC InterfaceCondition_PenaltyFieldCreateFinish,InterfaceCondition_PenaltyFieldCreateStart
-
-  PUBLIC INTERFACE_CONDITION_USER_NUMBER_FIND
 
   PUBLIC INTERFACE_CONDITIONS_FINALISE,INTERFACE_CONDITIONS_INITIALISE
 
@@ -2367,56 +2367,6 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfaceCondition_FiniteElementCalculate
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Finds and returns in INTERFACE_CONDITION a pointer to the interface condition identified by USER_NUMBER in the given INTERFACE. If no interface condition with that USER_NUMBER exists INTERFACE_CONDITION is left nullified.
-  SUBROUTINE INTERFACE_CONDITION_USER_NUMBER_FIND(USER_NUMBER,INTERFACE,INTERFACE_CONDITION,ERR,ERROR,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number to find.
-    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE !<The interface to find the interface condition in.
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION !<On return a pointer to the interface condition with the given user number. If no interface condition with that user number exists then the pointer is returned as NULL. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    INTEGER(INTG) :: interface_condition_idx
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("INTERFACE_CONDITION_USER_NUMBER_FIND",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(INTERFACE)) THEN
-      IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
-        CALL FlagError("Interface condition is already associated.",ERR,ERROR,*999)
-      ELSE
-        NULLIFY(INTERFACE_CONDITION)
-        IF(ASSOCIATED(INTERFACE%INTERFACE_CONDITIONS)) THEN
-          interface_condition_idx=1
-          DO WHILE(interface_condition_idx<=INTERFACE%INTERFACE_CONDITIONS%NUMBER_OF_INTERFACE_CONDITIONS.AND. &
-            & .NOT.ASSOCIATED(INTERFACE_CONDITION))
-            IF(INTERFACE%INTERFACE_CONDITIONS%INTERFACE_CONDITIONS(interface_condition_idx)%PTR%USER_NUMBER==USER_NUMBER) THEN
-              INTERFACE_CONDITION=>INTERFACE%INTERFACE_CONDITIONS%INTERFACE_CONDITIONS(interface_condition_idx)%PTR
-            ELSE
-              interface_condition_idx=interface_condition_idx+1
-            ENDIF
-          ENDDO
-        ELSE
-          LOCAL_ERROR="The interface conditions on interface number "// &
-            & TRIM(NUMBER_TO_VSTRING(INTERFACE%USER_NUMBER,"*",ERR,ERROR))//" are not associated."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Interface is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("INTERFACE_CONDITION_USER_NUMBER_FIND")
-    RETURN
-999 ERRORSEXITS("INTERFACE_CONDITION_USER_NUMBER_FIND",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE INTERFACE_CONDITION_USER_NUMBER_FIND
 
   !
   !================================================================================================================================

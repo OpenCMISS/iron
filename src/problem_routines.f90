@@ -55,7 +55,7 @@ MODULE PROBLEM_ROUTINES
   USE FIELD_ROUTINES
   USE FIELD_IO_ROUTINES
   USE FINITE_ELASTICITY_ROUTINES
-  USE FITTING_ROUTINES
+  USE FittingRoutines
   USE FLUID_MECHANICS_ROUTINES
   USE INPUT_OUTPUT
   USE INTERFACE_CONDITIONS_CONSTANTS
@@ -65,6 +65,7 @@ MODULE PROBLEM_ROUTINES
   USE KINDS
   USE MULTI_PHYSICS_ROUTINES
   USE PROBLEM_CONSTANTS
+  USE ProblemAccessRoutines
   USE REACTION_DIFFUSION_EQUATION_ROUTINES
   USE SOLVER_ROUTINES
   USE SOLVER_MATRICES_ROUTINES
@@ -84,35 +85,11 @@ MODULE PROBLEM_ROUTINES
 
   !Module variables
 
-  TYPE(PROBLEMS_TYPE), TARGET :: PROBLEMS
-  
   !Interfaces
 
-  INTERFACE PROBLEM_CELLML_EQUATIONS_GET
-    MODULE PROCEDURE PROBLEM_CELLML_EQUATIONS_GET_0
-    MODULE PROCEDURE PROBLEM_CELLML_EQUATIONS_GET_1
-  END INTERFACE !PROBLEM_CELLML_EQUATIONS_GET
-
-  INTERFACE PROBLEM_CONTROL_LOOP_GET
-    MODULE PROCEDURE PROBLEM_CONTROL_LOOP_GET_0
-    MODULE PROCEDURE PROBLEM_CONTROL_LOOP_GET_1
-  END INTERFACE !PROBLEM_CONTROL_LOOP_GET
-
-  INTERFACE PROBLEM_SOLVER_EQUATIONS_GET
-    MODULE PROCEDURE PROBLEM_SOLVER_EQUATIONS_GET_0
-    MODULE PROCEDURE PROBLEM_SOLVER_EQUATIONS_GET_1
-  END INTERFACE !PROBLEM_SOLVER_EQUATIONS_GET
-
-  INTERFACE PROBLEM_SOLVER_GET
-    MODULE PROCEDURE PROBLEM_SOLVER_GET_0
-    MODULE PROCEDURE PROBLEM_SOLVER_GET_1
-  END INTERFACE !PROBLEM_SOLVER_GET
-  
   PUBLIC PROBLEMS_INITIALISE,PROBLEMS_FINALISE
   
   PUBLIC PROBLEM_CELLML_EQUATIONS_CREATE_START,PROBLEM_CELLML_EQUATIONS_CREATE_FINISH
-  
-  PUBLIC PROBLEM_CELLML_EQUATIONS_GET
   
   PUBLIC PROBLEM_CREATE_START,PROBLEM_CREATE_FINISH,PROBLEM_DESTROY
   
@@ -122,8 +99,6 @@ MODULE PROBLEM_ROUTINES
   
   PUBLIC PROBLEM_CONTROL_LOOP_DESTROY
   
-  PUBLIC PROBLEM_CONTROL_LOOP_GET
-
   PUBLIC Problem_SolverDAECellMLRHSEvaluate
   
   PUBLIC Problem_SolverEquationsBoundaryConditionsAnalytic
@@ -132,11 +107,7 @@ MODULE PROBLEM_ROUTINES
   
   PUBLIC PROBLEM_SOLVER_EQUATIONS_DESTROY
   
-  PUBLIC PROBLEM_SOLVER_EQUATIONS_GET
-  
   PUBLIC PROBLEM_SOLVER_JACOBIAN_EVALUATE,PROBLEM_SOLVER_RESIDUAL_EVALUATE
-  
-  PUBLIC PROBLEM_SOLVER_GET
   
   PUBLIC Problem_SolverNonlinearMonitor
   
@@ -145,8 +116,6 @@ MODULE PROBLEM_ROUTINES
   PUBLIC PROBLEM_SOLVERS_CREATE_START,PROBLEM_SOLVERS_CREATE_FINISH
   
   PUBLIC PROBLEM_SOLVERS_DESTROY
-  
-  PUBLIC PROBLEM_USER_NUMBER_FIND
   
 CONTAINS
 
@@ -220,96 +189,6 @@ CONTAINS
     RETURN 1
   END SUBROUTINE PROBLEM_CELLML_EQUATIONS_CREATE_START
 
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns a pointer to the CellML equations defined with a solver. \see OPENCMISS::CMISSProblemSolverCellMLEquationsGet
-  SUBROUTINE PROBLEM_CELLML_EQUATIONS_GET_0(PROBLEM,CONTROL_LOOP_IDENTIFIER,SOLVER_INDEX,CELLML_EQUATIONS,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem to get solver CellML equations for
-    INTEGER(INTG), INTENT(IN) :: CONTROL_LOOP_IDENTIFIER !<The control loop identifier to get the solver CellML equations for
-    INTEGER(INTG), INTENT(IN) :: SOLVER_INDEX !<The solver index in the solvers to get the solver CellML equations for
-    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: CELLML_EQUATIONS !<On exit, a pointer to the specified solver CellML equations. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
- 
-    ENTERS("PROBLEM_CELLML_EQUATIONS_GET_0",ERR,ERROR,*999)
-
-    CALL PROBLEM_CELLML_EQUATIONS_GET_1(PROBLEM,[CONTROL_LOOP_IDENTIFIER],SOLVER_INDEX,CELLML_EQUATIONS,ERR,ERROR,*999)
-    
-    EXITS("PROBLEM_CELLML_EQUATIONS_GET_0")
-    RETURN
-999 ERRORSEXITS("PROBLEM_CELLML_EQUATIONS_GET_0",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE PROBLEM_CELLML_EQUATIONS_GET_0
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns a pointer to the solver CellML equations defined with a solver. \see OPENCMISS::CMISSProblemSolverCellMLEquationsGet
-  SUBROUTINE PROBLEM_CELLML_EQUATIONS_GET_1(PROBLEM,CONTROL_LOOP_IDENTIFIER,SOLVER_INDEX,CELLML_EQUATIONS,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem to get the CellML equations for
-    INTEGER(INTG), INTENT(IN) :: CONTROL_LOOP_IDENTIFIER(:) !<The control loop identifier to get the CellML equations for
-    INTEGER(INTG), INTENT(IN) :: SOLVER_INDEX !<The solver index in the solvers to get the CellML equations for
-    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: CELLML_EQUATIONS !<On exit, a pointer to the specified CellML equations. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("PROBLEM_CELLML_EQUATIONS_GET_1",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(PROBLEM)) THEN
-      IF(ASSOCIATED(CELLML_EQUATIONS)) THEN
-        CALL FlagError("The CellML equations is already associated.",ERR,ERROR,*999)
-      ELSE
-        NULLIFY(CELLML_EQUATIONS)
-        CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
-        IF(ASSOCIATED(CONTROL_LOOP_ROOT)) THEN
-          NULLIFY(CONTROL_LOOP)
-          CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_IDENTIFIER,CONTROL_LOOP,ERR,ERROR,*999)
-          SOLVERS=>CONTROL_LOOP%SOLVERS
-          IF(ASSOCIATED(SOLVERS)) THEN            
-            IF(SOLVER_INDEX>0.AND.SOLVER_INDEX<=SOLVERS%NUMBER_OF_SOLVERS) THEN
-              SOLVER=>SOLVERS%SOLVERS(SOLVER_INDEX)%PTR
-              IF(ASSOCIATED(SOLVER)) THEN
-                CELLML_EQUATIONS=>SOLVER%CELLML_EQUATIONS
-                IF(.NOT.ASSOCIATED(CELLML_EQUATIONS)) CALL FlagError("CellML equations is not associated.",ERR,ERROR,*999)
-              ELSE
-                CALL FlagError("Solver is not associated.",ERR,ERROR,*999)
-              ENDIF
-            ELSE
-              LOCAL_ERROR="The specified solver index of "//TRIM(NUMBER_TO_VSTRING(SOLVER_INDEX,"*",ERR,ERROR))// &
-                & " is invalid. The index must be > 0 and <= "// &
-                & TRIM(NUMBER_TO_VSTRING(SOLVERS%NUMBER_OF_SOLVERS,"*",ERR,ERROR))//"."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Solvers is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Problem control loop is not associated.",ERR,ERROR,*999)          
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("PROBLEM_CELLML_EQUATIONS_GET_1")
-    RETURN
-999 ERRORSEXITS("PROBLEM_CELLML_EQUATIONS_GET_1",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE PROBLEM_CELLML_EQUATIONS_GET_1
-  
   !
   !================================================================================================================================
   !
@@ -1128,71 +1007,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the control loop for a problem. \see OPENCMISS::CMISSProblemControlLoopGet
-  SUBROUTINE PROBLEM_CONTROL_LOOP_GET_0(PROBLEM,CONTROL_LOOP_IDENTIFIER,CONTROL_LOOP,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem to get the control loop for.
-    INTEGER(INTG), INTENT(IN) :: CONTROL_LOOP_IDENTIFIER !<The control loop identifier
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<On return, a pointer to the control loop. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
- 
-    ENTERS("PROBLEM_CONTROL_LOOP_GET_0",ERR,ERROR,*999)
-
-    CALL PROBLEM_CONTROL_LOOP_GET_1(PROBLEM,[CONTROL_LOOP_IDENTIFIER],CONTROL_LOOP,ERR,ERROR,*999) 
-       
-    EXITS("PROBLEM_CONTROL_LOOP_GET_0")
-    RETURN
-999 ERRORSEXITS("PROBLEM_CONTROL_LOOP_GET_0",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE PROBLEM_CONTROL_LOOP_GET_0
-  
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns a pointer to the control_loop for a problem. \see OPENCMISS::CMISSProblemControlLoopGet
-  SUBROUTINE PROBLEM_CONTROL_LOOP_GET_1(PROBLEM,CONTROL_LOOP_IDENTIFIER,CONTROL_LOOP,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem to get the control loop for.
-    INTEGER(INTG), INTENT(IN) :: CONTROL_LOOP_IDENTIFIER(:) !<The control loop identifier.
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<On return, a pointer to the control loop. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP_ROOT
- 
-    ENTERS("PROBLEM_CONTROL_LOOP_GET_1",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(PROBLEM)) THEN
-      IF(ASSOCIATED(CONTROL_LOOP)) THEN
-        CALL FlagError("Control loop is already associated.",ERR,ERROR,*999)
-      ELSE
-        CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
-        IF(ASSOCIATED(CONTROL_LOOP_ROOT)) THEN
-          NULLIFY(CONTROL_LOOP)
-          CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_IDENTIFIER,CONTROL_LOOP,ERR,ERROR,*999)
-        ELSE
-          CALL FlagError("Problem control loop is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("PROBLEM_CONTROL_LOOP_GET_1")
-    RETURN
-999 ERRORSEXITS("PROBLEM_CONTROL_LOOP_GET_1",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE PROBLEM_CONTROL_LOOP_GET_1
-  
-  !
-  !================================================================================================================================
-  !
-
   !>Sets up the specifices for a problem.
   SUBROUTINE Problem_Setup(problem,problemSetupInfo,err,error,*)
 
@@ -1224,7 +1038,7 @@ CONTAINS
       CASE(PROBLEM_CLASSICAL_FIELD_CLASS)
         CALL CLASSICAL_FIELD_PROBLEM_SETUP(problem,problemSetupInfo,err,error,*999)
       CASE(PROBLEM_FITTING_CLASS)
-        CALL FITTING_PROBLEM_SETUP(problem,problemSetupInfo,err,error,*999)
+        CALL Fitting_ProblemSetup(problem,problemSetupInfo,err,error,*999)
       CASE(PROBLEM_MODAL_CLASS)
         CALL FlagError("Not implemented.",err,error,*999)
       CASE(PROBLEM_MULTI_PHYSICS_CLASS)
@@ -1245,96 +1059,6 @@ CONTAINS
     
   END SUBROUTINE Problem_Setup
 
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns a pointer to a solver equations defined with a solver. \see OPENCMISS::CMISSProblemSolverEquationsGet
-  SUBROUTINE PROBLEM_SOLVER_EQUATIONS_GET_0(PROBLEM,CONTROL_LOOP_IDENTIFIER,SOLVER_INDEX,SOLVER_EQUATIONS,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem to get solver equations for
-    INTEGER(INTG), INTENT(IN) :: CONTROL_LOOP_IDENTIFIER !<The control loop identifier to get the solver equations for
-    INTEGER(INTG), INTENT(IN) :: SOLVER_INDEX !<The solver index in the solvers to get the solver equations for
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS !<On exit, a pointer to the specified solver equations. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
- 
-    ENTERS("PROBLEM_SOLVER_EQUATIONS_GET_0",ERR,ERROR,*999)
-
-    CALL PROBLEM_SOLVER_EQUATIONS_GET_1(PROBLEM,[CONTROL_LOOP_IDENTIFIER],SOLVER_INDEX,SOLVER_EQUATIONS,ERR,ERROR,*999)
-    
-    EXITS("PROBLEM_SOLVER_EQUATIONS_GET_0")
-    RETURN
-999 ERRORSEXITS("PROBLEM_SOLVER_EQUATIONS_GET_0",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE PROBLEM_SOLVER_EQUATIONS_GET_0
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns a pointer to a solver equations defined with a solver. \see OPENCMISS::CMISSProblemSolverEquationsGet
-  SUBROUTINE PROBLEM_SOLVER_EQUATIONS_GET_1(PROBLEM,CONTROL_LOOP_IDENTIFIER,SOLVER_INDEX,SOLVER_EQUATIONS,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem to get solver equations for
-    INTEGER(INTG), INTENT(IN) :: CONTROL_LOOP_IDENTIFIER(:) !<The control loop identifier to get the solver equations for
-    INTEGER(INTG), INTENT(IN) :: SOLVER_INDEX !<The solver index in the solvers to get the solver equations for
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS !<On exit, a pointer to the specified solver equations. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("PROBLEM_SOLVER_EQUATIONS_GET_1",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(PROBLEM)) THEN
-      IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-        CALL FlagError("The solver equations is already associated.",ERR,ERROR,*999)
-      ELSE
-        NULLIFY(SOLVER_EQUATIONS)
-        CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
-        IF(ASSOCIATED(CONTROL_LOOP_ROOT)) THEN
-          NULLIFY(CONTROL_LOOP)
-          CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_IDENTIFIER,CONTROL_LOOP,ERR,ERROR,*999)
-          SOLVERS=>CONTROL_LOOP%SOLVERS
-          IF(ASSOCIATED(SOLVERS)) THEN            
-            IF(SOLVER_INDEX>0.AND.SOLVER_INDEX<=SOLVERS%NUMBER_OF_SOLVERS) THEN
-              SOLVER=>SOLVERS%SOLVERS(SOLVER_INDEX)%PTR
-              IF(ASSOCIATED(SOLVER)) THEN
-                SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
-                IF(.NOT.ASSOCIATED(SOLVER_EQUATIONS)) CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
-              ELSE
-                CALL FlagError("Solver is not associated.",ERR,ERROR,*999)
-              ENDIF
-            ELSE
-              LOCAL_ERROR="The specified solver index of "//TRIM(NUMBER_TO_VSTRING(SOLVER_INDEX,"*",ERR,ERROR))// &
-                & " is invalid. The index must be > 0 and <= "// &
-                & TRIM(NUMBER_TO_VSTRING(SOLVERS%NUMBER_OF_SOLVERS,"*",ERR,ERROR))//"."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Solvers is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Problem control loop is not associated.",ERR,ERROR,*999)          
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("PROBLEM_SOLVER_EQUATIONS_GET_1")
-    RETURN
-999 ERRORSEXITS("PROBLEM_SOLVER_EQUATIONS_GET_1",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE PROBLEM_SOLVER_EQUATIONS_GET_1
-  
   !
   !================================================================================================================================
   !
@@ -2224,7 +1948,7 @@ CONTAINS
             CASE(PROBLEM_CLASSICAL_FIELD_CLASS)
               CALL CLASSICAL_FIELD_PRE_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
             CASE(PROBLEM_FITTING_CLASS)
-              CALL FITTING_PRE_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
+              CALL Fitting_PreSolve(solver,err,error,*999)
             CASE(PROBLEM_MODAL_CLASS)
               !Do nothing???
             CASE(PROBLEM_MULTI_PHYSICS_CLASS)
@@ -2293,11 +2017,10 @@ CONTAINS
               CALL FLUID_MECHANICS_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
             CASE(PROBLEM_ELECTROMAGNETICS_CLASS)
               !Do nothing???
-            CASE(PROBLEM_CLASSICAL_FIELD_CLASS)
-                
+            CASE(PROBLEM_CLASSICAL_FIELD_CLASS)                
               CALL CLASSICAL_FIELD_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
             CASE(PROBLEM_FITTING_CLASS)
-              CALL FITTING_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
+              CALL Fitting_PostSolve(solver,err,error,*999)
             CASE(PROBLEM_MODAL_CLASS)
               !Do nothing???
             CASE(PROBLEM_MULTI_PHYSICS_CLASS)
@@ -3381,90 +3104,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the solver for a problem control loop. \see OPENCMISS::CMISSProblemSolverGet
-  SUBROUTINE PROBLEM_SOLVER_GET_0(PROBLEM,CONTROL_LOOP_IDENTIFIER,SOLVER_INDEX,SOLVER,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem to get the solver for.
-    INTEGER(INTG), INTENT(IN) :: CONTROL_LOOP_IDENTIFIER !<The control loop identifier
-    INTEGER(INTG), INTENT(IN) :: SOLVER_INDEX !<The solver index to get the solver for.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<On return, a pointer to the solver. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
- 
-    ENTERS("PROBLEM_SOLVER_GET_0",ERR,ERROR,*999)
-
-    CALL PROBLEM_SOLVER_GET_1(PROBLEM,[CONTROL_LOOP_IDENTIFIER],SOLVER_INDEX,SOLVER,ERR,ERROR,*999) 
-       
-    EXITS("PROBLEM_SOLVER_GET_0")
-    RETURN
-999 ERRORSEXITS("PROBLEM_SOLVER_GET_0",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE PROBLEM_SOLVER_GET_0
-  
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns a pointer to the solver for a problem control loop. \see OPENCMISS::CMISSProblemSolverGet
-  SUBROUTINE PROBLEM_SOLVER_GET_1(PROBLEM,CONTROL_LOOP_IDENTIFIER,SOLVER_INDEX,SOLVER,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem to get the solver for.
-    INTEGER(INTG), INTENT(IN) :: CONTROL_LOOP_IDENTIFIER(:) !<The control loop identifier to get the solver for.
-    INTEGER(INTG), INTENT(IN) :: SOLVER_INDEX !<The solver index to get the solver for.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<On return, a pointer to the solver. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
- 
-    ENTERS("PROBLEM_SOLVER_GET_1",ERR,ERROR,*998)
-
-    IF(ASSOCIATED(PROBLEM)) THEN
-      IF(ASSOCIATED(SOLVER)) THEN
-        CALL FlagError("Solver is already associated.",ERR,ERROR,*998)
-      ELSE
-        CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
-        IF(ASSOCIATED(CONTROL_LOOP_ROOT)) THEN
-          NULLIFY(CONTROL_LOOP)
-          CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_IDENTIFIER,CONTROL_LOOP,ERR,ERROR,*999)
-          SOLVERS=>CONTROL_LOOP%SOLVERS
-          IF(ASSOCIATED(SOLVERS)) THEN
-            IF(SOLVER_INDEX>0.AND.SOLVER_INDEX<=SOLVERS%NUMBER_OF_SOLVERS) THEN
-              SOLVER=>SOLVERS%SOLVERS(SOLVER_INDEX)%PTR
-              IF(.NOT.ASSOCIATED(SOLVER)) CALL FlagError("Solvers solver is not associated.",ERR,ERROR,*999)
-            ELSE
-              LOCAL_ERROR="The specified solver index of "//TRIM(NUMBER_TO_VSTRING(SOLVER_INDEX,"*",ERR,ERROR))// &
-                & " is invalid. The index must be > 0 and <= "// &
-                & TRIM(NUMBER_TO_VSTRING(SOLVERS%NUMBER_OF_SOLVERS,"*",ERR,ERROR))//"."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Control loop solvers is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Problem control loop is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Problem is not associated.",ERR,ERROR,*998)
-    ENDIF
-    
-    EXITS("PROBLEM_SOLVER_GET_1")
-    RETURN
-999 NULLIFY(SOLVER)
-998 ERRORSEXITS("PROBLEM_SOLVER_GET_1",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE PROBLEM_SOLVER_GET_1
-  
-  !
-  !================================================================================================================================
-  !
-
   !>Monitors the problem nonlinear solve
   SUBROUTINE Problem_SolverNonlinearMonitor(solver,iterationNumber,residualNorm,err,error,*)
 
@@ -3646,8 +3285,8 @@ CONTAINS
     TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: interpolatedPoints(:)
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: interpolatedPoint
     TYPE(DecompositionElementDataPointsType), POINTER :: decompositionElementData !<A pointer to the decomposition data point topology
-    TYPE(DATA_POINTS_TYPE), POINTER :: interfaceDatapoints
-    TYPE(DATA_PROJECTION_TYPE), POINTER :: dataProjection
+    TYPE(DataPointsType), POINTER :: interfaceDatapoints
+    TYPE(DataProjectionType), POINTER :: dataProjection
 
     TYPE(PROBLEM_TYPE), POINTER :: problem
 
@@ -3757,7 +3396,7 @@ CONTAINS
               interfaceCondition=>solverMapping%INTERFACE_CONDITIONS(interfaceConditionIdx)%PTR
               interface=>solverMapping%INTERFACE_CONDITIONS(interfaceConditionIdx)%PTR%interface
               pointsConnectivity=>interface%pointsConnectivity
-              interfaceDatapoints=>interface%DATA_POINTS
+              interfaceDatapoints=>pointsConnectivity%dataPoints
               IF(ASSOCIATED(pointsConnectivity)) THEN
                 DO coupledMeshIdx=1,interface%NUMBER_OF_COUPLED_MESHES
                   filenameOutput=directory//"PointsConnectivity"//TRIM(NUMBER_TO_VSTRING(coupledMeshIdx,"*",err,error))// &
@@ -3791,7 +3430,7 @@ CONTAINS
                   CALL FIELD_INTERPOLATED_POINTS_INITIALISE(interpolationParameters,interpolatedPoints,err,error,*999, &
                     & FIELD_GEOMETRIC_COMPONENTS_TYPE)
                   interpolatedPoint=>interpolatedPoints(FIELD_U_VARIABLE_TYPE)%PTR
-                  dataProjection=>interfaceDatapoints%DATA_PROJECTIONS(coupledMeshIdx+1)%PTR
+                  dataProjection=>interfaceDatapoints%dataProjections%dataProjections(coupledMeshIdx+1)%PTR
                   DO interfaceElementNumber=1,SIZE(pointsConnectivity%coupledElements,1)
                     decompositionElementData=>interfaceCondition%LAGRANGE%LAGRANGE_FIELD%DECOMPOSITION%TOPOLOGY%dataPoints% &
                       & elementDataPoint(interfaceElementNumber)
@@ -3799,7 +3438,7 @@ CONTAINS
                       globalDataPointNumber=decompositionElementData%dataIndices(dataPointIdx)%globalNumber
                       WRITE(IUNIT,'(1X,''Node:'',I4)') globalDataPointNumber
                       DO component=1,3
-                        WRITE(IUNIT,'(1X,3E25.15)') interfaceDatapoints%DATA_POINTS(globalDataPointNumber)%position(component)
+                        WRITE(IUNIT,'(1X,3E25.15)') interfaceDatapoints%dataPoints(globalDataPointNumber)%position(component)
                       ENDDO !component
                       coupledMeshElementNumber=pointsConnectivity%pointsConnectivity(globalDataPointNumber,coupledMeshIdx)% &
                         & coupledMeshElementNumber
@@ -3813,12 +3452,12 @@ CONTAINS
                         & coupledMeshIdx)%reducedXi(:),interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE) !Interpolate contact data points on each surface
                       DO component=1,3
                         WRITE(IUNIT,'(1X,3E25.15)') interpolatedPoint%VALUES(component,NO_PART_DERIV) - &
-                          & interfaceDatapoints%DATA_POINTS(globalDataPointNumber)%position(component)
+                          & interfaceDatapoints%dataPoints(globalDataPointNumber)%position(component)
                       ENDDO !component
                       DO component=1,3
                         WRITE(IUNIT,'(1X,3E25.15)') interpolatedPoint%VALUES(component,NO_PART_DERIV)
                       ENDDO !component
-                      WRITE(IUNIT,'(1X,I2)') dataProjection%DATA_PROJECTION_RESULTS(globalDataPointNumber)%EXIT_TAG
+                      WRITE(IUNIT,'(1X,I2)') dataProjection%dataProjectionResults(globalDataPointNumber)%exitTag
                     ENDDO !dataPointIdx
                   ENDDO !interfaceElementNumber
                   CALL FIELD_INTERPOLATION_PARAMETERS_FINALISE(interpolationParameters,err,error,*999)
@@ -3994,42 +3633,6 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Problem_SpecificationSizeGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Finds and returns in PROBLEM a pointer to the problem identified by USER_NUMBER. If no problem with that USER_NUMBER exists PROBLEM is left nullified.
-  SUBROUTINE PROBLEM_USER_NUMBER_FIND(USER_NUMBER,PROBLEM,ERR,ERROR,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number to find.
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<On return a pointer to the problem with the given user number. If no problem with that user number exists then the pointer is returned as NULL. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    INTEGER(INTG) :: problem_idx
-
-    ENTERS("PROBLEM_USER_NUMBER_FIND",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(PROBLEM)) THEN
-      CALL FlagError("Problem is already associated.",ERR,ERROR,*999)
-    ELSE
-      problem_idx=1
-      DO WHILE(problem_idx<=PROBLEMS%NUMBER_OF_PROBLEMS.AND..NOT.ASSOCIATED(PROBLEM))
-        IF(PROBLEMS%PROBLEMS(problem_idx)%PTR%USER_NUMBER==USER_NUMBER) THEN
-          PROBLEM=>PROBLEMS%PROBLEMS(problem_idx)%PTR
-        ELSE
-          problem_idx=problem_idx+1
-        ENDIF
-      ENDDO
-    ENDIF
-    
-    EXITS("PROBLEM_USER_NUMBER_FIND")
-    RETURN
-999 ERRORSEXITS("PROBLEM_USER_NUMBER_FIND",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE PROBLEM_USER_NUMBER_FIND
 
   !
   !================================================================================================================================

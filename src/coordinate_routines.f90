@@ -46,6 +46,7 @@ MODULE COORDINATE_ROUTINES
 
   USE BASE_ROUTINES
   USE CONSTANTS
+  USE CoordinateSystemAccessRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE KINDS
@@ -95,11 +96,6 @@ MODULE COORDINATE_ROUTINES
   !>@}
   
   !Module types
-
-  TYPE COORDINATE_SYSTEMS_TYPE
-    INTEGER(INTG) :: NUMBER_OF_COORDINATE_SYSTEMS
-    TYPE(COORDINATE_SYSTEM_PTR_TYPE), POINTER :: COORDINATE_SYSTEMS(:)
-  END TYPE COORDINATE_SYSTEMS_TYPE
   
   !Module variables
 
@@ -110,8 +106,6 @@ MODULE COORDINATE_ROUTINES
     &    "Prolate Spheroidal   ", &
     &    "Oblate Spheroidal    " /)
 
-  TYPE(COORDINATE_SYSTEMS_TYPE) :: COORDINATE_SYSTEMS
-  
   !Interfaces
 
   !>COORDINATE_CONVERT_FROM_RC performs a coordinate transformation from a rectangular cartesian coordinate at the point with
@@ -188,8 +182,6 @@ MODULE COORDINATE_ROUTINES
   PUBLIC COORDINATE_SYSTEM_DESTROY
 
   PUBLIC COORDINATE_DERIVATIVE_CONVERT_TO_RC
-
-  PUBLIC COORDINATE_SYSTEM_USER_NUMBER_FIND
   
   PUBLIC COORDINATE_SYSTEMS_INITIALISE,COORDINATE_SYSTEMS_FINALISE
 
@@ -1176,40 +1168,7 @@ CONTAINS
     RETURN 1
   END SUBROUTINE COORDINATE_SYSTEM_NORMAL_CALCULATE
 
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the coordinate system dimension. 
-  SUBROUTINE COORDINATE_SYSTEM_DIMENSION_GET(COORDINATE_SYSTEM,NUMBER_OF_DIMENSIONS,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to get the dimension for
-    INTEGER(INTG), INTENT(OUT) :: NUMBER_OF_DIMENSIONS !<On return, the number of dimensions in the coordinate system.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-
-    ENTERS("COORDINATE_SYSTEM_DIMENSION_GET",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
-      IF(COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED) THEN
-        NUMBER_OF_DIMENSIONS=COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS
-      ELSE
-        CALL FlagError("Coordinate system has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Coordinate system is not associated.",ERR,ERROR,*999)
-    ENDIF
-   
-    EXITS("COORDINATE_SYSTEM_DIMENSION_GET")
-    RETURN
-999 ERRORSEXITS("COORDINATE_SYSTEM_DIMENSION_GET",ERR,ERROR)
-    RETURN 1
-
-  END SUBROUTINE COORDINATE_SYSTEM_DIMENSION_GET
-
-  !
+   !
   !================================================================================================================================
   !
 
@@ -1776,15 +1735,15 @@ CONTAINS
           &   0.0_DP,0.0_DP,1.0_DP/), &
           & (/3,3/))
         
-        ALLOCATE(NEW_COORDINATE_SYSTEMS(COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS+1),STAT=ERR)
+        ALLOCATE(NEW_COORDINATE_SYSTEMS(coordinateSystems%numberOfCoordinateSystems+1),STAT=ERR)
         IF(ERR/=0) CALL FlagError("Could not allocate new coordinate systems.",ERR,ERROR,*999)
-        DO coord_system_idx=1,COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS
-          NEW_COORDINATE_SYSTEMS(coord_system_idx)%PTR=>COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(coord_system_idx)%PTR
+        DO coord_system_idx=1,coordinateSystems%numberOfCoordinateSystems
+          NEW_COORDINATE_SYSTEMS(coord_system_idx)%ptr=>coordinateSystems%coordinateSystems(coord_system_idx)%ptr
         ENDDO !coord_system_idx
-        NEW_COORDINATE_SYSTEMS(COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS+1)%PTR=>NEW_COORDINATE_SYSTEM
-        DEALLOCATE(COORDINATE_SYSTEMS%COORDINATE_SYSTEMS)
-        COORDINATE_SYSTEMS%COORDINATE_SYSTEMS=>NEW_COORDINATE_SYSTEMS
-        COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS=COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS+1
+        NEW_COORDINATE_SYSTEMS(coordinateSystems%numberOfCoordinateSystems+1)%ptr=>NEW_COORDINATE_SYSTEM
+        DEALLOCATE(coordinateSystems%coordinateSystems)
+        coordinateSystems%coordinateSystems=>NEW_COORDINATE_SYSTEMS
+        coordinateSystems%numberOfCoordinateSystems=coordinateSystems%numberOfCoordinateSystems+1
         
         COORDINATE_SYSTEM=>NEW_COORDINATE_SYSTEM
       ENDIF
@@ -1823,15 +1782,15 @@ CONTAINS
     
     IF(DIAGNOSTICS1) THEN
       CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"Number of coordinate systems = ", &
-        & COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS,ERR,ERROR,*999)
-      DO coord_system_idx=1,COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS
+        & coordinateSystems%numberOfCoordinateSystems,ERR,ERROR,*999)
+      DO coord_system_idx=1,coordinateSystems%numberOfCoordinateSystems
         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Coordinate system : ",coord_system_idx,ERR,ERROR,*999)
         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number = ", &
-          & COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(coord_system_idx)%PTR%USER_NUMBER,ERR,ERROR,*999)
+          & coordinateSystems%coordinateSystems(coord_system_idx)%ptr%USER_NUMBER,ERR,ERROR,*999)
         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Type = ", &
-          & COORDINATE_SYSTEM_TYPE_STRING(COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(coord_system_idx)%PTR%TYPE),ERR,ERROR,*999)
+          & COORDINATE_SYSTEM_TYPE_STRING(coordinateSystems%coordinateSystems(coord_system_idx)%ptr%TYPE),ERR,ERROR,*999)
         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of dimensions = ", &
-          & COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(coord_system_idx)%PTR%NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
+          & coordinateSystems%coordinateSystems(coord_system_idx)%ptr%NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
       ENDDO !coord_system_idx
     ENDIF
     
@@ -1865,21 +1824,21 @@ CONTAINS
       ELSE
         FOUND=.FALSE.
         new_coord_system_no=0
-        ALLOCATE(NEW_COORDINATE_SYSTEMS(COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS-1),STAT=ERR)
+        ALLOCATE(NEW_COORDINATE_SYSTEMS(coordinateSystems%numberOfCoordinateSystems-1),STAT=ERR)
         IF(ERR/=0) CALL FlagError("Could not allocate new coordianate systems.",ERR,ERROR,*999)
-        DO coord_system_no=1,COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS
-          IF(COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(coord_system_no)%PTR%USER_NUMBER==COORDINATE_SYSTEM%USER_NUMBER) THEN
+        DO coord_system_no=1,coordinateSystems%numberOfCoordinateSystems
+          IF(coordinateSystems%coordinateSystems(coord_system_no)%ptr%USER_NUMBER==COORDINATE_SYSTEM%USER_NUMBER) THEN
             FOUND=.TRUE.
           ELSE
             new_coord_system_no=new_coord_system_no+1
-            NEW_COORDINATE_SYSTEMS(new_coord_system_no)%PTR=>COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(coord_system_no)%PTR
+            NEW_COORDINATE_SYSTEMS(new_coord_system_no)%ptr=>coordinateSystems%coordinateSystems(coord_system_no)%ptr
           ENDIF
         ENDDO !coord_system_no
         IF(FOUND) THEN
           CALL COORDINATE_SYSTEM_FINALISE(COORDINATE_SYSTEM,ERR,ERROR,*999)
-          DEALLOCATE(COORDINATE_SYSTEMS%COORDINATE_SYSTEMS)
-          COORDINATE_SYSTEMS%COORDINATE_SYSTEMS=>NEW_COORDINATE_SYSTEMS
-          COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS=COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS-1
+          DEALLOCATE(coordinateSystems%coordinateSystems)
+          coordinateSystems%coordinateSystems=>NEW_COORDINATE_SYSTEMS
+          coordinateSystems%numberOfCoordinateSystems=coordinateSystems%numberOfCoordinateSystems-1
         ELSE
           DEALLOCATE(NEW_COORDINATE_SYSTEMS)
           CALL FlagError("Coordinate system number to destroy does not exist.",ERR,ERROR,*999)
@@ -4238,44 +4197,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the coordinate system identified by USER_NUMBER. If a coordinate system with that number is not
-  !>found then COORDINATE_SYSTEM is set to NULL.
-  SUBROUTINE COORDINATE_SYSTEM_USER_NUMBER_FIND(USER_NUMBER,COORDINATE_SYSTEM,ERR,ERROR,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the coordinate system to find.
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<On exit, a pointer to the coordinate system with the specified user number if it exists. If no coordinate system has the specified user number the pointer is returned as NULL. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    INTEGER(INTG) :: coord_system_idx
-    
-    ENTERS("COORDINATE_SYSTEM_USER_NUMBER_FIND",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
-      CALL FlagError("Coordinate_system is already associated.",ERR,ERROR,*999)
-    ELSE
-      NULLIFY(COORDINATE_SYSTEM)
-      coord_system_idx=1
-      DO WHILE(coord_system_idx<=COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS.AND..NOT.ASSOCIATED(COORDINATE_SYSTEM))
-        IF(COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(coord_system_idx)%PTR%USER_NUMBER==USER_NUMBER) THEN
-          COORDINATE_SYSTEM=>COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(coord_system_idx)%PTR
-        ELSE
-          coord_system_idx=coord_system_idx+1
-        ENDIF
-      ENDDO
-    ENDIF
-    
-    EXITS("COORDINATE_SYSTEM_USER_NUMBER_FIND")
-    RETURN
-999 ERRORSEXITS("COORDINATE_SYSTEM_USER_NUMBER_FIND",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE COORDINATE_SYSTEM_USER_NUMBER_FIND
-
-  !
-  !================================================================================================================================
-  !
-
   !>Finalises the coordinate systems and destroys all coordinate systems.
   SUBROUTINE COORDINATE_SYSTEMS_FINALISE(ERR,ERROR,*)
 
@@ -4287,11 +4208,11 @@ CONTAINS
     
     ENTERS("COORDINATE_SYSTEMS_FINALISE",ERR,ERROR,*999)
 
-    DO coord_system_idx=1,COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS
-      CALL COORDINATE_SYSTEM_FINALISE(COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(coord_system_idx)%PTR,ERR,ERROR,*999)
+    DO coord_system_idx=1,coordinateSystems%numberOfCoordinateSystems
+      CALL COORDINATE_SYSTEM_FINALISE(coordinateSystems%coordinateSystems(coord_system_idx)%ptr,ERR,ERROR,*999)
     ENDDO !coord_system_idx
-    DEALLOCATE(COORDINATE_SYSTEMS%COORDINATE_SYSTEMS)
-    COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS=0
+    DEALLOCATE(coordinateSystems%coordinateSystems)
+    coordinateSystems%numberOfCoordinateSystems=0
     
     EXITS("COORDINATE_SYSTEMS_FINALISE")
     RETURN
@@ -4314,23 +4235,23 @@ CONTAINS
     ENTERS("COORDINATE_SYSTEMS_INITIALISE",ERR,ERROR,*999)
 
     !Allocate the coordinate systems
-    ALLOCATE(COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(1),STAT=ERR)
+    ALLOCATE(coordinateSystems%coordinateSystems(1),STAT=ERR)
     IF(ERR/=0) CALL FlagError("Could not allocate coordinate systems.",ERR,ERROR,*999)
     !Create the default RC World cooordinate system
-    ALLOCATE(COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(1)%PTR,STAT=ERR)
+    ALLOCATE(coordinateSystems%coordinateSystems(1)%ptr,STAT=ERR)
     IF(ERR/=0) CALL FlagError("Could not allocate world coordinate system.",ERR,ERROR,*999)
-    COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(1)%PTR%USER_NUMBER=0
-    COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(1)%PTR%TYPE=COORDINATE_RECTANGULAR_CARTESIAN_TYPE
-    COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(1)%PTR%NUMBER_OF_DIMENSIONS=3
-    COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(1)%PTR%FOCUS=1.0_DP    
-    COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(1)%PTR%ORIGIN=(/0.0_DP,0.0_DP,0.0_DP/)
-    COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(1)%PTR%ORIENTATION=RESHAPE(&
+    coordinateSystems%coordinateSystems(1)%ptr%USER_NUMBER=0
+    coordinateSystems%coordinateSystems(1)%ptr%TYPE=COORDINATE_RECTANGULAR_CARTESIAN_TYPE
+    coordinateSystems%coordinateSystems(1)%ptr%NUMBER_OF_DIMENSIONS=3
+    coordinateSystems%coordinateSystems(1)%ptr%FOCUS=1.0_DP    
+    coordinateSystems%coordinateSystems(1)%ptr%ORIGIN=(/0.0_DP,0.0_DP,0.0_DP/)
+    coordinateSystems%coordinateSystems(1)%ptr%ORIENTATION=RESHAPE(&
       & (/1.0_DP,0.0_DP,0.0_DP, &
       &   0.0_DP,1.0_DP,0.0_DP, &
       &   0.0_DP,0.0_DP,1.0_DP/), &
       & (/3,3/))    
-    COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(1)%PTR%COORDINATE_SYSTEM_FINISHED=.TRUE.
-    COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS=1
+    coordinateSystems%coordinateSystems(1)%ptr%COORDINATE_SYSTEM_FINISHED=.TRUE.
+    coordinateSystems%numberOfCoordinateSystems=1
    
     EXITS("COORDINATE_SYSTEMS_INITIALISE")
     RETURN

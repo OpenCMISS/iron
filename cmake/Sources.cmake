@@ -18,6 +18,7 @@ set(IRON_Fortran_SRC
     analytic_analysis_routines.f90
     base_routines.f90
     basis_routines.f90
+    basis_access_routines.f90
     #binary_file_f.f90
     biodomain_equation_routines.f90
     bioelectric_finite_elasticity_routines.f90
@@ -25,6 +26,7 @@ set(IRON_Fortran_SRC
     blas.f90
     boundary_condition_routines.f90
     Burgers_equation_routines.f90
+    cellml_access_routines.f90
     characteristic_equation_routines.f90
     classical_field_routines.f90
     cmiss_cellml.f90
@@ -37,11 +39,15 @@ set(IRON_Fortran_SRC
     computational_environment.f90
     constants.f90
     control_loop_routines.f90
+    control_loop_access_routines.f90
     coordinate_routines.f90
+    coordinate_access_routines.f90
     Darcy_equations_routines.f90
     Darcy_pressure_equations_routines.f90
     data_point_routines.f90
+    data_point_access_routines.f90
     data_projection_routines.f90
+    data_projection_access_routines.f90
     diffusion_advection_diffusion_routines.f90
     diffusion_diffusion_routines.f90
     diffusion_equation_routines.f90
@@ -56,8 +62,10 @@ set(IRON_Fortran_SRC
     equations_routines.f90
     equations_set_constants.f90
     equations_set_routines.f90
+    equations_set_access_routines.f90
     field_IO_routines.f90
     field_routines.f90
+    field_access_routines.f90
     finite_elasticity_Darcy_routines.f90
     finite_elasticity_fluid_pressure_routines.f90
     finite_elasticity_routines.f90
@@ -66,6 +74,7 @@ set(IRON_Fortran_SRC
     fluid_mechanics_routines.f90
     fsi_routines.f90
     generated_mesh_routines.f90
+    generated_mesh_access_routines.f90
     Hamilton_Jacobi_equations_routines.f90
     Helmholtz_equations_routines.f90
     #Helmholtz_TEMPLATE_equations_routines.f90
@@ -73,12 +82,14 @@ set(IRON_Fortran_SRC
     input_output.f90
     interface_conditions_constants.f90
     interface_conditions_routines.f90
+    interface_condition_access_routines.f90
     interface_equations_routines.f90
     interface_mapping_routines.f90
     interface_matrices_constants.f90
     interface_matrices_routines.f90
     interface_operators_routines.f90
     interface_routines.f90
+    interface_access_routines.f90
     iso_varying_string.f90
     kinds.f90
     lapack.f90
@@ -89,6 +100,7 @@ set(IRON_Fortran_SRC
     maths.f90
     matrix_vector.f90
     mesh_routines.f90
+    mesh_access_routines.f90
     monodomain_equations_routines.f90
     multi_compartment_transport_routines.f90
     multi_physics_routines.f90
@@ -100,12 +112,15 @@ set(IRON_Fortran_SRC
     Poisson_equations_routines.f90
     problem_constants.f90
     problem_routines.f90
+    problem_access_routines.f90
     reaction_diffusion_equation_routines.f90
     reaction_diffusion_IO_routines.f90
     region_routines.f90
+    region_access_routines.f90
     solver_mapping_routines.f90
     solver_matrices_routines.f90
     solver_routines.f90
+    solver_access_routines.f90
     sorting.f90
     Stokes_equations_routines.f90
     stree_equation_routines.f90

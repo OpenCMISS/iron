@@ -64,6 +64,7 @@ MODULE SOLVER_ROUTINES
   USE ISO_VARYING_STRING
   USE MATHS
   USE PROBLEM_CONSTANTS
+  USE SolverAccessRoutines
   USE SOLVER_MAPPING_ROUTINES
   USE SOLVER_MATRICES_ROUTINES
   USE STRINGS
@@ -397,15 +398,86 @@ MODULE SOLVER_ROUTINES
     MODULE PROCEDURE SOLVER_DYNAMIC_THETA_SET_DP
   END INTERFACE SOLVER_DYNAMIC_THETA_SET
 
+  INTERFACE Solver_DynamicThetaSet
+    MODULE PROCEDURE SOLVER_DYNAMIC_THETA_SET_DP1
+    MODULE PROCEDURE SOLVER_DYNAMIC_THETA_SET_DP
+  END INTERFACE Solver_DynamicThetaSet
+
   INTERFACE SOLVER_LABEL_GET
     MODULE PROCEDURE SOLVER_LABEL_GET_C
     MODULE PROCEDURE SOLVER_LABEL_GET_VS
   END INTERFACE SOLVER_LABEL_GET
   
+  INTERFACE Solver_LabelGet
+    MODULE PROCEDURE SOLVER_LABEL_GET_C
+    MODULE PROCEDURE SOLVER_LABEL_GET_VS
+  END INTERFACE Solver_LabelGet
+  
   INTERFACE SOLVER_LABEL_SET
     MODULE PROCEDURE SOLVER_LABEL_SET_C
     MODULE PROCEDURE SOLVER_LABEL_SET_VS
   END INTERFACE SOLVER_LABEL_SET
+  
+  INTERFACE Solver_LabelSet
+    MODULE PROCEDURE SOLVER_LABEL_SET_C
+    MODULE PROCEDURE SOLVER_LABEL_SET_VS
+  END INTERFACE Solver_LabelSet
+
+  INTERFACE Solver_LibraryTypeGet
+    MODULE PROCEDURE SOLVER_LIBRARY_TYPE_GET
+  END INTERFACE Solver_LibraryTypeGet
+
+  INTERFACE Solver_LibraryTypeSet
+    MODULE PROCEDURE SOLVER_LIBRARY_TYPE_SET
+  END INTERFACE Solver_LibraryTypeSet
+
+  INTERFACE Solver_TypeSet
+    MODULE PROCEDURE SOLVER_TYPE_SET
+  END INTERFACE Solver_TypeSet
+
+  INTERFACE SolverEquations_CreateFinish
+    MODULE PROCEDURE SOLVER_EQUATIONS_CREATE_FINISH
+  END INTERFACE SolverEquations_CreateFinish
+  
+  INTERFACE SolverEquations_CreateStart
+    MODULE PROCEDURE SOLVER_EQUATIONS_CREATE_START
+  END INTERFACE SolverEquations_CreateStart
+
+  INTERFACE SolverEquations_Destroy
+    MODULE PROCEDURE SOLVER_EQUATIONS_DESTROY
+  END INTERFACE SolverEquations_Destroy
+  
+  INTERFACE SolverEquations_EquationsSetAdd
+    MODULE PROCEDURE SOLVER_EQUATIONS_EQUATIONS_SET_ADD
+  END INTERFACE SolverEquations_EquationsSetAdd
+  
+  INTERFACE SolverEquations_InterfaceConditionAdd
+    MODULE PROCEDURE SOLVER_EQUATIONS_INTERFACE_CONDITION_ADD
+  END INTERFACE SolverEquations_InterfaceConditionAdd
+  
+  INTERFACE SolverEquations_LinearityTypeSet
+    MODULE PROCEDURE SOLVER_EQUATIONS_LINEARITY_TYPE_SET
+  END INTERFACE SolverEquations_LinearityTypeSet
+  
+  INTERFACE SolverEquations_SparsityTypeSet
+    MODULE PROCEDURE SOLVER_EQUATIONS_SPARSITY_TYPE_SET
+  END INTERFACE SolverEquations_SparsityTypeSet
+  
+  INTERFACE SolverEquations_TimeDependenceTypeSet
+    MODULE PROCEDURE SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET
+  END INTERFACE SolverEquations_TimeDependenceTypeSet
+  
+  INTERFACE Solvers_CreateStart
+    MODULE PROCEDURE SOLVERS_CREATE_START
+  END INTERFACE Solvers_CreateStart
+  
+  INTERFACE Solvers_CreateFinish
+    MODULE PROCEDURE SOLVERS_CREATE_FINISH
+  END INTERFACE Solvers_CreateFinish
+  
+  INTERFACE Solvers_NumberSet
+    MODULE PROCEDURE SOLVERS_NUMBER_SET
+  END INTERFACE Solvers_NumberSet
   
   PUBLIC SOLVER_NUMBER_OF_SOLVER_TYPES
   
@@ -494,8 +566,6 @@ MODULE SOLVER_ROUTINES
 
   PUBLIC CELLML_EQUATIONS_DESTROY
   
-  PUBLIC SOLVER_CELLML_EQUATIONS_GET
-
   PUBLIC SOLVER_DAE_SOLVER_TYPE_GET,SOLVER_DAE_SOLVER_TYPE_SET
 
   PUBLIC SOLVER_DAE_TIMES_SET,SOLVER_DAE_TIME_STEP_SET
@@ -504,7 +574,7 @@ MODULE SOLVER_ROUTINES
 
   PUBLIC Solver_DAECellMLRHSEvaluate
   
-  PUBLIC SOLVER_DESTROY
+  PUBLIC Solver_Destroy
   
   PUBLIC SOLVER_DYNAMIC_DEGREE_GET,SOLVER_DYNAMIC_DEGREE_SET
 
@@ -526,23 +596,35 @@ MODULE SOLVER_ROUTINES
 
   PUBLIC SOLVER_DYNAMIC_TIMES_SET
 
-  PUBLIC SOLVER_EQUATIONS_BOUNDARY_CONDITIONS_GET
+  PUBLIC SolverEquations_BoundaryConditionsCreateFinish,SolverEquations_BoundaryConditionsCreateStart
 
   PUBLIC SOLVER_EQUATIONS_CREATE_FINISH,SOLVER_EQUATIONS_CREATE_START
 
+  PUBLIC SolverEquations_CreateFinish,SolverEquations_CreateStart
+
   PUBLIC SOLVER_EQUATIONS_DESTROY
+
+  PUBLIC SolverEquations_Destroy
   
   PUBLIC SOLVER_EQUATIONS_EQUATIONS_SET_ADD
 
+  PUBLIC SolverEquations_EquationsSetAdd
+
   PUBLIC SOLVER_EQUATIONS_INTERFACE_CONDITION_ADD
+
+  PUBLIC SolverEquations_InterfaceConditionAdd
 
   PUBLIC SOLVER_EQUATIONS_LINEARITY_TYPE_SET
 
+  PUBLIC SolverEquations_LinearityTypeSet
+
   PUBLIC SOLVER_EQUATIONS_SPARSITY_TYPE_SET
 
-  PUBLIC SolverEquations_BoundaryConditionsCreateFinish,SolverEquations_BoundaryConditionsCreateStart
+  PUBLIC SolverEquations_SparsityTypeSet
 
   PUBLIC SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET
+
+  PUBLIC SolverEquations_TimeDependenceTypeSet
 
   PUBLIC SolverEquations_NumberOfMatricesGet
 
@@ -559,6 +641,8 @@ MODULE SOLVER_ROUTINES
   PUBLIC SOLVER_LABEL_GET,SOLVER_LABEL_SET
   
   PUBLIC SOLVER_LIBRARY_TYPE_GET,SOLVER_LIBRARY_TYPE_SET
+
+  PUBLIC Solver_LibraryTypeGet,Solver_LibraryTypeSet
 
   PUBLIC SOLVER_LINEAR_TYPE_SET
   
@@ -684,9 +768,13 @@ MODULE SOLVER_ROUTINES
   
   PUBLIC SOLVER_SOLVER_EQUATIONS_GET
 
+  PUBLIC Solver_SolverEquationsGet
+
   PUBLIC SOLVER_TIME_STEPPING_MONITOR
   
   PUBLIC SOLVER_TYPE_SET
+
+  PUBLIC Solver_TypeSet
 
   PUBLIC SOLVER_VARIABLES_DYNAMIC_FIELD_UPDATE
 
@@ -698,11 +786,17 @@ MODULE SOLVER_ROUTINES
 
   PUBLIC SOLVERS_CREATE_FINISH,SOLVERS_CREATE_START
 
-  PUBLIC SOLVERS_DESTROY
+  PUBLIC Solvers_CreateFinish,Solvers_CreateStart
+
+  PUBLIC Solvers_Destroy
 
   PUBLIC SOLVERS_NUMBER_SET
 
+  PUBLIC Solvers_NumberSet
+
   PUBLIC SOLVERS_SOLVER_GET
+
+  PUBLIC Solvers_SolverGet
 
   PUBLIC SOLVER_NEWTON_CELLML_EVALUATOR_CREATE,SOLVER_CELLML_EVALUATOR_FINALISE
 
@@ -938,44 +1032,6 @@ CONTAINS
    
   END SUBROUTINE CELLML_EQUATIONS_INITIALISE
         
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns a pointer to the CellML equations for a solver. \see OPENCMISS::CMISSSolverCellMLEquationsGet
-  SUBROUTINE SOLVER_CELLML_EQUATIONS_GET(SOLVER,CELLML_EQUATIONS,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver to get the CellML equations for
-    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: CELLML_EQUATIONS !<On exit, a pointer to the specified CellML equations. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
- 
-    ENTERS("SOLVER_CELLML_EQUATIONS_GET",ERR,ERROR,*998)
-
-    IF(ASSOCIATED(SOLVER)) THEN
-      IF(ASSOCIATED(CELLML_EQUATIONS)) THEN
-        CALL FlagError("CellML equations is already associated.",ERR,ERROR,*998)
-      ELSE
-        CELLML_EQUATIONS=>SOLVER%CELLML_EQUATIONS
-        IF(.NOT.ASSOCIATED(CELLML_EQUATIONS)) CALL FlagError("CellML equations is not associated.",ERR,ERROR,*999)
-      ENDIF
-      !ELSE
-        !CALL FlagError("Solver has not been finished.",ERR,ERROR,*998)
-      !ENDIF
-    ELSE
-      CALL FlagError("Solver is not associated.",ERR,ERROR,*998)
-    ENDIF
-       
-    EXITS("SOLVER_CELLML_EQUATIONS_GET")
-    RETURN
-999 NULLIFY(CELLML_EQUATIONS)
-998 ERRORSEXITS("SOLVER_CELLML_EQUATIONS_GET",ERR,ERROR)
-    RETURN 1
-    
-  END SUBROUTINE SOLVER_CELLML_EQUATIONS_GET
-  
   !
   !================================================================================================================================
   !
@@ -7117,45 +7173,6 @@ CONTAINS
     RETURN 1
    
   END SUBROUTINE SOLVER_EIGENPROBLEM_SOLVE
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the boundary conditions for solver equations. \see OPENCMISS_CMISSSolverEquationsBoundaryConditionsGet
-  SUBROUTINE SOLVER_EQUATIONS_BOUNDARY_CONDITIONS_GET(SOLVER_EQUATIONS,BOUNDARY_CONDITIONS,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS !<A pointer to the solver equations to get the boundary conditions for
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS !<On exit, a pointer to the boundary conditions for the specified solver equations. Must not be associated on entry
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-
-    ENTERS("SOLVER_EQUATIONS_BOUNDARY_CONDITIONS_GET",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-      IF(SOLVER_EQUATIONS%SOLVER_EQUATIONS_FINISHED) THEN
-        IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
-          CALL FlagError("Boundary conditions is already associated.",ERR,ERROR,*999)
-        ELSE
-          BOUNDARY_CONDITIONS=>SOLVER_EQUATIONS%BOUNDARY_CONDITIONS
-          IF(.NOT.ASSOCIATED(BOUNDARY_CONDITIONS)) CALL FlagError("Solver equations boundary conditions is not associated.", &
-            & ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Solver equations has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("SOLVER_EQUATIONS_BOUNDARY_CONDITIONS_GET")
-    RETURN
-999 ERRORSEXITS("SOLVER_EQUATIONS_BOUNDARY_CONDITIONS_GET",ERR,ERROR)
-    RETURN 1
-
-  END SUBROUTINE SOLVER_EQUATIONS_BOUNDARY_CONDITIONS_GET
 
   !
   !================================================================================================================================
@@ -21223,45 +21240,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the solver equations for a solver. \see OPENCMISS::CMISSSolverSolverEquationsGet
-  SUBROUTINE SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver to get the solver equations for
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS !<On exit, a pointer to the specified solver equations. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
- 
-    ENTERS("SOLVER_SOLVER_EQUATIONS_GET",ERR,ERROR,*998)
-
-    IF(ASSOCIATED(SOLVER)) THEN
-      IF(SOLVER%SOLVER_FINISHED) THEN 
-        IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-          CALL FlagError("Solver equations is already associated.",ERR,ERROR,*998)
-        ELSE
-          SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
-          IF(.NOT.ASSOCIATED(SOLVER_EQUATIONS)) CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Solver has not been finished.",ERR,ERROR,*998)
-      ENDIF
-    ELSE
-      CALL FlagError("Solver is not associated.",ERR,ERROR,*998)
-    ENDIF
-       
-    EXITS("SOLVER_SOLVER_EQUATIONS_GET")
-    RETURN
-999 NULLIFY(SOLVER_EQUATIONS)
-998 ERRORSEXITS("SOLVER_SOLVER_EQUATIONS_GET",ERR,ERROR)
-    RETURN 1
-    
-  END SUBROUTINE SOLVER_SOLVER_EQUATIONS_GET
-  
-  !
-  !================================================================================================================================
-  !
-
   !>Solve the problem. 
   RECURSIVE SUBROUTINE SOLVER_SOLVE(SOLVER,ERR,ERROR,*)
 
@@ -22865,55 +22843,6 @@ CONTAINS
     
   END SUBROUTINE SOLVERS_NUMBER_SET
   
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns a pointer to the specified solver in the list of solvers.
-  SUBROUTINE SOLVERS_SOLVER_GET(SOLVERS,SOLVER_INDEX,SOLVER,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS !<A pointer to the solvers to get the solver for
-    INTEGER(INTG), INTENT(IN) :: SOLVER_INDEX !<The specified solver to get
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<On exit, a pointer to the specified solver. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
- 
-    ENTERS("SOLVERS_SOLVER_GET",ERR,ERROR,*998)
-
-    IF(ASSOCIATED(SOLVERS)) THEN
-      IF(ASSOCIATED(SOLVER)) THEN
-        CALL FlagError("Solver is already associated.",ERR,ERROR,*998)
-      ELSE
-        NULLIFY(SOLVER)
-        IF(SOLVER_INDEX>0.AND.SOLVER_INDEX<=SOLVERS%NUMBER_OF_SOLVERS) THEN
-          IF(ALLOCATED(SOLVERS%SOLVERS)) THEN
-            SOLVER=>SOLVERS%SOLVERS(SOLVER_INDEX)%PTR
-            IF(.NOT.ASSOCIATED(SOLVER)) CALL FlagError("Solver is not associated.",ERR,ERROR,*999)
-          ELSE
-            CALL FlagError("Solvers solvers is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The specified solver index of "//TRIM(NumberToVString(SOLVER_INDEX,"*",ERR,ERROR))// &
-            & " is invalid. The solver index must be >= 1 and <= "// &
-            & TRIM(NumberToVString(SOLVERS%NUMBER_OF_SOLVERS,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Solvers is not associated.",ERR,ERROR,*998)
-    ENDIF
-       
-    EXITS("SOLVERS_SOLVER_GET")
-    RETURN
-999 NULLIFY(SOLVER)
-998 ERRORSEXITS("SOLVERS_SOLVER_GET",ERR,ERROR)
-    RETURN 1
-    
-  END SUBROUTINE SOLVERS_SOLVER_GET
-     
   !
   !================================================================================================================================
   !

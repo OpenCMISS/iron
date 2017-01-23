@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s): Thomas Klotz
+!> Contributor(s): Chris Bradley, Thomas Klotz
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -52,12 +52,14 @@ MODULE BIOELECTRIC_FINITE_ELASTICITY_ROUTINES
   USE BIODOMAIN_EQUATION_ROUTINES
   USE CONSTANTS
   USE CONTROL_LOOP_ROUTINES
+  USE ControlLoopAccessRoutines
   USE EQUATIONS_ROUTINES
   USE EQUATIONS_MAPPING_ROUTINES
   USE EQUATIONS_MATRICES_ROUTINES
   USE EQUATIONS_SET_CONSTANTS
   USE FIELD_IO_ROUTINES
   USE FIELD_ROUTINES
+  USE FieldAccessRoutines
   USE FINITE_ELASTICITY_ROUTINES
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
@@ -66,6 +68,7 @@ MODULE BIOELECTRIC_FINITE_ELASTICITY_ROUTINES
   USE PROBLEM_CONSTANTS
   USE STRINGS
   USE SOLVER_ROUTINES
+  USE SolverAccessRoutines
   USE TYPES
 
 #include "macros.h"
