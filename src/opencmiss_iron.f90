@@ -26944,27 +26944,15 @@ CONTAINS
     !Local variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(REGION_TYPE), POINTER :: region
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_EquationsSet_TimesGetNumber",err,error,*999)
 
-    NULLIFY(region)
     NULLIFY(equationsSet)
-    CALL REGION_USER_NUMBER_FIND(regionUserNumber,region,err,error,*999)
-    IF(ASSOCIATED(region)) THEN
-      CALL EQUATIONS_SET_USER_NUMBER_FIND(equationsSetUserNumber,region,equationsSet,err,error,*999)
-      IF(ASSOCIATED(equationsSet)) THEN
-        CALL EquationsSet_TimesGet(equationsSet,currentTime,deltaTime,err,error,*999)
-      ELSE
-        localError="An equations set with an user number of "//TRIM(NUMBER_TO_VSTRING(equationsSetUserNumber,"*",err,error))// &
-          & " does not exist on region number "//TRIM(NUMBER_TO_VSTRING(regionUserNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      END IF
-    ELSE
-      localError="A region with an user number of "//TRIM(NUMBER_TO_VSTRING(regionUserNumber,"*",err,error))//" does not exist."
-      CALL FlagError(localError,err,error,*999)
-    END IF
-
+    NULLIFY(region)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
+    CALL EquationsSet_TimesGet(equationsSet,currentTime,deltaTime,err,error,*999)
+ 
     EXITS("cmfe_EquationsSet_TimesGetNumber")
     RETURN
 999 ERRORS("cmfe_EquationsSet_TimesGetNumber",err,error)
@@ -27019,26 +27007,14 @@ CONTAINS
     !Local variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(REGION_TYPE), POINTER :: region
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_EquationsSet_TimesSetNumber",err,error,*999)
 
-    NULLIFY(region)
     NULLIFY(equationsSet)
-    CALL REGION_USER_NUMBER_FIND(regionUserNumber,region,err,error,*999)
-    IF(ASSOCIATED(region)) THEN
-      CALL EQUATIONS_SET_USER_NUMBER_FIND(equationsSetUserNumber,region,equationsSet,err,error,*999)
-      IF(ASSOCIATED(equationsSet)) THEN
-        CALL EquationsSet_TimesSet(equationsSet,currentTime,deltaTime,err,error,*999)
-      ELSE
-        localError="An equations set with an user number of "//TRIM(NUMBER_TO_VSTRING(equationsSetUserNumber,"*",err,error))// &
-          & " does not exist on region number "//TRIM(NUMBER_TO_VSTRING(regionUserNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      END IF
-    ELSE
-      localError="A region with an user number of "//TRIM(NUMBER_TO_VSTRING(regionUserNumber,"*",err,error))//" does not exist."
-      CALL FlagError(localError,err,error,*999)
-    END IF
+    NULLIFY(region)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
+    CALL EquationsSet_TimesSet(equationsSet,currentTime,deltaTime,err,error,*999)
 
     EXITS("cmfe_EquationsSet_TimesSetNumber")
     RETURN
