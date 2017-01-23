@@ -3170,6 +3170,18 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_EquationsSet_StrainInterpolateXiObj
   END INTERFACE cmfe_EquationsSet_StrainInterpolateXi
 
+  !>Returns the equations set current times
+  INTERFACE cmfe_EquationsSet_TimesGet
+    MODULE PROCEDURE cmfe_EquationsSet_TimesGetNumber
+    MODULE PROCEDURE cmfe_EquationsSet_TimesGetObj
+  END INTERFACE cmfe_EquationsSet_TimesGet
+
+  !>Sets/changes the equations set current times
+  INTERFACE cmfe_EquationsSet_TimesSet
+    MODULE PROCEDURE cmfe_EquationsSet_TimesSetNumber
+    MODULE PROCEDURE cmfe_EquationsSet_TimesSetObj
+  END INTERFACE cmfe_EquationsSet_TimesSet
+
   !>Gets the equations set analytic user parameter
   INTERFACE cmfe_EquationsSet_AnalyticUserParamGet
     MODULE PROCEDURE cmfe_EquationsSet_AnalyticUserParamGetNumber
@@ -3225,6 +3237,8 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_EquationsSet_SpecificationGet,cmfe_EquationsSet_SpecificationSizeGet
 
   PUBLIC cmfe_EquationsSet_StrainInterpolateXi
+
+  PUBLIC cmfe_EquationsSet_TimesGet,cmfe_EquationsSet_TimesSet
 
   PUBLIC cmfe_EquationsSet_AnalyticUserParamSet,cmfe_EquationsSet_AnalyticUserParamGet
 
@@ -5493,10 +5507,13 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE = &
     & PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE !<Coupled Finite Elasticity Navier Stokes moving mesh subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
 
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE = PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE !<Static finite elasticity subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE = PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE !<Quasistatic finite elasticity subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_CELLML_SUBTYPE = PROBLEM_FINITE_ELASTICITY_CELLML_SUBTYPE !<Quasistatic finite elasticity subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE = PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE !<Dynamic finite elasticity subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE = PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE !<Quasistatic finite elasticity with active subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE = PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE !<Finite elasticity with CellML subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE =  &
-    & PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE !<Quasistatic finite elasticity subtype \see OPENCMISS_QProblemSubtypes,OPENCMISS
+    & PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE !<Finite elasticity with growth and CellML subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
 
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_GUDUNOV_SPLIT_SUBTYPE = PROBLEM_MONODOMAIN_GUDUNOV_SPLIT_SUBTYPE !<Monodomain Gudunov split problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_STRANG_SPLIT_SUBTYPE = PROBLEM_MONODOMAIN_STRANG_SPLIT_SUBTYPE !<Monodomain Gudunov split problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
@@ -5642,7 +5659,10 @@ MODULE OpenCMISS_Iron
    & CMFE_PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,CMFE_PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
    & CMFE_PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE
 
-  PUBLIC CMFE_PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE,CMFE_PROBLEM_FINITE_ELASTICITY_CELLML_SUBTYPE, &
+  PUBLIC CMFE_PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE,CMFE_PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE, &
+    & CMFE_PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE
+
+  PUBLIC CMFE_PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE,CMFE_PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE, &
     & CMFE_PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE
   
 !!==================================================================================================================================
@@ -26363,6 +26383,156 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_EquationsSet_StrainInterpolateXiObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the equations set current times for an equations set identified by a user number.
+  SUBROUTINE cmfe_EquationsSet_TimesGetNumber(regionUserNumber,equationsSetUserNumber,currentTime,deltaTime,err)
+    !DLLEXPORT(cmfe_EquationsSet_TimesGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to get the times for.
+    INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to get the times for.
+    REAL(DP), INTENT(OUT) :: currentTime !<On return, the equations set current time.
+    REAL(DP), INTENT(OUT) :: deltaTime !<On return, the equations set current delta time.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("cmfe_EquationsSet_TimesGetNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(equationsSet)
+    CALL REGION_USER_NUMBER_FIND(regionUserNumber,region,err,error,*999)
+    IF(ASSOCIATED(region)) THEN
+      CALL EQUATIONS_SET_USER_NUMBER_FIND(equationsSetUserNumber,region,equationsSet,err,error,*999)
+      IF(ASSOCIATED(equationsSet)) THEN
+        CALL EquationsSet_TimesGet(equationsSet,currentTime,deltaTime,err,error,*999)
+      ELSE
+        localError="An equations set with an user number of "//TRIM(NUMBER_TO_VSTRING(equationsSetUserNumber,"*",err,error))// &
+          & " does not exist on region number "//TRIM(NUMBER_TO_VSTRING(regionUserNumber,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      END IF
+    ELSE
+      localError="A region with an user number of "//TRIM(NUMBER_TO_VSTRING(regionUserNumber,"*",err,error))//" does not exist."
+      CALL FlagError(localError,err,error,*999)
+    END IF
+
+    EXITS("cmfe_EquationsSet_TimesGetNumber")
+    RETURN
+999 ERRORS("cmfe_EquationsSet_TimesGetNumber",err,error)
+    EXITS("cmfe_EquationsSet_TimesGetNumber")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_EquationsSet_TimesGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the equations set current times for an equations set identified by an object.
+  SUBROUTINE cmfe_EquationsSet_TimesGetObj(equationsSet,currentTime,deltaTime,err)
+    !DLLEXPORT(cmfe_EquationsSet_TimesGetObj)
+
+    !Argument variables
+    TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<The equations set to get the times for.
+    REAL(DP), INTENT(OUT) :: currentTime !<On return, the equations set current time.
+    REAL(DP), INTENT(OUT) :: deltaTime !<On return, the equations set current delta time.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_EquationsSet_TimesGetObj",err,error,*999)
+
+    CALL EquationsSet_TimesGet(equationsSet%equationsSet,currentTime,deltaTime,err,error,*999)
+
+    EXITS("cmfe_EquationsSet_TimesGetObj")
+    RETURN
+999 ERRORS("cmfe_EquationsSet_TimesGetObj",err,error)
+    EXITS("cmfe_EquationsSet_TimesGetObj")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+    
+  END SUBROUTINE cmfe_EquationsSet_TimesGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the equations set current times for an equations set identified by a user number.
+  SUBROUTINE cmfe_EquationsSet_TimesSetNumber(regionUserNumber,equationsSetUserNumber,currentTime,deltaTime,err)
+    !DLLEXPORT(cmfe_EquationsSet_TimesSetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to set the times for.
+    INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to set the times for.
+    REAL(DP), INTENT(IN) :: currentTime !<The equations set current time to set.
+    REAL(DP), INTENT(IN) :: deltaTime !<The equations set current delta time to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("cmfe_EquationsSet_TimesSetNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(equationsSet)
+    CALL REGION_USER_NUMBER_FIND(regionUserNumber,region,err,error,*999)
+    IF(ASSOCIATED(region)) THEN
+      CALL EQUATIONS_SET_USER_NUMBER_FIND(equationsSetUserNumber,region,equationsSet,err,error,*999)
+      IF(ASSOCIATED(equationsSet)) THEN
+        CALL EquationsSet_TimesSet(equationsSet,currentTime,deltaTime,err,error,*999)
+      ELSE
+        localError="An equations set with an user number of "//TRIM(NUMBER_TO_VSTRING(equationsSetUserNumber,"*",err,error))// &
+          & " does not exist on region number "//TRIM(NUMBER_TO_VSTRING(regionUserNumber,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      END IF
+    ELSE
+      localError="A region with an user number of "//TRIM(NUMBER_TO_VSTRING(regionUserNumber,"*",err,error))//" does not exist."
+      CALL FlagError(localError,err,error,*999)
+    END IF
+
+    EXITS("cmfe_EquationsSet_TimesSetNumber")
+    RETURN
+999 ERRORS("cmfe_EquationsSet_TimesSetNumber",err,error)
+    EXITS("cmfe_EquationsSet_TimesSetNumber")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_EquationsSet_TimesSetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the equations set current times for an equations set identified by an object.
+  SUBROUTINE cmfe_EquationsSet_TimesSetObj(equationsSet,currentTime,deltaTime,err)
+    !DLLEXPORT(cmfe_EquationsSet_TimesSetObj)
+
+    !Argument variables
+    TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<The equations set to set the times for.
+    REAL(DP), INTENT(IN) :: currentTime !<The equations set current time to set.
+    REAL(DP), INTENT(IN) :: deltaTime !<The equations set current delta time to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_EquationsSet_TimesSetObj",err,error,*999)
+
+    CALL EquationsSet_TimesSet(equationsSet%equationsSet,currentTime,deltaTime,err,error,*999)
+
+    EXITS("cmfe_EquationsSet_TimesSetObj")
+    RETURN
+999 ERRORS("cmfe_EquationsSet_TimesSetObj",err,error)
+    EXITS("cmfe_EquationsSet_TimesSetObj")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+    
+  END SUBROUTINE cmfe_EquationsSet_TimesSetObj
 
 !!==================================================================================================================================
 !!

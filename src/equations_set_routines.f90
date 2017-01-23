@@ -156,6 +156,8 @@ MODULE EQUATIONS_SET_ROUTINES
   
   PUBLIC EQUATIONS_SET_ANALYTIC_USER_PARAM_SET,EQUATIONS_SET_ANALYTIC_USER_PARAM_GET
 
+  PUBLIC EquationsSet_TimesGet,EquationsSet_TimesSet
+
 CONTAINS
 
   !
@@ -3626,6 +3628,8 @@ CONTAINS
       EQUATIONS_SET%EQUATIONS_SET_FINISHED=.FALSE.
       NULLIFY(EQUATIONS_SET%EQUATIONS_SETS)
       NULLIFY(EQUATIONS_SET%REGION)
+      EQUATIONS_SET%currentTime=0.0_DP
+      EQUATIONS_SET%deltaTime=0.0_DP
       EQUATIONS_SET%SOLUTION_METHOD=0
       CALL EQUATIONS_SET_GEOMETRY_INITIALISE(EQUATIONS_SET,ERR,ERROR,*999)
       CALL EQUATIONS_SET_DEPENDENT_INITIALISE(EQUATIONS_SET,ERR,ERROR,*999)
@@ -5692,7 +5696,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the solution method for an equations set. \see OPENCMISS::CMISSEquationsSetSolutionMethodSet
+  !>Sets/changes the solution method for an equations set. \see OpenCMISS::cmfe_EquationsSet_SolutionMethodSet
   SUBROUTINE EQUATIONS_SET_SOLUTION_METHOD_SET(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*)
 
     !Argument variables
@@ -5758,7 +5762,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the solution method for an equations set. \see OPENCMISS::CMISSEquationsSetSolutionMethodGet
+  !>Returns the solution method for an equations set. \see OpenCMISS::cmfe_EquationsSet_SolutionMethodGet
   SUBROUTINE EQUATIONS_SET_SOLUTION_METHOD_GET(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*)
 
     !Argument variables
@@ -6131,6 +6135,69 @@ CONTAINS
     
   END SUBROUTINE EquationsSet_SpecificationSizeGet
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the current times for an equations set. \see OPENCMISS::cmfe_EquationsSet_TimesGet
+  SUBROUTINE EquationsSet_TimesGet(equationsSet,currentTime,deltaTime,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the times for
+    REAL(DP), INTENT(OUT) :: currentTime !<The current time for the equations set to get.
+    REAL(DP), INTENT(OUT) :: deltaTime !<The current time incremenet for the equations set to get
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("EquationsSet_TimesGet",err,error,*999) 
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.equationsSet%EQUATIONS_SET_FINISHED) CALL FlagError("Equations set has not been finished.",err,error,*999)
+
+    currentTime=equationsSet%currentTime
+    deltaTime=equationsSet%deltaTime
+      
+    EXITS("EquationsSet_TimesGet")
+    RETURN
+999 ERRORSEXITS("EquationsSet_TimesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_TimesGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the current times for an equations set. \see OPENCMISS::cmfe_EquationsSet_TimesSet
+  SUBROUTINE EquationsSet_TimesSet(equationsSet,currentTime,deltaTime,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the times for
+    REAL(DP), INTENT(IN) :: currentTime !<The current time for the equations set to set.
+    REAL(DP), INTENT(IN) :: deltaTime !<The current time incremenet for the equations set to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("EquationsSet_TimesSet",err,error,*999) 
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.equationsSet%EQUATIONS_SET_FINISHED) CALL FlagError("Equations set has not been finished.",err,error,*999)
+    IF(currentTime<0.0_DP) CALL FlagError("Invalid current time. The time must be >= zero.",err,error,*999)
+
+    equationsSet%currentTime=currentTime
+    equationsSet%deltaTime=deltaTime
+      
+    EXITS("EquationsSet_TimesSet")
+    RETURN
+999 ERRORSEXITS("EquationsSet_TimesSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_TimesSet
+  
   !
   !================================================================================================================================
   !
