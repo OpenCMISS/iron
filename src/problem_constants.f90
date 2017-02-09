@@ -313,5 +313,23 @@ MODULE PROBLEM_CONSTANTS
   INTEGER(INTG), PARAMETER :: SOLVER_EQUATIONS_SECOND_ORDER_DYNAMIC=4 !<Solver equations are second order dynamic \see PROBLEM_CONSTANTS_EquationTimeDependenceTypes,PROBLEM_CONSTANTS
   !>@}
 
+  
+  !> \addtogroup PROBLEM_CONSTANTS_CellMLEquationsLinearityTypes OpenCMISS::Iron::CellMLEquationsLinearityTypes
+  !> \brief The CellML equations linearity types 
+  !> \see PROBLEM_CONSTANTS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CELLML_EQUATIONS_LINEAR=1 !<CellML equations are linear \see PROBLEM_CONSTANTS_CellMLEquationLinearityTypes,PROBLEM_CONSTANTS
+  INTEGER(INTG), PARAMETER :: CELLML_EQUATIONS_NONLINEAR=2 !<CellML equations are nonlinear \see PROBLEM_CONSTANTS_CellMLEquationLinearityTypes,PROBLEM_CONSTANTS
+  !>@}
+
+  !> \addtogroup PROBLEM_CONSTANTS_CellMLEquationsTimeDependenceTypes OpenCMISS:Iron::CellMLEquationsTimeDependenceTypes
+  !> \brief The CellML equations time dependence types 
+  !> \see PROBLEM_CONSTANTS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CELLML_EQUATIONS_STATIC=1 !<CellML equations are static \see PROBLEM_CONSTANTS_CellMLEquationTimeDependenceTypes,PROBLEM_CONSTANTS
+  INTEGER(INTG), PARAMETER :: CELLML_EQUATIONS_QUASISTATIC=2 !<CellML equations are quasistatic \see PROBLEM_CONSTANTS_CellMLEquationTimeDependenceTypes,PROBLEM_CONSTANTS
+  INTEGER(INTG), PARAMETER :: CELLML_EQUATIONS_DYNAMIC=3 !<CellML equations are dynamic \see PROBLEM_CONSTANTS_CellMLEquationTimeDependenceTypes,PROBLEM_CONSTANTS
+  !>@}
+
    
 END MODULE PROBLEM_CONSTANTS

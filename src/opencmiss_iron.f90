@@ -1014,6 +1014,12 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_ExtractErrorMessageVS
   END INTERFACE cmfe_ExtractErrorMessage
 
+  !>Extracts the OpenCMISS error stack.
+  INTERFACE cmfe_ExtractErrorStack
+    MODULE PROCEDURE cmfe_ExtractErrorStackC
+    MODULE PROCEDURE cmfe_ExtractErrorStackVS
+  END INTERFACE cmfe_ExtractErrorStack
+
   !>Gets the random seeds for OpenCMISS.
   INTERFACE cmfe_RandomSeedsGet
     MODULE PROCEDURE cmfe_RandomSeedsGet0
@@ -1030,7 +1036,7 @@ MODULE OpenCMISS_Iron
 
   PUBLIC cmfe_ErrorHandlingModeGet,cmfe_ErrorHandlingModeSet
 
-  PUBLIC cmfe_ExtractErrorMessage
+  PUBLIC cmfe_ExtractErrorMessage,cmfe_ExtractErrorStack
 
   PUBLIC cmfe_RandomSeedsGet,cmfe_RandomSeedsSizeGet,cmfe_RandomSeedsSet
 
@@ -2619,7 +2625,9 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTITUTIVE_LAW_IN_CELLML_EVALUATE_SUBTYPE = &
     & EQUATIONS_SET_CONSTITUTIVE_LAW_IN_CELLML_EVALUATE_SUBTYPE !<In CellML evaluated incompressible material law for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE = EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE !<Rubin rate based smooth model for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE = EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE !<Rubin compressible rate based smooth model for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE = EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE !<Rubin rate based growth model for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE = EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE !<Rubin compressible rate based growth model for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTIT_AND_GROWTH_LAW_IN_CELLML_SUBTYPE = &
     & EQUATIONS_SET_CONSTITUTIVE_AND_GROWTH_LAW_IN_CELLML_SUBTYPE !<CellML evaluated growth and constituative material law for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE = &
@@ -3085,7 +3093,8 @@ MODULE OpenCMISS_Iron
     & CMFE_EQUATIONS_SET_CONSTIT_AND_GROWTH_LAW_IN_CELLML_SUBTYPE, &
     & CMFE_EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
     & CMFE_EQUATIONS_SET_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
-    & CMFE_EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,CMFE_EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE
+    & CMFE_EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,CMFE_EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE,CMFE_EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE
 
   PUBLIC CMFE_EQUATIONS_SET_FITTING_NO_SMOOTHING,CMFE_EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING, &
     & CMFE_EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING,CMFE_EQUATIONS_SET_FITTING_STRAIN_ENERGY_SMOOTHING
@@ -4993,6 +5002,13 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_DECOMPOSITION_CALCULATED_TYPE = DECOMPOSITION_CALCULATED_TYPE !<The element decomposition is calculated by graph partitioning. \see OPENCMISS_DecompositionTypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_DECOMPOSITION_USER_DEFINED_TYPE = DECOMPOSITION_USER_DEFINED_TYPE !<The user will set the element decomposition. \see OPENCMISS_DecompositionTypes,OPENCMISS
   !>@}
+  !> \addtogroup OPENCMISS_MeshBoundaryTypes OpenCMISS::Iron::Mesh::MeshBoundaryTypes
+  !> \brief The boundary type parameters for a mesh domain
+  !> \see OpenCMISS::Iron::Mesh,OPENCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_MESH_OFF_DOMAIN_BOUNDARY = MESH_OFF_DOMAIN_BOUNDARY !<The node/element is not on the mesh domain boundary \see OPENCMISS_MeshBoundaryTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_MESH_ON_DOMAIN_BOUNDARY = MESH_ON_DOMAIN_BOUNDARY !<The node/element is on the mesh domain boundary \see OPENCMISS_MeshBoundaryTypes,OPENCMISS
+  !>@}
   !>@}
 
   !Module types
@@ -5171,6 +5187,12 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_MeshElements_CreateStartObj
   END INTERFACE cmfe_MeshElements_CreateStart
 
+  !>Gets the mesh boundary type for an element
+  INTERFACE cmfe_MeshElements_ElementOnBoundaryGet
+    MODULE PROCEDURE cmfe_MeshElements_ElementOnBoundaryGetNumber
+    MODULE PROCEDURE cmfe_MeshElements_ElementOnBoundaryGetObj
+  END INTERFACE cmfe_MeshElements_ElementOnBoundaryGet
+
   !>Get the mesh elements belonging to a mesh component.
   INTERFACE cmfe_Mesh_ElementsGet
     MODULE PROCEDURE cmfe_Mesh_ElementsGetNumber
@@ -5237,6 +5259,12 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_Mesh_NodesGetObj
   END INTERFACE cmfe_Mesh_NodesGet
 
+  !>Get the mesh boundary type for a node.
+  INTERFACE cmfe_MeshNodes_NodeOnBoundaryGet
+    MODULE PROCEDURE cmfe_MeshNodes_NodeOnBoundaryGetNumber
+    MODULE PROCEDURE cmfe_MeshNodes_NodeOnBoundaryGetObj
+  END INTERFACE cmfe_MeshNodes_NodeOnBoundaryGet
+
   !>Returns the number of derivatives for a node in a mesh.
   INTERFACE cmfe_MeshNodes_NumberOfDerivativesGet
     MODULE PROCEDURE cmfe_MeshNodes_NumberOfDerivativesGetNumber
@@ -5289,6 +5317,8 @@ MODULE OpenCMISS_Iron
 
   PUBLIC CMFE_DECOMPOSITION_ALL_TYPE,CMFE_DECOMPOSITION_CALCULATED_TYPE,CMFE_DECOMPOSITION_USER_DEFINED_TYPE
 
+  PUBLIC CMFE_MESH_OFF_DOMAIN_BOUNDARY,CMFE_MESH_ON_DOMAIN_BOUNDARY
+
   PUBLIC cmfe_Decomposition_CreateFinish,cmfe_Decomposition_CreateStart
 
   PUBLIC cmfe_Decomposition_TopologyDataProjectionCalculate
@@ -5325,6 +5355,8 @@ MODULE OpenCMISS_Iron
 
   PUBLIC cmfe_MeshElements_AdjacentElementGet
 
+  PUBLIC cmfe_MeshElements_ElementOnBoundaryGet
+
   PUBLIC cmfe_MeshElements_UserNodeVersionSet,cmfe_MeshElements_LocalElementNodeVersionSet
 
   PUBLIC cmfe_MeshElements_CreateFinish,cmfe_MeshElements_CreateStart
@@ -5334,6 +5366,8 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_MeshElements_UserNumberGet,cmfe_MeshElements_UserNumberSet
 
   PUBLIC cmfe_MeshElements_UserNumbersAllSet
+
+  PUBLIC cmfe_MeshNodes_NodeOnBoundaryGet
  
   PUBLIC cmfe_MeshNodes_NumberOfDerivativesGet,cmfe_MeshNodes_DerivativesGet
 
@@ -6169,6 +6203,26 @@ MODULE OpenCMISS_Iron
 
   !Module parameters
 
+  !> \addtogroup OPENCMISS_CellMLEquationsConstants OpenCMISS::Iron::CellMLEquations::Constants
+  !> \brief CellML equations constants.
+  !>@{
+  !> \addtogroup OPENCMISS_CellMLEquationsLinearityTypes OpenCMISS::Iron::CellMLEquations::Constants::LinearityTypes
+  !> \brief The CellML equations linearity types
+  !> \see OpenCMISS::Iron::CellMLEquations,OPENCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_CELLML_EQUATIONS_LINEAR = CELLML_EQUATIONS_LINEAR !<The CellML equations are linear. \see OPENCMISS_CellMLEquationsLinearityTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_CELLML_EQUATIONS_NONLINEAR = CELLML_EQUATIONS_NONLINEAR !<The CellML equations are non-linear. \see \see OPENCMISS_CellMLEquationsLinearityTypes,OPENCMISS
+  !>@}
+  !> \addtogroup OPENCMISS_CellMLEquationsTimeDependenceTypes OpenCMISS::Iron::CellMLEquations::Constants:TimeDependenceTypes
+  !> \brief The CellML equations time dependence types
+  !> \see OpenCMISS::Iron::CellMLEquations,OPENCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_CELLML_EQUATIONS_STATIC = CELLML_EQUATIONS_STATIC !<The CellML equations are static and have no time dependence. \see OPENCMISS_CellMLEquationsTimeDependenceTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_CELLML_EQUATIONS_QUASISTATIC = CELLML_EQUATIONS_QUASISTATIC !<The CellML equations are quasi-static. \see OPENCMISS_CellMLEquationsTimeDependenceTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_CELLML_EQUATIONS_DYNAMIC = CELLML_EQUATIONS_DYNAMIC !<The equations are dynamic. \see OPENCMISS_CellMLEquationsTimeDependenceTypes,OPENCMISS
+  !>@}
+  !>@}
+
   !> \addtogroup OPENCMISS_SolverConstants OpenCMISS::Iron::Solver::Constants
   !> \brief Solver constants.
   !>@{
@@ -6445,6 +6499,30 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_CellMLEquations_CellMLAddNumber1
     MODULE PROCEDURE cmfe_CellMLEquations_CellMLAddObj
   END INTERFACE cmfe_CellMLEquations_CellMLAdd
+
+  !>Returns the linearity type of CellML equations.
+  INTERFACE cmfe_CellMLEquations_LinearityTypeGet
+    MODULE PROCEDURE cmfe_CellMLEquations_LinearityTypeGetNumber
+    MODULE PROCEDURE cmfe_CellMLEquations_LinearityTypeGetObj
+  END INTERFACE cmfe_CellMLEquations_LinearityTypeGet
+
+  !>Sets/changes the linearity type of CellML equations.
+  INTERFACE cmfe_CellMLEquations_LinearityTypeSet
+    MODULE PROCEDURE cmfe_CellMLEquations_LinearityTypeSetNumber
+    MODULE PROCEDURE cmfe_CellMLEquations_LinearityTypeSetObj
+  END INTERFACE cmfe_CellMLEquations_LinearityTypeSet
+
+  !>Returns the time dependence type of CellML equations.
+  INTERFACE cmfe_CellMLEquations_TimeDependenceTypeGet
+    MODULE PROCEDURE cmfe_CellMLEquations_TimeDependenceTypeGetNumber
+    MODULE PROCEDURE cmfe_CellMLEquations_TimeDependenceTypeGetObj
+  END INTERFACE cmfe_CellMLEquations_TimeDependenceTypeGet
+
+  !>Sets/changes the time dependence type of CellML equations.
+  INTERFACE cmfe_CellMLEquations_TimeDependenceTypeSet
+    MODULE PROCEDURE cmfe_CellMLEquations_TimeDependenceTypeSetNumber
+    MODULE PROCEDURE cmfe_CellMLEquations_TimeDependenceTypeSetObj
+  END INTERFACE cmfe_CellMLEquations_TimeDependenceTypeSet
 
   !>Returns the solver type for an Euler differential-algebraic equation solver. \todo should this be CMISSSolver_DAEEulerSolverTypeGet???
   INTERFACE cmfe_Solver_DAEEulerSolverTypeGet
@@ -7020,6 +7098,10 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_SolverEquations_BoundaryConditionsGetObj
   END INTERFACE cmfe_SolverEquations_BoundaryConditionsGet
 
+  PUBLIC CMFE_CELLML_EQUATIONS_LINEAR,CMFE_CELLML_EQUATIONS_NONLINEAR
+
+  PUBLIC CMFE_CELLML_EQUATIONS_STATIC,CMFE_CELLML_EQUATIONS_QUASISTATIC,CMFE_CELLML_EQUATIONS_DYNAMIC
+  
   PUBLIC CMFE_SOLVER_LINEAR_TYPE,CMFE_SOLVER_NONLINEAR_TYPE,CMFE_SOLVER_DYNAMIC_TYPE,CMFE_SOLVER_DAE_TYPE, &
     & CMFE_SOLVER_EIGENPROBLEM_TYPE, &
     & CMFE_SOLVER_OPTIMISER_TYPE
@@ -7103,6 +7185,10 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_Solver_CellMLEquationsGet
 
   PUBLIC cmfe_CellMLEquations_CellMLAdd
+
+  PUBLIC cmfe_CellMLEquations_LinearityTypeGet,cmfe_CellMLEquations_LinearityTypeSet
+
+  PUBLIC cmfe_CellMLEquations_TimeDependenceTypeGet,cmfe_CellMLEquations_TimeDependenceTypeSet
 
   PUBLIC cmfe_Solver_DAEEulerSolverTypeGet,cmfe_Solver_DAEEulerSolverTypeSet
 
@@ -12820,6 +12906,46 @@ CONTAINS
 999 RETURN
 
   END SUBROUTINE cmfe_ExtractErrorMessageVS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Extracts the most recent error string for OpenCMISS
+  SUBROUTINE cmfe_ExtractErrorStackC(errorStack,err)
+    !DLLEXPORT(cmfe_ExtractErrorStackC)
+
+    !Argument variables
+    CHARACTER(LEN=*), INTENT(OUT) :: errorStack !<On return, the extracted error stack.
+    INTEGER(INTG), INTENT(IN) :: err !<The error code.
+    !Local variables
+
+    CALL ExtractErrorStack(errorStack,err,error,*999)
+
+    RETURN
+999 RETURN
+
+  END SUBROUTINE cmfe_ExtractErrorStackC
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Extracts the most recent error stack for OpenCMISS
+  SUBROUTINE cmfe_ExtractErrorStackVS(errorStack,err)
+    !DLLEXPORT(cmfe_ExtractErrorStackVS)
+
+    !Argument variables
+    TYPE(VARYING_STRING), INTENT(OUT) :: errorStack !<On return, the extracted error stack.
+    INTEGER(INTG), INTENT(IN) :: err !<The error code.
+    !Local variables
+
+    CALL ExtractErrorStack(errorStack,err,error,*999)
+
+    RETURN
+999 RETURN
+
+  END SUBROUTINE cmfe_ExtractErrorStackVS
 
   !
   !================================================================================================================================
@@ -42561,6 +42687,72 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the boundary type for an user element of a mesh identified by a user number
+  SUBROUTINE cmfe_MeshElements_ElementOnBoundaryGetNumber(regionUserNumber,meshUserNumber,meshComponentNumber,userElementNumber, &
+    & onBoundary,err)
+    !DLLEXPORT(cmfe_MeshElements_ElementOnBoundaryGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh from which to get the boundary type from.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh from which to get the boundary type from.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number from which to get the boundary type from.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the boundary type for.
+    INTEGER(INTG), INTENT(OUT) :: onBoundary !<On return, the boundary type for the specified user element. \see OPENCMISS_MeshBoundaryTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(MESH_TYPE), POINTER :: mesh
+    TYPE(MeshElementsType), POINTER :: meshElements
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_MeshElements_ElementOnBoundaryGetNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(meshElements)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_MeshElementsGet(mesh,meshComponentNumber,meshElements,err,error,*999)
+    CALL MeshTopology_ElementOnBoundaryGet(meshElements,userElementNumber,onBoundary,err,error,*999)
+
+    EXITS("cmfe_MeshElements_ElementOnBoundaryGetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_MeshElements_ElementOnBoundaryGetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_MeshElements_ElementOnBoundaryGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the boundary type for an user element of a mesh identified by an object
+  SUBROUTINE cmfe_MeshElements_ElementOnBoundaryGetObj(meshElements,userElementNumber,onBoundary,err)
+    !DLLEXPORT(cmfe_MeshElements_ElementOnBoundaryGetObj)
+
+    !Argument variables
+    TYPE(cmfe_MeshElementsType), INTENT(IN) :: meshElements !<The mesh elements from which to get the boundary type for.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the boundary type for.
+    INTEGER(INTG), INTENT(OUT) :: onBoundary !<On return, the boundary type for the specified user element. \see OPENCMISS_MeshBoundaryTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_MeshElements_ElementOnBoundaryGetObj",err,error,*999)
+
+    CALL MeshTopology_ElementOnBoundaryGet(meshElements%meshElements,userElementNumber,onBoundary,err,error,*999)
+
+    EXITS("cmfe_MeshElements_ElementOnBoundaryGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_MeshElements_ElementOnBoundaryGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_MeshElements_ElementOnBoundaryGetObj
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns the element nodes for an element in a mesh identified by an user number. \todo should the global element number be a user number?
   SUBROUTINE cmfe_MeshElements_NodesGetNumber(regionUserNumber,meshUserNumber,meshComponentNumber,globalElementNumber, &
     & elementUserNodes,err)
@@ -43277,6 +43469,72 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Mesh_NodesGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the boundary type for an user node of a mesh identified by a user number
+  SUBROUTINE cmfe_MeshNodes_NodeOnBoundaryGetNumber(regionUserNumber,meshUserNumber,meshComponentNumber,userNodeNumber, &
+    & onBoundary,err)
+    !DLLEXPORT(cmfe_MeshNodes_NodeOnBoundaryGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh from which to get the boundary type from.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh from which to get the boundary type from.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number from which to get the boundary type from.
+    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get the boundary type for.
+    INTEGER(INTG), INTENT(OUT) :: onBoundary !<On return, the boundary type for the specified user node. \see OPENCMISS_MeshBoundaryTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(MESH_TYPE), POINTER :: mesh
+    TYPE(MeshNodesType), POINTER :: meshNodes
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_MeshNodes_NodeOnBoundaryGetNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(meshNodes)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_MeshNodesGet(mesh,meshComponentNumber,meshNodes,err,error,*999)
+    CALL MeshTopology_NodeOnBoundaryGet(meshNodes,userNodeNumber,onBoundary,err,error,*999)
+
+    EXITS("cmfe_MeshNodes_NodeOnBoundaryGetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_MeshNodes_NodeOnBoundaryGetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+    
+  END SUBROUTINE cmfe_MeshNodes_NodeOnBoundaryGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the boundary type for an user node of a mesh identified by an object
+  SUBROUTINE cmfe_MeshNodes_NodeOnBoundaryGetObj(meshNodes,userNodeNumber,onBoundary,err)
+    !DLLEXPORT(cmfe_MeshNodes_NodeOnBoundaryGetObj)
+
+    !Argument variables
+    TYPE(cmfe_MeshNodesType), INTENT(IN) :: meshNodes !<The mesh nodes from which to get the boundary type for.
+    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get the boundary type for.
+    INTEGER(INTG), INTENT(OUT) :: onBoundary !<On return, the boundary type for the specified user node. \see OPENCMISS_MeshBoundaryTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_MeshNodes_NodeOnBoundaryGetObj",err,error,*999)
+
+    CALL MeshTopology_NodeOnBoundaryGet(meshNodes%meshNodes,userNodeNumber,onBoundary,err,error,*999)
+
+    EXITS("cmfe_MeshNodes_NodeOnBoundaryGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_MeshNodes_NodeOnBoundaryGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_MeshNodes_NodeOnBoundaryGetObj
 
   !
   !================================================================================================================================
@@ -47061,6 +47319,260 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_CellMLEquations_CellMLAddObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the linearity type for CellML equations identified by an user number.
+  SUBROUTINE cmfe_CellMLEquations_LinearityTypeGetNumber(problemUserNumber,controlLoopIdentifier,solverIndex,linearityType,err)
+    !DLLEXPORT(cmfe_CellMLEquations_LinearityTypeGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem with the solver to get the CellML equations linearity type for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to get the CellML equations linearity type for.
+    INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get CellML equations linearity type for.
+    INTEGER(INTG), INTENT(OUT) :: linearityType !<On exit, the linearity type of the specified CellML equations. \see OPENCMISS_CellMLEquationsLinearityTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations
+    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(SOLVER_TYPE), POINTER :: solver
+ 
+    ENTERS("cmfe_CellMLEquations_LinearityTypeGetNumber",err,error,*999)
+
+    NULLIFY(problem)
+    NULLIFY(solver)
+    NULLIFY(cellMLEquations)
+    CALL Problem_Get(problemUserNumber,problem,err,error,*999)
+    CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
+    CALL Solver_CellMLEquationsGet(solver,cellMLEquations,err,error,*999)
+    CALL CellMLEquations_LinearityTypeGet(cellMLEquations,linearityType,err,error,*999)
+    
+    EXITS("cmfe_CellMLEquations_LinearityTypeGetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_CellMLEquations_LinearityTypeGetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_CellMLEquations_LinearityTypeGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the linearity type for CellML equations identified by an object.
+  SUBROUTINE cmfe_CellMLEquations_LinearityTypeGetObj(cellMLEquations,linearityType,err)
+    !DLLEXPORT(cmfe_CellMLEquations_LinearityTypeGetObj)
+
+    !Argument variables
+    TYPE(cmfe_CellMLEquationsType), INTENT(IN) :: cellMLEquations !<The CellML equations to get the linearity type for.
+    INTEGER(INTG), INTENT(OUT) :: linearityType !<On exit, the linearity type of the specified CellML equations. \see OPENCMISS_CellMLEquationsLinearityTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_CellMLEquations_LinearityTypeGetObj",err,error,*999)
+
+    CALL CellMLEquations_LinearityTypeGet(cellMLEquations%cellMLEquations,linearityType,err,error,*999)
+
+    EXITS("cmfe_CellMLEquations_LinearityTypeGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_CellMLEquations_LinearityTypeGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_CellMLEquations_LinearityTypeGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the linearity type for CellML equations identified by an user number.
+  SUBROUTINE cmfe_CellMLEquations_LinearityTypeSetNumber(problemUserNumber,controlLoopIdentifier,solverIndex,linearityType,err)
+    !DLLEXPORT(cmfe_CellMLEquations_LinearityTypeSetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem with the solver to set the CellML equations linearity type for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to set the CellML equations linearity type for.
+    INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set CellML equations linearity type for.
+    INTEGER(INTG), INTENT(IN) :: linearityType !<The linearity type of the specified CellML equations to set. \see OPENCMISS_CellMLEquationsLinearityTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations
+    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(SOLVER_TYPE), POINTER :: solver
+ 
+    ENTERS("cmfe_CellMLEquations_LinearityTypeSetNumber",err,error,*999)
+
+    NULLIFY(problem)
+    NULLIFY(solver)
+    NULLIFY(cellMLEquations)
+    CALL Problem_Get(problemUserNumber,problem,err,error,*999)
+    CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
+    CALL Solver_CellMLEquationsGet(solver,cellMLEquations,err,error,*999)
+    CALL CellMLEquations_LinearityTypeSet(cellMLEquations,linearityType,err,error,*999)
+    
+    EXITS("cmfe_CellMLEquations_LinearityTypeSetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_CellMLEquations_LinearityTypeSetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_CellMLEquations_LinearityTypeSetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the linearity type for CellML equations identified by an object.
+  SUBROUTINE cmfe_CellMLEquations_LinearityTypeSetObj(cellMLEquations,linearityType,err)
+    !DLLEXPORT(cmfe_CellMLEquations_LinearityTypeSetObj)
+
+    !Argument variables
+    TYPE(cmfe_CellMLEquationsType), INTENT(IN) :: cellMLEquations !<The CellML equations to set the linearity type for.
+    INTEGER(INTG), INTENT(IN) :: linearityType !<The linearity type of the specified CellML equations to set. \see OPENCMISS_CellMLEquationsLinearityTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_CellMLEquations_LinearityTypeSetObj",err,error,*999)
+
+    CALL CellMLEquations_LinearityTypeSet(cellMLEquations%cellMLEquations,linearityType,err,error,*999)
+
+    EXITS("cmfe_CellMLEquations_LinearityTypeSetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_CellMLEquations_LinearityTypeSetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_CellMLEquations_LinearityTypeSetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the time dependence type for CellML equations identified by an user number.
+  SUBROUTINE cmfe_CellMLEquations_TimeDependenceTypeGetNumber(problemUserNumber,controlLoopIdentifier,solverIndex, &
+    & timeDependenceType,err)
+    !DLLEXPORT(cmfe_CellMLEquations_TimeDependenceTypeGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem with the solver to get the CellML equations time dependence type for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to get the CellML equations time dependence type for.
+    INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get CellML equations time dependence type for.
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On exit, the time dependence type of the specified CellML equations. \see OPENCMISS_CellMLEquationsTimeDependenceTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations
+    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(SOLVER_TYPE), POINTER :: solver
+ 
+    ENTERS("cmfe_CellMLEquations_TimeDependenceTypeGetNumber",err,error,*999)
+
+    NULLIFY(problem)
+    NULLIFY(solver)
+    NULLIFY(cellMLEquations)
+    CALL Problem_Get(problemUserNumber,problem,err,error,*999)
+    CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
+    CALL Solver_CellMLEquationsGet(solver,cellMLEquations,err,error,*999)
+    CALL CellMLEquations_TimeDependenceTypeGet(cellMLEquations,timeDependenceType,err,error,*999)
+    
+    EXITS("cmfe_CellMLEquations_TimeDependenceTypeGetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_CellMLEquations_TimeDependenceTypeGetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_CellMLEquations_TimeDependenceTypeGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the time dependence type for CellML equations identified by an object.
+  SUBROUTINE cmfe_CellMLEquations_TimeDependenceTypeGetObj(cellMLEquations,timeDependenceType,err)
+    !DLLEXPORT(cmfe_CellMLEquations_TimeDependenceTypeGetObj)
+
+    !Argument variables
+    TYPE(cmfe_CellMLEquationsType), INTENT(IN) :: cellMLEquations !<The CellML equations to get the time dependence type for.
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On exit, the time dependence type of the specified CellML equations. \see OPENCMISS_CellMLEquationsTimeDependenceTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_CellMLEquations_TimeDependenceTypeGetObj",err,error,*999)
+
+    CALL CellMLEquations_TimeDependenceTypeGet(cellMLEquations%cellMLEquations,timeDependenceType,err,error,*999)
+
+    EXITS("cmfe_CellMLEquations_TimeDependenceTypeGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_CellMLEquations_TimeDependenceTypeGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_CellMLEquations_TimeDependenceTypeGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the time dependence type for CellML equations identified by an user number.
+  SUBROUTINE cmfe_CellMLEquations_TimeDependenceTypeSetNumber(problemUserNumber,controlLoopIdentifier,solverIndex, &
+    & timeDependenceType,err)
+    !DLLEXPORT(cmfe_CellMLEquations_TimeDependenceTypeSetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem with the solver to set the CellML equations time dependence type for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to set the CellML equations time dependence type for.
+    INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set CellML equations time dependence type for.
+    INTEGER(INTG), INTENT(IN) :: timeDependenceType !<The time dependence type of the specified CellML equations to set. \see OPENCMISS_CellMLEquationsTimeDependenceTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations
+    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(SOLVER_TYPE), POINTER :: solver
+ 
+    ENTERS("cmfe_CellMLEquations_TimeDependenceTypeSetNumber",err,error,*999)
+
+    NULLIFY(problem)
+    NULLIFY(solver)
+    NULLIFY(cellMLEquations)
+    CALL Problem_Get(problemUserNumber,problem,err,error,*999)
+    CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
+    CALL Solver_CellMLEquationsGet(solver,cellMLEquations,err,error,*999)
+    CALL CellMLEquations_TimeDependenceTypeSet(cellMLEquations,timeDependenceType,err,error,*999)
+    
+    EXITS("cmfe_CellMLEquations_TimeDependenceTypeSetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_CellMLEquations_TimeDependenceTypeSetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_CellMLEquations_TimeDependenceTypeSetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the time dependence type for CellML equations identified by an object.
+  SUBROUTINE cmfe_CellMLEquations_TimeDependenceTypeSetObj(cellMLEquations,timeDependenceType,err)
+    !DLLEXPORT(cmfe_CellMLEquations_TimeDependenceTypeSetObj)
+
+    !Argument variables
+    TYPE(cmfe_CellMLEquationsType), INTENT(IN) :: cellMLEquations !<The CellML equations to set the time dependence type for.
+    INTEGER(INTG), INTENT(IN) :: timeDependenceType !<The time dependence type of the specified CellML equations to set. \see OPENCMISS_CellMLEquationsTimeDependenceTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_CellMLEquations_TimeDependenceTypeSetObj",err,error,*999)
+
+    CALL CellMLEquations_TimeDependenceTypeSet(cellMLEquations%cellMLEquations,timeDependenceType,err,error,*999)
+
+    EXITS("cmfe_CellMLEquations_TimeDependenceTypeSetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_CellMLEquations_TimeDependenceTypeSetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_CellMLEquations_TimeDependenceTypeSetObj
 
   !
   !================================================================================================================================

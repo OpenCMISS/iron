@@ -2066,23 +2066,39 @@ CONTAINS
             !Create the CellML equations for the first DAE solver
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
             CALL CELLML_EQUATIONS_CREATE_START(SOLVER,CELLML_EQUATIONS,ERR,ERROR,*999)
+            !Set the time dependence
+            CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
+            !Set the linearity
+            CALL CellMLEquations_LinearityTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_NONLINEAR,err,error,*999)
             IF(PROBLEM%SPECIFICATION(3)==PROBLEM_MONODOMAIN_STRANG_SPLIT_SUBTYPE) THEN
               !Create the CellML equations for the second DAE solver
               NULLIFY(SOLVER)
               NULLIFY(CELLML_EQUATIONS)
               CALL SOLVERS_SOLVER_GET(SOLVERS,3,SOLVER,ERR,ERROR,*999)
               CALL CELLML_EQUATIONS_CREATE_START(SOLVER,CELLML_EQUATIONS,ERR,ERROR,*999)
+              !Set the time dependence
+              CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
+              !Set the linearity
+              CALL CellMLEquations_LinearityTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_NONLINEAR,err,error,*999)
             ENDIF
           CASE(PROBLEM_BIDOMAIN_EQUATION_TYPE)
             !Create the CellML equations for the first DAE solver
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
             CALL CELLML_EQUATIONS_CREATE_START(SOLVER,CELLML_EQUATIONS,ERR,ERROR,*999)
+            !Set the time dependence
+            CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
+            !Set the linearity
+            CALL CellMLEquations_LinearityTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_NONLINEAR,err,error,*999)
             IF(PROBLEM%SPECIFICATION(3)==PROBLEM_BIDOMAIN_STRANG_SPLIT_SUBTYPE) THEN
               !Create the CellML equations for the second DAE solver
               NULLIFY(SOLVER)
               NULLIFY(CELLML_EQUATIONS)
               CALL SOLVERS_SOLVER_GET(SOLVERS,4,SOLVER,ERR,ERROR,*999)
               CALL CELLML_EQUATIONS_CREATE_START(SOLVER,CELLML_EQUATIONS,ERR,ERROR,*999)
+              !Set the time dependence
+              CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
+              !Set the linearity
+              CALL CellMLEquations_LinearityTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_NONLINEAR,err,error,*999)
             ENDIF
           CASE DEFAULT
             LOCAL_ERROR="The problem type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(2),"*",ERR,ERROR))//  &

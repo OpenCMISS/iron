@@ -64,6 +64,7 @@ MODULE Stree_EQUATION_ROUTINES
   USE EQUATIONS_SET_CONSTANTS
   USE EquationsSetAccessRoutines
   USE FIELD_ROUTINES
+  USE FieldAccessRoutines
   USE FIELD_IO_ROUTINES
   USE FLUID_MECHANICS_IO_ROUTINES
   USE INPUT_OUTPUT
@@ -843,7 +844,7 @@ CONTAINS
     DO variableIdx=1,navierstokesDependentField%NUMBER_OF_VARIABLES
       dependentVariableType=navierstokesDependentField%VARIABLES(variableIdx)%VARIABLE_TYPE
       NULLIFY(dependentFieldVariable)
-      CALL FIELD_VARIABLE_GET(navierstokesDependentField,dependentVariableType,dependentFieldVariable,ERR,ERROR,*999)
+      CALL Field_VariableGet(navierstokesDependentField,dependentVariableType,dependentFieldVariable,ERR,ERROR,*999)
       CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS, &
         & dependentFieldVariable,BOUNDARY_CONDITIONS_VARIABLE,ERR,ERROR,*999)
       IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN

@@ -118,7 +118,9 @@ set(IRON_Fortran_SRC
     region_routines.f90
     region_access_routines.f90
     solver_mapping_routines.f90
+    solver_mapping_access_routines.f90
     solver_matrices_routines.f90
+    solver_matrices_access_routines.f90
     solver_routines.f90
     solver_access_routines.f90
     sorting.f90

@@ -61,6 +61,7 @@ MODULE MESH_ROUTINES
   USE MPI
 #endif
   USE NODE_ROUTINES
+  USE RegionAccessRoutines
   USE Strings
   USE Trees
   USE Types
@@ -77,6 +78,14 @@ MODULE MESH_ROUTINES
 
   !Module parameters
 
+  !> \addtogroup MESH_ROUTINES_MeshBoundaryTypes MESH_ROUTINES::MeshBoundaryTypes
+  !> \brief The types of whether or not a node/element is on a mesh domain boundary.
+  !> \see MESH_ROUTINES
+  !>@{
+  INTEGER(INTG), PARAMETER :: MESH_OFF_DOMAIN_BOUNDARY=0 !<The node/element is not on the mesh domain boundary. \see MESH_ROUTINES_MeshBoundaryTypes,MESH_ROUTINES
+  INTEGER(INTG), PARAMETER :: MESH_ON_DOMAIN_BOUNDARY=1 !<The node/element is on the mesh domain boundary. \see MESH_ROUTINES_MeshBoundaryTypes,MESH_ROUTINES
+  !>@}
+   
   !> \addtogroup MESH_ROUTINES_DecompositionTypes MESH_ROUTINES::DecompositionTypes
   !> \brief The Decomposition types parameters
   !> \see MESH_ROUTINES
@@ -92,6 +101,10 @@ MODULE MESH_ROUTINES
 
   !Interfaces
 
+  INTERFACE DECOMPOSITION_TOPOLOGY_ELEMENT_CHECK_EXISTS
+    MODULE PROCEDURE DecompositionTopology_ElementCheckExists
+  END INTERFACE DECOMPOSITION_TOPOLOGY_ELEMENT_CHECK_EXISTS
+  
   !>Starts the process of creating a mesh
   INTERFACE MESH_CREATE_START
     MODULE PROCEDURE MESH_CREATE_START_INTERFACE
@@ -104,21 +117,27 @@ MODULE MESH_ROUTINES
     MODULE PROCEDURE MESHES_INITIALISE_REGION
   END INTERFACE !MESHES_INITIALISE
 
-  INTERFACE MeshTopology_NodeCheckExists
-    MODULE PROCEDURE MeshTopology_NodeCheckExistsMesh
-    MODULE PROCEDURE MeshTopology_NodeCheckExistsMeshNodes    
-  END INTERFACE MeshTopology_NodeCheckExists  
-  
   INTERFACE MeshTopology_ElementCheckExists
     MODULE PROCEDURE MeshTopology_ElementCheckExistsMesh
     MODULE PROCEDURE MeshTopology_ElementCheckExistsMeshElements
   END INTERFACE MeshTopology_ElementCheckExists
   
-  INTERFACE DecompositionTopology_ElementCheckExists
-    MODULE PROCEDURE DECOMPOSITION_TOPOLOGY_ELEMENT_CHECK_EXISTS
-  END INTERFACE DecompositionTopology_ElementCheckExists
+  INTERFACE MeshTopology_ElementGet
+    MODULE PROCEDURE MeshTopology_ElementGetMeshElements
+  END INTERFACE MeshTopology_ElementGet
+  
+  INTERFACE MeshTopology_NodeCheckExists
+    MODULE PROCEDURE MeshTopology_NodeCheckExistsMesh
+    MODULE PROCEDURE MeshTopology_NodeCheckExistsMeshNodes    
+  END INTERFACE MeshTopology_NodeCheckExists  
+  
+  INTERFACE MeshTopology_NodeGet
+    MODULE PROCEDURE MeshTopology_NodeGetMeshNodes    
+  END INTERFACE MeshTopology_NodeGet
   
   PUBLIC DECOMPOSITION_ALL_TYPE,DECOMPOSITION_CALCULATED_TYPE,DECOMPOSITION_USER_DEFINED_TYPE
+
+  PUBLIC MESH_ON_DOMAIN_BOUNDARY,MESH_OFF_DOMAIN_BOUNDARY
 
   PUBLIC DECOMPOSITIONS_INITIALISE,DECOMPOSITIONS_FINALISE
 
@@ -134,15 +153,17 @@ MODULE MESH_ROUTINES
   
   PUBLIC DECOMPOSITION_NUMBER_OF_DOMAINS_GET,DECOMPOSITION_NUMBER_OF_DOMAINS_SET
 
-  PUBLIC DecompositionTopology_ElementCheckExists
-  
-  PUBLIC DECOMPOSITION_TOPOLOGY_ELEMENT_CHECK_EXISTS,DecompositionTopology_DataPointCheckExists
+  PUBLIC DecompositionTopology_DataPointCheckExists
   
   PUBLIC DecompositionTopology_DataProjectionCalculate
+
+  PUBLIC DecompositionTopology_ElementCheckExists,DECOMPOSITION_TOPOLOGY_ELEMENT_CHECK_EXISTS
 
   PUBLIC DecompositionTopology_ElementDataPointLocalNumberGet
 
   PUBLIC DecompositionTopology_ElementDataPointUserNumberGet
+
+  PUBLIC DecompositionTopology_ElementGet
 
   PUBLIC DecompositionTopology_NumberOfElementDataPointsGet
   
@@ -178,11 +199,15 @@ MODULE MESH_ROUTINES
 
   PUBLIC MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET,MeshElements_ElementNodeVersionSet
 
+  PUBLIC MeshTopology_DataPointsCalculateProjection
+
+  PUBLIC MeshTopology_ElementOnBoundaryGet
+
   PUBLIC MeshElements_ElementUserNumberGet,MeshElements_ElementUserNumberSet
   
   PUBLIC MeshTopology_ElementsUserNumbersAllSet
 
-  PUBLIC MeshTopology_DataPointsCalculateProjection
+  PUBLIC MeshTopology_NodeOnBoundaryGet
 
   PUBLIC MeshTopology_NodeDerivativesGet
 
@@ -1600,49 +1625,87 @@ CONTAINS
   !
 
   !>Checks that a user element number exists in a decomposition. 
-  SUBROUTINE DECOMPOSITION_TOPOLOGY_ELEMENT_CHECK_EXISTS(DECOMPOSITION_TOPOLOGY,USER_ELEMENT_NUMBER,ELEMENT_EXISTS, &
-    & DECOMPOSITION_LOCAL_ELEMENT_NUMBER,GHOST_ELEMENT,ERR,ERROR,*)
+  SUBROUTINE DecompositionTopology_ElementCheckExists(decompositionTopology,userElementNumber,elementExists,localElementNumber, &
+    & ghostElement,err,error,*)
 
     !Argument variables
-    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: DECOMPOSITION_TOPOLOGY !<A pointer to the decomposition topology to check the element exists on
-    INTEGER(INTG), INTENT(IN) :: USER_ELEMENT_NUMBER !<The user element number to check if it exists
-    LOGICAL, INTENT(OUT) :: ELEMENT_EXISTS !<On exit, is .TRUE. if the element user number exists in the decomposition topology, .FALSE. if not
-    INTEGER(INTG), INTENT(OUT) :: DECOMPOSITION_LOCAL_ELEMENT_NUMBER !<On exit, if the element exists the local number corresponding to the user element number. If the element does not exist then local number will be 0.
-    LOGICAL, INTENT(OUT) :: GHOST_ELEMENT !<On exit, is .TRUE. if the local element (if it exists) is a ghost element, .FALSE. if not.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology !<A pointer to the decomposition topology to check the element exists on
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to check if it exists
+    LOGICAL, INTENT(OUT) :: elementExists!<On exit, is .TRUE. if the element user number exists in the decomposition topology, .FALSE. if not
+    INTEGER(INTG), INTENT(OUT) :: localElementNumber !<On exit, if the element exists the local number corresponding to the user element number. If the element does not exist then local number will be 0.
+    LOGICAL, INTENT(OUT) :: ghostElement !<On exit, is .TRUE. if the local element (if it exists) is a ghost element, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(DECOMPOSITION_ELEMENTS_TYPE), POINTER :: DECOMPOSITION_ELEMENTS
-    TYPE(TREE_NODE_TYPE), POINTER :: TREE_NODE
+    TYPE(DECOMPOSITION_ELEMENTS_TYPE), POINTER :: decompositionElements
+    TYPE(TREE_NODE_TYPE), POINTER :: treeNode
     
-    ENTERS("DECOMPOSITION_TOPOLOGY_ELEMENT_CHECK_EXISTS",ERR,ERROR,*999)
+    ENTERS("DecompositionTopology_ElementCheckExists",err,error,*999)
 
-    ELEMENT_EXISTS=.FALSE.
-    DECOMPOSITION_LOCAL_ELEMENT_NUMBER=0
-    GHOST_ELEMENT=.FALSE.
-    IF(ASSOCIATED(DECOMPOSITION_TOPOLOGY)) THEN
-      DECOMPOSITION_ELEMENTS=>DECOMPOSITION_TOPOLOGY%ELEMENTS
-      IF(ASSOCIATED(DECOMPOSITION_ELEMENTS)) THEN
-        NULLIFY(TREE_NODE)
-        CALL TREE_SEARCH(DECOMPOSITION_ELEMENTS%ELEMENTS_TREE,USER_ELEMENT_NUMBER,TREE_NODE,ERR,ERROR,*999)
-        IF(ASSOCIATED(TREE_NODE)) THEN
-          CALL TREE_NODE_VALUE_GET(DECOMPOSITION_ELEMENTS%ELEMENTS_TREE,TREE_NODE,DECOMPOSITION_LOCAL_ELEMENT_NUMBER,ERR,ERROR,*999)
-          ELEMENT_EXISTS=.TRUE.
-          GHOST_ELEMENT=DECOMPOSITION_LOCAL_ELEMENT_NUMBER>DECOMPOSITION_ELEMENTS%NUMBER_OF_ELEMENTS
-        ENDIF
-      ELSE
-        CALL FlagError("Decomposition topology elements is not associated.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Decomposition topology is not associated.",ERR,ERROR,*999)
+    elementExists=.FALSE.
+    localElementNumber=0
+    ghostElement=.FALSE.
+    IF(.NOT.ASSOCIATED(decompositionTopology)) CALL FlagError("Decomposition topology is not associated.",err,error,*999)
+    
+    NULLIFY(decompositionElements)
+    CALL DecompositionTopology_ElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    NULLIFY(treeNode)
+    CALL Tree_Search(decompositionElements%ELEMENTS_TREE,userElementNumber,treeNode,err,error,*999)
+    IF(ASSOCIATED(treeNode)) THEN
+      CALL Tree_NodeValueGet(decompositionElements%ELEMENTS_TREE,treeNode,localElementNumber,err,error,*999)
+      elementExists=.TRUE.
+      ghostElement=localElementNumber>decompositionElements%NUMBER_OF_ELEMENTS
     ENDIF
     
-    EXITS("DECOMPOSITION_TOPOLOGY_ELEMENT_CHECK_EXISTS")
+    EXITS("DecompositionTopology_ElementCheckExists")
     RETURN
-999 ERRORSEXITS("DECOMPOSITION_TOPOLOGY_ELEMENT_CHECK_EXISTS",ERR,ERROR)
+999 ERRORSEXITS("DecompositionTopology_ElementCheckExists",err,error)
     RETURN 1
     
-  END SUBROUTINE DECOMPOSITION_TOPOLOGY_ELEMENT_CHECK_EXISTS
+  END SUBROUTINE DecompositionTopology_ElementCheckExists
+
+  !
+  !================================================================================================================================
+  !
+
+!!TODO: Should this be decompositionElements???
+  !>Gets a local element number that corresponds to a user element number from a decomposition. An error will be raised if the user element number does not exist.
+  SUBROUTINE DecompositionTopology_ElementGet(decompositionTopology,userElementNumber,localElementNumber,ghostElement,err,error,*)
+
+    !Argument variables
+    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology !<A pointer to the decomposition topology to get the element on
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get
+    INTEGER(INTG), INTENT(OUT) :: localElementNumber !<On exit, the local number corresponding to the user element number.
+    LOGICAL, INTENT(OUT) :: ghostElement !<On exit, is .TRUE. if the local element is a ghost element, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    LOGICAL :: elementExists
+    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DecompositionTopology_ElementGet",err,error,*999)
+
+    CALL DecompositionTopology_ElementCheckExists(decompositionTopology,userElementNumber,elementExists,localElementNumber, &
+      & ghostElement,err,error,*999)
+    IF(.NOT.elementExists) THEN
+      decomposition=>decompositionTopology%decomposition
+      IF(ASSOCIATED(decomposition)) THEN
+        localError="The user element number "//TRIM(NumberToVString(userElementNumber,"*",err,error))// &
+          & " does not exist in decomposition number "//TRIM(NumberToVString(decomposition%USER_NUMBER,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ELSE
+        localError="The user element number "//TRIM(NumberToVString(userElementNumber,"*",err,error))//" does not exist."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ENDIF
+   
+    EXITS("DecompositionTopology_ElementGet")
+    RETURN
+999 ERRORSEXITS("DecompositionTopology_ElementGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DecompositionTopology_ElementGet
 
   !
   !================================================================================================================================
@@ -8723,7 +8786,7 @@ CONTAINS
     !Local Variables
     TYPE(TREE_NODE_TYPE), POINTER :: treeNode
     
-    ENTERS("MeshTopology_ElementCheckExistsMesh",err,error,*999)
+    ENTERS("MeshTopology_ElementCheckExistsMeshElements",err,error,*999)
 
     elementExists=.FALSE.
     globalElementNumber=0
@@ -8744,6 +8807,90 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE MeshTopology_ElementCheckExistsMeshElements
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a mesh element number that corresponds to a user element number from mesh element. An error will be raised if the user element number does not exist.
+  SUBROUTINE MeshTopology_ElementGetMeshElements(meshElements,userElementNumber,globalElementNumber,err,error,*)
+
+    !Argument variables
+    TYPE(MeshElementsType), POINTER :: meshElements !<A pointer to the mesh elements to get the element for
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get
+    INTEGER(INTG), INTENT(OUT) :: globalElementNumber !<On exit, the global number corresponding to the user element number. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    LOGICAL :: elementExists
+    TYPE(MESH_TYPE), POINTER :: mesh
+    TYPE(MeshComponentTopologyType), POINTER :: meshComponentTopology
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("MeshTopology_ElementGetMeshElements",err,error,*999)
+
+    CALL MeshTopology_ElementCheckExistsMeshElements(meshElements,userElementNumber,elementExists,globalElementNumber,err,error,*999)
+    IF(.NOT.elementExists) THEN
+      meshComponentTopology=>meshElements%meshComponentTopology
+      IF(ASSOCIATED(meshComponentTopology)) THEN
+        mesh=>meshComponentTopology%mesh
+        IF(ASSOCIATED(mesh)) THEN
+          localError="The user element number "//TRIM(NumberToVString(userElementNumber,"*",err,error))// &
+            & " does not exist in mesh number "//TRIM(NumberToVString(mesh%USER_NUMBER,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ELSE
+          localError="The user element number "//TRIM(NumberToVString(userElementNumber,"*",err,error))//" does not exist."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ELSE
+        localError="The user element number "//TRIM(NumberToVString(userElementNumber,"*",err,error))//" does not exist."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ENDIF
+   
+    EXITS("MeshTopology_ElementGetMeshElements")
+    RETURN
+999 globalElementNumber=0
+    ERRORSEXITS("MeshTopology_ElementGetMeshElements",err,error)
+    RETURN 1
+    
+  END SUBROUTINE MeshTopology_ElementGetMeshElements
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns if the element in a mesh is on the boundary or not
+  SUBROUTINE MeshTopology_ElementOnBoundaryGet(meshElements,userNumber,onBoundary,err,error,*)
+
+    !Argument variables
+    TYPE(MeshElementsType), POINTER :: meshElements !<A pointer to the mesh element containing the element to get the boundary type for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user element number to get the boundary type for
+    INTEGER(INTG), INTENT(OUT) :: onBoundary !<On return, the boundary type of the specified user element number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: globalNumber
+
+    ENTERS("MeshTopology_ElementOnBoundaryGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(meshElements)) CALL FlagError("Mesh elements is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(meshElements%elements)) CALL FlagError("Mesh elements elements is not associated.",err,error,*999)
+    
+    CALL MeshTopology_ElementGet(meshElements,userNumber,globalNumber,err,error,*999)
+    IF(meshElements%elements(globalNumber)%boundary_Element) THEN
+      onBoundary=MESH_ON_DOMAIN_BOUNDARY
+    ELSE
+      onBoundary=MESH_OFF_DOMAIN_BOUNDARY
+    ENDIF
+    
+    EXITS("MeshTopology_ElementOnBoundaryGet")
+    RETURN
+999 onBoundary=MESH_OFF_DOMAIN_BOUNDARY
+    ERRORSEXITS("MeshTopology_ElementOnBoundaryGet",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE MeshTopology_ElementOnBoundaryGet
   
   !
   !================================================================================================================================
@@ -8841,19 +8988,15 @@ CONTAINS
         IF(ASSOCIATED(mesh)) THEN
           IF(mesh%MESH_FINISHED) THEN
             CALL Mesh_RegionGet(mesh,region,err,error,*999)
-            nodes=>region%nodes
-            IF(ASSOCIATED(nodes)) THEN
-              CALL NODE_CHECK_EXISTS(nodes,userNodeNumber,nodeExists,globalNodeNumber,err,error,*999)
-              NULLIFY(treeNode)
-              CALL TREE_SEARCH(meshNodes%nodesTree,globalNodeNumber,treeNode,err,error,*999)
-              IF(ASSOCIATED(treeNode)) THEN
-                CALL TREE_NODE_VALUE_GET(meshNodes%nodesTree,treeNode,meshNodeNumber,err,error,*999)
-                nodeExists=.TRUE.
-              ENDIF
-            ELSE
-              CALL FlagError("Region nodes is not associated.",err,error,*999)
+            CALL Region_NodesGet(region,nodes,err,error,*999)
+            CALL NODE_CHECK_EXISTS(nodes,userNodeNumber,nodeExists,globalNodeNumber,err,error,*999)
+            NULLIFY(treeNode)
+            CALL TREE_SEARCH(meshNodes%nodesTree,globalNodeNumber,treeNode,err,error,*999)
+            IF(ASSOCIATED(treeNode)) THEN
+              CALL TREE_NODE_VALUE_GET(meshNodes%nodesTree,treeNode,meshNodeNumber,err,error,*999)
+              nodeExists=.TRUE.
             ENDIF
-          ELSE
+         ELSE
             CALL FlagError("Mesh has not been finished.",err,error,*999)
           ENDIF
         ELSE
@@ -8872,6 +9015,58 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE MeshTopology_NodeCheckExistsMeshNodes
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a mesh node number that corresponds to a user node number from mesh nodes. An error will be raised if the user node number does not exist.
+  SUBROUTINE MeshTopology_NodeGetMeshNodes(meshNodes,userNodeNumber,meshNodeNumber,err,error,*)
+
+    !Argument variables
+    TYPE(MeshNodesType), POINTER :: meshNodes !<A pointer to the mesh nodes to get the node from
+    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get
+    INTEGER(INTG), INTENT(OUT) :: meshNodeNumber !<On exit, the mesh number corresponding to the user node number. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: meshComponentNumber
+    LOGICAL :: nodeExists
+    TYPE(MESH_TYPE), POINTER :: mesh
+    TYPE(MeshComponentTopologyType), POINTER :: meshComponentTopology
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("MeshTopology_NodeGetMeshNodes",err,error,*999)
+
+    CALL MeshTopology_NodeCheckExistsMeshNodes(meshNodes,userNodeNumber,nodeExists,meshNodeNumber,err,error,*999)
+    IF(.NOT.nodeExists) THEN
+      meshComponentTopology=>meshNodes%meshComponentTopology
+      IF(ASSOCIATED(meshComponentTopology)) THEN
+        mesh=>meshComponentTopology%mesh
+        IF(ASSOCIATED(mesh)) THEN
+          meshComponentNumber=meshComponentTopology%meshComponentNumber
+          localError="The user node number "//TRIM(NumberToVString(userNodeNumber,"*",err,error))// &
+            & " does not exist in mesh component number "//TRIM(NumberToVString(meshComponentNumber,"*",err,error))// &
+            & " of mesh number "//TRIM(NumberToVString(mesh%USER_NUMBER,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ELSE
+          localError="The user node number "//TRIM(NumberToVString(userNodeNumber,"*",err,error))// &
+            & " does not exist in mesh component number "//TRIM(NumberToVString(meshComponentNumber,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ELSE
+        localError="The user node number "//TRIM(NumberToVString(userNodeNumber,"*",err,error))//" does not exist."
+        CALL FlagError(localError,err,error,*999)        
+      ENDIF
+    ENDIF
+    
+    EXITS("MeshTopology_NodeGetMeshNodes")
+    RETURN
+999 meshNodeNumber=0
+    ERRORSEXITS("MeshTopology_NodeGetMeshNodes",err,error)
+    RETURN 1
+    
+  END SUBROUTINE MeshTopology_NodeGetMeshNodes
   
   !
   !================================================================================================================================
@@ -9578,6 +9773,45 @@ CONTAINS
    
   END SUBROUTINE MeshTopology_NodesVersionCalculate
 
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns if the node in a mesh is on the boundary or not
+  SUBROUTINE MeshTopology_NodeOnBoundaryGet(meshNodes,userNumber,onBoundary,err,error,*)
+
+    !Argument variables
+    TYPE(MeshNodesType), POINTER :: meshNodes !<A pointer to the mesh nodes containing the nodes to get the boundary type for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user node number to get the boundary type for
+    INTEGER(INTG), INTENT(OUT) :: onBoundary !<On return, the boundary type of the specified user node number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: meshComponentNumber,meshNumber
+    LOGICAL :: nodeExists
+    TYPE(MESH_TYPE), POINTER :: mesh
+    TYPE(MeshComponentTopologyType), POINTER :: meshComponentTopology
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("MeshTopology_NodeOnBoundaryGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(meshNodes%nodes)) CALL FlagError("Mesh nodes nodes is not allocated.",err,error,*999)
+    
+    CALL MeshTopology_NodeGet(meshNodes,userNumber,meshNumber,err,error,*999)
+    IF(meshNodes%nodes(meshNumber)%boundaryNode) THEN
+      onBoundary=MESH_ON_DOMAIN_BOUNDARY
+    ELSE
+      onBoundary=MESH_OFF_DOMAIN_BOUNDARY
+    ENDIF
+    
+    EXITS("MeshTopology_NodeOnBoundaryGet")
+    RETURN
+999 ERRORSEXITS("MeshTopology_NodeOnBoundaryGet",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE MeshTopology_NodeOnBoundaryGet
+  
   !
   !================================================================================================================================
   !

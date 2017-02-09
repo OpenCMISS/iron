@@ -43,7 +43,8 @@
 
 module electrophysiology_cell_routines
   USE BASE_ROUTINES
-  use field_routines
+  USE field_routines
+  USE FieldAccessRoutines
   use kinds
   use strings
   use types

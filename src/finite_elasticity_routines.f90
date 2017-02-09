@@ -60,6 +60,7 @@ MODULE FINITE_ELASTICITY_ROUTINES
   USE EQUATIONS_SET_CONSTANTS
   USE EquationsSetAccessRoutines
   USE FIELD_ROUTINES
+  USE FieldAccessRoutines
   USE FIELD_IO_ROUTINES
   USE FLUID_MECHANICS_IO_ROUTINES
   USE GENERATED_MESH_ROUTINES
@@ -76,6 +77,7 @@ MODULE FINITE_ELASTICITY_ROUTINES
   USE PROBLEM_CONSTANTS
   USE SOLVER_ROUTINES
   USE SolverAccessRoutines
+  USE SolverMappingAccessRoutines
   USE STRINGS
   USE TIMER
   USE TYPES
@@ -122,8 +124,8 @@ MODULE FINITE_ELASTICITY_ROUTINES
     & FINITE_ELASTICITY_EQUATIONS_SET_SETUP,FiniteElasticity_EquationsSetSolutionMethodSet, &
     & FiniteElasticity_EquationsSetSpecificationSet,FiniteElasticity_ProblemSpecificationSet,FINITE_ELASTICITY_PROBLEM_SETUP, &
     & FiniteElasticity_ContactProblemSpecificationSet,FiniteElasticity_ContactProblemSetup, & 
-    & FINITE_ELASTICITY_POST_SOLVE,FINITE_ELASTICITY_POST_SOLVE_OUTPUT_DATA, &
-    & FINITE_ELASTICITY_PRE_SOLVE,FiniteElasticity_ControlTimeLoopPreLoop,FiniteElasticity_ControlLoadIncrementLoopPostLoop, &
+    & FiniteElasticity_PostSolve,FiniteElasticity_PostSolveOutputData, &
+    & FiniteElasticity_PreSolve,FiniteElasticity_ControlTimeLoopPreLoop,FiniteElasticity_ControlLoadIncrementLoopPostLoop, &
     & EVALUATE_CHAPELLE_FUNCTION, GET_DARCY_FINITE_ELASTICITY_PARAMETERS, &
     & FiniteElasticity_GaussDeformationGradientTensor,FINITE_ELASTICITY_LOAD_INCREMENT_APPLY, &
     & FiniteElasticity_StrainCalculate, &
@@ -181,7 +183,7 @@ CONTAINS
             CALL FIELD_NUMBER_OF_COMPONENTS_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
             !Get access to geometric coordinates
             NULLIFY(GEOMETRIC_VARIABLE)
-            CALL FIELD_VARIABLE_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,GEOMETRIC_VARIABLE,ERR,ERROR,*999)
+            CALL Field_VariableGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,GEOMETRIC_VARIABLE,ERR,ERROR,*999)
             MESH_COMPONENT=GEOMETRIC_VARIABLE%COMPONENTS(1)%MESH_COMPONENT_NUMBER
             CALL FIELD_PARAMETER_SET_DATA_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,GEOMETRIC_PARAMETERS, &
               & ERR,ERROR,*999)
@@ -684,7 +686,7 @@ CONTAINS
         !add active contraction stress values
         !Be aware for modified DZDNU, should active contraction be added here? Normally should be okay as modified DZDNU and DZDNU
         !converge during the Newton iteration.
-        CALL FIELD_VARIABLE_GET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
+        CALL Field_VariableGet(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
         DO i=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
           dof_idx=FIELD_VARIABLE%COMPONENTS(i)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP% &
             & GAUSS_POINTS(GAUSS_POINT_NUMBER,ELEMENT_NUMBER)
@@ -761,7 +763,7 @@ CONTAINS
         !add active contraction stress values
         !Be aware for modified DZDNU, should active contraction be added here? Normally should be okay as modified DZDNU and DZDNU
         !converge during the Newton iteration.
-        CALL FIELD_VARIABLE_GET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
+        CALL Field_VariableGet(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
         DO i=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
           dof_idx=FIELD_VARIABLE%COMPONENTS(i)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP% &
             & GAUSS_POINTS(GAUSS_POINT_NUMBER,ELEMENT_NUMBER)
@@ -1268,7 +1270,7 @@ CONTAINS
   !
 
   !>Evaluates the residual and RHS vectors for a finite elasticity finite element equations set.
-  SUBROUTINE FiniteElasticity_FiniteElementResidualEvaluate(EQUATIONS_SET,elementNumber,ERR,ERROR,*)
+   SUBROUTINE FiniteElasticity_FiniteElementResidualEvaluate(EQUATIONS_SET,elementNumber,ERR,ERROR,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
@@ -1291,20 +1293,21 @@ CONTAINS
     TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: GEOMETRIC_INTERPOLATION_PARAMETERS, &
       & FIBRE_INTERPOLATION_PARAMETERS,MATERIALS_INTERPOLATION_PARAMETERS,DEPENDENT_INTERPOLATION_PARAMETERS, &
       & DARCY_DEPENDENT_INTERPOLATION_PARAMETERS,SOURCE_INTERPOLATION_PARAMETERS,DARCY_MATERIALS_INTERPOLATION_PARAMETERS, &
-      & DENSITY_INTERPOLATION_PARAMETERS,INDEPENDENT_INTERPOLATION_PARAMETERS
+      & DENSITY_INTERPOLATION_PARAMETERS,INDEPENDENT_INTERPOLATION_PARAMETERS,prevDependentInterpParameters
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: GEOMETRIC_INTERPOLATED_POINT,FIBRE_INTERPOLATED_POINT, &
       & MATERIALS_INTERPOLATED_POINT,DEPENDENT_INTERPOLATED_POINT,DARCY_DEPENDENT_INTERPOLATED_POINT,SOURCE_INTERPOLATED_POINT, &
-      & DENSITY_INTERPOLATED_POINT,INDEPENDENT_INTERPOLATED_POINT,DARCY_MATERIALS_INTERPOLATED_POINT
+      & DENSITY_INTERPOLATED_POINT,INDEPENDENT_INTERPOLATED_POINT,DARCY_MATERIALS_INTERPOLATED_POINT, &
+      & prevDependentInterpPoint
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: GEOMETRIC_INTERPOLATED_POINT_METRICS, &
-      & DEPENDENT_INTERPOLATED_POINT_METRICS
+      & DEPENDENT_INTERPOLATED_POINT_METRICS,prevDependentInterpPointMetrics
     TYPE(BASIS_TYPE), POINTER :: DEPENDENT_BASIS_1,GEOMETRIC_BASIS
     TYPE(DECOMPOSITION_TYPE), POINTER :: DECOMPOSITION
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: DOMAIN_ELEMENT_MAPPING
     TYPE(VARYING_STRING) :: localError
     LOGICAL :: DARCY_DENSITY,DARCY_DEPENDENT
     INTEGER(INTG) :: component_idx,component_idx2,parameter_idx,gauss_idx,element_dof_idx,FIELD_VAR_TYPE,DARCY_FIELD_VAR_TYPE
-    INTEGER(INTG) :: imatrix,Ncompartments,gaussIdx
-    INTEGER(INTG) :: i,j,numberOfXDimensions,numberOfXiDimensions
+    INTEGER(INTG) :: imatrix,Ncompartments,gaussIdx,rowIdx,columnIdx,componentIdx
+    INTEGER(INTG) :: numberOfXDimensions,numberOfXiDimensions
     INTEGER(INTG) :: NDOFS,mh,ms,mhs,mi,nh,ns,rowComponentIdx,rowElementParameterIdx,rowElementDofIdx,xiIdx,columnComponentIdx, &
       & columnElementParameterIdx
     INTEGER(INTG) :: DEPENDENT_NUMBER_OF_COMPONENTS
@@ -1318,22 +1321,23 @@ CONTAINS
     INTEGER(INTG) :: var2 ! Variable number corresponding to 'DELUDLEN' in single physics case
     INTEGER(INTG), POINTER :: EQUATIONS_SET_FIELD_DATA(:)
     REAL(DP) :: DZDNU(3,3),DZDNUT(3,3),dZdXi(3,3),AZL(3,3),AZU(3,3),Fe(3,3),FeT(3,3),Fg(3,3),C(3,3),f(3,3),E(3,3),I3,P, &
-      & piolaTensor(3,3),TEMP(3,3)
+      & piolaTensor(3,3),TEMP(3,3),prevdZdXi(3,3),prevdZdNu(3,3),invPrevdZdNu(3,3)
     REAL(DP) :: cauchyTensor(3,3),JGW_CAUCHY_TENSOR(3,3),kirchoffTensor(3,3),STRESS_TENSOR(6)
     REAL(DP) :: deformationGradientTensor(3,3),growthTensor(3,3),growthTensorInverse(3,3),growthTensorInverseTranspose(3,3), &
       & Jg,Je,Jc,Jv,fibreGrowth,sheetGrowth,normalGrowth,fibreVector(3),sheetVector(3),normalVector(3)
     REAL(DP) :: dNudXi(3,3),dXidNu(3,3)
     REAL(DP) :: DFDZ(64,3,3) !temporary until a proper alternative is found
     REAL(DP) :: dPhidZ(3,64,3) !temporary until a proper alternative is found
-    REAL(DP) :: GAUSS_WEIGHT,Jznu,Jxxi,Jzxi,JGw,gaussWeight
+    REAL(DP) :: GAUSS_WEIGHT,J,Jznu,Jxxi,Jzxi,JGw,gaussWeight,prevJZxi
     REAL(DP) :: sum1,tempTerm1
     REAL(DP) :: THICKNESS ! for elastic membrane
     REAL(DP) :: DARCY_MASS_INCREASE,DARCY_VOL_INCREASE,DARCY_RHO_0_F,DENSITY  !coupling with Darcy model
     REAL(DP) :: Mfact, bfact, p0fact
-    REAL(DP) :: dt,K,mu,a0,a1,b0,b1,m,Jn,Jr,kappan,kappas
-    REAL(DP) :: alpha1,Bepr(3,3),Beprn(3,3),Beprs(3,3),Br(3,3),c0,c1,c2,Dbar(3,3),Deps,detdevBepr,devBepr(3,3),devBeprs(3,3), &
-      & devDbar(3,3),devgepr(3,3),devgeprs(3,3),devT(3,3),dtGam0,dtGam1,factor1,factor2,Fr(3,3),Frpr(3,3),gam,games,gamma, &
-      & hydBeprs(3,3),hydDbar(3,3),ITens(3,3),kappa,tempTensor(3,3),TGPa(3,3)
+    REAL(DP) :: dt,K,mu,a0,a1,b0,b1,m,Jr,kappa1,kappan,kappas,detPrevdZdNu
+    REAL(DP) :: alpha1,BePrime(3,3),BePrime1(3,3),BePrimeStar(3,3),Br(3,3),c0,c1,c2,Dbar(3,3),deltaEps,detdevBePrimePrime, &
+      & devBePrimePrime(3,3),BePrimePrimeStar(3,3),devDbar(3,3),gePrimePrime(3,3),gePrimePrimeStar(3,3),devT(3,3),dtGamma, &
+      & dtGamma0,dtGamma1,factor1,factor2,Fr(3,3),FrPrime(3,3),gammaEStar,gamma,hydBePrimeStar(3,3),hydDbar(3,3),ITens(3,3), &
+      & kappa,tempTensor(3,3)
     INTEGER(INTG) :: EQUATIONS_SET_SUBTYPE
 
     ENTERS("FiniteElasticity_FiniteElementResidualEvaluate",ERR,ERROR,*999)
@@ -1345,13 +1349,13 @@ CONTAINS
     NULLIFY(FIELD_VARIABLE)
     NULLIFY(DEPENDENT_QUADRATURE_SCHEME,COMPONENT_QUADRATURE_SCHEME)
     NULLIFY(GEOMETRIC_INTERPOLATION_PARAMETERS,FIBRE_INTERPOLATION_PARAMETERS,SOURCE_INTERPOLATION_PARAMETERS)
-    NULLIFY(MATERIALS_INTERPOLATION_PARAMETERS,DEPENDENT_INTERPOLATION_PARAMETERS)
+    NULLIFY(MATERIALS_INTERPOLATION_PARAMETERS,DEPENDENT_INTERPOLATION_PARAMETERS,prevDependentInterpParameters)
     NULLIFY(INDEPENDENT_INTERPOLATION_PARAMETERS,DARCY_MATERIALS_INTERPOLATION_PARAMETERS)
     NULLIFY(DARCY_DEPENDENT_INTERPOLATION_PARAMETERS,DENSITY_INTERPOLATION_PARAMETERS)
     NULLIFY(GEOMETRIC_INTERPOLATED_POINT,FIBRE_INTERPOLATED_POINT,SOURCE_INTERPOLATED_POINT)
-    NULLIFY(GEOMETRIC_INTERPOLATED_POINT_METRICS,DEPENDENT_INTERPOLATED_POINT_METRICS)
+    NULLIFY(GEOMETRIC_INTERPOLATED_POINT_METRICS,DEPENDENT_INTERPOLATED_POINT_METRICS,prevDependentInterpPointMetrics)
     NULLIFY(MATERIALS_INTERPOLATED_POINT,DEPENDENT_INTERPOLATED_POINT,DARCY_DEPENDENT_INTERPOLATED_POINT)
-    NULLIFY(DENSITY_INTERPOLATED_POINT,INDEPENDENT_INTERPOLATED_POINT)
+    NULLIFY(DENSITY_INTERPOLATED_POINT,INDEPENDENT_INTERPOLATED_POINT,prevDependentInterpPoint)
     NULLIFY(DEPENDENT_BASIS_1)
     NULLIFY(DECOMPOSITION)
     NULLIFY(EQUATIONS_SET_FIELD_DATA)
@@ -1437,6 +1441,9 @@ CONTAINS
         FIELD_VARIABLE=>EQUATIONS_SET%EQUATIONS%EQUATIONS_MAPPING%NONLINEAR_MAPPING%RESIDUAL_VARIABLES(1)%PTR
         FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
         DEPENDENT_INTERPOLATION_PARAMETERS=>EQUATIONS%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(FIELD_VAR_TYPE)%PTR
+        IF(EQUATIONS%TIME_DEPENDENCE/=EQUATIONS_STATIC) THEN
+          prevDependentInterpParameters=>equations%interpolation%prevDependentInterpParameters(FIELD_VAR_TYPE)%ptr
+        ENDIF
         GEOMETRIC_INTERPOLATION_PARAMETERS=>EQUATIONS%INTERPOLATION%GEOMETRIC_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR
         IF(ASSOCIATED(FIBRE_FIELD)) THEN
           FIBRE_INTERPOLATION_PARAMETERS=>EQUATIONS%INTERPOLATION%FIBRE_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR
@@ -1470,6 +1477,10 @@ CONTAINS
         ENDIF
         CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementNumber, &
           & DEPENDENT_INTERPOLATION_PARAMETERS,ERR,ERROR,*999)
+        IF(EQUATIONS%TIME_DEPENDENCE/=EQUATIONS_STATIC) THEN
+          CALL Field_InterpolationParametersElementGet(FIELD_PREVIOUS_VALUES_SET_TYPE,elementNumber, &
+            & prevDependentInterpParameters,err,error,*999)
+        ENDIF
         IF(DARCY_DEPENDENT) THEN
           CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementNumber, &
             & DARCY_DEPENDENT_INTERPOLATION_PARAMETERS,ERR,ERROR,*999)
@@ -1494,6 +1505,10 @@ CONTAINS
         ENDIF
         DEPENDENT_INTERPOLATED_POINT=>EQUATIONS%INTERPOLATION%DEPENDENT_INTERP_POINT(FIELD_VAR_TYPE)%PTR
         DEPENDENT_INTERPOLATED_POINT_METRICS=>EQUATIONS%INTERPOLATION%DEPENDENT_INTERP_POINT_METRICS(FIELD_VAR_TYPE)%PTR
+        IF(EQUATIONS%TIME_DEPENDENCE/=EQUATIONS_STATIC) THEN
+          prevDependentInterpPoint=>equations%interpolation%prevDependentInterpPoint(FIELD_VAR_TYPE)%ptr
+          prevDependentInterpPointMetrics=>equations%interpolation%prevDependentInterpPointMetrics(FIELD_VAR_TYPE)%ptr
+        ENDIF
         IF(DARCY_DEPENDENT) THEN
           DARCY_DEPENDENT_INTERPOLATED_POINT=>EQUATIONS%INTERPOLATION%DEPENDENT_INTERP_POINT(FIELD_V_VARIABLE_TYPE)%PTR
         ELSE IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE) THEN
@@ -2020,7 +2035,8 @@ CONTAINS
           ENDIF
 
         ! ---------------------------------------------------------------
-        CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+        CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+          & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
 
           hydrostaticPressureComponent=DEPENDENT_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%NUMBER_OF_COMPONENTS
           CALL IdentityMatrix(ITens,err,error,*999)
@@ -2036,11 +2052,15 @@ CONTAINS
 
             gaussWeight=DEPENDENT_QUADRATURE_SCHEME%GAUSS_WEIGHTS(gaussIdx)
             
-            !Interpolate dependent, geometric, fibre and materials fields
+            !Interpolate dependent, previous dependent, geometric, fibre and materials fields
             CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx, &
               & DEPENDENT_INTERPOLATED_POINT,ERR,ERROR,*999)
             CALL Field_InterpolatedPointMetricsCalculate(DEPENDENT_BASIS%NUMBER_OF_XI,DEPENDENT_INTERPOLATED_POINT_METRICS, &
               & ERR,ERROR,*999)
+            CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx, &
+              & prevDependentInterpPoint,err,error,*999)
+            CALL Field_InterpolatedPointMetricsCalculate(DEPENDENT_BASIS%NUMBER_OF_XI,prevDependentInterpPointMetrics, &
+              & err,error,*999)
             CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx, &
               & GEOMETRIC_INTERPOLATED_POINT,ERR,ERROR,*999)
             CALL Field_InterpolatedPointMetricsCalculate(GEOMETRIC_BASIS%NUMBER_OF_XI,GEOMETRIC_INTERPOLATED_POINT_METRICS, &
@@ -2052,99 +2072,195 @@ CONTAINS
                 & FIBRE_INTERPOLATED_POINT,ERR,ERROR,*999)
             ENDIF
             
-            !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
+            !Get the hardening variable, kappa
+            CALL Field_ParameterSetGetLocalGaussPoint(DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+              & gaussIdx,elementNumber,1,kappa1,err,error,*999)
+            !Get BePrime from the start of the time step
+            DO columnIdx=1,3
+              DO rowIdx=1,3
+                componentIdx=1+rowIdx+(columnIdx-1)*3
+                CALL Field_ParameterSetGetLocalGaussPoint(DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,componentIdx,BePrime1(rowIdx,columnIdx),err,error,*999)
+              ENDDO !rowIdx
+            ENDDO !column
+            
+            !Calculate F=dZ/dNu, the deformation gradient tensor at the gauss point
             CALL FiniteElasticity_GaussDeformationGradientTensor(DEPENDENT_INTERPOLATED_POINT_METRICS, &
               & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,dZdXi,dZdNu,ERR,ERROR,*999)
 
-            Fr=dZdNu
-            CALL IdentityMatrix(Beprn,err,error,*999)
+            !Calculate prevF=prevdZ/dNu, the relative deformation gradient tensor at the gauss point
+!!TODO: What happens with the fibres here! They will not be in an orthogonal system
+            CALL FiniteElasticity_GaussDeformationGradientTensor(prevDependentInterpPointMetrics, &
+              & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,prevdZdXi,prevdZdNu,ERR,ERROR,*999)
+
+            !Equation numbers are from M. Hollenstein, M. Jabareen and M.B. Rubin "Modeling a smoth elastic-inelastic
+            !transition with a strongly objective numerical integrator needing no iteration". 2013. Comput Mech. 52:649-667.
             
+            !Calculate Fr = F.prevF^-1
+            CALL Invert(prevdZdNu,invPrevdZdNu,detPrevdZdNu,err,error,*999)
+            CALL MatrixProduct(dZdNu,invPrevdZdNu,Fr,err,error,*999)
+
             JXXi=GEOMETRIC_INTERPOLATED_POINT_METRICS%JACOBIAN            
             JZxi=DEPENDENT_INTERPOLATED_POINT_METRICS%JACOBIAN
+            prevJZxi=prevDependentInterpPointMetrics%JACOBIAN
             
-            P=DEPENDENT_INTERPOLATED_POINT%VALUES(hydrostaticPressureComponent,1)
+            SELECT CASE(EQUATIONS_SET_SUBTYPE)
+            CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+              & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+              P=DEPENDENT_INTERPOLATED_POINT%VALUES(hydrostaticPressureComponent,1)
             
-            K=MATERIALS_INTERPOLATED_POINT%VALUES(1,1)
-            mu=MATERIALS_INTERPOLATED_POINT%VALUES(2,1)
-            a0=MATERIALS_INTERPOLATED_POINT%VALUES(3,1)
-            a1=MATERIALS_INTERPOLATED_POINT%VALUES(4,1)
-            b0=MATERIALS_INTERPOLATED_POINT%VALUES(5,1)
-            b1=MATERIALS_INTERPOLATED_POINT%VALUES(6,1)
-            m=MATERIALS_INTERPOLATED_POINT%VALUES(7,1)
-            Jn=MATERIALS_INTERPOLATED_POINT%VALUES(8,1)
-            kappan=MATERIALS_INTERPOLATED_POINT%VALUES(9,1)
-            kappas=MATERIALS_INTERPOLATED_POINT%VALUES(10,1)
+              mu=MATERIALS_INTERPOLATED_POINT%VALUES(1,1)
+              a0=MATERIALS_INTERPOLATED_POINT%VALUES(2,1)
+              a1=MATERIALS_INTERPOLATED_POINT%VALUES(3,1)
+              b0=MATERIALS_INTERPOLATED_POINT%VALUES(4,1)
+              b1=MATERIALS_INTERPOLATED_POINT%VALUES(5,1)
+              m=MATERIALS_INTERPOLATED_POINT%VALUES(6,1)
+              kappas=MATERIALS_INTERPOLATED_POINT%VALUES(7,1)
+            CASE(EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+              & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+              K=MATERIALS_INTERPOLATED_POINT%VALUES(1,1)
+              mu=MATERIALS_INTERPOLATED_POINT%VALUES(2,1)
+              a0=MATERIALS_INTERPOLATED_POINT%VALUES(3,1)
+              a1=MATERIALS_INTERPOLATED_POINT%VALUES(4,1)
+              b0=MATERIALS_INTERPOLATED_POINT%VALUES(5,1)
+              b1=MATERIALS_INTERPOLATED_POINT%VALUES(6,1)
+              m=MATERIALS_INTERPOLATED_POINT%VALUES(7,1)
+              kappas=MATERIALS_INTERPOLATED_POINT%VALUES(8,1)
+            END SELECT
 
-            Beprn=Itens
             CALL Determinant(Fr,Jr,err,error,*999)
-            J=Jr*Jn
-            CALL Unimodular(Fr,Frpr,err,error,*999)
-            !Calculate Elastic Trial
-            CALL MatrixProduct(Frpr,Beprn,tempTensor,err,error,*999)
-            CALL MatrixProductTranspose(tempTensor,Frpr,Beprs,err,error,*999)
-            CALL DecomposeSphericalDeviatoric(Beprs,hydBeprs,devBeprs,err,error,*999)
-            devgeprs=0.5_DP*devBeprs
-            !Calculate Equivalent Strain
-            CALL DoubleDotProduct(devBeprs,devBeprs,games,err,error,*999)
-            games=SQRT(3.0_DP/8.0_DP*games)
-            !Calculate Total Effective Distortional Strain
+            !Eqn (4.6)
+!!TODO: This could just be JZxi???
+            J=Jr*prevJZxi
+            !Eqn (4.4)
+            CALL Unimodular(Fr,FrPrime,err,error,*999)
+            !Calculate Elastic Trial. Eqn (4.7)
+            CALL MatrixProduct(FrPrime,BePrime1,tempTensor,err,error,*999)
+            CALL MatrixProductTranspose(tempTensor,FrPrime,BePrimeStar,err,error,*999)
+            CALL DecomposeSphericalDeviatoric(BePrimeStar,hydBePrimeStar,BePrimePrimeStar,err,error,*999)
+            !Calculate gePrimePrimeStar. Eqn (4.10)
+            gePrimePrimeStar=BePrimePrimeStar/2.0_DP
+            !Calculate Equivalent Strain, gammaEStar. Use Eqn (4.10) in Eqn (4.17)
+            CALL DoubleDotProduct(BePrimePrimeStar,BePrimePrimeStar,gammaEStar,err,error,*999)
+            gammaEStar=SQRT(3.0_DP/8.0_DP*gammaEStar)
+            !Calculate Total Effective Distortional Strain, Dbar. Eqn (4.13)
             CALL MatrixProductTranspose(Fr,Fr,Br,err,error,*999)
-            Dbar=0.5_DP/dt*(Br-ITens)
+            Dbar=(Br-ITens)/(2.0_DP*dt)
+            !Calculate delta epsilon. Eqn (4.14). Note typo in paper. It should be devDbar dot devDbar
             CALL DecomposeSphericalDeviatoric(Dbar,hydDbar,devDbar,err,error,*999)
-            CALL DoubleDotProduct(devDbar,devDbar,Deps,err,error,*999)
-            Deps=dt*SQRT(2.0_DP/3.0_DP*Deps)
-            !Calculate gamma TODO
-            dtGam0=dt*a0+b0*Deps
-            dtGam1=dt*a1+b1*Deps
-            c0=dtGam1*(games-(1.0_DP+dtGam0)*kappan)
+            CALL DoubleDotProduct(devDbar,devDbar,deltaEps,err,error,*999)
+            deltaEps=dt*SQRT(2.0_DP/3.0_DP*deltaEps)
+            !Calculate gamma. Eqn (4.18)
+            dtGamma0=dt*a0+b0*deltaEps
+            dtGamma1=dt*a1+b1*deltaEps
+            !Eqn (4.21)
+            c0=dtGamma1*(gammaEStar-(1.0_DP+dtGamma0)*kappa1)
             IF(c0<=ZERO_TOLERANCE) THEN
-              gam=0.0_DP
+              !Eqn (4.19)
+              gamma=0.0_DP
             ELSE
-              c1=games+dtGam1*(kappan-m*(games-(1.0_DP+dtGam0)*kappas))
+              !Eqn (4.21)
+              c1=gammaEStar+dtGamma1*(kappa1-m*(gammaEStar-(1.0_DP+dtGamma0)*kappas))
               IF(ABS(m)<ZERO_TOLERANCE) THEN
-                gam=c0/c1
+                gamma=c0/c1
               ELSE
-                c2=m*(games+dtGam1*kappas)
-                gam=(-c1+SQRT(c1*c1+4.0_DP*c0*c2))/2.0_DP/c2
+                !Eqn (4.21)
+                c2=m*(gammaEStar+dtGamma1*kappas)
+                !Eqn (4.22)
+                gamma=(-c1+SQRT(c1*c1+4.0_DP*c0*c2))/(2.0_DP*c2)
               ENDIF
             ENDIF
-            gamma=dtGam0/dt+gam/dt
-            !Calculate Hardening
-            kappa=(kappan+m*kappas*gam)/(1.0_DP+m*gam)
-            !Calculate Beprpr
-            factor1=2.0_DP/(1.0_DP+dt*gamma)
-            devBepr=factor1*devgeprs
-            devgepr=0.5_DP*devBepr
+            !Calculate dtGamma. Eqn (4.15)
+            dtGamma=dtGamma0+gamma
+            !Calculate Hardening. Eqn (4.16)
+            kappa=(kappa1+m*kappas*gamma)/(1.0_DP+m*gamma)
+            !Calculate devBePrimePrime. Eqn (4.11)
+            devBePrimePrime=2.0_DP/(1.0_DP+dtGamma)*gePrimePrimeStar
+            !Calculate gePrimePrime (deviatoric part of gePrime). Eqn (3.1) and (4.11)
+            gePrimePrime=devBePrimePrime/2.0_DP
             !Calculate alpha
-            CALL Determinant(devBepr,detdevBepr,err,error,*999)
-            CALL DoubleDotProduct(devBepr,devBepr,factor1,err,error,*999)
+            CALL Determinant(devBePrimePrime,detdevBePrimePrime,err,error,*999)
+            CALL DoubleDotProduct(devBePrimePrime,devBePrimePrime,factor1,err,error,*999)
             factor1=2.0_DP/3.0_DP*factor1
             IF(ABS(factor1)<ZERO_TOLERANCE) THEN
               alpha1=3.0_DP
             ELSE
-              factor2=(4.0_DP*(1.0_DP-detdevBepr))/(factor1**1.5_DP)
+              factor2=(4.0_DP*(1.0_DP-detdevBePrimePrime))/(factor1**1.5_DP)
               IF(factor2>=1.0_DP) THEN
                 alpha1=3.0_DP*SQRT(factor1)*COSH(ACOSH(factor2)/3.0_DP)
               ELSE
                 alpha1=3.0_DP*SQRT(factor1)*COS(ACOS(factor2)/3.0_DP)
               ENDIF
             ENDIF
-            !Calculate Beprime
-            Bepr=alpha1/3.0_DP*ITens+devBepr
-            !Calculate Cauchy stress
-            !P=-K*(J-1.0_DP)
-            devT=2.0_DP*mu/J*devgepr
+            !Calculate BePrime. Eqn (4.12)
+            BePrime=alpha1/3.0_DP*ITens+devBePrimePrime
+            !Calculate deviatoric part of Cauchy stress. Eqn (6.2)
+            devT=2.0_DP*mu*gePrimePrime/J
+            SELECT CASE(EQUATIONS_SET_SUBTYPE)
+            CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+              & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+              P=DEPENDENT_INTERPOLATED_POINT%VALUES(hydrostaticPressureComponent,1)
+            CASE(EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+              & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+              P=-K*(J-1.0_DP)
+            END SELECT
+            !Calculate Cauchy stress. Eqn (2.9)
             cauchyTensor=devT-P*ITens
-            TGpa=cauchyTensor*10.0_DP**(-9.0_DP)
             
+            !Store the current value of the hardening variable, kappa, in the next values parameter set
+            CALL Field_ParameterSetUpdateLocalGaussPoint(DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_NEXT_VALUES_SET_TYPE, &
+              & gaussIdx,elementNumber,1,kappa,err,error,*999)            
+            !Store BePrime in the next values parameter set
+            DO columnIdx=1,3
+              DO rowIdx=1,3
+                componentIdx=1+rowIdx+(columnIdx-1)*3
+                CALL Field_ParameterSetUpdateLocalGaussPoint(DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_NEXT_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,componentIdx,BePrime(rowIdx,columnIdx),err,error,*999)            
+              ENDDO !rowIdx
+            ENDDO !column
+
             IF(diagnostics1) THEN
               CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Deformation gradient tensors:",err,error,*999)
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Deformation gradient at time t:",err,error,*999)
+              CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
+                & 3,3,prevdZdNu,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("            F','(",I1,",:)',' :",3(X,E13.6))', &
+                & '(16X,3(X,E13.6))',ERR,ERROR,*999)
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Deformation gradient at time t + dt:",err,error,*999)
+              CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
+                & 3,3,dZdNu,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("            F','(",I1,",:)',' :",3(X,E13.6))', &
+                & '(16X,3(X,E13.6))',ERR,ERROR,*999)
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Relative deformation gradient:",err,error,*999)
+              CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
+                & 3,3,Fr,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("           Fr','(",I1,",:)',' :",3(X,E13.6))', &
+                & '(16X,3(X,E13.6))',ERR,ERROR,*999)
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Jacobians:",err,error,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  J at time t      = ",prevJZxi,err,error,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  J at time t + dt = ",J,err,error,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Jr               = ",Jr,err,error,*999)
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Strain tensors:",err,error,*999)
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Be prime at t:",err,error,*999)
+              CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
+                & 3,3,BePrime1,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    Be prime','(",I1,",:)',' :",3(X,E13.6))', &
+                & '(16X,3(X,E13.6))',ERR,ERROR,*999)
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Be prime at t+dt:",err,error,*999)
+              CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
+                & 3,3,BePrime,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    Be prime','(",I1,",:)',' :",3(X,E13.6))', &
+                & '(16X,3(X,E13.6))',ERR,ERROR,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  gamma = ",gamma,err,error,*999)
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Strain hardening:",err,error,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  kappa at time t    = ",kappa1,err,error,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  kappa at time t+dt = ",kappa,err,error,*999)
               CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Stress tensors:",err,error,*999)
               CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Hydrostatic pressure = ",P,err,error,*999)
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Deviatoric Cauchy stress tensor:",err,error,*999)
+              CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
+                & 3,3,devT,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    dev sigma','(",I1,",:)',' :",3(X,E13.6))', &
+                & '(16X,3(X,E13.6))',ERR,ERROR,*999)
               CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Cauchy stress tensor:",err,error,*999)
               CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
-                & 3,3,cauchyTensor,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    sigma','(",I1,",:)',' :",3(X,E13.6))', &
-                & '(12X,3(X,E13.6))',ERR,ERROR,*999)
+                & 3,3,cauchyTensor,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("        sigma','(",I1,",:)',' :",3(X,E13.6))', &
+                & '(16X,3(X,E13.6))',ERR,ERROR,*999)
             ENDIF
             
             !Loop over dependent columns directions.
@@ -2182,39 +2298,46 @@ CONTAINS
               ENDDO !rowElementParameterIdx
             ENDDO !rowComponentIdx
             
-            !Hydrostatic pressure component
-            hydrostaticPressureComponent=DEPENDENT_FIELD%VARIABLES(var1)%NUMBER_OF_COMPONENTS
-            dependentComponentInterpolationType=DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS(hydrostaticPressureComponent)% &
-              & INTERPOLATION_TYPE
-            tempTerm1=gaussWeight*K*(J-1.0_DP)
-            SELECT CASE(dependentComponentInterpolationType)
-            CASE(FIELD_CONSTANT_INTERPOLATION)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-              rowElementDofIdx=rowElementDofIdx+1
-              NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(rowElementDofIdx)= &
-                & NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(rowElementDofIdx)+tempTerm1
-            CASE(FIELD_NODE_BASED_INTERPOLATION)
-              dependentBasis=>DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS(hydrostaticPressureComponent)%DOMAIN% &
-                & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%basis
-              quadratureScheme=>dependentBasis%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
-              DO rowElementParameterIdx=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
-                mhs=mhs+1 
-                NONLINEAR_MATRICES%ELEMENT_RESIDUAL%vector(rowElementParameterIdx)= &
-                  & NONLINEAR_MATRICES%ELEMENT_RESIDUAL%vector(rowElementParameterIdx)+ &
-                  & quadratureScheme%GAUSS_BASIS_FNS(rowElementParameterIdx,1,gaussIdx)*tempTerm1
-              ENDDO
-            CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
-              CALL FlagError("Not implemented.",err,error,*999)
+            SELECT CASE(EQUATIONS_SET_SUBTYPE)
+            CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+              & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+              P=DEPENDENT_INTERPOLATED_POINT%VALUES(hydrostaticPressureComponent,1)
+              !Hydrostatic pressure component
+              hydrostaticPressureComponent=DEPENDENT_FIELD%VARIABLES(var1)%NUMBER_OF_COMPONENTS
+              dependentComponentInterpolationType=DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS(hydrostaticPressureComponent)% &
+                & INTERPOLATION_TYPE
+              tempTerm1=gaussWeight*(J-1.0_DP)
+              SELECT CASE(dependentComponentInterpolationType)
+              CASE(FIELD_CONSTANT_INTERPOLATION)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+                rowElementDofIdx=rowElementDofIdx+1
+                NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(rowElementDofIdx)= &
+                  & NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(rowElementDofIdx)+tempTerm1
+              CASE(FIELD_NODE_BASED_INTERPOLATION)
+                dependentBasis=>DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS(hydrostaticPressureComponent)%DOMAIN% &
+                  & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%basis
+                quadratureScheme=>dependentBasis%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
+                DO rowElementParameterIdx=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
+                  mhs=mhs+1 
+                  NONLINEAR_MATRICES%ELEMENT_RESIDUAL%vector(rowElementParameterIdx)= &
+                    & NONLINEAR_MATRICES%ELEMENT_RESIDUAL%vector(rowElementParameterIdx)+ &
+                    & quadratureScheme%GAUSS_BASIS_FNS(rowElementParameterIdx,1,gaussIdx)*tempTerm1
+                ENDDO
+              CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE DEFAULT
+                localError="The dependent field interpolation type of "// &
+                  & TRIM(NumberToVString(dependentComponentInterpolationType,"*",err,error))//" for field component "// &
+                  & TRIM(NumberToVString(hydrostaticPressureComponent,"*",err,error))//" is invalid."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT
             CASE DEFAULT
-              localError="The dependent field interpolation type of "// &
-                & TRIM(NumberToVString(dependentComponentInterpolationType,"*",err,error))//" for field component "// &
-                & TRIM(NumberToVString(hydrostaticPressureComponent,"*",err,error))//" is invalid."
-              CALL FlagError(localError,err,error,*999)
+              !Do nothing
             END SELECT
             
           ENDDO !gaussIdx
@@ -2613,29 +2736,30 @@ CONTAINS
         CALL FiniteElasticity_StrainCalculate(EQUATIONS_SET,DEPENDENT_FIELD, &
           & FIELD_U1_VARIABLE_TYPE,ERR,ERROR,*999)
       CASE(EQUATIONS_SET_MEMBRANE_SUBTYPE,EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE, &
-          & EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE, &
-          & EQUATIONS_SET_STVENANT_KIRCHOFF_ACTIVECONTRACTION_SUBTYPE, &
-          & EQUATIONS_SET_ISOTROPIC_EXPONENTIAL_SUBTYPE, &
-          & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_EXPONENTIAL_SUBTYPE,EQUATIONS_SET_TRANSVERSE_ISOTROPIC_POLYNOMIAL_SUBTYPE, &
-          & EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_SUBTYPE,EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_ACTIVE_SUBTYPE, &
-          & EQUATIONS_SET_TRANS_ISOTROPIC_ACTIVE_TRANSITION_SUBTYPE,EQUATIONS_SET_TRANSVERSE_ISOTROPIC_ACTIVE_SUBTYPE, &
-          & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE,&
-          & EQUATIONS_SET_COMPRESSIBLE_ACTIVECONTRACTION_SUBTYPE, &
-          & EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE, EQUATIONS_SET_NO_SUBTYPE, &
-          & EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
-          & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
-          & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_HOLZAPFEL_OGDEN_SUBTYPE, &
-          & EQUATIONS_SET_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE,EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE, &
-          & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE,EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE, &
-          & EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE, &
-          & EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_STATIC_INRIA_SUBTYPE, &
-          & EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_HOLMES_MOW_SUBTYPE, &
-          & EQUATIONS_SET_ELASTICITY_FLUID_PRES_HOLMES_MOW_ACTIVE_SUBTYPE, &
-          & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_HUMPHREY_YIN_SUBTYPE, &
-          & EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE,EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE, &
-          & EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
-          & EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE, &
-          & EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+        & EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE, &
+        & EQUATIONS_SET_STVENANT_KIRCHOFF_ACTIVECONTRACTION_SUBTYPE, &
+        & EQUATIONS_SET_ISOTROPIC_EXPONENTIAL_SUBTYPE, &
+        & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_EXPONENTIAL_SUBTYPE,EQUATIONS_SET_TRANSVERSE_ISOTROPIC_POLYNOMIAL_SUBTYPE, &
+        & EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_SUBTYPE,EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_ACTIVE_SUBTYPE, &
+        & EQUATIONS_SET_TRANS_ISOTROPIC_ACTIVE_TRANSITION_SUBTYPE,EQUATIONS_SET_TRANSVERSE_ISOTROPIC_ACTIVE_SUBTYPE, &
+        & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE,&
+        & EQUATIONS_SET_COMPRESSIBLE_ACTIVECONTRACTION_SUBTYPE, &
+        & EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE, EQUATIONS_SET_NO_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_HOLZAPFEL_OGDEN_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE,EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE,EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE, &
+        & EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE, &
+        & EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_STATIC_INRIA_SUBTYPE, &
+        & EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_HOLMES_MOW_SUBTYPE, &
+        & EQUATIONS_SET_ELASTICITY_FLUID_PRES_HOLMES_MOW_ACTIVE_SUBTYPE, &
+        & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_HUMPHREY_YIN_SUBTYPE, &
+        & EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE,EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE, &
+        & EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
+        & EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE, &
+        & EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+        & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
         !Do nothing ???
       CASE DEFAULT
         LOCAL_ERROR="The third equations set specification of "// &
@@ -2680,30 +2804,31 @@ CONTAINS
       END IF
       SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
       CASE(EQUATIONS_SET_MEMBRANE_SUBTYPE,EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE, &
-          & EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE, & 
-          & EQUATIONS_SET_STVENANT_KIRCHOFF_ACTIVECONTRACTION_SUBTYPE, &
-          & EQUATIONS_SET_ISOTROPIC_EXPONENTIAL_SUBTYPE, &
-          & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_EXPONENTIAL_SUBTYPE,EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE, &
-          & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE,&
-          & EQUATIONS_SET_COMPRESSIBLE_ACTIVECONTRACTION_SUBTYPE,EQUATIONS_SET_TRANSVERSE_ISOTROPIC_ACTIVE_SUBTYPE, &
-          & EQUATIONS_SET_TRANS_ISOTROPIC_ACTIVE_TRANSITION_SUBTYPE,EQUATIONS_SET_TRANSVERSE_ISOTROPIC_POLYNOMIAL_SUBTYPE, & 
-          & EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_SUBTYPE,EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_ACTIVE_SUBTYPE, &
-          & EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE,EQUATIONS_SET_NO_SUBTYPE,EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE, &
-          & EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
-          & EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
-          & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
-          & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_HOLZAPFEL_OGDEN_SUBTYPE, &
-          & EQUATIONS_SET_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE,EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE, & 
-          & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE,EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE, &
-          & EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE, &
-          & EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_STATIC_INRIA_SUBTYPE, &
-          & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_HUMPHREY_YIN_SUBTYPE,&
-          & EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_HOLMES_MOW_SUBTYPE, &
-          & EQUATIONS_SET_ELASTICITY_FLUID_PRES_HOLMES_MOW_ACTIVE_SUBTYPE, &
-          & EQUATIONS_SET_CONSTITUTIVE_LAW_IN_CELLML_EVALUATE_SUBTYPE, &
-          & EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE, &
-          & EQUATIONS_SET_CONSTITUTIVE_AND_GROWTH_LAW_IN_CELLML_SUBTYPE, &
-          & EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+        & EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE, & 
+        & EQUATIONS_SET_STVENANT_KIRCHOFF_ACTIVECONTRACTION_SUBTYPE, &
+        & EQUATIONS_SET_ISOTROPIC_EXPONENTIAL_SUBTYPE, &
+        & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_EXPONENTIAL_SUBTYPE,EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE, &
+        & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE,&
+        & EQUATIONS_SET_COMPRESSIBLE_ACTIVECONTRACTION_SUBTYPE,EQUATIONS_SET_TRANSVERSE_ISOTROPIC_ACTIVE_SUBTYPE, &
+        & EQUATIONS_SET_TRANS_ISOTROPIC_ACTIVE_TRANSITION_SUBTYPE,EQUATIONS_SET_TRANSVERSE_ISOTROPIC_POLYNOMIAL_SUBTYPE, & 
+        & EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_SUBTYPE,EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_ACTIVE_SUBTYPE, &
+        & EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE,EQUATIONS_SET_NO_SUBTYPE,EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE, &
+        & EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_HOLZAPFEL_OGDEN_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE,EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE, & 
+        & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE,EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE, &
+        & EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE, &
+        & EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_STATIC_INRIA_SUBTYPE, &
+        & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_HUMPHREY_YIN_SUBTYPE,&
+        & EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_HOLMES_MOW_SUBTYPE, &
+        & EQUATIONS_SET_ELASTICITY_FLUID_PRES_HOLMES_MOW_ACTIVE_SUBTYPE, &
+        & EQUATIONS_SET_CONSTITUTIVE_LAW_IN_CELLML_EVALUATE_SUBTYPE, &
+        & EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE, &
+        & EQUATIONS_SET_CONSTITUTIVE_AND_GROWTH_LAW_IN_CELLML_SUBTYPE, &
+        & EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+        & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
         !Do nothing ???
       CASE DEFAULT
         LOCAL_ERROR="The third equations set specification of "// &
@@ -3808,7 +3933,7 @@ CONTAINS
           PIOLA_TENSOR(1,1)=PIOLA_TENSOR(1,1)+C(3)/AZL(1,1)*(AZL(1,1)**(C(4)/2.0_DP)-1.0_DP)
         ENDIF
         !active stress component
-        CALL FIELD_VARIABLE_GET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
+        CALL Field_VariableGet(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
         dof_idx=FIELD_VARIABLE%COMPONENTS(1)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(GAUSS_POINT_NUMBER, &
           & ELEMENT_NUMBER)
         CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
@@ -3878,7 +4003,7 @@ CONTAINS
         ENDIF
 !tomo end
         !active stress component
-        CALL FIELD_VARIABLE_GET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
+        CALL Field_VariableGet(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
         dof_idx=FIELD_VARIABLE%COMPONENTS(1)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(GAUSS_POINT_NUMBER, &
           & ELEMENT_NUMBER)
         CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
@@ -4214,7 +4339,7 @@ CONTAINS
 !        !the active stress is stored inside the independent field that has been set up in the user program.
 !        !for better generality we could set up 3 components in independent field for 3 different active stress components,
 !        !but only one component is implemented so far for fibre active tension.
-!        CALL FIELD_VARIABLE_GET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
+!        CALL Field_VariableGet(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
 !        DO i=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
 !          dof_idx=FIELD_VARIABLE%COMPONENTS(i)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP% &
 !            & GAUSS_POINTS(GAUSS_POINT_NUMBER,ELEMENT_NUMBER)
@@ -4229,7 +4354,7 @@ CONTAINS
       !add active contraction stress value to the trace of the stress tensor - basically adding to hydrostatic pressure.
       !the active stress is stored inside the independent field that has been set up in the user program.
       !for generality we could set up 3 components in independent field for 3 different active stress components
-        CALL FIELD_VARIABLE_GET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
+        CALL Field_VariableGet(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
         DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
           dof_idx=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP% &
             & GAUSS_POINTS(GAUSS_POINT_NUMBER,ELEMENT_NUMBER)
@@ -4467,7 +4592,7 @@ CONTAINS
       !add active contraction stress value to the trace of the stress tensor - basically adding to hydrostatic pressure.
       !the active stress is stored inside the independent field that has been set up in the user program.
       !for generality we could set up 3 components in independent field for 3 different active stress components
-        CALL FIELD_VARIABLE_GET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
+        CALL Field_VariableGet(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
         DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
           dof_idx=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP% &
             & GAUSS_POINTS(GAUSS_POINT_NUMBER,ELEMENT_NUMBER)
@@ -4701,7 +4826,7 @@ CONTAINS
         !add active contraction stress values
         !Be aware for modified DZDNU, should active contraction be added here? Normally should be okay as modified DZDNU and DZDNU
         !converge during the Newton iteration.
-        CALL FIELD_VARIABLE_GET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
+        CALL Field_VariableGet(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
         DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
           dof_idx=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP% &
             & GAUSS_POINTS(GAUSS_POINT_NUMBER,ELEMENT_NUMBER)
@@ -4730,7 +4855,7 @@ CONTAINS
         !add active contraction stress values
         !Be aware for modified DZDNU, should active contraction be added here? Normally should be okay as modified DZDNU and DZDNU
         !converge during the Newton iteration.
-        CALL FIELD_VARIABLE_GET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
+        CALL Field_VariableGet(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
         DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
           dof_idx=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP% &
             & GAUSS_POINTS(GAUSS_POINT_NUMBER,ELEMENT_NUMBER)
@@ -4962,7 +5087,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: GEOMETRIC_MESH_COMPONENT,GEOMETRIC_SCALING_TYPE,NUMBER_OF_COMPONENTS, &
       & NUMBER_OF_DIMENSIONS, NUMBER_OF_DARCY_COMPONENTS,GEOMETRIC_COMPONENT_NUMBER,NUMBER_OF_COMPONENTS_2,component_idx, &
-      & derivedIdx,varIdx,variableType,NUMBER_OF_FLUID_COMPONENTS
+      & componentIdx,derivedIdx,varIdx,variableType,NUMBER_OF_FLUID_COMPONENTS
     TYPE(DECOMPOSITION_TYPE), POINTER :: GEOMETRIC_DECOMPOSITION
     TYPE(FIELD_TYPE), POINTER :: ANALYTIC_FIELD,DEPENDENT_FIELD,GEOMETRIC_FIELD
     TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
@@ -4972,7 +5097,7 @@ CONTAINS
     TYPE(FIELD_TYPE), POINTER :: EQUATIONS_SET_FIELD_FIELD
     TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: EQUATIONS_MATERIALS
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: LOCAL_ERROR,localError
     LOGICAL :: IS_HYDROSTATIC_PRESSURE_DEPENDENT_FIELD
     INTEGER(INTG) :: num_var,Ncompartments,DEPENDENT_FIELD_NUMBER_OF_VARIABLES
     INTEGER(INTG) :: EQUATIONS_SET_FIELD_NUMBER_OF_VARIABLES,EQUATIONS_SET_FIELD_NUMBER_OF_COMPONENTS    
@@ -5018,30 +5143,31 @@ CONTAINS
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       SELECT CASE(EQUATIONS_SET_SUBTYPE)
       CASE(EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE,EQUATIONS_SET_MEMBRANE_SUBTYPE, &
-          & EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE, &
-          & EQUATIONS_SET_STVENANT_KIRCHOFF_ACTIVECONTRACTION_SUBTYPE, &
-          & EQUATIONS_SET_ISOTROPIC_EXPONENTIAL_SUBTYPE,EQUATIONS_SET_TRANSVERSE_ISOTROPIC_ACTIVE_SUBTYPE, &
-          & EQUATIONS_SET_TRANS_ISOTROPIC_ACTIVE_TRANSITION_SUBTYPE, &
-          & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_EXPONENTIAL_SUBTYPE,EQUATIONS_SET_TRANSVERSE_ISOTROPIC_POLYNOMIAL_SUBTYPE, &
-          & EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_SUBTYPE,EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_ACTIVE_SUBTYPE, &
-          & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE, &
-          & EQUATIONS_SET_COMPRESSIBLE_ACTIVECONTRACTION_SUBTYPE,&
-          & EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE, EQUATIONS_SET_NO_SUBTYPE, &
-          & EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
-          & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
-          & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_HOLZAPFEL_OGDEN_SUBTYPE, &
-          & EQUATIONS_SET_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE,EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE, & 
-          & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE,EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE, &
-          & EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE, &
-          & EQUATIONS_SET_CONSTITUTIVE_LAW_IN_CELLML_EVALUATE_SUBTYPE, &
-          & EQUATIONS_SET_CONSTITUTIVE_AND_GROWTH_LAW_IN_CELLML_SUBTYPE, &
-          & EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_STATIC_INRIA_SUBTYPE, &
-          & EQUATIONS_SET_ELASTICITY_FLUID_PRES_HOLMES_MOW_ACTIVE_SUBTYPE, &
-          & EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_HOLMES_MOW_SUBTYPE,EQUATIONS_SET_TRANSVERSE_ISOTROPIC_HUMPHREY_YIN_SUBTYPE, &
-          & EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE,EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE, &
-          & EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
-          & EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE, &
-          & EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+        & EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE, &
+        & EQUATIONS_SET_STVENANT_KIRCHOFF_ACTIVECONTRACTION_SUBTYPE, &
+        & EQUATIONS_SET_ISOTROPIC_EXPONENTIAL_SUBTYPE,EQUATIONS_SET_TRANSVERSE_ISOTROPIC_ACTIVE_SUBTYPE, &
+        & EQUATIONS_SET_TRANS_ISOTROPIC_ACTIVE_TRANSITION_SUBTYPE, &
+        & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_EXPONENTIAL_SUBTYPE,EQUATIONS_SET_TRANSVERSE_ISOTROPIC_POLYNOMIAL_SUBTYPE, &
+        & EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_SUBTYPE,EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_ACTIVE_SUBTYPE, &
+        & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE, &
+        & EQUATIONS_SET_COMPRESSIBLE_ACTIVECONTRACTION_SUBTYPE,&
+        & EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE, EQUATIONS_SET_NO_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
+        & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_HOLZAPFEL_OGDEN_SUBTYPE, &
+        & EQUATIONS_SET_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE,EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE, & 
+        & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE,EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE, &
+        & EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE, &
+        & EQUATIONS_SET_CONSTITUTIVE_LAW_IN_CELLML_EVALUATE_SUBTYPE, &
+        & EQUATIONS_SET_CONSTITUTIVE_AND_GROWTH_LAW_IN_CELLML_SUBTYPE, &
+        & EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_STATIC_INRIA_SUBTYPE, &
+        & EQUATIONS_SET_ELASTICITY_FLUID_PRES_HOLMES_MOW_ACTIVE_SUBTYPE, &
+        & EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_HOLMES_MOW_SUBTYPE,EQUATIONS_SET_TRANSVERSE_ISOTROPIC_HUMPHREY_YIN_SUBTYPE, &
+        & EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE,EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE, &
+        & EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
+        & EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE, &
+        & EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+        & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
         SELECT CASE(EQUATIONS_SET_SETUP%SETUP_TYPE)
         CASE(EQUATIONS_SET_SETUP_INITIAL_TYPE)
           SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
@@ -5144,7 +5270,8 @@ CONTAINS
               & EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
               & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_HUMPHREY_YIN_SUBTYPE, &
               & EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE, &
-              & EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+              & EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+              & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
               IF(.NOT.ASSOCIATED(EQUATIONS_SET%GEOMETRY%FIBRE_FIELD)) CALL FlagError( &
                 & "Finite elascitiy equations require a fibre field.",ERR,ERROR,*999)
             CASE DEFAULT
@@ -5648,18 +5775,228 @@ CONTAINS
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
 
-          CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+          CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+            & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
             !Rubin rate based formulations
             SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
             CASE(EQUATIONS_SET_SETUP_START_ACTION)
               IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
                 !Create the auto created dependent field
+                CALL Field_CreateStart(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
+                  & DEPENDENT_FIELD,ERR,ERROR,*999)
+                CALL Field_LabelSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",ERR,ERROR,*999)
+                CALL Field_TypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GEOMETRIC_GENERAL_TYPE,ERR,ERROR,*999)
+                CALL Field_DependentTypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DEPENDENT_TYPE,ERR,ERROR,*999)
+                CALL Field_MeshDecompositionGet(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,ERR,ERROR,*999)
+                CALL Field_MeshDecompositionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_DECOMPOSITION, &
+                  & ERR,ERROR,*999)
+                CALL Field_GeometricFieldSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,EQUATIONS_SET%GEOMETRY% &
+                  & GEOMETRIC_FIELD,ERR,ERROR,*999)
+                CALL Field_NumberOfVariablesSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,3,ERR,ERROR,*999)
+                CALL Field_VariableTypesSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,[FIELD_U_VARIABLE_TYPE, &
+                  & FIELD_DELUDELN_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE],ERR,ERROR,*999)
+                CALL Field_VariableLabelSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  & "U",ERR,ERROR,*999)
+                CALL Field_VariableLabelSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+                  & "del U/del n",ERR,ERROR,*999)
+                CALL Field_VariableLabelSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                  & "U1",ERR,ERROR,*999)
+                CALL Field_DimensionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
+                CALL Field_DimensionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+                  & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
+                CALL Field_DimensionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                  & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
+                CALL Field_DataTypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  & FIELD_DP_TYPE,ERR,ERROR,*999)
+                CALL Field_DataTypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+                  & FIELD_DP_TYPE,ERR,ERROR,*999)
+                CALL Field_DataTypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                  & FIELD_DP_TYPE,ERR,ERROR,*999)
+                CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  & NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
+                SELECT CASE(EQUATIONS_SET_SUBTYPE)
+                CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+                  & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+                  CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    & NUMBER_OF_DIMENSIONS+1,ERR,ERROR,*999)
+                  CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
+                    & FIELD_DELUDELN_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS+1,ERR,ERROR,*999)
+                CASE(EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+                  & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+                  CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    & NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
+                  CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
+                    & FIELD_DELUDELN_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
+                CASE DEFAULT
+                  localError="The equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET_SUBTYPE,"*",err,error))// &
+                    & " is invalid."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
+                CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                  & 10,ERR,ERROR,*999)
+                !Default to the geometric interpolation setup
+                CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  & 1,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
+                DO component_idx=1,NUMBER_OF_DIMENSIONS
+                  CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    & component_idx,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
+                  CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+                    & component_idx,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
+                ENDDO !component_idx
+                SELECT CASE(EQUATIONS_SET_SUBTYPE)
+                CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+                  & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+                  !Set the hydrostatic component to that of the first geometric component
+                  CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    & NUMBER_OF_DIMENSIONS+1,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
+                  CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+                    & NUMBER_OF_DIMENSIONS+1,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
+                CASE DEFAULT
+                  !Do nothing
+                END SELECT
+                !Set the U1 variable components
+                DO componentIdx=1,10
+                  CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                    & componentIdx,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
+                ENDDO !componentIdx
+               SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
+                CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+                  !Set the displacement components to node based interpolation
+                  DO component_idx=1,NUMBER_OF_DIMENSIONS
+                    CALL Field_ComponentInterpolationSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                      & component_idx,FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
+                    CALL Field_ComponentInterpolationSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
+                      & FIELD_DELUDELN_VARIABLE_TYPE,component_idx,FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
+                  ENDDO !component_idx
+                  SELECT CASE(EQUATIONS_SET_SUBTYPE)
+                  CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+                    & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+                    !Set the hydrostatic pressure component to element based interpolation
+                    CALL Field_ComponentInterpolationSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                      & NUMBER_OF_DIMENSIONS+1,FIELD_ELEMENT_BASED_INTERPOLATION,ERR,ERROR,*999)
+                    CALL Field_ComponentInterpolationSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
+                      & FIELD_DELUDELN_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS+1,FIELD_ELEMENT_BASED_INTERPOLATION,ERR,ERROR,*999)
+                  CASE DEFAULT
+                    !Do nothing
+                  END SELECT
+                  !Set the U1 variable components to Gauss point based interpolation
+                  DO componentIdx=1,10
+                    CALL Field_ComponentInterpolationSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                      & componentIdx,FIELD_GAUSS_POINT_BASED_INTERPOLATION,ERR,ERROR,*999)
+                  ENDDO !componentIdx
+                  !Default the scaling to the geometric field scaling
+                  CALL Field_ScalingTypeGet(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
+                  CALL Field_ScalingTypeSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
+                CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+                  CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+                  CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+                  CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+                  CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+                  CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CASE DEFAULT
+                  LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
+                    & " is invalid."
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                END SELECT
               ELSE
+                !Check the user specified field
+                CALL Field_TypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_GEOMETRIC_GENERAL_TYPE,ERR,ERROR,*999)
+                CALL Field_DependentTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DEPENDENT_TYPE,ERR,ERROR,*999)
+                CALL Field_NumberOfVariablesCheck(EQUATIONS_SET_SETUP%FIELD,3,ERR,ERROR,*999)
+                CALL Field_VariableTypesCheck(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE, &
+                  & FIELD_U1_VARIABLE_TYPE],ERR,ERROR,*999)
+                CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+                  & ERR,ERROR,*999)
+                CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+                  & ERR,ERROR,*999)
+                CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+                  & ERR,ERROR,*999)
+                CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
+                CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
+                CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
+                CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  & NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
+                SELECT CASE(EQUATIONS_SET_SUBTYPE)
+                CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+                  & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+                  CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS+1, &
+                    & ERR,ERROR,*999)
+                  CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS+1, &
+                    & ERR,ERROR,*999)
+                CASE(EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+                  & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+                  CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS, &
+                    & ERR,ERROR,*999)
+                  CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS, &
+                    & ERR,ERROR,*999)
+                CASE DEFAULT
+                  localError="The equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET_SUBTYPE,"*",err,error))// &
+                    & " is invalid."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
+                CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U1_VARIABLE_TYPE,10,ERR,ERROR,*999)
+                !Check that the pressure values set type is created here?? (second variable is a DELUDELN type, as checked above)
+                !\todo: Decide whether these set_types (previous one as well) is to be created by user or automatically..
+                IF(.NOT.ASSOCIATED(EQUATIONS_SET_SETUP%FIELD%VARIABLES(2)%PARAMETER_SETS% &
+                  & SET_TYPE(FIELD_PRESSURE_VALUES_SET_TYPE)%PTR)) THEN
+                    LOCAL_ERROR="Variable 2 of type "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%FIELD%VARIABLES(2)% &
+                      & VARIABLE_TYPE,"*",ERR,ERROR))//" does not have a pressure values set type associated."
+                ENDIF
+                SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
+                CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+                  DO componentIdx=1,NUMBER_OF_DIMENSIONS
+                    CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,componentIdx, &
+                      & FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
+                    CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,componentIdx, &
+                      & FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
+                  ENDDO !componentIdx
+                  DO componentIdx=1,10
+                    CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U1_VARIABLE_TYPE, &
+                      & componentIdx,FIELD_GAUSS_POINT_BASED_INTERPOLATION,ERR,ERROR,*999)
+                  ENDDO !componentIdx
+                CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+                  CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+                  CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+                  CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+                  CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+                  CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CASE DEFAULT
+                  LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
+                    & " is invalid."
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                END SELECT
               ENDIF
             CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
               IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
-                CALL FIELD_CREATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,ERR,ERROR,*999)
+                CALL Field_CreateFinish(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,ERR,ERROR,*999)
+                !Initialise U1 variables
+                !Initialise Be prime to the identity matrix
+                CALL Field_ComponentValuesInitialise(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                  & FIELD_VALUES_SET_TYPE,2,1.0_DP,err,error,*999)
+                CALL Field_ComponentValuesInitialise(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                  & FIELD_VALUES_SET_TYPE,6,1.0_DP,err,error,*999)
+                CALL Field_ComponentValuesInitialise(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                  & FIELD_VALUES_SET_TYPE,10,1.0_DP,err,error,*999)
               ENDIF
+              CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                & FIELD_PREVIOUS_VALUES_SET_TYPE,ERR,ERROR,*999)
+              CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,ERR,ERROR,*999)
+              CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+                & FIELD_PREVIOUS_VALUES_SET_TYPE,ERR,ERROR,*999)
+              CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+                & FIELD_PRESSURE_VALUES_SET_TYPE,ERR,ERROR,*999)
+              CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                & FIELD_NEXT_VALUES_SET_TYPE,ERR,ERROR,*999)
             CASE DEFAULT
               LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
                 & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
@@ -6996,9 +7333,13 @@ CONTAINS
               CASE(EQUATIONS_SET_CONSTITUTIVE_AND_GROWTH_LAW_IN_CELLML_SUBTYPE)
                 CALL FlagError("Materials field is not required for CellML based constituative laws.",err,error,*999)
               CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE)
-                NUMBER_OF_COMPONENTS=10
+                NUMBER_OF_COMPONENTS=7
+              CASE(EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE)
+                NUMBER_OF_COMPONENTS=8
               CASE(EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE)
-                NUMBER_OF_COMPONENTS=10
+                NUMBER_OF_COMPONENTS=8
+              CASE(EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+                NUMBER_OF_COMPONENTS=8
               CASE DEFAULT
                 LOCAL_ERROR="The third equations set specification of "// &
                   & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SUBTYPE,"*",ERR,ERROR))// &
@@ -7292,12 +7633,14 @@ CONTAINS
               !Start the equations creation
               CALL EQUATIONS_CREATE_START(EQUATIONS_SET,EQUATIONS,ERR,ERROR,*999)
               CALL EQUATIONS_LINEARITY_TYPE_SET(EQUATIONS,EQUATIONS_NONLINEAR,ERR,ERROR,*999)
-              ! sander: Quasistatic / Active contraction. correct location?
-              IF(EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE) THEN
+              SELECT CASE(EQUATIONS_SET_SUBTYPE)
+              CASE(EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE, & 
+                & EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, & 
+                & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
                 CALL EQUATIONS_TIME_DEPENDENCE_TYPE_SET(EQUATIONS,EQUATIONS_QUASISTATIC,ERR,ERROR,*999)
-              ELSE
+              CASE DEFAULT
                 CALL EQUATIONS_TIME_DEPENDENCE_TYPE_SET(EQUATIONS,EQUATIONS_STATIC,ERR,ERROR,*999)
-              ENDIF
+              END SELECT
             ELSE
               CALL FlagError("Equations set dependent field has not been finished.",ERR,ERROR,*999)
             ENDIF
@@ -7540,7 +7883,8 @@ CONTAINS
           & EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
           & EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE, &
           & EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE, &
-          & EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+          & EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+          & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
         SELECT CASE(SOLUTION_METHOD)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           EQUATIONS_SET%SOLUTION_METHOD=EQUATIONS_SET_FEM_SOLUTION_METHOD
@@ -7625,7 +7969,8 @@ CONTAINS
           & EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE,EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE, &
           & EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
           & EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE, &
-          & EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+          & EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+          & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
         !Set full specification
         IF(ALLOCATED(equationsSet%specification)) THEN
           CALL FlagError("Equations set specification is already allocated.",err,error,*999)
@@ -7742,8 +8087,43 @@ CONTAINS
           CASE(PROBLEM_SETUP_START_ACTION)
             !Start the solvers creation
             CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
-            IF(PROBLEM_SUBTYPE == PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE) THEN
+            SELECT CASE(PROBLEM%SPECIFICATION(3))
+            CASE(PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE, &
+              & PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE)
+              CALL SOLVERS_NUMBER_SET(SOLVERS,1,ERR,ERROR,*999)
+              !Set the solver to be a nonlinear solver
+              CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
+              CALL SOLVER_TYPE_SET(SOLVER,SOLVER_NONLINEAR_TYPE,ERR,ERROR,*999)
+              !Set solver defaults
+              CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,ERR,ERROR,*999)              
+            CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE)
               CALL SOLVERS_NUMBER_SET(SOLVERS,2,ERR,ERROR,*999)
+              !Set the first solver to be an CellML Evaluator for time varying boundary conditions
+              CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
+              CALL SOLVER_TYPE_SET(SOLVER,SOLVER_CELLML_EVALUATOR_TYPE,ERR,ERROR,*999)
+              CALL Solver_LabelSet(solver,"Boundary Condition Evaluation Solver",err,error,*999)
+              !Set solver defaults
+              CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,ERR,ERROR,*999)
+              !Set the second solver to be a nonlinear solver to solve the mechanics
+              NULLIFY(SOLVER)
+              CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,ERR,ERROR,*999)
+              CALL SOLVER_TYPE_SET(SOLVER,SOLVER_NONLINEAR_TYPE,ERR,ERROR,*999)
+              CALL Solver_LabelSet(solver,"Nonlinear Solver",err,error,*999)
+              !Set solver defaults
+              CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,ERR,ERROR,*999)
+            CASE(PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE)
+              CALL SOLVERS_NUMBER_SET(SOLVERS,1,ERR,ERROR,*999)
+              !Set the solver to be a nonlinear solver
+              CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
+              CALL SOLVER_TYPE_SET(SOLVER,SOLVER_NONLINEAR_TYPE,ERR,ERROR,*999)
+              !Set solver defaults
+              CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,ERR,ERROR,*999)
+              !Create the CellML evaluator solver
+              CALL SOLVER_NEWTON_CELLML_EVALUATOR_CREATE(SOLVER,CELLML_SOLVER,ERR,ERROR,*999)
+              !Link the CellML evaluator solver to the solver
+              CALL SOLVER_LINKED_SOLVER_ADD(SOLVER,CELLML_SOLVER,SOLVER_CELLML_EVALUATOR_TYPE,ERR,ERROR,*999)
+            CASE(PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE) 
+               CALL SOLVERS_NUMBER_SET(SOLVERS,2,ERR,ERROR,*999)
               !Set the first solver to be an ODE integrator
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
               CALL SOLVER_TYPE_SET(SOLVER,SOLVER_DAE_TYPE,ERR,ERROR,*999)
@@ -7760,21 +8140,11 @@ CONTAINS
               CALL SOLVER_NEWTON_CELLML_EVALUATOR_CREATE(SOLVER,CELLML_SOLVER,ERR,ERROR,*999)
               !Link the CellML evaluator solver to the solver
               CALL SOLVER_LINKED_SOLVER_ADD(SOLVER,CELLML_SOLVER,SOLVER_CELLML_EVALUATOR_TYPE,ERR,ERROR,*999)
-            ELSE
-              CALL SOLVERS_NUMBER_SET(SOLVERS,1,ERR,ERROR,*999)
-              !Set the solver to be a nonlinear solver
-              CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
-              CALL SOLVER_TYPE_SET(SOLVER,SOLVER_NONLINEAR_TYPE,ERR,ERROR,*999)
-              !Set solver defaults
-              CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,ERR,ERROR,*999)
-              
-              IF(PROBLEM%SPECIFICATION(3)==PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE) THEN
-                !Create the CellML evaluator solver
-                CALL SOLVER_NEWTON_CELLML_EVALUATOR_CREATE(SOLVER,CELLML_SOLVER,ERR,ERROR,*999)
-                !Link the CellML evaluator solver to the solver
-                CALL SOLVER_LINKED_SOLVER_ADD(SOLVER,CELLML_SOLVER,SOLVER_CELLML_EVALUATOR_TYPE,ERR,ERROR,*999)
-              ENDIF
-            ENDIF
+           CASE DEFAULT
+              localError="The third problem specification of "//TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
+                & " is not valid for a finite elasticity type of an elasticity problem class."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the solvers
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
@@ -7794,16 +8164,23 @@ CONTAINS
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
             !Get the solver
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
-            IF(PROBLEM%SPECIFICATION(3) == PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE) THEN
-              CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,ERR,ERROR,*999)
-            ELSE
+            SELECT CASE(PROBLEM%SPECIFICATION(3))
+            CASE(PROBLEM_NO_SUBTYPE,PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE, &
+              & PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE,PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE)
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
-            ENDIF
+            CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE)
+              CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,ERR,ERROR,*999)
+            CASE DEFAULT
+              localError="The third problem specification of "//TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
+                & " is not valid for a finite elasticity type of an elasticity problem class."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
             !Create the solver equatgions
             CALL SOLVER_EQUATIONS_CREATE_START(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
+            CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,ERR,ERROR,*999)
             CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_NONLINEAR,ERR,ERROR,*999)
-            ! sander - Quasistatic: Change 2/2. worth splitting entire case over in copy/paste?
-            SELECT CASE(PROBLEM_SUBTYPE)
+            !Set time dependence
+            SELECT CASE(PROBLEM%SPECIFICATION(3))
             CASE(PROBLEM_NO_SUBTYPE,PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE)
               CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_STATIC,ERR,ERROR,*999)
             CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE, &
@@ -7812,22 +8189,27 @@ CONTAINS
             CASE(PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE)
               CALL FlagError("Not implemented.",err,error,*999)
             CASE DEFAULT
-              localError="Problem subtype "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SUBTYPE,"*",ERR,ERROR))// &
+              localError="The third problem specification of "//TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
                 & " is not valid for a finite elasticity type of an elasticity problem class."
               CALL FlagError(localError,err,error,*999)
             END SELECT
-            CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,ERR,ERROR,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
             CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
             !Get the solver equations
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
-            IF(PROBLEM%SPECIFICATION(3) == PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE) THEN
-              CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,ERR,ERROR,*999)
-            ELSE
+            SELECT CASE(PROBLEM%SPECIFICATION(3))
+            CASE(PROBLEM_NO_SUBTYPE,PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE, &
+              & PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE,PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE)
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
-            ENDIF
+            CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE)
+              CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,ERR,ERROR,*999)
+            CASE DEFAULT
+              localError="The third problem specification of "//TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
+                & " is not valid for a finite elasticity type of an elasticity problem class."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
             CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
             !Finish the solver equations creation
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,ERR,ERROR,*999)             
@@ -7838,13 +8220,35 @@ CONTAINS
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE(PROBLEM_SETUP_CELLML_EQUATIONS_TYPE)
+          !Get the control loop
+          CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+          CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
+          CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
-            !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
-            IF(PROBLEM%SPECIFICATION(3) == PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE) THEN
+            SELECT CASE(PROBLEM%SPECIFICATION(3))
+            CASE(PROBLEM_NO_SUBTYPE,PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE, &
+              & PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE)
+              !Do nothing
+            CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE)
+              !Get the CellML solver
+              CALL SOLVERS_SOLVER_GET(SOLVERS,1,CELLML_SOLVER,ERR,ERROR,*999)
+              !Create the CellML equations
+              CALL CELLML_EQUATIONS_CREATE_START(CELLML_SOLVER,CELLML_EQUATIONS,ERR,ERROR,*999)
+              !Set the time dependence
+              CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_QUASISTATIC,err,error,*999)
+              !Set the time dependence
+              CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_QUASISTATIC,err,error,*999)
+            CASE(PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE)
+              !Get the nonlinear solver
+              CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
+              !Get the CellML evaluator solver
+              CALL SOLVER_NEWTON_CELLML_SOLVER_GET(SOLVER,CELLML_SOLVER,ERR,ERROR,*999)
+              !Create the CellML equations
+              CALL CELLML_EQUATIONS_CREATE_START(CELLML_SOLVER,CELLML_EQUATIONS,ERR,ERROR,*999)
+              !Set the time dependence
+              CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_STATIC,err,error,*999)
+            CASE(PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE) 
               !Get the CellML integrator solver
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,CELLML_SOLVER,ERR,ERROR,*999)
               CALL CELLML_EQUATIONS_CREATE_START(CELLML_SOLVER,CELLML_EQUATIONS,ERR,ERROR,*999)
@@ -7852,21 +8256,40 @@ CONTAINS
               NULLIFY(CELLML_EQUATIONS)
               !Get the nonlinear solver
               CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,ERR,ERROR,*999)
-            ELSE
+              !Get the CellML evaluator solver
+              CALL SOLVER_NEWTON_CELLML_SOLVER_GET(SOLVER,CELLML_SOLVER,ERR,ERROR,*999)
+              !Create the CellML equations
+              CALL CELLML_EQUATIONS_CREATE_START(CELLML_SOLVER,CELLML_EQUATIONS, &
+                & ERR,ERROR,*999)
+              !Set the time dependence
+              CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_QUASISTATIC,err,error,*999)
+            CASE DEFAULT
+              localError="The third problem specification of "//TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
+                & " is not valid for a finite elasticity type of an elasticity problem class."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
+          CASE(PROBLEM_SETUP_FINISH_ACTION)
+            SELECT CASE(PROBLEM%SPECIFICATION(3))
+            CASE(PROBLEM_NO_SUBTYPE,PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE, &
+              & PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE)
+              !Do nothing
+            CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE)
+              !Get the CellML evaluator solver
+              CALL SOLVERS_SOLVER_GET(SOLVERS,1,CELLML_SOLVER,ERR,ERROR,*999)
+              !Get the CellML equations for the CellML evaluator solver
+              CALL SOLVER_CELLML_EQUATIONS_GET(CELLML_SOLVER,CELLML_EQUATIONS,ERR,ERROR,*999)
+              !Finish the CellML equations creation
+              CALL CELLML_EQUATIONS_CREATE_FINISH(CELLML_EQUATIONS,ERR,ERROR,*999)
+            CASE(PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE)
               !Get the nonlinear solver
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
-            ENDIF
-            !Get the CellML evaluator solver
-            CALL SOLVER_NEWTON_CELLML_SOLVER_GET(SOLVER,CELLML_SOLVER,ERR,ERROR,*999)
-            !Create the CellML equations
-            CALL CELLML_EQUATIONS_CREATE_START(CELLML_SOLVER,CELLML_EQUATIONS, &
-              & ERR,ERROR,*999)
-          CASE(PROBLEM_SETUP_FINISH_ACTION)
-            !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
-            IF(PROBLEM%SPECIFICATION(3) == PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE) THEN
+              !Get the CellML evaluator solver
+              CALL SOLVER_NEWTON_CELLML_SOLVER_GET(SOLVER,CELLML_SOLVER,ERR,ERROR,*999)
+              !Get the CellML equations for the CellML evaluator solver
+              CALL SOLVER_CELLML_EQUATIONS_GET(CELLML_SOLVER,CELLML_EQUATIONS,ERR,ERROR,*999)
+              !Finish the CellML equations creation
+              CALL CELLML_EQUATIONS_CREATE_FINISH(CELLML_EQUATIONS,ERR,ERROR,*999)
+            CASE(PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE) 
               !Get the CellML integrator solver
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,CELLML_SOLVER,ERR,ERROR,*999)
               !Get the CellML equations for the CellML evaluator solver
@@ -7877,16 +8300,17 @@ CONTAINS
               NULLIFY(CELLML_EQUATIONS)
               !Get the nonlinear solver
               CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,ERR,ERROR,*999)
-            ELSE
-              !Get the nonlinear solver
-              CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
-            ENDIF
-            !Get the CellML evaluator solver
-            CALL SOLVER_NEWTON_CELLML_SOLVER_GET(SOLVER,CELLML_SOLVER,ERR,ERROR,*999)
-            !Get the CellML equations for the CellML evaluator solver
-            CALL SOLVER_CELLML_EQUATIONS_GET(CELLML_SOLVER,CELLML_EQUATIONS,ERR,ERROR,*999)
-            !Finish the CellML equations creation
-            CALL CELLML_EQUATIONS_CREATE_FINISH(CELLML_EQUATIONS,ERR,ERROR,*999)
+              !Get the CellML evaluator solver
+              CALL SOLVER_NEWTON_CELLML_SOLVER_GET(SOLVER,CELLML_SOLVER,ERR,ERROR,*999)
+              !Get the CellML equations for the CellML evaluator solver
+              CALL SOLVER_CELLML_EQUATIONS_GET(CELLML_SOLVER,CELLML_EQUATIONS,ERR,ERROR,*999)
+              !Finish the CellML equations creation
+              CALL CELLML_EQUATIONS_CREATE_FINISH(CELLML_EQUATIONS,ERR,ERROR,*999)
+            CASE DEFAULT
+              localError="The third problem specification of "//TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
+                & " is not valid for a finite elasticity type of an elasticity problem class."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
           CASE DEFAULT
             LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
               & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
@@ -8280,94 +8704,126 @@ CONTAINS
   !
 
   !>Sets up the finite elasticity problem post solve.
-  SUBROUTINE FINITE_ELASTICITY_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*)
+  SUBROUTINE FiniteElasticity_PostSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER!<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-
+    TYPE(SOLVER_TYPE), POINTER :: solver!<A pointer to the solver
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: I
-    TYPE(FIELD_TYPE), POINTER :: INDEPENDENT_FIELD
+    INTEGER(INTG) :: equationsSetIdx,I
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(FIELD_TYPE), POINTER :: dependentField,independentField
+    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
+ 
+    ENTERS("FiniteElasticity_PostSolve",err,error,*999)
 
-    ENTERS("FINITE_ELASTICITY_POST_SOLVE",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
 
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(ASSOCIATED(SOLVER)) THEN
-        IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-          IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
-            CALL FlagError("Problem specification is not allocated.",err,error,*999)
-          ELSE IF(SIZE(CONTROL_LOOP%PROBLEM%SPECIFICATION,1)<3) THEN
-            CALL FlagError("Problem specification must have three entries for a finite elasticity problem.",err,error,*999)
-          END IF
-          SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-          CASE(PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE)
-            IF(SOLVER%GLOBAL_NUMBER==2) THEN
-              !Nonlinear solver
-              CALL SOLVER_NONLINEAR_DIVERGENCE_EXIT(SOLVER,ERR,ERROR,*999)
-              CALL FINITE_ELASTICITY_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)          
-            ENDIF
-          CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE, &
-            & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
-            !Call divergence test only if finite element loop: THIS IS NOT A PROPER FIX
-            IF(CONTROL_LOOP%SUB_LOOP_INDEX==1) THEN
-              CALL SOLVER_NONLINEAR_DIVERGENCE_EXIT(SOLVER,ERR,ERROR,*999)
-            ENDIF
-            IF(CONTROL_LOOP%LOOP_TYPE==PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE.AND.SOLVER%GLOBAL_NUMBER==1) THEN
-              CALL FINITE_ELASTICITY_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
-            END IF
-          CASE(PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE)
-            ! how to check eqn subtype? assume active contraction 
-            INDEPENDENT_FIELD => SOLVER%SOLVERS%SOLVERS(1)%PTR%SOLVER_EQUATIONS%SOLVER_MAPPING% &
-                                   & EQUATIONS_SETS(1)%PTR%INDEPENDENT%INDEPENDENT_FIELD
-            ! store lambda Q (5-8) in prev lambda Q (1-4)
-            DO I=1,4
-              CALL Field_ParametersToFieldParametersCopy(INDEPENDENT_FIELD,&
-                & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, I+4, &
-                & INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, I,ERR,ERROR,*999)
-            END DO
-            ! output data
-            CALL FINITE_ELASTICITY_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
-          CASE DEFAULT
-            !Check that solver converged
-            CALL SOLVER_NONLINEAR_DIVERGENCE_EXIT(SOLVER,ERR,ERROR,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Solver is not associated.",ERR,ERROR,*999)
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    
+    IF(.NOT.ALLOCATED(problem%specification)) CALL FlagError("Problem specification is not allocated.",err,error,*999)
+    IF(SIZE(problem%specification,1)<3) &
+      & CALL FlagError("Problem specification must have three entries for a finite elasticity problem.",err,error,*999)
+ 
+    SELECT CASE(problem%specification(3))
+    CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE)
+      IF(solver%GLOBAL_NUMBER==2) THEN
+        !Nonlinear solver
+        CALL Solver_NonlinearDivergenceExit(solver,err,error,*999)
+        !Update the hardening variable if we have converged
+        NULLIFY(solverEquations)
+        CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+        NULLIFY(solverMapping)
+        CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+        DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+          NULLIFY(equationsSet)
+          CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
+          IF(equationsSet%specification(1)==EQUATIONS_SET_ELASTICITY_CLASS.AND. &
+            & equationsSet%specification(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE.AND. &
+            & (equationsSet%specification(3)==EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE.OR. &
+            & equationsSet%specification(3)==EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE.OR. &
+            & equationsSet%specification(3)==EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE.OR. &
+            & equationsSet%specification(3)==EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)) THEN
+            !Rate based model
+            !Update hardening variable
+            NULLIFY(dependentField)
+            CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+            CALL Field_ParameterSetsCopy(dependentField,FIELD_U1_VARIABLE_TYPE,FIELD_NEXT_VALUES_SET_TYPE, &
+              & FIELD_VALUES_SET_TYPE,1.0_DP,err,error,*999)
+          ENDIF
+        ENDDO !equationsSetIdx
+        !Output results
+        CALL FiniteElasticity_PostSolveOutputData(solver,err,error,*999)          
       ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CASE(PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE)
+      IF(solver%GLOBAL_NUMBER==2) THEN
+        !Nonlinear solver
+        CALL Solver_NonlinearDivergenceExit(solver,err,error,*999)
+        CALL FiniteElasticity_PostSolveOutputData(solver,err,error,*999)          
+      ENDIF
+    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE, &
+      & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
+      !Call divergence test only if finite element loop: THIS IS NOT A PROPER FIX
+      IF(controlLoop%SUB_LOOP_INDEX==1) THEN
+        CALL Solver_NonlinearDivergenceExit(solver,err,error,*999)
+      ENDIF
+      IF(controlLoop%LOOP_TYPE==PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE.AND.solver%GLOBAL_NUMBER==1) THEN
+        CALL FiniteElasticity_PostSolveOutputData(solver,err,error,*999)
+      END IF
+    CASE(PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE)
+      ! how to check eqn subtype? assume active contraction
+      NULLIFY(solverEquations)
+      CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+      NULLIFY(solverMapping)
+      CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+      NULLIFY(equationsSet)
+      CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
+      NULLIFY(independentField)
+      CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
+      ! store lambda Q (5-8) in prev lambda Q (1-4)
+      DO I=1,4
+        CALL Field_ParametersToFieldParametersCopy(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,I+4, &
+          & independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,I,err,error,*999)
+      END DO
+      ! output data
+      CALL FiniteElasticity_PostSolveOutputData(solver,err,error,*999)
+    CASE DEFAULT
+      !Check that solver converged
+      CALL Solver_NonlinearDivergenceExit(solver,err,error,*999)
+    END SELECT
 
-    EXITS("FINITE_ELASTICITY_POST_SOLVE")
+    EXITS("FiniteElasticity_PostSolve")
     RETURN
-999 ERRORSEXITS("FINITE_ELASTICITY_POST_SOLVE",ERR,ERROR)
+999 ERRORSEXITS("FiniteElasticity_PostSolve",err,error)
     RETURN 1
-  END SUBROUTINE FINITE_ELASTICITY_POST_SOLVE
+    
+  END SUBROUTINE FiniteElasticity_PostSolve
 
   !
   !================================================================================================================================
   !
 
   !>Sets up the finite elasticity problem post solve output data.
-  SUBROUTINE FINITE_ELASTICITY_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,ERR,ERROR,*)
+  SUBROUTINE FiniteElasticity_PostSolveOutputData(solver,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop !<A pointer to the control loop to solve.
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(CONTROL_LOOP_TYPE), POINTER :: TIME_LOOP !<A pointer to the control time loop.
+    TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     TYPE(VARYING_STRING) :: METHOD !,FILE
     CHARACTER(14) :: FILE
@@ -8377,116 +8833,112 @@ CONTAINS
     INTEGER(INTG) :: OUTPUT_ITERATION_NUMBER
     INTEGER(INTG) :: equations_set_idx,loop_idx
 
-    ENTERS("FINITE_ELASTICITY_POST_SOLVE_OUTPUT_DATA",ERR,ERROR,*999)
+    ENTERS("FiniteElasticity_PostSolveOutputData",err,error,*999)
 
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(ASSOCIATED(SOLVER)) THEN
-        IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-          IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
-            CALL FlagError("Problem specification is not allocated.",err,error,*999)
-          ELSE IF(SIZE(CONTROL_LOOP%PROBLEM%SPECIFICATION,1)<3) THEN
-            CALL FlagError("Problem specification must have three entries for a finite elasticity problem.",err,error,*999)
-          END IF
-          SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-          CASE(PROBLEM_NO_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_FLUID_PRESSURE_SUBTYPE, &
-            & PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE, &
-            & PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE)
-            SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
-            IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-              SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
-              IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                !Make sure the equations sets are up to date
-                DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                  EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
-                  METHOD="FORTRAN"
-                  !EXPORT_FIELD=.TRUE.
-                  EXPORT_FIELD=.FALSE.
-                  IF(EXPORT_FIELD) THEN          
-                    IF(SOLVER%OUTPUT_TYPE>=SOLVER_PROGRESS_OUTPUT) THEN
-                      CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Finite Elasticity export fields ... ",ERR,ERROR,*999)
-                      CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"STATICSOLUTION",ERR,ERROR,*999)
-                    ENDIF
-                    CALL FLUID_MECHANICS_IO_WRITE_CMGUI(EQUATIONS_SET%REGION,EQUATIONS_SET%GLOBAL_NUMBER, &
-                      & "STATICSOLIDSOLUTION",ERR,ERROR,*999)
-                  ENDIF
-                ENDDO
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+        
+    IF(.NOT.ALLOCATED(problem%SPECIFICATION)) &
+      & CALL FlagError("Problem specification is not allocated.",err,error,*999)
+    IF(SIZE(problem%SPECIFICATION,1)<3) &
+      & CALL FlagError("Problem specification must have three entries for a finite elasticity problem.",err,error,*999)
+     
+    SELECT CASE(problem%SPECIFICATION(3))
+    CASE(PROBLEM_NO_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_FLUID_PRESSURE_SUBTYPE, &
+      & PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE, &
+      & PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE)
+      SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+      IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
+        SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+        IF(ASSOCIATED(SOLVER_MAPPING)) THEN
+          !Make sure the equations sets are up to date
+          DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+            EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
+            METHOD="FORTRAN"
+            !EXPORT_FIELD=.TRUE.
+            EXPORT_FIELD=.FALSE.
+            IF(EXPORT_FIELD) THEN          
+              IF(SOLVER%OUTPUT_TYPE>=SOLVER_PROGRESS_OUTPUT) THEN
+                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Finite Elasticity export fields ... ",ERR,ERROR,*999)
+                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"STATICSOLUTION",ERR,ERROR,*999)
               ENDIF
+              CALL FLUID_MECHANICS_IO_WRITE_CMGUI(EQUATIONS_SET%REGION,EQUATIONS_SET%GLOBAL_NUMBER, &
+                & "STATICSOLIDSOLUTION",ERR,ERROR,*999)
             ENDIF
-          CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE, &
-            & PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE,PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE, &
-            & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
-            SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
-            IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-              SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
-              IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                !Make sure the equations sets are up to date
-                DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                  EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
-                  IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
-                    CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-                  ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
-                    CALL FlagError("Equations set specification does not have a type.", &
-                      & err,error,*999)
-                  END IF
-                  IF(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE) THEN
-                    TIME_LOOP=>CONTROL_LOOP !Initialise time loop (load increment loop on first)
-                    !Move up to find outer time loop
-                    DO loop_idx=1,CONTROL_LOOP%CONTROL_LOOP_LEVEL-1
-                      IF(ASSOCIATED(TIME_LOOP%PARENT_LOOP)) THEN
-                        TIME_LOOP=>TIME_LOOP%PARENT_LOOP
-                      ELSE
-                        CALL FlagError("Could not find a time control loop.",ERR,ERROR,*999)
-                      ENDIF
-                    ENDDO
-                    CURRENT_LOOP_ITERATION=TIME_LOOP%TIME_LOOP%ITERATION_NUMBER
-                    OUTPUT_ITERATION_NUMBER=TIME_LOOP%TIME_LOOP%OUTPUT_NUMBER
-                    
-                    !Write out fields at each timestep
-                    IF(TIME_LOOP%TIME_LOOP%CURRENT_TIME<=TIME_LOOP%TIME_LOOP%STOP_TIME) THEN
-                      WRITE(OUTPUT_FILE,'("S_TIMESTP_",I4.4)') CURRENT_LOOP_ITERATION
-                      FILE=OUTPUT_FILE
-                      METHOD="FORTRAN"
-                      EXPORT_FIELD=.TRUE.
-                      IF(EXPORT_FIELD) THEN
-                        IF(OUTPUT_ITERATION_NUMBER/=0.AND.MOD(CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER)==0)  THEN
-                          IF(SOLVER%OUTPUT_TYPE>=SOLVER_PROGRESS_OUTPUT) THEN
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Finite Elasticity export fields ...",ERR,ERROR,*999)
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,OUTPUT_FILE,ERR,ERROR,*999)
-                          ENDIF
-                          CALL FLUID_MECHANICS_IO_WRITE_CMGUI(EQUATIONS_SET%REGION,EQUATIONS_SET%GLOBAL_NUMBER,FILE, &
-                            & ERR,ERROR,*999)
-                          IF(SOLVER%OUTPUT_TYPE>=SOLVER_PROGRESS_OUTPUT) THEN
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Finite Elasticity all fields exported ...",ERR,ERROR,*999)
-                          ENDIF
-                          CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,OUTPUT_FILE,ERR,ERROR,*999)
-                        ENDIF
-                      ENDIF
-                    ENDIF !stop_time                 
-                  ENDIF !EQUATIONS_SET_FINITE_ELASTICITY_TYPE
-                ENDDO !equations_set_idx
-              ENDIF !Solver_mapping
-            ENDIF !Solver_equations
-          CASE DEFAULT
-            LOCAL_ERROR="The third problem specification of "// &
-              & TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
-              & " is not valid for a finite elasticity problem class."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
+          ENDDO
         ENDIF
-      ELSE
-        CALL FlagError("Solver is not associated.",ERR,ERROR,*999)
       ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE, &
+      & PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE,PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE, &
+      & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
+      SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+      IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
+        SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+        IF(ASSOCIATED(SOLVER_MAPPING)) THEN
+          !Make sure the equations sets are up to date
+          DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+            EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
+            IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
+              CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+            ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<2) THEN
+              CALL FlagError("Equations set specification does not have a type.", &
+                & err,error,*999)
+            END IF
+            IF(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE) THEN
+              TIME_LOOP=>controlLoop !Initialise time loop (load increment loop on first)
+              !Move up to find outer time loop
+              DO loop_idx=1,controlLoop%CONTROL_LOOP_LEVEL-1
+                IF(ASSOCIATED(TIME_LOOP%PARENT_LOOP)) THEN
+                  TIME_LOOP=>TIME_LOOP%PARENT_LOOP
+                ELSE
+                  CALL FlagError("Could not find a time control loop.",ERR,ERROR,*999)
+                ENDIF
+              ENDDO
+              CURRENT_LOOP_ITERATION=TIME_LOOP%TIME_LOOP%ITERATION_NUMBER
+              OUTPUT_ITERATION_NUMBER=TIME_LOOP%TIME_LOOP%OUTPUT_NUMBER
+              
+              !Write out fields at each timestep
+              IF(TIME_LOOP%TIME_LOOP%CURRENT_TIME<=TIME_LOOP%TIME_LOOP%STOP_TIME) THEN
+                WRITE(OUTPUT_FILE,'("S_TIMESTP_",I4.4)') CURRENT_LOOP_ITERATION
+                FILE=OUTPUT_FILE
+                METHOD="FORTRAN"
+                EXPORT_FIELD=.TRUE.
+                IF(EXPORT_FIELD) THEN
+                  IF(OUTPUT_ITERATION_NUMBER/=0.AND.MOD(CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER)==0)  THEN
+                    IF(SOLVER%OUTPUT_TYPE>=SOLVER_PROGRESS_OUTPUT) THEN
+                      CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Finite Elasticity export fields ...",ERR,ERROR,*999)
+                      CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,OUTPUT_FILE,ERR,ERROR,*999)
+                    ENDIF
+                    CALL FLUID_MECHANICS_IO_WRITE_CMGUI(EQUATIONS_SET%REGION,EQUATIONS_SET%GLOBAL_NUMBER,FILE, &
+                      & ERR,ERROR,*999)
+                    IF(SOLVER%OUTPUT_TYPE>=SOLVER_PROGRESS_OUTPUT) THEN
+                      CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Finite Elasticity all fields exported ...",ERR,ERROR,*999)
+                    ENDIF
+                    CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,OUTPUT_FILE,ERR,ERROR,*999)
+                  ENDIF
+                ENDIF
+              ENDIF !stop_time                 
+            ENDIF !EQUATIONS_SET_FINITE_ELASTICITY_TYPE
+          ENDDO !equations_set_idx
+        ENDIF !Solver_mapping
+      ENDIF !Solver_equations
+    CASE DEFAULT
+      LOCAL_ERROR="The third problem specification of "// &
+        & TRIM(NUMBER_TO_VSTRING(problem%SPECIFICATION(3),"*",ERR,ERROR))// &
+        & " is not valid for a finite elasticity problem class."
+      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+    END SELECT
       
-    EXITS("FINITE_ELASTICITY_POST_SOLVE_OUTPUT_DATA")
+    EXITS("FiniteElasticity_PostSolveOutputData")
     RETURN
-999 ERRORSEXITS("FINITE_ELASTICITY_POST_SOLVE_OUTPUT_DATA",ERR,ERROR)
+999 ERRORSEXITS("FiniteElasticity_PostSolveOutputData",ERR,ERROR)
     RETURN 1
-  END SUBROUTINE FINITE_ELASTICITY_POST_SOLVE_OUTPUT_DATA
+    
+  END SUBROUTINE FiniteElasticity_PostSolveOutputData
 
   !
   !================================================================================================================================
@@ -8632,10 +9084,9 @@ CONTAINS
   !
 
   !>Sets up the finite elasticity problem pre-solve.
-  SUBROUTINE FINITE_ELASTICITY_PRE_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*)
+  SUBROUTINE FiniteElasticity_PreSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -8644,8 +9095,10 @@ CONTAINS
     INTEGER(INTG) :: solver_matrix_idx,equations_set_idx
     LOGICAL :: CELLMLSOLVER,NONLINEARSOLVER,VALID_SUBTYPE
     REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop !<A pointer to the control loop to solve.
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD
+    TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(SOLVER_TYPE), POINTER :: CELLML_SOLVER
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
@@ -8653,142 +9106,137 @@ CONTAINS
     TYPE(SOLVER_MATRIX_TYPE), POINTER :: SOLVER_MATRIX
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("FINITE_ELASTICITY_PRE_SOLVE",ERR,ERROR,*999)
+    ENTERS("FiniteElasticity_PreSolve",ERR,ERROR,*999)
 
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(ASSOCIATED(SOLVER)) THEN
-        IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-          IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
-            CALL FlagError("Problem specification is not allocated.",err,error,*999)
-          ELSE IF(SIZE(CONTROL_LOOP%PROBLEM%SPECIFICATION,1)<3) THEN
-            CALL FlagError("Problem specification must have three entries for a finite elasticity problem.",err,error,*999)
-          END IF
-          SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-            CASE(PROBLEM_NO_SUBTYPE)
-              !Do nothing ???
-            CASE(PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE)
-              !Do nothing ???
-            CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE)
-              !Do nothing ???
-            CASE(PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE)
-              !Do nothing ???
-            CASE(PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE, &
-              & PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE)
-              IF(CONTROL_LOOP%PROBLEM%SPECIFICATION(3)==PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE) THEN
-                IF(SOLVER%GLOBAL_NUMBER==1) THEN
-                  CELLMLSOLVER=.TRUE.
-                  NONLINEARSOLVER=.FALSE.
-                ELSE
-                  CELLMLSOLVER=.FALSE.
-                  NONLINEARSOLVER=.TRUE.
-                ENDIF
-              ELSE
-                CELLMLSOLVER=.FALSE.
-                NONLINEARSOLVER=.TRUE.
-              ENDIF
-              IF(CELLMLSOLVER) THEN
-                CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_LOOP,CURRENT_TIME,TIME_INCREMENT,ERR,ERROR,*999)
-                CALL SOLVER_DAE_TIMES_SET(SOLVER,CURRENT_TIME,CURRENT_TIME+TIME_INCREMENT,ERR,ERROR,*999)
-              ENDIF
-              IF(NONLINEARSOLVER) THEN
-                SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
-                IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                  SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
-                  IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                    VALID_SUBTYPE=.FALSE.
-                    DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                      EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
-                      IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTITUTIVE_LAW_IN_CELLML_EVALUATE_SUBTYPE.OR. &
-                        EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTITUTIVE_AND_GROWTH_LAW_IN_CELLML_SUBTYPE) THEN
-                        VALID_SUBTYPE=.TRUE.
-                        !compute the strain field
-                        DEPENDENT_FIELD=>EQUATIONS_SET%EQUATIONS%INTERPOLATION%DEPENDENT_FIELD
-                        CALL FiniteElasticity_StrainCalculate(EQUATIONS_SET,DEPENDENT_FIELD, &
-                          & FIELD_U1_VARIABLE_TYPE,ERR,ERROR,*999)
-                        !check for a linked CellML solver 
-                        CELLML_SOLVER=>SOLVER%NONLINEAR_SOLVER%NEWTON_SOLVER%CELLML_EVALUATOR_SOLVER
-                        IF(ASSOCIATED(CELLML_SOLVER)) THEN
-                          !evaluate the constiutive equation in CellML
-                          CALL SOLVER_SOLVE(CELLML_SOLVER,ERR,ERROR,*999)
-                        ENDIF
-                      ENDIF
-                    ENDDO !equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                    IF(VALID_SUBTYPE .NEQV. .TRUE.) THEN
-                      LOCAL_ERROR="The third equations set specification of "// &
-                        & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%specification(3),"*",ERR, &
-                        & ERROR))//"is not valid for a finite elasticity third problem specification of "//TRIM( &
-                        & NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%specification(3),"*",ERR,ERROR))//"."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ENDIF
-                  ELSE
-                    CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
-                ENDIF
-              ENDIF
-            CASE(PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE)
-              ! do nothing, time values get updated in CONTROL_TIME_LOOP_PRE_LOOP as there might be 
-              ! a load increment loop below the time loop, so we don't want to update times here before
-              ! every solve
-            CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE)
-              ! do nothing
-            CASE(PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE)
-              ! do nothing
-            CASE(EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
-              ! do nothing
-            CASE(PROBLEM_STANDARD_ELASTICITY_FLUID_PRESSURE_SUBTYPE)
-              ! do nothing
-            CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE, &
-              & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
-              IF(SOLVER%OUTPUT_TYPE>=SOLVER_PROGRESS_OUTPUT) THEN
-                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Finite Elasticity pre-solve",ERR,ERROR,*999)
-              ENDIF
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
 
-              !--- Set 'SOLVER_MATRIX%UPDATE_MATRIX=.TRUE.'
-              SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
-              IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
-                IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                  SOLVER_MATRICES=>SOLVER_EQUATIONS%SOLVER_MATRICES
-                  IF(ASSOCIATED(SOLVER_MATRICES)) THEN
-                    DO solver_matrix_idx=1,SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES
-                      SOLVER_MATRIX=>SOLVER_MATRICES%MATRICES(solver_matrix_idx)%PTR
-                      IF(ASSOCIATED(SOLVER_MATRIX)) THEN
-                        SOLVER_MATRIX%UPDATE_MATRIX=.TRUE.
-                      ELSE
-                        CALL FlagError("Solver Matrix is not associated.",ERR,ERROR,*999)
-                      ENDIF
-                    ENDDO
-                  ELSE
-                    CALL FlagError("Solver Matrices is not associated.",ERR,ERROR,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
-              ENDIF
-            CASE DEFAULT
-              LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
-                & " is not valid for a finite elasticity problem class."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    
+    IF(.NOT.ALLOCATED(problem%specification)) CALL FlagError("Problem specification is not allocated.",err,error,*999)
+    IF(SIZE(problem%specification,1)<3) &
+      & CALL FlagError("Problem specification must have three entries for a finite elasticity problem.",err,error,*999)
+ 
+    SELECT CASE(problem%SPECIFICATION(3))
+    CASE(PROBLEM_NO_SUBTYPE)
+      !Do nothing ???
+    CASE(PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE)
+      !Do nothing ???
+    CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE)
+      !Do nothing ???
+    CASE(PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE)
+      !Do nothing ???
+    CASE(PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE, &
+      & PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE)
+      IF(problem%SPECIFICATION(3)==PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE) THEN
+        IF(SOLVER%GLOBAL_NUMBER==1) THEN
+          CELLMLSOLVER=.TRUE.
+          NONLINEARSOLVER=.FALSE.
         ELSE
-          CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
+          CELLMLSOLVER=.FALSE.
+          NONLINEARSOLVER=.TRUE.
         ENDIF
       ELSE
-        CALL FlagError("Solver is not associated.",ERR,ERROR,*999)
+        CELLMLSOLVER=.FALSE.
+        NONLINEARSOLVER=.TRUE.
       ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
-    ENDIF
+      IF(CELLMLSOLVER) THEN
+        CALL CONTROL_LOOP_CURRENT_TIMES_GET(controlLoop,CURRENT_TIME,TIME_INCREMENT,ERR,ERROR,*999)
+        CALL SOLVER_DAE_TIMES_SET(SOLVER,CURRENT_TIME,CURRENT_TIME+TIME_INCREMENT,ERR,ERROR,*999)
+      ENDIF
+      IF(NONLINEARSOLVER) THEN
+        SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+        IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
+          SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+          IF(ASSOCIATED(SOLVER_MAPPING)) THEN
+            VALID_SUBTYPE=.FALSE.
+            DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+              EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
+              IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTITUTIVE_LAW_IN_CELLML_EVALUATE_SUBTYPE.OR. &
+                EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTITUTIVE_AND_GROWTH_LAW_IN_CELLML_SUBTYPE) THEN
+                VALID_SUBTYPE=.TRUE.
+                !compute the strain field
+                NULLIFY(DEPENDENT_FIELD)
+                CALL EquationsSet_DependentFieldGet(EQUATIONS_SET,DEPENDENT_FIELD,ERR,ERROR,*999)
+                CALL FiniteElasticity_StrainCalculate(EQUATIONS_SET,DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE,ERR,ERROR,*999)
+                !check for a linked CellML solver 
+                CELLML_SOLVER=>SOLVER%NONLINEAR_SOLVER%NEWTON_SOLVER%CELLML_EVALUATOR_SOLVER
+                IF(ASSOCIATED(CELLML_SOLVER)) THEN
+                  !evaluate the constiutive equation in CellML
+                  CALL SOLVER_SOLVE(CELLML_SOLVER,ERR,ERROR,*999)
+                ENDIF
+              ENDIF
+            ENDDO !equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+            IF(VALID_SUBTYPE .NEQV. .TRUE.) THEN
+              LOCAL_ERROR="The third equations set specification of "// &
+                & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%specification(3),"*",ERR, &
+                & ERROR))//"is not valid for a finite elasticity third problem specification of "//TRIM( &
+                & NUMBER_TO_VSTRING(problem%specification(3),"*",ERR,ERROR))//"."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            ENDIF
+          ELSE
+            CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
+          ENDIF
+        ELSE
+          CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
+        ENDIF
+      ENDIF
+    CASE(PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE)
+      ! do nothing, time values get updated in CONTROL_TIME_LOOP_PRE_LOOP as there might be 
+      ! a load increment loop below the time loop, so we don't want to update times here before
+      ! every solve
+    CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE)
+      ! do nothing
+    CASE(EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_STANDARD_ELASTICITY_FLUID_PRESSURE_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE, &
+      & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
+      IF(SOLVER%OUTPUT_TYPE>=SOLVER_PROGRESS_OUTPUT) THEN
+        CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Finite Elasticity pre-solve",ERR,ERROR,*999)
+      ENDIF
+      
+      !--- Set 'SOLVER_MATRIX%UPDATE_MATRIX=.TRUE.'
+      SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+      IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
+        SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+        IF(ASSOCIATED(SOLVER_MAPPING)) THEN
+          SOLVER_MATRICES=>SOLVER_EQUATIONS%SOLVER_MATRICES
+          IF(ASSOCIATED(SOLVER_MATRICES)) THEN
+            DO solver_matrix_idx=1,SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES
+              SOLVER_MATRIX=>SOLVER_MATRICES%MATRICES(solver_matrix_idx)%PTR
+              IF(ASSOCIATED(SOLVER_MATRIX)) THEN
+                SOLVER_MATRIX%UPDATE_MATRIX=.TRUE.
+              ELSE
+                CALL FlagError("Solver Matrix is not associated.",ERR,ERROR,*999)
+              ENDIF
+            ENDDO
+          ELSE
+            CALL FlagError("Solver Matrices is not associated.",ERR,ERROR,*999)
+          ENDIF
+        ELSE
+          CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
+        ENDIF
+      ELSE
+        CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
+      ENDIF
+    CASE DEFAULT
+      LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(problem%SPECIFICATION(3),"*",ERR,ERROR))// &
+        & " is not valid for a finite elasticity problem class."
+      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+    END SELECT
 
-    EXITS("FINITE_ELASTICITY_PRE_SOLVE")
+    EXITS("FiniteElasticity_PreSolve")
     RETURN
-999 ERRORSEXITS("FINITE_ELASTICITY_PRE_SOLVE",ERR,ERROR)
+999 ERRORSEXITS("FiniteElasticity_PreSolve",ERR,ERROR)
     RETURN 1
-  END SUBROUTINE FINITE_ELASTICITY_PRE_SOLVE
+    
+  END SUBROUTINE FiniteElasticity_PreSolve
       
   !   
   !================================================================================================================================
@@ -9018,7 +9466,7 @@ CONTAINS
                               IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
                                 EQUATIONS_MAPPING=>EQUATIONS_SET%EQUATIONS%EQUATIONS_MAPPING
                                 IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-                                  CALL FIELD_VARIABLE_GET(DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VARIABLE, &
+                                  CALL Field_VariableGet(DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VARIABLE, &
                                     & ERR,ERROR,*999)
                                   IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                                     CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS,FIELD_VARIABLE, &
@@ -9143,7 +9591,7 @@ CONTAINS
                               IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
                                 EQUATIONS_MAPPING=>EQUATIONS_SET%EQUATIONS%EQUATIONS_MAPPING
                                 IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-                                  CALL FIELD_VARIABLE_GET(DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
+                                  CALL Field_VariableGet(DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
                                   IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                                     CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS,FIELD_VARIABLE, &
                                       & BOUNDARY_CONDITIONS_VARIABLE,ERR,ERROR,*999)

@@ -217,10 +217,17 @@ MODULE BASE_ROUTINES
     MODULE PROCEDURE EXTRACT_ERROR_MESSAGE_VS
   END INTERFACE EXTRACT_ERROR_MESSAGE
 
+  !>Extracts the error message part of an error string
   INTERFACE ExtractErrorMessage
     MODULE PROCEDURE EXTRACT_ERROR_MESSAGE_C
     MODULE PROCEDURE EXTRACT_ERROR_MESSAGE_VS
   END INTERFACE ExtractErrorMessage
+
+  !>Extracts the error stack part of the error string
+  INTERFACE ExtractErrorStack
+    MODULE PROCEDURE ExtractErrorStackC
+    MODULE PROCEDURE ExtractErrorStackVS
+  END INTERFACE ExtractErrorStack
 
   !>Flags an error condition \see BASE_ROUTINES
   INTERFACE FLAG_ERROR
@@ -280,12 +287,12 @@ MODULE BASE_ROUTINES
     MODULE PROCEDURE TIMING_SUMMARY_OUTPUT
   END INTERFACE TimingSummaryOutput
 
-  !>Flags a warning to the user \see BASE_ROUTINES
+  !>Writes the error string \see BASE_ROUTINES
   INTERFACE WRITE_ERROR
     MODULE PROCEDURE WriteError
   END INTERFACE WRITE_ERROR
 
-  !>Flags a warning to the user \see BASE_ROUTINES
+  !>Writes an output string \see BASE_ROUTINES
   INTERFACE WriteStr
     MODULE PROCEDURE WRITE_STR
   END INTERFACE WriteStr
@@ -323,6 +330,8 @@ MODULE BASE_ROUTINES
   PUBLIC EXTRACT_ERROR_MESSAGE
 
   PUBLIC ExtractErrorMessage
+  
+  PUBLIC ExtractErrorStack
   
   PUBLIC FLAG_ERROR,FLAG_WARNING
 
@@ -686,6 +695,46 @@ CONTAINS
 
     RETURN
   END SUBROUTINE EXTRACT_ERROR_MESSAGE_C
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Extracts the error stack from a CMISS error string and returns it as a varying string
+  SUBROUTINE ExtractErrorStackVS(errorStack,err,error,*)
+
+    !Argument variables
+    TYPE(VARYING_STRING), INTENT(OUT) :: errorStack !<The extracted error stack
+    INTEGER(INTG), INTENT(IN) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(IN) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: position
+
+    position=INDEX(error,ERROR_SEPARATOR_CONSTANT)
+    errorStack=EXTRACT(error,position+1,LEN_TRIM(error))
+
+    RETURN
+  END SUBROUTINE ExtractErrorStackVS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Extracts the error stack from a CMISS error string and returns it as a character array
+  SUBROUTINE ExtractErrorStackC(errorStack,err,error,*)
+
+    !Argument variables
+    CHARACTER(LEN=*), INTENT(OUT) :: errorStack !<The extracted error stack
+    INTEGER(INTG), INTENT(IN) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(IN) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: position
+
+    position=INDEX(error,ERROR_SEPARATOR_CONSTANT)
+    errorStack=EXTRACT(error,position+1,LEN_TRIM(error))
+
+    RETURN
+  END SUBROUTINE ExtractErrorStackC
 
   !
   !================================================================================================================================

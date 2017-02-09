@@ -117,64 +117,7 @@ MODULE FIELD_ROUTINES
   INTEGER(INTG), PARAMETER :: FIELD_DATA_POINT_BASED_INTERPOLATION=6 !<data point based interpolation. Parameters are different at each data point \see FIELD_ROUTINES_InterpolationTypes,FIELD_ROUTINES
   !>@}
 
-  !> \addtogroup FIELD_ROUTINES_VariableTypes FIELD_ROUTINES::VariableTypes
-  !> \brief Field variable type parameters
-  !> \see FIELD_ROUTINES,OPENCMISS_FieldVariableTypes
-  !> \todo sort out variable access routines so that you are always accessing by variable type rather than variable number.
-  !>@{
-  INTEGER(INTG), PARAMETER :: FIELD_NUMBER_OF_VARIABLE_TYPES=48 !<Number of different field variable types possible \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
-  INTEGER(INTG), PARAMETER :: FIELD_NUMBER_OF_VARIABLE_SUBTYPES=4 !<The number of variants of a particular variable - currently 4. U, delUdelN, delUdelT,del2UdelT2 \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_U_VARIABLE_TYPE=1 !<Standard variable type i.e., u \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DELUDELN_VARIABLE_TYPE=2 !<Normal derivative variable type i.e., du/dn \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DELUDELT_VARIABLE_TYPE=3 !<First time derivative variable type i.e., du/dt \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DEL2UDELT2_VARIABLE_TYPE=4 !<Second time derivative variable type i.e., d^2u/dt^2 \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_V_VARIABLE_TYPE=5 !<Second standard variable type i.e., v \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DELVDELN_VARIABLE_TYPE=6 !<Second normal derivative variable type i.e., dv/dn \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DELVDELT_VARIABLE_TYPE=7 !<First time derivative variable type i.e., du/dt \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DEL2VDELT2_VARIABLE_TYPE=8 !<Second time derivative variable type i.e., d^2u/dt^2 \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_U1_VARIABLE_TYPE=9 !<Third standard variable type i.e., v \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DELU1DELN_VARIABLE_TYPE=10 !<Third normal derivative variable type i.e., dv/dn \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DELU1DELT_VARIABLE_TYPE=11 !<Third time derivative variable type i.e., du/dt \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DEL2U1DELT2_VARIABLE_TYPE=12 !<Third time derivative variable type i.e., d^2u/dt^2 \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_U2_VARIABLE_TYPE=13 !<Fourth standard variable type i.e., v \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DELU2DELN_VARIABLE_TYPE=14 !<Fourth normal derivative variable type i.e., dv/dn \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DELU2DELT_VARIABLE_TYPE=15 !<Fourth time derivative variable type i.e., du/dt \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DEL2U2DELT2_VARIABLE_TYPE=16 !<Fourth time derivative variable type i.e., d^2u/dt^2 \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_U3_VARIABLE_TYPE=17 !<Fifth standard variable type i.e., v \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DELU3DELN_VARIABLE_TYPE=18 !<Fifth normal derivative variable type i.e., dv/dn \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DELU3DELT_VARIABLE_TYPE=19 !<Fifth time derivative variable type i.e., du/dt \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DEL2U3DELT2_VARIABLE_TYPE=20 !<Fifth time derivative variable type i.e., d^2u/dt^2 \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_U4_VARIABLE_TYPE=21 !<Sixth standard variable type i.e., v \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DELU4DELN_VARIABLE_TYPE=22 !<Sixth normal derivative variable type i.e., dv/dn \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DELU4DELT_VARIABLE_TYPE=23 !<Sixth time derivative variable type i.e., du/dt \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DEL2U4DELT2_VARIABLE_TYPE=24 !<Sixth time derivative variable type i.e., d^2u/dt^2 \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_U5_VARIABLE_TYPE=25 !<Seventh standard variable type i.e., v \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DELU5DELN_VARIABLE_TYPE=26 !<Seventh normal derivative variable type i.e., dv/dn \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DELU5DELT_VARIABLE_TYPE=27 !<Seventh time derivative variable type i.e., du/dt \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DEL2U5DELT2_VARIABLE_TYPE=28 !<Seventh time derivative variable type i.e., d^2u/dt^2 \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_U6_VARIABLE_TYPE=29 !<Eighth standard variable type i.e., v \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DELU6DELN_VARIABLE_TYPE=30 !<Eighth normal derivative variable type i.e., dv/dn \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DELU6DELT_VARIABLE_TYPE=31 !<Eighth time derivative variable type i.e., du/dt \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DEL2U6DELT2_VARIABLE_TYPE=32 !<Eighth time derivative variable type i.e., d^2u/dt^2 \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_U7_VARIABLE_TYPE=33 !<Ninth standard variable type i.e., v \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DELU7DELN_VARIABLE_TYPE=34 !<Ninth normal derivative variable type i.e., dv/dn \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DELU7DELT_VARIABLE_TYPE=35 !<Ninth time derivative variable type i.e., du/dt \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DEL2U7DELT2_VARIABLE_TYPE=36 !<Ninth time derivative variable type i.e., d^2u/dt^2 \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_U8_VARIABLE_TYPE=37 !<Tenth standard variable type i.e., v \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DELU8DELN_VARIABLE_TYPE=38 !<Tenth normal derivative variable type i.e., dv/dn \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DELU8DELT_VARIABLE_TYPE=39 !<Tenth time derivative variable type i.e., du/dt \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DEL2U8DELT2_VARIABLE_TYPE=40 !<Tenth time derivative variable type i.e., d^2u/dt^2 \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_U9_VARIABLE_TYPE=41 !<Eleventh standard variable type i.e., v \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DELU9DELN_VARIABLE_TYPE=42 !<Eleventh normal derivative variable type i.e., dv/dn \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DELU9DELT_VARIABLE_TYPE=43 !<Eleventh time derivative variable type i.e., du/dt \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DEL2U9DELT2_VARIABLE_TYPE=44 !<Eleventh time derivative variable type i.e., d^2u/dt^2 \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_U10_VARIABLE_TYPE=45 !<Twelfth standard variable type i.e., v \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DELU10DELN_VARIABLE_TYPE=46 !<Twelfth normal derivative variable type i.e., dv/dn \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DELU10DELT_VARIABLE_TYPE=47 !<Twelfth time derivative variable type i.e., du/dt \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_DEL2U10DELT2_VARIABLE_TYPE=48 !<Twelfth time derivative variable type i.e., d^2u/dt^2 \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-  !>@}
-  
-  !> \addtogroup FIELD_ROUTINES_DofTypes FIELD_ROUTINES::DofTypes
+!> \addtogroup FIELD_ROUTINES_DofTypes FIELD_ROUTINES::DofTypes
   !> \brief Field dof type parameters
   !> \see FIELD_ROUTINES
   !>@{
@@ -215,39 +158,40 @@ MODULE FIELD_ROUTINES
   INTEGER(INTG), PARAMETER :: FIELD_INCREMENTAL_VALUES_SET_TYPE=4 !<The parameter set corresponding to the field incremental values \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
   INTEGER(INTG), PARAMETER :: FIELD_ANALYTIC_VALUES_SET_TYPE=5 !<The parameter set corresponding to the analytic field values \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
   INTEGER(INTG), PARAMETER :: FIELD_PREVIOUS_VALUES_SET_TYPE=6 !<The parameter set corresponding to the previous field values (at time T) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE=7 !<The parameter set corresponding to the mean predicited values (at time T+DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_VELOCITY_VALUES_SET_TYPE=8 !<The parameter set corresponding to the velocity values (at time T+DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_INITIAL_VELOCITY_SET_TYPE=9 !<The parameter set corresponding to the initial velocity values for dynamic problems. This is also the previous velocity values \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_PREVIOUS_VELOCITY_SET_TYPE=9 !<The parameter set corresponding to the previous velocity values (at time T). This is also the initial velocity values for dynamic problems. \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE=10 !<The parameter set corresponding to the mean predicited velocity values (at time T+DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_ACCELERATION_VALUES_SET_TYPE=11 !<The parameter set corresponding to the acceleration values (at time T+DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_INITIAL_ACCELERATION_SET_TYPE=12 !<The parameter set corresponding to the initial acceleration values for dynamic problems. This is also the previous accelearation values \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_PREVIOUS_ACCELERATION_SET_TYPE=12 !<The parameter set corresponding to the previous acceleration values (at time T).This is also the initial acceleration values for dynamic problems. \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE=13 !<The parameter set corresponding to the mean predicted acceleration values (at time T+DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_PREDICTED_DISPLACEMENT_SET_TYPE=14 !<The parameter set corresponding to the predicted values (at time T+DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_PREDICTED_VELOCITY_SET_TYPE=15 !<The parameter set corresponding to the predicted velocity values (at time T+DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_PREDICTED_ACCELERATION_SET_TYPE=16 !<The parameter set corresponding to the predicted acceleration values (at time T+DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_RESIDUAL_SET_TYPE=17 !<The parameter set corresponding to the evaluated residual values (at time T) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_PREVIOUS_RESIDUAL_SET_TYPE=18 !<The parameter set corresponding to the residual values evaluated previously (at time T-DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_MESH_DISPLACEMENT_SET_TYPE=19 !<The parameter set corresponding to the mesh displacement values for ALE \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_MESH_VELOCITY_SET_TYPE=20 !<The parameter set corresponding to the mesh velocity values for ALE \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_BOUNDARY_SET_TYPE=21 !<The parameter set corresponding to the mesh velocity values for ALE \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_INPUT_DATA1_SET_TYPE=22 !<The parameter set corresponding to a input field \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_INPUT_DATA2_SET_TYPE=23 !<The parameter set corresponding to a input field \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_INPUT_DATA3_SET_TYPE=24 !<The parameter set corresponding to a input field \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_INPUT_VEL1_SET_TYPE=25 !<The parameter set corresponding to a input field (PPE)\see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_INPUT_VEL2_SET_TYPE=26 !<The parameter set corresponding to a input field (PPE)\see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_INPUT_VEL3_SET_TYPE=27 !<The parameter set corresponding to a input field (PPE)\see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_INPUT_LABEL_SET_TYPE=28 !<The parameter set corresponding to a input field (PPE)\see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_PRESSURE_VALUES_SET_TYPE=29 !<The parameter set corresponding to the surface pressure values (at time T+DT). \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_PREVIOUS_PRESSURE_SET_TYPE=30 !<The parameter set corresponding to the previous surface pressure values (at previous increment step). \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES 
-  INTEGER(INTG), PARAMETER :: FIELD_RELATIVE_VELOCITY_SET_TYPE=31 !<The parameter set corresponding to the relative velocity values for ALE \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_NEGATIVE_MESH_VELOCITY_SET_TYPE=32 !<The parameter set corresponding to the NEGATIVE mesh velocity values for ALE \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE=33 !<The parameter set corresponding to the previous iteration field values (at iteration n) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_IMPERMEABLE_FLAG_VALUES_SET_TYPE=34 !<The parameter set corresponding to the impermeable flag field values \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_INTEGRATED_NEUMANN_SET_TYPE=35 !<Stores integrated Neumann values calculated from Neumann point values \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_UPWIND_VALUES_SET_TYPE=36 !<Stores upwind values associated with a field. \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-  INTEGER(INTG), PARAMETER :: FIELD_PREVIOUS_UPWIND_VALUES_SET_TYPE=37 !<Stores upwind values associated with a field from previous timestep. \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_NEXT_VALUES_SET_TYPE=7 !<The parameter set corresponding to the next field values (at time T+dT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE=8 !<The parameter set corresponding to the mean predicited values (at time T+DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_VELOCITY_VALUES_SET_TYPE=9 !<The parameter set corresponding to the velocity values (at time T+DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_INITIAL_VELOCITY_SET_TYPE=10 !<The parameter set corresponding to the initial velocity values for dynamic problems. This is also the previous velocity values \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_PREVIOUS_VELOCITY_SET_TYPE=10 !<The parameter set corresponding to the previous velocity values (at time T). This is also the initial velocity values for dynamic problems. \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE=11 !<The parameter set corresponding to the mean predicited velocity values (at time T+DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_ACCELERATION_VALUES_SET_TYPE=12 !<The parameter set corresponding to the acceleration values (at time T+DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_INITIAL_ACCELERATION_SET_TYPE=13 !<The parameter set corresponding to the initial acceleration values for dynamic problems. This is also the previous accelearation values \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_PREVIOUS_ACCELERATION_SET_TYPE=13 !<The parameter set corresponding to the previous acceleration values (at time T).This is also the initial acceleration values for dynamic problems. \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE=14 !<The parameter set corresponding to the mean predicted acceleration values (at time T+DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_PREDICTED_DISPLACEMENT_SET_TYPE=15 !<The parameter set corresponding to the predicted values (at time T+DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_PREDICTED_VELOCITY_SET_TYPE=16 !<The parameter set corresponding to the predicted velocity values (at time T+DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_PREDICTED_ACCELERATION_SET_TYPE=17 !<The parameter set corresponding to the predicted acceleration values (at time T+DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_RESIDUAL_SET_TYPE=18 !<The parameter set corresponding to the evaluated residual values (at time T) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_PREVIOUS_RESIDUAL_SET_TYPE=19 !<The parameter set corresponding to the residual values evaluated previously (at time T-DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_MESH_DISPLACEMENT_SET_TYPE=20 !<The parameter set corresponding to the mesh displacement values for ALE \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_MESH_VELOCITY_SET_TYPE=21 !<The parameter set corresponding to the mesh velocity values for ALE \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_BOUNDARY_SET_TYPE=22 !<The parameter set corresponding to the mesh velocity values for ALE \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_INPUT_DATA1_SET_TYPE=23 !<The parameter set corresponding to a input field \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_INPUT_DATA2_SET_TYPE=24 !<The parameter set corresponding to a input field \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_INPUT_DATA3_SET_TYPE=25 !<The parameter set corresponding to a input field \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_INPUT_VEL1_SET_TYPE=26 !<The parameter set corresponding to a input field (PPE)\see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_INPUT_VEL2_SET_TYPE=27 !<The parameter set corresponding to a input field (PPE)\see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_INPUT_VEL3_SET_TYPE=28 !<The parameter set corresponding to a input field (PPE)\see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_INPUT_LABEL_SET_TYPE=29 !<The parameter set corresponding to a input field (PPE)\see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_PRESSURE_VALUES_SET_TYPE=30 !<The parameter set corresponding to the surface pressure values (at time T+DT). \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_PREVIOUS_PRESSURE_SET_TYPE=31 !<The parameter set corresponding to the previous surface pressure values (at previous increment step). \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES 
+  INTEGER(INTG), PARAMETER :: FIELD_RELATIVE_VELOCITY_SET_TYPE=32 !<The parameter set corresponding to the relative velocity values for ALE \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_NEGATIVE_MESH_VELOCITY_SET_TYPE=33 !<The parameter set corresponding to the NEGATIVE mesh velocity values for ALE \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE=34 !<The parameter set corresponding to the previous iteration field values (at iteration n) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_IMPERMEABLE_FLAG_VALUES_SET_TYPE=35 !<The parameter set corresponding to the impermeable flag field values \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_INTEGRATED_NEUMANN_SET_TYPE=36 !<Stores integrated Neumann values calculated from Neumann point values \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_UPWIND_VALUES_SET_TYPE=37 !<Stores upwind values associated with a field. \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_PREVIOUS_UPWIND_VALUES_SET_TYPE=38 !<Stores upwind values associated with a field from previous timestep. \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
   !>@}
 
   !> \addtogroup FIELD_ROUTINES_ScalingTypes FIELD_ROUTINES::ScalingTypes
@@ -601,9 +545,9 @@ MODULE FIELD_ROUTINES
     MODULE PROCEDURE FIELD_PARAMETER_SETS_ADD_DP1
   END INTERFACE Field_ParameterSetsAdd
 
-  INTERFACE Field_ParameterSetsCopy
-    MODULE PROCEDURE FIELD_PARAMETER_SETS_COPY
-  END INTERFACE Field_ParameterSetsCopy
+  INTERFACE FIELD_PARAMETER_SETS_COPY
+    MODULE PROCEDURE Field_ParameterSetsCopy
+  END INTERFACE FIELD_PARAMETER_SETS_COPY
   
   INTERFACE Field_ParameterSetDestroy
     MODULE PROCEDURE FIELD_PARAMETER_SET_DESTROY
@@ -1096,10 +1040,6 @@ MODULE FIELD_ROUTINES
     MODULE PROCEDURE FIELD_TYPE_SET_AND_LOCK
   END INTERFACE Field_TypeSetAndLock
 
-  INTERFACE Field_VariableGet
-    MODULE PROCEDURE FIELD_VARIABLE_GET
-  END INTERFACE Field_VariableGet
-
   !>Gets the label for a field variable type.
   INTERFACE FIELD_VARIABLE_LABEL_GET
     MODULE PROCEDURE FIELD_VARIABLE_LABEL_GET_C
@@ -1174,38 +1114,22 @@ MODULE FIELD_ROUTINES
   PUBLIC FIELD_CONSTANT_DOF_TYPE,FIELD_ELEMENT_DOF_TYPE,FIELD_NODE_DOF_TYPE,FIELD_GRID_POINT_DOF_TYPE,FIELD_GAUSS_POINT_DOF_TYPE, &
     & FIELD_DATA_POINT_DOF_TYPE
 
-  PUBLIC FIELD_NUMBER_OF_VARIABLE_TYPES,FIELD_NUMBER_OF_VARIABLE_SUBTYPES,FIELD_NUMBER_OF_SET_TYPES, &
-    & FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DELUDELT_VARIABLE_TYPE, &
-    & FIELD_DEL2UDELT2_VARIABLE_TYPE,FIELD_V_VARIABLE_TYPE,FIELD_DELVDELN_VARIABLE_TYPE,FIELD_DELVDELT_VARIABLE_TYPE, &
-    & FIELD_DEL2VDELT2_VARIABLE_TYPE,&
-    & FIELD_U1_VARIABLE_TYPE,FIELD_DELU1DELN_VARIABLE_TYPE,FIELD_DELU1DELT_VARIABLE_TYPE,FIELD_DEL2U1DELT2_VARIABLE_TYPE,&
-    & FIELD_U2_VARIABLE_TYPE,FIELD_DELU2DELN_VARIABLE_TYPE,FIELD_DELU2DELT_VARIABLE_TYPE,FIELD_DEL2U2DELT2_VARIABLE_TYPE,&
-    & FIELD_U3_VARIABLE_TYPE,FIELD_DELU3DELN_VARIABLE_TYPE,FIELD_DELU3DELT_VARIABLE_TYPE,FIELD_DEL2U3DELT2_VARIABLE_TYPE,&
-    & FIELD_U4_VARIABLE_TYPE,FIELD_DELU4DELN_VARIABLE_TYPE,FIELD_DELU4DELT_VARIABLE_TYPE,FIELD_DEL2U4DELT2_VARIABLE_TYPE,&
-    & FIELD_U5_VARIABLE_TYPE,FIELD_DELU5DELN_VARIABLE_TYPE,FIELD_DELU5DELT_VARIABLE_TYPE,FIELD_DEL2U5DELT2_VARIABLE_TYPE,&
-    & FIELD_U6_VARIABLE_TYPE,FIELD_DELU6DELN_VARIABLE_TYPE,FIELD_DELU6DELT_VARIABLE_TYPE,FIELD_DEL2U6DELT2_VARIABLE_TYPE,&
-    & FIELD_U7_VARIABLE_TYPE,FIELD_DELU7DELN_VARIABLE_TYPE,FIELD_DELU7DELT_VARIABLE_TYPE,FIELD_DEL2U7DELT2_VARIABLE_TYPE,&
-    & FIELD_U8_VARIABLE_TYPE,FIELD_DELU8DELN_VARIABLE_TYPE,FIELD_DELU8DELT_VARIABLE_TYPE,FIELD_DEL2U8DELT2_VARIABLE_TYPE,&
-    & FIELD_U9_VARIABLE_TYPE,FIELD_DELU9DELN_VARIABLE_TYPE,FIELD_DELU9DELT_VARIABLE_TYPE,FIELD_DEL2U9DELT2_VARIABLE_TYPE,&
-    & FIELD_U10_VARIABLE_TYPE,FIELD_DELU10DELN_VARIABLE_TYPE,FIELD_DELU10DELT_VARIABLE_TYPE,FIELD_DEL2U10DELT2_VARIABLE_TYPE
-
   PUBLIC FIELD_INTG_TYPE,FIELD_SP_TYPE,FIELD_DP_TYPE,FIELD_L_TYPE
 
   PUBLIC FIELD_SEPARATED_COMPONENT_DOF_ORDER,FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER
 
-  PUBLIC FIELD_VALUES_SET_TYPE,FIELD_BOUNDARY_CONDITIONS_SET_TYPE,FIELD_INITIAL_VALUES_SET_TYPE,FIELD_INCREMENTAL_VALUES_SET_TYPE, &
-    & FIELD_ANALYTIC_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE, &
-    & FIELD_VELOCITY_VALUES_SET_TYPE,FIELD_INITIAL_VELOCITY_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE, &
-    & FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,FIELD_ACCELERATION_VALUES_SET_TYPE,FIELD_INITIAL_ACCELERATION_SET_TYPE, &
-    & FIELD_PREVIOUS_ACCELERATION_SET_TYPE,FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE,FIELD_PREDICTED_DISPLACEMENT_SET_TYPE, &
-    & FIELD_PREDICTED_VELOCITY_SET_TYPE,FIELD_PREDICTED_ACCELERATION_SET_TYPE,FIELD_RESIDUAL_SET_TYPE, & 
-    & FIELD_PREVIOUS_RESIDUAL_SET_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE,FIELD_MESH_VELOCITY_SET_TYPE,FIELD_BOUNDARY_SET_TYPE, &
-    & FIELD_INPUT_DATA1_SET_TYPE, FIELD_INPUT_DATA2_SET_TYPE, FIELD_INPUT_DATA3_SET_TYPE, FIELD_PRESSURE_VALUES_SET_TYPE, &
-    & FIELD_PREVIOUS_PRESSURE_SET_TYPE, FIELD_RELATIVE_VELOCITY_SET_TYPE, FIELD_NEGATIVE_MESH_VELOCITY_SET_TYPE, &
-    & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE, &
-    & FIELD_INPUT_VEL1_SET_TYPE,FIELD_INPUT_VEL2_SET_TYPE,FIELD_INPUT_VEL3_SET_TYPE,FIELD_INPUT_LABEL_SET_TYPE, &
-    & FIELD_IMPERMEABLE_FLAG_VALUES_SET_TYPE,FIELD_INTEGRATED_NEUMANN_SET_TYPE,FIELD_UPWIND_VALUES_SET_TYPE, &
-    & FIELD_PREVIOUS_UPWIND_VALUES_SET_TYPE
+  PUBLIC FIELD_NUMBER_OF_SET_TYPES,FIELD_VALUES_SET_TYPE,FIELD_BOUNDARY_CONDITIONS_SET_TYPE,FIELD_INITIAL_VALUES_SET_TYPE, &
+    & FIELD_INCREMENTAL_VALUES_SET_TYPE,FIELD_ANALYTIC_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_NEXT_VALUES_SET_TYPE, &
+    & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,FIELD_VELOCITY_VALUES_SET_TYPE,FIELD_INITIAL_VELOCITY_SET_TYPE, &
+    & FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,FIELD_ACCELERATION_VALUES_SET_TYPE, &
+    & FIELD_INITIAL_ACCELERATION_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE,FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE, &
+    & FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,FIELD_PREDICTED_VELOCITY_SET_TYPE,FIELD_PREDICTED_ACCELERATION_SET_TYPE, &
+    & FIELD_RESIDUAL_SET_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE,FIELD_MESH_VELOCITY_SET_TYPE, &
+    & FIELD_BOUNDARY_SET_TYPE,FIELD_INPUT_DATA1_SET_TYPE,FIELD_INPUT_DATA2_SET_TYPE,FIELD_INPUT_DATA3_SET_TYPE, &
+    & FIELD_PRESSURE_VALUES_SET_TYPE,FIELD_PREVIOUS_PRESSURE_SET_TYPE,FIELD_RELATIVE_VELOCITY_SET_TYPE, &
+    & FIELD_NEGATIVE_MESH_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,FIELD_INPUT_VEL1_SET_TYPE, &
+    & FIELD_INPUT_VEL2_SET_TYPE,FIELD_INPUT_VEL3_SET_TYPE,FIELD_INPUT_LABEL_SET_TYPE,FIELD_IMPERMEABLE_FLAG_VALUES_SET_TYPE, &
+    & FIELD_INTEGRATED_NEUMANN_SET_TYPE,FIELD_UPWIND_VALUES_SET_TYPE,FIELD_PREVIOUS_UPWIND_VALUES_SET_TYPE
 
   PUBLIC FIELD_NO_SCALING,FIELD_UNIT_SCALING,FIELD_ARC_LENGTH_SCALING,FIELD_HARMONIC_MEAN_SCALING,FIELD_ARITHMETIC_MEAN_SCALING, &
     & FIELD_GEOMETRIC_MEAN_SCALING
@@ -1319,6 +1243,8 @@ MODULE FIELD_ROUTINES
 
   PUBLIC Field_ParameterSetsCopy
 
+  PUBLIC Field_ParameterSetsCopyIfExists
+
   PUBLIC FIELD_PARAMETER_SET_DESTROY
 
   PUBLIC Field_ParameterSetDestroy
@@ -1401,10 +1327,6 @@ MODULE FIELD_ROUTINES
 
   PUBLIC Field_TypeCheck,Field_TypeGet,Field_TypeSet,Field_TypeSetAndLock
 
-  PUBLIC FIELD_VARIABLE_GET
-
-  PUBLIC Field_VariableGet
-
   PUBLIC FIELD_VARIABLE_LABEL_GET,FIELD_VARIABLE_LABEL_SET,FIELD_VARIABLE_LABEL_SET_AND_LOCK
 
   PUBLIC Field_VariableLabelGet,Field_VariableLabelSet,Field_VariableLabelSetAndLock
@@ -1417,6 +1339,10 @@ MODULE FIELD_ROUTINES
 
   PUBLIC Field_VariableTypesCheck,Field_VariableTypesGet,Field_VariableTypesSet,Field_VariableTypesSetAndLock
 
+  PUBLIC FieldVariable_ParameterSetsCopy
+
+  PUBLIC FieldVariable_ParameterSetsCopyIfExists
+  
   PUBLIC FieldVariable_ParameterSetGet
 
   PUBLIC Fields_Finalise,Fields_Initialise
@@ -6497,7 +6423,7 @@ CONTAINS
                     CALL FIELD_COORDINATE_SYSTEM_GET(INTERP_FIELD,COORDINATE_SYSTEM,ERR,ERROR,*999)
                     IF(ASSOCIATED(FIELD)) THEN
                       NULLIFY(FIELD_VARIABLE)
-                      CALL FIELD_VARIABLE_GET(FIELD,VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
+                      CALL Field_VariableGet(FIELD,VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
                       IF(COMPONENT_NUMBER>0.AND.COMPONENT_NUMBER<=FIELD_VARIABLE%NUMBER_OF_COMPONENTS) THEN
                         DOMAIN=>FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%DOMAIN
                         IF(ASSOCIATED(DOMAIN)) THEN
@@ -7349,7 +7275,7 @@ CONTAINS
         GEOMETRIC_FIELD=>FIELD%GEOMETRIC_FIELD
         IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
           IF(VARIABLE_TYPE>=1.AND.VARIABLE_TYPE<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-            CALL FIELD_VARIABLE_GET(FIELD,VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
+            CALL Field_VariableGet(FIELD,VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
             IF(ASSOCIATED(FIELD_VARIABLE)) THEN
               DIMS=GEOMETRIC_FIELD%VARIABLES(1)%NUMBER_OF_COMPONENTS !\TODO: clean this up
 !               DIMS=FIELD_VARIABLE%NUMBER_OF_COMPONENTS !\TODO: clean this up
@@ -13290,7 +13216,7 @@ CONTAINS
     RETURN 1
   END SUBROUTINE FIELD_PARAMETER_SETS_ADD_DP
   
- !
+  !
   !================================================================================================================================
   !
 
@@ -13321,92 +13247,77 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Copys the parameter set from one parameter set type to another parameter set type \todo make this call distributed vector copy???
-  SUBROUTINE FIELD_PARAMETER_SETS_COPY(FIELD,VARIABLE_TYPE,FIELD_FROM_SET_TYPE,FIELD_TO_SET_TYPE,ALPHA,ERR,ERROR,*)
+  !>Copys the parameter set from one parameter set type to another parameter set type for a field
+  SUBROUTINE Field_ParameterSetsCopy(field,variableType,parameterFromSetType,parameterToSetType,alpha,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to copy the parameters set for
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to copy \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-    INTEGER(INTG), INTENT(IN) :: FIELD_FROM_SET_TYPE !<The field parameter set identifier to copy the parameters from \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-    INTEGER(INTG), INTENT(IN) :: FIELD_TO_SET_TYPE !<The field parameter set identifier to copy the parameters to \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-    REAL(DP), INTENT(IN) :: ALPHA !<The multiplicative factor for the copy.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to copy the parameters set for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to copy \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
+    INTEGER(INTG), INTENT(IN) :: parameterFromSetType !<The field parameter set identifier to copy the parameters from \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+    INTEGER(INTG), INTENT(IN) :: parameterToSetType !<The field parameter set identifier to copy the parameters to \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+    REAL(DP), INTENT(IN) :: alpha !<The multiplicative factor for the copy.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: FIELD_FROM_PARAMETER_SET,FIELD_TO_PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("FIELD_PARAMETER_SETS_COPY",ERR,ERROR,*999)
+    ENTERS("Field_ParameterSetsCopy",err,error,*999)
 
-    IF(ASSOCIATED(FIELD)) THEN
-      IF(FIELD%FIELD_FINISHED) THEN
-        IF(VARIABLE_TYPE>=1.AND.VARIABLE_TYPE<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-          FIELD_VARIABLE=>FIELD%VARIABLE_TYPE_MAP(VARIABLE_TYPE)%PTR
-          IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-            !Check the from set type input
-            IF(FIELD_FROM_SET_TYPE>0.AND.FIELD_FROM_SET_TYPE<FIELD_NUMBER_OF_SET_TYPES) THEN
-              FIELD_FROM_PARAMETER_SET=>FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_FROM_SET_TYPE)%PTR
-              IF(ASSOCIATED(FIELD_FROM_PARAMETER_SET)) THEN
-                !Check the from set type input
-                IF(FIELD_TO_SET_TYPE>0.AND.FIELD_TO_SET_TYPE<FIELD_NUMBER_OF_SET_TYPES) THEN
-                  FIELD_TO_PARAMETER_SET=>FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_TO_SET_TYPE)%PTR
-                  !Do not need to do an update here as each rank already has the values.
-                  IF(ASSOCIATED(FIELD_TO_PARAMETER_SET)) THEN
-                    CALL DISTRIBUTED_VECTOR_COPY(FIELD_FROM_PARAMETER_SET%PARAMETERS,FIELD_TO_PARAMETER_SET%PARAMETERS, &
-                      & ALPHA,ERR,ERROR,*999)
-                  ELSE
-                    ! CHECK what needs to be done here: LagrangeMultipliersField does not have SET_TYPE==PREVIOUS_VALUES
-                    IF(ASSOCIATED(FIELD%INTERFACE)) THEN
-                      !OK if LagrangeMultipliersField?
-                    ELSE
-                      LOCAL_ERROR="The field to set type of "//TRIM(NUMBER_TO_VSTRING(FIELD_TO_SET_TYPE,"*",ERR,ERROR))// &
-                        & " has not been created on field number "//TRIM(NUMBER_TO_VSTRING(FIELD%USER_NUMBER,"*",ERR,ERROR))//"."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ENDIF
-                  ENDIF
-                ELSE
-                  LOCAL_ERROR="The field to set type of "//TRIM(NUMBER_TO_VSTRING(FIELD_TO_SET_TYPE,"*",ERR,ERROR))// &
-                    & " is invalid. The field parameter set type must be between 1 and "// &
-                    & TRIM(NUMBER_TO_VSTRING(FIELD_NUMBER_OF_SET_TYPES,"*",ERR,ERROR))//"."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                LOCAL_ERROR="The field from set type of "//TRIM(NUMBER_TO_VSTRING(FIELD_FROM_SET_TYPE,"*",ERR,ERROR))// &
-                  & " has not been created on field number "//TRIM(NUMBER_TO_VSTRING(FIELD%USER_NUMBER,"*",ERR,ERROR))//"."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              ENDIF
-            ELSE
-              LOCAL_ERROR="The field from set type of "//TRIM(NUMBER_TO_VSTRING(FIELD_FROM_SET_TYPE,"*",ERR,ERROR))// &
-                & " is invalid. The field parameter set type must be between 1 and "// &
-                & TRIM(NUMBER_TO_VSTRING(FIELD_NUMBER_OF_SET_TYPES,"*",ERR,ERROR))//"."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The field variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
-              & " has not been created on field number "//TRIM(NUMBER_TO_VSTRING(FIELD%USER_NUMBER,"*",ERR,ERROR))//"."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The field variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
-            & " is invalid. The variable type must be between 1 and "// &
-            & TRIM(NUMBER_TO_VSTRING(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        LOCAL_ERROR="Field number "//TRIM(NUMBER_TO_VSTRING(FIELD%USER_NUMBER,"*",ERR,ERROR))//" has not been finished."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Field is not associated.",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+    IF(.NOT.field%FIELD_FINISHED) THEN
+      localError="Field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" has not been finished."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
 
-    EXITS("FIELD_PARAMETER_SETS_COPY")
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
+    CALL FieldVariable_ParameterSetsCopy(fieldVariable,parameterFromSetType,parameterToSetType,alpha,err,error,*999)
+    
+    EXITS("Field_ParameterSetsCopy")
     RETURN
-999 ERRORSEXITS("FIELD_PARAMETER_SETS_COPY",ERR,ERROR)
+999 ERRORSEXITS("Field_ParameterSetsCopy",err,error)
     RETURN 1
     
-  END SUBROUTINE FIELD_PARAMETER_SETS_COPY
+  END SUBROUTINE Field_ParameterSetsCopy
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Copys the parameter set from one parameter set type to another parameter set type if they exist for a field
+  SUBROUTINE Field_ParameterSetsCopyIfExists(field,variableType,parameterFromSetType,parameterToSetType,alpha,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to copy the parameters set for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to copy \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
+    INTEGER(INTG), INTENT(IN) :: parameterFromSetType !<The field parameter set identifier to copy the parameters from \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+    INTEGER(INTG), INTENT(IN) :: parameterToSetType !<The field parameter set identifier to copy the parameters to \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+    REAL(DP), INTENT(IN) :: alpha !<The multiplicative factor for the copy.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Field_ParameterSetsCopyIfExists",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+    IF(.NOT.field%FIELD_FINISHED) THEN
+      localError="Field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" has not been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
+    CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,parameterFromSetType,parameterToSetType,alpha,err,error,*999)
+    
+    EXITS("Field_ParameterSetsCopyIfExists")
+    RETURN
+999 ERRORSEXITS("Field_ParameterSetsCopyIfExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Field_ParameterSetsCopyIfExists
 
   !
   !================================================================================================================================
@@ -30652,59 +30563,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to a field variable
-  SUBROUTINE FIELD_VARIABLE_GET(FIELD,VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the variable for.
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The type of field variable to set. \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE !<On exit, a pointer to the field variable. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("FIELD_VARIABLE_GET",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(FIELD)) THEN
-      IF(FIELD%FIELD_FINISHED) THEN
-        IF(VARIABLE_TYPE>=1.AND.VARIABLE_TYPE<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-          IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-            CALL FlagError("Field variable is already associated.",ERR,ERROR,*999)
-          ELSE
-            NULLIFY(FIELD_VARIABLE)
-            FIELD_VARIABLE=>FIELD%VARIABLE_TYPE_MAP(VARIABLE_TYPE)%PTR
-            IF(.NOT.ASSOCIATED(FIELD_VARIABLE)) THEN
-              LOCAL_ERROR="The field variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
-                & " has not been defined on field number "//TRIM(NUMBER_TO_VSTRING(FIELD%USER_NUMBER,"*",ERR,ERROR))//"."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The field variable type of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))// &
-            & " is invalid. The field variable type must be between 1 and "// &
-            & TRIM(NUMBER_TO_VSTRING(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        LOCAL_ERROR="Field number "//TRIM(NUMBER_TO_VSTRING(FIELD%USER_NUMBER,"*",ERR,ERROR))// &
-          & " has not been finished."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Field is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("FIELD_VARIABLE_GET")
-    RETURN
-999 ERRORSEXITS("FIELD_VARIABLE_GET",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE FIELD_VARIABLE_GET
-
-  !
-  !================================================================================================================================
-  !
-
   !>Initialises a field variable.
   SUBROUTINE FIELD_VARIABLE_INITIALISE(FIELD,VARIABLE_NUMBER,ERR,ERROR,*)
 
@@ -31584,6 +31442,129 @@ CONTAINS
   END SUBROUTINE FIELD_VARIABLES_INITIALISE
 
   !
+  !================================================================================================================================
+  !
+
+  !>Copys the parameter set from one parameter set type to another parameter set type for a field variable 
+  SUBROUTINE FieldVariable_ParameterSetsCopy(fieldVariable,parameterFromSetType,parameterToSetType,alpha,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable to copy the parameters set for
+    INTEGER(INTG), INTENT(IN) :: parameterFromSetType !<The field parameter set identifier to copy the parameters from \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+    INTEGER(INTG), INTENT(IN) :: parameterToSetType !<The field parameter set identifier to copy the parameters to \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+    REAL(DP), INTENT(IN) :: alpha !<The multiplicative factor for the copy.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: fromParameterSet,toParameterSet
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FieldVariable_ParameterSetsCopy",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+    IF(parameterFromSetType<=0.OR.parameterFromSetType>FIELD_NUMBER_OF_SET_TYPES) THEN
+      localError="The from parameter set type of "//TRIM(NumberToVString(parameterFromSetType,"*",err,error))// &
+        & " is invalid. The parameter set type must be between 1 and "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_SET_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(parameterToSetType<=0.OR.parameterToSetType>FIELD_NUMBER_OF_SET_TYPES) THEN
+      localError="The to parameter set type of "//TRIM(NumberToVString(parameterToSetType,"*",err,error))// &
+        & " is invalid. The parameter set type must be between 1 and "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_SET_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    fromParameterSet=>fieldVariable%PARAMETER_SETS%SET_TYPE(parameterFromSetType)%ptr
+    IF(ASSOCIATED(fromParameterSet)) THEN
+      toParameterSet=>fieldVariable%PARAMETER_SETS%SET_TYPE(parameterToSetType)%ptr
+      IF(ASSOCIATED(toParameterSet)) THEN
+        !Do not need to do an update here as each rank already has the values.
+        CALL DistributedVector_Copy(fromParameterSet%parameters,toParameterSet%parameters,alpha,err,error,*999)
+      ELSE
+        field=>fieldVariable%field
+        IF(.NOT.ASSOCIATED(field)) THEN
+          localError="The to parameter set type of "//TRIM(NumberToVString(parameterToSetType,"*",err,error))// &
+            & " has not been created on variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"",err,error))// &
+            & " of field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
+        ELSE
+          localError="The to parameter set type of "//TRIM(NumberToVString(parameterToSetType,"*",err,error))// &
+            & " has not been created on variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"",err,error))//"."
+        ENDIF
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ELSE
+      field=>fieldVariable%field
+      IF(.NOT.ASSOCIATED(field)) THEN
+        localError="The from parameter set type of "//TRIM(NumberToVString(parameterFromSetType,"*",err,error))// &
+          & " has not been created on variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"",err,error))// &
+          & " of field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
+      ELSE
+        localError="The from parameter set type of "//TRIM(NumberToVString(parameterFromSetType,"*",err,error))// &
+          & " has not been created on variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"",err,error))//"."
+      ENDIF
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+    
+    EXITS("FieldVariable_ParameterSetsCopy")
+    RETURN
+999 ERRORSEXITS("FieldVariable_ParameterSetsCopy",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_ParameterSetsCopy
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Copys the parameter set from one parameter set type to another parameter set type if they exist for a field variable 
+  SUBROUTINE FieldVariable_ParameterSetsCopyIfExists(fieldVariable,parameterFromSetType,parameterToSetType,alpha,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable to copy the parameters set for
+    INTEGER(INTG), INTENT(IN) :: parameterFromSetType !<The field parameter set identifier to copy the parameters from \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+    INTEGER(INTG), INTENT(IN) :: parameterToSetType !<The field parameter set identifier to copy the parameters to \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+    REAL(DP), INTENT(IN) :: alpha !<The multiplicative factor for the copy.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: fromParameterSet,toParameterSet
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FieldVariable_ParameterSetsCopyIfExists",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+    IF(parameterFromSetType<=0.OR.parameterFromSetType>FIELD_NUMBER_OF_SET_TYPES) THEN
+      localError="The from parameter set type of "//TRIM(NumberToVString(parameterFromSetType,"*",err,error))// &
+        & " is invalid. The parameter set type must be between 1 and "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_SET_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(parameterToSetType<=0.OR.parameterToSetType>FIELD_NUMBER_OF_SET_TYPES) THEN
+      localError="The to parameter set type of "//TRIM(NumberToVString(parameterToSetType,"*",err,error))// &
+        & " is invalid. The parameter set type must be between 1 and "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_SET_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    fromParameterSet=>fieldVariable%PARAMETER_SETS%SET_TYPE(parameterFromSetType)%ptr
+    IF(ASSOCIATED(fromParameterSet)) THEN
+      toParameterSet=>fieldVariable%PARAMETER_SETS%SET_TYPE(parameterToSetType)%ptr
+      IF(ASSOCIATED(toParameterSet)) THEN
+        !Do not need to do an update here as each rank already has the values.
+        CALL DistributedVector_Copy(fromParameterSet%parameters,toParameterSet%parameters,alpha,err,error,*999)
+      ENDIF
+    ENDIF
+    
+    EXITS("FieldVariable_ParameterSetsCopyIfExists")
+    RETURN
+999 ERRORSEXITS("FieldVariable_ParameterSetsCopyIfExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_ParameterSetsCopyIfExists
+
   !
   !================================================================================================================================
   !

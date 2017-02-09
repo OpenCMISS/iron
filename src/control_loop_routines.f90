@@ -46,10 +46,14 @@ MODULE CONTROL_LOOP_ROUTINES
 
   USE BASE_ROUTINES
   USE ControlLoopAccessRoutines
+  USE FIELD_ROUTINES
+  USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE KINDS
   USE PROBLEM_CONSTANTS
   USE SOLVER_ROUTINES
+  USE SolverAccessRoutines
+  USE SolverMatricesAccessRoutines  
   USE STRINGS
   USE TYPES
 
@@ -61,15 +65,33 @@ MODULE CONTROL_LOOP_ROUTINES
 
   !Module parameters
 
-  !> \addtogroup CONTROL_LOOP_ROUTINES_OutputTypes CONTROL_LOOP_ROUTINES::OutputTypes
+  !> \addtogroup ControlLoop_OutputTypes OpenCMISS::Iron::ControlLoop::OutputTypes
   !> \brief The types of output for a control loop.
-  !> \see CONTROL_ROUTINES
+  !> \see ControlLoop
   !>@{
-  INTEGER(INTG), PARAMETER :: CONTROL_LOOP_NO_OUTPUT=0 !<No output from the control loop \see CONTROL_LOOP_ROUTINES_OutputTypes,CONTROL_LOOP_ROUTINES
-  INTEGER(INTG), PARAMETER :: CONTROL_LOOP_PROGRESS_OUTPUT=1 !<Progress output from control loop \see CONTROL_LOOP_ROUTINES_OutputTypes,CONTROL_LOOP_ROUTINES
-  INTEGER(INTG), PARAMETER :: CONTROL_LOOP_TIMING_OUTPUT=2 !<Timing output from the control loop \see CONTROL_LOOP_ROUTINES_OutputTypes,CONTROL_LOOP_ROUTINES
+  INTEGER(INTG), PARAMETER :: CONTROL_LOOP_NO_OUTPUT=0 !<No output from the control loop \see ControlLoop_OutputTypes,ControlLoop
+  INTEGER(INTG), PARAMETER :: CONTROL_LOOP_PROGRESS_OUTPUT=1 !<Progress output from control loop \see ControlLoop_OutputTypes,ControlLoop
+  INTEGER(INTG), PARAMETER :: CONTROL_LOOP_TIMING_OUTPUT=2 !<Timing output from the control loop \see ControlLoop_OutputTypes,ControlLoop
   !>@}
 
+  !> \addtogroup ControlLoop_FieldVariableLinearityTypes OpenCMISS::Iron::ControlLoop::FieldVariableLinearityTypes
+  !> \brief The linearity type of control loop field variables
+  !> \see ControlLoop
+  !>@{
+  INTEGER(INTG), PARAMETER :: CONTROL_LOOP_FIELD_VARIABLE_LINEAR=1 !<The control loop field variable is linear \see ControlLoop_FieldVariableLinearityTypes,ControlLoop
+  INTEGER(INTG), PARAMETER :: CONTROL_LOOP_FIELD_VARIABLE_NONLINEAR=2 !<The control loop field variable is nonlinear \see ControlLoop_FieldVariableLinearityTypes,ControlLoop
+  !>@}
+
+  !> \addtogroup ControlLoop_FieldVariableTimeDependenceTypes OpenCMISS::Iron::ControlLoop::FieldVariableTimeDependenceTypes
+  !> \brief The time dependence type of control loop field variables
+  !> \see ControlLoop
+  !>@{
+  INTEGER(INTG), PARAMETER :: CONTROL_LOOP_FIELD_VARIABLE_STATIC=1 !<The control loop field variable is static \see ControlLoop_FieldVariableTimeDependenceTypes,ControlLoop
+  INTEGER(INTG), PARAMETER :: CONTROL_LOOP_FIELD_VARIABLE_QUASISTATIC=2 !<The control loop field variable is quasistatic \see ControlLoop_FieldVariableTimeDependenceTypes,ControlLoop
+  INTEGER(INTG), PARAMETER :: CONTROL_LOOP_FIELD_VARIABLE_FIRST_DEGREE_DYNAMIC=3 !<The control loop field variable is first degree dynamic i.e., we use first time derivatives \see ControlLoop_FieldVariableTimeDependenceTypes,ControlLoop
+  INTEGER(INTG), PARAMETER :: CONTROL_LOOP_FIELD_VARIABLE_SECOND_DEGREE_DYNAMIC=4 !<The control loop field variable is second degree dynamic i.e., we use second time derivatives \see ControlLoop_FieldVariableTimeDependenceTypes,ControlLoop
+  !>@}
+  
   !Module types
 
   !Module variables
@@ -185,6 +207,8 @@ MODULE CONTROL_LOOP_ROUTINES
   PUBLIC CONTROL_LOOP_DESTROY
 
   PUBLIC ControlLoop_Destroy
+
+  PUBLIC ControlLoop_FieldVariablesCalculate
   
   PUBLIC CONTROL_LOOP_ITERATIONS_SET
 
@@ -211,6 +235,8 @@ MODULE CONTROL_LOOP_ROUTINES
   PUBLIC CONTROL_LOOP_OUTPUT_TYPE_GET,CONTROL_LOOP_OUTPUT_TYPE_SET
 
   PUBLIC ControlLoop_OutputTypeGet,ControlLoop_OutputTypeSet
+
+  PUBLIC ControlLoop_PreviousValuesUpdate
 
   PUBLIC CONTROL_LOOP_SUB_LOOP_GET
 
@@ -250,7 +276,7 @@ CONTAINS
   RECURSIVE SUBROUTINE CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER, INTENT(IN) :: CONTROL_LOOP !<A pointer to the control loop to finish.
+    TYPE(CONTROL_LOOP_TYPE), POINTER, INTENT(INOUT) :: CONTROL_LOOP !<A pointer to the control loop to finish.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -324,7 +350,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the current time parameters for a time control loop. \see OPENCMISS_CMISSControlLoopCurrentTimesGet
+  !>Gets the current time parameters for a time control loop. \see OpenCMISS_cmfe_ControlLoop_CurrentTimesGet
   SUBROUTINE CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_LOOP,CURRENT_TIME,TIME_INCREMENT,ERR,ERROR,*)
 
     !Argument variables
@@ -408,6 +434,365 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Finalises a ControlLoopFieldVariableType and deallocates all memory
+  SUBROUTINE ControlLoop_FieldVariableFinalise(controlLoopFieldVariable,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopFieldVariableType), INTENT(INOUT) :: controlLoopFieldVariable !<The control loop field variable to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+   
+    ENTERS("ControlLoop_FieldVariableFinalise",err,error,*999)
+
+    NULLIFY(controlLoopFieldVariable%fieldVariable)
+    controlLoopFieldVariable%timeDependence=0
+    controlLoopFieldVariable%linearity=0
+      
+    EXITS("ControlLoop_FieldVariableFinalise")
+    RETURN
+999 ERRORSEXITS("ControlLoop_FieldVariableFinalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_FieldVariableFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialise a ControlLoopFieldVariableType
+  SUBROUTINE ControlLoop_FieldVariableInitialise(controlLoopFieldVariable,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopFieldVariableType), INTENT(INOUT) :: controlLoopFieldVariable !<The control loop field variable to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+   
+    ENTERS("ControlLoop_FieldVariableInitialise",err,error,*999)
+
+    NULLIFY(controlLoopFieldVariable%fieldVariable)
+    controlLoopFieldVariable%timeDependence=0
+    controlLoopFieldVariable%linearity=0
+      
+    EXITS("ControlLoop_FieldVariableInitialise")
+    RETURN
+999 ERRORSEXITS("ControlLoop_FieldVariableInitialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_FieldVariableInitialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds a field variable to the list of control loop field variables
+  SUBROUTINE ControlLoop_FieldVariableAdd(controlLoopFieldVariables,variableLinearity,variableTimeDependence,fieldVariable, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopFieldVariablesType), POINTER :: controlLoopFieldVariables !<The control loop field variables to add the field variable to
+    INTEGER(INTG), INTENT(IN) :: variableLinearity !<The linearity of the field variable
+    INTEGER(INTG), INTENT(IN) :: variableTimeDependence !<The time dependence of the field variable
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable to add.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: variableIdx
+    LOGICAL :: found
+    TYPE(ControlLoopFieldVariableType), ALLOCATABLE :: newFieldVariables(:)
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: controlLoopVariable
+   
+    ENTERS("ControlLoop_FieldVariableAdd",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(controlLoopFieldVariables)) CALL FlagError("Control loop field variables is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+    
+    !See if we already have this field variable in the list for the control loop
+    found=.FALSE.
+    DO variableIdx=1,controlLoopFieldVariables%numberOfFieldVariables
+      controlLoopVariable=>controlLoopFieldVariables%fieldVariables(variableIdx)%fieldVariable
+      IF(ASSOCIATED(fieldVariable,controlLoopVariable)) THEN
+        found=.TRUE.
+        EXIT
+      ENDIF
+    ENDDO !variableIdx
+    IF(found) THEN
+      !We have found the variable. Check if the time dependence and nonlinearity needs to be updated.
+      IF(variableTimeDependence>controlLoopFieldVariables%fieldVariables(variableIdx)%timeDependence) &
+        & controlLoopFieldVariables%fieldVariables(variableIdx)%timeDependence=variableTimeDependence
+      IF(variableLinearity>controlLoopFieldVariables%fieldVariables(variableIdx)%linearity) &
+        & controlLoopFieldVariables%fieldVariables(variableIdx)%timeDependence=variableLinearity
+    ELSE
+      !We have not found the field variable in the control loop list so add it to the list.
+      !Reallocate the list to take the new variable
+      ALLOCATE(newFieldVariables(controlLoopFieldVariables%numberOfFieldVariables+1),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate new field variables.",err,error,*999)
+      DO variableIdx=1,controlLoopFieldVariables%numberOfFieldVariables
+        newFieldVariables(variableIdx)%fieldVariable=> &
+          & controlLoopFieldVariables%fieldVariables(variableIdx)%fieldVariable
+        newFieldVariables(variableIdx)%timeDependence= &
+          & controlLoopFieldVariables%fieldVariables(variableIdx)%timeDependence
+        newFieldVariables(variableIdx)%linearity= &
+          & controlLoopFieldVariables%fieldVariables(variableIdx)%linearity
+      ENDDO !variableIdx
+      !Add in the field variable and it's information
+      newFieldVariables(controlLoopFieldVariables%numberOfFieldVariables+1)%fieldVariable=>fieldVariable
+      newFieldVariables(controlLoopFieldVariables%numberOfFieldVariables+1)%timeDependence=variableTimeDependence
+      newFieldVariables(controlLoopFieldVariables%numberOfFieldVariables+1)%linearity=variableLinearity
+      !Move alloc the new list
+      CALL MOVE_ALLOC(newFieldVariables,controlLoopFieldVariables%fieldVariables)
+      controlLoopFieldVariables%numberOfFieldVariables=controlLoopFieldVariables%numberOfFieldVariables+1
+    ENDIF
+     
+    EXITS("ControlLoop_FieldVariableAdd")
+    RETURN
+999 IF(ALLOCATED(newFieldVariables)) DEALLOCATE(newFieldVariables)
+    ERRORSEXITS("ControlLoop_FieldVariableAdd",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_FieldVariableAdd
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculate the dependent field variables involved in a control loop
+  RECURSIVE SUBROUTINE ControlLoop_FieldVariablesCalculate(controlLoop,err,error,*)
+
+    !Argument variables
+    TYPE(CONTROL_LOOP_TYPE), POINTER, INTENT(INOUT) :: controlLoop !<A pointer to the control loop to calculate the field variables for.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: loopIdx,matrixIdx,solverIdx,variableIdx,variableLinearity,variableTimeDependence
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop2
+    TYPE(DYNAMIC_SOLVER_TYPE), POINTER :: dynamicSolver
+    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
+    TYPE(SOLVER_MATRICES_TYPE), POINTER :: solverMatrices
+    TYPE(SOLVERS_TYPE), POINTER :: solvers
+    TYPE(VARYING_STRING) :: localError
+   
+    ENTERS("ControlLoop_FieldVariablesCalculate",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+
+    !Recursively calculate the field variables for the underlying control loops
+    IF(controlLoop%NUMBER_OF_SUB_LOOPS>0) THEN
+      DO loopIdx=1,controlLoop%NUMBER_OF_SUB_LOOPS
+        controlLoop2=>controlLoop%SUB_LOOPS(loopIdx)%PTR
+        CALL ControlLoop_FieldVariablesCalculate(controlLoop2,err,error,*999)
+      ENDDO !loopIdx
+    ENDIF
+    
+    !Initialise this control loop field variables
+    CALL ControlLoop_FieldVariablesInitialise(controlLoop,err,error,*999)
+    !There are no sub loops so process the solvers for this loop to calculate the field variables
+    NULLIFY(solvers)
+    CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+    !Loop over the solvers
+    DO solverIdx=1,solvers%NUMBER_OF_SOLVERS
+      !Get the solver
+      NULLIFY(solver)
+      CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
+      solverEquations=>solver%SOLVER_EQUATIONS
+!!TODO: Need to think about solvers that do not have solver equations.
+      IF(ASSOCIATED(solverEquations)) THEN
+        !If we have solver equations then find the variables.
+!!TODO: could flag the linearity and time dependence of variable in equations.
+        SELECT CASE(solverEquations%linearity)
+        CASE(SOLVER_EQUATIONS_LINEAR)
+          variableLinearity=CONTROL_LOOP_FIELD_VARIABLE_LINEAR
+        CASE(SOLVER_EQUATIONS_NONLINEAR)
+          variableLinearity=CONTROL_LOOP_FIELD_VARIABLE_NONLINEAR
+        CASE DEFAULT
+          localError="The solver equations linearity type of "//TRIM(NumberToVString(solverEquations%linearity,"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+        SELECT CASE(solverEquations%TIME_DEPENDENCE)
+        CASE(SOLVER_EQUATIONS_STATIC)
+          variableTimeDependence=CONTROL_LOOP_FIELD_VARIABLE_STATIC
+        CASE(SOLVER_EQUATIONS_QUASISTATIC)
+          variableTimeDependence=CONTROL_LOOP_FIELD_VARIABLE_QUASISTATIC
+        CASE(SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,SOLVER_EQUATIONS_SECOND_ORDER_DYNAMIC)
+          dynamicSolver=>solver%DYNAMIC_SOLVER
+          IF(ASSOCIATED(dynamicSolver)) THEN
+            IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE)  THEN
+              IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE)  THEN
+                variableTimeDependence=CONTROL_LOOP_FIELD_VARIABLE_SECOND_DEGREE_DYNAMIC
+              ELSE
+                variableTimeDependence=CONTROL_LOOP_FIELD_VARIABLE_FIRST_DEGREE_DYNAMIC
+              ENDIF
+            ELSE
+              variableTimeDependence=CONTROL_LOOP_FIELD_VARIABLE_QUASISTATIC
+            ENDIF
+          ELSE
+            CALL FlagError("Solver dynamic solver is not associated.",err,error,*999)
+          ENDIF          
+        CASE DEFAULT
+          localError="The solver equations time dependence type of "// &
+            & TRIM(NumberToVString(solverEquations%TIME_DEPENDENCE,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+        !Get the solver mapping
+        NULLIFY(solverMatrices)
+        CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
+        NULLIFY(solverMapping)
+        CALL SolverMatrices_SolverMappingGet(solverMatrices,solverMapping,err,error,*999)
+        !Loop over the solver matrices
+        DO matrixIdx=1,solverMatrices%NUMBER_OF_MATRICES
+          !Loop over the field variables associated with the solver mapping
+          DO variableIdx=1,solverMapping%VARIABLES_LIST(matrixIdx)%NUMBER_OF_VARIABLES
+            fieldVariable=>solverMapping%VARIABLES_LIST(matrixIdx)%variables(variableIdx)%variable
+            IF(ASSOCIATED(fieldVariable)) THEN
+              CALL ControlLoop_FieldVariableAdd(controlLoop%fieldVariables,variableLinearity,variableTimeDependence, &
+                & fieldVariable,err,error,*999)
+            ELSE
+              localError="The field variable for variable index "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
+                & " of matrix index "//TRIM(NumberToVString(matrixIdx,"*",err,error))//" is not associated."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+          ENDDO !variableIdx
+        ENDDO !matrixIdx
+        !Add in the RHS
+        DO variableIdx=1,solverMapping%rhsVariablesList%NUMBER_OF_VARIABLES
+          fieldVariable=>solverMapping%rhsVariablesList%variables(variableIdx)%variable
+          IF(ASSOCIATED(fieldVariable)) THEN
+            CALL ControlLoop_FieldVariableAdd(controlLoop%fieldVariables,variableLinearity,variableTimeDependence, &
+              & fieldVariable,err,error,*999)
+          ELSE
+            localError="The field variable for variable index "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
+              & " of matrix index "//TRIM(NumberToVString(matrixIdx,"*",err,error))//" is not associated."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+        ENDDO !equationSetIdx
+      ENDIF
+    ENDDO !solverIdx
+
+    IF(diagnostics1) THEN
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Control loop field variables:",err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Loop level = ",controlLoop%CONTROL_LOOP_LEVEL,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Sub loop index = ",controlLoop%SUB_LOOP_INDEX,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Label = ",controlLoop%label,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Loop type = ",controlLoop%LOOP_TYPE,err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Field Variables:",err,error,*999)
+      IF(ASSOCIATED(controlLoop%fieldVariables)) THEN
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of field variables = ",controlLoop%fieldVariables% &
+          & numberOfFieldVariables,err,error,*999)
+        IF(ALLOCATED(controlLoop%fieldVariables%fieldVariables)) THEN
+          DO variableIdx=1,controlLoop%fieldVariables%numberOfFieldVariables          
+            fieldVariable=>controlLoop%fieldVariables%fieldVariables(variableIdx)%fieldVariable
+            IF(ASSOCIATED(fieldVariable)) THEN
+              field=>fieldVariable%field
+              IF(ASSOCIATED(field)) THEN
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Variable index : ",variableIdx,err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Variable field user number = ",field%USER_NUMBER, &
+                  & err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Variable type = ",fieldVariable%VARIABLE_TYPE, &
+                  & err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Variable linearity = ",controlLoop%fieldVariables% &
+                  & fieldVariables(variableIdx)%linearity,err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Variable time dependence = ",controlLoop%fieldVariables% &
+                  & fieldVariables(variableIdx)%timeDependence,err,error,*999)
+              ELSE
+                localError="Field variable field is not associated for variable index "// &
+                  & TRIM(NumberToVString(variableIdx,"*",err,error))//"."
+                CALL FlagError(localError,err,error,*999)
+              ENDIF
+            ELSE
+              localError="Field variable is not associated for variable index "// &
+                & TRIM(NumberToVString(variableIdx,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)              
+            ENDIF
+          ENDDO !variableIdx
+        ELSE
+          CALL FlagError("Control loop field variables is not allocated.",err,error,*999)
+        ENDIF
+      ELSE
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of field variables = ",0,err,error,*999)
+      ENDIF      
+    ENDIF
+    
+    EXITS("ControlLoop_FieldVariablesCalculate")
+    RETURN
+999 ERRORSEXITS("ControlLoop_FieldVariablesCalculate",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_FieldVariablesCalculate
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises a ControlLoopFieldVariablesType and deallocates all memory
+  SUBROUTINE ControlLoop_FieldVariablesFinalise(controlLoopFieldVariables,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopFieldVariablesType), POINTER :: controlLoopFieldVariables !<The control loop field variables to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: fieldVariableIdx
+   
+    ENTERS("ControlLoop_FieldVariablesFinalise",err,error,*999)
+
+    IF(ASSOCIATED(controlLoopFieldVariables)) THEN
+      DO fieldVariableIdx=1,SIZE(controlLoopFieldVariables%fieldVariables,1)
+        CALL ControlLoop_FieldVariableFinalise(controlLoopFieldVariables%fieldVariables(fieldVariableIdx),err,error,*998)
+      ENDDO !fieldVariableIdx
+998   DEALLOCATE(controlLoopFieldVariables%fieldVariables)
+      controlLoopFieldVariables%numberOfFieldVariables=0
+    ENDIF
+      
+    EXITS("ControlLoop_FieldVariablesFinalise")
+    RETURN
+999 ERRORSEXITS("ControlLoop_FieldVariablesFinalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_FieldVariablesFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialise a ControlLoopFieldVariableType for a controlLoop
+  SUBROUTINE ControlLoop_FieldVariablesInitialise(controlLoop,err,error,*)
+
+    !Argument variables
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop !<The control loop to initialsie the field variables for.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
+   
+    ENTERS("ControlLoop_FieldVariablesInitialise",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*998)
+    
+    IF(ASSOCIATED(controlLoop%fieldVariables)) CALL ControlLoop_FieldVariablesFinalise(controlLoop%fieldVariables,err,error,*999)
+    ALLOCATE(controlLoop%fieldVariables,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate control loop field variables.",err,error,*999)
+    controlLoop%fieldVariables%numberOfFieldVariables=0
+      
+    EXITS("ControlLoop_FieldVariableInitialise")
+    RETURN
+999 CALL ControlLoop_FieldVariablesFinalise(controlLoop%fieldVariables,dummyErr,dummyError,*998)
+998 ERRORSEXITS("ControlLoop_FieldVariableInitialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_FieldVariablesInitialise
+
+  !
+  !================================================================================================================================
+  !
+
   !>Finalise a control loop and deallocate all memory
   RECURSIVE SUBROUTINE CONTROL_LOOP_FINALISE(CONTROL_LOOP,ERR,ERROR,*)
 
@@ -439,6 +824,7 @@ CONTAINS
       CALL CONTROL_LOOP_LOAD_INCREMENT_FINALISE(CONTROL_LOOP%LOAD_INCREMENT_LOOP,ERR,ERROR,*999)
       CALL CONTROL_LOOP_TIME_FINALISE(CONTROL_LOOP%TIME_LOOP,ERR,ERROR,*999)
       CALL CONTROL_LOOP_WHILE_FINALISE(CONTROL_LOOP%WHILE_LOOP,ERR,ERROR,*999)
+      CALL ControlLoop_FieldVariablesFinalise(CONTROL_LOOP%fieldVariables,err,error,*999)
       DEALLOCATE(CONTROL_LOOP)
     ENDIF
        
@@ -485,6 +871,7 @@ CONTAINS
         NULLIFY(PROBLEM%CONTROL_LOOP%WHILE_LOOP)
         NULLIFY(PROBLEM%CONTROL_LOOP%LOAD_INCREMENT_LOOP)
         PROBLEM%CONTROL_LOOP%NUMBER_OF_SUB_LOOPS=0
+        NULLIFY(problem%CONTROL_LOOP%fieldVariables)
         NULLIFY(PROBLEM%CONTROL_LOOP%SOLVERS)
         CALL CONTROL_LOOP_SIMPLE_INITIALISE(PROBLEM%CONTROL_LOOP,ERR,ERROR,*999)
       ENDIF
@@ -568,7 +955,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the iteration parameters for a fixed control loop. \see OPENCMISS_CMISSControlLoopIterationsSet
+  !>Sets the iteration parameters for a fixed control loop. \see OpenCMISS_cmfe_ControlLoop_IterationsSet
   SUBROUTINE CONTROL_LOOP_ITERATIONS_SET(CONTROL_LOOP,START_ITERATION,STOP_ITERATION,ITERATION_INCREMENT,ERR,ERROR,*)
 
     !Argument variables
@@ -638,7 +1025,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the label of a control loop. \see OPENCMISS::CMISSControlLoopLabelGet
+  !>Returns the label of a control loop. \see OpenCMISS::cmfe_ControlLoop_LabelGet
   SUBROUTINE CONTROL_LOOP_LABEL_GET_C(CONTROL_LOOP,LABEL,ERR,ERROR,*)
 
     !Argument variables
@@ -674,7 +1061,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the label of a control loop. \see OPENCMISS::CMISSControlLoopLabelGet
+  !>Returns the label of a control loop. \see OpenCMISS::cmfe_ControlLoop_LabelGet
   SUBROUTINE CONTROL_LOOP_LABEL_GET_VS(CONTROL_LOOP,LABEL,ERR,ERROR,*)
 
     !Argument variables
@@ -703,7 +1090,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the label of a control loop. \see OPENCMISS::CMISSControlLoopLabelSet
+  !>Sets the label of a control loop. \see OpenCMISS::cmfe_ControlLoop_LabelSet
   SUBROUTINE CONTROL_LOOP_LABEL_SET_C(CONTROL_LOOP,LABEL,ERR,ERROR,*)
 
     !Argument variables
@@ -736,7 +1123,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the label of a control loop. \see OPENCMISS::CMISSControlLoopLabelSet
+  !>Sets the label of a control loop. \see OpenCMISS::cmfe_ControlLoop_LabelSet
   SUBROUTINE CONTROL_LOOP_LABEL_SET_VS(CONTROL_LOOP,LABEL,ERR,ERROR,*)
 
     !Argument variables
@@ -769,7 +1156,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the maximum number of iterations for a while or load increment control loop. \see OPENCMISS_CMISSControlLoopMaximumIterationsSet
+  !>Sets the maximum number of iterations for a while or load increment control loop. \see OpenCMISS_cmfe_ControlLoop_MaximumIterationsSet
   SUBROUTINE CONTROL_LOOP_MAXIMUM_ITERATIONS_SET(CONTROL_LOOP,MAXIMUM_ITERATIONS,ERR,ERROR,*)
 
     !Argument variables
@@ -848,7 +1235,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the output for a load incremented control loop identified by an object. \see OPENCMISS_CMISSControlLoopLoadOutputSet
+  !>Sets/changes the output for a load incremented control loop identified by an object. \see OpenCMISS_cmfe_ControlLoop_LoadOutputSet
   SUBROUTINE CONTROL_LOOP_LOAD_OUTPUT_SET(CONTROL_LOOP,OUTPUT_FREQUENCY,ERR,ERROR,*)
 
     !Argument variables
@@ -890,7 +1277,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the absolute tolerance (convergence condition tolerance) for a while control loop. \see OPENCMISS_CMISSControlLoopAbsoluteToleranceSet
+  !>Sets the absolute tolerance (convergence condition tolerance) for a while control loop. \see OpenCMISS_cmfe_ControlLoop_AbsoluteToleranceSet
   SUBROUTINE ControlLoop_AbsoluteToleranceSet(controlLoop,absoluteTolerance,err,error,*)
 
     !Argument variables
@@ -938,7 +1325,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the number of sub loops for a control loop. \see OPENCMISS_CMISSCMISSControlLoopNumberOfSubLoopsGet
+  !>Gets the number of sub loops for a control loop. \see OpenCMISS_CMISScmfe_ControlLoop_NumberOfSubLoopsGet
   SUBROUTINE CONTROL_LOOP_NUMBER_OF_SUB_LOOPS_GET(CONTROL_LOOP,NUMBER_OF_SUB_LOOPS,ERR,ERROR,*)
 
     !Argument variables
@@ -970,7 +1357,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Sets/changes the number of sub loops in a control loop. \see OPENCMISS_CMISSCMISSControlLoopNumberOfSubLoopsSet
+  !>Sets/changes the number of sub loops in a control loop. \see OpenCMISS_CMISScmfe_ControlLoop_NumberOfSubLoopsSet
   SUBROUTINE CONTROL_LOOP_NUMBER_OF_SUB_LOOPS_SET(CONTROL_LOOP,NUMBER_OF_SUB_LOOPS,ERR,ERROR,*)
 
     !Argument variables
@@ -1055,7 +1442,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the output type for a control loop. \see OPENCMISS::CMISSControlLoopOutputTypeGet
+  !>Gets the output type for a control loop. \see OpenCMISS::cmfe_ControlLoop_OutputTypeGet
   SUBROUTINE CONTROL_LOOP_OUTPUT_TYPE_GET(CONTROL_LOOP,OUTPUT_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -1087,7 +1474,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the output type for a control loop. \see OPENCMISS::CMISSControlLoopOutputTypeSet
+  !>Sets/changes the output type for a control loop. \see OpenCMISS::cmfe_ControlLoop_OutputTypeSet
   SUBROUTINE CONTROL_LOOP_OUTPUT_TYPE_SET(CONTROL_LOOP,OUTPUT_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -1128,6 +1515,111 @@ CONTAINS
    
   END SUBROUTINE CONTROL_LOOP_OUTPUT_TYPE_SET
         
+  !
+  !================================================================================================================================
+  !
+
+  !>Updates the previous values for dependent variables under a time control loop
+  SUBROUTINE ControlLoop_PreviousValuesUpdate(controlLoop,err,error,*)
+
+    !Argument variables
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop !<A pointer the time control loop to update the variables from
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: linearity,timeDependence,variableIdx
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("ControlLoop_PreviousValuesUpdate",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)    
+    IF(.NOT.ASSOCIATED(controlLoop%fieldVariables)) CALL FlagError("Control loop field variables is not associated.",err,error,*999)
+
+    DO variableIdx=1,controlLoop%fieldVariables%numberOfFieldVariables
+      fieldVariable=>controlLoop%fieldVariables%fieldVariables(variableIdx)%fieldVariable
+      linearity=controlLoop%fieldVariables%fieldVariables(variableIdx)%linearity
+      timeDependence=controlLoop%fieldVariables%fieldVariables(variableIdx)%timeDependence
+      IF(ASSOCIATED(fieldVariable)) THEN
+        SELECT CASE(timeDependence)
+        CASE(CONTROL_LOOP_FIELD_VARIABLE_STATIC)
+          !Do nothing additional
+        CASE(CONTROL_LOOP_FIELD_VARIABLE_QUASISTATIC)
+          !Copy field variable values to the previous values
+          CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE, &
+            & 1.0_DP,err,error,*999)
+          SELECT CASE(linearity)
+          CASE(CONTROL_LOOP_FIELD_VARIABLE_LINEAR)
+            !Do nothing additional
+          CASE(CONTROL_LOOP_FIELD_VARIABLE_NONLINEAR)
+            !Copy residual to the previous residual
+            CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_RESIDUAL_SET_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE, &
+              & 1.0_DP,err,error,*999)
+          CASE DEFAULT
+            localError="The control loop variable linearity of "//TRIM(NumberToVString(linearity,"*",err,error))// &
+              & " is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE(CONTROL_LOOP_FIELD_VARIABLE_FIRST_DEGREE_DYNAMIC)
+          !Copy field variable values to the previous values
+          CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE, &
+            & 1.0_DP,err,error,*999)
+          !Copy velocity values to the previous velocity
+          CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_VELOCITY_VALUES_SET_TYPE, &
+            & FIELD_PREVIOUS_VELOCITY_SET_TYPE,1.0_DP,err,error,*999)
+          SELECT CASE(linearity)
+          CASE(CONTROL_LOOP_FIELD_VARIABLE_LINEAR)
+            !Do nothing additional
+          CASE(CONTROL_LOOP_FIELD_VARIABLE_NONLINEAR)
+            !Copy residual to the previous residual
+            CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_RESIDUAL_SET_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE, &
+              & 1.0_DP,err,error,*999)
+          CASE DEFAULT
+            localError="The control loop variable linearity of "//TRIM(NumberToVString(linearity,"*",err,error))// &
+              & " is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE(CONTROL_LOOP_FIELD_VARIABLE_SECOND_DEGREE_DYNAMIC)
+          !Copy field variable values to the previous values
+          CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE, &
+            & 1.0_DP,err,error,*999)
+          !Copy velocity values to the previous velocity
+          CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_VELOCITY_VALUES_SET_TYPE, &
+            & FIELD_PREVIOUS_VELOCITY_SET_TYPE,1.0_DP,err,error,*999)
+          !Copy acceleration values to the previous velocity
+          CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_ACCELERATION_VALUES_SET_TYPE, &
+            & FIELD_PREVIOUS_ACCELERATION_SET_TYPE,1.0_DP,err,error,*999)
+          SELECT CASE(linearity)
+          CASE(CONTROL_LOOP_FIELD_VARIABLE_LINEAR)
+            !Do nothing additional
+          CASE(CONTROL_LOOP_FIELD_VARIABLE_NONLINEAR)
+            !Copy residual to the previous residual
+            CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_RESIDUAL_SET_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE, &
+              & 1.0_DP,err,error,*999)
+          CASE DEFAULT
+            localError="The control loop variable linearity of "//TRIM(NumberToVString(linearity,"*",err,error))// &
+              & " is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE DEFAULT
+          localError="The control loop variable linearity of "//TRIM(NumberToVString(linearity,"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      ELSE
+        localError="The field variable for variable index "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
+          & " is not associated."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ENDDO !variableIdx
+    
+    EXITS("ControlLoop_PreviousValuesUpdate")
+    RETURN
+999 ERRORSEXITS("ControlLoop_PreviousValuesUpdate",err,error)
+    RETURN 1
+
+  END SUBROUTINE ControlLoop_PreviousValuesUpdate
+
   !
   !================================================================================================================================
   !
@@ -1392,7 +1884,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Gets the current time parameters for a time control loop. \see OPENCMISS_CMISSControlLoopCurrentTimesGet
+  !>Gets the current time parameters for a time control loop. \see OpenCMISS_cmfe_ControlLoop_CurrentTimesGet
   SUBROUTINE CONTROL_LOOP_TIMES_GET(CONTROL_LOOP,START_TIME,STOP_TIME,CURRENT_TIME,TIME_INCREMENT, &
     & CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER,ERR,ERROR,*)
 
@@ -1457,7 +1949,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the time parameters for a time control loop. \see OPENCMISS_CMISSControlLoopTimesSet
+  !>Sets the time parameters for a time control loop. \see OpenCMISS_cmfe_ControlLoop_TimesSet
   SUBROUTINE CONTROL_LOOP_TIMES_SET(CONTROL_LOOP,START_TIME,STOP_TIME,TIME_INCREMENT,ERR,ERROR,*)
 
     !Argument variables
@@ -1521,7 +2013,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the output parameters for a time control loop. \see OPENCMISS_CMISSControlLoopTimeOutputSet
+  !>Sets the output parameters for a time control loop. \see OpenCMISS_cmfe_ControlLoop_TimeOutputSet
   SUBROUTINE CONTROL_LOOP_TIME_OUTPUT_SET(CONTROL_LOOP,OUTPUT_FREQUENCY,ERR,ERROR,*)
 
     !Argument variables
@@ -1568,7 +2060,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the input parameters for a time control loop. \see OPENCMISS_CMISSControlLoopTimeInputSet
+  !>Sets the input parameters for a time control loop. \see OpenCMISS_cmfe_ControlLoop_TimeInputSet
   SUBROUTINE CONTROL_LOOP_TIME_INPUT_SET(CONTROL_LOOP,INPUT_OPTION,ERR,ERROR,*)
 
     !Argument variables

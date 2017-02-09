@@ -57,6 +57,7 @@ MODULE SOLVER_ROUTINES
   USE DISTRIBUTED_MATRIX_VECTOR
   USE EQUATIONS_SET_CONSTANTS
   USE FIELD_ROUTINES
+  USE FieldAccessRoutines
   USE KINDS
   USE INPUT_OUTPUT
   USE INTERFACE_CONDITIONS_CONSTANTS
@@ -87,7 +88,7 @@ MODULE SOLVER_ROUTINES
   !>@{
   INTEGER(INTG), PARAMETER :: SOLVER_NUMBER_OF_SOLVER_TYPES=9 !<Number of different solver types possible \see SOLVER_ROUTINES_SolverTypes,SOLVER_ROUTINES
   INTEGER(INTG), PARAMETER :: SOLVER_LINEAR_TYPE=1 !<A linear solver \see SOLVER_ROUTINES_SolverTypes,SOLVER_ROUTINES
-  INTEGER(INTG), PARAMETER :: SOLVER_NONLINEAR_TYPE=2 !<A nonlinear solver  \see SOLVER_ROUTINES_SolverTypes,SOLVER_ROUTINES
+  INTEGER(INTG), PARAMETER :: SOLVER_NONLINEAR_TYPE=2 !<A nonliXnear solver  \see SOLVER_ROUTINES_SolverTypes,SOLVER_ROUTINES
   INTEGER(INTG), PARAMETER :: SOLVER_DYNAMIC_TYPE=3 !<A dynamic solver \see SOLVER_ROUTINES_SolverTypes,SOLVER_ROUTINES
   INTEGER(INTG), PARAMETER :: SOLVER_DAE_TYPE=4 !<A differential-algebraic equation solver \see SOLVER_ROUTINES_SolverTypes,SOLVER_ROUTINES
   INTEGER(INTG), PARAMETER :: SOLVER_EIGENPROBLEM_TYPE=5 !<A eigenproblem solver \see SOLVER_ROUTINES_SolverTypes,SOLVER_ROUTINES
@@ -431,6 +432,10 @@ MODULE SOLVER_ROUTINES
     MODULE PROCEDURE SOLVER_LIBRARY_TYPE_SET
   END INTERFACE Solver_LibraryTypeSet
 
+  INTERFACE Solver_NonlinearDivergenceExit
+    MODULE PROCEDURE SOLVER_NONLINEAR_DIVERGENCE_EXIT
+  END INTERFACE Solver_NonlinearDivergenceExit
+
   INTERFACE Solver_TypeSet
     MODULE PROCEDURE SOLVER_TYPE_SET
   END INTERFACE Solver_TypeSet
@@ -565,6 +570,12 @@ MODULE SOLVER_ROUTINES
   PUBLIC CELLML_EQUATIONS_CREATE_FINISH,CELLML_EQUATIONS_CREATE_START
 
   PUBLIC CELLML_EQUATIONS_DESTROY
+  
+  PUBLIC CellMLEquations_LinearityTypeGet,CellMLEquations_LinearityTypeSet
+
+  PUBLIC CellMLEquations_TimeDependenceTypeGet,CellMLEquations_TimeDependenceTypeSet
+
+  PUBLIC CellMLEquations_TimeGet,CellMLEquations_TimeSet
   
   PUBLIC SOLVER_DAE_SOLVER_TYPE_GET,SOLVER_DAE_SOLVER_TYPE_SET
 
@@ -760,6 +771,8 @@ MODULE SOLVER_ROUTINES
 
   PUBLIC SOLVER_NONLINEAR_DIVERGENCE_EXIT,SOLVER_NONLINEAR_MONITOR
 
+  PUBLIC Solver_NonlinearDivergenceExit
+
   PUBLIC SOLVER_NONLINEAR_TYPE_SET
   
   PUBLIC SOLVER_OUTPUT_TYPE_SET
@@ -793,10 +806,6 @@ MODULE SOLVER_ROUTINES
   PUBLIC SOLVERS_NUMBER_SET
 
   PUBLIC Solvers_NumberSet
-
-  PUBLIC SOLVERS_SOLVER_GET
-
-  PUBLIC Solvers_SolverGet
 
   PUBLIC SOLVER_NEWTON_CELLML_EVALUATOR_CREATE,SOLVER_CELLML_EVALUATOR_FINALISE
 
@@ -1018,6 +1027,9 @@ CONTAINS
         IF(ERR/=0) CALL FlagError("Could not allocate CellML equations.",ERR,ERROR,*999)
         SOLVER%CELLML_EQUATIONS%SOLVER=>SOLVER
         SOLVER%CELLML_EQUATIONS%CELLML_EQUATIONS_FINISHED=.FALSE.
+        SOLVER%CELLML_EQUATIONS%linearity=CELLML_EQUATIONS_LINEAR
+        SOLVER%CELLML_EQUATIONS%timeDependence=CELLML_EQUATIONS_STATIC
+        solver%CELLML_EQUATIONS%currentTime=0.0_DP
         SOLVER%CELLML_EQUATIONS%NUMBER_OF_CELLML_ENVIRONMENTS=0
       ENDIF
     ELSE
@@ -1032,6 +1044,193 @@ CONTAINS
    
   END SUBROUTINE CELLML_EQUATIONS_INITIALISE
         
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the linearity type for CellML equations
+  SUBROUTINE CellMLEquations_LinearityTypeGet(cellMLEquations,linearityType,err,error,*)
+
+    !Argument variables
+    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations !<A pointer the CellML equations to get the linearity type for
+    INTEGER(INTG), INTENT(OUT) :: linearityType !<On exit, the type of linearity of the CellML equations \see PROBLEM_CONSTANTS_CellMLEquationLinearityTypes,PROBLEM_CONSTANTS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("CellMLEquations_LinearityTypeGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(cellMLEquations)) CALL FlagError("CellML equations is not associated.",err,error,*999)
+    IF(.NOT.cellMLEquations%CELLML_EQUATIONS_FINISHED) CALL FlagError("CellML equations have not been finished.",err,error,*999)
+   
+    linearityType=cellMLEquations%linearity
+   
+    EXITS("CellMLEquations_LinearityTypeGet")
+    RETURN
+999 ERRORSEXITS("CellMLEquations_LinearityTypeGet",err,error)
+    RETURN 1
+   
+  END SUBROUTINE CellMLEquations_LinearityTypeGet
+        
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the linearity type for CellML equations
+  SUBROUTINE CellMLEquations_LinearityTypeSet(cellMLEquations,linearityType,err,error,*)
+
+    !Argument variables
+    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations !<A pointer the CellML equations to set the linearity type for
+    INTEGER(INTG), INTENT(IN) :: linearityType !<The type of linearity to be set \see PROBLEM_CONSTANTS_CellMLEquationLinearityTypes,PROBLEM_CONSTANTS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("CellMLEquations_LinearityTypeSet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(cellMLEquations)) CALL FlagError("CellML equations is not associated.",err,error,*999)
+    IF(cellMLEquations%CELLML_EQUATIONS_FINISHED) CALL FlagError("CellML equations has already been finished.",err,error,*999)
+   
+    SELECT CASE(linearityType)
+    CASE(CELLML_EQUATIONS_LINEAR)
+      cellMLEquations%linearity=CELLML_EQUATIONS_LINEAR
+    CASE(CELLML_EQUATIONS_NONLINEAR)
+      cellMLEquations%linearity=CELLML_EQUATIONS_NONLINEAR
+    CASE DEFAULT
+      localError="The specified CellML equations linearity type of "// &
+        & TRIM(NumberToVString(linearityType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+   
+    EXITS("CellMLEquations_LinearityTypeSet")
+    RETURN
+999 ERRORSEXITS("CellMLEquations_LinearityTypeSet",err,error)
+    RETURN 1
+   
+  END SUBROUTINE CellMLEquations_LinearityTypeSet
+        
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the time dependence type for CellML equations
+  SUBROUTINE CellMLEquations_TimeDependenceTypeGet(cellMLEquations,timeDependenceType,err,error,*)
+
+    !Argument variables
+    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations !<A pointer the CellML equations to get the time dependence type for
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On exit, the type of time dependence of the CellML equations \see PROBLEM_CONSTANTS_CellMLEquationTimeDependenceTypes,PROBLEM_CONSTANTS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("CellMLEquations_TimeDependenceTypeGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(cellMLEquations)) CALL FlagError("CellML equations is not associated.",err,error,*999)
+    IF(.NOT.cellMLEquations%CELLML_EQUATIONS_FINISHED) CALL FlagError("CellML equations has not been finished.",err,error,*999)
+   
+    timeDependenceType=cellMLEquations%timeDependence
+   
+    EXITS("CellMLEquations_TimeDependenceTypeGet")
+    RETURN
+999 ERRORSEXITS("CellMLEquations_TimeDependenceTypeGet",err,error)
+    RETURN 1
+   
+  END SUBROUTINE CellMLEquations_TimeDependenceTypeGet
+        
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the time dependence type for CellML equations
+  SUBROUTINE CellMLEquations_TimeDependenceTypeSet(cellMLEquations,timeDependenceType,err,error,*)
+
+    !Argument variables
+    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations !<A pointer the CellML equations to set the time dependence type for
+    INTEGER(INTG), INTENT(IN) :: timeDependenceType !<The type of time dependence to be set \see PROBLEM_CONSTANTS_CellMLEquationTimeDependenceTypes,PROBLEM_CONSTANTS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("CellMLEquations_TimeDependenceTypeSet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(cellMLEquations)) CALL FlagError("CellML equations is not associated.",err,error,*999)
+    IF(cellMLEquations%CELLML_EQUATIONS_FINISHED) CALL FlagError("CellML equations has already been finished.",err,error,*999)
+   
+    SELECT CASE(timeDependenceType)
+    CASE(CELLML_EQUATIONS_STATIC)
+      cellMLEquations%timeDependence=CELLML_EQUATIONS_STATIC
+    CASE(CELLML_EQUATIONS_QUASISTATIC)
+      cellMLEquations%timeDependence=CELLML_EQUATIONS_QUASISTATIC
+    CASE(CELLML_EQUATIONS_DYNAMIC)
+      cellMLEquations%timeDependence=CELLML_EQUATIONS_DYNAMIC
+    CASE DEFAULT
+      localError="The specified CellML equations time dependence type of "// &
+        & TRIM(NumberToVString(timeDependenceType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+   
+    EXITS("CellMLEquations_TimeDependenceTypeSet")
+    RETURN
+999 ERRORSEXITS("CellMLEquations_TimeDependenceTypeSet",err,error)
+    RETURN 1
+   
+  END SUBROUTINE CellMLEquations_TimeDependenceTypeSet
+        
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the curent time for CellML equations.
+  SUBROUTINE CellMLEquations_TimeGet(cellMLEquations,time,err,error,*)
+
+    !Argument variables
+    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations !<A pointer the CellML equations to get the time for.
+    REAL(DP), INTENT(OUT) :: time !<On exit, the time for the CellML equations
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("CellMLEquations_TimeGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(cellMLEquations)) CALL FlagError("CellML evaluator solver is not associated.",err,error,*999)
+    
+    time=cellMLEquations%currentTime
+   
+    EXITS("CellMLEquations_TimeGet")
+    RETURN
+999 ERRORSEXITS("CellMLEquations_TimeGet",err,error)
+    RETURN 1
+   
+  END SUBROUTINE CellMLEquations_TimeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the current time for CellML equations.
+  SUBROUTINE CellMLEquations_TimeSet(cellMLEquations,time,err,error,*)
+
+    !Argument variables
+    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations !<A pointer the CellML equations to set the time for.
+    REAL(DP), INTENT(IN) :: time !<The time for the CellML equations to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+
+    ENTERS("CellMLEquations_TimeSet",err,error,*999)
+    
+    IF(.NOT.ASSOCIATED(cellMLEquations)) CALL FlagError("CellML evaluator solver is not associated.",err,error,*999)
+
+    cellMLEquations%currentTime=time
+         
+    EXITS("CellMLEquations_TimeSet")
+    RETURN
+999 ERRORSEXITS("CellMLEquations_TimeSet",err,error)
+    RETURN 1
+   
+  END SUBROUTINE CellMLEquations_TimeSet
+
   !
   !================================================================================================================================
   !
@@ -1111,7 +1310,6 @@ CONTAINS
         IF(ERR/=0) CALL FlagError("Could not allocate solver CellML evaluator solver.",ERR,ERROR,*999)
         SOLVER%CELLML_EVALUATOR_SOLVER%SOLVER=>SOLVER
         SOLVER%CELLML_EVALUATOR_SOLVER%SOLVER_LIBRARY=SOLVER_CMISS_LIBRARY
-        SOLVER%CELLML_EVALUATOR_SOLVER%CURRENT_TIME=0.0_DP
       ENDIF
     ELSE
       CALL FlagError("Solver is not associated.",ERR,ERROR,*998)
@@ -1174,7 +1372,7 @@ CONTAINS
     IF(ASSOCIATED(CELLML_EVALUATOR_SOLVER)) THEN
       SELECT CASE(SOLVER_LIBRARY_TYPE)
       CASE(SOLVER_CMISS_LIBRARY)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
+        CELLML_EVALUATOR_SOLVER%SOLVER_LIBRARY=SOLVER_CMISS_LIBRARY
       CASE DEFAULT
         LOCAL_ERROR="The specified solver library type of "//TRIM(NumberToVString(SOLVER_LIBRARY_TYPE,"*",ERR,ERROR))// &
           & " is invalid for a CellML evaluator solver."
@@ -1195,63 +1393,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the time for a CellML evaluator solver.
-  SUBROUTINE SOLVER_CELLML_EVALUATOR_TIME_GET(CELLML_EVALUATOR_SOLVER,TIME,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(CELLML_EVALUATOR_SOLVER_TYPE), POINTER :: CELLML_EVALUATOR_SOLVER !<A pointer the CellML evaluator solver to get the time for.
-    REAL(DP), INTENT(OUT) :: TIME !<On exit, the time for the CellML evaluator solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
- 
-    ENTERS("SOLVER_CELLML_EVALUATOR_TIME_GET",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(CELLML_EVALUATOR_SOLVER)) THEN
-      TIME=CELLML_EVALUATOR_SOLVER%CURRENT_TIME
-    ELSE
-      CALL FlagError("CellML evaluator solver is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("SOLVER_CELLML_EVALUATOR_TIME_GET")
-    RETURN
-999 ERRORSEXITS("SOLVER_CELLML_EVALUATOR_TIME_GET",ERR,ERROR)
-    RETURN 1
-   
-  END SUBROUTINE SOLVER_CELLML_EVALUATOR_TIME_GET
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Sets/changes the time for a CellML evaluator solver.
-  SUBROUTINE SOLVER_CELLML_EVALUATOR_TIME_SET(CELLML_EVALUATOR_SOLVER,TIME,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(CELLML_EVALUATOR_SOLVER_TYPE), POINTER :: CELLML_EVALUATOR_SOLVER !<A pointer the CellML evaluator solver to set the time for.
-    REAL(DP), INTENT(IN) :: TIME !<The time for the CellML evaluator solver to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-
-    ENTERS("SOLVER_CELLML_EVALUATOR_TIME_SET",ERR,ERROR,*999)
-    
-    IF(ASSOCIATED(CELLML_EVALUATOR_SOLVER)) THEN
-      CELLML_EVALUATOR_SOLVER%CURRENT_TIME=TIME
-    ELSE
-      CALL FlagError("CellML evaluator solver is not associated.",ERR,ERROR,*999)
-    ENDIF
-        
-    EXITS("SOLVER_CELLML_EVALUATOR_TIME_SET")
-    RETURN
-999 ERRORSEXITS("SOLVER_CELLML_EVALUATOR_TIME_SET",ERR,ERROR)
-    RETURN 1
-   
-  END SUBROUTINE SOLVER_CELLML_EVALUATOR_TIME_SET
-
-  !
-  !================================================================================================================================
-  !
-
   !>Solve a CellML evaluator solver
   SUBROUTINE SOLVER_CELLML_EVALUATOR_SOLVE(CELLML_EVALUATOR_SOLVER,ERR,ERROR,*)
 
@@ -1262,6 +1403,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: cellml_idx
     INTEGER(INTG), POINTER :: MODELS_DATA(:)
+    REAL(DP) :: time
     REAL(DP), POINTER :: INTERMEDIATE_DATA(:),PARAMETERS_DATA(:),STATE_DATA(:)
     TYPE(CELLML_TYPE), POINTER :: CELLML_ENVIRONMENT
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: CELLML_EQUATIONS
@@ -1288,6 +1430,7 @@ CONTAINS
       IF(ASSOCIATED(SOLVER)) THEN
         CELLML_EQUATIONS=>SOLVER%CELLML_EQUATIONS
         IF(ASSOCIATED(CELLML_EQUATIONS)) THEN
+          time=CELLML_EQUATIONS%currentTime
           DO cellml_idx=1,CELLML_EQUATIONS%NUMBER_OF_CELLML_ENVIRONMENTS
             CELLML_ENVIRONMENT=>CELLML_EQUATIONS%CELLML_ENVIRONMENTS(cellml_idx)%PTR
             IF(ASSOCIATED(CELLML_ENVIRONMENT)) THEN                  
@@ -1301,7 +1444,7 @@ CONTAINS
                   !Make sure CellML fields have been updated to the current value of any mapped fields
                   CALL CELLML_FIELD_TO_CELLML_UPDATE(CELLML_ENVIRONMENT,ERR,ERROR,*999)
 
-                  CALL FIELD_VARIABLE_GET(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE,ERR,ERROR,*999)
+                  CALL Field_VariableGet(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE,ERR,ERROR,*999)
                   CALL FIELD_PARAMETER_SET_DATA_GET(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                     & MODELS_DATA,ERR,ERROR,*999)
                       
@@ -1335,8 +1478,8 @@ CONTAINS
                   !Solve these CellML equations
                   SELECT CASE(CELLML_EVALUATOR_SOLVER%SOLVER_LIBRARY)
                   CASE(SOLVER_CMISS_LIBRARY)
-                    CALL SOLVER_CELLML_EVALUATE(CELLML_EVALUATOR_SOLVER,CELLML_ENVIRONMENT,MODELS_VARIABLE%TOTAL_NUMBER_OF_DOFS, & 
-                      & CELLML_ENVIRONMENT%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,MODELS_DATA,CELLML_ENVIRONMENT% &
+                    CALL SOLVER_CELLML_EVALUATE(CELLML_EVALUATOR_SOLVER,time,CELLML_ENVIRONMENT,MODELS_VARIABLE% &
+                      & TOTAL_NUMBER_OF_DOFS,CELLML_ENVIRONMENT%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,MODELS_DATA,CELLML_ENVIRONMENT% &
                       & MAXIMUM_NUMBER_OF_STATE,STATE_DATA,CELLML_ENVIRONMENT%MAXIMUM_NUMBER_OF_PARAMETERS, &
                       & PARAMETERS_DATA,CELLML_ENVIRONMENT%MAXIMUM_NUMBER_OF_INTERMEDIATE,INTERMEDIATE_DATA,ERR,ERROR,*999)
                   CASE DEFAULT
@@ -1394,11 +1537,12 @@ CONTAINS
   !
   
   !>Evaluate the CellML equations. 
-  SUBROUTINE SOLVER_CELLML_EVALUATE(CELLML_EVALUATOR_SOLVER,CELLML,N, ONLY_ONE_MODEL_INDEX,MODELS_DATA,MAX_NUMBER_STATES, &
+  SUBROUTINE SOLVER_CELLML_EVALUATE(CELLML_EVALUATOR_SOLVER,time,CELLML,N, ONLY_ONE_MODEL_INDEX,MODELS_DATA,MAX_NUMBER_STATES, &
     & STATE_DATA,MAX_NUMBER_PARAMETERS,PARAMETERS_DATA,MAX_NUMBER_INTERMEDIATES,INTERMEDIATE_DATA,ERR,ERROR,*)
 
     !Argument variables
     TYPE(CELLML_EVALUATOR_SOLVER_TYPE), POINTER :: CELLML_EVALUATOR_SOLVER !<A pointer the CellML evaluator equation solver to evaluate
+    REAL(DP), INTENT(IN) :: time !<The time for the CellML evaluate.
     TYPE(CELLML_TYPE), POINTER :: CELLML !<A pointer to the CellML environment to integrate the equations for.
     INTEGER(INTG), INTENT(IN) :: N !<The number of degrees-of-freedom
     INTEGER(INTG), INTENT(IN) :: ONLY_ONE_MODEL_INDEX !<If only one model is used in the models data the index of that model. 0 otherwise.
@@ -1448,7 +1592,7 @@ CONTAINS
                     ENDDO !parameter_idx
                   
 #ifdef WITH_CELLML                    
-                    CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,0.0_DP,STATES,RATES,INTERMEDIATES, &
+                    CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,time,STATES,RATES,INTERMEDIATES, &
                       & PARAMETERS)
 #else
                     CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
@@ -1490,7 +1634,7 @@ CONTAINS
                     ENDDO !parameter_idx
 
 #ifdef WITH_CELLML                    
-                    CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,0.0_DP,STATES,RATES,INTERMEDIATES, &
+                    CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,time,STATES,RATES,INTERMEDIATES, &
                       & PARAMETERS)
 #else
                     CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
@@ -1539,7 +1683,7 @@ CONTAINS
                           PARAMETER_START_DOF=(dof_idx-1)*MAX_NUMBER_PARAMETERS+1
                           PARAMETER_END_DOF=PARAMETER_START_DOF+NUMBER_PARAMETERS-1         
                     
-                          CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,0.0_DP, & 
+                          CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,time, & 
                             & STATE_DATA(STATE_START_DOF:STATE_END_DOF), &
                             & RATES,INTERMEDIATE_DATA(INTERMEDIATE_START_DOF:INTERMEDIATE_END_DOF),PARAMETERS_DATA( &
                             & PARAMETER_START_DOF:PARAMETER_END_DOF))
@@ -1551,7 +1695,7 @@ CONTAINS
                           INTERMEDIATE_START_DOF=(dof_idx-1)*MAX_NUMBER_INTERMEDIATES+1
                           INTERMEDIATE_END_DOF=INTERMEDIATE_START_DOF+NUMBER_INTERMEDIATES-1
                     
-                          CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,0.0_DP, & 
+                          CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,time, & 
                             & STATE_DATA(STATE_START_DOF:STATE_END_DOF), &
                             & RATES,INTERMEDIATE_DATA(INTERMEDIATE_START_DOF:INTERMEDIATE_END_DOF),PARAMETERS)
                         
@@ -1564,7 +1708,7 @@ CONTAINS
                           PARAMETER_START_DOF=(dof_idx-1)*MAX_NUMBER_PARAMETERS+1
                           PARAMETER_END_DOF=PARAMETER_START_DOF+NUMBER_PARAMETERS-1         
                     
-                          CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,0.0_DP, & 
+                          CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,time, & 
                             & STATE_DATA(STATE_START_DOF:STATE_END_DOF), &
                             & RATES,INTERMEDIATES,PARAMETERS_DATA(PARAMETER_START_DOF:PARAMETER_END_DOF))
                         
@@ -1573,7 +1717,7 @@ CONTAINS
                           STATE_START_DOF=(dof_idx-1)*MAX_NUMBER_STATES+1
                           STATE_END_DOF=STATE_START_DOF+NUMBER_STATES-1
                     
-                          CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,0.0_DP, & 
+                          CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,time, & 
                             & STATE_DATA(STATE_START_DOF:STATE_END_DOF), &
                             & RATES,INTERMEDIATES,PARAMETERS)
                         
@@ -1588,7 +1732,7 @@ CONTAINS
                           PARAMETER_START_DOF=(dof_idx-1)*MAX_NUMBER_PARAMETERS+1
                           PARAMETER_END_DOF=PARAMETER_START_DOF+NUMBER_PARAMETERS-1         
                     
-                          CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,0.0_DP,STATES,RATES, &
+                          CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,time,STATES,RATES, &
                             & INTERMEDIATE_DATA(INTERMEDIATE_START_DOF:INTERMEDIATE_END_DOF),PARAMETERS_DATA( &
                             & PARAMETER_START_DOF:PARAMETER_END_DOF))
                         ELSE
@@ -1596,7 +1740,7 @@ CONTAINS
                           INTERMEDIATE_START_DOF=(dof_idx-1)*MAX_NUMBER_INTERMEDIATES+1
                           INTERMEDIATE_END_DOF=INTERMEDIATE_START_DOF+NUMBER_INTERMEDIATES-1
                     
-                          CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,0.0_DP,STATES,RATES, &
+                          CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,time,STATES,RATES, &
                             & INTERMEDIATE_DATA(INTERMEDIATE_START_DOF:INTERMEDIATE_END_DOF),PARAMETERS)
                           
                         ENDIF
@@ -1642,7 +1786,7 @@ CONTAINS
                           PARAMETER_START_DOF=(dof_idx-1)*MAX_NUMBER_PARAMETERS+1
                           PARAMETER_END_DOF=PARAMETER_START_DOF+NUMBER_PARAMETERS-1
                     
-                          CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,0.0_DP, & 
+                          CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,time, & 
                             & STATE_DATA(STATE_START_DOF:STATE_END_DOF), &
                             & RATES,INTERMEDIATE_DATA(INTERMEDIATE_START_DOF:INTERMEDIATE_END_DOF),PARAMETERS_DATA( &
                             & PARAMETER_START_DOF:PARAMETER_END_DOF))
@@ -1658,7 +1802,7 @@ CONTAINS
                           INTERMEDIATE_START_DOF=(dof_idx-1)*MAX_NUMBER_INTERMEDIATES+1
                           INTERMEDIATE_END_DOF=INTERMEDIATE_START_DOF+NUMBER_INTERMEDIATES-1
                    
-                          CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,0.0_DP, & 
+                          CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,time, & 
                             & STATE_DATA(STATE_START_DOF:STATE_END_DOF), &
                             & RATES,INTERMEDIATE_DATA(INTERMEDIATE_START_DOF:INTERMEDIATE_END_DOF),PARAMETERS)
                         ENDIF !model_idx
@@ -1677,7 +1821,7 @@ CONTAINS
                           PARAMETER_START_DOF=(dof_idx-1)*MAX_NUMBER_PARAMETERS+1
                           PARAMETER_END_DOF=PARAMETER_START_DOF+NUMBER_PARAMETERS-1
                     
-                          CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,0.0_DP, & 
+                          CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,time, & 
                             & STATE_DATA(STATE_START_DOF:STATE_END_DOF), &
                             & RATES,INTERMEDIATES,PARAMETERS_DATA(PARAMETER_START_DOF:PARAMETER_END_DOF))
                         ENDIF !model_idx
@@ -1691,7 +1835,7 @@ CONTAINS
                           STATE_START_DOF=(dof_idx-1)*MAX_NUMBER_STATES+1
                           STATE_END_DOF=STATE_START_DOF+NUMBER_STATES-1
                         
-                          CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,0.0_DP,& 
+                          CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,time,& 
                             & STATE_DATA(STATE_START_DOF:STATE_END_DOF), &
                             & RATES,INTERMEDIATES,PARAMETERS)
                         ENDIF !model_idx
@@ -1711,7 +1855,7 @@ CONTAINS
                           PARAMETER_START_DOF=(dof_idx-1)*MAX_NUMBER_PARAMETERS+1
                           PARAMETER_END_DOF=PARAMETER_START_DOF+NUMBER_PARAMETERS-1
                     
-                          CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,0.0_DP,STATES,RATES, &
+                          CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,time,STATES,RATES, &
                             & INTERMEDIATE_DATA(INTERMEDIATE_START_DOF:INTERMEDIATE_END_DOF),PARAMETERS_DATA( &
                             & PARAMETER_START_DOF:PARAMETER_END_DOF))
                         ENDIF !model_idx
@@ -1725,7 +1869,7 @@ CONTAINS
                           INTERMEDIATE_START_DOF=(dof_idx-1)*MAX_NUMBER_INTERMEDIATES+1
                           INTERMEDIATE_END_DOF=INTERMEDIATE_START_DOF+NUMBER_INTERMEDIATES-1
                      
-                          CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,0.0_DP,STATES,RATES, &
+                          CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(MODEL%PTR,time,STATES,RATES, &
                             & INTERMEDIATE_DATA(INTERMEDIATE_START_DOF:INTERMEDIATE_END_DOF),PARAMETERS)
                         ENDIF !model_idx           
                       ENDDO !dof_idx
@@ -2546,7 +2690,7 @@ CONTAINS
                       !Make sure CellML fields have been updated to the current value of any mapped fields
                       CALL CELLML_FIELD_TO_CELLML_UPDATE(CELLML_ENVIRONMENT,ERR,ERROR,*999)
 
-                      CALL FIELD_VARIABLE_GET(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE,ERR,ERROR,*999)
+                      CALL Field_VariableGet(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE,ERR,ERROR,*999)
                       CALL FIELD_PARAMETER_SET_DATA_GET(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                         & MODELS_DATA,ERR,ERROR,*999)
                       
@@ -3864,7 +4008,7 @@ CONTAINS
                       !Make sure CellML fields have been updated to the current value of any mapped fields
                     CALL CELLML_FIELD_TO_CELLML_UPDATE(CELLML_ENVIRONMENT,ERR,ERROR,*999)
 
-                    CALL FIELD_VARIABLE_GET(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE,ERR,ERROR,*999)
+                    CALL Field_VariableGet(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE,ERR,ERROR,*999)
                     CALL FIELD_PARAMETER_SET_DATA_GET(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                       & MODELS_DATA,ERR,ERROR,*999)
                       
@@ -4163,7 +4307,7 @@ CONTAINS
                     CALL CELLML_FIELD_TO_CELLML_UPDATE(CELLML_ENVIRONMENT,ERR,ERROR,*999)
 
                     NULLIFY(MODELS_VARIABLE)
-                    CALL FIELD_VARIABLE_GET(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE,ERR,ERROR,*999)
+                    CALL Field_VariableGet(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE,ERR,ERROR,*999)
                     CALL FIELD_PARAMETER_SET_DATA_GET(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                       & MODELS_DATA,ERR,ERROR,*999)
                     

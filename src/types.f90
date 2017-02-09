@@ -1338,12 +1338,6 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(FIELD_PARAMETER_SET_PTR_TYPE), POINTER :: PARAMETER_SETS(:) !<PARAMETER_SETS(set_type_idx). \todo change to allocatable. A pointer to an array of pointers to the parameter sets that have been created on the field. PARAMETER_SET(set_type_idx)%PTR is a pointer to the parameter set type for the set_type_idx'th parameter set that has been created. set_type_idx can vary from 1 to the number of parameter set types that have currently been created for the field i.e., TYPES::FIELD_PARAMETER_SETS_TYPE::NUMBER_OF_PARAMETER_SETS.
   END TYPE FIELD_PARAMETER_SETS_TYPE
 
-  !>A type to store a list of field variables
-  TYPE FieldVariableListType
-    INTEGER(INTG) :: numberOfFieldVariables !<The number of field variables in the list
-    TYPE(FIELD_VARIABLE_PTR_TYPE), ALLOCATABLE :: fieldVariables(:) !<fieldVariables(fieldVariableIdx). A pointer to the fieldVariableIdx'th field variable in the list
-  END TYPE FieldVariableListType
-  
   !>Contains information for a field variable defined on a field.
   TYPE FIELD_VARIABLE_TYPE
     INTEGER(INTG) :: VARIABLE_NUMBER !<The number of the field variable
@@ -1774,17 +1768,20 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: GEOMETRIC_INTERP_PARAMETERS(:) !<GEOMETRIC_INTERP_PARAMETERS(field_variable_type). A pointer to the field_variable_type'th geometric interpolation parameters for the equations.
     TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: FIBRE_INTERP_PARAMETERS(:) !<FIBRE_INTERP_PARAMETERS(field_variable_type). A pointer to the fibre interpolation parameters for the equations (if a fibre field is defined). 
     TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: DEPENDENT_INTERP_PARAMETERS(:) !<DEPENDENT_INTERP_PARAMETERS(field_variable_type). A pointer to the field_variable_type'th dependent interpolation parameters for the equations. 
+    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: prevDependentInterpParameters(:) !<prevDependentInterpParameters(fieldVariableType). A pointer to the previous fieldVariableType'th dependent interpolation parameters for the equations. Only allocated for non-static equations.
     TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: INDEPENDENT_INTERP_PARAMETERS(:) !<INDEPENDENT_INTERP_PARAMETERS(field_variable_type). A pointer to the field_variable_type'th independent interpolation parameters for the equations. 
     TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: MATERIALS_INTERP_PARAMETERS(:) !<MATERIALS_INTERP_PARAMETERS(field_variable_type). A pointer to the field_variable_type'th material interpolation parameters for the equations (if a material field is defined). 
     TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: SOURCE_INTERP_PARAMETERS(:) !<SOURCE_INTERP_PARAMETERS(field_variable_type). A pointer to the field_variable_type'th source interpolation parameters for the equations (if a source field is defined). 
     TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: GEOMETRIC_INTERP_POINT(:) !<GEOMETRIC_INTERP_POINT(field_variable_type). A pointer to the field_variable_type'th geometric interpolated point information for the equations. 
     TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: FIBRE_INTERP_POINT(:) !<FIBRE_INTERP_POINT(field_variable_type). A pointer to the field_variable_type'th fibre interpolated point information for the equations (if a fibre field is defined). 
     TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: DEPENDENT_INTERP_POINT(:) !<DEPENDENT_INTERP_POINT(field_variable_type). A pointer to the field_variable_type'th dependent interpolated point information for the equations. 
+    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: prevDependentInterpPoint(:) !<prevDependentInterpPoint(fieldVariableType). A pointer to the previous fieldVariableType'th dependent interpolated point information for the equations. Only allocated for non-static equations.
     TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: INDEPENDENT_INTERP_POINT(:) !<INDEPENDENT_INTERP_POINT(field_variable_type). A pointer to the field_variable_type'th independent interpolated point information for the equations. 
     TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: MATERIALS_INTERP_POINT(:) !<MATERIALS_INTERP_POINT(field_variable_type). A pointer to the field_variable_type'th material interpolated point information for the equations (if a material field is defined). 
     TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: SOURCE_INTERP_POINT(:) !<SOURCE_INTERP_POINT(field_variable_type). A pointer to the field_variable_type'th source interpolated point information for the equations (if a source field is defined).
     TYPE(FIELD_PHYSICAL_POINT_PTR_TYPE), POINTER :: DEPENDENT_PHYSICAL_POINT(:) !<DEPENDENT_PHYSICAL_POINT(field_variable_type). A pointer to the field_variable_type'th dependent physical point information for the equations. 
-     TYPE(FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE), POINTER :: DEPENDENT_INTERP_POINT_METRICS(:) !<DEPENDENT_INTERP_POINT_METRICS(field_variable_type). A pointer to the field_variable_type'th dependent interpolated point metrics information 
+    TYPE(FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE), POINTER :: DEPENDENT_INTERP_POINT_METRICS(:) !<DEPENDENT_INTERP_POINT_METRICS(field_variable_type). A pointer to the field_variable_type'th dependent interpolated point metrics information 
+    TYPE(FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE), POINTER :: prevDependentInterpPointMetrics(:) !<prevDependentInterpPointMetrics(fieldVariableType). A pointer to the previous fieldVariableType'th dependent interpolated point metrics information. Only allocated for non-static equations. 
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE), POINTER :: INDEPENDENT_INTERP_POINT_METRICS(:) !<INDEPENDENT_INTERP_POINT_METRICS(field_variable_type). A pointer to the field_variable_type'th independent interpolated point metrics information 
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE), POINTER :: GEOMETRIC_INTERP_POINT_METRICS(:) !<GEOMETRIC_INTERP_POINT_METRICS(field_variable_type). A pointer to the field_variable_type'th geometric interpolated point metrics information 
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE), POINTER :: FIBRE_INTERP_POINT_METRICS(:) !<FIBRE_INTERP_POINT_METRICS(field_variable_type). A pointer to the field_variable_type'th fibre interpolated point metrics information 
@@ -2537,6 +2534,9 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE CELLML_EQUATIONS_TYPE
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
     LOGICAL :: CELLML_EQUATIONS_FINISHED !<Is .TRUE. if the CellML equations have finished being created, .FALSE. if not.
+    INTEGER(INTG) :: linearity !<The linearity type of the CellML equations
+    INTEGER(INTG) :: timeDependence !<The time dependence type of the CellML equations
+    REAL(DP) :: currentTime !<The current time to evaluate the equations at
     INTEGER(INTG) :: NUMBER_OF_CELLML_ENVIRONMENTS !<The number of CellML environments in the equations
     TYPE(CELLML_PTR_TYPE), ALLOCATABLE :: CELLML_ENVIRONMENTS(:) !<CELLML_ENVIORNMENTS(cellml_idx). The array of pointers to the CellML environments for these CellML equations.     
   END TYPE CELLML_EQUATIONS_TYPE
@@ -2816,7 +2816,6 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG) :: SOLVER_LIBRARY !<The library type for the CellML evaluation solver \see SOLVER_ROUTINES_SolverLibraries,SOLVER_ROUTINES
     TYPE(CELLML_TYPE), POINTER :: CELLML !<A pointer to the CellML environment for the solver
-    REAL(DP) :: CURRENT_TIME !<The current time value for the evaluator solver
   END TYPE CELLML_EVALUATOR_SOLVER_TYPE
   
   !>Contains information for a geometric transformation solver
@@ -3119,6 +3118,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>Contains information about the cached create values for a solver mapping
   TYPE SOLVER_MAPPING_CREATE_VALUES_CACHE_TYPE
     TYPE(LIST_PTR_TYPE), POINTER :: EQUATIONS_VARIABLE_LIST(:) !<EQUATIONS_VARIABLES_LIST(solver_matrix_idx). The list of equations set variables in the solver mapping.
+    TYPE(LIST_TYPE), POINTER :: equationsRHSVariablesList !<The list of equations RHS variables in the solver mapping.
     INTEGER, ALLOCATABLE :: DYNAMIC_VARIABLE_TYPE(:) !<DYNAMIC_VARIABLE_TYPE(equations_set_idx). The variable type that is mapped to the dynamic matrices for the equations_set_idx'th equations set.
     INTEGER(INTG), ALLOCATABLE :: MATRIX_VARIABLE_TYPES(:,:,:) !<MATRIX_VARIABLE_TYPES(0:..,equations_set_idx,matrix_idx). The list of matrix variable types in the equations_set_idx'th equations set for the matrix_idx'th solver matrix. MATRIX_VARIABLE_TYPES(0,equations_set_idx,matrix_idx) is the number of variable types in the equations_set_idx'th equations set mapped to the matrix_idx'th solver matrix and MATRIX_VARIABLE_TYPES(1..,equations_set_idx,matrix_idx) is the list of the variable types in the equations set.
     INTEGER(INTG), ALLOCATABLE :: RESIDUAL_VARIABLE_TYPES(:,:) !<RESIDUAL_VARIABLE_TYPES(0:..,equations_set_idx). The list of residual variable types in the equations_set_idx'th equations set. RESIDUAL_VARIABLE_TYPES(0,equations_set_idx) is the number of variable types in the equations_set_idx'th equations set and RESIDUAL_VARIABLE_TYPES(1..,equations_set_idx) is the list of the variable types in the equations set.
@@ -3163,6 +3163,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(INTERFACE_CONDITION_PTR_TYPE), ALLOCATABLE :: INTERFACE_CONDITIONS(:) !<The list of interface conditions that are in this
     TYPE(INTERFACE_CONDITION_TO_SOLVER_MAP_TYPE), ALLOCATABLE :: INTERFACE_CONDITION_TO_SOLVER_MAP(:) !<INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx). The mapping from the interface_condition_idx'th interface condition to the solver matrices.
     TYPE(SOLVER_MAPPING_VARIABLES_TYPE), ALLOCATABLE :: VARIABLES_LIST(:) !<VARIABLES_LIST(solver_matrix_idx). The list of variable for the solver_matrix_idx'th solver matrix.
+    TYPE(SOLVER_MAPPING_VARIABLES_TYPE) :: rhsVariablesList !<The list of variables for the RHS vector
     TYPE(SOLVER_COL_TO_EQUATIONS_MAPS_TYPE), ALLOCATABLE :: SOLVER_COL_TO_EQUATIONS_COLS_MAP(:) !<SOLVER_TO_EQUATIONS_SET_MAP(solver_matrix_idx). The mapping from the solver_matrix_idx'th solver matrix to the equations set. 
     TYPE(SOLVER_ROW_TO_EQUATIONS_MAPS_TYPE), ALLOCATABLE :: SOLVER_ROW_TO_EQUATIONS_ROWS_MAP(:) !<SOLVER_ROW_TO_EQUATIONS_SET_MAPS(local_row_idx). The mappings from the local_row_idx'th solver row to the equations set rows.
     !LOGICAL :: HAVE_JACOBIAN !<Is .TRUE. if the Jacobian exists for nonlinear problems.
@@ -3237,6 +3238,19 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: OUTPUT_NUMBER
   END TYPE CONTROL_LOOP_LOAD_INCREMENT_TYPE
 
+  !>Contains information about a dependent field variable involved in a control loop solver.
+  TYPE ControlLoopFieldVariableType
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable
+    INTEGER(INTG) :: timeDependence !<The time dependence type of the field variable in the control loop solvers
+    INTEGER(INTG) :: linearity !<The linearity type of the field variable in the control loop solvers.
+  END TYPE ControlLoopFieldVariableType
+
+  !>Contains information on the list of dependent field variables involved in the control loop solvers.
+  TYPE ControlLoopFieldVariablesType
+    INTEGER(INTG) :: numberOfFieldVariables !<The number of field variables in the control loop
+    TYPE(ControlLoopFieldVariableType), ALLOCATABLE :: fieldVariables(:) !<fieldVariables(fieldVariableIdx). The information for the fieldVariableIdx'th field variable.
+  END TYPE ControlLoopFieldVariablesType
+
   !>A buffer type to allow for an array of pointers to a CONTROL_LOOP_TYPE \see TYPES::CONTROL_LOOP_TYPE
   TYPE CONTROL_LOOP_PTR_TYPE
     TYPE(CONTROL_LOOP_TYPE), POINTER :: PTR !<The pointer to the control loop
@@ -3262,7 +3276,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     
     INTEGER(INTG) :: NUMBER_OF_SUB_LOOPS !<The number of control loops below this loop
     TYPE(CONTROL_LOOP_PTR_TYPE), ALLOCATABLE :: SUB_LOOPS(:) !<A array of pointers to the loops below this loop.
-    
+
+    TYPE(ControlLoopFieldVariablesType), POINTER :: fieldVariables !<A pointer to the field variables information for this control loop.
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS !<A pointer to the solvers for this control loop
     TYPE(HISTORY_TYPE), POINTER :: HISTORY !<A pointer to the history file for this control loop.
   END TYPE CONTROL_LOOP_TYPE  

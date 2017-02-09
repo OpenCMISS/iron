@@ -91,6 +91,8 @@ MODULE ControlLoopAccessRoutines
 
   PUBLIC CONTROL_LOOP_GET
 
+  PUBLIC ControlLoop_ProblemGet
+
   PUBLIC ControlLoop_SolversGet
 
   PUBLIC CONTROL_LOOP_SOLVERS_GET
@@ -191,6 +193,36 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns a pointer to the problem for a control loop.
+  SUBROUTINE ControlLoop_ProblemGet(controlLoop,problem,err,error,*)
+
+    !Argument variables
+    TYPE(CONTROL_LOOP_TYPE), POINTER, INTENT(IN) :: controlLoop !<A pointer to control loop to get the problem for.
+    TYPE(PROBLEM_TYPE), POINTER :: problem !<On exit, a pointer to the control loop problem. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("ControlLoop_ProblemGet",err,error,*998)
+
+    IF(ASSOCIATED(problem)) CALL FlagError("Problem is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+
+    problem=>controlLoop%problem
+    IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Control loop problem is not associated.",err,error,*999)
+       
+    EXITS("ControlLoop_ProblemGet")
+    RETURN
+998 NULLIFY(problem)
+999 ERRORSEXITS("ControlLoop_ProblemGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_ProblemGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns a pointer to the solvers for a control loop.
   SUBROUTINE ControlLoop_SolversGet(controlLoop,solvers,err,error,*)
 
@@ -201,16 +233,17 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("ControlLoop_SolversGet",err,error,*999)
+    ENTERS("ControlLoop_SolversGet",err,error,*998)
 
+    IF(ASSOCIATED(solvers)) CALL FlagError("Solvers is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
-    IF(ASSOCIATED(solvers)) CALL FlagError("Solvers is already associated.",err,error,*999)
-
+ 
     solvers=>controlLoop%solvers
     IF(.NOT.ASSOCIATED(solvers)) CALL FlagError("Control loop solvers is not associated.",err,error,*999)
        
     EXITS("ControlLoop_SolversGet")
     RETURN
+998 NULLIFY(solvers)
 999 ERRORSEXITS("ControlLoop_SolversGet",err,error)
     RETURN 1
     

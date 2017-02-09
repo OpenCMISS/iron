@@ -71,15 +71,60 @@ MODULE EquationsSetAccessRoutines
     MODULE PROCEDURE EquationsSet_UserNumberFind
   END INTERFACE EQUATIONS_SET_USER_NUMBER_FIND
 
+  PUBLIC EquationsSet_DependentFieldGet
+
   PUBLIC EquationsSet_EquationsGet
 
   PUBLIC EQUATIONS_SET_EQUATIONS_GET
+  
+  PUBLIC EquationsSet_GeometricFieldGet
+  
+  PUBLIC EquationsSet_IndependentFieldGet
+  
+  PUBLIC EquationsSet_MaterialsFieldGet
+  
+  PUBLIC EquationsSet_SourceFieldGet
   
   PUBLIC EquationsSet_UserNumberFind
 
   PUBLIC EQUATIONS_SET_USER_NUMBER_FIND
 
 CONTAINS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the dependent field for an equations set.
+  SUBROUTINE EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the dependent field for
+    TYPE(FIELD_TYPE), POINTER :: dependentField !<On exit, a pointer to the dependent field in the specified equations set. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_DependentFieldGet",err,error,*998)
+
+    IF(ASSOCIATED(dependentField)) CALL FlagError("Dependent field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+
+    dependentField=>equationsSet%dependent%DEPENDENT_FIELD
+    IF(.NOT.ASSOCIATED(dependentField)) THEN
+      localError="Dependent field is not associated for equations set number "// &
+      & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsSet_DependentFieldGet")
+    RETURN
+999 NULLIFY(dependentField)
+998 ERRORSEXITS("EquationsSet_DependentFieldGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_DependentFieldGet
 
   !
   !================================================================================================================================
@@ -96,11 +141,11 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: localError
  
-    ENTERS("EquationsSet_EquationsGet",err,error,*999)
+    ENTERS("EquationsSet_EquationsGet",err,error,*998)
 
+    IF(ASSOCIATED(equations)) CALL FlagError("Equations is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
     IF(.NOT.equationsSet%EQUATIONS_SET_FINISHED) CALL FlagError("Equations set has not been finished.",err,error,*999)
-    IF(ASSOCIATED(equations)) CALL FlagError("Equations is already associated.",err,error,*999)
 
     equations=>equationsSet%equations
     IF(.NOT.ASSOCIATED(equations)) THEN
@@ -111,10 +156,166 @@ CONTAINS
        
     EXITS("EquationsSet_EquationsGet")
     RETURN
-999 ERRORSEXITS("EquationsSet_EquationsGet",err,error)
+999 NULLIFY(equations)
+998 ERRORSEXITS("EquationsSet_EquationsGet",err,error)
     RETURN 1
     
   END SUBROUTINE EquationsSet_EquationsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the geometric field for an equations set.
+  SUBROUTINE EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the geometric field for
+    TYPE(FIELD_TYPE), POINTER :: geometricField !<On exit, a pointer to the geometric field in the specified equations set. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_GeometricFieldGet",err,error,*998)
+
+    IF(ASSOCIATED(geometricField)) CALL FlagError("Geometric field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+
+    geometricField=>equationsSet%geometry%GEOMETRIC_FIELD
+    IF(.NOT.ASSOCIATED(geometricField)) THEN
+      localError="Geometric field is not associated for equations set number "// &
+      & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsSet_GeometricFieldGet")
+    RETURN
+999 NULLIFY(geometricField)
+998 ERRORSEXITS("EquationsSet_GeometricFieldGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_GeometricFieldGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the independent field for an equations set.
+  SUBROUTINE EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the independent field for
+    TYPE(FIELD_TYPE), POINTER :: independentField !<On exit, a pointer to the independent field in the specified equations set. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_IndependentFieldGet",err,error,*998)
+
+    IF(ASSOCIATED(independentField)) CALL FlagError("Independent field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet%independent)) THEN
+      localError="Independent information is not associated for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    independentField=>equationsSet%independent%INDEPENDENT_FIELD
+    IF(.NOT.ASSOCIATED(independentField)) THEN
+      localError="Independent field is not associated for equations set number "// &
+      & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsSet_IndependentFieldGet")
+    RETURN
+999 NULLIFY(independentField)
+998 ERRORSEXITS("EquationsSet_IndependentFieldGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_IndependentFieldGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the materials field for an equations set.
+  SUBROUTINE EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the materials field for
+    TYPE(FIELD_TYPE), POINTER :: materialsField !<On exit, a pointer to the materials field in the specified equations set. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_MaterialsFieldGet",err,error,*998)
+
+    IF(ASSOCIATED(materialsField)) CALL FlagError("Materials field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet%materials)) THEN
+      localError="Materials information is not associated for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    materialsField=>equationsSet%materials%MATERIALS_FIELD
+    IF(.NOT.ASSOCIATED(materialsField)) THEN
+      localError="Materials field is not associated for equations set number "// &
+      & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsSet_MaterialsFieldGet")
+    RETURN
+999 NULLIFY(materialsField)
+998 ERRORSEXITS("EquationsSet_MaterialsFieldGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_MaterialsFieldGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the source  field for an equations set.
+  SUBROUTINE EquationsSet_SourceFieldGet(equationsSet,sourceField,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the source field for
+    TYPE(FIELD_TYPE), POINTER :: sourceField !<On exit, a pointer to the source field in the specified equations set. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_SourceFieldGet",err,error,*998)
+
+    IF(ASSOCIATED(sourceField)) CALL FlagError("Source field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet%source)) THEN
+      localError="Source information is not associated for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    sourceField=>equationsSet%source%SOURCE_FIELD
+    IF(.NOT.ASSOCIATED(sourceField)) THEN
+      localError="Source field is not associated for equations set number "// &
+      & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsSet_SourceFieldGet")
+    RETURN
+999 NULLIFY(sourceField)
+998 ERRORSEXITS("EquationsSet_SourceFieldGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_SourceFieldGet
 
   !
   !================================================================================================================================

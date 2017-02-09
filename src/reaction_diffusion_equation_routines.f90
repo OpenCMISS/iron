@@ -59,6 +59,7 @@ MODULE REACTION_DIFFUSION_EQUATION_ROUTINES
   USE EQUATIONS_SET_CONSTANTS
   USE EquationsSetAccessRoutines
   USE FIELD_ROUTINES
+  USE FieldAccessRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE KINDS
@@ -1281,11 +1282,19 @@ CONTAINS
             !Create the CellML equations for the first DAE solver
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
             CALL CELLML_EQUATIONS_CREATE_START(SOLVER,CELLML_EQUATIONS,ERR,ERROR,*999)
+            !Set the time dependence
+            CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
+            !Set the linearity
+            CALL CellMLEquations_LinearityTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_NONLINEAR,err,error,*999)
             !Create the CellML equations for the second DAE solver
             NULLIFY(SOLVER)
             NULLIFY(CELLML_EQUATIONS)
             CALL SOLVERS_SOLVER_GET(SOLVERS,3,SOLVER,ERR,ERROR,*999)
             CALL CELLML_EQUATIONS_CREATE_START(SOLVER,CELLML_EQUATIONS,ERR,ERROR,*999)
+            !Set the time dependence
+            CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
+            !Set the linearity
+            CALL CellMLEquations_LinearityTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_NONLINEAR,err,error,*999)
           ELSEIF(PROBLEM%SPECIFICATION(3)== &
            & PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE) THEN
             !CREATE the CellML equations for the first evaluator solver
@@ -1294,6 +1303,10 @@ CONTAINS
             !Create the CellML equations for the first cellml evaluator solver
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
             CALL CELLML_EQUATIONS_CREATE_START(SOLVER,CELLML_EQUATIONS,ERR,ERROR,*999)
+            !Set the time dependence
+            CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
+            !Set the linearity
+            CALL CellMLEquations_LinearityTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_NONLINEAR,err,error,*999)
           ENDIF
         CASE(PROBLEM_SETUP_FINISH_ACTION)
           !Get the control loop

@@ -50,6 +50,7 @@ MODULE PROBLEM_ROUTINES
   USE CONTROL_LOOP_ROUTINES
   USE DISTRIBUTED_MATRIX_VECTOR
   USE ELASTICITY_ROUTINES
+  USE EQUATIONS_ROUTINES
   USE EQUATIONS_SET_CONSTANTS
   USE EQUATIONS_SET_ROUTINES
   USE FIELD_ROUTINES
@@ -68,6 +69,7 @@ MODULE PROBLEM_ROUTINES
   USE ProblemAccessRoutines
   USE REACTION_DIFFUSION_EQUATION_ROUTINES
   USE SOLVER_ROUTINES
+  USE SolverAccessRoutines
   USE SOLVER_MATRICES_ROUTINES
   USE STRINGS
   USE TIMER
@@ -123,7 +125,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of the CellML equations for the problem solver. \see OPENCMISS::CMISSProblemSolverCellMLEquationsCreateFinish
+  !>Finish the creation of the CellML equations for the problem solver. \see OpenCMISS::cmfe_Problem_SolverCellMLEquationsCreateFinish
   SUBROUTINE PROBLEM_CELLML_EQUATIONS_CREATE_FINISH(PROBLEM,ERR,ERROR,*)
 
     !Argument variables
@@ -158,7 +160,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of CellML equations for a problem solver. \see OPENCMISS::CMISSProblemSolverCellMLEquationsCreateStart
+  !>Start the creation of CellML equations for a problem solver. \see OpenCMISS::cmfe_Problem_SolverCellMLEquationsCreateStart
   SUBROUTINE PROBLEM_CELLML_EQUATIONS_CREATE_START(PROBLEM,ERR,ERROR,*)
 
     !Argument variablesg
@@ -194,40 +196,48 @@ CONTAINS
   !
 
   !>Solves CellML equations for a problem.
-  SUBROUTINE PROBLEM_CELLML_EQUATIONS_SOLVE(CELLML_EQUATIONS,ERR,ERROR,*)
+  SUBROUTINE Problem_CellMLEquationsSolve(cellMLEquations,err,error,*)
 
    !Argument variables
-    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: CELLML_EQUATIONS !<A pointer to the CellML equations to solve
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations !<A pointer to the CellML equations to solve
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER
+    REAL(DP) :: currentTime,timeIncrement
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
+    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("PROBLEM_CELLML_EQUATIONS_SOLVE",ERR,ERROR,*999)
+    ENTERS("Problem_CellMLEquationsSolve",err,error,*999)
     
-    IF(ASSOCIATED(CELLML_EQUATIONS)) THEN
-      IF(CELLML_EQUATIONS%CELLML_EQUATIONS_FINISHED) THEN
-        SOLVER=>CELLML_EQUATIONS%SOLVER
-        IF(ASSOCIATED(SOLVER)) THEN
-          
-          CALL SOLVER_SOLVE(SOLVER,ERR,ERROR,*999)
-          
-        ELSE
-          CALL FlagError("CellML equations solver is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("CellML equations have not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("CellML equations is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(cellMLEquations)) CALL FlagError("CellML equations is not associated.",err,error,*999)
+    IF(.NOT.cellMLEquations%CELLML_EQUATIONS_FINISHED) CALL FlagError("CellML equations have not been finished.",err,error,*999)
+
+    NULLIFY(solver)
+    CALL CellMLEquations_SolverGet(cellMLEquations,solver,err,error,*999)
+
+    SELECT CASE(cellMLEquations%timeDependence)
+    CASE(CELLML_EQUATIONS_STATIC)
+      !Do nothing
+    CASE(CELLML_EQUATIONS_QUASISTATIC,CELLML_EQUATIONS_DYNAMIC)
+      NULLIFY(controlLoop)
+      CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+      CALL ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*999)
+      CALL CellMLEquations_TimeSet(cellMLEquations,currentTime,err,error,*999)
+    CASE DEFAULT
+      localError="The CellML equations time dependence type of "// &
+        & TRIM(NumberToVString(cellMLEquations%timeDependence,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
     
-    EXITS("PROBLEM_CELLML_EQUATIONS_SOLVE")
+    CALL Solver_Solve(solver,err,error,*999)
+      
+    EXITS("Problem_CellMLEquationsSolve")
     RETURN
-999 ERRORSEXITS("PROBLEM_CELLML_EQUATIONS_SOLVE",ERR,ERROR)
+999 ERRORSEXITS("Problem_CellMLEquationsSolve",err,error)
     RETURN 1
     
-  END SUBROUTINE PROBLEM_CELLML_EQUATIONS_SOLVE
+  END SUBROUTINE Problem_CellMLEquationsSolve
 
   !
   !================================================================================================================================
@@ -593,7 +603,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the process of creating a problem. \see OPENCMISS::CMISSProblemCreateFinish
+  !>Finishes the process of creating a problem. \see OpenCMISS::cmfe_Problem_CreateFinish
   SUBROUTINE PROBLEM_CREATE_FINISH(PROBLEM,ERR,ERROR,*)
 
     !Argument variables
@@ -646,7 +656,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the process of creating a problem defined by USER_NUMBER. \see OPENCMISS::CMISSProblemCreateStart
+  !>Starts the process of creating a problem defined by USER_NUMBER. \see OpenCMISS::cmfe_Problem_CreateStart
   SUBROUTINE PROBLEM_CREATE_START(USER_NUMBER,PROBLEM_SPECIFICATION,PROBLEM,ERR,ERROR,*)
 
     !Argument variables
@@ -721,7 +731,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys a problem. \see OPENCMISS::CMISSProblemDestroy
+  !>Destroys a problem. \see OpenCMISS::cmfe_Problem_Destroy
   SUBROUTINE PROBLEM_DESTROY(PROBLEM,ERR,ERROR,*)
 
     !Argument variables
@@ -888,7 +898,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of the control for the problem. \see OPENCMISS::CMISSProblemControlLoopCreateFinish
+  !>Finish the creation of the control for the problem. \see OpenCMISS::cmfe_Problem_ControlLoopCreateFinish
   SUBROUTINE PROBLEM_CONTROL_LOOP_CREATE_FINISH(PROBLEM,ERR,ERROR,*)
 
     !Argument variables
@@ -933,7 +943,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of a control loop for a problem. \see OPENCMISS::CMISSProblemControlLoopCreateStart
+  !>Start the creation of a control loop for a problem. \see OpenCMISS::cmfe_Problem_ControlLoopCreateStart
   !>The default values of the PROBLEM CONTROL LOOP attributes are:
   !>- LOOP_TYPE: PROBLEM_CONTROL_SIMPLE_TYPE
   !>- CONTROL_LOOP_LEVEL: 1
@@ -976,7 +986,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroy the control loop for a problem. \see OPENCMISS::CMISSProblemControlLoopDestroy
+  !>Destroy the control loop for a problem. \see OpenCMISS::cmfe_Problem_ControlLoopDestroy
   SUBROUTINE PROBLEM_CONTROL_LOOP_DESTROY(PROBLEM,ERR,ERROR,*)
 
     !Argument variables
@@ -1629,7 +1639,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of solvers for a problem. \see OPENCMISS::CMISSProblemSolversCreateFinish
+  !>Finish the creation of solvers for a problem. \see OpenCMISS::cmfe_Problem_SolversCreateFinish
   SUBROUTINE PROBLEM_SOLVERS_CREATE_FINISH(PROBLEM,ERR,ERROR,*)
 
     !Argument variables
@@ -1664,7 +1674,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of a solvers for the problem. \see OPENCMISS::CMISSProblemSolversCreateStart
+  !>Start the creation of a solvers for the problem. \see OpenCMISS::cmfe_Problem_SolversCreateStart
   SUBROUTINE PROBLEM_SOLVERS_CREATE_START(PROBLEM,ERR,ERROR,*)
 
     !Argument variables
@@ -1699,7 +1709,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Solves a problem. \see OPENCMISS::CMISSProblemSolve
+  !>Solves a problem. \see OpenCMISS::cmfe_Problem_Solve
   SUBROUTINE PROBLEM_SOLVE(PROBLEM,ERR,ERROR,*)
 
     !Argument variables
@@ -1715,6 +1725,7 @@ CONTAINS
       IF(PROBLEM%PROBLEM_FINISHED) THEN
         CONTROL_LOOP=>PROBLEM%CONTROL_LOOP
         IF(ASSOCIATED(CONTROL_LOOP)) THEN
+          CALL ControlLoop_FieldVariablesCalculate(CONTROL_LOOP,err,error,*999)
           CALL PROBLEM_CONTROL_LOOP_SOLVE(CONTROL_LOOP,ERR,ERROR,*999)
         ELSE
           CALL FlagError("Problem control loop is not associated.",ERR,ERROR,*999)
@@ -1795,7 +1806,7 @@ CONTAINS
       IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
         !For all time loops, update the previous values from the current values
         IF(CONTROL_LOOP%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) THEN
-          CALL PROBLEM_CONTROL_LOOP_PREVIOUS_VALUES_UPDATE(CONTROL_LOOP,ERR,ERROR,*999)
+          CALL ControlLoop_PreviousValuesUpdate(CONTROL_LOOP,ERR,ERROR,*999)
         ENDIF
         IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
           CALL FlagError("Problem specification is not allocated.",err,error,*999)
@@ -2404,6 +2415,7 @@ CONTAINS
     INTEGER(INTG) :: equations_set_idx
     REAL(DP) :: currentTime,timeIncrement
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP
+    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
@@ -2694,7 +2706,7 @@ CONTAINS
         !Check for other equations.
         IF(ASSOCIATED(SOLVER%CELLML_EQUATIONS)) THEN
           !A solver with CellML equations.
-          CALL PROBLEM_CELLML_EQUATIONS_SOLVE(SOLVER%CELLML_EQUATIONS,ERR,ERROR,*999)
+          CALL Problem_CellMLEquationsSolve(SOLVER%CELLML_EQUATIONS,ERR,ERROR,*999)
         ELSEIF(SOLVER%SOLVE_TYPE==SOLVER_GEOMETRIC_TRANSFORMATION_TYPE) THEN
           CALL Problem_SolverGeometricTransformationSolve(SOLVER%geometricTransformationSolver,ERR,ERROR,*999)
         ELSE
@@ -2727,7 +2739,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroy the solvers for a problem. \see OPENCMISS::CMISSProblemSolversDestroy
+  !>Destroy the solvers for a problem. \see OpenCMISS::cmfe_Problem_SolversDestroy
   SUBROUTINE PROBLEM_SOLVERS_DESTROY(PROBLEM,ERR,ERROR,*)
 
     !Argument variables
@@ -2813,7 +2825,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of the solver equations for the problem. \see OPENCMISS::CMISSProblemSolverEquationsCreateFinish
+  !>Finish the creation of the solver equations for the problem. \see OpenCMISS::cmfe_Problem_SolverEquationsCreateFinish
   SUBROUTINE PROBLEM_SOLVER_EQUATIONS_CREATE_FINISH(PROBLEM,ERR,ERROR,*)
 
     !Argument variables
@@ -2848,7 +2860,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of solver equations for a problem. \see OPENCMISS::CMISSProblemSolverEquationsCreateStart
+  !>Start the creation of solver equations for a problem. \see OpenCMISS::cmfe_Problem_SolverEquationsCreateStart
   !>The default values of the SOLVER attributes are:
   !>- SOLVE_TYPE: 1 (SOLVER_LINEAR_TYPE)
   !>- OUTPUT_TYPE: 0 (SOLVER_NO_OUTPUT)
@@ -2889,7 +2901,7 @@ CONTAINS
 
   !!TODO: this should be removed - just call the solver equations destroy directly???
   
-  !>Destroy the solver equations for a problem. \see OPENCMISS::CMISSProblemSolverEquationsDestroy
+  !>Destroy the solver equations for a problem. \see OpenCMISS::cmfe_Problem_SolverEquationsDestroy
   SUBROUTINE PROBLEM_SOLVER_EQUATIONS_DESTROY(PROBLEM,ERR,ERROR,*)
 
     !Argument variables
@@ -3496,7 +3508,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the problem specification array for a problem identified by a pointer. \see OPENCMISS::CMISSProblemSpecificationGet
+  !>Gets the problem specification array for a problem identified by a pointer. \see OpenCMISS::cmfe_Problem_SpecificationGet
   SUBROUTINE Problem_SpecificationGet(problem,problemSpecification,err,error,*)
 
     !Argument variables
@@ -3601,7 +3613,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the size of the problem specification array for a problem identified by a pointer. \see OPENCMISS::CMISSProblemSpecificationSizeGet
+  !>Gets the size of the problem specification array for a problem identified by a pointer. \see OpenCMISS::cmfe_Problem_SpecificationSizeGet
   SUBROUTINE Problem_SpecificationSizeGet(problem,specificationSize,err,error,*)
 
     !Argument variables
@@ -3681,55 +3693,6 @@ CONTAINS
     RETURN 1   
   END SUBROUTINE PROBLEMS_INITIALISE
   
-  !
-  !================================================================================================================================
-  !
-
-  !>Updates the dependent variables from the solver solution for all dynamic solvers under the time control loop
-  RECURSIVE SUBROUTINE PROBLEM_CONTROL_LOOP_PREVIOUS_VALUES_UPDATE(CONTROL_LOOP,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer the time control loop to update the variables from
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS !<A pointer the solvers to update the variables from
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer the solver to update the variables from
-    INTEGER(INTG) :: solver_idx
-
-    NULLIFY(SOLVER)
-
-    ENTERS("PROBLEM_CONTROL_LOOP_PREVIOUS_VALUES_UPDATE",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(CONTROL_LOOP%NUMBER_OF_SUB_LOOPS==0) THEN
-        !If there are no sub loops then get the solvers for this loop.
-        SOLVERS=>CONTROL_LOOP%SOLVERS
-        IF(ASSOCIATED(SOLVERS)) THEN
-          DO solver_idx=1,SOLVERS%NUMBER_OF_SOLVERS
-            SOLVER=>SOLVERS%SOLVERS(solver_idx)%PTR
-            SELECT CASE(SOLVER%SOLVE_TYPE)
-            CASE(SOLVER_DYNAMIC_TYPE)
-              CALL Solver_VariablesDynamicFieldPreviousValuesUpdate(SOLVER,ERR,ERROR,*999)
-            CASE DEFAULT
-              !Do nothing
-            END SELECT
-          ENDDO !solver_idx
-        ELSE
-          CALL FlagError("Control loop solvers is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("PROBLEM_CONTROL_LOOP_PREVIOUS_VALUES_UPDATE")
-    RETURN
-999 ERRORSEXITS("PROBLEM_CONTROL_LOOP_PREVIOUS_VALUES_UPDATE",ERR,ERROR)
-    RETURN 1
-
-  END SUBROUTINE PROBLEM_CONTROL_LOOP_PREVIOUS_VALUES_UPDATE
-
   !
   !================================================================================================================================
   !
