@@ -1333,7 +1333,7 @@ CONTAINS
     REAL(DP) :: THICKNESS ! for elastic membrane
     REAL(DP) :: DARCY_MASS_INCREASE,DARCY_VOL_INCREASE,DARCY_RHO_0_F,DENSITY  !coupling with Darcy model
     REAL(DP) :: Mfact, bfact, p0fact
-    REAL(DP) :: dt,K,mu,a0,a1,b0,b1,m,Jr,kappa1,kappan,kappas,detPrevdZdNu
+    REAL(DP) :: dt,K,mu,a0,a1,b0,b1,m,Jr,kappa1,kappan,kappas,prevJF
     REAL(DP) :: alpha1,BePrime(3,3),BePrime1(3,3),BePrimeStar(3,3),Br(3,3),c0,c1,c2,Dbar(3,3),deltaEps,detdevBePrimePrime, &
       & devBePrimePrime(3,3),BePrimePrimeStar(3,3),devDbar(3,3),gePrimePrime(3,3),gePrimePrimeStar(3,3),devT(3,3),dtGamma, &
       & dtGamma0,dtGamma1,factor1,factor2,Fr(3,3),FrPrime(3,3),gammaEStar,gamma,hydBePrimeStar(3,3),hydDbar(3,3),ITens(3,3), &
@@ -2095,9 +2095,9 @@ CONTAINS
 
             !Equation numbers are from M. Hollenstein, M. Jabareen and M.B. Rubin "Modeling a smoth elastic-inelastic
             !transition with a strongly objective numerical integrator needing no iteration". 2013. Comput Mech. 52:649-667.
-            
+
             !Calculate Fr = F.prevF^-1
-            CALL Invert(prevdZdNu,invPrevdZdNu,detPrevdZdNu,err,error,*999)
+            CALL Invert(prevdZdNu,invPrevdZdNu,prevJF,err,error,*999)
             CALL MatrixProduct(dZdNu,invPrevdZdNu,Fr,err,error,*999)
 
             JXXi=GEOMETRIC_INTERPOLATED_POINT_METRICS%JACOBIAN            
@@ -2131,7 +2131,7 @@ CONTAINS
             CALL Determinant(Fr,Jr,err,error,*999)
             !Eqn (4.6)
 !!TODO: This could just be JZxi???
-            J=Jr*prevJZxi
+            J=Jr*prevJF
             !Eqn (4.4)
             CALL Unimodular(Fr,FrPrime,err,error,*999)
             !Calculate Elastic Trial. Eqn (4.7)
@@ -2235,7 +2235,7 @@ CONTAINS
                 & 3,3,Fr,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("           Fr','(",I1,",:)',' :",3(X,E13.6))', &
                 & '(16X,3(X,E13.6))',ERR,ERROR,*999)
               CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Jacobians:",err,error,*999)
-              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  J at time t      = ",prevJZxi,err,error,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  J at time t      = ",prevJF,err,error,*999)
               CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  J at time t + dt = ",J,err,error,*999)
               CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Jr               = ",Jr,err,error,*999)
               CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Strain tensors:",err,error,*999)
@@ -8063,6 +8063,7 @@ CONTAINS
               & PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE,PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE)
 !!TODO: Should we have a load step loop inside the time loop?
               CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,PROBLEM_CONTROL_TIME_LOOP_TYPE,ERR,ERROR,*999)
+              CALL ControlLoop_LabelSet(CONTROL_LOOP,"Time Loop",err,error,*999)
             CASE DEFAULT
               localError="Problem subtype "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SUBTYPE,"*",ERR,ERROR))// &
                 & " is not valid for a finite elasticity type of an elasticity problem class."
@@ -8819,19 +8820,21 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop !<A pointer to the control loop to solve.
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
+    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS,solverEquations  !<A pointer to the solver equations
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET,equationsSet !<A pointer to the equations set
+    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING,solverMapping !<A pointer to the solver mapping
     TYPE(CONTROL_LOOP_TYPE), POINTER :: TIME_LOOP !<A pointer to the control time loop.
     TYPE(PROBLEM_TYPE), POINTER :: problem
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-    TYPE(VARYING_STRING) :: METHOD !,FILE
-    CHARACTER(14) :: FILE
+    TYPE(VARYING_STRING) :: LOCAL_ERROR,localError
+    TYPE(VARYING_STRING) :: METHOD,outputFile !,FILE
+    CHARACTER(14) :: file
     CHARACTER(14) :: OUTPUT_FILE
+    CHARACTER(15) :: fileName
     LOGICAL :: EXPORT_FIELD
-    INTEGER(INTG) :: CURRENT_LOOP_ITERATION
-    INTEGER(INTG) :: OUTPUT_ITERATION_NUMBER
-    INTEGER(INTG) :: equations_set_idx,loop_idx
+    REAL(DP) :: startTime,stopTime,currentTime,timeIncrement
+    INTEGER(INTG) :: CURRENT_LOOP_ITERATION,currentIteration
+    INTEGER(INTG) :: OUTPUT_ITERATION_NUMBER,outputIteration
+    INTEGER(INTG) :: equations_set_idx,loop_idx,equationsSetIdx
 
     ENTERS("FiniteElasticity_PostSolveOutputData",err,error,*999)
 
@@ -8848,7 +8851,8 @@ CONTAINS
       & CALL FlagError("Problem specification must have three entries for a finite elasticity problem.",err,error,*999)
      
     SELECT CASE(problem%SPECIFICATION(3))
-    CASE(PROBLEM_NO_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_FLUID_PRESSURE_SUBTYPE, &
+    CASE(PROBLEM_NO_SUBTYPE,PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE, &
+      & PROBLEM_STANDARD_ELASTICITY_FLUID_PRESSURE_SUBTYPE, &
       & PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE, &
       & PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE)
       SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
@@ -8870,6 +8874,38 @@ CONTAINS
                 & "STATICSOLIDSOLUTION",ERR,ERROR,*999)
             ENDIF
           ENDDO
+        ENDIF
+      ENDIF
+    CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE)
+      !Get the current time information
+      CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
+        & outputIteration,err,error,*999)
+      !See if we should output
+      IF(currentTime<=stopTime) THEN
+        IF(outputIteration/=0) THEN
+          IF(MOD(currentIteration,outputIteration)==0) THEN
+            !Output 
+            WRITE(fileName,'("Elasticity_",I4.4)') currentIteration
+            outputFile=fileName
+            method="FORTRAN"
+            !Loop over the equations sets and output
+            NULLIFY(solverEquations)
+            CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+            NULLIFY(solverMapping)
+            CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+            DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+              NULLIFY(equationsSet)
+              CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
+              IF(.NOT.ALLOCATED(equationsSet%specification))  &
+                & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+              IF(SIZE(equationsSet%specification,1)<2)  &
+                & CALL FlagError("Equations set specification does not have a type.",err,error,*999)
+              IF(equationsSet%specification(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE) THEN
+                CALL FIELD_IO_NODES_EXPORT(equationsSet%region%fields,outputFile,method,err,error,*999)
+                CALL FIELD_IO_ELEMENTS_EXPORT(equationsSet%region%fields,outputFile,method,err,error,*999)
+              ENDIF
+            ENDDO !equationsSetIdx
+          ENDIF
         ENDIF
       ENDIF
     CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE, &

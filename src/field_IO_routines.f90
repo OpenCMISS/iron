@@ -646,21 +646,21 @@ CONTAINS
     ENTERS("GROW_ARRAY_INT",ERR,ERROR,*999)
 
     IF( .NOT.ALLOCATED( array ) ) THEN
-      CALL REALLOCATE( array, delta, errorMessage, ERR, ERROR, *999 )
-      RETURN
+      CALL REALLOCATE( array, delta, errorMessage, ERR, ERROR, *999 )     
+    ELSE
+      
+      oldSize = SIZE( array )
+      
+      CALL REALLOCATE( tempArray, oldSize, errorMessage, ERR, ERROR, *999 )
+      
+      tempArray(:) = array(:)
+      
+      CALL REALLOCATE( array, oldSize + delta, errorMessage, ERR, ERROR, *999 )
+      
+      array(1:oldSize) = tempArray(:)
+      
+      DEALLOCATE( tempArray )
     ENDIF
-
-    oldSize = SIZE( array )
-
-    CALL REALLOCATE( tempArray, oldSize, errorMessage, ERR, ERROR, *999 )
-
-    tempArray(:) = array(:)
-
-    CALL REALLOCATE( array, oldSize + delta, errorMessage, ERR, ERROR, *999 )
-
-    array(1:oldSize) = tempArray(:)
-
-    DEALLOCATE( tempArray )
 
     EXITS("GROW_ARRAY_INT")
     RETURN
@@ -686,20 +686,20 @@ CONTAINS
 
     IF( .NOT.ALLOCATED( array ) ) THEN
       CALL REALLOCATE( array, delta, errorMessage, ERR, ERROR, *999 )
-      RETURN
+    ELSE
+
+      oldSize = SIZE( array )
+
+      CALL REALLOCATE( tempArray, oldSize, errorMessage, ERR, ERROR, *999 )
+      
+      tempArray(:) = array(:)
+      
+      CALL REALLOCATE( array, oldSize + delta, errorMessage, ERR, ERROR, *999 )
+      
+      array(1:oldSize) = tempArray(:)
+      
+      DEALLOCATE( tempArray )
     ENDIF
-
-    oldSize = SIZE( array )
-
-    CALL REALLOCATE( tempArray, oldSize, errorMessage, ERR, ERROR, *999 )
-
-    tempArray(:) = array(:)
-
-    CALL REALLOCATE( array, oldSize + delta, errorMessage, ERR, ERROR, *999 )
-
-    array(1:oldSize) = tempArray(:)
-
-    DEALLOCATE( tempArray )
 
     EXITS("GROW_ARRAY_REAL")
     RETURN
@@ -725,20 +725,20 @@ CONTAINS
 
     IF( .NOT.ALLOCATED( array ) ) THEN
       CALL REALLOCATE( array, delta, errorMessage, ERR, ERROR, *999 )
-      RETURN
+    ELSE
+
+      oldSize = SIZE( array )
+      
+      CALL REALLOCATE( tempArray, oldSize, errorMessage, ERR, ERROR, *999 )
+      
+      tempArray(:) = array(:)
+      
+      CALL REALLOCATE( array, oldSize + delta, errorMessage, ERR, ERROR, *999 )
+      
+      array(1:oldSize) = tempArray(:)
+      
+      DEALLOCATE( tempArray )
     ENDIF
-
-    oldSize = SIZE( array )
-
-    CALL REALLOCATE( tempArray, oldSize, errorMessage, ERR, ERROR, *999 )
-
-    tempArray(:) = array(:)
-
-    CALL REALLOCATE( array, oldSize + delta, errorMessage, ERR, ERROR, *999 )
-
-    array(1:oldSize) = tempArray(:)
-
-    DEALLOCATE( tempArray )
 
     EXITS("GROW_ARRAY_COMPONENTS")
     RETURN
@@ -994,6 +994,8 @@ CONTAINS
     EXITS("FIELD_IO_ELEMENT_DERIVATIVE_INDEX")
     RETURN
 999 ERRORSEXITS("FIELD_IO_ELEMENT_DERIVATIVE_INDEX",ERR,ERROR)
+    RETURN
+    
   END FUNCTION FIELD_IO_ELEMENT_DERIVATIVE_INDEX
 
   !
@@ -4656,6 +4658,8 @@ CONTAINS
     EXITS("FIELD_IO_LABEL_DERIVATIVE_INFO_GET")
     RETURN
 999 ERRORSEXITS("FIELD_IO_LABEL_DERIVATIVE_INFO_GET",ERR,ERROR)
+    RETURN
+    
   END FUNCTION FIELD_IO_LABEL_DERIVATIVE_INFO_GET
 
   !
@@ -4697,6 +4701,8 @@ CONTAINS
     EXITS("FIELD_IO_GET_FIELD_INFO_LABEL")
     RETURN
 999 ERRORSEXITS("FIELD_IO_GET_FIELD_INFO_LABEL",ERR,ERROR)
+    RETURN
+    
   END FUNCTION FIELD_IO_GET_FIELD_INFO_LABEL
   !
   !================================================================================================================================
@@ -4832,6 +4838,8 @@ CONTAINS
     EXITS("FIELD_IO_GET_VARIABLE_INFO_LABEL")
     RETURN
 999 ERRORSEXITS("FIELD_IO_GET_VARIABLE_INFO_LABEL",ERR,ERROR)
+    RETURN
+    
   END FUNCTION FIELD_IO_GET_VARIABLE_INFO_LABEL
   !
   !================================================================================================================================
@@ -4892,6 +4900,8 @@ CONTAINS
     EXITS("FIELD_IO_GET_COMPONENT_INFO_LABEL")
     RETURN
 999 ERRORSEXITS("FIELD_IO_GET_COMPONENT_INFO_LABEL",ERR,ERROR)
+    RETURN
+    
   END FUNCTION FIELD_IO_GET_COMPONENT_INFO_LABEL
 
   !!
@@ -5638,7 +5648,7 @@ CONTAINS
 
     EXITS("FIELD_IO_FORTRAN_FILE_READ_STRING")
     RETURN
-999 ERRORSEXITS("FIELD_IO_FORTRAN_FILE_READ_STRING",ERR,ERROR)
+999 ERRORS("FIELD_IO_FORTRAN_FILE_READ_STRING",ERR,ERROR)
 
     EXITS("FIELD_IO_FORTRAN_FILE_READ_STRING")
     RETURN 1
