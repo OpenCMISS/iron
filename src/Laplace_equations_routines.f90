@@ -1578,10 +1578,9 @@ CONTAINS
       CALL FlagError("Equations set is not associated.",err,error,*999)
     END IF
 
-    CALL Exits("Laplace_EquationsSetSpecificationSet")
+    EXITS("Laplace_EquationsSetSpecificationSet")
     RETURN
-999 CALL Errors("Laplace_EquationsSetSpecificationSet",err,error)
-    CALL Exits("Laplace_EquationsSetSpecificationSet")
+999 ERRORSEXITS("Laplace_EquationsSetSpecificationSet",err,error)
     RETURN 1
     
   END SUBROUTINE Laplace_EquationsSetSpecificationSet
@@ -1607,7 +1606,7 @@ CONTAINS
     TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("LAPLACE_EQUATION_EQUATION_SET_STANDARD_SETUP",ERR,ERROR,*999)
+    ENTERS("Laplace_EquationsSetStandardSetup",ERR,ERROR,*999)
 
     NULLIFY(EQUATIONS)
     NULLIFY(EQUATIONS_MAPPING)

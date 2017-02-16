@@ -150,7 +150,7 @@ CONTAINS
     
     EXITS("cmfe_ErrorHandlingModeGet_")
     RETURN
-999 ERRORSEXITS("",err,error)
+999 ERRORSEXITS("cmfe_ErrorHandlingModeGet_",err,error)
     RETURN 1
     
   END SUBROUTINE cmfe_ErrorHandlingModeGet_
@@ -171,7 +171,7 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: localError
     
-    ENTERS("cmfe_ErrorHandlingModeSet",err,error,*999)
+    ENTERS("cmfe_ErrorHandlingModeSet_",err,error,*999)
 
     SELECT CASE(errorHandlingMode)
     CASE(CMFE_RETURN_ERROR_CODE)

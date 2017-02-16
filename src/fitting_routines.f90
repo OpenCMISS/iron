@@ -3404,7 +3404,7 @@ CONTAINS
     TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: EQUATIONS_MATERIALS
     TYPE(VARYING_STRING) :: localError
     
-    ENTERS("FITTING_EQUATION_SET_VECTORDATA_SETUP",err,error,*999)
+    ENTERS("FITTING_EQUATIONS_SET_VECTORDATA_SETUP",err,error,*999)
 
     NULLIFY(BOUNDARY_CONDITIONS)
     NULLIFY(EQUATIONS)
@@ -5375,7 +5375,7 @@ CONTAINS
     
     EXITS("Fitting_PostSolveOutputData")
     RETURN
-999 ERRORSEXITS(" Fitting_PostSolveOutputData",err,error)
+999 ERRORSEXITS("Fitting_PostSolveOutputData",err,error)
     RETURN 1
     
   END SUBROUTINE Fitting_PostSolveOutputData
@@ -5461,7 +5461,7 @@ CONTAINS
                     CALL Field_ParameterSetDataGet(equationsSet%source%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, & 
                       & FIELD_VALUES_SET_TYPE,inputVelNewData,err,error,*999)
                     CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,inputVelNewData, & 
-                      & numberOfDimensions,inputType,inputOption,currentLoopIteration,1.0_DP)
+                      & numberOfDimensions,inputType,inputOption,currentLoopIteration,1.0_DP,err,error,*999)
                   ELSE
                     CALL FlagError("Equations set is not associated.",err,error,*999)
                   END IF

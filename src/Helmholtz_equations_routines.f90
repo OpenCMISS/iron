@@ -663,7 +663,7 @@ CONTAINS
     INTEGER(INTG) :: i,GEOMETRIC_COMPONENT_NUMBER
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("HELMHOLTZ_EQUATION_EQUATION_SET_STANDARD_SETUP",ERR,ERROR,*999)
+    ENTERS("Helmholtz_EquationsSetStandardSetup",ERR,ERROR,*999)
 
     NULLIFY(EQUATIONS)
     NULLIFY(EQUATIONS_MAPPING)
@@ -1091,7 +1091,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: problemSubtype
 
-    CALL Enters("Helmholtz_ProblemSpecificationSet",err,error,*999)
+    ENTERS("Helmholtz_ProblemSpecificationSet",err,error,*999)
 
     IF(ASSOCIATED(problem)) THEN
       IF(SIZE(problemSpecification,1)==3) THEN
@@ -1120,10 +1120,9 @@ CONTAINS
       CALL FlagError("Problem is not associated.",err,error,*999)
     END IF
 
-    CALL Exits("Helmholtz_ProblemSpecificationSet")
+    EXITS("Helmholtz_ProblemSpecificationSet")
     RETURN
-999 CALL Errors("Helmholtz_ProblemSpecificationSet",err,error)
-    CALL Exits("Helmholtz_ProblemSpecificationSet")
+999 ERRORSEXITS("Helmholtz_ProblemSpecificationSet",err,error)
     RETURN 1
     
   END SUBROUTINE Helmholtz_ProblemSpecificationSet

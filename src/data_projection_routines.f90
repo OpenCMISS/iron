@@ -833,7 +833,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: dataPointIdx
        
-    ENTERS("DataProjection_DataProjectionCandidatessFinalise",err,error,*999)
+    ENTERS("DataProjection_DataProjectionCandidatesFinalise",err,error,*999)
 
     IF(ASSOCIATED(dataProjection)) THEN
       IF(ALLOCATED(dataProjection%dataProjectionCandidates)) THEN
@@ -844,7 +844,7 @@ CONTAINS
       ENDIF
     ENDIF
     
-    EXITS("DataProjection_DataProjectionCandidatessFinalise")
+    EXITS("DataProjection_DataProjectionCandidatesFinalise")
     RETURN
 999 ERRORSEXITS("DataProjection_DataProjectionCandidatesFinalise",err,error)
     RETURN 1
@@ -3859,7 +3859,7 @@ CONTAINS
     TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology
     TYPE(VARYING_STRING) :: localError
     
-    ENTERS("DataProjection_ProjectionCandidatesFacesSet",err,error,*998)
+    ENTERS("DataProjection_ProjectionCandidateFacesSet",err,error,*998)
 
     IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*998)
     IF(.NOT.ALLOCATED(dataProjection%dataProjectionCandidates)) &
@@ -3924,13 +3924,13 @@ CONTAINS
       CALL FlagError(localError,err,error,*998)
     END SELECT
      
-    EXITS("DataProjection_ProjectionCandidatesFacesSet")
+    EXITS("DataProjection_ProjectionCandidateFacesSet")
     RETURN
 999 IF(ALLOCATED(dataProjection%dataProjectionCandidates(0)%candidateElementNumbers)) &
       & DEALLOCATE(dataProjection%dataProjectionCandidates(0)%candidateElementNumbers)
     IF(ALLOCATED(dataProjection%dataProjectionCandidates(0)%localFaceLineNumbers)) &
       & DEALLOCATE(dataProjection%dataProjectionCandidates(0)%localFaceLineNumbers)
-998 ERRORSEXITS("DataProjection_ProjectionCandidatesFacesSet",err,error)
+998 ERRORSEXITS("DataProjection_ProjectionCandidateFacesSet",err,error)
     RETURN 1
 
   END SUBROUTINE DataProjection_ProjectionCandidateFacesSet
@@ -3961,7 +3961,7 @@ CONTAINS
     TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology
     TYPE(VARYING_STRING) :: localError
     
-    ENTERS("DataProjection_ProjectionDataCandidatesFacesSet",err,error,*999)
+    ENTERS("DataProjection_ProjectionDataCandidateFacesSet",err,error,*999)
 
     IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
     IF(.NOT.ALLOCATED(dataProjection%dataProjectionCandidates)) &
@@ -4034,9 +4034,9 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     END SELECT
      
-    EXITS("DataProjection_ProjectionDataCandidatesFacesSet")
+    EXITS("DataProjection_ProjectionDataCandidateFacesSet")
     RETURN
-999 ERRORSEXITS("DataProjection_ProjectionDataCandidatesFacesSet",err,error)
+999 ERRORSEXITS("DataProjection_ProjectionDataCandidateFacesSet",err,error)
     RETURN 1
 
   END SUBROUTINE DataProjection_ProjectionDataCandidateFacesSet
@@ -4065,7 +4065,7 @@ CONTAINS
     TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology
     TYPE(VARYING_STRING) :: localError
     
-    ENTERS("DataProjection_ProjectionCandidatesLinesSet",err,error,*998)
+    ENTERS("DataProjection_ProjectionCandidateLinesSet",err,error,*998)
 
     IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*998)
     IF(.NOT.ALLOCATED(dataProjection%dataProjectionCandidates)) &
@@ -4135,13 +4135,13 @@ CONTAINS
       CALL FlagError(localError,err,error,*998)
     END SELECT
      
-    EXITS("DataProjection_ProjectionCandidatesLinesSet")
+    EXITS("DataProjection_ProjectionCandidateLinesSet")
     RETURN
 999 IF(ALLOCATED(dataProjection%dataProjectionCandidates(0)%candidateElementNumbers)) &
       & DEALLOCATE(dataProjection%dataProjectionCandidates(0)%candidateElementNumbers)
     IF(ALLOCATED(dataProjection%dataProjectionCandidates(0)%localFaceLineNumbers)) &
       & DEALLOCATE(dataProjection%dataProjectionCandidates(0)%localFaceLineNumbers)
-998 ERRORSEXITS("DataProjection_ProjectionCandidatesLinesSet",err,error)
+998 ERRORSEXITS("DataProjection_ProjectionCandidateLinesSet",err,error)
     RETURN 1
 
   END SUBROUTINE DataProjection_ProjectionCandidateLinesSet
@@ -4172,7 +4172,7 @@ CONTAINS
     TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology
     TYPE(VARYING_STRING) :: localError
     
-    ENTERS("DataProjection_ProjectionDataCandidatesLinesSet",err,error,*999)
+    ENTERS("DataProjection_ProjectionDataCandidateLinesSet",err,error,*999)
 
     IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
     IF(.NOT.ALLOCATED(dataProjection%dataProjectionCandidates)) &
@@ -4248,9 +4248,9 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     END SELECT
      
-    EXITS("DataProjection_ProjectionDataCandidatesLinesSet")
+    EXITS("DataProjection_ProjectionDataCandidateLinesSet")
     RETURN
-999 ERRORSEXITS("DataProjection_ProjectionDataCandidatesLinesSet",err,error)
+999 ERRORSEXITS("DataProjection_ProjectionDataCandidateLinesSet",err,error)
     RETURN 1
 
   END SUBROUTINE DataProjection_ProjectionDataCandidateLinesSet

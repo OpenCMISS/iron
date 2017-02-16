@@ -372,7 +372,7 @@ CONTAINS
   !
   
   !>Calculates single precision hyperbolic cotangent function
-  FUNCTION CothSP(a)
+  PURE FUNCTION CothSP(a)
 
     !Argument variables
     REAL(SP), INTENT(IN) :: a !<argument to perform coth() on
@@ -390,7 +390,7 @@ CONTAINS
   !
 
   !> Calculates double precision hyperbolic cotangent function
-  FUNCTION CothDP(a)
+  PURE FUNCTION CothDP(a)
 
     !Argument variables
     REAL(DP), INTENT(IN) :: a !<argument to perform coth() on
@@ -1577,7 +1577,7 @@ CONTAINS
     !Local variables
     INTEGER(INTG) :: i,j
 
-    ENTERS("",err,error,*999)
+    ENTERS("DotTransposeProductMatrixVectorSP",err,error,*999)
 
     IF(SIZE(A,1)/=SIZE(b,1)) CALL FlagError("The number of rows in A does not match the number of rows in b.",err,error,*999)
     IF(SIZE(A,2)/=SIZE(c,1)) CALL FlagError("The number of columns in A does not match the number of rows in c.",err,error,*999)
@@ -4261,7 +4261,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
    
-    ENTERS("IdentityMatrixDP",err,error,*999)
+    ENTERS("ZeroMatrixDP",err,error,*999)
 
     A=0.0_DP
 

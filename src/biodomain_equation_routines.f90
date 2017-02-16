@@ -1530,7 +1530,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: equationsSetType,equationsSetSubtype
 
-    ENTERS("BiodomainEquation_EquationsSetSpecificationSet",err,error,*999)
+    ENTERS("Biodomain_EquationsSetSpecificationSet",err,error,*999)
 
     IF(ASSOCIATED(equationsSet)) THEN
       IF(SIZE(specification,1)/=3) THEN

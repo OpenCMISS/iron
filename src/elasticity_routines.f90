@@ -597,7 +597,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: problemType
 
-    CALL Enters("Elasticity_ProblemSpecificationSet",err,error,*999)
+    ENTERS("Elasticity_ProblemSpecificationSet",err,error,*999)
 
     IF(ASSOCIATED(problem)) THEN
       IF(SIZE(problemSpecification,1)>=2) THEN
@@ -623,10 +623,10 @@ CONTAINS
       CALL FlagError("Problem is not associated.",err,error,*999)
     END IF
 
-    CALL Exits("Elasticity_ProblemSpecificationSet")
+    EXITS("Elasticity_ProblemSpecificationSet")
     RETURN
-999 CALL Errors("Elasticity_ProblemSpecificationSet",err,error)
-    CALL Exits("Elasticity_ProblemSpecificationSet")
+999 ERRORS("Elasticity_ProblemSpecificationSet",err,error)
+    EXITS("Elasticity_ProblemSpecificationSet")
     RETURN 1
     
   END SUBROUTINE Elasticity_ProblemSpecificationSet

@@ -816,10 +816,10 @@ CONTAINS
     IF(err/=0) CALL FlagError("Could not allocate control loop field variables.",err,error,*999)
     controlLoop%fieldVariables%numberOfFieldVariables=0
       
-    EXITS("ControlLoop_FieldVariableInitialise")
+    EXITS("ControlLoop_FieldVariablesInitialise")
     RETURN
 999 CALL ControlLoop_FieldVariablesFinalise(controlLoop%fieldVariables,dummyErr,dummyError,*998)
-998 ERRORSEXITS("ControlLoop_FieldVariableInitialise",err,error)
+998 ERRORSEXITS("ControlLoop_FieldVariablesInitialise",err,error)
     RETURN 1
     
   END SUBROUTINE ControlLoop_FieldVariablesInitialise

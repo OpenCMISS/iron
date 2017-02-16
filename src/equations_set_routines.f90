@@ -1662,6 +1662,7 @@ CONTAINS
     ! currently no difference
     CALL EQUATIONS_SET_ASSEMBLE_STATIC_NONLINEAR_FEM(EQUATIONS_SET,ERR,ERROR,*999)
     
+    EXITS("EquationsSet_AssembleQuasistaticNonlinearFEM")
     RETURN
 999 ERRORS("EquationsSet_AssembleQuasistaticNonlinearFEM",ERR,ERROR)
     EXITS("EquationsSet_AssembleQuasistaticNonlinearFEM")

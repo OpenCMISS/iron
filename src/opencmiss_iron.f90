@@ -8529,7 +8529,7 @@ CONTAINS
 
     EXITS("cmfe_InterfaceCondition_Finalise")
     RETURN
-999 ERRORSEXITS("cmfe_InterfaceTypeConditionFinalise",err,error)
+999 ERRORSEXITS("cmfe_InterfaceCondition_Finalise",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -9548,10 +9548,10 @@ CONTAINS
     CALL AnalyticAnalysis_RelativeErrorGetNode(field%field,variableType,versionNumber,derivativeNumber,nodeNumber, &
       & componentNumber,value,err,error,*999)
 
-    EXITS("cmfe_AnalyticAnalysisRelativeErrorGetNodeObj")
+    EXITS("cmfe_AnalyticAnalysis_RelativeErrorGetNodeObj")
     RETURN
-999 ERRORS("cmfe_AnalyticAnalysisRelativeErrorGetNodeObj",err,error)
-    EXITS("cmfe_AnalyticAnalysisRelativeErrorGetNodeObj")
+999 ERRORS("cmfe_AnalyticAnalysis_RelativeErrorGetNodeObj",err,error)
+    EXITS("cmfe_AnalyticAnalysis_RelativeErrorGetNodeObj")
     CALL cmfe_HandleError(err,error)
    RETURN
 
@@ -10095,7 +10095,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
-    ENTERS("cmfe_AnalyticAnalysis_RMSErrorGetNodeObj",err,error,*999)
+    ENTERS("cmfe_AnalyticAnalysis_RMSErrorGetElementObj",err,error,*999)
 
     CALL AnalyticAnalysis_RMSErrorGetElement(field%field,variableType,componentNumber,errorType,localValue,localGhostValue, &
       & globalValue,err,error,*999)
@@ -11121,7 +11121,6 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("cmfe_Basis_InterpolationXiGetObj",err,error)
     CALL cmfe_HandleError(err,error)
-    EXITS("cmfe_Basis_InterpolationXiGetObj")
     RETURN
 
   END SUBROUTINE cmfe_Basis_InterpolationXiGetObj
@@ -13553,7 +13552,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
-    ENTERS("cmfe_CellML_CreateCellMLToFieldMapNumberVS",err,error,*999)
+    ENTERS("cmfe_CellML_CreateCellMLToFieldMapObjVS",err,error,*999)
 
 #ifdef WITH_CELLML
 
@@ -13740,7 +13739,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
-    ENTERS("cmfe_CellML_CreateFieldToCellMLMapNumberVS",err,error,*999)
+    ENTERS("cmfe_CellML_CreateFieldToCellMLMapObjVS",err,error,*999)
 
 #ifdef WITH_CELLML
 
@@ -14106,9 +14105,9 @@ CONTAINS
 
 #endif
 
-    EXITS("cmfe_CellMLFieldCreateStartNumber")
+    EXITS("cmfe_CellML_FieldMapsCreateStartNumber")
     RETURN
-999 ERRORSEXITS("cmfe_CellMLFieldCreateStartNumber",err,error)
+999 ERRORSEXITS("cmfe_CellML_FieldMapsCreateStartNumber",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -16397,7 +16396,7 @@ CONTAINS
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
     CALL CONTROL_LOOP_LABEL_SET(controlLoop,CHAR(label),err,error,*999)
 
-    EXITS("cmfe_ControlLoopLabelStVSNumber0")
+    EXITS("cmfe_ControlLoop_LabelSetVSNumber0")
     RETURN
 999 ERRORSEXITS("cmfe_ControlLoop_LabelSetVSNumber0",err,error)
     CALL cmfe_HandleError(err,error)
@@ -16430,7 +16429,7 @@ CONTAINS
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
     CALL CONTROL_LOOP_LABEL_SET(controlLoop,CHAR(label),err,error,*999)
 
-    EXITS("cmfe_ControlLoopLabelStVSNumber1")
+    EXITS("cmfe_ControlLoop_LabelSetVSNumber1")
     RETURN
 999 ERRORSEXITS("cmfe_ControlLoop_LabelSetVSNumber1",err,error)
     CALL cmfe_HandleError(err,error)
@@ -16787,7 +16786,7 @@ CONTAINS
     TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
     TYPE(PROBLEM_TYPE), POINTER :: problem
 
-    ENTERS("cmfe_ControlLoopNumberOfSubLoopsSetNumber",err,error,*999)
+    ENTERS("cmfe_ControlLoop_NumberOfSubLoopsSetNumber",err,error,*999)
 
     NULLIFY(controlLoop)
     NULLIFY(problem)
@@ -17700,7 +17699,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
-    ENTERS("cmfe_CoordinateSysteDestroyObj",err,error,*999)
+    ENTERS("cmfe_CoordinateSystem_DestroyObj",err,error,*999)
 
     CALL COORDINATE_SYSTEM_DESTROY(coordinateSystem%coordinateSystem,err,error,*999)
 
@@ -23666,7 +23665,7 @@ CONTAINS
     CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_LabelGet(dataProjection,label,err,error,*999)
     
-    EXITS("cmfe_DataProjection_LabelGetRegionNumber")
+    EXITS("cmfe_DataProjection_LabelGetCRegionNumber")
     RETURN
 999 ERRORSEXITS("cmfe_DataProjection_LabelGetCRegionNumber",err,error)
     CALL cmfe_HandleError(err,error)
@@ -23878,7 +23877,7 @@ CONTAINS
     CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_LabelSet(dataProjection,label,err,error,*999)
     
-    EXITS("cmfe_DataProjection_LabelSetRegionNumber")
+    EXITS("cmfe_DataProjection_LabelSetCRegionNumber")
     RETURN
 999 ERRORSEXITS("cmfe_DataProjection_LabelSetCRegionNumber",err,error)
     CALL cmfe_HandleError(err,error)
@@ -24572,7 +24571,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: numberOfMatrices !<On return, the number of Jacobian matrices
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
 
-    ENTERS("cmfe_Equations_NumberOfLinearMatricesGet",err,error,*999)
+    ENTERS("cmfe_Equations_NumberOfJacobianMatricesGet",err,error,*999)
 
     CALL Equations_NumberOfJacobianMatricesGet(equations%equations,numberOfMatrices,err,error,*999)
 
@@ -24869,6 +24868,7 @@ CONTAINS
 999 ERRORS("cmfe_EquationsSet_DerivedVariableCalculateObj",err,error)
     EXITS("cmfe_EquationsSet_DerivedVariableCalculateObj")
     CALL cmfe_HandleError(err,error)
+    RETURN
     
   END SUBROUTINE cmfe_EquationsSet_DerivedVariableCalculateObj
 
@@ -24902,6 +24902,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("cmfe_EquationsSet_DerivedVariableSetNumber",err,error)
     CALL cmfe_HandleError(err,error)
+    RETURN
     
   END SUBROUTINE cmfe_EquationsSet_DerivedVariableSetNumber
 
@@ -24927,6 +24928,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("cmfe_EquationsSet_DerivedVariableSetObj",err,error)
     CALL cmfe_HandleError(err,error)
+    RETURN
     
   END SUBROUTINE cmfe_EquationsSet_DerivedVariableSetObj
 
@@ -26289,7 +26291,7 @@ CONTAINS
     TYPE(FIELD_TYPE), POINTER :: independentField
     TYPE(REGION_TYPE), POINTER :: region
 
-    ENTERS("cmfe_EquationsSet_DependentCreateStartNumber",err,error,*999)
+    ENTERS("cmfe_EquationsSet_IndependentCreateStartNumber",err,error,*999)
 
     NULLIFY(region)
     NULLIFY(equationsSet)
@@ -30193,7 +30195,7 @@ CONTAINS
 
     CALL FIELD_PARAMETER_SET_ADD_CONSTANT(field%field,variableType,fieldSetType,componentNumber,value,err,error,*999)
 
-    EXITS("cmfe_FieldParameterSetAddConstantLbj")
+    EXITS("cmfe_Field_ParameterSetAddConstantLObj")
     RETURN
 999 ERRORSEXITS("cmfe_Field_ParameterSetAddConstantLObj",err,error)
     CALL cmfe_HandleError(err,error)
@@ -35199,6 +35201,7 @@ CONTAINS
     CALL Field_ParametersToFieldParametersCopy(fromField,fromVariableType,fromParameterSetType, &
       & fromComponentNumber,toField,toVariableType,toParameterSetType,toComponentNumber,err,error,*999)
       
+    EXITS("cmfe_Field_ParametersToFieldParametersComponentCopyNumber")
     RETURN
 999 ERRORS("cmfe_Field_ParametersToFieldParametersComponentCopyNumber",err,error)
     EXITS("cmfe_Field_ParametersToFieldParametersComponentCopyNumber")
@@ -35234,6 +35237,7 @@ CONTAINS
     CALL Field_ParametersToFieldParametersCopy(fromField%field,fromVariableType,fromParameterSetType, &
       & fromComponentNumber,toField%field,toVariableType,toParameterSetType,toComponentNumber,err,error,*999)
 
+    EXITS("cmfe_Field_ParametersToFieldParametersComponentCopyObj")
     RETURN
 999 ERRORS("cmfe_Field_ParametersToFieldParametersComponentCopyObj",err,error)
     EXITS("cmfe_Field_ParametersToFieldParametersComponentCopyObj")
@@ -35965,7 +35969,7 @@ CONTAINS
 
     EXITS("cmfe_Fields_ElementsExportVSVSObj")
     RETURN
-999 ERRORSEXITS("cmfe_FieldIOElementsExportVSObj",err,error)
+999 ERRORSEXITS("cmfe_Fields_ElementsExportVSVSObj",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -37367,8 +37371,17 @@ CONTAINS
     TYPE(cmfe_MeshEmbeddingType), INTENT(INOUT) :: meshEmbedding !<The embedding
     TYPE(cmfe_MeshType), INTENT(IN) :: parentMesh, childMesh   !<The parent and child meshes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+
+    ENTERS("cmfe_MeshEmbedding_CreateObj",err,error,*999)
+    
     CALL MESH_EMBEDDING_CREATE(meshEmbedding%meshEmbedding,parentMesh%mesh,childMesh%mesh,err,error,*999)
-999 RETURN
+    
+    EXITS("cmfe_MeshEmbedding_CreateObj")
+    RETURN
+999 ERRORSEXITS("cmfe_MeshEmbedding_CreateObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
   END SUBROUTINE cmfe_MeshEmbedding_CreateObj
 
   !
@@ -37383,8 +37396,17 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: nodeNumbers(:)  !<Node numbers in child mesh
     REAL(DP), INTENT(IN)      :: xiCoords(:,:)   !<Xi coordinates of embedded nodes wrt parent element
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+
+    ENTERS("cmfe_MeshEmbedding_SetChildNodePositionObj",err,error,*999)
+    
     CALL MESH_EMBEDDING_SET_CHILD_NODE_POSITION(meshEmbedding%meshEmbedding,elementNumber, nodeNumbers, xiCoords, err, error, *999)
-999 RETURN
+
+    EXITS("cmfe_MeshEmbedding_SetChildNodePositionObj")
+    RETURN
+999 ERRORSEXITS("cmfe_MeshEmbedding_SetChildNodePositionObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
   END SUBROUTINE cmfe_MeshEmbedding_SetChildNodePositionObj
 
   !
@@ -37400,9 +37422,18 @@ CONTAINS
 
     INTEGER(INTG), INTENT(IN) :: parentComponent, childComponent  !<Component numbers in respective fields
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    
+    ENTERS("cmfe_MeshEmbedding_PushDataObj",err,error,*999)
+    
     CALL MESH_EMBEDDING_PUSH_DATA(meshEmbedding%meshEmbedding,parentField%field, parentComponent, childField%field, &
       & childComponent, err, error, *999)
-999 RETURN
+    
+    EXITS("cmfe_MeshEmbedding_PushDataObj")
+    RETURN
+999 ERRORSEXITS("cmfe_MeshEmbedding_PushDataObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
   END SUBROUTINE cmfe_MeshEmbedding_PushDataObj
 
 !
@@ -37419,11 +37450,19 @@ CONTAINS
      REAL(DP), INTENT(IN)      :: parentXiCoords(:)   !<Xi coordinates of embedded nodes wrt parent element
      REAL(DP), INTENT(IN)      :: childXiCoords(:)   !<Xi coordinates of embedded nodes wrt Child element
      INTEGER(INTG), INTENT(OUT) :: err           !<The error code
-!
+     !
+     ENTERS("cmfe_MeshEmbedding_SetGaussPointDataObj",err,error,*999)
+     
      CALL MESH_EMBEDDING_SET_GAUSS_POINT_DATA(meshEmbedding%meshEmbedding, parentElementNumber, gaussPointNumber,&
-     & parentXiCoords, childElementNumber, childXiCoords,err,error,*999)
- 999 RETURN
-    END SUBROUTINE cmfe_MeshEmbedding_SetGaussPointDataObj
+       & parentXiCoords, childElementNumber, childXiCoords,err,error,*999)
+     
+     EXITS("cmfe_MeshEmbedding_SetGaussPointDataObj")
+     RETURN
+999  ERRORSEXITS("cmfe_MeshEmbedding_SetGaussPointDataObj",err,error)
+     CALL cmfe_HandleError(err,error)
+     RETURN
+     
+   END SUBROUTINE cmfe_MeshEmbedding_SetGaussPointDataObj
 ! !
   !================================================================================================================================
   !
@@ -37436,9 +37475,17 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: parentComponent, childComponent  !<Component numbers in respective fields
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
 
-    CALL MESH_EMBEDDING_PULL_GAUSS_POINT_DATA(meshEmbedding%meshEmbedding,parentField%field, parentComponent, &
+    ENTERS("cmfe_MeshEmbedding_PullGaussPointDataObj",err,error,*999)
+     
+     CALL MESH_EMBEDDING_PULL_GAUSS_POINT_DATA(meshEmbedding%meshEmbedding,parentField%field, parentComponent, &
       &  childField%field,childComponent, err, error, *999)
-999 RETURN
+     
+     EXITS("cmfe_MeshEmbedding_PullGaussPointDataObj")
+     RETURN
+999  ERRORSEXITS("cmfe_MeshEmbedding_PullGaussPointDataObj",err,error)
+     CALL cmfe_HandleError(err,error)
+     RETURN
+     
     END SUBROUTINE cmfe_MeshEmbedding_PullGaussPointDataObj
 ! !
   !================================================================================================================================
@@ -37459,12 +37506,15 @@ CONTAINS
 
     CALL FIELD_PARAMETER_SET_GET_GAUSS_POINT_COORD(meshEmbedding%meshEmbedding,componentNumber, &
       & NumberofGaussPoints,COORDS,err,error,*999)
-
+    
     EXITS("cmfe_Field_ParameterSetGetGaussPointCoordObj")
-
-999 RETURN
-
+    RETURN
+999 ERRORSEXITS("cmfe_Field_ParameterSetGetGaussPointCoordObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+ 
   END SUBROUTINE cmfe_Field_ParameterSetGetGaussPointCoordObj
+  
 !!==================================================================================================================================
 !!
 !! INTERFACE_ROUTINES
@@ -37723,7 +37773,7 @@ CONTAINS
     TYPE(REGION_TYPE), POINTER :: region
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("cmfe_FInterfaceDestroyNumber",err,error,*999)
+    ENTERS("cmfe_Interface_DestroyNumber",err,error,*999)
 
     NULLIFY(region)
     NULLIFY(INTERFACE)
@@ -37966,7 +38016,7 @@ CONTAINS
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,INTERFACE,err,error,*999)
     CALL INTERFACE_LABEL_SET(INTERFACE,CHAR(label),err,error,*999)
 
-    EXITS("cmfe_InterfaceLabelStVSNumber")
+    EXITS("cmfe_Interface_LabelSetVSNumber")
     RETURN
 999 ERRORSEXITS("cmfe_Interface_LabelSetVSNumber",err,error)
     CALL cmfe_HandleError(err,error)
@@ -38309,14 +38359,14 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
  
-    ENTERS("cmfe_InterfaceMeshConnectivity_ElementNumberSetNumber",err,error,*999)
+    ENTERS("cmfe_InterfaceMeshConnectivity_NodeNumberSetNumber",err,error,*999)
 
     CALL FlagError("Not implemented yet.",err,error,*999)
 
-    EXITS("cmfe_InterfaceMeshConnectivity_ElementNumberSetNumber")
+    EXITS("cmfe_InterfaceMeshConnectivity_NodeNumberSetNumber")
     RETURN
-999 ERRORS("cmfe_InterfaceMeshConnectivity_ElementNumberSetNumber",err,error)
-    EXITS("cmfe_InterfaceMeshConnectivity_ElementNumberSetNumber")
+999 ERRORS("cmfe_InterfaceMeshConnectivity_NodeNumberSetNumber",err,error)
+    EXITS("cmfe_InterfaceMeshConnectivity_NodeNumberSetNumber")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -38519,7 +38569,7 @@ CONTAINS
     TYPE(INTERFACE_TYPE), POINTER :: INTERFACE
     TYPE(REGION_TYPE), POINTER :: region
 
-    ENTERS("cmfe_FInterfaceMeshConnectivityDestroyNumber",err,error,*999)
+    ENTERS("cmfe_InterfaceMeshConnectivity_DestroyNumber",err,error,*999)
 
     NULLIFY(region)
     NULLIFY(INTERFACE)
@@ -39389,7 +39439,7 @@ CONTAINS
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(REGION_TYPE), POINTER :: region
 
-    ENTERS("cmfe_FInterfaceConditionDestroyNumber",err,error,*999)
+    ENTERS("cmfe_InterfaceCondition_DestroyNumber",err,error,*999)
 
     NULLIFY(region)
     NULLIFY(INTERFACE)
@@ -39582,7 +39632,7 @@ CONTAINS
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(REGION_TYPE), POINTER :: region
  
-    ENTERS("cmfe_FInterfaceConditionEquationsDestroyNumber",err,error,*999)
+    ENTERS("cmfe_InterfaceCondition_EquationsDestroyNumber",err,error,*999)
 
     NULLIFY(region)
     NULLIFY(INTERFACE)
@@ -39746,7 +39796,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
-    ENTERS("cmfe_InterfaceCondition_MethodSetObj",err,error,*999)
+    ENTERS("cmfe_InterfaceCondition_IntegrationTypeSetObj",err,error,*999)
 
     CALL InterfaceCondition_IntegrationTypeSet(interfaceCondition%interfaceCondition,interfaceConditionIntegrationType, &
       & err,error,*999)
@@ -43231,8 +43281,8 @@ CONTAINS
 
     EXITS("cmfe_MeshElements_UserNumbersAllSetNumber")
     RETURN
-999 ERRORS("cmfe_MeshElements_AllUserNumbersAllSetNumber",err,error)
-    EXITS("cmfe_MeshElements_AllUserNumbersAllSetNumber")
+999 ERRORS("cmfe_MeshElements_UserNumbersAllSetNumber",err,error)
+    EXITS("cmfe_MeshElements_UserNumbersAllSetNumber")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -44557,7 +44607,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
-    ENTERS("cmfe_NodeDestroyObj",err,error,*999)
+    ENTERS("cmfe_Nodes_DestroyObj",err,error,*999)
 
     CALL Nodes_Destroy(nodes%nodes,err,error,*999)
 
@@ -46529,16 +46579,16 @@ CONTAINS
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
 
-    CALL Enters("cmfe_Problem_SpecificationGetNumber",err,error,*999)
+    ENTERS("cmfe_Problem_SpecificationGetNumber",err,error,*999)
 
     NULLIFY(problem)
     CALL Problem_Get(problemUserNumber,problem,err,error,*999)
     CALL Problem_SpecificationGet(problem,problemSpecification,err,error,*999)
 
-    CALL Exits("cmfe_Problem_SpecificationGetNumber")
+    EXITS("cmfe_Problem_SpecificationGetNumber")
     RETURN
-999 CALL Errors("cmfe_Problem_SpecificationGetNumber",err,error)
-    CALL Exits("cmfe_Problem_SpecificationGetNumber")
+999 ERRORS("cmfe_Problem_SpecificationGetNumber",err,error)
+    EXITS("cmfe_Problem_SpecificationGetNumber")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -47135,7 +47185,7 @@ CONTAINS
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL REGION_LABEL_SET(region,CHAR(label),err,error,*999)
  
-    EXITS("cmfe_RegionLabelStVSNumber")
+    EXITS("cmfe_Region_LabelSetVSNumber")
     RETURN
 999 ERRORSEXITS("cmfe_Region_LabelSetVSNumber",err,error)
     CALL cmfe_HandleError(err,error)
@@ -49059,7 +49109,7 @@ CONTAINS
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(SOLVER_TYPE), POINTER :: solver
  
-    ENTERS("cmfe_SolverDynamicTimeSetNumber1",err,error,*999)
+    ENTERS("cmfe_Solver_DynamicTimeSetNumber1",err,error,*999)
 
     NULLIFY(problem)
     NULLIFY(solver)
@@ -49442,7 +49492,7 @@ CONTAINS
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(SOLVER_TYPE), POINTER :: solver
 
-    ENTERS("cmfe_Solver_GeometricTransformationNumberOfLoadIncrementsSetNumber",err,error,*999)
+    ENTERS("cmfe_Solver_GeometricTransformationNoLoadIncrementsSetNumber",err,error,*999)
 
     NULLIFY(problem)
     NULLIFY(solver)
@@ -49450,10 +49500,10 @@ CONTAINS
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
     CALL Solver_GeometricTransformationNumberOfLoadIncrementsSet(solver,numberOfIncrements,err,error,*999)
 
-    EXITS("cmfe_Solver_GeometricTransformationNumberOfLoadIncrementsSetNumber")
+    EXITS("cmfe_Solver_GeometricTransformationNoLoadIncrementsSetNumber")
     RETURN
-999 ERRORS("cmfe_Solver_GeometricTransformationNumberOfLoadIncrementsSetNumber",err,error)
-    EXITS("cmfe_Solver_GeometricTransformationNumberOfLoadIncrementsSetNumber")
+999 ERRORS("cmfe_Solver_GeometricTransformationNoLoadIncrementsSetNumber",err,error)
+    EXITS("cmfe_Solver_GeometricTransformationNoLoadIncrementsSetNumber")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -49473,14 +49523,14 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
-    ENTERS("cmfe_Solver_GeometricTransformationNumberOfLoadIncrementsSetObj",err,error,*999)
+    ENTERS("cmfe_Solver_GeometricTransformationNoLoadIncrementsSetObj",err,error,*999)
     
     CALL Solver_GeometricTransformationNumberOfLoadIncrementsSet(solver%solver,numberOfIncrements,err,error,*999)
 
-    EXITS("cmfe_Solver_GeometricTransformationNumberOfLoadIncrementsSetObj")
+    EXITS("cmfe_Solver_GeometricTransformationNoLoadIncrementsSetObj")
     RETURN
-999 ERRORS("cmfe_Solver_GeometricTransformationNumberOfLoadIncrementsSetObj",err,error)
-    EXITS("cmfe_Solver_GeometricTransformationNumberOfLoadIncrementsSetObj")
+999 ERRORS("cmfe_Solver_GeometricTransformationNoLoadIncrementsSetObj",err,error)
+    EXITS("cmfe_Solver_GeometricTransformationNoLoadIncrementsSetObj")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -50122,7 +50172,7 @@ CONTAINS
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
     CALL SOLVER_LABEL_SET(solver,CHAR(label),err,error,*999)
 
-    EXITS("cmfe_SolverLabelStVSNumber0")
+    EXITS("cmfe_Solver_LabelSetVSNumber0")
     RETURN
 999 ERRORSEXITS("cmfe_Solver_LabelSetVSNumber0",err,error)
     CALL cmfe_HandleError(err,error)
@@ -50156,7 +50206,7 @@ CONTAINS
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
     CALL SOLVER_LABEL_SET(solver,CHAR(label),err,error,*999)
 
-    EXITS("cmfe_SolverLabelStVSNumber1")
+    EXITS("cmfe_Solver_LabelSetVSNumber1")
     RETURN
 999 ERRORSEXITS("cmfe_Solver_LabelSetVSNumber1",err,error)
     CALL cmfe_HandleError(err,error)
@@ -55339,7 +55389,7 @@ CONTAINS
     CALL SOLVER_EQUATIONS_INTERFACE_CONDITION_ADD(solverEquations,interfaceCondition,interfaceConditionIndex, &
       & err,error,*999)
     
-    EXITS("cmfe_SolverEquationsInterfaceConditionNumber0")
+    EXITS("cmfe_SolverEquations_InterfaceConditionAddNumber0")
     RETURN
 999 ERRORS("cmfe_SolverEquations_InterfaceConditionAddNumber0",err,error)
     EXITS("cmfe_SolverEquations_InterfaceConditionAddNumber0")
@@ -56839,7 +56889,7 @@ CONTAINS
     TYPE(REGION_TYPE), POINTER :: region
     TYPE(MESH_TYPE), POINTER :: mesh
 
-    ENTERS( "CMISSFieldML_InputCreateMeshComponentNumberVS", err, error, *999 )
+    ENTERS("CMISSFieldML_InputCreateMeshComponentNumberVS",err,error,*999)
 
 #ifdef WITH_FIELDML
 
@@ -56917,7 +56967,7 @@ CONTAINS
     TYPE(REGION_TYPE), POINTER :: region
     TYPE(MESH_TYPE), POINTER :: mesh
 
-    ENTERS( "CMISSFieldML_InputCreateMeshComponentNumberC", err, error, *999 )
+    ENTERS("CMISSFieldML_InputCreateMeshComponentNumberC",err,error,*999)
 
 #ifdef WITH_FIELDML
 

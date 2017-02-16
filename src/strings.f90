@@ -292,7 +292,7 @@ CONTAINS
   !
 
   !>IS_ABBREVIATION returns .TRUE. if the character string SHORT is an abbreviation of the character string LONG. SHORT must be at least MIN_NUM_CHARACTERS long.
-  FUNCTION IS_ABBREVIATION_C_C(SHORT,LONG,MIN_NUM_CHARACTERS)
+  PURE FUNCTION IS_ABBREVIATION_C_C(SHORT,LONG,MIN_NUM_CHARACTERS)
 
     !Argument variables
     CHARACTER(LEN=*), INTENT(IN) :: SHORT !<The short form of the string
@@ -324,7 +324,7 @@ CONTAINS
   !
 
   !>IS_ABBREVIATION returns .TRUE. if the character string SHORT is an abbreviation of the varying string LONG. SHORT must be at least MIN_NUM_CHARACTERS long.
-  FUNCTION IS_ABBREVIATION_C_VS(SHORT,LONG,MIN_NUM_CHARACTERS)
+  PURE FUNCTION IS_ABBREVIATION_C_VS(SHORT,LONG,MIN_NUM_CHARACTERS)
 
     !Argument variables
     CHARACTER(LEN=*), INTENT(IN) :: SHORT !<The short form of the string
@@ -356,7 +356,7 @@ CONTAINS
   !
 
   !>IS_ABBREVIATION returns .TRUE. if the varying string SHORT is an abbreviation of the character string LONG. SHORT must be at least MIN_NUM_CHARACTERS long.
-  FUNCTION IS_ABBREVIATION_VS_C(SHORT,LONG,MIN_NUM_CHARACTERS)
+  PURE FUNCTION IS_ABBREVIATION_VS_C(SHORT,LONG,MIN_NUM_CHARACTERS)
 
     !Argument variables
     TYPE(VARYING_STRING), INTENT(IN) :: SHORT !<The short form of the string
@@ -388,7 +388,7 @@ CONTAINS
   !
 
   !>IS_ABBREVIATION returns .TRUE. if the varying string SHORT is an abbreviation of the varying string LONG. SHORT must be at least MIN_NUM_CHARACTERS long.
-  FUNCTION IS_ABBREVIATION_VS_VS(SHORT,LONG,MIN_NUM_CHARACTERS)
+  PURE FUNCTION IS_ABBREVIATION_VS_VS(SHORT,LONG,MIN_NUM_CHARACTERS)
 
     !Argument variables
     TYPE(VARYING_STRING), INTENT(IN) :: SHORT !<The short form of the string
@@ -419,7 +419,7 @@ CONTAINS
   !
 
   !>IS_DIGIT returns .TRUE. if the character CHARAC is a digit character (i.e. 0..9)
-  FUNCTION IS_DIGIT(CHARAC)
+  PURE FUNCTION IS_DIGIT(CHARAC)
 
     !Argument variables
     CHARACTER(LEN=1), INTENT(IN) :: CHARAC !<The character to test if it is a digit
@@ -437,7 +437,7 @@ CONTAINS
   !
 
   !>IS_LETTER returns .TRUE. if the character CHARAC is a letter character (i.e. A..Z or a..z)
-  FUNCTION IS_LETTER(CHARAC)
+  PURE FUNCTION IS_LETTER(CHARAC)
 
     !Argument variables
     CHARACTER(LEN=1), INTENT(IN) :: CHARAC !<The character to test if it is a letter
@@ -456,7 +456,7 @@ CONTAINS
   !
 
   !>Returns .TRUE. if the supplied character is a lowercase character.
-  FUNCTION IS_LOWERCASE(CHARC)
+  PURE FUNCTION IS_LOWERCASE(CHARC)
 
     !Argument variables
     CHARACTER(LEN=1), INTENT(IN) :: CHARC !<The character to test if it is lowercase
@@ -478,7 +478,7 @@ CONTAINS
   !
 
   !>Returns .TRUE. if the supplied character is an uppercase character.
-  FUNCTION IS_UPPERCASE(CHARC)
+  PURE FUNCTION IS_UPPERCASE(CHARC)
 
     !Argument variables
     CHARACTER(LEN=1), INTENT(IN) :: CHARC !<The character to test if it is uppercase
@@ -500,7 +500,7 @@ CONTAINS
   !
 
   !>IS_WHITESPACE returns .TRUE. if the character CHARAC is a whitespace character (i.e. space, tabs, etc.)
-  FUNCTION IS_WHITESPACE(CHARAC)
+  PURE FUNCTION IS_WHITESPACE(CHARAC)
 
     !Argument variables
     CHARACTER(LEN=1), INTENT(IN) :: CHARAC !<The character to test if it is whitespace
@@ -1215,9 +1215,7 @@ CONTAINS
     LOGICAL :: ADJUST_LEFT
     CHARACTER(LEN=MAXSTRLEN) :: LOCAL_FORMAT,LOCAL_STRING
     
-!!TODO: put back enters,exits.
-
-!    ENTERS("NUMBER_TO_VSTRING_INTG",ERR,ERROR,*999)
+    ENTERS("NUMBER_TO_VSTRING_INTG",ERR,ERROR,*999)
 
 !!TODO: remove dependance on LOCAL_STRING
     
@@ -1243,11 +1241,13 @@ CONTAINS
       NUMBER_TO_VSTRING_INTG=LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING))
     ENDIF
 
-!    EXITS("NUMBER_TO_VSTRING_INTG")
+    EXITS("NUMBER_TO_VSTRING_INTG")
     RETURN
 999 CALL FlagError("Error converting an integer to a varying string",ERR,ERROR,*998)
-998 ERRORSEXITS("NUMBER_TO_VSTRING_INTG",ERR,ERROR)
-    RETURN    
+998 ERRORS("NUMBER_TO_VSTRING_INTG",ERR,ERROR)
+    EXITS("NUMBER_TO_VSTRING_INTG")
+    RETURN
+    
   END FUNCTION NUMBER_TO_VSTRING_INTG
   
   !
@@ -1269,9 +1269,8 @@ CONTAINS
     CHARACTER(LEN=MAXSTRLEN) :: LOCAL_FORMAT,LOCAL_STRING
     LOGICAL :: ADJUST_LEFT
    
-!!TODO: put back enters,exits.
 
-!    ENTERS("NUMBER_TO_VSTRING_LINTG",ERR,ERROR,*999)
+    ENTERS("NUMBER_TO_VSTRING_LINTG",ERR,ERROR,*999)
 
 !!TODO: remove dependance on LOCAL_STRING
     
@@ -1297,11 +1296,11 @@ CONTAINS
       NUMBER_TO_VSTRING_LINTG=LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING))
     ENDIF
 
-!    EXITS("NUMBER_TO_VSTRING_LINTG")
+    EXITS("NUMBER_TO_VSTRING_LINTG")
     RETURN
 999 CALL FlagError("Error converting a long integer to a varying string",ERR,ERROR,*998)
-998 ERRORSEXITS("NUMBER_TO_VSTRING_LINTG",ERR,ERROR)
-!    EXITS("NUMBER_TO_VSTRING_LINTG")
+998 ERRORS("NUMBER_TO_VSTRING_LINTG",ERR,ERROR)
+    EXITS("NUMBER_TO_VSTRING_LINTG")
     RETURN    
   END FUNCTION NUMBER_TO_VSTRING_LINTG
   
@@ -1409,7 +1408,8 @@ CONTAINS
     EXITS("NUMBER_TO_VSTRING_SP")
     RETURN
 999 CALL FlagError("Error converting a single precision number to a varying string",ERR,ERROR,*998)
-998 ERRORSEXITS("NUMBER_TO_VSTRING_SP",ERR,ERROR)
+998 ERRORS("NUMBER_TO_VSTRING_SP",ERR,ERROR)
+    EXITS("NUMBER_TO_VSTRING_SP")
     RETURN    
   END FUNCTION NUMBER_TO_VSTRING_SP
   
@@ -1434,9 +1434,8 @@ CONTAINS
     CHARACTER(LEN=MAXSTRLEN) :: LOCAL_FORMAT,LOCAL_STRING
      LOGICAL :: ADJUST_LEFT
      
-!!TODO: put back enters,exits.
 
-!    ENTERS("NUMBER_TO_VSTRING_DP",ERR,ERROR,*999)
+    ENTERS("NUMBER_TO_VSTRING_DP",ERR,ERROR,*999)
 
 !!TODO: remove dependance on LOCAL_STRING
     
@@ -1517,11 +1516,11 @@ CONTAINS
       NUMBER_TO_VSTRING_DP=LOCAL_STRING(1:LEN_TRIM(LOCAL_STRING))
     ENDIF
 
-!    EXITS("NUMBER_TO_VSTRING_DP")
+    EXITS("NUMBER_TO_VSTRING_DP")
     RETURN
 999 CALL FlagError("Error converting double precision number to a varying string",ERR,ERROR,*998)
-998 ERRORSEXITS("NUMBER_TO_VSTRING_DP",ERR,ERROR)
-!    EXITS("NUMBER_TO_VSTRING_DP")
+998 ERRORS("NUMBER_TO_VSTRING_DP",ERR,ERROR)
+    EXITS("NUMBER_TO_VSTRING_DP")
     RETURN    
   END FUNCTION NUMBER_TO_VSTRING_DP
   
@@ -1808,7 +1807,7 @@ CONTAINS
   !================================================================================================================================
   !
     
-  FUNCTION CHARACTER_TO_LOWERCASE_C(STRING)
+  PURE FUNCTION CHARACTER_TO_LOWERCASE_C(STRING)
 
     !Argument variables
     CHARACTER(LEN=*), INTENT(IN) :: STRING !<The string to convert to lowercase
@@ -1833,7 +1832,7 @@ CONTAINS
   !
 
   !>Returns a character string that is the lowercase equivalent of the supplied varying string.
-  FUNCTION CHARACTER_TO_LOWERCASE_VS(STRING)
+  PURE FUNCTION CHARACTER_TO_LOWERCASE_VS(STRING)
 
     !Argument variables
     TYPE(VARYING_STRING), INTENT(IN) :: STRING !<The string to convert
@@ -1858,7 +1857,7 @@ CONTAINS
   !
 
   !>Returns a varying string that is the lowercase equivalent of the supplied character string.
-  FUNCTION VSTRING_TO_LOWERCASE_C(STRING)
+  PURE FUNCTION VSTRING_TO_LOWERCASE_C(STRING)
 
     !Argument variables
     CHARACTER(LEN=*), INTENT(IN) :: STRING !<The string to convert
@@ -1883,7 +1882,7 @@ CONTAINS
   !
 
   !>Returns a varying string that is the lowercase equivalent of the supplied varying string.
-  FUNCTION VSTRING_TO_LOWERCASE_VS(STRING)
+  PURE FUNCTION VSTRING_TO_LOWERCASE_VS(STRING)
 
     !Argument variables
     TYPE(VARYING_STRING), INTENT(IN) :: STRING !<The string to convert
@@ -1908,7 +1907,7 @@ CONTAINS
   !
 
   !>Returns a character string which is uppercase equivalent of the supplied character string.
-  FUNCTION CHARACTER_TO_UPPERCASE_C(STRING)
+  PURE FUNCTION CHARACTER_TO_UPPERCASE_C(STRING)
 
     !Argument variables 
     CHARACTER(LEN=*), INTENT(IN) :: STRING !<The string to convert
@@ -1933,7 +1932,7 @@ CONTAINS
   !
 
   !>Returns a character string which is uppercase equivalent of the supplied varying string.
-  FUNCTION CHARACTER_TO_UPPERCASE_VS(STRING)
+  PURE FUNCTION CHARACTER_TO_UPPERCASE_VS(STRING)
 
     !Argument variables
     TYPE(VARYING_STRING), INTENT(IN) :: STRING !<The string to convert
@@ -1958,7 +1957,7 @@ CONTAINS
   !
 
   !>Returns a varying string which is uppercase equivalent of the supplied character string.
-  FUNCTION VSTRING_TO_UPPERCASE_C(STRING)
+  PURE FUNCTION VSTRING_TO_UPPERCASE_C(STRING)
 
     !Argument variables
     CHARACTER(LEN=*), INTENT(IN) :: STRING !<The string to convert
@@ -1983,7 +1982,7 @@ CONTAINS
   !
 
   !>Returns a varying string which is uppercase equivalent of the supplied varying string.
-  FUNCTION VSTRING_TO_UPPERCASE_VS(STRING)
+  PURE FUNCTION VSTRING_TO_UPPERCASE_VS(STRING)
 
     !Argument variables
     TYPE(VARYING_STRING), INTENT(IN) :: STRING !<The string to convert

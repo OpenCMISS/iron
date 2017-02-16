@@ -283,10 +283,10 @@ CONTAINS
       CALL FlagError("Equations set is not associated",err,error,*999)
     END IF
 
-    CALL Exits("Monodomain_EquationsSetSpecificationSet")
+    EXITS("Monodomain_EquationsSetSpecificationSet")
     RETURN
-999 CALL Errors("Monodomain_EquationsSetSpecificationSet",err,error)
-    CALL Exits("Monodomain_EquationsSetSpecificationSet")
+999 ERRORS("Monodomain_EquationsSetSpecificationSet",err,error)
+    EXITS("Monodomain_EquationsSetSpecificationSet")
     RETURN 1
     
   END SUBROUTINE Monodomain_EquationsSetSpecificationSet
@@ -307,7 +307,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: problemType,problemSubtype
 
-    CALL Enters("Monodomain_ProblemSpecificationSet",err,error,*999)
+    ENTERS("Monodomain_ProblemSpecificationSet",err,error,*999)
 
     IF(ASSOCIATED(problem)) THEN
       IF(SIZE(problemSpecification,1)>=3) THEN
@@ -343,10 +343,9 @@ CONTAINS
       CALL FlagError("Problem is not associated",err,error,*999)
     END IF
 
-    CALL Exits("Monodomain_ProblemSpecificationSet")
+    EXITS("Monodomain_ProblemSpecificationSet")
     RETURN
-999 CALL Errors("Monodomain_ProblemSpecificationSet",err,error)
-    CALL Exits("Monodomain_ProblemSpecificationSet")
+999 ERRORSEXITS("Monodomain_ProblemSpecificationSet",err,error)
     RETURN 1
     
   END SUBROUTINE Monodomain_ProblemSpecificationSet
@@ -625,7 +624,7 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("MONODOMAIN_EQUATIONS_SET_SOLUTION_METHOD_SET",ERR,ERROR,*999)
+    ENTERS("Monodomain_EquationsSetSolutionMethodSet",ERR,ERROR,*999)
     
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
@@ -692,7 +691,7 @@ CONTAINS
     TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: EQUATIONS_MATERIALS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("MONODOMAIN_EQUATION_EQUATION_SET_SUBTYPE_SETUP",ERR,ERROR,*999)
+    ENTERS("Monodomain_EquationsSetSubtypeSetup",ERR,ERROR,*999)
  
     NULLIFY(EQUATIONS)
     NULLIFY(EQUATIONS_MAPPING)
