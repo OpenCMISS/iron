@@ -171,6 +171,12 @@ MODULE Maths
     MODULE PROCEDURE InvertFullDP
   END INTERFACE Invert
 
+  !>Returns the inverse of a transposed matrix.
+  INTERFACE InvertTranspose
+    MODULE PROCEDURE InvertTransposeFullSP
+    MODULE PROCEDURE InvertTransposeFullDP
+  END INTERFACE InvertTranspose
+
   !>Calculates the modified Bessel function of the second kind of order 0 using the approximation of Abromowitz and Stegun.
   INTERFACE K0
     MODULE PROCEDURE K0DP
@@ -219,6 +225,12 @@ MODULE Maths
     MODULE PROCEDURE LInfNormVectorDP
   END INTERFACE LInfNorm
     
+  !>Calculates the Macaulay Bracket of a number
+  INTERFACE MacaulayBracket
+    MODULE PROCEDURE MacaulayBracketSP
+    MODULE PROCEDURE MacaulayBracketDP
+  END INTERFACE MacaulayBracket
+  
   !>Calculates and returns the matrix product between matrices and vectors i.e., C=A.B
   INTERFACE MatrixProduct
     MODULE PROCEDURE DotProductMatrix2Matrix2SP
@@ -329,6 +341,8 @@ MODULE Maths
 
   PUBLIC Invert
 
+  PUBLIC InvertTranspose
+
   PUBLIC K0,K1,Kdp
 
   PUBLIC L1Norm
@@ -336,6 +350,8 @@ MODULE Maths
   PUBLIC L2Norm
 
   PUBLIC LInfNorm
+
+  PUBLIC MacaulayBracket
 
   PUBLIC MatrixProduct
 
@@ -2741,7 +2757,7 @@ CONTAINS
         B(1,1)=1.0_SP/A(1,1)
       ELSE
         CALL FlagWarning("Matrix A is zero and cannot be inverted.",err,error,*999)
-        B(1,1)=0.0_DP
+        B(1,1)=0.0_SP
       ENDIF
     CASE(2)
       det=A(1,1)*A(2,2)-A(1,2)*A(2,1)
@@ -2752,7 +2768,7 @@ CONTAINS
         B(2,2)=A(1,1)/det
       ELSE
         CALL FlagWarning("Zero Determinant for matrix A.",err,error,*999)
-        B=0.0_DP
+        B=0.0_SP
       ENDIF
     CASE(3)
       det=A(1,1)*A(2,2)*A(3,3)+A(1,2)*A(2,3)*A(3,1)+A(1,3)*A(2,1)*A(3,2)-A(1,1)*A(3,2)*A(2,3)-A(2,1)*A(1,2)*A(3,3)- &
@@ -2769,7 +2785,7 @@ CONTAINS
         B(3,3)=(A(1,1)*A(2,2)-A(2,1)*A(1,2))/det
       ELSE
         CALL FlagWarning("Zero Determinant for matrix A.",err,error,*999)
-        B=0.0_DP
+        B=0.0_SP
       ENDIF
     CASE DEFAULT
       CALL FlagError("Matrix size is not implemented.",err,error,*999)
@@ -2850,6 +2866,142 @@ CONTAINS
     
   END SUBROUTINE InvertFullDP
   
+  !
+  !================================================================================================================================
+  !
+
+  !>Inverts the transpose of a full single precision matrix A to give matrix B and returns the determinant of A in det.
+  SUBROUTINE InvertTransposeFullSP(A,B,det,err,error,*)
+    
+    !Argument variables
+    REAL(SP), INTENT(IN) :: A(:,:) !<The A matrix to invert the tranpose of
+    REAL(SP), INTENT(OUT) :: B(:,:) !<On exit, the inverse of A^T
+    REAL(SP), INTENT(OUT) :: det !<On exit, the determinant of A^T
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+
+    ENTERS("InvertTransposeFullSP",err,error,*999)
+
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix A is not square.",err,error,*999)
+    IF(SIZE(B,1)/=SIZE(A,2).OR.SIZE(B,2)/=SIZE(A,1)) CALL FlagError("Matrix B is not the same size as matrix A.",err,error,*999)
+    
+    SELECT CASE(SIZE(A,1)) 
+    CASE(1)
+      det=A(1,1)
+      IF(ABS(det)>ZERO_TOLERANCE_SP) THEN
+        B(1,1)=1.0_SP/A(1,1)
+      ELSE
+        CALL FlagWarning("Matrix A is zero and cannot be inverted.",err,error,*999)
+        B(1,1)=0.0_SP
+      ENDIF
+    CASE(2)
+      det=A(1,1)*A(2,2)-A(2,1)*A(1,2)
+      IF(ABS(det)>ZERO_TOLERANCE_SP) THEN
+        B(1,1)=A(2,2)/det
+        B(1,2)=-A(2,1)/det
+        B(2,1)=-A(1,2)/det
+        B(2,2)=A(1,1)/det
+      ELSE
+        CALL FlagWarning("Zero Determinant for matrix A.",err,error,*999)
+        B=0.0_SP
+      ENDIF
+    CASE(3)
+      det=A(1,1)*A(2,2)*A(3,3)+A(2,1)*A(3,2)*A(1,3)+A(3,1)*A(1,2)*A(2,3)-A(1,1)*A(2,3)*A(3,2)-A(1,2)*A(2,1)*A(3,3)- &
+        & A(1,3)*A(2,2)*A(3,1)
+      IF(ABS(det)>ZERO_TOLERANCE_SP) THEN
+        B(1,1)=(A(2,2)*A(3,3)-A(2,3)*A(3,2))/det
+        B(2,1)=(A(3,2)*A(1,3)-A(3,3)*A(1,2))/det
+        B(3,1)=(A(1,2)*A(2,3)-A(1,3)*A(2,2))/det
+        B(1,2)=(A(2,3)*A(3,1)-A(2,1)*A(3,3))/det
+        B(2,2)=(A(3,3)*A(1,1)-A(3,1)*A(1,3))/det
+        B(3,2)=(A(1,3)*A(2,1)-A(1,1)*A(2,3))/det
+        B(1,3)=(A(2,1)*A(3,2)-A(2,2)*A(3,1))/det
+        B(2,3)=(A(3,1)*A(1,2)-A(3,2)*A(1,1))/det
+        B(3,3)=(A(1,1)*A(2,2)-A(1,2)*A(2,1))/det
+      ELSE
+        CALL FlagWarning("Zero Determinant for matrix A.",err,error,*999)
+        B=0.0_SP
+      ENDIF
+    CASE DEFAULT
+      CALL FlagError("Matrix size is not implemented.",err,error,*999)
+    END SELECT
+
+    EXITS("InvertTransposeFullSP")
+    RETURN
+999 ERRORSEXITS("InvertTransposeFullSP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InvertTransposeFullSP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Inverts the transpose of a full double precision matrix A to give matrix B and returns the determinant of A in det.
+  SUBROUTINE InvertTransposeFullDP(A,B,det,err,error,*)
+    
+    !Argument variables
+    REAL(DP), INTENT(IN) :: A(:,:) !<The A matrix to invert the tranpose of
+    REAL(DP), INTENT(OUT) :: B(:,:) !<On exit, the inverse of A^T
+    REAL(DP), INTENT(OUT) :: det !<On exit, the determinant of A^T
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+
+    ENTERS("InvertTransposeFullDP",err,error,*999)
+
+    IF(SIZE(A,1)/=SIZE(A,2)) CALL FlagError("Matrix A is not square.",err,error,*999)
+    IF(SIZE(B,1)/=SIZE(A,2).OR.SIZE(B,2)/=SIZE(A,1)) CALL FlagError("Matrix B is not the same size as matrix A.",err,error,*999)
+    
+    SELECT CASE(SIZE(A,1)) 
+    CASE(1)
+      det=A(1,1)
+      IF(ABS(det)>ZERO_TOLERANCE_DP) THEN
+        B(1,1)=1.0_DP/A(1,1)
+      ELSE
+        CALL FlagWarning("Matrix A is zero and cannot be inverted.",err,error,*999)
+        B(1,1)=0.0_DP
+      ENDIF
+    CASE(2)
+      det=A(1,1)*A(2,2)-A(2,1)*A(1,2)
+      IF(ABS(det)>ZERO_TOLERANCE_DP) THEN
+        B(1,1)=A(2,2)/det
+        B(1,2)=-A(2,1)/det
+        B(2,1)=-A(1,2)/det
+        B(2,2)=A(1,1)/det
+      ELSE
+        CALL FlagWarning("Zero Determinant for matrix A.",err,error,*999)
+        B=0.0_DP
+      ENDIF
+    CASE(3)
+      det=A(1,1)*A(2,2)*A(3,3)+A(2,1)*A(3,2)*A(1,3)+A(3,1)*A(1,2)*A(2,3)-A(1,1)*A(2,3)*A(3,2)-A(1,2)*A(2,1)*A(3,3)- &
+        & A(1,3)*A(2,2)*A(3,1)
+      IF(ABS(det)>ZERO_TOLERANCE_DP) THEN
+        B(1,1)=(A(2,2)*A(3,3)-A(2,3)*A(3,2))/det
+        B(2,1)=(A(3,2)*A(1,3)-A(3,3)*A(1,2))/det
+        B(3,1)=(A(1,2)*A(2,3)-A(1,3)*A(2,2))/det
+        B(1,2)=(A(2,3)*A(3,1)-A(2,1)*A(3,3))/det
+        B(2,2)=(A(3,3)*A(1,1)-A(3,1)*A(1,3))/det
+        B(3,2)=(A(1,3)*A(2,1)-A(1,1)*A(2,3))/det
+        B(1,3)=(A(2,1)*A(3,2)-A(2,2)*A(3,1))/det
+        B(2,3)=(A(3,1)*A(1,2)-A(3,2)*A(1,1))/det
+        B(3,3)=(A(1,1)*A(2,2)-A(1,2)*A(2,1))/det
+      ELSE
+        CALL FlagWarning("Zero Determinant for matrix A.",err,error,*999)
+        B=0.0_DP
+      ENDIF
+    CASE DEFAULT
+      CALL FlagError("Matrix size is not implemented.",err,error,*999)
+    END SELECT
+
+    EXITS("InvertTransposeFullDP")
+    RETURN
+999 ERRORSEXITS("InvertTransposeFullDP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InvertTransposeFullDP
+
   !
   !================================================================================================================================
   !
@@ -3482,6 +3634,42 @@ CONTAINS
   !================================================================================================================================
   !
   
+  !>Calculates the Macaulay bracket <x> of a single precision number x
+  PURE FUNCTION MacaulayBracketSP(x)
+
+    !Argument variables
+    REAL(SP), INTENT(IN) :: x !<argument to calculate <x> with
+    !Function variable
+    REAL(SP) :: MacaulayBracketSP
+    
+    MacaulayBracketSP=MAX(x,0.0_SP)
+
+    RETURN
+    
+  END FUNCTION MacaulayBracketSP
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Calculates the Macaulay bracket <x> of a double precision number x
+  PURE FUNCTION MacaulayBracketDP(x)
+
+    !Argument variables
+    REAL(DP), INTENT(IN) :: x !<argument to calculate <x> with
+    !Function variable
+    REAL(DP) :: MacaulayBracketDP
+    
+    MacaulayBracketDP=MAX(x,0.0_DP)
+
+    RETURN
+    
+  END FUNCTION MacaulayBracketDP
+
+  !
+  !================================================================================================================================
+  !
+  
   !>Normalises a real single precision matrix A.
   SUBROUTINE NormaliseMatrixSP(A,normA,err,error,*)
 
@@ -3770,7 +3958,7 @@ CONTAINS
       DO j=1,SIZE(A,2)
         DO k=1,SIZE(B,1)
           DO l=1,SIZE(B,2)
-            C(i,j,k,l)=A(i,j)*B(k,j)
+            C(i,j,k,l)=A(i,j)*B(k,l)
           ENDDO !l
         ENDDO !k
       ENDDO !j
@@ -3810,7 +3998,7 @@ CONTAINS
       DO j=1,SIZE(A,2)
         DO k=1,SIZE(B,1)
           DO l=1,SIZE(B,2)
-            C(i,j,k,l)=A(i,j)*B(k,j)
+            C(i,j,k,l)=A(i,j)*B(k,l)
           ENDDO !l
         ENDDO !k
       ENDDO !j
@@ -4168,7 +4356,7 @@ CONTAINS
       unimodA = factor*A
     CASE(3)
       CALL Determinant(A,detA,err,error,*999)
-      factor = SIGN(ABS(detA)**1.0_SP/3.0_SP,detA)
+      factor = SIGN(ABS(detA)**(-1.0_SP/3.0_SP),detA)
       unimodA = factor*A      
     CASE DEFAULT
       CALL FlagError("Matrix size not implemented.",err,error,*999)
@@ -4211,7 +4399,7 @@ CONTAINS
       unimodA = factor*A
     CASE(3)
       CALL Determinant(A,detA,err,error,*999)
-      factor = SIGN(ABS(detA)**1.0_DP/3.0_DP,detA)
+      factor = SIGN(ABS(detA)**(-1.0_DP/3.0_DP),detA)
       unimodA = factor*A      
     CASE DEFAULT
       CALL FlagError("Matrix size not implemented.",err,error,*999)

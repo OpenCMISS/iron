@@ -2743,7 +2743,8 @@ CONTAINS
         ELSEIF(SOLVER%SOLVE_TYPE==SOLVER_GEOMETRIC_TRANSFORMATION_TYPE) THEN
           CALL Problem_SolverGeometricTransformationSolve(SOLVER%geometricTransformationSolver,err,error,*999)
         ELSE
-          CALL FlagError("Solver does not have any equations associated.",err,error,*999)
+          !Do nothing now. 
+          !CALL FlagError("Solver does not have any equations associated.",err,error,*999)
         ENDIF
       ENDIF
 

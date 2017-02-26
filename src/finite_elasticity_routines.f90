@@ -1323,7 +1323,7 @@ CONTAINS
     INTEGER(INTG) :: NDOFS,mh,ms,mhs,mi,nh,ns,rowComponentIdx,rowElementParameterIdx,rowElementDofIdx,xiIdx,columnComponentIdx, &
       & columnElementParameterIdx
     INTEGER(INTG) :: DEPENDENT_NUMBER_OF_COMPONENTS
-    INTEGER(INTG) :: NUMBER_OF_DIMENSIONS,NUMBER_OF_XI,HYDROSTATIC_PRESSURE_COMPONENT,hydrostaticPressureComponent,numberOfXi
+    INTEGER(INTG) :: numberOfDimensions,NUMBER_OF_XI,HYDROSTATIC_PRESSURE_COMPONENT,hydrostaticPressureComponent,numberOfXi
     INTEGER(INTG) :: NUMBER_OF_FIELD_COMPONENT_INTERPOLATION_PARAMETERS
     INTEGER(INTG) :: DEPENDENT_COMPONENT_INTERPOLATION_TYPE,dependentComponentInterpolationType
     INTEGER(INTG) :: DEPENDENT_NUMBER_OF_GAUSS_POINTS       
@@ -1350,6 +1350,15 @@ CONTAINS
       & devBePrimePrime(3,3),BePrimePrimeStar(3,3),devDbar(3,3),gePrimePrime(3,3),gePrimePrimeStar(3,3),devT(3,3),dtGamma, &
       & dtGamma0,dtGamma1,factor1,factor2,Fr(3,3),FrPrime(3,3),gammaEStar,gamma,hydBePrimeStar(3,3),hydDbar(3,3),ITens(3,3), &
       & kappa,tempTensor(3,3)
+    INTEGER(INTG) :: numIterations,maxNumIterations
+    REAL(DP) :: mu0,q,kt,kc,k1,k2,k3,k12,ka,Je1,Je2,Jh,GammaM,deltaAlphaNorm,deltaAlphaNormTolerance,detBePrime, &
+      & detBePrimePrime,BeDDotH,BeDDotBe,detBe,ktJe,kcJe,macEe11,macEe22,macEe33,QQ,detInvFrT,hstep,hStepAlpha,detJacobian, &
+      & H11,H22,H33,H12,H13,H23
+    REAL(DP) :: alpha(2),perturbedAlpha(2),deltaAlpha(2),resid(2),perturbedResid(2),H(3,3),HPrimePrime(3,3), &
+      & S1(3,3),S2(3,3),S(3,3,3,3),Be(3,3),uniBePrime1(3,3),invBePrime(3,3),Jacobian(2,2),lame(4),Ee(4,4),invBe(3,3), &
+      & invBeS33(3,3),S33invBe(3,3),T0(3,3),T1(3,3),T2(3,3),T3(3,3),T4(3,3),T5(3,3),invFrT(3,3),BePrimePrime(3,3), &
+      & invJacobian(2,2)
+    REAL(DP) :: statev(13),ddsdde(3,3,3,3),props(8)
     INTEGER(INTG) :: EQUATIONS_SET_SUBTYPE
 
     ENTERS("FiniteElasticity_FiniteElementResidualEvaluate",ERR,ERROR,*999)
@@ -1420,7 +1429,7 @@ CONTAINS
         GEOMETRIC_BASIS=>GEOMETRIC_FIELD%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR% &
           & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
 
-        NUMBER_OF_DIMENSIONS=EQUATIONS_SET%REGION%COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS
+        numberOfDimensions=EQUATIONS_SET%REGION%COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS
         numberOfXi=DECOMPOSITION%DOMAIN(MESH_COMPONENT_NUMBER)%PTR%TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS%NUMBER_OF_XI
 
         !Initialise tensors and matrices
@@ -1554,14 +1563,14 @@ CONTAINS
               & MATERIALS_INTERPOLATED_POINT,ERR,ERROR,*999)
             
             !Loop over geometric dependent basis functions.
-            DO nh=1,NUMBER_OF_DIMENSIONS
+            DO nh=1,numberOfDimensions
               MESH_COMPONENT_NUMBER=FIELD_VARIABLE%COMPONENTS(nh)%MESH_COMPONENT_NUMBER
               DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(MESH_COMPONENT_NUMBER)%PTR% &
                 & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
               COMPONENT_QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
               DO ns=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
                 !Loop over derivative directions.
-                DO mh=1,NUMBER_OF_DIMENSIONS
+                DO mh=1,numberOfDimensions
                   SUM1=0.0_DP
                   DO mi=1,numberOfXi
                     SUM1=SUM1+DEPENDENT_INTERPOLATED_POINT_METRICS%DXI_DX(mi,mh)* &
@@ -1583,15 +1592,15 @@ CONTAINS
              & MATERIALS_INTERPOLATED_POINT,STRESS_TENSOR,DZDNU,Jznu,elementNumber,gauss_idx,ERR,ERROR,*999)
             
             ! Convert from Voigt form to tensor form and multiply with Jacobian and Gauss weight.
-            DO nh=1,NUMBER_OF_DIMENSIONS
-              DO mh=1,NUMBER_OF_DIMENSIONS
+            DO nh=1,numberOfDimensions
+              DO mh=1,numberOfDimensions
                 JGW_CAUCHY_TENSOR(mh,nh)=JGW*STRESS_TENSOR(TENSOR_TO_VOIGT3(mh,nh))
               ENDDO
             ENDDO
 
             !Now add up the residual terms
             mhs=0
-            DO mh=1,NUMBER_OF_DIMENSIONS
+            DO mh=1,numberOfDimensions
               MESH_COMPONENT_NUMBER=FIELD_VARIABLE%COMPONENTS(mh)%MESH_COMPONENT_NUMBER
               DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(MESH_COMPONENT_NUMBER)%PTR% &
                 & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
@@ -1631,7 +1640,7 @@ CONTAINS
 !                   & DENSITY_INTERPOLATED_POINT,ERR,ERROR,*999)
 !                 DENSITY=DENSITY_INTERPOLATED_POINT%VALUES(1,NO_PART_DERIV)
 !                 mhs=0
-!                 DO mh=1,NUMBER_OF_DIMENSIONS
+!                 DO mh=1,numberOfDimensions
 !                   MESH_COMPONENT_NUMBER=FIELD_VARIABLE%COMPONENTS(mh)%MESH_COMPONENT_NUMBER
 !                   DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(MESH_COMPONENT_NUMBER)%PTR% &
 !                     & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
@@ -1663,7 +1672,7 @@ CONTAINS
             CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber, &
               & DEPENDENT_INTERPOLATION_PARAMETERS,ERR,ERROR,*999) 
             mhs=0          
-            DO mh=1,NUMBER_OF_DIMENSIONS
+            DO mh=1,numberOfDimensions
               MESH_COMPONENT_NUMBER=FIELD_VARIABLE%COMPONENTS(mh)%MESH_COMPONENT_NUMBER
               DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(MESH_COMPONENT_NUMBER)%PTR% &
                 & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
@@ -1752,13 +1761,13 @@ CONTAINS
             ENDIF
 
             !Calculate dPhi/dZ at the gauss point, Phi is the basis function
-            CALL FINITE_ELASTICITY_GAUSS_DFDZ(DEPENDENT_INTERPOLATED_POINT,elementNumber,gauss_idx,NUMBER_OF_DIMENSIONS, &
+            CALL FINITE_ELASTICITY_GAUSS_DFDZ(DEPENDENT_INTERPOLATED_POINT,elementNumber,gauss_idx,numberOfDimensions, &
               & numberOfXi,DFDZ,ERR,ERROR,*999)
 
             !For membrane theory in 3D space, the final equation is multiplied by thickness. Default to unit thickness if equation set subtype is not membrane
             THICKNESS = 1.0_DP
             IF(EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_MEMBRANE_SUBTYPE) THEN
-              IF(NUMBER_OF_DIMENSIONS == 3) THEN
+              IF(numberOfDimensions == 3) THEN
                 THICKNESS = MATERIALS_INTERPOLATED_POINT%VALUES(MATERIALS_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS% &
                   & FIELD_VARIABLE%NUMBER_OF_COMPONENTS,1)
               ENDIF
@@ -1766,7 +1775,7 @@ CONTAINS
 
             !Now add up the residual terms
             element_dof_idx=0
-            DO component_idx=1,NUMBER_OF_DIMENSIONS
+            DO component_idx=1,numberOfDimensions
               DEPENDENT_COMPONENT_INTERPOLATION_TYPE=DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS(component_idx)%INTERPOLATION_TYPE
               IF(DEPENDENT_COMPONENT_INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN !node based
                 DEPENDENT_BASIS=>DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS(component_idx)%DOMAIN%TOPOLOGY% &
@@ -1774,7 +1783,7 @@ CONTAINS
                 NUMBER_OF_FIELD_COMPONENT_INTERPOLATION_PARAMETERS=DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
                 DO parameter_idx=1,NUMBER_OF_FIELD_COMPONENT_INTERPOLATION_PARAMETERS
                   element_dof_idx=element_dof_idx+1
-                  DO component_idx2=1,NUMBER_OF_DIMENSIONS
+                  DO component_idx2=1,numberOfDimensions
                     NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(element_dof_idx)= &
                       & NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(element_dof_idx)+ &
                       & GAUSS_WEIGHT*Jxxi*Jznu*THICKNESS*cauchyTensor(component_idx,component_idx2)* &
@@ -1870,13 +1879,13 @@ CONTAINS
               & NUMBER_OF_COMPONENTS
             P=DEPENDENT_INTERPOLATED_POINT%VALUES(HYDROSTATIC_PRESSURE_COMPONENT,1)
             
-            CALL FiniteElasticity_GaussGrowthTensor(EQUATIONS_SET,NUMBER_OF_DIMENSIONS,gauss_idx,elementNumber,DEPENDENT_FIELD, &
+            CALL FiniteElasticity_GaussGrowthTensor(EQUATIONS_SET,numberOfDimensions,gauss_idx,elementNumber,DEPENDENT_FIELD, &
               & dZdNu,Fg,Fe,Jg,Je,err,error,*999)
              
             CALL FiniteElasticity_StrainTensor(Fe,C,f,Jznu,E,err,error,*999)
  
             !Get the stress field!!!
-            IF(NUMBER_OF_DIMENSIONS==3) THEN
+            IF(numberOfDimensions==3) THEN
               CALL Field_ParameterSetGetLocalGaussPoint(DEPENDENT_FIELD,FIELD_U2_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                 & gauss_idx,elementNumber,1,piolaTensor(1,1),ERR,ERROR,*999)
               CALL Field_ParameterSetGetLocalGaussPoint(DEPENDENT_FIELD,FIELD_U2_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
@@ -1899,7 +1908,7 @@ CONTAINS
               piolaTensor(2,1)=piolaTensor(1,2)
               piolaTensor(3,1)=piolaTensor(1,3)
               piolaTensor(3,2)=piolaTensor(2,3)
-            ELSE IF(NUMBER_OF_DIMENSIONS==2) THEN
+            ELSE IF(numberOfDimensions==2) THEN
               CALL Field_ParameterSetGetLocalGaussPoint(DEPENDENT_FIELD,FIELD_U2_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                 & gauss_idx,elementNumber,1,piolaTensor(1,1),ERR,ERROR,*999)
               CALL Field_ParameterSetGetLocalGaussPoint(DEPENDENT_FIELD,FIELD_U2_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
@@ -1939,14 +1948,14 @@ CONTAINS
             ENDIF
 
             !Calculate dPhi/dZ at the gauss point, Phi is the basis function
-            !CALL FINITE_ELASTICITY_GAUSS_DFDZ(DEPENDENT_INTERPOLATED_POINT,elementNumber,gauss_idx,NUMBER_OF_DIMENSIONS, &
+            !CALL FINITE_ELASTICITY_GAUSS_DFDZ(DEPENDENT_INTERPOLATED_POINT,elementNumber,gauss_idx,numberOfDimensions, &
             !  & numberOfXi,DFDZ,ERR,ERROR,*999)
 
             !For membrane theory in 3D space, the final equation is multiplied by thickness. Default to unit thickness if equation set subtype is not membrane
             !!TODO Maybe have the thickness as a component in the equations set field. Yes, as we don't need a materials field for CellML constituative laws.
             THICKNESS = 1.0_DP
             IF(EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_MEMBRANE_SUBTYPE) THEN
-              IF(NUMBER_OF_DIMENSIONS == 3) THEN
+              IF(numberOfDimensions == 3) THEN
                 IF(ASSOCIATED(MATERIALS_FIELD)) THEN
                   CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
                     & MATERIALS_INTERPOLATED_POINT,ERR,ERROR,*999)
@@ -1958,7 +1967,7 @@ CONTAINS
 
             !!Now add up the residual terms
             !element_dof_idx=0
-            !DO component_idx=1,NUMBER_OF_DIMENSIONS
+            !DO component_idx=1,numberOfDimensions
             !  DEPENDENT_COMPONENT_INTERPOLATION_TYPE=DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS(component_idx)%INTERPOLATION_TYPE
             !  IF(DEPENDENT_COMPONENT_INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN !node based
             !    DEPENDENT_BASIS=>DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS(component_idx)%DOMAIN%TOPOLOGY% &
@@ -1966,7 +1975,7 @@ CONTAINS
             !    NUMBER_OF_FIELD_COMPONENT_INTERPOLATION_PARAMETERS=DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
             !    DO parameter_idx=1,NUMBER_OF_FIELD_COMPONENT_INTERPOLATION_PARAMETERS
             !      element_dof_idx=element_dof_idx+1
-            !      DO component_idx2=1,NUMBER_OF_DIMENSIONS
+            !      DO component_idx2=1,numberOfDimensions
             !        NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(element_dof_idx)= &
             !          & NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(element_dof_idx)+ &
             !          & GAUSS_WEIGHT*Jzxi*THICKNESS*cauchyTensor(component_idx,component_idx2)* &
@@ -1980,14 +1989,14 @@ CONTAINS
             !ENDDO ! component_idx
 
             !Loop over geometric dependent basis functions.
-            DO nh=1,NUMBER_OF_DIMENSIONS
+            DO nh=1,numberOfDimensions
               MESH_COMPONENT_NUMBER=FIELD_VARIABLE%COMPONENTS(nh)%MESH_COMPONENT_NUMBER
               DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(MESH_COMPONENT_NUMBER)%PTR% &
                 & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
               COMPONENT_QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
               DO ns=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
                 !Loop over derivative directions.
-                DO mh=1,NUMBER_OF_DIMENSIONS
+                DO mh=1,numberOfDimensions
                   SUM1=0.0_DP
                   DO mi=1,numberOfXi
                     SUM1=SUM1+DEPENDENT_INTERPOLATED_POINT_METRICS%DXI_DX(mi,mh)* &
@@ -2000,7 +2009,7 @@ CONTAINS
             JGW=Jzxi*DEPENDENT_QUADRATURE_SCHEME%GAUSS_WEIGHTS(gauss_idx)
             !Now add up the residual terms
             mhs=0
-            DO mh=1,NUMBER_OF_DIMENSIONS
+            DO mh=1,numberOfDimensions
               MESH_COMPONENT_NUMBER=FIELD_VARIABLE%COMPONENTS(mh)%MESH_COMPONENT_NUMBER
               DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(MESH_COMPONENT_NUMBER)%PTR% &
                 & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
@@ -2057,9 +2066,9 @@ CONTAINS
           !Loop over gauss points and add residuals
           DO gaussIdx=1,DEPENDENT_NUMBER_OF_GAUSS_POINTS
             
-            IF(DIAGNOSTICS1) THEN
-              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Element number = ",elementNumber,ERR,ERROR,*999)
-              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Gauss index  = ",gaussIdx,ERR,ERROR,*999)
+            IF(diagnostics1) THEN
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Element number = ",elementNumber,err,error,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Gauss index  = ",gaussIdx,err,error,*999)
             ENDIF
 
             gaussWeight=DEPENDENT_QUADRATURE_SCHEME%GAUSS_WEIGHTS(gaussIdx)
@@ -2084,19 +2093,7 @@ CONTAINS
                 & FIBRE_INTERPOLATED_POINT,ERR,ERROR,*999)
             ENDIF
             
-            !Get the hardening variable, kappa
-            CALL Field_ParameterSetGetLocalGaussPoint(DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-              & gaussIdx,elementNumber,1,kappa1,err,error,*999)
-            !Get BePrime from the start of the time step
-            DO columnIdx=1,3
-              DO rowIdx=1,3
-                componentIdx=1+rowIdx+(columnIdx-1)*3
-                CALL Field_ParameterSetGetLocalGaussPoint(DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                  & gaussIdx,elementNumber,componentIdx,BePrime1(rowIdx,columnIdx),err,error,*999)
-              ENDDO !rowIdx
-            ENDDO !column
-            
-            !Calculate F=dZ/dNu, the deformation gradient tensor at the gauss point
+             !Calculate F=dZ/dNu, the deformation gradient tensor at the gauss point
             CALL FiniteElasticity_GaussDeformationGradientTensor(DEPENDENT_INTERPOLATED_POINT_METRICS, &
               & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,dZdXi,dZdNu,ERR,ERROR,*999)
 
@@ -2105,132 +2102,25 @@ CONTAINS
             CALL FiniteElasticity_GaussDeformationGradientTensor(prevDependentInterpPointMetrics, &
               & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,prevdZdXi,prevdZdNu,ERR,ERROR,*999)
 
-            !Equation numbers are from M. Hollenstein, M. Jabareen and M.B. Rubin "Modeling a smoth elastic-inelastic
-            !transition with a strongly objective numerical integrator needing no iteration". 2013. Comput Mech. 52:649-667.
+            !Get BePrime from the start of the time step
+            DO rowIdx=1,numberOfDimensions
+              DO columnIdx=rowIdx,numberOfDimensions
+                componentIdx=1+TENSOR_TO_VOIGT(rowIdx,columnIdx,numberOfDimensions)
+                CALL Field_ParameterSetGetLocalGaussPoint(DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,componentIdx,BePrime1(rowIdx,columnIdx),err,error,*999)
+              ENDDO !columnIdx
+              DO columnIdx=1,rowIdx-1
+                BePrime1(rowIdx,columnIdx)=BePrime1(columnIdx,rowIdx)
+              ENDDO !columnIdx
+            ENDDO !rowIdx
+            
 
             !Calculate Fr = F.prevF^-1
             CALL Invert(prevdZdNu,invPrevdZdNu,prevJF,err,error,*999)
             CALL MatrixProduct(dZdNu,invPrevdZdNu,Fr,err,error,*999)
-
-            JXXi=GEOMETRIC_INTERPOLATED_POINT_METRICS%JACOBIAN            
-            JZxi=DEPENDENT_INTERPOLATED_POINT_METRICS%JACOBIAN
-            prevJZxi=prevDependentInterpPointMetrics%JACOBIAN
-            
-            SELECT CASE(EQUATIONS_SET_SUBTYPE)
-            CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
-              & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE)
-              P=DEPENDENT_INTERPOLATED_POINT%VALUES(hydrostaticPressureComponent,1)
-            
-              mu=MATERIALS_INTERPOLATED_POINT%VALUES(1,1)
-              a0=MATERIALS_INTERPOLATED_POINT%VALUES(2,1)
-              a1=MATERIALS_INTERPOLATED_POINT%VALUES(3,1)
-              b0=MATERIALS_INTERPOLATED_POINT%VALUES(4,1)
-              b1=MATERIALS_INTERPOLATED_POINT%VALUES(5,1)
-              m=MATERIALS_INTERPOLATED_POINT%VALUES(6,1)
-              kappas=MATERIALS_INTERPOLATED_POINT%VALUES(7,1)
-            CASE(EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
-              & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
-              K=MATERIALS_INTERPOLATED_POINT%VALUES(1,1)
-              mu=MATERIALS_INTERPOLATED_POINT%VALUES(2,1)
-              a0=MATERIALS_INTERPOLATED_POINT%VALUES(3,1)
-              a1=MATERIALS_INTERPOLATED_POINT%VALUES(4,1)
-              b0=MATERIALS_INTERPOLATED_POINT%VALUES(5,1)
-              b1=MATERIALS_INTERPOLATED_POINT%VALUES(6,1)
-              m=MATERIALS_INTERPOLATED_POINT%VALUES(7,1)
-              kappas=MATERIALS_INTERPOLATED_POINT%VALUES(8,1)
-            END SELECT
-
+            !Calculate Jr
             CALL Determinant(Fr,Jr,err,error,*999)
-            !Eqn (4.6)
-!!TODO: This could just be JZxi???
-            J=Jr*prevJF
-            !Eqn (4.4)
-            CALL Unimodular(Fr,FrPrime,err,error,*999)
-            !Calculate Elastic Trial. Eqn (4.7)
-            CALL MatrixProduct(FrPrime,BePrime1,tempTensor,err,error,*999)
-            CALL MatrixProductTranspose(tempTensor,FrPrime,BePrimeStar,err,error,*999)
-            CALL DecomposeSphericalDeviatoric(BePrimeStar,hydBePrimeStar,BePrimePrimeStar,err,error,*999)
-            !Calculate gePrimePrimeStar. Eqn (4.10)
-            gePrimePrimeStar=BePrimePrimeStar/2.0_DP
-            !Calculate Equivalent Strain, gammaEStar. Use Eqn (4.10) in Eqn (4.17)
-            CALL DoubleDotProduct(BePrimePrimeStar,BePrimePrimeStar,gammaEStar,err,error,*999)
-            gammaEStar=SQRT(3.0_DP/8.0_DP*gammaEStar)
-            !Calculate Total Effective Distortional Strain, Dbar. Eqn (4.13)
-            CALL MatrixProductTranspose(Fr,Fr,Br,err,error,*999)
-            Dbar=(Br-ITens)/(2.0_DP*dt)
-            !Calculate delta epsilon. Eqn (4.14). Note typo in paper. It should be devDbar dot devDbar
-            CALL DecomposeSphericalDeviatoric(Dbar,hydDbar,devDbar,err,error,*999)
-            CALL DoubleDotProduct(devDbar,devDbar,deltaEps,err,error,*999)
-            deltaEps=dt*SQRT(2.0_DP/3.0_DP*deltaEps)
-            !Calculate gamma. Eqn (4.18)
-            dtGamma0=dt*a0+b0*deltaEps
-            dtGamma1=dt*a1+b1*deltaEps
-            !Eqn (4.21)
-            c0=dtGamma1*(gammaEStar-(1.0_DP+dtGamma0)*kappa1)
-            IF(c0<=ZERO_TOLERANCE) THEN
-              !Eqn (4.19)
-              gamma=0.0_DP
-            ELSE
-              !Eqn (4.21)
-              c1=gammaEStar+dtGamma1*(kappa1-m*(gammaEStar-(1.0_DP+dtGamma0)*kappas))
-              IF(ABS(m)<ZERO_TOLERANCE) THEN
-                gamma=c0/c1
-              ELSE
-                !Eqn (4.21)
-                c2=m*(gammaEStar+dtGamma1*kappas)
-                !Eqn (4.22)
-                gamma=(-c1+SQRT(c1*c1+4.0_DP*c0*c2))/(2.0_DP*c2)
-              ENDIF
-            ENDIF
-            !Calculate dtGamma. Eqn (4.15)
-            dtGamma=dtGamma0+gamma
-            !Calculate Hardening. Eqn (4.16)
-            kappa=(kappa1+m*kappas*gamma)/(1.0_DP+m*gamma)
-            !Calculate devBePrimePrime. Eqn (4.11)
-            devBePrimePrime=2.0_DP/(1.0_DP+dtGamma)*gePrimePrimeStar
-            !Calculate gePrimePrime (deviatoric part of gePrime). Eqn (3.1) and (4.11)
-            gePrimePrime=devBePrimePrime/2.0_DP
-            !Calculate alpha
-            CALL Determinant(devBePrimePrime,detdevBePrimePrime,err,error,*999)
-            CALL DoubleDotProduct(devBePrimePrime,devBePrimePrime,factor1,err,error,*999)
-            factor1=2.0_DP/3.0_DP*factor1
-            IF(ABS(factor1)<ZERO_TOLERANCE) THEN
-              alpha1=3.0_DP
-            ELSE
-              factor2=(4.0_DP*(1.0_DP-detdevBePrimePrime))/(factor1**1.5_DP)
-              IF(factor2>=1.0_DP) THEN
-                alpha1=3.0_DP*SQRT(factor1)*COSH(ACOSH(factor2)/3.0_DP)
-              ELSE
-                alpha1=3.0_DP*SQRT(factor1)*COS(ACOS(factor2)/3.0_DP)
-              ENDIF
-            ENDIF
-            !Calculate BePrime. Eqn (4.12)
-            BePrime=alpha1/3.0_DP*ITens+devBePrimePrime
-            !Calculate deviatoric part of Cauchy stress. Eqn (6.2)
-            devT=2.0_DP*mu*gePrimePrime/J
-            SELECT CASE(EQUATIONS_SET_SUBTYPE)
-            CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
-              & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE)
-              P=DEPENDENT_INTERPOLATED_POINT%VALUES(hydrostaticPressureComponent,1)
-            CASE(EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
-              & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
-              P=-K*(J-1.0_DP)
-            END SELECT
-            !Calculate Cauchy stress. Eqn (2.9)
-            cauchyTensor=devT-P*ITens
             
-            !Store the current value of the hardening variable, kappa, in the next values parameter set
-            CALL Field_ParameterSetUpdateLocalGaussPoint(DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_NEXT_VALUES_SET_TYPE, &
-              & gaussIdx,elementNumber,1,kappa,err,error,*999)            
-            !Store BePrime in the next values parameter set
-            DO columnIdx=1,3
-              DO rowIdx=1,3
-                componentIdx=1+rowIdx+(columnIdx-1)*3
-                CALL Field_ParameterSetUpdateLocalGaussPoint(DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_NEXT_VALUES_SET_TYPE, &
-                  & gaussIdx,elementNumber,componentIdx,BePrime(rowIdx,columnIdx),err,error,*999)            
-              ENDDO !rowIdx
-            ENDDO !column
-
             IF(diagnostics1) THEN
               CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
               CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Deformation gradient tensors:",err,error,*999)
@@ -2247,36 +2137,409 @@ CONTAINS
                 & 3,3,Fr,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("           Fr','(",I1,",:)',' :",3(X,E13.6))', &
                 & '(16X,3(X,E13.6))',ERR,ERROR,*999)
               CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Jacobians:",err,error,*999)
-              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  J at time t      = ",prevJF,err,error,*999)
-              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  J at time t + dt = ",J,err,error,*999)
-              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Jr               = ",Jr,err,error,*999)
-              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Strain tensors:",err,error,*999)
-              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Be prime at t:",err,error,*999)
-              CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
-                & 3,3,BePrime1,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    Be prime','(",I1,",:)',' :",3(X,E13.6))', &
-                & '(16X,3(X,E13.6))',ERR,ERROR,*999)
-              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Be prime at t+dt:",err,error,*999)
-              CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
-                & 3,3,BePrime,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    Be prime','(",I1,",:)',' :",3(X,E13.6))', &
-                & '(16X,3(X,E13.6))',ERR,ERROR,*999)
-              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  gamma = ",gamma,err,error,*999)
-              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Strain hardening:",err,error,*999)
-              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  kappa at time t    = ",kappa1,err,error,*999)
-              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  kappa at time t+dt = ",kappa,err,error,*999)
-              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Stress tensors:",err,error,*999)
-              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Hydrostatic pressure = ",P,err,error,*999)
-              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Deviatoric Cauchy stress tensor:",err,error,*999)
-              CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
-                & 3,3,devT,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    dev sigma','(",I1,",:)',' :",3(X,E13.6))', &
-                & '(16X,3(X,E13.6))',ERR,ERROR,*999)
-              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Cauchy stress tensor:",err,error,*999)
-              CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
-                & 3,3,cauchyTensor,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("        sigma','(",I1,",:)',' :",3(X,E13.6))', &
-                & '(16X,3(X,E13.6))',ERR,ERROR,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  J at time t       = ",prevJF,err,error,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  J at time t + dt  = ",J,err,error,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Jr                = ",Jr,err,error,*999)
             ENDIF
             
+            JXXi=GEOMETRIC_INTERPOLATED_POINT_METRICS%JACOBIAN            
+            JZxi=DEPENDENT_INTERPOLATED_POINT_METRICS%JACOBIAN
+            prevJZxi=prevDependentInterpPointMetrics%JACOBIAN            
+                        
+            SELECT CASE(EQUATIONS_SET_SUBTYPE)
+            CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE)
+              
+              !Equation numbers are from M. Hollenstein, M. Jabareen and M.B. Rubin "Modeling a smoth elastic-inelastic
+              !transition with a strongly objective numerical integrator needing no iteration". 2013. Comput Mech. 52:649-667.
+
+              mu=MATERIALS_INTERPOLATED_POINT%VALUES(1,1)
+              a0=MATERIALS_INTERPOLATED_POINT%VALUES(2,1)
+              a1=MATERIALS_INTERPOLATED_POINT%VALUES(3,1)
+              b0=MATERIALS_INTERPOLATED_POINT%VALUES(4,1)
+              b1=MATERIALS_INTERPOLATED_POINT%VALUES(5,1)
+              m=MATERIALS_INTERPOLATED_POINT%VALUES(6,1)
+              kappas=MATERIALS_INTERPOLATED_POINT%VALUES(7,1)
+              
+              !Get the hardening variable, kappa
+              CALL Field_ParameterSetGetLocalGaussPoint(DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                & gaussIdx,elementNumber,1,kappa1,err,error,*999)
+              
+              !props(1)=K
+              !props(2)=mu
+              !props(3)=a0
+              !props(4)=a1
+              !props(5)=b0
+              !props(6)=b1
+              !props(7)=m
+              !props(8)=kappas
+              
+              !statev(1)=prevJF
+              !statev(2)=BePrime1(1,1)
+              !statev(3)=BePrime1(2,2)
+              !statev(4)=BePrime1(3,3)
+              !statev(5)=BePrime1(1,2)
+              !statev(6)=BePrime1(2,3)
+              !statev(7)=BePrime1(1,3)
+              !statev(8)=kappa1
+              !statev(9)=0.0_DP
+              !statev(10)=0.0_DP
+              !statev(11)=0.0_DP
+              !statev(12)=statev(2)+statev(3)+statev(4)
+              !statev(13)=0.0_DP
+              
+              !CALL umat(6,13,8,2,1,prevdZdNu,dZdNu,dt,cauchyTensor,statev,ddsdde,props)
+                            
+              !Eqn (4.6)
+              J=Jr*prevJF
+              !Eqn (4.4)
+              CALL Unimodular(Fr,FrPrime,err,error,*999)
+              !Calculate Elastic Trial. Eqn (4.7)
+              CALL MatrixProduct(FrPrime,BePrime1,tempTensor,err,error,*999)
+              CALL MatrixProductTranspose(tempTensor,FrPrime,BePrimeStar,err,error,*999)
+              CALL DecomposeSphericalDeviatoric(BePrimeStar,hydBePrimeStar,BePrimePrimeStar,err,error,*999)
+              !Calculate gePrimePrimeStar. Eqn (4.10)
+              gePrimePrimeStar=BePrimePrimeStar/2.0_DP
+              !Calculate Equivalent Strain, gammaEStar. Use Eqn (4.10) in Eqn (4.17)
+              CALL DoubleDotProduct(BePrimePrimeStar,BePrimePrimeStar,gammaEStar,err,error,*999)
+              gammaEStar=SQRT(3.0_DP/8.0_DP*gammaEStar)
+              !Calculate Total Effective Distortional Strain, Dbar. Eqn (4.13)
+              CALL MatrixProductTranspose(Fr,Fr,Br,err,error,*999)
+              Dbar=(Br-ITens)/(2.0_DP*dt)
+              !Calculate delta epsilon. Eqn (4.14). Note typo in paper. It should be devDbar dot devDbar
+              CALL DecomposeSphericalDeviatoric(Dbar,hydDbar,devDbar,err,error,*999)
+              CALL DoubleDotProduct(devDbar,devDbar,deltaEps,err,error,*999)
+              deltaEps=dt*SQRT(2.0_DP/3.0_DP*deltaEps)
+              !Calculate gamma. Eqn (4.18)
+              dtGamma0=dt*a0+b0*deltaEps
+              dtGamma1=dt*a1+b1*deltaEps
+              !Eqn (4.21)
+              c0=dtGamma1*(gammaEStar-(1.0_DP+dtGamma0)*kappa1)
+              IF(c0<=ZERO_TOLERANCE) THEN
+                !Eqn (4.19)
+                gamma=0.0_DP
+              ELSE
+                !Eqn (4.21)
+                c1=gammaEStar+dtGamma1*(kappa1-m*(gammaEStar-(1.0_DP+dtGamma0)*kappas))
+                IF(ABS(m)<ZERO_TOLERANCE) THEN
+                  gamma=c0/c1
+                ELSE
+                  !Eqn (4.21)
+                  c2=m*(gammaEStar+dtGamma1*kappas)
+                  !Eqn (4.22)
+                  gamma=(-c1+SQRT(c1*c1+4.0_DP*c0*c2))/(2.0_DP*c2)
+                ENDIF
+              ENDIF
+              !Calculate dtGamma. Eqn (4.15)
+              dtGamma=dtGamma0+gamma
+              !Calculate Hardening. Eqn (4.16)
+              kappa=(kappa1+m*kappas*gamma)/(1.0_DP+m*gamma)
+              !Calculate devBePrimePrime. Eqn (4.11)
+              devBePrimePrime=2.0_DP/(1.0_DP+dtGamma)*gePrimePrimeStar
+              !Calculate gePrimePrime (deviatoric part of gePrime). Eqn (3.1) and (4.11)
+              gePrimePrime=devBePrimePrime/2.0_DP
+              !Calculate alpha
+              CALL Determinant(devBePrimePrime,detdevBePrimePrime,err,error,*999)
+              CALL DoubleDotProduct(devBePrimePrime,devBePrimePrime,factor1,err,error,*999)
+              factor1=2.0_DP/3.0_DP*factor1
+              IF(ABS(factor1)<ZERO_TOLERANCE) THEN
+                alpha1=3.0_DP
+              ELSE
+                factor2=(4.0_DP*(1.0_DP-detdevBePrimePrime))/(factor1**1.5_DP)
+                IF(factor2>=1.0_DP) THEN
+                  alpha1=3.0_DP*SQRT(factor1)*COSH(ACOSH(factor2)/3.0_DP)
+                ELSE
+                  alpha1=3.0_DP*SQRT(factor1)*COS(ACOS(factor2)/3.0_DP)
+                ENDIF
+              ENDIF
+              !Calculate BePrime. Eqn (4.12)
+              BePrime=alpha1/3.0_DP*ITens+devBePrimePrime
+              !Calculate deviatoric part of Cauchy stress. Eqn (6.2)
+              devT=2.0_DP*mu*gePrimePrime/J
+              SELECT CASE(EQUATIONS_SET_SUBTYPE)
+              CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE)
+                P=DEPENDENT_INTERPOLATED_POINT%VALUES(hydrostaticPressureComponent,1)
+              CASE(EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE)
+                P=-K*(J-1.0_DP)
+              END SELECT
+              !Calculate Cauchy stress. Eqn (2.9)
+              cauchyTensor=devT-P*ITens
+              
+              IF(diagnostics1) THEN
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Strain tensors:",err,error,*999)
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Be prime at t:",err,error,*999)
+                CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
+                  & 3,3,BePrime1,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    Be prime','(",I1,",:)',' :",3(X,E13.6))', &
+                  & '(16X,3(X,E13.6))',ERR,ERROR,*999)
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Be prime at t+dt:",err,error,*999)
+                CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
+                  & 3,3,BePrime,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    Be prime','(",I1,",:)',' :",3(X,E13.6))', &
+                  & '(16X,3(X,E13.6))',ERR,ERROR,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  gamma = ",gamma,err,error,*999)
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Strain hardening:",err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  kappa at time t      = ",kappa1,err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  kappa at time t + dt = ",kappa,err,error,*999)
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Stress tensors:",err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Hydrostatic pressure = ",P,err,error,*999)
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Deviatoric Cauchy stress tensor:",err,error,*999)
+                CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
+                  & 3,3,devT,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    dev sigma','(",I1,",:)',' :",3(X,E13.6))', &
+                  & '(16X,3(X,E13.6))',ERR,ERROR,*999)
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Cauchy stress tensor:",err,error,*999)
+                CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
+                  & 3,3,cauchyTensor,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("        sigma','(",I1,",:)',' :",3(X,E13.6))', &
+                  & '(16X,3(X,E13.6))',ERR,ERROR,*999)
+              ENDIF
+
+              !Store the current value of the hardening variable, kappa, in the next values parameter set
+              CALL Field_ParameterSetUpdateLocalGaussPoint(DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_NEXT_VALUES_SET_TYPE, &
+                & gaussIdx,elementNumber,1,kappa,err,error,*999)            
+                           
+            CASE(EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE,EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+              
+              mu0=MATERIALS_INTERPOLATED_POINT%VALUES(1,1)
+              q=MATERIALS_INTERPOLATED_POINT%VALUES(2,1)
+              kt=MATERIALS_INTERPOLATED_POINT%VALUES(3,1)
+              kc=MATERIALS_INTERPOLATED_POINT%VALUES(4,1)
+              k1=MATERIALS_INTERPOLATED_POINT%VALUES(5,1)
+              k2=MATERIALS_INTERPOLATED_POINT%VALUES(6,1)
+              k3=MATERIALS_INTERPOLATED_POINT%VALUES(7,1)
+              k12=MATERIALS_INTERPOLATED_POINT%VALUES(8,1)
+              ka=MATERIALS_INTERPOLATED_POINT%VALUES(9,1)
+              Gamma=MATERIALS_INTERPOLATED_POINT%VALUES(10,1)
+              GammaM=MATERIALS_INTERPOLATED_POINT%VALUES(11,1)
+              Jh=MATERIALS_INTERPOLATED_POINT%VALUES(12,1)
+              H11=MATERIALS_INTERPOLATED_POINT%VALUES(13,1)
+              H22=MATERIALS_INTERPOLATED_POINT%VALUES(14,1)
+              H33=MATERIALS_INTERPOLATED_POINT%VALUES(15,1)
+              H12=MATERIALS_INTERPOLATED_POINT%VALUES(16,1)
+              H13=MATERIALS_INTERPOLATED_POINT%VALUES(17,1)
+              H23=MATERIALS_INTERPOLATED_POINT%VALUES(18,1)
+              
+              !Get the current value of Je at the start of the time step
+              CALL Field_ParameterSetGetLocalGaussPoint(DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                & gaussIdx,elementNumber,1,Je1,err,error,*999)
+              
+               !Get the structural tensor, S1, from the start of the time step
+              DO rowIdx=1,numberOfDimensions
+                DO columnIdx=1,numberOfDimensions
+                  componentIdx=rowIdx+(columnIdx-1)*numberOfDimensions
+                  CALL Field_ParameterSetGetLocalGaussPoint(DEPENDENT_FIELD,FIELD_U2_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                    & gaussIdx,elementNumber,componentIdx,S1(rowIdx,columnIdx),err,error,*999)
+                ENDDO !columnIdx
+              ENDDO !rowIdx
+
+              !Calculate the elastic dilatation. Eqn (6.5) and (6.8)
+              Je2 = Jr*Je1
+              Je = EXP(LOG(Je2)+dt*GammaM*LOG(Jh))/(1.0_DP+dt*GammaM)
+              !Update state variables
+              !Update the fibre vectors s1 and s3 to give S at t2 i.e., S2 Eqn (6.4)
+              CALL MatrixVectorProduct(Fr,S1(:,1),S2(:,1),err,error,*999)
+              CALL Normalise(S2(:,1),S2(:,1),err,error,*999)
+              CALL InvertTranspose(Fr,invFrT,detInvFrT,err,error,*999)
+              CALL MatrixVectorProduct(invFrT,S1(:,3),S2(:,3),err,error,*999)
+              CALL Normalise(S2(:,3),S2(:,3),err,error,*999)
+              !Compute s2 = s3 x s1. Eqn (3.1)
+              CALL CrossProduct(S2(:,3),S2(:,1),S2(:,2),err,error,*999)
+              !Compute the structural tensor(s). Eqn (3.5)
+!!TODO: Change this to use a matrix matrix tensor product?/ Indices will change???
+              DO rowIdx=1,numberOfDimensions
+                DO columnIdx=1,numberOfDimensions
+                  CALL TensorProduct(S2(:,rowIdx),S2(:,columnIdx),S(rowIdx,columnIdx,:,:),err,error,*999)
+                ENDDO !columnIdx
+              ENDDO !rowIdx
+              !Compute the homostatis growth tensor. Eqn (7.4) and (???)
+              HPrimePrime=H11*S(1,1,:,:)+H22*S(2,2,:,:)-(H11+H22)*S(3,3,:,:)+H12*(S(1,2,:,:)+S(2,1,:,:))
+              H=ITens+HPrimePrime
+              !Compute alphas via non-linear Newton solve              
+              !Calculate BePrimeStar
+              CALL MatrixProduct(FrPrime,BePrime1,tempTensor,err,error,*999)
+              CALL MatrixProductTranspose(tempTensor,FrPrime,BePrimeStar,err,error,*999)
+              !Calculate BePrimePrimeStar (deviatoric part of BePrimeStar)
+              CALL DecomposeSphericalDeviatoric(BePrimeStar,hydBePrimeStar,BePrimePrimeStar,err,error,*999)
+              !Initialise alpha
+              CALL Unimodular(BePrime1,uniBePrime1,err,error,*999)
+              CALL Trace(uniBePrime1,alpha(1),err,error,*999)
+              alpha(2)=1.0_DP              
+              numIterations=0
+              deltaAlphaNorm=1.0_DP
+              deltaAlphaNormTolerance=10.0E-10
+              hStep=10.0E-10
+              maxNumIterations=100
+              DO WHILE((deltaAlphaNorm>=deltaAlphaNormTolerance).AND.(numIterations<maxNumIterations))
+                !Increment iteration count
+                numIterations=numIterations+1
+                !Calculate deviatoric part of BePrime2, BePrimePrime
+                BePrimePrime=(BePrimePrimeStar+alpha(2)*dt*Gamma*HPrimePrime)/(1.0_DP+dt*Gamma)
+                !Calculate elastic distortion, Beprime
+                BePrime=alpha(1)*ITens/3.0_DP+BePrimePrime
+                !Calculate resid(1)
+                !Calculate inverse of BePrime
+                CALL Invert(BePrime,invBePrime,detBePrime,err,error,*999)
+                CALL DoubleDotProduct(invBePrime,H,BeDDotH,err,error,*999)
+                resid(1)=alpha(2)-3.0_DP/BeDDotH
+                !Calculate resid(2)
+                CALL DoubleDotProduct(BePrimePrime,BePrimePrime,BeDDotBe,err,error,*999)
+                CALL Determinant(BePrimePrime,detBePrimePrime,err,error,*999)
+                resid(2)=(alpha(1)/3.0_DP)**3.0_DP-(BeDDotBe*alpha(1)/6.0_DP)-(1.0_DP-detBePrimePrime)
+                perturbedAlpha=alpha
+                DO columnIdx=1,2
+                  hStepAlpha=MAX(hStep,ABS(hstep*perturbedAlpha(columnIdx)))
+                  perturbedAlpha(columnIdx)=perturbedAlpha(columnIdx)+hstepAlpha
+                  !Calculate deviatoric part of BePrime2, BePrimePrime
+                  BePrimePrime=(BePrimePrimeStar+perturbedAlpha(2)*dt*Gamma*HPrimePrime)/(1.0_DP+dt*Gamma)
+                  !Calculate elastic distortion, Beprime
+                  BePrime=perturbedAlpha(1)*ITens/3.0_DP+BePrimePrime
+                  !Calculate resid(1)
+                  !Calculate inverse of BePrime
+                  CALL Invert(BePrime,invBePrime,detBePrime,err,error,*999)
+                  CALL DoubleDotProduct(invBePrime,H,BeDDotH,err,error,*999)
+                  perturbedResid(1)=perturbedAlpha(2)-3.0_DP/BeDDotH
+                  !Calculate resid(2)
+                  CALL DoubleDotProduct(BePrimePrime,BePrimePrime,BeDDotBe,err,error,*999)
+                  CALL Determinant(BePrimePrime,detBePrimePrime,err,error,*999)
+                  perturbedResid(2)=(perturbedAlpha(1)/3.0_DP)**3.0_DP-(BeDDotBe*perturbedAlpha(1)/6.0_DP)-(1.0_DP-detBePrimePrime)
+                  DO rowIdx=1,2
+                    Jacobian(rowIdx,columnIdx)=(perturbedResid(rowIdx)-resid(rowIdx))/hStepAlpha
+                  ENDDO !rowIdx
+                  perturbedAlpha(columnIdx)=alpha(columnIdx)
+                ENDDO !columnIdx
+                CALL Invert(Jacobian,invJacobian,detJacobian,err,error,*999)
+                CALL MatrixVectorProduct(invJacobian,resid,deltaAlpha,err,error,*999)
+                CALL L2Norm(deltaAlpha,deltaAlphaNorm,err,error,*999)
+                alpha=alpha-deltaAlpha
+              ENDDO
+              !Calculate deviatoric part of BePrime2, BePrimePrime
+              BePrimePrime=(BePrimePrimeStar+alpha(2)*dt*Gamma*HPrimePrime)/(1.0_DP+dt*Gamma)
+              !Calculate elastic distortion, Beprime
+              BePrime=alpha(1)*ITens/3.0_DP+BePrimePrime
+              !Calculate strain information
+              !Calculate Be
+              Be=(Je**(2.0_DP/3.0_DP))*BePrime
+              !Invert Be
+              CALL Invert(Be,invBe,detBe,err,error,*999)
+              !Calculate lame and Ee
+              Ee=0.0_DP
+              DO rowIdx=1,numberOfDimensions
+                CALL DoubleDotProduct(invBe,S(rowIdx,rowIdx,:,:),lame(rowIdx),err,error,*999)
+                lame(rowIdx)=1.0_DP/SQRT(lame(rowIdx))
+                Ee(rowIdx,rowIdx)=(lame(rowIdx)*lame(rowIdx)-1.0_DP)/2.0_DP
+              ENDDO !rowIdx
+              CALL DoubleDotProduct(invBe,S(1,2,:,:),Ee(1,2),err,error,*999)
+              Ee(1,2)=-1.0_DP*lame(1)*lame(2)**Ee(1,2)/2.0_DP
+              CALL DoubleDotProduct(Be,S(3,3,:,:),lame(4),err,error,*999)
+              lame(4)=Je/SQRT(lame(4))
+              Ee(4,4)=lame(4)-1.0_DP
+              !Calculate stress information
+              ktJe=MacaulayBracket(Je-1.0_DP)
+              kcJe=MacaulayBracket(1.0_DP-Je)
+              macEe11=MacaulayBracket(Ee(1,1))
+              macEe22=MacaulayBracket(Ee(2,2))
+              macEe33=MacaulayBracket(Ee(3,3))
+              CALL MatrixProduct(invBe,S(3,3,:,:),invBeS33,err,error,*999)
+              CALL MatrixProduct(S(3,3,:,:),invBe,S33invBe,err,error,*999)
+              
+              QQ=0.50_DP*kt*(ktJe**2.0_DP)+0.50_DP*kc*(kcJe**2.0_DP) &
+                &  +0.50_DP*(alpha(1)-3.0_DP)+0.50_DP*k1*(macEe11**2.0_DP) &
+                &  +0.50_DP*k2*(macEe22**2.0_DP)+0.50_DP*k3*(macEe33**2.0_DP) &
+                &  +2.0_DP*k12*(Ee(1,2)**2.0_DP)+0.50_DP*ka*(Ee(4,4)**2.0d0)
+              
+              mu=mu0*EXP(q*QQ)
+              T0=mu*(kt*ktJe-kc*kcJe)*iTens+(mu/Je)*BePrimePrime
+              T1=((k1*mu*(lame(1)**2.0_DP)*macEe11)/Je)*S(1,1,:,:)
+              T2=((k2*mu*(lame(2)**2.0_DP)*macEe22)/Je)*(S(2,2,:,:)-(2.0_DP*lame(2)/lame(1))*Ee(1,2)*(S(1,2,:,:)+S(2,1,:,:)))
+              T3=((k3*mu*(lame(3)**2.0_DP)*macEe33)/Je)*((lame(3)**2.0_DP)*(invBeS33+S33invBe)-S(3,3,:,:))
+              T4=2.0_DP*mu*k12*Ee(1,2)*(lame(2)/lame(1)/Je)*(1.0d0-4.0d0*(Ee(1,2)**2.0_DP))*(S(1,2,:,:)+S(2,1,:,:))
+              T5=(mu*ka*Ee(4,4)*lame(4)/Je)*(S(1,1,:,:)+S(2,2,:,:))
+
+              cauchyTensor=T0+T1+T2+T3+T4+T5
+              
+              IF(diagnostics1) THEN
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Je at time t      = ",Je1,err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Je at time t + dt = ",Je2,err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Je                = ",Je,err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Jh                = ",Jh,err,error,*999)
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Structural fibre tensors:",err,error,*999)
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  S at t:",err,error,*999)
+                CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
+                  & 3,3,S1,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("           S','(",I1,",:)',' :",3(X,E13.6))', &
+                  & '(16X,3(X,E13.6))',ERR,ERROR,*999)
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  S at t + dt:",err,error,*999)
+                CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
+                  & 3,3,S2,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("           S','(",I1,",:)',' :",3(X,E13.6))', &
+                  & '(16X,3(X,E13.6))',ERR,ERROR,*999)
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Growth tensors:",err,error,*999)
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  H prime prime:",err,error,*999)
+                CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
+                  & 3,3,HPrimePrime,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("           H','(",I1,",:)',' :",3(X,E13.6))', &
+                  & '(16X,3(X,E13.6))',ERR,ERROR,*999)
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  H:",err,error,*999)
+                CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
+                  & 3,3,H,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("           H','(",I1,",:)',' :",3(X,E13.6))', &
+                  & '(16X,3(X,E13.6))',ERR,ERROR,*999)
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Strain tensors:",err,error,*999)
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Be prime at t:",err,error,*999)
+                CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
+                  & 3,3,BePrime1,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    Be prime','(",I1,",:)',' :",3(X,E13.6))', &
+                  & '(16X,3(X,E13.6))',ERR,ERROR,*999)
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Be prime at t + dt:",err,error,*999)
+                CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
+                  & 3,3,BePrime,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    Be prime','(",I1,",:)',' :",3(X,E13.6))', &
+                  & '(16X,3(X,E13.6))',ERR,ERROR,*999)
+                CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,2,2,alpha,'("",2(X,E13.6))','(2(X,E13.6))',err,error,*999)
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Ee at t + dt:",err,error,*999)
+                CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,4,1,1,4, &
+                  & 4,4,Ee,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("          Ee','(",I1,",:)',' :",4(X,E13.6))', &
+                  & '(16X,4(X,E13.6))',ERR,ERROR,*999)
+                CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,4,4,4,lame,'("",4(X,E13.6))','4(X,E13.6))',err,error,*999)
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Stress tensors:",err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  QQ = ",QQ,err,error,*999)
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  T1-5:",err,error,*999)
+                CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,T1,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+                  & '("            T1','(",I1,",:)',' :",3(X,E13.6))','(16X,3(X,E13.6))',ERR,ERROR,*999)
+                CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,T2,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+                  & '("            T2','(",I1,",:)',' :",3(X,E13.6))','(16X,3(X,E13.6))',ERR,ERROR,*999)
+                CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,T3,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+                  & '("            T3','(",I1,",:)',' :",3(X,E13.6))','(16X,3(X,E13.6))',ERR,ERROR,*999)
+                CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,T4,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+                  & '("            T4','(",I1,",:)',' :",3(X,E13.6))','(16X,3(X,E13.6))',ERR,ERROR,*999)
+                CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,T5,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+                  & '("            T5','(",I1,",:)',' :",3(X,E13.6))','(16X,3(X,E13.6))',ERR,ERROR,*999)
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Cauchy stress tensor:",err,error,*999)
+                CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
+                  & 3,3,cauchyTensor,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("        sigma','(",I1,",:)',' :",3(X,E13.6))', &
+                  & '(16X,3(X,E13.6))',ERR,ERROR,*999)
+              ENDIF
+              
+              !Store the current value of Je in the next values parameter set
+              CALL Field_ParameterSetUpdateLocalGaussPoint(DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_NEXT_VALUES_SET_TYPE, &
+                & gaussIdx,elementNumber,1,Je,err,error,*999)              
+            
+              !Store the current values of the structural tensor, S2, in the next values parameter set
+              DO rowIdx=1,numberOfDimensions
+                DO columnIdx=1,numberOfDimensions
+                  componentIdx=rowIdx+(columnIdx-1)*numberOfDimensions
+                  CALL Field_ParameterSetUpdateLocalGaussPoint(DEPENDENT_FIELD,FIELD_U2_VARIABLE_TYPE,FIELD_NEXT_VALUES_SET_TYPE, &
+                    & gaussIdx,elementNumber,componentIdx,S2(rowIdx,columnIdx),err,error,*999)
+                ENDDO !columnIdx
+              ENDDO !rowIdx
+              
+           CASE DEFAULT
+              localError="The equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET_SUBTYPE,"*",err,error))// &
+                & " is invalid."
+              CALL FlagError(localError,err,error,*999)              
+            END SELECT
+            
+            !Store BePrime in the next values parameter set
+            DO rowIdx=1,numberOfDimensions
+              DO columnIdx=rowIdx,numberOfDimensions
+                componentIdx=1+TENSOR_TO_VOIGT(rowIdx,columnIdx,numberOfDimensions)
+                CALL Field_ParameterSetUpdateLocalGaussPoint(DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_NEXT_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,componentIdx,BePrime(rowIdx,columnIdx),err,error,*999)            
+              ENDDO !columnIdx
+            ENDDO !rowIdx
+
             !Loop over dependent columns directions.
-            DO columnComponentIdx=1,NUMBER_OF_DIMENSIONS
+            DO columnComponentIdx=1,numberOfDimensions
               meshComponentNumber=FIELD_VARIABLE%COMPONENTS(columnComponentIdx)%MESH_COMPONENT_NUMBER
               dependentBasis=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(meshComponentNumber)%PTR% &
                 & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
@@ -2284,7 +2547,7 @@ CONTAINS
               !Loop over dependent columns element parameters.
               DO columnElementParameterIdx=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
                 !Loop over dependent columns directions.
-                DO rowComponentIdx=1,NUMBER_OF_DIMENSIONS
+                DO rowComponentIdx=1,numberOfDimensions
                   sum1=0.0_DP
                   DO xiIdx=1,numberOfXi
                     sum1=sum1+DEPENDENT_INTERPOLATED_POINT_METRICS%DXI_DX(xiIdx,rowComponentIdx)* &
@@ -2298,7 +2561,7 @@ CONTAINS
             JGw=JZxi*gaussWeight
             !Now add up the residual terms
             rowElementDofIdx=0
-            DO rowComponentIdx=1,NUMBER_OF_DIMENSIONS
+            DO rowComponentIdx=1,numberOfDimensions
               meshComponentNumber=FIELD_VARIABLE%COMPONENTS(rowComponentIdx)%MESH_COMPONENT_NUMBER
               dependentBasis=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(meshComponentNumber)%PTR% &
                 & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
@@ -2436,13 +2699,13 @@ CONTAINS
               & INDEPENDENT_INTERPOLATED_POINT,cauchyTensor,Jznu,DZDNU,elementNumber,gauss_idx,ERR,ERROR,*999)
 
             !Calculate dPhi/dZ at the gauss point, Phi is the basis function
-            CALL FINITE_ELASTICITY_GAUSS_DFDZ(DEPENDENT_INTERPOLATED_POINT,elementNumber,gauss_idx,NUMBER_OF_DIMENSIONS, &
+            CALL FINITE_ELASTICITY_GAUSS_DFDZ(DEPENDENT_INTERPOLATED_POINT,elementNumber,gauss_idx,numberOfDimensions, &
               & numberOfXi,DFDZ,ERR,ERROR,*999)
 
             !For membrane theory in 3D space, the final equation is multiplied by thickness. Default to unit thickness if equation set subtype is not membrane
             THICKNESS = 1.0_DP
             IF(EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_MEMBRANE_SUBTYPE) THEN
-              IF(NUMBER_OF_DIMENSIONS == 3) THEN
+              IF(numberOfDimensions == 3) THEN
                 THICKNESS = MATERIALS_INTERPOLATED_POINT%VALUES(MATERIALS_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS% &
                   & FIELD_VARIABLE%NUMBER_OF_COMPONENTS,1)
               ENDIF
@@ -2450,7 +2713,7 @@ CONTAINS
 
             !Now add up the residual terms
             element_dof_idx=0
-            DO component_idx=1,NUMBER_OF_DIMENSIONS
+            DO component_idx=1,numberOfDimensions
               DEPENDENT_COMPONENT_INTERPOLATION_TYPE=DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS(component_idx)%INTERPOLATION_TYPE
               IF(DEPENDENT_COMPONENT_INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN !node based
                 DEPENDENT_BASIS=>DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS(component_idx)%DOMAIN%TOPOLOGY% &
@@ -2458,7 +2721,7 @@ CONTAINS
                 NUMBER_OF_FIELD_COMPONENT_INTERPOLATION_PARAMETERS=DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
                 DO parameter_idx=1,NUMBER_OF_FIELD_COMPONENT_INTERPOLATION_PARAMETERS
                   element_dof_idx=element_dof_idx+1
-                  DO component_idx2=1,NUMBER_OF_DIMENSIONS
+                  DO component_idx2=1,numberOfDimensions
                     NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(element_dof_idx)= &
                       & NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(element_dof_idx)+ &
                       & GAUSS_WEIGHT*Jxxi*Jznu*THICKNESS*cauchyTensor(component_idx,component_idx2)* &
@@ -2547,7 +2810,7 @@ CONTAINS
               & INDEPENDENT_INTERPOLATED_POINT,cauchyTensor,Jznu,DZDNU,elementNumber,gauss_idx,ERR,ERROR,*999)
 
             !Calculate dF/DZ at the gauss point
-            CALL FINITE_ELASTICITY_GAUSS_DFDZ(DEPENDENT_INTERPOLATED_POINT,elementNumber,gauss_idx,NUMBER_OF_DIMENSIONS, &
+            CALL FINITE_ELASTICITY_GAUSS_DFDZ(DEPENDENT_INTERPOLATED_POINT,elementNumber,gauss_idx,numberOfDimensions, &
               & numberOfXi,DFDZ,ERR,ERROR,*999)
 
             !Add up the residual terms
@@ -2625,7 +2888,7 @@ CONTAINS
                   CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%NUMBER_OF_XI,EQUATIONS%INTERPOLATION% &
                     & GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
                   element_dof_idx=0
-                  DO component_idx=1,NUMBER_OF_DIMENSIONS
+                  DO component_idx=1,numberOfDimensions
                     DEPENDENT_BASIS=>DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS(component_idx)%DOMAIN%TOPOLOGY% &
                       & ELEMENTS%ELEMENTS(elementNumber)%BASIS
                     DO parameter_idx=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
@@ -5122,7 +5385,7 @@ CONTAINS
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: LOCAL_ERROR,localError
     LOGICAL :: IS_HYDROSTATIC_PRESSURE_DEPENDENT_FIELD
-    INTEGER(INTG) :: num_var,Ncompartments,DEPENDENT_FIELD_NUMBER_OF_VARIABLES
+    INTEGER(INTG) :: num_var,Ncompartments,DEPENDENT_FIELD_NUMBER_OF_VARIABLES,dimensionIdx
     INTEGER(INTG) :: EQUATIONS_SET_FIELD_NUMBER_OF_VARIABLES,EQUATIONS_SET_FIELD_NUMBER_OF_COMPONENTS    
     INTEGER(INTG), POINTER :: EQUATIONS_SET_FIELD_DATA(:)
     INTEGER(INTG), ALLOCATABLE :: VARIABLE_TYPES(:)
@@ -5153,7 +5416,9 @@ CONTAINS
         & .AND. EQUATIONS_SET_SUBTYPE/=EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_STATIC_INRIA_SUBTYPE &
         & .AND. EQUATIONS_SET_SUBTYPE/=EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_HOLMES_MOW_SUBTYPE &
         & .AND. EQUATIONS_SET_SUBTYPE/=EQUATIONS_SET_ELASTICITY_FLUID_PRES_HOLMES_MOW_ACTIVE_SUBTYPE &
-        & .AND. EQUATIONS_SET_SUBTYPE/=EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE
+        & .AND. EQUATIONS_SET_SUBTYPE/=EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE &
+        & .AND. EQUATIONS_SET_SUBTYPE/=EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE &
+        & .AND. EQUATIONS_SET_SUBTYPE/=EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE
 
     NUMBER_OF_DIMENSIONS = EQUATIONS_SET%REGION%COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS
 
@@ -5815,75 +6080,107 @@ CONTAINS
                   & ERR,ERROR,*999)
                 CALL Field_GeometricFieldSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,EQUATIONS_SET%GEOMETRY% &
                   & GEOMETRIC_FIELD,ERR,ERROR,*999)
-                CALL Field_NumberOfVariablesSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,3,ERR,ERROR,*999)
-                CALL Field_VariableTypesSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,[FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_DELUDELN_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE],ERR,ERROR,*999)
-                CALL Field_VariableLabelSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & "U",ERR,ERROR,*999)
-                CALL Field_VariableLabelSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                  & "del U/del n",ERR,ERROR,*999)
-                CALL Field_VariableLabelSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
-                  & "U1",ERR,ERROR,*999)
-                CALL Field_DimensionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
-                CALL Field_DimensionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                  & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
-                CALL Field_DimensionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
-                  & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
-                CALL Field_DataTypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_DP_TYPE,ERR,ERROR,*999)
-                CALL Field_DataTypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                  & FIELD_DP_TYPE,ERR,ERROR,*999)
-                CALL Field_DataTypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
-                  & FIELD_DP_TYPE,ERR,ERROR,*999)
-                CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
                 SELECT CASE(EQUATIONS_SET_SUBTYPE)
                 CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
-                  & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE)
-                  CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & NUMBER_OF_DIMENSIONS+1,ERR,ERROR,*999)
-                  CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
-                    & FIELD_DELUDELN_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS+1,ERR,ERROR,*999)
-                CASE(EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+                  & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE)
+                  CALL Field_NumberOfVariablesSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,3,ERR,ERROR,*999)
+                  CALL Field_VariableTypesSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,[FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_DELUDELN_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE],ERR,ERROR,*999)
+                  CALL Field_VariableLabelSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    & "U",ERR,ERROR,*999)
+                  CALL Field_VariableLabelSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+                    & "del U/del n",ERR,ERROR,*999)
+                  CALL Field_VariableLabelSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                    & "U1",ERR,ERROR,*999)
+                  CALL Field_DimensionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
+                  CALL Field_DimensionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+                    & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
+                  CALL Field_DimensionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                    & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
+                  CALL Field_DataTypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_DP_TYPE,ERR,ERROR,*999)
+                  CALL Field_DataTypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+                    & FIELD_DP_TYPE,ERR,ERROR,*999)
+                  CALL Field_DataTypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                    & FIELD_DP_TYPE,ERR,ERROR,*999)
+                CASE( EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE, &
                   & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
-                  CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
-                  CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
-                    & FIELD_DELUDELN_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
+                  CALL Field_NumberOfVariablesSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,4,ERR,ERROR,*999)
+                  CALL Field_VariableTypesSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,[FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_DELUDELN_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE,FIELD_U2_VARIABLE_TYPE],ERR,ERROR,*999)
+                  CALL Field_VariableLabelSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    & "U",ERR,ERROR,*999)
+                  CALL Field_VariableLabelSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+                    & "del U/del n",ERR,ERROR,*999)
+                  CALL Field_VariableLabelSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                    & "U1",ERR,ERROR,*999)
+                  CALL Field_VariableLabelSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                    & "U2",ERR,ERROR,*999)
+                  CALL Field_DimensionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
+                  CALL Field_DimensionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+                    & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
+                  CALL Field_DimensionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                    & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
+                  CALL Field_DimensionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U2_VARIABLE_TYPE, &
+                    & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
+                  CALL Field_DataTypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_DP_TYPE,ERR,ERROR,*999)
+                  CALL Field_DataTypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+                    & FIELD_DP_TYPE,ERR,ERROR,*999)
+                  CALL Field_DataTypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                    & FIELD_DP_TYPE,ERR,ERROR,*999)
+                  CALL Field_DataTypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U2_VARIABLE_TYPE, &
+                    & FIELD_DP_TYPE,ERR,ERROR,*999)
                 CASE DEFAULT
                   localError="The equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET_SUBTYPE,"*",err,error))// &
                     & " is invalid."
                   CALL FlagError(localError,err,error,*999)
                 END SELECT
-                CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
-                  & 10,ERR,ERROR,*999)
+                CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  & 1,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
+                SELECT CASE(EQUATIONS_SET_SUBTYPE)
+                CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+                  & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE)
+                  CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
+                    & FIELD_U_VARIABLE_TYPE,NUMBER_OF_COMPONENTS,ERR,ERROR,*999)
+                  CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
+                    & FIELD_DELUDELN_VARIABLE_TYPE,NUMBER_OF_COMPONENTS,ERR,ERROR,*999)
+                  CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
+                    & FIELD_U1_VARIABLE_TYPE,1+NUMBER_OF_VOIGT(NUMBER_OF_DIMENSIONS),ERR,ERROR,*999)
+                CASE(EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE, &
+                  & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+                  CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
+                    & FIELD_U_VARIABLE_TYPE,NUMBER_OF_COMPONENTS,ERR,ERROR,*999)
+                  CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
+                    & FIELD_DELUDELN_VARIABLE_TYPE,NUMBER_OF_COMPONENTS,ERR,ERROR,*999)
+                  CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
+                    & FIELD_U1_VARIABLE_TYPE,1+NUMBER_OF_VOIGT(NUMBER_OF_DIMENSIONS),ERR,ERROR,*999)
+                  CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
+                    & FIELD_U2_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS*NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
+                CASE DEFAULT
+                  localError="The equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET_SUBTYPE,"*",err,error))// &
+                    & " is invalid."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
                 !Default to the geometric interpolation setup
                 CALL Field_ComponentMeshComponentGet(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
                   & 1,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
-                DO component_idx=1,NUMBER_OF_DIMENSIONS
+                DO component_idx=1,NUMBER_OF_COMPONENTS
                   CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
                     & component_idx,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
                   CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
                     & component_idx,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
                 ENDDO !component_idx
-                SELECT CASE(EQUATIONS_SET_SUBTYPE)
-                CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
-                  & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+                IF(IS_HYDROSTATIC_PRESSURE_DEPENDENT_FIELD) THEN
                   !Set the hydrostatic component to that of the first geometric component
                   CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
                     & NUMBER_OF_DIMENSIONS+1,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
                   CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
                     & NUMBER_OF_DIMENSIONS+1,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
-                CASE DEFAULT
-                  !Do nothing
-                END SELECT
-                !Set the U1 variable components
-                DO componentIdx=1,10
-                  CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
-                    & componentIdx,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
-                ENDDO !componentIdx
-               SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
+                END IF
+                SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
                 CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                   !Set the displacement components to node based interpolation
                   DO component_idx=1,NUMBER_OF_DIMENSIONS
@@ -5892,25 +6189,13 @@ CONTAINS
                     CALL Field_ComponentInterpolationSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
                       & FIELD_DELUDELN_VARIABLE_TYPE,component_idx,FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
                   ENDDO !component_idx
-                  SELECT CASE(EQUATIONS_SET_SUBTYPE)
-                  CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
-                    & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+                  IF(IS_HYDROSTATIC_PRESSURE_DEPENDENT_FIELD) THEN
                     !Set the hydrostatic pressure component to element based interpolation
                     CALL Field_ComponentInterpolationSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
                       & NUMBER_OF_DIMENSIONS+1,FIELD_ELEMENT_BASED_INTERPOLATION,ERR,ERROR,*999)
                     CALL Field_ComponentInterpolationSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
                       & FIELD_DELUDELN_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS+1,FIELD_ELEMENT_BASED_INTERPOLATION,ERR,ERROR,*999)
-                  CASE DEFAULT
-                    !Do nothing
-                  END SELECT
-                  !Set the U1 variable components to Gauss point based interpolation
-                  DO componentIdx=1,10
-                    CALL Field_ComponentInterpolationSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
-                      & componentIdx,FIELD_GAUSS_POINT_BASED_INTERPOLATION,ERR,ERROR,*999)
-                  ENDDO !componentIdx
-                  !Default the scaling to the geometric field scaling
-                  CALL Field_ScalingTypeGet(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
-                  CALL Field_ScalingTypeSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
+                  ENDIF
                 CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                 CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
@@ -5926,50 +6211,85 @@ CONTAINS
                     & " is invalid."
                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 END SELECT
-              ELSE
-                !Check the user specified field
-                CALL Field_TypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_GEOMETRIC_GENERAL_TYPE,ERR,ERROR,*999)
-                CALL Field_DependentTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DEPENDENT_TYPE,ERR,ERROR,*999)
-                CALL Field_NumberOfVariablesCheck(EQUATIONS_SET_SETUP%FIELD,3,ERR,ERROR,*999)
-                CALL Field_VariableTypesCheck(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE, &
-                  & FIELD_U1_VARIABLE_TYPE],ERR,ERROR,*999)
-                CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                  & ERR,ERROR,*999)
-                CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                  & ERR,ERROR,*999)
-                CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                  & ERR,ERROR,*999)
-                CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
-                CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
-                CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
-                CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
                 SELECT CASE(EQUATIONS_SET_SUBTYPE)
                 CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
-                  & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE)
-                  CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS+1, &
-                    & ERR,ERROR,*999)
-                  CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS+1, &
-                    & ERR,ERROR,*999)
-                CASE(EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+                  & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE)
+                  !Set the U1 variable components
+                  DO componentIdx=1,1+NUMBER_OF_VOIGT(NUMBER_OF_DIMENSIONS)
+                    CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                      & componentIdx,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
+                    CALL Field_ComponentInterpolationSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                      & componentIdx,FIELD_GAUSS_POINT_BASED_INTERPOLATION,ERR,ERROR,*999)
+                  ENDDO !componentIdx
+                CASE(EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE, &
                   & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
-                  CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS, &
-                    & ERR,ERROR,*999)
-                  CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS, &
-                    & ERR,ERROR,*999)
+                  !Set the U1 variable components
+                  DO componentIdx=1,1+NUMBER_OF_VOIGT(NUMBER_OF_DIMENSIONS)
+                    CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                      & componentIdx,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
+                    CALL Field_ComponentInterpolationSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                      & componentIdx,FIELD_GAUSS_POINT_BASED_INTERPOLATION,ERR,ERROR,*999)
+                  ENDDO !componentIdx
+                  !Set the U2 variable components
+                  DO componentIdx=1,NUMBER_OF_DIMENSIONS*NUMBER_OF_DIMENSIONS
+                    CALL Field_ComponentMeshComponentSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U2_VARIABLE_TYPE, &
+                      & componentIdx,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
+                    CALL Field_ComponentInterpolationSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U2_VARIABLE_TYPE, &
+                      & componentIdx,FIELD_GAUSS_POINT_BASED_INTERPOLATION,ERR,ERROR,*999)
+                  ENDDO !componentIdx
                 CASE DEFAULT
                   localError="The equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET_SUBTYPE,"*",err,error))// &
                     & " is invalid."
                   CALL FlagError(localError,err,error,*999)
                 END SELECT
-                CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U1_VARIABLE_TYPE,10,ERR,ERROR,*999)
-                !Check that the pressure values set type is created here?? (second variable is a DELUDELN type, as checked above)
-                !\todo: Decide whether these set_types (previous one as well) is to be created by user or automatically..
-                IF(.NOT.ASSOCIATED(EQUATIONS_SET_SETUP%FIELD%VARIABLES(2)%PARAMETER_SETS% &
-                  & SET_TYPE(FIELD_PRESSURE_VALUES_SET_TYPE)%PTR)) THEN
-                    LOCAL_ERROR="Variable 2 of type "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%FIELD%VARIABLES(2)% &
-                      & VARIABLE_TYPE,"*",ERR,ERROR))//" does not have a pressure values set type associated."
-                ENDIF
+                !Default the scaling to the geometric field scaling
+                CALL Field_ScalingTypeGet(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
+                CALL Field_ScalingTypeSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
+              ELSE
+                !Check the user specified field
+                CALL Field_TypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_GEOMETRIC_GENERAL_TYPE,ERR,ERROR,*999)
+                CALL Field_DependentTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DEPENDENT_TYPE,ERR,ERROR,*999)
+                SELECT CASE(EQUATIONS_SET_SUBTYPE)
+                CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+                  & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE)
+                  CALL Field_NumberOfVariablesCheck(EQUATIONS_SET_SETUP%FIELD,3,ERR,ERROR,*999)
+                  CALL Field_VariableTypesCheck(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE, &
+                    & FIELD_U1_VARIABLE_TYPE],ERR,ERROR,*999)
+                  CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+                    & ERR,ERROR,*999)
+                  CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+                    & ERR,ERROR,*999)
+                  CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+                    & ERR,ERROR,*999)
+                  CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
+                  CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
+                  CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
+                CASE( EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE, &
+                  & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+                  CALL Field_NumberOfVariablesCheck(EQUATIONS_SET_SETUP%FIELD,4,ERR,ERROR,*999)
+                  CALL Field_VariableTypesCheck(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE, &
+                    & FIELD_U1_VARIABLE_TYPE,FIELD_U2_VARIABLE_TYPE],ERR,ERROR,*999)
+                  CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+                    & ERR,ERROR,*999)
+                  CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+                    & ERR,ERROR,*999)
+                  CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+                    & ERR,ERROR,*999)
+                  CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U2_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+                    & ERR,ERROR,*999)
+                  CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
+                  CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
+                  CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
+                  CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U2_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
+                CASE DEFAULT
+                  localError="The equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET_SUBTYPE,"*",err,error))// &
+                    & " is invalid."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
+                CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_COMPONENTS, &
+                  & ERR,ERROR,*999)
+                CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,NUMBER_OF_COMPONENTS, &
+                  & ERR,ERROR,*999)
                 SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
                 CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                   DO componentIdx=1,NUMBER_OF_DIMENSIONS
@@ -5978,10 +6298,6 @@ CONTAINS
                     CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,componentIdx, &
                       & FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
                   ENDDO !componentIdx
-                  DO componentIdx=1,10
-                    CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U1_VARIABLE_TYPE, &
-                      & componentIdx,FIELD_GAUSS_POINT_BASED_INTERPOLATION,ERR,ERROR,*999)
-                  ENDDO !componentIdx
                 CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
                   CALL FlagError("Not implemented.",ERR,ERROR,*999)
                 CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
@@ -5997,18 +6313,79 @@ CONTAINS
                     & " is invalid."
                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 END SELECT
+                SELECT CASE(EQUATIONS_SET_SUBTYPE)
+                CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+                  & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE)
+                  CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U1_VARIABLE_TYPE, &
+                    & 1+NUMBER_OF_VOIGT(NUMBER_OF_DIMENSIONS),ERR,ERROR,*999)
+                  DO componentIdx=1,1+NUMBER_OF_VOIGT(NUMBER_OF_DIMENSIONS)
+                    CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U1_VARIABLE_TYPE,componentIdx, &
+                      & FIELD_GAUSS_POINT_BASED_INTERPOLATION,ERR,ERROR,*999)
+                  ENDDO !componentIdx
+                CASE(EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE, &
+                  & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+                  CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U1_VARIABLE_TYPE, &
+                    & 1+NUMBER_OF_VOIGT(NUMBER_OF_DIMENSIONS),ERR,ERROR,*999)
+                  CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U2_VARIABLE_TYPE, &
+                    & NUMBER_OF_DIMENSIONS*NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
+                  DO componentIdx=1,1+NUMBER_OF_VOIGT(NUMBER_OF_DIMENSIONS)
+                    CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U1_VARIABLE_TYPE,componentIdx, &
+                      & FIELD_GAUSS_POINT_BASED_INTERPOLATION,ERR,ERROR,*999)
+                  ENDDO !componentIdx
+                  DO componentIdx=1,NUMBER_OF_DIMENSIONS*NUMBER_OF_DIMENSIONS
+                    CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U2_VARIABLE_TYPE,componentIdx, &
+                      & FIELD_GAUSS_POINT_BASED_INTERPOLATION,ERR,ERROR,*999)
+                  ENDDO !componentIdx
+                CASE DEFAULT
+                  localError="The equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET_SUBTYPE,"*",err,error))// &
+                    & " is invalid."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
+                !Check that the pressure values set type is created here?? (second variable is a DELUDELN type, as checked above)
+                !\todo: Decide whether these set_types (previous one as well) is to be created by user or automatically..
+                IF(.NOT.ASSOCIATED(EQUATIONS_SET_SETUP%FIELD%VARIABLES(2)%PARAMETER_SETS% &
+                  & SET_TYPE(FIELD_PRESSURE_VALUES_SET_TYPE)%PTR)) THEN
+                    LOCAL_ERROR="Variable 2 of type "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%FIELD%VARIABLES(2)% &
+                      & VARIABLE_TYPE,"*",ERR,ERROR))//" does not have a pressure values set type associated."
+                ENDIF
               ENDIF
             CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
               IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
                 CALL Field_CreateFinish(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,ERR,ERROR,*999)
-                !Initialise U1 variables
-                !Initialise Be prime to the identity matrix
-                CALL Field_ComponentValuesInitialise(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,2,1.0_DP,err,error,*999)
-                CALL Field_ComponentValuesInitialise(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,6,1.0_DP,err,error,*999)
-                CALL Field_ComponentValuesInitialise(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,10,1.0_DP,err,error,*999)
+                SELECT CASE(EQUATIONS_SET_SUBTYPE)
+                CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+                  & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE)
+                  !Initialise U1 variables
+                  !Initialise Be prime to the identity matrix
+                  DO dimensionIdx=1,NUMBER_OF_DIMENSIONS
+                    componentIdx=1+TENSOR_TO_VOIGT(dimensionIdx,dimensionIdx,NUMBER_OF_DIMENSIONS)
+                    CALL Field_ComponentValuesInitialise(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                      & FIELD_VALUES_SET_TYPE,componentIdx,1.0_DP,err,error,*999)
+                  ENDDO !dimensionIdx
+                CASE(EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE, &
+                  & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+                  !Initialise U1 variables
+                  !Initialise Je to 1.0
+                  CALL Field_ComponentValuesInitialise(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                    & FIELD_VALUES_SET_TYPE,1,1.0_DP,err,error,*999)
+                  !Initialise Be prime to the identity matrix
+                  DO dimensionIdx=1,NUMBER_OF_DIMENSIONS
+                    componentIdx=1+TENSOR_TO_VOIGT(dimensionIdx,dimensionIdx,NUMBER_OF_DIMENSIONS)
+                    CALL Field_ComponentValuesInitialise(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                      & FIELD_VALUES_SET_TYPE,componentIdx,1.0_DP,err,error,*999)
+                  ENDDO !dimensionIdx
+                  !Initialise U2 variables
+                  !Initialise S to the identity matrix
+                  DO dimensionIdx=1,NUMBER_OF_DIMENSIONS
+                    componentIdx=dimensionIdx+(dimensionIdx-1)*NUMBER_OF_DIMENSIONS
+                    CALL Field_ComponentValuesInitialise(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U2_VARIABLE_TYPE, &
+                      & FIELD_VALUES_SET_TYPE,componentIdx,1.0_DP,err,error,*999)
+                  ENDDO !dimensionIdx
+                CASE DEFAULT
+                  localError="The equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET_SUBTYPE,"*",err,error))// &
+                    & " is invalid."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
               ENDIF
               CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
                 & FIELD_PREVIOUS_VALUES_SET_TYPE,ERR,ERROR,*999)
@@ -6018,8 +6395,22 @@ CONTAINS
                 & FIELD_PREVIOUS_VALUES_SET_TYPE,ERR,ERROR,*999)
               CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
                 & FIELD_PRESSURE_VALUES_SET_TYPE,ERR,ERROR,*999)
-              CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
-                & FIELD_NEXT_VALUES_SET_TYPE,ERR,ERROR,*999)
+              SELECT CASE(EQUATIONS_SET_SUBTYPE)
+              CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+                & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE)
+                CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                  & FIELD_NEXT_VALUES_SET_TYPE,ERR,ERROR,*999)
+              CASE(EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE, &
+                & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
+                CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE, &
+                  & FIELD_NEXT_VALUES_SET_TYPE,ERR,ERROR,*999)
+                CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U2_VARIABLE_TYPE, &
+                  & FIELD_NEXT_VALUES_SET_TYPE,ERR,ERROR,*999)
+              CASE DEFAULT
+                localError="The equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET_SUBTYPE,"*",err,error))// &
+                  & " is invalid."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT
             CASE DEFAULT
               LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
                 & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
@@ -7360,9 +7751,9 @@ CONTAINS
               CASE(EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE)
                 NUMBER_OF_COMPONENTS=8
               CASE(EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE)
-                NUMBER_OF_COMPONENTS=8
+                NUMBER_OF_COMPONENTS=9+3+NUMBER_OF_VOIGT(NUMBER_OF_DIMENSIONS)
               CASE(EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
-                NUMBER_OF_COMPONENTS=8
+                NUMBER_OF_COMPONENTS=9+3+NUMBER_OF_VOIGT(NUMBER_OF_DIMENSIONS)
               CASE DEFAULT
                 LOCAL_ERROR="The third equations set specification of "// &
                   & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SUBTYPE,"*",ERR,ERROR))// &
@@ -8770,17 +9161,27 @@ CONTAINS
           NULLIFY(equationsSet)
           CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
           IF(equationsSet%specification(1)==EQUATIONS_SET_ELASTICITY_CLASS.AND. &
-            & equationsSet%specification(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE.AND. &
-            & (equationsSet%specification(3)==EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE.OR. &
-            & equationsSet%specification(3)==EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE.OR. &
-            & equationsSet%specification(3)==EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE.OR. &
-            & equationsSet%specification(3)==EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)) THEN
-            !Rate based model
-            !Update hardening variable
-            NULLIFY(dependentField)
-            CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-            CALL Field_ParameterSetsCopy(dependentField,FIELD_U1_VARIABLE_TYPE,FIELD_NEXT_VALUES_SET_TYPE, &
-              & FIELD_VALUES_SET_TYPE,1.0_DP,err,error,*999)
+            & equationsSet%specification(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE) THEN
+            IF(equationsSet%specification(3)==EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE.OR. &
+              & equationsSet%specification(3)==EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE) THEN
+              !Rate based smooth model
+              NULLIFY(dependentField)
+              CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+              !Update U1 variable
+              CALL Field_ParameterSetsCopy(dependentField,FIELD_U1_VARIABLE_TYPE,FIELD_NEXT_VALUES_SET_TYPE, &
+                & FIELD_VALUES_SET_TYPE,1.0_DP,err,error,*999)
+            ELSE IF(equationsSet%specification(3)==EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE.OR. &
+              & equationsSet%specification(3)==EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE) THEN
+              !Rate based growh model
+              NULLIFY(dependentField)
+              CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+              !Update U1 variable
+              CALL Field_ParameterSetsCopy(dependentField,FIELD_U1_VARIABLE_TYPE,FIELD_NEXT_VALUES_SET_TYPE, &
+                & FIELD_VALUES_SET_TYPE,1.0_DP,err,error,*999)
+              !Update U2 variable
+              CALL Field_ParameterSetsCopy(dependentField,FIELD_U2_VARIABLE_TYPE,FIELD_NEXT_VALUES_SET_TYPE, &
+                & FIELD_VALUES_SET_TYPE,1.0_DP,err,error,*999)
+            ENDIF
           ENDIF
         ENDDO !equationsSetIdx
         !Output results
@@ -10013,5 +10414,1083 @@ CONTAINS
   !
   !================================================================================================================================
   !
+  
+  SUBROUTINE umat(ntens,nstatv,nprops,kstep,kinc,dfgrd0,dfgrd1,dtime,stress,statev,ddsdde,props)
+    
+!  SUBROUTINE umat(stress,statev,ddsdde,sse,spd,scd,rpl,ddsddt, &
+!    & drplde,drpldt,stran,dstran,time,dtime,temp,dtemp,predef,dpred, &
+!    & materl,ndi,nshr,ntens,nstatv,props,nprops,coords,drot,pnewdt, &
+!    & celent,dfgrd0,dfgrd1,noel,npt,kslay,kspt,kstep,kinc)
+    
+    !include 'aba_param.inc'
+    
+    CHARACTER*8 materl
+    INTEGER ntens,nstatv,nprops
+    INTEGER ndi,nshr,noel,npt,kslay,kspt,kstep,kinc
+    REAL*8 sse,spd,scd,rpl,drpldt,dtime,temp,dtemp,pnewdt,celent
+    REAL*8 stress(ntens),statev(nstatv),ddsdde(ntens,ntens), &
+      & ddsddt(ntens),drplde(ntens),stran(ntens),dstran(ntens), &
+      & dfgrd0(3,3),dfgrd1(3,3),time(2),predef(1),dpred(1), &
+      & props(nprops),coords(3),drot(3,3)
+    
+    REAL*8 EyeTens(3,3),Dt,K,mu,a0,b0,a1,b1,m,kappas,Jn,kappan
+    REAL*8 Beprn(3,3),Fr(3,3),J,Beprs(3,3),devBeprs(3,3),games,game
+    REAL*8 Br(3,3),Deps,DtGam0,DtGam1,c0,c1,c2,gam,GAMMA
+    REAL*8 devBepr(3,3),alpha1,Bepr(3,3),kappa,T(3,3),dJdFrFrT(3,3)
+    REAL*8 ddevBeprsdFrFrT(3,3,3,3),dgamesdFrFrT(3,3)
+    REAL*8 dDepsdFrFrT(3,3),dDtGam0dFrFrT(3,3),dDtGam1dFrFrT(3,3)
+    REAL*8 dgamdFrFrT(3,3),dc0dFrFrT(3,3),dc1dFrFrT(3,3)
+    REAL*8 dc2dFrFrT(3,3),dDtGAMdFrFrT(3,3),ddevBeprdFrFrT(3,3,3,3)
+    REAL*8 tanmat(3,3,3,3)
+    REAL*8 Ft1(3,3),Ft2(3,3),invFt1(3,3)
+   
+    INTEGER ii1,ii2,ii3,ii4
+
+    INTEGER ind11(6),ind21(6)
+    DATA    ind11/1,2,3,1,1,2/
+    DATA    ind21/1,2,3,2,3,3/
+    INTEGER i1,i2
+      
+    CALL IdentityTens(EyeTens)
+
+!   -------------------     
+!   Material constants
+!   -------------------
+    K=props(1)
+    mu=props(2)
+    a0=props(3)
+    a1=props(4)
+    b0=props(5)
+    b1=props(6)
+    m=props(7)
+    kappas=props(8)
+    
+!   ----------------------------------------------
+!   Set the initial values of the state variables
+!   ----------------------------------------------
+    IF ((kstep.EQ.1).AND.(kinc.EQ.1)) THEN
+      statev(1)=1.0d0
+      statev(2)=1.0d0
+      statev(3)=1.0d0
+      statev(4)=1.0d0
+      statev(5)=0.0d0
+      statev(6)=0.0d0
+      statev(7)=0.0d0
+      statev(8)=0.010d0        
+      statev(9)=0.0d0
+      statev(10)=0.0d0
+      statev(11)=0.0d0
+      statev(12)=statev(2)+statev(3)+statev(4)
+      statev(13)=0.0d0
+    END IF
+    
+!   ------------------------------------------
+!   Get the old values of the state variables
+!   ------------------------------------------      
+    Jn=statev(1)
+    Beprn(1,1)=statev(2)
+    Beprn(2,2)=statev(3)
+    Beprn(3,3)=statev(4)
+    Beprn(1,2)=statev(5)
+    Beprn(2,3)=statev(6)
+    Beprn(1,3)=statev(7)
+    kappan=statev(8)
+    games=statev(9)
+    Deps=statev(10)
+    GAMMA=statev(11)
+    alpha1=statev(12)
+    game=statev(13)
+    
+    Beprn(2,1)=Beprn(1,2)
+    Beprn(3,2)=Beprn(2,3)
+    Beprn(3,1)=Beprn(1,3)
+    
+!   -----------------------------------------
+!   Time step; Relative deformation gradient
+!   -----------------------------------------
+    Dt=dtime
+    
+    DO i1=1,3
+      DO i2=1,3
+!           <Ft1=F(t1)>
+        Ft1(i1,i2)=dfgrd0(i1,i2)
+!           <Ft2=F(t2)>
+        Ft2(i1,i2)=dfgrd1(i1,i2)
+      END DO
+    END DO
+      
+    CALL InvTens(Ft1,invFt1)
+    CALL JuxtaTensTens(Ft2,invFt1,Fr)
+    
+!   -------------------------------------------------------------------------------------------
+!   Calculate the updated values of the state variables, stresses, and Spatial-Tangent Modulus
+!   -------------------------------------------------------------------------------------------     
+    CALL SmoothMultiPhase(Dt,K,mu,a0,b0,a1,b1,m,kappas,Jn,Beprn, &
+      & kappan,Fr,J,Beprs,devBeprs,games,Br,Deps,DtGam0,DtGam1,c0,c1,c2, &
+      & gam,GAMMA,devBepr,alpha1,Bepr,kappa,T,dJdFrFrT,ddevBeprsdFrFrT, &
+      & dgamesdFrFrT,dDepsdFrFrT,dDtGam0dFrFrT,dDtGam1dFrFrT,dc0dFrFrT, &
+      & dc1dFrFrT,dc2dFrFrT,dgamdFrFrT,dDtGAMdFrFrT,ddevBeprdFrFrT, &
+      & tanmat)     
+      
+!   --------------------------- 
+!   Update the state variables
+!   ---------------------------
+    statev(1)=J
+    statev(2)=Bepr(1,1)
+    statev(3)=Bepr(2,2)
+    statev(4)=Bepr(3,3)
+    statev(5)=Bepr(1,2)
+    statev(6)=Bepr(2,3)
+    statev(7)=Bepr(1,3)
+    statev(8)=kappa
+!      
+    statev(9)=games
+    statev(10)=Deps
+    statev(11)=GAMMA
+    statev(12)=alpha1      
+    CALL EquivStrain(devBepr,game)
+    statev(13)=game   
+    
+!   ------------------------------------------------
+!   Update the Stresses and Spatial-Tangent Modulus
+!   ------------------------------------------------
+    IF (ntens.EQ.6) THEN
+!       !   
+!       ! 3D Problem 
+!       !
+      DO i1=1,6
+        ii1=ind11(i1)
+        ii2=ind21(i1)
+        stress(i1)=T(ii1,ii2)
+        DO i2=1,6
+          ii3=ind11(i2)
+          ii4=ind21(i2)
+          ddsdde(i1,i2)=tanmat(ii1,ii2,ii3,ii4)
+        END DO ! i2
+      END DO ! i1
+      
+    ELSE IF (ntens.EQ.4) THEN
+!       !
+!       ! Axisymmetric Problem
+!       !
+      stress(1)=T(1,1) 
+      stress(2)=T(2,2) 
+      stress(3)=T(1,2) 
+      stress(4)=T(3,3)        
+      
+      ddsdde(1,1)=tanmat(1,1,1,1)
+      ddsdde(1,2)=tanmat(1,1,2,2)
+      ddsdde(1,3)=tanmat(1,1,1,2)
+      ddsdde(1,4)=tanmat(1,1,3,3)
+      
+      ddsdde(2,1)=tanmat(2,2,1,1)
+      ddsdde(2,2)=tanmat(2,2,2,2)
+      ddsdde(2,3)=tanmat(2,2,1,2)
+      ddsdde(2,4)=tanmat(2,2,3,3)
+        
+      ddsdde(3,1)=tanmat(1,2,1,1)
+      ddsdde(3,2)=tanmat(1,2,2,2)
+      ddsdde(3,3)=tanmat(1,2,1,2)
+      ddsdde(3,4)=tanmat(1,2,3,3)
+        
+      ddsdde(4,1)=tanmat(3,3,1,1)
+      ddsdde(4,2)=tanmat(3,3,2,2)
+      ddsdde(4,3)=tanmat(3,3,1,2)
+      ddsdde(4,4)=tanmat(3,3,3,3)
+        
+    ELSE IF (ntens.EQ.3) THEN
+!       !   
+!       ! 2D Problem
+!       !
+      stress(1)=T(1,1) 
+      stress(2)=T(2,2) 
+      stress(3)=T(1,2)        
+      
+      ddsdde(1,1)=tanmat(1,1,1,1)
+      ddsdde(1,2)=tanmat(1,1,2,2)
+      ddsdde(1,3)=tanmat(1,1,1,2)
+      
+      ddsdde(2,1)=tanmat(2,2,1,1)
+      ddsdde(2,2)=tanmat(2,2,2,2)
+      ddsdde(2,3)=tanmat(2,2,1,2)
+      
+      ddsdde(3,1)=tanmat(1,2,1,1)
+      ddsdde(3,2)=tanmat(1,2,2,2)
+      ddsdde(3,3)=tanmat(1,2,1,2)
+      
+    END IF
+      
+    RETURN
+  END SUBROUTINE umat
+
+!   ***************************************************************************
+!   ***************************************************************************  
+            
+!   ================
+!   Main Subroutine
+!   ================
+           
+  SUBROUTINE SmoothMultiPhase(Dt,K,mu,a0,b0,a1,b1,m,kappas,Jn, &
+    & Beprn,kappan,Fr,J,Beprs,devBeprs,games,Br,Deps,DtGam0, &
+    & DtGam1,c0,c1,c2,gam,GAMMA,devBepr,alpha1,Bepr,kappa,T,dJdFrFrT, &
+    & ddevBeprsdFrFrT,dgamesdFrFrT,dDepsdFrFrT,dDtGam0dFrFrT, &
+    & dDtGam1dFrFrT,dc0dFrFrT,dc1dFrFrT,dc2dFrFrT,dgamdFrFrT, &
+    & dDtGAMdFrFrT,ddevBeprdFrFrT,tanmat)
+      
+    IMPLICIT NONE
+      
+    REAL*8 EyeTens(3,3),Dt,K,mu,a0,b0,a1,b1,m,kappas,Jn,kappan
+    REAL*8 Beprn(3,3),Fr(3,3),FrT(3,3),Frpr(3,3),Jr,J,Beprs(3,3)
+    REAL*8 devBeprs(3,3),hydBeprs(3,3),devgeprs(3,3),games
+    REAL*8 Dbar(3,3),Br(3,3),Deps,DtGam0,DtGam1,c0,c1,c2,gam
+    REAL*8 GAMMA,devBepr(3,3),devgepr(3,3),alpha1,Bepr(3,3)
+    REAL*8 kappa,p,devT(3,3),T(3,3),dJdFrFrT(3,3),dgamesdFrFrT(3,3)
+    REAL*8 ddevBeprsdFrFrT(3,3,3,3),dDepsdFrFrT(3,3)
+    REAL*8 dDtGam0dFrFrT(3,3),dDtGam1dFrFrT(3,3),dgamdFrFrT(3,3)
+    REAL*8 dc0dFrFrT(3,3),dc1dFrFrT(3,3),dc2dFrFrT(3,3)
+    REAL*8 dDtGAMdFrFrT(3,3),ddevBeprdFrFrT(3,3,3,3),tanmat(3,3,3,3)
+    INTEGER i1,i2
+      
+    CALL IdentityTens(EyeTens)
+    CALL DetTens(Fr,Jr)
+    J=Jr*Jn
+    
+    CALL MUnimodular(Fr,Frpr)
+    CALL ElasticTrialDist(Frpr,Beprn,Beprs)
+    CALL DevTens(Beprs,devBeprs,hydBeprs) 
+    DO i1=1,3
+      DO i2=1,3
+        devgeprs(i1,i2)=0.50d0*devBeprs(i1,i2)
+      END DO
+    END DO
+    
+    CALL EquivStrain(devBeprs,games)
+    
+    CALL TransTens(Fr,FrT)
+    CALL JuxtaTensTens(Fr,FrT,Br)
+    DO i1=1,3
+      DO i2=1,3
+        Dbar(i1,i2)=0.50d0/Dt*(Br(i1,i2)-EyeTens(i1,i2))
+      END DO
+    END DO
+    CALL EffDistStrain(Dbar,Dt,Deps) 
+    
+    CALL DeltatGamma(a0,a1,b0,b1,m,kappas,Dt,kappan,games,Deps, &
+      & DtGam0,DtGam1,c0,c1,c2,gam,GAMMA)
+    
+    CALL Beprpr(devgeprs,Dt,GAMMA,devBepr)
+    DO i1=1,3
+      DO i2=1,3
+        devgepr(i1,i2)=0.50d0*devBepr(i1,i2)
+      END DO
+    END DO
+    CALL OneThirdAlpha(devBepr,alpha1)
+    CALL Beprime(devBepr,alpha1,Bepr)
+    
+    CALL CauchyStress(K,mu,J,devgepr,p,devT,T)      
+    CALL hardening(kappan,kappas,m,gam,kappa)
+    
+    CALL Tangent(K,mu,a0,a1,b0,b1,m,Dt,kappas,kappan,DtGam0, &
+      & DtGam1,c0,c1,c2,gam,GAMMA,Fr,J,Beprs,devBeprs,games,devBepr, &
+      & Deps,T,dJdFrFrT,ddevBeprsdFrFrT,dgamesdFrFrT,dDepsdFrFrT, &
+      & dDtGam0dFrFrT,dDtGam1dFrFrT,dc0dFrFrT,dc1dFrFrT,dc2dFrFrT, &
+      & dgamdFrFrT,dDtGAMdFrFrT,ddevBeprdFrFrT,tanmat)
+    
+    RETURN
+  END SUBROUTINE SmoothMultiPhase
+            
+!   ===========================
+!   DISTORTIONAL ELASTIC TRIAL
+!   ===========================
+      
+!   Compute the elastic trial value Be'* of Be'    
+     
+  SUBROUTINE ElasticTrialDist(Frpr,Beprn,Bepret)
+    
+    IMPLICIT NONE
+    
+!   Declarations
+    REAL*8 Frpr(3,3),FrprT(3,3),Beprn(3,3),aux(3,3),Bepret(3,3)     
+    
+    CALL TransTens(Frpr,FrprT)
+    CALL JuxtaTensTens(Frpr,Beprn,aux)
+    CALL JuxtaTensTens(aux,FrprT,Bepret)
+    
+    RETURN
+  END SUBROUTINE ElasticTrialDist
+  
+!   ==========================
+!   EQUIVALENT STRAIN gamma_e
+!   ==========================
+      
+  SUBROUTINE EquivStrain(devBepr,game)
+    
+    IMPLICIT NONE
+    
+!   Declarations
+    REAL*8 devBepr(3,3),game
+      
+    CALL DotTensTens(devBepr,devBepr,game)
+    game=dsqrt((3.0d0/8.0d0)*game)
+    
+    RETURN
+  END SUBROUTINE EquivStrain
+  
+!   ================================================
+!   EFFECTIVE TOTAL DISTORTIONAL DEFORMATION D(eps)
+!   ================================================
+      
+  SUBROUTINE EffDistStrain(Dbar,Dt,Deps)
+      
+    IMPLICIT NONE
+    
+!   Declarations
+    REAL*8 Dbar(3,3),Dt,Deps,devDbar(3,3),hydDbar(3,3)
+      
+    CALL DevTens(Dbar,devDbar,hydDbar)
+    CALL DotTensTens(devDbar,devDbar,Deps)
+    Deps=Dt*dsqrt(2.0d0/3.0d0*Deps)
+    
+    RETURN
+  END SUBROUTINE EffDistStrain
+            
+!   ============================
+!   Deviatoric part Be'' of Be'
+!   ============================
+      
+  SUBROUTINE Beprpr(devgeprs,Dt,GAMMA,devBepr)
+    
+    IMPLICIT NONE
+    
+!   Declarations
+    REAL*8 Dt,GAMMA,devgeprs(3,3),devBepr(3,3),fac1
+    INTEGER i1,i2
+    
+    fac1=2.0d0/(1.0d0+(Dt*GAMMA))
+    
+    DO i1=1,3
+      DO i2=1,3
+        devBepr(i1,i2)=fac1*devgeprs(i1,i2)
+      END DO
+    END DO
+      
+    RETURN
+  END SUBROUTINE Beprpr
+            
+!   ======================================
+!   FIRST NON-TRIVIAL INVARIANT (alpha_1)
+!   ======================================
+      
+!   Calculate alpha=trace(Bepr) by solving a quadratic equation
+      
+  SUBROUTINE OneThirdAlpha(devBepr,alpha1)
+    
+    IMPLICIT NONE
+    
+!   Declarations
+    REAL*8 devBepr(3,3),alpha1
+    REAL*8 fac1,fac2,detdevBepr,dotprod
+    
+    CALL DetTens(devBepr,detdevBepr)
+    CALL DotTensTens(devBepr,devBepr,dotprod)
+      
+    fac1=2.0d0*dotprod/3.0d0
+    IF (fac1.EQ.0.0d0) THEN
+      alpha1=3.0d0
+    ELSE
+      fac2=(4.0d0*(1.0d0-detdevBepr))/(fac1**1.5d0)
+      IF (fac2.GE.1.0d0) THEN
+        alpha1=3.0d0*dsqrt(fac1)*dcosh(dacosh(fac2)/3.0d0)
+      ELSE
+        alpha1=3.0d0*dsqrt(fac1)*dcos(dacos(fac2)/3.0d0)
+      END IF
+    END IF
+    
+    RETURN
+  END SUBROUTINE OneThirdAlpha
+            
+!   =========================
+!   ELASTIC DISTORTION (Be')
+!   =========================
+      
+  SUBROUTINE Beprime(devBepr,alpha1,Bepr)
+      
+    IMPLICIT NONE
+
+!   Declarations
+    REAL*8 EyeTens(3,3),devBepr(3,3),alpha1,Bepr(3,3)
+    INTEGER i1,i2
+    
+    CALL IdentityTens(EyeTens)
+    DO i1=1,3
+      DO i2=1,3
+        Bepr(i1,i2)=alpha1/3.0d0*EyeTens(i1,i2)+devBepr(i1,i2)
+      END DO
+    END DO
+    
+    RETURN
+  END SUBROUTINE Beprime
+  
+!   ======================================
+!   AUXILIARY VARIABLES (gamma and GAMMA)
+!   ======================================
+      
+  SUBROUTINE DeltatGamma(a0,a1,b0,b1,m,kappas,Dt,kappan,games, &
+    & Deps,DtGam0,DtGam1,c0,c1,c2,gam,GAMMA)
+      
+    IMPLICIT NONE
+    
+!   Declarations
+    REAL*8 a0,a1,b0,b1,Dt,games,kappan,gam,GAMMA,DtGam0,DtGam1
+    REAL*8 c0,c1,c2,Deps,m,kappas
+    
+    DtGam0=Dt*a0+b0*Deps
+    DtGam1=Dt*a1+b1*Deps  
+    c0=DtGam1*(games-(1.0d0+DtGam0)*kappan)
+    
+    IF (c0.LE.0.0d0) THEN
+      gam=0.0d0
+    ELSE
+      c1=games+DtGam1*(kappan-m*(games-(1+DtGam0)*kappas))
+      IF (m.EQ.0.0d0) THEN
+        gam=c0/c1
+      ELSE
+        c2=m*(games+DtGam1*kappas)
+        gam=(-c1+dsqrt(c1**2.0d0+4.0d0*c0*c2))/2.0d0/c2
+      END IF
+    END IF
+      
+    GAMMA=DtGam0/Dt+gam/Dt
+      
+    RETURN
+  END SUBROUTINE DeltatGamma
+            
+!   =====================
+!   CAUCHY STRESS TENSOR
+!   =====================
+      
+  SUBROUTINE CauchyStress(K,mu,J,devgepr,p,devT,T)
+    
+    IMPLICIT NONE
+      
+!   Declarations
+    REAL*8 K,mu,J,devgepr(3,3),p,devT(3,3),T(3,3)
+    REAL*8 EyeTens(3,3)
+    INTEGER i1,i2
+      
+    CALL IdentityTens(EyeTens)
+      
+    p=-K*(J-1.0d0)
+    DO i1=1,3
+      DO i2=1,3
+        devT(i1,i2)=2.0d0*mu*devgepr(i1,i2)/J
+        T(i1,i2)=-p*EyeTens(i1,i2)+devT(i1,i2)
+      END DO
+    END DO
+      
+    RETURN
+  END SUBROUTINE CauchyStress
+            
+!   ===================
+!   HARDENING VARIABLE
+!   ===================
+      
+  SUBROUTINE hardening(kappan,kappas,m,gam,kappa)
+      
+    IMPLICIT NONE
+      
+!   Declarations
+    REAL*8 kappan,kappas,m,gam,kappa
+    
+    kappa=(kappan+m*kappas*gam)/(1.0d0+m*gam)
+    
+    RETURN
+  END SUBROUTINE hardening
+  
+!   =======================
+!   SPATIAL TANGENT MODULI
+!   =======================
+      
+  SUBROUTINE Tangent(K,mu,a0,a1,b0,b1,m,Dt,kappas,kappan,DtGam0, &
+    & DtGam1,c0,c1,c2,gam,GAMMA,Fr,J,Beprs,devBeprs,games,devBepr, &
+    & Deps,T,dJdFrFrT,ddevBeprsdFrFrT,dgamesdFrFrT,dDepsdFrFrT, &
+    & dDtGam0dFrFrT,dDtGam1dFrFrT,dc0dFrFrT,dc1dFrFrT,dc2dFrFrT, &
+    & dgamdFrFrT,dDtGAMdFrFrT,ddevBeprdFrFrT,tanmat)
+      
+    IMPLICIT NONE
+      
+!   Declarations
+    REAL*8 EyeTens(3,3),K,mu,a0,a1,b0,b1,m,Dt,kappas,kappan
+    REAL*8 DtGam0,DtGam1,c0,c1,c2,gam,GAMMA,Fr(3,3),J,Beprs(3,3)
+    REAL*8 devBeprs(3,3),games,devBepr(3,3),Deps,ex(3,3),hx(3,3)
+    REAL*8 Frt(3,3),Br(3,3),T(3,3),devBr(3,3),dJdFrFrT(3,3)
+    REAL*8 ddevBeprsdFrFrT(3,3,3,3),dgamesdFrFrT(3,3)
+    REAL*8 dDepsdFrFrT(3,3),dDtGam0dFrFrT(3,3),dDtGam1dFrFrT(3,3)
+    REAL*8 cf0,dc0dFrFrT(3,3),cf1,dc1dFrFrT(3,3),dc2dFrFrT(3,3)
+    REAL*8 dgamdFrFrT(3,3),dDtGAMdFrFrT(3,3),ddevBeprdFrFrT(3,3,3,3)
+    REAL*8 cft1,cft2,tanmat(3,3,3,3)
+    INTEGER i1,i2,i3,i4
+    
+    
+    CALL IdentityTens(EyeTens)
+    CALL JuxtaTensTens(devBeprs,Beprs,ex)
+    CALL DevTens(ex,dgamesdFrFrT,hx)
+    CALL TransTens(Fr,Frt)
+    CALL JuxtaTensTens(Fr,Frt,Br)
+    CALL DevTens(Br,devBr,hx)
+    CALL JuxtaTensTens(devBr,Br,dDepsdFrFrT)
+    
+!     calculate diff(J,Fr)*Fr^T     
+    DO i1=1,3
+      DO i2=1,3
+        dJdFrFrT(i1,i2)=J*EyeTens(i1,i2)
+      END DO
+    END DO
+      
+!     calculate diff(gammae*,Fr)*Fr^T     
+    DO i1=1,3
+      DO i2=1,3
+        dgamesdFrFrT(i1,i2)=3.0d0/4.0d0/games*dgamesdFrFrT(i1,i2)
+      END DO
+    END DO
+      
+!     calculate diff(Depsilon,Fr)*Fr^T 
+    DO i1=1,3
+      DO i2=1,3
+        dDepsdFrFrT(i1,i2)=1.0d0/3.0d0/Deps*dDepsdFrFrT(i1,i2)
+      END DO
+    END DO
+    
+!     calculate diff(Dt*Gamma0,Fr)*Fr^T      
+    DO i1=1,3
+      DO i2=1,3
+        dDtGam0dFrFrT(i1,i2)=b0*dDepsdFrFrT(i1,i2)
+      END DO
+    END DO
+      
+!     calculate diff(Dt*Gamma1,Fr)*Fr^T   
+    DO i1=1,3
+      DO i2=1,3
+        dDtGam1dFrFrT(i1,i2)=b1*dDepsdFrFrT(i1,i2)
+      END DO
+    END DO
+    
+!     calculate diff(gamma,Fr)*Fr^T   
+    cf0=games-(1.0d0+DtGam0)*kappan
+    cf1=kappan-m*(games-(1.0d0+DtGam0)*kappas)
+    DO i1=1,3
+      DO i2=1,3
+        IF (c0.LE.0.0d0) THEN
+          dgamdFrFrT(i1,i2)=0.0d0
+        ELSE
+          dc0dFrFrT(i1,i2)=cf0*dDtGam1dFrFrT(i1,i2) & 
+            & +DtGam1*(dgamesdFrFrT(i1,i2)-kappan*dDtGam0dFrFrT(i1,i2))
+          dc1dFrFrT(i1,i2)=(1.0d0-m*DtGam1)*dgamesdFrFrT(i1,i2) &
+            & +m*kappas*DtGam1*dDtGam0dFrFrT(i1,i2) &
+            & +cf1*dDtGam1dFrFrT(i1,i2)
+          dc2dFrFrT(i1,i2)=m*(dgamesdFrFrT(i1,i2) &
+            & +kappas*dDtGam1dFrFrT(i1,i2))
+          IF (m.EQ.0.0d0) THEN
+            dgamdFrFrT(i1,i2)=(1.0d0/c1)*(dc0dFrFrT(i1,i2) &
+              & -gam*dc1dFrFrT(i1,i2))
+          ELSE
+            dgamdFrFrT(i1,i2)=(gam/(2.0d0*c0-c1*gam)) &
+              &  *(dc0dFrFrT(i1,i2)-gam*dc1dFrFrT(i1,i2) &
+              &  -(gam**2.0d0)*dc2dFrFrT(i1,i2))
+          END IF
+          dDtGAMdFrFrT(i1,i2)=dDtGam0dFrFrT(i1,i2)+dgamdFrFrT(i1,i2)
+        END IF
+      END DO
+    END DO
+      
+!     calculate diff(Be''*,Fr)*Fr^T         
+    DO i1=1,3
+      DO i2=1,3
+        DO i3=1,3
+          DO i4=1,3
+            ddevBeprsdFrFrT(i1,i2,i3,i4)= &
+              & EyeTens(i1,i3)*Beprs(i2,i4) &
+              & +Beprs(i1,i4)*EyeTens(i2,i3) &
+              & -(2.0d0/3.0d0)*Beprs(i1,i2)*EyeTens(i3,i4) &
+              & -(2.0d0/3.0d0)*EyeTens(i1,i2)*devBeprs(i3,i4)
+          END DO
+        END DO
+      END DO
+    END DO
+      
+!     calculate diff(Be'',Fr)*Fr^T      
+    DO i1=1,3
+      DO i2=1,3
+        DO i3=1,3
+          DO i4=1,3
+            ddevBeprdFrFrT(i1,i2,i3,i4)=(1.0d0/(1.0d0+Dt*GAMMA))* &
+              & (ddevBeprsdFrFrT(i1,i2,i3,i4)-devBepr(i1,i2)* &
+              & dDtGAMdFrFrT(i3,i4))
+          END DO
+        END DO
+      END DO
+    END DO
+
+!     calculate the spatial tangent moduli     
+    cft1=K/J*(2*J-1.0d0)
+    cft2=mu/J
+    DO i1=1,3
+      DO i2=1,3
+        DO i3=1,3
+          DO i4=1,3
+            tanmat(i1,i2,i3,i4)=cft1*EyeTens(i1,i2)*dJdFrFrT(i3,i4) &
+              & +cft2*ddevBeprdFrFrT(i1,i2,i3,i4) &
+              & -T(i1,i4)*EyeTens(i2,i3)
+          END DO
+        END DO
+      END DO
+    END DO
+      
+    RETURN
+  END SUBROUTINE Tangent
+
+!   ***************************************************************************
+!   ***************************************************************************  
+      
+!   Juxtaposition of a 3x3 tensor and a 3x1 vector
+!   Also holds for a Dot Product between a 2nd order tensor and a vector
+      
+  SUBROUTINE JuxtaTensVec(A,v,Av)
+      
+    IMPLICIT NONE
+      
+!   Declarations
+    REAL*8 A(3,3),v(3),Av(3)
+    INTEGER i,j
+    
+    DO i=1,3
+      Av(i)=0.0d0
+      DO j=1,3
+        Av(i)=Av(i)+A(i,j)*v(j)
+      END DO
+    END DO
+    
+    RETURN
+  END SUBROUTINE JuxtaTensVec
+      
+!   ====================================================================
+      
+!   Juxtaposition between two 2nd order tensors
+      
+  SUBROUTINE JuxtaTensTens(A,B,AB)
+    
+    IMPLICIT NONE
+    
+!   Declarations
+    REAL*8 A(3,3),B(3,3),AB(3,3)
+    INTEGER i,j,k
+
+    DO i=1,3
+      DO j=1,3        
+        AB(i,j)=0.0d0
+        DO k=1,3
+          AB(i,j)=AB(i,j)+A(i,k)*B(k,j)
+        END DO
+      END DO
+    END DO
+    
+    RETURN
+  END SUBROUTINE JuxtaTensTens
+  
+!   ====================================================================
+      
+!   Transpose of a 2nd order tensor
+      
+  SUBROUTINE TransTens(A,At)
+      
+    IMPLICIT NONE
+      
+!   Declarations
+    REAL*8 A(3,3),At(3,3)
+    INTEGER i,j
+    
+    DO i=1,3
+      DO j=1,3
+        At(i,j)=A(j,i)
+      END DO
+    END DO
+    
+    RETURN
+  END SUBROUTINE TransTens
+      
+!   ====================================================================
+      
+!   Determinant of a 2nd order tensor
+      
+  SUBROUTINE DetTens(A,detA)
+      
+    IMPLICIT NONE
+      
+!   Declarations
+    REAL*8 A(3,3),A2(3,3),A3(3,3),detA,trA,trA2,trA3
+    
+    CALL JuxtaTensTens(A,A,A2)
+    CALL JuxtaTensTens(A,A2,A3)
+    
+    CALL TraceTens(A,trA)
+    CALL TraceTens(A2,trA2)
+    CALL TraceTens(A3,trA3)
+    
+    detA=1.0d0/3.0d0*(trA3-trA*trA2+0.50d0*(trA**2.0d0-trA2)*trA)
+    
+    RETURN
+  END SUBROUTINE DetTens
+  
+!   ====================================================================           
+      
+!   Trace of a 2nd order tensor
+      
+  SUBROUTINE TraceTens(A,trA)
+    
+    IMPLICIT NONE
+
+!   Declarations
+    REAL*8 A(3,3)
+    REAL*8 trA
+    
+    trA=A(1,1)+A(2,2)+A(3,3)
+    
+    RETURN
+  END SUBROUTINE TraceTens
+  
+!   ====================================================================    
+      
+!   Inverse of a 2nd order tensor
+      
+  SUBROUTINE InvTens(A,invA)
+      
+    IMPLICIT NONE
+      
+!   Declarations
+    REAL*8 EyeTens(3,3),A(3,3),detA,I11,A2(3,3),trA2,I22,invA(3,3)
+    INTEGER i1,i2
+    
+    CALL IdentityTens(EyeTens)
+    CALL DetTens(A,detA)   
+    I11=A(1,1)+A(2,2)+A(3,3)      
+    CALL JuxtaTensTens(A,A,A2)
+    trA2=A2(1,1)+A2(2,2)+A2(3,3)
+    I22=0.50d0*(I11**2.0d0-trA2)
+    
+    DO i1=1,3
+      DO i2=1,3
+        invA(i1,i2)=1.0d0/detA*(A2(i1,i2)-I11*A(i1,i2) &
+          & +I22*EyeTens(i1,i2))
+      END DO
+    END DO
+    
+    RETURN
+  END SUBROUTINE InvTens
+  
+!   ====================================================================
+      
+!   Dot Product between two 2nd order tensors
+      
+  SUBROUTINE DotTensTens(A,B,AdotB)
+      
+    IMPLICIT NONE
+    
+!   Declarations
+    REAL*8 A(3,3),B(3,3),Bt(3,3),ABt(3,3)
+    REAL*8 trABt,AdotB
+    
+    CALL TransTens(B,Bt)
+    CALL JuxtaTensTens(A,Bt,ABt)
+    CALL TraceTens(ABt,trABt)
+    
+    AdotB=trABt
+    
+    RETURN
+  END SUBROUTINE DotTensTens
+      
+!   ====================================================================
+      
+!   2nd order identity tensor
+      
+  SUBROUTINE IdentityTens(EyeTens)
+      
+    IMPLICIT NONE
+      
+!   Declarations
+    REAL*8 EyeTens(3,3)
+      
+    EyeTens(1,1)=1.0d0
+    EyeTens(1,2)=0.0d0
+    EyeTens(1,3)=0.0d0
+    EyeTens(2,1)=0.0d0
+    EyeTens(2,2)=1.0d0
+    EyeTens(2,3)=0.0d0
+    EyeTens(3,1)=0.0d0
+    EyeTens(3,2)=0.0d0
+    EyeTens(3,3)=1.0d0
+    
+    RETURN
+  END SUBROUTINE IdentityTens
+      
+!   ====================================================================
+      
+!   2nd order sparse tensor
+      
+  SUBROUTINE ZeroTens(zero3)
+      
+    IMPLICIT NONE
+      
+!   Declarations
+    REAL*8 zero3(3,3)
+    
+    zero3(1,1)=0.0d0
+    zero3(1,2)=0.0d0
+    zero3(1,3)=0.0d0
+    zero3(2,1)=0.0d0
+    zero3(2,2)=0.0d0
+    zero3(2,3)=0.0d0
+    zero3(3,1)=0.0d0
+    zero3(3,2)=0.0d0
+    zero3(3,3)=0.0d0
+      
+    RETURN
+  END SUBROUTINE ZeroTens
+      
+!   ====================================================================
+      
+!   Deviator of a 2nd order tensor
+      
+  SUBROUTINE DevTens(A,devA,hydA)
+      
+    IMPLICIT NONE
+      
+!   Declarations
+    REAL*8 A(3,3),devA(3,3),EyeTens(3,3),hydA(3,3)
+    REAL*8 p,trA
+    INTEGER i,j
+    
+    CALL TraceTens(A,trA)
+    p=-trA/3.0d0
+    CALL IdentityTens(EyeTens)
+    
+    DO i=1,3
+      DO j=1,3
+        hydA(i,j)=-p*EyeTens(i,j)
+        devA(i,j)=A(i,j)-hydA(i,j)
+      END DO
+    END DO
+      
+    RETURN
+  END SUBROUTINE DevTens
+      
+!   ====================================================================
+      
+!   Unimodular 2nd order tensor
+      
+  SUBROUTINE MUnimodular(A,Apr)
+      
+    IMPLICIT NONE
+      
+!   Declarations
+    REAL*8 A(3,3),Apr(3,3)
+    REAL*8 detA,power,fac
+    INTEGER i,j
+    power=-1.0d0/3.0d0
+    
+    CALL DetTens(A,detA)
+    
+    DO i=1,3
+      DO j=1,3
+        Apr(i,j)=SIGN(dabs(detA)**power, detA)*A(i,j) 
+      END DO
+    END DO
+      
+!       do i=1,3
+!         do j=1,3
+!           Apr(i,j)=fac*A(i,j)
+!         enddo
+!       enddo  
+      
+    RETURN
+  END SUBROUTINE MUnimodular
+      
+!   ====================================================================
+      
+!   Cross Product between two vectors
+      
+  SUBROUTINE CrossVecVec(a,b,axb)
+      
+    IMPLICIT NONE
+      
+!   Declarations
+    REAL*8 a(3),b(3),axb(3)
+      
+    axb(1)=a(2)*b(3)-a(3)*b(2)
+    axb(2)=a(3)*b(1)-a(1)*b(3)
+    axb(3)=a(1)*b(2)-a(2)*b(1)
+    
+    RETURN
+  END SUBROUTINE CrossVecVec
+      
+!   ====================================================================
+      
+!   Dot Product between two vectors
+      
+  SUBROUTINE DotVecVec(a,b,adotb)
+      
+    IMPLICIT NONE
+      
+    REAL*8 a(3),b(3)
+    REAL*8 adotb
+      
+    adotb=a(1)*b(1)+a(2)*b(2)+a(3)*b(3)
+    
+    RETURN
+  END SUBROUTINE DotVecVec
+      
+!   ====================================================================
+      
+!   Tensor Product between two vectors
+      
+  SUBROUTINE TensProd(a,b,aoxb)
+      
+    IMPLICIT NONE
+      
+    REAL*8 a(3),b(3),aoxb(3,3)
+    INTEGER i,j
+      
+    DO i=1,3
+      DO j=1,3
+        aoxb(i,j)=a(i)*b(j)
+      END DO
+    END DO
+    
+    RETURN
+  END SUBROUTINE TensProd
+      
+!   ====================================================================
+      
+!   Tensor Product berween two 2nd order tensors
+
+  SUBROUTINE TensProd33(A,B,AoxB)
+      
+    IMPLICIT NONE
+      
+    REAL*8 A(3,3),B(3,3),AoxB(3,3,3,3)
+    INTEGER i,j,m,n
+    
+    DO i=1,3
+      DO j=1,3
+        DO m=1,3
+          DO n=1,3
+            AoxB(i,j,m,n)=A(i,j)*B(m,n)
+          END DO
+        END DO
+      END DO
+    END DO
+    
+    RETURN
+  END SUBROUTINE TensProd33
+      
+!   ====================================================================
+      
+!   The Operation "oplus" between two 2nd order tensors
+
+  SUBROUTINE oplus(A,B,AopB)
+      
+    IMPLICIT NONE
+      
+    REAL*8 A(3,3),B(3,3),AopB(3,3,3,3)
+    INTEGER i,j,m,n
+    
+    DO i=1,3
+      DO j=1,3
+        DO m=1,3
+          DO n=1,3
+            AopB(i,j,m,n)=A(i,n)*B(j,m)
+          END DO
+        END DO
+      END DO
+    END DO
+      
+    RETURN
+  END SUBROUTINE oplus
+      
+!   ====================================================================      
+!   The Operation "ominus" between two 2nd order tensors
+
+  SUBROUTINE ominus(A,B,AomB)
+      
+    IMPLICIT NONE
+      
+    REAL*8 A(3,3),B(3,3),AomB(3,3,3,3)
+    INTEGER i,j,m,n
+    
+    DO i=1,3
+      DO j=1,3
+        DO m=1,3
+          DO n=1,3
+            AomB(i,j,m,n)=A(i,m)*B(j,n)
+          END DO
+        END DO
+      END DO
+    END DO
+    
+    RETURN
+  END SUBROUTINE ominus
+      
+!   ====================================================================
+      
+!   Dot Product between a 2nd order tensor and a 4th order tensor
+      
+  SUBROUTINE DotTens2Tens4(A2,B4,A2dotB4)
+    
+    IMPLICIT NONE
+    
+!   Declarations
+    REAL*8 A2(3,3),B4(3,3,3,3),A2dotB4(3,3)
+    INTEGER i,j,m,n
+    
+    DO i=1,3
+      DO j=1,3
+        A2dotB4(i,j)=0.0d0
+        DO m=1,3
+          DO n=1,3
+            A2dotB4(i,j)=A2dotB4(i,j)+A2(m,n)*B4(m,n,i,j)
+          END DO
+        END DO
+      END DO
+    END DO
+    
+    RETURN
+  END SUBROUTINE DotTens2Tens4
+      
+!   ====================================================================
+      
+!   Dot Product between a 4th order tensor and a 2nd order tensor
+      
+  SUBROUTINE DotTens4Tens2(A4,B2,A4dotB2)
+    
+    IMPLICIT NONE
+    
+!   Declarations
+    REAL*8 A4(3,3,3,3),B2(3,3),A4dotB2(3,3)
+    INTEGER i,j,m,n
+    
+    DO i=1,3
+      DO j=1,3
+        A4dotB2(i,j)=0.0d0
+        DO m=1,3
+          DO n=1,3
+            A4dotB2(i,j)=A4dotB2(i,j)+A4(i,j,m,n)*B2(m,n)
+          END DO
+        END DO
+      END DO
+    END DO
+    
+    RETURN
+  END SUBROUTINE DotTens4Tens2
+      
+!   ====================================================================  
   
 END MODULE FINITE_ELASTICITY_ROUTINES

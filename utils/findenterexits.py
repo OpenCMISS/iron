@@ -14,6 +14,8 @@ PURE FUNCTIONS and routines inside INTERFACE/END INTERFACE blocks are not checke
 A routine can also be omitted from checking by adding the name to the ignore_routines list.
 
 Debugging can be controlled by setting the debug_level variable [0-5].
+
+Chris Bradley 16/2/17.
 """
 
 import sys
