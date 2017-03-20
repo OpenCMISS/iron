@@ -837,7 +837,7 @@ CONTAINS
 
     IF(ASSOCIATED(dataProjection)) THEN
       IF(ALLOCATED(dataProjection%dataProjectionCandidates)) THEN
-        DO dataPointIdx=1,SIZE(dataProjection%dataProjectionCandidates,1)
+        DO dataPointIdx=0,SIZE(dataProjection%dataProjectionCandidates,1)-1
           CALL DataProjection_DataProjectionCandidateFinalise(dataProjection%dataProjectionCandidates(dataPointIdx),err,error,*999)
         ENDDO !dataPointIdx
         DEALLOCATE(dataProjection%dataProjectionCandidates)
