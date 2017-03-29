@@ -1358,6 +1358,7 @@ CONTAINS
       & S1(3,3),S2(3,3),S(3,3,3,3),Be(3,3),uniBePrime1(3,3),invBePrime(3,3),Jacobian(2,2),lame(4),Ee(4,4),invBe(3,3), &
       & invBeS33(3,3),S33invBe(3,3),T0(3,3),T1(3,3),T2(3,3),T3(3,3),T4(3,3),T5(3,3),invFrT(3,3),BePrimePrime(3,3), &
       & invJacobian(2,2)
+    REAL(DP) :: devH(3,3),HH(3,3),malpha1,B,Bepr(3,3),lame1,lame2,lame3,lamea,Ee11,Ee22,Ee33,Ee12,Eea,TT(3,3)
     REAL(DP) :: statev(13),ddsdde(3,3,3,3),props(8)
     INTEGER(INTG) :: EQUATIONS_SET_SUBTYPE
 
@@ -2319,7 +2320,7 @@ CONTAINS
               CALL Field_ParameterSetGetLocalGaussPoint(DEPENDENT_FIELD,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                 & gaussIdx,elementNumber,1,Je1,err,error,*999)
               
-               !Get the structural tensor, S1, from the start of the time step
+              !Get the structural tensor, S1, from the start of the time step
               DO rowIdx=1,numberOfDimensions
                 DO columnIdx=1,numberOfDimensions
                   componentIdx=rowIdx+(columnIdx-1)*numberOfDimensions
@@ -2327,6 +2328,10 @@ CONTAINS
                     & gaussIdx,elementNumber,componentIdx,S1(rowIdx,columnIdx),err,error,*999)
                 ENDDO !columnIdx
               ENDDO !rowIdx
+
+              CALL clooping(1.0E-10_DP,1.0E-10_DP,100,mu0,kc,kt,1,k2,k3,k12,ka,q,H11,H22,H12,Jh,Gamma,Gammam,dt,Fr,Jr,Je1, &
+                & S1(:,1),S1(:,2),S1(:,3),devH,HH,malpha1,B,Bepr,lame1,lame2,lame3,lamea,Ee11,Ee22,Ee33,Ee12,Eea,QQ,T0,T1, &
+                & T2,T3,T4,T5,TT)
 
               !Calculate the elastic dilatation. Eqn (6.5) and (6.8)
               Je2 = Jr*Je1
@@ -10415,6 +10420,373 @@ CONTAINS
   !================================================================================================================================
   !
   
+!   Main functions to compute everything
+      
+  SUBROUTINE clooping(hstep,tol,maxitr,mu0,kc,kt,k1,k2,k3,k12,ka, &
+    & q,H1,H2,H12,Jh,Gamma,Gammam,Dt,Fr,Jr,Jen,Beprn,s1n,s2n,s3n, &
+    & alpha1n,Bn,Je,s1,s2,s3,devH,HH,alpha1,B,Bepr,lame1,lame2,lame3, &
+    & lamea,Ee11,Ee22,Ee33,Ee12,Eea,QQ,T0,T1,T2,T3,T4,T5,TT)
+      
+    IMPLICIT NONE
+      
+!   Declarations
+    REAL*8 hstep,tol,maxitr,alpha1n,Bn
+    REAL*8 mu0,kc,kt,k1,k2,k3,k12,ka,q,H1,H2,H12,Jh,Gamma,Gammam,Dt
+    REAL*8 Fr(3,3),Jr,Jen,Beprn(3,3),s1n(3),s2n(3),s3n(3),Je,s1(3)
+    REAL*8 s2(3),s3(3),S11(3,3),S22(3,3),S33(3,3),S12(3,3),S21(3,3)
+    REAL*8 S13(3,3),S31(3,3),S23(3,3),S32(3,3),devH(3,3),HH(3,3)
+    REAL*8 alpha1,B,Bepr(3,3),lame1,lame2,lame3,lamea,Ee11,Ee22,Ee33
+    REAL*8 Ee12,Eea,devBepr(3,3),QQ,T0(3,3),T1(3,3),T2(3,3),T3(3,3)
+    REAL*8 T4(3,3),T5(3,3),TT(3,3)
+    INTEGER i1,i2
+    
+    CALL ElasticDil(Jr,Jh,Dt,Gammam,Jen,Je)
+    
+    CALL StateVarsIntegrator(hstep,tol,maxitr,Fr,Dt,Gamma,Beprn, &
+      & alpha1n,Bn,s1n,s2n,s3n,H1,H2,H12,s1,s2,s3,S11,S22,S33,S12,S21, &
+      & devH,HH,B,alpha1,devBepr,Bepr)
+      
+    CALL ElasticMeasures(Je,Bepr,S11,S22,S33,S12,lame1,lame2,lame3, &
+      & lamea,Ee11,Ee22,Ee33,Ee12,Eea)
+     
+    CALL Constitutive(mu0,kc,kt,k1,k2,k3,k12,ka,q,Je,devBepr,Bepr, &
+      & alpha1,S11,S22,S33,S12,S21,lame1,lame2,lame3,lamea,Ee12,Ee11, &
+      & Ee22,Ee33,Eea,QQ,T0,T1,T2,T3,T4,T5,TT)
+                      
+  END SUBROUTINE clopping
+      
+!   ====================================================================
+      
+!   Elastic dilatation at t=t2
+      
+  SUBROUTINE ElasticDil(Jr,Jh,Dt,Gammam,Jen,Je) 
+      
+    IMPLICIT NONE
+      
+!   Declarations
+    REAL*8 Jr,Jh,Dt,Gammam,Jen,Jn,Je,Jes
+    
+    Jes=Jr*Jen
+    Je=dexp((dlog(Jes)+Dt*Gammam*dlog(Jh))/(1+Dt*Gammam))
+    
+  END SUBROUTINE ElasticDil
+      
+!   ====================================================================
+      
+  SUBROUTINE StateVarsIntegrator(hstep,tol,maxitr,Fr,Dt,Gamma, &
+    & Beprn,alpha1n,Bn,s1n,s2n,s3n,H1,H2,H12,s1,s2,s3,S11,S22,S33,S12, &
+    & S21,devH,HH,B,alpha1,devBepr,Bepr)
+    
+    IMPLICIT NONE
+      
+!   Declarations
+    REAL*8 hstep,tol,maxitr,Fr(3,3),Beprn(3,3),Dt,Gamma,alpha1n,Bn
+    REAL*8 s1n(3),s2n(3),s3n(3),H1,H2,H12,alpha1,B,Bepr(3,3),s1(3)
+    REAL*8 s2(3),s3(3),S11(3,3),S22(3,3),S33(3,3),S12(3,3),S21(3,3)
+    REAL*8 S13(3,3),S31(3,3),S23(3,3),S32(3,3),devH(3,3),devBepr(3,3)
+    REAL*8 HH(3,3),BB(3,3),Frt(3,3),aux(3,3),EyeTens(3,3)
+    INTEGER i1,i2
+      
+    CALL IdentityTens(EyeTens)
+    CALL UpdateFibersHomeo(s1n,s2n,s3n,Fr,H1,H2,H12,s1,s2,s3,S11, &
+      & S22,S33,S12,S21,S13,S31,S23,S32,devH,HH)     
+    CALL alpha1B(hstep,tol,maxitr,Fr,Beprn,Dt,Gamma,devH,HH,alpha1n, &
+      & Bn,alpha1,B)       
+    CALL deviatorBepr(Fr,Beprn,Dt,Gamma,B,devH,devBepr)
+    DO i1=1,3
+      DO i2=1,3
+        Bepr(i1,i2)=(alpha1/3.0d0)*EyeTens(i1,i2)+devBepr(i1,i2)
+      END DO
+    END DO
+    
+  END SUBROUTINE StateVarsIntegrator
+  
+!   ====================================================================
+      
+!   Compute the deviatoric part Be''
+
+  SUBROUTINE deviatorBepr(Fr,Beprn,Dt,Gamma,B,devH,devBepr)
+      
+    IMPLICIT NONE
+      
+    !   Declarations
+    REAL*8 Fr(3,3),Beprn(3,3),Dt,Gamma,B,devH(3,3),devBepr(3,3)
+    REAL*8 Beprs(3,3),hydBeprs(3,3),devBeprs(3,3),Frpr(3,3)
+    REAL*8 FrprT(3,3),aux(3,3)
+    INTEGER i1,i2
+    
+    CALL MUnimodular(Fr,Frpr)
+    CALL TransTens(Frpr,FrprT)
+    CALL JuxtaTensTens(Frpr,Beprn,aux)
+    CALL JuxtaTensTens(aux,FrprT,Beprs)
+    CALL DevTens(Beprs,devBeprs,hydBeprs)
+    
+    DO i1=1,3
+      DO i2=1,3
+        devBepr(i1,i2)=(1.0d0/(1.0d0+Dt*Gamma)) & 
+          & *(devBeprs(i1,i2)+B*Dt*Gamma*devH(i1,i2))
+      END DO
+    END DO
+    
+  END SUBROUTINE deviatorBepr
+  
+!   ====================================================================
+      
+!   Updated fibers directions and the homeostatic state
+      
+  SUBROUTINE UpdateFibersHomeo(s1n,s2n,s3n,Fr,H1,H2,H12,s1,s2,s3, &
+    & S11,S22,S33,S12,S21,S13,S31,S23,S32,devH,HH)
+    
+    IMPLICIT NONE
+      
+!   Declarations
+    REAL*8 s1n(3),s2n(3),s3n(3),Fr(3,3),H1,H2,H12,s1(3),s2(3),s3(3)
+    REAL*8 S11(3,3),S22(3,3),S33(3,3),S12(3,3),S21(3,3),S13(3,3)
+    REAL*8 S31(3,3),S23(3,3),S32(3,3),devH(3,3),HH(3,3),Frt(3,3)
+    REAL*8 invFrt(3,3),EyeTens(3,3),ms1,ms3
+    INTEGER i,j
+    
+    CALL IdentityTens(EyeTens)
+    CALL TransTens(Fr,Frt)
+    CALL InvTens(Frt,invFrt)
+    
+    CALL JuxtaTensVec(Fr,s1n,s1)
+    ms1=dsqrt(s1(1)**2.0d0+s1(2)**2.0d0+s1(3)**2.0d0)
+    s1(1)=s1(1)/ms1
+    s1(2)=s1(2)/ms1
+    s1(3)=s1(3)/ms1
+    
+    CALL JuxtaTensVec(invFrt,s3n,s3)
+    ms3=dsqrt(s3(1)**2.0d0+s3(2)**2.0d0+s3(3)**2.0d0)
+    s3(1)=s3(1)/ms3
+    s3(2)=s3(2)/ms3
+    s3(3)=s3(3)/ms3
+    
+    CALL CrossVecVec(s3,s1,s2)
+    
+    DO i=1,3
+      DO j=1,3
+        S11(i,j)=s1(i)*s1(j)
+        S22(i,j)=s2(i)*s2(j)
+        S33(i,j)=s3(i)*s3(j)
+        S12(i,j)=s1(i)*s2(j)
+        S21(i,j)=s2(i)*s1(j)
+        S13(i,j)=s1(i)*s3(j)
+        S31(i,j)=s3(i)*s1(j)
+        S23(i,j)=s2(i)*s3(j)
+        S32(i,j)=s3(i)*s2(j)        
+        devH(i,j)=H1*S11(i,j)+H2*S22(i,j)-(H1+H2)*S33(i,j) &
+          & +H12*(S12(i,j)+S21(i,j))          
+        HH(i,j)=EyeTens(i,j)+devH(i,j)
+      END DO
+    END DO
+    
+  END SUBROUTINE UpdateFibersHomeo
+  
+!   ====================================================================
+  
+!   Compute the nonlinear function to compute {alpha1, B}
+      
+  SUBROUTINE nonlinearfuncs(Fr,Beprn,Dt,Gamma,devH,HH,alpha1,B, &
+    & devBepr,f1,f2)
+    
+    IMPLICIT NONE
+      
+!   Declarations
+    REAL*8 Fr(3,3),Beprn(3,3),Dt,Gamma,devH(3,3),HH(3,3),alpha1,B
+    REAL*8 devBepr(3,3),Bepr(3,3),invBepr(3,3),EyeTens(3,3),f1,f2
+    REAL*8 aux1,aux2,detdevBepr
+    INTEGER i1,i2
+    
+    CALL IdentityTens(EyeTens)
+    
+    DO i1=1,3
+      DO i2=1,3
+        Bepr(i1,i2)=(alpha1/3.0d0)*EyeTens(i1,i2)+devBepr(i1,i2)
+      END DO
+    END DO
+    CALL InvTens(Bepr,invBepr)
+    CALL DotTensTens(invBepr,HH,aux1)
+    f1=B-3.0d0/aux1
+    
+    CALL DotTensTens(devBepr,devBepr,aux2)
+    CALL DetTens(devBepr,detdevBepr)
+    f2=(alpha1/3.0d0)**3.0d0-(aux2/2.0d0)*(alpha1/3.0d0) &
+      & -(1.0d0-detdevBepr)
+    
+  END SUBROUTINE nonlinearfuncs
+      
+!   ====================================================================
+      
+!   Compute the scalars {alpha1, B}
+      
+  SUBROUTINE alpha1B(hstep,tol,maxitr,Fr,Beprn,Dt,Gamma,devH,HH, &
+    & alpha1n,Bn,alpha1,B)   
+    
+    IMPLICIT NONE
+      
+!   Declarations
+    REAL*8 hstep,tol,maxitr,Fr(3,3),Beprn(3,3),Dt,Gamma,devH(3,3)
+    REAL*8 HH(3,3),alpha1n,Bn,alpha1,B,devBepr(3,3),n,mDvars
+    REAL*8 varsn(2),xpertb(2),ff(2),ffp(2),Jacob(2,2),varsnew(2)
+    REAL*8 invJ(2,2),invJff(2),Dvars(2),hstepx
+    INTEGER i1,i2,i3
+      
+    n=0.0d0
+    mDvars=1.0d0
+    alpha1=alpha1n
+    B=Bn
+    
+    DO WHILE ((mDvars.GT.tol).AND.(n.LT.maxitr))
+      varsn(1)=alpha1
+      varsn(2)=B
+      CALL deviatorBepr(Fr,Beprn,Dt,Gamma,varsn(2),devH,devBepr)
+      CALL nonlinearfuncs(Fr,Beprn,Dt,Gamma,devH,HH,varsn(1), &
+        & varsn(2),devBepr,ff(1),ff(2)) 
+      xpertb(1)=varsn(1)
+      xpertb(2)=varsn(2)
+      DO i2=1,2
+        hstepx=MAX(hstep,dabs(hstep*xpertb(i2)))
+        xpertb(i2)=xpertb(i2)+hstepx
+        CALL deviatorBepr(Fr,Beprn,Dt,Gamma,xpertb(2),devH,devBepr)
+        CALL nonlinearfuncs(Fr,Beprn,Dt,Gamma,devH,HH,xpertb(1), &
+          & xpertb(2),devBepr,ffp(1),ffp(2))         
+        DO i3=1,2
+          Jacob(i3,i2)=(ffp(i3)-ff(i3))/hstepx
+        END DO
+        xpertb(i2)=varsn(i2)
+      END DO
+      CALL InvTens2by2(Jacob,invJ)
+      DO i1=1,2
+        invJff(i1)=0.0d0
+        DO i2=1,2
+          invJff(i1)=invJff(i1)+Jacob(i1,i2)*ff(i2)
+        END DO
+        varsnew(i1)=varsn(i1)-invJff(i1)
+        Dvars(i1)=varsnew(i1)-varsn(i1)
+      END DO
+      mDvars=dsqrt(Dvars(1)**2.0d0+Dvars(2)**2.0d0)
+      n=n+1.0d0 
+      alpha1=varsnew(1)
+      B=varsnew(2)
+      
+      WRITE(*,*) mDvars
+      WRITE(*,*) ''
+      WRITE(*,*) n
+      WRITE(*,*) '=========================='
+      
+    END DO
+    
+  END SUBROUTINE alpha1B
+  
+!   ====================================================================
+      
+!   compute the elastic stretches and strains
+
+  SUBROUTINE ElasticMeasures(Je,Bepr,S11,S22,S33,S12,lame1,lame2, &
+    & lame3,lamea,Ee11,Ee22,Ee33,Ee12,Eea)
+      
+    IMPLICIT NONE
+      
+!   Declarations
+    REAL*8 Je,Bepr(3,3),Be(3,3),S11(3,3),S22(3,3),S33(3,3),S12(3,3)
+    REAL*8 lame1,lame2,lame3,lamea,Ee11,Ee22,Ee33,Ee12,Eea,invBe(3,3)
+    REAL*8 aux3
+    INTEGER i1,i2
+    
+    DO i1=1,3
+      DO i2=1,3
+        Be(i1,i2)=(Je**(2.0d0/3.0d0))*Bepr(i1,i2)
+      END DO
+    END DO
+    
+    CALL InvTens(Be,invBe)
+    
+    CALL DotTensTens(invBe,S11,lame1)
+    lame1=lame1**(-0.50d0)
+    Ee11=0.50d0*((lame1**2.0d0)-1.0d0)
+    
+    CALL DotTensTens(invBe,S22,lame2)
+    lame2=lame2**(-0.50d0)
+    Ee22=0.50d0*((lame2**2.0d0)-1.0d0)
+    
+    CALL DotTensTens(invBe,S33,lame3)
+    lame3=lame3**(-0.50d0)
+    Ee33=0.50d0*((lame3**2.0d0)-1.0d0)
+    
+    CALL DotTensTens(invBe,S12,Ee12)
+    Ee12=-0.50d0*lame1*lame2*Ee12
+    
+    CALL DotTensTens(Be,S33,lamea)
+    lamea=Je*(lamea**(-0.50d0))
+    Eea=lamea-1.0d0
+    
+  END SUBROUTINE ElasticMeasures
+  
+!   ====================================================================
+      
+!   Constitutive Equations (Cauchy Stresses)
+      
+  SUBROUTINE Constitutive(mu0,kc,kt,k1,k2,k3,k12,ka,q,Je,devBepr, &
+    & Bepr,alpha1,S11,S22,S33,S12,S21,lame1,lame2,lame3,lamea,Ee12, &
+    & Ee11,Ee22,Ee33,Eea,QQ,T0,T1,T2,T3,T4,T5,TT)
+    
+    IMPLICIT NONE
+      
+!   Declarations
+    REAL*8 mu0,kc,kt,k1,k2,k3,k12,ka,q,mu,Je,Bepr(3,3),Be(3,3),alpha1
+    REAL*8 S11(3,3),S22(3,3),S33(3,3),S12(3,3),S21(3,3),lame1,lame2
+    REAL*8 lame3,lamea,Ee12,Ee11,Ee22,Ee33,Eea,QQ,T0(3,3),T1(3,3)
+    REAL*8 T2(3,3),T3(3,3),T4(3,3),T5(3,3),TT(3,3),ktJe,kcJe
+    REAL*8 macEe11,macEe22,macEe33,EyeTens(3,3),devBepr(3,3)
+    REAL*8 invBe(3,3),invBeS33(3,3),S33invBe(3,3)
+    INTEGER i1,i2
+    
+    CALL IdentityTens(EyeTens)
+    CALL MacBrackets(Je-1,ktJe)
+    CALL MacBrackets(1-Je,kcJe)
+    CALL MacBrackets(Ee11,macEe11)
+    CALL MacBrackets(Ee22,macEe22)
+    CALL MacBrackets(Ee33,macEe33)
+    DO i1=1,3
+      DO i2=1,3
+        Be(i1,i2)=(Je**(2.0d0/3.0d0))*Bepr(i1,i2)
+      END DO
+    END DO
+    CALL InvTens(Be,invBe)
+    CALL JuxtaTensTens(invBe,S33,invBeS33)
+    CALL JuxtaTensTens(S33,invBe,S33invBe)
+    
+    QQ=0.50d0*kt*(ktJe**2.0d0)+0.50d0*kc*(kcJe**2.0d0) &
+      & +0.50d0*(alpha1-3.0d0)+0.50d0*k1*(macEe11**2.0d0) &
+      & +0.50d0*k2*(macEe22**2.0d0)+0.50d0*k3*(macEe33**2.0d0) &
+      & +2.0d0*k12*(Ee12**2.0d0)+0.50d0*ka*(Eea**2.0d0) 
+    
+    mu=mu0*dexp(q*QQ)
+    DO i1=1,3
+      DO i2=1,3
+        T0(i1,i2)=mu*(kt*ktJe-kc*kcJe)*EyeTens(i1,i2) &
+          & +(mu/Je)*devBepr(i1,i2)
+        T1(i1,i2)=((k1*mu*(lame1**2.0d0)*macEe11)/Je)*S11(i1,i2)
+        T2(i1,i2)=((k2*mu*(lame2**2.0d0)*macEe22)/Je) & 
+          & *(S22(i1,i2)-(2.0d0*lame2/lame1) &
+          & *Ee12*(S12(i1,i2)+S21(i1,i2)))
+        T3(i1,i2)=((k3*mu*(lame3**2.0d0)*macEe33)/Je) &
+          & *((lame3**2.0d0)*(invBeS33(i1,i2)+S33invBe(i1,i2)) &
+          & -S33(i1,i2))
+        T4(i1,i2)=2.0d0*mu*k12*Ee12*(lame2/lame1/Je) &
+          & *(1.0d0-4.0d0*(Ee12**2.0d0)) &
+          & *(S12(i1,i2)+S21(i1,i2))
+        T5(i1,i2)=(mu*ka*Eea*lamea/Je)*(S11(i1,i2)+S22(i1,i2))
+        TT(i1,i2)=T0(i1,i2)+T1(i1,i2)+T2(i1,i2)+T3(i1,i2)+T4(i1,i2) &
+          & +T5(i1,i2)
+      END DO
+    END DO
+    
+  END SUBROUTINE Constitutive
+      
+!   ====================================================================
+      
   SUBROUTINE umat(ntens,nstatv,nprops,kstep,kinc,dfgrd0,dfgrd1,dtime,stress,statev,ddsdde,props)
     
 !  SUBROUTINE umat(stress,statev,ddsdde,sse,spd,scd,rpl,ddsddt, &
@@ -11491,6 +11863,38 @@ CONTAINS
     RETURN
   END SUBROUTINE DotTens4Tens2
       
+!   ====================================================================    
+      
+!   Inverse of a 2 by 2 matrix
+      
+  SUBROUTINE InvTens2by2(A,invA)
+      
+    IMPLICIT NONE
+      
+!   Declarations
+    REAL*8 A(2,2),detA,invA(2,2)
+    
+    detA=A(1,1)*A(2,2)-A(1,2)*A(2,1)
+    invA(1,1)=1.0d0/detA*A(2,2)
+    invA(1,2)=-1.0d0/detA*A(1,2)
+    invA(2,1)=-1.0d0/detA*A(2,1)
+    invA(2,2)=1.0d0/detA*A(1,1)
+    
+  END SUBROUTINE InvTens2by2
+      
 !   ====================================================================  
+        
+!   Macauley Brackets
+      
+  SUBROUTINE MacBrackets(x,Macx)
+    
+    IMPLICIT NONE
+      
+!   Declarations
+    REAL*8 x,Macx
+    
+    Macx=MAX(x,0.0d0)
+      
+  END SUBROUTINE MacBrackets
   
 END MODULE FINITE_ELASTICITY_ROUTINES
