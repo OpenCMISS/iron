@@ -76,11 +76,11 @@ MODULE ADVECTION_EQUATION_ROUTINES
   PUBLIC Advection_EquationsSetSolutionMethodSet
   PUBLIC Advection_EquationsSetSpecificationSet
   PUBLIC Advection_ProblemSpecificationSet
-  PUBLIC ADVECTION_EQUATION_PROBLEM_SETUP
-  PUBLIC ADVECTION_EQUATION_FINITE_ELEMENT_CALCULATE
-  PUBLIC ADVECTION_PRE_SOLVE
-  PUBLIC ADVECTION_PRE_SOLVE_UPDATE_BC
-  PUBLIC ADVECTION_POST_SOLVE
+  PUBLIC Advection_EquationProblemSetup
+  PUBLIC Advection_EquationFiniteElementCalculate
+  PUBLIC Advection_PreSolve
+  PUBLIC Advection_PreSolveUpdateBC
+  PUBLIC Advection_PostSolve
   PUBLIC Advection_Couple1D0D
 
 CONTAINS
@@ -696,7 +696,7 @@ CONTAINS
   !
 
   !>Sets up the diffusion problem.
-  SUBROUTINE ADVECTION_EQUATION_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*)
+  SUBROUTINE Advection_EquationProblemSetup(PROBLEM,PROBLEM_SETUP,err,error,*)
 
     !Argument variables
     TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
@@ -706,7 +706,7 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("ADVECTION_EQUATION_PROBLEM_SETUP",err,error,*999)
+    ENTERS("Advection_EquationProblemSetup",err,error,*999)
 
     IF(.NOT.ASSOCIATED(PROBLEM)) CALL FlagError("Problem is not associated.",err,error,*999)
     IF(.NOT.ALLOCATED(PROBLEM%SPECIFICATION)) THEN
@@ -724,12 +724,12 @@ CONTAINS
        CALL FlagError(localError,err,error,*999)
     END SELECT
 
-    EXITS("ADVECTION_EQUATION_PROBLEM_SETUP")
+    EXITS("Advection_EquationProblemSetup")
     RETURN
-999 ERRORSEXITS("ADVECTION_EQUATION_PROBLEM_SETUP",err,error)
+999 ERRORSEXITS("Advection_EquationProblemSetup",err,error)
     RETURN 1
 
-  END SUBROUTINE ADVECTION_EQUATION_PROBLEM_SETUP
+  END SUBROUTINE Advection_EquationProblemSetup
 
   !
   !================================================================================================================================
@@ -874,7 +874,7 @@ CONTAINS
   !
 
   !>Calculates the element stiffness matrices for an advection equation finite element equations set.
-  SUBROUTINE ADVECTION_EQUATION_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*)
+  SUBROUTINE Advection_EquationFiniteElementCalculate(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
@@ -901,7 +901,7 @@ CONTAINS
     UPDATE_DAMPING_MATRIX = .FALSE.
     UPDATE_STIFFNESS_MATRIX = .FALSE.
 
-    ENTERS("ADVECTION_EQUATION_FINITE_ELEMENT_CALCULATE",err,error,*999)
+    ENTERS("Advection_EquationFiniteElementCalculate",err,error,*999)
 
     IF(.NOT.ASSOCIATED(EQUATIONS_SET)) CALL FlagError("Equations set is not associated.",err,error,*999)
     EQUATIONS=>EQUATIONS_SET%EQUATIONS
@@ -1028,19 +1028,19 @@ CONTAINS
        CALL FlagError(localError,err,error,*999)
     END SELECT
 
-    EXITS("ADVECTION_EQUATION_FINITE_ELEMENT_CALCULATE")
+    EXITS("Advection_EquationFiniteElementCalculate")
     RETURN
-999 ERRORSEXITS("ADVECTION_EQUATION_FINITE_ELEMENT_CALCULATE",err,error)
+999 ERRORSEXITS("Advection_EquationFiniteElementCalculate",err,error)
     RETURN 1
 
-  END SUBROUTINE ADVECTION_EQUATION_FINITE_ELEMENT_CALCULATE
+  END SUBROUTINE Advection_EquationFiniteElementCalculate
 
   !
   !================================================================================================================================
   !
 
   !>Sets up the Poisson problem pre solve.
-  SUBROUTINE ADVECTION_PRE_SOLVE(SOLVER,err,error,*)
+  SUBROUTINE Advection_PreSolve(SOLVER,err,error,*)
 
     !Argument variables
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
@@ -1051,7 +1051,7 @@ CONTAINS
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("ADVECTION_PRE_SOLVE",err,error,*999)
+    ENTERS("Advection_PreSolve",err,error,*999)
 
     IF(.NOT.ASSOCIATED(SOLVER)) CALL FlagError("Solver is not associated.",err,error,*999)
     SOLVERS=>SOLVER%SOLVERS
@@ -1067,25 +1067,25 @@ CONTAINS
     CASE(PROBLEM_ADVECTION_SUBTYPE, &
          & PROBLEM_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE, &
          & PROBLEM_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE)
-       CALL ADVECTION_PRE_SOLVE_UPDATE_BC(SOLVER,err,error,*999)
+       CALL Advection_PreSolveUpdateBC(SOLVER,err,error,*999)
        !CALL Advection_Couple1D0D(SOLVER,err,error,*999)
     CASE DEFAULT
        CALL FlagError(localError,err,error,*999)
     END SELECT
 
-    EXITS("ADVECTION_PRE_SOLVE")
+    EXITS("Advection_PreSolve")
     RETURN
-999 ERRORSEXITS("ADVECTION_PRE_SOLVE",err,error)
+999 ERRORSEXITS("Advection_PreSolve",err,error)
     RETURN 1
 
-  END SUBROUTINE ADVECTION_PRE_SOLVE
+  END SUBROUTINE Advection_PreSolve
 
   !
   !================================================================================================================================
   !
 
   !Update the boundary conditions
-  SUBROUTINE ADVECTION_PRE_SOLVE_UPDATE_BC(SOLVER,err,error,*)
+  SUBROUTINE Advection_PreSolveUpdateBC(SOLVER,err,error,*)
     !Argument variables
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     INTEGER(INTG), INTENT(OUT) :: err
@@ -1103,7 +1103,7 @@ CONTAINS
     REAL(DP) :: CONC,START_TIME,STOP_TIME,CURRENT_TIME,TIME_INCREMENT,period,delta(300),t(300),c(300),s
     INTEGER(INTG) :: CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER,i,j,n,m
 
-    ENTERS("ADVECTION_PRE_SOLVE_UPDATE_BC",err,error,*999)
+    ENTERS("Advection_PreSolveUpdateBC",err,error,*999)
 
     IF(.NOT.ASSOCIATED(SOLVER)) CALL FlagError("Solver is not associated.",err,error,*999)
     SOLVERS=>SOLVER%SOLVERS
@@ -1190,18 +1190,18 @@ CONTAINS
        CALL FlagError(localError,err,error,*999)
     END SELECT
 
-    EXITS("ADVECTION_PRE_SOLVE_UPDATE_BC")
+    EXITS("Advection_PreSolveUpdateBC")
     RETURN
-999 ERRORSEXITS("ADVECTION_PRE_SOLVE_UPDATE_BC",err,error)
+999 ERRORSEXITS("Advection_PreSolveUpdateBC",err,error)
     RETURN 1
 
-  END SUBROUTINE ADVECTION_PRE_SOLVE_UPDATE_BC
+  END SUBROUTINE Advection_PreSolveUpdateBC
 
   !
   !================================================================================================================================
   !
 
-  SUBROUTINE ADVECTION_POST_SOLVE(SOLVER,err,error,*)
+  SUBROUTINE Advection_PostSolve(SOLVER,err,error,*)
 
     !Argument variables
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
@@ -1212,7 +1212,7 @@ CONTAINS
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("ADVECTION_POST_SOLVE",err,error,*999)
+    ENTERS("Advection_PostSolve",err,error,*999)
 
     IF(.NOT.ASSOCIATED(SOLVER)) CALL FlagError("Solver is not associated.",err,error,*999)
     SOLVERS=>SOLVER%SOLVERS
@@ -1234,12 +1234,12 @@ CONTAINS
        CALL FlagError(localError,err,error,*999)
     END SELECT
 
-    EXITS("ADVECTION_POST_SOLVE")
+    EXITS("Advection_PostSolve")
     RETURN
-999 ERRORSEXITS("ADVECTION_POST_SOLVE",err,error)
+999 ERRORSEXITS("Advection_PostSolve",err,error)
     RETURN 1
 
-  END SUBROUTINE ADVECTION_POST_SOLVE
+  END SUBROUTINE Advection_PostSolve
 
   !
   !================================================================================================================================

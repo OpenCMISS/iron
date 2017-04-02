@@ -66,7 +66,7 @@ MODULE FSI_ROUTINES
   USE SOLVER_ROUTINES
   USE TYPES
 
-#include "macros.h"  
+#include "macros.h"
 
   IMPLICIT NONE
 
@@ -101,9 +101,9 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: Error !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
-    
+
     ENTERS("FSI_EQUATIONS_SET_SOLUTION_METHOD_SET",Err,Error,*999)
-    
+
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
         CALL FlagError("Equations set specification is not allocated.",err,error,*999)
@@ -138,7 +138,7 @@ CONTAINS
     ELSE
       CALL FlagError("Equations set is not associated.",Err,Error,*999)
     ENDIF
-       
+
     EXITS("FSI_EQUATIONS_SET_SOLUTION_METHOD_SET")
     RETURN
 999 ERRORSEXITS("FSI_EQUATIONS_SET_SOLUTION_METHOD_SET",Err,Error)
@@ -160,7 +160,7 @@ CONTAINS
 
 
     ENTERS("FSI_EQUATIONS_SET_SETUP",Err,Error,*999)
-    
+
     CALL FlagError("FSI_EQUATIONS_SET_SETUP is not implemented.",Err,Error,*999)
 
     EXITS("FSI_EQUATIONS_SET_SETUP")
@@ -215,7 +215,7 @@ CONTAINS
 999 ERRORS("FSI_EquationsSetSpecificationSet",err,error)
     EXITS("FSI_EquationsSetSpecificationSet")
     RETURN 1
-    
+
   END SUBROUTINE FSI_EquationsSetSpecificationSet
 
   !
@@ -268,7 +268,7 @@ CONTAINS
 999 ERRORS("FSI_ProblemSpecificationSet",err,error)
     EXITS("FSI_ProblemSpecificationSet")
     RETURN 1
-    
+
   END SUBROUTINE FSI_ProblemSpecificationSet
 
   !
@@ -303,7 +303,7 @@ CONTAINS
     NULLIFY(MovingMeshSolverEquations)
     NULLIFY(SOLVERS)
     NULLIFY(MovingMeshSolvers)
-    
+
     IF(ASSOCIATED(PROBLEM)) THEN
       IF(ALLOCATED(problem%specification)) THEN
         IF(.NOT.ALLOCATED(problem%specification)) THEN
@@ -337,12 +337,12 @@ CONTAINS
                   !Set up a time control loop as parent loop
                   CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,Err,Error,*999)
                   CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,PROBLEM_CONTROL_TIME_LOOP_TYPE,Err,Error,*999)
-                  CALL CONTROL_LOOP_OUTPUT_TYPE_SET(CONTROL_LOOP,CONTROL_LOOP_PROGRESS_OUTPUT,Err,Error,*999)       
+                  CALL CONTROL_LOOP_OUTPUT_TYPE_SET(CONTROL_LOOP,CONTROL_LOOP_PROGRESS_OUTPUT,Err,Error,*999)
                 CASE(PROBLEM_SETUP_FINISH_ACTION)
                   !Finish the control loops
                   CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
                   CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,Err,Error,*999)
-                  CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,Err,Error,*999)            
+                  CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,Err,Error,*999)
                 CASE DEFAULT
                   LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",Err,Error))// &
                     & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",Err,Error))// &
@@ -363,7 +363,7 @@ CONTAINS
                   CALL SOLVER_TYPE_SET(MOVING_MESH_SOLVER,SOLVER_LINEAR_TYPE,ERR,ERROR,*999)
                   !Set solver defaults
                   CALL SOLVER_LIBRARY_TYPE_SET(MOVING_MESH_SOLVER,SOLVER_PETSC_LIBRARY,ERR,ERROR,*999)
-                  !Set the solver to be a first order dynamic solver 
+                  !Set the solver to be a first order dynamic solver
                   CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
                   CALL SOLVER_TYPE_SET(SOLVER,SOLVER_DYNAMIC_TYPE,ERR,ERROR,*999)
                   CALL SOLVER_DYNAMIC_LINEARITY_TYPE_SET(SOLVER,SOLVER_DYNAMIC_NONLINEAR,ERR,ERROR,*999)
@@ -414,12 +414,12 @@ CONTAINS
                   CALL SOLVERS_SOLVER_GET(SOLVERS,2,MOVING_MESH_SOLVER,ERR,ERROR,*999)
                   CALL SOLVER_SOLVER_EQUATIONS_GET(MOVING_MESH_SOLVER,MOVING_MESH_SOLVER_EQUATIONS,ERR,ERROR,*999)
                   !Finish the solver equations creation
-                  CALL SOLVER_EQUATIONS_CREATE_FINISH(MOVING_MESH_SOLVER_EQUATIONS,ERR,ERROR,*999)             
+                  CALL SOLVER_EQUATIONS_CREATE_FINISH(MOVING_MESH_SOLVER_EQUATIONS,ERR,ERROR,*999)
 
                   CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
                   CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
                   !Finish the solver equations creation
-                  CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,ERR,ERROR,*999)    
+                  CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,ERR,ERROR,*999)
                 CASE DEFAULT
                   LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",Err,Error))// &
                     & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",Err,Error))// &
@@ -439,7 +439,7 @@ CONTAINS
     ELSE
       CALL FlagError("Problem is not associated.",Err,Error,*999)
     ENDIF
-       
+
     EXITS("FSI_PROBLEM_SETUP")
     RETURN
 999 ERRORSEXITS("FSI_PROBLEM_SETUP",Err,Error)
@@ -449,7 +449,7 @@ CONTAINS
   !
   !================================================================================================================================
   !
- 
+
   !>Sets up the finite elasticity navier stokes problem pre-solve.
   SUBROUTINE FSI_PRE_SOLVE(ControlLoop,Solver,Err,Error,*)
 
@@ -477,7 +477,7 @@ CONTAINS
               IF(ControlLoop%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) THEN
                 CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Running pre-solve steps.",Err,Error,*999)
                 !Pre solve for ALE NavierStokes equations set
-                CALL NAVIER_STOKES_PRE_SOLVE(Solver,Err,Error,*999)
+                CALL NavierStokes_PreSolve(Solver,Err,Error,*999)
                 !Pre solve for FiniteElasticity equations set
                 !Nothing to be done???
               ELSE
@@ -503,8 +503,8 @@ CONTAINS
 999 ERRORSEXITS("FSI_PRE_SOLVE",Err,Error)
     RETURN 1
   END SUBROUTINE FSI_PRE_SOLVE
-      
-  !   
+
+  !
   !================================================================================================================================
   !
 
@@ -521,12 +521,12 @@ CONTAINS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
     ENTERS("FSI_POST_SOLVE",Err,Error,*999)
-    
+
     NULLIFY(Solver2)
 
     IF(ASSOCIATED(ControlLoop)) THEN
       IF(ASSOCIATED(Solver)) THEN
-        IF(ASSOCIATED(ControlLoop%problem)) THEN 
+        IF(ASSOCIATED(ControlLoop%problem)) THEN
           IF(.NOT.ALLOCATED(ControlLoop%problem%specification)) THEN
             CALL FlagError("Problem specification is not allocated.",err,error,*999)
           ELSE IF(SIZE(ControlLoop%problem%specification,1)<3) THEN
@@ -541,7 +541,7 @@ CONTAINS
            !     CALL SOLVERS_SOLVER_GET(Solver%SOLVERS,2,Solver2,ERR,ERROR,*999)
                 IF(ASSOCIATED(Solver2%DYNAMIC_SOLVER)) THEN
                   Solver2%DYNAMIC_SOLVER%ALE=.TRUE.
-                ELSE  
+                ELSE
                   CALL FlagError("Dynamic solver is not associated for ALE problem.",ERR,ERROR,*999)
                 END IF
               !Post solve for the dynamic solver
@@ -607,7 +607,7 @@ CONTAINS
     !Local Variables
 
     ENTERS("FSI_CONTROL_LOOP_PRE_LOOP",Err,Error,*999)
-    
+
     CALL FlagError("FSI_CONTROL_LOOP_PRE_LOOP not implemented.",Err,Error,*999)
 
     EXITS("FSI_CONTROL_LOOP_PRE_LOOP")
@@ -644,7 +644,7 @@ CONTAINS
     LOGICAL :: FluidEquationsSetFound,SolidEquationsSetFound=.FALSE.
 
     ENTERS("FSI_CONTROL_LOOP_POST_LOOP",Err,Error,*999)
-    
+
     NULLIFY(DynamicSolver)
     NULLIFY(LinearSolver)
     NULLIFY(TimeLoop)
@@ -657,7 +657,7 @@ CONTAINS
     NULLIFY(InterfaceCondition)
     NULLIFY(FSInterface)
     NULLIFY(InterfaceNodes)
-    
+
     !Check pointers
     IF(.NOT.ASSOCIATED(ControlLoop)) CALL FlagError("Main control loop not associated.",Err,Error,*999)
     IF(.NOT.ASSOCIATED(ControlLoop%SOLVERS)) CALL FlagError("Solvers are not associated.",Err,Error,*999)
@@ -673,7 +673,7 @@ CONTAINS
     TimeStepNumber=(CurrentTime-StartTime)/TimeIncrement!GLOBAL_ITERATION_NUMBER???
     !===============================================================================================================================
     !First update mesh and calculate boundary velocity values
-    CALL NAVIER_STOKES_PRE_SOLVE_ALE_UPDATE_MESH(DynamicSolver,Err,Error,*999)
+    CALL NavierStokes_PreSolveALEUpdateMesh(DynamicSolver,Err,Error,*999)
     !===============================================================================================================================
     !Update interface geometric field and export results
     DynamicSolverEquations=>DynamicSolver%SOLVER_EQUATIONS
@@ -734,9 +734,9 @@ CONTAINS
                           & FIELD_VALUES_SET_TYPE,1,1,InterfaceNodeNumber,InterfaceNodeComponent,Value,Err,Error,*999)
                       ENDDO
                     ENDDO
-                    CALL FIELD_PARAMETER_SET_UPDATE_START(InterfaceGeometricField, & 
+                    CALL FIELD_PARAMETER_SET_UPDATE_START(InterfaceGeometricField, &
                       & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,Err,Error,*999)
-                    CALL FIELD_PARAMETER_SET_UPDATE_FINISH(InterfaceGeometricField, & 
+                    CALL FIELD_PARAMETER_SET_UPDATE_FINISH(InterfaceGeometricField, &
                       & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,Err,Error,*999)
                     !===============================================================================================================
                     !Export fields

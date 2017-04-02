@@ -92,27 +92,27 @@ MODULE NAVIER_STOKES_EQUATIONS_ROUTINES
 #include "mpif.h"
 #endif
 
-  PUBLIC NAVIER_STOKES_ANALYTIC_FUNCTIONS_EVALUATE
+  PUBLIC NavierStokes_AnalyticFunctionEvaluate
 
   PUBLIC NavierStokes_EquationsSetSpecificationSet
 
   PUBLIC NavierStokes_EquationsSetSolutionMethodSet
 
-  PUBLIC NAVIER_STOKES_EQUATIONS_SET_SETUP
+  PUBLIC NavierStokes_EquationsSetSetup
 
   PUBLIC NavierStokes_PreSolveALEUpdateParameters
 
   PUBLIC NavierStokes_PreSolveUpdateBoundaryConditions
 
-  PUBLIC NAVIER_STOKES_PRE_SOLVE_ALE_UPDATE_MESH
+  PUBLIC NavierStokes_PreSolveALEUpdateMesh
 
-  PUBLIC NAVIER_STOKES_PRE_SOLVE
+  PUBLIC NavierStokes_PreSolve
 
-  PUBLIC NAVIER_STOKES_POST_SOLVE
+  PUBLIC NavierStokes_PostSolve
 
   PUBLIC NavierStokes_ProblemSpecificationSet
 
-  PUBLIC NAVIER_STOKES_PROBLEM_SETUP
+  PUBLIC NavierStokes_ProblemSetup
 
   PUBLIC NavierStokes_FiniteElementResidualEvaluate
 
@@ -271,7 +271,7 @@ CONTAINS
   !
 
   !>Sets up the Navier-Stokes fluid setup.
-  SUBROUTINE NAVIER_STOKES_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,err,error,*)
+  SUBROUTINE NavierStokes_EquationsSetSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
@@ -295,7 +295,7 @@ CONTAINS
     INTEGER(INTG) :: EQUATIONS_SET_FIELD_NUMBER_OF_VARIABLES,EQUATIONS_SET_FIELD_NUMBER_OF_COMPONENTS
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("NAVIER_STOKES_EQUATIONS_SET_SETUP",err,error,*999)
+    ENTERS("NavierStokes_EquationsSetSetup",err,error,*999)
 
     NULLIFY(EQUATIONS)
     NULLIFY(EQUATIONS_MAPPING)
@@ -2487,20 +2487,20 @@ CONTAINS
        CALL FlagError(localError,err,error,*999)
     END SELECT
 
-    EXITS("NAVIER_STOKES_EQUATIONS_SET_SETUP")
+    EXITS("NavierStokes_EquationsSetSetup")
     RETURN
-999 ERRORS("NAVIER_STOKES_EQUATIONS_SET_SETUP",err,error)
-    EXITS("NAVIER_STOKES_EQUATIONS_SET_SETUP")
+999 ERRORS("NavierStokes_EquationsSetSetup",err,error)
+    EXITS("NavierStokes_EquationsSetSetup")
     RETURN 1
 
-  END SUBROUTINE NAVIER_STOKES_EQUATIONS_SET_SETUP
+  END SUBROUTINE NavierStokes_EquationsSetSetup
 
   !
   !================================================================================================================================
   !
 
   !>Sets up the Navier-Stokes problem pre solve.
-  SUBROUTINE NAVIER_STOKES_PRE_SOLVE(SOLVER,err,error,*)
+  SUBROUTINE NavierStokes_PreSolve(SOLVER,err,error,*)
 
     !Argument variables
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
@@ -2525,7 +2525,7 @@ CONTAINS
 
     NULLIFY(SOLVER2)
 
-    ENTERS("NAVIER_STOKES_PRE_SOLVE",err,error,*999)
+    ENTERS("NavierStokes_PreSolve",err,error,*999)
 
     IF (.NOT.ASSOCIATED(SOLVER)) CALL FlagError("Solver is not associated.",err,error,*999)
     SOLVERS=>SOLVER%SOLVERS
@@ -2644,7 +2644,7 @@ CONTAINS
                      & FIELD_RESIDUAL_SET_TYPE,1.0_DP,err,error,*999)
              ELSE
                 ! --- A d v e c t i o n   S o l v e r ---
-                CALL ADVECTION_PRE_SOLVE(SOLVER,err,error,*999)
+                CALL Advection_PreSolve(SOLVER,err,error,*999)
              END IF
              ! Update boundary conditions
              CALL NavierStokes_PreSolveUpdateBoundaryConditions(SOLVER,err,error,*999)
@@ -2672,7 +2672,7 @@ CONTAINS
        CASE(PROBLEM_PGM_NAVIER_STOKES_SUBTYPE)
           !do nothing ???
           !First update mesh and calculates boundary velocity values
-          CALL NAVIER_STOKES_PRE_SOLVE_ALE_UPDATE_MESH(SOLVER,err,error,*999)
+          CALL NavierStokes_PreSolveALEUpdateMesh(SOLVER,err,error,*999)
           !Then apply both normal and moving mesh boundary conditions
           CALL NavierStokes_PreSolveUpdateBoundaryConditions(SOLVER,err,error,*999)
        CASE(PROBLEM_ALE_NAVIER_STOKES_SUBTYPE)
@@ -2692,7 +2692,7 @@ CONTAINS
              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"ALE Navier-Stokes pre solve... ",err,error,*999)
              IF (SOLVER%DYNAMIC_SOLVER%ALE) THEN
                 !First update mesh and calculates boundary velocity values
-                CALL NAVIER_STOKES_PRE_SOLVE_ALE_UPDATE_MESH(SOLVER,err,error,*999)
+                CALL NavierStokes_PreSolveALEUpdateMesh(SOLVER,err,error,*999)
                 !Then apply both normal and moving mesh boundary conditions
                 CALL NavierStokes_PreSolveUpdateBoundaryConditions(SOLVER,err,error,*999)
              ELSE
@@ -2743,7 +2743,7 @@ CONTAINS
           END SELECT
        CASE DEFAULT
           localError="Problem type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(2),"*",err,error))// &
-               & " is not valid for NAVIER_STOKES_PRE_SOLVE of a multi physics problem class."
+               & " is not valid for NavierStokes_PreSolve of a multi physics problem class."
           CALL FlagError(localError,Err,Error,*999)
        END SELECT
     CASE DEFAULT
@@ -2752,13 +2752,13 @@ CONTAINS
        CALL FlagError(localError,Err,Error,*999)
     END SELECT
 
-    EXITS("NAVIER_STOKES_PRE_SOLVE")
+    EXITS("NavierStokes_PreSolve")
     RETURN
-999 ERRORS("NAVIER_STOKES_PRE_SOLVE",err,error)
-    EXITS("NAVIER_STOKES_PRE_SOLVE")
+999 ERRORS("NavierStokes_PreSolve",err,error)
+    EXITS("NavierStokes_PreSolve")
     RETURN 1
 
-  END SUBROUTINE NAVIER_STOKES_PRE_SOLVE
+  END SUBROUTINE NavierStokes_PreSolve
 
   !
   !================================================================================================================================
@@ -2828,7 +2828,7 @@ CONTAINS
   !
 
   !>Sets up the Navier-Stokes problem.
-  SUBROUTINE NAVIER_STOKES_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*)
+  SUBROUTINE NavierStokes_ProblemSetup(PROBLEM,PROBLEM_SETUP,err,error,*)
 
     !Argument variables
     TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
@@ -2844,7 +2844,7 @@ CONTAINS
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("NAVIER_STOKES_PROBLEM_SETUP",err,error,*999)
+    ENTERS("NavierStokes_ProblemSetup",err,error,*999)
 
     NULLIFY(BIF_SOLVER)
     NULLIFY(BIF_SOLVER_EQUATIONS)
@@ -4328,13 +4328,13 @@ CONTAINS
        CALL FlagError(localError,err,error,*999)
     END SELECT
 
-    EXITS("NAVIER_STOKES_PROBLEM_SETUP")
+    EXITS("NavierStokes_ProblemSetup")
     RETURN
-999 ERRORS("NAVIER_STOKES_PROBLEM_SETUP",err,error)
-    EXITS("NAVIER_STOKES_PROBLEM_SETUP")
+999 ERRORS("NavierStokes_ProblemSetup",err,error)
+    EXITS("NavierStokes_ProblemSetup")
     RETURN 1
 
-  END SUBROUTINE NAVIER_STOKES_PROBLEM_SETUP
+  END SUBROUTINE NavierStokes_ProblemSetup
 
   !
   !================================================================================================================================
@@ -5833,7 +5833,7 @@ CONTAINS
   !
 
   !>Sets up the Navier-Stokes problem post solve.
-  SUBROUTINE NAVIER_STOKES_POST_SOLVE(SOLVER,err,error,*)
+  SUBROUTINE NavierStokes_PostSolve(SOLVER,err,error,*)
 
     !Argument variables
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
@@ -5849,7 +5849,7 @@ CONTAINS
     REAL(DP) :: startTime,stopTime,currentTime,timeIncrement
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("NAVIER_STOKES_POST_SOLVE",err,error,*999)
+    ENTERS("NavierStokes_PostSolve",err,error,*999)
     NULLIFY(SOLVER2)
     NULLIFY(SOLVERS)
     NULLIFY(dependentField)
@@ -5868,13 +5868,13 @@ CONTAINS
     END IF
     SELECT CASE(CONTROL_LOOP%PROBLEM%specification(3))
     CASE(PROBLEM_STATIC_NAVIER_STOKES_SUBTYPE,PROBLEM_LAPLACE_NAVIER_STOKES_SUBTYPE)
-       CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(SOLVER,err,error,*999)
+       CALL NavierStokes_PostSolve_OUTPUT_DATA(SOLVER,err,error,*999)
     CASE(PROBLEM_PGM_NAVIER_STOKES_SUBTYPE)
-       CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(SOLVER,err,error,*999)
+       CALL NavierStokes_PostSolve_OUTPUT_DATA(SOLVER,err,error,*999)
     CASE(PROBLEM_QUASISTATIC_NAVIER_STOKES_SUBTYPE)
-       CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(SOLVER,err,error,*999)
+       CALL NavierStokes_PostSolve_OUTPUT_DATA(SOLVER,err,error,*999)
     CASE(PROBLEM_TRANSIENT_NAVIER_STOKES_SUBTYPE)
-       CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(SOLVER,err,error,*999)
+       CALL NavierStokes_PostSolve_OUTPUT_DATA(SOLVER,err,error,*999)
     CASE(PROBLEM_TRANSIENT1D_NAVIER_STOKES_SUBTYPE)
        SELECT CASE(SOLVER%SOLVE_TYPE)
        CASE(SOLVER_NONLINEAR_TYPE)
@@ -5992,7 +5992,7 @@ CONTAINS
           ! Advection solver output data if necessary
           IF (CONTROL_LOOP%WHILE_LOOP%CONTINUE_LOOP .EQV. .FALSE.) THEN
              ! 1D NSE solver output data if N-S/Chars converged
-             CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(SOLVER,err,error,*999)
+             CALL NavierStokes_PostSolve_OUTPUT_DATA(SOLVER,err,error,*999)
           END IF
        CASE DEFAULT
           localError="The solver global number of "//TRIM(NUMBER_TO_VSTRING(SOLVER%GLOBAL_NUMBER,"*",err,error))// &
@@ -6026,7 +6026,7 @@ CONTAINS
        ELSE IF (ASSOCIATED(SOLVER%SOLVERS%CONTROL_LOOP%SIMPLE_LOOP)) THEN
           ! DAE and advection solvers - output data if post advection solve
           IF (SOLVER%SOLVERS%CONTROL_LOOP%SUB_LOOP_INDEX == 3) THEN
-             CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(SOLVER,err,error,*999)
+             CALL NavierStokes_PostSolve_OUTPUT_DATA(SOLVER,err,error,*999)
           END IF
        ELSE
           localError="The control loop type for solver "//TRIM(NUMBER_TO_VSTRING(SOLVER%GLOBAL_NUMBER,"*",err,error))// &
@@ -6060,7 +6060,7 @@ CONTAINS
        ELSE IF (ASSOCIATED(SOLVER%SOLVERS%CONTROL_LOOP%SIMPLE_LOOP)) THEN
           ! DAE and advection solvers - output data if post advection solve
           IF (SOLVER%SOLVERS%CONTROL_LOOP%SUB_LOOP_INDEX == 3) THEN
-             CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(SOLVER,err,error,*999)
+             CALL NavierStokes_PostSolve_OUTPUT_DATA(SOLVER,err,error,*999)
           END IF
        ELSE
           localError="The control loop type for solver "//TRIM(NUMBER_TO_VSTRING(SOLVER%GLOBAL_NUMBER,"*",err,error))// &
@@ -6071,10 +6071,10 @@ CONTAINS
        CALL CONTROL_LOOP_TIMES_GET(CONTROL_LOOP,startTime,stopTime,currentTime,timeIncrement, &
             & timestep,outputIteration,err,error,*999)
        CALL NavierStokes_CalculateBoundaryFlux(SOLVER,err,error,*999)
-       CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(SOLVER,err,error,*999)
+       CALL NavierStokes_PostSolve_OUTPUT_DATA(SOLVER,err,error,*999)
     CASE(PROBLEM_MULTISCALE_NAVIER_STOKES_SUBTYPE)
        CALL NavierStokes_CalculateBoundaryFlux(SOLVER,err,error,*999)
-       CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(SOLVER,err,error,*999)
+       CALL NavierStokes_PostSolve_OUTPUT_DATA(SOLVER,err,error,*999)
        DO equationsSetNumber=1,SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
           ! If this is a coupled constitutive (non-Newtonian) viscosity problem, update shear rate values
           !  to be passed to the CellML solver at beginning of next timestep
@@ -6095,7 +6095,7 @@ CONTAINS
           !Post solve for the dynamic solver
        ELSE IF (SOLVER%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
           CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"ALE Navier-Stokes post solve... ",err,error,*999)
-          CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(SOLVER,err,error,*999)
+          CALL NavierStokes_PostSolve_OUTPUT_DATA(SOLVER,err,error,*999)
        END IF
     CASE DEFAULT
        localError="The third problem specification of  "// &
@@ -6104,12 +6104,12 @@ CONTAINS
        CALL FlagError(localError,err,error,*999)
     END SELECT
 
-    EXITS("NAVIER_STOKES_POST_SOLVE")
+    EXITS("NavierStokes_PostSolve")
     RETURN
-999 ERRORS("NAVIER_STOKES_POST_SOLVE",err,error)
-    EXITS("NAVIER_STOKES_POST_SOLVE")
+999 ERRORS("NavierStokes_PostSolve",err,error)
+    EXITS("NavierStokes_PostSolve")
     RETURN 1
-  END SUBROUTINE NAVIER_STOKES_POST_SOLVE
+  END SUBROUTINE NavierStokes_PostSolve
 
   !
   !================================================================================================================================
@@ -6381,7 +6381,7 @@ CONTAINS
                                ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE
                                GLOBAL_DERIV_INDEX=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)% &
                                     & GLOBAL_DERIVATIVE_INDEX
-                               CALL NAVIER_STOKES_ANALYTIC_FUNCTIONS_EVALUATE(ANALYTIC_FUNCTION_TYPE,X, &
+                               CALL NavierStokes_AnalyticFunctionEvaluate(ANALYTIC_FUNCTION_TYPE,X, &
                                     & CURRENT_TIME,variable_type,GLOBAL_DERIV_INDEX,compIdx, &
                                     & NUMBER_OF_DIMENSIONS,FIELD_VARIABLE%NUMBER_OF_COMPONENTS,ANALYTIC_PARAMETERS, &
                                     & MATERIALS_PARAMETERS,VALUE,err,error,*999)
@@ -6629,7 +6629,7 @@ CONTAINS
                                !Define RHO, density=2
                                RHO=MATERIALS_FIELD%variables(1)%parameter_sets%parameter_sets(1)%ptr% &
                                     & parameters%cmiss%data_dp(2)
-                               CALL NAVIER_STOKES_ANALYTIC_FUNCTIONS_EVALUATE(ANALYTIC_FUNCTION_TYPE,X, &
+                               CALL NavierStokes_AnalyticFunctionEvaluate(ANALYTIC_FUNCTION_TYPE,X, &
                                     & CURRENT_TIME,variable_type,GLOBAL_DERIV_INDEX,compIdx,NUMBER_OF_DIMENSIONS,&
                                     & FIELD_VARIABLE%NUMBER_OF_COMPONENTS,ANALYTIC_PARAMETERS, &
                                     & MATERIALS_PARAMETERS,VALUE,err,error,*999)
@@ -7396,7 +7396,7 @@ CONTAINS
           END SELECT
        CASE DEFAULT
           localError="Problem type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(2),"*",err,error))// &
-               & " is not valid for NAVIER_STOKES_PRE_SOLVE of a multi physics problem class."
+               & " is not valid for NavierStokes_PreSolve of a multi physics problem class."
           CALL FlagError(localError,Err,Error,*999)
        END SELECT
     CASE DEFAULT
@@ -7419,7 +7419,7 @@ CONTAINS
   !
 
   !>Update mesh velocity and move mesh for ALE Navier-Stokes problem
-  SUBROUTINE NAVIER_STOKES_PRE_SOLVE_ALE_UPDATE_MESH(SOLVER,err,error,*)
+  SUBROUTINE NavierStokes_PreSolveALEUpdateMesh(SOLVER,err,error,*)
 
     !Argument variables
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
@@ -7446,7 +7446,7 @@ CONTAINS
     LOGICAL :: ALENavierStokesEquationsSetFound=.FALSE.
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("NAVIER_STOKES_PRE_SOLVE_ALE_UPDATE_MESH",err,error,*999)
+    ENTERS("NavierStokes_PreSolveALEUpdateMesh",err,error,*999)
 
     IF (.NOT.ASSOCIATED(SOLVER)) CALL FlagError("Solver is not associated.",err,error,*999)
     SOLVERS=>SOLVER%SOLVERS
@@ -7782,21 +7782,21 @@ CONTAINS
           END SELECT
        CASE DEFAULT
           localError="Problem type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(2),"*",err,error))// &
-               & " is not valid for NAVIER_STOKES_PRE_SOLVE_ALE_UPDATE_MESH of a multi physics problem class."
+               & " is not valid for NavierStokes_PreSolveALEUpdateMesh of a multi physics problem class."
        END SELECT
     CASE DEFAULT
        localError="Problem class "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(1),"*",err,error))// &
-            & " is not valid for NAVIER_STOKES_PRE_SOLVE_ALE_UPDATE_MESH."
+            & " is not valid for NavierStokes_PreSolveALEUpdateMesh."
        CALL FlagError(localError,err,error,*999)
     END SELECT
 
-    EXITS("NAVIER_STOKES_PRE_SOLVE_ALE_UPDATE_MESH")
+    EXITS("NavierStokes_PreSolveALEUpdateMesh")
     RETURN
-999 ERRORS("NAVIER_STOKES_PRE_SOLVE_ALE_UPDATE_MESH",err,error)
-    EXITS("NAVIER_STOKES_PRE_SOLVE_ALE_UPDATE_MESH")
+999 ERRORS("NavierStokes_PreSolveALEUpdateMesh",err,error)
+    EXITS("NavierStokes_PreSolveALEUpdateMesh")
     RETURN 1
 
-  END SUBROUTINE NAVIER_STOKES_PRE_SOLVE_ALE_UPDATE_MESH
+  END SUBROUTINE NavierStokes_PreSolveALEUpdateMesh
 
   !
   !================================================================================================================================
@@ -7990,7 +7990,7 @@ CONTAINS
   !
 
   !>Output data post solve
-  SUBROUTINE NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(SOLVER,err,error,*)
+  SUBROUTINE NavierStokes_PostSolve_OUTPUT_DATA(SOLVER,err,error,*)
 
     !Argument variables
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
@@ -8013,7 +8013,7 @@ CONTAINS
 
     NULLIFY(Fields)
 
-    ENTERS("NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA",err,error,*999)
+    ENTERS("NavierStokes_PostSolve_OUTPUT_DATA",err,error,*999)
 
     IF (.NOT.ASSOCIATED(SOLVER)) CALL FlagError("Solver is not associated.",err,error,*999)
     SOLVERS=>SOLVER%SOLVERS
@@ -8184,19 +8184,19 @@ CONTAINS
        CALL FlagError(localError,err,error,*999)
     END SELECT
 
-    EXITS("NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA")
+    EXITS("NavierStokes_PostSolve_OUTPUT_DATA")
     RETURN
-999 ERRORS("NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA",err,error)
-    EXITS("NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA")
+999 ERRORS("NavierStokes_PostSolve_OUTPUT_DATA",err,error)
+    EXITS("NavierStokes_PostSolve_OUTPUT_DATA")
     RETURN 1
 
-  END SUBROUTINE NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA
+  END SUBROUTINE NavierStokes_PostSolve_OUTPUT_DATA
 
   !
   !================================================================================================================================
   !
 
-  !>Sets up analytic parameters and calls NAVIER_STOKES_ANALYTIC_FUNCTIONS_EVALUATE to evaluate solutions to analytic problems
+  !>Sets up analytic parameters and calls NavierStokes_AnalyticFunctionEvaluate to evaluate solutions to analytic problems
   SUBROUTINE NavierStokes_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*)
 
     !Argument variables
@@ -8317,7 +8317,7 @@ CONTAINS
                          globalDerivativeIndex=domainNodes%NODES(nodeNumber)%DERIVATIVES(derivIdx)% &
                               & GLOBAL_DERIVATIVE_INDEX
                          DO versionIdx=1,domainNodes%NODES(nodeNumber)%DERIVATIVES(derivIdx)%numberOfVersions
-                            CALL NAVIER_STOKES_ANALYTIC_FUNCTIONS_EVALUATE(analyticFunctionType,X,TIME,variableType, &
+                            CALL NavierStokes_AnalyticFunctionEvaluate(analyticFunctionType,X,TIME,variableType, &
                                  & globalDerivativeIndex,compIdx,numberOfDimensions,fieldVariable%NUMBER_OF_COMPONENTS, &
                                  & analyticParameters,materialsParameters,VALUE,err,error,*999)
                             local_ny=fieldVariable%COMPONENTS(compIdx)%PARAM_TO_DOF_MAP% &
@@ -8356,11 +8356,11 @@ CONTAINS
                                        & versionIdx,derivIdx,nodeIdx,parameterIdx,nodeAnalyticParameters(parameterIdx), &
                                        & err,error,*999)
                                END DO
-                               CALL NAVIER_STOKES_ANALYTIC_FUNCTIONS_EVALUATE(analyticFunctionType,X,TIME,variableType, &
+                               CALL NavierStokes_AnalyticFunctionEvaluate(analyticFunctionType,X,TIME,variableType, &
                                     & globalDerivativeIndex,compIdx,numberOfDimensions,fieldVariable%NUMBER_OF_COMPONENTS, &
                                     & nodeAnalyticParameters,materialsParameters,VALUE,err,error,*999)
                             ELSE
-                               CALL NAVIER_STOKES_ANALYTIC_FUNCTIONS_EVALUATE(analyticFunctionType,X,TIME,variableType, &
+                               CALL NavierStokes_AnalyticFunctionEvaluate(analyticFunctionType,X,TIME,variableType, &
                                     & globalDerivativeIndex,compIdx,numberOfDimensions,fieldVariable%NUMBER_OF_COMPONENTS, &
                                     & analyticParameters,materialsParameters,VALUE,err,error,*999)
                             END IF
@@ -8414,7 +8414,7 @@ CONTAINS
                                IF (ASSOCIATED(boundaryConditionsVariable)) THEN
                                   boundaryConditionsCheckVariable=boundaryConditionsVariable%CONDITION_TYPES(local_ny)
                                   IF (boundaryConditionsCheckVariable==BOUNDARY_CONDITION_FIXED_INLET) THEN
-                                     CALL NAVIER_STOKES_ANALYTIC_FUNCTIONS_EVALUATE(analyticFunctionType,X,TIME,variableType, &
+                                     CALL NavierStokes_AnalyticFunctionEvaluate(analyticFunctionType,X,TIME,variableType, &
                                           & globalDerivativeIndex,compIdx,numberOfXi,fieldVariable%NUMBER_OF_COMPONENTS, &
                                           & analyticParameters,materialsParameters,VALUE,err,error,*999)
                                      !If we are a boundary node then set the analytic value on the boundary
@@ -8556,7 +8556,7 @@ CONTAINS
                    DO derivIdx=1,domainNodes%NODES(nodeIdx)%NUMBER_OF_DERIVATIVES
                       globalDerivativeIndex=domainNodes%NODES(nodeIdx)%DERIVATIVES(derivIdx)% &
                            & GLOBAL_DERIVATIVE_INDEX
-                      CALL NAVIER_STOKES_ANALYTIC_FUNCTIONS_EVALUATE(analyticFunctionType,X,TIME,variableType, &
+                      CALL NavierStokes_AnalyticFunctionEvaluate(analyticFunctionType,X,TIME,variableType, &
                            & globalDerivativeIndex,compIdx,numberOfDimensions,fieldVariable%NUMBER_OF_COMPONENTS, &
                            & analyticParameters,materialsParameters,VALUE,err,error,*999)
                       DO versionIdx=1,domainNodes%NODES(nodeIdx)%DERIVATIVES(derivIdx)%numberOfVersions
@@ -8669,7 +8669,7 @@ CONTAINS
   !================================================================================================================================
   !
   !>Calculates the various analytic values for NSE examples with exact solutions
-  SUBROUTINE NAVIER_STOKES_ANALYTIC_FUNCTIONS_EVALUATE(ANALYTIC_FUNCTION_TYPE,X,TIME,VARIABLE_TYPE,GLOBAL_DERIV_INDEX, &
+  SUBROUTINE NavierStokes_AnalyticFunctionEvaluate(ANALYTIC_FUNCTION_TYPE,X,TIME,VARIABLE_TYPE,GLOBAL_DERIV_INDEX, &
        & componentNumber,NUMBER_OF_DIMENSIONS,NUMBER_OF_COMPONENTS,ANALYTIC_PARAMETERS,MATERIALS_PARAMETERS,VALUE,err,error,*)
 
     !Argument variables
@@ -8686,7 +8686,7 @@ CONTAINS
     REAL(DP) :: amplitude,yOffset,period,phaseShift,frequency,INTERNAL_TIME,CURRENT_TIME
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("NAVIER_STOKES_ANALYTIC_FUNCTIONS_EVALUATE",err,error,*999)
+    ENTERS("NavierStokes_AnalyticFunctionEvaluate",err,error,*999)
 
     !\todo: Introduce user-defined or default values instead for density and viscosity
     INTERNAL_TIME=TIME
@@ -9644,13 +9644,13 @@ CONTAINS
        CALL FlagError(localError,err,error,*999)
     END SELECT
 
-    EXITS("NAVIER_STOKES_ANALYTIC_FUNCTIONS_EVALUATE")
+    EXITS("NavierStokes_AnalyticFunctionEvaluate")
     RETURN
-999 ERRORS("NAVIER_STOKES_ANALYTIC_FUNCTIONS_EVALUATE",err,error)
-    EXITS("NAVIER_STOKES_ANALYTIC_FUNCTIONS_EVALUATE")
+999 ERRORS("NavierStokes_AnalyticFunctionEvaluate",err,error)
+    EXITS("NavierStokes_AnalyticFunctionEvaluate")
     RETURN 1
 
-  END SUBROUTINE NAVIER_STOKES_ANALYTIC_FUNCTIONS_EVALUATE
+  END SUBROUTINE NavierStokes_AnalyticFunctionEvaluate
 
   !
   !================================================================================================================================
@@ -11847,7 +11847,7 @@ CONTAINS
        CASE(PROBLEM_CONTROL_TIME_LOOP_TYPE)
           !Global time loop - export data
           navierStokesSolver=>controlLoop%SUB_LOOPS(1)%PTR%SOLVERS%SOLVERS(2)%PTR
-          CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(navierStokesSolver,err,error,*999)
+          CALL NavierStokes_PostSolve_OUTPUT_DATA(navierStokesSolver,err,error,*999)
        CASE(PROBLEM_CONTROL_WHILE_LOOP_TYPE)
           navierStokesSolver=>controlLoop%SOLVERS%SOLVERS(2)%PTR
           CALL NavierStokes_CoupleCharacteristics(controlLoop,navierStokesSolver,err,error,*999)
@@ -11866,7 +11866,7 @@ CONTAINS
        CASE(PROBLEM_CONTROL_TIME_LOOP_TYPE)
           !Global time loop - export data
           navierStokesSolver=>controlLoop%SUB_LOOPS(1)%PTR%SUB_LOOPS(2)%PTR%SOLVERS%SOLVERS(2)%PTR
-          CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(navierStokesSolver,err,error,*999)
+          CALL NavierStokes_PostSolve_OUTPUT_DATA(navierStokesSolver,err,error,*999)
        CASE(PROBLEM_CONTROL_WHILE_LOOP_TYPE)
           !Couple 1D/0D loop
           IF (controlLoop%CONTROL_LOOP_LEVEL==2) THEN
