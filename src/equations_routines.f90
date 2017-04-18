@@ -42,7 +42,7 @@
 !>
 
 !> This module handles all equations routines.
-MODULE EQUATIONS_ROUTINES
+MODULE EquationsRoutines
 
   USE BASE_ROUTINES
   USE EQUATIONS_MAPPING_ROUTINES
@@ -60,32 +60,51 @@ MODULE EQUATIONS_ROUTINES
 
   PRIVATE
 
-
-  !> \addtogroup EQUATIONS_ROUTINES_OutputTypes EQUATIONS_ROUTINES::OutputTypes
-  !> \brief The equations output types
-  !> \see EQUATIONS_ROUTINES,OPENCMISS_EquationsConstants
+  !> \addtogroup EquationsRoutines_EquationTypes EquationsRoutines::EquationTypes
+  !> \brief The types of equations
+  !> \see EquationsRoutines,OPENCMISS_EquationsTypes
   !>@{
-  INTEGER(INTG), PARAMETER :: EQUATIONS_NO_OUTPUT=0 !<No output. \see EQUATIONS_ROUTINES_OutputTypes,EQUATIONS_ROUTINES
-  INTEGER(INTG), PARAMETER :: EQUATIONS_TIMING_OUTPUT=1 !<Timing information output. \see EQUATIONS_ROUTINES_OutputTypes,EQUATIONS_ROUTINES
-  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRIX_OUTPUT=2 !<All below and equation matrices output. \see EQUATIONS_ROUTINES_OutputTypes,EQUATIONS_ROUTINES
-  INTEGER(INTG), PARAMETER :: EQUATIONS_ELEMENT_MATRIX_OUTPUT=3 !<All below and element matrices output. \see EQUATIONS_ROUTINES_OutputTypes,EQUATIONS_ROUTINES
-  INTEGER(INTG), PARAMETER :: EQUATIONS_NODAL_MATRIX_OUTPUT=4 !<All below and nodal matrices output. \see EQUATIONS_ROUTINES_OutputTypes,EQUATIONS_ROUTINES
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SCALAR_TYPE=1 !<Single scalar equation. \see EquationsRoutines_EquationTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_VECTOR_TYPE=2 !<Vector of multiple equations. \see EquationsRoutines_EquationsTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_FUNCTIONAL_TYPE=2 !<Vector of functional equations. \see EquationsRoutines_EquationsTypes,EquationsRoutines
   !>@}
 
-  !> \addtogroup EQUATIONS_ROUTINES_SparsityTypes EQUATIONS_ROUTINES::SparsityTypes
-  !> \brief Equations matrices sparsity types
-  !> \see EQUATIONS_ROUTINES,OPENCMISS_EquationsSparsityTypes
+  !> \addtogroup EquationsRoutines_EquationEqualityTypes EquationsRoutines::EquationEqualityTypes
+  !> \brief The types of equality for the equations
+  !> \see EquationsRoutines,OPENCMISS_EquationsEqualityTypes
   !>@{
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SPARSE_MATRICES=1 !<Use sparse matrices for the equations. \see EQUATIONS_ROUTINES_SparsityTypes,EQUATIONS_ROUTINES
-  INTEGER(INTG), PARAMETER :: EQUATIONS_FULL_MATRICES=2 !<Use fully populated matrices for the equations. \see EQUATIONS_ROUTINES_SparsityTypes,EQUATIONS_ROUTINES
+  INTEGER(INTG), PARAMETER :: EQUATIONS_EQUALS_TYPE=1 !<The equations equal zero \see EquationsRoutines_EquationEqualityTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_LESS_THAN_TYPE=2 !<The equations are less than zero. \see EquationsRoutines_EquationsEqualityTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_LESS_THAN_EQUALS_TYPE=2 !<The equations are less than or equal to zero. \see EquationsRoutines_EquationsEqualityTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_GREATER_THAN_TYPE=2 !<The equations are greater than zero. \see EquationsRoutines_EquationsEqualityTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_GREATER_THAN_EQUALS_TYPE=2 !<The equations are greater than or equal to zero. \see EquationsRoutines_EquationsEqualityTypes,EquationsRoutines
+  !>@}
+
+  !> \addtogroup EquationsRoutines_OutputTypes EquationsRoutines::OutputTypes
+  !> \brief The equations output types
+  !> \see EquationsRoutines,OPENCMISS_EquationsConstants
+  !>@{
+  INTEGER(INTG), PARAMETER :: EQUATIONS_NO_OUTPUT=0 !<No output. \see EquationsRoutines_OutputTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_TIMING_OUTPUT=1 !<Timing information output. \see EquationsRoutines_OutputTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRIX_OUTPUT=2 !<All below and equation matrices output. \see EquationsRoutines_OutputTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_ELEMENT_MATRIX_OUTPUT=3 !<All below and element matrices output. \see EquationsRoutines_OutputTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_NODAL_MATRIX_OUTPUT=4 !<All below and nodal matrices output. \see EquationsRoutines_OutputTypes,EquationsRoutines
+  !>@}
+
+  !> \addtogroup EquationsRoutines_SparsityTypes EquationsRoutines::SparsityTypes
+  !> \brief Equations matrices sparsity types
+  !> \see EquationsRoutines,OPENCMISS_EquationsSparsityTypes
+  !>@{
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SPARSE_MATRICES=1 !<Use sparse matrices for the equations. \see EquationsRoutines_SparsityTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_FULL_MATRICES=2 !<Use fully populated matrices for the equations. \see EquationsRoutines_SparsityTypes,EquationsRoutines
  !>@}
  
-  !> \addtogroup EQUATIONS_ROUTINES_LumpingTypes EQUATIONS_ROUTINES::LumpingTypes
+  !> \addtogroup EquationsRoutines_LumpingTypes EquationsRoutines::LumpingTypes
   !> \brief Equations matrices lumping types
-  !> \see EQUATIONS_ROUTINES,OPENCMISS_EquationsLumpingTypes
+  !> \see EquationsRoutines,OPENCMISS_EquationsLumpingTypes
   !>@{
-  INTEGER(INTG), PARAMETER :: EQUATIONS_UNLUMPED_MATRICES=1 !<The equations matrices are not lumped. \see EQUATIONS_ROUTINES_LumpingTypes,EQUATIONS_ROUTINES
-  INTEGER(INTG), PARAMETER :: EQUATIONS_LUMPED_MATRICES=2 !<The equations matrices are "mass" lumped. \see EQUATIONS_ROUTINES_LumpingTypes,EQUATIONS_ROUTINES
+  INTEGER(INTG), PARAMETER :: EQUATIONS_UNLUMPED_MATRICES=1 !<The equations matrices are not lumped. \see EquationsRoutines_LumpingTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_LUMPED_MATRICES=2 !<The equations matrices are "mass" lumped. \see EquationsRoutines_LumpingTypes,EquationsRoutines
  !>@}
  
   !Module types
@@ -93,6 +112,15 @@ MODULE EQUATIONS_ROUTINES
   !Module variables
 
   !Interfaces
+
+  INTERFACE EQUATIONS_CREATE_START
+    MODULE PROCEDURE Equations_CreateStart
+  END INTERFACE EQUATIONS_CREATE_START
+
+  PUBLIC EQUATIONS_SCALAR_TYPE,EQUATIONS_VECTOR_TYPE,EQUATIONS_FUNCTIONAL_TYPE
+
+  PUBLIC EQUATIONS_EQUALS_TYPE,EQUATIONS_LESS_THAN_TYPE,EQUATIONS_LESS_THAN_EQUALS_TYPE,EQUATIONS_GREATER_THAN_TYPE, &
+    & EQUATIONS_GREATER_THAN_EQUALS_TYPE
 
   PUBLIC EQUATIONS_NO_OUTPUT,EQUATIONS_TIMING_OUTPUT,EQUATIONS_MATRIX_OUTPUT,EQUATIONS_ELEMENT_MATRIX_OUTPUT
 
@@ -104,21 +132,39 @@ MODULE EQUATIONS_ROUTINES
   
   PUBLIC EQUATIONS_CREATE_START,EQUATIONS_CREATE_FINISH
 
+  PUBLIC Equations_CreateStart,Equations_CreateFinish
+
   PUBLIC EQUATIONS_DESTROY
+
+  PUBLIC Equations_Destroy
 
   PUBLIC EQUATIONS_INITIALISE,EQUATIONS_FINALISE
 
+  PUBLIC Equations_Initialise,Equations_Finalise
+
   PUBLIC EQUATIONS_LINEARITY_TYPE_GET,EQUATIONS_LINEARITY_TYPE_SET
+
+  PUBLIC Equations_LinearityTypeGet,Equations_LinearityTypeSet
 
   PUBLIC EQUATIONS_LUMPING_TYPE_GET,EQUATIONS_LUMPING_TYPE_SET
 
+  PUBLIC Equations_LumpingTypeGet,Equations_LumpingTypeSet
+
   PUBLIC EQUATIONS_OUTPUT_TYPE_GET,EQUATIONS_OUTPUT_TYPE_SET
+
+  PUBLIC Equations_OutputTypeGet,Equations_OutputTypeSet
 
   PUBLIC EQUATIONS_SPARSITY_TYPE_GET,EQUATIONS_SPARSITY_TYPE_SET
 
+  PUBLIC Equations_SparsityTypeGet,Equations_SparsityTypeSet
+
   PUBLIC EQUATIONS_TIME_DEPENDENCE_TYPE_GET,EQUATIONS_TIME_DEPENDENCE_TYPE_SET
 
+  PUBLIC Equations_TimeDependenceTypeGet,Equations_TimeDependenceTypeSet
+
   PUBLIC EQUATIONS_SET_EQUATIONS_GET
+
+  PUBLIC EquationsSet_EquationsGet
 
   PUBLIC Equations_DerivedVariableGet
 
@@ -615,7 +661,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS !<A pointer to the equations to set the lumping for
-    INTEGER(INTG), INTENT(IN) :: LUMPING_TYPE !<The lumping type to set \see EQUATIONS_ROUTINES_LumpingTypes,EQUATIONS_ROUTINES
+    INTEGER(INTG), INTENT(IN) :: LUMPING_TYPE !<The lumping type to set \see EquationsRoutines_LumpingTypes,EquationsRoutines
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -697,7 +743,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS !<A pointer to the equations to set the output type for
-    INTEGER(INTG), INTENT(IN) :: OUTPUT_TYPE !<The output type to set \see EQUATIONS_ROUTINES_OutputTypes,EQUATIONS_ROUTINES
+    INTEGER(INTG), INTENT(IN) :: OUTPUT_TYPE !<The output type to set \see EquationsRoutines_OutputTypes,EquationsRoutines
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -777,7 +823,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS !<A pointer to the equations to set the sparsity type for
-    INTEGER(INTG), INTENT(IN) :: SPARSITY_TYPE !<The sparsity type to set \see EQUATIONS_ROUTINES_SparsityTypes,EQUATIONS_ROUTINES
+    INTEGER(INTG), INTENT(IN) :: SPARSITY_TYPE !<The sparsity type to set \see EquationsRoutines_SparsityTypes,EquationsRoutines
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -851,7 +897,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS !<A pointer to the equations to set the linearity for
-    INTEGER(INTG), INTENT(IN) :: TIME_DEPENDENCE_TYPE !<The time dependence type to set \see EQUATIONS_ROUTINES_TimeDependenceTypes,EQUATIONS_ROUTINES
+    INTEGER(INTG), INTENT(IN) :: TIME_DEPENDENCE_TYPE !<The time dependence type to set \see EquationsRoutines_TimeDependenceTypes,EquationsRoutines
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -1690,4 +1736,4 @@ CONTAINS
   !================================================================================================================================
   !
 
-END MODULE EQUATIONS_ROUTINES
+END MODULE EquationsRoutines

@@ -109,7 +109,6 @@ MODULE SOLVER_ROUTINES
   INTEGER(INTG), PARAMETER :: SOLVER_LUSOL_LIBRARY=LIBRARY_LUSOL_TYPE !<LUSOL solver library \see SOLVER_ROUTINES_SolverLibraries,SOLVER_ROUTINES
   INTEGER(INTG), PARAMETER :: SOLVER_ESSL_LIBRARY=LIBRARY_ESSL_TYPE !<ESSL solver library \see SOLVER_ROUTINES_SolverLibraries,SOLVER_ROUTINES
   INTEGER(INTG), PARAMETER :: SOLVER_LAPACK_LIBRARY=LIBRARY_LAPACK_TYPE !<LAPACK solver library \see SOLVER_ROUTINES_SolverLibraries,SOLVER_ROUTINES
-  INTEGER(INTG), PARAMETER :: SOLVER_TAO_LIBRARY=LIBRARY_TAO_TYPE !<TAO solver library \see SOLVER_ROUTINES_SolverLibraries,SOLVER_ROUTINES
   INTEGER(INTG), PARAMETER :: SOLVER_HYPRE_LIBRARY=LIBRARY_HYPRE_TYPE !<Hypre solver library \see SOLVER_ROUTINES_SolverLibraries,SOLVER_ROUTINES
   INTEGER(INTG), PARAMETER :: SOLVER_PASTIX_LIBRARY=LIBRARY_PASTIX_TYPE !<PaStiX solver library \see SOLVER_ROUTINES_SolverLibraries,SOLVER_ROUTINES
    !>@}
@@ -333,6 +332,72 @@ MODULE SOLVER_ROUTINES
   INTEGER(INTG), PARAMETER :: SOLVER_DAE_EULER_IMPROVED=3 !<Improved Euler differential equation solver \see SOLVER_ROUTINES_EulerDAESolverTypes,SOLVER_ROUTINES
   !>@}
 
+  !> \addtogroup SOLVER_ROUTINES_OptimiserObjectiveTypes SOLVER_ROUTINES::OptimiserObjectiveTypes
+  !> \brief The types of objective for an optimisation problem
+  !> \see SOLVER_ROUTINES_OptimiserObjectiveTypes,SOLVER_ROUTINES
+  !>@{
+  INTEGER(INTG), PARAMETER :: SOLVER_OPTIMISER_NO_OBJECTIVE=1 !<Optimisation problem has no objective (feasibility problem) \see SOLVER_ROUTINES_OptimiserObjectiveTypes,SOLVER_ROUTINES
+  INTEGER(INTG), PARAMETER :: SOLVER_OPTIMISER_ONE_OBJECTIVE=2 !<Optimisation problem has one objective (standard problem) \see SOLVER_ROUTINES_OptimiserObjectiveTypes,SOLVER_ROUTINES
+  INTEGER(INTG), PARAMETER :: SOLVER_OPTIMISER_MANY_OBJECTIVE=3 !<Optimisation problem has many objectives (multi-objective problem) \see SOLVER_ROUTINES_OptimiserObjectiveTypes,SOLVER_ROUTINES
+  !>@}
+
+  !> \addtogroup SOLVER_ROUTINES_OptimiserVariableTypes SOLVER_ROUTINES::OptimiserVariableTypes
+  !> \brief The types of variables for an optimisation problem
+  !> \see SOLVER_ROUTINES_OptimiserVariablesTypes,SOLVER_ROUTINES
+  !>@{
+  INTEGER(INTG), PARAMETER :: SOLVER_OPTIMISER_CONTINUOUS_VARIABLES=1 !<Optimisation problem has continuous variables \see SOLVER_ROUTINES_OptimiserVariableTypes,SOLVER_ROUTINES
+  INTEGER(INTG), PARAMETER :: SOLVER_OPTIMISER_DISCRETE_VARIABLES=2 !<Optimisation problem has discrete variables \see SOLVER_ROUTINES_OptimiserVariableTypes,SOLVER_ROUTINES
+  !>@}
+
+  !> \addtogroup SOLVER_ROUTINES_OptimiserCertaintyTypes SOLVER_ROUTINES::OptimiserCertaintyTypes
+  !> \brief The types of certainty for an optimisation problem
+  !> \see SOLVER_ROUTINES_OptimiserCertaintyTypes,SOLVER_ROUTINES
+  !>@{
+  INTEGER(INTG), PARAMETER :: SOLVER_OPTIMISER_DETERMINISTIC_CERTAINTY=1 !<Optimisation problem is determanistic \see SOLVER_ROUTINES_OptimiserCertaintyTypes,SOLVER_ROUTINES
+  INTEGER(INTG), PARAMETER :: SOLVER_OPTIMISER_STOCHASTIC_CERTAINTY=2 !<Optimisation problem is stochastic \see SOLVER_ROUTINES_OptimiserCertaintyTypes,SOLVER_ROUTINES
+  !>@}
+
+  !> \addtogroup SOLVER_ROUTINES_OptimiserConstraintTypes SOLVER_ROUTINES::OptimiserConstraintTypes
+  !> \brief The types of constraints for an optimisation problem
+  !> \see SOLVER_ROUTINES_OptimiserConstraintTypes,SOLVER_ROUTINES
+  !>@{
+  INTEGER(INTG), PARAMETER :: SOLVER_OPTIMISER_UNCONSTRAINED=1 !<Unconstrained optimisation problem \see SOLVER_ROUTINES_OptimiserConstraintTypes,SOLVER_ROUTINES
+  INTEGER(INTG), PARAMETER :: SOLVER_OPTIMISER_BOUND_CONSTRAINED=2 !<Optimisation problem with bounds on the variables \see SOLVER_ROUTINES_OptimiserConstraintTypes,SOLVER_ROUTINES
+  INTEGER(INTG), PARAMETER :: SOLVER_OPTIMISER_LINEAR_CONSTRAINTS=3 !<Optimisation with linear constraints \see SOLVER_ROUTINES_OptimiserConstraintTypes,SOLVER_ROUTINES
+  INTEGER(INTG), PARAMETER :: SOLVER_OPTIMISER_NONLINEAR_CONSTRAINTS=4 !<Optimisation with non-linear constraints \see SOLVER_ROUTINES_OptimiserConstraintTypes,SOLVER_ROUTINES
+  INTEGER(INTG), PARAMETER :: SOLVER_OPTIMISER_PDE_CONSTRAINTS=5 !<PDE constrained optimisation \see SOLVER_ROUTINES_OptimiserConstraintTypes,SOLVER_ROUTINES
+  !>@}
+
+  !> \addtogroup SOLVER_ROUTINES_OptimiserSolverTypes SOLVER_ROUTINES::OptimiserSolverTypes
+  !> \brief The types of solver for an optimisation problem
+  !> \see SOLVER_ROUTINES_OptimiserSolverTypes,SOLVER_ROUTINES
+  !>@{
+  INTEGER(INTG), PARAMETER :: SOLVER_OPTIMISER_NONLINEAR_LEAST_SQUARES=1 !<Non-linear least squares optimisation problem \see SOLVER_ROUTINES_OptimiserSolverTypes,SOLVER_ROUTINES
+  INTEGER(INTG), PARAMETER :: SOLVER_OPTIMISER_LINEAR_PROGRAMMING=1 !<Linear programming optimisation problem \see SOLVER_ROUTINES_OptimiserSolverTypes,SOLVER_ROUTINES
+  INTEGER(INTG), PARAMETER :: SOLVER_OPTIMISER_QUADRATIC_PROGRAMMING=1 !<Quadratic programming optimisation problem \see SOLVER_ROUTINES_OptimiserSolverTypes,SOLVER_ROUTINES
+  INTEGER(INTG), PARAMETER :: SOLVER_OPTIMISER_INTEGER_PROGRAMMING=1 !<Integer programming optimisation problem \see SOLVER_ROUTINES_OptimiserSolverTypes,SOLVER_ROUTINES
+  INTEGER(INTG), PARAMETER :: SOLVER_OPTIMISER_LINEAR_COMPLEMENTARITY=1 !<Linear complementarity optimisation problem \see SOLVER_ROUTINES_OptimiserSolverTypes,SOLVER_ROUTINES
+  INTEGER(INTG), PARAMETER :: SOLVER_OPTIMISER_NONLINEAR_COMPLEMENTARITY=1 !<Nonlinear complementarity optimisation problem \see SOLVER_ROUTINES_OptimiserSolverTypes,SOLVER_ROUTINES
+  !>@}
+  
+  !> \addtogroup SOLVER_ROUTINES_OptimiserGradientCalculationTypes SOLVER_ROUTINES::OptimiserGradientCalculationTypes
+  !> \brief The gradient calculation types for an optimiser solver 
+  !> \see SOLVER_ROUTINES
+  !>@{
+  INTEGER(INTG), PARAMETER :: SOLVER_OPTIMISER_GRADIENT_NOT_CALCULATED=1 !<The gradient values will not be calculated for the optimiser equations set \see SOLVER_ROUTINES_OptimiserGradientCalculationTypes,SOLVER_ROUTINES
+  INTEGER(INTG), PARAMETER :: SOLVER_OPTIMISER_GRADIENT_EQUATIONS_CALCULATED=2 !<The gradient values will be calculated analytically for the optimiser equations set \see SOLVER_ROUTINES_OptimiserGradientCalculationTypes,SOLVER_ROUTINES
+  INTEGER(INTG), PARAMETER :: SOLVER_OPTIMISER_GRADIENT_FD_CALCULATED=3 !<The gradient values will be calculated using finite differences for the optimiser equations set \see SOLVER_ROUTINES_OptimiserGradientCalculationTypes,SOLVER_ROUTINES
+  !>@} 
+  
+  !> \addtogroup SOLVER_ROUTINES_OptimiserHessianCalculationTypes SOLVER_ROUTINES::OptimiserHessianCalculationTypes
+  !> \brief The Hessian calculation types for an optimiser solver 
+  !> \see SOLVER_ROUTINES
+  !>@{
+  INTEGER(INTG), PARAMETER :: SOLVER_OPTIMISER_HESSIAN_NOT_CALCULATED=1 !<The Hessian values will not be calculated for the optimiser equations set \see SOLVER_ROUTINES_OptimiserHessianCalculationTypes,SOLVER_ROUTINES
+  INTEGER(INTG), PARAMETER :: SOLVER_OPTIMISER_HESSIAN_EQUATIONS_CALCULATED=2 !<The Hessian values will be calculated analytically for the optimiser equations set \see SOLVER_ROUTINES_OptimiserHessianCalculationTypes,SOLVER_ROUTINES
+  INTEGER(INTG), PARAMETER :: SOLVER_OPTIMISER_HESSIAN_FD_CALCULATED=3 !<The Hessian values will be calculated using finite differences for the optimiser equations set \see SOLVER_ROUTINES_OptimiserHessianCalculationTypes,SOLVER_ROUTINES
+  !>@} 
+  
   !> \addtogroup SOLVER_ROUTINES_SolutionInitialiseTypes SOLVER_ROUTINES::SolutionInitialiseTypes
   !> \brief The types of solution initialisation
   !> \see SOLVER_ROUTINES
@@ -413,8 +478,8 @@ MODULE SOLVER_ROUTINES
     & SOLVER_OPTIMISER_TYPE,SOLVER_CELLML_EVALUATOR_TYPE,SOLVER_GEOMETRIC_TRANSFORMATION_TYPE
 
   PUBLIC SOLVER_CMISS_LIBRARY,SOLVER_PETSC_LIBRARY,SOLVER_MUMPS_LIBRARY,SOLVER_SUPERLU_LIBRARY,SOLVER_SPOOLES_LIBRARY, &
-    & SOLVER_UMFPACK_LIBRARY,SOLVER_LUSOL_LIBRARY,SOLVER_ESSL_LIBRARY,SOLVER_LAPACK_LIBRARY,SOLVER_TAO_LIBRARY, &
-    & SOLVER_HYPRE_LIBRARY,SOLVER_PASTIX_LIBRARY
+    & SOLVER_UMFPACK_LIBRARY,SOLVER_LUSOL_LIBRARY,SOLVER_ESSL_LIBRARY,SOLVER_LAPACK_LIBRARY,SOLVER_HYPRE_LIBRARY, &
+    & SOLVER_PASTIX_LIBRARY
 
   PUBLIC SOLVER_LINEAR_DIRECT_SOLVE_TYPE,SOLVER_LINEAR_ITERATIVE_SOLVE_TYPE
  
@@ -476,6 +541,21 @@ MODULE SOLVER_ROUTINES
     & SOLVER_DAE_RUSH_LARSON,SOLVER_DAE_EXTERNAL
 
   PUBLIC SOLVER_DAE_EULER_FORWARD,SOLVER_DAE_EULER_BACKWARD,SOLVER_DAE_EULER_IMPROVED
+
+  PUBLIC SOLVER_OPTIMISER_NO_OBJECTIVE,SOLVER_OPTIMISER_ONE_OBJECTIVE,SOLVER_OPTIMISER_MANY_OBJECTIVE
+
+  PUBLIC SOLVER_OPTIMISER_CONTINUOUS_VARIABLES,SOLVER_OPTIMISER_DISCRETE_VARAIBLES
+
+  PUBLIC SOLVER_OPTIMISER_DETERMINISTIC_CERTAINTY,SOLVER_OPTIMISER_STOCHASTIC_CERTAINTY
+  
+  PUBLIC SOLVER_OPTIMISER_UNCONSTRAINED,SOLVER_OPTIMISER_BOUND_CONSTRAINED,SOLVER_OPTIMISER_LINEAR_CONSTRAINTS, &
+    & SOLVER_OPTIMISER_NONLINEAR_CONSTRAINTS,SOLVER_OPTIMISER_PDE_CONSTRAINTS
+
+  PUBLIC SOLVER_OPTIMISER_GRADIENT_NOT_CALCULATED,SOLVER_OPTIMISER_GRADIENT_EQUATIONS_CALCULATED, &
+    & SOLVER_OPTIMISER_GRADIENT_FD_CALCULATED
+
+  PUBLIC SOLVER_OPTIMISER_HESSIAN_NOT_CALCULATED,SOLVER_HESSIAN_GRADIENT_EQUATIONS_CALCULATED, &
+    & SOLVER_OPTIMISER_HESSIAN_FD_CALCULATED
 
   PUBLIC SOLVER_SOLUTION_INITIALISE_ZERO,SOLVER_SOLUTION_INITIALISE_CURRENT_FIELD,SOLVER_SOLUTION_INITIALISE_NO_CHANGE
   
@@ -8121,7 +8201,7 @@ CONTAINS
       CALL SOLVER_DYNAMIC_FINALISE(SOLVER%DYNAMIC_SOLVER,ERR,ERROR,*999)        
       CALL SOLVER_DAE_FINALISE(SOLVER%DAE_SOLVER,ERR,ERROR,*999)        
       CALL SOLVER_EIGENPROBLEM_FINALISE(SOLVER%EIGENPROBLEM_SOLVER,ERR,ERROR,*999)
-      CALL SOLVER_OPTIMISER_FINALISE(SOLVER%OPTIMISER_SOLVER,ERR,ERROR,*999)
+      CALL Solver_OptimiserFinalise(solver%optimiserSolver,err,error,*999)
       CALL SOLVER_CELLML_EVALUATOR_FINALISE(SOLVER%CELLML_EVALUATOR_SOLVER,ERR,ERROR,*999)
       CALL Solver_GeometricTransformationFinalise(SOLVER%geometricTransformationSolver,ERR,ERROR,*999)
       IF(.NOT.ASSOCIATED(SOLVER%LINKING_SOLVER)) &
@@ -8820,7 +8900,7 @@ CONTAINS
       NULLIFY(SOLVER%DYNAMIC_SOLVER)
       NULLIFY(SOLVER%DAE_SOLVER)
       NULLIFY(SOLVER%EIGENPROBLEM_SOLVER)
-      NULLIFY(SOLVER%OPTIMISER_SOLVER)
+      NULLIFY(solver%optimiserSolver)
       NULLIFY(SOLVER%CELLML_EVALUATOR_SOLVER)
       NULLIFY(SOLVER%SOLVER_EQUATIONS)
       NULLIFY(SOLVER%CELLML_EQUATIONS)
@@ -8984,7 +9064,7 @@ CONTAINS
     TYPE(EIGENPROBLEM_SOLVER_TYPE), POINTER :: EIGENPROBLEM_SOLVER
     TYPE(LINEAR_SOLVER_TYPE), POINTER :: LINEAR_SOLVER
     TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: NONLINEAR_SOLVER
-    TYPE(OPTIMISER_SOLVER_TYPE), POINTER :: OPTIMISER_SOLVER
+    TYPE(OptimiserSolverType), POINTER :: optimiserSolver
     TYPE(CELLML_EVALUATOR_SOLVER_TYPE), POINTER :: CELLML_EVALUATOR_SOLVER
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
@@ -9030,11 +9110,11 @@ CONTAINS
           CALL FlagError("Solver eigenproblem solver is not associated.",ERR,ERROR,*999)
         ENDIF
       CASE(SOLVER_OPTIMISER_TYPE)
-        OPTIMISER_SOLVER=>SOLVER%OPTIMISER_SOLVER
-        IF(ASSOCIATED(OPTIMISER_SOLVER)) THEN
-          CALL SOLVER_OPTIMISER_LIBRARY_TYPE_GET(OPTIMISER_SOLVER,SOLVER_LIBRARY_TYPE,ERR,ERROR,*999)
+        optimiserSolver=>solver%optimiserSolver
+        IF(ASSOCIATED(optimiserSolver)) THEN
+          CALL Solver_OptimiserLibraryTypeGet(optimiserSolver,solver_library_type,err,error,*999)
         ELSE
-          CALL FlagError("Solver optimiser solver is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Solver optimiser solver is not associated.",err,error,*999)
         ENDIF
       CASE(SOLVER_CELLML_EVALUATOR_TYPE)
         CELLML_EVALUATOR_SOLVER=>SOLVER%CELLML_EVALUATOR_SOLVER
@@ -9076,7 +9156,7 @@ CONTAINS
     TYPE(EIGENPROBLEM_SOLVER_TYPE), POINTER :: EIGENPROBLEM_SOLVER
     TYPE(LINEAR_SOLVER_TYPE), POINTER :: LINEAR_SOLVER
     TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: NONLINEAR_SOLVER
-    TYPE(OPTIMISER_SOLVER_TYPE), POINTER :: OPTIMISER_SOLVER
+    TYPE(OptimiserSolverType), POINTER :: optimiserSolver
     TYPE(CELLML_EVALUATOR_SOLVER_TYPE), POINTER :: CELLML_EVALUATOR_SOLVER
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
@@ -9132,11 +9212,11 @@ CONTAINS
             CALL FlagError("Solver eigenproblem solver is not associated.",ERR,ERROR,*999)
           ENDIF
         CASE(SOLVER_OPTIMISER_TYPE)
-          OPTIMISER_SOLVER=>SOLVER%OPTIMISER_SOLVER
-          IF(ASSOCIATED(OPTIMISER_SOLVER)) THEN
-            CALL SOLVER_OPTIMISER_LIBRARY_TYPE_SET(OPTIMISER_SOLVER,SOLVER_LIBRARY_TYPE,ERR,ERROR,*999)
+          optimiserSolver=>solver%optimiserSolver
+          IF(ASSOCIATED(optimiserSolver)) THEN
+            CALL Solver_OptimiserLibraryTypeSet(optimiserSolver,SOLVER_LIBRARY_TYPE,err,error,*999)
           ELSE
-            CALL FlagError("Solver optimiser solver is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Solver optimiser solver is not associated.",err,error,*999)
           ENDIF
         CASE(SOLVER_CELLML_EVALUATOR_TYPE)
           CELLML_EVALUATOR_SOLVER=>SOLVER%CELLML_EVALUATOR_SOLVER
@@ -14786,7 +14866,7 @@ CONTAINS
     TYPE(EIGENPROBLEM_SOLVER_TYPE), POINTER :: EIGENPROBLEM_SOLVER
     TYPE(LINEAR_SOLVER_TYPE), POINTER :: LINEAR_SOLVER
     TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: NONLINEAR_SOLVER
-    TYPE(OPTIMISER_SOLVER_TYPE), POINTER :: OPTIMISER_SOLVER
+    TYPE(OptimiserSolverType), POINTER :: optimiserSolver
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
     ENTERS("SOLVER_MATRICES_LIBRARY_TYPE_GET",ERR,ERROR,*999)
@@ -14819,11 +14899,11 @@ CONTAINS
           CALL FlagError("Solver eigenproblem solver is not associated.",ERR,ERROR,*999)
         ENDIF
       CASE(SOLVER_OPTIMISER_TYPE)
-        OPTIMISER_SOLVER=>SOLVER%OPTIMISER_SOLVER
-        IF(ASSOCIATED(OPTIMISER_SOLVER)) THEN
-          CALL SOLVER_OPTIMISER_MATRICES_LIBRARY_TYPE_GET(OPTIMISER_SOLVER,MATRICES_LIBRARY_TYPE,ERR,ERROR,*999)
+        optimiserSolver=>solver%optimiserSolver
+        IF(ASSOCIATED(optimiserSolver)) THEN
+          CALL Solver_OptimiserMatricesLibraryTypeGet(optimiserSolver,MATRICES_LIBRARY_TYPE,err,error,*999)
         ELSE
-          CALL FlagError("Solver optimiser solver is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Solver optimiser solver is not associated.",err,error,*999)
         ENDIF
       CASE(SOLVER_CELLML_EVALUATOR_TYPE)
         CALL FlagError("Cannot get the solver matrices library for a CellML evaluator solver.",ERR,ERROR,*999)
@@ -20811,220 +20891,565 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the process of creating an optimiser solver 
-  SUBROUTINE SOLVER_OPTIMISER_CREATE_FINISH(OPTIMISER_SOLVER,ERR,ERROR,*)
+  !>Returns the type of certainty for an optimiser solver.
+  SUBROUTINE Solver_OptimiserCertaintyTypeGet(optimiserSolver,solverCertaintyType,err,error,*)
 
     !Argument variables
-    TYPE(OPTIMISER_SOLVER_TYPE), POINTER :: OPTIMISER_SOLVER !<A pointer to the optimiser solver to finish the creation of.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(OptimiserSolverType), POINTER :: optimiserSolver !<A pointer the optimiser solver to get the certainty type for.
+    INTEGER(INTG), INTENT(OUT) :: solverConstraintType !<On exit, the type of certainty for the optimiser solver \see SOLVER_ROUTINES_OptimiserCertaintyTypes,SOLVER_ROUTINES
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+ 
+    ENTERS("Solver_OptimiserCertaintyTypeGet",err,error,*999)
 
-    ENTERS("SOLVER_OPTIMISER_CREATE_FINISH",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(OPTIMISER_SOLVER)) THEN
-      CALL FlagError("Not implemented.",ERR,ERROR,*999)
-    ELSE
-      CALL FlagError("Optimiser solver is not associated.",ERR,ERROR,*999)
-    ENDIF
-        
-    EXITS("SOLVER_OPTIMISER_CREATE_FINISH")
+    IF(.NOT.ASSOCIATED(optimiserSolver)) CALL FlagError("Optimiser solver is not associated.",err,error,*999)
+    
+    solverCertaintyType=optimiserSolver%certaintyType
+    
+    EXITS("Solver_OptimiserCertaintyTypeGet")
     RETURN
-999 ERRORSEXITS("SOLVER_OPTIMISER_CREATE_FINISH",ERR,ERROR)
+999 ERRORSEXITS("Solver_OptimiserCertaintyTypeGet",err,error)
     RETURN 1
    
-  END SUBROUTINE SOLVER_OPTIMISER_CREATE_FINISH
+  END SUBROUTINE Solver_OptimiserCertaintyTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the type of certainty for an optimisation solver.
+  SUBROUTINE Solver_OptimiserCertaintyTypeSet(optimiserSolver,solverCertaintyType,err,error,*)
+
+    !Argument variables
+    TYPE(OptimiserSolverType), POINTER :: optimiserSolver !<A pointer the optimiser solver to set the certainty type for.
+    INTEGER(INTG), INTENT(IN) :: solverCertaintyType !<The type of certainty for the optimiser solver to set. \see SOLVER_ROUTINES_OptimiserCertaintyType,SOLVER_ROUTINES
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Solver_OptimiserCertaintyTypeSet",err,error,*999)
+    
+    IF(.NOT.ASSOCIATED(optimiserSolver)) CALL FlagError("Optimiser solver is not associated.",err,error,*999)
+    
+    SELECT CASE(solverCertaintyType)
+    CASE(SOLVER_OPTIMISER_DETERMINISTIC_CERTAINTY)
+      optimiserSolver%certaintyType=SOLVER_OPTIMISER_DETERMINISTIC_CERTAINTY
+    CASE(SOLVER_OPTIMISER_STOCHASTIC_CERTAINTY)
+      optimiserSolver%certaintyType=SOLVER_OPTIMISER_STOCHASTIC_CERTAINTY
+    CASE DEFAULT
+      localError="The specified certainty type of "//TRIM(NumberToVString(solverCertaintyType,"*",err,error))// &
+        & " is invalid for an optimiser solver."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+        
+    EXITS("Solver_OptimiserCertaintyTypeSet")
+    RETURN
+999 ERRORSEXITS("Solver_OptimiserCertaintyTypeSet",err,error)
+    RETURN 1
+   
+  END SUBROUTINE Solver_OptimiserCertaintyTypeSet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the type of constraints for an optimiser solver.
+  SUBROUTINE Solver_OptimiserConstraintTypeGet(optimiserSolver,solverConstraintType,err,error,*)
+
+    !Argument variables
+    TYPE(OptimiserSolverType), POINTER :: optimiserSolver !<A pointer the optimiser solver to get the constraint type for.
+    INTEGER(INTG), INTENT(OUT) :: solverConstraintType !<On exit, the type of constraint for the optimiser solver \see SOLVER_ROUTINES_OptimiserConstraintTypes,SOLVER_ROUTINES
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Solver_OptimiserConstraintTypeGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(optimiserSolver)) CALL FlagError("Optimiser solver is not associated.",err,error,*999)
+    
+    solverConstraintType=optimiserSolver%constraintType
+    
+    EXITS("Solver_OptimiserConstraintTypeGet")
+    RETURN
+999 ERRORSEXITS("Solver_OptimiserConstraintTypeGet",err,error)
+    RETURN 1
+   
+  END SUBROUTINE Solver_OptimiserConstraintTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the type of constraint for an optimisation solver.
+  SUBROUTINE Solver_OptimiserConstraintTypeSet(optimiserSolver,solverConstraintType,err,error,*)
+
+    !Argument variables
+    TYPE(OptimiserSolverType), POINTER :: optimiserSolver !<A pointer the optimiser solver to set the constraint type for.
+    INTEGER(INTG), INTENT(IN) :: solverConstraintType !<The type of constraint for the optimiser solver to set. \see SOLVER_ROUTINES_OptimiserConstraintType,SOLVER_ROUTINES
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Solver_OptimiserConstraintTypeSet",err,error,*999)
+    
+    IF(.NOT.ASSOCIATED(optimiserSolver)) CALL FlagError("Optimiser solver is not associated.",err,error,*999)
+    
+    SELECT CASE(solverConstraintType)
+    CASE(SOLVER_OPTIMISER_UNCONSTRAINED)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(SOLVER_OPTIMISER_BOUND_CONSTRAINED)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(SOLVER_OPTIMISER_LINEAR_CONSTRAINTS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(SOLVER_OPTIMISER_NONLINEAR_CONSTRAINTS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(SOLVER_OPTIMISER_PDE_CONSTRAINTS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The specified constraint type of "//TRIM(NumberToVString(solverConstraintType,"*",err,error))// &
+        & " is invalid for an optimiser solver."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+        
+    EXITS("Solver_OptimiserConstraintTypeSet")
+    RETURN
+999 ERRORSEXITS("Solver_OptimiserConstraintTypeSet",err,error)
+    RETURN 1
+   
+  END SUBROUTINE Solver_OptimiserConstraintTypeSet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finishes the process of creating an optimiser solver 
+  SUBROUTINE Solver_OptimiserCreateFinish(optimiserSolver,err,error,*)
+
+    !Argument variables
+    TYPE(OptimiserSolverType), POINTER :: optimiserSolver !<A pointer to the optimiser solver to finish the creation of.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Solver_OptimiserCreateFinish",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(optimiserSolver)) CALL FlagError("Optimiser solver is not associated.",err,error,*999)
+    
+    CALL FlagError("Not implemented.",err,error,*999)
+         
+    EXITS("Solver_OptimiserCreateFinish")
+    RETURN
+999 ERRORSEXITS("Solver_OptimiserCreateFinish",err,error)
+    RETURN 1
+   
+  END SUBROUTINE Solver_OptimiserCreateFinish
         
   !
   !================================================================================================================================
   !
 
   !>Finalise a optimiser solver.
-  SUBROUTINE SOLVER_OPTIMISER_FINALISE(OPTIMISER_SOLVER,ERR,ERROR,*)
+  SUBROUTINE Solver_OptimiserFinalise(optimiserSolver,err,error,*)
 
     !Argument variables
-    TYPE(OPTIMISER_SOLVER_TYPE), POINTER :: OPTIMISER_SOLVER !<A pointer the optimiser solver to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(OptimiserSolverType), POINTER :: optimiserSolver !<A pointer the optimiser solver to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("SOLVER_OPTIMISER_FINALISE",ERR,ERROR,*999)
+    ENTERS("Solver_OptimiserFinalise",err,error,*999)
 
-    IF(ASSOCIATED(OPTIMISER_SOLVER)) THEN        
-      DEALLOCATE(OPTIMISER_SOLVER)
+    IF(ASSOCIATED(optimiserSolver)) THEN        
+      DEALLOCATE(optimiserSolver)
     ENDIF
          
-    EXITS("SOLVER_OPTIMISER_FINALISE")
+    EXITS("Solver_OptimiserFinalise")
     RETURN
-999 ERRORSEXITS("SOLVER_OPTIMISER_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("Solver_OptimiserFinalise",err,error)
     RETURN 1
    
-  END SUBROUTINE SOLVER_OPTIMISER_FINALISE
+  END SUBROUTINE Solver_OptimiserFinalise
 
   !
   !================================================================================================================================
   !
 
-  !>Initialise an optimiser solver for a solver.
-  SUBROUTINE SOLVER_OPTIMISER_INITIALISE(SOLVER,ERR,ERROR,*)
+  !>Sets/changes the type of gradient calculation type for an optimisation solver.
+  SUBROUTINE Solver_OptimiserGradientCalculationTypeSet(solver,gradientCalculationType,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer the solver to initialise the optimiser solver for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer the solver to set the gradient calculation type
+    INTEGER(INTG), INTENT(IN) :: gradientCalculationType !<The type of gradient calculation type to set for an optimisation solver \see SOLVER_ROUTINES_OptimiserGradientCalculationTypes,SOLVER_ROUTINES
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    TYPE(OptimiserSolverType), POINTER :: optimiserSolver
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("Solver_OptimiserGradientCalculationTypeSet",err,error,*999)
 
-    ENTERS("SOLVER_OPTIMISER_INITIALISE",ERR,ERROR,*998)
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated",err,error,*999)
+    IF(solver%SOLVER_FINISHED) CALL FlagError("Solver has already been finished",err,error,*999)
+    IF(solver%SOLVE_TYPE/=SOLVER_OPTIMISER_TYPE) CALL FlagError("The solver is not an optimiser solver",err,error,*999)
+    IF(.NOT.ASSOCIATED(solver%optimiserSolver)) CALL FlagError("The solver optimiser solver is not associated",ERR,ERROR,*999)
 
-    IF(ASSOCIATED(SOLVER)) THEN
-      IF(ASSOCIATED(SOLVER%OPTIMISER_SOLVER)) THEN
-        CALL FlagError("Optimiser solver is already associated for this solver.",ERR,ERROR,*998)
-      ELSE
-        ALLOCATE(SOLVER%OPTIMISER_SOLVER,STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate solver optimiser solver.",ERR,ERROR,*999)
-        SOLVER%OPTIMISER_SOLVER%SOLVER=>SOLVER
-        SOLVER%OPTIMISER_SOLVER%SOLVER_LIBRARY=SOLVER_TAO_LIBRARY
-        SOLVER%OPTIMISER_SOLVER%SOLVER_MATRICES_LIBRARY=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
-      ENDIF
-    ELSE
-      CALL FlagError("Solver is not associated.",ERR,ERROR,*998)
+    optimiserSolver=>solver%optimiserSolver
+    IF(gradientCalculationType/=optimiserSolver%gradientCalculationType) THEN
+      SELECT CASE(gradientCalculationType)
+      CASE(SOLVER_OPTIMISER_GRADIENT_NOT_CALCULATED)
+        optimiserSolver%gradientCalculationType=SOLVER_OPTIMISER_GRADIENT_NOT_CALCULATED
+      CASE(SOLVER_OPTIMISER_GRADIENT_EQUATIONS_CALCULATED)
+        optimiserSolver%gradientCalculationType=SOLVER_OPTIMISER_GRADIENT_EQUATIONS_CALCULATED
+      CASE(SOLVER_OPTIMISER_GRADIENT_FD_CALCULATED)
+        optimiserSolver%gradientCalculationType=SOLVER_OPTIMISER_GRADIENT_FD_CALCULATED
+      CASE DEFAULT
+        localError="The gradient calculation type of "//TRIM(NumberToVString(gradientCalculationType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
     ENDIF
-        
-    EXITS("SOLVER_OPTIMISER_INITIALISE")
+    
+    EXITS("Solver_OptimiserGradientCalculationTypeSet")
     RETURN
-999 CALL SOLVER_OPTIMISER_FINALISE(SOLVER%OPTIMISER_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("SOLVER_OPTIMISER_INITIALISE",ERR,ERROR)
+999 ERRORSEXITS("Solver_OptimiserGradientCalculationTypeSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Solver_OptimiserGradientCalculationTypeSet
+        
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the type of Hessian calculation type for an optimisation solver.
+  SUBROUTINE Solver_OptimiserHessianCalculationTypeSet(solver,hessianCalculationType,err,error,*)
+
+    !Argument variables
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer the solver to set the Hessian calculation type
+    INTEGER(INTG), INTENT(IN) :: hessianCalculationType !<The type of Hessian calculation type to set for an optimisation solver \see SOLVER_ROUTINES_OptimiserHessianCalculationTypes,SOLVER_ROUTINES
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(OptimiserSolverType), POINTER :: optimiserSolver
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("Solver_OptimiserHessianCalculationTypeSet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated",err,error,*999)
+    IF(solver%SOLVER_FINISHED) CALL FlagError("Solver has already been finished",err,error,*999)
+    IF(solver%SOLVE_TYPE/=SOLVER_OPTIMISER_TYPE) CALL FlagError("The solver is not an optimiser solver",err,error,*999)
+    IF(.NOT.ASSOCIATED(solver%optimiserSolver)) CALL FlagError("The solver optimiser solver is not associated",ERR,ERROR,*999)
+
+    optimiserSolver=>solver%optimiserSolver
+    IF(hessianCalculationType/=optimiserSolver%hessianCalculationType) THEN
+      SELECT CASE(hessianCalculationType)
+      CASE(SOLVER_OPTIMISER_HESSIAN_NOT_CALCULATED)
+        optimiserSolver%hessianCalculationType=SOLVER_OPTIMISER_HESSIAN_NOT_CALCULATED
+      CASE(SOLVER_OPTIMISER_HESSIAN_EQUATIONS_CALCULATED)
+        optimiserSolver%hessianCalculationType=SOLVER_OPTIMISER_HESSIAN_EQUATIONS_CALCULATED
+      CASE(SOLVER_OPTIMISER_HESSIAN_FD_CALCULATED)
+        optimiserSolver%hessianCalculationType=SOLVER_OPTIMISER_HESSIAN_FD_CALCULATED
+      CASE DEFAULT
+        localError="The Hessian calculation type of "//TRIM(NumberToVString(hessianCalculationType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    ENDIF
+    
+    EXITS("Solver_OptimiserHessianCalculationTypeSet")
+    RETURN
+999 ERRORSEXITS("Solver_OptimiserHessianCalculationTypeSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Solver_OptimiserHessianCalculationTypeSet
+        
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialise an optimiser solver for a solver.
+  SUBROUTINE Solver_OptimiserInitialise(solver,err,error,*)
+
+    !Argument variables
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer the solver to initialise the optimiser solver for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
+
+    ENTERS("Solver_OptimiserInitialise",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*998)
+    IF(ASSOCIATED(solver%optimiserSolver)) CALL FlagError("Optimiser solver is already associated for this solver.",err,error,*998)
+     
+    ALLOCATE(solver%optimiserSolver,STAT=err)
+    IF(ERR/=0) CALL FlagError("Could not allocate solver optimiser solver.",err,error,*999)
+    solver%optimiserSolver%solver=>solver
+    solver%optimiserSolver%solverLibrary=SOLVER_PETSC_LIBRARY
+    solver%optimiserSolver%solverMatricesLibraryType=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
+    solver%optimiserSolver%variableType=SOLVER_OPTIMISER_CONTINUOUS_VARIABLES
+    solver%optimiserSolver%objectiveType=SOLVER_OPTIMISER_ONE_OBJECTIVE
+    solver%optimiserSolver%constraintType=SOLVER_OPTIMISER_UNCONSTRAINED
+    solver%optimiserSolver%certaintyType=SOLVER_OPTIMISER_DETERMINISTIC_CERTAINTY
+    solver%optimiserSolver%gradientCalculationType=SOLVER_OPTIMISER_GRADIENT_FD_CALCULATED
+    solver%optimiserSolver%hessianCalculationType=SOLVER_OPTIMISER_HESSIAN_FD_CALCULATED
+        
+    EXITS("Solver_OptimiserInitialise")
+    RETURN
+999 CALL Solver_OptimiserFinalise(solver%optimiserSolver,dummyErr,dummyError,*998)
+998 ERRORSEXITS("Solver_OptimiserInitialise",err,error)
     RETURN 1
    
-  END SUBROUTINE SOLVER_OPTIMISER_INITIALISE
+  END SUBROUTINE Solver_OptimiserInitialise
 
   !
   !================================================================================================================================
   !
 
   !>Returns the type of library to use for an optimiser solver.
-  SUBROUTINE SOLVER_OPTIMISER_LIBRARY_TYPE_GET(OPTIMISER_SOLVER,SOLVER_LIBRARY_TYPE,ERR,ERROR,*)
+  SUBROUTINE Solver_OptimiserLibraryTypeGet(optimiserSolver,solverLibraryType,err,error,*)
 
     !Argument variables
-    TYPE(OPTIMISER_SOLVER_TYPE), POINTER :: OPTIMISER_SOLVER !<A pointer the optimiser solver to get the library type for.
-    INTEGER(INTG), INTENT(OUT) :: SOLVER_LIBRARY_TYPE !<On exit, the type of library used for the optimiser solver \see SOLVER_ROUTINES_SolverLibraries,SOLVER_ROUTINES
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(OptimiserSolverType), POINTER :: optimiserSolver !<A pointer the optimiser solver to get the library type for.
+    INTEGER(INTG), INTENT(OUT) :: solverLibraryType !<On exit, the type of library used for the optimiser solver \see SOLVER_ROUTINES_SolverLibraries,SOLVER_ROUTINES
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("SOLVER_OPTIMISER_LIBRARY_TYPE_GET",ERR,ERROR,*999)
+    ENTERS("Solver_OptimiserLibraryTypeGet",err,error,*999)
 
-    IF(ASSOCIATED(OPTIMISER_SOLVER)) THEN
-      SOLVER_LIBRARY_TYPE=OPTIMISER_SOLVER%SOLVER_LIBRARY
-    ELSE
-      CALL FlagError("Optimiser solver is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(optimiserSolver)) CALL FlagError("Optimiser solver is not associated.",err,error,*999)
     
-    EXITS("SOLVER_OPTIMISER_LIBRARY_TYPE_GET")
+    solverLibraryType=optimiserSolver%solverLibrary
+    
+    EXITS("Solver_OptimiserLibraryTypeGet")
     RETURN
-999 ERRORSEXITS("SOLVER_OPTIMISER_LIBRARY_TYPE_GET",ERR,ERROR)
+999 ERRORSEXITS("Solver_OptimiserLibraryTypeGet",err,error)
     RETURN 1
    
-  END SUBROUTINE SOLVER_OPTIMISER_LIBRARY_TYPE_GET
+  END SUBROUTINE Solver_OptimiserLibraryTypeGet
 
   !
   !================================================================================================================================
   !
 
   !>Sets/changes the type of library to use for an optimisation solver.
-  SUBROUTINE SOLVER_OPTIMISER_LIBRARY_TYPE_SET(OPTIMISER_SOLVER,SOLVER_LIBRARY_TYPE,ERR,ERROR,*)
+  SUBROUTINE Solver_OptimiserLibraryTypeSet(optimiserSolver,solverLibraryType,err,error,*)
 
     !Argument variables
-    TYPE(OPTIMISER_SOLVER_TYPE), POINTER :: OPTIMISER_SOLVER !<A pointer the optimiser solver to get the library type for.
-    INTEGER(INTG), INTENT(IN) :: SOLVER_LIBRARY_TYPE !<The type of library for the optimiser solver to set. \see SOLVER_ROUTINES_SolverLibraries,SOLVER_ROUTINES
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(OptimiserSolverType), POINTER :: optimiserSolver !<A pointer the optimiser solver to get the library type for.
+    INTEGER(INTG), INTENT(IN) :: solverLibraryType !<The type of library for the optimiser solver to set. \see SOLVER_ROUTINES_SolverLibraries,SOLVER_ROUTINES
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("SOLVER_OPTIMISER_LIBRARY_TYPE_SET",ERR,ERROR,*999)
+    ENTERS("Solver_OptimiserLibraryTypeSet",err,error,*999)
     
-    IF(ASSOCIATED(OPTIMISER_SOLVER)) THEN
-      SELECT CASE(SOLVER_LIBRARY_TYPE)
-      CASE(SOLVER_CMISS_LIBRARY)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
-      CASE(SOLVER_TAO_LIBRARY)
-        OPTIMISER_SOLVER%SOLVER_LIBRARY=SOLVER_TAO_LIBRARY
-        OPTIMISER_SOLVER%SOLVER_MATRICES_LIBRARY=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
-      CASE DEFAULT
-        LOCAL_ERROR="The specified solver library type of "//TRIM(NumberToVString(SOLVER_LIBRARY_TYPE,"*",ERR,ERROR))// &
-          & " is invalid for an optimiser solver."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Optimiser solver is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(optimiserSolver)) CALL FlagError("Optimiser solver is not associated.",err,error,*999)
+    
+    SELECT CASE(solverLibraryType)
+    CASE(SOLVER_CMISS_LIBRARY)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(SOLVER_PETSC_LIBRARY)
+      optimiserSolver%solverLibrary=SOLVER_PETSC_LIBRARY
+      optimiserSolver%solverMatricesLibraryType=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
+    CASE DEFAULT
+      localError="The specified solver library type of "//TRIM(NumberToVString(solverLibraryType,"*",err,error))// &
+        & " is invalid for an optimiser solver."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
         
-    EXITS("SOLVER_OPTIMISER_LIBRARY_TYPE_SET")
+    EXITS("Solver_OptimiserLibraryTypeSet")
     RETURN
-999 ERRORSEXITS("SOLVER_OPTIMISER_LIBRARY_TYPE_SET",ERR,ERROR)
+999 ERRORSEXITS("Solver_OptimiserLibraryTypeSet",err,error)
     RETURN 1
    
-  END SUBROUTINE SOLVER_OPTIMISER_LIBRARY_TYPE_SET
+  END SUBROUTINE Solver_OptimiserLibraryTypeSet
 
   !
   !================================================================================================================================
   !
 
   !>Returns the type of library to use for an optimiser solver matrices.
-  SUBROUTINE SOLVER_OPTIMISER_MATRICES_LIBRARY_TYPE_GET(OPTIMISER_SOLVER,MATRICES_LIBRARY_TYPE,ERR,ERROR,*)
+  SUBROUTINE Solver_OptimiserMatricesLibraryTypeGet(optimiserSolver,matricesLibraryType,err,error,*)
 
     !Argument variables
-    TYPE(OPTIMISER_SOLVER_TYPE), POINTER :: OPTIMISER_SOLVER !<A pointer the optimiser solver to get the library type for.
-    INTEGER(INTG), INTENT(OUT) :: MATRICES_LIBRARY_TYPE !<On exit, the type of library used for the optimiser solver matrices \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(OptimiserSolverType), POINTER :: optimiserSolver !<A pointer the optimiser solver to get the library type for.
+    INTEGER(INTG), INTENT(OUT) :: matricesLibrarytype !<On exit, the type of library used for the optimiser solver matrices \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("SOLVER_OPTIMISER_MATRICES_LIBRARY_TYPE_GET",ERR,ERROR,*999)
+    ENTERS("Solver_OptimiserMatricesLibraryTypeGet",err,error,*999)
 
-    IF(ASSOCIATED(OPTIMISER_SOLVER)) THEN
-      MATRICES_LIBRARY_TYPE=OPTIMISER_SOLVER%SOLVER_MATRICES_LIBRARY
-    ELSE
-      CALL FlagError("Optimiser solver is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(optimiserSolver)) CALL FlagError("Optimiser solver is not associated.",err,error,*999)
+
+    matricesLibraryType=optimiserSolver%solverMatricesLibrary
     
-    EXITS("SOLVER_OPTIMISER_MATRICES_LIBRARY_TYPE_GET")
+    EXITS("Solver_OptimiserMatricesLibraryTypeGet")
     RETURN
-999 ERRORSEXITS("SOLVER_OPTIMISER_MATRICES_LIBRARY_TYPE_GET",ERR,ERROR)
+999 ERRORSEXITS("Solver_OptimiserMatricesLibraryTypeGet",err,error)
     RETURN 1
    
-  END SUBROUTINE SOLVER_OPTIMISER_MATRICES_LIBRARY_TYPE_GET
+  END SUBROUTINE Solver_OptimiserMatricesLibraryTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the type of objective for an optimiser solver.
+  SUBROUTINE Solver_OptimiserObjectiveTypeGet(optimiserSolver,solverObjectiveType,err,error,*)
+
+    !Argument variables
+    TYPE(OptimiserSolverType), POINTER :: optimiserSolver !<A pointer the optimiser solver to get the objective type for.
+    INTEGER(INTG), INTENT(OUT) :: solverConstraintType !<On exit, the type of objective for the optimiser solver \see SOLVER_ROUTINES_OptimiserObjectiveTypes,SOLVER_ROUTINES
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Solver_OptimiserObjectiveTypeGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(optimiserSolver)) CALL FlagError("Optimiser solver is not associated.",err,error,*999)
+    
+    solverObjectiveType=optimiserSolver%objectiveType
+    
+    EXITS("Solver_OptimiserObjectiveTypeGet")
+    RETURN
+999 ERRORSEXITS("Solver_OptimiserObjectiveTypeGet",err,error)
+    RETURN 1
+   
+  END SUBROUTINE Solver_OptimiserObjectiveTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the type of objective for an optimisation solver.
+  SUBROUTINE Solver_OptimiserObjectiveTypeSet(optimiserSolver,solverObjectiveType,err,error,*)
+
+    !Argument variables
+    TYPE(OptimiserSolverType), POINTER :: optimiserSolver !<A pointer the optimiser solver to set the objective type for.
+    INTEGER(INTG), INTENT(IN) :: solverConstraintType !<The type of objective for the optimiser solver to set. \see SOLVER_ROUTINES_OptimiserObjectiveType,SOLVER_ROUTINES
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Solver_OptimiserObjectiveTypeSet",err,error,*999)
+    
+    IF(.NOT.ASSOCIATED(optimiserSolver)) CALL FlagError("Optimiser solver is not associated.",err,error,*999)
+    
+    SELECT CASE(solverObjectiveType)
+    CASE(SOLVER_OPTIMISER_NO_OBJECTIVE)
+      optimiserSolver%objectiveType=SOLVER_OPTIMISER_NO_OBJECTIVE
+    CASE(SOLVER_OPTIMISER_ONE_OBJECTIVE)
+      optimiserSolver%objectiveType=SOLVER_OPTIMISER_ONE_OBJECTIVE
+    CASE(SOLVER_OPTIMISER_MANY_OBJECTIVE)
+      optimiserSolver%objectiveType=SOLVER_OPTIMISER_MANY_OBJECTIVE
+    CASE DEFAULT
+      localError="The specified objective type of "//TRIM(NumberToVString(solverObjectiveType,"*",err,error))// &
+        & " is invalid for an optimiser solver."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+        
+    EXITS("Solver_OptimiserObjectiveTypeSet")
+    RETURN
+999 ERRORSEXITS("Solver_OptimiserObjectiveTypeSet",err,error)
+    RETURN 1
+   
+  END SUBROUTINE Solver_OptimiserObjectiveTypeSet
 
   !
   !================================================================================================================================
   !
 
   !>Solve an optimiser solver
-  SUBROUTINE SOLVER_OPTIMISER_SOLVE(OPTIMISER_SOLVER,ERR,ERROR,*)
+  SUBROUTINE Solver_OptimiserSolve(optimiserSolver,err,error,*)
 
     !Argument variables
-    TYPE(OPTIMISER_SOLVER_TYPE), POINTER :: OPTIMISER_SOLVER !<A pointer the optimiser solver to solve
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(OptimiserSolverType), POINTER :: optimiserSolver !<A pointer the optimiser solver to solve
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("SOLVER_OPTIMISER_SOLVE",ERR,ERROR,*999)
+    ENTERS("Solver_OptimiserSolve",err,error,*999)
 
-    IF(ASSOCIATED(OPTIMISER_SOLVER)) THEN        
-      CALL FlagError("Not implemented.",ERR,ERROR,*999)
-    ELSE
-      CALL FlagError("Optimiser solver is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(optimiserSolver)) CALL FlagError("Optimiser solver is not associated.",err,error,*999)
+    
+    CALL FlagError("Not implemented.",err,error,*999)
          
-    EXITS("SOLVER_OPTIMISER_SOLVE")
+    EXITS("Solver_OptimiserSolve")
     RETURN
-999 ERRORSEXITS("SOLVER_OPTIMISER_SOLVE",ERR,ERROR)
+999 ERRORSEXITS("Solver_OptimiserSolve",err,error)
     RETURN 1
    
-  END SUBROUTINE SOLVER_OPTIMISER_SOLVE
+  END SUBROUTINE Solver_OptimiserSolve
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the type of variable for an optimiser solver.
+  SUBROUTINE Solver_OptimiserVariableTypeGet(optimiserSolver,solverVariableType,err,error,*)
+
+    !Argument variables
+    TYPE(OptimiserSolverType), POINTER :: optimiserSolver !<A pointer the optimiser solver to get the variable type for.
+    INTEGER(INTG), INTENT(OUT) :: solverConstraintType !<On exit, the type of variable for the optimiser solver \see SOLVER_ROUTINES_OptimiserVariableTypes,SOLVER_ROUTINES
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Solver_OptimiserVariableTypeGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(optimiserSolver)) CALL FlagError("Optimiser solver is not associated.",err,error,*999)
+    
+    solverVariableType=optimiserSolver%variableType
+    
+    EXITS("Solver_OptimiserVariableTypeGet")
+    RETURN
+999 ERRORSEXITS("Solver_OptimiserVariableTypeGet",err,error)
+    RETURN 1
+   
+  END SUBROUTINE Solver_OptimiserVariableTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the type of variable type for an optimisation solver.
+  SUBROUTINE Solver_OptimiserVariableTypeSet(optimiserSolver,solverVariableType,err,error,*)
+
+    !Argument variables
+    TYPE(OptimiserSolverType), POINTER :: optimiserSolver !<A pointer the optimiser solver to set the variable type for.
+    INTEGER(INTG), INTENT(IN) :: solverVariableType !<The type of variable for the optimiser solver to set. \see SOLVER_ROUTINES_OptimiserVariableType,SOLVER_ROUTINES
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Solver_OptimiserVariableTypeSet",err,error,*999)
+    
+    IF(.NOT.ASSOCIATED(optimiserSolver)) CALL FlagError("Optimiser solver is not associated.",err,error,*999)
+    
+    SELECT CASE(solverVariableType)
+    CASE(SOLVER_OPTIMISER_CONTINUOUS_VARIABLES)
+      optimiserSolver%variableType=SOLVER_OPTIMISER_CONTINUOUS_VARIABLES
+    CASE(SOLVER_OPTIMISER_DISCRETE_VARIABLES)
+      optimiserSolver%variableType=SOLVER_OPTIMISER_DISCRETE_VARIABLES
+    CASE DEFAULT
+      localError="The specified variable type of "//TRIM(NumberToVString(solverVariableType,"*",err,error))// &
+        & " is invalid for an optimiser solver."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+        
+    EXITS("Solver_OptimiserVariableTypeSet")
+    RETURN
+999 ERRORSEXITS("Solver_OptimiserVariableTypeSet",err,error)
+    RETURN 1
+   
+  END SUBROUTINE Solver_OptimiserVariableTypeSet
 
   !
   !================================================================================================================================
@@ -21300,7 +21725,7 @@ CONTAINS
           CALL SOLVER_EIGENPROBLEM_SOLVE(SOLVER%EIGENPROBLEM_SOLVER,ERR,ERROR,*999)
         CASE(SOLVER_OPTIMISER_TYPE)
           !Solve an optimisation problem
-          CALL SOLVER_OPTIMISER_SOLVE(SOLVER%OPTIMISER_SOLVER,ERR,ERROR,*999)
+          CALL Solver_OptimiserSolve(solver%optimiserSolver,err,error,*999)
         CASE(SOLVER_CELLML_EVALUATOR_TYPE)
           !Solve a CellML evaluator
           CALL SOLVER_CELLML_EVALUATOR_SOLVE(SOLVER%CELLML_EVALUATOR_SOLVER,ERR,ERROR,*999)
@@ -21373,7 +21798,7 @@ CONTAINS
             CASE(SOLVER_EIGENPROBLEM_TYPE)
               CALL SOLVER_EIGENPROBLEM_INITIALISE(SOLVER,ERR,ERROR,*999)
             CASE(SOLVER_OPTIMISER_TYPE)
-              CALL SOLVER_OPTIMISER_INITIALISE(SOLVER,ERR,ERROR,*999)
+              CALL Solver_OptimiserInitialise(solver,err,error,*999)
             CASE(SOLVER_CELLML_EVALUATOR_TYPE)
               CALL SOLVER_CELLML_EVALUATOR_INITIALISE(SOLVER,ERR,ERROR,*999)
             CASE(SOLVER_GEOMETRIC_TRANSFORMATION_TYPE)
@@ -21395,7 +21820,7 @@ CONTAINS
             CASE(SOLVER_EIGENPROBLEM_TYPE)
               CALL SOLVER_EIGENPROBLEM_FINALISE(SOLVER%EIGENPROBLEM_SOLVER,ERR,ERROR,*999)
             CASE(SOLVER_OPTIMISER_TYPE)
-              CALL SOLVER_OPTIMISER_FINALISE(SOLVER%OPTIMISER_SOLVER,ERR,ERROR,*999)
+              CALL Solver_OptimiserFinalise(solver%optimiserSolver,err,error,*999)
             CASE(SOLVER_CELLML_EVALUATOR_TYPE)
               CALL SOLVER_CELLML_EVALUATOR_FINALISE(SOLVER%CELLML_EVALUATOR_SOLVER,ERR,ERROR,*999)
             CASE(SOLVER_GEOMETRIC_TRANSFORMATION_TYPE)
@@ -21427,7 +21852,7 @@ CONTAINS
     CASE(SOLVER_EIGENPROBLEM_TYPE)
       CALL SOLVER_EIGENPROBLEM_FINALISE(SOLVER%EIGENPROBLEM_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
     CASE(SOLVER_OPTIMISER_TYPE)
-      CALL SOLVER_OPTIMISER_FINALISE(SOLVER%OPTIMISER_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+      CALL Solver_OptimiserFinalise(solver%optimiserSolver,dummyErr,dummyError,*998)
     CASE(SOLVER_GEOMETRIC_TRANSFORMATION_TYPE)
       CALL Solver_GeometricTransformationFinalise(SOLVER%geometricTransformationSolver,ERR,ERROR,*999)
     END SELECT

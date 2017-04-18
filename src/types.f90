@@ -1467,6 +1467,25 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EQUATIONS_JACOBIAN_TYPE), POINTER :: PTR
   END TYPE EQUATIONS_JACOBIAN_PTR_TYPE
 
+  !>Contains information on the Hessian matrix for optimisation problems
+  TYPE EquationsHessianType
+    INTEGER(INTG) :: hessianNumber !<The equations Hessian matrix number
+    TYPE(EquationsMatricesOptimisationType), POINTER :: optimisationMatrices !<A pointer back to the optimisation matrices for this Hessian
+    INTEGER(INTG) :: storageType !<The storage (sparsity) type for this matrix
+    INTEGER(INTG) :: structureType!<The structure (sparsity) type for this matrix
+    INTEGER(INTG) :: numberOfColumns !<The number of columns in this global matrix
+    LOGICAL :: updateHessian !<Is .TRUE. if this Hessian matrix is to be updated
+    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: hessian !<A pointer to the distributed Hessian matrix data
+    LOGICAL :: firstAssembly !<Is .TRUE. if this Hessian matrix has not been assembled
+    TYPE(ELEMENT_MATRIX_TYPE) :: elementHessian !<The element matrix for this Hessian matrix. This is not used if the Hessian is not supplied.
+    INTEGER(INTG) :: hessianCalculationType !<The calculation type (analytic of finite difference) of the Hessian.
+  END TYPE EquationsHessianType
+
+  !>A buffer type to allow for an array of pointers to a EquationsHessianType \see Types::EquationsHessianType
+  TYPE EquationsHessianPtrType
+    TYPE(EquationsHessianType), POINTER :: ptr
+  END TYPE EquationsHessianPtrType
+
   !>Contains information of the dynamic matrices for equations matrices
   TYPE EQUATIONS_MATRICES_DYNAMIC_TYPE
     TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer back to the equations matrices.
@@ -1495,6 +1514,30 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: NodalResidualCalculated !<The number of the nodal the residual is calculated for, or zero if it isn't calculated
     INTEGER(INTG) :: ELEMENT_RESIDUAL_CALCULATED !<The number of the element the residual is calculated for, or zero if it isn't calculated
   END TYPE EQUATIONS_MATRICES_NONLINEAR_TYPE
+
+  !>Contains information of the optimisation matrices and vectors for equations matrices
+  TYPE EquationsMatricesOptimisationType
+    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices !<A pointer back to the equations matrices.
+    REAL(DP) :: objective !<The value of the objective
+    INTEGER(INTG) :: numberOfHessians !<The number of Hessian matrices for the equations set.
+    TYPE(EquationsHessianPtrType), ALLOCATABLE :: hessians(:) !<hessians(matrixIdx)%ptr is a pointer to the matrixIdx'th Hessian matrix for optimisation equations
+    LOGICAL :: updateGradient !<Is .TRUE. if the equations gradient vector is to be updated
+    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: gradient !<A pointer to the distributed gradient vector for optimisation equations
+    TYPE(ELEMENT_VECTOR_TYPE) :: elementGradient !<The element gradient information for optimisation equations.
+    LOGICAL :: updateConstraints !<Is .TRUE. if the equations constraints vector is to be updated
+    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: constraints !<A pointer to the distributed constraints vector for optimisation equations
+    TYPE(ELEMENT_VECTOR_TYPE) :: elementConstraints !<The element constraints information for optimisation equations.
+    LOGICAL :: updateBounds !<Is .TRUE. if the equations bounds vectors are to be updated
+    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: lowerBounds !<A pointer to the distributed lower bounds vector for optimisation equations
+    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: upperBounds !<A pointer to the distributed upper bounds vector for optimisation equations
+    TYPE(ELEMENT_VECTOR_TYPE) :: elementLowerBounds !<The element lower bounds information for optimisation equations.
+    TYPE(ELEMENT_VECTOR_TYPE) :: elementUpperBounds !<The element upper bounds information for optimisation equations.
+    LOGICAL :: updateResidual !<Is .TRUE. if the equtions residual vector is to be updated
+    LOGICAL :: firstAssembly !<Is .TRUE. if this residual vector has not been assembled
+    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: residual !<A pointer to the distributed residual vector for optimisation equations
+    TYPE(ELEMENT_VECTOR_TYPE) :: elementResidual !<The element residual information for optimisation equations. Old CMISS name RE1
+
+  END TYPE EquationsMatricesOptimisationType
 
   !>Contains information of the RHS vector for equations matrices
   TYPE EQUATIONS_MATRICES_RHS_TYPE
@@ -1529,6 +1572,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EQUATIONS_MATRICES_DYNAMIC_TYPE), POINTER :: DYNAMIC_MATRICES !<A pointer to the dynamic matrices information for the equations matrices
     TYPE(EQUATIONS_MATRICES_LINEAR_TYPE), POINTER :: LINEAR_MATRICES !<A pointer to the linear matrices information for the equations matrices
     TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: NONLINEAR_MATRICES !<A pointer to the nonlinear matrices and vectors information for the equations matrices
+    TYPE(EquationsMatricesOptimisationType), POINTER :: optimisationMatrices !<A pointer to the optimisation matrices and vectors information for the equations matrices
     TYPE(EQUATIONS_MATRICES_RHS_TYPE), POINTER :: RHS_VECTOR !<A pointer to the RHS vector information for the equations matrices
     TYPE(EQUATIONS_MATRICES_SOURCE_TYPE), POINTER :: SOURCE_VECTOR !<A pointer to the source vector information for the equations matrices
   END TYPE EQUATIONS_MATRICES_TYPE
@@ -2437,6 +2481,9 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     !Nonlinear matrices and vectors
     LOGICAL :: UPDATE_RESIDUAL !<Is .TRUE. if the residual vector is to be updated
     TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: RESIDUAL !<A pointer to the distributed residual vector for nonlinear problems
+    !Optimiser matrices and vectors
+    LOGICAL :: updateGradient !<Is .TRUE. if the gradient vector is to be updated
+    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: gradient !<A pointer to the distributed gradient vector for optimisation problems
     !Right hand side vector
     LOGICAL :: UPDATE_RHS_VECTOR !<Is .TRUE. if the RHS vector is to be updated
     TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: RHS_VECTOR !<A pointer to the distributed RHS vector for the solver matrices
@@ -2743,11 +2790,18 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   END TYPE EIGENPROBLEM_SOLVER_TYPE
   
   !>Contains information for an optimiser solver
-  TYPE OPTIMISER_SOLVER_TYPE
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
-    INTEGER(INTG) :: SOLVER_LIBRARY !<The library type for the optimiser solver \see SOLVER_ROUTINES_SolverLibraries,SOLVER_ROUTINES
-    INTEGER(INTG) :: SOLVER_MATRICES_LIBRARY !<The library type for the optimiser solver matrices \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
-  END TYPE OPTIMISER_SOLVER_TYPE
+  TYPE OptimiserSolverType
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    INTEGER(INTG) :: solverLibrary !<The library type for the optimiser solver \see SOLVER_ROUTINES_SolverLibraries,SOLVER_ROUTINES
+    INTEGER(INTG) :: solverMatricesLibrary !<The library type for the optimiser solver matrices \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
+    INTEGER(INTG) :: objectiveType !The type of objective for the optimiser solver \see SOLVER_ROUTINES_OptimiserObjectiveTypes,SOLVER_ROUTINES
+    INTEGER(INTG) :: constraintType !The type of constraints for the optimiser solver \see SOLVER_ROUTINES_OptimiserConstraintTypes,SOLVER_ROUTINES
+    INTEGER(INTG) :: certaintyType !The type of certainty for the optimiser solver \see SOLVER_ROUTINES_OptimiserCertaintyTypes,SOLVER_ROUTINES
+    INTEGER(INTG) :: variableType !The type of variable type for the optimiser solver \see SOLVER_ROUTINES_OptimiserVariableTypes,SOLVER_ROUTINES
+    INTEGER(INTG) :: gradientCalculationType !The type of calculation to obtain the gradient for the optimiser solver \see SOLVER_ROUTINES_OptimiserGradientCalculationTypes,SOLVER_ROUTINES
+    INTEGER(INTG) :: hessianCalculationType !The type of calculation to obtain the Hessian for the optimiser solver \see SOLVER_ROUTINES_OptimiserHessianCalculationTypes,SOLVER_ROUTINES
+    TYPE(PetscTaoType) :: tao !<The PETSc tao optimiser object
+  END TYPE OptimiserSolverType
 
   !>Contains information for a CellML evaluation solver
   TYPE CELLML_EVALUATOR_SOLVER_TYPE
@@ -2793,7 +2847,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(DYNAMIC_SOLVER_TYPE), POINTER :: DYNAMIC_SOLVER !<A pointer to the dynamic solver information
     TYPE(DAE_SOLVER_TYPE), POINTER :: DAE_SOLVER !<A pointer to the differential-algebraic equation solver information
     TYPE(EIGENPROBLEM_SOLVER_TYPE), POINTER :: EIGENPROBLEM_SOLVER !<A pointer to the eigenproblem solver information
-    TYPE(OPTIMISER_SOLVER_TYPE), POINTER :: OPTIMISER_SOLVER !<A pointer to the optimiser solver information
+    TYPE(OptimiserSolverType), POINTER :: optimiserSolver !<A pointer to the optimiser solver information
     TYPE(CELLML_EVALUATOR_SOLVER_TYPE), POINTER :: CELLML_EVALUATOR_SOLVER !<A pointer to the CellML solver information
     TYPE(GeometricTransformationSolverType), POINTER :: geometricTransformationSolver !<A pointer to the geometric transformation solver information
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS !<A pointer to the solver equations

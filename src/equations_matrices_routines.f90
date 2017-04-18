@@ -109,11 +109,23 @@ MODULE EQUATIONS_MATRICES_ROUTINES
   INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_VECTORS_ONLY=12 !<Assemble only the equations vectors \see EQUATIONS_MATRICES_ROUTINES::SelectMatricesTypes,EQUATION_MATRICES_ROUTINES
   !>@}
 
-  !> \addtogroup EQUATIONS_MATRICES_ROUTINES_JacobianCalculationTypes EQUATIONS_MATRICES_ROUTINES:JacobianCalculationTypes
+  !> \addtogroup EQUATIONS_MATRICES_ROUTINES_GradientCalculationTypes EQUATIONS_MATRICES_ROUTINES::GradientCalculationTypes
+  !> \brief Gradient calculation types
+  !>@{
+  INTEGER(INTG), PARAMETER :: EQUATIONS_GRADIENT_FINITE_DIFFERENCE_CALCULATED=1 !<Use finite differencing to calculate the gradient
+  INTEGER(INTG), PARAMETER :: EQUATIONS_GRADIENT_ANALYTIC_CALCULATED=2 !<Use an analytic gradient evaluation
+  !>@}
+  !> \addtogroup EQUATIONS_MATRICES_ROUTINES_JacobianCalculationTypes EQUATIONS_MATRICES_ROUTINES::JacobianCalculationTypes
   !> \brief Jacobian calculation types
   !>@{
   INTEGER(INTG), PARAMETER :: EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED=1 !<Use finite differencing to calculate the Jacobian
   INTEGER(INTG), PARAMETER :: EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED=2 !<Use an analytic Jacobian evaluation
+  !>@}
+  !> \addtogroup EQUATIONS_MATRICES_ROUTINES_HessianCalculationTypes EQUATIONS_MATRICES_ROUTINES::HessianCalculationTypes
+  !> \brief Hessian calculation types
+  !>@{
+  INTEGER(INTG), PARAMETER :: EQUATIONS_HESSIAN_FINITE_DIFFERENCE_CALCULATED=1 !<Use finite differencing to calculate the Hessian
+  INTEGER(INTG), PARAMETER :: EQUATIONS_HESSIAN_ANALYTIC_CALCULATED=2 !<Use an analytic Hessian evaluation
   !>@}
   !>@}
 
@@ -227,7 +239,11 @@ MODULE EQUATIONS_MATRICES_ROUTINES
     & EQUATIONS_MATRICES_RHS_RESIDUAL_ONLY,EQUATIONS_MATRICES_RHS_SOURCE_ONLY,EQUATIONS_MATRICES_RESIDUAL_SOURCE_ONLY, &
     & EQUATIONS_MATRICES_VECTORS_ONLY
   
+  PUBLIC EQUATIONS_GRADIENT_FINITE_DIFFERENCE_CALCULATED,EQUATIONS_GRADIENT_ANALYTIC_CALCULATED
+
   PUBLIC EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED,EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED
+
+  PUBLIC EQUATIONS_HESSIAN_FINITE_DIFFERENCE_CALCULATED,EQUATIONS_HESSIAN_ANALYTIC_CALCULATED
 
   PUBLIC EQUATIONS_MATRICES_CREATE_FINISH,EQUATIONS_MATRICES_CREATE_START
 
@@ -290,7 +306,7 @@ MODULE EQUATIONS_MATRICES_ROUTINES
 
   PUBLIC EQUATIONS_MATRICES_OUTPUT,EQUATIONS_MATRICES_JACOBIAN_OUTPUT
 
-  PUBLIC EquationsMatrices_Output,EquationsMatrices_JacobianOutput
+  PUBLIC EquationsMatrices_Output,EquationsMatrices_JacobianOutput,EquationsMatrices_HessianOutput
 
 CONTAINS
 
@@ -3170,6 +3186,104 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Adds the Hessian elmental matrices into the equations Hessian.
+  SUBROUTINE EquationsMatrices_HessianElementAdd(equationsMatrices,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices !<A pointer to the equations matrices
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: hessianMatrixIdx
+    TYPE(EquationsHessianType), POINTER :: hessianMatrix
+    TYPE(EquationsMatricesOptimisationType), POINTER :: optimisationMatrices
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("EquationsMatrices_HessianElementAdd",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsMatrices)) CALL FlagError("Equations matrices is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsMatrices%optimisationMatrices)) &
+      & CALL FlagError("Equations matrices optimisation matrices is not associated.",err,error,*999)
+
+    optimisationMatrices=>equationsMatrices%optimisationMatrices
+    DO hessianMatrixIdx=1,optimisationMatrices%numberOfHessians
+      hessianMatrix=>optimisationMatrices%hessians(hessianMatrixIdx)%ptr
+      IF(ASSOCIATED(hessianMatrix)) THEN
+        IF(hessianMatrix%updateHessian) THEN
+          !Add in Hessian element matrices
+          CALL DistributedMatrix_ValuesAdd(hessianMatrix%hessian,hessianMatrix%elementHessian%ROW_DOFS( &
+            & 1:hessianMatrix%elementHessianNUMBER_OF_ROWS),hessianMatrix%elementHessian%COLUMN_DOFS( &
+            & 1:hessianMatrix%elementHessian%NUMBER_OF_COLUMNS),hessianMatrix%elementHessian(1: &
+            & hessianMatrix%elementHessian%NUMBER_OF_ROWS,1:hessianMatrix%elementHessian%NUMBER_OF_COLUMNS), &
+            & err,error,*999)
+        ENDIF
+      ELSE
+        localError="The Hessian matrix for Hessian matrix index "//TRIM(NumberToVString(hessianMatrixIdx,"*",err,error))// &
+          & " is not associated."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ENDDO !hessianMatrixIdx
+    
+    EXITS("EquationsMatrices_HessianElementAdd")
+    RETURN
+999 ERRORSEXITS("EquationsMatrices_HessianElementAdd",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrices_HessianElementAdd
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Outputs the equations Hessian matrices
+  SUBROUTINE EquationsMatrices_HessianOutput(id,equationsMatrices,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the ouptut stream
+    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices !<A pointer to the equations Hessian matrices
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: hessianMatrixIdx
+    TYPE(EquationsHessianType), POINTER :: hessianMatrix
+    TYPE(EquationsMatricesOptimisationType), POINTER :: optimisationMatrices
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("EquationsMatrices_HessianOutput",err,error,*999)
+    
+    IF(.NOT.ASSOCIATED(equationsMatrices)) CALL FlagError("Equations matrices is not associated.",err,error,*999)
+    IF(.NOT.equationsMatrices%EQUATIONS_MATRICES_FINISHED) &
+      & CALL FlagError("Equations matrices have not been finished.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsMatrices%optimisationMatrices)) &
+      & CALL FlagError("Equations matrices optimisation matrices is not associated.",err,error,*999)
+
+    optimisationMatrices=>equationsMatrices%optimisationMatrices
+    
+    CALL WriteString(id,"",err,error,*999)
+    CALL WriteString(id,"Hessian matrices:",err,error,*999)
+    DO hessianMatrixIdx=1,optimisationMatrices%numberOfHessians
+      hessianMatrix=>optimisationMatrices%hessians(hessianMatrixIdx)%ptr
+      IF(ASSOCIATED(hessianMatrix)) THEN        
+        CALL WriteStringValue(id,"Hessian matrix: ",hessianMatrixIdx,err,error,*999)
+        CALL DistributedMatrix_Output(id,hessianMatrix,err,error,*999)
+      ELSE
+        localError="The Hessian matrix for Hessian matrix index "//TRIM(NumberToVString(hessianMatrixIdx,"*",err,error))// &
+          & " is not associated."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ENDDO !hessianMatrixIdx
+    
+    EXITS("EquationsMatrices_HessianOutput")
+    RETURN
+999 ERRORSEXITS("EquationsMatrices_HessianOutput",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrices_HessianOutput
+  
+  !
+  !================================================================================================================================
+  !
+
   !>Adds the Jacobain matrices into the equations Jacobian.
   SUBROUTINE EQUATIONS_MATRICES_JACOBIAN_ELEMENT_ADD(EQUATIONS_MATRICES,ERR,ERROR,*)
 
@@ -3510,6 +3624,106 @@ CONTAINS
 998 ERRORSEXITS("EQUATIONS_MATRICES_NONLINEAR_INITIALISE",ERR,ERROR)
     RETURN 1
   END SUBROUTINE EQUATIONS_MATRICES_NONLINEAR_INITIALISE
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises the equations matrices optimisation matrices and deallocates all memory
+  SUBROUTINE EquationsMatrices_OptimisationFinalise(optimisationMatrices,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesOptimisationType), POINTER :: optimisationMatrices !<A pointer to the equation matrices optimisation matrices to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: matrixIdx
+     
+    ENTERS("EquationsMatrices_OptimisationFinalise",err,error,*999)
+
+    IF(ASSOCIATED(optimisationMatrices)) THEN
+      IF(ALLOCATED(optimisationMatrices%hessians)) THEN
+        DO matrixIdx=1,SIZE(optimisationMatrices%hessians,1)
+          CALL EquationsMatrix_HessianFinalise(optimisationMatrices%hessians(matrixIdx)%ptr,err,error,*999)
+        ENDDO !matrixIdx
+        DEALLOCATE(optimisationMatrices%hessians)
+      ENDIF
+      IF(ASSOCIATED(optimisationMatrices%gradient)) CALL DistributedVector_Destroy(optimisationMatrices%gradient,err,error,*999)
+      CALL EquationsMatrices_ElementVectorFinalise(optimisationMatrices%elementGradient,err,error,*999)
+      IF(ASSOCIATED(optimisationMatrices%constraints)) CALL DistributedVector_Destroy(optimisationMatrices%constraints, &
+        & err,error,*999)
+      CALL EquationsMatrices_ElementVectorFinalise(optimisationMatrices%elementConstraints,err,error,*999)
+      IF(ASSOCIATED(optimisationMatrices%lowerBounds)) CALL DistributedVector_Destroy(optimisationMatrices%lowerBounds, &
+        & err,error,*999)
+      CALL EquationsMatrices_ElementVectorFinalise(optimisationMatrices%elementLowerBounds,err,error,*999)
+      IF(ASSOCIATED(optimisationMatrices%upperBounds)) CALL DistributedVector_Destroy(optimisationMatrices%upperBounds, &
+        & err,error,*999)
+      CALL EquationsMatrices_ElementVectorFinalise(optimisationMatrices%elementUpperBounds,err,error,*999)
+      IF(ASSOCIATED(optimisationMatrices%residual)) CALL DistributedVector_Destroy(optimisationMatrices%residual,err,error,*999)
+      CALL EquationsMatrices_ElementVectorFinalise(optimisationMatrices%elementResidual,err,error,*999)
+      DEALLOCATE(optimisationMatrices)
+    ENDIF
+    
+    EXITS("EquationsMatrices_OptimisationFinalise")
+    RETURN
+999 ERRORSEXITS("EquationsMatrices_OptimisationFinalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrices_OptimisationFinalise
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises the equations matrices optimisation matrices
+  SUBROUTINE EquationsMatrices_OptimisationInitialise(equationsMatrices,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices !<A pointer to the equation matrices to initialise the optimisation matrices for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr,matrixIdx
+    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: equationsMapping
+    TYPE(EquationsMappingOptimisationType), POINTER :: optimisationMapping
+    TYPE(VARYING_STRING) :: dummyError
+     
+    ENTERS("",err,error,*998)
+    
+    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
+      EQUATIONS_MAPPING=>EQUATIONS_MATRICES%EQUATIONS_MAPPING
+      IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
+        DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING
+        IF(ASSOCIATED(DYNAMIC_MAPPING)) THEN
+          IF(ASSOCIATED(EQUATIONS_MATRICES%DYNAMIC_MATRICES)) THEN
+            CALL FlagError("Equations matrices dynamic matrices is already associated.",ERR,ERROR,*998)
+          ELSE
+            ALLOCATE(EQUATIONS_MATRICES%DYNAMIC_MATRICES,STAT=ERR)
+            IF(ERR/=0) CALL FlagError("Could not allocate equations matrices dynamic matrices.",ERR,ERROR,*999)
+            EQUATIONS_MATRICES%DYNAMIC_MATRICES%EQUATIONS_MATRICES=>EQUATIONS_MATRICES
+            EQUATIONS_MATRICES%DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES=DYNAMIC_MAPPING%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES
+            ALLOCATE(EQUATIONS_MATRICES%DYNAMIC_MATRICES%MATRICES(DYNAMIC_MAPPING%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES),STAT=ERR)
+            IF(ERR/=0) CALL FlagError("Could not allocate equations matrices dynamic matrices matrices.",ERR,ERROR,*999)
+            DO matrix_idx=1,DYNAMIC_MAPPING%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES
+              NULLIFY(EQUATIONS_MATRICES%DYNAMIC_MATRICES%MATRICES(matrix_idx)%PTR)
+              CALL EQUATIONS_MATRIX_DYNAMIC_INITIALISE(EQUATIONS_MATRICES%DYNAMIC_MATRICES,matrix_idx,ERR,ERROR,*999)
+            ENDDO !matrix_idx
+            NULLIFY(EQUATIONS_MATRICES%DYNAMIC_MATRICES%TEMP_VECTOR)
+          ENDIF
+        ENDIF
+      ELSE
+        CALL FlagError("Equations matrices equations mapping is not associated.",ERR,ERROR,*998)        
+      ENDIF
+    ELSE
+      CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*998)
+    ENDIF
+    
+    EXITS("EQUATIONS_MATRICES_DYNAMIC_INITIALISE")
+    RETURN
+999 CALL EQUATIONS_MATRICES_DYNAMIC_FINALISE(EQUATIONS_MATRICES%DYNAMIC_MATRICES,DUMMY_ERR,DUMMY_ERROR,*998)
+998 ERRORSEXITS("EQUATIONS_MATRICES_DYNAMIC_INITIALISE",ERR,ERROR)
+    RETURN 1
+  END SUBROUTINE EQUATIONS_MATRICES_DYNAMIC_INITIALISE
   
   !
   !================================================================================================================================

@@ -4357,6 +4357,73 @@ END SUBROUTINE Problem_SolverJacobianFDCalculatePetsc
 !================================================================================================================================
 !
 
+!>Called from the PETSc TAO solvers to evaluate the objective for an optimiser solver
+SUBROUTINE Problem_SolverObjectiveEvaluatePetsc(tao,x,f,ctx,err)
+
+  USE BASE_ROUTINES
+  USE CmissPetscTypes
+  USE DISTRIBUTED_MATRIX_VECTOR
+  USE ISO_VARYING_STRING
+  USE KINDS
+  USE PROBLEM_ROUTINES
+  USE SOLVER_ROUTINES
+  USE STRINGS
+  USE TYPES
+
+  IMPLICIT NONE
+  
+  !Argument variables
+  TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The PETSc tao type
+  TYPE(PetscVecType), INTENT(INOUT) :: x !<The PETSc x Vec type
+  REAL(DP), INTENT(OUT) :: f !<On exit, the evaluated objective
+  TYPE(SOLVER_TYPE), POINTER :: ctx !<The passed through context
+  INTEGER(INTG), INTENT(INOUT) :: err !<The error code
+  !Local Variables
+  INTEGER(INTG) :: dummyErr
+  TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: solverVector
+  TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+  TYPE(SOLVER_MATRICES_TYPE), POINTER :: solverMatrices
+  TYPE(SOLVER_MATRIX_TYPE), POINTER :: solverMatrix
+  TYPE(VARYING_STRING) :: dummyError,error,localError
+
+  IF(.NOT.ASSOCIATED(ctx)) CALL FlagError("Solver context is not associated.",err,error,*997)
+  IF(.NOT.ASSOCIATED(ctx%optimiserSolver)) CALL FlagError("Solver optimiser solver is not associated.",err,error,*997)
+  IF(.NOT.ASSOCIATED(ctx%SOLVER_EQUATIONS)) CALL FlagError("Solver equations is not associated.",err,error,*997)
+  
+  solverEquations=>ctx%SOLVER_EQUATIONS
+  solverMatrices=>solverEquations%SOLVER_MATRICES
+  IF(.NOT.ASSOCIATED(solverMatrices)) CALL FlagError("Solver equations solver matrices is not associated.",err,error,*997)
+  IF(solverMatrices%NUMBER_OF_MATRICES/=1) THEN
+    localError="The number of solver matrices of "//TRIM(NumberToVString(solverMatrices%NUMBER_OF_MATRICES,"*",err,error))// &
+      & " is invalid. There should be 1 solver matrix."
+    CALL FlagError(localError,err,error,*997)          
+  ENDIF
+  solverMatrix=>solverMatrices%matrices(1)%ptr
+  IF(.NOT.ASSOCIATED(solverMatrix)) CALL FlagError("Solver matrix is not associated.",err,error,*997)
+  solverVector=>solverMatrix%SOLVER_VECTOR
+  IF(.NOT.ASSOCIATED(solverVector)) CALL FlagError("Solver vector is not associated.",err,error,*997)
+
+  CALL DistributedVector_OverrideSetOn(solverVector,x,err,error,*999)
+    
+  CALL Problem_SolverObjectiveEvaluate(ctx,err,error,*999)
+                    
+  CALL DistributedVector_OverrideSetOff(solverVector,err,error,*999)
+
+!!TODO: move this to PROBLEM_SOLVER_RESIDUAL_EVALUATE or elsewhere?
+  optimiserSolver%totalNumberOfObjectiveEvaluations=optimiserSolver%totalNumberOfFunctionEvaluations+1
+  
+  RETURN
+999 CALL DistributedVector_OverrideSetOff(solverVector,dummyErr,dummyError,*998)  
+997 CALL WriteError(err,error,*996)
+996 CALL FlagWarning("Error evaluating optimiser objective.",err,error,*995)
+995 RETURN
+
+END SUBROUTINE Problem_SolverObjectiveEvaluatePetsc
+
+!
+!================================================================================================================================
+!
+
 !>Called from the PETSc SNES solvers to evaluate the residual for a Newton like nonlinear solver
 SUBROUTINE Problem_SolverResidualEvaluatePetsc(snes,x,f,ctx,err)
 
@@ -4419,7 +4486,7 @@ SUBROUTINE Problem_SolverResidualEvaluatePetsc(snes,x,f,ctx,err)
                   CALL FlagError("Solver vector is not associated.",err,error,*997)
                 ENDIF
               ELSE
-                CALL FlagError("Solver matrix is not associated.",err,error,*997)
+                
               ENDIF
             ELSE
               localError="The number of solver matrices of "// &
@@ -4751,3 +4818,40 @@ SUBROUTINE Problem_SolverNonlinearMonitorPETSC(snes,iterationNumber,residualNorm
 997 RETURN    
 
 END SUBROUTINE Problem_SolverNonlinearMonitorPETSC
+
+!
+!================================================================================================================================
+!
+
+!>Called from the PETSc TAO solvers to monitor an optimiser solver
+SUBROUTINE Problem_SolverOptimiserMonitorPETSC(tao,context,err)
+
+  USE BASE_ROUTINES
+  USE CmissPetscTypes
+  USE ISO_VARYING_STRING
+  USE KINDS
+  USE PROBLEM_ROUTINES
+  USE TYPES
+
+  IMPLICIT NONE
+  
+  !Argument variables
+  TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The PETSc tao type
+  TYPE(SOLVER_TYPE), POINTER :: context !<The passed through context (solver)
+  INTEGER(INTG), INTENT(INOUT) :: err !<The error code
+  !Local Variables
+  TYPE(VARYING_STRING) :: error
+
+  IF(.NOT.ASSOCIATED(context)) CALL FlagError("Solver context is not associated.",err,error,*999)
+  IF(.NOT.ASSOCIATED(context%optimiserSolver)) CALL FlagError("Solver optimiser solver is not associated.",err,error,*999)
+  IF(.NOT.ASSOCIATED(context%optimiserSolver%solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+  
+  CALL Problem_SolverOptimiserMonitor(context%optimiserSolver%solver,err,error,*999)
+  
+  RETURN
+
+999 CALL WriteError(err,error,*998)
+998 CALL FlagWarning("Error monitoring optimiser.",err,error,*997)
+997 RETURN    
+
+END SUBROUTINE Problem_SolverOptimiserMonitorPETSC
