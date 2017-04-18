@@ -50,16 +50,18 @@ MODULE SOLVER_MAPPING_ROUTINES
   USE DISTRIBUTED_MATRIX_VECTOR
   USE DOMAIN_MAPPINGS
   USE EQUATIONS_SET_CONSTANTS
-  USE FIELD_ROUTINES
+  USE EquationsSetAccessRoutines
+  USE FieldAccessRoutines
   USE INPUT_OUTPUT
   USE INTERFACE_CONDITIONS_CONSTANTS
   USE ISO_VARYING_STRING
-  USE KINDS
-  USE LISTS
+  USE Kinds
+  USE Lists
   USE MATRIX_VECTOR
   USE PROBLEM_CONSTANTS
-  USE STRINGS
-  USE TYPES
+  USE SolverMappingAccessRoutines
+  USE Strings
+  USE Types
 
 #include "macros.h"  
 
@@ -134,13 +136,14 @@ CONTAINS
       & NUMBER_OF_INTERFACE_ROWS,NUMBER_OF_INTERFACE_VARIABLES,NUMBER_OF_GLOBAL_SOLVER_DOFS,NUMBER_OF_GLOBAL_SOLVER_ROWS, &
       & NUMBER_OF_LINEAR_EQUATIONS_MATRICES,NUMBER_OF_LOCAL_SOLVER_DOFS,NUMBER_OF_LOCAL_SOLVER_ROWS,NUMBER_OF_RANK_COLS, &
       & NUMBER_OF_RANK_ROWS,NUMBER_OF_VARIABLES,rank,rank_idx,row_idx,ROW_LIST_ITEM(4),ROW_RANK,solver_global_dof, &
-      & solver_matrix_idx,solver_variable_idx,TOTAL_NUMBER_OF_LOCAL_SOLVER_DOFS,variable_idx, &
+      & solver_matrix_idx,solver_variable_idx,TOTAL_NUMBER_OF_LOCAL_SOLVER_DOFS,variable_idx,variableIdx, &
       & VARIABLE_LIST_ITEM(3),variable_position_idx,variable_type, &
       & numberRowEquationsRows,numberColEquationsCols,rowEquationsRowIdx,colEquationsColIdx, &
-      & globalDofCouplingNumber,equationsRow,eqnLocalDof
+      & globalDofCouplingNumber,equationsRow,eqnLocalDof,numberOfEquationsRHSVariables,rhsVariableType,equationsSetIdx
     INTEGER(INTG) :: temp_offset, solver_variable_idx_temp
     INTEGER(INTG), ALLOCATABLE :: EQUATIONS_SET_VARIABLES(:,:),EQUATIONS_VARIABLES(:,:),INTERFACE_EQUATIONS_LIST(:,:), &
-      & INTERFACE_VARIABLES(:,:),RANK_GLOBAL_ROWS_LIST(:,:),RANK_GLOBAL_COLS_LIST(:,:),solver_local_dof(:)
+      & INTERFACE_VARIABLES(:,:),RANK_GLOBAL_ROWS_LIST(:,:),RANK_GLOBAL_COLS_LIST(:,:),solver_local_dof(:), &
+      & equationsRHSVariables(:,:)
     INTEGER(INTG), ALLOCATABLE :: NUMBER_OF_VARIABLE_GLOBAL_SOLVER_DOFS(:),NUMBER_OF_VARIABLE_LOCAL_SOLVER_DOFS(:), &
       & TOTAL_NUMBER_OF_VARIABLE_LOCAL_SOLVER_DOFS(:),SUB_MATRIX_INFORMATION(:,:,:),SUB_MATRIX_LIST(:,:,:),VARIABLE_TYPES(:)
     REAL(DP) :: couplingCoefficient
@@ -156,10 +159,10 @@ CONTAINS
     TYPE(EQUATIONS_MAPPING_NONLINEAR_TYPE), POINTER :: NONLINEAR_MAPPING
     TYPE(EQUATIONS_MAPPING_RHS_TYPE), POINTER :: RHS_MAPPING
     TYPE(EQUATIONS_MAPPING_SOURCE_TYPE), POINTER :: SOURCE_MAPPING
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET,equationsSet
     TYPE(EQUATIONS_TO_SOLVER_MAPS_TYPE), POINTER :: EQUATIONS_TO_SOLVER_MAP
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: DEPENDENT_VARIABLE,LAGRANGE_VARIABLE,VARIABLE
+    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD,dependentField
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: DEPENDENT_VARIABLE,LAGRANGE_VARIABLE,VARIABLE,rhsVariable
     TYPE(INTEGER_INTG_PTR_TYPE), POINTER :: DOF_MAP(:)
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
     TYPE(INTERFACE_DEPENDENT_TYPE), POINTER :: INTERFACE_DEPENDENT
@@ -1177,7 +1180,28 @@ CONTAINS
               ENDIF
             ENDDO !variable_idx
             IF(ALLOCATED(INTERFACE_VARIABLES)) DEALLOCATE(INTERFACE_VARIABLES)
-            
+            !Handle the RHS variables
+            CALL List_DetachAndDestroy(SOLVER_MAPPING%CREATE_VALUES_CACHE%equationsRHSVariablesList, &
+              & numberOfEquationsRHSVariables,equationsRHSVariables,err,error,*999)
+            SOLVER_MAPPING%rhsVariablesList%NUMBER_OF_VARIABLES=numberOfEquationsRHSVariables
+            ALLOCATE(SOLVER_MAPPING%rhsVariablesList%variables(numberOfEquationsRHSVariables),STAT=err)
+            IF(err/=0) CALL FlagError("Could not allocate RHS variables list.",err,error,*999)
+            DO variableIdx=1,numberOfEquationsRHSVariables
+              CALL SOLVER_MAPPING_VARIABLE_INITIALISE(SOLVER_MAPPING%rhsVariablesList%variables(variableIdx),err,error,*999)
+              equationsSetIdx=equationsRHSVariables(1,variableIdx)
+              NULLIFY(equationsSet)
+              CALL SolverMapping_EquationsSetGet(SOLVER_MAPPING,equationsSetIdx,equationsSet,err,error,*999)
+              NULLIFY(dependentField)
+              CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+              rhsVariableType=equationsRHSVariables(2,variableIdx)
+              NULLIFY(rhsVariable)
+              CALL Field_VariableGet(dependentField,rhsVariableType,rhsVariable,err,error,*999)
+              SOLVER_MAPPING%rhsVariablesList%variables(variableIdx)%variable=>rhsVariable
+              SOLVER_MAPPING%rhsVariablesList%variables(variableIdx)%VARIABLE_TYPE=rhsVariableType
+!!TODO: Redo this properly with left hand side mapping. For now just add this equations set.
+              SOLVER_MAPPING%rhsVariablesList%variables(variableIdx)%NUMBER_OF_EQUATIONS=0
+            ENDDO
+            IF(ALLOCATED(equationsRHSVariables)) DEALLOCATE(equationsRHSVariables)
             !Initialise solver column to equations sets mapping array
             CALL SolverMapping_SolColToEquationsMapsInitialise(SOLVER_MAPPING% &
               & SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx),ERR,ERROR,*999)
@@ -3166,6 +3190,22 @@ CONTAINS
             & variable_idx)%EQUATION_TYPES,'("        Equation indices :",5(X,I13))','(26X,5(X,I13))',ERR,ERROR,*999)
         ENDDO !variable_idx
       ENDDO !solver_matrix_idx
+      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    RHS vector : ",solver_matrix_idx,ERR,ERROR,*999)        
+      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of variables = ",SOLVER_MAPPING%rhsVariablesList% &
+        & NUMBER_OF_VARIABLES,ERR,ERROR,*999)        
+      DO variable_idx=1,SOLVER_MAPPING%rhsVariablesList%NUMBER_OF_VARIABLES
+        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Variable : ",variable_idx,ERR,ERROR,*999)
+        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Variable type = ",SOLVER_MAPPING%rhsVariablesList% &
+          & VARIABLES(variable_idx)%VARIABLE_TYPE,ERR,ERROR,*999)        
+        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Number of equations = ",SOLVER_MAPPING%rhsVariablesList% &
+          & VARIABLES(variable_idx)%NUMBER_OF_EQUATIONS,ERR,ERROR,*999)        
+        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,SOLVER_MAPPING%rhsVariablesList%VARIABLES(variable_idx)% &
+          & NUMBER_OF_EQUATIONS,5,5,SOLVER_MAPPING%rhsVariablesList%VARIABLES(variable_idx)%EQUATION_TYPES, &
+          & '("        Equation types   :",5(X,I13))','(26X,5(X,I13))',ERR,ERROR,*999)
+        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,SOLVER_MAPPING%rhsVariablesList%VARIABLES(variable_idx)% &
+          & NUMBER_OF_EQUATIONS,5,5,SOLVER_MAPPING%rhsVariablesList%VARIABLES(variable_idx)%EQUATION_TYPES, &
+          & '("        Equation indices :",5(X,I13))','(26X,5(X,I13))',ERR,ERROR,*999)
+      ENDDO !variable_idx
       CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Solver row to equations rows mappings:",ERR,ERROR,*999)      
       CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of rows = ",SOLVER_MAPPING%NUMBER_OF_ROWS,ERR,ERROR,*999)
       CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of global rows = ",SOLVER_MAPPING%NUMBER_OF_GLOBAL_ROWS, &
@@ -3754,6 +3794,7 @@ CONTAINS
     RETURN
 999 IF(ALLOCATED(SUB_MATRIX_INFORMATION)) DEALLOCATE(SUB_MATRIX_INFORMATION)
     IF(ALLOCATED(SUB_MATRIX_LIST)) DEALLOCATE(SUB_MATRIX_LIST)
+    IF(ALLOCATED(equationsRHSVariables)) DEALLOCATE(equationsRHSVariables)
     IF(ALLOCATED(VARIABLE_RANK_PROCESSED)) DEALLOCATE(VARIABLE_RANK_PROCESSED)
     IF(ALLOCATED(NUMBER_OF_VARIABLE_GLOBAL_SOLVER_DOFS)) DEALLOCATE(NUMBER_OF_VARIABLE_GLOBAL_SOLVER_DOFS)
     IF(ALLOCATED(NUMBER_OF_VARIABLE_LOCAL_SOLVER_DOFS)) DEALLOCATE(NUMBER_OF_VARIABLE_LOCAL_SOLVER_DOFS)
@@ -3869,6 +3910,8 @@ CONTAINS
         ENDDO !solver_matrix_idx
         DEALLOCATE(CREATE_VALUES_CACHE%EQUATIONS_VARIABLE_LIST)
       ENDIF
+      IF(ASSOCIATED(CREATE_VALUES_CACHE%equationsRHSVariablesList)) CALL List_Destroy(CREATE_VALUES_CACHE% &
+        & equationsRHSVariablesList,ERR,ERROR,*999)
       IF(ALLOCATED(CREATE_VALUES_CACHE%DYNAMIC_VARIABLE_TYPE)) DEALLOCATE(CREATE_VALUES_CACHE%DYNAMIC_VARIABLE_TYPE)
       IF(ALLOCATED(CREATE_VALUES_CACHE%MATRIX_VARIABLE_TYPES)) DEALLOCATE(CREATE_VALUES_CACHE%MATRIX_VARIABLE_TYPES)
       IF(ALLOCATED(CREATE_VALUES_CACHE%RESIDUAL_VARIABLE_TYPES)) DEALLOCATE(CREATE_VALUES_CACHE%RESIDUAL_VARIABLE_TYPES)
@@ -3963,6 +4006,11 @@ CONTAINS
             & 2,ERR,ERROR,*999)
           CALL LIST_CREATE_FINISH(SOLVER_MAPPING%CREATE_VALUES_CACHE%INTERFACE_VARIABLE_LIST(solver_matrix_idx)%PTR,ERR,ERROR,*999)
         ENDDO !solver_idx
+        NULLIFY(SOLVER_MAPPING%CREATE_VALUES_CACHE%equationsRHSVariablesList)
+        CALL LIST_CREATE_START(SOLVER_MAPPING%CREATE_VALUES_CACHE%equationsRHSVariablesList,ERR,ERROR,*999)
+        CALL LIST_DATA_TYPE_SET(SOLVER_MAPPING%CREATE_VALUES_CACHE%equationsRHSVariablesList,LIST_INTG_TYPE,ERR,ERROR,*999)
+        CALL LIST_DATA_DIMENSION_SET(SOLVER_MAPPING%CREATE_VALUES_CACHE%equationsRHSVariablesList,2,ERR,ERROR,*999)
+        CALL LIST_CREATE_FINISH(SOLVER_MAPPING%CREATE_VALUES_CACHE%equationsRHSVariablesList,ERR,ERROR,*999)
         DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
           NULLIFY(SOLVER_MAPPING%CREATE_VALUES_CACHE%INTERFACE_INDICES(equations_set_idx)%PTR)
           CALL LIST_CREATE_START(SOLVER_MAPPING%CREATE_VALUES_CACHE%INTERFACE_INDICES(equations_set_idx)%PTR,ERR,ERROR,*999)
@@ -4074,6 +4122,66 @@ CONTAINS
     RETURN 1
    
   END SUBROUTINE SolverMapping_CreateValuesCacheEqnVarListAdd
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds a variable type from an equations set dependent field to the list of RHS variables for a particular solver mapping.
+  SUBROUTINE SolverMapping_CreateValuesCacheEqnRHSVarListAdd(solverMapping,equationsSetIdx,rhsVariableType,err,error,*)
+
+    !Argument variables
+    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping !<A pointer the solver mapping to add to the variable list for.
+    INTEGER(INTG), INTENT(IN) :: equationsSetIdx !<The equations set index of the variable to add
+    INTEGER(INTG), INTENT(IN) :: rhsVariableType !<The RHS variable type to add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: equationsSetIdx2,numberOfVariables,variableIdx,variableItem(2)
+    LOGICAL :: varFound
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet,varEquationsSet
+    TYPE(FIELD_TYPE), POINTER :: dependentField,varDependentField
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: rhsVariable,varRhsVariable
+
+    ENTERS("SolverMapping_CreateValuesCacheEqnRHSVarListAdd",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(solverMapping)) CALL FlagError("Solver mapping is not associated.",err,error,*999)
+
+    NULLIFY(equationsSet)
+    CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
+    NULLIFY(dependentField)
+    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+    NULLIFY(rhsVariable)
+    CALL Field_VariableGet(dependentField,rhsVariableType,rhsVariable,err,error,*999)
+    varFound=.FALSE.
+    CALL List_NumberOfItemsGet(solverMapping%CREATE_VALUES_CACHE%equationsRHSVariablesList,numberOfVariables,err,error,*999)
+    DO variableIdx=1,numberOfVariables
+      CALL List_ItemGet(solverMapping%CREATE_VALUES_CACHE%equationsRHSVariablesList,variableIdx,variableItem,err,error,*999)
+      equationsSetIdx2=variableItem(1)
+      NULLIFY(varEquationsSet)
+      CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx2,varEquationsSet,err,error,*999)
+      NULLIFY(varDependentField)
+      CALL EquationsSet_DependentFieldGet(varEquationsSet,varDependentField,err,error,*999)
+      NULLIFY(varRhsVariable)
+      CALL Field_VariableGet(varDependentField,variableItem(2),varRhsVariable,err,error,*999)
+      IF(ASSOCIATED(rhsVariable,varRhsVariable)) THEN
+        varFound=.TRUE.
+        EXIT
+      ENDIF
+    ENDDO !variableIdx
+    IF(.NOT.varFound) THEN
+      variableItem(1)=equationsSetIdx
+      variableItem(2)=rhsVariableType
+      CALL List_ItemAdd(solverMapping%CREATE_VALUES_CACHE%equationsRHSVariablesList,variableItem,err,error,*999)
+    ENDIF
+       
+    EXITS("SolverMapping_CreateValuesCacheEqnRHSVarListAdd")
+    RETURN
+999 ERRORS("SolverMapping_CreateValuesCacheEqnRHSVarListAdd",err,error)    
+    EXITS("SolverMapping_CreateValuesCacheEqnRHSVarListAdd")    
+    RETURN 1
+   
+  END SUBROUTINE SolverMapping_CreateValuesCacheEqnRHSVarListAdd
 
   !
   !================================================================================================================================
@@ -4722,6 +4830,10 @@ CONTAINS
                       CALL SolverMapping_CreateValuesCacheEqnVarListAdd(SOLVER_MAPPING,1,EQUATIONS_SET_INDEX,variable_type, &
                         & ERR,ERROR,*999)
                     ENDDO
+                    IF(ASSOCIATED(EQUATIONS_MAPPING%RHS_MAPPING)) THEN
+                      CALL SolverMapping_CreateValuesCacheEqnRHSVarListAdd(SOLVER_MAPPING,EQUATIONS_SET_INDEX,EQUATIONS_MAPPING% &
+                        & RHS_MAPPING%RHS_VARIABLE_TYPE,err,error,*999)
+                    ENDIF
                   ELSE
                     CALL FlagError("Solvers mapping create values cache is not associated.",ERR,ERROR,*999)
                   ENDIF
@@ -5156,6 +5268,7 @@ CONTAINS
         ENDDO ! solver_matrix_idx
         DEALLOCATE(SOLVER_MAPPING%VARIABLES_LIST)
       ENDIF
+      CALL SOLVER_MAPPING_VARIABLES_FINALISE(SOLVER_MAPPING%rhsVariablesList,ERR,ERROR,*999)      
       IF(ALLOCATED(SOLVER_MAPPING%EQUATIONS_SETS)) DEALLOCATE(SOLVER_MAPPING%EQUATIONS_SETS)        
       IF(ALLOCATED(SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP)) THEN
         DO equations_set_idx=1,SIZE(SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP,1)
@@ -5227,6 +5340,7 @@ CONTAINS
         SOLVER_EQUATIONS%SOLVER_MAPPING%NUMBER_OF_GLOBAL_ROWS=0
         SOLVER_EQUATIONS%SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS=0
         SOLVER_EQUATIONS%SOLVER_MAPPING%NUMBER_OF_INTERFACE_CONDITIONS=0
+        CALL SOLVER_MAPPING_VARIABLES_INITIALISE(SOLVER_EQUATIONS%SOLVER_MAPPING%rhsVariablesList,err,error,*999)
         NULLIFY(SOLVER_EQUATIONS%SOLVER_MAPPING%ROW_DOFS_MAPPING)
         NULLIFY(SOLVER_EQUATIONS%SOLVER_MAPPING%CREATE_VALUES_CACHE)
         CALL SolverMapping_CreateValuesCacheInitialise(SOLVER_EQUATIONS%SOLVER_MAPPING,ERR,ERROR,*999)

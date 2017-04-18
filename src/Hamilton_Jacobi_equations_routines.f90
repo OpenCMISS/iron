@@ -49,13 +49,16 @@ MODULE HAMILTON_JACOBI_EQUATIONS_ROUTINES
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE CONSTANTS
   USE CONTROL_LOOP_ROUTINES
+  USE ControlLoopAccessRoutines
   USE DISTRIBUTED_MATRIX_VECTOR
   USE DOMAIN_MAPPINGS
   USE EQUATIONS_ROUTINES
   USE EQUATIONS_MAPPING_ROUTINES
   USE EQUATIONS_MATRICES_ROUTINES
   USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetAccessRoutines
   USE FIELD_ROUTINES
+  USE FieldAccessRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE KINDS
@@ -65,6 +68,7 @@ MODULE HAMILTON_JACOBI_EQUATIONS_ROUTINES
   USE PROBLEM_CONSTANTS
   USE STRINGS
   USE SOLVER_ROUTINES
+  USE SolverAccessRoutines
   USE TIMER
   USE TYPES
 
@@ -137,7 +141,7 @@ CONTAINS
           IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
             CALL FIELD_NUMBER_OF_COMPONENTS_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
             NULLIFY(GEOMETRIC_VARIABLE)
-            CALL FIELD_VARIABLE_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,GEOMETRIC_VARIABLE,ERR,ERROR,*999)
+            CALL Field_VariableGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,GEOMETRIC_VARIABLE,ERR,ERROR,*999)
             CALL FIELD_PARAMETER_SET_DATA_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,GEOMETRIC_PARAMETERS, &
               & ERR,ERROR,*999)
             IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
@@ -897,7 +901,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: subtype
 
-    CALL Enters("HJEquation_EquationsSetSpecificationSet",err,error,*999)
+    ENTERS("HJEquation_EquationsSetSpecificationSet",err,error,*999)
 
     IF(ASSOCIATED(equationsSet)) THEN
       IF(SIZE(specification,1)/=3) THEN
@@ -959,7 +963,7 @@ CONTAINS
 
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("HJ_EQUATION_EQUATION_SET_STANDARD_SETUP",ERR,ERROR,*999)
+    ENTERS("HJ_EQUATION_EQUATIONS_SET_STANDARD_SETUP",ERR,ERROR,*999)
 
     NULLIFY(EQUATIONS)
     NULLIFY(EQUATIONS_MAPPING)
@@ -2328,15 +2332,15 @@ CONTAINS
             CALL VECTOR_VECTOR_PRODUCT(A,B,DOT_PRODUCT_VALUE,Err)
 
             IF (DOT_PRODUCT_VALUE .LT. 0.8_DP) THEN
-              CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+              CALL CrossProduct(A,B,C,Err,Error,*999)
             ELSE
               B=(/0.0_DP,1.0_DP,0.0_DP/)
               CALL VECTOR_VECTOR_PRODUCT(A,B,DOT_PRODUCT_VALUE,Err)
               IF (DOT_PRODUCT_VALUE .LT. 0.8_DP) THEN
-                CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+                CALL CrossProduct(A,B,C,Err,Error,*999)
               ELSE
                 B=(/1.0_DP,0.0_DP,0.0_DP/)
-                CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+                CALL CrossProduct(A,B,C,Err,Error,*999)
               ENDIF
             ENDIF
 
@@ -2349,7 +2353,7 @@ CONTAINS
             ENDIF
 
             B=(/CONDUCTIVITY_TENSOR(I,4),CONDUCTIVITY_TENSOR(I,5),CONDUCTIVITY_TENSOR(I,6)/)
-            CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+            CALL CrossProduct(A,B,C,Err,Error,*999)
 
             IF (ABS(SQRT(C(1)**2+C(2)**2+C(3)**2))>ZERO_TOLERANCE) THEN
 
@@ -2607,15 +2611,15 @@ CONTAINS
             CALL VECTOR_VECTOR_PRODUCT(A,B,DOT_PRODUCT_VALUE,Err)
 
             IF (DOT_PRODUCT_VALUE .LT. 0.8_DP) THEN
-              CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+              CALL CrossProduct(A,B,C,Err,Error,*999)
             ELSE
               B=(/0.0_DP,1.0_DP,0.0_DP/)
               CALL VECTOR_VECTOR_PRODUCT(A,B,DOT_PRODUCT_VALUE,Err)
               IF (DOT_PRODUCT_VALUE .LT. 0.8_DP) THEN
-                CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+                CALL CrossProduct(A,B,C,Err,Error,*999)
               ELSE
                 B=(/1.0_DP,0.0_DP,0.0_DP/)
-                CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+                CALL CrossProduct(A,B,C,Err,Error,*999)
               ENDIF
             ENDIF
 
@@ -2628,7 +2632,7 @@ CONTAINS
             ENDIF
 
             B=(/CONDUCTIVITY_TENSOR(I,4),CONDUCTIVITY_TENSOR(I,5),CONDUCTIVITY_TENSOR(I,6)/)
-            CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+            CALL CrossProduct(A,B,C,Err,Error,*999)
 
             IF (ABS(SQRT(C(1)**2+C(2)**2+C(3)**2))>=ZERO_TOLERANCE) THEN
 
@@ -2937,15 +2941,15 @@ CONTAINS
             CALL VECTOR_VECTOR_PRODUCT(A,B,DOT_PRODUCT_VALUE,Err)
 
             IF (DOT_PRODUCT_VALUE .LT. 0.8_DP) THEN
-              CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+              CALL CrossProduct(A,B,C,Err,Error,*999)
             ELSE
               B=(/0.0_DP,1.0_DP,0.0_DP/)
               CALL VECTOR_VECTOR_PRODUCT(A,B,DOT_PRODUCT_VALUE,Err)
               IF (DOT_PRODUCT_VALUE .LT. 0.8_DP) THEN
-                CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+                CALL CrossProduct(A,B,C,Err,Error,*999)
               ELSE
                 B=(/1.0_DP,0.0_DP,0.0_DP/)
-                CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+                CALL CrossProduct(A,B,C,Err,Error,*999)
               ENDIF
             ENDIF
 
@@ -2958,7 +2962,7 @@ CONTAINS
             ENDIF
 
             B=(/CONDUCTIVITY_TENSOR(I,4),CONDUCTIVITY_TENSOR(I,5),CONDUCTIVITY_TENSOR(I,6)/)
-            CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+            CALL CrossProduct(A,B,C,Err,Error,*999)
 
             IF (ABS(SQRT(C(1)**2+C(2)**2+C(3)**2))>=ZERO_TOLERANCE) THEN
 
@@ -3199,15 +3203,15 @@ CONTAINS
             CALL VECTOR_VECTOR_PRODUCT(A,B,DOT_PRODUCT_VALUE,Err)
 
             IF (DOT_PRODUCT_VALUE .LT. 0.8_DP) THEN
-              CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+              CALL CrossProduct(A,B,C,Err,Error,*999)
             ELSE
               B=(/0.0_DP,1.0_DP,0.0_DP/)
               CALL VECTOR_VECTOR_PRODUCT(A,B,DOT_PRODUCT_VALUE,Err)
               IF (DOT_PRODUCT_VALUE .LT. 0.8_DP) THEN
-                CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+                CALL CrossProduct(A,B,C,Err,Error,*999)
               ELSE
                 B=(/1.0_DP,0.0_DP,0.0_DP/)
-                CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+                CALL CrossProduct(A,B,C,Err,Error,*999)
               ENDIF
             ENDIF
 
@@ -3221,7 +3225,7 @@ CONTAINS
 
             B=(/CONDUCTIVITY_TENSOR(ELEMENT_LIST(I,1),4),CONDUCTIVITY_TENSOR(ELEMENT_LIST(I,1),5), &
              & CONDUCTIVITY_TENSOR(ELEMENT_LIST(I,1),6)/)
-            CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+            CALL CrossProduct(A,B,C,Err,Error,*999)
 
             IF (ABS(SQRT(C(1)**2+C(2)**2+C(3)**2))>=ZERO_TOLERANCE) THEN
 
@@ -3473,16 +3477,16 @@ CONTAINS
             CALL VECTOR_VECTOR_PRODUCT(A,B,DOT_PRODUCT_VALUE,Err)
 
             IF (DOT_PRODUCT_VALUE .LT. 0.8_DP) THEN
-              CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+              CALL CrossProduct(A,B,C,Err,Error,*999)
             ELSE
               B=(/0.0_DP,1.0_DP,0.0_DP/)
               CALL VECTOR_VECTOR_PRODUCT(A,B,DOT_PRODUCT_VALUE,Err)
               IF (DOT_PRODUCT_VALUE .LT. 0.8_DP) THEN
-                CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+                CALL CrossProduct(A,B,C,Err,Error,*999)
               ELSE
 
                 B=(/1.0_DP,0.0_DP,0.0_DP/)
-                CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+                CALL CrossProduct(A,B,C,Err,Error,*999)
               ENDIF
             ENDIF
 
@@ -3495,7 +3499,7 @@ CONTAINS
             ENDIF
 
             B=(/CONDUCTIVITY_TENSOR(I,4),CONDUCTIVITY_TENSOR(I,5),CONDUCTIVITY_TENSOR(I,6)/)
-            CALL CROSS_PRODUCT(A,B,C,Err,Error,*999)
+            CALL CrossProduct(A,B,C,Err,Error,*999)
 
             IF (ABS(SQRT(C(1)**2+C(2)**2+C(3)**2))>ZERO_TOLERANCE) THEN
 
@@ -3619,7 +3623,7 @@ CONTAINS
 
 !    EXITS("GENERATE_STATUS_MASK")
 !    RETURN
-999 ERRORSEXITS("GENERATE_STATUS_MASK",ERR,ERROR)
+999 ERRORS("GENERATE_STATUS_MASK",ERR,ERROR)
     RETURN
 
   END SUBROUTINE PRE_PROCESS_INFORMATION
@@ -3723,14 +3727,14 @@ CONTAINS
                                &CONDUCTIVITY_TENSOR(CONNECTIVITY_LIST(CONNECTIVITY_LIST(MIN_TRIAL_NODE,I),J),9)/&
                                &),SHAPE = (/3,3/))
 
-            CALL MATRIX_TRANSPOSE(F,FT,Err,Error,*999)
-            CALL MATRIX_PRODUCT(CONDUCTIVITY_MATRIX,FT,MFT,Err,Error,*999)
-            CALL MATRIX_PRODUCT(F,MFT,FMFT,Err,Error,*999)
+            CALL MatrixTranspose(F,FT,Err,Error,*999)
+            CALL MatrixProduct(CONDUCTIVITY_MATRIX,FT,MFT,Err,Error,*999)
+            CALL MatrixProduct(F,MFT,FMFT,Err,Error,*999)
 !            CALL INVERT(FMFT,INV_FMFT,DET,Err,Error,*999)
 
 !	    PRINT *,F(1,1),F(1,2),F(1,3),F(2,1),F(2,2),F(2,3),F(3,1),F(3,2),F(3,3)
 
-            CALL MATRIX_VECTOR_PRODUCT(FMFT,DISTANCE_VECTOR,MV,Err,Error,*999)
+            CALL MatrixVectorProduct(FMFT,DISTANCE_VECTOR,MV,Err,Error,*999)
             CALL VECTOR_VECTOR_PRODUCT(DISTANCE_VECTOR,MV,VMV,Err)
 
             TIME_ITER=SEED_VALUE(CONNECTIVITY_LIST(CONNECTIVITY_LIST(MIN_TRIAL_NODE,I),J))+SQRT(ABS(VMV))*&
@@ -3778,8 +3782,8 @@ CONTAINS
 
     ENDDO
 
-
-999 ERRORSEXITS("SOLVE_PROBLEM_FMM",ERR,ERROR)
+    RETURN
+999 ERRORS("SOLVE_PROBLEM_FMM",ERR,ERROR)
     RETURN
 
   END SUBROUTINE SOLVE_PROBLEM_FMM
@@ -3875,12 +3879,12 @@ CONTAINS
                                &CONDUCTIVITY_TENSOR_ON_CONNECTIVITY(J,8),&
                                &CONDUCTIVITY_TENSOR_ON_CONNECTIVITY(J,9)/),SHAPE = (/3,3/))
 
-            CALL MATRIX_TRANSPOSE(F,FT,Err,Error,*999)
-            CALL MATRIX_PRODUCT(CONDUCTIVITY_MATRIX,FT,MFT,Err,Error,*999)
-            CALL MATRIX_PRODUCT(F,MFT,FMFT,Err,Error,*999)
+            CALL MatrixTranspose(F,FT,Err,Error,*999)
+            CALL MatrixProduct(CONDUCTIVITY_MATRIX,FT,MFT,Err,Error,*999)
+            CALL MatrixProduct(F,MFT,FMFT,Err,Error,*999)
 !            CALL INVERT(FMFT,INV_FMFT,DET,Err,Error,*999)
 
-            CALL MATRIX_VECTOR_PRODUCT(FMFT,DISTANCE_VECTOR,MV,Err,Error,*999)
+            CALL MatrixVectorProduct(FMFT,DISTANCE_VECTOR,MV,Err,Error,*999)
             CALL VECTOR_VECTOR_PRODUCT(DISTANCE_VECTOR,MV,VMV,Err)
 
             TIME_ITER=SEED_VALUE(COLUMN_INDEX(J))+SQRT(ABS(VMV))*SPEED_FUNCTION_TABLE_ON_CONNECTIVITY(J,1)
@@ -3926,7 +3930,8 @@ CONTAINS
     ENDDO
 
 
-999 ERRORSEXITS("SOLVE_PROBLEM_FMM_CONNECTIVITY",ERR,ERROR)
+    RETURN
+999 ERRORS("SOLVE_PROBLEM_FMM_CONNECTIVITY",ERR,ERROR)
     RETURN
 
   END SUBROUTINE SOLVE_PROBLEM_FMM_CONNECTIVITY
@@ -3994,11 +3999,11 @@ CONTAINS
                            &CONDUCTIVITY_TENSOR_ON_CONNECTIVITY(J,8),&
                            &CONDUCTIVITY_TENSOR_ON_CONNECTIVITY(J,9)/),SHAPE = (/3,3/))
 
-        CALL MATRIX_TRANSPOSE(F,FT,Err,Error,*999)
-        CALL MATRIX_PRODUCT(CONDUCTIVITY_MATRIX,FT,MFT,Err,Error,*999)
-        CALL MATRIX_PRODUCT(F,MFT,FMFT,Err,Error,*999)
+        CALL MatrixTranspose(F,FT,Err,Error,*999)
+        CALL MatrixProduct(CONDUCTIVITY_MATRIX,FT,MFT,Err,Error,*999)
+        CALL MatrixProduct(F,MFT,FMFT,Err,Error,*999)
 
-        CALL MATRIX_VECTOR_PRODUCT(FMFT,DISTANCE_VECTOR,MV,Err,Error,*999)
+        CALL MatrixVectorProduct(FMFT,DISTANCE_VECTOR,MV,Err,Error,*999)
         CALL VECTOR_VECTOR_PRODUCT(DISTANCE_VECTOR,MV,VMV,Err)
 
         CONNECTIVITY_WEIGHT(J)=SQRT(ABS(VMV))*SPEED_FUNCTION_TABLE_ON_CONNECTIVITY(J,1)
@@ -4082,7 +4087,8 @@ CONTAINS
 
     ENDDO
 
-999 ERRORSEXITS("SOLVE_PROBLEM_GEODESIC_CONNECTIVITY",ERR,ERROR)
+    RETURN
+999 ERRORS("SOLVE_PROBLEM_GEODESIC_CONNECTIVITY",ERR,ERROR)
     RETURN
 
   END SUBROUTINE SOLVE_PROBLEM_GEODESIC_CONNECTIVITY
@@ -4182,11 +4188,11 @@ CONTAINS
                                &CONDUCTIVITY_TENSOR(CONNECTIVITY_LIST(CONNECTIVITY_LIST(MIN_TRIAL_NODE,I),J),9)/&
                                &),SHAPE = (/3,3/))
 
-            CALL MATRIX_TRANSPOSE(F,FT,Err,Error,*999)
-            CALL MATRIX_PRODUCT(CONDUCTIVITY_MATRIX,FT,MFT,Err,Error,*999)
-            CALL MATRIX_PRODUCT(F,MFT,FMFT,Err,Error,*999)
+            CALL MatrixTranspose(F,FT,Err,Error,*999)
+            CALL MatrixProduct(CONDUCTIVITY_MATRIX,FT,MFT,Err,Error,*999)
+            CALL MatrixProduct(F,MFT,FMFT,Err,Error,*999)
 
-            CALL MATRIX_VECTOR_PRODUCT(FMFT,DISTANCE_VECTOR,MV,Err,Error,*999)
+            CALL MatrixVectorProduct(FMFT,DISTANCE_VECTOR,MV,Err,Error,*999)
             CALL VECTOR_VECTOR_PRODUCT(DISTANCE_VECTOR,MV,VMV,Err)
 
             TIME_ITER=SEED_VALUE(CONNECTIVITY_LIST(CONNECTIVITY_LIST(MIN_TRIAL_NODE,I),J))+&
@@ -4235,7 +4241,8 @@ CONTAINS
     ENDDO
 
 
-999 ERRORSEXITS("SOLVE_PROBLEM_GEODESIC",ERR,ERROR)
+    RETURN
+999 ERRORS("SOLVE_PROBLEM_GEODESIC",ERR,ERROR)
     RETURN
 
   END SUBROUTINE SOLVE_PROBLEM_GEODESIC

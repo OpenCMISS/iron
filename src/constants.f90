@@ -61,11 +61,13 @@ MODULE CONSTANTS
   !> \addtogroup CONSTANTS_NumericalConstants CONSTANTS::NumericalConstants
   !> \see CONSTANTS
   !>@{ 
-  REAL(DP), PARAMETER :: CONVERGENCE_TOLERANCE=5.0_DP*EPSILON(1.0_DP) !<The convergence tolerance for double precision convergence calculations. Convergence tests should be of the form \f$\frac{|X_{i+1}-X_{i}|}{1+|X_{i}|}<\texttt{CONVERGENCE\_TOLERANCE}\f$ or for norms, \f$\frac{\|r\|}{\sqrt{n}+\|b\|}<\texttt{CONVERGENCE\_TOLERANCE}\f$
+  REAL(DP), PARAMETER :: CONVERGENCE_TOLERANCE_DP=5.0_DP*EPSILON(1.0_DP) !<The convergence tolerance for double precision convergence calculations. Convergence tests should be of the form \f$\frac{|X_{i+1}-X_{i}|}{1+|X_{i}|}<\texttt{CONVERGENCE\_TOLERANCE}\f$ or for norms, \f$\frac{\|r\|}{\sqrt{n}+\|b\|}<\texttt{CONVERGENCE\_TOLERANCE}\f$
+  REAL(DP), PARAMETER :: CONVERGENCE_TOLERANCE=CONVERGENCE_TOLERANCE_DP
   !cpb 02/04/07 IBM compilers do not like this, initialise in BASE_ROUTINES_INITIALISE
   !REAL(DP), PARAMETER :: LOOSE_TOLERANCE=EPSILON(1.0_DP)**0.5
   REAL(DP) :: LOOSE_TOLERANCE !<The loose tolerance for double precision convergence calculations. Loose tolerance is to be used in the same manner as CONSTANTS::CONVERGENCE_TOLERANCE when a looser criterion is desired.
-  REAL(DP), PARAMETER :: ZERO_TOLERANCE=5.0_DP*EPSILON(1.0_DP) !<The zero tolerance for double precision zero tests i.e., if(abs(x)>zero_tolerance) then...
+  REAL(DP), PARAMETER :: ZERO_TOLERANCE_DP=5.0_DP*EPSILON(1.0_DP) !<The zero tolerance for double precision zero tests i.e., if(abs(x)>zero_tolerance) then...
+  REAL(DP), PARAMETER :: ZERO_TOLERANCE=ZERO_TOLERANCE_DP
   REAL(DP), PARAMETER :: CONVERGENCE_TOLERANCE_SP=5.0_SP*EPSILON(1.0_SP) !<The convergence tolerance for single precision convergence calculations. Convergence tests should be of the form \f$\frac{|X_{i+1}-X_{i}|}{1+|X_{i}|}<\texttt{CONVERGENCE\_TOLERANCE}\f$ or for norms, \f$\frac{\|r\|}{\sqrt{n}+\|b\|}<\texttt{CONVERGENCE\_TOLERANCE}\f$
   !cpb 02/04/07 IBM compilers do not like this, initialise in BASE_ROUTINES_INITIALISE
   !REAL(SP), PARAMETER :: LOOSE_TOLERANCE_SP=EPSILON(1.0_SP)**0.5
@@ -275,12 +277,35 @@ MODULE CONSTANTS
         
   INTEGER(INTG) :: OTHER_XI_ORIENTATIONS2(2) = [1,-1] !<OTHER_XI_ORIENTATIONSS2(ni) gives the orientation of the given xi direction and the other xi direction. Is equal to leviCivita(ni,OTHER_XI_DIRECTIONS2(ni)) where leviCivita is the Levi-Civita or alternating symbol
   INTEGER(INTG) :: OTHER_XI_ORIENTATIONS3(3,3) = RESHAPE([0,-1,1,1,0,-1,-1,1,0],[3,3]) !<OTHER_XI_ORIENTATIONSS3(ni,nii) gives the orientation of the given two xi directions. Is equal to leviCivita(ni,nii,OTHER_XI_DIRECTIONS3(ni,nii,2)) where leviCivita is the Levi-Civita or alternating symbol
-
-  !Tensor to voigt indices and voigt to tensor indices maps.
   !>
-  INTEGER(INTG), PARAMETER :: TENSOR_TO_VOIGT2(2,2)=RESHAPE([1,3,3,2],[2,2]) !TENSOR_TO_VOIGT2(i,j) converts a pair (i,j) of rank 2 symmetric tensor indices to Voigt index (a) in 2 dimensions.
-  INTEGER(INTG), PARAMETER :: VOIGT_TO_TENSOR2(2,3)=RESHAPE([1,1,2,2,1,2],[2,3]) !VOIGT_TO_TENSOR2(a) converts a Voigt index (a) to a pair (i,j) of rank 2 symmetric tensor indices in 2 dimensions.
-  INTEGER(INTG), PARAMETER :: TENSOR_TO_VOIGT3(3,3)=RESHAPE([1,4,5,4,2,6,5,6,3],[3,3]) !TENSOR_TO_VOIGT3(i,j) converts a pair (i,j) of rank 2 symmetric tensor indices to Voigt index (a) in 3 dimensions.
-  INTEGER(INTG), PARAMETER :: VOIGT_TO_TENSOR3(2,6)=RESHAPE([1,1,2,2,3,3,1,2,1,3,2,3],[2,6]) !VOIGT_TO_TENSOR3(i,j) converts a Voigt index (a) to a pair (i,j) of rank 2 symmetric tensor indices in 3 dimensions.
 
-END MODULE CONSTANTS
+  !> \addtogroup CONSTANTS_ElementNormalXiDirections CONSTANTS::ElementNormalXiDirections
+  !> \brief Xi normal directions
+  !> \see CONSTANTS
+  !>@{ 
+  INTEGER(INTG), PARAMETER :: ELEMENT_NORMAL_MINUS_XI1=-1 !<Negative xi 1 normal 
+  INTEGER(INTG), PARAMETER :: ELEMENT_NORMAL_MINUS_XI2=-2 !<Negative xi 2 normal 
+  INTEGER(INTG), PARAMETER :: ELEMENT_NORMAL_MINUS_XI3=-3 !<Negative xi 3 normal 
+  INTEGER(INTG), PARAMETER :: ELEMENT_NORMAL_MINUS_XI4=-4 !<Negative xi 4 normal 
+  INTEGER(INTG), PARAMETER :: ELEMENT_NORMAL_PLUS_XI1=1 !<Positive xi 1 normal 
+  INTEGER(INTG), PARAMETER :: ELEMENT_NORMAL_PLUS_XI2=2 !<Positive xi 2 normal 
+  INTEGER(INTG), PARAMETER :: ELEMENT_NORMAL_PLUS_XI3=3 !<Positive xi 3 normal 
+  INTEGER(INTG), PARAMETER :: ELEMENT_NORMAL_PLUS_XI4=4 !<Positive xi 4 normal 
+  !>@}
+    
+  !> \addtogroup CONSTANTS_VoigtTensorIndices CONSTANTS::VoigtTensorIndices
+  !> \brief The indices for converting back and forth between Voigt indices and symmetric rank 2 tensor indices.
+  !> \see CONSTANTS
+  !>@{ 
+  INTEGER(INTG), PARAMETER :: NUMBER_OF_VOIGT(3)=[1,3,6] !<NUMBER_OF_VOIGT(numberOfDimensions). The number of Voigt indices for a rank 2 symmetric tensor with numberOfDimensions dimensions.
+  INTEGER(INTG), PARAMETER :: TENSOR_TO_VOIGT1(1,1)=1 !<TENSOR_TO_VOIGT1(i,j) converts a pair (i,j) of rank 2 symmetric tensor indices to Voigt index (1) in 1 dimension.
+  INTEGER(INTG), PARAMETER :: VOIGT_TO_TENSOR1(2,1)=RESHAPE([1,1],[2,1]) !<VOIGT_TO_TENSOR(k,a) converts a Voigt index (a) to a pair (k=1,k=2) indices of a rank 2 symmetric tensor in 1 dimension.
+  INTEGER(INTG), PARAMETER :: TENSOR_TO_VOIGT2(2,2)=RESHAPE([1,3,3,2],[2,2]) !<TENSOR_TO_VOIGT2(i,j) converts a pair (i,j) of rank 2 symmetric tensor indices to Voigt index (a) in 2 dimensions.
+  INTEGER(INTG), PARAMETER :: VOIGT_TO_TENSOR2(2,3)=RESHAPE([1,1,2,2,1,2],[2,3]) !<VOIGT_TO_TENSOR2(K,a) converts a Voigt index (a) to a pair (k=1,k=2) of rank 2 symmetric tensor indices in 2 dimensions.
+  INTEGER(INTG), PARAMETER :: TENSOR_TO_VOIGT3(3,3)=RESHAPE([1,4,5,4,2,6,5,6,3],[3,3]) !<TENSOR_TO_VOIGT3(i,j) converts a pair (i,j) of rank 2 symmetric tensor indices to Voigt index (a) in 3 dimensions.
+  INTEGER(INTG), PARAMETER :: VOIGT_TO_TENSOR3(2,6)=RESHAPE([1,1,2,2,3,3,1,2,1,3,2,3],[2,6]) !<VOIGT_TO_TENSOR3(k,a) converts a Voigt index (a) to a pair (k=1,k=2) of rank 2 symmetric tensor indices in 3 dimensions.
+  INTEGER(INTG), PARAMETER :: TENSOR_TO_VOIGT(3,3,3)=RESHAPE([1,0,0,0,0,0,0,0,0,1,3,0,3,2,0,0,0,0,1,4,5,4,2,6,5,6,3],[3,3,3]) !<TENSOR_TO_VOIGT(i,j,numberOfDimensions) converts a pair of (i,j) of a symmetric tensor to Voigt index (a) for a rank 2 tensor with numberOfDimensions dimensions.
+  INTEGER(INTG), PARAMETER :: VOIGT_TO_TENSOR(2,6,3)=RESHAPE([1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,2,1,2,0,0,0,0,0,0,1,1,2,2,3,3,1,2,1,3,2,3],[2,6,3]) !<VOIGT_TO_TENSOR(k,a,numberOfDimensions). Converts a Voigt index (a) to a pair (k=1,k=2) of rank 2 symeetric tensor indices in numberOfDimensions dimensions. 
+  !>@}
+
+END MODULE CONSTANTS 

@@ -108,8 +108,6 @@ MODULE INTERFACE_EQUATIONS_ROUTINES
 
   PUBLIC InterfaceEquations_TimeDependenceTypeGet,InterfaceEquationsTimeDependenceTypeSet
 
-  PUBLIC INTERFACE_CONDITION_EQUATIONS_GET
-  
 CONTAINS
 
   !
@@ -368,7 +366,7 @@ CONTAINS
     INTEGER(INTG) :: DUMMY_ERR,interpolation_set_idx
     TYPE(VARYING_STRING) :: DUMMY_ERROR
  
-    ENTERS("InterfaceEquations_DomainInterpolationSet",ERR,ERROR,*998)
+    ENTERS("INTERFACE_EQUATIONS_DOMAIN_INTERFACE_INTERPOLATION_",ERR,ERROR,*998)
 
     IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
       IF(ASSOCIATED(LAGRANGE_FIELD)) THEN
@@ -426,10 +424,10 @@ CONTAINS
       CALL FlagError("Geometric field is not associated.",ERR,ERROR,*998)
     ENDIF
     
-    EXITS("InterfaceEquations_DomainInterpolationSet")
+    EXITS("INTERFACE_EQUATIONS_DOMAIN_INTERFACE_INTERPOLATION_")
     RETURN
 999 CALL InterfaceEquations_DomainInterpolationFinalise(DOMAIN_INTERPOLATION,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("InterfaceEquations_DomainInterpolationSet",ERR,ERROR)
+998 ERRORSEXITS("INTERFACE_EQUATIONS_DOMAIN_INTERFACE_INTERPOLATION_",ERR,ERROR)
     RETURN 1
     
   END SUBROUTINE INTERFACE_EQUATIONS_DOMAIN_INTERFACE_INTERPOLATION_
@@ -1193,49 +1191,6 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfaceEquations_VariableInterpSetsNumberSet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the interface equations for an interface conditions.
-  SUBROUTINE INTERFACE_CONDITION_EQUATIONS_GET(INTERFACE_CONDITION,INTERFACE_EQUATIONS,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION !<A pointer to the interface conditions to get the interface equations for
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<On exit, a pointer to the interface equations in the specified interface condition. Must not be associated on entry
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
- 
-    ENTERS("INTERFACE_CONDITION_EQUATIONS_GET",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
-      IF(INTERFACE_CONDITION%INTERFACE_CONDITION_FINISHED) THEN
-        IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-          CALL FlagError("Interface equations is already associated.",ERR,ERROR,*999)
-        ELSE
-          INTERFACE_EQUATIONS=>INTERFACE_CONDITION%INTERFACE_EQUATIONS
-          IF(.NOT.ASSOCIATED(INTERFACE_EQUATIONS)) &
-            & CALL FlagError("Interface equations set equations is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Interface equations set has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Interface equations set is not associated.",ERR,ERROR,*999)
-    ENDIF
-       
-    EXITS("INTERFACE_CONDITION_EQUATIONS_GET")
-    RETURN
-999 ERRORSEXITS("INTERFACE_CONDITION_EQUATIONS_GET",ERR,ERROR)
-    RETURN 1
-    
-  END SUBROUTINE INTERFACE_CONDITION_EQUATIONS_GET
-
-
-
-
 
   !
   !================================================================================================================================

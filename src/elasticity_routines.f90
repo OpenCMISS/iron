@@ -597,7 +597,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: problemType
 
-    CALL Enters("Elasticity_ProblemSpecificationSet",err,error,*999)
+    ENTERS("Elasticity_ProblemSpecificationSet",err,error,*999)
 
     IF(ASSOCIATED(problem)) THEN
       IF(SIZE(problemSpecification,1)>=2) THEN
@@ -623,10 +623,10 @@ CONTAINS
       CALL FlagError("Problem is not associated.",err,error,*999)
     END IF
 
-    CALL Exits("Elasticity_ProblemSpecificationSet")
+    EXITS("Elasticity_ProblemSpecificationSet")
     RETURN
-999 CALL Errors("Elasticity_ProblemSpecificationSet",err,error)
-    CALL Exits("Elasticity_ProblemSpecificationSet")
+999 ERRORS("Elasticity_ProblemSpecificationSet",err,error)
+    EXITS("Elasticity_ProblemSpecificationSet")
     RETURN 1
     
   END SUBROUTINE Elasticity_ProblemSpecificationSet
@@ -705,7 +705,7 @@ CONTAINS
       CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
         !Do Nothing
       CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
-        CALL FINITE_ELASTICITY_PRE_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
+        CALL FiniteElasticity_PreSolve(solver,err,error,*999)
       CASE(PROBLEM_LINEAR_ELASTICITY_CONTACT_TYPE)
         !Do Nothing
       CASE(PROBLEM_FINITE_ELASTICITY_CONTACT_TYPE)
@@ -753,7 +753,7 @@ CONTAINS
       CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
         !Do Nothing
       CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
-        CALL FINITE_ELASTICITY_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
+        CALL FiniteElasticity_PostSolve(solver,err,error,*999)
       CASE(PROBLEM_LINEAR_ELASTICITY_CONTACT_TYPE)
         !Do Nothing
       CASE(PROBLEM_FINITE_ELASTICITY_CONTACT_TYPE)
@@ -793,15 +793,6 @@ CONTAINS
     IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
       SELECT CASE(CONTROL_LOOP%LOOP_TYPE)
       CASE(PROBLEM_CONTROL_TIME_LOOP_TYPE)
-        CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_LOOP,CURRENT_TIME,TIME_INCREMENT,ERR,ERROR,*999)
-        CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"====== Starting time step",ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"CURRENT_TIME          = ",CURRENT_TIME,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"TIME_INCREMENT        = ",TIME_INCREMENT,ERR,ERROR,*999)
-        IF(DIAGNOSTICS1) THEN
-          CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"====== Starting time step",ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"CURRENT_TIME          = ",CURRENT_TIME,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"TIME_INCREMENT        = ",TIME_INCREMENT,ERR,ERROR,*999)
-        ENDIF
         IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
           CALL FlagError("Problem specification is not allocated.",err,error,*999)
         ELSE IF(SIZE(CONTROL_LOOP%PROBLEM%SPECIFICATION,1)<2) THEN

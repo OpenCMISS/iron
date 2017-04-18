@@ -3593,7 +3593,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("MatSeqAIJRestoreArrayF90",err,error,*999)
+    ENTERS("Petsc_MatSeqAIJRestoreArrayF90",err,error,*999)
 
     CALL MatSeqAIJRestoreArrayF90(a%mat,array,err)
     IF(err/=0) THEN
@@ -3603,9 +3603,9 @@ CONTAINS
       CALL FlagError("PETSc error in MatSeqAIJRestoreArrayF90.",err,error,*999)
     ENDIF
     
-    EXITS("MatSeqAIJRestoreArrayF90")
+    EXITS("Petsc_MatSeqAIJRestoreArrayF90")
     RETURN
-999 ERRORSEXITS("MatSeqAIJRestoreArrayF90",err,error)
+999 ERRORSEXITS("Petsc_MatSeqAIJRestoreArrayF90",err,error)
     RETURN 1
     
   END SUBROUTINE Petsc_MatSeqAIJRestoreArrayF90
@@ -4079,7 +4079,6 @@ CONTAINS
     EXITS("Petsc_MatColoringDestroy")
     RETURN
 999 ERRORSEXITS("Petsc_MatColoringDestroy",err,error)
-    EXITS("Petsc_MatColoringDestroy")
     RETURN 1
     
   END SUBROUTINE Petsc_MatColoringDestroy

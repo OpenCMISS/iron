@@ -47,6 +47,7 @@ MODULE FIELD_IO_ROUTINES
   USE BASE_ROUTINES
   USE LISTS
   USE BASIS_ROUTINES
+  USE BasisAccessRoutines
   USE MESH_ROUTINES
   USE NODE_ROUTINES
   USE COMP_ENVIRONMENT
@@ -55,6 +56,7 @@ MODULE FIELD_IO_ROUTINES
   USE MACHINE_CONSTANTS
   USE KINDS
   USE FIELD_ROUTINES
+  USE FieldAccessRoutines
   USE ISO_VARYING_STRING
   !USE, INTRINSIC :: ISO_C_BINDING
   USE STRINGS
@@ -644,21 +646,21 @@ CONTAINS
     ENTERS("GROW_ARRAY_INT",ERR,ERROR,*999)
 
     IF( .NOT.ALLOCATED( array ) ) THEN
-      CALL REALLOCATE( array, delta, errorMessage, ERR, ERROR, *999 )
-      RETURN
+      CALL REALLOCATE( array, delta, errorMessage, ERR, ERROR, *999 )     
+    ELSE
+      
+      oldSize = SIZE( array )
+      
+      CALL REALLOCATE( tempArray, oldSize, errorMessage, ERR, ERROR, *999 )
+      
+      tempArray(:) = array(:)
+      
+      CALL REALLOCATE( array, oldSize + delta, errorMessage, ERR, ERROR, *999 )
+      
+      array(1:oldSize) = tempArray(:)
+      
+      DEALLOCATE( tempArray )
     ENDIF
-
-    oldSize = SIZE( array )
-
-    CALL REALLOCATE( tempArray, oldSize, errorMessage, ERR, ERROR, *999 )
-
-    tempArray(:) = array(:)
-
-    CALL REALLOCATE( array, oldSize + delta, errorMessage, ERR, ERROR, *999 )
-
-    array(1:oldSize) = tempArray(:)
-
-    DEALLOCATE( tempArray )
 
     EXITS("GROW_ARRAY_INT")
     RETURN
@@ -684,20 +686,20 @@ CONTAINS
 
     IF( .NOT.ALLOCATED( array ) ) THEN
       CALL REALLOCATE( array, delta, errorMessage, ERR, ERROR, *999 )
-      RETURN
+    ELSE
+
+      oldSize = SIZE( array )
+
+      CALL REALLOCATE( tempArray, oldSize, errorMessage, ERR, ERROR, *999 )
+      
+      tempArray(:) = array(:)
+      
+      CALL REALLOCATE( array, oldSize + delta, errorMessage, ERR, ERROR, *999 )
+      
+      array(1:oldSize) = tempArray(:)
+      
+      DEALLOCATE( tempArray )
     ENDIF
-
-    oldSize = SIZE( array )
-
-    CALL REALLOCATE( tempArray, oldSize, errorMessage, ERR, ERROR, *999 )
-
-    tempArray(:) = array(:)
-
-    CALL REALLOCATE( array, oldSize + delta, errorMessage, ERR, ERROR, *999 )
-
-    array(1:oldSize) = tempArray(:)
-
-    DEALLOCATE( tempArray )
 
     EXITS("GROW_ARRAY_REAL")
     RETURN
@@ -723,20 +725,20 @@ CONTAINS
 
     IF( .NOT.ALLOCATED( array ) ) THEN
       CALL REALLOCATE( array, delta, errorMessage, ERR, ERROR, *999 )
-      RETURN
+    ELSE
+
+      oldSize = SIZE( array )
+      
+      CALL REALLOCATE( tempArray, oldSize, errorMessage, ERR, ERROR, *999 )
+      
+      tempArray(:) = array(:)
+      
+      CALL REALLOCATE( array, oldSize + delta, errorMessage, ERR, ERROR, *999 )
+      
+      array(1:oldSize) = tempArray(:)
+      
+      DEALLOCATE( tempArray )
     ENDIF
-
-    oldSize = SIZE( array )
-
-    CALL REALLOCATE( tempArray, oldSize, errorMessage, ERR, ERROR, *999 )
-
-    tempArray(:) = array(:)
-
-    CALL REALLOCATE( array, oldSize + delta, errorMessage, ERR, ERROR, *999 )
-
-    array(1:oldSize) = tempArray(:)
-
-    DEALLOCATE( tempArray )
 
     EXITS("GROW_ARRAY_COMPONENTS")
     RETURN
@@ -963,6 +965,7 @@ CONTAINS
     EXITS("FIELD_IO_DERIVATIVE_INFO")
     RETURN
 999 ERRORSEXITS("FIELD_IO_DERIVATIVE_INFO",ERR,ERROR)
+    RETURN
   END FUNCTION FIELD_IO_DERIVATIVE_INFO
 
   !
@@ -992,6 +995,8 @@ CONTAINS
     EXITS("FIELD_IO_ELEMENT_DERIVATIVE_INDEX")
     RETURN
 999 ERRORSEXITS("FIELD_IO_ELEMENT_DERIVATIVE_INDEX",ERR,ERROR)
+    RETURN
+    
   END FUNCTION FIELD_IO_ELEMENT_DERIVATIVE_INDEX
 
   !
@@ -2016,14 +2021,14 @@ CONTAINS
     CALL REALLOCATE( ELEMENTS_PTR, NUMBER_OF_MESH_COMPONENTS, &
       & "can not allocate list of mesh element pointers", ERR, ERROR, *999 )
 
-    IF(BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS<=0)  THEN
+    IF(basisFunctions%NUMBER_BASIS_FUNCTIONS<=0)  THEN
       CALL BASIS_CREATE_START(1,BASIS,ERR,ERROR,*999)
       CALL BASIS_NUMBER_OF_XI_SET(BASIS,NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
       CALL BASIS_CREATE_FINISH(BASIS,ERR,ERROR,*999)
     ENDIF
 
     DO idx_comp=1, NUMBER_OF_MESH_COMPONENTS
-      CALL MESH_TOPOLOGY_ELEMENTS_CREATE_START(MESH,idx_comp,BASIS_FUNCTIONS%BASES(1)%PTR,ELEMENTS_PTR(idx_comp)%PTR, &
+      CALL MESH_TOPOLOGY_ELEMENTS_CREATE_START(MESH,idx_comp,basisFunctions%BASES(1)%PTR,ELEMENTS_PTR(idx_comp)%PTR, &
           & ERR,ERROR,*999)
     ENDDO
 
@@ -2307,8 +2312,8 @@ CONTAINS
         IF(MESH_COMPONENTS_OF_FIELD_COMPONENTS(idx_comp)==current_mesh_comp) THEN
           !find out whether the basis has been created
           pos=0
-          DO idx_basis=1, BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS
-            IF(SUM(BASIS_FUNCTIONS%BASES(idx_basis)%PTR%INTERPOLATION_XI(:)-INTERPOLATION_XI(idx_comp,:))==0) THEN
+          DO idx_basis=1, basisFunctions%NUMBER_BASIS_FUNCTIONS
+            IF(SUM(basisFunctions%BASES(idx_basis)%PTR%INTERPOLATION_XI(:)-INTERPOLATION_XI(idx_comp,:))==0) THEN
               pos=idx_basis
               EXIT
             ENDIF
@@ -2316,7 +2321,7 @@ CONTAINS
 
           IF(pos==0) THEN
             IF(ASSOCIATED(BASIS)) NULLIFY(BASIS)
-            CALL BASIS_CREATE_START(BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS+1,BASIS,ERR,ERROR,*999)
+            CALL BASIS_CREATE_START(basisFunctions%NUMBER_BASIS_FUNCTIONS+1,BASIS,ERR,ERROR,*999)
             CALL BASIS_NUMBER_OF_XI_SET(BASIS,NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
             CALL BASIS_INTERPOLATION_XI_SET(BASIS,INTERPOLATION_XI(idx_comp,:),ERR,ERROR,*999)
             CALL BASIS_CREATE_FINISH(BASIS,ERR,ERROR,*999)
@@ -4654,6 +4659,8 @@ CONTAINS
     EXITS("FIELD_IO_LABEL_DERIVATIVE_INFO_GET")
     RETURN
 999 ERRORSEXITS("FIELD_IO_LABEL_DERIVATIVE_INFO_GET",ERR,ERROR)
+    RETURN
+    
   END FUNCTION FIELD_IO_LABEL_DERIVATIVE_INFO_GET
 
   !
@@ -4695,6 +4702,8 @@ CONTAINS
     EXITS("FIELD_IO_GET_FIELD_INFO_LABEL")
     RETURN
 999 ERRORSEXITS("FIELD_IO_GET_FIELD_INFO_LABEL",ERR,ERROR)
+    RETURN
+    
   END FUNCTION FIELD_IO_GET_FIELD_INFO_LABEL
   !
   !================================================================================================================================
@@ -4830,6 +4839,8 @@ CONTAINS
     EXITS("FIELD_IO_GET_VARIABLE_INFO_LABEL")
     RETURN
 999 ERRORSEXITS("FIELD_IO_GET_VARIABLE_INFO_LABEL",ERR,ERROR)
+    RETURN
+    
   END FUNCTION FIELD_IO_GET_VARIABLE_INFO_LABEL
   !
   !================================================================================================================================
@@ -4890,6 +4901,8 @@ CONTAINS
     EXITS("FIELD_IO_GET_COMPONENT_INFO_LABEL")
     RETURN
 999 ERRORSEXITS("FIELD_IO_GET_COMPONENT_INFO_LABEL",ERR,ERROR)
+    RETURN
+    
   END FUNCTION FIELD_IO_GET_COMPONENT_INFO_LABEL
 
   !!
@@ -5636,7 +5649,7 @@ CONTAINS
 
     EXITS("FIELD_IO_FORTRAN_FILE_READ_STRING")
     RETURN
-999 ERRORSEXITS("FIELD_IO_FORTRAN_FILE_READ_STRING",ERR,ERROR)
+999 ERRORS("FIELD_IO_FORTRAN_FILE_READ_STRING",ERR,ERROR)
 
     EXITS("FIELD_IO_FORTRAN_FILE_READ_STRING")
     RETURN 1

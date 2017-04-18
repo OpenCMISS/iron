@@ -61,7 +61,9 @@ MODULE NAVIER_STOKES_EQUATIONS_ROUTINES
   USE EQUATIONS_MAPPING_ROUTINES
   USE EQUATIONS_MATRICES_ROUTINES
   USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetAccessRoutines
   USE FIELD_ROUTINES
+  USE FieldAccessRoutines
   USE FIELD_IO_ROUTINES
   USE FLUID_MECHANICS_IO_ROUTINES
   USE INPUT_OUTPUT
@@ -79,6 +81,7 @@ MODULE NAVIER_STOKES_EQUATIONS_ROUTINES
   USE STREE_EQUATION_ROUTINES
   USE STRINGS
   USE SOLVER_ROUTINES
+  USE SolverAccessRoutines
   USE TIMER
   USE TYPES
 
@@ -2627,7 +2630,7 @@ CONTAINS
                 ! *NEXT* timestep by extrapolating current field values and then solving a system of nonlinear
                 ! equations: cons mass, continuity of pressure, and the characteristics.
                 NULLIFY(fieldVariable)
-                CALL FIELD_VARIABLE_GET(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,ERR,ERROR,*999)
+                CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,ERR,ERROR,*999)
                 IF(.NOT.ASSOCIATED(fieldVariable%PARAMETER_SETS%SET_TYPE(FIELD_INPUT_DATA1_SET_TYPE)%PTR)) THEN
                   CALL FIELD_PARAMETER_SET_CREATE(dependentField,FIELD_U_VARIABLE_TYPE, &
                    & FIELD_INPUT_DATA1_SET_TYPE,ERR,ERROR,*999)
@@ -2641,7 +2644,7 @@ CONTAINS
 
                 IF(iteration == 1) THEN
                   NULLIFY(fieldVariable)
-                  CALL FIELD_VARIABLE_GET(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,ERR,ERROR,*999)
+                  CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,ERR,ERROR,*999)
                   IF(.NOT.ASSOCIATED(fieldVariable%PARAMETER_SETS%SET_TYPE(FIELD_UPWIND_VALUES_SET_TYPE)%PTR)) THEN
                     CALL FIELD_PARAMETER_SET_CREATE(dependentField,FIELD_U_VARIABLE_TYPE, &
                      & FIELD_UPWIND_VALUES_SET_TYPE,ERR,ERROR,*999)
@@ -3138,6 +3141,10 @@ CONTAINS
                 !Create the CellML equations
                 CALL CELLML_EQUATIONS_CREATE_START(cellmlSolver,CELLML_EQUATIONS, &
                   & ERR,ERROR,*999)
+                !Set the time dependence
+                CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
+                !Set the linearity
+                CALL CellMLEquations_LinearityTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_NONLINEAR,err,error,*999)
               CASE(PROBLEM_SETUP_FINISH_ACTION)
                 !Get the control loop
                 CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
@@ -4122,6 +4129,10 @@ CONTAINS
                  & PROBLEM_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE)
                 CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
                 CALL CELLML_EQUATIONS_CREATE_START(solver,CELLML_EQUATIONS,ERR,ERROR,*999)
+                !Set the time dependence
+                CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_DYNAMIC,err,error,*999)
+                !Set the linearity
+                CALL CellMLEquations_LinearityTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_NONLINEAR,err,error,*999)
               CASE DEFAULT
                 LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(PROBLEM%specification(3),"*",ERR,ERROR))// &
                   & " is not valid for cellML equations setup Navier-Stokes equation type of a fluid mechanics problem class."
@@ -5911,7 +5922,7 @@ CONTAINS
               CASE(SOLVER_NONLINEAR_TYPE)
                 ! Characteristic solver- copy branch Q,A values to new parameter set
                 dependentField=>SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING%EQUATIONS_SETS(1)%PTR%DEPENDENT%DEPENDENT_FIELD
-                CALL FIELD_VARIABLE_GET(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,ERR,ERROR,*999)
+                CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,ERR,ERROR,*999)
                 IF(.NOT.ASSOCIATED(fieldVariable%PARAMETER_SETS%SET_TYPE(FIELD_UPWIND_VALUES_SET_TYPE)%PTR)) THEN
                   CALL FIELD_PARAMETER_SET_CREATE(dependentField,FIELD_U_VARIABLE_TYPE, &
                    & FIELD_UPWIND_VALUES_SET_TYPE,ERR,ERROR,*999)
@@ -5934,7 +5945,7 @@ CONTAINS
                 CASE(1)
                   ! Characteristic solver- copy branch Q,A values to new parameter set
                   dependentField=>SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING%EQUATIONS_SETS(1)%PTR%DEPENDENT%DEPENDENT_FIELD
-                  CALL FIELD_VARIABLE_GET(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,ERR,ERROR,*999)
+                  CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,ERR,ERROR,*999)
                   IF(.NOT.ASSOCIATED(fieldVariable%PARAMETER_SETS%SET_TYPE(FIELD_UPWIND_VALUES_SET_TYPE)%PTR)) THEN
                     CALL FIELD_PARAMETER_SET_CREATE(dependentField,FIELD_U_VARIABLE_TYPE, &
                      & FIELD_UPWIND_VALUES_SET_TYPE,ERR,ERROR,*999)
@@ -5972,7 +5983,7 @@ CONTAINS
                 CASE(1)
                   ! Characteristic solver- copy branch Q,A values to new parameter set
                   dependentField=>SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING%EQUATIONS_SETS(1)%PTR%DEPENDENT%DEPENDENT_FIELD
-                  CALL FIELD_VARIABLE_GET(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,ERR,ERROR,*999)
+                  CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,ERR,ERROR,*999)
                   IF(.NOT.ASSOCIATED(fieldVariable%PARAMETER_SETS%SET_TYPE(FIELD_UPWIND_VALUES_SET_TYPE)%PTR)) THEN
                     CALL FIELD_PARAMETER_SET_CREATE(dependentField,FIELD_U_VARIABLE_TYPE, &
                      & FIELD_UPWIND_VALUES_SET_TYPE,ERR,ERROR,*999)
@@ -6009,7 +6020,7 @@ CONTAINS
               CASE(1)
                 ! Characteristic solver- copy branch Q,A values to new parameter set
                 dependentField=>SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING%EQUATIONS_SETS(1)%PTR%DEPENDENT%DEPENDENT_FIELD
-                CALL FIELD_VARIABLE_GET(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,ERR,ERROR,*999)
+                CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,ERR,ERROR,*999)
                 IF(.NOT.ASSOCIATED(fieldVariable%PARAMETER_SETS%SET_TYPE(FIELD_UPWIND_VALUES_SET_TYPE)%PTR)) THEN
                   CALL FIELD_PARAMETER_SET_CREATE(dependentField,FIELD_U_VARIABLE_TYPE, &
                    & FIELD_UPWIND_VALUES_SET_TYPE,ERR,ERROR,*999)
@@ -6036,7 +6047,7 @@ CONTAINS
                 CASE(1)
                   ! Characteristic solver- copy branch Q,A values to new parameter set
                   dependentField=>SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING%EQUATIONS_SETS(1)%PTR%DEPENDENT%DEPENDENT_FIELD
-                  CALL FIELD_VARIABLE_GET(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,ERR,ERROR,*999)
+                  CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,ERR,ERROR,*999)
                   IF(.NOT.ASSOCIATED(fieldVariable%PARAMETER_SETS%SET_TYPE(FIELD_UPWIND_VALUES_SET_TYPE)%PTR)) THEN
                     CALL FIELD_PARAMETER_SET_CREATE(dependentField,FIELD_U_VARIABLE_TYPE, &
                      & FIELD_UPWIND_VALUES_SET_TYPE,ERR,ERROR,*999)
@@ -6070,7 +6081,7 @@ CONTAINS
                 CASE(1)
                   ! Characteristic solver- copy branch Q,A values to new parameter set
                   dependentField=>SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING%EQUATIONS_SETS(1)%PTR%DEPENDENT%DEPENDENT_FIELD
-                  CALL FIELD_VARIABLE_GET(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,ERR,ERROR,*999)
+                  CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,ERR,ERROR,*999)
                   IF(.NOT.ASSOCIATED(fieldVariable%PARAMETER_SETS%SET_TYPE(FIELD_UPWIND_VALUES_SET_TYPE)%PTR)) THEN
                     CALL FIELD_PARAMETER_SET_CREATE(dependentField,FIELD_U_VARIABLE_TYPE, &
                      & FIELD_UPWIND_VALUES_SET_TYPE,ERR,ERROR,*999)
@@ -6273,9 +6284,9 @@ CONTAINS
                     INDEPENDENT_FIELD=>EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD
                     DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
                     independentVariableType=INDEPENDENT_FIELD%VARIABLES(1)%VARIABLE_TYPE
-                    CALL FIELD_VARIABLE_GET(INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,independentFieldVariable,ERR,ERROR,*999)
+                    CALL Field_VariableGet(INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,independentFieldVariable,ERR,ERROR,*999)
                     dependentVariableType=DEPENDENT_FIELD%VARIABLES(1)%VARIABLE_TYPE
-                    CALL FIELD_VARIABLE_GET(DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,dependentFieldVariable,ERR,ERROR,*999)
+                    CALL Field_VariableGet(DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,dependentFieldVariable,ERR,ERROR,*999)
                     CALL BOUNDARY_CONDITIONS_VARIABLE_GET(SOLVER_EQUATIONS%BOUNDARY_CONDITIONS, &
                       & dependentFieldVariable,BOUNDARY_CONDITIONS_VARIABLE,ERR,ERROR,*999)
                     !Read in field data from file
@@ -6382,7 +6393,7 @@ CONTAINS
                                 & ERROR,*999)
                               NULLIFY(GEOMETRIC_VARIABLE)
                               NULLIFY(GEOMETRIC_PARAMETERS)
-                              CALL FIELD_VARIABLE_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,GEOMETRIC_VARIABLE,ERR,ERROR,*999)
+                              CALL Field_VariableGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,GEOMETRIC_VARIABLE,ERR,ERROR,*999)
                               CALL FIELD_PARAMETER_SET_DATA_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                                 & GEOMETRIC_PARAMETERS,ERR,ERROR,*999)
                               ! Analytic parameters
@@ -6390,7 +6401,7 @@ CONTAINS
                               NULLIFY(ANALYTIC_VARIABLE)
                               NULLIFY(ANALYTIC_PARAMETERS)
                               IF(ASSOCIATED(ANALYTIC_FIELD)) THEN
-                                CALL FIELD_VARIABLE_GET(ANALYTIC_FIELD,FIELD_U_VARIABLE_TYPE,ANALYTIC_VARIABLE,ERR,ERROR,*999)
+                                CALL Field_VariableGet(ANALYTIC_FIELD,FIELD_U_VARIABLE_TYPE,ANALYTIC_VARIABLE,ERR,ERROR,*999)
                                 CALL FIELD_PARAMETER_SET_DATA_GET(ANALYTIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                                   & ANALYTIC_PARAMETERS,ERR,ERROR,*999)           
                               END IF
@@ -6400,7 +6411,7 @@ CONTAINS
                               NULLIFY(MATERIALS_PARAMETERS)
                               IF(ASSOCIATED(EQUATIONS_SET%MATERIALS)) THEN
                                 MATERIALS_FIELD=>EQUATIONS_SET%MATERIALS%MATERIALS_FIELD
-                                CALL FIELD_VARIABLE_GET(MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE,MATERIALS_VARIABLE,ERR,ERROR,*999)
+                                CALL Field_VariableGet(MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE,MATERIALS_VARIABLE,ERR,ERROR,*999)
                                 CALL FIELD_PARAMETER_SET_DATA_GET(MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                                   & MATERIALS_PARAMETERS,ERR,ERROR,*999)           
                               END IF
@@ -6518,7 +6529,7 @@ CONTAINS
                             CALL FIELD_NUMBER_OF_COMPONENTS_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS, &
                              & ERR,ERROR,*999)
                             NULLIFY(GEOMETRIC_VARIABLE)
-                            CALL FIELD_VARIABLE_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,GEOMETRIC_VARIABLE,ERR,ERROR,*999)
+                            CALL Field_VariableGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,GEOMETRIC_VARIABLE,ERR,ERROR,*999)
                             NULLIFY(GEOMETRIC_PARAMETERS)
                             CALL FIELD_PARAMETER_SET_DATA_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, & 
                               & GEOMETRIC_PARAMETERS,ERR,ERROR,*999)
@@ -6528,7 +6539,7 @@ CONTAINS
                             NULLIFY(ANALYTIC_VARIABLE)
                             NULLIFY(ANALYTIC_PARAMETERS)
                             IF(ASSOCIATED(ANALYTIC_FIELD)) THEN
-                              CALL FIELD_VARIABLE_GET(ANALYTIC_FIELD,FIELD_U_VARIABLE_TYPE,ANALYTIC_VARIABLE,ERR,ERROR,*999)
+                              CALL Field_VariableGet(ANALYTIC_FIELD,FIELD_U_VARIABLE_TYPE,ANALYTIC_VARIABLE,ERR,ERROR,*999)
                               CALL FIELD_PARAMETER_SET_DATA_GET(ANALYTIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                                 & ANALYTIC_PARAMETERS,ERR,ERROR,*999)           
                             END IF
@@ -6538,7 +6549,7 @@ CONTAINS
                             NULLIFY(MATERIALS_PARAMETERS)
                             IF(ASSOCIATED(EQUATIONS_SET%MATERIALS)) THEN
                               MATERIALS_FIELD=>EQUATIONS_SET%MATERIALS%MATERIALS_FIELD
-                              CALL FIELD_VARIABLE_GET(MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE,MATERIALS_VARIABLE,ERR,ERROR,*999)
+                              CALL Field_VariableGet(MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE,MATERIALS_VARIABLE,ERR,ERROR,*999)
                               CALL FIELD_PARAMETER_SET_DATA_GET(MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                                 & MATERIALS_PARAMETERS,ERR,ERROR,*999)           
                             END IF
@@ -6812,7 +6823,7 @@ CONTAINS
                         DO variableIdx=1,DEPENDENT_FIELD%NUMBER_OF_VARIABLES
                           dependentVariableType=DEPENDENT_FIELD%VARIABLES(variableIdx)%VARIABLE_TYPE
                           NULLIFY(dependentFieldVariable)
-                          CALL FIELD_VARIABLE_GET(DEPENDENT_FIELD,dependentVariableType,dependentFieldVariable,ERR,ERROR,*999)
+                          CALL Field_VariableGet(DEPENDENT_FIELD,dependentVariableType,dependentFieldVariable,ERR,ERROR,*999)
                           CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS, &
                            & dependentFieldVariable,BOUNDARY_CONDITIONS_VARIABLE,ERR,ERROR,*999)
                           IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
@@ -6926,7 +6937,7 @@ CONTAINS
                         DO variableIdx=1,DEPENDENT_FIELD%NUMBER_OF_VARIABLES
                           dependentVariableType=DEPENDENT_FIELD%VARIABLES(variableIdx)%VARIABLE_TYPE
                           NULLIFY(dependentFieldVariable)
-                          CALL FIELD_VARIABLE_GET(DEPENDENT_FIELD,dependentVariableType,dependentFieldVariable,ERR,ERROR,*999)
+                          CALL Field_VariableGet(DEPENDENT_FIELD,dependentVariableType,dependentFieldVariable,ERR,ERROR,*999)
                           CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS,dependentFieldVariable, &
                             & BOUNDARY_CONDITIONS_VARIABLE,ERR,ERROR,*999)
                           IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
@@ -7016,7 +7027,7 @@ CONTAINS
                          & FIELD_BOUNDARY_SET_TYPE,BOUNDARY_VALUES,ERR,ERROR,*999)
                        CALL FLUID_MECHANICS_IO_READ_BOUNDARY_CONDITIONS(SOLVER_NONLINEAR_TYPE,BOUNDARY_VALUES, &
                          & NUMBER_OF_DIMENSIONS,BOUNDARY_CONDITION_FIXED_INLET,CONTROL_LOOP%TIME_LOOP%INPUT_NUMBER, &
-                         & CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER,CURRENT_TIME,1.0_DP)
+                         & CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER,CURRENT_TIME,1.0_DP,ERR,ERROR,*999)
                        DO variable_idx=1,EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%NUMBER_OF_VARIABLES
                          variable_type=EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE
                          FIELD_VARIABLE=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%PTR
@@ -7100,7 +7111,7 @@ CONTAINS
                             & FIELD_BOUNDARY_SET_TYPE,BOUNDARY_VALUES,ERR,ERROR,*999)
                           CALL FLUID_MECHANICS_IO_READ_BOUNDARY_CONDITIONS(SOLVER_LINEAR_TYPE,BOUNDARY_VALUES, & 
                             & NUMBER_OF_DIMENSIONS,BOUNDARY_CONDITION_FIXED_INLET,CONTROL_LOOP%TIME_LOOP%INPUT_NUMBER, &
-                            & CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER,CURRENT_TIME,1.0_DP)
+                            & CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER,CURRENT_TIME,1.0_DP,ERR,ERROR,*999)
                           DO variable_idx=1,EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%NUMBER_OF_VARIABLES
                             variable_type=EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE
                             FIELD_VARIABLE=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%PTR
@@ -7185,7 +7196,7 @@ CONTAINS
                             & FIELD_BOUNDARY_SET_TYPE,BOUNDARY_VALUES,ERR,ERROR,*999)
                           CALL FLUID_MECHANICS_IO_READ_BOUNDARY_CONDITIONS(SOLVER_LINEAR_TYPE,BOUNDARY_VALUES, & 
                             & NUMBER_OF_DIMENSIONS,BOUNDARY_CONDITION_MOVED_WALL,CONTROL_LOOP%TIME_LOOP%INPUT_NUMBER, &
-                            & CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER,CURRENT_TIME,1.0_DP)
+                            & CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER,CURRENT_TIME,1.0_DP,ERR,ERROR,*999)
                           DO variable_idx=1,EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%NUMBER_OF_VARIABLES
                             variable_type=EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE
                             FIELD_VARIABLE=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%PTR
@@ -7269,7 +7280,7 @@ CONTAINS
                             & FIELD_BOUNDARY_SET_TYPE,BOUNDARY_VALUES,ERR,ERROR,*999)
                           CALL FLUID_MECHANICS_IO_READ_BOUNDARY_CONDITIONS(SOLVER_LINEAR_TYPE,BOUNDARY_VALUES, & 
                             & NUMBER_OF_DIMENSIONS,BOUNDARY_CONDITION_FIXED_INLET,CONTROL_LOOP%TIME_LOOP%INPUT_NUMBER, &
-                            & CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER,CURRENT_TIME,1.0_DP)
+                            & CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER,CURRENT_TIME,1.0_DP,ERR,ERROR,*999)
                           DO variable_idx=1,EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%NUMBER_OF_VARIABLES
                             variable_type=EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE
                             FIELD_VARIABLE=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%PTR
@@ -7593,7 +7604,7 @@ CONTAINS
                           CALL FluidMechanics_IO_UpdateBoundaryConditionUpdateNodes(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD, &
                             & SOLVER%SOLVE_TYPE,InletNodes, &
                             & BoundaryValues,BOUNDARY_CONDITION_FIXED_INLET,CONTROL_LOOP%TIME_LOOP%INPUT_NUMBER, &
-                            & CURRENT_TIME,CONTROL_LOOP%TIME_LOOP%STOP_TIME)
+                            & CURRENT_TIME,CONTROL_LOOP%TIME_LOOP%STOP_TIME,ERR,ERROR,*999)
                           DO node_idx=1,SIZE(InletNodes)
                             CALL FIELD_PARAMETER_SET_UPDATE_NODE(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
                               & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,InletNodes(node_idx),componentBC, &
@@ -7610,7 +7621,7 @@ CONTAINS
                           CALL FluidMechanics_IO_UpdateBoundaryConditionUpdateNodes(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD, &
                             & SOLVER%SOLVE_TYPE,InletNodes, &
                             & BoundaryValues,BOUNDARY_CONDITION_FIXED_INLET,CONTROL_LOOP%TIME_LOOP%INPUT_NUMBER, &
-                            & CURRENT_TIME,CONTROL_LOOP%TIME_LOOP%STOP_TIME)
+                            & CURRENT_TIME,CONTROL_LOOP%TIME_LOOP%STOP_TIME,ERR,ERROR,*999)
                           DO node_idx=1,SIZE(InletNodes)
                             CALL FIELD_PARAMETER_SET_UPDATE_NODE(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
                               & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,InletNodes(node_idx),componentBC, &
@@ -7757,7 +7768,7 @@ CONTAINS
                       & FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE,MESH_DISPLACEMENT_VALUES,ERR,ERROR,*999)
                     CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,MESH_DISPLACEMENT_VALUES, & 
                       & NUMBER_OF_DIMENSIONS_ALE_NAVIER_STOKES,INPUT_TYPE,INPUT_OPTION, &
-                      & CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP)
+                      & CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP,ERR,ERROR,*999)
                     CALL FIELD_PARAMETER_SET_UPDATE_START(EQUATIONS_SET_ALE_NAVIER_STOKES%INDEPENDENT%INDEPENDENT_FIELD, & 
                       & FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE,ERR,ERROR,*999)
                     CALL FIELD_PARAMETER_SET_UPDATE_FINISH(EQUATIONS_SET_ALE_NAVIER_STOKES%INDEPENDENT%INDEPENDENT_FIELD, & 
@@ -8614,7 +8625,7 @@ CONTAINS
             ! Geometric parameters
             CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
             NULLIFY(geometricVariable)
-            CALL FIELD_VARIABLE_GET(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
+            CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
             NULLIFY(geometricParameters)
             CALL FIELD_PARAMETER_SET_DATA_GET(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,geometricParameters, &
               & err,error,*999)
@@ -8624,7 +8635,7 @@ CONTAINS
             NULLIFY(analyticVariable)
             NULLIFY(analyticParameters)
             IF(ASSOCIATED(analyticField)) THEN
-              CALL FIELD_VARIABLE_GET(analyticField,FIELD_U_VARIABLE_TYPE,analyticVariable,err,error,*999)
+              CALL Field_VariableGet(analyticField,FIELD_U_VARIABLE_TYPE,analyticVariable,err,error,*999)
               CALL FIELD_PARAMETER_SET_DATA_GET(analyticField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                 & analyticParameters,err,error,*999)           
             END IF
@@ -8634,7 +8645,7 @@ CONTAINS
             NULLIFY(materialsParameters)
             IF(ASSOCIATED(equationsSet%MATERIALS)) THEN
               materialsField=>equationsSet%MATERIALS%MATERIALS_FIELD
-              CALL FIELD_VARIABLE_GET(materialsField,FIELD_U_VARIABLE_TYPE,materialsVariable,err,error,*999)
+              CALL Field_VariableGet(materialsField,FIELD_U_VARIABLE_TYPE,materialsVariable,err,error,*999)
               CALL FIELD_PARAMETER_SET_DATA_GET(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                 & materialsParameters,err,error,*999)           
             END IF
@@ -10903,7 +10914,7 @@ CONTAINS
               END IF
               DEALLOCATE(WORK)
 
-              velocityNorm = L2NORM(avgVelocity)
+              CALL L2Norm(avgVelocity,velocityNorm,err,error,*999)
               cellReynoldsNumber = 0.0_DP
               cellCourantNumber = 0.0_DP
               IF(velocityNorm > ZERO_TOLERANCE) THEN
@@ -11088,7 +11099,7 @@ CONTAINS
         geometricField=>equationsSet%GEOMETRY%GEOMETRIC_FIELD
         CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,ERR,ERROR,*999)
         !Get access to geometric coordinates
-        CALL FIELD_VARIABLE_GET(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,ERR,ERROR,*999)
+        CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,ERR,ERROR,*999)
         meshComponentNumber=geometricVariable%COMPONENTS(1)%MESH_COMPONENT_NUMBER
         !Get the geometric distributed vector
         CALL FIELD_PARAMETER_SET_DATA_GET(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
@@ -11148,18 +11159,14 @@ CONTAINS
                 normalProjection(componentIdx)=-normalProjection(componentIdx)
               END IF
             END DO
-            IF(L2NORM(normalProjection)>ZERO_TOLERANCE) THEN
-               unitNormal=normalProjection/L2NORM(normalProjection)
-            ELSE
-               unitNormal=0.0_DP
-            END IF
+            CALL Normalise(normalProjection,unitNormal,err,error,*999)
 
             ! Stabilisation term to correct for possible retrograde flow divergence.
             ! See: Moghadam et al 2011 A comparison of outlet boundary treatments for prevention of backflow divergence..." and
             !      Ismail et al 2014 "A stable approach for coupling multidimensional cardiovascular and pulmonary networks..."
             ! Note: beta is a relative scaling factor 0 <= beta <= 1; default 1.0
             stabilisationTerm = 0.0_DP
-            normalDifference=L2NORM(boundaryNormal-unitNormal)
+            CALL L2Norm(boundaryNormal-unitNormal,normalDifference,err,error,*999)
             normalTolerance=0.1_DP
             IF(normalDifference < normalTolerance) THEN
               normalFlow = DOT_PRODUCT(velocity,normalProjection)
@@ -11206,7 +11213,7 @@ CONTAINS
             ! ! Calculate viscous term
             ! dXiDX=0.0_DP
             ! dXiDX=pointMetrics%DXI_DX(:,:)
-            ! CALL MATRIX_PRODUCT(dUDXi,dXiDX,gradU,err,error,*999)
+            ! CALL MatrixProduct(dUDXi,dXiDX,gradU,err,error,*999)
             ! DO i=1,numberOfDimensions 
             !   SUM1 = 0.0_DP
             !   SUM2 = 0.0_DP
@@ -11527,8 +11534,8 @@ CONTAINS
                   END IF
                   faceNormal(componentIdx)=normalProjection
                 END DO !componentIdx
-                unitNormal=faceNormal/L2NORM(faceNormal)
-                normalDifference=L2NORM(elementNormal-unitNormal)
+                CALL Normalise(faceNormal,unitNormal,err,error,*999)
+                CALL L2Norm(elementNormal-unitNormal,normalDifference,err,error,*999)
                 normalTolerance=0.1_DP
                 IF(normalDifference>normalTolerance) EXIT
               CASE(BASIS_SIMPLEX_TYPE)
@@ -11623,7 +11630,7 @@ CONTAINS
                 END IF
                 faceNormal(componentIdx)=normalProjection
               END DO !componentIdx
-              unitNormal=faceNormal/L2NORM(faceNormal)
+              CALL Normalise(faceNormal,unitNormal,err,error,*999)
             CASE(BASIS_SIMPLEX_TYPE)
               !still have faceNormal/unitNormal
             CASE DEFAULT
@@ -11631,7 +11638,7 @@ CONTAINS
                 & " is not yet implemented for Navier-Stokes."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
-            normalDifference=L2NORM(elementNormal-unitNormal)
+            CALL L2Norm(elementNormal-unitNormal,normalDifference,err,error,*999)
             normalTolerance=0.1_DP
             IF(normalDifference>normalTolerance) CYCLE
 
@@ -11813,13 +11820,13 @@ CONTAINS
         IF(iteration == 1 .AND. timestep == 0) THEN
           ! Create the previous iteration field values type on the dependent field if it does not exist
           NULLIFY(fieldVariable)
-          CALL FIELD_VARIABLE_GET(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,ERR,ERROR,*999)
+          CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,ERR,ERROR,*999)
           IF(.NOT.ASSOCIATED(fieldVariable%PARAMETER_SETS%SET_TYPE(FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE)%PTR)) THEN
             CALL FIELD_PARAMETER_SET_CREATE(dependentField,FIELD_U_VARIABLE_TYPE, &
              & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,ERR,ERROR,*999)
           END IF
           NULLIFY(fieldVariable)
-          CALL FIELD_VARIABLE_GET(dependentField,FIELD_U1_VARIABLE_TYPE,fieldVariable,ERR,ERROR,*999)
+          CALL Field_VariableGet(dependentField,FIELD_U1_VARIABLE_TYPE,fieldVariable,ERR,ERROR,*999)
           IF(.NOT.ASSOCIATED(fieldVariable%PARAMETER_SETS%SET_TYPE(FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE)%PTR)) THEN
             CALL FIELD_PARAMETER_SET_CREATE(dependentField,FIELD_U1_VARIABLE_TYPE, &
              & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,ERR,ERROR,*999)
@@ -12097,8 +12104,8 @@ CONTAINS
 
         ! Evaluate error between current and previous Q,A values
         IF(numberOfVersions > 1 ) THEN
-          l2ErrorQ(branchNumber) = L2NORM(qNavierStokes-qCharacteristic)
-          l2ErrorA(branchNumber) = L2NORM(aNavierStokes-aCharacteristic)
+          CALL L2Norm(qNavierStokes-qCharacteristic,l2ErrorQ(branchNumber),err,error,*999)
+          CALL L2Norm(aNavierStokes-aCharacteristic,l2ErrorA(branchNumber),err,error,*999)
         END IF
         ! Check if the branch values have converged
         IF((ABS(l2ErrorQ(branchNumber)) < couplingTolerance) .AND. (ABS(l2ErrorA(branchNumber)) < couplingTolerance)) THEN
@@ -12300,8 +12307,8 @@ CONTAINS
             dUdXTrans=0.0_DP
             strainRate=0.0_DP
 
-            CALL MATRIX_PRODUCT(dUdXi,dXidX,dUdX,ERR,ERROR,*999) !dU/dX = dU/dxi * dxi/dX (deformation gradient tensor)
-            CALL MATRIX_TRANSPOSE(dUdX,dUdXTrans,ERR,ERROR,*999)
+            CALL MatrixProduct(dUdXi,dXidX,dUdX,ERR,ERROR,*999) !dU/dX = dU/dxi * dxi/dX (deformation gradient tensor)
+            CALL MatrixTranspose(dUdX,dUdXTrans,ERR,ERROR,*999)
             DO i=1,3
               DO j=1,3
                 strainRate = strainRate + (dUdX(i,j)*dUdXTrans(i,j))
@@ -12530,7 +12537,7 @@ CONTAINS
     TYPE(SOLVER_TYPE), POINTER :: streeSolver
     TYPE(VARYING_STRING) :: localError
     REAL(DP) :: rho,A0,H0,E,beta,pExternal,lengthScale,timeScale,massScale,currentTime,timeIncrement
-    REAL(DP) :: pCellml,qCellml,ABoundary,W1,W2,ACellML,normalWave(2,4)
+    REAL(DP) :: pCellml,qCellml,ABoundary,W1,W2,ACellML,normalWave(2,4),norm
     REAL(DP), POINTER :: Impedance(:),Flow(:)
     INTEGER(INTG) :: nodeIdx,versionIdx,derivativeIdx,componentIdx,numberOfVersions,numberOfLocalNodes
     INTEGER(INTG) :: dependentDof,boundaryConditionType,k
@@ -12696,7 +12703,8 @@ CONTAINS
         END DO
         !!!-- F i n d   b o u n d a r y    n o d e s --!!!
         IF(ABS(normalWave(1,1)) > ZERO_TOLERANCE .OR. ABS(normalWave(2,1))> ZERO_TOLERANCE) THEN
-          IF(numberOfVersions == 1 .AND. L2NORM(normalWave(:,1)) > ZERO_TOLERANCE) THEN
+          CALL L2Norm(normalWave(:,1),norm,err,error,*999)
+          IF(numberOfVersions == 1 .AND. norm > ZERO_TOLERANCE) THEN
             versionIdx = 1
             !Get material parameters
             CALL Field_ParameterSetGetLocalNode(materialsField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,versionIdx, &
@@ -12709,7 +12717,7 @@ CONTAINS
             ! Get the boundary condition type for the dependent field primitive variables (Q,A)
             boundaryConditions=>solverEquations%BOUNDARY_CONDITIONS
             NULLIFY(fieldVariable)
-            CALL FIELD_VARIABLE_GET(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,err,error,*999)
+            CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,err,error,*999)
             dependentDof = fieldVariable%COMPONENTS(2)%PARAM_TO_DOF_MAP% &
              & NODE_PARAM2DOF_MAP%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%VERSIONS(versionIdx)
             CALL BOUNDARY_CONDITIONS_VARIABLE_GET(boundaryConditions, &

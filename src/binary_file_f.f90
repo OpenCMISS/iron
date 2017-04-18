@@ -407,7 +407,7 @@ CONTAINS
   !============================================================================
   !
   
-  FUNCTION INQUIRE_OPEN_BINARY_FILE(FILEID)
+  PURE FUNCTION INQUIRE_OPEN_BINARY_FILE(FILEID)
     
     !#### Function: INQUIRE_OPEN_BINARY_FILE
     !###  Type: LOGICAL

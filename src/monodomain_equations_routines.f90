@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -49,6 +49,7 @@ MODULE MONODOMAIN_EQUATIONS_ROUTINES
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE CONSTANTS
   USE CONTROL_LOOP_ROUTINES
+  USE ControlLoopAccessRoutines
   USE DISTRIBUTED_MATRIX_VECTOR
   USE DOMAIN_MAPPINGS
   USE ELECTROPHYSIOLOGY_CELL_ROUTINES
@@ -56,9 +57,10 @@ MODULE MONODOMAIN_EQUATIONS_ROUTINES
   USE EQUATIONS_MAPPING_ROUTINES
   USE EQUATIONS_MATRICES_ROUTINES
   USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetAccessRoutines
   USE FIELD_IO_ROUTINES
   USE FIELD_ROUTINES
-  USE FITTING_ROUTINES
+  USE FieldAccessRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE KINDS
@@ -67,6 +69,7 @@ MODULE MONODOMAIN_EQUATIONS_ROUTINES
   USE PROBLEM_CONSTANTS
   USE STRINGS
   USE SOLVER_ROUTINES
+  USE SolverAccessRoutines
   USE TIMER
   USE TYPES
 
@@ -280,10 +283,10 @@ CONTAINS
       CALL FlagError("Equations set is not associated",err,error,*999)
     END IF
 
-    CALL Exits("Monodomain_EquationsSetSpecificationSet")
+    EXITS("Monodomain_EquationsSetSpecificationSet")
     RETURN
-999 CALL Errors("Monodomain_EquationsSetSpecificationSet",err,error)
-    CALL Exits("Monodomain_EquationsSetSpecificationSet")
+999 ERRORS("Monodomain_EquationsSetSpecificationSet",err,error)
+    EXITS("Monodomain_EquationsSetSpecificationSet")
     RETURN 1
     
   END SUBROUTINE Monodomain_EquationsSetSpecificationSet
@@ -304,7 +307,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: problemType,problemSubtype
 
-    CALL Enters("Monodomain_ProblemSpecificationSet",err,error,*999)
+    ENTERS("Monodomain_ProblemSpecificationSet",err,error,*999)
 
     IF(ASSOCIATED(problem)) THEN
       IF(SIZE(problemSpecification,1)>=3) THEN
@@ -340,10 +343,9 @@ CONTAINS
       CALL FlagError("Problem is not associated",err,error,*999)
     END IF
 
-    CALL Exits("Monodomain_ProblemSpecificationSet")
+    EXITS("Monodomain_ProblemSpecificationSet")
     RETURN
-999 CALL Errors("Monodomain_ProblemSpecificationSet",err,error)
-    CALL Exits("Monodomain_ProblemSpecificationSet")
+999 ERRORSEXITS("Monodomain_ProblemSpecificationSet",err,error)
     RETURN 1
     
   END SUBROUTINE Monodomain_ProblemSpecificationSet
@@ -622,7 +624,7 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("MONODOMAIN_EQUATIONS_SET_SOLUTION_METHOD_SET",ERR,ERROR,*999)
+    ENTERS("Monodomain_EquationsSetSolutionMethodSet",ERR,ERROR,*999)
     
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
@@ -689,7 +691,7 @@ CONTAINS
     TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: EQUATIONS_MATERIALS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("MONODOMAIN_EQUATION_EQUATION_SET_SUBTYPE_SETUP",ERR,ERROR,*999)
+    ENTERS("Monodomain_EquationsSetSubtypeSetup",ERR,ERROR,*999)
  
     NULLIFY(EQUATIONS)
     NULLIFY(EQUATIONS_MAPPING)

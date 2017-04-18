@@ -1353,6 +1353,7 @@ CONTAINS
             Y=>Y%LEFT
           ENDDO
           TREE_SUCCESSOR=>Y
+          EXITS("TREE_SUCCESSOR")
           RETURN
         ELSE
           Y=>X%PARENT
