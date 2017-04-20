@@ -58,7 +58,7 @@ MODULE Stree_EQUATION_ROUTINES
   USE COORDINATE_ROUTINES
   USE DISTRIBUTED_MATRIX_VECTOR
   USE DOMAIN_MAPPINGS
-  USE EQUATIONS_ROUTINES
+  USE EquationsRoutines
   USE EQUATIONS_MAPPING_ROUTINES
   USE EQUATIONS_MATRICES_ROUTINES
   USE EQUATIONS_SET_CONSTANTS
@@ -222,7 +222,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
     TYPE(DECOMPOSITION_TYPE), POINTER :: geometricDecomposition
-    TYPE(EQUATIONS_TYPE), POINTER :: equations
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: equationsMapping
     TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices
     TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: equationsMaterials
@@ -577,9 +577,9 @@ CONTAINS
               equationsMaterials=>equationsSet%MATERIALS
               IF(ASSOCIATED(equationsMaterials)) THEN              
                 IF(equationsMaterials%MATERIALS_FINISHED) THEN
-                  CALL EQUATIONS_CREATE_START(equationsSet,equations,err,error,*999)
-                  CALL EQUATIONS_LINEARITY_TYPE_SET(equations,EQUATIONS_LINEAR,err,error,*999)
-                  CALL EQUATIONS_TIME_DEPENDENCE_TYPE_SET(equations,EQUATIONS_STATIC,err,error,*999)
+                  CALL Equations_CreateStart(equationsSet,equations,err,error,*999)
+                  CALL Equations_LinearityTypeSet(equations,EQUATIONS_LINEAR,err,error,*999)
+                  CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_STATIC,err,error,*999)
                 ELSE
                   CALL FLAG_ERROR("Equations set materials has not been finished.",err,error,*999)
                 ENDIF
@@ -590,8 +590,8 @@ CONTAINS
               SELECT CASE(equationsSet%SOLUTION_METHOD)
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                 !Finish the creation of the equations
-                CALL EQUATIONS_SET_EQUATIONS_GET(equationsSet,equations,err,error,*999)
-                CALL EQUATIONS_CREATE_FINISH(equations,err,error,*999)
+                CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+                CALL Equations_CreateFinish(equations,err,error,*999)
                 !Create the equations mapping.
                 CALL EQUATIONS_MAPPING_CREATE_START(equations,equationsMapping,err,error,*999)
                 CALL EquationsMapping_LinearMatricesNumberSet(equationsMapping,1,err,error,*999)
@@ -600,7 +600,7 @@ CONTAINS
                 CALL EQUATIONS_MAPPING_CREATE_FINISH(equationsMapping,err,error,*999)
                 !Create the equations matrices
                 CALL EQUATIONS_MATRICES_CREATE_START(equations,equationsMatrices,err,error,*999)
-                SELECT CASE(equations%SPARSITY_TYPE)
+                SELECT CASE(equations%sparsityType)
                 CASE(EQUATIONS_MATRICES_FULL_MATRICES)
                   CALL EQUATIONS_MATRICES_LINEAR_STORAGE_TYPE_SET(equationsMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
                 CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
@@ -610,7 +610,7 @@ CONTAINS
                     & [EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
                 CASE DEFAULT
                   localError="The equations matrices sparsity type of "// &
-                    & TRIM(NUMBER_TO_VSTRING(equations%SPARSITY_TYPE,"*",err,error))//" is invalid."
+                    & TRIM(NUMBER_TO_VSTRING(equations%sparsityType,"*",err,error))//" is invalid."
                   CALL FLAG_ERROR(localError,err,error,*999)
                 END SELECT
                 CALL EQUATIONS_MATRICES_CREATE_FINISH(equationsMatrices,err,error,*999)
@@ -678,7 +678,7 @@ CONTAINS
     !Local Variables
     TYPE(DOMAIN_NODES_TYPE), POINTER :: domainNodes
     TYPE(DOMAIN_TYPE), POINTER :: domain
-    TYPE(EQUATIONS_TYPE), POINTER :: equations
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: equationsMapping
     TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices
     TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: linearMapping
@@ -708,7 +708,7 @@ CONTAINS
     IF(ASSOCIATED(equationsSet)) THEN
       equations=>equationsSet%EQUATIONS
       IF(ASSOCIATED(equations)) THEN
-        dependentField=>equations%EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+        dependentField=>equations%equationsSet%DEPENDENT%DEPENDENT_FIELD
         IF(ASSOCIATED(dependentField)) THEN
           domain=>dependentField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR
           IF(ASSOCIATED(domain)) THEN
@@ -729,8 +729,8 @@ CONTAINS
     SELECT CASE(equationsSet%specification(3))
     CASE(EQUATIONS_SET_STREE1D0D_SUBTYPE)
       !Set General and Specific Pointers
-      equationsMatrices=>equations%EQUATIONS_MATRICES
-      equationsMapping=>equations%EQUATIONS_MAPPING
+      equationsMatrices=>equations%equationsMatrices
+      equationsMapping=>equations%equationsMapping
       linearMatrices=>equationsMatrices%LINEAR_MATRICES
       stiffnessMatrix=>linearMatrices%MATRICES(1)%PTR
       linearMapping=>equationsMapping%LINEAR_MAPPING
@@ -768,7 +768,7 @@ CONTAINS
     TYPE(DOMAIN_NODES_TYPE), POINTER :: domainNodes
     TYPE(DOMAIN_TYPE), POINTER :: domain
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet,navierstokesEquationsSet
-    TYPE(EQUATIONS_TYPE), POINTER :: equations,navierstokesEquations
+    TYPE(EquationsType), POINTER :: equations,navierstokesEquations
     TYPE(FIELD_TYPE), POINTER :: materialsField,navierstokesDependentField
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: dependentFieldVariable
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations,navierstokesSolverEquations

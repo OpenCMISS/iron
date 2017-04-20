@@ -53,7 +53,7 @@ MODULE FittingRoutines
   USE DARCY_EQUATIONS_ROUTINES, ONLY: idebug1
   USE DISTRIBUTED_MATRIX_VECTOR
   USE DOMAIN_MAPPINGS
-  USE EQUATIONS_ROUTINES
+  USE EquationsRoutines
   USE EQUATIONS_MAPPING_ROUTINES
   USE EQUATIONS_MATRICES_ROUTINES
   USE EQUATIONS_SET_CONSTANTS
@@ -127,7 +127,7 @@ CONTAINS
     TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology
     TYPE(DecompositionDataPointsType), POINTER :: dataPoints
     TYPE(BASIS_TYPE), POINTER :: dependentBasis,geometricBasis,sourceBasis,dependentBasisRow,dependentBasisColumn
-    TYPE(EQUATIONS_TYPE), POINTER :: equations
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: equationsMapping
     TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: linearMapping
     TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices
@@ -205,11 +205,11 @@ CONTAINS
             geometricField=>equations%interpolation%GEOMETRIC_FIELD
             dependentField=>equations%interpolation%DEPENDENT_FIELD
             independentField=>equations%interpolation%INDEPENDENT_FIELD
-            equationsMatrices=>equations%EQUATIONS_MATRICES
+            equationsMatrices=>equations%equationsMatrices
             linearMatrices=>equationsMatrices%LINEAR_MATRICES
             equationsMatrix=>linearMatrices%matrices(1)%ptr
             rhsVector=>equationsMatrices%RHS_VECTOR
-            equationsMapping=>equations%EQUATIONS_MAPPING
+            equationsMapping=>equations%equationsMapping
             linearMapping=>equationsMapping%LINEAR_MAPPING
             dependentVariable=>linearMapping%EQUATIONS_MATRIX_TO_VAR_MAPS(1)%VARIABLE
             dependentVariableType=dependentVariable%VARIABLE_TYPE
@@ -453,11 +453,11 @@ CONTAINS
             ENDIF
             geometricField=>equations%interpolation%GEOMETRIC_FIELD
             materialsField=>equations%interpolation%MATERIALS_FIELD
-            equationsMatrices=>equations%EQUATIONS_MATRICES
+            equationsMatrices=>equations%equationsMatrices
             linearMatrices=>equationsMatrices%LINEAR_MATRICES
             equationsMatrix=>linearMatrices%matrices(1)%ptr
             rhsVector=>equationsMatrices%RHS_VECTOR
-            equationsMapping=>equations%EQUATIONS_MAPPING
+            equationsMapping=>equations%equationsMapping
             linearMapping=>equationsMapping%LINEAR_MAPPING
             dependentVariable=>linearMapping%equations_MATRIX_TO_VAR_MAPS(1)%variable
             dependentVariableType=dependentVariable%VARIABLE_TYPE
@@ -662,11 +662,11 @@ CONTAINS
             geometricField=>equations%interpolation%GEOMETRIC_FIELD
             materialsField=>equations%interpolation%MATERIALS_FIELD
             
-            equationsMatrices=>equations%EQUATIONS_MATRICES
+            equationsMatrices=>equations%equationsMatrices
             linearMatrices=>equationsMatrices%LINEAR_MATRICES
             equationsMatrix=>linearMatrices%matrices(1)%ptr
             rhsVector=>equationsMatrices%RHS_VECTOR
-            equationsMapping=>equations%EQUATIONS_MAPPING
+            equationsMapping=>equations%equationsMapping
             linearMapping=>equationsMapping%LINEAR_MAPPING
             fieldVariable=>linearMapping%EQUATIONS_MATRIX_TO_VAR_MAPS(1)%VARIABLE
             dependentVariableType=fieldVariable%VARIABLE_TYPE
@@ -835,12 +835,12 @@ CONTAINS
             geometricField=>equations%interpolation%GEOMETRIC_FIELD
             materialsField=>equations%interpolation%MATERIALS_FIELD
             sourceField=>equations%interpolation%SOURCE_FIELD
-            equationsMatrices=>equations%EQUATIONS_MATRICES
+            equationsMatrices=>equations%equationsMatrices
             linearMatrices=>equationsMatrices%LINEAR_MATRICES
             equationsMatrix=>linearMatrices%matrices(1)%ptr
             rhsVector=>equationsMatrices%RHS_VECTOR
             sourceVector=>equationsMatrices%SOURCE_VECTOR
-            equationsMapping=>equations%EQUATIONS_MAPPING
+            equationsMapping=>equations%equationsMapping
             linearMapping=>equationsMapping%LINEAR_MAPPING
             fieldVariable=>linearMapping%EQUATIONS_MATRIX_TO_VAR_MAPS(1)%VARIABLE
             dependentVariableType=fieldVariable%VARIABLE_TYPE
@@ -1076,11 +1076,11 @@ CONTAINS
             independentField=>equations%interpolation%INDEPENDENT_FIELD
             decompositionTopology=>independentField%decomposition%topology
             geometricField=>equations%interpolation%GEOMETRIC_FIELD
-            equationsMatrices=>equations%EQUATIONS_MATRICES
+            equationsMatrices=>equations%equationsMatrices
             linearMatrices=>equationsMatrices%LINEAR_MATRICES
             equationsMatrix=>linearMatrices%matrices(1)%ptr
             rhsVector=>equationsMatrices%RHS_VECTOR
-            equationsMapping=>equations%EQUATIONS_MAPPING
+            equationsMapping=>equations%equationsMapping
             linearMapping=>equationsMapping%LINEAR_MAPPING
             dependentVariable=>linearMapping%EQUATIONS_MATRIX_TO_VAR_MAPS(1)%VARIABLE
             dependentVariableType=dependentVariable%VARIABLE_TYPE
@@ -1354,7 +1354,7 @@ CONTAINS
     INTEGER(INTG) :: INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS,INDEPENDENT_FIELD_NUMBER_OF_VARIABLES
     TYPE(DECOMPOSITION_TYPE), POINTER :: GEOMETRIC_DECOMPOSITION
 !     TYPE(FIELD_TYPE), POINTER :: ANALYTIC_FIELD,DEPENDENT_FIELD,GEOMETRIC_FIELD
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
     TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES
     TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: EQUATIONS_MATERIALS
@@ -1860,7 +1860,7 @@ CONTAINS
               CALL EquationsMapping_CreateFinish(EQUATIONS_MAPPING,err,error,*999)
               !Create the equations matrices
               CALL EquationsMatrices_CreateStart(EQUATIONS,EQUATIONS_MATRICES,err,error,*999)
-              SELECT CASE(EQUATIONS%SPARSITY_TYPE)
+              SELECT CASE(EQUATIONS%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES) 
                 CALL EquationsMatrices_LinearStorageTypeSet(EQUATIONS_MATRICES,[MATRIX_BLOCK_STORAGE_TYPE], &
                   & err,error,*999)
@@ -1871,7 +1871,7 @@ CONTAINS
                   & err,error,*999)
               CASE DEFAULT
                 localError="The equations matrices sparsity type of "// &
-                  & TRIM(NumberToVString(EQUATIONS%SPARSITY_TYPE,"*",err,error))//" is invalid."
+                  & TRIM(NumberToVString(EQUATIONS%sparsityType,"*",err,error))//" is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
               CALL EquationsMatrices_CreateFinish(EQUATIONS_MATRICES,err,error,*999)
@@ -2194,7 +2194,7 @@ CONTAINS
     INTEGER(INTG) :: componentIdx,geometricMeshComponent,geometricScalingType,numberOfComponents,numberOfComponents2, &
       & numberOfDependentComponents,numberOfIndependentComponents
     TYPE(DECOMPOSITION_TYPE), POINTER :: geometricDecomposition
-    TYPE(EQUATIONS_TYPE), POINTER :: equations
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: equationsMapping
     TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices
     TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: equationsMaterials
@@ -2711,7 +2711,7 @@ CONTAINS
                 CALL EquationsMapping_CreateFinish(equationsMapping,err,error,*999)
                 !Create the equations matrices
                 CALL EquationsMatrices_CreateStart(equations,equationsMatrices,err,error,*999)
-                SELECT CASE(equations%SPARSITY_TYPE)
+                SELECT CASE(equations%sparsityType)
                 CASE(EQUATIONS_MATRICES_FULL_MATRICES) 
                   CALL EquationsMatrices_LinearStorageTypeSet(equationsMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
                 CASE(EQUATIONS_MATRICES_SPARSE_MATRICES) 
@@ -2720,7 +2720,7 @@ CONTAINS
                   CALL EquationsMatrices_LinearStructureTypeSet(equationsMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
                 CASE DEFAULT
                   localError="The equations matrices sparsity type of "// &
-                    & TRIM(NumberToVString(equations%SPARSITY_TYPE,"*",err,error))//" is invalid."
+                    & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
                   CALL FlagError(localError,err,error,*999)
                 END SELECT
                 CALL EquationsMatrices_CreateFinish(equationsMatrices,err,error,*999)
@@ -2787,7 +2787,7 @@ CONTAINS
     INTEGER(INTG) :: componentIdx,geometricMeshComponent,geometricScalingType,numberOfComponents,numberOfComponents2, &
       & numberOfDependentComponents,numberOfIndependentComponents
     TYPE(DECOMPOSITION_TYPE), POINTER :: geometricDecomposition
-    TYPE(EQUATIONS_TYPE), POINTER :: equations
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: equationsMapping
     TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices
     TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: equationsMaterials
@@ -3318,7 +3318,7 @@ CONTAINS
               CALL EquationsMapping_CreateFinish(equationsMapping,err,error,*999)
               !Create the equations matrices
               CALL EquationsMatrices_CreateStart(equations,equationsMatrices,err,error,*999)
-              SELECT CASE(equations%SPARSITY_TYPE)
+              SELECT CASE(equations%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES) 
                 CALL EquationsMatrices_LinearStorageTypeSet(equationsMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
               CASE(EQUATIONS_MATRICES_SPARSE_MATRICES) 
@@ -3328,7 +3328,7 @@ CONTAINS
                   & err,error,*999)
               CASE DEFAULT
                 localError="The equations matrices sparsity type of "// &
-                  & TRIM(NumberToVString(equations%SPARSITY_TYPE,"*",err,error))//" is invalid."
+                  & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
               CALL EquationsMatrices_CreateFinish(equationsMatrices,err,error,*999)
@@ -3398,7 +3398,7 @@ CONTAINS
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
     TYPE(DECOMPOSITION_TYPE), POINTER :: GEOMETRIC_DECOMPOSITION
 !     TYPE(FIELD_TYPE), POINTER :: ANALYTIC_FIELD,DEPENDENT_FIELD,GEOMETRIC_FIELD
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
     TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES
     TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: EQUATIONS_MATERIALS
@@ -4049,7 +4049,7 @@ CONTAINS
               CALL EquationsMapping_CreateFinish(EQUATIONS_MAPPING,err,error,*999)
               !Create the equations matrices
               CALL EquationsMatrices_CreateStart(EQUATIONS,EQUATIONS_MATRICES,err,error,*999)
-              SELECT CASE(EQUATIONS%SPARSITY_TYPE)
+              SELECT CASE(EQUATIONS%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES) 
                 CALL EquationsMatrices_LinearStorageTypeSet(EQUATIONS_MATRICES,[MATRIX_BLOCK_STORAGE_TYPE], &
                   & err,error,*999)
@@ -4060,7 +4060,7 @@ CONTAINS
                   & err,error,*999)
               CASE DEFAULT
                 localError="The equations matrices sparsity type of "// &
-                  & TRIM(NumberToVString(EQUATIONS%SPARSITY_TYPE,"*",err,error))//" is invalid."
+                  & TRIM(NumberToVString(EQUATIONS%sparsityType,"*",err,error))//" is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
               CALL EquationsMatrices_CreateFinish(EQUATIONS_MATRICES,err,error,*999)
@@ -4482,7 +4482,7 @@ CONTAINS
               CALL EquationsMapping_CreateFinish(EQUATIONS_MAPPING,err,error,*999)
               !Create the equations matrices
               CALL EquationsMatrices_CreateStart(EQUATIONS,EQUATIONS_MATRICES,err,error,*999)
-              SELECT CASE(EQUATIONS%SPARSITY_TYPE)
+              SELECT CASE(EQUATIONS%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES) 
                 CALL EquationsMatrices_LinearStorageTypeSet(EQUATIONS_MATRICES,[MATRIX_BLOCK_STORAGE_TYPE], &
                   & err,error,*999)
@@ -4493,7 +4493,7 @@ CONTAINS
                   & err,error,*999)
               CASE DEFAULT
                 localError="The equations matrices sparsity type of "// &
-                  & TRIM(NumberToVString(EQUATIONS%SPARSITY_TYPE,"*",err,error))//" is invalid."
+                  & TRIM(NumberToVString(EQUATIONS%sparsityType,"*",err,error))//" is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
               CALL EquationsMatrices_CreateFinish(EQUATIONS_MATRICES,err,error,*999)
@@ -5398,7 +5398,7 @@ CONTAINS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping !<A pointer to the solver mapping
     TYPE(SOLVERS_TYPE), POINTER :: solvers
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
-    TYPE(EQUATIONS_TYPE), POINTER :: equations
+    TYPE(EquationsType), POINTER :: equations
     TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: numberOfDimensions,currentLoopIteration
     INTEGER(INTG) :: inputType,inputOption
@@ -5449,7 +5449,7 @@ CONTAINS
                 solverMapping=>solverEquations%SOLVER_MAPPING
                 equations=>solverMapping%EQUATIONS_SET_TO_SOLVER_MAP(1)%equations
                 IF(ASSOCIATED(equations)) THEN
-                  equationsSet=>equations%EQUATIONS_SET
+                  equationsSet=>equations%equationsSet
                   IF(ASSOCIATED(equationsSet)) THEN
                     CALL Field_NumberOfComponentsGet(equationsSet%geometry%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
                       & numberOfDimensions,err,error,*999)

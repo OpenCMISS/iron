@@ -74,7 +74,7 @@ MODULE OpenCMISS_Iron
   USE DataProjectionRoutines
   USE DataProjectionAccessRoutines
   USE DISTRIBUTED_MATRIX_VECTOR
-  USE EQUATIONS_ROUTINES
+  USE EquationsRoutines
   USE EQUATIONS_SET_CONSTANTS
   USE EQUATIONS_SET_ROUTINES
   USE EquationsSetAccessRoutines
@@ -184,7 +184,7 @@ MODULE OpenCMISS_Iron
   !>Contains information about the equations in an equations set.
   TYPE cmfe_EquationsType
     PRIVATE
-    TYPE(EQUATIONS_TYPE), POINTER :: equations
+    TYPE(EquationsType), POINTER :: equations
   END TYPE cmfe_EquationsType
 
   !>Contains information on an equations set defined on a region.
@@ -2221,7 +2221,7 @@ MODULE OpenCMISS_Iron
 
 !!==================================================================================================================================
 !!
-!! EQUATIONS_ROUTINES
+!! EquationsRoutines
 !!
 !!==================================================================================================================================
 
@@ -6269,7 +6269,6 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_SOLVER_LUSOL_LIBRARY = SOLVER_LUSOL_LIBRARY !<LUSOL solver library. \see OPENCMISS_SolverLibraries,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ESSL_LIBRARY = SOLVER_ESSL_LIBRARY !<ESSL solver library. \see OPENCMISS_SolverLibraries,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_SOLVER_LAPACK_LIBRARY = SOLVER_LAPACK_LIBRARY !<LAPACK solver library. \see OPENCMISS_SolverLibraries,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_TAO_LIBRARY = SOLVER_TAO_LIBRARY !<TAO solver library. \see OPENCMISS_SolverLibraries,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_SOLVER_HYPRE_LIBRARY = SOLVER_HYPRE_LIBRARY !<Hypre solver library. \see OPENCMISS_SolverLibraries,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_SOLVER_PASTIX_LIBRARY = SOLVER_PASTIX_LIBRARY !<PaStiX solver library. \see OPENCMISS_SolverLibraries,OPENCMISS
   !>@}
@@ -7126,7 +7125,7 @@ MODULE OpenCMISS_Iron
 
   PUBLIC CMFE_SOLVER_CMISS_LIBRARY,CMFE_SOLVER_PETSC_LIBRARY,CMFE_SOLVER_MUMPS_LIBRARY,CMFE_SOLVER_SUPERLU_LIBRARY, &
     & CMFE_SOLVER_SPOOLES_LIBRARY,CMFE_SOLVER_UMFPACK_LIBRARY,CMFE_SOLVER_LUSOL_LIBRARY,CMFE_SOLVER_ESSL_LIBRARY, &
-    & CMFE_SOLVER_LAPACK_LIBRARY,CMFE_SOLVER_TAO_LIBRARY,CMFE_SOLVER_HYPRE_LIBRARY,CMFE_SOLVER_PASTIX_LIBRARY
+    & CMFE_SOLVER_LAPACK_LIBRARY,CMFE_SOLVER_HYPRE_LIBRARY,CMFE_SOLVER_PASTIX_LIBRARY
 
   PUBLIC CMFE_SOLVER_LINEAR_DIRECT_SOLVE_TYPE,CMFE_SOLVER_LINEAR_ITERATIVE_SOLVE_TYPE
 
@@ -8163,7 +8162,7 @@ CONTAINS
     ENTERS("cmfe_Equations_Finalise",err,error,*999)
 
     IF(ASSOCIATED(cmfe_Equations%equations))  &
-      & CALL EQUATIONS_DESTROY(cmfe_Equations%equations,err,error,*999)
+      & CALL Equations_Destroy(cmfe_Equations%equations,err,error,*999)
 
     EXITS("cmfe_Equations_Finalise")
     RETURN
@@ -24010,7 +24009,7 @@ CONTAINS
 
 !!==================================================================================================================================
 !!
-!! EQUATIONS_ROUTINES
+!! EquationsRoutines
 !!
 !!==================================================================================================================================
 
@@ -24023,7 +24022,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to destroy the equations for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(EQUATIONS_TYPE), POINTER :: equations
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(REGION_TYPE), POINTER :: region
     TYPE(VARYING_STRING) :: localError
@@ -24036,7 +24035,7 @@ CONTAINS
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-    CALL EQUATIONS_DESTROY(equations,err,error,*999)
+    CALL Equations_Destroy(equations,err,error,*999)
 
     EXITS("cmfe_Equations_DestroyNumber")
     RETURN
@@ -24061,7 +24060,7 @@ CONTAINS
 
     ENTERS("cmfe_Equations_DestroyObj",err,error,*999)
 
-    CALL EQUATIONS_DESTROY(equations%equations,err,error,*999)
+    CALL Equations_Destroy(equations%equations,err,error,*999)
 
     EXITS("cmfe_Equations_DestroyObj")
     RETURN
@@ -24085,7 +24084,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: linearityType !<On return, the linearity type of the equations \see OPENCMISS_EquationsLinearityTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(EQUATIONS_TYPE), POINTER :: equations
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(REGION_TYPE), POINTER :: region
  
@@ -24097,7 +24096,7 @@ CONTAINS
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-    CALL EQUATIONS_LINEARITY_TYPE_GET(equations,linearityType,err,error,*999)
+    CALL Equations_LinearityTypeGet(equations,linearityType,err,error,*999)
 
     EXITS("cmfe_Equations_LinearityTypeGetNumber")
     RETURN
@@ -24123,7 +24122,7 @@ CONTAINS
 
     ENTERS("cmfe_Equations_LinearityTypeGetObj",err,error,*999)
 
-    CALL EQUATIONS_LINEARITY_TYPE_GET(equations%equations,linearityType,err,error,*999)
+    CALL Equations_LinearityTypeGet(equations%equations,linearityType,err,error,*999)
 
     EXITS("cmfe_Equations_LinearityTypeGetObj")
     RETURN
@@ -24147,7 +24146,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: lumpingType !<On return, the lumping type of the equations \see OPENCMISS_EquationsLumpingTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(EQUATIONS_TYPE), POINTER :: equations
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(REGION_TYPE), POINTER :: region
 
@@ -24159,7 +24158,7 @@ CONTAINS
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-    CALL EQUATIONS_LUMPING_TYPE_GET(equations,lumpingType,err,error,*999)
+    CALL Equations_LumpingTypeGet(equations,lumpingType,err,error,*999)
 
     EXITS("cmfe_Equations_LumpingTypeGetNumber")
     RETURN
@@ -24185,7 +24184,7 @@ CONTAINS
 
     ENTERS("cmfe_Equations_LumpingTypeGetObj",err,error,*999)
 
-    CALL EQUATIONS_LUMPING_TYPE_GET(equations%equations,lumpingType,err,error,*999)
+    CALL Equations_LumpingTypeGet(equations%equations,lumpingType,err,error,*999)
 
     EXITS("cmfe_Equations_LumpingTypeGetObj")
     RETURN
@@ -24209,7 +24208,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: lumpingType !<The lumping type of the equations to set\see OPENCMISS_EquationsLumpingTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(EQUATIONS_TYPE), POINTER :: equations
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(REGION_TYPE), POINTER :: region
  
@@ -24221,7 +24220,7 @@ CONTAINS
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-    CALL EQUATIONS_LUMPING_TYPE_SET(equations,lumpingType,err,error,*999)
+    CALL Equations_LumpingTypeSet(equations,lumpingType,err,error,*999)
     
     EXITS("cmfe_Equations_LumpingTypeSetNumber")
     RETURN
@@ -24247,7 +24246,7 @@ CONTAINS
 
     ENTERS("cmfe_Equations_LumpingTypeSetObj",err,error,*999)
 
-    CALL EQUATIONS_LUMPING_TYPE_SET(equations%equations,lumpingType,err,error,*999)
+    CALL Equations_LumpingTypeSet(equations%equations,lumpingType,err,error,*999)
 
     EXITS("cmfe_Equations_LumpingTypeSetObj")
     RETURN
@@ -24271,7 +24270,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the equations \see OPENCMISS_EquationsOutputTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(EQUATIONS_TYPE), POINTER :: equations
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(REGION_TYPE), POINTER :: region
 
@@ -24283,7 +24282,7 @@ CONTAINS
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-    CALL EQUATIONS_OUTPUT_TYPE_GET(equations,outputType,err,error,*999)
+    CALL Equations_OutputTypeGet(equations,outputType,err,error,*999)
 
     EXITS("cmfe_Equations_OutputTypeGetNumber")
     RETURN
@@ -24309,7 +24308,7 @@ CONTAINS
 
     ENTERS("cmfe_Equations_OutputTypeGetObj",err,error,*999)
 
-    CALL EQUATIONS_OUTPUT_TYPE_GET(equations%equations,outputType,err,error,*999)
+    CALL Equations_OutputTypeGet(equations%equations,outputType,err,error,*999)
 
     EXITS("cmfe_Equations_OutputTypeGetObj")
     RETURN
@@ -24333,7 +24332,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: outputType !<The output type of the equations to set \see OPENCMISS_EquationsOutputTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(EQUATIONS_TYPE), POINTER :: equations
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(REGION_TYPE), POINTER :: region
 
@@ -24345,7 +24344,7 @@ CONTAINS
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-    CALL EQUATIONS_OUTPUT_TYPE_SET(equations,outputType,err,error,*999)
+    CALL Equations_OutputTypeSet(equations,outputType,err,error,*999)
 
     EXITS("cmfe_Equations_OutputTypeSetNumber")
     RETURN
@@ -24371,7 +24370,7 @@ CONTAINS
 
     ENTERS("cmfe_Equations_OutputTypeSetObj",err,error,*999)
 
-    CALL EQUATIONS_OUTPUT_TYPE_SET(equations%equations,outputType,err,error,*999)
+    CALL Equations_OutputTypeSet(equations%equations,outputType,err,error,*999)
 
     EXITS("cmfe_Equations_OutputTypeSetObj")
     RETURN
@@ -24395,7 +24394,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: sparsityType !<On return, the sparsity type of the equations \see OPENCMISS_EquationsSparsityTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(EQUATIONS_TYPE), POINTER :: equations
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(REGION_TYPE), POINTER :: region
 
@@ -24407,7 +24406,7 @@ CONTAINS
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-    CALL EQUATIONS_SPARSITY_TYPE_GET(equations,sparsityType,err,error,*999)
+    CALL Equations_SparsityTypeGet(equations,sparsityType,err,error,*999)
     
     EXITS("cmfe_Equations_SparsityTypeGetNumber")
     RETURN
@@ -24433,7 +24432,7 @@ CONTAINS
 
     ENTERS("cmfe_Equations_SparsityTypeGetObj",err,error,*999)
 
-    CALL EQUATIONS_SPARSITY_TYPE_GET(equations%equations,sparsityType,err,error,*999)
+    CALL Equations_SparsityTypeGet(equations%equations,sparsityType,err,error,*999)
 
     EXITS("cmfe_Equations_SparsityTypeGetObj")
     RETURN
@@ -24457,7 +24456,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: sparsityType !<The sparsity type of the equations to set \see OPENCMISS_EquationsSparsityTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(EQUATIONS_TYPE), POINTER :: equations
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(REGION_TYPE), POINTER :: region
 
@@ -24469,7 +24468,7 @@ CONTAINS
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-    CALL EQUATIONS_SPARSITY_TYPE_SET(equations,sparsityType,err,error,*999)
+    CALL Equations_SparsityTypeSet(equations,sparsityType,err,error,*999)
 
     EXITS("cmfe_Equations_SparsityTypeSetNumber")
     RETURN
@@ -24495,7 +24494,7 @@ CONTAINS
 
     ENTERS("cmfe_Equations_SparsityTypeSetObj",err,error,*999)
 
-    CALL EQUATIONS_SPARSITY_TYPE_SET(equations%equations,sparsityType,err,error,*999)
+    CALL Equations_SparsityTypeSet(equations%equations,sparsityType,err,error,*999)
 
     EXITS("cmfe_Equations_SparsityTypeSetObj")
     RETURN
@@ -24519,7 +24518,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On return, the time dependence type of the equations \see OPENCMISS_EquationsTimeDependenceTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(EQUATIONS_TYPE), POINTER :: equations
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(REGION_TYPE), POINTER :: region
 
@@ -24531,7 +24530,7 @@ CONTAINS
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-    CALL EQUATIONS_TIME_DEPENDENCE_TYPE_GET(equations,timeDependenceType,err,error,*999)
+    CALL Equations_TimeDependenceTypeGet(equations,timeDependenceType,err,error,*999)
 
     EXITS("cmfe_Equations_TimeDependenceTypeGetNumber")
     RETURN
@@ -24557,7 +24556,7 @@ CONTAINS
 
     ENTERS("cmfe_Equations_TimeDependenceTypeGetObj",err,error,*999)
 
-    CALL EQUATIONS_TIME_DEPENDENCE_TYPE_GET(equations%equations,timeDependenceType,err,error,*999)
+    CALL Equations_TimeDependenceTypeGet(equations%equations,timeDependenceType,err,error,*999)
 
     EXITS("cmfe_Equations_TimeDependenceTypeGetObj")
     RETURN
@@ -26143,7 +26142,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to start the creation of equations for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(EQUATIONS_TYPE), POINTER :: equations
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(REGION_TYPE), POINTER :: region
 

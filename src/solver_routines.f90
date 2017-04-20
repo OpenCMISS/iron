@@ -621,7 +621,7 @@ MODULE SOLVER_ROUTINES
 
   PUBLIC SOLVER_OPTIMISER_NO_OBJECTIVE,SOLVER_OPTIMISER_ONE_OBJECTIVE,SOLVER_OPTIMISER_MANY_OBJECTIVE
 
-  PUBLIC SOLVER_OPTIMISER_CONTINUOUS_VARIABLES,SOLVER_OPTIMISER_DISCRETE_VARAIBLES
+  PUBLIC SOLVER_OPTIMISER_CONTINUOUS_VARIABLES,SOLVER_OPTIMISER_DISCRETE_VARIABLES
 
   PUBLIC SOLVER_OPTIMISER_DETERMINISTIC_CERTAINTY,SOLVER_OPTIMISER_STOCHASTIC_CERTAINTY
   
@@ -631,7 +631,7 @@ MODULE SOLVER_ROUTINES
   PUBLIC SOLVER_OPTIMISER_GRADIENT_NOT_CALCULATED,SOLVER_OPTIMISER_GRADIENT_EQUATIONS_CALCULATED, &
     & SOLVER_OPTIMISER_GRADIENT_FD_CALCULATED
 
-  PUBLIC SOLVER_OPTIMISER_HESSIAN_NOT_CALCULATED,SOLVER_HESSIAN_GRADIENT_EQUATIONS_CALCULATED, &
+  PUBLIC SOLVER_OPTIMISER_HESSIAN_NOT_CALCULATED,SOLVER_OPTIMISER_HESSIAN_EQUATIONS_CALCULATED, &
     & SOLVER_OPTIMISER_HESSIAN_FD_CALCULATED
 
   PUBLIC SOLVER_SOLUTION_INITIALISE_ZERO,SOLVER_SOLUTION_INITIALISE_CURRENT_FIELD,SOLVER_SOLUTION_INITIALISE_NO_CHANGE
@@ -856,10 +856,12 @@ MODULE SOLVER_ROUTINES
   PUBLIC Solver_NonlinearDivergenceExit
 
   PUBLIC SOLVER_NONLINEAR_TYPE_SET
+
+  PUBLIC Solver_OptimiserMonitor
   
   PUBLIC SOLVER_OUTPUT_TYPE_SET
   
-  PUBLIC SOLVER_SOLVE
+  PUBLIC Solver_Solve
   
   PUBLIC SOLVER_SOLVER_EQUATIONS_GET
 
@@ -1096,8 +1098,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
 
     ENTERS("CELLML_EQUATIONS_INITIALISE",ERR,ERROR,*998)
 
@@ -1120,7 +1122,7 @@ CONTAINS
         
     EXITS("CELLML_EQUATIONS_INITIALISE")
     RETURN
-999 CALL CELLML_EQUATIONS_FINALISE(SOLVER%CELLML_EQUATIONS,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL CELLML_EQUATIONS_FINALISE(SOLVER%CELLML_EQUATIONS,dummyErr,dummyError,*998)
 998 ERRORSEXITS("CELLML_EQUATIONS_INITIALISE",ERR,ERROR)
     RETURN 1
    
@@ -1379,8 +1381,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
 
     ENTERS("SOLVER_CELLML_EVALUATOR_INITIALISE",ERR,ERROR,*998)
 
@@ -1399,7 +1401,7 @@ CONTAINS
         
     EXITS("SOLVER_CELLML_EVALUATOR_INITIALISE")
     RETURN
-999 CALL SOLVER_CELLML_EVALUATOR_FINALISE(SOLVER%CELLML_EVALUATOR_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVER_CELLML_EVALUATOR_FINALISE(SOLVER%CELLML_EVALUATOR_SOLVER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_CELLML_EVALUATOR_INITIALISE",ERR,ERROR)
     RETURN 1
    
@@ -2063,8 +2065,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
     
     ENTERS("SOLVER_DAE_ADAMS_MOULTON_INITIALISE",ERR,ERROR,*998)
 
@@ -2087,7 +2089,7 @@ CONTAINS
          
     EXITS("SOLVER_DAE_ADAMS_MOULTON_INITIALISE")
     RETURN
-999 CALL SOLVER_DAE_ADAMS_MOULTON_FINALISE(DAE_SOLVER%ADAMS_MOULTON_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVER_DAE_ADAMS_MOULTON_FINALISE(DAE_SOLVER%ADAMS_MOULTON_SOLVER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_DAE_ADAMS_MOULTON_INITIALISE",ERR,ERROR)
     RETURN 1
     
@@ -2187,8 +2189,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
     
     ENTERS("SOLVER_DAE_EULER_BACKWARD_INITIALISE",ERR,ERROR,*998)
 
@@ -2211,7 +2213,7 @@ CONTAINS
          
     EXITS("SOLVER_DAE_EULER_BACKWARD_INITIALISE")
     RETURN
-999 CALL SOLVER_DAE_EULER_BACKWARD_FINALISE(EULER_DAE_SOLVER%BACKWARD_EULER_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVER_DAE_EULER_BACKWARD_FINALISE(EULER_DAE_SOLVER%BACKWARD_EULER_SOLVER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_DAE_EULER_BACKWARD_INITIALISE",ERR,ERROR)
     RETURN 1
    
@@ -2312,8 +2314,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
     
     ENTERS("SOLVER_DAE_EULER_FORWARD_INITIALISE",ERR,ERROR,*998)
 
@@ -2336,7 +2338,7 @@ CONTAINS
          
     EXITS("SOLVER_DAE_EULER_FORWARD_INITIALISE")
     RETURN
-999 CALL SOLVER_DAE_EULER_FORWARD_FINALISE(EULER_DAE_SOLVER%FORWARD_EULER_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVER_DAE_EULER_FORWARD_FINALISE(EULER_DAE_SOLVER%FORWARD_EULER_SOLVER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_DAE_EULER_FORWARD_INITIALISE",ERR,ERROR)
     RETURN 1
    
@@ -2900,8 +2902,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
     
     ENTERS("SOLVER_DAE_EULER_IMPROVED_INITIALISE",ERR,ERROR,*998)
 
@@ -2924,7 +2926,7 @@ CONTAINS
          
     EXITS("SOLVER_DAE_EULER_IMPROVED_INITIALISE")
     RETURN
-999 CALL SOLVER_DAE_EULER_IMPROVED_FINALISE(EULER_DAE_SOLVER%IMPROVED_EULER_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVER_DAE_EULER_IMPROVED_FINALISE(EULER_DAE_SOLVER%IMPROVED_EULER_SOLVER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_DAE_EULER_IMPROVED_INITIALISE",ERR,ERROR)
     RETURN 1
    
@@ -2970,8 +2972,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
     
     ENTERS("SOLVER_DAE_EULER_INITIALISE",ERR,ERROR,*998)
 
@@ -2997,7 +2999,7 @@ CONTAINS
          
     EXITS("SOLVER_DAE_EULER_INITIALISE")
     RETURN
-999 CALL SOLVER_DAE_EULER_FINALISE(DAE_SOLVER%EULER_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVER_DAE_EULER_FINALISE(DAE_SOLVER%EULER_SOLVER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_DAE_EULER_INITIALISE",ERR,ERROR)
     RETURN 1
    
@@ -3370,8 +3372,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
 
     ENTERS("SOLVER_DAE_INITIALISE",ERR,ERROR,*998)
 
@@ -3406,7 +3408,7 @@ CONTAINS
         
     EXITS("SOLVER_DAE_INITIALISE")
     RETURN
-999 CALL SOLVER_DAE_FINALISE(SOLVER%DAE_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVER_DAE_FINALISE(SOLVER%DAE_SOLVER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_DAE_INITIALISE",ERR,ERROR)
     RETURN 1
    
@@ -3722,8 +3724,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
     
     ENTERS("SOLVER_DAE_BDF_INITIALISE",ERR,ERROR,*998)
 
@@ -3745,7 +3747,7 @@ CONTAINS
          
     EXITS("SOLVER_DAE_BDF_INITIALISE")
     RETURN
-999 CALL SOLVER_DAE_BDF_FINALISE(DAE_SOLVER%BDF_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVER_DAE_BDF_FINALISE(DAE_SOLVER%BDF_SOLVER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_DAE_BDF_INITIALISE",ERR,ERROR)
     RETURN 1
     
@@ -3979,8 +3981,8 @@ CONTAINS
                       CALL Petsc_TSSetExactFinalTime(ts,.TRUE.,ERR,ERROR,*999)
                       
                       IF(DIAGNOSTICS1) THEN
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  DAE START TIME = ",START_TIME,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  DAE END TIME = ",END_TIME,ERR,ERROR,*999)
+                        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  DAE START TIME = ",START_TIME,ERR,ERROR,*999)
+                        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  DAE END TIME = ",END_TIME,ERR,ERROR,*999)
                       ENDIF
                       
                       !set rhs function and pass through the cellml model context 
@@ -3989,7 +3991,7 @@ CONTAINS
                       
                       CALL Petsc_TSSolve(TS,PETSC_CURRENT_STATES,FINALSOLVEDTIME,ERR,ERROR,*999) 
                       IF(DIAGNOSTICS1) THEN
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  FINAL SOLVED TIME = ", &
+                        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  FINAL SOLVED TIME = ", &
                           & FINALSOLVEDTIME,ERR,ERROR,*999)
                       ENDIF
                       
@@ -4216,8 +4218,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
     
     ENTERS("SOLVER_DAE_CRANK_NICOLSON_INITIALISE",ERR,ERROR,*998)
 
@@ -4240,7 +4242,7 @@ CONTAINS
          
     EXITS("SOLVER_DAE_CRANK_NICOLSON_INITIALISE")
     RETURN
-999 CALL SOLVER_DAE_CRANK_NICOLSON_FINALISE(DAE_SOLVER%CRANK_NICOLSON_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVER_DAE_CRANK_NICOLSON_FINALISE(DAE_SOLVER%CRANK_NICOLSON_SOLVER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_DAE_CRANK_NICOLSON_INITIALISE",ERR,ERROR)
     RETURN 1
     
@@ -4312,8 +4314,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
     
     ENTERS("SOLVER_DAE_EXTERNAL_INITIALISE",ERR,ERROR,*998)
 
@@ -4335,7 +4337,7 @@ CONTAINS
          
     EXITS("SOLVER_DAE_EXTERNAL_INITIALISE")
     RETURN
-999 CALL SOLVER_DAE_EXTERNAL_FINALISE(DAE_SOLVER%EXTERNAL_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVER_DAE_EXTERNAL_FINALISE(DAE_SOLVER%EXTERNAL_SOLVER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_DAE_EXTERNAL_INITIALISE",ERR,ERROR)
     RETURN 1
     
@@ -4896,8 +4898,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
     
     ENTERS("SOLVER_DAE_RUNGE_KUTTA_INITIALISE",ERR,ERROR,*998)
 
@@ -4919,7 +4921,7 @@ CONTAINS
          
     EXITS("SOLVER_DAE_RUNGE_KUTTA_INITIALISE")
     RETURN
-999 CALL SOLVER_DAE_RUNGE_KUTTA_FINALISE(DAE_SOLVER%RUNGE_KUTTA_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVER_DAE_RUNGE_KUTTA_FINALISE(DAE_SOLVER%RUNGE_KUTTA_SOLVER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_DAE_RUNGE_KUTTA_INITIALISE",ERR,ERROR)
     RETURN 1
     
@@ -4991,8 +4993,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
     
     ENTERS("SOLVER_DAE_RUSH_LARSON_INITIALISE",ERR,ERROR,*998)
 
@@ -5014,7 +5016,7 @@ CONTAINS
          
     EXITS("SOLVER_DAE_RUSH_LARSON_INITIALISE")
     RETURN
-999 CALL SOLVER_DAE_RUSH_LARSON_FINALISE(DAE_SOLVER%RUSH_LARSON_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVER_DAE_RUSH_LARSON_FINALISE(DAE_SOLVER%RUSH_LARSON_SOLVER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_DAE_RUSH_LARSON_INITIALISE",ERR,ERROR)
     RETURN 1
     
@@ -5092,22 +5094,22 @@ CONTAINS
             & TRIM(NumberToVString(DAE_SOLVER%DAE_SOLVE_TYPE,"*",ERR,ERROR))//" is invalid."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
-        IF(SOLVER%OUTPUT_TYPE>SOLVER_SOLVER_OUTPUT) THEN
+        IF(SOLVER%outputType>SOLVER_SOLVER_OUTPUT) THEN
 #ifdef TAUPROF
            CALL TAU_STATIC_PHASE_START("Solution Output Phase")
 #endif
            CELLML_EQUATIONS=>SOLVER%CELLML_EQUATIONS
            IF(ASSOCIATED(CELLML_EQUATIONS)) THEN
-             CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
-             CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Solver State vectors:",ERR,ERROR,*999)
-             CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Number of CellML environments = ",CELLML_EQUATIONS% &
+             CALL WriteString(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
+             CALL WriteString(GENERAL_OUTPUT_TYPE,"Solver State vectors:",ERR,ERROR,*999)
+             CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of CellML environments = ",CELLML_EQUATIONS% &
                & NUMBER_OF_CELLML_ENVIRONMENTS,ERR,ERROR,*999)
              DO cellml_idx=1,CELLML_EQUATIONS%NUMBER_OF_CELLML_ENVIRONMENTS
                CELLML=>CELLML_EQUATIONS%CELLML_ENVIRONMENTS(cellml_idx)%PTR
                IF(ASSOCIATED(CELLML)) THEN
                  CELLML_STATE_FIELD=>CELLML%STATE_FIELD
                  IF(ASSOCIATED(CELLML_STATE_FIELD)) THEN
-                   CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"CellML index : ",cellml_idx,ERR,ERROR,*999)
+                   CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"CellML index : ",cellml_idx,ERR,ERROR,*999)
                    CALL FIELD_PARAMETER_SET_OUTPUT(GENERAL_OUTPUT_TYPE,CELLML_STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
                      & FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
                  ELSE
@@ -5408,7 +5410,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: DYNAMIC_VARIABLE_TYPE,equations_matrix_idx,equations_set_idx,LINEAR_LIBRARY_TYPE,NONLINEAR_LIBRARY_TYPE
     INTEGER(INTG) :: VariableType=0
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
     TYPE(EQUATIONS_MAPPING_DYNAMIC_TYPE), POINTER :: DYNAMIC_MAPPING
     TYPE(EQUATIONS_MAPPING_NONLINEAR_TYPE), POINTER :: NonlinearMapping
@@ -5446,11 +5448,11 @@ CONTAINS
                 DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                   EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)%EQUATIONS
                   IF(ASSOCIATED(EQUATIONS)) THEN
-                    EQUATIONS_SET=>EQUATIONS%EQUATIONS_SET
+                    EQUATIONS_SET=>equations%equationsSet
                     IF(ASSOCIATED(EQUATIONS_SET)) THEN
                       DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
                       IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-                        EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
+                        EQUATIONS_MAPPING=>EQUATIONS%equationsMapping
                         IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
                           DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING
                           IF(ASSOCIATED(DYNAMIC_MAPPING)) THEN
@@ -5485,7 +5487,7 @@ CONTAINS
                               
                               
                               !Create the dynamic matrices temporary vector for matrix-vector products
-                              EQUATIONS_MATRICES=>EQUATIONS%EQUATIONS_MATRICES
+                              EQUATIONS_MATRICES=>EQUATIONS%equationsMatrices
                               IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
                                 DYNAMIC_MATRICES=>EQUATIONS_MATRICES%DYNAMIC_MATRICES
                                 IF(ASSOCIATED(DYNAMIC_MATRICES)) THEN
@@ -5532,7 +5534,7 @@ CONTAINS
                             !We now allow for static equation sets for dynamic solvers to be able to couple static eqs - dynamic eqs
                             NonlinearMapping=>EQUATIONS_MAPPING%NONLINEAR_MAPPING
                             IF(ASSOCIATED(NonlinearMapping)) THEN
-                              IF(DYNAMIC_SOLVER%LINEARITY==SOLVER_DYNAMIC_NONLINEAR) THEN
+                              IF(DYNAMIC_SOLVER%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
                                 !Default to first variable type for now
                                 ResidualVariable=>NonlinearMapping%RESIDUAL_VARIABLES(1)%PTR
                                 IF(ASSOCIATED(ResidualVariable)) THEN
@@ -5542,7 +5544,7 @@ CONTAINS
                                 ENDIF
                               ELSE
                                 LOCAL_ERROR="The specified dynamic solver linearity type of "// &
-                                  & TRIM(NumberToVString(DYNAMIC_SOLVER%LINEARITY,"*",ERR,ERROR))// &
+                                  & TRIM(NumberToVString(DYNAMIC_SOLVER%linearity,"*",ERR,ERROR))// &
                                   & " is invalid for a nonlinear equations mapping."
                                 CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                               ENDIF
@@ -5567,7 +5569,7 @@ CONTAINS
                           LINEAR_MAPPING=>EQUATIONS_MAPPING%LINEAR_MAPPING
                           IF(ASSOCIATED(LINEAR_MAPPING)) THEN
                             !If there are any linear matrices create temporary vector for matrix-vector products
-                            EQUATIONS_MATRICES=>EQUATIONS%EQUATIONS_MATRICES
+                            EQUATIONS_MATRICES=>EQUATIONS%equationsMatrices
                             IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
                               LINEAR_MATRICES=>EQUATIONS_MATRICES%LINEAR_MATRICES
                               IF(ASSOCIATED(LINEAR_MATRICES)) THEN
@@ -5617,7 +5619,7 @@ CONTAINS
                   ENDIF
                 ENDDO !equations_set_idx
                 !Create the solver matrices and vectors
-                IF(DYNAMIC_SOLVER%LINEARITY==SOLVER_DYNAMIC_LINEAR) THEN
+                IF(DYNAMIC_SOLVER%linearity==SOLVER_DYNAMIC_LINEAR) THEN
                   LINEAR_SOLVER=>DYNAMIC_SOLVER%LINEAR_SOLVER
                   IF(ASSOCIATED(LINEAR_SOLVER)) THEN
                     NULLIFY(SOLVER_MATRICES)
@@ -5628,7 +5630,7 @@ CONTAINS
                       CALL SOLVER_MATRICES_STORAGE_TYPE_SET(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE], &
                         & ERR,ERROR,*999)
                     ELSE
-                      SELECT CASE(SOLVER_EQUATIONS%SPARSITY_TYPE)
+                      SELECT CASE(SOLVER_EQUATIONS%sparsityType)
                       CASE(SOLVER_SPARSE_MATRICES)
                         CALL SOLVER_MATRICES_STORAGE_TYPE_SET(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
                           & ERR,ERROR,*999)
@@ -5637,7 +5639,7 @@ CONTAINS
                           & ERR,ERROR,*999)
                       CASE DEFAULT
                         LOCAL_ERROR="The specified solver equations sparsity type of "// &
-                          & TRIM(NumberToVString(SOLVER_EQUATIONS%SPARSITY_TYPE,"*",ERR,ERROR))// &
+                          & TRIM(NumberToVString(SOLVER_EQUATIONS%sparsityType,"*",ERR,ERROR))// &
                           & " is invalid."
                         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                       END SELECT
@@ -5650,7 +5652,7 @@ CONTAINS
                   ELSE
                     CALL FlagError("Dynamic solver linear solver is not associated.",ERR,ERROR,*999)
                   ENDIF
-                ELSE IF(DYNAMIC_SOLVER%LINEARITY==SOLVER_DYNAMIC_NONLINEAR) THEN
+                ELSE IF(DYNAMIC_SOLVER%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
                   NONLINEAR_SOLVER=>DYNAMIC_SOLVER%NONLINEAR_SOLVER
                   IF(ASSOCIATED(NONLINEAR_SOLVER)) THEN
                     NULLIFY(SOLVER_MATRICES)
@@ -5661,7 +5663,7 @@ CONTAINS
                       CALL SOLVER_MATRICES_STORAGE_TYPE_SET(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE], &
                         & ERR,ERROR,*999)
                     ELSE
-                      SELECT CASE(SOLVER_EQUATIONS%SPARSITY_TYPE)
+                      SELECT CASE(SOLVER_EQUATIONS%sparsityType)
                       CASE(SOLVER_SPARSE_MATRICES)
                         CALL SOLVER_MATRICES_STORAGE_TYPE_SET(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
                           & ERR,ERROR,*999)
@@ -5670,7 +5672,7 @@ CONTAINS
                           & ERR,ERROR,*999)
                       CASE DEFAULT
                         LOCAL_ERROR="The specified solver equations sparsity type of "// &
-                          & TRIM(NumberToVString(SOLVER_EQUATIONS%SPARSITY_TYPE,"*",ERR,ERROR))// &
+                          & TRIM(NumberToVString(SOLVER_EQUATIONS%sparsityType,"*",ERR,ERROR))// &
                           & " is invalid."
                         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                       END SELECT
@@ -5853,7 +5855,7 @@ CONTAINS
     ENTERS("SOLVER_DYNAMIC_FINALISE",ERR,ERROR,*999)
     IF(ASSOCIATED(DYNAMIC_SOLVER)) THEN
       IF(ALLOCATED(DYNAMIC_SOLVER%THETA)) THEN
-!         CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Dynamic solver - theta = ",DYNAMIC_SOLVER%THETA(1), &
+!         CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Dynamic solver - theta = ",DYNAMIC_SOLVER%THETA(1), &
 !         & ERR,ERROR,*999)
         DEALLOCATE(DYNAMIC_SOLVER%THETA)
       ENDIF
@@ -6013,7 +6015,7 @@ CONTAINS
       IF(SOLVER%SOLVER_FINISHED) THEN
         DYNAMIC_SOLVER=>SOLVER%DYNAMIC_SOLVER
         IF(ASSOCIATED(DYNAMIC_SOLVER)) THEN
-          LINEARITY_TYPE=DYNAMIC_SOLVER%LINEARITY
+          LINEARITY_TYPE=DYNAMIC_SOLVER%linearity
         ELSE
           CALL FlagError("Dynamic solver is not associated.",ERR,ERROR,*999)
         ENDIF
@@ -6065,7 +6067,7 @@ CONTAINS
             ALLOCATE(DYNAMIC_SOLVER%LINEAR_SOLVER,STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate solver linear solver.",ERR,ERROR,*999)
             NULLIFY(DYNAMIC_SOLVER%LINEAR_SOLVER%SOLVERS)
-            DYNAMIC_SOLVER%LINEARITY=SOLVER_DYNAMIC_LINEAR
+            DYNAMIC_SOLVER%linearity=SOLVER_DYNAMIC_LINEAR
             CALL SOLVER_INITIALISE_PTR(DYNAMIC_SOLVER%LINEAR_SOLVER,ERR,ERROR,*999)
             CALL SOLVER_LINEAR_INITIALISE(DYNAMIC_SOLVER%LINEAR_SOLVER,ERR,ERROR,*999)
             CALL SOLVER_LINKED_SOLVER_ADD(SOLVER,DYNAMIC_SOLVER%LINEAR_SOLVER,SOLVER_LINEAR_TYPE,ERR,ERROR,*999)
@@ -6078,7 +6080,7 @@ CONTAINS
             ALLOCATE(DYNAMIC_SOLVER%NONLINEAR_SOLVER,STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate solver nonlinear solver.",ERR,ERROR,*999)
             NULLIFY(DYNAMIC_SOLVER%NONLINEAR_SOLVER%SOLVERS)
-            DYNAMIC_SOLVER%LINEARITY=SOLVER_DYNAMIC_NONLINEAR
+            DYNAMIC_SOLVER%linearity=SOLVER_DYNAMIC_NONLINEAR
             CALL SOLVER_INITIALISE_PTR(DYNAMIC_SOLVER%NONLINEAR_SOLVER,ERR,ERROR,*999)
             CALL SOLVER_NONLINEAR_INITIALISE(DYNAMIC_SOLVER%NONLINEAR_SOLVER,ERR,ERROR,*999)
             CALL SOLVER_LINKED_SOLVER_ADD(SOLVER,DYNAMIC_SOLVER%NONLINEAR_SOLVER,SOLVER_NONLINEAR_TYPE,ERR,ERROR,*999)
@@ -6219,7 +6221,7 @@ CONTAINS
     REAL(DP) :: DELTA_T,FIRST_MEAN_PREDICTION_FACTOR, SECOND_MEAN_PREDICTION_FACTOR,THIRD_MEAN_PREDICTION_FACTOR
     REAL(DP) :: FIRST_PREDICTION_FACTOR, SECOND_PREDICTION_FACTOR,THIRD_PREDICTION_FACTOR
     TYPE(DYNAMIC_SOLVER_TYPE), POINTER :: DYNAMIC_SOLVER
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
     TYPE(EQUATIONS_MAPPING_DYNAMIC_TYPE), POINTER :: DYNAMIC_MAPPING
     TYPE(EQUATIONS_MAPPING_NONLINEAR_TYPE), POINTER :: NONLINEAR_MAPPING
@@ -6277,9 +6279,9 @@ CONTAINS
                     DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
                     EQUATIONS=>EQUATIONS_SET%EQUATIONS
                     IF(ASSOCIATED(EQUATIONS)) THEN
-                      EQUATIONS_MATRICES=>EQUATIONS%EQUATIONS_MATRICES
+                      EQUATIONS_MATRICES=>EQUATIONS%equationsMatrices
                       IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-                        EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
+                        EQUATIONS_MAPPING=>EQUATIONS%equationsMapping
                         IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
                           DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING
                           IF(ASSOCIATED(DYNAMIC_MAPPING)) THEN
@@ -6291,7 +6293,7 @@ CONTAINS
                               !Copy the current field values to the previous values
                               CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                                 & FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,ERR,ERROR,*999)
-                              IF(DYNAMIC_SOLVER%LINEARITY==SOLVER_DYNAMIC_NONLINEAR) THEN
+                              IF(DYNAMIC_SOLVER%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
                                 CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                   & FIELD_RESIDUAL_SET_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE,1.0_DP, &
                                   & ERR,ERROR,*999)
@@ -6303,7 +6305,7 @@ CONTAINS
                                 CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                   & FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,1.0_DP, & 
                                   & ERR,ERROR,*999)
-                                IF(DYNAMIC_SOLVER%LINEARITY==SOLVER_DYNAMIC_NONLINEAR) THEN
+                                IF(DYNAMIC_SOLVER%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
                                   !The predicted displacement is just the current displacement
                                   CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                     & FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,1.0_DP, &
@@ -6318,7 +6320,7 @@ CONTAINS
                                 !The mean predicted velocity is the current velocity
                                 CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                   & FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,1.0_DP,ERR,ERROR,*999)
-                                IF(DYNAMIC_SOLVER%LINEARITY==SOLVER_DYNAMIC_NONLINEAR) THEN
+                                IF(DYNAMIC_SOLVER%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
                                   !The predicted displacement comes from the previous displacement and the previous velocity
                                   CALL FIELD_PARAMETER_SETS_ADD(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                     & [FIRST_PREDICTION_FACTOR,SECOND_PREDICTION_FACTOR], &
@@ -6342,7 +6344,7 @@ CONTAINS
                                 CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                   & FIELD_PREVIOUS_ACCELERATION_SET_TYPE,FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE,1.0_DP, &
                                   & ERR,ERROR,*999)
-                                IF(DYNAMIC_SOLVER%LINEARITY==SOLVER_DYNAMIC_NONLINEAR) THEN
+                                IF(DYNAMIC_SOLVER%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
                                   !The predicted displacement comes from the previous displacement and the previous
                                   !velocity and acceleration
                                   CALL FIELD_PARAMETER_SETS_ADD(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
@@ -6369,7 +6371,7 @@ CONTAINS
                                 !Copy the current field values to the previous values
                                 CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                                   & FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,ERR,ERROR,*999)
-                                IF(DYNAMIC_SOLVER%LINEARITY==SOLVER_DYNAMIC_NONLINEAR) THEN
+                                IF(DYNAMIC_SOLVER%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
                                   CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                     & FIELD_RESIDUAL_SET_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE,1.0_DP, &
                                     & ERR,ERROR,*999)
@@ -6381,7 +6383,7 @@ CONTAINS
                                   CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                     & FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,1.0_DP, & 
                                     & ERR,ERROR,*999)
-                                  IF(DYNAMIC_SOLVER%LINEARITY==SOLVER_DYNAMIC_NONLINEAR) THEN
+                                  IF(DYNAMIC_SOLVER%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
                                     !The predicted displacement is just the current displacement
                                     CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                       & FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,1.0_DP, &
@@ -6396,7 +6398,7 @@ CONTAINS
                                   !The mean predicted velocity is the current velocity
                                   CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                     & FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,1.0_DP,ERR,ERROR,*999)
-                                  IF(DYNAMIC_SOLVER%LINEARITY==SOLVER_DYNAMIC_NONLINEAR) THEN
+                                  IF(DYNAMIC_SOLVER%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
                                     !The predicted displacement comes from the previous displacement and the previous velocity
                                     CALL FIELD_PARAMETER_SETS_ADD(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                       & [FIRST_PREDICTION_FACTOR,SECOND_PREDICTION_FACTOR], &
@@ -6584,11 +6586,11 @@ CONTAINS
 
     IF(ASSOCIATED(DAE_SOLVER)) THEN
         
-      CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
-      CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Differential-algebraic equations solve monitor: ",ERR,ERROR,*999)
-      CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Number of steps = ",STEPS,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Current time    = ",TIME,ERR,ERROR,*999)
+      CALL WriteString(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
+      CALL WriteString(GENERAL_OUTPUT_TYPE,"Differential-algebraic equations solve monitor: ",ERR,ERROR,*999)
+      CALL WriteString(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
+      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of steps = ",STEPS,ERR,ERROR,*999)
+      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Current time    = ",TIME,ERR,ERROR,*999)
         
     ELSE
       CALL FlagError("Differential-algebraic equations solver is not associated.",ERR,ERROR,*999)
@@ -6913,7 +6915,7 @@ CONTAINS
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
           
-          IF(SOLVER%OUTPUT_TYPE>=SOLVER_SOLVER_OUTPUT) THEN
+          IF(SOLVER%outputType>=SOLVER_SOLVER_OUTPUT) THEN
             
 #ifdef TAUPROF
             CALL TAU_STATIC_PHASE_START("Solution Output Phase")
@@ -6922,12 +6924,12 @@ CONTAINS
             IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
               SOLVER_MATRICES=>SOLVER_EQUATIONS%SOLVER_MATRICES
               IF(ASSOCIATED(SOLVER_MATRICES)) THEN
-                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
-                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Solver solution vectors:",ERR,ERROR,*999)
-                CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Number of solution vectors = ",SOLVER_MATRICES%NUMBER_OF_MATRICES, &
+                CALL WriteString(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
+                CALL WriteString(GENERAL_OUTPUT_TYPE,"Solver solution vectors:",ERR,ERROR,*999)
+                CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of solution vectors = ",SOLVER_MATRICES%NUMBER_OF_MATRICES, &
                   & ERR,ERROR,*999)
                 DO solver_matrix_idx=1,SOLVER_MATRICES%NUMBER_OF_MATRICES
-                  CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Solution vector for solver matrix : ",solver_matrix_idx, &
+                  CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solution vector for solver matrix : ",solver_matrix_idx, &
                     & ERR,ERROR,*999)
                   CALL DISTRIBUTED_VECTOR_OUTPUT(GENERAL_OUTPUT_TYPE,SOLVER_MATRICES%MATRICES(solver_matrix_idx)%PTR% &
                     & SOLVER_VECTOR,ERR,ERROR,*999)
@@ -7250,8 +7252,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
 
     ENTERS("SOLVER_EIGENPROBLEM_INITIALISE",ERR,ERROR,*998)
 
@@ -7271,7 +7273,7 @@ CONTAINS
         
     EXITS("SOLVER_EIGENPROBLEM_INITIALISE")
     RETURN
-999 CALL SOLVER_EIGENPROBLEM_FINALISE(SOLVER%EIGENPROBLEM_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVER_EIGENPROBLEM_FINALISE(SOLVER%EIGENPROBLEM_SOLVER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_EIGENPROBLEM_INITIALISE",ERR,ERROR)
     RETURN 1
    
@@ -7547,7 +7549,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
     TYPE(VARYING_STRING) :: LOCAL_ERROR
@@ -7572,16 +7574,16 @@ CONTAINS
                   TIME_COMPATIBLE=.TRUE.
                   LINEARITY_COMPATIBLE=.TRUE.
                   !Check solver equations and equations set time dependence is compatible
-                  SELECT CASE(SOLVER_EQUATIONS%TIME_DEPENDENCE)
+                  SELECT CASE(SOLVER_EQUATIONS%timeDependence)
                   CASE(SOLVER_EQUATIONS_STATIC,SOLVER_EQUATIONS_QUASISTATIC)
-                    SELECT CASE(EQUATIONS%TIME_DEPENDENCE)
+                    SELECT CASE(EQUATIONS%timeDependence)
                     CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC)
                       !OK
                     CASE DEFAULT
                       TIME_COMPATIBLE=.FALSE.
                     END SELECT
                   CASE(SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC)
-                    SELECT CASE(EQUATIONS%TIME_DEPENDENCE)
+                    SELECT CASE(EQUATIONS%timeDependence)
 !                    
                     CASE(EQUATIONS_STATIC)
                       !OK for now, just to test!!!
@@ -7597,7 +7599,7 @@ CONTAINS
                       TIME_COMPATIBLE=.FALSE.
                     END SELECT
                   CASE(SOLVER_EQUATIONS_SECOND_ORDER_DYNAMIC)
-                    SELECT CASE(EQUATIONS%TIME_DEPENDENCE)
+                    SELECT CASE(EQUATIONS%timeDependence)
                     CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC,EQUATIONS_FIRST_ORDER_DYNAMIC)
                       !Not implemented, this needs to be checked to see that it works
                       TIME_COMPATIBLE=.FALSE.
@@ -7612,14 +7614,14 @@ CONTAINS
                   CASE DEFAULT
                     TIME_COMPATIBLE=.FALSE.
                     LOCAL_ERROR="Invalid time dependence for solver equations, "// &
-                      & TRIM(NumberToVString(SOLVER_EQUATIONS%TIME_DEPENDENCE,"*",ERR,ERROR))//"."
+                      & TRIM(NumberToVString(SOLVER_EQUATIONS%timeDependence,"*",ERR,ERROR))//"."
                     CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   END SELECT
                   IF (.NOT. TIME_COMPATIBLE) THEN
                     LOCAL_ERROR="Invalid equations set up. The time dependence of the equations set to add ("// &
-                      & TRIM(NumberToVString(EQUATIONS%TIME_DEPENDENCE,"*",ERR,ERROR))// &
+                      & TRIM(NumberToVString(EQUATIONS%timeDependence,"*",ERR,ERROR))// &
                       & ") is not compatible with the solver equations time dependence ("// &
-                      & TRIM(NumberToVString(SOLVER_EQUATIONS%TIME_DEPENDENCE,"*",ERR,ERROR))//")."
+                      & TRIM(NumberToVString(SOLVER_EQUATIONS%timeDependence,"*",ERR,ERROR))//")."
                     CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                   !Check solver equations and equations set linearity is compatible
@@ -7646,9 +7648,9 @@ CONTAINS
                   END SELECT
                   IF (.NOT. LINEARITY_COMPATIBLE) THEN
                     LOCAL_ERROR="Invalid equations set up. The linearity of the equations set to add ("// &
-                      & TRIM(NumberToVString(EQUATIONS%TIME_DEPENDENCE,"*",ERR,ERROR))// &
+                      & TRIM(NumberToVString(EQUATIONS%timeDependence,"*",ERR,ERROR))// &
                       & ") is not compatible with the solver equations linearity ("// &
-                      & TRIM(NumberToVString(SOLVER_EQUATIONS%TIME_DEPENDENCE,"*",ERR,ERROR))//")."
+                      & TRIM(NumberToVString(SOLVER_EQUATIONS%timeDependence,"*",ERR,ERROR))//")."
                     CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                   IF (TIME_COMPATIBLE .AND. LINEARITY_COMPATIBLE) THEN
@@ -7720,8 +7722,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
 
     ENTERS("SOLVER_EQUATIONS_INITIALISE",ERR,ERROR,*998)
 
@@ -7733,7 +7735,7 @@ CONTAINS
         IF(ERR/=0) CALL FlagError("Could not allocate solver equations.",ERR,ERROR,*999)
         SOLVER%SOLVER_EQUATIONS%SOLVER=>SOLVER
         SOLVER%SOLVER_EQUATIONS%SOLVER_EQUATIONS_FINISHED=.FALSE.
-        SOLVER%SOLVER_EQUATIONS%SPARSITY_TYPE=SOLVER_SPARSE_MATRICES
+        SOLVER%SOLVER_EQUATIONS%sparsityType=SOLVER_SPARSE_MATRICES
         NULLIFY(SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING)
         NULLIFY(SOLVER%SOLVER_EQUATIONS%SOLVER_MATRICES)
         NULLIFY(SOLVER%SOLVER_EQUATIONS%BOUNDARY_CONDITIONS)
@@ -7744,7 +7746,7 @@ CONTAINS
         
     EXITS("SOLVER_EQUATIONS_INITIALISE")
     RETURN
-999 CALL SOLVER_EQUATIONS_FINALISE(SOLVER%SOLVER_EQUATIONS,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVER_EQUATIONS_FINALISE(SOLVER%SOLVER_EQUATIONS,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_EQUATIONS_INITIALISE",ERR,ERROR)
     RETURN 1
    
@@ -7998,9 +8000,9 @@ CONTAINS
 !!TODO: Maybe set the sparsity in the different types of solvers. e.g., a sparse integrator doesn't mean much.
             SELECT CASE(SPARSITY_TYPE)
             CASE(SOLVER_SPARSE_MATRICES)
-              SOLVER_EQUATIONS%SPARSITY_TYPE=SOLVER_SPARSE_MATRICES
+              SOLVER_EQUATIONS%sparsityType=SOLVER_SPARSE_MATRICES
             CASE(SOLVER_FULL_MATRICES)
-              SOLVER_EQUATIONS%SPARSITY_TYPE=SOLVER_FULL_MATRICES
+              SOLVER_EQUATIONS%sparsityType=SOLVER_FULL_MATRICES
             CASE DEFAULT
               LOCAL_ERROR="The specified solver equations sparsity type of "// &
                 & TRIM(NumberToVString(SPARSITY_TYPE,"*",ERR,ERROR))//" is invalid."
@@ -8051,13 +8053,13 @@ CONTAINS
           ELSE
             SELECT CASE(TIME_DEPENDENCE_TYPE)
             CASE(SOLVER_EQUATIONS_STATIC)
-              SOLVER_EQUATIONS%TIME_DEPENDENCE=SOLVER_EQUATIONS_STATIC
+              SOLVER_EQUATIONS%timeDependence=SOLVER_EQUATIONS_STATIC
             CASE(SOLVER_EQUATIONS_QUASISTATIC)
-              SOLVER_EQUATIONS%TIME_DEPENDENCE=SOLVER_EQUATIONS_QUASISTATIC
+              SOLVER_EQUATIONS%timeDependence=SOLVER_EQUATIONS_QUASISTATIC
             CASE(SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC)
-              SOLVER_EQUATIONS%TIME_DEPENDENCE=SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC
+              SOLVER_EQUATIONS%timeDependence=SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC
             CASE(SOLVER_EQUATIONS_SECOND_ORDER_DYNAMIC)
-              SOLVER_EQUATIONS%TIME_DEPENDENCE=SOLVER_EQUATIONS_SECOND_ORDER_DYNAMIC
+              SOLVER_EQUATIONS%timeDependence=SOLVER_EQUATIONS_SECOND_ORDER_DYNAMIC
             CASE DEFAULT
               LOCAL_ERROR="The specified solver equations time dependence type of "// &
                 & TRIM(NumberToVString(TIME_DEPENDENCE_TYPE,"*",ERR,ERROR))//" is invalid."
@@ -8990,8 +8992,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR,LOCAL_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError,LOCAL_ERROR
     
     ENTERS("SOLVER_INITIALISE",ERR,ERROR,*998)
 
@@ -9025,7 +9027,7 @@ CONTAINS
         
     EXITS("SOLVER_INITIALISE")
     RETURN
-999 CALL SOLVER_FINALISE(SOLVERS%SOLVERS(SOLVER_INDEX)%PTR,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVER_FINALISE(SOLVERS%SOLVERS(SOLVER_INDEX)%PTR,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_INITIALISE",ERR,ERROR)
     RETURN 1
    
@@ -9057,7 +9059,7 @@ CONTAINS
       SOLVER%NUMBER_OF_LINKED_SOLVERS=0
       SOLVER%SOLVER_FINISHED=.FALSE.
       SOLVER%LABEL=""
-      SOLVER%OUTPUT_TYPE=SOLVER_NO_OUTPUT
+      SOLVER%outputType=SOLVER_NO_OUTPUT
       NULLIFY(SOLVER%LINEAR_SOLVER)
       NULLIFY(SOLVER%NONLINEAR_SOLVER)
       NULLIFY(SOLVER%DYNAMIC_SOLVER)
@@ -9641,7 +9643,7 @@ CONTAINS
                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 END SELECT
 
-                SELECT CASE(SOLVER_EQUATIONS%SPARSITY_TYPE)
+                SELECT CASE(SOLVER_EQUATIONS%sparsityType)
                 CASE(SOLVER_SPARSE_MATRICES)
                   CALL SOLVER_MATRICES_STORAGE_TYPE_SET(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
                     & ERR,ERROR,*999)
@@ -9650,7 +9652,7 @@ CONTAINS
                     & ERR,ERROR,*999)
                 CASE DEFAULT
                   LOCAL_ERROR="The specified solver equations sparsity type of "// &
-                    & TRIM(NumberToVString(SOLVER_EQUATIONS%SPARSITY_TYPE,"*",ERR,ERROR))// &
+                    & TRIM(NumberToVString(SOLVER_EQUATIONS%sparsityType,"*",ERR,ERROR))// &
                     & " is invalid."
                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 END SELECT
@@ -9678,7 +9680,7 @@ CONTAINS
                     CALL Petsc_KSPSetOperators(LINEAR_DIRECT_SOLVER%KSP,SOLVER_MATRIX%PETSC%MATRIX,SOLVER_MATRIX%PETSC%MATRIX, &
                       & ERR,ERROR,*999)
                     !Check that the solver supports the matrix sparsity type
-                    SELECT CASE(SOLVER_EQUATIONS%SPARSITY_TYPE)
+                    SELECT CASE(SOLVER_EQUATIONS%sparsityType)
                     CASE(SOLVER_FULL_MATRICES)
                       SELECT CASE(LINEAR_DIRECT_SOLVER%SOLVER_LIBRARY)
                       CASE(SOLVER_MUMPS_LIBRARY,SOLVER_SUPERLU_LIBRARY,SOLVER_PASTIX_LIBRARY)
@@ -9809,8 +9811,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
     
     ENTERS("SOLVER_LINEAR_DIRECT_INITIALISE",ERR,ERROR,*998)
 
@@ -9831,7 +9833,7 @@ CONTAINS
         
     EXITS("SOLVER_LINEAR_DIRECT_INITIALISE")
     RETURN
-999 CALL SOLVER_LINEAR_DIRECT_FINALISE(LINEAR_SOLVER%DIRECT_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVER_LINEAR_DIRECT_FINALISE(LINEAR_SOLVER%DIRECT_SOLVER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_LINEAR_DIRECT_INITIALISE",ERR,ERROR)
     RETURN 1
    
@@ -10016,8 +10018,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
     
     ENTERS("SOLVER_LINEAR_DIRECT_LU_INITIALISE",ERR,ERROR,*998)
 
@@ -10034,7 +10036,7 @@ CONTAINS
         
     EXITS("SOLVER_LINEAR_DIRECT_LU_INITIALISE")
     RETURN
-999 CALL SOLVER_LINEAR_DIRECT_LU_FINALISE(DIRECT_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVER_LINEAR_DIRECT_LU_FINALISE(DIRECT_SOLVER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_LINEAR_DIRECT_LU_INITIALISE",ERR,ERROR)
     RETURN 1
    
@@ -10716,8 +10718,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
 
     ENTERS("SOLVER_LINEAR_INITIALISE",ERR,ERROR,*998)
 
@@ -10742,7 +10744,7 @@ CONTAINS
         
     EXITS("SOLVER_LINEAR_INITIALISE")
     RETURN
-999 CALL SOLVER_LINEAR_FINALISE(SOLVER%LINEAR_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVER_LINEAR_FINALISE(SOLVER%LINEAR_SOLVER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_LINEAR_INITIALISE",ERR,ERROR)
     RETURN 1
    
@@ -10858,7 +10860,7 @@ CONTAINS
                 NULLIFY(SOLVER_MATRICES)
                 CALL SOLVER_MATRICES_CREATE_START(SOLVER_EQUATIONS,SOLVER_MATRICES,ERR,ERROR,*999)
                 CALL SOLVER_MATRICES_LIBRARY_TYPE_SET(SOLVER_MATRICES,SOLVER_PETSC_LIBRARY,ERR,ERROR,*999)
-                SELECT CASE(SOLVER_EQUATIONS%SPARSITY_TYPE)
+                SELECT CASE(SOLVER_EQUATIONS%sparsityType)
                 CASE(SOLVER_SPARSE_MATRICES)
                   CALL SOLVER_MATRICES_STORAGE_TYPE_SET(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
                     & ERR,ERROR,*999)
@@ -10867,7 +10869,7 @@ CONTAINS
                     & ERR,ERROR,*999)
                 CASE DEFAULT
                   LOCAL_ERROR="The specified solver equations sparsity type of "// &
-                    & TRIM(NumberToVString(SOLVER_EQUATIONS%SPARSITY_TYPE,"*",ERR,ERROR))// &
+                    & TRIM(NumberToVString(SOLVER_EQUATIONS%sparsityType,"*",ERR,ERROR))// &
                     & " is invalid."
                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 END SELECT
@@ -11204,8 +11206,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
 
     ENTERS("SOLVER_LINEAR_ITERATIVE_INITIALISE",ERR,ERROR,*998)
 
@@ -11236,7 +11238,7 @@ CONTAINS
         
     EXITS("SOLVER_LINEAR_ITERATIVE_INITIALISE")
     RETURN
-999 CALL SOLVER_LINEAR_ITERATIVE_FINALISE(LINEAR_SOLVER%ITERATIVE_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVER_LINEAR_ITERATIVE_FINALISE(LINEAR_SOLVER%ITERATIVE_SOLVER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_LINEAR_ITERATIVE_INITIALISE",ERR,ERROR)
     RETURN 1
    
@@ -11816,37 +11818,37 @@ CONTAINS
                                 CALL FLAG_WARNING("Linear iterative solver did not converge. PETSc diverged indefinite mat.", &
                                   & ERR,ERROR,*999)
                               END SELECT
-                              IF(SOLVER%OUTPUT_TYPE>=SOLVER_SOLVER_OUTPUT) THEN
+                              IF(SOLVER%outputType>=SOLVER_SOLVER_OUTPUT) THEN
                                 !Output solution characteristics
-                                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
-                                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Linear iterative solver parameters:",ERR,ERROR,*999)
+                                CALL WriteString(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
+                                CALL WriteString(GENERAL_OUTPUT_TYPE,"Linear iterative solver parameters:",ERR,ERROR,*999)
                                 CALL Petsc_KSPGetIterationNumber(LINEAR_ITERATIVE_SOLVER%KSP,NUMBER_ITERATIONS,ERR,ERROR,*999)
-                                CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Final number of iterations = ",NUMBER_ITERATIONS, &
+                                CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Final number of iterations = ",NUMBER_ITERATIONS, &
                                   & ERR,ERROR,*999)
                                 CALL Petsc_KSPGetResidualNorm(LINEAR_ITERATIVE_SOLVER%KSP,RESIDUAL_NORM,ERR,ERROR,*999)
-                                CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Final residual norm = ",RESIDUAL_NORM, &
+                                CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Final residual norm = ",RESIDUAL_NORM, &
                                   & ERR,ERROR,*999)
                                 SELECT CASE(CONVERGED_REASON)
                                 CASE(PETSC_KSP_CONVERGED_RTOL)
-                                  CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged RTol",ERR,ERROR,*999)
+                                  CALL WriteString(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged RTol",ERR,ERROR,*999)
                                 CASE(PETSC_KSP_CONVERGED_ATOL)
-                                  CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged ATol",ERR,ERROR,*999)
+                                  CALL WriteString(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged ATol",ERR,ERROR,*999)
                                 CASE(PETSC_KSP_CONVERGED_ITS)
-                                  CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged its",ERR,ERROR,*999)
+                                  CALL WriteString(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged its",ERR,ERROR,*999)
                                 CASE(PETSC_KSP_CONVERGED_CG_NEG_CURVE)
-                                  CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged CG neg curve", &
+                                  CALL WriteString(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged CG neg curve", &
                                     & ERR,ERROR,*999)
                                 CASE(PETSC_KSP_CONVERGED_CG_CONSTRAINED)
-                                  CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged CG constrained", &
+                                  CALL WriteString(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged CG constrained", &
                                     & ERR,ERROR,*999)
                                 CASE(PETSC_KSP_CONVERGED_STEP_LENGTH)
-                                  CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged step length", &
+                                  CALL WriteString(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged step length", &
                                     & ERR,ERROR,*999)
                                 CASE(PETSC_KSP_CONVERGED_HAPPY_BREAKDOWN)
-                                  CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged happy breakdown", &
+                                  CALL WriteString(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged happy breakdown", &
                                     & ERR,ERROR,*999)
                                 CASE(PETSC_KSP_CONVERGED_ITERATING)
-                                  CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged iterating", &
+                                  CALL WriteString(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged iterating", &
                                     & ERR,ERROR,*999)
                                 END SELECT
                               ENDIF
@@ -12186,7 +12188,7 @@ CONTAINS
         CALL TAU_STATIC_PHASE_STOP("Solve Phase")
 #endif
         
-        IF(SOLVER%OUTPUT_TYPE>=SOLVER_SOLVER_OUTPUT) THEN
+        IF(SOLVER%outputType>=SOLVER_SOLVER_OUTPUT) THEN
 
 #ifdef TAUPROF
           CALL TAU_STATIC_PHASE_START("Solution Output Phase")
@@ -12196,12 +12198,12 @@ CONTAINS
           IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
             SOLVER_MATRICES=>SOLVER_EQUATIONS%SOLVER_MATRICES
             IF(ASSOCIATED(SOLVER_MATRICES)) THEN
-              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
-              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Solver solution vectors:",ERR,ERROR,*999)
-              CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Number of solution vectors = ",SOLVER_MATRICES%NUMBER_OF_MATRICES, &
+              CALL WriteString(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
+              CALL WriteString(GENERAL_OUTPUT_TYPE,"Solver solution vectors:",ERR,ERROR,*999)
+              CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of solution vectors = ",SOLVER_MATRICES%NUMBER_OF_MATRICES, &
                 & ERR,ERROR,*999)
               DO solver_matrix_idx=1,SOLVER_MATRICES%NUMBER_OF_MATRICES
-                CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Solution vector for solver matrix : ",solver_matrix_idx,ERR,ERROR,*999)
+                CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solution vector for solver matrix : ",solver_matrix_idx,ERR,ERROR,*999)
                 CALL DISTRIBUTED_VECTOR_OUTPUT(GENERAL_OUTPUT_TYPE,SOLVER_MATRICES%MATRICES(solver_matrix_idx)%PTR% &
                   & SOLVER_VECTOR,ERR,ERROR,*999)
               ENDDO !solver_matrix_idx
@@ -12254,8 +12256,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR,LOCAL_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError,LOCAL_ERROR
     
     ENTERS("SOLVER_LINEAR_TYPE_SET",ERR,ERROR,*998)
 
@@ -12304,9 +12306,9 @@ CONTAINS
     RETURN
 999 SELECT CASE(LINEAR_SOLVE_TYPE)
     CASE(SOLVER_LINEAR_DIRECT_SOLVE_TYPE)
-      CALL SOLVER_LINEAR_DIRECT_FINALISE(SOLVER%LINEAR_SOLVER%DIRECT_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+      CALL SOLVER_LINEAR_DIRECT_FINALISE(SOLVER%LINEAR_SOLVER%DIRECT_SOLVER,dummyErr,dummyError,*998)
     CASE(SOLVER_LINEAR_ITERATIVE_SOLVE_TYPE)
-      CALL SOLVER_LINEAR_ITERATIVE_FINALISE(SOLVER%LINEAR_SOLVER%ITERATIVE_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+      CALL SOLVER_LINEAR_ITERATIVE_FINALISE(SOLVER%LINEAR_SOLVER%ITERATIVE_SOLVER,dummyErr,dummyError,*998)
     END SELECT
 998 ERRORSEXITS("SOLVER_LINEAR_TYPE_SET",ERR,ERROR)
     RETURN 1
@@ -12351,7 +12353,7 @@ CONTAINS
       & LAGRANGE_VECTOR
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: RHS_DOMAIN_MAPPING,VARIABLE_DOMAIN_MAPPING
     TYPE(DYNAMIC_SOLVER_TYPE), POINTER :: DYNAMIC_SOLVER
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
     TYPE(EQUATIONS_MAPPING_DYNAMIC_TYPE), POINTER :: DYNAMIC_MAPPING
     TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: LINEAR_MAPPING
@@ -12534,7 +12536,7 @@ CONTAINS
                   & (DYNAMIC_SOLVER%ORDER==SOLVER_DYNAMIC_SECOND_ORDER.AND.DYNAMIC_SOLVER%DEGREE>SOLVER_DYNAMIC_SECOND_DEGREE)))) &
                   & THEN
                   !Assemble solver matrices
-                  IF(SOLVER%OUTPUT_TYPE>=SOLVER_TIMING_OUTPUT) THEN
+                  IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
                     CALL CPU_TIMER(USER_CPU,USER_TIME1,ERR,ERROR,*999)
                     CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME1,ERR,ERROR,*999)
                   ENDIF
@@ -12555,11 +12557,11 @@ CONTAINS
                           DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                             EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)%EQUATIONS
                             IF(ASSOCIATED(EQUATIONS)) THEN
-                              EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
+                              EQUATIONS_MAPPING=>EQUATIONS%equationsMapping
                               IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
                                 DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING
                                 IF(ASSOCIATED(DYNAMIC_MAPPING)) THEN
-                                  EQUATIONS_MATRICES=>EQUATIONS%EQUATIONS_MATRICES
+                                  EQUATIONS_MATRICES=>EQUATIONS%equationsMatrices
                                   IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
                                     DYNAMIC_MATRICES=>EQUATIONS_MATRICES%DYNAMIC_MATRICES
                                     IF(ASSOCIATED(DYNAMIC_MATRICES)) THEN
@@ -12632,7 +12634,7 @@ CONTAINS
                                 ELSE
                                   NONLINEAR_MAPPING=>EQUATIONS_MAPPING%NONLINEAR_MAPPING
                                   IF(ASSOCIATED(NONLINEAR_MAPPING)) THEN
-                                    EQUATIONS_MATRICES=>EQUATIONS%EQUATIONS_MATRICES
+                                    EQUATIONS_MATRICES=>EQUATIONS%equationsMatrices
                                     IF(.NOT.ASSOCIATED(EQUATIONS_MATRICES)) THEN
                                       CALL FlagError("Equations matrices not associated.",ERR,ERROR,*999)
                                     ENDIF
@@ -12749,15 +12751,15 @@ CONTAINS
                   IF(ASSOCIATED(PREVIOUS_SOLVER_DISTRIBUTED_MATRIX)) THEN
                     CALL DISTRIBUTED_MATRIX_UPDATE_FINISH(PREVIOUS_SOLVER_DISTRIBUTED_MATRIX,ERR,ERROR,*999)
                   ENDIF
-                  IF(SOLVER%OUTPUT_TYPE>=SOLVER_TIMING_OUTPUT) THEN
+                  IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
                     CALL CPU_TIMER(USER_CPU,USER_TIME2,ERR,ERROR,*999)
                     CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME2,ERR,ERROR,*999)
                     USER_ELAPSED=USER_TIME2(1)-USER_TIME1(1)
                     SYSTEM_ELAPSED=SYSTEM_TIME2(1)-SYSTEM_TIME1(1)
-                    CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
-                    CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Total user time for solver matrices assembly = ",USER_ELAPSED, &
+                    CALL WriteString(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
+                    CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total user time for solver matrices assembly = ",USER_ELAPSED, &
                       & ERR,ERROR,*999)
-                    CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Total System time for solver matrices assembly = ", &
+                    CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total System time for solver matrices assembly = ", &
                       & SYSTEM_ELAPSED,ERR,ERROR,*999)
                   ENDIF
                 ENDIF
@@ -12774,7 +12776,7 @@ CONTAINS
                   & (DYNAMIC_SOLVER%ORDER==SOLVER_DYNAMIC_SECOND_ORDER.AND.DYNAMIC_SOLVER%DEGREE>SOLVER_DYNAMIC_SECOND_DEGREE)))) &
                   & THEN
                   !Assemble rhs vector
-                  IF(SOLVER%OUTPUT_TYPE>=SOLVER_TIMING_OUTPUT) THEN
+                  IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
                     CALL CPU_TIMER(USER_CPU,USER_TIME1,ERR,ERROR,*999)
                     CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME1,ERR,ERROR,*999)
                   ENDIF
@@ -12796,9 +12798,9 @@ CONTAINS
                           EQUATIONS=>EQUATIONS_SET%EQUATIONS
                           IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
                             IF(ASSOCIATED(EQUATIONS)) THEN
-                              EQUATIONS_MATRICES=>EQUATIONS%EQUATIONS_MATRICES
+                              EQUATIONS_MATRICES=>EQUATIONS%equationsMatrices
                               IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-                                EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
+                                EQUATIONS_MAPPING=>EQUATIONS%equationsMapping
                                 IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
 
                                   DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING
@@ -13433,15 +13435,15 @@ CONTAINS
                       CALL FlagError("The solver RHS vector is not associated.",ERR,ERROR,*999)
                     ENDIF
                   ENDIF
-                  IF(SOLVER%OUTPUT_TYPE>=SOLVER_TIMING_OUTPUT) THEN
+                  IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
                     CALL CPU_TIMER(USER_CPU,USER_TIME2,ERR,ERROR,*999)
                     CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME2,ERR,ERROR,*999)
                     USER_ELAPSED=USER_TIME2(1)-USER_TIME1(1)
                     SYSTEM_ELAPSED=SYSTEM_TIME2(1)-SYSTEM_TIME1(1)
-                    CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
-                    CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Total user time for solver RHS assembly = ",USER_ELAPSED, &
+                    CALL WriteString(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
+                    CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total user time for solver RHS assembly = ",USER_ELAPSED, &
                       & ERR,ERROR,*999)
-                    CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Total System time for solver RHS assembly = ",SYSTEM_ELAPSED, &
+                    CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total System time for solver RHS assembly = ",SYSTEM_ELAPSED, &
                       & ERR,ERROR,*999)
                   ENDIF
                 ENDIF
@@ -13460,7 +13462,7 @@ CONTAINS
                   & (DYNAMIC_SOLVER%ORDER==SOLVER_DYNAMIC_SECOND_ORDER.AND.DYNAMIC_SOLVER%DEGREE>SOLVER_DYNAMIC_SECOND_DEGREE)))) &
                   & THEN
                   !Assemble residual vector
-                  IF(SOLVER%OUTPUT_TYPE>=SOLVER_TIMING_OUTPUT) THEN
+                  IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
                     CALL CPU_TIMER(USER_CPU,USER_TIME1,ERR,ERROR,*999)
                     CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME1,ERR,ERROR,*999)
                   ENDIF
@@ -13480,9 +13482,9 @@ CONTAINS
                           IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
                             EQUATIONS=>EQUATIONS_SET%EQUATIONS
                             IF(ASSOCIATED(EQUATIONS)) THEN
-                              EQUATIONS_MATRICES=>EQUATIONS%EQUATIONS_MATRICES
+                              EQUATIONS_MATRICES=>EQUATIONS%equationsMatrices
                               IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-                                EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
+                                EQUATIONS_MAPPING=>EQUATIONS%equationsMapping
                                 IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
                                   DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING
                                   IF(ASSOCIATED(DYNAMIC_MAPPING)) THEN
@@ -13878,15 +13880,15 @@ CONTAINS
                   IF(ASSOCIATED(SOLVER_RESIDUAL_VECTOR)) THEN
                     CALL DISTRIBUTED_VECTOR_UPDATE_FINISH(SOLVER_RESIDUAL_VECTOR,ERR,ERROR,*999)
                   ENDIF
-                  IF(SOLVER%OUTPUT_TYPE>=SOLVER_TIMING_OUTPUT) THEN
+                  IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
                     CALL CPU_TIMER(USER_CPU,USER_TIME2,ERR,ERROR,*999)
                     CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME2,ERR,ERROR,*999)
                     USER_ELAPSED=USER_TIME2(1)-USER_TIME1(1)
                     SYSTEM_ELAPSED=SYSTEM_TIME2(1)-SYSTEM_TIME1(1)
-                    CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
-                    CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Total user time for solver residual assembly = ", & 
+                    CALL WriteString(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
+                    CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total user time for solver residual assembly = ", & 
                       & USER_ELAPSED,ERR,ERROR,*999)
-                    CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Total System time for solver residual assembly = ", & 
+                    CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total System time for solver residual assembly = ", & 
                       & SYSTEM_ELAPSED,ERR,ERROR,*999)
                  ENDIF
                 ENDIF
@@ -13904,7 +13906,7 @@ CONTAINS
                       IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
                         EQUATIONS=>EQUATIONS_SET%EQUATIONS
                         IF(ASSOCIATED(EQUATIONS)) THEN
-                          EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
+                          EQUATIONS_MAPPING=>EQUATIONS%equationsMapping
                           IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
                             DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING
                             IF(ASSOCIATED(DYNAMIC_MAPPING)) THEN
@@ -13955,7 +13957,7 @@ CONTAINS
                 ENDIF
               ENDIF
               !If required output the solver matrices
-              IF(SOLVER%OUTPUT_TYPE>=SOLVER_MATRIX_OUTPUT) THEN
+              IF(SOLVER%outputType>=SOLVER_MATRIX_OUTPUT) THEN
                 CALL SOLVER_MATRICES_OUTPUT(GENERAL_OUTPUT_TYPE,SELECTION_TYPE,SOLVER_MATRICES,ERR,ERROR,*999)
               ENDIF
             ELSE
@@ -14012,7 +14014,7 @@ CONTAINS
       & LINEAR_TEMP_VECTOR,INTERFACE_TEMP_VECTOR,RESIDUAL_VECTOR,SOLVER_RESIDUAL_VECTOR,SOLVER_RHS_VECTOR
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: RHS_DOMAIN_MAPPING,VARIABLE_DOMAIN_MAPPING
     TYPE(EQUATIONS_JACOBIAN_TYPE), POINTER :: JACOBIAN_MATRIX
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
     TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: LINEAR_MAPPING
     TYPE(EQUATIONS_MAPPING_NONLINEAR_TYPE), POINTER :: NONLINEAR_MAPPING
@@ -14061,7 +14063,7 @@ CONTAINS
               & SELECTION_TYPE==SOLVER_MATRICES_NONLINEAR_ONLY.OR. &
               & SELECTION_TYPE==SOLVER_MATRICES_JACOBIAN_ONLY) THEN
               !Assemble solver matrices
-              IF(SOLVER%OUTPUT_TYPE>=SOLVER_TIMING_OUTPUT) THEN
+              IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
                 CALL CPU_TIMER(USER_CPU,USER_TIME1,ERR,ERROR,*999)
                 CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME1,ERR,ERROR,*999)
               ENDIF
@@ -14157,15 +14159,15 @@ CONTAINS
               IF(ASSOCIATED(PREVIOUS_SOLVER_DISTRIBUTED_MATRIX)) THEN
                 CALL DISTRIBUTED_MATRIX_UPDATE_FINISH(PREVIOUS_SOLVER_DISTRIBUTED_MATRIX,ERR,ERROR,*999)
               ENDIF
-              IF(SOLVER%OUTPUT_TYPE>=SOLVER_TIMING_OUTPUT) THEN
+              IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
                 CALL CPU_TIMER(USER_CPU,USER_TIME2,ERR,ERROR,*999)
                 CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME2,ERR,ERROR,*999)
                 USER_ELAPSED=USER_TIME2(1)-USER_TIME1(1)
                 SYSTEM_ELAPSED=SYSTEM_TIME2(1)-SYSTEM_TIME1(1)
-                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
-                CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Total user time for solver matrices assembly = ",USER_ELAPSED, &
+                CALL WriteString(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
+                CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total user time for solver matrices assembly = ",USER_ELAPSED, &
                   & ERR,ERROR,*999)
-                CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Total System time for solver matrices assembly = ",SYSTEM_ELAPSED, &
+                CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total System time for solver matrices assembly = ",SYSTEM_ELAPSED, &
                   & ERR,ERROR,*999)
               ENDIF
             ENDIF
@@ -14179,7 +14181,7 @@ CONTAINS
               !We assemble residual vector before RHS vector, then when assembling the RHS vector we subtract
               !the RHS terms for fixed BCs from the residual vector as this residual evaluation uses a matrix
               !vector product of the full equations matrix rather than the reduced solver matrix
-              IF(SOLVER%OUTPUT_TYPE>=SOLVER_TIMING_OUTPUT) THEN
+              IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
                 CALL CPU_TIMER(USER_CPU,USER_TIME1,ERR,ERROR,*999)
                 CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME1,ERR,ERROR,*999)
               ENDIF
@@ -14196,9 +14198,9 @@ CONTAINS
                       IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
                         EQUATIONS=>EQUATIONS_SET%EQUATIONS
                         IF(ASSOCIATED(EQUATIONS)) THEN
-                          EQUATIONS_MATRICES=>EQUATIONS%EQUATIONS_MATRICES
+                          EQUATIONS_MATRICES=>EQUATIONS%equationsMatrices
                           IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-                            EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
+                            EQUATIONS_MAPPING=>EQUATIONS%equationsMapping
                             IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
                               !Calculate the contributions from any linear matrices
                               LINEAR_MAPPING=>EQUATIONS_MAPPING%LINEAR_MAPPING
@@ -14505,15 +14507,15 @@ CONTAINS
               IF(ASSOCIATED(SOLVER_RESIDUAL_VECTOR)) THEN
                 CALL DISTRIBUTED_VECTOR_UPDATE_FINISH(SOLVER_RESIDUAL_VECTOR,ERR,ERROR,*999)
               ENDIF
-              IF(SOLVER%OUTPUT_TYPE>=SOLVER_TIMING_OUTPUT) THEN
+              IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
                 CALL CPU_TIMER(USER_CPU,USER_TIME2,ERR,ERROR,*999)
                 CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME2,ERR,ERROR,*999)
                 USER_ELAPSED=USER_TIME2(1)-USER_TIME1(1)
                 SYSTEM_ELAPSED=SYSTEM_TIME2(1)-SYSTEM_TIME1(1)
-                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
-                CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Total user time for solver residual assembly = ",USER_ELAPSED, &
+                CALL WriteString(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
+                CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total user time for solver residual assembly = ",USER_ELAPSED, &
                   & ERR,ERROR,*999)
-                CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Total System time for solver residual assembly = ",SYSTEM_ELAPSED, &
+                CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total System time for solver residual assembly = ",SYSTEM_ELAPSED, &
                   & ERR,ERROR,*999)
               ENDIF
             ENDIF
@@ -14524,7 +14526,7 @@ CONTAINS
               & SELECTION_TYPE==SOLVER_MATRICES_RHS_ONLY.OR. &
               & SELECTION_TYPE==SOLVER_MATRICES_RHS_RESIDUAL_ONLY) THEN
               !Assemble rhs vector
-              IF(SOLVER%OUTPUT_TYPE>=SOLVER_TIMING_OUTPUT) THEN
+              IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
                 CALL CPU_TIMER(USER_CPU,USER_TIME1,ERR,ERROR,*999)
                 CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME1,ERR,ERROR,*999)
               ENDIF
@@ -14555,9 +14557,9 @@ CONTAINS
                       IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
                         EQUATIONS=>EQUATIONS_SET%EQUATIONS
                         IF(ASSOCIATED(EQUATIONS)) THEN
-                          EQUATIONS_MATRICES=>EQUATIONS%EQUATIONS_MATRICES
+                          EQUATIONS_MATRICES=>EQUATIONS%equationsMatrices
                           IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-                            EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
+                            EQUATIONS_MAPPING=>EQUATIONS%equationsMapping
                             IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
                               SOURCE_MAPPING=>EQUATIONS_MAPPING%SOURCE_MAPPING
                               IF(ASSOCIATED(SOURCE_MAPPING)) THEN
@@ -14974,15 +14976,15 @@ CONTAINS
                   CALL FlagError("The solver RHS vector is not associated.",ERR,ERROR,*999)
                 ENDIF
               ENDIF
-              IF(SOLVER%OUTPUT_TYPE>=SOLVER_TIMING_OUTPUT) THEN
+              IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
                 CALL CPU_TIMER(USER_CPU,USER_TIME2,ERR,ERROR,*999)
                 CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME2,ERR,ERROR,*999)
                 USER_ELAPSED=USER_TIME2(1)-USER_TIME1(1)
                 SYSTEM_ELAPSED=SYSTEM_TIME2(1)-SYSTEM_TIME1(1)
-                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
-                CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Total user time for solver RHS assembly = ",USER_ELAPSED, &
+                CALL WriteString(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
+                CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total user time for solver RHS assembly = ",USER_ELAPSED, &
                   & ERR,ERROR,*999)
-                CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Total System time for solver RHS assembly = ",SYSTEM_ELAPSED, &
+                CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total System time for solver RHS assembly = ",SYSTEM_ELAPSED, &
                   & ERR,ERROR,*999)
               ENDIF
             ENDIF
@@ -14990,7 +14992,7 @@ CONTAINS
               CALL DISTRIBUTED_VECTOR_UPDATE_FINISH(SOLVER_RHS_VECTOR,ERR,ERROR,*999)
             ENDIF
             !If required output the solver matrices
-            IF(SOLVER%OUTPUT_TYPE>=SOLVER_MATRIX_OUTPUT) THEN
+            IF(SOLVER%outputType>=SOLVER_MATRIX_OUTPUT) THEN
               CALL SOLVER_MATRICES_OUTPUT(GENERAL_OUTPUT_TYPE,SELECTION_TYPE,SOLVER_MATRICES,ERR,ERROR,*999)
             ENDIF
           ELSE
@@ -15290,9 +15292,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
+    INTEGER(INTG) :: dummyErr
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    TYPE(VARYING_STRING) :: dummyError
  
     ENTERS("SOLVER_QUASI_NEWTON_INITIALISE",ERR,ERROR,*998)
 
@@ -15349,7 +15351,7 @@ CONTAINS
         
     EXITS("SOLVER_QUASI_NEWTON_INITIALISE")
     RETURN
-999 CALL SOLVER_QUASI_NEWTON_FINALISE(NONLINEAR_SOLVER%QUASI_NEWTON_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVER_QUASI_NEWTON_FINALISE(NONLINEAR_SOLVER%QUASI_NEWTON_SOLVER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_QUASI_NEWTON_INITIALISE",ERR,ERROR)
     RETURN 1
    
@@ -15760,7 +15762,7 @@ CONTAINS
     INTEGER(INTG) :: equations_matrix_idx,equations_set_idx,interface_condition_idx,interface_matrix_idx
     TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: JACOBIAN_MATRIX
     TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: RESIDUAL_VECTOR
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
     TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: LINEAR_MAPPING
     TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES
@@ -15805,16 +15807,16 @@ CONTAINS
                   DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                     EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)%EQUATIONS
                     IF(ASSOCIATED(EQUATIONS)) THEN
-                      EQUATIONS_SET=>EQUATIONS%EQUATIONS_SET
+                      EQUATIONS_SET=>equations%equationsSet
                       IF(ASSOCIATED(EQUATIONS_SET)) THEN
                         DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
                         IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-                          EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
+                          EQUATIONS_MAPPING=>EQUATIONS%equationsMapping
                           IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
                             LINEAR_MAPPING=>EQUATIONS_MAPPING%LINEAR_MAPPING
                             IF(ASSOCIATED(LINEAR_MAPPING)) THEN
                               !If there are any linear matrices create temporary vector for matrix-vector products
-                              EQUATIONS_MATRICES=>EQUATIONS%EQUATIONS_MATRICES
+                              EQUATIONS_MATRICES=>EQUATIONS%equationsMatrices
                               IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
                                 LINEAR_MATRICES=>EQUATIONS_MATRICES%LINEAR_MATRICES
                                 IF(ASSOCIATED(LINEAR_MATRICES)) THEN
@@ -15986,7 +15988,7 @@ CONTAINS
                     NULLIFY(SOLVER_MATRICES)
                     CALL SOLVER_MATRICES_CREATE_START(SOLVER_EQUATIONS,SOLVER_MATRICES,ERR,ERROR,*999)
                     CALL SOLVER_MATRICES_LIBRARY_TYPE_SET(SOLVER_MATRICES,SOLVER_PETSC_LIBRARY,ERR,ERROR,*999)
-                    SELECT CASE(SOLVER_EQUATIONS%SPARSITY_TYPE)
+                    SELECT CASE(SOLVER_EQUATIONS%sparsityType)
                     CASE(SOLVER_SPARSE_MATRICES)
                       CALL SOLVER_MATRICES_STORAGE_TYPE_SET(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
                         & ERR,ERROR,*999)
@@ -15995,7 +15997,7 @@ CONTAINS
                         & ERR,ERROR,*999)
                     CASE DEFAULT
                       LOCAL_ERROR="The specified solver equations sparsity type of "// &
-                        & TRIM(NumberToVString(SOLVER_EQUATIONS%SPARSITY_TYPE,"*",ERR,ERROR))//" is invalid."
+                        & TRIM(NumberToVString(SOLVER_EQUATIONS%sparsityType,"*",ERR,ERROR))//" is invalid."
                       CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     END SELECT
                     CALL SOLVER_MATRICES_CREATE_FINISH(SOLVER_MATRICES,ERR,ERROR,*999)
@@ -16057,7 +16059,7 @@ CONTAINS
                             CASE(SOLVER_NEWTON_JACOBIAN_FD_CALCULATED)
                               SOLVER_JACOBIAN%UPDATE_MATRIX=.FALSE. !Petsc will fill in the Jacobian values
                               CALL DISTRIBUTED_MATRIX_FORM(JACOBIAN_MATRIX,ERR,ERROR,*999)
-                              SELECT CASE(SOLVER_EQUATIONS%SPARSITY_TYPE)
+                              SELECT CASE(SOLVER_EQUATIONS%sparsityType)
                               CASE(SOLVER_SPARSE_MATRICES)
                                 CALL Petsc_MatColoringCreate(JACOBIAN_MATRIX%PETSC%MATRIX,LINESEARCH_SOLVER%jacobianMatColoring, &
                                   & ERR,ERROR,*999)
@@ -16080,7 +16082,7 @@ CONTAINS
                                 !Do nothing
                               CASE DEFAULT
                                 LOCAL_ERROR="The specified solver equations sparsity type of "// &
-                                  & TRIM(NumberToVString(SOLVER_EQUATIONS%SPARSITY_TYPE,"*",ERR,ERROR))//" is invalid."
+                                  & TRIM(NumberToVString(SOLVER_EQUATIONS%sparsityType,"*",ERR,ERROR))//" is invalid."
                                 CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                               END SELECT
                               CALL Petsc_SnesSetJacobian(LINESEARCH_SOLVER%snes,JACOBIAN_MATRIX%PETSC%MATRIX, &
@@ -16106,7 +16108,7 @@ CONTAINS
                         & TRIM(NumberToVString(SOLVER_MATRICES%NUMBER_OF_MATRICES,"*",ERR,ERROR))//" and it should be 1."
                       CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     ENDIF
-                    IF(SOLVER%OUTPUT_TYPE>=SOLVER_PROGRESS_OUTPUT) THEN
+                    IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
                       !Set the monitor
                       !Pass the linesearch solver object rather than the temporary solver
                       CALL Petsc_SnesMonitorSet(LINESEARCH_SOLVER%snes,Problem_SolverNonlinearMonitorPETSC, &
@@ -16220,8 +16222,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
   
     ENTERS("SOLVER_QUASI_NEWTON_LINESEARCH_INITIALISE",ERR,ERROR,*998)
 
@@ -16251,7 +16253,7 @@ CONTAINS
         
     EXITS("SOLVER_QUASI_NEWTON_LINESEARCH_INITIALISE")
     RETURN
-999 CALL Solver_QuasiNewtonLinesearchFinalise(QUASI_NEWTON_SOLVER%LINESEARCH_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL Solver_QuasiNewtonLinesearchFinalise(QUASI_NEWTON_SOLVER%LINESEARCH_SOLVER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_QUASI_NEWTON_LINESEARCH_INITIALISE",ERR,ERROR)
     RETURN 1
    
@@ -16414,28 +16416,28 @@ CONTAINS
                           CALL FLAG_WARNING("Nonlinear line search solver did not converge. PETSc diverged local minimum.", &
                             & ERR,ERROR,*999)
                         END SELECT
-                         IF(SOLVER%OUTPUT_TYPE>=SOLVER_SOLVER_OUTPUT) THEN
+                         IF(SOLVER%outputType>=SOLVER_SOLVER_OUTPUT) THEN
                           !Output solution characteristics
-                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
-                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Quasi-Newton linesearch solver parameters:",ERR,ERROR,*999)
+                          CALL WriteString(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
+                          CALL WriteString(GENERAL_OUTPUT_TYPE,"Quasi-Newton linesearch solver parameters:",ERR,ERROR,*999)
                           CALL Petsc_SnesGetIterationNumber(LINESEARCH_SOLVER%snes,NUMBER_ITERATIONS,ERR,ERROR,*999)
-                          CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Final number of iterations = ",NUMBER_ITERATIONS, &
+                          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Final number of iterations = ",NUMBER_ITERATIONS, &
                             & ERR,ERROR,*999)
                           CALL Petsc_SnesGetFunction(LINESEARCH_SOLVER%snes,FUNCTION_VECTOR,ERR,ERROR,*999)
                           CALL Petsc_VecNorm(FUNCTION_VECTOR,PETSC_NORM_2,FUNCTION_NORM,ERR,ERROR,*999)
-                          CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Final function norm = ",FUNCTION_NORM, &
+                          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Final function norm = ",FUNCTION_NORM, &
                             & ERR,ERROR,*999)
                           SELECT CASE(CONVERGED_REASON)
                           CASE(PETSC_SNES_CONVERGED_FNORM_ABS)
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged F Norm absolute.", &
+                            CALL WriteString(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged F Norm absolute.", &
                               & ERR,ERROR,*999)
                           CASE(PETSC_SNES_CONVERGED_FNORM_RELATIVE)
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged F Norm relative.", &
+                            CALL WriteString(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged F Norm relative.", &
                               & ERR,ERROR,*999)
                           CASE(PETSC_SNES_CONVERGED_ITS)
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged its.",ERR,ERROR,*999)
+                            CALL WriteString(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged its.",ERR,ERROR,*999)
                           CASE(PETSC_SNES_CONVERGED_ITERATING)
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged iterating.",ERR,ERROR,*999)
+                            CALL WriteString(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged iterating.",ERR,ERROR,*999)
                           END SELECT
                         ENDIF
                       CASE DEFAULT
@@ -17038,7 +17040,7 @@ CONTAINS
     EXTERNAL :: Problem_SolverResidualEvaluatePetsc
     INTEGER(INTG) :: equations_matrix_idx,equations_set_idx
     TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: RESIDUAL_VECTOR
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
     TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: LINEAR_MAPPING
     TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES
@@ -17076,16 +17078,16 @@ CONTAINS
                   DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                     EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)%EQUATIONS
                     IF(ASSOCIATED(EQUATIONS)) THEN
-                      EQUATIONS_SET=>EQUATIONS%EQUATIONS_SET
+                      EQUATIONS_SET=>equations%equationsSet
                       IF(ASSOCIATED(EQUATIONS_SET)) THEN
                         DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
                         IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-                          EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
+                          EQUATIONS_MAPPING=>EQUATIONS%equationsMapping
                           IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
                             LINEAR_MAPPING=>EQUATIONS_MAPPING%LINEAR_MAPPING
                             IF(ASSOCIATED(LINEAR_MAPPING)) THEN
                               !If there are any linear matrices create temporary vector for matrix-vector products
-                              EQUATIONS_MATRICES=>EQUATIONS%EQUATIONS_MATRICES
+                              EQUATIONS_MATRICES=>EQUATIONS%equationsMatrices
                               IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
                                 LINEAR_MATRICES=>EQUATIONS_MATRICES%LINEAR_MATRICES
                                 IF(ASSOCIATED(LINEAR_MATRICES)) THEN
@@ -17309,8 +17311,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
   
     ENTERS("SOLVER_QUASI_NEWTON_TRUSTREGION_INITIALISE",ERR,ERROR,*998)
 
@@ -17333,7 +17335,7 @@ CONTAINS
         
     EXITS("SOLVER_QUASI_NEWTON_TRUSTREGION_INITIALISE")
     RETURN
-999 CALL SOLVER_QUASI_NEWTON_TRUSTREGION_FINALISE(QUASI_NEWTON_SOLVER%TRUSTREGION_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVER_QUASI_NEWTON_TRUSTREGION_FINALISE(QUASI_NEWTON_SOLVER%TRUSTREGION_SOLVER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_QUASI_NEWTON_TRUSTREGION_INITIALISE",ERR,ERROR)
     RETURN 1
    
@@ -17752,10 +17754,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
+    INTEGER(INTG) :: dummyErr
     TYPE(QUASI_NEWTON_SOLVER_TYPE), POINTER :: QUASI_NEWTON_SOLVER
     TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: NONLINEAR_SOLVER
-    TYPE(VARYING_STRING) :: DUMMY_ERROR,LOCAL_ERROR
+    TYPE(VARYING_STRING) :: dummyError,LOCAL_ERROR
     
     ENTERS("SOLVER_QUASI_NEWTON_SOLVE_TYPE_SET",ERR,ERROR,*998)
 
@@ -17816,9 +17818,9 @@ CONTAINS
     RETURN
 999 SELECT CASE(QUASI_NEWTON_SOLVE_TYPE)
     CASE(SOLVER_QUASI_NEWTON_LINESEARCH)
-      CALL Solver_QuasiNewtonLinesearchFinalise(QUASI_NEWTON_SOLVER%LINESEARCH_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+      CALL Solver_QuasiNewtonLinesearchFinalise(QUASI_NEWTON_SOLVER%LINESEARCH_SOLVER,dummyErr,dummyError,*998)
     CASE(SOLVER_QUASI_NEWTON_TRUSTREGION)
-      CALL SOLVER_QUASI_NEWTON_TRUSTREGION_FINALISE(QUASI_NEWTON_SOLVER%TRUSTREGION_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+      CALL SOLVER_QUASI_NEWTON_TRUSTREGION_FINALISE(QUASI_NEWTON_SOLVER%TRUSTREGION_SOLVER,dummyErr,dummyError,*998)
     END SELECT
 998 ERRORSEXITS("SOLVER_QUASI_NEWTON_SOLVE_TYPE_SET",ERR,ERROR)
     RETURN 1
@@ -18027,9 +18029,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
+    INTEGER(INTG) :: dummyErr
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    TYPE(VARYING_STRING) :: dummyError
  
     ENTERS("SOLVER_NEWTON_INITIALISE",ERR,ERROR,*998)
 
@@ -18081,7 +18083,7 @@ CONTAINS
         
     EXITS("SOLVER_NEWTON_INITIALISE")
     RETURN
-999 CALL SOLVER_NEWTON_FINALISE(NONLINEAR_SOLVER%NEWTON_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVER_NEWTON_FINALISE(NONLINEAR_SOLVER%NEWTON_SOLVER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_NEWTON_INITIALISE",ERR,ERROR)
     RETURN 1
    
@@ -18561,7 +18563,7 @@ CONTAINS
     INTEGER(INTG) :: equations_matrix_idx,equations_set_idx,interface_condition_idx,interface_matrix_idx
     TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: JACOBIAN_MATRIX
     TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: RESIDUAL_VECTOR
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
     TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: LINEAR_MAPPING
     TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES
@@ -18606,16 +18608,16 @@ CONTAINS
                   DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                     EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)%EQUATIONS
                     IF(ASSOCIATED(EQUATIONS)) THEN
-                      EQUATIONS_SET=>EQUATIONS%EQUATIONS_SET
+                      EQUATIONS_SET=>equations%equationsSet
                       IF(ASSOCIATED(EQUATIONS_SET)) THEN
                         DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
                         IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-                          EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
+                          EQUATIONS_MAPPING=>EQUATIONS%equationsMapping
                           IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
                             LINEAR_MAPPING=>EQUATIONS_MAPPING%LINEAR_MAPPING
                             IF(ASSOCIATED(LINEAR_MAPPING)) THEN
                               !If there are any linear matrices create temporary vector for matrix-vector products
-                              EQUATIONS_MATRICES=>EQUATIONS%EQUATIONS_MATRICES
+                              EQUATIONS_MATRICES=>EQUATIONS%equationsMatrices
                               IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
                                 LINEAR_MATRICES=>EQUATIONS_MATRICES%LINEAR_MATRICES
                                 IF(ASSOCIATED(LINEAR_MATRICES)) THEN
@@ -18743,7 +18745,7 @@ CONTAINS
                     NULLIFY(SOLVER_MATRICES)
                     CALL SOLVER_MATRICES_CREATE_START(SOLVER_EQUATIONS,SOLVER_MATRICES,ERR,ERROR,*999)
                     CALL SOLVER_MATRICES_LIBRARY_TYPE_SET(SOLVER_MATRICES,SOLVER_PETSC_LIBRARY,ERR,ERROR,*999)
-                    SELECT CASE(SOLVER_EQUATIONS%SPARSITY_TYPE)
+                    SELECT CASE(SOLVER_EQUATIONS%sparsityType)
                     CASE(SOLVER_SPARSE_MATRICES)
                       CALL SOLVER_MATRICES_STORAGE_TYPE_SET(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
                         & ERR,ERROR,*999)
@@ -18752,7 +18754,7 @@ CONTAINS
                         & ERR,ERROR,*999)
                     CASE DEFAULT
                       LOCAL_ERROR="The specified solver equations sparsity type of "// &
-                        & TRIM(NumberToVString(SOLVER_EQUATIONS%SPARSITY_TYPE,"*",ERR,ERROR))//" is invalid."
+                        & TRIM(NumberToVString(SOLVER_EQUATIONS%sparsityType,"*",ERR,ERROR))//" is invalid."
                       CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     END SELECT
                     CALL SOLVER_MATRICES_CREATE_FINISH(SOLVER_MATRICES,ERR,ERROR,*999)
@@ -18817,7 +18819,7 @@ CONTAINS
                             CASE(SOLVER_NEWTON_JACOBIAN_FD_CALCULATED)
                               SOLVER_JACOBIAN%UPDATE_MATRIX=.FALSE. !Petsc will fill in the Jacobian values
                               CALL DISTRIBUTED_MATRIX_FORM(JACOBIAN_MATRIX,ERR,ERROR,*999)
-                              SELECT CASE(SOLVER_EQUATIONS%SPARSITY_TYPE)
+                              SELECT CASE(SOLVER_EQUATIONS%sparsityType)
                               CASE(SOLVER_SPARSE_MATRICES)
                                 CALL Petsc_MatColoringCreate(JACOBIAN_MATRIX%petsc%matrix,LINESEARCH_SOLVER%jacobianMatColoring, &
                                   & err,error,*999)
@@ -18842,7 +18844,7 @@ CONTAINS
                                 !Do nothing
                               CASE DEFAULT
                                 LOCAL_ERROR="The specified solver equations sparsity type of "// &
-                                  & TRIM(NumberToVString(SOLVER_EQUATIONS%SPARSITY_TYPE,"*",ERR,ERROR))//" is invalid."
+                                  & TRIM(NumberToVString(SOLVER_EQUATIONS%sparsityType,"*",ERR,ERROR))//" is invalid."
                                 CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                               END SELECT
                               CALL Petsc_SnesSetJacobian(LINESEARCH_SOLVER%snes,JACOBIAN_MATRIX%petsc%matrix, &
@@ -18868,7 +18870,7 @@ CONTAINS
                         & TRIM(NumberToVString(SOLVER_MATRICES%NUMBER_OF_MATRICES,"*",ERR,ERROR))//" and it should be 1."
                       CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     ENDIF
-                    IF(SOLVER%OUTPUT_TYPE>=SOLVER_PROGRESS_OUTPUT) THEN
+                    IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
                       !Set the monitor
                       !Pass the linesearch solver object rather than the temporary solver
                       CALL Petsc_SnesMonitorSet(LINESEARCH_SOLVER%snes,Problem_SolverNonlinearMonitorPETSC, &
@@ -18997,8 +18999,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
   
     ENTERS("SOLVER_NEWTON_LINESEARCH_INITIALISE",ERR,ERROR,*998)
 
@@ -19029,7 +19031,7 @@ CONTAINS
         
     EXITS("SOLVER_NEWTON_LINESEARCH_INITIALISE")
     RETURN
-999 CALL SOLVER_NEWTON_LINESEARCH_FINALISE(NEWTON_SOLVER%LINESEARCH_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVER_NEWTON_LINESEARCH_FINALISE(NEWTON_SOLVER%LINESEARCH_SOLVER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_NEWTON_LINESEARCH_INITIALISE",ERR,ERROR)
     RETURN 1
    
@@ -19194,31 +19196,31 @@ CONTAINS
                           CALL FlagError("Nonlinear line search solver did not converge. PETSc diverged local minimum.", &
                             & ERR,ERROR,*999)
                         END SELECT
-                        IF(SOLVER%OUTPUT_TYPE>=SOLVER_SOLVER_OUTPUT) THEN
+                        IF(SOLVER%outputType>=SOLVER_SOLVER_OUTPUT) THEN
                           !Output solution characteristics
-                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
-                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Newton linesearch solver parameters:",ERR,ERROR,*999)
+                          CALL WriteString(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
+                          CALL WriteString(GENERAL_OUTPUT_TYPE,"Newton linesearch solver parameters:",ERR,ERROR,*999)
                           CALL Petsc_SnesGetIterationNumber(LINESEARCH_SOLVER%snes,NUMBER_ITERATIONS,ERR,ERROR,*999)
-                          CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Final number of iterations = ",NUMBER_ITERATIONS, &
+                          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Final number of iterations = ",NUMBER_ITERATIONS, &
                             & ERR,ERROR,*999)
                           CALL Petsc_SnesGetFunction(LINESEARCH_SOLVER%snes,FUNCTION_VECTOR,ERR,ERROR,*999)
                           CALL Petsc_VecNorm(FUNCTION_VECTOR,PETSC_NORM_2,FUNCTION_NORM,ERR,ERROR,*999)
-                          CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Final function norm = ",FUNCTION_NORM, &
+                          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Final function norm = ",FUNCTION_NORM, &
                             & ERR,ERROR,*999)
                           SELECT CASE(CONVERGED_REASON)
                           CASE(PETSC_SNES_CONVERGED_FNORM_ABS)
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged F Norm absolute.", &
+                            CALL WriteString(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged F Norm absolute.", &
                               & ERR,ERROR,*999)
                           CASE(PETSC_SNES_CONVERGED_FNORM_RELATIVE)
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged F Norm relative.", &
+                            CALL WriteString(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged F Norm relative.", &
                               & ERR,ERROR,*999)
                           CASE(PETSC_SNES_CONVERGED_SNORM_RELATIVE)
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged S Norm relative.", &
+                            CALL WriteString(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged S Norm relative.", &
                               & ERR,ERROR,*999)
                           CASE(PETSC_SNES_CONVERGED_ITS)
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged its.",ERR,ERROR,*999)
+                            CALL WriteString(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged its.",ERR,ERROR,*999)
                           CASE(PETSC_SNES_CONVERGED_ITERATING)
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged iterating.",ERR,ERROR,*999)
+                            CALL WriteString(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged iterating.",ERR,ERROR,*999)
                           END SELECT
                         ENDIF
                       CASE DEFAULT
@@ -19822,7 +19824,7 @@ CONTAINS
     EXTERNAL :: Problem_SolverResidualEvaluatePetsc
     INTEGER(INTG) :: equations_matrix_idx,equations_set_idx
     TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: RESIDUAL_VECTOR
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
     TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: LINEAR_MAPPING
     TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES
@@ -19860,16 +19862,16 @@ CONTAINS
                   DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                     EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)%EQUATIONS
                     IF(ASSOCIATED(EQUATIONS)) THEN
-                      EQUATIONS_SET=>EQUATIONS%EQUATIONS_SET
+                      EQUATIONS_SET=>equations%equationsSet
                       IF(ASSOCIATED(EQUATIONS_SET)) THEN
                         DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
                         IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-                          EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
+                          EQUATIONS_MAPPING=>EQUATIONS%equationsMapping
                           IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
                             LINEAR_MAPPING=>EQUATIONS_MAPPING%LINEAR_MAPPING
                             IF(ASSOCIATED(LINEAR_MAPPING)) THEN
                               !If there are any linear matrices create temporary vector for matrix-vector products
-                              EQUATIONS_MATRICES=>EQUATIONS%EQUATIONS_MATRICES
+                              EQUATIONS_MATRICES=>EQUATIONS%equationsMatrices
                               IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
                                 LINEAR_MATRICES=>EQUATIONS_MATRICES%LINEAR_MATRICES
                                 IF(ASSOCIATED(LINEAR_MATRICES)) THEN
@@ -20095,8 +20097,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
   
     ENTERS("SOLVER_NEWTON_TRUSTREGION_INITIALISE",ERR,ERROR,*998)
 
@@ -20119,7 +20121,7 @@ CONTAINS
         
     EXITS("SOLVER_NEWTON_TRUSTREGION_INITIALISE")
     RETURN
-999 CALL SOLVER_NEWTON_TRUSTREGION_FINALISE(NEWTON_SOLVER%TRUSTREGION_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVER_NEWTON_TRUSTREGION_FINALISE(NEWTON_SOLVER%TRUSTREGION_SOLVER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_NEWTON_TRUSTREGION_INITIALISE",ERR,ERROR)
     RETURN 1
    
@@ -20277,10 +20279,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
+    INTEGER(INTG) :: dummyErr
     TYPE(NEWTON_SOLVER_TYPE), POINTER :: NEWTON_SOLVER
     TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: NONLINEAR_SOLVER
-    TYPE(VARYING_STRING) :: DUMMY_ERROR,LOCAL_ERROR
+    TYPE(VARYING_STRING) :: dummyError,LOCAL_ERROR
     
     ENTERS("SOLVER_NEWTON_TYPE_SET",ERR,ERROR,*998)
 
@@ -20340,9 +20342,9 @@ CONTAINS
     RETURN
 999 SELECT CASE(NEWTON_SOLVE_TYPE)
     CASE(SOLVER_NEWTON_LINESEARCH)
-      CALL SOLVER_NEWTON_LINESEARCH_FINALISE(NEWTON_SOLVER%LINESEARCH_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+      CALL SOLVER_NEWTON_LINESEARCH_FINALISE(NEWTON_SOLVER%LINESEARCH_SOLVER,dummyErr,dummyError,*998)
     CASE(SOLVER_NEWTON_TRUSTREGION)
-      CALL SOLVER_NEWTON_TRUSTREGION_FINALISE(NEWTON_SOLVER%TRUSTREGION_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+      CALL SOLVER_NEWTON_TRUSTREGION_FINALISE(NEWTON_SOLVER%TRUSTREGION_SOLVER,dummyErr,dummyError,*998)
     END SELECT
 998 ERRORSEXITS("SOLVER_NEWTON_TYPE_SET",ERR,ERROR)
     RETURN 1
@@ -20557,8 +20559,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
     
     ENTERS("SOLVER_NONLINEAR_INITIALISE",ERR,ERROR,*998)
 
@@ -20581,7 +20583,7 @@ CONTAINS
         
     EXITS("SOLVER_NONLINEAR_INITIALISE")
     RETURN
-999 CALL SOLVER_NONLINEAR_FINALISE(SOLVER%NONLINEAR_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVER_NONLINEAR_FINALISE(SOLVER%NONLINEAR_SOLVER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_NONLINEAR_INITIALISE",ERR,ERROR)
     RETURN 1
    
@@ -20782,27 +20784,27 @@ CONTAINS
 
     IF(ASSOCIATED(nonlinearSolver)) THEN
         
-      CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Nonlinear solve monitor: ",err,error,*999)
-      CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"",err,ERROR,*999)
-      CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Iteration number = ",its,err,error,*999)
+      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
+      CALL WriteString(GENERAL_OUTPUT_TYPE,"Nonlinear solve monitor: ",err,error,*999)
+      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,ERROR,*999)
+      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Iteration number = ",its,err,error,*999)
       SELECT CASE(nonlinearSolver%NONLINEAR_SOLVE_TYPE)
       CASE(SOLVER_NONLINEAR_NEWTON)
         newtonSolver=>nonlinearSolver%NEWTON_SOLVER
         IF(ASSOCIATED(newtonSolver)) THEN
           SELECT CASE(newtonSolver%convergenceTestType)
             CASE(SOLVER_NEWTON_CONVERGENCE_PETSC_DEFAULT)
-              CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Function Norm = ",norm,err,error,*999)
+              CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Function Norm = ",norm,err,error,*999)
             CASE(SOLVER_NEWTON_CONVERGENCE_ENERGY_NORM)
               SELECT CASE(newtonSolver%NEWTON_SOLVE_TYPE)
               CASE(SOLVER_NEWTON_LINESEARCH)
                 newtonLinesearchSolver=>newtonSolver%LINESEARCH_SOLVER
                 IF(ASSOCIATED(newtonLinesearchSolver)) THEN
                   CALL petsc_SnesLineSearchGetNorms(newtonLinesearchSolver%sneslinesearch,xnorm,fnorm,ynorm,err,error,*999)
-                  CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Solution Norm          = ",xnorm,err,error,*999)
-                  CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Solution Update Norm   = ",ynorm,err,error,*999)
-                  CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Function Norm          = ",fnorm,err,error,*999)
-                  CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Normalised Energy Norm = ", &
+                  CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Solution Norm          = ",xnorm,err,error,*999)
+                  CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Solution Update Norm   = ",ynorm,err,error,*999)
+                  CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Function Norm          = ",fnorm,err,error,*999)
+                  CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Normalised Energy Norm = ", &
                     & newtonSolver%convergenceTest%normalisedEnergy,err,error,*999)
                 ELSE
                   CALL FlagError("Newton solver linesearch solver is not associated.",err,error,*999)
@@ -20818,10 +20820,10 @@ CONTAINS
               CALL FlagError("The Sum of differentiated ratios of unconstrained to constrained residuals"// &
                 &  "convergence test type is not implemented.",err,error,*999)
             END SELECT
-          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"  Newton solver information: ",err,error,*999)          
-          CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"    Number of function evaluations = ",newtonSolver% &
+          CALL WriteString(GENERAL_OUTPUT_TYPE,"  Newton solver information: ",err,error,*999)          
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"    Number of function evaluations = ",newtonSolver% &
             & TOTAL_NUMBER_OF_FUNCTION_EVALUATIONS,err,error,*999)
-          CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"    Number of Jacobian evaluations = ",newtonSolver% &
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"    Number of Jacobian evaluations = ",newtonSolver% &
             & TOTAL_NUMBER_OF_JACOBIAN_EVALUATIONS,err,error,*999)            
         ELSE
           CALL FlagError("Nonlinear solver Newton solver is not associated.",err,error,*999)
@@ -20835,16 +20837,16 @@ CONTAINS
         IF(ASSOCIATED(QUASI_NEWTON_SOLVER)) THEN
           SELECT CASE(QUASI_NEWTON_SOLVER%convergenceTestType)
             CASE(SOLVER_NEWTON_CONVERGENCE_PETSC_DEFAULT)
-              CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Function Norm    = ",norm,err,error,*999)
+              CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Function Norm    = ",norm,err,error,*999)
             CASE(SOLVER_NEWTON_CONVERGENCE_ENERGY_NORM)
               quasiNewtonLinesearchSolver=>QUASI_NEWTON_SOLVER%LINESEARCH_SOLVER
               IF(ASSOCIATED(quasiNewtonLinesearchSolver)) THEN
                 CALL petsc_SnesLineSearchGetNorms(quasiNewtonLinesearchSolver%sneslinesearch, &
                   & xnorm,fnorm,ynorm,err,error,*999)
-                CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Solution Norm          = ",xnorm,err,error,*999)
-                CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Solution Update Norm   = ",ynorm,err,error,*999)
-                CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Function Norm          = ",fnorm,err,error,*999)
-                CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Normalised Energy Norm = ", &
+                CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Solution Norm          = ",xnorm,err,error,*999)
+                CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Solution Update Norm   = ",ynorm,err,error,*999)
+                CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Function Norm          = ",fnorm,err,error,*999)
+                CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Normalised Energy Norm = ", &
                   & QUASI_NEWTON_SOLVER%convergenceTest%normalisedEnergy,err,error,*999)
               ELSE
                 CALL FlagError("Quasi-Newton solver linesearch solver is not associated.",err,error,*999)
@@ -20853,10 +20855,10 @@ CONTAINS
               CALL FlagError("The Sum of differentiated ratios of unconstrained to constrained residuals"// &
                 &  "convergence test type is not implemented.",err,error,*999)
             END SELECT
-          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"  Quasi-Newton solver information: ",err,error,*999)          
-          CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"    Number of function evaluations = ",QUASI_NEWTON_SOLVER% &
+          CALL WriteString(GENERAL_OUTPUT_TYPE,"  Quasi-Newton solver information: ",err,error,*999)          
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"    Number of function evaluations = ",QUASI_NEWTON_SOLVER% &
             & TOTAL_NUMBER_OF_FUNCTION_EVALUATIONS,err,error,*999)
-          CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"    Number of Jacobian evaluations = ",QUASI_NEWTON_SOLVER% &
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"    Number of Jacobian evaluations = ",QUASI_NEWTON_SOLVER% &
             & TOTAL_NUMBER_OF_JACOBIAN_EVALUATIONS,err,error,*999)            
         ELSE
           CALL FlagError("Nonlinear solver Quasi-Newton solver is not associated.",err,error,*999)
@@ -20915,7 +20917,7 @@ CONTAINS
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
         
-        IF(SOLVER%OUTPUT_TYPE>=SOLVER_SOLVER_OUTPUT) THEN
+        IF(SOLVER%outputType>=SOLVER_SOLVER_OUTPUT) THEN
           
 #ifdef TAUPROF
           CALL TAU_STATIC_PHASE_START("Solution Output Phase")
@@ -20925,12 +20927,12 @@ CONTAINS
           IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
             SOLVER_MATRICES=>SOLVER_EQUATIONS%SOLVER_MATRICES
             IF(ASSOCIATED(SOLVER_MATRICES)) THEN
-              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
-              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Solver solution vectors:",ERR,ERROR,*999)
-              CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Number of solution vectors = ",SOLVER_MATRICES%NUMBER_OF_MATRICES, &
+              CALL WriteString(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
+              CALL WriteString(GENERAL_OUTPUT_TYPE,"Solver solution vectors:",ERR,ERROR,*999)
+              CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Number of solution vectors = ",SOLVER_MATRICES%NUMBER_OF_MATRICES, &
                 & ERR,ERROR,*999)
               DO solver_matrix_idx=1,SOLVER_MATRICES%NUMBER_OF_MATRICES
-                CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Solution vector for solver matrix : ",solver_matrix_idx, &
+                CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solution vector for solver matrix : ",solver_matrix_idx, &
                   & ERR,ERROR,*999)
                 CALL DISTRIBUTED_VECTOR_OUTPUT(GENERAL_OUTPUT_TYPE,SOLVER_MATRICES%MATRICES(solver_matrix_idx)%PTR% &
                   & SOLVER_VECTOR,ERR,ERROR,*999)
@@ -20973,9 +20975,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
+    INTEGER(INTG) :: dummyErr
     TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: NONLINEAR_SOLVER
-    TYPE(VARYING_STRING) :: DUMMY_ERROR,LOCAL_ERROR
+    TYPE(VARYING_STRING) :: dummyError,LOCAL_ERROR
     
     ENTERS("SOLVER_NONLINEAR_TYPE_SET",ERR,ERROR,*998)
 
@@ -21037,13 +21039,13 @@ CONTAINS
     RETURN
 999 SELECT CASE(NONLINEAR_SOLVE_TYPE)
     CASE(SOLVER_NONLINEAR_NEWTON)
-      CALL SOLVER_NEWTON_FINALISE(NONLINEAR_SOLVER%NEWTON_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+      CALL SOLVER_NEWTON_FINALISE(NONLINEAR_SOLVER%NEWTON_SOLVER,dummyErr,dummyError,*998)
     CASE(SOLVER_NONLINEAR_BFGS_INVERSE)
       CALL FlagError("Not implemented.",ERR,ERROR,*998)                
     CASE(SOLVER_NONLINEAR_SQP)
       CALL FlagError("Not implemented.",ERR,ERROR,*998)      
     CASE(SOLVER_NONLINEAR_QUASI_NEWTON)
-      CALL SOLVER_QUASI_NEWTON_FINALISE(NONLINEAR_SOLVER%QUASI_NEWTON_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+      CALL SOLVER_QUASI_NEWTON_FINALISE(NONLINEAR_SOLVER%QUASI_NEWTON_SOLVER,dummyErr,dummyError,*998)
     END SELECT
 998 ERRORSEXITS("SOLVER_NONLINEAR_TYPE_SET",ERR,ERROR)
     RETURN 1
@@ -21059,7 +21061,7 @@ CONTAINS
 
     !Argument variables
     TYPE(OptimiserSolverType), POINTER :: optimiserSolver !<A pointer the optimiser solver to get the certainty type for.
-    INTEGER(INTG), INTENT(OUT) :: solverConstraintType !<On exit, the type of certainty for the optimiser solver \see SOLVER_ROUTINES_OptimiserCertaintyTypes,SOLVER_ROUTINES
+    INTEGER(INTG), INTENT(OUT) :: solverCertaintyType !<On exit, the type of certainty for the optimiser solver \see SOLVER_ROUTINES_OptimiserCertaintyTypes,SOLVER_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -21350,7 +21352,7 @@ CONTAINS
     IF(ERR/=0) CALL FlagError("Could not allocate solver optimiser solver.",err,error,*999)
     solver%optimiserSolver%solver=>solver
     solver%optimiserSolver%solverLibrary=SOLVER_PETSC_LIBRARY
-    solver%optimiserSolver%solverMatricesLibraryType=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
+    solver%optimiserSolver%solverMatricesLibrary=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
     solver%optimiserSolver%variableType=SOLVER_OPTIMISER_CONTINUOUS_VARIABLES
     solver%optimiserSolver%objectiveType=SOLVER_OPTIMISER_ONE_OBJECTIVE
     solver%optimiserSolver%constraintType=SOLVER_OPTIMISER_UNCONSTRAINED
@@ -21417,7 +21419,7 @@ CONTAINS
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(SOLVER_PETSC_LIBRARY)
       optimiserSolver%solverLibrary=SOLVER_PETSC_LIBRARY
-      optimiserSolver%solverMatricesLibraryType=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
+      optimiserSolver%solverMatricesLibrary=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
     CASE DEFAULT
       localError="The specified solver library type of "//TRIM(NumberToVString(solverLibraryType,"*",err,error))// &
         & " is invalid for an optimiser solver."
@@ -21462,12 +21464,41 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Monitors the optimiser solve.
+  SUBROUTINE Solver_OptimiserMonitor(optimiserSolver,err,error,*)
+
+    !Argument variables
+    TYPE(OptimiserSolverType), POINTER :: optimiserSolver !<A pointer to the optimiser solver to monitor
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("Solver_OptimiserSolver",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(optimiserSolver)) CALL FlagError("Optimiser solver is not associated.",err,error,*999)
+        
+    CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
+    CALL WriteString(GENERAL_OUTPUT_TYPE,"Optimiser solve monitor: ",err,error,*999)
+    CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
+     
+    EXITS("Solver_OptimiserMonitor")
+    RETURN
+999 ERRORSEXITS("Solver_OptimiserMonitor",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Solver_OptimiserMonitor
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns the type of objective for an optimiser solver.
   SUBROUTINE Solver_OptimiserObjectiveTypeGet(optimiserSolver,solverObjectiveType,err,error,*)
 
     !Argument variables
     TYPE(OptimiserSolverType), POINTER :: optimiserSolver !<A pointer the optimiser solver to get the objective type for.
-    INTEGER(INTG), INTENT(OUT) :: solverConstraintType !<On exit, the type of objective for the optimiser solver \see SOLVER_ROUTINES_OptimiserObjectiveTypes,SOLVER_ROUTINES
+    INTEGER(INTG), INTENT(OUT) :: solverObjectiveType !<On exit, the type of objective for the optimiser solver \see SOLVER_ROUTINES_OptimiserObjectiveTypes,SOLVER_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -21494,7 +21525,7 @@ CONTAINS
 
     !Argument variables
     TYPE(OptimiserSolverType), POINTER :: optimiserSolver !<A pointer the optimiser solver to set the objective type for.
-    INTEGER(INTG), INTENT(IN) :: solverConstraintType !<The type of objective for the optimiser solver to set. \see SOLVER_ROUTINES_OptimiserObjectiveType,SOLVER_ROUTINES
+    INTEGER(INTG), INTENT(IN) :: solverObjectiveType !<The type of objective for the optimiser solver to set. \see SOLVER_ROUTINES_OptimiserObjectiveType,SOLVER_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -21559,7 +21590,7 @@ CONTAINS
 
     !Argument variables
     TYPE(OptimiserSolverType), POINTER :: optimiserSolver !<A pointer the optimiser solver to get the variable type for.
-    INTEGER(INTG), INTENT(OUT) :: solverConstraintType !<On exit, the type of variable for the optimiser solver \see SOLVER_ROUTINES_OptimiserVariableTypes,SOLVER_ROUTINES
+    INTEGER(INTG), INTENT(OUT) :: solverVariableType !<On exit, the type of variable for the optimiser solver \see SOLVER_ROUTINES_OptimiserVariableTypes,SOLVER_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -21637,15 +21668,15 @@ CONTAINS
       ELSE        
         SELECT CASE(OUTPUT_TYPE)
         CASE(SOLVER_NO_OUTPUT)
-          SOLVER%OUTPUT_TYPE=SOLVER_NO_OUTPUT
+          SOLVER%outputType=SOLVER_NO_OUTPUT
         CASE(SOLVER_PROGRESS_OUTPUT)
-          SOLVER%OUTPUT_TYPE=SOLVER_PROGRESS_OUTPUT
+          SOLVER%outputType=SOLVER_PROGRESS_OUTPUT
         CASE(SOLVER_TIMING_OUTPUT)
-          SOLVER%OUTPUT_TYPE=SOLVER_TIMING_OUTPUT
+          SOLVER%outputType=SOLVER_TIMING_OUTPUT
         CASE(SOLVER_SOLVER_OUTPUT)
-          SOLVER%OUTPUT_TYPE=SOLVER_SOLVER_OUTPUT
+          SOLVER%outputType=SOLVER_SOLVER_OUTPUT
         CASE(SOLVER_MATRIX_OUTPUT)
-          SOLVER%OUTPUT_TYPE=SOLVER_MATRIX_OUTPUT         
+          SOLVER%outputType=SOLVER_MATRIX_OUTPUT         
         CASE DEFAULT
           LOCAL_ERROR="The specified solver output type of "// &
             & TRIM(NumberToVString(OUTPUT_TYPE,"*",ERR,ERROR))//" is invalid."
@@ -21826,7 +21857,7 @@ CONTAINS
 
     IF(ASSOCIATED(SOLVER)) THEN
       IF(SOLVER%SOLVER_FINISHED) THEN
-        IF(SOLVER%OUTPUT_TYPE>=SOLVER_TIMING_OUTPUT) THEN
+        IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
           CALL CPU_TIMER(USER_CPU,USER_TIME1,ERR,ERROR,*999)
           CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME1,ERR,ERROR,*999)          
         ENDIF
@@ -21858,15 +21889,15 @@ CONTAINS
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
         !If necessary output the timing information
-        IF(SOLVER%OUTPUT_TYPE>=SOLVER_TIMING_OUTPUT) THEN
+        IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
           CALL CPU_TIMER(USER_CPU,USER_TIME2,ERR,ERROR,*999)
           CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME2,ERR,ERROR,*999)
           USER_ELAPSED=USER_TIME2(1)-USER_TIME1(1)
           SYSTEM_ELAPSED=SYSTEM_TIME2(1)-SYSTEM_TIME1(1)
-          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Total user time for solve = ",USER_ELAPSED, &
+          CALL WriteString(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total user time for solve = ",USER_ELAPSED, &
             & ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Total System time for solve = ",SYSTEM_ELAPSED, &
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total System time for solve = ",SYSTEM_ELAPSED, &
             & ERR,ERROR,*999)
         ENDIF
       ELSE
@@ -21896,8 +21927,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR,LOCAL_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError,LOCAL_ERROR
     
     ENTERS("SOLVER_TYPE_SET",ERR,ERROR,*998)
 
@@ -21966,15 +21997,15 @@ CONTAINS
     RETURN
 999 SELECT CASE(SOLVE_TYPE)
     CASE(SOLVER_LINEAR_TYPE)
-      CALL SOLVER_LINEAR_FINALISE(SOLVER%LINEAR_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+      CALL SOLVER_LINEAR_FINALISE(SOLVER%LINEAR_SOLVER,dummyErr,dummyError,*998)
     CASE(SOLVER_NONLINEAR_TYPE)
-      CALL SOLVER_NONLINEAR_FINALISE(SOLVER%NONLINEAR_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+      CALL SOLVER_NONLINEAR_FINALISE(SOLVER%NONLINEAR_SOLVER,dummyErr,dummyError,*998)
     CASE(SOLVER_DYNAMIC_TYPE)
-      CALL SOLVER_DYNAMIC_FINALISE(SOLVER%DYNAMIC_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+      CALL SOLVER_DYNAMIC_FINALISE(SOLVER%DYNAMIC_SOLVER,dummyErr,dummyError,*998)
     CASE(SOLVER_DAE_TYPE)
-      CALL SOLVER_DAE_FINALISE(SOLVER%DAE_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+      CALL SOLVER_DAE_FINALISE(SOLVER%DAE_SOLVER,dummyErr,dummyError,*998)
     CASE(SOLVER_EIGENPROBLEM_TYPE)
-      CALL SOLVER_EIGENPROBLEM_FINALISE(SOLVER%EIGENPROBLEM_SOLVER,DUMMY_ERR,DUMMY_ERROR,*998)
+      CALL SOLVER_EIGENPROBLEM_FINALISE(SOLVER%EIGENPROBLEM_SOLVER,dummyErr,dummyError,*998)
     CASE(SOLVER_OPTIMISER_TYPE)
       CALL Solver_OptimiserFinalise(solver%optimiserSolver,dummyErr,dummyError,*998)
     CASE(SOLVER_GEOMETRIC_TRANSFORMATION_TYPE)
@@ -21997,13 +22028,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR,DYNAMIC_VARIABLE_TYPE,equations_idx,equations_set_idx,solver_dof_idx,solver_matrix_idx,variable_dof
+    INTEGER(INTG) :: dummyErr,DYNAMIC_VARIABLE_TYPE,equations_idx,equations_set_idx,solver_dof_idx,solver_matrix_idx,variable_dof
     REAL(DP) :: ACCELERATION_VALUE,additive_constant,DELTA_T,DISPLACEMENT_VALUE,PREDICTED_DISPLACEMENT,PREVIOUS_ACCELERATION, &
       & PREVIOUS_DISPLACEMENT,PREVIOUS_VELOCITY,SOLVER_VALUE,variable_coefficient,VELOCITY_VALUE
     REAL(DP), POINTER :: SOLVER_DATA(:)
     TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: SOLVER_VECTOR
     TYPE(DYNAMIC_SOLVER_TYPE), POINTER :: DYNAMIC_SOLVER
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
     TYPE(EQUATIONS_MAPPING_DYNAMIC_TYPE), POINTER :: DYNAMIC_MAPPING
     TYPE(EQUATIONS_MAPPING_NONLINEAR_TYPE), POINTER :: NONLINEAR_MAPPING
@@ -22014,7 +22045,7 @@ CONTAINS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
     TYPE(SOLVER_MATRIX_TYPE), POINTER :: SOLVER_MATRIX
-    TYPE(VARYING_STRING) :: DUMMY_ERROR,LOCAL_ERROR
+    TYPE(VARYING_STRING) :: dummyError,LOCAL_ERROR
 
     NULLIFY(SOLVER_DATA)
     
@@ -22216,7 +22247,7 @@ CONTAINS
                           IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
                             EQUATIONS=>EQUATIONS_SET%EQUATIONS
                             IF(ASSOCIATED(EQUATIONS)) THEN
-                              EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
+                              EQUATIONS_MAPPING=>EQUATIONS%equationsMapping
                               IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
                                 DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING
                                 IF(ASSOCIATED(DYNAMIC_MAPPING)) THEN
@@ -22341,7 +22372,7 @@ CONTAINS
                         EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
                         DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
                         EQUATIONS=>EQUATIONS_SET%EQUATIONS
-                        EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
+                        EQUATIONS_MAPPING=>EQUATIONS%equationsMapping
                         DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING
                         !
                         IF(ASSOCIATED(DYNAMIC_MAPPING))THEN
@@ -22468,7 +22499,7 @@ CONTAINS
     
     EXITS("SOLVER_VARIABLES_DYNAMIC_FIELD_UPDATE")
     RETURN
-999 IF(ASSOCIATED(SOLVER_DATA)) CALL DISTRIBUTED_VECTOR_DATA_RESTORE(SOLVER_VECTOR,SOLVER_DATA,DUMMY_ERR,DUMMY_ERROR,*998)
+999 IF(ASSOCIATED(SOLVER_DATA)) CALL DISTRIBUTED_VECTOR_DATA_RESTORE(SOLVER_VECTOR,SOLVER_DATA,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_VARIABLES_DYNAMIC_FIELD_UPDATE",ERR,ERROR)
     RETURN 1
    
@@ -22489,7 +22520,7 @@ CONTAINS
     INTEGER(INTG) :: VARIABLE_TYPE,equations_set_idx,solver_matrix_idx, &
       & residual_variable_idx,variable_idx
     TYPE(DYNAMIC_SOLVER_TYPE), POINTER :: DYNAMIC_SOLVER
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
     TYPE(EQUATIONS_MAPPING_NONLINEAR_TYPE), POINTER :: NONLINEAR_MAPPING
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
@@ -22546,7 +22577,7 @@ CONTAINS
                         EQUATIONS=>EQUATIONS_SET%EQUATIONS
                         IF(ASSOCIATED(EQUATIONS)) THEN
                           IF(EQUATIONS%LINEARITY==EQUATIONS_NONLINEAR) THEN
-                            EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
+                            EQUATIONS_MAPPING=>EQUATIONS%equationsMapping
                             IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
                               NONLINEAR_MAPPING=>EQUATIONS_MAPPING%NONLINEAR_MAPPING
                               IF(ASSOCIATED(NONLINEAR_MAPPING)) THEN
@@ -22620,7 +22651,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR,DYNAMIC_VARIABLE_TYPE,equations_idx,equations_set_idx,solver_dof_idx,solver_matrix_idx,variable_dof
+    INTEGER(INTG) :: dummyErr,DYNAMIC_VARIABLE_TYPE,equations_idx,equations_set_idx,solver_dof_idx,solver_matrix_idx,variable_dof
     REAL(DP) :: additive_constant,DELTA_T,VALUE,variable_coefficient
     REAL(DP) :: ALPHA_VALUE,DYNAMIC_ALPHA_FACTOR, DYNAMIC_U_FACTOR,PREDICTED_DISPLACEMENT
     INTEGER(INTG) :: variable_idx,VARIABLE_TYPE,interface_condition_idx
@@ -22639,11 +22670,11 @@ CONTAINS
     TYPE(INTERFACE_MAPPING_TYPE), POINTER :: INTERFACE_MAPPING
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
     TYPE(SOLVER_MATRIX_TYPE), POINTER :: SOLVER_MATRIX
-    TYPE(VARYING_STRING) :: DUMMY_ERROR,LOCAL_ERROR
+    TYPE(VARYING_STRING) :: dummyError,LOCAL_ERROR
 
 
     TYPE(DYNAMIC_SOLVER_TYPE), POINTER :: DYNAMIC_SOLVER
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: EQUATIONS
 
     !STABILITY_TEST under investigation
     LOGICAL :: STABILITY_TEST
@@ -22724,7 +22755,7 @@ CONTAINS
                               VARIABLE_TYPE=DEPENDENT_VARIABLE%VARIABLE_TYPE
                               IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
                                 IF(ASSOCIATED(EQUATIONS)) THEN
-                                  EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
+                                  EQUATIONS_MAPPING=>EQUATIONS%equationsMapping
                                   IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
                                     DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING
                                     IF(ASSOCIATED(DYNAMIC_MAPPING)) THEN
@@ -22936,7 +22967,7 @@ CONTAINS
     
     EXITS("SOLVER_VARIABLES_DYNAMIC_NONLINEAR_UPDATE")
     RETURN
-999 IF(ASSOCIATED(SOLVER_DATA)) CALL DISTRIBUTED_VECTOR_DATA_RESTORE(SOLVER_VECTOR,SOLVER_DATA,DUMMY_ERR,DUMMY_ERROR,*998)
+999 IF(ASSOCIATED(SOLVER_DATA)) CALL DISTRIBUTED_VECTOR_DATA_RESTORE(SOLVER_VECTOR,SOLVER_DATA,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_VARIABLES_DYNAMIC_NONLINEAR_UPDATE",ERR,ERROR)
     RETURN 1
   END SUBROUTINE SOLVER_VARIABLES_DYNAMIC_NONLINEAR_UPDATE 
@@ -22954,7 +22985,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR,equations_idx,equations_set_idx,solver_dof_idx,solver_matrix_idx,variable_dof,variable_idx, &
+    INTEGER(INTG) :: dummyErr,equations_idx,equations_set_idx,solver_dof_idx,solver_matrix_idx,variable_dof,variable_idx, &
       & VARIABLE_TYPE
     REAL(DP) :: additive_constant,VALUE,variable_coefficient
     REAL(DP), POINTER :: SOLVER_DATA(:)
@@ -22966,7 +22997,7 @@ CONTAINS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
     TYPE(SOLVER_MATRIX_TYPE), POINTER :: SOLVER_MATRIX
-    TYPE(VARYING_STRING) :: DUMMY_ERROR,LOCAL_ERROR
+    TYPE(VARYING_STRING) :: dummyError,LOCAL_ERROR
 
     NULLIFY(SOLVER_DATA)
     
@@ -23055,12 +23086,12 @@ CONTAINS
                       ENDDO !equations_idx
                     ENDDO !solver_dof_idx
                     IF(DIAGNOSTICS2) THEN
-                      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Solver matrix index = ",solver_matrix_idx,ERR,ERROR,*999)
+                      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Solver matrix index = ",solver_matrix_idx,ERR,ERROR,*999)
                       DO solver_dof_idx=1,SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%NUMBER_OF_DOFS
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Solver dof index = ",solver_dof_idx,ERR,ERROR,*999)
+                        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Solver dof index = ",solver_dof_idx,ERR,ERROR,*999)
                         DO equations_idx=1,SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)% &
                           & SOLVER_DOF_TO_VARIABLE_MAPS(solver_dof_idx)%NUMBER_OF_EQUATION_DOFS
-                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Equations index = ",equations_idx,ERR,ERROR,*999)
+                          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Equations index = ",equations_idx,ERR,ERROR,*999)
                           variable_dof=SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)% &
                             & SOLVER_DOF_TO_VARIABLE_MAPS(solver_dof_idx)%VARIABLE_DOF(equations_idx)
                           variable_coefficient=SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)% &
@@ -23068,12 +23099,12 @@ CONTAINS
                           additive_constant=SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)% &
                             & SOLVER_DOF_TO_VARIABLE_MAPS(solver_dof_idx)%ADDITIVE_CONSTANT(equations_idx)
                           VALUE=SOLVER_DATA(solver_dof_idx)*variable_coefficient+additive_constant
-                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Variable dof = ",variable_dof,ERR,ERROR,*999)
-                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Variable coefficient = ",variable_coefficient, &
+                          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Variable dof = ",variable_dof,ERR,ERROR,*999)
+                          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Variable coefficient = ",variable_coefficient, &
                               & ERR,ERROR,*999)
-                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Additive constant = ",additive_constant, &
+                          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Additive constant = ",additive_constant, &
                               & ERR,ERROR,*999)
-                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Value = ",VALUE,ERR,ERROR,*999)
+                          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Value = ",VALUE,ERR,ERROR,*999)
                         ENDDO
                       ENDDO
                     ENDIF
@@ -23130,7 +23161,7 @@ CONTAINS
     
     EXITS("SOLVER_VARIABLES_FIELD_UPDATE")
     RETURN
-999 IF(ASSOCIATED(SOLVER_DATA)) CALL DISTRIBUTED_VECTOR_DATA_RESTORE(SOLVER_VECTOR,SOLVER_DATA,DUMMY_ERR,DUMMY_ERROR,*998)
+999 IF(ASSOCIATED(SOLVER_DATA)) CALL DISTRIBUTED_VECTOR_DATA_RESTORE(SOLVER_VECTOR,SOLVER_DATA,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_VARIABLES_FIELD_UPDATE",ERR,ERROR)
     RETURN 1
     
@@ -23309,8 +23340,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR,solver_idx
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr,solver_idx
+    TYPE(VARYING_STRING) :: dummyError
 
     ENTERS("SOLVERS_INITIALISE",ERR,ERROR,*998)
 
@@ -23336,7 +23367,7 @@ CONTAINS
        
     EXITS("SOLVERS_INITIALISE")
     RETURN
-999 CALL SOLVERS_FINALISE(CONTROL_LOOP%SOLVERS,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL SOLVERS_FINALISE(CONTROL_LOOP%SOLVERS,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVERS_INITIALISE",ERR,ERROR)
     RETURN 1
     

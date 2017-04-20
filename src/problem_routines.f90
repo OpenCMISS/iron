@@ -48,9 +48,10 @@ MODULE PROBLEM_ROUTINES
   USE BIOELECTRIC_ROUTINES
   USE CLASSICAL_FIELD_ROUTINES
   USE CONTROL_LOOP_ROUTINES
+  USE ControlLoopAccessRoutines
   USE DISTRIBUTED_MATRIX_VECTOR
   USE ELASTICITY_ROUTINES
-  USE EQUATIONS_ROUTINES
+  USE EquationsRoutines
   USE EQUATIONS_SET_CONSTANTS
   USE EQUATIONS_SET_ROUTINES
   USE FIELD_ROUTINES
@@ -63,7 +64,7 @@ MODULE PROBLEM_ROUTINES
   USE INTERFACE_CONDITIONS_ROUTINES
   USE INTERFACE_ROUTINES
   USE ISO_VARYING_STRING
-  USE KINDS
+  USE Kinds
   USE MULTI_PHYSICS_ROUTINES
   USE PROBLEM_CONSTANTS
   USE ProblemAccessRoutines
@@ -71,9 +72,9 @@ MODULE PROBLEM_ROUTINES
   USE SOLVER_ROUTINES
   USE SolverAccessRoutines
   USE SOLVER_MATRICES_ROUTINES
-  USE STRINGS
-  USE TIMER
-  USE TYPES
+  USE Strings
+  USE Timer
+  USE Types
 
 #include "macros.h"  
 
@@ -112,6 +113,8 @@ MODULE PROBLEM_ROUTINES
   PUBLIC PROBLEM_SOLVER_JACOBIAN_EVALUATE,PROBLEM_SOLVER_RESIDUAL_EVALUATE
   
   PUBLIC Problem_SolverNonlinearMonitor
+
+  PUBLIC Problem_SolverOptimiserMonitor
   
   PUBLIC PROBLEM_SOLVE
   
@@ -358,7 +361,7 @@ CONTAINS
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
       IF(CONTROL_LOOP%CONTROL_LOOP_FINISHED) THEN
         !Solve this control loop
-        IF(CONTROL_LOOP%OUTPUT_TYPE>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+        IF(CONTROL_LOOP%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
           CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Control loop: ",CONTROL_LOOP%LABEL,err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Control loop level = ",CONTROL_LOOP%CONTROL_LOOP_LEVEL,err,error,*999)
@@ -374,7 +377,7 @@ CONTAINS
         CASE(PROBLEM_CONTROL_SIMPLE_TYPE)
           SIMPLE_LOOP=>CONTROL_LOOP%SIMPLE_LOOP
           IF(ASSOCIATED(SIMPLE_LOOP)) THEN
-            IF(CONTROL_LOOP%OUTPUT_TYPE>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+            IF(CONTROL_LOOP%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
               CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
               CALL WriteString(GENERAL_OUTPUT_TYPE,"Simple control loop: ",err,error,*999)
             ENDIF
@@ -411,7 +414,7 @@ CONTAINS
           FIXED_LOOP=>CONTROL_LOOP%FIXED_LOOP
           IF(ASSOCIATED(FIXED_LOOP)) THEN
             DO iteration_idx=FIXED_LOOP%START_ITERATION,FIXED_LOOP%STOP_ITERATION,FIXED_LOOP%ITERATION_INCREMENT
-              IF(CONTROL_LOOP%OUTPUT_TYPE>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+              IF(CONTROL_LOOP%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
                 CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
                 CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Fixed control loop iteration: ",iteration_idx,err,error,*999)
               ENDIF
@@ -453,7 +456,7 @@ CONTAINS
             TIME_LOOP%CURRENT_TIME=TIME_LOOP%START_TIME
             TIME_LOOP%ITERATION_NUMBER=0
             DO WHILE(TIME_LOOP%CURRENT_TIME<TIME_LOOP%STOP_TIME)
-              IF(CONTROL_LOOP%OUTPUT_TYPE>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+              IF(CONTROL_LOOP%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
                 CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
                 CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Time control loop iteration: ",TIME_LOOP%ITERATION_NUMBER, &
                   & err,error,*999)
@@ -509,7 +512,7 @@ CONTAINS
             DO WHILE(WHILE_LOOP%CONTINUE_LOOP.AND.WHILE_LOOP%ITERATION_NUMBER &
               & <WHILE_LOOP%MAXIMUM_NUMBER_OF_ITERATIONS)
               WHILE_LOOP%ITERATION_NUMBER=WHILE_LOOP%ITERATION_NUMBER+1
-              IF(CONTROL_LOOP%OUTPUT_TYPE>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+              IF(CONTROL_LOOP%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
                 CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
                 CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"While control loop iteration: ",WHILE_LOOP%ITERATION_NUMBER, &
                   & err,error,*999)
@@ -566,7 +569,7 @@ CONTAINS
               ! fixed number of steps
               DO WHILE(LOAD_INCREMENT_LOOP%ITERATION_NUMBER<LOAD_INCREMENT_LOOP%MAXIMUM_NUMBER_OF_ITERATIONS)
                 LOAD_INCREMENT_LOOP%ITERATION_NUMBER=LOAD_INCREMENT_LOOP%ITERATION_NUMBER+1
-                IF(CONTROL_LOOP%OUTPUT_TYPE>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+                IF(CONTROL_LOOP%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
                   CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
                   CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Load increment control loop iteration: ", &
                     & LOAD_INCREMENT_LOOP%ITERATION_NUMBER,err,error,*999)
@@ -1132,7 +1135,7 @@ CONTAINS
         IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
           SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
           IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-            IF(SOLVER%OUTPUT_TYPE>=SOLVER_MATRIX_OUTPUT) THEN
+            IF(SOLVER%outputType>=SOLVER_MATRIX_OUTPUT) THEN
               SOLVER_MATRICES=>SOLVER_EQUATIONS%SOLVER_MATRICES
               IF(ASSOCIATED(SOLVER_MATRICES)) THEN
                 CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
@@ -1267,7 +1270,7 @@ CONTAINS
         IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
           SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
           IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-            IF(SOLVER%OUTPUT_TYPE>=SOLVER_MATRIX_OUTPUT) THEN
+            IF(SOLVER%outputType>=SOLVER_MATRIX_OUTPUT) THEN
               SOLVER_MATRICES=>SOLVER_EQUATIONS%SOLVER_MATRICES
               IF(ASSOCIATED(SOLVER_MATRICES)) THEN
                 CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
@@ -1313,7 +1316,7 @@ CONTAINS
                   !Calculate the residual for each element (M, C, K and g)
                   DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                     EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
-                    SELECT CASE(EQUATIONS_SET%EQUATIONS%LINEARITY)
+                    SELECT CASE(EQUATIONS_SET%EQUATIONS%linearity)
                     CASE(EQUATIONS_LINEAR)
                       !Assemble the equations for linear equations
                       CALL EQUATIONS_SET_ASSEMBLE(EQUATIONS_SET,err,error,*999)
@@ -1349,7 +1352,7 @@ CONTAINS
                 !Make sure the equations sets are up to date
                 DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                   EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
-                  SELECT CASE(EQUATIONS_SET%EQUATIONS%LINEARITY)
+                  SELECT CASE(EQUATIONS_SET%EQUATIONS%linearity)
                   CASE(EQUATIONS_LINEAR)
                     !Assemble the equations for linear equations
                     CALL EQUATIONS_SET_ASSEMBLE(EQUATIONS_SET,err,error,*999)
@@ -1407,7 +1410,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: equations_set_idx
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
     TYPE(VARYING_STRING) :: LOCAL_ERROR
@@ -1425,12 +1428,12 @@ CONTAINS
               IF(ASSOCIATED(EQUATIONS_SET)) THEN
                 EQUATIONS=>EQUATIONS_SET%EQUATIONS
                 IF(ASSOCIATED(EQUATIONS)) THEN
-                  IF(EQUATIONS%EQUATIONS_FINISHED) THEN
-                    SELECT CASE(EQUATIONS%LINEARITY)
+                  IF(equations%equationsFinished) THEN
+                    SELECT CASE(EQUATIONS%linearity)
                     CASE(EQUATIONS_LINEAR)            
                       CALL FlagError("Can not pre-evaluate a residual for linear equations.",err,error,*999)
                     CASE(EQUATIONS_NONLINEAR)
-                      SELECT CASE(EQUATIONS%TIME_DEPENDENCE)
+                      SELECT CASE(EQUATIONS%timeDependence)
                       CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC,EQUATIONS_FIRST_ORDER_DYNAMIC) ! quasistatic handled like static
                         SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
                         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
@@ -1490,14 +1493,14 @@ CONTAINS
                         CALL FlagError("Not implemented.",err,error,*999)
                       CASE DEFAULT
                         LOCAL_ERROR="The equations set time dependence type of "// &
-                          & TRIM(NUMBER_TO_VSTRING(EQUATIONS%TIME_DEPENDENCE,"*",err,error))//" is invalid."
+                          & TRIM(NUMBER_TO_VSTRING(EQUATIONS%timeDependence,"*",err,error))//" is invalid."
                         CALL FlagError(LOCAL_ERROR,err,error,*999)
                       END SELECT
                     CASE(EQUATIONS_NONLINEAR_BCS)
                       CALL FlagError("Not implemented.",err,error,*999)
                     CASE DEFAULT
                       LOCAL_ERROR="The equations linearity of "// &
-                        & TRIM(NUMBER_TO_VSTRING(EQUATIONS%LINEARITY,"*",err,error))//" is invalid."
+                        & TRIM(NUMBER_TO_VSTRING(EQUATIONS%linearity,"*",err,error))//" is invalid."
                       CALL FlagError(LOCAL_ERROR,err,error,*999)
                     END SELECT
                   ELSE
@@ -1544,7 +1547,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: equations_set_idx
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
     TYPE(VARYING_STRING) :: LOCAL_ERROR
@@ -1562,12 +1565,12 @@ CONTAINS
               IF(ASSOCIATED(EQUATIONS_SET)) THEN
                 EQUATIONS=>EQUATIONS_SET%EQUATIONS
                 IF(ASSOCIATED(EQUATIONS)) THEN
-                  IF(EQUATIONS%EQUATIONS_FINISHED) THEN
-                    SELECT CASE(EQUATIONS%LINEARITY)
+                  IF(equations%equationsFinished) THEN
+                    SELECT CASE(EQUATIONS%linearity)
                     CASE(EQUATIONS_LINEAR)            
                       CALL FlagError("Can not post-evaluate a residual for linear equations.",err,error,*999)
                     CASE(EQUATIONS_NONLINEAR)
-                      SELECT CASE(EQUATIONS%TIME_DEPENDENCE)
+                      SELECT CASE(EQUATIONS%timeDependence)
                       CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC,EQUATIONS_FIRST_ORDER_DYNAMIC) ! quasistatic handled like static
                         SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
                         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
@@ -1628,14 +1631,14 @@ CONTAINS
                         CALL FlagError("Not implemented.",err,error,*999)
                       CASE DEFAULT
                         LOCAL_ERROR="The equations set time dependence type of "// &
-                          & TRIM(NUMBER_TO_VSTRING(EQUATIONS%TIME_DEPENDENCE,"*",err,error))//" is invalid."
+                          & TRIM(NUMBER_TO_VSTRING(EQUATIONS%timeDependence,"*",err,error))//" is invalid."
                         CALL FlagError(LOCAL_ERROR,err,error,*999)
                       END SELECT
                     CASE(EQUATIONS_NONLINEAR_BCS)
                       CALL FlagError("Not implemented.",err,error,*999)
                     CASE DEFAULT
                       LOCAL_ERROR="The equations linearity of "// &
-                        & TRIM(NUMBER_TO_VSTRING(EQUATIONS%LINEARITY,"*",err,error))//" is invalid."
+                        & TRIM(NUMBER_TO_VSTRING(EQUATIONS%linearity,"*",err,error))//" is invalid."
                       CALL FlagError(LOCAL_ERROR,err,error,*999)
                     END SELECT
                   ELSE
@@ -2112,43 +2115,43 @@ CONTAINS
     
     IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
       IF(SOLVER_EQUATIONS%SOLVER_EQUATIONS_FINISHED) THEN
-        SELECT CASE(SOLVER_EQUATIONS%TIME_DEPENDENCE)
+        SELECT CASE(SOLVER_EQUATIONS%timeDependence)
         CASE(SOLVER_EQUATIONS_STATIC)
-          SELECT CASE(SOLVER_EQUATIONS%LINEARITY)
+          SELECT CASE(SOLVER_EQUATIONS%linearity)
           CASE(SOLVER_EQUATIONS_LINEAR)
             CALL Problem_SolverEquationsStaticLinearSolve(SOLVER_EQUATIONS,err,error,*999)
           CASE(SOLVER_EQUATIONS_NONLINEAR)
             CALL Problem_SolverEquationsStaticNonlinearSolve(SOLVER_EQUATIONS,err,error,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The solver equations linearity of "//TRIM(NUMBER_TO_VSTRING(SOLVER_EQUATIONS%LINEARITY,"*",err,error))// &
+            LOCAL_ERROR="The solver equations linearity of "//TRIM(NUMBER_TO_VSTRING(SOLVER_EQUATIONS%linearity,"*",err,error))// &
               & " is invalid."
             CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         CASE(SOLVER_EQUATIONS_QUASISTATIC)
-          SELECT CASE(SOLVER_EQUATIONS%LINEARITY)
+          SELECT CASE(SOLVER_EQUATIONS%linearity)
           CASE(SOLVER_EQUATIONS_LINEAR)
             CALL Problem_SolverEquationsQuasistaticLinearSolve(SOLVER_EQUATIONS,err,error,*999)
           CASE(SOLVER_EQUATIONS_NONLINEAR)
             CALL Problem_SolverEquationsQuasistaticNonlinearSolve(SOLVER_EQUATIONS,err,error,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The solver equations linearity of "//TRIM(NUMBER_TO_VSTRING(SOLVER_EQUATIONS%LINEARITY,"*",err,error))// &
+            LOCAL_ERROR="The solver equations linearity of "//TRIM(NUMBER_TO_VSTRING(SOLVER_EQUATIONS%linearity,"*",err,error))// &
               & " is invalid."
             CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         CASE(SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,SOLVER_EQUATIONS_SECOND_ORDER_DYNAMIC)
-          SELECT CASE(SOLVER_EQUATIONS%LINEARITY)
+          SELECT CASE(SOLVER_EQUATIONS%linearity)
           CASE(SOLVER_EQUATIONS_LINEAR)
             CALL Problem_SolverEquationsDynamicLinearSolve(SOLVER_EQUATIONS,err,error,*999)
           CASE(SOLVER_EQUATIONS_NONLINEAR)
             CALL Problem_SolverEquationsDynamicNonlinearSolve(SOLVER_EQUATIONS,err,error,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The solver equations linearity of "//TRIM(NUMBER_TO_VSTRING(SOLVER_EQUATIONS%LINEARITY,"*",err,error))// &
+            LOCAL_ERROR="The solver equations linearity of "//TRIM(NUMBER_TO_VSTRING(SOLVER_EQUATIONS%linearity,"*",err,error))// &
               & " is invalid."
             CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         CASE DEFAULT
           LOCAL_ERROR="The solver equations time dependence type of "// &
-            & TRIM(NUMBER_TO_VSTRING(SOLVER_EQUATIONS%TIME_DEPENDENCE,"*",err,error))//" is invalid."
+            & TRIM(NUMBER_TO_VSTRING(SOLVER_EQUATIONS%timeDependence,"*",err,error))//" is invalid."
           CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
       ELSE
@@ -2262,7 +2265,7 @@ CONTAINS
     INTEGER(INTG) :: equations_set_idx,loop_idx,interface_condition_idx
     REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP,CONTROL_TIME_LOOP
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
@@ -2290,7 +2293,7 @@ CONTAINS
                     !If we need to restart or we haven't initialised yet or we have an FSI scheme, make sure the equations sets are up to date
                     EQUATIONS=>EQUATIONS_SET%EQUATIONS
                     IF(ASSOCIATED(EQUATIONS)) THEN
-                      SELECT CASE(EQUATIONS%LINEARITY)
+                      SELECT CASE(EQUATIONS%linearity)
                       CASE(EQUATIONS_LINEAR)
                         !Assemble the equations
                         CALL EQUATIONS_SET_ASSEMBLE(EQUATIONS_SET,err,error,*999)
@@ -2301,7 +2304,7 @@ CONTAINS
                         CALL FlagError("Not implemented.",err,error,*999)
                       CASE DEFAULT
                         LOCAL_ERROR="The equations linearity type of "// &
-                          & TRIM(NUMBER_TO_VSTRING(EQUATIONS%LINEARITY,"*",err,error))// &
+                          & TRIM(NUMBER_TO_VSTRING(EQUATIONS%linearity,"*",err,error))// &
                           & " is invalid."
                         CALL FlagError(LOCAL_ERROR,err,error,*999)
                       END SELECT
@@ -2448,7 +2451,7 @@ CONTAINS
     INTEGER(INTG) :: equations_set_idx
     REAL(DP) :: currentTime,timeIncrement
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
@@ -2484,7 +2487,7 @@ CONTAINS
                 EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
                 EQUATIONS=>EQUATIONS_SET%EQUATIONS
                 IF(ASSOCIATED(EQUATIONS)) THEN
-                  SELECT CASE(EQUATIONS%LINEARITY)
+                  SELECT CASE(EQUATIONS%linearity)
                   CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
                     CALL EQUATIONS_SET_BACKSUBSTITUTE(EQUATIONS_SET,SOLVER_EQUATIONS%BOUNDARY_CONDITIONS,err,error,*999)
                   CASE(EQUATIONS_NONLINEAR)
@@ -2625,7 +2628,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: equations_set_idx,interface_condition_idx
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
@@ -2669,7 +2672,7 @@ CONTAINS
             EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
             EQUATIONS=>EQUATIONS_SET%EQUATIONS
             IF(ASSOCIATED(EQUATIONS)) THEN
-              SELECT CASE(EQUATIONS%LINEARITY)
+              SELECT CASE(EQUATIONS%linearity)
               CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
                 CALL EQUATIONS_SET_BACKSUBSTITUTE(EQUATIONS_SET,SOLVER_EQUATIONS%BOUNDARY_CONDITIONS,err,error,*999)
               CASE(EQUATIONS_NONLINEAR)
@@ -2716,7 +2719,7 @@ CONTAINS
     
     IF(ASSOCIATED(SOLVER)) THEN
 
-      IF(SOLVER%OUTPUT_TYPE>=SOLVER_PROGRESS_OUTPUT) THEN
+      IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
         CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
         CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solver: ",SOLVER%LABEL,err,error,*999)
         CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Solver index = ",SOLVER%GLOBAL_NUMBER,err,error,*999)
@@ -3542,6 +3545,59 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Monitors the problem optimiser solve
+  SUBROUTINE Problem_SolverOptimiserMonitor(solver,err,error,*)
+
+    !Argument variables
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver to monitor
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
+    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(OptimiserSolverType), POINTER :: optimiserSolver
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("Problem_SolverOptimiserMonitor",err,error,*999)
+    
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+    
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    
+    !IF(.NOT.ALLOCATED(problem%specification)) CALL FlagError("Problem specification is not allocated.",err,error,*999)
+    !IF(SIZE(problem%specification,1)<1) CALL FlagError("Problem specification must have at least one entry.",err,error,*999)
+
+    !SELECT CASE(problem%specification(1))
+    !CASE DEFAULT
+    !  localError="The problem class of "//TRIM(NUMBER_TO_VSTRING(problem%specification(1),"*",err,error))//" is invalid."
+    !  CALL FlagError(localError,err,error,*999)
+    !END SELECT
+
+    !Optimiser solve monitor--progress output if required
+    IF(solver%SOLVE_TYPE==SOLVER_OPTIMISER_TYPE) THEN
+      optimiserSolver=>solver%optimiserSolver
+      IF(.NOT.ASSOCIATED(optimiserSolver)) CALL FlagError("Solver optimiser solver is not associated.",err,error,*999)
+      CALL Solver_OptimiserMonitor(optimiserSolver,err,error,*999)
+    ELSE
+      localError="Invalid solve type. The solve type of "//TRIM(NumberToVString(solver%SOLVE_TYPE,"*",err,error))// &
+        & " does not correspond to an optimiser solver."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Problem_SolverOptimiserMonitor")
+    RETURN
+999 ERRORSEXITS("Problem_SolverOptimiserMonitor",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Problem_SolverOptimiserMonitor
+  
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the problem specification array for a problem identified by a pointer. \see OpenCMISS::cmfe_Problem_SpecificationGet
   SUBROUTINE Problem_SpecificationGet(problem,problemSpecification,err,error,*)
 
@@ -3893,7 +3949,7 @@ SUBROUTINE Problem_SolverJacobianFDCalculatePetsc(snes,x,A,B,ctx,err)
           IF(solverMatrices%NUMBER_OF_MATRICES==1) THEN
             solverMatrix=>solverMatrices%matrices(1)%ptr
             IF(ASSOCIATED(solverMatrix)) THEN
-              SELECT CASE(solverEquations%SPARSITY_TYPE)
+              SELECT CASE(solverEquations%sparsityType)
               CASE(SOLVER_SPARSE_MATRICES)
                 SELECT CASE(nonlinearSolver%NONLINEAR_SOLVE_TYPE)
                 CASE(SOLVER_NONLINEAR_NEWTON)
@@ -3935,10 +3991,10 @@ SUBROUTINE Problem_SolverJacobianFDCalculatePetsc(snes,x,A,B,ctx,err)
                 CALL Petsc_SnesComputeJacobianDefault(snes,x,A,B,ctx,err,error,*999)
               CASE DEFAULT
                 localError="The specified solver equations sparsity type of "// &
-                  & TRIM(NumberToVString(solverEquations%SPARSITY_TYPE,"*",err,error))//" is invalid."
+                  & TRIM(NumberToVString(solverEquations%sparsityType,"*",err,error))//" is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
-              IF(ctx%OUTPUT_TYPE>=SOLVER_MATRIX_OUTPUT) THEN
+              IF(ctx%outputType>=SOLVER_MATRIX_OUTPUT) THEN
                 CALL DISTRIBUTED_MATRIX_OVERRIDE_SET_ON(solverMatrices%matrices(1)%ptr%matrix,A,err,error,*999)
                 CALL SOLVER_MATRICES_OUTPUT(GENERAL_OUTPUT_TYPE,SOLVER_MATRICES_JACOBIAN_ONLY,solverMatrices,err,error,*998)
                 CALL DISTRIBUTED_MATRIX_OVERRIDE_SET_OFF(solverMatrices%matrices(1)%ptr%matrix,err,error,*999)
@@ -4025,18 +4081,20 @@ SUBROUTINE Problem_SolverObjectiveEvaluatePetsc(tao,x,f,ctx,err)
 
   CALL DistributedVector_OverrideSetOn(solverVector,x,err,error,*999)
     
-  CALL Problem_SolverObjectiveEvaluate(ctx,err,error,*999)
+  !CALL Problem_SolverObjectiveEvaluate(ctx,err,error,*999)
+
+  f=0.0_DP
                     
   CALL DistributedVector_OverrideSetOff(solverVector,err,error,*999)
 
 !!TODO: move this to PROBLEM_SOLVER_RESIDUAL_EVALUATE or elsewhere?
-  optimiserSolver%totalNumberOfObjectiveEvaluations=optimiserSolver%totalNumberOfFunctionEvaluations+1
+  !optimiserSolver%totalNumberOfObjectiveEvaluations=optimiserSolver%totalNumberOfFunctionEvaluations+1
   
   RETURN
 999 CALL DistributedVector_OverrideSetOff(solverVector,dummyErr,dummyError,*998)  
-997 CALL WriteError(err,error,*996)
-996 CALL FlagWarning("Error evaluating optimiser objective.",err,error,*995)
-995 RETURN
+998 CALL WriteError(err,error,*997)
+997 CALL FlagWarning("Error evaluating optimiser objective.",err,error,*996)
+996 RETURN
 
 END SUBROUTINE Problem_SolverObjectiveEvaluatePetsc
 

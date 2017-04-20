@@ -179,10 +179,6 @@ MODULE EQUATIONS_MATRICES_ROUTINES
     MODULE PROCEDURE EQUATIONS_MATRICES_VALUES_INITIALISE
   END INTERFACE EquationsMatrices_ValuesInitialise
 
-  INTERFACE EquationsMatrices_ElementMatrixFinalise
-    MODULE PROCEDURE EQUATIONS_MATRICES_ELEMENT_MATRIX_FINALISE
-  END INTERFACE EquationsMatrices_ElementMatrixFinalise
-
   INTERFACE EquationsMatrices_ElementMatrixCalculate
     MODULE PROCEDURE EQUATIONS_MATRICES_ELEMENT_MATRIX_CALCULATE
   END INTERFACE EquationsMatrices_ElementMatrixCalculate
@@ -268,8 +264,6 @@ MODULE EQUATIONS_MATRICES_ROUTINES
   PUBLIC EquationsMatrices_ElementAdd,EquationsMatrices_JacobianElementAdd,EquationsMatrices_ElementCalculate, &
     & EquationsMatrices_ValuesInitialise
 
-  PUBLIC EQUATIONS_MATRICES_ELEMENT_MATRIX_FINALISE
-
   PUBLIC EquationsMatrices_ElementMatrixFinalise,EquationsMatrices_ElementMatrixInitialise
   
   PUBLIC EQUATIONS_MATRICES_ELEMENT_MATRIX_CALCULATE,EQUATIONS_MATRICES_ELEMENT_MATRIX_SETUP
@@ -314,6 +308,34 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Finalise the equations Hessian and deallocate all memory
+  SUBROUTINE EquationsMatrices_HessianFinalise(hessian,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsHessianType), POINTER :: hessian !<A pointer to the equations Hessian to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("EquationsMatrices_HessianFinalise",ERR,ERROR,*999)
+
+    IF(.NOT.ASSOCIATED(hessian)) THEN
+      IF(ASSOCIATED(hessian%hessian)) CALL DistributedMatrix_Destroy(hessian%hessian,err,error,*999)
+      CALL EquationsMatrices_ElementMatrixFinalise(hessian%elementHessian,err,error,*999)
+      DEALLOCATE(hessian)
+    ENDIF
+    
+    EXITS("EquationsMatrices_HessianFinalise")
+    RETURN
+999 ERRORSEXITS("EquationsMatrices_HessianFinalise",ERR,ERROR)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrices_HessianFinalise
+
+  !
+  !================================================================================================================================
+  !
+
   !>Finalise the equations Jacobian and deallocate all memory
   SUBROUTINE EQUATIONS_JACOBIAN_FINALISE(EQUATIONS_JACOBIAN,ERR,ERROR,*)
 
@@ -327,8 +349,9 @@ CONTAINS
 
     IF(ASSOCIATED(EQUATIONS_JACOBIAN)) THEN
       IF(ASSOCIATED(EQUATIONS_JACOBIAN%JACOBIAN)) CALL DISTRIBUTED_MATRIX_DESTROY(EQUATIONS_JACOBIAN%JACOBIAN,ERR,ERROR,*999)
-      CALL EQUATIONS_MATRICES_ELEMENT_MATRIX_FINALISE(EQUATIONS_JACOBIAN%ELEMENT_JACOBIAN,ERR,ERROR,*999)
+      CALL EquationsMatrices_ElementMatrixFinalise(EQUATIONS_JACOBIAN%ELEMENT_JACOBIAN,ERR,ERROR,*999)
       CALL EquationsMatrices_NodalMatrixFinalise(EQUATIONS_JACOBIAN%NodalJacobian,ERR,ERROR,*999)
+      DEALLOCATE(EQUATIONS_JACOBIAN)
     ENDIF
     
     EXITS("EQUATIONS_JACOBIAN_FINALISE")
@@ -359,9 +382,9 @@ CONTAINS
     ENTERS("EQUATIONS_JACOBIAN_INITIALISE",ERR,ERROR,*998)
  
     IF(ASSOCIATED(NONLINEAR_MATRICES)) THEN
-      EQUATIONS_MATRICES=>NONLINEAR_MATRICES%EQUATIONS_MATRICES
+      EQUATIONS_MATRICES=>NONLINEAR_MATRICES%equationsMatrices
       IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-        EQUATIONS_MAPPING=>EQUATIONS_MATRICES%EQUATIONS_MAPPING
+        EQUATIONS_MAPPING=>EQUATIONS_MATRICES%equationsMapping
         IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
           NONLINEAR_MAPPING=>EQUATIONS_MAPPING%NONLINEAR_MAPPING
           IF(ASSOCIATED(NONLINEAR_MAPPING)) THEN
@@ -448,7 +471,7 @@ CONTAINS
       IF(EQUATIONS_MATRICES%EQUATIONS_MATRICES_FINISHED) THEN
         CALL FlagError("Equations matrices have already been finished.",ERR,ERROR,*998)
       ELSE
-        EQUATIONS_MAPPING=>EQUATIONS_MATRICES%EQUATIONS_MAPPING
+        EQUATIONS_MAPPING=>EQUATIONS_MATRICES%equationsMapping
         IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
           ROW_DOMAIN_MAP=>EQUATIONS_MAPPING%ROW_DOFS_MAPPING
           IF(ASSOCIATED(ROW_DOMAIN_MAP)) THEN
@@ -630,7 +653,7 @@ CONTAINS
   SUBROUTINE EQUATIONS_MATRICES_CREATE_START(EQUATIONS,EQUATIONS_MATRICES,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS !<The pointer to the equations to create the equations matrices for
+    TYPE(EquationsType), POINTER :: EQUATIONS !<The pointer to the equations to create the equations matrices for
     TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<On return, a pointer to the equations matrices being created.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string  
@@ -641,14 +664,14 @@ CONTAINS
     ENTERS("EQUATIONS_MATRICES_CREATE_START",ERR,ERROR,*998)
 
     IF(ASSOCIATED(EQUATIONS)) THEN      
-      IF(EQUATIONS%EQUATIONS_FINISHED) THEN
+      IF(equations%equationsFinished) THEN
         IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
           CALL FlagError("Equations matrices is already associated.",ERR,ERROR,*998)
         ELSE
           NULLIFY(EQUATIONS_MATRICES)
           !Initialise the equations matrices
           CALL EQUATIONS_MATRICES_INITIALISE(EQUATIONS,ERR,ERROR,*999)
-          EQUATIONS_MATRICES=>EQUATIONS%EQUATIONS_MATRICES
+          EQUATIONS_MATRICES=>EQUATIONS%equationsMatrices
         ENDIF
       ELSE
         CALL FlagError("Equations has not been finished.",ERR,ERROR,*999)
@@ -659,7 +682,7 @@ CONTAINS
     
     EXITS("EQUATIONS_MATRICES_CREATE_START")
     RETURN
-999 CALL EQUATIONS_MATRICES_FINALISE(EQUATIONS%EQUATIONS_MATRICES,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL EQUATIONS_MATRICES_FINALISE(EQUATIONS%equationsMatrices,DUMMY_ERR,DUMMY_ERROR,*998)
 998 ERRORSEXITS("EQUATIONS_MATRICES_CREATE_START",ERR,ERROR)
     RETURN 1
   END SUBROUTINE EQUATIONS_MATRICES_CREATE_START
@@ -955,53 +978,55 @@ CONTAINS
   !
 
   !>Finalise an element matrix and deallocate all memory
-  SUBROUTINE EQUATIONS_MATRICES_ELEMENT_MATRIX_FINALISE(ELEMENT_MATRIX,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_ElementMatrixFinalise(elementMatrix,err,error,*)
 
     !Argument variables
-    TYPE(ELEMENT_MATRIX_TYPE):: ELEMENT_MATRIX !<The element matrix to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(ELEMENT_MATRIX_TYPE):: elementMatrix!<The element matrix to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     
-    ENTERS("EQUATIONS_MATRICES_ELEMENT_MATRIX_FINALISE",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_ElementMatrixFinalise",err,error,*999)
 
-    ELEMENT_MATRIX%MAX_NUMBER_OF_ROWS=0
-    ELEMENT_MATRIX%MAX_NUMBER_OF_COLUMNS=0
-    IF(ALLOCATED(ELEMENT_MATRIX%ROW_DOFS)) DEALLOCATE(ELEMENT_MATRIX%ROW_DOFS)
-    IF(ALLOCATED(ELEMENT_MATRIX%COLUMN_DOFS)) DEALLOCATE(ELEMENT_MATRIX%COLUMN_DOFS)
-    IF(ALLOCATED(ELEMENT_MATRIX%MATRIX)) DEALLOCATE(ELEMENT_MATRIX%MATRIX)
+    elementMatrix%MAX_NUMBER_OF_ROWS=0
+    elementMatrix%MAX_NUMBER_OF_COLUMNS=0
+    IF(ALLOCATED(elementMatrix%ROW_DOFS)) DEALLOCATE(elementMatrix%ROW_DOFS)
+    IF(ALLOCATED(elementMatrix%COLUMN_DOFS)) DEALLOCATE(elementMatrix%COLUMN_DOFS)
+    IF(ALLOCATED(elementMatrix%MATRIX)) DEALLOCATE(elementMatrix%MATRIX)
     
-    EXITS("EQUATIONS_MATRICES_ELEMENT_MATRIX_FINALISE")
+    EXITS("EquationsMatrices_ElementMatrixFinalise")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MATRICES_ELEMENT_MATRIX_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_ElementMatrixFinalise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_ELEMENT_MATRIX_FINALISE
+    
+  END SUBROUTINE EquationsMatrices_ElementMatrixFinalise
 
   !
   !================================================================================================================================
   !
 
   !>Initialise the element matrix.
-  SUBROUTINE EquationsMatrices_ElementMatrixInitialise(ELEMENT_MATRIX,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_ElementMatrixInitialise(elementMatrix,err,error,*)
 
     !Argument variables
-    TYPE(ELEMENT_MATRIX_TYPE) :: ELEMENT_MATRIX !The element matrix to initialise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(ELEMENT_MATRIX_TYPE) :: elementMatrix !The element matrix to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("EquationsMatrices_ElementMatrixInitialise",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_ElementMatrixInitialise",err,error,*999)
 
-    ELEMENT_MATRIX%EQUATIONS_MATRIX_NUMBER=0
-    ELEMENT_MATRIX%NUMBER_OF_ROWS=0
-    ELEMENT_MATRIX%NUMBER_OF_COLUMNS=0
-    ELEMENT_MATRIX%MAX_NUMBER_OF_ROWS=0
-    ELEMENT_MATRIX%MAX_NUMBER_OF_COLUMNS=0
+    elementMatrix%EQUATIONS_MATRIX_NUMBER=0
+    elementMatrix%NUMBER_OF_ROWS=0
+    elementMatrix%NUMBER_OF_COLUMNS=0
+    elementMatrix%MAX_NUMBER_OF_ROWS=0
+    elementMatrix%MAX_NUMBER_OF_COLUMNS=0
        
     EXITS("EquationsMatrices_ElementMatrixInitialise")
     RETURN
-999 ERRORSEXITS("EquationsMatrices_ElementMatrixInitialise",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_ElementMatrixInitialise",err,error)
     RETURN 1
+    
   END SUBROUTINE EquationsMatrices_ElementMatrixInitialise
 
   !
@@ -1067,7 +1092,7 @@ CONTAINS
     
     EXITS("EQUATIONS_MATRICES_ELEMENT_MATRIX_SETUP")
     RETURN
-999 CALL EQUATIONS_MATRICES_ELEMENT_MATRIX_FINALISE(elementMatrix,dummyErr,dummyError,*998)
+999 CALL EquationsMatrices_ElementMatrixFinalise(elementMatrix,dummyErr,dummyError,*998)
 998 ERRORSEXITS("EQUATIONS_MATRICES_ELEMENT_MATRIX_SETUP",err,error)
     RETURN 1
   END SUBROUTINE EQUATIONS_MATRICES_ELEMENT_MATRIX_SETUP
@@ -1446,7 +1471,7 @@ CONTAINS
     ENTERS("EQUATIONS_MATRICES_ELEMENT_CALCULATE",ERR,ERROR,*999)
 
     IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      EQUATIONS_MAPPING=>EQUATIONS_MATRICES%EQUATIONS_MAPPING
+      EQUATIONS_MAPPING=>EQUATIONS_MATRICES%equationsMapping
       IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
         DYNAMIC_MATRICES=>EQUATIONS_MATRICES%DYNAMIC_MATRICES
         IF(ASSOCIATED(DYNAMIC_MATRICES)) THEN
@@ -1598,7 +1623,7 @@ CONTAINS
     ENTERS("EquationsMatrices_NodalCalculate",err,error,*999)
 
     IF(ASSOCIATED(equationsMatrices)) THEN
-      equationsMapping=>equationsMatrices%EQUATIONS_MAPPING
+      equationsMapping=>equationsMatrices%equationsMapping
       IF(ASSOCIATED(equationsMapping)) THEN
         dynamicMatrices=>equationsMatrices%DYNAMIC_MATRICES
         IF(ASSOCIATED(dynamicMatrices)) THEN
@@ -2188,7 +2213,7 @@ CONTAINS
     ENTERS("EquationsMatrices_NodalInitialise",err,error,*999)
 
     IF(ASSOCIATED(equationsMatrices)) THEN
-      equationsMapping=>equationsMatrices%EQUATIONS_MAPPING
+      equationsMapping=>equationsMatrices%equationsMapping
       IF(ASSOCIATED(equationsMapping)) THEN
         dynamicMatrices=>equationsMatrices%DYNAMIC_MATRICES
         IF(ASSOCIATED(dynamicMatrices)) THEN
@@ -2696,7 +2721,7 @@ CONTAINS
         DO matrix_idx=1,DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES
           EQUATIONS_MATRIX=>DYNAMIC_MATRICES%MATRICES(matrix_idx)%PTR
           IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
-            CALL EQUATIONS_MATRICES_ELEMENT_MATRIX_FINALISE(EQUATIONS_MATRIX%ELEMENT_MATRIX,ERR,ERROR,*999)
+            CALL EquationsMatrices_ElementMatrixFinalise(EQUATIONS_MATRIX%ELEMENT_MATRIX,ERR,ERROR,*999)
           ELSE
             LOCAL_ERROR="Equations matrix for dynamic matrix number "//TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))// &
               & " is not associated."
@@ -2710,7 +2735,7 @@ CONTAINS
         DO matrix_idx=1,LINEAR_MATRICES%NUMBER_OF_LINEAR_MATRICES
           EQUATIONS_MATRIX=>LINEAR_MATRICES%MATRICES(matrix_idx)%PTR
           IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
-            CALL EQUATIONS_MATRICES_ELEMENT_MATRIX_FINALISE(EQUATIONS_MATRIX%ELEMENT_MATRIX,ERR,ERROR,*999)
+            CALL EquationsMatrices_ElementMatrixFinalise(EQUATIONS_MATRIX%ELEMENT_MATRIX,ERR,ERROR,*999)
           ELSE
             LOCAL_ERROR="Equations matrix for linear matrix number "//TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))// &
               & " is not associated."
@@ -2795,7 +2820,7 @@ CONTAINS
     IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
       rowsNumberOfElements=1
       colsNumberOfElements=1
-      EQUATIONS_MAPPING=>EQUATIONS_MATRICES%EQUATIONS_MAPPING
+      EQUATIONS_MAPPING=>EQUATIONS_MATRICES%equationsMapping
       IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
         DYNAMIC_MATRICES=>EQUATIONS_MATRICES%DYNAMIC_MATRICES
         IF(ASSOCIATED(DYNAMIC_MATRICES)) THEN
@@ -2926,7 +2951,7 @@ CONTAINS
 
     IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
       IF(ASSOCIATED(EQUATIONS_MATRIX%MATRIX)) CALL DISTRIBUTED_MATRIX_DESTROY(EQUATIONS_MATRIX%MATRIX,ERR,ERROR,*999)
-      CALL EQUATIONS_MATRICES_ELEMENT_MATRIX_FINALISE(EQUATIONS_MATRIX%ELEMENT_MATRIX,ERR,ERROR,*999)
+      CALL EquationsMatrices_ElementMatrixFinalise(EQUATIONS_MATRIX%ELEMENT_MATRIX,ERR,ERROR,*999)
       CALL EquationsMatrices_NodalMatrixFinalise(EQUATIONS_MATRIX%NodalMatrix,ERR,ERROR,*999)
       IF(ASSOCIATED(EQUATIONS_MATRIX%TEMP_VECTOR)) CALL DISTRIBUTED_VECTOR_DESTROY(EQUATIONS_MATRIX%TEMP_VECTOR,ERR,ERROR,*999)
     ENDIF
@@ -2961,9 +2986,9 @@ CONTAINS
 
     IF(ASSOCIATED(DYNAMIC_MATRICES)) THEN
       IF(MATRIX_NUMBER>0.AND.MATRIX_NUMBER<=DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES) THEN
-        EQUATIONS_MATRICES=>DYNAMIC_MATRICES%EQUATIONS_MATRICES
+        EQUATIONS_MATRICES=>DYNAMIC_MATRICES%equationsMatrices
         IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-          EQUATIONS_MAPPING=>EQUATIONS_MATRICES%EQUATIONS_MAPPING
+          EQUATIONS_MAPPING=>EQUATIONS_MATRICES%equationsMapping
           IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
             DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING
             IF(ASSOCIATED(DYNAMIC_MAPPING)) THEN
@@ -3040,9 +3065,9 @@ CONTAINS
 
     IF(ASSOCIATED(LINEAR_MATRICES)) THEN
       IF(MATRIX_NUMBER>0.AND.MATRIX_NUMBER<=LINEAR_MATRICES%NUMBER_OF_LINEAR_MATRICES) THEN
-        EQUATIONS_MATRICES=>LINEAR_MATRICES%EQUATIONS_MATRICES
+        EQUATIONS_MATRICES=>LINEAR_MATRICES%equationsMatrices
         IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-          EQUATIONS_MAPPING=>EQUATIONS_MATRICES%EQUATIONS_MAPPING
+          EQUATIONS_MAPPING=>EQUATIONS_MATRICES%equationsMapping
           IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
             LINEAR_MAPPING=>EQUATIONS_MAPPING%LINEAR_MAPPING
             IF(ASSOCIATED(LINEAR_MAPPING)) THEN
@@ -3148,7 +3173,7 @@ CONTAINS
     ENTERS("EQUATIONS_MATRICES_DYNAMIC_INITIALISE",ERR,ERROR,*998)
     
     IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      EQUATIONS_MAPPING=>EQUATIONS_MATRICES%EQUATIONS_MAPPING
+      EQUATIONS_MAPPING=>EQUATIONS_MATRICES%equationsMapping
       IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
         DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING
         IF(ASSOCIATED(DYNAMIC_MAPPING)) THEN
@@ -3157,7 +3182,7 @@ CONTAINS
           ELSE
             ALLOCATE(EQUATIONS_MATRICES%DYNAMIC_MATRICES,STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate equations matrices dynamic matrices.",ERR,ERROR,*999)
-            EQUATIONS_MATRICES%DYNAMIC_MATRICES%EQUATIONS_MATRICES=>EQUATIONS_MATRICES
+            EQUATIONS_MATRICES%DYNAMIC_MATRICES%equationsMatrices=>EQUATIONS_MATRICES
             EQUATIONS_MATRICES%DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES=DYNAMIC_MAPPING%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES
             ALLOCATE(EQUATIONS_MATRICES%DYNAMIC_MATRICES%MATRICES(DYNAMIC_MAPPING%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate equations matrices dynamic matrices matrices.",ERR,ERROR,*999)
@@ -3212,8 +3237,8 @@ CONTAINS
         IF(hessianMatrix%updateHessian) THEN
           !Add in Hessian element matrices
           CALL DistributedMatrix_ValuesAdd(hessianMatrix%hessian,hessianMatrix%elementHessian%ROW_DOFS( &
-            & 1:hessianMatrix%elementHessianNUMBER_OF_ROWS),hessianMatrix%elementHessian%COLUMN_DOFS( &
-            & 1:hessianMatrix%elementHessian%NUMBER_OF_COLUMNS),hessianMatrix%elementHessian(1: &
+            & 1:hessianMatrix%elementHessian%NUMBER_OF_ROWS),hessianMatrix%elementHessian%COLUMN_DOFS( &
+            & 1:hessianMatrix%elementHessian%NUMBER_OF_COLUMNS),hessianMatrix%elementHessian%matrix(1: &
             & hessianMatrix%elementHessian%NUMBER_OF_ROWS,1:hessianMatrix%elementHessian%NUMBER_OF_COLUMNS), &
             & err,error,*999)
         ENDIF
@@ -3265,7 +3290,7 @@ CONTAINS
       hessianMatrix=>optimisationMatrices%hessians(hessianMatrixIdx)%ptr
       IF(ASSOCIATED(hessianMatrix)) THEN        
         CALL WriteStringValue(id,"Hessian matrix: ",hessianMatrixIdx,err,error,*999)
-        CALL DistributedMatrix_Output(id,hessianMatrix,err,error,*999)
+        CALL DistributedMatrix_Output(id,hessianMatrix%hessian,err,error,*999)
       ELSE
         localError="The Hessian matrix for Hessian matrix index "//TRIM(NumberToVString(hessianMatrixIdx,"*",err,error))// &
           & " is not associated."
@@ -3499,7 +3524,7 @@ CONTAINS
     ENTERS("EQUATIONS_MATRICES_LINEAR_INITIALISE",ERR,ERROR,*998)
     
     IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      EQUATIONS_MAPPING=>EQUATIONS_MATRICES%EQUATIONS_MAPPING
+      EQUATIONS_MAPPING=>EQUATIONS_MATRICES%equationsMapping
       IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
         LINEAR_MAPPING=>EQUATIONS_MAPPING%LINEAR_MAPPING
         IF(ASSOCIATED(LINEAR_MAPPING)) THEN
@@ -3508,7 +3533,7 @@ CONTAINS
           ELSE
             ALLOCATE(EQUATIONS_MATRICES%LINEAR_MATRICES,STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate equations matrices linear matrices.",ERR,ERROR,*999)
-            EQUATIONS_MATRICES%LINEAR_MATRICES%EQUATIONS_MATRICES=>EQUATIONS_MATRICES
+            EQUATIONS_MATRICES%LINEAR_MATRICES%equationsMatrices=>EQUATIONS_MATRICES
             EQUATIONS_MATRICES%LINEAR_MATRICES%NUMBER_OF_LINEAR_MATRICES=LINEAR_MAPPING%NUMBER_OF_LINEAR_EQUATIONS_MATRICES
             ALLOCATE(EQUATIONS_MATRICES%LINEAR_MATRICES%MATRICES(LINEAR_MAPPING%NUMBER_OF_LINEAR_EQUATIONS_MATRICES),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate equations matrices linear matrices matrices.",ERR,ERROR,*999)
@@ -3587,7 +3612,7 @@ CONTAINS
     ENTERS("EQUATIONS_MATRICES_NONLINEAR_INITIALISE",ERR,ERROR,*998)
 
     IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      EQUATIONS_MAPPING=>EQUATIONS_MATRICES%EQUATIONS_MAPPING
+      EQUATIONS_MAPPING=>EQUATIONS_MATRICES%equationsMapping
       IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
         NONLINEAR_MAPPING=>EQUATIONS_MAPPING%NONLINEAR_MAPPING
         IF(ASSOCIATED(NONLINEAR_MAPPING)) THEN
@@ -3596,7 +3621,7 @@ CONTAINS
           ELSE
             ALLOCATE(EQUATIONS_MATRICES%NONLINEAR_MATRICES,STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate equations matrices nonlinear matrices.",ERR,ERROR,*999)
-            EQUATIONS_MATRICES%NONLINEAR_MATRICES%EQUATIONS_MATRICES=>EQUATIONS_MATRICES
+            EQUATIONS_MATRICES%NONLINEAR_MATRICES%equationsMatrices=>EQUATIONS_MATRICES
             EQUATIONS_MATRICES%NONLINEAR_MATRICES%UPDATE_RESIDUAL=.TRUE.
             EQUATIONS_MATRICES%NONLINEAR_MATRICES%FIRST_ASSEMBLY=.TRUE.
             NULLIFY(EQUATIONS_MATRICES%NONLINEAR_MATRICES%RESIDUAL)
@@ -3644,7 +3669,7 @@ CONTAINS
     IF(ASSOCIATED(optimisationMatrices)) THEN
       IF(ALLOCATED(optimisationMatrices%hessians)) THEN
         DO matrixIdx=1,SIZE(optimisationMatrices%hessians,1)
-          CALL EquationsMatrix_HessianFinalise(optimisationMatrices%hessians(matrixIdx)%ptr,err,error,*999)
+          CALL EquationsMatrices_HessianFinalise(optimisationMatrices%hessians(matrixIdx)%ptr,err,error,*999)
         ENDDO !matrixIdx
         DEALLOCATE(optimisationMatrices%hessians)
       ENDIF
@@ -3670,60 +3695,6 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMatrices_OptimisationFinalise
-  
-  !
-  !================================================================================================================================
-  !
-
-  !>Initialises the equations matrices optimisation matrices
-  SUBROUTINE EquationsMatrices_OptimisationInitialise(equationsMatrices,err,error,*)
-
-    !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices !<A pointer to the equation matrices to initialise the optimisation matrices for
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: dummyErr,matrixIdx
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: equationsMapping
-    TYPE(EquationsMappingOptimisationType), POINTER :: optimisationMapping
-    TYPE(VARYING_STRING) :: dummyError
-     
-    ENTERS("",err,error,*998)
-    
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      EQUATIONS_MAPPING=>EQUATIONS_MATRICES%EQUATIONS_MAPPING
-      IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-        DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING
-        IF(ASSOCIATED(DYNAMIC_MAPPING)) THEN
-          IF(ASSOCIATED(EQUATIONS_MATRICES%DYNAMIC_MATRICES)) THEN
-            CALL FlagError("Equations matrices dynamic matrices is already associated.",ERR,ERROR,*998)
-          ELSE
-            ALLOCATE(EQUATIONS_MATRICES%DYNAMIC_MATRICES,STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate equations matrices dynamic matrices.",ERR,ERROR,*999)
-            EQUATIONS_MATRICES%DYNAMIC_MATRICES%EQUATIONS_MATRICES=>EQUATIONS_MATRICES
-            EQUATIONS_MATRICES%DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES=DYNAMIC_MAPPING%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES
-            ALLOCATE(EQUATIONS_MATRICES%DYNAMIC_MATRICES%MATRICES(DYNAMIC_MAPPING%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate equations matrices dynamic matrices matrices.",ERR,ERROR,*999)
-            DO matrix_idx=1,DYNAMIC_MAPPING%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES
-              NULLIFY(EQUATIONS_MATRICES%DYNAMIC_MATRICES%MATRICES(matrix_idx)%PTR)
-              CALL EQUATIONS_MATRIX_DYNAMIC_INITIALISE(EQUATIONS_MATRICES%DYNAMIC_MATRICES,matrix_idx,ERR,ERROR,*999)
-            ENDDO !matrix_idx
-            NULLIFY(EQUATIONS_MATRICES%DYNAMIC_MATRICES%TEMP_VECTOR)
-          ENDIF
-        ENDIF
-      ELSE
-        CALL FlagError("Equations matrices equations mapping is not associated.",ERR,ERROR,*998)        
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*998)
-    ENDIF
-    
-    EXITS("EQUATIONS_MATRICES_DYNAMIC_INITIALISE")
-    RETURN
-999 CALL EQUATIONS_MATRICES_DYNAMIC_FINALISE(EQUATIONS_MATRICES%DYNAMIC_MATRICES,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("EQUATIONS_MATRICES_DYNAMIC_INITIALISE",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_DYNAMIC_INITIALISE
   
   !
   !================================================================================================================================
@@ -3861,7 +3832,7 @@ CONTAINS
     ENTERS("EQUATIONS_MATRICES_RHS_INITIALISE",ERR,ERROR,*998)
 
     IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      EQUATIONS_MAPPING=>EQUATIONS_MATRICES%EQUATIONS_MAPPING
+      EQUATIONS_MAPPING=>EQUATIONS_MATRICES%equationsMapping
       IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
         RHS_MAPPING=>EQUATIONS_MAPPING%RHS_MAPPING
         IF(ASSOCIATED(RHS_MAPPING)) THEN
@@ -3939,7 +3910,7 @@ CONTAINS
     ENTERS("EQUATIONS_MATRICES_SOURCE_INITIALISE",ERR,ERROR,*998)
 
     IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      EQUATIONS_MAPPING=>EQUATIONS_MATRICES%EQUATIONS_MAPPING
+      EQUATIONS_MAPPING=>EQUATIONS_MATRICES%equationsMapping
       IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
         SOURCE_MAPPING=>EQUATIONS_MAPPING%SOURCE_MAPPING
         IF(ASSOCIATED(SOURCE_MAPPING)) THEN
@@ -4592,7 +4563,7 @@ CONTAINS
   SUBROUTINE EQUATIONS_MATRICES_INITIALISE(EQUATIONS,ERR,ERROR,*)
     
      !Argument variables
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS !<A pointer to the equations to initialise the equations matrices for
+    TYPE(EquationsType), POINTER :: EQUATIONS !<A pointer to the equations to initialise the equations matrices for
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -4603,31 +4574,31 @@ CONTAINS
     ENTERS("EQUATIONS_MATRICES_INITIALISE",ERR,ERROR,*998)
 
     IF(ASSOCIATED(EQUATIONS)) THEN
-      IF(ASSOCIATED(EQUATIONS%EQUATIONS_MATRICES)) THEN
+      IF(ASSOCIATED(EQUATIONS%equationsMatrices)) THEN
         CALL FlagError("Equations matrices is already associated for this equations.",ERR,ERROR,*998)
       ELSE
-        EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
+        EQUATIONS_MAPPING=>EQUATIONS%equationsMapping
         IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
           IF(EQUATIONS_MAPPING%EQUATIONS_MAPPING_FINISHED) THEN
-            ALLOCATE(EQUATIONS%EQUATIONS_MATRICES,STAT=ERR)
+            ALLOCATE(EQUATIONS%equationsMatrices,STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate equations equations matrices.",ERR,ERROR,*999)
-            EQUATIONS%EQUATIONS_MATRICES%EQUATIONS=>EQUATIONS
-            EQUATIONS%EQUATIONS_MATRICES%EQUATIONS_MATRICES_FINISHED=.FALSE.
-            EQUATIONS%EQUATIONS_MATRICES%EQUATIONS_MAPPING=>EQUATIONS_MAPPING
-            NULLIFY(EQUATIONS%EQUATIONS_MATRICES%SOLVER_MAPPING)
-            EQUATIONS%EQUATIONS_MATRICES%NUMBER_OF_ROWS=EQUATIONS_MAPPING%NUMBER_OF_ROWS
-            EQUATIONS%EQUATIONS_MATRICES%TOTAL_NUMBER_OF_ROWS=EQUATIONS_MAPPING%TOTAL_NUMBER_OF_ROWS
-            EQUATIONS%EQUATIONS_MATRICES%NUMBER_OF_GLOBAL_ROWS=EQUATIONS_MAPPING%NUMBER_OF_GLOBAL_ROWS
-            NULLIFY(EQUATIONS%EQUATIONS_MATRICES%DYNAMIC_MATRICES)
-            NULLIFY(EQUATIONS%EQUATIONS_MATRICES%LINEAR_MATRICES)
-            NULLIFY(EQUATIONS%EQUATIONS_MATRICES%NONLINEAR_MATRICES)
-            NULLIFY(EQUATIONS%EQUATIONS_MATRICES%RHS_VECTOR)
-            NULLIFY(EQUATIONS%EQUATIONS_MATRICES%SOURCE_VECTOR)            
-            CALL EQUATIONS_MATRICES_DYNAMIC_INITIALISE(EQUATIONS%EQUATIONS_MATRICES,ERR,ERROR,*999)            
-            CALL EQUATIONS_MATRICES_LINEAR_INITIALISE(EQUATIONS%EQUATIONS_MATRICES,ERR,ERROR,*999)            
-            CALL EQUATIONS_MATRICES_NONLINEAR_INITIALISE(EQUATIONS%EQUATIONS_MATRICES,ERR,ERROR,*999)            
-            CALL EQUATIONS_MATRICES_RHS_INITIALISE(EQUATIONS%EQUATIONS_MATRICES,ERR,ERROR,*999)            
-            CALL EQUATIONS_MATRICES_SOURCE_INITIALISE(EQUATIONS%EQUATIONS_MATRICES,ERR,ERROR,*999)            
+            EQUATIONS%equationsMatrices%EQUATIONS=>EQUATIONS
+            EQUATIONS%equationsMatrices%EQUATIONS_MATRICES_FINISHED=.FALSE.
+            EQUATIONS%equationsMatrices%equationsMapping=>EQUATIONS_MAPPING
+            NULLIFY(EQUATIONS%equationsMatrices%SOLVER_MAPPING)
+            EQUATIONS%equationsMatrices%NUMBER_OF_ROWS=EQUATIONS_MAPPING%NUMBER_OF_ROWS
+            EQUATIONS%equationsMatrices%TOTAL_NUMBER_OF_ROWS=EQUATIONS_MAPPING%TOTAL_NUMBER_OF_ROWS
+            EQUATIONS%equationsMatrices%NUMBER_OF_GLOBAL_ROWS=EQUATIONS_MAPPING%NUMBER_OF_GLOBAL_ROWS
+            NULLIFY(EQUATIONS%equationsMatrices%DYNAMIC_MATRICES)
+            NULLIFY(EQUATIONS%equationsMatrices%LINEAR_MATRICES)
+            NULLIFY(EQUATIONS%equationsMatrices%NONLINEAR_MATRICES)
+            NULLIFY(EQUATIONS%equationsMatrices%RHS_VECTOR)
+            NULLIFY(EQUATIONS%equationsMatrices%SOURCE_VECTOR)            
+            CALL EQUATIONS_MATRICES_DYNAMIC_INITIALISE(EQUATIONS%equationsMatrices,ERR,ERROR,*999)            
+            CALL EQUATIONS_MATRICES_LINEAR_INITIALISE(EQUATIONS%equationsMatrices,ERR,ERROR,*999)            
+            CALL EQUATIONS_MATRICES_NONLINEAR_INITIALISE(EQUATIONS%equationsMatrices,ERR,ERROR,*999)            
+            CALL EQUATIONS_MATRICES_RHS_INITIALISE(EQUATIONS%equationsMatrices,ERR,ERROR,*999)            
+            CALL EQUATIONS_MATRICES_SOURCE_INITIALISE(EQUATIONS%equationsMatrices,ERR,ERROR,*999)            
           ELSE
             CALL FlagError("Equations mapping has not been finished.",ERR,ERROR,*999)
           ENDIF
@@ -4641,7 +4612,7 @@ CONTAINS
        
     EXITS("EQUATIONS_MATRICES_INITIALISE")
     RETURN
-999 CALL EQUATIONS_MATRICES_FINALISE(EQUATIONS%EQUATIONS_MATRICES,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL EQUATIONS_MATRICES_FINALISE(EQUATIONS%equationsMatrices,DUMMY_ERR,DUMMY_ERROR,*998)
 998 ERRORSEXITS("EQUATIONS_MATRICES_INITIALISE",ERR,ERROR)
     RETURN 1
   END SUBROUTINE EQUATIONS_MATRICES_INITIALISE
@@ -4804,7 +4775,7 @@ CONTAINS
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: dependentDofsDomainMapping
     TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: domainElements
     TYPE(DOMAIN_NODES_TYPE), POINTER :: domainNodes
-    TYPE(EQUATIONS_TYPE), POINTER :: equations
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: equationsMapping
     TYPE(EQUATIONS_MAPPING_DYNAMIC_TYPE), POINTER :: dynamicMapping
     TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: linearMapping
@@ -4834,19 +4805,19 @@ CONTAINS
               dynamicMatrices=>equationsMatrix%DYNAMIC_MATRICES
               IF(ASSOCIATED(dynamicMatrices).OR.ASSOCIATED(linearMatrices)) THEN
                 IF(ASSOCIATED(dynamicMatrices)) THEN
-                  equationsMatrices=>dynamicMatrices%EQUATIONS_MATRICES
+                  equationsMatrices=>dynamicMatrices%equationsMatrices
                 ELSE
-                  equationsMatrices=>linearMatrices%EQUATIONS_MATRICES
+                  equationsMatrices=>linearMatrices%equationsMatrices
                 ENDIF
                 IF(ASSOCIATED(equationsMatrices)) THEN
                   equations=>equationsMatrices%EQUATIONS
                   IF(ASSOCIATED(equations)) THEN
-                    equationsMapping=>equationsMatrices%EQUATIONS_MAPPING
+                    equationsMapping=>equationsMatrices%equationsMapping
                     IF(ASSOCIATED(equationsMapping)) THEN
                       dynamicMapping=>equationsMapping%DYNAMIC_MAPPING
                       linearMapping=>equationsMapping%LINEAR_MAPPING
                       IF(ASSOCIATED(dynamicMapping).OR.ASSOCIATED(linearMapping)) THEN
-                        equationsSet=>equations%EQUATIONS_SET
+                        equationsSet=>equations%equationsSet
                         IF(ASSOCIATED(equationsSet)) THEN
                           dependentField=>equationsSet%DEPENDENT%DEPENDENT_FIELD
                           IF(ASSOCIATED(dependentField)) THEN
@@ -4937,15 +4908,15 @@ CONTAINS
                                       ! global to local columns
                                        IF(ASSOCIATED(linearMapping).OR.ASSOCIATED(dynamicMapping)) THEN
                                          IF(ASSOCIATED(dynamicMatrices)) THEN
-                                           local_cols=equationsMatrices%equations_mapping%dynamic_mapping &
+                                           local_cols=equationsMatrices%equationsMapping%dynamic_mapping &
                                              & %equations_matrix_to_var_maps(1)%column_dofs_mapping%global_to_local_map &
                                              & (columns(columnIdx))%LOCAL_NUMBER(1)
                                            local_dof = local_cols
                                            ! Column to dof mapping?
-                                           !local_dof=equationsMatrices%equations_mapping%dynamic_mapping% &
+                                           !local_dof=equationsMatrices%equationsMapping%dynamic_mapping% &
                                             ! & equations_matrix_to_var_maps(1)%column_to_dof_map(local_cols)
                                          ELSE
-                                           local_cols=equationsMatrices%equations_mapping%linear_mapping &
+                                           local_cols=equationsMatrices%equationsMapping%linear_mapping &
                                              & %equations_matrix_to_var_maps(1)%column_dofs_mapping%global_to_local_map &
                                              & (columns(columnIdx))%LOCAL_NUMBER(1)
                                            local_dof = local_cols
@@ -5033,19 +5004,19 @@ CONTAINS
               dynamicMatrices=>equationsMatrix%DYNAMIC_MATRICES
               IF(ASSOCIATED(dynamicMatrices).OR.ASSOCIATED(linearMatrices)) THEN
                 IF(ASSOCIATED(dynamicMatrices)) THEN
-                  equationsMatrices=>dynamicMatrices%EQUATIONS_MATRICES
+                  equationsMatrices=>dynamicMatrices%equationsMatrices
                 ELSE
-                  equationsMatrices=>linearMatrices%EQUATIONS_MATRICES
+                  equationsMatrices=>linearMatrices%equationsMatrices
                 ENDIF
                 IF(ASSOCIATED(equationsMatrices)) THEN
                   equations=>equationsMatrices%EQUATIONS
                   IF(ASSOCIATED(equations)) THEN
-                    equationsMapping=>equationsMatrices%EQUATIONS_MAPPING
+                    equationsMapping=>equationsMatrices%equationsMapping
                     IF(ASSOCIATED(equationsMapping)) THEN
                       dynamicMapping=>equationsMapping%DYNAMIC_MAPPING
                       linearMapping=>equationsMapping%LINEAR_MAPPING
                       IF(ASSOCIATED(dynamicMapping).OR.ASSOCIATED(linearMapping)) THEN
-                        equationsSet=>equations%EQUATIONS_SET
+                        equationsSet=>equations%equationsSet
                         IF(ASSOCIATED(equationsSet)) THEN
                           dependentField=>equationsSet%DEPENDENT%DEPENDENT_FIELD
                           IF(ASSOCIATED(dependentField)) THEN
@@ -5132,15 +5103,15 @@ CONTAINS
                                       ! global to local columns
                                        IF(ASSOCIATED(linearMapping).OR.ASSOCIATED(dynamicMapping)) THEN
                                          IF(ASSOCIATED(dynamicMatrices)) THEN
-                                           local_cols=equationsMatrices%equations_mapping%dynamic_mapping &
+                                           local_cols=equationsMatrices%equationsMapping%dynamic_mapping &
                                              & %equations_matrix_to_var_maps(1)%column_dofs_mapping%global_to_local_map &
                                              & (columns(columnIdx))%LOCAL_NUMBER(1)
                                            local_dof = local_cols
                                            ! Column to dof mapping?
-                                           !local_dof=equationsMatrices%equations_mapping%dynamic_mapping% &
+                                           !local_dof=equationsMatrices%equationsMapping%dynamic_mapping% &
                                             ! & equations_matrix_to_var_maps(1)%column_to_dof_map(local_cols)
                                          ELSE
-                                           local_cols=equationsMatrices%equations_mapping%linear_mapping &
+                                           local_cols=equationsMatrices%equationsMapping%linear_mapping &
                                              & %equations_matrix_to_var_maps(1)%column_dofs_mapping%global_to_local_map &
                                              & (columns(columnIdx))%LOCAL_NUMBER(1)
                                            local_dof = local_cols
@@ -5279,7 +5250,7 @@ CONTAINS
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: dependentDofsDomainMapping,rowDofsDomainMapping
     TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: domainElements
     TYPE(DOMAIN_NODES_TYPE), POINTER :: domainNodes
-    TYPE(EQUATIONS_TYPE), POINTER :: equations
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: equationsMapping
     TYPE(EQUATIONS_MAPPING_NONLINEAR_TYPE), POINTER :: nonlinearMapping
     TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices
@@ -5306,15 +5277,15 @@ CONTAINS
             CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
               nonlinearMatrices=>jacobianMatrix%NONLINEAR_MATRICES
               IF(ASSOCIATED(nonlinearMatrices)) THEN
-                equationsMatrices=>nonlinearMatrices%EQUATIONS_MATRICES
+                equationsMatrices=>nonlinearMatrices%equationsMatrices
                 IF(ASSOCIATED(equationsMatrices)) THEN
                   equations=>equationsMatrices%EQUATIONS
                   IF(ASSOCIATED(equations)) THEN
-                    equationsMapping=>equationsMatrices%EQUATIONS_MAPPING
+                    equationsMapping=>equationsMatrices%equationsMapping
                     IF(ASSOCIATED(equationsMapping)) THEN
                       nonlinearMapping=>equationsMapping%NONLINEAR_MAPPING
                       IF(ASSOCIATED(nonlinearMapping)) THEN
-                        equationsSet=>equations%EQUATIONS_SET
+                        equationsSet=>equations%equationsSet
                         IF(ASSOCIATED(equationsSet)) THEN
                           dependentField=>equationsSet%DEPENDENT%DEPENDENT_FIELD
                           IF(ASSOCIATED(dependentField)) THEN
@@ -5558,15 +5529,15 @@ CONTAINS
             CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
               nonlinearMatrices=>jacobianMatrix%NONLINEAR_MATRICES
               IF(ASSOCIATED(nonlinearMatrices)) THEN
-                equationsMatrices=>nonlinearMatrices%EQUATIONS_MATRICES
+                equationsMatrices=>nonlinearMatrices%equationsMatrices
                 IF(ASSOCIATED(equationsMatrices)) THEN
                   equations=>equationsMatrices%EQUATIONS
                   IF(ASSOCIATED(equations)) THEN
-                    equationsMapping=>equationsMatrices%EQUATIONS_MAPPING
+                    equationsMapping=>equationsMatrices%equationsMapping
                     IF(ASSOCIATED(equationsMapping)) THEN
                       nonlinearMapping=>equationsMapping%NONLINEAR_MAPPING
                       IF(ASSOCIATED(nonlinearMapping)) THEN
-                        equationsSet=>equations%EQUATIONS_SET
+                        equationsSet=>equations%equationsSet
                         IF(ASSOCIATED(equationsSet)) THEN
                           dependentField=>equationsSet%DEPENDENT%DEPENDENT_FIELD
                           IF(ASSOCIATED(dependentField)) THEN

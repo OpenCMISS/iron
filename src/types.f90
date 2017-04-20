@@ -67,15 +67,15 @@
 !###    Index for a partial derivative.
 
 !> This module contains all type definitions in order to avoid cyclic module references.
-MODULE TYPES
+MODULE Types
 
   USE CmissPetscTypes, ONLY : PetscISColoringType,PetscKspType,PetscMatType,PetscMatColoringType,PetscMatFDColoringType, &
-    & PetscPCType,PetscSnesType,PetscSnesLineSearchType,PetscVecType
-  USE CONSTANTS
-  USE KINDS
+    & PetscPCType,PetscSnesType,PetscSnesLineSearchType,PetscTaoType,PetscVecType
+  USE Constants
+  USE Kinds
   USE ISO_C_BINDING
   USE ISO_VARYING_STRING
-  USE TREES
+  USE Trees
   use linkedlist_routines
 
   IMPLICIT NONE
@@ -1541,7 +1541,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains information of the dynamic matrices for equations matrices
   TYPE EQUATIONS_MATRICES_DYNAMIC_TYPE
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer back to the equations matrices.
+    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices !<A pointer back to the equations matrices.
     INTEGER(INTG) :: NUMBER_OF_DYNAMIC_MATRICES !<The number of dynamic equations matrices defined for the equations set.
     TYPE(EQUATIONS_MATRIX_PTR_TYPE), ALLOCATABLE :: MATRICES(:) !<MATRICES(matrix_idx)%PTR contains the information on the matrix_idx'th dynamic equations matrix.
     TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: TEMP_VECTOR !<Temporary vector used for assembly. 
@@ -1549,14 +1549,14 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains information of the linear matrices for equations matrices
   TYPE EQUATIONS_MATRICES_LINEAR_TYPE
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer back to the equations matrices.
+    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices !<A pointer back to the equations matrices.
     INTEGER(INTG) :: NUMBER_OF_LINEAR_MATRICES !<The number of linear equations matrices defined for the equations set.
     TYPE(EQUATIONS_MATRIX_PTR_TYPE), ALLOCATABLE :: MATRICES(:) !<MATRICES(matrix_idx)%PTR contains the information on the matrix_idx'th linear equations matrix.
   END TYPE EQUATIONS_MATRICES_LINEAR_TYPE
 
   !>Contains information of the nolinear matrices and vectors for equations matrices
   TYPE EQUATIONS_MATRICES_NONLINEAR_TYPE
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer back to the equations matrices.
+    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices !<A pointer back to the equations matrices.
     INTEGER(INTG) :: NUMBER_OF_JACOBIANS !<The number of Jacobian matrices for the equations set.
     TYPE(EQUATIONS_JACOBIAN_PTR_TYPE), ALLOCATABLE :: JACOBIANS(:) !<JACOBIANS(matrix_idx)%PTR is a pointer to the matrix_idx'th Jacobian matrix for nonlinear equations
     LOGICAL :: UPDATE_RESIDUAL !<Is .TRUE. if the equtions residual vector is to be updated
@@ -1594,7 +1594,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains information of the RHS vector for equations matrices
   TYPE EQUATIONS_MATRICES_RHS_TYPE
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer back to the equations matrices.
+    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices !<A pointer back to the equations matrices.
     LOGICAL :: UPDATE_VECTOR !<Is .TRUE. if the equtions rhs vector is to be updated
     LOGICAL :: FIRST_ASSEMBLY !<Is .TRUE. if this rhs vector has not been assembled
     TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the distributed global rhs vector data \todo rename this RHS_VECTOR
@@ -1604,7 +1604,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   
   !>Contains information of the source vector for equations matrices
   TYPE EQUATIONS_MATRICES_SOURCE_TYPE
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer back to the equations matrices.
+    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices !<A pointer back to the equations matrices.
     LOGICAL :: UPDATE_VECTOR !<Is .TRUE. if the equtions rhs vector is to be updated
     LOGICAL :: FIRST_ASSEMBLY !<Is .TRUE. if this source vector has not been assembled
     TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the distributed source vector data \todo rename this SOURCE_VECTOR
@@ -1614,9 +1614,9 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   
   !>Contains information on the equations matrices and vectors
   TYPE EQUATIONS_MATRICES_TYPE
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS !<A pointer back to the equations
+    TYPE(EquationsType), POINTER :: EQUATIONS !<A pointer back to the equations
     LOGICAL :: EQUATIONS_MATRICES_FINISHED !<Is .TRUE. if the equations matrices have finished being created, .FALSE. if not.
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping for the equations matrices.
+    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: equationsMapping !<A pointer to the equations mapping for the equations matrices.
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping for the equations matrices
     INTEGER(INTG) :: NUMBER_OF_ROWS !<The number of local rows (excluding ghost rows) in the distributed equations matrices and vectors
     INTEGER(INTG) :: TOTAL_NUMBER_OF_ROWS !<The number of local rows (including ghost rows) in the distributed equations matrices and vectors
@@ -1666,7 +1666,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains information for mapping field variables to the dynamic matrices in the equations set of the mapping
   TYPE EQUATIONS_MAPPING_DYNAMIC_TYPE
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping
+    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: equationsMapping !<A pointer to the equations mapping
     INTEGER(INTG) :: NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES !<The number of dynamic equations matrices in this mapping
 
     INTEGER(INTG) :: STIFFNESS_MATRIX_NUMBER !<The matrix number of the dynamic stiffness matrix. 0 if there is no dynamic stiffness matrix
@@ -1682,7 +1682,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains information for mapping field variables to the linear matrices in the equations set of the mapping
   TYPE EQUATIONS_MAPPING_LINEAR_TYPE
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping
+    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: equationsMapping !<A pointer to the equations mapping
     INTEGER(INTG) :: NUMBER_OF_LINEAR_EQUATIONS_MATRICES !<The number of linear equations matrices in this mapping
     INTEGER(INTG) :: NUMBER_OF_LINEAR_MATRIX_VARIABLES !<The number of dependent variables involved in the linear equations matrix mapping
     INTEGER(INTG), ALLOCATABLE :: LINEAR_MATRIX_VARIABLE_TYPES(:) !<LINEAR_MATRIX_VARIABLE_TYPES(i). The variable type of the i'th variable type involved in the equations linear matrix mapping.
@@ -1718,7 +1718,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>of this equations mapping.
   !>There may be multiple residual variables with a Jacobian matrix for each variable
   TYPE EQUATIONS_MAPPING_NONLINEAR_TYPE
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping
+    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: equationsMapping !<A pointer to the equations mapping
     INTEGER(INTG) :: NUMBER_OF_RESIDUAL_VARIABLES !<The number of residual variables in this mapping
     TYPE(FIELD_VARIABLE_PTR_TYPE), ALLOCATABLE :: RESIDUAL_VARIABLES(:) !<RESIDUAL_VARIABLES(variable_idx). The variable_idx'th residual variable.
     TYPE(VAR_TO_EQUATIONS_JACOBIAN_MAP_TYPE), ALLOCATABLE :: VAR_TO_JACOBIAN_MAP(:) !<VAR_TO_JACOBIAN_MAP(variable_idx). The mapping from the residual variable to the Jacobain matrix for the variable_idx'th residual variable.
@@ -1730,7 +1730,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>Contains information on the equations mapping for a RHS i.e., how a field variable is mapped to the RHS vector for
   !>the equations set of this equations mapping.
   TYPE EQUATIONS_MAPPING_RHS_TYPE
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping
+    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: equationsMapping !<A pointer to the equations mapping
     INTEGER(INTG) :: RHS_VARIABLE_TYPE !<The variable type number mapped to the RHS vector
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: RHS_VARIABLE !<A pointer to the variable that is mapped to the RHS vector
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: RHS_VARIABLE_MAPPING !<A pointer to the RHS variable domain mapping
@@ -1742,7 +1742,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>Contains information on the equations mapping for a source i.e., how a field variable is mapped to the source vector for
   !>the equations set of this equations mapping.
   TYPE EQUATIONS_MAPPING_SOURCE_TYPE
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping
+    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: equationsMapping !<A pointer to the equations mapping
     INTEGER(INTG) :: SOURCE_VARIABLE_TYPE !<The variable type number mapped from the source vector
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: SOURCE_VARIABLE !<A pointer to the source variable 
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: SOURCE_VARIABLE_MAPPING !<A pointer to the domain mapping for the source variable.
@@ -1776,7 +1776,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>Contains information on the equations mapping i.e., how field variable DOFS are mapped to the rows and columns of a number
   !>of equations matrices.
   TYPE EQUATIONS_MAPPING_TYPE
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS !<A pointer to the equations for this equations mapping
+    TYPE(EquationsType), POINTER :: EQUATIONS !<A pointer to the equations for this equations mapping
     LOGICAL :: EQUATIONS_MAPPING_FINISHED !<Is .TRUE. if the equations mapping has finished being created, .FALSE. if not.
     TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer to the equations matrices associated with this equations mapping.
     !Row mappings
@@ -1802,7 +1802,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   
   !>Contains information on the interpolation for the equations
   TYPE EQUATIONS_INTERPOLATION_TYPE
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS !<A pointer to the equations
+    TYPE(EquationsType), POINTER :: EQUATIONS !<A pointer to the equations
     TYPE(FIELD_TYPE), POINTER :: GEOMETRIC_FIELD !<A pointer to the geometric field for the equations.
     TYPE(FIELD_TYPE), POINTER :: FIBRE_FIELD !<A pointer to the fibre field for the equations (if one is defined).
     TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD !<A pointer to the dependent field for the equations 
@@ -1832,21 +1832,23 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   END TYPE EQUATIONS_INTERPOLATION_TYPE
 
   !>Contains information about the equations in an equations set. \see OPENCMISS::Iron::cmfe_EquationsType
-  TYPE EQUATIONS_TYPE
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations_set
-    LOGICAL :: EQUATIONS_FINISHED !<Is .TRUE. if the equations have finished being created, .FALSE. if not.
-    INTEGER(INTG) :: LINEARITY !<The equations linearity type \see EQUATIONS_SET_CONSTANTS_LinearityTypes,EQUATIONS_SET_CONSTANTS
-    INTEGER(INTG) :: TIME_DEPENDENCE !<The equations time dependence type \see EQUATIONS_SET_CONSTANTS_TimeDependenceTypes,EQUATIONS_SET_CONSTANTS
-    INTEGER(INTG) :: OUTPUT_TYPE !<The output type for the equations \see EQUATIONS_ROUTINES_EquationsOutputTypes,EQUATIONS_ROUTINES
-    INTEGER(INTG) :: SPARSITY_TYPE !<The sparsity type for the equation matrices of the equations \see EQUATIONS_ROUTINES_EquationsSparsityTypes,EQUATIONS_ROUTINES
-    INTEGER(INTG) :: LUMPING_TYPE !<The lumping type for the equation matrices of the equations \see EQUATIONS_ROUTINES_EquationsLumpingTypes,EQUATIONS_ROUTINES
-    TYPE(EQUATIONS_INTERPOLATION_TYPE), POINTER :: INTERPOLATION !<A pointer to the interpolation information used in the equations.
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping for the equations.
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer to the equations matrices and vectors used for the equations.
-  END TYPE EQUATIONS_TYPE
+  TYPE EquationsType
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations_set
+    LOGICAL :: equationsFinished !<Is .TRUE. if the equations have finished being created, .FALSE. if not.
+    INTEGER(INTG) :: equationType !<The equations type \see EquationsRoutines_EquationTypes,EquationsRoutines
+    INTEGER(INTG) :: equalityType !<The equations equality type \see EquationsRoutines_EquationEqualityTypes,EquationsRoutines
+    INTEGER(INTG) :: linearity !<The equations linearity type \see EQUATIONS_SET_CONSTANTS_LinearityTypes,EQUATIONS_SET_CONSTANTS
+    INTEGER(INTG) :: timeDependence !<The equations time dependence type \see EQUATIONS_SET_CONSTANTS_TimeDependenceTypes,EQUATIONS_SET_CONSTANTS
+    INTEGER(INTG) :: outputType !<The output type for the equations \see EquationsRoutines_EquationsOutputTypes,EquationsRoutines
+    INTEGER(INTG) :: sparsityType !<The sparsity type for the equation matrices of the equations \see EquationsRoutines_EquationsSparsityTypes,EquationsRoutines
+    INTEGER(INTG) :: lumpingType !<The lumping type for the equation matrices of the equations \see EquationsRoutines_EquationsLumpingTypes,EquationsRoutines
+    TYPE(EQUATIONS_INTERPOLATION_TYPE), POINTER :: interpolation !<A pointer to the interpolation information used in the equations.
+    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: equationsMapping !<A pointer to the equations mapping for the equations.
+    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices !<A pointer to the equations matrices and vectors used for the equations.
+  END TYPE EquationsType
 
   TYPE EQUATIONS_PTR_TYPE
-    TYPE(EQUATIONS_TYPE), POINTER :: PTR
+    TYPE(EquationsType), POINTER :: PTR
   END TYPE EQUATIONS_PTR_TYPE
 
   !
@@ -2047,7 +2049,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG), ALLOCATABLE :: SPECIFICATION(:) !<The equations set specification array, eg. [class, type, subtype], although there can be more or fewer identifiers. Unused identifiers are set to zero.
     REAL(DP) :: currentTime !<The current time for the equations set
     REAL(DP) :: deltaTime !<The current time increment for the equations set
-    INTEGER(INTG) :: SOLUTION_METHOD !<The solution method for the equations set \see EQUATIONS_ROUTINES_SolutionMethods 
+    INTEGER(INTG) :: SOLUTION_METHOD !<The solution method for the equations set \see EquationsRoutines_SolutionMethods 
     TYPE(EQUATIONS_SET_GEOMETRY_TYPE) :: GEOMETRY !<The geometry information for the equations set.
     TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: MATERIALS !<A pointer to the materials information for the equations set.
     TYPE(EQUATIONS_SET_SOURCE_TYPE), POINTER :: SOURCE !<A pointer to the source information for the equations set.
@@ -2055,7 +2057,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EQUATIONS_SET_INDEPENDENT_TYPE), POINTER :: INDEPENDENT !<A pointer to the indepedent field information for the equations set.
     TYPE(EQUATIONS_SET_ANALYTIC_TYPE), POINTER :: ANALYTIC !<A pointer to the analytic setup information for the equations set.
     TYPE(EquationsSetDerivedType), POINTER :: derived !<A pointer to the derived field information.
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS !<A pointer to the equations information for the equations set
+    TYPE(EquationsType), POINTER :: EQUATIONS !<A pointer to the equations information for the equations set
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS !<A pointer to the boundary condition information for the equations set.
     TYPE(EQUATIONS_SET_EQUATIONS_SET_FIELD_TYPE) :: EQUATIONS_SET_FIELD !<A pointer to the equations set field for the equations set.
   END TYPE EQUATIONS_SET_TYPE
@@ -2212,10 +2214,10 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE INTERFACE_EQUATIONS_TYPE
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION !<A pointer to the interface condition
     LOGICAL :: INTERFACE_EQUATIONS_FINISHED !<Is .TRUE. if the interface equations have finished being created, .FALSE. if not.
-    INTEGER(INTG) :: OUTPUT_TYPE !<The output type for the interface equations \see INTERFACE_EQUATIONS_ROUTINES_OutputTypes,INTERFACE_EQUATIONS_ROUTINES
-    INTEGER(INTG) :: SPARSITY_TYPE !<The sparsity type for the interface equation matrices of the interface equations \see INTERFACE_EQUATIONS_ROUTINES_SparsityTypes,INTERFACE_EQUATIONS_ROUTINES
+    INTEGER(INTG) :: outputType !<The output type for the interface equations \see INTERFACE_EQUATIONS_ROUTINES_OutputTypes,INTERFACE_EQUATIONS_ROUTINES
+    INTEGER(INTG) :: sparsityType !<The sparsity type for the interface equation matrices of the interface equations \see INTERFACE_EQUATIONS_ROUTINES_SparsityTypes,INTERFACE_EQUATIONS_ROUTINES
     INTEGER(INTG) :: LINEARITY !<The interface equations linearity type \see INTERFACE_CONDITIONS_CONSTANTS_LinearityTypes,INTERFACE_CONDITIONS_CONSTANTS
-    INTEGER(INTG) :: TIME_DEPENDENCE !<The interface equations time dependence type \see INTERFACE_CONDITIONS_CONSTANTS_TimeDependenceTypes,INTERFACE_CONDITIONS_CONSTANTS
+    INTEGER(INTG) :: timeDependence !<The interface equations time dependence type \see INTERFACE_CONDITIONS_CONSTANTS_TimeDependenceTypes,INTERFACE_CONDITIONS_CONSTANTS
     TYPE(INTERFACE_EQUATIONS_INTERPOLATION_TYPE), POINTER :: INTERPOLATION !<A pointer to the interpolation information used in the interface equations.
     TYPE(INTERFACE_MAPPING_TYPE), POINTER :: INTERFACE_MAPPING !<A pointer to the interface equations mapping for the interface.
     TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES !<A pointer to the interface equations matrices and vectors used for the interface equations.
@@ -2559,10 +2561,10 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
     LOGICAL :: SOLVER_EQUATIONS_FINISHED !<Is .TRUE. if the solver equations have finished being created, .FALSE. if not.
 
-    INTEGER(INTG) :: LINEARITY !<The linearity type of the solver equations
-    INTEGER(INTG) :: TIME_DEPENDENCE !<The time dependence type of the solver equations
+    INTEGER(INTG) :: linearity !<The linearity type of the solver equations
+    INTEGER(INTG) :: timeDependence !<The time dependence type of the solver equations
 
-    INTEGER(INTG) :: SPARSITY_TYPE !<The type of sparsity to use in the solver matrices \see SOLVER_ROUTINES_SparsityTypes,SOLVER_ROUTINES
+    INTEGER(INTG) :: sparsityType !<The type of sparsity to use in the solver matrices \see SOLVER_ROUTINES_SparsityTypes,SOLVER_ROUTINES
 
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES !<A pointer to the solver matrices for the problem
@@ -2862,6 +2864,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: variableType !The type of variable type for the optimiser solver \see SOLVER_ROUTINES_OptimiserVariableTypes,SOLVER_ROUTINES
     INTEGER(INTG) :: gradientCalculationType !The type of calculation to obtain the gradient for the optimiser solver \see SOLVER_ROUTINES_OptimiserGradientCalculationTypes,SOLVER_ROUTINES
     INTEGER(INTG) :: hessianCalculationType !The type of calculation to obtain the Hessian for the optimiser solver \see SOLVER_ROUTINES_OptimiserHessianCalculationTypes,SOLVER_ROUTINES
+    INTEGER(INTG) :: totalNumberOfObjectiveEvaluations !<The total number of objective evaluations for the optimiser solver.
     TYPE(PetscTaoType) :: tao !<The PETSc tao optimiser object
   END TYPE OptimiserSolverType
 
@@ -2899,7 +2902,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     LOGICAL :: SOLVER_FINISHED !<Is .TRUE. if the solver has finished being created, .FALSE. if not.
     TYPE(VARYING_STRING) :: LABEL !<A user defined label for the solver.
      
-    INTEGER(INTG) :: OUTPUT_TYPE !<The type of output required \see SOLVER_ROUTINES_OutputTypes,SOLVER_ROUTINES
+    INTEGER(INTG) :: outputType !<The type of output required \see SOLVER_ROUTINES_OutputTypes,SOLVER_ROUTINES
     
     INTEGER(INTG) :: SOLVE_TYPE !<The type of the solver \see SOLVER_ROUTINES_SolverTypes,SOLVER_ROUTINES
     
@@ -3027,7 +3030,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE EQUATIONS_SET_TO_SOLVER_MAP_TYPE
     INTEGER(INTG) :: EQUATIONS_SET_INDEX !<The index of the equations set for these mappings
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mappings
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS !<A pointer to the equations in this equations set
+    TYPE(EquationsType), POINTER :: EQUATIONS !<A pointer to the equations in this equations set
     INTEGER(INTG) :: NUMBER_OF_INTERFACE_CONDITIONS !<The number of interface conditions affecting this equations set.
     TYPE(EQUATIONS_TO_SOLVER_MATRIX_MAPS_INTERFACE_TYPE), ALLOCATABLE :: EQUATIONS_TO_SOLVER_MATRIX_MAPS_INTERFACE(:) !<EQUATIONS_TO_SOLVER_MATRIX_MAPS_INTERFACE(interface_condition_idx). Information on the interface_condition_idx'th interface condition affecting this equations set
     TYPE(EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM_TYPE), ALLOCATABLE :: EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(:) !<EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx). The mappings from the equations matrices in this equation set to the solver_matrix_idx'th solver_matrix
@@ -3123,7 +3126,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   
   !>Contains information about the mappings from a solver matrix to the equations in an equations set
   TYPE SOLVER_COL_TO_EQUATIONS_SET_MAP_TYPE
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS !<A pointer to the equations in the equations set that these columns map to.
+    TYPE(EquationsType), POINTER :: EQUATIONS !<A pointer to the equations in the equations set that these columns map to.
     LOGICAL :: HAVE_DYNAMIC !<Is .TRUE. if there are any dynamic equations in the map.
     LOGICAL :: HAVE_STATIC !<Is .TRUE. if there are any static equations in the map.
     TYPE(SOLVER_COL_TO_DYNAMIC_EQUATIONS_MAP_TYPE), ALLOCATABLE :: SOLVER_COL_TO_DYNAMIC_EQUATIONS_MAPS(:) !<SOLVER_COL_TO_DYNAMIC_EQUATIONS_MAPS(col_idx). The mappings from the col_idx'th column of the solver matrix to the dynamic equations in the equations set.
@@ -3140,7 +3143,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains information about the mappings from a solver matrix to the equations in an equations set
   TYPE SOLVER_COL_TO_INTERFACE_MAP_TYPE
-    TYPE(EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<A pointer to the interface equations in the interface conditionthat these columns map to.
+    TYPE(EquationsType), POINTER :: INTERFACE_EQUATIONS !<A pointer to the interface equations in the interface conditionthat these columns map to.
     TYPE(SOLVER_COL_TO_INTERFACE_EQUATIONS_MAP_TYPE), ALLOCATABLE :: SOLVER_COL_TO_INTERFACE_EQUATIONS_MAPS(:) !<SOLVER_COL_TO_INTERFACE_EQUATIONS_MAPS(col_idx). The mappings from the col_idx'th column of the solver matrix to the interface equations in the interface condition.
   END TYPE SOLVER_COL_TO_INTERFACE_MAP_TYPE
   
@@ -3320,7 +3323,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: LOOP_TYPE !<The type of control loop \see PROBLEM_CONSTANTS_ControlTypes,PROBLEM_CONSTANTS
     INTEGER(INTG) :: CONTROL_LOOP_LEVEL !<The level of the control loop
     INTEGER(INTG) :: SUB_LOOP_INDEX !<The position of this loop in the sub loops of the parent loop if this is a sub loop.
-    INTEGER(INTG) :: OUTPUT_TYPE !<The output type of the control loop \see CONTROL_LOOP_ROUTINES_OutputTypes,CONTROL_LOOP_ROUTINES
+    INTEGER(INTG) :: outputType !<The output type of the control loop \see CONTROL_LOOP_ROUTINES_OutputTypes,CONTROL_LOOP_ROUTINES
     
     TYPE(CONTROL_LOOP_SIMPLE_TYPE), POINTER :: SIMPLE_LOOP !<A pointer to the simple loop information
     TYPE(CONTROL_LOOP_FIXED_TYPE), POINTER :: FIXED_LOOP !<A pointer to the fixed loop information
@@ -3407,5 +3410,5 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !
 
 
-END MODULE TYPES
+END MODULE Types
 

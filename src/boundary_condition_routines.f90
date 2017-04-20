@@ -196,7 +196,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES
     TYPE(EQUATIONS_MATRICES_LINEAR_TYPE), POINTER :: LINEAR_MATRICES
     TYPE(EQUATIONS_MATRICES_DYNAMIC_TYPE), POINTER :: DYNAMIC_MATRICES
@@ -319,7 +319,7 @@ CONTAINS
                             IF(ASSOCIATED(EQUATIONS_SET)) THEN
                               EQUATIONS=>EQUATIONS_SET%EQUATIONS
                               IF(ASSOCIATED(EQUATIONS)) THEN
-                                EQUATIONS_MATRICES=>EQUATIONS%EQUATIONS_MATRICES
+                                EQUATIONS_MATRICES=>EQUATIONS%equationsMatrices
                                 IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
                                   LINEAR_MATRICES=>EQUATIONS_MATRICES%LINEAR_MATRICES
                                   IF(ASSOCIATED(LINEAR_MATRICES)) THEN
@@ -766,7 +766,7 @@ CONTAINS
           ENDIF
         ENDDO !variable_idx
         NULLIFY(BOUNDARY_CONDITIONS%SOLVER_EQUATIONS%SOLVER%SOLVER_EQUATIONS)
-        !BOUNDARY_CONDITIONS%SOLVER_EQUATIONS%SOLVER_EQUATIONS_FINISHED = .FALSE.
+        !BOUNDARY_CONDITIONS%SOLVER_EQUATIONS%SOLVER_equationsFinished = .FALSE.
         !BOUNDARY_CONDITIONS%SOLVER_EQUATIONS%SOLVER_MAPPING%SOLVER_MAPPING_FINISHED = .FALSE.
         DEALLOCATE(BOUNDARY_CONDITIONS%BOUNDARY_CONDITIONS_VARIABLES)
       ENDIF
@@ -792,7 +792,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     INTEGER(INTG) :: DUMMY_ERR,variable_idx,variable_type,equations_set_idx,interface_condition_idx
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
     TYPE(EQUATIONS_MAPPING_DYNAMIC_TYPE), POINTER :: DYNAMIC_MAPPING
@@ -823,14 +823,14 @@ CONTAINS
             IF(ASSOCIATED(EQUATIONS_SET)) THEN
               EQUATIONS=>EQUATIONS_SET%EQUATIONS
               IF(ASSOCIATED(EQUATIONS)) THEN
-                IF(EQUATIONS%EQUATIONS_FINISHED) THEN
-                  EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
+                IF(EQUATIONS%equationsFinished) THEN
+                  EQUATIONS_MAPPING=>EQUATIONS%equationsMapping
                   IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
                     IF(EQUATIONS_MAPPING%EQUATIONS_MAPPING_FINISHED) THEN
                       EQUATIONS_SET%BOUNDARY_CONDITIONS=>SOLVER_EQUATIONS%BOUNDARY_CONDITIONS
-                      SELECT CASE(EQUATIONS%TIME_DEPENDENCE)
+                      SELECT CASE(EQUATIONS%timeDependence)
                       CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC)
-                        SELECT CASE(EQUATIONS%LINEARITY)
+                        SELECT CASE(EQUATIONS%linearity)
                         CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
                           LINEAR_MAPPING=>EQUATIONS_MAPPING%LINEAR_MAPPING
                           IF(ASSOCIATED(LINEAR_MAPPING)) THEN
@@ -867,12 +867,12 @@ CONTAINS
                             CALL FlagError("Equations mapping RHS mapping is not associated.",ERR,ERROR,*999)
                           ENDIF
                         CASE DEFAULT
-                          LOCAL_ERROR="The equations linearity type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS%LINEARITY,"*", &
+                          LOCAL_ERROR="The equations linearity type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS%linearity,"*", &
                                 & ERR,ERROR))//" is invalid."
                           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                         END SELECT
                       CASE(EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
-                        SELECT CASE(EQUATIONS%LINEARITY)
+                        SELECT CASE(EQUATIONS%linearity)
                         CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
                           DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING
                           IF(ASSOCIATED(DYNAMIC_MAPPING)) THEN
@@ -904,13 +904,13 @@ CONTAINS
                             CALL FlagError("Equations mapping RHS mapping is not associated.",ERR,ERROR,*999)
                           ENDIF
                         CASE DEFAULT
-                          LOCAL_ERROR="The equations linearity type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS%LINEARITY,"*", &
+                          LOCAL_ERROR="The equations linearity type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS%linearity,"*", &
                                 & ERR,ERROR))//" is invalid."
                           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                         END SELECT
                       CASE DEFAULT
                         LOCAL_ERROR="The equations time dependence type of "// &
-                          & TRIM(NUMBER_TO_VSTRING(EQUATIONS%TIME_DEPENDENCE,"*",ERR,ERROR))//" is invalid."
+                          & TRIM(NUMBER_TO_VSTRING(EQUATIONS%timeDependence,"*",ERR,ERROR))//" is invalid."
                         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                       END SELECT
                     ELSE
@@ -940,9 +940,9 @@ CONTAINS
                     IF(INTERFACE_MAPPING%INTERFACE_MAPPING_FINISHED) THEN
                       INTERFACE_CONDITION%BOUNDARY_CONDITIONS=>SOLVER_EQUATIONS%BOUNDARY_CONDITIONS
                       !Only linear interface equations implemented at the moment
-                      SELECT CASE(INTERFACE_EQUATIONS%TIME_DEPENDENCE)
+                      SELECT CASE(INTERFACE_EQUATIONS%timeDependence)
                       CASE(INTERFACE_CONDITION_STATIC,INTERFACE_CONDITION_QUASISTATIC)
-                        SELECT CASE(INTERFACE_EQUATIONS%LINEARITY)
+                        SELECT CASE(INTERFACE_EQUATIONS%linearity)
                         CASE(INTERFACE_CONDITION_LINEAR)
                           INTERFACE_MAPPING=>INTERFACE_EQUATIONS%INTERFACE_MAPPING
                           IF(ASSOCIATED(INTERFACE_MAPPING)) THEN
@@ -960,13 +960,13 @@ CONTAINS
                                 & INTERFACE_RHS_MAPPING%RHS_VARIABLE,ERR,ERROR,*999)
                           ENDIF
                         CASE DEFAULT
-                          LOCAL_ERROR="The equations linearity type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS%LINEARITY,"*", &
+                          LOCAL_ERROR="The equations linearity type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS%linearity,"*", &
                                 & ERR,ERROR))//" is invalid."
                           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                         END SELECT
                       CASE DEFAULT
                         LOCAL_ERROR="The equations time dependence type of "// &
-                          & TRIM(NUMBER_TO_VSTRING(EQUATIONS%TIME_DEPENDENCE,"*",ERR,ERROR))//" is invalid."
+                          & TRIM(NUMBER_TO_VSTRING(EQUATIONS%timeDependence,"*",ERR,ERROR))//" is invalid."
                         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                       END SELECT
                     ELSE
@@ -3688,7 +3688,7 @@ CONTAINS
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(BOUNDARY_CONDITIONS_DIRICHLET_TYPE), POINTER :: BOUNDARY_CONDITIONS_DIRICHLET
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
     TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: LINEAR_MAPPING
     TYPE(EQUATIONS_MAPPING_DYNAMIC_TYPE), POINTER :: DYNAMIC_MAPPING
@@ -3716,7 +3716,7 @@ CONTAINS
             IF(ASSOCIATED(EQUATIONS_SET)) THEN
               EQUATIONS=>EQUATIONS_SET%EQUATIONS
               IF(ASSOCIATED(EQUATIONS)) THEN
-                EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
+                EQUATIONS_MAPPING=>EQUATIONS%equationsMapping
                 IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
                   LINEAR_MAPPING=>EQUATIONS_MAPPING%LINEAR_MAPPING
                   DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING

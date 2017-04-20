@@ -169,7 +169,7 @@ CONTAINS
                   CALL FlagError("Solver matrix is not associated.",ERR,ERROR,*999)
                 ENDIF
               ENDDO !matrix_idx
-              IF(SOLVER_EQUATIONS%LINEARITY==PROBLEM_SOLVER_NONLINEAR) THEN
+              IF(SOLVER_EQUATIONS%linearity==PROBLEM_SOLVER_NONLINEAR) THEN
                 !Allocate the nonlinear matrices and vectors                  
                 !Allocate the distributed residual vector
                 CALL DISTRIBUTED_VECTOR_CREATE_START(ROW_DOMAIN_MAP,SOLVER_MATRICES%RESIDUAL,ERR,ERROR,*999)
@@ -383,7 +383,7 @@ CONTAINS
               ENDIF
             ENDDO !equations_set_idx
           ENDDO !matrix_idx
-          IF(SOLVER_EQUATIONS%LINEARITY==PROBLEM_SOLVER_NONLINEAR) THEN
+          IF(SOLVER_EQUATIONS%linearity==PROBLEM_SOLVER_NONLINEAR) THEN
             SOLVER_EQUATIONS%SOLVER_MATRICES%UPDATE_RESIDUAL=.TRUE.
           ELSE
             SOLVER_EQUATIONS%SOLVER_MATRICES%UPDATE_RESIDUAL=.FALSE.
@@ -717,9 +717,9 @@ CONTAINS
                 DYNAMIC_MATRICES=>EQUATIONS_MATRIX%DYNAMIC_MATRICES
                 IF(ASSOCIATED(DYNAMIC_MATRICES).OR.ASSOCIATED(LINEAR_MATRICES)) THEN
                   IF(ASSOCIATED(DYNAMIC_MATRICES)) THEN
-                    EQUATIONS_MATRICES=>DYNAMIC_MATRICES%EQUATIONS_MATRICES
+                    EQUATIONS_MATRICES=>DYNAMIC_MATRICES%equationsMatrices
                   ELSE
-                    EQUATIONS_MATRICES=>LINEAR_MATRICES%EQUATIONS_MATRICES
+                    EQUATIONS_MATRICES=>LINEAR_MATRICES%equationsMatrices
                   ENDIF
                   IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
                     IF(EQUATIONS_MATRICES%EQUATIONS_MATRICES_FINISHED) THEN
@@ -1300,7 +1300,7 @@ CONTAINS
                 NONLINEAR_MATRICES=>JACOBIAN_MATRIX%NONLINEAR_MATRICES
 
                 IF(ASSOCIATED(NONLINEAR_MATRICES)) THEN
-                  EQUATIONS_MATRICES=>NONLINEAR_MATRICES%EQUATIONS_MATRICES
+                  EQUATIONS_MATRICES=>NONLINEAR_MATRICES%equationsMatrices
                   IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
                     IF(EQUATIONS_MATRICES%EQUATIONS_MATRICES_FINISHED) THEN
                       IF(equations_set_idx>0.AND.equations_set_idx<=SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS) THEN
@@ -1559,7 +1559,7 @@ CONTAINS
                             IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
                               DYNAMIC_MATRICES=>EQUATIONS_MATRIX%DYNAMIC_MATRICES
                               IF(ASSOCIATED(DYNAMIC_MATRICES)) THEN
-                                EQUATIONS_MATRICES=>DYNAMIC_MATRICES%EQUATIONS_MATRICES
+                                EQUATIONS_MATRICES=>DYNAMIC_MATRICES%equationsMatrices
                                 IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
                                   DISTRIBUTED_MATRIX=>EQUATIONS_MATRIX%MATRIX
                                   IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
@@ -1593,7 +1593,7 @@ CONTAINS
                             IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
                               LINEAR_MATRICES=>EQUATIONS_MATRIX%LINEAR_MATRICES
                               IF(ASSOCIATED(LINEAR_MATRICES)) THEN
-                                EQUATIONS_MATRICES=>LINEAR_MATRICES%EQUATIONS_MATRICES
+                                EQUATIONS_MATRICES=>LINEAR_MATRICES%equationsMatrices
                                 IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
                                   DISTRIBUTED_MATRIX=>EQUATIONS_MATRIX%MATRIX
                                   IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
@@ -1626,7 +1626,7 @@ CONTAINS
                             IF(ASSOCIATED(JACOBIAN_MATRIX)) THEN
                               NONLINEAR_MATRICES=>JACOBIAN_MATRIX%NONLINEAR_MATRICES
                               IF(ASSOCIATED(NONLINEAR_MATRICES)) THEN
-                                EQUATIONS_MATRICES=>NONLINEAR_MATRICES%EQUATIONS_MATRICES
+                                EQUATIONS_MATRICES=>NONLINEAR_MATRICES%equationsMatrices
                                 IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
                                   DISTRIBUTED_MATRIX=>JACOBIAN_MATRIX%JACOBIAN
                                   IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
@@ -1730,7 +1730,7 @@ CONTAINS
                             & equations_matrix_idx)%PTR
                           EQUATIONS_MATRIX=>EQUATIONS_TO_SOLVER_MAP%EQUATIONS_MATRIX
                           DYNAMIC_MATRICES=>EQUATIONS_MATRIX%DYNAMIC_MATRICES
-                          EQUATIONS_MATRICES=>DYNAMIC_MATRICES%EQUATIONS_MATRICES
+                          EQUATIONS_MATRICES=>DYNAMIC_MATRICES%equationsMatrices
                           DISTRIBUTED_MATRIX=>EQUATIONS_MATRIX%MATRIX
                           CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_GET(DISTRIBUTED_MATRIX,EQUATIONS_STORAGE_TYPE,ERR,ERROR,*999)
                           SELECT CASE(EQUATIONS_STORAGE_TYPE)
@@ -1826,7 +1826,7 @@ CONTAINS
                             & equations_matrix_idx)%PTR
                           EQUATIONS_MATRIX=>EQUATIONS_TO_SOLVER_MAP%EQUATIONS_MATRIX
                           LINEAR_MATRICES=>EQUATIONS_MATRIX%LINEAR_MATRICES
-                          EQUATIONS_MATRICES=>LINEAR_MATRICES%EQUATIONS_MATRICES
+                          EQUATIONS_MATRICES=>LINEAR_MATRICES%equationsMatrices
                           DISTRIBUTED_MATRIX=>EQUATIONS_MATRIX%MATRIX
                           CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_GET(DISTRIBUTED_MATRIX,EQUATIONS_STORAGE_TYPE,ERR,ERROR,*999)
                           SELECT CASE(EQUATIONS_STORAGE_TYPE)
@@ -1922,7 +1922,7 @@ CONTAINS
                             !Note: pointers have been checked above
                             JACOBIAN_MATRIX=>JACOBIAN_TO_SOLVER_MAP%JACOBIAN_MATRIX
                             NONLINEAR_MATRICES=>JACOBIAN_MATRIX%NONLINEAR_MATRICES
-                            EQUATIONS_MATRICES=>NONLINEAR_MATRICES%EQUATIONS_MATRICES
+                            EQUATIONS_MATRICES=>NONLINEAR_MATRICES%equationsMatrices
                             DISTRIBUTED_MATRIX=>JACOBIAN_MATRIX%JACOBIAN
                             CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_GET(DISTRIBUTED_MATRIX,EQUATIONS_STORAGE_TYPE,ERR,ERROR,*999)
                             SELECT CASE(EQUATIONS_STORAGE_TYPE)

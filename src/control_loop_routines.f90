@@ -649,7 +649,7 @@ CONTAINS
             & " is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
-        SELECT CASE(solverEquations%TIME_DEPENDENCE)
+        SELECT CASE(solverEquations%timeDependence)
         CASE(SOLVER_EQUATIONS_STATIC)
           variableTimeDependence=CONTROL_LOOP_FIELD_VARIABLE_STATIC
         CASE(SOLVER_EQUATIONS_QUASISTATIC)
@@ -671,7 +671,7 @@ CONTAINS
           ENDIF          
         CASE DEFAULT
           localError="The solver equations time dependence type of "// &
-            & TRIM(NumberToVString(solverEquations%TIME_DEPENDENCE,"*",err,error))//" is invalid."
+            & TRIM(NumberToVString(solverEquations%timeDependence,"*",err,error))//" is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
         !Get the solver mapping
@@ -899,7 +899,7 @@ CONTAINS
         PROBLEM%CONTROL_LOOP%LOOP_TYPE=PROBLEM_CONTROL_SIMPLE_TYPE
         PROBLEM%CONTROL_LOOP%CONTROL_LOOP_LEVEL=1
         PROBLEM%CONTROL_LOOP%SUB_LOOP_INDEX=0
-        PROBLEM%CONTROL_LOOP%OUTPUT_TYPE=CONTROL_LOOP_NO_OUTPUT
+        PROBLEM%CONTROL_LOOP%outputType=CONTROL_LOOP_NO_OUTPUT
         NULLIFY(PROBLEM%CONTROL_LOOP%SIMPLE_LOOP)
         NULLIFY(PROBLEM%CONTROL_LOOP%FIXED_LOOP)
         NULLIFY(PROBLEM%CONTROL_LOOP%TIME_LOOP)
@@ -1491,7 +1491,7 @@ CONTAINS
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
       IF(CONTROL_LOOP%CONTROL_LOOP_FINISHED) THEN
-        OUTPUT_TYPE=CONTROL_LOOP%OUTPUT_TYPE
+        OUTPUT_TYPE=CONTROL_LOOP%outputType
       ELSE
         CALL FlagError("Control loop has not been finished.",ERR,ERROR,*999)
       ENDIF
@@ -1528,11 +1528,11 @@ CONTAINS
       ELSE        
         SELECT CASE(OUTPUT_TYPE)
         CASE(CONTROL_LOOP_NO_OUTPUT)
-          CONTROL_LOOP%OUTPUT_TYPE=CONTROL_LOOP_NO_OUTPUT
+          CONTROL_LOOP%outputType=CONTROL_LOOP_NO_OUTPUT
         CASE(SOLVER_PROGRESS_OUTPUT)
-          CONTROL_LOOP%OUTPUT_TYPE=CONTROL_LOOP_PROGRESS_OUTPUT
+          CONTROL_LOOP%outputType=CONTROL_LOOP_PROGRESS_OUTPUT
         CASE(SOLVER_TIMING_OUTPUT)
-          CONTROL_LOOP%OUTPUT_TYPE=CONTROL_LOOP_TIMING_OUTPUT
+          CONTROL_LOOP%outputType=CONTROL_LOOP_TIMING_OUTPUT
         CASE DEFAULT
           LOCAL_ERROR="The specified control loop output type of "// &
             & TRIM(NUMBER_TO_VSTRING(OUTPUT_TYPE,"*",ERR,ERROR))//" is invalid."

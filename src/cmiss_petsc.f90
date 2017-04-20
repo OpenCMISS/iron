@@ -48,8 +48,8 @@ MODULE CmissPetsc
   USE CmissPetscTypes
   USE Kinds
   USE ISO_VARYING_STRING
-  USE STRINGS
-  USE TYPES
+  USE Strings
+  USE Types
   
 #include "macros.h"
 
@@ -353,6 +353,9 @@ MODULE CmissPetsc
   SNESQNScaleType, PARAMETER :: PETSC_SNES_QN_SCALE_LINESEARCH = SNES_QN_SCALE_LINESEARCH  
   SNESQNScaleType, PARAMETER :: PETSC_SNES_QN_SCALE_JACOBIAN = SNES_QN_SCALE_JACOBIAN
 
+!Temporary until we have a bug fix in PETSc  
+#define TaoType character*(80)
+  
   !TAO types
   TaoType, PARAMETER :: PETSC_TAO_LMVM = TAOLMVM !Limited Memory Variable Metric (quasi-Newton method)
   TaoType, PARAMETER :: PETSC_TAO_NLS = TAONLS !Newton's method with linesearch
@@ -373,7 +376,6 @@ MODULE CmissPetsc
   TaoType, PARAMETER :: PETSC_TAO_ASILS = TAOASILS !Active-set infeasible linesearch algorithm
   TaoType, PARAMETER :: PETSC_TAO_ASFLS = TAOASFLS !Active-set feasible linesearch algorithm
   TaoType, PARAMETER :: PETSC_TAO_IPM = TAOIPM !Interior point algorithm
-  TaoType, PARAMETER :: PETSC_TAO_TEST = TAOTEST
 
   !TAO converged reasons
   TaoConvergedReason, PARAMETER :: PETSC_TAO_CONVERGED_FATOL = TAO_CONVERGED_FATOL !f(X)-f(X*) <= fatol 
@@ -881,7 +883,7 @@ MODULE CmissPetsc
     END SUBROUTINE MatFDColoringSetFromOptions
 
     SUBROUTINE MatFDColoringSetFunction(fdcoloring,ffunction,ctx,ierr)
-      USE TYPES
+      USE Types
       MatFDColoring fdcoloring
       EXTERNAL ffunction
       TYPE(SOLVER_TYPE), POINTER :: ctx
@@ -952,7 +954,7 @@ MODULE CmissPetsc
     END SUBROUTINE SNESDestroy
 
     SUBROUTINE SNESGetApplicationContext(snes,ctx,ierr)
-      USE TYPES
+      USE Types
       SNES snes
       TYPE(SOLVER_TYPE), POINTER :: ctx
       PetscInt ierr
@@ -965,7 +967,7 @@ MODULE CmissPetsc
     END SUBROUTINE SNESGetConvergedReason
     
     SUBROUTINE SNESGetFunction(snes,f,ffunction,ctx,ierr)
-      USE TYPES
+      USE Types
       SNES snes
       Vec f
       EXTERNAL ffunction
@@ -980,7 +982,7 @@ MODULE CmissPetsc
     END SUBROUTINE SNESGetIterationNumber
 
     SUBROUTINE SNESGetJacobian(snes,A,B,Jfunction,ctx,ierr)
-      USE TYPES
+      USE Types
       SNES snes
       Mat A
       Mat B      
@@ -1008,7 +1010,7 @@ MODULE CmissPetsc
     END SUBROUTINE SNESGetSolutionUpdate
 
     SUBROUTINE SNESMonitorSet(snes,mfunction,mctx,monitordestroy,ierr)
-      USE TYPES
+      USE Types
       SNES snes
       EXTERNAL mfunction
       TYPE(SOLVER_TYPE), POINTER :: mctx
@@ -1035,14 +1037,14 @@ MODULE CmissPetsc
     END SUBROUTINE SNESQNSetType
 
     SUBROUTINE SNESSetApplicationContext(snes,ctx,ierr)
-      USE TYPES
+      USE Types
       SNES snes
       TYPE(SOLVER_TYPE), POINTER :: ctx
       PetscInt ierr
     END SUBROUTINE SNESSetApplicationContext
 
     SUBROUTINE SNESSetConvergenceTest(snes,cfunction,ctx,destroyFunction,ierr)
-      USE TYPES
+      USE Types
       SNES snes
       EXTERNAL cfunction
       TYPE(SOLVER_TYPE), POINTER :: ctx
@@ -1056,7 +1058,7 @@ MODULE CmissPetsc
     END SUBROUTINE SNESSetFromOptions
 
     SUBROUTINE SNESSetFunction(snes,f,ffunction,ctx,ierr)
-      USE TYPES
+      USE Types
       SNES snes
       Vec f
       EXTERNAL ffunction
@@ -1065,7 +1067,7 @@ MODULE CmissPetsc
     END SUBROUTINE SNESSetFunction
 
     SUBROUTINE SNESSetJacobian(snes,A,B,Jfunction,ctx,ierr)
-      USE TYPES
+      USE Types
       SNES snes
       Mat A
       Mat B      
@@ -1235,6 +1237,7 @@ MODULE CmissPetsc
     END SUBROUTINE TaoSetInitialVector
 
     SUBROUTINE TaoSetGradientRoutine(tao,GFunction,ctx,ierr)
+      USE Types
       Tao tao
       EXTERNAL GFunction
       TYPE(SOLVER_TYPE), POINTER :: ctx
@@ -1242,6 +1245,7 @@ MODULE CmissPetsc
     END SUBROUTINE TaoSetGradientRoutine
 
     SUBROUTINE TaoSetHessianRoutine(tao,H,Hpre,HFunction,ctx,ierr)
+      USE Types
       Tao tao
       Mat H
       Mat Hpre
@@ -1251,6 +1255,7 @@ MODULE CmissPetsc
     END SUBROUTINE TaoSetHessianRoutine
     
     SUBROUTINE TaoSetMonitor(tao,mFunction,mctx,ierr)
+      USE Types
       Tao tao
       EXTERNAL mFunction
       TYPE(SOLVER_TYPE), POINTER :: mctx
@@ -1258,6 +1263,7 @@ MODULE CmissPetsc
     END SUBROUTINE TaoSetMonitor
     
     SUBROUTINE TaoSetObjectiveRoutine(tao,OFunction,ctx,ierr)
+      USE Types
       Tao tao
       EXTERNAL OFunction
       TYPE(SOLVER_TYPE), POINTER :: ctx
@@ -1265,6 +1271,7 @@ MODULE CmissPetsc
     END SUBROUTINE TaoSetObjectiveRoutine
 
     SUBROUTINE TaoSetObjectiveAndGradientRoutine(tao,ogFunction,ctx,ierr)
+      USE Types
       Tao tao
       EXTERNAL ogFunction
       TYPE(SOLVER_TYPE), POINTER :: ctx
@@ -1272,6 +1279,7 @@ MODULE CmissPetsc
     END SUBROUTINE TaoSetObjectiveAndGradientRoutine
 
     SUBROUTINE TaoSetSeparableObjectiveRoutine(tao,oFunction,ctx,ierr)
+      USE Types
       Tao tao
       EXTERNAL oFunction
       TYPE(SOLVER_TYPE), POINTER :: ctx
@@ -1318,7 +1326,7 @@ MODULE CmissPetsc
     END SUBROUTINE TSGetSolution
     
     SUBROUTINE TSMonitorSet(ts,mfunction,mctx,monitordestroy,ierr)
-      USE TYPES
+      USE Types
       TS ts
       EXTERNAL mfunction
       TYPE(SOLVER_TYPE), POINTER :: mctx
@@ -1358,7 +1366,7 @@ MODULE CmissPetsc
     END SUBROUTINE TSSetProblemType
     
     SUBROUTINE TSSetRHSFunction(ts,r,rhsfunc,ctx,ierr)
-      USE TYPES
+      USE Types
       TS ts
       Vec r
       EXTERNAL rhsfunc
@@ -1841,7 +1849,7 @@ MODULE CmissPetsc
 
   PUBLIC PETSC_TAO_LMVM,PETSC_TAO_NLS,PETSC_TAO_NTR,PETSC_TAO_NTL,PETSC_TAO_CG,PETSC_TAO_TRON,PETSC_TAO_OWLQN,PETSC_TAO_BMRM, &
     & PETSC_TAO_BLMVM,PETSC_TAO_BQPIP,PETSC_TAO_GPCG,PETSC_TAO_NM,PETSC_TAO_POUNDERS,PETSC_TAO_LCL,PETSC_TAO_SSILS, &
-    & PETSC_TAO_SSFLS,PETSC_TAO_ASILS,PETSC_TAO_ASFLS,PETSC_TAO_IPM,PETSC_TAO_TEST
+    & PETSC_TAO_SSFLS,PETSC_TAO_ASILS,PETSC_TAO_ASFLS,PETSC_TAO_IPM
 
   PUBLIC PETSC_TAO_CONVERGED_FATOL,PETSC_TAO_CONVERGED_FRTOL,PETSC_TAO_CONVERGED_GATOL,PETSC_TAO_CONVERGED_GRTOL, &
     & PETSC_TAO_CONVERGED_GTTOL,PETSC_TAO_CONVERGED_STEPTOL,PETSC_TAO_CONVERGED_MINF,PETSC_TAO_CONVERGED_USER, &
@@ -6128,7 +6136,7 @@ CONTAINS
     TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The Tao to get the tolerances for
     REAL(DP), INTENT(OUT) :: gaTol !<On exit, the absolute tolerance of the gradient norm
     REAL(DP), INTENT(OUT) :: grTol !<On exit, the relative tolerance of the gradient norm
-    REAL(DP), INTENT(0UT) :: gtTol !<On exit, the factor tolerance of the gradient norm
+    REAL(DP), INTENT(OUT) :: gtTol !<On exit, the factor tolerance of the gradient norm
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6185,7 +6193,7 @@ CONTAINS
   !
   
   !>Buffer routine to the PETSc TaoSetInequalityBounds routine.
-  SUBROUTINE Petsc_TaoSetInequalityBounds(tao,lowerBound,upperBound,err,error,*)
+  SUBROUTINE Petsc_TaoSetInequalityBounds(tao,lowerBounds,upperBounds,err,error,*)
 
     !Argument Variables
     TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to set the inequality bounds for
@@ -6475,7 +6483,7 @@ CONTAINS
   !
   
   !>Buffer routine to the PETSc TaoSetVariableBounds routine.
-  SUBROUTINE Petsc_TaoSetVariableBounds(tao,lowerBound,upperBound,err,error,*)
+  SUBROUTINE Petsc_TaoSetVariableBounds(tao,lowerBounds,upperBounds,err,error,*)
 
     !Argument Variables
     TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to set the variable bounds for
