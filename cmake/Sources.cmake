@@ -57,9 +57,12 @@ set(IRON_Fortran_SRC
     elasticity_routines.f90
     electromechanics_routines.f90
     electrophysiology_cell_routines.f90
-    equations_mapping_routines.f90
-    equations_matrices_routines.f90
     equations_routines.f90
+    equations_access_routines.f90
+    equations_mapping_routines.f90
+    equations_mapping_access_routines.f90
+    equations_matrices_routines.f90
+    equations_matrices_access_routines.f90
     equations_set_constants.f90
     equations_set_routines.f90
     equations_set_access_routines.f90

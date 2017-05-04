@@ -1,4 +1,4 @@
-!> \file 
+!!> \file 
 !> \author Ting Yu
 !> \brief This module set the boundary conditions for the given equation set
 !>
@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -52,6 +52,8 @@ MODULE BOUNDARY_CONDITIONS_ROUTINES
   USE COORDINATE_ROUTINES
   USE DISTRIBUTED_MATRIX_VECTOR
   USE DOMAIN_MAPPINGS
+  USE EquationsAccessRoutines
+  USE EquationsSetAccessRoutines
   USE EQUATIONS_SET_CONSTANTS
   USE INTERFACE_CONDITIONS_CONSTANTS
   USE FIELD_ROUTINES
@@ -197,10 +199,10 @@ CONTAINS
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(EquationsType), POINTER :: EQUATIONS
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES
-    TYPE(EQUATIONS_MATRICES_LINEAR_TYPE), POINTER :: LINEAR_MATRICES
-    TYPE(EQUATIONS_MATRICES_DYNAMIC_TYPE), POINTER :: DYNAMIC_MATRICES
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: EQUATION_MATRIX
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
+    TYPE(EquationsMatrixType), POINTER :: EQUATION_MATRIX
     TYPE(BOUNDARY_CONDITIONS_SPARSITY_INDICES_TYPE), POINTER :: SPARSITY_INDICES
     TYPE(LIST_TYPE), POINTER :: SPARSE_INDICES
     TYPE(LinkedList),POINTER :: LIST(:)
@@ -317,176 +319,168 @@ CONTAINS
                           DO equations_set_idx=1,SOLVER_EQUATIONS%SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                             EQUATIONS_SET=>SOLVER_EQUATIONS%SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
                             IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                              EQUATIONS=>EQUATIONS_SET%EQUATIONS
-                              IF(ASSOCIATED(EQUATIONS)) THEN
-                                EQUATIONS_MATRICES=>EQUATIONS%equationsMatrices
-                                IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-                                  LINEAR_MATRICES=>EQUATIONS_MATRICES%LINEAR_MATRICES
-                                  IF(ASSOCIATED(LINEAR_MATRICES)) THEN
-                                    !Iterate through equations matrices
-                                    DO equ_matrix_idx=1,LINEAR_MATRICES%NUMBER_OF_LINEAR_MATRICES
-                                      EQUATION_MATRIX=>LINEAR_MATRICES%MATRICES(equ_matrix_idx)%PTR
-                                      CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_GET(EQUATION_MATRIX%MATRIX,STORAGE_TYPE,ERR,ERROR,*999)
-                                      IF(ASSOCIATED(EQUATION_MATRIX)) THEN
-                                        SELECT CASE(STORAGE_TYPE)
-                                        CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
-                                          !Do nothing
-                                        CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
-                                          !Do nothing
-                                        CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-                                          CALL FlagError("Not implemented for column major storage.",ERR,ERROR,*999)
-                                        CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
-                                          CALL FlagError("Not implemented for row major storage.",ERR,ERROR,*999)
-                                        CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-                                          !Get Sparsity pattern, number of non zeros, number of rows
-                                          CALL DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_GET(EQUATION_MATRIX%MATRIX,ROW_INDICES, &
-                                            & COLUMN_INDICES,ERR,ERROR,*999)
-                                          CALL DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_GET(EQUATION_MATRIX%MATRIX,NUMBER_OF_NON_ZEROS, &
-                                            & ERR,ERROR,*999)
-                                          !Get the matrix stored as a linked list
-                                          CALL DISTRIBUTED_MATRIX_LINKLIST_GET(EQUATION_MATRIX%MATRIX,LIST,ERR,ERROR,*999)
-                                          NUMBER_OF_ROWS=EQUATIONS_MATRICES%TOTAL_NUMBER_OF_ROWS
-                                          !Initialise sparsity indices arrays
-                                          CALL BoundaryConditions_SparsityIndicesInitialise(BOUNDARY_CONDITIONS_DIRICHLET% &
-                                            & LINEAR_SPARSITY_INDICES(equations_set_idx,equ_matrix_idx)%PTR, &
-                                            & BOUNDARY_CONDITION_VARIABLE%NUMBER_OF_DIRICHLET_CONDITIONS,ERR,ERROR,*999)
-                                          !Find dirichlet columns and store the non zero indices (with respect to the 1D storage array)
-                                          NULLIFY(SPARSITY_INDICES)
-                                          SPARSITY_INDICES=>BOUNDARY_CONDITIONS_DIRICHLET%LINEAR_SPARSITY_INDICES( &
-                                            & equations_set_idx,equ_matrix_idx)%PTR
-                                          IF(ASSOCIATED(SPARSITY_INDICES)) THEN
-                                            !Setup list for storing dirichlet non zero indices
-                                            NULLIFY(SPARSE_INDICES)
-                                            CALL LIST_CREATE_START(SPARSE_INDICES,ERR,ERROR,*999)
-                                            CALL LIST_DATA_TYPE_SET(SPARSE_INDICES,LIST_INTG_TYPE,ERR,ERROR,*999)
-                                            CALL LIST_INITIAL_SIZE_SET(SPARSE_INDICES, &
-                                              & BOUNDARY_CONDITION_VARIABLE%NUMBER_OF_DIRICHLET_CONDITIONS*( &
-                                              & NUMBER_OF_NON_ZEROS/NUMBER_OF_ROWS),ERR,ERROR,*999)
-                                            CALL LIST_CREATE_FINISH(SPARSE_INDICES,ERR,ERROR,*999)
-                                            COUNT=0
-                                            SPARSITY_INDICES%SPARSE_COLUMN_INDICES(1)=1
-                                            LAST=1
-                                            DO dirichlet_idx=1,BOUNDARY_CONDITION_VARIABLE%NUMBER_OF_DIRICHLET_CONDITIONS
-                                              DIRICHLET_DOF=BOUNDARY_CONDITIONS_DIRICHLET%DIRICHLET_DOF_INDICES(dirichlet_idx)
-                                              CALL LinkedList_to_Array(list(DIRICHLET_DOF),column_array,ERR,ERROR,*999)
-                                                DO row_idx=1,size(column_array)
-                                                  CALL LIST_ITEM_ADD(SPARSE_INDICES,column_array(row_idx),ERR,ERROR,*999)
-                                                  COUNT=COUNT+1
-                                                  LAST=row_idx+1
-                                                ENDDO
-                                              SPARSITY_INDICES%SPARSE_COLUMN_INDICES(dirichlet_idx+1)=COUNT+1
-                                            ENDDO
-                                            CALL LIST_DETACH_AND_DESTROY(SPARSE_INDICES,DUMMY,SPARSITY_INDICES%SPARSE_ROW_INDICES, &
-                                              & ERR,ERROR,*999)
-                                            DO col_idx =1,NUMBER_OF_ROWS
-                                              CALL LINKEDLIST_DESTROY(list(col_idx),ERR,ERROR,*999)
-                                            ENDDO
-                                          ELSE
-                                            LOCAL_ERROR="Sparsity indices arrays are not associated for this equations matrix."
-                                            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                                          ENDIF
-                                        CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-                                          CALL FlagError("Not implemented for compressed column storage.",ERR,ERROR,*999)
-                                        CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
-                                          CALL FlagError("Not implemented for row column storage.",ERR,ERROR,*999)
-                                        CASE DEFAULT
-                                          LOCAL_ERROR="The storage type of "//TRIM(NUMBER_TO_VSTRING(STORAGE_TYPE,"*",ERR,ERROR)) &
-                                            //" is invalid."
-                                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                                        END SELECT
+                              NULLIFY(equations)
+                              CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
+                              NULLIFY(vectorMatrices)
+                              CALL Equations_VectorMatricesGet(equations,vectorMatrices,err,error,*999)
+                              linearMatrices=>vectorMatrices%linearMatrices
+                              IF(ASSOCIATED(linearMatrices)) THEN
+                                !Iterate through equations matrices
+                                DO equ_matrix_idx=1,linearMatrices%numberOfLinearMatrices
+                                  EQUATION_MATRIX=>linearMatrices%MATRICES(equ_matrix_idx)%PTR
+                                  CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_GET(EQUATION_MATRIX%MATRIX,STORAGE_TYPE,ERR,ERROR,*999)
+                                  IF(ASSOCIATED(EQUATION_MATRIX)) THEN
+                                    SELECT CASE(STORAGE_TYPE)
+                                    CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
+                                      !Do nothing
+                                    CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
+                                      !Do nothing
+                                    CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+                                      CALL FlagError("Not implemented for column major storage.",ERR,ERROR,*999)
+                                    CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
+                                      CALL FlagError("Not implemented for row major storage.",ERR,ERROR,*999)
+                                    CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+                                      !Get Sparsity pattern, number of non zeros, number of rows
+                                      CALL DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_GET(EQUATION_MATRIX%MATRIX,ROW_INDICES, &
+                                        & COLUMN_INDICES,ERR,ERROR,*999)
+                                      CALL DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_GET(EQUATION_MATRIX%MATRIX,NUMBER_OF_NON_ZEROS, &
+                                        & ERR,ERROR,*999)
+                                      !Get the matrix stored as a linked list
+                                      CALL DISTRIBUTED_MATRIX_LINKLIST_GET(EQUATION_MATRIX%MATRIX,LIST,ERR,ERROR,*999)
+                                      NUMBER_OF_ROWS=vectorMatrices%totalNumberOfRows
+                                      !Initialise sparsity indices arrays
+                                      CALL BoundaryConditions_SparsityIndicesInitialise(BOUNDARY_CONDITIONS_DIRICHLET% &
+                                        & LINEAR_SPARSITY_INDICES(equations_set_idx,equ_matrix_idx)%PTR, &
+                                        & BOUNDARY_CONDITION_VARIABLE%NUMBER_OF_DIRICHLET_CONDITIONS,ERR,ERROR,*999)
+                                      !Find dirichlet columns and store the non zero indices (with respect to the 1D storage array)
+                                      NULLIFY(SPARSITY_INDICES)
+                                      SPARSITY_INDICES=>BOUNDARY_CONDITIONS_DIRICHLET%LINEAR_SPARSITY_INDICES( &
+                                        & equations_set_idx,equ_matrix_idx)%PTR
+                                      IF(ASSOCIATED(SPARSITY_INDICES)) THEN
+                                        !Setup list for storing dirichlet non zero indices
+                                        NULLIFY(SPARSE_INDICES)
+                                        CALL LIST_CREATE_START(SPARSE_INDICES,ERR,ERROR,*999)
+                                        CALL LIST_DATA_TYPE_SET(SPARSE_INDICES,LIST_INTG_TYPE,ERR,ERROR,*999)
+                                        CALL LIST_INITIAL_SIZE_SET(SPARSE_INDICES, &
+                                          & BOUNDARY_CONDITION_VARIABLE%NUMBER_OF_DIRICHLET_CONDITIONS*( &
+                                          & NUMBER_OF_NON_ZEROS/NUMBER_OF_ROWS),ERR,ERROR,*999)
+                                        CALL LIST_CREATE_FINISH(SPARSE_INDICES,ERR,ERROR,*999)
+                                        COUNT=0
+                                        SPARSITY_INDICES%SPARSE_COLUMN_INDICES(1)=1
+                                        LAST=1
+                                        DO dirichlet_idx=1,BOUNDARY_CONDITION_VARIABLE%NUMBER_OF_DIRICHLET_CONDITIONS
+                                          DIRICHLET_DOF=BOUNDARY_CONDITIONS_DIRICHLET%DIRICHLET_DOF_INDICES(dirichlet_idx)
+                                          CALL LinkedList_to_Array(list(DIRICHLET_DOF),column_array,ERR,ERROR,*999)
+                                          DO row_idx=1,SIZE(column_array)
+                                            CALL LIST_ITEM_ADD(SPARSE_INDICES,column_array(row_idx),ERR,ERROR,*999)
+                                            COUNT=COUNT+1
+                                            LAST=row_idx+1
+                                          ENDDO
+                                          SPARSITY_INDICES%SPARSE_COLUMN_INDICES(dirichlet_idx+1)=COUNT+1
+                                        ENDDO
+                                        CALL LIST_DETACH_AND_DESTROY(SPARSE_INDICES,DUMMY,SPARSITY_INDICES%SPARSE_ROW_INDICES, &
+                                          & ERR,ERROR,*999)
+                                        DO col_idx =1,NUMBER_OF_ROWS
+                                          CALL LINKEDLIST_DESTROY(list(col_idx),ERR,ERROR,*999)
+                                        ENDDO
                                       ELSE
-                                        CALL FlagError("The equation matrix is not associated.",ERR,ERROR,*999)
+                                        LOCAL_ERROR="Sparsity indices arrays are not associated for this equations matrix."
+                                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                                       ENDIF
-                                    ENDDO
+                                    CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+                                      CALL FlagError("Not implemented for compressed column storage.",ERR,ERROR,*999)
+                                    CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
+                                      CALL FlagError("Not implemented for row column storage.",ERR,ERROR,*999)
+                                    CASE DEFAULT
+                                      LOCAL_ERROR="The storage type of "//TRIM(NUMBER_TO_VSTRING(STORAGE_TYPE,"*",ERR,ERROR)) &
+                                        //" is invalid."
+                                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                    END SELECT
+                                  ELSE
+                                    CALL FlagError("The equation matrix is not associated.",ERR,ERROR,*999)
                                   ENDIF
-
-                                  DYNAMIC_MATRICES=>EQUATIONS_MATRICES%DYNAMIC_MATRICES
-                                  IF(ASSOCIATED(DYNAMIC_MATRICES)) THEN
-                                    !Iterate through equations matrices
-                                    DO equ_matrix_idx=1,DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES
-                                      EQUATION_MATRIX=>DYNAMIC_MATRICES%MATRICES(equ_matrix_idx)%PTR
-                                      CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_GET(EQUATION_MATRIX%MATRIX,STORAGE_TYPE,ERR,ERROR,*999)
-                                      IF(ASSOCIATED(EQUATION_MATRIX)) THEN
-                                        SELECT CASE(STORAGE_TYPE)
-                                        CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
-                                          !Do nothing
-                                        CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
-                                          !Do nothing
-                                        CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-                                          CALL FlagError("Not implemented for column major storage.",ERR,ERROR,*999)
-                                        CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
-                                          CALL FlagError("Not implemented for row major storage.",ERR,ERROR,*999)
-                                        CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-                                          !Get Sparsity pattern, number of non zeros, number of rows
-                                          CALL DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_GET(EQUATION_MATRIX%MATRIX,ROW_INDICES, &
-                                            & COLUMN_INDICES,ERR,ERROR,*999)
-                                          CALL DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_GET(EQUATION_MATRIX%MATRIX,NUMBER_OF_NON_ZEROS, &
-                                            & ERR,ERROR,*999)
-                                          !Sparse matrix in a list
-                                          CALL DISTRIBUTED_MATRIX_LINKLIST_GET(EQUATION_MATRIX%MATRIX,LIST,ERR,ERROR,*999)
-                                          NUMBER_OF_ROWS=EQUATIONS_MATRICES%TOTAL_NUMBER_OF_ROWS
-                                          !Intialise sparsity indices arrays
-                                          CALL BoundaryConditions_SparsityIndicesInitialise(BOUNDARY_CONDITIONS_DIRICHLET% &
-                                            & DYNAMIC_SPARSITY_INDICES(equations_set_idx,equ_matrix_idx)%PTR, &
-                                            & BOUNDARY_CONDITION_VARIABLE%NUMBER_OF_DIRICHLET_CONDITIONS,ERR,ERROR,*999)
-                                          !Find dirichlet columns and store the non zero indices (with respect to the 1D storage array)
-                                          NULLIFY(SPARSITY_INDICES)
-                                          SPARSITY_INDICES=>BOUNDARY_CONDITIONS_DIRICHLET%DYNAMIC_SPARSITY_INDICES( &
-                                              & equations_set_idx,equ_matrix_idx)%PTR
-                                          IF(ASSOCIATED(SPARSITY_INDICES)) THEN
-                                            ! Setup list for storing dirichlet non zero indices
-                                            NULLIFY(SPARSE_INDICES)
-                                            CALL LIST_CREATE_START(SPARSE_INDICES,ERR,ERROR,*999)
-                                            CALL LIST_DATA_TYPE_SET(SPARSE_INDICES,LIST_INTG_TYPE,ERR,ERROR,*999)
-                                            CALL LIST_INITIAL_SIZE_SET(SPARSE_INDICES, &
-                                              & BOUNDARY_CONDITION_VARIABLE%NUMBER_OF_DIRICHLET_CONDITIONS*( &
-                                              & NUMBER_OF_NON_ZEROS/NUMBER_OF_ROWS),ERR,ERROR,*999)
-                                            CALL LIST_CREATE_FINISH(SPARSE_INDICES,ERR,ERROR,*999)
-                                            COUNT=0
-                                            SPARSITY_INDICES%SPARSE_COLUMN_INDICES(1)=1
-                                            LAST=1
-                                            DO dirichlet_idx=1,BOUNDARY_CONDITION_VARIABLE%NUMBER_OF_DIRICHLET_CONDITIONS
-                                              !Dirichlet columns
-                                              DIRICHLET_DOF=BOUNDARY_CONDITIONS_DIRICHLET%DIRICHLET_DOF_INDICES(dirichlet_idx)
-                                              CALL LinkedList_to_Array(list(DIRICHLET_DOF),column_array,ERR,ERROR,*999)
-                                              !The row indices
-                                              DO row_idx=1,size(column_array)
-                                                CALL LIST_ITEM_ADD(SPARSE_INDICES,column_array(row_idx),ERR,ERROR,*999)
-                                                 COUNT=COUNT+1
-                                                 LAST=row_idx+1
-                                              ENDDO
-                                              SPARSITY_INDICES%SPARSE_COLUMN_INDICES(dirichlet_idx+1)=COUNT+1
-                                            ENDDO
-                                            CALL LIST_DETACH_AND_DESTROY(SPARSE_INDICES,DUMMY,SPARSITY_INDICES%SPARSE_ROW_INDICES, &
-                                              & ERR,ERROR,*999)
-                                            DO col_idx =1,NUMBER_OF_ROWS
-                                              CALL LINKEDLIST_DESTROY(list(col_idx),ERR,ERROR,*999)
-                                            ENDDO
-                                          ELSE
-                                            LOCAL_ERROR="Sparsity indices arrays are not associated for this equations matrix."
-                                            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                                          ENDIF
-                                        CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-                                          CALL FlagError("Not implemented for compressed column storage.",ERR,ERROR,*999)
-                                        CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
-                                          CALL FlagError("Not implemented for row column storage.",ERR,ERROR,*999)
-                                        CASE DEFAULT
-                                          LOCAL_ERROR="The storage type of "//TRIM(NUMBER_TO_VSTRING(STORAGE_TYPE,"*",ERR,ERROR)) &
-                                            //" is invalid."
-                                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                                        END SELECT
+                                ENDDO
+                              ENDIF
+                              
+                              dynamicMatrices=>vectorMatrices%dynamicMatrices
+                              IF(ASSOCIATED(dynamicMatrices)) THEN
+                                !Iterate through equations matrices
+                                DO equ_matrix_idx=1,dynamicMatrices%numberOfDynamicMatrices
+                                  EQUATION_MATRIX=>dynamicMatrices%MATRICES(equ_matrix_idx)%PTR
+                                  CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_GET(EQUATION_MATRIX%MATRIX,STORAGE_TYPE,ERR,ERROR,*999)
+                                  IF(ASSOCIATED(EQUATION_MATRIX)) THEN
+                                    SELECT CASE(STORAGE_TYPE)
+                                    CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
+                                      !Do nothing
+                                    CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
+                                      !Do nothing
+                                    CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+                                      CALL FlagError("Not implemented for column major storage.",ERR,ERROR,*999)
+                                    CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
+                                      CALL FlagError("Not implemented for row major storage.",ERR,ERROR,*999)
+                                    CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+                                      !Get Sparsity pattern, number of non zeros, number of rows
+                                      CALL DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_GET(EQUATION_MATRIX%MATRIX,ROW_INDICES, &
+                                        & COLUMN_INDICES,ERR,ERROR,*999)
+                                      CALL DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_GET(EQUATION_MATRIX%MATRIX,NUMBER_OF_NON_ZEROS, &
+                                        & ERR,ERROR,*999)
+                                      !Sparse matrix in a list
+                                      CALL DISTRIBUTED_MATRIX_LINKLIST_GET(EQUATION_MATRIX%MATRIX,LIST,ERR,ERROR,*999)
+                                      NUMBER_OF_ROWS=vectorMatrices%totalNumberOfRows
+                                      !Intialise sparsity indices arrays
+                                      CALL BoundaryConditions_SparsityIndicesInitialise(BOUNDARY_CONDITIONS_DIRICHLET% &
+                                        & DYNAMIC_SPARSITY_INDICES(equations_set_idx,equ_matrix_idx)%PTR, &
+                                        & BOUNDARY_CONDITION_VARIABLE%NUMBER_OF_DIRICHLET_CONDITIONS,ERR,ERROR,*999)
+                                      !Find dirichlet columns and store the non zero indices (with respect to the 1D storage array)
+                                      NULLIFY(SPARSITY_INDICES)
+                                      SPARSITY_INDICES=>BOUNDARY_CONDITIONS_DIRICHLET%DYNAMIC_SPARSITY_INDICES( &
+                                        & equations_set_idx,equ_matrix_idx)%PTR
+                                      IF(ASSOCIATED(SPARSITY_INDICES)) THEN
+                                        ! Setup list for storing dirichlet non zero indices
+                                        NULLIFY(SPARSE_INDICES)
+                                        CALL LIST_CREATE_START(SPARSE_INDICES,ERR,ERROR,*999)
+                                        CALL LIST_DATA_TYPE_SET(SPARSE_INDICES,LIST_INTG_TYPE,ERR,ERROR,*999)
+                                        CALL LIST_INITIAL_SIZE_SET(SPARSE_INDICES, &
+                                          & BOUNDARY_CONDITION_VARIABLE%NUMBER_OF_DIRICHLET_CONDITIONS*( &
+                                          & NUMBER_OF_NON_ZEROS/NUMBER_OF_ROWS),ERR,ERROR,*999)
+                                        CALL LIST_CREATE_FINISH(SPARSE_INDICES,ERR,ERROR,*999)
+                                        COUNT=0
+                                        SPARSITY_INDICES%SPARSE_COLUMN_INDICES(1)=1
+                                        LAST=1
+                                        DO dirichlet_idx=1,BOUNDARY_CONDITION_VARIABLE%NUMBER_OF_DIRICHLET_CONDITIONS
+                                          !Dirichlet columns
+                                          DIRICHLET_DOF=BOUNDARY_CONDITIONS_DIRICHLET%DIRICHLET_DOF_INDICES(dirichlet_idx)
+                                          CALL LinkedList_to_Array(list(DIRICHLET_DOF),column_array,ERR,ERROR,*999)
+                                          !The row indices
+                                          DO row_idx=1,SIZE(column_array)
+                                            CALL LIST_ITEM_ADD(SPARSE_INDICES,column_array(row_idx),ERR,ERROR,*999)
+                                            COUNT=COUNT+1
+                                            LAST=row_idx+1
+                                          ENDDO
+                                          SPARSITY_INDICES%SPARSE_COLUMN_INDICES(dirichlet_idx+1)=COUNT+1
+                                        ENDDO
+                                        CALL LIST_DETACH_AND_DESTROY(SPARSE_INDICES,DUMMY,SPARSITY_INDICES%SPARSE_ROW_INDICES, &
+                                          & ERR,ERROR,*999)
+                                        DO col_idx =1,NUMBER_OF_ROWS
+                                          CALL LINKEDLIST_DESTROY(list(col_idx),ERR,ERROR,*999)
+                                        ENDDO
                                       ELSE
-                                        CALL FlagError("The equation matrix is not associated.",ERR,ERROR,*999)
+                                        LOCAL_ERROR="Sparsity indices arrays are not associated for this equations matrix."
+                                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                                       ENDIF
-                                    ENDDO
+                                    CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+                                      CALL FlagError("Not implemented for compressed column storage.",ERR,ERROR,*999)
+                                    CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
+                                      CALL FlagError("Not implemented for row column storage.",ERR,ERROR,*999)
+                                    CASE DEFAULT
+                                      LOCAL_ERROR="The storage type of "//TRIM(NUMBER_TO_VSTRING(STORAGE_TYPE,"*",ERR,ERROR)) &
+                                        //" is invalid."
+                                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                    END SELECT
+                                  ELSE
+                                    CALL FlagError("The equation matrix is not associated.",ERR,ERROR,*999)
                                   ENDIF
-                                ELSE
-                                  LOCAL_ERROR="Equations Matrices is not associated for these Equations."
-                                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                                ENDIF
-                              ELSE
-                                LOCAL_ERROR="Equations is not associated for this Equations Set."
-                                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                ENDDO
                               ENDIF
                             ELSE
                               LOCAL_ERROR="Equations Set is not associated for boundary conditions variable "// &
@@ -525,7 +519,7 @@ CONTAINS
 !                                          & ERR,ERROR,*999)
 !                                        !Get the matrix stored as a linked list
 !                                        CALL DISTRIBUTED_MATRIX_LINKLIST_GET(INTERFACE_MATRIX%MATRIX,LIST,ERR,ERROR,*999)
-!                                        NUMBER_OF_ROWS=EQUATIONS_MATRICES%TOTAL_NUMBER_OF_ROWS
+!                                        NUMBER_OF_ROWS=vectorMatrices%totalNumberOfRows
 !                                        !Initialise sparsity indices arrays
 !                                        CALL BoundaryConditions_SparsityIndicesInitialise(BOUNDARY_CONDITIONS_DIRICHLET% &
 !                                          & LINEAR_SPARSITY_INDICES(interface_condition_idx,interface_matrix_idx)%PTR, &
@@ -793,12 +787,13 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: DUMMY_ERR,variable_idx,variable_type,equations_set_idx,interface_condition_idx
     TYPE(EquationsType), POINTER :: EQUATIONS
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
-    TYPE(EQUATIONS_MAPPING_DYNAMIC_TYPE), POINTER :: DYNAMIC_MAPPING
-    TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: LINEAR_MAPPING
-    TYPE(EQUATIONS_MAPPING_NONLINEAR_TYPE), POINTER :: NONLINEAR_MAPPING
-    TYPE(EQUATIONS_MAPPING_RHS_TYPE), POINTER :: RHS_MAPPING
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
+    TYPE(EquationsMappingLinearType), POINTER :: linearMapping
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
     TYPE(INTERFACE_MAPPING_TYPE), POINTER :: INTERFACE_MAPPING
@@ -823,104 +818,103 @@ CONTAINS
             IF(ASSOCIATED(EQUATIONS_SET)) THEN
               EQUATIONS=>EQUATIONS_SET%EQUATIONS
               IF(ASSOCIATED(EQUATIONS)) THEN
-                IF(EQUATIONS%equationsFinished) THEN
-                  EQUATIONS_MAPPING=>EQUATIONS%equationsMapping
-                  IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-                    IF(EQUATIONS_MAPPING%EQUATIONS_MAPPING_FINISHED) THEN
-                      EQUATIONS_SET%BOUNDARY_CONDITIONS=>SOLVER_EQUATIONS%BOUNDARY_CONDITIONS
-                      SELECT CASE(EQUATIONS%timeDependence)
-                      CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC)
-                        SELECT CASE(EQUATIONS%linearity)
-                        CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
-                          LINEAR_MAPPING=>EQUATIONS_MAPPING%LINEAR_MAPPING
-                          IF(ASSOCIATED(LINEAR_MAPPING)) THEN
-                            DO variable_idx=1,LINEAR_MAPPING%NUMBER_OF_LINEAR_MATRIX_VARIABLES
-                              variable_type=LINEAR_MAPPING%LINEAR_MATRIX_VARIABLE_TYPES(variable_idx)
-                              IF(LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(VARIABLE_TYPE)%NUMBER_OF_EQUATIONS_MATRICES>0) THEN
-                                CALL BOUNDARY_CONDITIONS_VARIABLE_INITIALISE(SOLVER_EQUATIONS%BOUNDARY_CONDITIONS, &
-                                  & LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(VARIABLE_TYPE)%VARIABLE,ERR,ERROR,*999)
-                              ENDIF
-                            ENDDO !variable_idx
-                          ELSE
-                            CALL FlagError("Equations mapping linear mapping is not associated.",ERR,ERROR,*999)
-                          ENDIF
-                          RHS_MAPPING=>EQUATIONS_MAPPING%RHS_MAPPING
-                          IF(ASSOCIATED(RHS_MAPPING)) THEN
-                            CALL BOUNDARY_CONDITIONS_VARIABLE_INITIALISE(SOLVER_EQUATIONS%BOUNDARY_CONDITIONS, &
-                                & RHS_MAPPING%RHS_VARIABLE,ERR,ERROR,*999)
-                          ENDIF
-                        CASE(EQUATIONS_NONLINEAR)
-                          NONLINEAR_MAPPING=>EQUATIONS_MAPPING%NONLINEAR_MAPPING
-                          IF(ASSOCIATED(NONLINEAR_MAPPING)) THEN
-                            DO variable_idx=1,NONLINEAR_MAPPING%NUMBER_OF_RESIDUAL_VARIABLES
+                NULLIFY(vectorEquations)
+                CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+                IF(vectorEquations%vectorEquationsFinished) THEN
+                  NULLIFY(vectorMapping)
+                  CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+                  IF(vectorMapping%vectorMappingFinished) THEN
+                    EQUATIONS_SET%BOUNDARY_CONDITIONS=>SOLVER_EQUATIONS%BOUNDARY_CONDITIONS
+                    SELECT CASE(EQUATIONS%timeDependence)
+                    CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC)
+                      SELECT CASE(EQUATIONS%linearity)
+                      CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
+                        linearMapping=>vectorMapping%linearMapping
+                        IF(ASSOCIATED(linearMapping)) THEN
+                          DO variable_idx=1,linearMapping%numberOfLinearMatrixVariables
+                            variable_type=linearMapping%linearMatrixVariableTypes(variable_idx)
+                            IF(linearMapping%varToEquationsMatricesMaps(VARIABLE_TYPE)%numberOfEquationsMatrices>0) THEN
                               CALL BOUNDARY_CONDITIONS_VARIABLE_INITIALISE(SOLVER_EQUATIONS%BOUNDARY_CONDITIONS, &
-                                  & NONLINEAR_MAPPING%RESIDUAL_VARIABLES(variable_idx)%PTR,ERR,ERROR,*999)
-                            ENDDO
-                          ELSE
-                            CALL FlagError("Equations mapping nonlinear mapping is not associated.",ERR,ERROR,*999)
-                          ENDIF
-                          RHS_MAPPING=>EQUATIONS_MAPPING%RHS_MAPPING
-                          IF(ASSOCIATED(RHS_MAPPING)) THEN
+                                & linearMapping%varToEquationsMatricesMaps(VARIABLE_TYPE)%VARIABLE,ERR,ERROR,*999)
+                            ENDIF
+                          ENDDO !variable_idx
+                        ELSE
+                          CALL FlagError("Equations mapping linear mapping is not associated.",ERR,ERROR,*999)
+                        ENDIF
+                        rhsMapping=>vectorMapping%rhsMapping
+                        IF(ASSOCIATED(rhsMapping)) THEN
+                          CALL BOUNDARY_CONDITIONS_VARIABLE_INITIALISE(SOLVER_EQUATIONS%BOUNDARY_CONDITIONS, &
+                            & rhsMapping%rhsVariable,ERR,ERROR,*999)
+                        ENDIF
+                      CASE(EQUATIONS_NONLINEAR)
+                        nonlinearMapping=>vectorMapping%nonlinearMapping
+                        IF(ASSOCIATED(nonlinearMapping)) THEN
+                          DO variable_idx=1,nonlinearMapping%numberOfResidualVariables
                             CALL BOUNDARY_CONDITIONS_VARIABLE_INITIALISE(SOLVER_EQUATIONS%BOUNDARY_CONDITIONS, &
-                                & RHS_MAPPING%RHS_VARIABLE,ERR,ERROR,*999)
-                          ELSE
-                            CALL FlagError("Equations mapping RHS mapping is not associated.",ERR,ERROR,*999)
-                          ENDIF
-                        CASE DEFAULT
-                          LOCAL_ERROR="The equations linearity type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS%linearity,"*", &
-                                & ERR,ERROR))//" is invalid."
-                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                        END SELECT
-                      CASE(EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
-                        SELECT CASE(EQUATIONS%linearity)
-                        CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
-                          DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING
-                          IF(ASSOCIATED(DYNAMIC_MAPPING)) THEN
-                            CALL BOUNDARY_CONDITIONS_VARIABLE_INITIALISE(SOLVER_EQUATIONS%BOUNDARY_CONDITIONS, &
-                                & DYNAMIC_MAPPING%DYNAMIC_VARIABLE,ERR,ERROR,*999)
-                          ELSE
-                            CALL FlagError("Equations mapping dynamic mapping is not associated.",ERR,ERROR,*999)
-                          ENDIF
-                          RHS_MAPPING=>EQUATIONS_MAPPING%RHS_MAPPING
-                          IF(ASSOCIATED(RHS_MAPPING)) THEN
-                            CALL BOUNDARY_CONDITIONS_VARIABLE_INITIALISE(SOLVER_EQUATIONS%BOUNDARY_CONDITIONS, &
-                                & RHS_MAPPING%RHS_VARIABLE,ERR,ERROR,*999)
-                          ELSE
-                            CALL FlagError("Equations mapping RHS mapping is not associated.",ERR,ERROR,*999)
-                          ENDIF
-                        CASE(EQUATIONS_NONLINEAR)
-                          DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING
-                          IF(ASSOCIATED(DYNAMIC_MAPPING)) THEN
-                            CALL BOUNDARY_CONDITIONS_VARIABLE_INITIALISE(SOLVER_EQUATIONS%BOUNDARY_CONDITIONS, &
-                                & DYNAMIC_MAPPING%DYNAMIC_VARIABLE,ERR,ERROR,*999)
-                          ELSE
-                            CALL FlagError("Equations mapping dynamic mapping is not associated.",ERR,ERROR,*999)
-                          ENDIF
-                          RHS_MAPPING=>EQUATIONS_MAPPING%RHS_MAPPING
-                          IF(ASSOCIATED(RHS_MAPPING)) THEN
-                            CALL BOUNDARY_CONDITIONS_VARIABLE_INITIALISE(SOLVER_EQUATIONS%BOUNDARY_CONDITIONS, &
-                                & RHS_MAPPING%RHS_VARIABLE,ERR,ERROR,*999)
-                          ELSE
-                            CALL FlagError("Equations mapping RHS mapping is not associated.",ERR,ERROR,*999)
-                          ENDIF
-                        CASE DEFAULT
-                          LOCAL_ERROR="The equations linearity type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS%linearity,"*", &
-                                & ERR,ERROR))//" is invalid."
-                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                        END SELECT
+                              & nonlinearMapping%residualVariables(variable_idx)%PTR,ERR,ERROR,*999)
+                          ENDDO
+                        ELSE
+                          CALL FlagError("Equations mapping nonlinear mapping is not associated.",ERR,ERROR,*999)
+                        ENDIF
+                        rhsMapping=>vectorMapping%rhsMapping
+                        IF(ASSOCIATED(rhsMapping)) THEN
+                          CALL BOUNDARY_CONDITIONS_VARIABLE_INITIALISE(SOLVER_EQUATIONS%BOUNDARY_CONDITIONS, &
+                            & rhsMapping%rhsVariable,ERR,ERROR,*999)
+                        ELSE
+                          CALL FlagError("Equations mapping RHS mapping is not associated.",ERR,ERROR,*999)
+                        ENDIF
                       CASE DEFAULT
-                        LOCAL_ERROR="The equations time dependence type of "// &
-                          & TRIM(NUMBER_TO_VSTRING(EQUATIONS%timeDependence,"*",ERR,ERROR))//" is invalid."
+                        LOCAL_ERROR="The equations linearity type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS%linearity,"*", &
+                          & ERR,ERROR))//" is invalid."
                         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                       END SELECT
-                    ELSE
-                      CALL FlagError("Equations mapping has not been finished.",ERR,ERROR,*998)
-                    ENDIF
+                    CASE(EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
+                      SELECT CASE(EQUATIONS%linearity)
+                      CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
+                        dynamicMapping=>vectorMapping%dynamicMapping
+                        IF(ASSOCIATED(dynamicMapping)) THEN
+                          CALL BOUNDARY_CONDITIONS_VARIABLE_INITIALISE(SOLVER_EQUATIONS%BOUNDARY_CONDITIONS, &
+                            & dynamicMapping%dynamicVariable,ERR,ERROR,*999)
+                        ELSE
+                          CALL FlagError("Equations mapping dynamic mapping is not associated.",ERR,ERROR,*999)
+                        ENDIF
+                        rhsMapping=>vectorMapping%rhsMapping
+                        IF(ASSOCIATED(rhsMapping)) THEN
+                          CALL BOUNDARY_CONDITIONS_VARIABLE_INITIALISE(SOLVER_EQUATIONS%BOUNDARY_CONDITIONS, &
+                            & rhsMapping%rhsVariable,ERR,ERROR,*999)
+                        ELSE
+                          CALL FlagError("Equations mapping RHS mapping is not associated.",ERR,ERROR,*999)
+                        ENDIF
+                      CASE(EQUATIONS_NONLINEAR)
+                        dynamicMapping=>vectorMapping%dynamicMapping
+                        IF(ASSOCIATED(dynamicMapping)) THEN
+                          CALL BOUNDARY_CONDITIONS_VARIABLE_INITIALISE(SOLVER_EQUATIONS%BOUNDARY_CONDITIONS, &
+                            & dynamicMapping%dynamicVariable,ERR,ERROR,*999)
+                        ELSE
+                          CALL FlagError("Equations mapping dynamic mapping is not associated.",ERR,ERROR,*999)
+                        ENDIF
+                        rhsMapping=>vectorMapping%rhsMapping
+                        IF(ASSOCIATED(rhsMapping)) THEN
+                          CALL BOUNDARY_CONDITIONS_VARIABLE_INITIALISE(SOLVER_EQUATIONS%BOUNDARY_CONDITIONS, &
+                            & rhsMapping%rhsVariable,ERR,ERROR,*999)
+                        ELSE
+                          CALL FlagError("Equations mapping RHS mapping is not associated.",ERR,ERROR,*999)
+                        ENDIF
+                      CASE DEFAULT
+                        LOCAL_ERROR="The equations linearity type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS%linearity,"*", &
+                          & ERR,ERROR))//" is invalid."
+                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                      END SELECT
+                    CASE DEFAULT
+                      LOCAL_ERROR="The equations time dependence type of "// &
+                        & TRIM(NUMBER_TO_VSTRING(EQUATIONS%timeDependence,"*",ERR,ERROR))//" is invalid."
+                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                    END SELECT
                   ELSE
-                    CALL FlagError("Equations equations mapping is not associated.",ERR,ERROR,*998)
+                    CALL FlagError("Equations mapping has not been finished.",ERR,ERROR,*998)
                   ENDIF
                 ELSE
-                  CALL FlagError("Equations has not been finished.",ERR,ERROR,*998)
+                  CALL FlagError("Vector equations has not been finished.",ERR,ERROR,*998)
                 ENDIF
               ELSE
                 CALL FlagError("Equations set equations is not associated.",ERR,ERROR,*998)
@@ -957,7 +951,7 @@ CONTAINS
                           INTERFACE_RHS_MAPPING=>INTERFACE_MAPPING%RHS_MAPPING
                           IF(ASSOCIATED(INTERFACE_RHS_MAPPING)) THEN
                             CALL BOUNDARY_CONDITIONS_VARIABLE_INITIALISE(SOLVER_EQUATIONS%BOUNDARY_CONDITIONS, &
-                                & INTERFACE_RHS_MAPPING%RHS_VARIABLE,ERR,ERROR,*999)
+                              & INTERFACE_RHS_MAPPING%RHS_VARIABLE,ERR,ERROR,*999)
                           ENDIF
                         CASE DEFAULT
                           LOCAL_ERROR="The equations linearity type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS%linearity,"*", &
@@ -3683,15 +3677,16 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: NUMBER_OF_DIRICHLET_CONDITIONS,NUMBER_OF_LINEAR_MATRICES,NUMBER_OF_DYNAMIC_MATRICES,matrix_idx, &
+    INTEGER(INTG) :: NUMBER_OF_DIRICHLET_CONDITIONS,numberOfLinearMatrices,numberOfDynamicMatrices,matrix_idx, &
       & MAX_NUMBER_LINEAR_MATRICES,MAX_NUMBER_DYNAMIC_MATRICES,equations_set_idx
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(BOUNDARY_CONDITIONS_DIRICHLET_TYPE), POINTER :: BOUNDARY_CONDITIONS_DIRICHLET
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(EquationsType), POINTER :: EQUATIONS
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
-    TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: LINEAR_MAPPING
-    TYPE(EQUATIONS_MAPPING_DYNAMIC_TYPE), POINTER :: DYNAMIC_MAPPING
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingLinearType), POINTER :: linearMapping
+    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
 
     ENTERS("BOUNDARY_CONDITIONS_DIRICHLET_INITIALISE",ERR,ERROR,*999)
 
@@ -3714,27 +3709,23 @@ CONTAINS
           DO equations_set_idx=1,SOLVER_EQUATIONS%SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
             EQUATIONS_SET=>SOLVER_EQUATIONS%SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
             IF(ASSOCIATED(EQUATIONS_SET)) THEN
-              EQUATIONS=>EQUATIONS_SET%EQUATIONS
-              IF(ASSOCIATED(EQUATIONS)) THEN
-                EQUATIONS_MAPPING=>EQUATIONS%equationsMapping
-                IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-                  LINEAR_MAPPING=>EQUATIONS_MAPPING%LINEAR_MAPPING
-                  DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING
-                  IF(ASSOCIATED(LINEAR_MAPPING)) THEN
-                    NUMBER_OF_LINEAR_MATRICES=LINEAR_MAPPING%NUMBER_OF_LINEAR_EQUATIONS_MATRICES
-                    IF(NUMBER_OF_LINEAR_MATRICES>MAX_NUMBER_LINEAR_MATRICES) &
-                      & MAX_NUMBER_LINEAR_MATRICES=NUMBER_OF_LINEAR_MATRICES
-                  ENDIF
-                  IF(ASSOCIATED(DYNAMIC_MAPPING)) THEN
-                    NUMBER_OF_DYNAMIC_MATRICES=DYNAMIC_MAPPING%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES
-                    IF(NUMBER_OF_DYNAMIC_MATRICES>MAX_NUMBER_DYNAMIC_MATRICES) &
-                      & MAX_NUMBER_DYNAMIC_MATRICES=NUMBER_OF_DYNAMIC_MATRICES
-                  ENDIF
-                ELSE
-                  CALL FlagError("Equations mapping is not associated.",ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Equations is not associated.",ERR,ERROR,*999)
+              NULLIFY(equations)
+              CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
+              NULLIFY(vectorEquations)
+              CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+              NULLIFY(vectorMapping)
+              CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+              linearMapping=>vectorMapping%linearMapping
+              dynamicMapping=>vectorMapping%dynamicMapping
+              IF(ASSOCIATED(linearMapping)) THEN
+                numberOfLinearMatrices=linearMapping%numberOfLinearMatrices
+                IF(numberOfLinearMatrices>MAX_NUMBER_LINEAR_MATRICES) &
+                  & MAX_NUMBER_LINEAR_MATRICES=numberOfLinearMatrices
+              ENDIF
+              IF(ASSOCIATED(dynamicMapping)) THEN
+                numberOfDynamicMatrices=dynamicMapping%numberOfDynamicMatrices
+                IF(numberOfDynamicMatrices>MAX_NUMBER_DYNAMIC_MATRICES) &
+                  & MAX_NUMBER_DYNAMIC_MATRICES=numberOfDynamicMatrices
               ENDIF
             ELSE
               CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
