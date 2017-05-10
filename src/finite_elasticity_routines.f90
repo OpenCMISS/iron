@@ -9461,7 +9461,7 @@ CONTAINS
             !Start the solvers creation
             CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,err,error,*999)
             SELECT CASE(PROBLEM%SPECIFICATION(3))
-            CASE(PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE, &
+            CASE(PROBLEM_NO_SUBTYPE,PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE, &
               & PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE)
               CALL SOLVERS_NUMBER_SET(SOLVERS,1,err,error,*999)
               !Set the solver to be a nonlinear solver
@@ -10119,6 +10119,10 @@ CONTAINS
     ENTERS("FiniteElasticity_PostSolve",err,error,*999)
     
     IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
     IF(.NOT.ALLOCATED(problem%specification)) CALL FlagError("Problem specification is not allocated.",err,error,*999)
     IF(SIZE(problem%specification,1)<3) &
       & CALL FlagError("Problem specification must have three entries for a finite elasticity problem.",err,error,*999)

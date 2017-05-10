@@ -2665,7 +2665,7 @@ CONTAINS
         & TRIM(NumberToVString(createValuesCache%numberOfResidualVariables,"*",err,error))
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(equations%linearity==EQUATIONS_NONLINEAR) CALL FlagError("The equations are not nonlinear equations.",err,error,*999)
+    IF(equations%linearity/=EQUATIONS_NONLINEAR) CALL FlagError("The equations are not nonlinear equations.",err,error,*999)
     NULLIFY(dependentField)
     CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
       

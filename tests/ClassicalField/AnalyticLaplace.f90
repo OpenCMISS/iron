@@ -111,7 +111,7 @@ PROGRAM ANALYTICLAPLACEEXAMPLE
 
   CALL cmfe_RandomSeedsSet(9999,Err)
   
-  CALL cmfe_DiagnosticsSetOn(CMFE_ALL_DIAG_TYPE,[1,2,3,4,5],"Diagnostics",[""],Err)
+  !CALL cmfe_DiagnosticsSetOn(CMFE_ALL_DIAG_TYPE,[1,2,3,4,5],"Diagnostics",[""],Err)
 
   NUMBER_OF_ARGUMENTS = COMMAND_ARGUMENT_COUNT()
   IF(NUMBER_OF_ARGUMENTS >= 1) THEN
