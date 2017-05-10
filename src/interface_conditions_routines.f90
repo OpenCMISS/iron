@@ -2287,7 +2287,7 @@ CONTAINS
     !Local Variables
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer to the interface equations
     TYPE(INTERFACE_MATRICES_TYPE), POINTER :: interfaceMatrices !<A pointer to the interface matrices
-    TYPE(ELEMENT_MATRIX_TYPE), POINTER :: elementMatrix !<A pointer to the interface element matrix
+    TYPE(ElementMatrixType), POINTER :: elementMatrix !<A pointer to the interface element matrix
     INTEGER(INTG) :: interfaceMatrixIdx
     TYPE(VARYING_STRING) :: localError
     
@@ -2331,20 +2331,20 @@ CONTAINS
                 & UPDATE_MATRIX,err,error,*999)
               IF(interfaceMatrices%MATRICES(interfaceMatrixIdx)%PTR%UPDATE_MATRIX) THEN
                 elementMatrix=>interfaceMatrices%MATRICES(interfaceMatrixIdx)%PTR%ELEMENT_MATRIX
-                CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Number of rows = ",elementMatrix%NUMBER_OF_ROWS,err,error,*999)
-                CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Number of columns = ",elementMatrix%NUMBER_OF_COLUMNS, &
+                CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Number of rows = ",elementMatrix%numberOfRows,err,error,*999)
+                CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Number of columns = ",elementMatrix%numberOfColumns, &
                   & ERR,error,*999)
-                CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Maximum number of rows = ",elementMatrix%MAX_NUMBER_OF_ROWS, &
+                CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Maximum number of rows = ",elementMatrix%maxNumberOfRows, &
                   & ERR,error,*999)
                 CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Maximum number of columns = ",elementMatrix% &
-                  & MAX_NUMBER_OF_COLUMNS,err,error,*999)
-                CALL WRITE_STRING_VECTOR(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%NUMBER_OF_ROWS,8,8,elementMatrix%ROW_DOFS, &
+                  & maxNumberOfColumns,err,error,*999)
+                CALL WRITE_STRING_VECTOR(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfRows,8,8,elementMatrix%rowDOFS, &
                   & '("  Row dofs     :",8(X,I13))','(16X,8(X,I13))',err,error,*999)
-                CALL WRITE_STRING_VECTOR(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%NUMBER_OF_COLUMNS,8,8,elementMatrix% &
-                  & COLUMN_DOFS,'("  Column dofs  :",8(X,I13))','(16X,8(X,I13))',err,error,*999)
-                CALL WRITE_STRING_MATRIX(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%NUMBER_OF_ROWS,1,1,elementMatrix% &
-                  & NUMBER_OF_COLUMNS,8,8,elementMatrix%MATRIX(1:elementMatrix%NUMBER_OF_ROWS,1:elementMatrix% &
-                  & NUMBER_OF_COLUMNS),WRITE_STRING_MATRIX_NAME_AND_INDICES,'("  Matrix','(",I2,",:)',' :",8(X,E13.6))', &
+                CALL WRITE_STRING_VECTOR(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfColumns,8,8,elementMatrix% &
+                  & columnDOFS,'("  Column dofs  :",8(X,I13))','(16X,8(X,I13))',err,error,*999)
+                CALL WRITE_STRING_MATRIX(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfRows,1,1,elementMatrix% &
+                  & numberOfColumns,8,8,elementMatrix%matrix(1:elementMatrix%numberOfRows,1:elementMatrix% &
+                  & numberOfColumns),WRITE_STRING_MATRIX_NAME_AND_INDICES,'("  Matrix','(",I2,",:)',' :",8(X,E13.6))', &
                   & '(16X,8(X,E13.6))',err,error,*999)
               ENDIF
             ENDDO !interfaceMatrixIdx

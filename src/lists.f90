@@ -397,6 +397,8 @@ MODULE LISTS
 
   PUBLIC LIST_REMOVE_DUPLICATES
 
+  PUBLIC List_RemoveDuplicates
+
   PUBLIC LIST_SEARCH_LINEAR
   
   PUBLIC List_Search,List_SearchLinear

@@ -85,8 +85,6 @@ MODULE EquationsMatricesAccessRoutines
 
   PUBLIC EquationsMatricesVector_DynamicMatricesGet
   
-  PUBLIC EquationsMatricesVector_EquationsVectorGet
-
   PUBLIC EquationsMatricesVector_LinearMatricesGet
   
   PUBLIC EquationsMatricesVector_NonlinearMatricesGet
@@ -94,6 +92,10 @@ MODULE EquationsMatricesAccessRoutines
   PUBLIC EquationsMatricesVector_RHSVectorGet
   
   PUBLIC EquationsMatricesVector_SourceVectorGet
+
+  PUBLIC EquationsMatricesVector_VectorEquationsGet
+
+  PUBLIC EquationsMatricesVector_VectorMappingGet
 
 CONTAINS
 
@@ -154,7 +156,7 @@ CONTAINS
 
     IF(ASSOCIATED(equationsMatrix)) CALL FlagError("Equations matrix is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(dynamicMatrices)) CALL FlagError("Dynamic matrices is not associated.",err,error,*999)
-    IF(matrixIdx<1.OR.matrixIdx>=dynamicMatrices%numberOfDynamicMatrices) THEN
+    IF(matrixIdx<1.OR.matrixIdx>dynamicMatrices%numberOfDynamicMatrices) THEN
       localError="The specified matrix index of "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
         & " is invalid. The matrix index must be >= 1 and <= "// &
         & TRIM(NumberToVString(dynamicMatrices%numberOfDynamicMatrices,"*",err,error))//"."
@@ -228,7 +230,7 @@ CONTAINS
 
     IF(ASSOCIATED(equationsMatrix)) CALL FlagError("Equations matrix is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(linearMatrices)) CALL FlagError("Linear matrices is not associated.",err,error,*999)
-    IF(matrixIdx<1.OR.matrixIdx>=linearMatrices%numberOfLinearMatrices) THEN
+    IF(matrixIdx<1.OR.matrixIdx>linearMatrices%numberOfLinearMatrices) THEN
       localError="The specified matrix index of "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
         & " is invalid. The matrix index must be >= 1 and <= "// &
         & TRIM(NumberToVString(linearMatrices%numberOfLinearMatrices,"*",err,error))//"."
@@ -339,7 +341,7 @@ CONTAINS
 
     IF(ASSOCIATED(JacobianMatrix)) CALL FlagError("Jacobian matrix is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(nonlinearMatrices)) CALL FlagError("Nonlinear matrices is not associated.",err,error,*999)
-    IF(matrixIdx<1.OR.matrixIdx>=nonlinearMatrices%numberOfJacobians) THEN
+    IF(matrixIdx<1.OR.matrixIdx>nonlinearMatrices%numberOfJacobians) THEN
       localError="The specified matrix index of "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
         & " is invalid. The matrix index must be >= 1 and <= "// &
         & TRIM(NumberToVString(nonlinearMatrices%numberOfJacobians,"*",err,error))//"."
@@ -495,36 +497,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the vector equations for an vector equations matrices.
-  SUBROUTINE EquationsMatricesVector_EquationsVectorGet(vectorMatrices,vectorEquations,err,error,*)
-
-    !Argument variables
-    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the equations vector matrices to get the vector equations for
-    TYPE(EquationsVectorType), POINTER :: vectorEquations !<On exit, a pointer to the vector equations in the specified vector equations matrices. Must not be associated on entry
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
- 
-    ENTERS("EquationsMatricesVector_EquationsVectorGet",err,error,*998)
-
-    IF(ASSOCIATED(vectorEquations)) CALL FlagError("Vector equations is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector matrices is not associated.",err,error,*999)
-
-    vectorEquations=>vectorMatrices%vectorEquations
-    IF(.NOT.ASSOCIATED(vectorEquations)) CALL FlagError("Vector equations is not associated for the vector matrices.",err,error,*999)
-       
-    EXITS("EquationsMatricesVector_EquationsVectorGet")
-    RETURN
-999 NULLIFY(vectorEquations)
-998 ERRORSEXITS("EquationsMatricesVector_EquationsVectorGet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE EquationsMatricesVector_EquationsVectorGet
-
-  !
-  !================================================================================================================================
-  !
-
   !>Gets the linear vector matrices for an vector matrices.
   SUBROUTINE EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*)
 
@@ -646,5 +618,67 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the vector equations for an vector equations matrices.
+  SUBROUTINE EquationsMatricesVector_VectorEquationsGet(vectorMatrices,vectorEquations,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the equations vector matrices to get the vector equations for
+    TYPE(EquationsVectorType), POINTER :: vectorEquations !<On exit, a pointer to the vector equations in the specified vector equations matrices. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesVector_VectorEquationsGet",err,error,*998)
+
+    IF(ASSOCIATED(vectorEquations)) CALL FlagError("Vector equations is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector matrices is not associated.",err,error,*999)
+
+    vectorEquations=>vectorMatrices%vectorEquations
+    IF(.NOT.ASSOCIATED(vectorEquations)) CALL FlagError("Vector equations is not associated for the vector matrices.",err,error,*999)
+       
+    EXITS("EquationsMatricesVector_VectorEquationsGet")
+    RETURN
+999 NULLIFY(vectorEquations)
+998 ERRORSEXITS("EquationsMatricesVector_VectorEquationsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesVector_VectorEquationsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the vector mapping for vector matrices.
+  SUBROUTINE EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the equations vector matrices to get the vector mapping for
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<On exit, a pointer to the vector mapping for the specified vector equations matrices. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMatricesVector_VectorMappingGet",err,error,*998)
+
+    IF(ASSOCIATED(vectorMapping)) CALL FlagError("Vector mapping is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector matrices is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(vectorMatrices%vectorEquations)) &
+      & CALL FlagError("Vector matrices vector equations is not associated.",err,error,*999)
+    
+    vectorMapping=>vectorMatrices%vectorEquations%vectorMapping
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector mapping is not associated for the vector matrices.",err,error,*999)
+       
+    EXITS("EquationsMatricesVector_VectorMappingGet")
+    RETURN
+999 NULLIFY(vectorMapping)
+998 ERRORSEXITS("EquationsMatricesVector_VectorMappingGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatricesVector_VectorMappingGet
+
+  !
+  !================================================================================================================================
+  !
+
 END MODULE EquationsMatricesAccessRoutines
-!
+

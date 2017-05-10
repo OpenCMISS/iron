@@ -46,7 +46,7 @@ MODULE INTERFACE_MATRICES_ROUTINES
 
   USE BASE_ROUTINES
   USE DISTRIBUTED_MATRIX_VECTOR
-  USE EQUATIONS_MATRICES_ROUTINES
+  USE EquationsMatricesRoutines
   USE FIELD_ROUTINES
   USE INPUT_OUTPUT
   USE INTERFACE_CONDITIONS_CONSTANTS
@@ -166,14 +166,14 @@ CONTAINS
       IF(MATRIX_NUMBER>0.AND.MATRIX_NUMBER<=INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES) THEN
         INTERFACE_MAPPING=>INTERFACE_MATRICES%INTERFACE_MAPPING
         IF(ASSOCIATED(INTERFACE_MAPPING)) THEN
-          IF(ASSOCIATED(INTERFACE_MATRICES%MATRICES(MATRIX_NUMBER)%PTR)) THEN
+          IF(ASSOCIATED(INTERFACE_MATRICES%MATRICES(MATRIX_NUMBER)%ptr)) THEN
             LOCAL_ERROR="Interface matrix for matrix number "//TRIM(NUMBER_TO_VSTRING(MATRIX_NUMBER,"*",ERR,ERROR))// &
               & " is already associated."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*998)
           ELSE
-            ALLOCATE(INTERFACE_MATRICES%MATRICES(MATRIX_NUMBER)%PTR,STAT=ERR)
+            ALLOCATE(INTERFACE_MATRICES%MATRICES(MATRIX_NUMBER)%ptr,STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate interface matrix.",ERR,ERROR,*999)
-            INTERFACE_MATRIX=>INTERFACE_MATRICES%MATRICES(MATRIX_NUMBER)%PTR
+            INTERFACE_MATRIX=>INTERFACE_MATRICES%MATRICES(MATRIX_NUMBER)%ptr
             INTERFACE_MATRIX%MATRIX_NUMBER=MATRIX_NUMBER
             INTERFACE_MATRIX%INTERFACE_MATRICES=>INTERFACE_MATRICES
             INTERFACE_MATRIX%STORAGE_TYPE=MATRIX_BLOCK_STORAGE_TYPE
@@ -206,7 +206,7 @@ CONTAINS
     
     EXITS("INTERFACE_MATRIX_INITIALISE")
     RETURN
-999 CALL INTERFACE_MATRIX_FINALISE(INTERFACE_MATRICES%MATRICES(MATRIX_NUMBER)%PTR,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL INTERFACE_MATRIX_FINALISE(INTERFACE_MATRICES%MATRICES(MATRIX_NUMBER)%ptr,DUMMY_ERR,DUMMY_ERROR,*998)
 998 ERRORSEXITS("INTERFACE_MATRIX_INITIALISE",ERR,ERROR)
     RETURN 1
     
@@ -238,21 +238,21 @@ CONTAINS
     IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
       !Add the element matrices
       DO matrix_idx=1,INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES
-        INTERFACE_MATRIX=>INTERFACE_MATRICES%MATRICES(matrix_idx)%PTR
+        INTERFACE_MATRIX=>INTERFACE_MATRICES%MATRICES(matrix_idx)%ptr
         IF(ASSOCIATED(INTERFACE_MATRIX)) THEN
           IF(INTERFACE_MATRIX%UPDATE_MATRIX) THEN
             !Add the element matrix into the distributed interface equations matrix
-            CALL DISTRIBUTED_MATRIX_VALUES_ADD(INTERFACE_MATRIX%MATRIX,INTERFACE_MATRIX%ELEMENT_MATRIX%ROW_DOFS(1: &
-              & INTERFACE_MATRIX%ELEMENT_MATRIX%NUMBER_OF_ROWS),INTERFACE_MATRIX%ELEMENT_MATRIX%COLUMN_DOFS(1: &
-              & INTERFACE_MATRIX%ELEMENT_MATRIX%NUMBER_OF_COLUMNS),INTERFACE_MATRIX%ELEMENT_MATRIX%MATRIX(1: &
-              & INTERFACE_MATRIX%ELEMENT_MATRIX%NUMBER_OF_ROWS,1:INTERFACE_MATRIX%ELEMENT_MATRIX%NUMBER_OF_COLUMNS), &
+            CALL DISTRIBUTED_MATRIX_VALUES_ADD(INTERFACE_MATRIX%MATRIX,INTERFACE_MATRIX%ELEMENT_MATRIX%rowDOFS(1: &
+              & INTERFACE_MATRIX%ELEMENT_MATRIX%numberOfRows),INTERFACE_MATRIX%ELEMENT_MATRIX%columnDOFS(1: &
+              & INTERFACE_MATRIX%ELEMENT_MATRIX%numberOfColumns),INTERFACE_MATRIX%ELEMENT_MATRIX%matrix(1: &
+              & INTERFACE_MATRIX%ELEMENT_MATRIX%numberOfRows,1:INTERFACE_MATRIX%ELEMENT_MATRIX%numberOfColumns), &
               & ERR,ERROR,*999)
             !If the interface matrix has a transpose add it
             IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
-              CALL DISTRIBUTED_MATRIX_VALUES_ADD(INTERFACE_MATRIX%MATRIX_TRANSPOSE,INTERFACE_MATRIX%ELEMENT_MATRIX%COLUMN_DOFS(1: &
-                & INTERFACE_MATRIX%ELEMENT_MATRIX%NUMBER_OF_COLUMNS),INTERFACE_MATRIX%ELEMENT_MATRIX%ROW_DOFS(1: &
-                & INTERFACE_MATRIX%ELEMENT_MATRIX%NUMBER_OF_ROWS),TRANSPOSE(INTERFACE_MATRIX%ELEMENT_MATRIX%MATRIX(1: &
-                & INTERFACE_MATRIX%ELEMENT_MATRIX%NUMBER_OF_ROWS,1:INTERFACE_MATRIX%ELEMENT_MATRIX%NUMBER_OF_COLUMNS)), &
+              CALL DISTRIBUTED_MATRIX_VALUES_ADD(INTERFACE_MATRIX%MATRIX_TRANSPOSE,INTERFACE_MATRIX%ELEMENT_MATRIX%columnDOFS(1: &
+                & INTERFACE_MATRIX%ELEMENT_MATRIX%numberOfColumns),INTERFACE_MATRIX%ELEMENT_MATRIX%rowDOFS(1: &
+                & INTERFACE_MATRIX%ELEMENT_MATRIX%numberOfRows),TRANSPOSE(INTERFACE_MATRIX%ELEMENT_MATRIX%matrix(1: &
+                & INTERFACE_MATRIX%ELEMENT_MATRIX%numberOfRows,1:INTERFACE_MATRIX%ELEMENT_MATRIX%numberOfColumns)), &
                 & ERR,ERROR,*999)
             ENDIF
           ENDIF
@@ -266,9 +266,9 @@ CONTAINS
       IF(ASSOCIATED(RHS_VECTOR)) THEN
         IF(RHS_VECTOR%UPDATE_VECTOR) THEN
           !Add the rhs element vector
-          CALL DISTRIBUTED_VECTOR_VALUES_ADD(RHS_VECTOR%RHS_VECTOR,RHS_VECTOR%ELEMENT_VECTOR%ROW_DOFS(1: &
-            & RHS_VECTOR%ELEMENT_VECTOR%NUMBER_OF_ROWS),RHS_VECTOR%ELEMENT_VECTOR%VECTOR(1:RHS_VECTOR% &
-            & ELEMENT_VECTOR%NUMBER_OF_ROWS),ERR,ERROR,*999)
+          CALL DISTRIBUTED_VECTOR_VALUES_ADD(RHS_VECTOR%RHS_VECTOR,RHS_VECTOR%ELEMENT_VECTOR%rowDOFS(1: &
+            & RHS_VECTOR%ELEMENT_VECTOR%numberOfRows),RHS_VECTOR%ELEMENT_VECTOR%vector(1:RHS_VECTOR% &
+            & ELEMENT_VECTOR%numberOfRows),ERR,ERROR,*999)
         ENDIF
       ENDIF
     ELSE
@@ -332,7 +332,7 @@ CONTAINS
                   IF(ALLOCATED(meshConnectivity%ELEMENT_CONNECTIVITY)) THEN
                     !Calculate the row and columns for the interface equations matrices
                     DO matrixIdx=1,interfaceMatrices%NUMBER_OF_INTERFACE_MATRICES
-                      interfaceMatrix=>interfaceMatrices%MATRICES(matrixIdx)%PTR
+                      interfaceMatrix=>interfaceMatrices%MATRICES(matrixIdx)%ptr
                       IF(ASSOCIATED(interfaceMatrix)) THEN
                         rowsFieldVariable=>interfaceMapping%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrixIdx)%VARIABLE
                         colsFieldVariable=>interfaceMapping%LAGRANGE_VARIABLE !\todo: TEMPORARY: Needs generalising
@@ -344,7 +344,7 @@ CONTAINS
                           rowsElementNumber=meshConnectivity%ELEMENT_CONNECTIVITY(InterfaceElementNumber,rowsMeshIdx)% &
                             & COUPLED_MESH_ELEMENT_NUMBER
                         ENDIF
-                        CALL EQUATIONS_MATRICES_ELEMENT_MATRIX_CALCULATE(interfaceMatrix%ELEMENT_MATRIX, &
+                        CALL EquationsMatrices_ElementMatrixCalculate(interfaceMatrix%ELEMENT_MATRIX, &
                           & interfaceMatrix%UPDATE_MATRIX,[rowsElementNumber],[interfaceElementNumber],rowsFieldVariable, &
                           & colsFieldVariable,err,error,*999)
                       ELSE
@@ -364,20 +364,20 @@ CONTAINS
                 IF(ASSOCIATED(pointsConnectivity)) THEN
                   IF(ALLOCATED(pointsConnectivity%coupledElements)) THEN
                     DO matrixIdx=1,interfaceMatrices%NUMBER_OF_INTERFACE_MATRICES
-                      interfaceMatrix=>interfaceMatrices%MATRICES(matrixIdx)%PTR
+                      interfaceMatrix=>interfaceMatrices%MATRICES(matrixIdx)%ptr
                       IF(ASSOCIATED(interfaceMatrix)) THEN 
                         IF(interfaceCondition%METHOD==INTERFACE_CONDITION_PENALTY_METHOD .AND. &
                             matrixIdx==interfaceMatrices%NUMBER_OF_INTERFACE_MATRICES) THEN
                           rowsFieldVariable=>interfaceMapping%LAGRANGE_VARIABLE
                           colsFieldVariable=>interfaceMapping%LAGRANGE_VARIABLE
-                          CALL EQUATIONS_MATRICES_ELEMENT_MATRIX_CALCULATE(interfaceMatrix%ELEMENT_MATRIX, &
+                          CALL EquationsMatrices_ElementMatrixCalculate(interfaceMatrix%ELEMENT_MATRIX, &
                             & interfaceMatrix%UPDATE_MATRIX,[InterfaceElementNumber],[InterfaceElementNumber], &
                             & rowsFieldVariable,colsFieldVariable,err,error,*999)
                         ELSE
                           rowsFieldVariable=>interfaceMapping%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrixIdx)%VARIABLE
                           colsFieldVariable=>interfaceMapping%LAGRANGE_VARIABLE !\todo: TEMPORARY: Needs generalising
                           rowsMeshIdx=interfaceMapping%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrixIdx)%MESH_INDEX
-                          CALL EQUATIONS_MATRICES_ELEMENT_MATRIX_CALCULATE(interfaceMatrix%ELEMENT_MATRIX, &
+                          CALL EquationsMatrices_ElementMatrixCalculate(interfaceMatrix%ELEMENT_MATRIX, &
                             & interfaceMatrix%UPDATE_MATRIX,pointsConnectivity%coupledElements(InterfaceElementNumber, &
                             & rowsMeshIdx)%elementNumbers,[InterfaceElementNumber],rowsFieldVariable,colsFieldVariable, &
                             & err,error,*999)
@@ -406,7 +406,7 @@ CONTAINS
                 IF(ASSOCIATED(rhsMapping)) THEN
                   !Calculate the rows  for the equations RHS
                   rowsFieldVariable=>rhsMapping%RHS_VARIABLE
-                  CALL EQUATIONS_MATRICES_ELEMENT_VECTOR_CALCULATE(rhsVector%ELEMENT_VECTOR,rhsVector%UPDATE_VECTOR, &
+                  CALL EquationsMatrices_ElementVectorCalculate(rhsVector%ELEMENT_VECTOR,rhsVector%UPDATE_VECTOR, &
                     & interfaceElementNumber,rowsFieldVariable,err,error,*999)
                 ELSE
                   CALL FlagError("Interface mapping rhs mapping is not associated.",err,error,*999)
@@ -459,7 +459,7 @@ CONTAINS
 
     IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
       DO matrix_idx=1,INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES
-        INTERFACE_MATRIX=>INTERFACE_MATRICES%MATRICES(matrix_idx)%PTR
+        INTERFACE_MATRIX=>INTERFACE_MATRICES%MATRICES(matrix_idx)%ptr
         IF(ASSOCIATED(INTERFACE_MATRIX)) THEN
           CALL EquationsMatrices_ElementMatrixFinalise(INTERFACE_MATRIX%ELEMENT_MATRIX,ERR,ERROR,*999)
         ELSE
@@ -470,9 +470,9 @@ CONTAINS
       RHS_VECTOR=>INTERFACE_MATRICES%RHS_VECTOR
       IF(ASSOCIATED(RHS_VECTOR)) THEN
         !Finalise the interface element vector
-        RHS_VECTOR%ELEMENT_VECTOR%MAX_NUMBER_OF_ROWS=0
-        IF(ALLOCATED(RHS_VECTOR%ELEMENT_VECTOR%ROW_DOFS)) DEALLOCATE(RHS_VECTOR%ELEMENT_VECTOR%ROW_DOFS)
-        IF(ALLOCATED(RHS_VECTOR%ELEMENT_VECTOR%VECTOR)) DEALLOCATE(RHS_VECTOR%ELEMENT_VECTOR%VECTOR)
+        RHS_VECTOR%ELEMENT_VECTOR%maxNumberOfRows=0
+        IF(ALLOCATED(RHS_VECTOR%ELEMENT_VECTOR%rowDOFS)) DEALLOCATE(RHS_VECTOR%ELEMENT_VECTOR%rowDOFS)
+        IF(ALLOCATED(RHS_VECTOR%ELEMENT_VECTOR%vector)) DEALLOCATE(RHS_VECTOR%ELEMENT_VECTOR%vector)
       ENDIF
 
       ENDDO !matrix_idx
@@ -523,13 +523,13 @@ CONTAINS
             SELECT CASE(interfaceCondition%integrationType)
               CASE(INTERFACE_CONDITION_GAUSS_INTEGRATION)
               DO matrixIdx=1,interfaceMatrices%NUMBER_OF_INTERFACE_MATRICES
-                interfaceMatrix=>interfaceMatrices%MATRICES(matrixIdx)%PTR
+                interfaceMatrix=>interfaceMatrices%MATRICES(matrixIdx)%ptr
                 IF(ASSOCIATED(interfaceMatrix)) THEN
                   rowsNumberOfElements=1
                   colsNumberOfElements=1
                   rowsFieldVariable=>interfaceMapping%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrixIdx)%VARIABLE
                   colsFieldVariable=>interfaceMapping%LAGRANGE_VARIABLE !TEMPORARY: Needs generalising
-                  CALL EQUATIONS_MATRICES_ELEMENT_MATRIX_SETUP(interfaceMatrix%ELEMENT_MATRIX,rowsFieldVariable, &
+                  CALL EquationsMatrices_ElementMatrixSetup(interfaceMatrix%ELEMENT_MATRIX,rowsFieldVariable, &
                     & colsFieldVariable,rowsNumberOfElements,colsNumberOfElements,err,error,*999)
                 ELSE
                   localError="Interface matrix number "//TRIM(NUMBER_TO_VSTRING(matrixIdx,"*",err,error))// &
@@ -544,13 +544,13 @@ CONTAINS
                 IF(ASSOCIATED(pointsConnectivity)) THEN
                   IF(ALLOCATED(pointsConnectivity%coupledElements)) THEN
                     DO matrixIdx=1,interfaceMatrices%NUMBER_OF_INTERFACE_MATRICES !\todo: Need to separate the case for penalty matrix
-                      interfaceMatrix=>interfaceMatrices%MATRICES(matrixIdx)%PTR
+                      interfaceMatrix=>interfaceMatrices%MATRICES(matrixIdx)%ptr
                       IF(ASSOCIATED(interfaceMatrix)) THEN
                         colsNumberOfElements=1
                         rowsFieldVariable=>interfaceMapping%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrixIdx)%VARIABLE
                         colsFieldVariable=>interfaceMapping%LAGRANGE_VARIABLE !TEMPORARY: Needs generalising
                         rowsMeshIdx=interfaceMapping%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrixIdx)%MESH_INDEX
-                        CALL EQUATIONS_MATRICES_ELEMENT_MATRIX_SETUP(interfaceMatrix%ELEMENT_MATRIX,rowsFieldVariable, &
+                        CALL EquationsMatrices_ElementMatrixSetup(interfaceMatrix%ELEMENT_MATRIX,rowsFieldVariable, &
                           & colsFieldVariable,pointsConnectivity%maxNumberOfCoupledElements(rowsMeshIdx), &
                           & colsNumberOfElements,err,error,*999)
                       ELSE
@@ -585,7 +585,7 @@ CONTAINS
           rhsMapping=>interfaceMapping%RHS_MAPPING
           IF(ASSOCIATED(rhsMapping)) THEN
             rowsFieldVariable=>rhsMapping%RHS_VARIABLE
-            CALL EQUATIONS_MATRICES_ELEMENT_VECTOR_SETUP(rhsVector%ELEMENT_VECTOR,rowsFieldVariable,err,error,*999)
+            CALL EquationsMatrices_ElementVectorSetup(rhsVector%ELEMENT_VECTOR,rowsFieldVariable,err,error,*999)
           ELSE
             CALL FlagError("RHS mapping is not associated.",err,error,*999)
           ENDIF
@@ -687,12 +687,12 @@ CONTAINS
                                           IF(ERR/=0) CALL FlagError("Could not allocate column indices lists.",ERR,ERROR,*999)
                                           DO local_row=1,ROW_DOFS_DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL
                                             !Set up list
-                                            NULLIFY(COLUMN_INDICES_LISTS(local_row)%PTR)
-                                            CALL LIST_CREATE_START(COLUMN_INDICES_LISTS(local_row)%PTR,ERR,ERROR,*999)
-                                            CALL LIST_DATA_TYPE_SET(COLUMN_INDICES_LISTS(local_row)%PTR,LIST_INTG_TYPE, &
+                                            NULLIFY(COLUMN_INDICES_LISTS(local_row)%ptr)
+                                            CALL LIST_CREATE_START(COLUMN_INDICES_LISTS(local_row)%ptr,ERR,ERROR,*999)
+                                            CALL LIST_DATA_TYPE_SET(COLUMN_INDICES_LISTS(local_row)%ptr,LIST_INTG_TYPE, &
                                               & ERR,ERROR,*999)
-                                            CALL LIST_INITIAL_SIZE_SET(COLUMN_INDICES_LISTS(local_row)%PTR,50,ERR,ERROR,*999)
-                                            CALL LIST_CREATE_FINISH(COLUMN_INDICES_LISTS(local_row)%PTR,ERR,ERROR,*999)
+                                            CALL LIST_INITIAL_SIZE_SET(COLUMN_INDICES_LISTS(local_row)%ptr,50,ERR,ERROR,*999)
+                                            CALL LIST_CREATE_FINISH(COLUMN_INDICES_LISTS(local_row)%ptr,ERR,ERROR,*999)
                                           ENDDO !local_row
                                           !Allocate row indices
                                           ALLOCATE(ROW_INDICES(ROW_DOFS_DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL+1),STAT=ERR)
@@ -705,14 +705,14 @@ CONTAINS
                                               & ERR,ERROR,*999)
                                             DO local_column=1,COLUMN_DOFS_DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL
                                               !Set up list
-                                              NULLIFY(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%PTR)
-                                              CALL LIST_CREATE_START(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%PTR, &
+                                              NULLIFY(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr)
+                                              CALL LIST_CREATE_START(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                 & ERR,ERROR,*999)
-                                              CALL LIST_DATA_TYPE_SET(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%PTR, &
+                                              CALL LIST_DATA_TYPE_SET(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                 & LIST_INTG_TYPE,ERR,ERROR,*999)
-                                              CALL LIST_INITIAL_SIZE_SET(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%PTR,50, &
+                                              CALL LIST_INITIAL_SIZE_SET(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr,50, &
                                                 & ERR,ERROR,*999)
-                                              CALL LIST_CREATE_FINISH(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%PTR, &
+                                              CALL LIST_CREATE_FINISH(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                 & ERR,ERROR,*999)
                                             ENDDO !local_column
                                             !Allocate transpose row indices
@@ -749,11 +749,11 @@ CONTAINS
                                                       CASE(FIELD_CONSTANT_INTERPOLATION)
                                                         local_row=ROW_VARIABLE%COMPONENTS(row_component_idx)%PARAM_TO_DOF_MAP% &
                                                           & CONSTANT_PARAM2DOF_MAP
-                                                        CALL LIST_ITEM_ADD(COLUMN_INDICES_LISTS(local_row)%PTR,global_column, &
+                                                        CALL LIST_ITEM_ADD(COLUMN_INDICES_LISTS(local_row)%ptr,global_column, &
                                                           & ERR,ERROR,*999)
                                                         IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
                                                           global_row=ROW_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(local_row)
-                                                          CALL LIST_ITEM_ADD(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%PTR, &
+                                                          CALL LIST_ITEM_ADD(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                             & global_row,ERR,ERROR,*999)
                                                         ENDIF
                                                       CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
@@ -762,11 +762,11 @@ CONTAINS
                                                           & COUPLED_MESH_ELEMENT_NUMBER
                                                         local_row=ROW_VARIABLE%COMPONENTS(row_component_idx)%PARAM_TO_DOF_MAP% &
                                                           & ELEMENT_PARAM2DOF_MAP%ELEMENTS(domain_element)
-                                                        CALL LIST_ITEM_ADD(COLUMN_INDICES_LISTS(local_row)%PTR,global_column, &
+                                                        CALL LIST_ITEM_ADD(COLUMN_INDICES_LISTS(local_row)%ptr,global_column, &
                                                           & ERR,ERROR,*999)
                                                         IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
                                                           global_row=ROW_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(local_row)
-                                                          CALL LIST_ITEM_ADD(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%PTR, &
+                                                          CALL LIST_ITEM_ADD(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                             & global_row,ERR,ERROR,*999)
                                                         ENDIF
                                                       CASE(FIELD_NODE_BASED_INTERPOLATION)
@@ -788,11 +788,11 @@ CONTAINS
                                                             local_row=ROW_VARIABLE%COMPONENTS(row_component_idx)% &
                                                               & PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(row_node)% &
                                                               & DERIVATIVES(row_derivative)%VERSIONS(row_version)
-                                                            CALL LIST_ITEM_ADD(COLUMN_INDICES_LISTS(local_row)%PTR,global_column, &
+                                                            CALL LIST_ITEM_ADD(COLUMN_INDICES_LISTS(local_row)%ptr,global_column, &
                                                               & ERR,ERROR,*999)
                                                             IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
                                                               global_row=ROW_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(local_row)
-                                                              CALL LIST_ITEM_ADD(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%PTR, &
+                                                              CALL LIST_ITEM_ADD(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                                 & global_row,ERR,ERROR,*999)
                                                             ENDIF
                                                           ENDDO !row_local_derivative_idx
@@ -817,8 +817,8 @@ CONTAINS
                                           ENDDO !column_component_idx
                                           ROW_INDICES(1)=1
                                           DO local_row=1,ROW_DOFS_DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL
-                                            CALL LIST_REMOVE_DUPLICATES(COLUMN_INDICES_LISTS(local_row)%PTR,ERR,ERROR,*999)
-                                            CALL LIST_NUMBER_OF_ITEMS_GET(COLUMN_INDICES_LISTS(local_row)%PTR,NUMBER_OF_COLUMNS, &
+                                            CALL LIST_REMOVE_DUPLICATES(COLUMN_INDICES_LISTS(local_row)%ptr,ERR,ERROR,*999)
+                                            CALL LIST_NUMBER_OF_ITEMS_GET(COLUMN_INDICES_LISTS(local_row)%ptr,NUMBER_OF_COLUMNS, &
                                               & ERR,ERROR,*999)
                                             NUMBER_OF_NON_ZEROS=NUMBER_OF_NON_ZEROS+NUMBER_OF_COLUMNS
                                             ROW_INDICES(local_row+1)=NUMBER_OF_NON_ZEROS+1
@@ -827,9 +827,9 @@ CONTAINS
                                             TRANSPOSE_NUMBER_OF_NON_ZEROS=0
                                             TRANSPOSE_ROW_INDICES(1)=1
                                             DO local_column=1,COLUMN_DOFS_DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL
-                                              CALL LIST_REMOVE_DUPLICATES(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%PTR, &
+                                              CALL LIST_REMOVE_DUPLICATES(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                 & ERR,ERROR,*999)
-                                              CALL LIST_NUMBER_OF_ITEMS_GET(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%PTR, &
+                                              CALL LIST_NUMBER_OF_ITEMS_GET(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                 & NUMBER_OF_COLUMNS,ERR,ERROR,*999)
                                               TRANSPOSE_NUMBER_OF_NON_ZEROS=TRANSPOSE_NUMBER_OF_NON_ZEROS+NUMBER_OF_COLUMNS
                                               TRANSPOSE_ROW_INDICES(local_column+1)=TRANSPOSE_NUMBER_OF_NON_ZEROS+1
@@ -848,7 +848,7 @@ CONTAINS
                                           ALLOCATE(COLUMN_INDICES(NUMBER_OF_NON_ZEROS),STAT=ERR)
                                           IF(ERR/=0) CALL FlagError("Could not allocate column indices.",ERR,ERROR,*999)
                                           DO local_row=1,ROW_DOFS_DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL
-                                            CALL LIST_DETACH_AND_DESTROY(COLUMN_INDICES_LISTS(local_row)%PTR,NUMBER_OF_COLUMNS, &
+                                            CALL LIST_DETACH_AND_DESTROY(COLUMN_INDICES_LISTS(local_row)%ptr,NUMBER_OF_COLUMNS, &
                                               & COLUMNS,ERR,ERROR,*999)
                                             DO column_idx=1,NUMBER_OF_COLUMNS
                                               COLUMN_INDICES(ROW_INDICES(local_row)+column_idx-1)=COLUMNS(column_idx)
@@ -861,7 +861,7 @@ CONTAINS
                                             IF(ERR/=0) &
                                               & CALL FlagError("Could not allocate transpose column indices.",ERR,ERROR,*999)
                                             DO local_column=1,COLUMN_DOFS_DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL
-                                              CALL LIST_DETACH_AND_DESTROY(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%PTR, &
+                                              CALL LIST_DETACH_AND_DESTROY(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                 & NUMBER_OF_ROWS,TRANSPOSE_COLUMNS,ERR,ERROR,*999)
                                               DO row_idx=1,NUMBER_OF_ROWS
                                                 TRANSPOSE_COLUMN_INDICES(TRANSPOSE_ROW_INDICES(local_column)+row_idx-1)= &
@@ -974,15 +974,15 @@ CONTAINS
     IF(ALLOCATED(TRANSPOSE_COLUMNS)) DEALLOCATE(TRANSPOSE_COLUMNS)
     IF(ALLOCATED(COLUMN_INDICES_LISTS)) THEN
       DO local_row=1,SIZE(COLUMN_INDICES_LISTS,1)
-        IF(ASSOCIATED(COLUMN_INDICES_LISTS(local_row)%PTR)) &
-          & CALL LIST_DESTROY(COLUMN_INDICES_LISTS(local_row)%PTR,DUMMY_ERR,DUMMY_ERROR,*998)
+        IF(ASSOCIATED(COLUMN_INDICES_LISTS(local_row)%ptr)) &
+          & CALL LIST_DESTROY(COLUMN_INDICES_LISTS(local_row)%ptr,DUMMY_ERR,DUMMY_ERROR,*998)
       ENDDO !local_row
       DEALLOCATE(COLUMN_INDICES_LISTS)
     ENDIF
     IF(ALLOCATED(TRANSPOSE_COLUMN_INDICES_LISTS)) THEN
       DO local_column=1,SIZE(TRANSPOSE_COLUMN_INDICES_LISTS,1)
-        IF(ASSOCIATED(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%PTR)) &
-          & CALL LIST_DESTROY(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%PTR,DUMMY_ERR,DUMMY_ERROR,*998)
+        IF(ASSOCIATED(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr)) &
+          & CALL LIST_DESTROY(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr,DUMMY_ERR,DUMMY_ERROR,*998)
       ENDDO !local_row
       DEALLOCATE(TRANSPOSE_COLUMN_INDICES_LISTS)
     ENDIF
@@ -1031,18 +1031,18 @@ CONTAINS
           IF(ASSOCIATED(COLUMN_DOMAIN_MAP)) THEN
             !Now create the individual interface matrices
             DO matrix_idx=1,INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES
-              INTERFACE_MATRIX=>INTERFACE_MATRICES%MATRICES(matrix_idx)%PTR
+              INTERFACE_MATRIX=>INTERFACE_MATRICES%MATRICES(matrix_idx)%ptr
               IF(ASSOCIATED(INTERFACE_MATRIX)) THEN
                 ROW_DOMAIN_MAP=>INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%ROW_DOFS_MAPPING
                 IF(ASSOCIATED(ROW_DOMAIN_MAP)) THEN
                   !Create the distributed equations matrix
                   CALL DISTRIBUTED_MATRIX_CREATE_START(ROW_DOMAIN_MAP,COLUMN_DOMAIN_MAP,INTERFACE_MATRICES% &
-                    & MATRICES(matrix_idx)%PTR%MATRIX,ERR,ERROR,*999)
+                    & MATRICES(matrix_idx)%ptr%MATRIX,ERR,ERROR,*999)
                   CALL DISTRIBUTED_MATRIX_DATA_TYPE_SET(INTERFACE_MATRIX%MATRIX,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
                   CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_SET(INTERFACE_MATRIX%MATRIX,INTERFACE_MATRIX%STORAGE_TYPE,ERR,ERROR,*999)
                   IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
                     CALL DISTRIBUTED_MATRIX_CREATE_START(COLUMN_DOMAIN_MAP,ROW_DOMAIN_MAP,INTERFACE_MATRICES% &
-                      & MATRICES(matrix_idx)%PTR%MATRIX_TRANSPOSE,ERR,ERROR,*999)
+                      & MATRICES(matrix_idx)%ptr%MATRIX_TRANSPOSE,ERR,ERROR,*999)
                     CALL DISTRIBUTED_MATRIX_DATA_TYPE_SET(INTERFACE_MATRIX%MATRIX_TRANSPOSE,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE, &
                       & ERR,ERROR,*999)
                     CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_SET(INTERFACE_MATRIX%MATRIX_TRANSPOSE,INTERFACE_MATRIX%STORAGE_TYPE, &
@@ -1201,7 +1201,7 @@ CONTAINS
     IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
       IF(ALLOCATED(INTERFACE_MATRICES%MATRICES)) THEN
         DO matrix_idx=1,SIZE(INTERFACE_MATRICES%MATRICES,1)
-          CALL INTERFACE_MATRIX_FINALISE(INTERFACE_MATRICES%MATRICES(matrix_idx)%PTR,ERR,ERROR,*999)
+          CALL INTERFACE_MATRIX_FINALISE(INTERFACE_MATRICES%MATRICES(matrix_idx)%ptr,ERR,ERROR,*999)
         ENDDO !matrix_idx
         DEALLOCATE(INTERFACE_MATRICES%MATRICES)
       ENDIF
@@ -1256,7 +1256,7 @@ CONTAINS
               & NUMBER_OF_INTERFACE_MATRICES),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate interface matrices matrices.",ERR,ERROR,*999)
             DO matrix_idx=1,INTERFACE_EQUATIONS%INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES
-              NULLIFY(INTERFACE_EQUATIONS%INTERFACE_MATRICES%MATRICES(matrix_idx)%PTR)
+              NULLIFY(INTERFACE_EQUATIONS%INTERFACE_MATRICES%MATRICES(matrix_idx)%ptr)
               CALL INTERFACE_MATRIX_INITIALISE(INTERFACE_EQUATIONS%INTERFACE_MATRICES,matrix_idx,ERR,ERROR,*999)
             ENDDO !matrix_idx
             CALL INTERFACE_MATRICES_RHS_INITIALISE(INTERFACE_EQUATIONS%INTERFACE_MATRICES,ERR,ERROR,*999)
@@ -1303,7 +1303,7 @@ CONTAINS
         CALL WRITE_STRING_VALUE(ID,"Number of interface matrices = ",INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES, &
           & ERR,ERROR,*999)
         DO matrix_idx=1,INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES
-          INTERFACE_MATRIX=>INTERFACE_MATRICES%MATRICES(matrix_idx)%PTR
+          INTERFACE_MATRIX=>INTERFACE_MATRICES%MATRICES(matrix_idx)%ptr
           IF(ASSOCIATED(INTERFACE_MATRIX)) THEN
             CALL WRITE_STRING_VALUE(ID,"Interface matrix : ",matrix_idx,ERR,ERROR,*999)
             CALL WRITE_STRING(ID,"Standard matrix:",ERR,ERROR,*999)
@@ -1352,7 +1352,7 @@ CONTAINS
 
     IF(ASSOCIATED(RHS_VECTOR)) THEN
       IF(ASSOCIATED(RHS_VECTOR%RHS_VECTOR)) CALL DISTRIBUTED_VECTOR_DESTROY(RHS_VECTOR%RHS_VECTOR,ERR,ERROR,*999)
-      CALL EQUATIONS_MATRICES_ELEMENT_VECTOR_FINALISE(RHS_VECTOR%ELEMENT_VECTOR,ERR,ERROR,*999)
+      CALL EquationsMatrices_ElementVectorFinalise(RHS_VECTOR%ELEMENT_VECTOR,ERR,ERROR,*999)
       DEALLOCATE(RHS_VECTOR)
     ENDIF      
      
@@ -1436,7 +1436,7 @@ CONTAINS
       ELSE
         IF(SIZE(STORAGE_TYPE,1)==INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES) THEN
           DO matrix_idx=1,INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES
-            INTERFACE_MATRIX=>INTERFACE_MATRICES%MATRICES(matrix_idx)%PTR
+            INTERFACE_MATRIX=>INTERFACE_MATRICES%MATRICES(matrix_idx)%ptr
             IF(ASSOCIATED(INTERFACE_MATRIX)) THEN
               SELECT CASE(STORAGE_TYPE(matrix_idx))
               CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
@@ -1505,7 +1505,7 @@ CONTAINS
       ELSE
         IF(SIZE(STRUCTURE_TYPE,1)==INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES) THEN
           DO matrix_idx=1,INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES
-            INTERFACE_MATRIX=>INTERFACE_MATRICES%MATRICES(matrix_idx)%PTR
+            INTERFACE_MATRIX=>INTERFACE_MATRICES%MATRICES(matrix_idx)%ptr
             IF(ASSOCIATED(INTERFACE_MATRIX)) THEN
               SELECT CASE(STRUCTURE_TYPE(matrix_idx))
               CASE(INTERFACE_MATRIX_NO_STRUCTURE)
@@ -1560,7 +1560,7 @@ CONTAINS
     
     IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
       DO matrix_idx=1,INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES
-        INTERFACE_MATRIX=>INTERFACE_MATRICES%MATRICES(matrix_idx)%PTR
+        INTERFACE_MATRIX=>INTERFACE_MATRICES%MATRICES(matrix_idx)%ptr
         IF(ASSOCIATED(INTERFACE_MATRIX)) THEN
           IF(INTERFACE_MATRIX%UPDATE_MATRIX) THEN
             CALL DISTRIBUTED_MATRIX_ALL_VALUES_SET(INTERFACE_MATRIX%MATRIX,VALUE,ERR,ERROR,*999)
@@ -1616,7 +1616,7 @@ CONTAINS
       IF(ASSOCIATED(InterfaceEquations)) THEN
         InterfaceMatrices=>InterfaceEquations%INTERFACE_MATRICES
         IF(ASSOCIATED(InterfaceMatrices)) THEN
-          InterfaceMatrix=>InterfaceMatrices%MATRICES(InterfaceMatrixIndex)%PTR
+          InterfaceMatrix=>InterfaceMatrices%MATRICES(InterfaceMatrixIndex)%ptr
           IF(ASSOCIATED(InterfaceMatrix)) THEN
             IF(.NOT.IsTranspose) THEN
               InterfaceMatrix%INTERFACE_MATRIX_TIME_DEPENDENCE_TYPE=TimeDependenceType
@@ -1675,7 +1675,7 @@ CONTAINS
       IF(ASSOCIATED(InterfaceEquations)) THEN
         InterfaceMatrices=>InterfaceEquations%INTERFACE_MATRICES
         IF(ASSOCIATED(InterfaceMatrices)) THEN
-          InterfaceMatrix=>InterfaceMatrices%MATRICES(InterfaceMatrixIndex)%PTR
+          InterfaceMatrix=>InterfaceMatrices%MATRICES(InterfaceMatrixIndex)%ptr
           IF(ASSOCIATED(InterfaceMatrix)) THEN
             IF(.NOT.IsTranspose) THEN
               TimeDependenceType=InterfaceMatrix%INTERFACE_MATRIX_TIME_DEPENDENCE_TYPE

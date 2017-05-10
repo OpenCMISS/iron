@@ -57,6 +57,7 @@ MODULE FINITE_ELASTICITY_ROUTINES
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
+  USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
   USE EQUATIONS_SET_CONSTANTS
   USE EquationsSetAccessRoutines

@@ -1902,7 +1902,6 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>Contains information about scalar equations (i.e., a single equation row).
   TYPE EquationsScalarType
     TYPE(EquationsType), POINTER :: equations !<A pointer to the equations
-    LOGICAL :: scalarEquationsFinished !<Is .TRUE. if the equations have finished being created, .FALSE. if not.
     TYPE(EquationsMappingScalarType), POINTER :: scalarMapping !<A pointer to the mapping for the scalar equation
     TYPE(EquationsMatricesScalarType), POINTER :: scalarMatrices !<A pointer to the matrices, vectors and scalars for the scalar equation
   END TYPE EquationsScalarType
@@ -1910,7 +1909,6 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>Contains information about vector equations (i.e., a number of equation rows). 
   TYPE EquationsVectorType
     TYPE(EquationsType), POINTER :: equations !<A pointer to the equations
-    LOGICAL :: vectorEquationsFinished !<Is .TRUE. if the equations have finished being created, .FALSE. if not.
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the mapping for the vector equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the matrices, vectors for the vector equations
   END TYPE EquationsVectorType

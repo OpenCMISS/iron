@@ -1177,7 +1177,7 @@ CONTAINS
                   DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                     EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
                     !Assemble the equations for dynamic problems
-                    CALL EQUATIONS_SET_JACOBIAN_EVALUATE(EQUATIONS_SET,err,error,*999)
+                    CALL EquationsSet_JacobianEvaluate(EQUATIONS_SET,err,error,*999)
                   ENDDO !equations_set_idx
                   !Assemble the dynamic nonlinear solver matrices
                   CALL SOLVER_MATRICES_DYNAMIC_ASSEMBLE(SOLVER,SOLVER_MATRICES_JACOBIAN_ONLY,err,error,*999)
@@ -1203,7 +1203,7 @@ CONTAINS
                 DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                   EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
                   !Assemble the equations for linear problems
-                  CALL EQUATIONS_SET_JACOBIAN_EVALUATE(EQUATIONS_SET,err,error,*999)
+                  CALL EquationsSet_JacobianEvaluate(EQUATIONS_SET,err,error,*999)
                 ENDDO !equations_set_idx
                 !Update interface matrices
 !                DO interfaceConditionIdx=1,SOLVER_MAPPING%NUMBER_OF_INTERFACE_CONDITIONS
@@ -1322,7 +1322,7 @@ CONTAINS
                       CALL EQUATIONS_SET_ASSEMBLE(EQUATIONS_SET,err,error,*999)
                     CASE(EQUATIONS_NONLINEAR)
                       !Evaluate the residual for nonlinear equations
-                      CALL EQUATIONS_SET_RESIDUAL_EVALUATE(EQUATIONS_SET,err,error,*999)
+                      CALL EquationsSet_ResidualEvaluate(EQUATIONS_SET,err,error,*999)
                     END SELECT
                   ENDDO !equations_set_idx
                   !Assemble the final solver residual.
@@ -1358,7 +1358,7 @@ CONTAINS
                     CALL EQUATIONS_SET_ASSEMBLE(EQUATIONS_SET,err,error,*999)
                   CASE(EQUATIONS_NONLINEAR)
                     !Evaluate the residual for nonlinear equations
-                    CALL EQUATIONS_SET_RESIDUAL_EVALUATE(EQUATIONS_SET,err,error,*999)
+                    CALL EquationsSet_ResidualEvaluate(EQUATIONS_SET,err,error,*999)
                   END SELECT
                 ENDDO !equations_set_idx
                 !Note that the linear interface matrices are not required to be updated since these matrices do not change
@@ -2299,7 +2299,7 @@ CONTAINS
                         CALL EQUATIONS_SET_ASSEMBLE(EQUATIONS_SET,err,error,*999)
                       CASE(EQUATIONS_NONLINEAR)
                         !Evaluate the residuals
-                        CALL EQUATIONS_SET_RESIDUAL_EVALUATE(EQUATIONS_SET,err,error,*999)
+                        CALL EquationsSet_ResidualEvaluate(EQUATIONS_SET,err,error,*999)
                       CASE(EQUATIONS_NONLINEAR_BCS)
                         CALL FlagError("Not implemented.",err,error,*999)
                       CASE DEFAULT

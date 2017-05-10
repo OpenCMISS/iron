@@ -65,7 +65,21 @@ MODULE EquationsAccessRoutines
 
   PUBLIC Equations_EquationsSetGet
   
-  PUBLIC EquationsScalar_EquationsGet,EquationsVector_EquationsGet
+  PUBLIC Equations_ScalarEquationsGet
+  
+  PUBLIC Equations_VectorEquationsGet
+  
+  PUBLIC EquationsScalar_EquationsGet
+
+  PUBLIC EquationsScalar_ScalarMappingGet
+
+  PUBLIC EquationsScalar_ScalarMatricesGet
+
+  PUBLIC EquationsVector_EquationsGet
+  
+  PUBLIC EquationsVector_VectorMappingGet
+  
+  PUBLIC EquationsVector_VectorMatricesGet
   
 CONTAINS
 
@@ -103,6 +117,66 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the scalar equations for equations.
+  SUBROUTINE Equations_ScalarEquationsGet(equations,scalarEquations,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsType), POINTER :: equations !<A pointer to the equations to get the scalar equations for
+    TYPE(EquationsScalarType), POINTER :: scalarEquations !<On exit, a pointer to the scalar equations for the specified equations. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Equations_ScalarEquationsGet",err,error,*998)
+
+    IF(ASSOCIATED(scalarEquations)) CALL FlagError("Scalar equations is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations is not associated.",err,error,*999)
+
+    scalarEquations=>equations%scalarEquations
+    IF(.NOT.ASSOCIATED(scalarEquations)) CALL FlagError("Scalar equations is not associated for the equations.",err,error,*999)
+       
+    EXITS("Equations_ScalarEquationsGet")
+    RETURN
+999 NULLIFY(scalarEquations)
+998 ERRORSEXITS("Equations_ScalarEquationsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Equations_ScalarEquationsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the vector equations for equations.
+  SUBROUTINE Equations_VectorEquationsGet(equations,vectorEquations,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsType), POINTER :: equations !<A pointer to the equations to get the vector equations for
+    TYPE(EquationsVectorType), POINTER :: vectorEquations !<On exit, a pointer to the vector equations for the specified equations. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Equations_VectorEquationsGet",err,error,*998)
+
+    IF(ASSOCIATED(vectorEquations)) CALL FlagError("Vector equations is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations is not associated.",err,error,*999)
+
+    vectorEquations=>equations%vectorEquations
+    IF(.NOT.ASSOCIATED(vectorEquations)) CALL FlagError("Vector equations is not associated for the equations.",err,error,*999)
+       
+    EXITS("Equations_VectorEquationsGet")
+    RETURN
+999 NULLIFY(vectorEquations)
+998 ERRORSEXITS("Equations_VectorEquationsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Equations_VectorEquationsGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the equations for a scalar equations.
   SUBROUTINE EquationsScalar_EquationsGet(scalarEquations,equations,err,error,*)
 
@@ -133,6 +207,66 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the scalar mapping for a scalar equations.
+  SUBROUTINE EquationsScalar_ScalarMappingGet(scalarEquations,scalarMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsScalarType), POINTER :: scalarEquations !<A pointer to the scalar equations to get the scalar mapping for
+    TYPE(EquationsMappingScalarType), POINTER :: scalarMapping !<On exit, a pointer to the scalar mapping in the specified scalar equations. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsScalar_ScalarMappingGet",err,error,*998)
+
+    IF(ASSOCIATED(scalarMapping)) CALL FlagError("Scalar mapping is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(scalarEquations)) CALL FlagError("Scalar equations is not associated.",err,error,*999)
+
+    scalarMapping=>scalarEquations%scalarMapping
+    IF(.NOT.ASSOCIATED(scalarMapping)) CALL FlagError("Scalar mapping is not associated for the scalar equations.",err,error,*999)
+       
+    EXITS("EquationsScalar_ScalarMappingGet")
+    RETURN
+999 NULLIFY(scalarMapping)
+998 ERRORSEXITS("EquationsScalar_ScalarMappingGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsScalar_ScalarMappingGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the scalar matrices for a scalar equations.
+  SUBROUTINE EquationsScalar_ScalarMatricesGet(scalarEquations,scalarMatrices,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsScalarType), POINTER :: scalarEquations !<A pointer to the scalar equations to get the scalar matrices for
+    TYPE(EquationsMatricesScalarType), POINTER :: scalarMatrices !<On exit, a pointer to the scalar matrices in the specified scalar equations. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsScalar_ScalarMatricesGet",err,error,*998)
+
+    IF(ASSOCIATED(scalarMatrices)) CALL FlagError("Scalar matrices is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(scalarEquations)) CALL FlagError("Scalar equations is not associated.",err,error,*999)
+
+    scalarMatrices=>scalarEquations%scalarMatrices
+    IF(.NOT.ASSOCIATED(scalarMatrices)) CALL FlagError("Scalar matrices is not associated for the scalar equations.",err,error,*999)
+       
+    EXITS("EquationsScalar_ScalarMatricesGet")
+    RETURN
+999 NULLIFY(scalarMatrices)
+998 ERRORSEXITS("EquationsScalar_ScalarMatricesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsScalar_ScalarMatricesGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the equations for a vector equations.
   SUBROUTINE EquationsVector_EquationsGet(vectorEquations,equations,err,error,*)
 
@@ -158,6 +292,66 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsVector_EquationsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the vector mapping for a vector equations.
+  SUBROUTINE EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsVectorType), POINTER :: vectorEquations !<A pointer to the vector equations to get the vector mapping for
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<On exit, a pointer to the vector mapping in the specified vector equations. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsVector_VectorMappingGet",err,error,*998)
+
+    IF(ASSOCIATED(vectorMapping)) CALL FlagError("Vector mapping is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(vectorEquations)) CALL FlagError("Vector equations is not associated.",err,error,*999)
+
+    vectorMapping=>vectorEquations%vectorMapping
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector mapping is not associated for the vector equations.",err,error,*999)
+       
+    EXITS("EquationsVector_VectorMappingGet")
+    RETURN
+999 NULLIFY(vectorMapping)
+998 ERRORSEXITS("EquationsVector_VectorMappingGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsVector_VectorMappingGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the vector matrices for a vector equations.
+  SUBROUTINE EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsVectorType), POINTER :: vectorEquations !<A pointer to the vector equations to get the vector matrices for
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<On exit, a pointer to the vector matrices in the specified vector equations. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsVector_VectorMatricesGet",err,error,*998)
+
+    IF(ASSOCIATED(vectorMatrices)) CALL FlagError("Vector matrices is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(vectorEquations)) CALL FlagError("Vector equations is not associated.",err,error,*999)
+
+    vectorMatrices=>vectorEquations%vectorMatrices
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector matrices is not associated for the vector equations.",err,error,*999)
+       
+    EXITS("EquationsVector_VectorMatricesGet")
+    RETURN
+999 NULLIFY(vectorMatrices)
+998 ERRORSEXITS("EquationsVector_VectorMatricesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsVector_VectorMatricesGet
 
   !
   !================================================================================================================================

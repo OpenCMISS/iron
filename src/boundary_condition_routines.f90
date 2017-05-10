@@ -198,11 +198,12 @@ CONTAINS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(EquationsType), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatrixType), POINTER :: EQUATION_MATRIX
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(BOUNDARY_CONDITIONS_SPARSITY_INDICES_TYPE), POINTER :: SPARSITY_INDICES
     TYPE(LIST_TYPE), POINTER :: SPARSE_INDICES
     TYPE(LinkedList),POINTER :: LIST(:)
@@ -321,8 +322,10 @@ CONTAINS
                             IF(ASSOCIATED(EQUATIONS_SET)) THEN
                               NULLIFY(equations)
                               CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
+                              NULLIFY(vectorEquations)
+                              CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
                               NULLIFY(vectorMatrices)
-                              CALL Equations_VectorMatricesGet(equations,vectorMatrices,err,error,*999)
+                              CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
                               linearMatrices=>vectorMatrices%linearMatrices
                               IF(ASSOCIATED(linearMatrices)) THEN
                                 !Iterate through equations matrices
@@ -820,7 +823,7 @@ CONTAINS
               IF(ASSOCIATED(EQUATIONS)) THEN
                 NULLIFY(vectorEquations)
                 CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-                IF(vectorEquations%vectorEquationsFinished) THEN
+                IF(equations%equationsFinished) THEN
                   NULLIFY(vectorMapping)
                   CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
                   IF(vectorMapping%vectorMappingFinished) THEN
@@ -914,7 +917,7 @@ CONTAINS
                     CALL FlagError("Equations mapping has not been finished.",ERR,ERROR,*998)
                   ENDIF
                 ELSE
-                  CALL FlagError("Vector equations has not been finished.",ERR,ERROR,*998)
+                  CALL FlagError("Equations has not been finished.",ERR,ERROR,*998)
                 ENDIF
               ELSE
                 CALL FlagError("Equations set equations is not associated.",ERR,ERROR,*998)

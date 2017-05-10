@@ -155,7 +155,7 @@ void CPUTimer(double *return_time,
     default:
     {
       *err=1;
-      strcpy(error_string,"Invalid operation code");
+      strcpy(error_string,"Invalid operation code.");
       *return_time = -99999.0; /* get some attention! */
     }
   }     

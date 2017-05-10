@@ -46,7 +46,10 @@ MODULE EquationsMatricesRoutines
 
   USE BASE_ROUTINES
   USE DISTRIBUTED_MATRIX_VECTOR
+  USE EquationsAccessRoutines
+  USE EquationsMappingAccessRoutines
   USE EquationsMatricesAccessRoutines
+  USE EquationsSetAccessRoutines
   USE EQUATIONS_SET_CONSTANTS
   USE FIELD_ROUTINES
   USE ISO_VARYING_STRING
@@ -166,10 +169,6 @@ MODULE EquationsMatricesRoutines
 
   PUBLIC EQUATIONS_HESSIAN_FINITE_DIFFERENCE_CALCULATED,EQUATIONS_HESSIAN_ANALYTIC_CALCULATED
 
-  PUBLIC EquationsMatrices_VectorCreateFinish,EquationsMatrices_VectorCreateStart
-
-  PUBLIC EquationsMatrices_VectorDestroy
-
   PUBLIC EquationsMatrices_DynamicLumpingTypeSet
 
   PUBLIC EquationsMatrices_DynamicStorageTypeSet
@@ -185,8 +184,6 @@ MODULE EquationsMatricesRoutines
 
   PUBLIC EquationsMatrices_ElementCalculate
 
-  PUBLIC EquationsMatrices_VectorValuesInitialise
-
   PUBLIC EquationsMatrices_ElementMatrixFinalise,EquationsMatrices_ElementMatrixInitialise
   
   PUBLIC EquationsMatrices_ElementMatrixCalculate
@@ -199,6 +196,12 @@ MODULE EquationsMatricesRoutines
 
   PUBLIC EquationsMatrices_ElementVectorSetup
 
+  PUBLIC EquationsMatrices_HessianOutput
+
+  PUBLIC EquationsMatrices_JacobianNodeAdd
+
+  PUBLIC EquationsMatrices_JacobianOutput
+
   PUBLIC EquationsMatrices_JacobianTypesSet
 
   PUBLIC EquationsMatrices_LinearStorageTypeSet
@@ -208,8 +211,6 @@ MODULE EquationsMatricesRoutines
   PUBLIC EquationsMatrices_NodalInitialise,EquationsMatrices_NodalFinalise
 
   PUBLIC EquationsMatrices_NodeAdd
-
-  PUBLIC EquationsMatrices_JacobianNodeAdd
 
   PUBLIC EquationsMatrices_NodalCalculate
 
@@ -229,11 +230,16 @@ MODULE EquationsMatricesRoutines
 
   PUBLIC EquationsMatrices_NonlinearStructureTypeSet
 
+  PUBLIC EquationsMatrices_ScalarDestroy
+
+  PUBLIC EquationsMatrices_VectorCreateFinish,EquationsMatrices_VectorCreateStart
+
+  PUBLIC EquationsMatrices_VectorDestroy
+
   PUBLIC EquationsMatrices_VectorOutput
 
-  PUBLIC EquationsMatrices_JacobianOutput
+  PUBLIC EquationsMatrices_VectorValuesInitialise
 
-  PUBLIC EquationsMatrices_HessianOutput
 
 CONTAINS
 
@@ -544,13 +550,16 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string  
     !Local Variables
     INTEGER(INTG) :: dummyErr
+    TYPE(EquationsType), POINTER :: equations
     TYPE(VARYING_STRING) :: dummyError    
 
     ENTERS("EquationsMatrices_VectorCreateStart",err,error,*998)
 
     IF(ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(vectorEquations)) CALL FlagError("Vector equations is not associated.",err,error,*998)   
-    IF(.NOT.vectorEquations%vectorEquationsFinished) CALL FlagError("Vector equations has not been finished.",err,error,*999)
+    NULLIFY(equations)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
+    IF(.NOT.equations%equationsFinished) CALL FlagError("Vector equations equations has not been finished.",err,error,*999)
 
     NULLIFY(vectorMatrices)
     !Initialise the equations matrices
@@ -1328,7 +1337,7 @@ CONTAINS
       fieldVariable=>nonlinearMapping%jacobianToVarMap(1)%VARIABLE !Row field variable
       DO matrixIdx=1,nonlinearMatrices%numberOfJacobians
         NULLIFY(jacobianMatrix)
-        CALL EquationsMatricesNonlinear_JacobiansMatrixGet(nonlinearMatrices,matrixIdx,jacobianMatrix,err,error,*999)
+        CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,matrixIdx,jacobianMatrix,err,error,*999)
         colFieldVariable=>nonlinearMapping%jacobianToVarMap(matrixIdx)%variable
         CALL EquationsMatrices_ElementMatrixCalculate(jacobianMatrix%elementJacobian,jacobianMatrix%updateJacobian, &
           & [elementNumber],[elementNumber],fieldVariable,colFieldVariable,err,error,*999)
@@ -1350,8 +1359,8 @@ CONTAINS
       CALL EquationsMappingVector_RHSMappingGet(vectorMapping,rhsMapping,err,error,*999)
       !Calculate the rows for the vector equations RHS
       fieldVariable=>rhsMapping%rhsVariable
-      CALL EquationsMatrices_ElementVectorCalculate(rhsVector%elementVector,rhsVector%updateVector,elementNumber, &
-        & fieldVariable,err,error,*999)
+      CALL EquationsMatrices_ElementVectorCalculate(rhsVector%elementVector,rhsVector%updateVector,elementNumber,fieldVariable, &
+        & err,error,*999)
     ENDIF
     sourceVector=>vectorMatrices%sourceVector
     IF(ASSOCIATED(sourceVector)) THEN
@@ -1446,7 +1455,7 @@ CONTAINS
       nonlinearMapping=>vectorMapping%nonlinearMapping
       DO matrixIdx=1,nonlinearMatrices%numberOfJacobians
         NULLIFY(jacobianMatrix)
-        CALL EquationsMatricesNonlinear_JacobiansMatrixGet(nonlinearMatrices,matrixIdx,jacobianMatrix,err,error,*999)
+        CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,matrixIdx,jacobianMatrix,err,error,*999)
         colFieldVariable=>nonlinearMapping%jacobianToVarMap(matrixIdx)%VARIABLE
         CALL EquationsMatrices_NodalMatrixCalculate(jacobianMatrix%nodalJacobian,jacobianMatrix%updateJacobian, &
           & nodeNumber,nodeNumber,fieldVariable,colFieldVariable,err,error,*999)
@@ -2449,9 +2458,9 @@ CONTAINS
       CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
       DO matrixIdx=1,dynamicMatrices%numberOfDynamicMatrices
         NULLIFY(equationsMatrix)
-        CALL EquationsMatricesDynamic_EquationMatrixGet(dynamicMatrices,equationsMatrix,err,error,*999)        
+        CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,matrixIdx,equationsMatrix,err,error,*999)        
         fieldVariable=>dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%VARIABLE
-        CALL EqutionsMatrices_ElementMatrixSetup(equationsMatrix%elementMatrix,fieldVariable,fieldVariable, &
+        CALL EquationsMatrices_ElementMatrixSetup(equationsMatrix%elementMatrix,fieldVariable,fieldVariable, &
           & rowsNumberOfElements,colsNumberOfElements,err,error,*999)
       ENDDO !matrixIdx
     ENDIF
@@ -2462,9 +2471,9 @@ CONTAINS
       CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
       DO matrixIdx=1,linearMatrices%numberOfLinearMatrices
         NULLIFY(equationsMatrix)
-        CALL EquationsMatricesLinear_EquationMatrixGet(linearMatrices,equationsMatrix,err,error,*999)        
+        CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIdx,equationsMatrix,err,error,*999)        
         fieldVariable=>linearMapping%equationsMatrixToVarMaps(matrixIdx)%VARIABLE
-        CALL EqutionsMatrices_ElementMatrixSetup(equationsMatrix%elementMatrix,fieldVariable,fieldVariable, &
+        CALL EquationsMatrices_ElementMatrixSetup(equationsMatrix%elementMatrix,fieldVariable,fieldVariable, &
           & rowsNumberOfElements,colsNumberOfElements,err,error,*999)
       ENDDO !matrixIdx
     ENDIF
@@ -2478,7 +2487,7 @@ CONTAINS
         NULLIFY(jacobianMatrix)
         CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,matrixIdx,jacobianMatrix,err,error,*999)        
         colFieldVariable=>nonlinearMapping%jacobianToVarMap(matrixIdx)%VARIABLE
-        CALL EqutionsMatrices_ElementMatrixSetup(jacobianMatrix%elementJacobian,fieldVariable,colFieldVariable, &
+        CALL EquationsMatrices_ElementMatrixSetup(jacobianMatrix%elementJacobian,fieldVariable,colFieldVariable, &
           & rowsNumberOfElements,colsNumberOfElements,err,error,*999)
       ENDDO !matrixIdx
       !Use RHS variable for residual vector, otherwise first nonlinear variable if no RHS
@@ -2736,20 +2745,21 @@ CONTAINS
       & CALL FlagError("Equations matrices dynamic matrices is already associated.",err,error,*998)
     NULLIFY(vectorMapping)
     CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*998)
-    NULLIFY(dynamicMapping)
-    CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*998)
-        
-    ALLOCATE(vectorMatrices%dynamicMatrices,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate equations matrices dynamic matrices.",err,error,*999)
-    vectorMatrices%dynamicMatrices%vectorMatrices=>vectorMatrices
-    vectorMatrices%dynamicMatrices%numberOfDynamicMatrices=dynamicMapping%numberOfDynamicMatrices
-    ALLOCATE(vectorMatrices%dynamicMatrices%matrices(dynamicMapping%numberOfDynamicMatrices),STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate equations matrices dynamic matrices matrices.",err,error,*999)
-    DO matrixIdx=1,dynamicMapping%numberOfDynamicMatrices
-      NULLIFY(vectorMatrices%dynamicMatrices%matrices(matrixIdx)%ptr)
-      CALL EquationsMatrices_EquationsMatrixDynamicInitialise(vectorMatrices%dynamicMatrices,matrixIdx,err,error,*999)
-    ENDDO !matrixIdx
-    NULLIFY(vectorMatrices%dynamicMatrices%tempVector)
+    dynamicMapping=>vectorMapping%dynamicMapping
+
+    IF(ASSOCIATED(dynamicMapping)) THEN
+      ALLOCATE(vectorMatrices%dynamicMatrices,STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate equations matrices dynamic matrices.",err,error,*999)
+      vectorMatrices%dynamicMatrices%vectorMatrices=>vectorMatrices
+      vectorMatrices%dynamicMatrices%numberOfDynamicMatrices=dynamicMapping%numberOfDynamicMatrices
+      ALLOCATE(vectorMatrices%dynamicMatrices%matrices(dynamicMapping%numberOfDynamicMatrices),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate equations matrices dynamic matrices matrices.",err,error,*999)
+      DO matrixIdx=1,dynamicMapping%numberOfDynamicMatrices
+        NULLIFY(vectorMatrices%dynamicMatrices%matrices(matrixIdx)%ptr)
+        CALL EquationsMatrices_EquationsMatrixDynamicInitialise(vectorMatrices%dynamicMatrices,matrixIdx,err,error,*999)
+      ENDDO !matrixIdx
+      NULLIFY(vectorMatrices%dynamicMatrices%tempVector)
+    ENDIF
     
     EXITS("EquationsMatrices_DynamicInitialise")
     RETURN
@@ -3061,19 +3071,20 @@ CONTAINS
       & CALL FlagError("Vector equations matrices linear matrices is already associated.",err,error,*998)
     NULLIFY(vectorMapping)
     CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*999)
-    NULLIFY(linearMapping)
-    CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
+    linearMapping=>vectorMapping%linearMapping
 
-    ALLOCATE(vectorMatrices%linearMatrices,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate equations matrices linear matrices.",err,error,*999)
-    vectorMatrices%linearMatrices%vectorMatrices=>vectorMatrices
-    vectorMatrices%linearMatrices%numberOfLinearMatrices=linearMapping%numberOfLinearMatrices
-    ALLOCATE(vectorMatrices%linearMatrices%matrices(linearMapping%numberOfLinearMatrices),STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate equations matrices linear matrices matrices.",err,error,*999)
-    DO matrixIdx=1,linearMapping%numberOfLinearMatrices
-      NULLIFY(vectorMatrices%linearMatrices%matrices(matrixIdx)%ptr)
-      CALL EquationsMatrices_EquationsMatrixLinearInitialise(vectorMatrices%linearMatrices,matrixIdx,err,error,*999)
-    ENDDO !matrixIdx
+    IF(ASSOCIATED(linearMapping)) THEN
+      ALLOCATE(vectorMatrices%linearMatrices,STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate equations matrices linear matrices.",err,error,*999)
+      vectorMatrices%linearMatrices%vectorMatrices=>vectorMatrices
+      vectorMatrices%linearMatrices%numberOfLinearMatrices=linearMapping%numberOfLinearMatrices
+      ALLOCATE(vectorMatrices%linearMatrices%matrices(linearMapping%numberOfLinearMatrices),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate equations matrices linear matrices matrices.",err,error,*999)
+      DO matrixIdx=1,linearMapping%numberOfLinearMatrices
+        NULLIFY(vectorMatrices%linearMatrices%matrices(matrixIdx)%ptr)
+        CALL EquationsMatrices_EquationsMatrixLinearInitialise(vectorMatrices%linearMatrices,matrixIdx,err,error,*999)
+      ENDDO !matrixIdx
+    ENDIF
     
     EXITS("EquationsMatrices_LinearInitialise")
     RETURN
@@ -3143,7 +3154,7 @@ CONTAINS
       & CALL FlagError("Vector equations matrices nonlinear matrices is already associated.",err,error,*998)
 
     NULLIFY(vectorMapping)
-    CALL EquationsMatricesVector_VectorMapping(vectorMatrices,vectorMapping,err,error,*999)
+    CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*999)
    
     nonlinearMapping=>vectorMapping%nonlinearMapping
     IF(ASSOCIATED(nonlinearMapping)) THEN
@@ -3368,6 +3379,32 @@ CONTAINS
     
   END SUBROUTINE EquationsMatrices_RHSInitialise
   
+   !
+  !================================================================================================================================
+  !
+
+  !>Destroy the scalar equations matrices
+  SUBROUTINE EquationsMatrices_ScalarDestroy(scalarMatrices,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesScalarType), POINTER :: scalarMatrices !<A pointer the scalar equations matrices to destroy
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsMatrices_ScalarDestroy",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(scalarMatrices)) CALL FlagError("Scalar equations matrices is not associated",err,error,*999)
+    
+    CALL EquationsMatrices_ScalarFinalise(scalarMatrices,err,error,*999)
+        
+    EXITS("EquationsMatrices_ScalarDestroy")
+    RETURN
+999 ERRORSEXITS("EquationsMatrices_ScalarDestroy",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE EquationsMatrices_ScalarDestroy
+
   !
   !================================================================================================================================
   !
@@ -3420,7 +3457,7 @@ CONTAINS
     IF(ASSOCIATED(vectorMatrices%sourceVector)) &
       & CALL FlagError("Vector equations matrices source vector is already associated.",err,error,*998)
     NULLIFY(vectorMapping)
-    CALL EquationsMatricesVector_VectorMapping(vectorMatrices,vectorMapping,err,error,*998)
+    CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*998)
     
     sourceMapping=>vectorMapping%sourceMapping
     IF(ASSOCIATED(sourceMapping)) THEN
@@ -3933,11 +3970,81 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finalise the equations matrices and deallocate all memory.
+  !>Finalise the scalar equations matrices and deallocate all memory.
+  SUBROUTINE EquationsMatrices_ScalarFinalise(scalarMatrices,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesScalarType), POINTER :: scalarMatrices !<A pointer to the scalar equations matrices
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+   
+    ENTERS("EquationsMatrices_ScalarFinalise",err,error,*999)
+
+    IF(ASSOCIATED(scalarMatrices)) THEN
+      DEALLOCATE(scalarMatrices)
+    ENDIF
+       
+    EXITS("EquationsMatrices_ScalarFinalise")
+    RETURN
+999 ERRORSEXITS("EquationsMatrices_ScalarFinalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrices_ScalarFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialise the scalar equations matrices for the scalar equations.
+  SUBROUTINE EquationsMatrices_ScalarInitialise(scalarEquations,err,error,*)
+    
+    !Argument variables
+    TYPE(EquationsScalarType), POINTER :: scalarEquations !<A pointer to the scalar equations to initialise the scalar equations matrices for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(EquationsMappingScalarType), POINTER :: scalarMapping
+    TYPE(VARYING_STRING) :: dummyError
+    
+    ENTERS("EquationsMatrices_ScalarInitialise",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(scalarEquations)) CALL FlagError("Scalar equations is not associated.",err,error,*998)
+    IF(ASSOCIATED(scalarEquations%scalarMatrices)) &
+      & CALL FlagError("Scalar equations matrices is already associated for this equations.",err,error,*998)
+    NULLIFY(scalarMapping)
+    CALL EquationsScalar_ScalarMappingGet(scalarEquations,scalarMapping,err,error,*998)
+    IF(.NOT.scalarMapping%scalarMappingFinished) CALL FlagError("Scalar equations mapping has not been finished.",err,error,*998)
+    
+    ALLOCATE(scalarEquations%scalarMatrices,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate scalar equations scalar equations matrices.",err,error,*999)
+    scalarEquations%scalarMatrices%scalarEquations=>scalarEquations
+    scalarEquations%scalarMatrices%scalarMatricesFinished=.FALSE.
+    scalarEquations%scalarMatrices%scalarMapping=>scalarMapping
+    NULLIFY(scalarEquations%scalarMatrices%solverMapping)
+    NULLIFY(scalarEquations%scalarMatrices%functions)
+    NULLIFY(scalarEquations%scalarMatrices%normMatrices)
+    NULLIFY(scalarEquations%scalarMatrices%dotProductMatrices)
+    NULLIFY(scalarEquations%scalarMatrices%quadraticMatrices)
+       
+    EXITS("EquationsMatrices_ScalarInitialise")
+    RETURN
+999 CALL EquationsMatrices_ScalarFinalise(scalarEquations%scalarMatrices,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMatrices_ScalarInitialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrices_ScalarInitialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalise the vector equations matrices and deallocate all memory.
   SUBROUTINE EquationsMatrices_VectorFinalise(vectorMatrices,err,error,*)
 
     !Argument variables
-    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the equations matrices
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector equations matrices
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -4173,30 +4280,30 @@ CONTAINS
     dynamicMatrices=>equationsMatrix%dynamicMatrices
     IF(.NOT.ASSOCIATED(dynamicMatrices).AND..NOT.ASSOCIATED(linearMatrices)) &
       & CALL FlagError("Either equations matrix dynamic or linear matrices is not associated.",err,error,*998)
+    NULLIFY(vectorMatrices)
     IF(ASSOCIATED(dynamicMatrices)) THEN
-      vectorMatrices=>dynamicMatrices%vectorMatrices
+      CALL EquationsMatricesDynamic_VectorMatricesGet(dynamicMatrices,vectorMatrices,err,error,*999)
     ELSE
-      vectorMatrices=>linearMatrices%vectorMatrices
+      CALL EquationsMatricesLinear_VectorMatricesGet(linearMatrices,vectorMatrices,err,error,*999)
     ENDIF
-    IF(.NOT.ASSOCIATED(vectorMatrices)) &
-      & CALL FlagError("Dynamic or linear matrices equations matrices is not associated.",err,error,*998)
     NULLIFY(vectorMapping)
     CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*998)
     NULLIFY(vectorEquations)
-    CALL EquationsMatrices_VectorEquationsGet(vectorMatrices,vectorEquations,err,error,*998)
+    CALL EquationsMatricesVector_VectorEquationsGet(vectorMatrices,vectorEquations,err,error,*998)
     NULLIFY(equations)
     CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*998)
     NULLIFY(equationsSet)
     CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*998)
     NULLIFY(dependentField)
     CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*998)
-    dynamicMapping=>vectorMapping%dynamicMapping
-    linearMapping=>vectorMapping%linearMapping
-    IF(.NOT.ASSOCIATED(dynamicMapping).AND..NOT.ASSOCIATED(linearMapping))  &
-      & CALL FlagError("Either equations mapping dynamic mapping or linear mapping is not associated.",err,error,*998)
+    matrixNumber=equationsMatrix%matrixNumber
+    NULLIFY(dynamicMapping)
+    NULLIFY(linearMapping)
     IF(ASSOCIATED(dynamicMatrices)) THEN
+      CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
       fieldVariable=>dynamicMapping%equationsMatrixToVarMaps(matrixNumber)%variable
     ELSE
+      CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
       fieldVariable=>linearMapping%equationsMatrixToVarMaps(matrixNumber)%variable
     ENDIF
     IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Dependent field variable is not associated.",err,error,*998)          
@@ -4207,8 +4314,6 @@ CONTAINS
     IF(.NOT.ASSOCIATED(dependentDofsParamMapping)) &
       & CALL FlagError("Dependent dofs parameter mapping is not associated.",err,error,*998)
     
-    matrixNumber=equationsMatrix%matrixNumber
-
     SELECT CASE(equationsMatrix%structureType)
     CASE(EQUATIONS_MATRIX_NO_STRUCTURE)
       CALL FlagError("There is no structure to calculate for a matrix with no structure.",err,error,*998)
@@ -4468,7 +4573,7 @@ CONTAINS
     NULLIFY(vectorMapping)
     CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*998)
     NULLIFY(vectorEquations)
-    CALL EquationsMatrices_VectorEquationsGet(vectorMatrices,vectorEquations,err,error,*998)
+    CALL EquationsMatricesVector_VectorEquationsGet(vectorMatrices,vectorEquations,err,error,*998)
     NULLIFY(equations)
     CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*998)
     NULLIFY(equationsSet)

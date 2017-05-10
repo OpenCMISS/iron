@@ -642,10 +642,11 @@ CONTAINS
       & NUMBER_OF_MATERIALS_COMPONENTS,GEOMETRIC_MESH_COMPONENT,SOURCE_FIELD_NUMBER_OF_COMPONENTS,I, &
       & SOURCE_FIELD_NUMBER_OF_VARIABLES
     TYPE(DECOMPOSITION_TYPE), POINTER :: GEOMETRIC_DECOMPOSITION
-    TYPE(EquationsType), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
-    TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: EQUATIONS_MATERIALS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: EQUATIONS_MATERIALS
     TYPE(FIELD_TYPE), POINTER :: analytic_field,dependentField,geometricField
     TYPE(VARYING_STRING) :: localError
     
@@ -1228,9 +1229,9 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FINISHED) THEN
               !Create the equations
-              CALL Equations_CreateStart(EQUATIONS_SET,EQUATIONS,err,error,*999)
-              CALL Equations_LinearityTypeSet(EQUATIONS,EQUATIONS_LINEAR,err,error,*999)
-              CALL Equations_TimeDependenceTypeSet(EQUATIONS,EQUATIONS_QUASISTATIC,err,error,*999)
+              CALL Equations_CreateStart(EQUATIONS_SET,equations,err,error,*999)
+              CALL Equations_LinearityTypeSet(equations,EQUATIONS_LINEAR,err,error,*999)
+              CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_QUASISTATIC,err,error,*999)
             ELSE
               CALL FlagError("Equations set dependent field has not been finished.",err,error,*999)
             ENDIF
@@ -1238,16 +1239,18 @@ CONTAINS
             SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
             CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
               !Finish the creation of the equations
-              CALL EquationsSet_EquationsGet(EQUATIONS_SET,EQUATIONS,err,error,*999)
-              CALL Equations_CreateFinish(EQUATIONS,err,error,*999)
+              CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
+              CALL Equations_CreateFinish(equations,err,error,*999)
+              NULLIFY(vectorEquations)
+              CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
               !Create the equations mapping.
               CALL EquationsMapping_VectorCreateStart(vectorEquations,vectorMapping,err,error,*999)
               CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
               CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
                 & err,error,*999)
               CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
-              CALL EQUATIONS_MAPPING_SOURCE_VARIABLE_TYPE_SET(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
-              CALL EQUATIONS_MAPPING_CREATE_FINISH(vectorMapping,err,error,*999)
+              CALL EquationsMapping_SourceVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
               !Create the equations matrices
               CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
               SELECT CASE(equations%sparsityType)
@@ -1255,7 +1258,7 @@ CONTAINS
                 CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
                   & err,error,*999)
               CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                CALL vectorMatrices_LINEAR_STORAGE_TYPE_SET(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
+                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
                   & err,error,*999)
                 CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE], &
                   & err,error,*999)
@@ -1326,8 +1329,9 @@ CONTAINS
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS_ALE_PPE  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING_ALE_PPE !<A pointer to the solver mapping
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET_ALE_PPE !<A pointer to the equations set
-    TYPE(EquationsType), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(VARYING_STRING) :: localError
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
     TYPE(DOMAIN_TYPE), POINTER :: DOMAIN
@@ -1401,7 +1405,9 @@ CONTAINS
 !                   & FIELD_MESH_DISPLACEMENT_SET_TYPE,MESH_DISPLACEMENT_VALUES,err,error,*999)
                 EQUATIONS=>SOLVER_MAPPING_ALE_PPE%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
                 IF(ASSOCIATED(EQUATIONS)) THEN
-                  vectorMapping=>equations%equationsMapping
+                  NULLIFY(vectorEquations)
+                  CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+                  vectorMapping=>vectorEquations%vectorMapping
                   IF(ASSOCIATED(vectorMapping)) THEN
                     DO variable_idx=1,EQUATIONS_SET_ALE_PPE%DEPENDENT%DEPENDENT_FIELD%NUMBER_OF_VARIABLES
                       variable_type=EQUATIONS_SET_ALE_PPE%DEPENDENT%DEPENDENT_FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE
@@ -1639,10 +1645,11 @@ CONTAINS
       & NUMBER_OF_MATERIALS_COMPONENTS, GEOMETRIC_MESH_COMPONENT,SOURCE_FIELD_NUMBER_OF_COMPONENTS,I, &
       & SOURCE_FIELD_NUMBER_OF_VARIABLES
     TYPE(DECOMPOSITION_TYPE), POINTER :: GEOMETRIC_DECOMPOSITION
-    TYPE(EquationsType), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
-    TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: EQUATIONS_MATERIALS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: EQUATIONS_MATERIALS
     TYPE(FIELD_TYPE), POINTER :: analytic_field,dependentField,geometricField
     TYPE(VARYING_STRING) :: localError
     
@@ -2107,9 +2114,9 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FINISHED) THEN
               !Create the equations
-              CALL Equations_CreateStart(EQUATIONS_SET,EQUATIONS,err,error,*999)
-              CALL Equations_LinearityTypeSet(EQUATIONS,EQUATIONS_LINEAR,err,error,*999)
-              CALL Equations_TimeDependenceTypeSet(EQUATIONS,EQUATIONS_STATIC,err,error,*999)
+              CALL Equations_CreateStart(EQUATIONS_SET,equations,err,error,*999)
+              CALL Equations_LinearityTypeSet(equations,EQUATIONS_LINEAR,err,error,*999)
+              CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_STATIC,err,error,*999)
             ELSE
               CALL FlagError("Equations set dependent field has not been finished.",err,error,*999)
             ENDIF
@@ -2117,27 +2124,26 @@ CONTAINS
             SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
             CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
               !Finish the creation of the equations
-              CALL EquationsSet_EquationsGet(EQUATIONS_SET,EQUATIONS,err,error,*999)
-              CALL Equations_CreateFinish(EQUATIONS,err,error,*999)
+              CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
+              CALL Equations_CreateFinish(equations,err,error,*999)
+              NULLIFY(vectorEquations)
+              CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
               !Create the equations mapping.
               CALL EquationsMapping_VectorCreateStart(vectorEquations,vectorMapping,err,error,*999)
               CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
               CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
                 & err,error,*999)
               CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
-              CALL EQUATIONS_MAPPING_SOURCE_VARIABLE_TYPE_SET(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
-              CALL EQUATIONS_MAPPING_CREATE_FINISH(vectorMapping,err,error,*999)
+              CALL EquationsMapping_SourceVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
               !Create the equations matrices
               CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
               SELECT CASE(equations%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
-                  & err,error,*999)
+                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
               CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
-                  & err,error,*999)
-                CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE], &
-                  & err,error,*999)
+                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+                CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
               CASE DEFAULT
                 localError="The equations matrices sparsity type of "// &
                   & TRIM(NUMBER_TO_VSTRING(equations%sparsityType,"*",err,error))//" is invalid."
@@ -2205,10 +2211,11 @@ CONTAINS
       & SOURCE_FIELD_NUMBER_OF_VARIABLES
     TYPE(FIELD_TYPE), POINTER :: ANALYTIC_FIELD,DEPENDENT_FIELD,geometricField
     TYPE(DECOMPOSITION_TYPE), POINTER :: GEOMETRIC_DECOMPOSITION
-    TYPE(EquationsType), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
-    TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: EQUATIONS_MATERIALS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: EQUATIONS_MATERIALS
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("Poisson_EquationsSetExtracellularBidomainSetup",err,error,*999)
@@ -2672,9 +2679,9 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FINISHED) THEN
               !Create the equations
-              CALL Equations_CreateStart(EQUATIONS_SET,EQUATIONS,err,error,*999)
-              CALL Equations_LinearityTypeSet(EQUATIONS,EQUATIONS_LINEAR,err,error,*999)
-              CALL Equations_TimeDependenceTypeSet(EQUATIONS,EQUATIONS_STATIC,err,error,*999)
+              CALL Equations_CreateStart(EQUATIONS_SET,equations,err,error,*999)
+              CALL Equations_LinearityTypeSet(equations,EQUATIONS_LINEAR,err,error,*999)
+              CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_STATIC,err,error,*999)
             ELSE
               CALL FlagError("Equations set dependent field has not been finished.",err,error,*999)
             ENDIF
@@ -2683,32 +2690,31 @@ CONTAINS
             SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
             CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
               !Finish the creation of the equations
-              CALL EquationsSet_EquationsGet(EQUATIONS_SET,EQUATIONS,err,error,*999)
-              CALL Equations_CreateFinish(EQUATIONS,err,error,*999)
+              CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
+              CALL Equations_CreateFinish(equations,err,error,*999)
+              NULLIFY(vectorEquations)
+              CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
               !Create the equations mapping.
               CALL EquationsMapping_VectorCreateStart(vectorEquations,vectorMapping,err,error,*999)
               IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE) THEN   
                 CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
                 CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
                 CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999) 
-                CALL EQUATIONS_MAPPING_SOURCE_VARIABLE_TYPE_SET(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)             
+                CALL EquationsMapping_SourceVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)             
               ELSE
                 localError="The third equations set specification of "// &
                   & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))//" is invalid."
                 CALL FlagError(localError,err,error,*999)
               ENDIF    
-              CALL EQUATIONS_MAPPING_CREATE_FINISH(vectorMapping,err,error,*999)
+              CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
               !Create the equations matrices
               CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
               SELECT CASE(equations%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices, &
-                  & [MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
               CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices, &
-                  & [MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
-                CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices, &
-                  & [EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
+                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+                CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
               CASE DEFAULT
                 localError="The equations matrices sparsity type of "// &
                   & TRIM(NUMBER_TO_VSTRING(equations%sparsityType,"*",err,error))//" is invalid."
@@ -2774,10 +2780,11 @@ CONTAINS
     INTEGER(INTG) :: component_idx,GEOMETRIC_COMPONENT_NUMBER,GEOMETRIC_SCALING_TYPE,NUMBER_OF_DIMENSIONS, &
       & NUMBER_OF_MATERIALS_COMPONENTS
     TYPE(DECOMPOSITION_TYPE), POINTER :: GEOMETRIC_DECOMPOSITION
-    TYPE(EquationsType), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
-    TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: EQUATIONS_MATERIALS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: EQUATIONS_MATERIALS
     TYPE(FIELD_TYPE), POINTER :: analytic_field,dependentField,geometricField
     TYPE(VARYING_STRING) :: localError
     
@@ -3140,9 +3147,9 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FINISHED) THEN
               !Start the creation of the equations
-              CALL Equations_CreateStart(EQUATIONS_SET,EQUATIONS,err,error,*999)
-              CALL Equations_LinearityTypeSet(EQUATIONS,EQUATIONS_NONLINEAR,err,error,*999)
-              CALL Equations_TimeDependenceTypeSet(EQUATIONS,EQUATIONS_STATIC,err,error,*999)
+              CALL Equations_CreateStart(EQUATIONS_SET,equations,err,error,*999)
+              CALL Equations_LinearityTypeSet(equations,EQUATIONS_NONLINEAR,err,error,*999)
+              CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_STATIC,err,error,*999)
             ELSE
               CALL FlagError("Equations set dependent field has not been finished.",err,error,*999)
             ENDIF
@@ -3150,8 +3157,10 @@ CONTAINS
             SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
             CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
               !Finish the creation of the equations
-              CALL EquationsSet_EquationsGet(EQUATIONS_SET,EQUATIONS,err,error,*999)
-              CALL Equations_CreateFinish(EQUATIONS,err,error,*999)
+              CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
+              CALL Equations_CreateFinish(equations,err,error,*999)
+              NULLIFY(vectorEquations)
+              CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
               !Create the equations mapping.
               CALL EquationsMapping_VectorCreateStart(vectorEquations,vectorMapping,err,error,*999)
               CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
@@ -3290,7 +3299,7 @@ CONTAINS
     REAL(DP), ALLOCATABLE :: Vm(:)
     REAL(DP) :: U_VALUE(3),U_DERIV(3,3),RHO_PARAM,MU_PARAM,U_OLD(3),U_SECOND(3,3,3),X(3),B(3),P_DERIV(3),W_VALUE(3)
     TYPE(BASIS_TYPE), POINTER :: DEPENDENT_BASIS,GEOMETRIC_BASIS,SOURCE_BASIS,INDEPENDENT_BASIS
-    TYPE(EquationsType), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
@@ -3298,6 +3307,7 @@ CONTAINS
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FIELD_TYPE), POINTER :: dependentField,geometricField,sourceField,materialsField,independentField,fibreField
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE,SOURCE_FIELD_VARIABLE
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: QUADRATURE_SCHEME
@@ -3330,18 +3340,20 @@ CONTAINS
       END IF
       EQUATIONS=>EQUATIONS_SET%EQUATIONS
       IF(ASSOCIATED(EQUATIONS)) THEN
+        NULLIFY(vectorEquations)
+        CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
         SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
         CASE(EQUATIONS_SET_CONSTANT_SOURCE_POISSON_SUBTYPE)
           !Store all these in equations matrices/somewhere else?????
           dependentField=>equations%interpolation%dependentField
           geometricField=>equations%interpolation%geometricField
-          materialsField=>equations%interpolation%materialsField
-          vectorMatrices=>equations%equationsMatrices
+          materialsField=>equations%interpolation%materialsField         
+          vectorMatrices=>vectorEquations%vectorMatrices
           linearMatrices=>vectorMatrices%linearMatrices
           equationsMatrix=>linearMatrices%matrices(1)%ptr
           rhsVector=>vectorMatrices%rhsVector
           sourceVector=>vectorMatrices%sourceVector
-          vectorMapping=>equations%equationsMapping
+          vectorMapping=>vectorEquations%vectorMapping
           linearMapping=>vectorMapping%linearMapping
           FIELD_VARIABLE=>linearMapping%equationsMatrixToVarMaps(1)%VARIABLE
           FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
@@ -3412,7 +3424,7 @@ CONTAINS
           fibreField=>equations%interpolation%fibreField
           sourceField=>equations%interpolation%sourceField
           
-          vectorMatrices=>equations%equationsMatrices
+          vectorMatrices=>vectorEquations%vectorMatrices
           linearMatrices=>vectorMatrices%linearMatrices
           equationsMatrix=>linearMatrices%matrices(1)%ptr
 
@@ -3420,7 +3432,7 @@ CONTAINS
           sourceVector=>vectorMatrices%sourceVector
           sourceVector%updateVector=.TRUE. !TODO -- maybe done somewhere else (greped at equations_matrices_routines.f90)?, check when time dependency is included
           
-          vectorMapping=>equations%equationsMapping
+          vectorMapping=>vectorEquations%vectorMapping
           linearMapping=>vectorMapping%linearMapping
           FIELD_VARIABLE=>linearMapping%equationsMatrixToVarMaps(1)%VARIABLE
           FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
@@ -3681,12 +3693,12 @@ CONTAINS
           materialsField=>equations%interpolation%materialsField
           dependentField=>equations%interpolation%dependentField
           geometricField=>equations%interpolation%geometricField
-          vectorMatrices=>equations%equationsMatrices
+          vectorMatrices=>vectorEquations%vectorMatrices
           linearMatrices=>vectorMatrices%linearMatrices
           equationsMatrix=>linearMatrices%matrices(1)%ptr
           rhsVector=>vectorMatrices%rhsVector
           sourceVector=>vectorMatrices%sourceVector
-          vectorMapping=>equations%equationsMapping
+          vectorMapping=>vectorEquations%vectorMapping
           linearMapping=>vectorMapping%linearMapping
           FIELD_VARIABLE=>linearMapping%equationsMatrixToVarMaps(1)%variable
           FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
@@ -4051,12 +4063,13 @@ CONTAINS
     INTEGER(INTG) FIELD_VAR_TYPE,ng,mh,mhs,ms,nh,nhs,ns
     REAL(DP) :: B_PARAM,C_PARAM,RWG,U_VALUE,VALUE
     TYPE(BASIS_TYPE), POINTER :: DEPENDENT_BASIS,GEOMETRIC_BASIS
-    TYPE(EquationsType), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
     TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FIELD_TYPE), POINTER :: dependentField,geometricField,materialsField
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: DEPENDENT_VARIABLE,GEOMETRIC_VARIABLE
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: QUADRATURE_SCHEME
@@ -4073,6 +4086,8 @@ CONTAINS
       END IF
       EQUATIONS=>EQUATIONS_SET%EQUATIONS
       IF(ASSOCIATED(EQUATIONS)) THEN
+        NULLIFY(vectorEquations)
+        CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
         SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
         CASE(EQUATIONS_SET_CONSTANT_SOURCE_POISSON_SUBTYPE)
           CALL FlagError("Can not evaluate a Jacobian for a Poisson equation with a linear source.",err,error,*999)
@@ -4081,7 +4096,7 @@ CONTAINS
         CASE(EQUATIONS_SET_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE)
           CALL FlagError("Can not evaluate a Jacobian for a Poisson equation with a linear source.",err,error,*999)          
         CASE(EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE)
-          vectorMatrices=>equations%equationsMatrices
+          vectorMatrices=>vectorEquations%vectorMatrices
           nonlinearMatrices=>vectorMatrices%nonlinearMatrices
           jacobianMatrix=>nonlinearMatrices%JACOBIANS(1)%ptr
           IF(jacobianMatrix%updateJacobian) THEN
@@ -4089,7 +4104,7 @@ CONTAINS
             dependentField=>equations%interpolation%dependentField
             geometricField=>equations%interpolation%geometricField
             materialsField=>equations%interpolation%materialsField
-            vectorMapping=>equations%equationsMapping
+            vectorMapping=>vectorEquations%vectorMapping
             nonlinearMapping=>vectorMapping%nonlinearMapping
             DEPENDENT_VARIABLE=>nonlinearMapping%residualVariables(1)%ptr
             FIELD_VAR_TYPE=DEPENDENT_VARIABLE%VARIABLE_TYPE
@@ -4143,7 +4158,7 @@ CONTAINS
             ENDDO !ng
           ENDIF
         CASE(EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE)
-          vectorMatrices=>equations%equationsMatrices
+          vectorMatrices=>vectorEquations%vectorMatrices
           nonlinearMatrices=>vectorMatrices%nonlinearMatrices
           jacobianMatrix=>nonlinearMatrices%JACOBIANS(1)%ptr
           IF(jacobianMatrix%updateJacobian) THEN
@@ -4151,7 +4166,7 @@ CONTAINS
             dependentField=>equations%interpolation%dependentField
             geometricField=>equations%interpolation%geometricField
             materialsField=>equations%interpolation%materialsField
-            vectorMapping=>equations%equationsMapping
+            vectorMapping=>vectorEquations%vectorMapping
             nonlinearMapping=>vectorMapping%nonlinearMapping
             DEPENDENT_VARIABLE=>nonlinearMapping%residualVariables(1)%ptr
             FIELD_VAR_TYPE=DEPENDENT_VARIABLE%VARIABLE_TYPE
@@ -4242,7 +4257,7 @@ CONTAINS
     INTEGER(INTG) FIELD_VAR_TYPE,ng,mh,mhs,ms,nj,nh,nhs,ni,ns
     REAL(DP) :: A_PARAM,B_PARAM,C_PARAM,K_PARAM,RWG,SUM1,SUM2,PGMJ(3),PGNJ(3),U_VALUE,WG
     TYPE(BASIS_TYPE), POINTER :: DEPENDENT_BASIS,GEOMETRIC_BASIS
-    TYPE(EquationsType), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
@@ -4252,6 +4267,7 @@ CONTAINS
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FIELD_TYPE), POINTER :: dependentField,geometricField,materialsField
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: DEPENDENT_VARIABLE,GEOMETRIC_VARIABLE
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: QUADRATURE_SCHEME
@@ -4268,6 +4284,8 @@ CONTAINS
       END IF
       EQUATIONS=>EQUATIONS_SET%EQUATIONS
       IF(ASSOCIATED(EQUATIONS)) THEN
+        NULLIFY(vectorEquations)
+        CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
         SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
         CASE(EQUATIONS_SET_CONSTANT_SOURCE_POISSON_SUBTYPE)
           CALL FlagError("Can not evaluate a residual for a Poisson equation with a linear source.",err,error,*999)
@@ -4280,13 +4298,13 @@ CONTAINS
           dependentField=>equations%interpolation%dependentField
           geometricField=>equations%interpolation%geometricField
           materialsField=>equations%interpolation%materialsField
-          vectorMatrices=>equations%equationsMatrices
+          vectorMatrices=>vectorEquations%vectorMatrices
           linearMatrices=>vectorMatrices%linearMatrices
           nonlinearMatrices=>vectorMatrices%nonlinearMatrices
           equationsMatrix=>linearMatrices%matrices(1)%ptr
           rhsVector=>vectorMatrices%rhsVector
           sourceVector=>vectorMatrices%sourceVector
-          vectorMapping=>equations%equationsMapping
+          vectorMapping=>vectorEquations%vectorMapping
           linearMapping=>vectorMapping%linearMapping
           nonlinearMapping=>vectorMapping%nonlinearMapping
           DEPENDENT_VARIABLE=>nonlinearMapping%residualVariables(1)%ptr
@@ -4393,13 +4411,13 @@ CONTAINS
           dependentField=>equations%interpolation%dependentField
           geometricField=>equations%interpolation%geometricField
           materialsField=>equations%interpolation%materialsField
-          vectorMatrices=>equations%equationsMatrices
+          vectorMatrices=>vectorEquations%vectorMatrices
           linearMatrices=>vectorMatrices%linearMatrices
           nonlinearMatrices=>vectorMatrices%nonlinearMatrices
           equationsMatrix=>linearMatrices%matrices(1)%ptr
           rhsVector=>vectorMatrices%rhsVector
           sourceVector=>vectorMatrices%sourceVector
-          vectorMapping=>equations%equationsMapping
+          vectorMapping=>vectorEquations%vectorMapping
           linearMapping=>vectorMapping%linearMapping
           nonlinearMapping=>vectorMapping%nonlinearMapping
           DEPENDENT_VARIABLE=>nonlinearMapping%residualVariables(1)%ptr

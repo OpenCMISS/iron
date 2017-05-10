@@ -30,7 +30,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s): 
+!> Contributor(s): Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -51,7 +51,7 @@ MODULE Stree_EQUATION_ROUTINES
   USE BASE_ROUTINES
   USE BASIS_ROUTINES
   USE BOUNDARY_CONDITIONS_ROUTINES
-  USE CONSTANTS
+  USE Constants
   USE CONTROL_LOOP_ROUTINES
   USE CMISS_MPI  
   USE COMP_ENVIRONMENT
@@ -59,8 +59,9 @@ MODULE Stree_EQUATION_ROUTINES
   USE DISTRIBUTED_MATRIX_VECTOR
   USE DOMAIN_MAPPINGS
   USE EquationsRoutines
-  USE EQUATIONS_MAPPING_ROUTINES
-  USE EQUATIONS_MATRICES_ROUTINES
+  USE EquationsAccessRoutines
+  USE EquationsMappingRoutines
+  USE EquationsMatricesRoutines
   USE EQUATIONS_SET_CONSTANTS
   USE EquationsSetAccessRoutines
   USE FIELD_ROUTINES
@@ -69,16 +70,16 @@ MODULE Stree_EQUATION_ROUTINES
   USE FLUID_MECHANICS_IO_ROUTINES
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
-  USE KINDS
-  USE MATHS 
+  USE Kinds
+  USE Maths 
   USE MATRIX_VECTOR
   USE MESH_ROUTINES
   USE NODE_ROUTINES
   USE PROBLEM_CONSTANTS
-  USE STRINGS
+  USE Strings
   USE SOLVER_ROUTINES
-  USE TIMER
-  USE TYPES
+  USE Timer
+  USE Types
 
 #include "macros.h"  
 
@@ -223,8 +224,9 @@ CONTAINS
     !Local Variables
     TYPE(DECOMPOSITION_TYPE), POINTER :: geometricDecomposition
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: equationsMapping
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: equationsMaterials
     TYPE(EQUATIONS_SET_EQUATIONS_SET_FIELD_TYPE), POINTER :: equationsEquationsSetField
     TYPE(FIELD_TYPE), POINTER :: equationsSetField
@@ -236,8 +238,8 @@ CONTAINS
     ENTERS("Stree_EquationsSetSetup",err,error,*999)
 
     NULLIFY(equations)
-    NULLIFY(equationsMapping)
-    NULLIFY(equationsMatrices)
+    NULLIFY(vectorMapping)
+    NULLIFY(vectorMatrices)
     NULLIFY(equationsMaterials)
     NULLIFY(geometricDecomposition)
 
@@ -266,22 +268,22 @@ CONTAINS
               IF(equationsEquationsSetField%EQUATIONS_SET_FIELD_AUTO_CREATED) THEN
                 !Create the auto created equations set field field for SUPG element metrics
                 CALL FIELD_CREATE_START(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%REGION, &
-                  & equationsEquationsSetField%EQUATIONS_SET_FIELD_FIELD,ERR,ERROR,*999)
+                  & equationsEquationsSetField%EQUATIONS_SET_FIELD_FIELD,err,error,*999)
                 equationsSetField=>equationsEquationsSetField%EQUATIONS_SET_FIELD_FIELD
-                CALL FIELD_LABEL_SET(equationsSetField,"Equations Set Field",ERR,ERROR,*999)
+                CALL FIELD_LABEL_SET(equationsSetField,"Equations Set Field",err,error,*999)
                 CALL FIELD_TYPE_SET_AND_LOCK(equationsSetField,FIELD_GENERAL_TYPE,&
-                  & ERR,ERROR,*999)
-                CALL FIELD_NUMBER_OF_VARIABLES_SET(equationsSetField,1,ERR,ERROR,*999)
-                CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(equationsSetField,[FIELD_U_VARIABLE_TYPE],ERR,ERROR,*999)
-                CALL FIELD_VARIABLE_LABEL_SET(equationsSetField,FIELD_U_VARIABLE_TYPE,"Stree",ERR,ERROR,*999)
-                CALL FIELD_DATA_TYPE_SET_AND_LOCK(equationsSetField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
-                CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(equationsSetField,FIELD_U_VARIABLE_TYPE,1,ERR,ERROR,*999)
+                  & err,error,*999)
+                CALL FIELD_NUMBER_OF_VARIABLES_SET(equationsSetField,1,err,error,*999)
+                CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(equationsSetField,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+                CALL FIELD_VARIABLE_LABEL_SET(equationsSetField,FIELD_U_VARIABLE_TYPE,"Stree",err,error,*999)
+                CALL FIELD_DATA_TYPE_SET_AND_LOCK(equationsSetField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+                CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(equationsSetField,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
               ENDIF
             CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
               IF(equationsSet%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_AUTO_CREATED) THEN
-                CALL FIELD_CREATE_FINISH(equationsSet%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD,ERR,ERROR,*999)
+                CALL FIELD_CREATE_FINISH(equationsSet%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD,err,error,*999)
                 CALL FIELD_COMPONENT_VALUES_INITIALISE(equationsSet%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD, &
-                 & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1.0_DP,ERR,ERROR,*999)
+                 & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1.0_DP,err,error,*999)
               ENDIF
             CASE DEFAULT
               localError="The action type of "//TRIM(NUMBER_TO_VSTRING(equationsSetSetup%ACTION_TYPE, &
@@ -306,29 +308,29 @@ CONTAINS
               equationsEquationsSetField=>equationsSet%EQUATIONS_SET_FIELD
               equationsSetField=>equationsEquationsSetField%EQUATIONS_SET_FIELD_FIELD
               IF(equationsEquationsSetField%EQUATIONS_SET_FIELD_AUTO_CREATED) THEN
-                CALL FIELD_MESH_DECOMPOSITION_GET(equationsSet%GEOMETRY%GEOMETRIC_FIELD,geometricDecomposition,ERR,ERROR,*999)
-                CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(equationsSetField,geometricDecomposition,ERR,ERROR,*999)
-                CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(equationsSetField,equationsSet%GEOMETRY%GEOMETRIC_FIELD,ERR,ERROR,*999)
+                CALL FIELD_MESH_DECOMPOSITION_GET(equationsSet%GEOMETRY%GEOMETRIC_FIELD,geometricDecomposition,err,error,*999)
+                CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(equationsSetField,geometricDecomposition,err,error,*999)
+                CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(equationsSetField,equationsSet%GEOMETRY%GEOMETRIC_FIELD,err,error,*999)
                 CALL FIELD_COMPONENT_MESH_COMPONENT_GET(equationsSet%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & 1,geometricComponentNumber,ERR,ERROR,*999)                
+                  & 1,geometricComponentNumber,err,error,*999)                
                 CALL FIELD_COMPONENT_MESH_COMPONENT_SET_AND_LOCK(equationsSetField,FIELD_U_VARIABLE_TYPE, &
-                  & 1,geometricComponentNumber,ERR,ERROR,*999)
+                  & 1,geometricComponentNumber,err,error,*999)
                 CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(equationsSetField,FIELD_U_VARIABLE_TYPE, &
-                  & 1,FIELD_CONSTANT_INTERPOLATION,ERR,ERROR,*999)
+                  & 1,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
                 !Default the field scaling to that of the geometric field
-                CALL FIELD_SCALING_TYPE_GET(equationsSet%GEOMETRY%GEOMETRIC_FIELD,geometricScalingType,ERR,ERROR,*999)
+                CALL FIELD_SCALING_TYPE_GET(equationsSet%GEOMETRY%GEOMETRIC_FIELD,geometricScalingType,err,error,*999)
                 CALL FIELD_SCALING_TYPE_SET(equationsSet%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD, &
-                  & geometricScalingType,ERR,ERROR,*999)
+                  & geometricScalingType,err,error,*999)
               ELSE
                 !Do nothing
               ENDIF
             CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
               ! do nothing
             CASE DEFAULT
-              localError="The action type of "//TRIM(NUMBER_TO_VSTRING(equationsSetSetup%ACTION_TYPE,"*",ERR,ERROR))// &
-                & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(equationsSetSetup%SETUP_TYPE,"*",ERR,ERROR))// &
+              localError="The action type of "//TRIM(NUMBER_TO_VSTRING(equationsSetSetup%ACTION_TYPE,"*",err,error))// &
+                & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(equationsSetSetup%SETUP_TYPE,"*",err,error))// &
                 & " is invalid for a Stree equation."
-              CALL FLAG_ERROR(localError,ERR,ERROR,*999)
+              CALL FLAG_ERROR(localError,err,error,*999)
             END SELECT
           CASE DEFAULT
             localError="The third equations set specification of "// &
@@ -516,9 +518,9 @@ CONTAINS
                   ENDDO
                   DO I=1,materialsFieldNumberOfComponents
                     CALL FIELD_COMPONENT_INTERPOLATION_SET(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                      & I,FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
+                      & I,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                     CALL FIELD_COMPONENT_INTERPOLATION_SET(equationsMaterials%MATERIALS_FIELD,FIELD_V_VARIABLE_TYPE, &
-                      & I,FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
+                      & I,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                   ENDDO
                   !Default the field scaling to that of the geometric field
                   CALL FIELD_SCALING_TYPE_GET(equationsSet%GEOMETRY%GEOMETRIC_FIELD,geometricScalingType,err,error,*999)
@@ -592,28 +594,28 @@ CONTAINS
                 !Finish the creation of the equations
                 CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
                 CALL Equations_CreateFinish(equations,err,error,*999)
+                NULLIFY(vectorEquations)
+                CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
                 !Create the equations mapping.
-                CALL EQUATIONS_MAPPING_CREATE_START(equations,equationsMapping,err,error,*999)
-                CALL EquationsMapping_LinearMatricesNumberSet(equationsMapping,1,err,error,*999)
-                CALL EquationsMapping_LinearMatricesVariableTypesSet(equationsMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
-                CALL EQUATIONS_MAPPING_RHS_VARIABLE_TYPE_SET(equationsMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
-                CALL EQUATIONS_MAPPING_CREATE_FINISH(equationsMapping,err,error,*999)
+                CALL EquationsMapping_VectorCreateStart(vectorEquations,vectorMapping,err,error,*999)
+                CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
+                CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+                CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+                CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
                 !Create the equations matrices
-                CALL EQUATIONS_MATRICES_CREATE_START(equations,equationsMatrices,err,error,*999)
+                CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
                 SELECT CASE(equations%sparsityType)
                 CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                  CALL EQUATIONS_MATRICES_LINEAR_STORAGE_TYPE_SET(equationsMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+                  CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
                 CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                  CALL EQUATIONS_MATRICES_LINEAR_STORAGE_TYPE_SET(equationsMatrices, & 
-                    & [MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
-                  CALL EquationsMatrices_LinearStructureTypeSet(equationsMatrices, & 
-                    & [EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
+                  CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+                  CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
                 CASE DEFAULT
                   localError="The equations matrices sparsity type of "// &
                     & TRIM(NUMBER_TO_VSTRING(equations%sparsityType,"*",err,error))//" is invalid."
                   CALL FLAG_ERROR(localError,err,error,*999)
                 END SELECT
-                CALL EQUATIONS_MATRICES_CREATE_FINISH(equationsMatrices,err,error,*999)
+                CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
                 CALL FLAG_ERROR("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
@@ -679,11 +681,12 @@ CONTAINS
     TYPE(DOMAIN_NODES_TYPE), POINTER :: domainNodes
     TYPE(DOMAIN_TYPE), POINTER :: domain
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: equationsMapping
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices
-    TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: linearMapping
-    TYPE(EQUATIONS_MATRICES_LINEAR_TYPE), POINTER :: linearMatrices
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: stiffnessMatrix
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMappingLinearType), POINTER :: linearMapping
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
+    TYPE(EquationsMatrixType), POINTER :: stiffnessMatrix
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FIELD_TYPE), POINTER :: materialsField,dependentField
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
@@ -692,8 +695,8 @@ CONTAINS
     ENTERS("STREE_FINITE_ELEMENT_CALCULATE",err,error,*999)
 
     NULLIFY(equations)
-    NULLIFY(equationsMapping)
-    NULLIFY(equationsMatrices)
+    NULLIFY(vectorMapping)
+    NULLIFY(vectorMatrices)
     NULLIFY(linearMapping)
     NULLIFY(linearMatrices)
     NULLIFY(stiffnessMatrix)
@@ -708,9 +711,11 @@ CONTAINS
     IF(ASSOCIATED(equationsSet)) THEN
       equations=>equationsSet%EQUATIONS
       IF(ASSOCIATED(equations)) THEN
+        NULLIFY(vectorEquations)
+        CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
         dependentField=>equations%equationsSet%DEPENDENT%DEPENDENT_FIELD
         IF(ASSOCIATED(dependentField)) THEN
-          domain=>dependentField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR
+          domain=>dependentField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%ptr
           IF(ASSOCIATED(domain)) THEN
             domainNodes=>domain%TOPOLOGY%NODES
           ELSE
@@ -729,12 +734,12 @@ CONTAINS
     SELECT CASE(equationsSet%specification(3))
     CASE(EQUATIONS_SET_STREE1D0D_SUBTYPE)
       !Set General and Specific Pointers
-      equationsMatrices=>equations%equationsMatrices
-      equationsMapping=>equations%equationsMapping
-      linearMatrices=>equationsMatrices%LINEAR_MATRICES
-      stiffnessMatrix=>linearMatrices%MATRICES(1)%PTR
-      linearMapping=>equationsMapping%LINEAR_MAPPING
-      stiffnessMatrix%ELEMENT_MATRIX%matrix=0.0_DP
+      vectorMatrices=>vectorEquations%vectorMatrices
+      vectorMapping=>vectorEquations%vectorMapping
+      linearMatrices=>vectorMatrices%linearMatrices
+      stiffnessMatrix=>linearMatrices%matrices(1)%ptr
+      linearMapping=>vectorMapping%linearMapping
+      stiffnessMatrix%elementMatrix%matrix=0.0_DP
 
     CASE DEFAULT
       localError="The third equations set specification of "// &
@@ -787,10 +792,10 @@ CONTAINS
       solvers=>SOLVER%SOLVERS
       IF(ASSOCIATED(SOLVERS)) THEN
         controlLoop=>solvers%CONTROL_LOOP
-        CALL CONTROL_LOOP_CURRENT_TIMES_GET(controlLoop,currentTime,timeIncrement,ERR,ERROR,*999)
+        CALL CONTROL_LOOP_CURRENT_TIMES_GET(controlLoop,currentTime,timeIncrement,err,error,*999)
         parentLoop=>controlLoop%PARENT_LOOP
-        navierstokesLoop=>parentLoop%SUB_LOOPS(2)%PTR
-        navierstokesSolver=>navierstokesLoop%SOLVERS%SOLVERS(2)%PTR
+        navierstokesLoop=>parentLoop%SUB_LOOPS(2)%ptr
+        navierstokesSolver=>navierstokesLoop%SOLVERS%SOLVERS(2)%ptr
         IF(ASSOCIATED(controlLoop%PROBLEM)) THEN
           SELECT CASE(controlLoop%PROBLEM%specification(3))
           CASE(PROBLEM_STREE1D0D_NAVIER_STOKES_SUBTYPE, &
@@ -801,8 +806,8 @@ CONTAINS
               solverMapping=>solverEquations%SOLVER_MAPPING
               navierstokesSolverMapping=>navierstokesSolverEquations%SOLVER_MAPPING
               IF(ASSOCIATED(solverMapping)) THEN
-                equationsSet=>solverMapping%EQUATIONS_SETS(1)%PTR
-                navierstokesEquationsSet=>navierstokesSolverMapping%EQUATIONS_SETS(1)%PTR
+                equationsSet=>solverMapping%EQUATIONS_SETS(1)%ptr
+                navierstokesEquationsSet=>navierstokesSolverMapping%EQUATIONS_SETS(1)%ptr
                 IF(ASSOCIATED(equationsSet)) THEN
                   equations=>equationsSet%EQUATIONS
                   navierstokesEquations=>navierstokesEquationsSet%EQUATIONS
@@ -828,7 +833,7 @@ CONTAINS
             localError="The third problem specification of "// &
               & TRIM(NUMBER_TO_VSTRING(controlLoop%PROBLEM%specification(3),"*",err,error))// &
               & " is not valid for boundary flux calculation."
-            CALL FLAG_ERROR(localError,ERR,ERROR,*999)
+            CALL FLAG_ERROR(localError,err,error,*999)
           END SELECT
         ELSE
           CALL FLAG_ERROR("Problem is not associated.",err,error,*999)
@@ -844,9 +849,9 @@ CONTAINS
     DO variableIdx=1,navierstokesDependentField%NUMBER_OF_VARIABLES
       dependentVariableType=navierstokesDependentField%VARIABLES(variableIdx)%VARIABLE_TYPE
       NULLIFY(dependentFieldVariable)
-      CALL Field_VariableGet(navierstokesDependentField,dependentVariableType,dependentFieldVariable,ERR,ERROR,*999)
+      CALL Field_VariableGet(navierstokesDependentField,dependentVariableType,dependentFieldVariable,err,error,*999)
       CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS, &
-        & dependentFieldVariable,BOUNDARY_CONDITIONS_VARIABLE,ERR,ERROR,*999)
+        & dependentFieldVariable,BOUNDARY_CONDITIONS_VARIABLE,err,error,*999)
       IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
         IF(ASSOCIATED(dependentFieldVariable)) THEN
           DO componentIdx=1,dependentFieldVariable%NUMBER_OF_COMPONENTS
@@ -868,7 +873,7 @@ CONTAINS
                             ! Update dependent field value
                             IF(ASSOCIATED(materialsField)) THEN
                               CALL FIELD_PARAMETER_SET_GET_NODE(navierstokesDependentField,FIELD_U_VARIABLE_TYPE, &
-                                & FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx,nodeIdx,1,flow,ERR,ERROR,*999)
+                                & FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx,nodeIdx,1,flow,err,error,*999)
                               m=int(currentTime)-800*(int(currentTime)/800)
                               CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(materialsField,FIELD_V_VARIABLE_TYPE, &
                                 & FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx,m+1,1,flow,err,error,*999)
@@ -878,20 +883,20 @@ CONTAINS
                       ENDDO !derivativeIdx
                     ENDDO !nodeIdx
                   ELSE
-                    CALL FLAG_ERROR("Domain topology nodes is not associated.",ERR,ERROR,*999)
+                    CALL FLAG_ERROR("Domain topology nodes is not associated.",err,error,*999)
                   ENDIF
                 ELSE
-                  CALL FLAG_ERROR("Domain topology is not associated.",ERR,ERROR,*999)
+                  CALL FLAG_ERROR("Domain topology is not associated.",err,error,*999)
                 ENDIF
               ELSE
-                CALL FLAG_ERROR("Domain is not associated.",ERR,ERROR,*999)
+                CALL FLAG_ERROR("Domain is not associated.",err,error,*999)
               ENDIF
             ELSE
-              CALL FLAG_ERROR("Only node based interpolation is implemented.",ERR,ERROR,*999)
+              CALL FLAG_ERROR("Only node based interpolation is implemented.",err,error,*999)
             ENDIF
           ENDDO !componentIdx
         ELSE
-          CALL FLAG_ERROR("Dependent field variable is not associated.",ERR,ERROR,*999)
+          CALL FLAG_ERROR("Dependent field variable is not associated.",err,error,*999)
         ENDIF
       ENDIF
     ENDDO !variableIdx

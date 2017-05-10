@@ -30,7 +30,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s): Soroush Safaei
+!> Contributor(s): Soroush Safaei, Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -51,13 +51,14 @@ MODULE CHARACTERISTIC_EQUATION_ROUTINES
   USE BASE_ROUTINES
   USE BASIS_ROUTINES
   USE BOUNDARY_CONDITIONS_ROUTINES
-  USE CONSTANTS
+  USE Constants
   USE CONTROL_LOOP_ROUTINES
   USE DISTRIBUTED_MATRIX_VECTOR
   USE DOMAIN_MAPPINGS
   USE EquationsRoutines
-  USE EQUATIONS_MAPPING_ROUTINES
-  USE EQUATIONS_MATRICES_ROUTINES
+  USE EquationsAccessRoutines
+  USE EquationsMappingRoutines
+  USE EquationsMatricesRoutines
   USE EQUATIONS_SET_CONSTANTS
   USE EquationsSetAccessRoutines
   USE FIELD_ROUTINES
@@ -66,16 +67,16 @@ MODULE CHARACTERISTIC_EQUATION_ROUTINES
   USE FLUID_MECHANICS_IO_ROUTINES
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
-  USE KINDS
-  USE MATHS
+  USE Kinds
+  USE Maths
   USE MATRIX_VECTOR
   USE MESH_ROUTINES
   USE NODE_ROUTINES
   USE PROBLEM_CONSTANTS
-  USE STRINGS
+  USE Strings
   USE SOLVER_ROUTINES
-  USE TIMER
-  USE TYPES
+  USE Timer
+  USE Types
 
 #include "macros.h"
 
@@ -230,8 +231,9 @@ CONTAINS
     !Local Variables
     TYPE(DECOMPOSITION_TYPE), POINTER :: geometricDecomposition
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: equationsMapping
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: equationsMaterials
     TYPE(EQUATIONS_SET_EQUATIONS_SET_FIELD_TYPE), POINTER :: equationsEquationsSetField
     TYPE(FIELD_TYPE), POINTER :: equationsSetField
@@ -244,8 +246,8 @@ CONTAINS
     ENTERS("Characteristic_EquationsSetSetup",err,error,*999)
 
     NULLIFY(equations)
-    NULLIFY(equationsMapping)
-    NULLIFY(equationsMatrices)
+    NULLIFY(vectorMapping)
+    NULLIFY(vectorMatrices)
     NULLIFY(equationsMaterials)
     NULLIFY(geometricDecomposition)
 
@@ -764,39 +766,41 @@ CONTAINS
                 !Finish the creation of the equations
                 CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
                 CALL Equations_CreateFinish(equations,err,error,*999)
+                NULLIFY(vectorEquations)
+                CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
                 !Create the equations mapping.
-                CALL EQUATIONS_MAPPING_CREATE_START(equations,equationsMapping,err,error,*999)
-                CALL EquationsMapping_LinearMatricesNumberSet(equationsMapping,1,err,error,*999)
-                CALL EquationsMapping_LinearMatricesVariableTypesSet(equationsMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
-                CALL EQUATIONS_MAPPING_RHS_VARIABLE_TYPE_SET(equationsMapping,FIELD_DELUDELN_VARIABLE_TYPE, & 
+                CALL EquationsMapping_VectorCreateStart(vectorEquations,vectorMapping,err,error,*999)
+                CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
+                CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+                CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE, & 
                   & err,error,*999)
-                CALL EQUATIONS_MAPPING_CREATE_FINISH(equationsMapping,err,error,*999)
+                CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
                 !Create the equations matrices
-                CALL EQUATIONS_MATRICES_CREATE_START(equations,equationsMatrices,err,error,*999)
+                CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
                 ! Use the analytic Jacobian calculation
-                CALL EquationsMatrices_JacobianTypesSet(equationsMatrices,[EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED], &
+                CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED], &
                   & err,error,*999)
                 SELECT CASE(equations%sparsityType)
                 CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                  CALL EQUATIONS_MATRICES_LINEAR_STORAGE_TYPE_SET(equationsMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
+                  CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
                     & err,error,*999)
-                  CALL EquationsMatrices_NonlinearStorageTypeSet(equationsMatrices,MATRIX_BLOCK_STORAGE_TYPE, &
+                  CALL EquationsMatrices_NonlinearStorageTypeSet(vectorMatrices,MATRIX_BLOCK_STORAGE_TYPE, &
                     & err,error,*999)
                 CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                  CALL EQUATIONS_MATRICES_LINEAR_STORAGE_TYPE_SET(equationsMatrices, & 
+                  CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices, &
                     & [MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
-                  CALL EquationsMatrices_LinearStructureTypeSet(equationsMatrices, & 
+                  CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices, & 
                     & [EQUATIONS_MATRIX_NODAL_STRUCTURE],err,error,*999)
-                  CALL EquationsMatrices_NonlinearStorageTypeSet(equationsMatrices, & 
+                  CALL EquationsMatrices_NonlinearStorageTypeSet(vectorMatrices, & 
                     & MATRIX_COMPRESSED_ROW_STORAGE_TYPE,err,error,*999)
-                  CALL EquationsMatrices_NonlinearStructureTypeSet(equationsMatrices, & 
+                  CALL EquationsMatrices_NonlinearStructureTypeSet(vectorMatrices, & 
                     & EQUATIONS_MATRIX_NODAL_STRUCTURE,err,error,*999)
                 CASE DEFAULT
                   localError="The equations matrices sparsity type of "// &
                     & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
                   CALL FlagError(localError,err,error,*999)
                 END SELECT
-                CALL EQUATIONS_MATRICES_CREATE_FINISH(equationsMatrices,err,error,*999)
+                CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
@@ -862,13 +866,14 @@ CONTAINS
     TYPE(DOMAIN_NODES_TYPE), POINTER :: domainNodes
     TYPE(DOMAIN_TYPE), POINTER :: domain
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: equationsMapping
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices
-    TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: linearMapping
-    TYPE(EQUATIONS_MATRICES_LINEAR_TYPE), POINTER :: linearMatrices
-    TYPE(EQUATIONS_MAPPING_NONLINEAR_TYPE), POINTER :: nonlinearMapping
-    TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: nonlinearMatrices
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: stiffnessMatrix
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMappingLinearType), POINTER :: linearMapping
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatrixType), POINTER :: stiffnessMatrix
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FIELD_TYPE), POINTER :: materialsField,dependentField,independentField
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
@@ -880,9 +885,9 @@ CONTAINS
     ENTERS("Characteristic_NodalResidualEvaluate",err,error,*999)
 
     NULLIFY(equations)
-    NULLIFY(equationsMapping)
-    NULLIFY(equationsMapping)
-    NULLIFY(equationsMatrices)
+    NULLIFY(vectorMapping)
+    NULLIFY(vectorMapping)
+    NULLIFY(vectorMatrices)
     NULLIFY(linearMapping)
     NULLIFY(linearMatrices)
     NULLIFY(nonlinearMapping)
@@ -922,28 +927,26 @@ CONTAINS
       CALL FlagError("Equations set is not associated.",err,error,*999)
     ENDIF
 
-   IF(.NOT.ALLOCATED(equationsSet%specification)) THEN
-      CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-    ELSE IF(SIZE(equationsSet%specification,1)/=3) THEN
-      CALL FlagError("Equations set specification must have three entries for a characteristic type equations set.", &
-        & err,error,*999)
-    END IF
+    IF(.NOT.ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)/=3) &
+      & CALL FlagError("Equations set specification must have three entries for a characteristic type equations set.", &
+      & err,error,*999)
     SELECT CASE(equationsSet%specification(3))
     CASE(EQUATIONS_SET_CHARACTERISTIC_SUBTYPE)
       !Set General and Specific Pointers
-      independentField=>equations%INTERPOLATION%INDEPENDENT_FIELD
-      materialsField=>equations%INTERPOLATION%MATERIALS_FIELD
-      equationsMatrices=>equations%equationsMatrices
-      equationsMapping=>equations%equationsMapping
-      linearMatrices=>equationsMatrices%LINEAR_MATRICES
-      nonlinearMatrices=>equationsMatrices%NONLINEAR_MATRICES
-      stiffnessMatrix=>linearMatrices%MATRICES(1)%PTR
-      linearMapping=>equationsMapping%LINEAR_MAPPING
-      nonlinearMapping=>equationsMapping%NONLINEAR_MAPPING
-      stiffnessMatrix%NodalMatrix%matrix=0.0_DP
+      independentField=>equations%interpolation%independentField
+      materialsField=>equations%interpolation%materialsField
+      vectorMatrices=>vectorEquations%vectorMatrices
+      vectorMapping=>vectorEquations%vectorMapping
+      linearMatrices=>vectorMatrices%linearMatrices
+      nonlinearMatrices=>vectorMatrices%nonlinearMatrices
+      stiffnessMatrix=>linearMatrices%matrices(1)%PTR
+      linearMapping=>vectorMapping%linearMapping
+      nonlinearMapping=>vectorMapping%nonlinearMapping
+      stiffnessMatrix%nodalMatrix%matrix=0.0_DP
       nonlinearMatrices%NodalResidual%vector=0.0_DP
-      IF(ASSOCIATED(stiffnessMatrix)) updateStiffnessMatrix=stiffnessMatrix%UPDATE_MATRIX
-      IF(ASSOCIATED(nonlinearMatrices)) updateNonlinearResidual=nonlinearMatrices%UPDATE_RESIDUAL
+      IF(ASSOCIATED(stiffnessMatrix)) updateStiffnessMatrix=stiffnessMatrix%updateMatrix
+      IF(ASSOCIATED(nonlinearMatrices)) updateNonlinearResidual=nonlinearMatrices%updateResidual
 
       derivativeIdx=1
       normalWave=0.0_DP
@@ -1008,7 +1011,7 @@ CONTAINS
               DO versionIdx=1,numberOfVersions
                 IF(ABS(normalWave(componentIdx,versionIdx))>ZERO_TOLERANCE) THEN
                   columnIdx=columnIdx+1
-                  stiffnessMatrix%NodalMatrix%matrix(rowIdx,columnIdx)=normalWave(componentIdx,versionIdx)
+                  stiffnessMatrix%nodalMatrix%matrix(rowIdx,columnIdx)=normalWave(componentIdx,versionIdx)
                 ENDIF
               ENDDO
             ENDDO
@@ -1085,13 +1088,14 @@ CONTAINS
     TYPE(DOMAIN_NODES_TYPE), POINTER :: domainNodes
     TYPE(DOMAIN_TYPE), POINTER :: domain
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: equationsMapping
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices
-    TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: linearMapping
-    TYPE(EQUATIONS_MATRICES_LINEAR_TYPE), POINTER :: linearMatrices
-    TYPE(EQUATIONS_MAPPING_NONLINEAR_TYPE), POINTER :: nonlinearMapping
-    TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: nonlinearMatrices
-    TYPE(EQUATIONS_JACOBIAN_TYPE), POINTER :: jacobianMatrix
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMappingLinearType), POINTER :: linearMapping
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FIELD_TYPE), POINTER :: materialsField,dependentField,independentField
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
@@ -1104,9 +1108,10 @@ CONTAINS
     ENTERS("Characteristic_NodalJacobianEvaluate",err,error,*999)
 
     NULLIFY(equations)
-    NULLIFY(equationsMapping)
-    NULLIFY(equationsMapping)
-    NULLIFY(equationsMatrices)
+    NULLIFY(vectorEquations)
+    NULLIFY(vectorMapping)
+    NULLIFY(vectorMapping)
+    NULLIFY(vectorMatrices)
     NULLIFY(linearMapping)
     NULLIFY(linearMatrices)
     NULLIFY(nonlinearMapping)
@@ -1127,6 +1132,7 @@ CONTAINS
     IF(ASSOCIATED(equationsSet)) THEN
       equations=>equationsSet%EQUATIONS
       IF(ASSOCIATED(equations)) THEN
+        CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
         dependentField=>equations%equationsSet%DEPENDENT%DEPENDENT_FIELD
         IF(ASSOCIATED(dependentField)) THEN
           domain=>dependentField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR
@@ -1145,26 +1151,24 @@ CONTAINS
       CALL FlagError("Equations set is not associated.",err,error,*999)
     ENDIF
 
-    IF(.NOT.ALLOCATED(equationsSet%specification)) THEN
-      CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-    ELSE IF(SIZE(equationsSet%specification,1)/=3) THEN
-      CALL FlagError("Equations set specification must have three entries for a characteristic type equations set.", &
-        & err,error,*999)
-    END IF
+    IF(.NOT.ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)/=3) &
+      & CALL FlagError("Equations set specification must have three entries for a characteristic type equations set.", &
+      & err,error,*999)
     SELECT CASE(equationsSet%specification(3))
     CASE(EQUATIONS_SET_CHARACTERISTIC_SUBTYPE)
       !Set General and Specific Pointers
       independentField=>equations%equationsSet%INDEPENDENT%INDEPENDENT_FIELD
-      materialsField=>equations%INTERPOLATION%MATERIALS_FIELD
-      equationsMatrices=>equations%equationsMatrices
-      equationsMapping=>equations%equationsMapping
-      linearMatrices=>equationsMatrices%LINEAR_MATRICES
-      nonlinearMatrices=>equationsMatrices%NONLINEAR_MATRICES
-      nonlinearMapping=>equationsMapping%NONLINEAR_MAPPING
-      linearMapping=>equationsMapping%LINEAR_MAPPING
-      jacobianMatrix=>nonlinearMatrices%JACOBIANS(1)%PTR
+      materialsField=>equations%interpolation%materialsField
+      vectorMatrices=>vectorEquations%vectorMatrices
+      vectorMapping=>vectorEquations%vectorMapping
+      linearMatrices=>vectorMatrices%linearMatrices
+      nonlinearMatrices=>vectorMatrices%nonlinearMatrices
+      nonlinearMapping=>vectorMapping%nonlinearMapping
+      linearMapping=>vectorMapping%linearMapping
+      jacobianMatrix=>nonlinearMatrices%jacobians(1)%PTR
       jacobianMatrix%NodalJacobian%matrix=0.0_DP
-      IF(ASSOCIATED(jacobianMatrix)) updateJacobianMatrix=jacobianMatrix%UPDATE_JACOBIAN
+      IF(ASSOCIATED(jacobianMatrix)) updateJacobianMatrix=jacobianMatrix%updateJacobian
 
       derivativeIdx=1
       normalWave=0.0_DP
@@ -1371,7 +1375,7 @@ CONTAINS
               geometricField=>equationsSet%GEOMETRY%GEOMETRIC_FIELD
               dependentField=>equationsSet%DEPENDENT%DEPENDENT_FIELD
               independentField=>equationsSet%INDEPENDENT%INDEPENDENT_FIELD
-              materialsField=>equations%INTERPOLATION%MATERIALS_FIELD
+              materialsField=>equations%interpolation%materialsField
               dependentDomain=>dependentField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR
               materialsDomain=>materialsField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR
 
@@ -1480,25 +1484,25 @@ CONTAINS
 
                         ! Get Q,A values at extrapolated xi locations
                         CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE, &
-                         & versionElementNumber(versionIdx),EQUATIONS%INTERPOLATION% &
-                         & DEPENDENT_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-                        CALL FIELD_INTERPOLATE_XI(NO_PART_DERIV,XI,EQUATIONS%INTERPOLATION% &
-                          & DEPENDENT_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-                        Q_EX(versionIdx)=EQUATIONS%INTERPOLATION%DEPENDENT_INTERP_POINT(FIELD_U_VARIABLE_TYPE)% &
+                         & versionElementNumber(versionIdx),EQUATIONS%interpolation% &
+                         & dependentInterpParameters(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
+                        CALL FIELD_INTERPOLATE_XI(NO_PART_DERIV,XI,EQUATIONS%interpolation% &
+                          & dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
+                        Q_EX(versionIdx)=EQUATIONS%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)% &
                           & PTR%VALUES(1,NO_PART_DERIV)
-                        A_EX(versionIdx)=EQUATIONS%INTERPOLATION%DEPENDENT_INTERP_POINT(FIELD_U_VARIABLE_TYPE)% &
+                        A_EX(versionIdx)=EQUATIONS%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)% &
                           & PTR%VALUES(2,NO_PART_DERIV)
                         ! Get spatially varying material values at extrapolated xi locations
                         CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE, &
-                          & versionElementNumber(versionIdx),EQUATIONS%INTERPOLATION% &
-                          & MATERIALS_INTERP_PARAMETERS(FIELD_V_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-                        CALL FIELD_INTERPOLATE_XI(NO_PART_DERIV,XI,EQUATIONS%INTERPOLATION% &
-                          & MATERIALS_INTERP_POINT(FIELD_V_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-                        A0_EX(versionIdx)=EQUATIONS%INTERPOLATION%MATERIALS_INTERP_POINT(FIELD_V_VARIABLE_TYPE)% &
+                          & versionElementNumber(versionIdx),EQUATIONS%interpolation% &
+                          & materialsInterpParameters(FIELD_V_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
+                        CALL FIELD_INTERPOLATE_XI(NO_PART_DERIV,XI,EQUATIONS%interpolation% &
+                          & materialsInterpPoint(FIELD_V_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
+                        A0_EX(versionIdx)=EQUATIONS%interpolation%materialsInterpPoint(FIELD_V_VARIABLE_TYPE)% &
                           & PTR%VALUES(1,NO_PART_DERIV)
-                        E_EX(versionIdx)=EQUATIONS%INTERPOLATION%MATERIALS_INTERP_POINT(FIELD_V_VARIABLE_TYPE)% &
+                        E_EX(versionIdx)=EQUATIONS%interpolation%materialsInterpPoint(FIELD_V_VARIABLE_TYPE)% &
                           & PTR%VALUES(2,NO_PART_DERIV)
-                        H0_EX(versionIdx)=EQUATIONS%INTERPOLATION%MATERIALS_INTERP_POINT(FIELD_V_VARIABLE_TYPE)% &
+                        H0_EX(versionIdx)=EQUATIONS%interpolation%materialsInterpPoint(FIELD_V_VARIABLE_TYPE)% &
                           & PTR%VALUES(3,NO_PART_DERIV)
                         Beta_EX(versionIdx) = (4.0_DP*SQRT(PI)*E_EX(versionIdx)*H0_EX(versionIdx))/ &
                           & (3.0_DP*A0_EX(versionIdx))

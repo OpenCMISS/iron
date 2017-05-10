@@ -129,11 +129,15 @@ MODULE EquationsRoutines
 
   PUBLIC EQUATIONS_UNLUMPED_MATRICES,EQUATIONS_LUMPED_MATRICES
   
+  PUBLIC Equations_Initialise,Equations_Finalise
+
   PUBLIC Equations_CreateStart,Equations_CreateFinish
 
   PUBLIC Equations_Destroy
 
-  PUBLIC Equations_Initialise,Equations_Finalise
+  PUBLIC Equations_EqualityTypeGet,Equations_EqualityTypeSet
+  
+  PUBLIC Equations_EquationTypeGet,Equations_EquationTypeSet
 
   PUBLIC Equations_LinearityTypeGet,Equations_LinearityTypeSet
 
@@ -477,6 +481,7 @@ CONTAINS
     ALLOCATE(equationsSet%equations,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate equations.",err,error,*999)
     equationsSet%equations%equationsSet=>equationsSet
+    equationsSet%equations%equationsFinished=.FALSE.
     equationsSet%equations%equationType=EQUATIONS_VECTOR_TYPE
     equationsSet%equations%equalityType=EQUATIONS_EQUALS_TYPE
     equationsSet%equations%linearity=EQUATIONS_LINEAR
@@ -1225,7 +1230,7 @@ CONTAINS
     NULLIFY(vectorMatrices)
     CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
     NULLIFY(linearMatrices)
-    CALL EquationMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
+    CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
     NULLIFY(equationsMatrix)
     CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIndex,equationsMatrix,err,error,*999)
 
@@ -1277,9 +1282,9 @@ CONTAINS
     NULLIFY(vectorMapping)
     CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*998)
     NULLIFY(nonlinearMatrices)
-    CALL EquationMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*998)
+    CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*998)
     NULLIFY(nonlinearMapping)
-    CALL EquationMatricesVector_NonlinearMappingGet(vectorMatrices,nonlinearMapping,err,error,*998)
+    CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*998)
 
     !Find Jacobian matrix index using the nonlinear equations mapping
     matrixIndex=0
@@ -1340,7 +1345,7 @@ CONTAINS
     NULLIFY(vectorMatrices)
     CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
     NULLIFY(dynamicMatrices)
-    CALL EquationMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
+    CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
     NULLIFY(equationsMatrix)
     CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,matrixIndex,equationsMatrix,err,error,*999)
 
@@ -1391,9 +1396,9 @@ CONTAINS
     NULLIFY(vectorMapping)
     CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
     NULLIFY(dynamicMatrices)
-    CALL EquationMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
+    CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
     NULLIFY(dynamicMapping)
-    CALL EquationMatricesVector_DynamicMappingGet(vectorMatrices,dynamicMapping,err,error,*999)
+    CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
  
     !Find matrix index using the equations mapping
     SELECT CASE(matrixType)
@@ -1456,7 +1461,7 @@ CONTAINS
     NULLIFY(vectorMapping)
     CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
     NULLIFY(dynamicMapping)
-    CALL EquationMatricesVector_DynamicMappingGet(vectorMatrices,dynamicMapping,err,error,*999)
+    CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
 
     IF(matrixIndex<1.OR.matrixIndex>dynamicMapping%numberOfDynamicMatrices) THEN
       localError="The specified matrix index of "//TRIM(NumberToVString(matrixIndex,"*",err,error))// &
@@ -1552,7 +1557,7 @@ CONTAINS
     NULLIFY(vectorMatrices)
     CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*998)
     NULLIFY(nonlinearMatrices)
-    CALL EquationMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*998)
+    CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*998)
  
     vector=>nonlinearMatrices%residual
     IF(.NOT.ASSOCIATED(vector)) CALL FlagError("The residual vector vector is not associated.",err,error,*999)
@@ -1594,7 +1599,7 @@ CONTAINS
     NULLIFY(vectorMapping)
     CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
     NULLIFY(nonlinearMapping)
-    CALL EquationMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+    CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
     
     numberOfVariables=nonlinearMapping%numberOfResidualVariables
 
@@ -1636,7 +1641,7 @@ CONTAINS
     NULLIFY(vectorMapping)
     CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
     NULLIFY(nonlinearMapping)
-    CALL EquationMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+    CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
 
     numberOfVariables=nonlinearMapping%numberOfResidualVariables
     IF(SIZE(residualVariables,1)<numberOfVariables) THEN
@@ -1677,8 +1682,10 @@ CONTAINS
     ENTERS("Equations_ScalarFinalise",err,error,*999)
 
     IF(ASSOCIATED(scalarEquations)) THEN
-      CALL EquationsMapping_ScalarFinalise(scalarEquations%scalarMapping,err,error,*999)
-      CALL EquationsMatrices_ScalarFinalise(scalarEquations%scalarMatrices,err,error,*999)
+      IF(ASSOCIATED(scalarEquations%scalarMapping)) &
+        & CALL EquationsMapping_ScalarDestroy(scalarEquations%scalarMapping,err,error,*999)
+      IF(ASSOCIATED(scalarEquations%scalarMatrices)) &
+        & CALL EquationsMatrices_ScalarDestroy(scalarEquations%scalarMatrices,err,error,*999)
       DEALLOCATE(scalarEquations)
     ENDIF
        
@@ -1714,7 +1721,6 @@ CONTAINS
     equations%scalarEquations%equations=>equations
     NULLIFY(equations%scalarEquations%scalarMapping)
     NULLIFY(equations%scalarEquations%scalarMatrices)
-    equations%scalarEquations%scalarEquationsFinished=.FALSE.
         
     EXITS("Equations_ScalarInitialise")
     RETURN
@@ -1780,8 +1786,10 @@ CONTAINS
     ENTERS("Equations_VectorFinalise",err,error,*999)
 
     IF(ASSOCIATED(vectorEquations)) THEN
-      CALL EquationsMapping_VectorFinalise(vectorEquations%vectorMapping,err,error,*999)
-      CALL EquationsMatrices_VectorFinalise(vectorEquations%vectorMatrices,err,error,*999)
+      IF(ASSOCIATED(vectorEquations%vectorMapping)) &
+        & CALL EquationsMapping_VectorDestroy(vectorEquations%vectorMapping,err,error,*999)
+      IF(ASSOCIATED(vectorEquations%vectorMatrices)) &
+        & CALL EquationsMatrices_VectorDestroy(vectorEquations%vectorMatrices,err,error,*999)
       DEALLOCATE(vectorEquations)
     ENDIF
        
@@ -1817,7 +1825,6 @@ CONTAINS
     equations%vectorEquations%equations=>equations
     NULLIFY(equations%vectorEquations%vectorMapping)
     NULLIFY(equations%vectorEquations%vectorMatrices)
-    equations%vectorEquations%vectorEquationsFinished=.FALSE.
         
     EXITS("Equations_VectorInitialise")
     RETURN

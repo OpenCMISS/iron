@@ -82,10 +82,6 @@ MODULE EquationsMappingRoutines
     MODULE PROCEDURE EquationsMapping_DynamicMatricesCoeffsSet2
   END INTERFACE EquationsMapping_DynamicMatricesCoeffsSet
   
-  PUBLIC EquationsMapping_VectorCreateFinish,EquationsMapping_VectorCreateStart
-
-  PUBLIC EquationsMapping_VectorDestroy
-
   PUBLIC EquationsMapping_DynamicMatricesSet
 
   PUBLIC EquationsMapping_DynamicMatricesCoeffsSet
@@ -108,9 +104,15 @@ MODULE EquationsMappingRoutines
 
   PUBLIC EquationsMapping_RHSVariableTypeSet
 
+  PUBLIC EquationsMapping_ScalarDestroy
+
   PUBLIC EquationsMapping_SourceCoeffSet
 
   PUBLIC EquationsMapping_SourceVariableTypeSet
+
+  PUBLIC EquationsMapping_VectorCreateFinish,EquationsMapping_VectorCreateStart
+
+  PUBLIC EquationsMapping_VectorDestroy
 
 CONTAINS
 
@@ -119,7 +121,7 @@ CONTAINS
   !
 
   !>Calculates the equations vector mapping.
-  SUBROUTINE EquationsMapping_VectorCalaculate(vectorMapping,err,error,*)
+  SUBROUTINE EquationsMapping_VectorCalculate(vectorMapping,err,error,*)
 
     !Argument variables
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations vector mapping to calculate
@@ -141,11 +143,11 @@ CONTAINS
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: dependentVariable,sourceVariable,rowVariable
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("EquationsMapping_VectorCalaculate",err,error,*999)
+    ENTERS("EquationsMapping_VectorCalculate",err,error,*999)
 
     IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Equations mapping is not associated.",err,error,*999)
     NULLIFY(vectorEquations)
-    CALL EquationsMappingVector_EquationsVectorGet(vectorMapping,vectorEquations,err,error,*999)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
     NULLIFY(equations)
     CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
     NULLIFY(equationsSet)
@@ -539,7 +541,7 @@ CONTAINS
     IF(createValuesCache%numberOfResidualVariables/=0) THEN
       CALL EquationsMapping_NonlinearMappingInitialise(vectorMapping,err,error,*999)
       NULLIFY(nonlinearMapping)
-      CALL EquatinsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+      CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
       nonlinearMapping%numberOfResidualVariables=createValuesCache%numberOfResidualVariables
       ALLOCATE(nonlinearMapping%varToJacobianMap(nonlinearMapping%numberOfResidualVariables),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate variable to Jacobian maps.",err,error,*999)
@@ -846,12 +848,12 @@ CONTAINS
       ENDIF
     ENDIF
        
-    EXITS("EquationsMapping_VectorCalaculate")
+    EXITS("EquationsMapping_VectorCalculate")
     RETURN
-999 ERRORSEXITS("EquationsMapping_VectorCalaculate",err,error)
+999 ERRORSEXITS("EquationsMapping_VectorCalculate",err,error)
     RETURN 1
     
-  END SUBROUTINE EquationsMapping_VectorCalaculate
+  END SUBROUTINE EquationsMapping_VectorCalculate
 
   !
   !================================================================================================================================
@@ -869,6 +871,7 @@ CONTAINS
     LOGICAL :: isResidualType
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(VARYING_STRING) :: localError
 
@@ -878,9 +881,11 @@ CONTAINS
     IF(vectorMapping%vectorMappingFinished) CALL FlagError("Equations mapping has already been finished.",err,error,*999)
 
     NULLIFY(createValuesCache)
-    CALL EquationsMappingVector_CreateValuesGet(vectorMapping,createValuesCache,err,error,*999)
+    CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
     NULLIFY(equations)
-    CALL EquationsMappingVector_EquationsGet(vectorMapping,equations,err,error,*999)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
     NULLIFY(equationsSet)
     CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
 
@@ -956,7 +961,7 @@ CONTAINS
       ENDIF
     ENDDO !matrixIdx
     !Now calculate the equations mapping and clean up
-    CALL EquationsMapping_VectorMappingCalculate(vectorMapping,err,error,*999)
+    CALL EquationsMapping_VectorCalculate(vectorMapping,err,error,*999)
     CALL EquationsMapping_VectorCreateValuesCacheFinalise(vectorMapping%createValuesCache,err,error,*999)
     vectorMapping%vectorMappingFinished=.TRUE.
        
@@ -980,12 +985,15 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code 
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(EquationsType), POINTER :: equations
     
     ENTERS("EquationsMapping_VectorCreateStart",err,error,*998)
 
     IF(ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(vectorEquations)) CALL FlagError("Vector equations is not associated.",err,error,*999)
-    IF(.NOT.vectorEquations%vectorEquationsFinished) CALL FlagError("Vector equations has not been finished.",err,error,*999)
+    NULLIFY(equations)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
+    IF(.NOT.equations%equationsFinished) CALL FlagError("Vector equations equations has not been finished.",err,error,*999)
      
     CALL EquationsMapping_VectorInitialise(vectorEquations,err,error,*999)
     vectorMapping=>vectorEquations%vectorMapping
@@ -1041,7 +1049,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: dummyErr,matrixIdx,matrixIdx2,variableNumber
     LOGICAL :: isResidualType
-    TYPE(EquationsType), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(FIELD_TYPE), POINTER :: dependentField
     TYPE(VARYING_STRING) :: dummyError,localError
@@ -1052,8 +1061,10 @@ CONTAINS
     IF(ASSOCIATED(vectorMapping%createValuesCache)) &
       & CALL FlagError("Equations mapping create values cache is already associated.",err,error,*998)
     
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
     NULLIFY(equations)
-    CALL EquationsMappingVector_EquationsGet(vectorMapping,equations,err,error,*999)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
     NULLIFY(equationsSet)
     CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
     NULLIFY(dependentField)
@@ -1395,14 +1406,17 @@ CONTAINS
     REAL(DP), ALLOCATABLE :: oldDynamicMatrixCoefficients(:)
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("EquationsMapping_DynamicMatricesSetAll",err,error,*999)
 
     IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated.",err,error,*999)
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
     NULLIFY(equations)
-    CALL EquationsMappingVector_EquationsGet(vectorMapping,equations,err,error,*999)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
     NULLIFY(equationsSet)
     CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
     NULLIFY(createValuesCache)
@@ -1551,6 +1565,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("EquationsMapping_DynamicMatricesSet1",err,error,*999)
@@ -1558,8 +1573,10 @@ CONTAINS
     IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated.",err,error,*999)
     IF(vectorMapping%vectorMappingFinished) CALL FlagError("Vector equations mapping has already been finished.",err,error,*999)
     
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
     NULLIFY(equations)
-    CALL EquationsMappingVector_EquationsGet(vectorMapping,equations,err,error,*999)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
 
     SELECT CASE(equations%timeDependence)
     CASE(EQUATIONS_STATIC)
@@ -1600,6 +1617,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("EquationsMapping_DynamicMatricesSet2",err,error,*999)
@@ -1607,8 +1625,10 @@ CONTAINS
     IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated.",err,error,*999)
     IF(vectorMapping%vectorMappingFinished) CALL FlagError("Vector equations mapping has already been finished.",err,error,*999)
 
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
     NULLIFY(equations)
-    CALL EquationsMappingVector_EquationsGet(vectorMapping,equations,err,error,*999)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
 
     SELECT CASE(equations%timeDependence)
     CASE(EQUATIONS_STATIC)
@@ -1655,6 +1675,7 @@ CONTAINS
     !Local Variables
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("EquationsMapping_DynamicMatricesCoeffsSet1",err,error,*999)
@@ -1664,8 +1685,10 @@ CONTAINS
  
     NULLIFY(createValuesCache)
     CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
     NULLIFY(equations)
-    CALL EquationsMappingVector_EquationsGet(vectorMapping,equations,err,error,*999)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
     
     SELECT CASE(equations%timeDependence)
     CASE(EQUATIONS_STATIC)
@@ -1711,8 +1734,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code 
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(EquationsType), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("EquationsMapping_DynamicMatricesCoeffsSet2",err,error,*999)
@@ -1722,8 +1746,10 @@ CONTAINS
 
     NULLIFY(createValuesCache)
     CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
     NULLIFY(equations)
-    CALL EquationsMappingVector_EquationsGet(vectorMapping,equations,err,error,*999)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
     
     SELECT CASE(equations%timeDependence)
     CASE(EQUATIONS_STATIC)
@@ -1768,6 +1794,7 @@ CONTAINS
     INTEGER(INTG) :: matrixIdx
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(FIELD_TYPE), POINTER :: dependentField
     TYPE(VARYING_STRING) :: localError
@@ -1780,8 +1807,10 @@ CONTAINS
 
     NULLIFY(createValuesCache)
     CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
     NULLIFY(equations)
-    CALL EquationsMappingVector_EquationsGet(vectorMapping,equations,err,error,*999)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
     
     IF(dynamicVariableType==0) THEN
       createValuesCache%dynamicVariableType=0
@@ -1978,7 +2007,7 @@ CONTAINS
        CALL EquationsMapping_NonlinearMappingFinalise(vectorMapping%nonlinearMapping,err,error,*999)
        CALL EquationsMapping_RHSMappingFinalise(vectorMapping%rhsMapping,err,error,*999)      
        CALL EquationsMapping_SourceMappingFinalise(vectorMapping%sourceMapping,err,error,*999)      
-       CALL EquationsMapping_CreateValuesCacheFinalise(vectorMapping%createValuesCache,err,error,*999)
+       CALL EquationsMapping_VectorCreateValuesCacheFinalise(vectorMapping%createValuesCache,err,error,*999)
        DEALLOCATE(vectorMapping)
     ENDIF
        
@@ -2013,6 +2042,7 @@ CONTAINS
     IF(err/=0) CALL FlagError("Could not allocate vector equations vector mapping.",err,error,*999)
     vectorEquations%vectorMapping%vectorEquations=>vectorEquations
     vectorEquations%vectorMapping%vectorMappingFinished=.FALSE.
+    NULLIFY(vectorEquations%vectorMapping%vectorMatrices)
     NULLIFY(vectorEquations%vectorMapping%rowDofsMapping)
     NULLIFY(vectorEquations%vectorMapping%dynamicMapping)
     NULLIFY(vectorEquations%vectorMapping%linearMapping)
@@ -2020,7 +2050,7 @@ CONTAINS
     NULLIFY(vectorEquations%vectorMapping%rhsMapping)
     NULLIFY(vectorEquations%vectorMapping%sourceMapping)
     NULLIFY(vectorEquations%vectorMapping%createValuesCache)
-    CALL EquationsMapping_CreateValuesCacheInitialise(vectorEquations%vectorMapping,err,error,*999)        
+    CALL EquationsMapping_VectorCreateValuesCacheInitialise(vectorEquations%vectorMapping,err,error,*999)        
        
     EXITS("EquationsMapping_VectorInitialise")
     RETURN
@@ -2209,8 +2239,9 @@ CONTAINS
     INTEGER(INTG) :: matrixIdx
     INTEGER(INTG), ALLOCATABLE :: oldLinearMatrixVariableTypes(:)
     REAL(DP), ALLOCATABLE :: oldLinearMatrixCoefficients(:)
-    TYPE(EquationsType), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(FIELD_TYPE), POINTER :: dependentField
     TYPE(VARYING_STRING) :: localError
@@ -2222,9 +2253,11 @@ CONTAINS
       
 
     NULLIFY(createValuesCache)
-    CALL EquationsMappingVector_CreateValueCache(vectorMapping,createValuesCache,err,error,*999)
+    CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
     NULLIFY(equations)
-    CALL EquationsMappingVector_EquationsGet(vectorMapping,equations,err,error,*999)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
     NULLIFY(equationsSet)
     CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
 
@@ -2408,6 +2441,7 @@ CONTAINS
     INTEGER(INTG) :: matrixIdx
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(FIELD_TYPE), POINTER :: dependentField
     TYPE(VARYING_STRING) :: localError
@@ -2419,8 +2453,10 @@ CONTAINS
 
     NULLIFY(createValuesCache)
     CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
     NULLIFY(equations)
-    CALL EquationsMappingVector_EquationsGet(vectorMapping,equations,err,error,*999)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
     NULLIFY(equationsSet)
     CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
     NULLIFY(dependentField)
@@ -2603,6 +2639,7 @@ CONTAINS
     INTEGER(INTG) :: matrixIdx,variableIdx,numberOfResidualVariables,residualVariableType
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(FIELD_TYPE), POINTER :: dependentField
     TYPE(VARYING_STRING) :: localError
@@ -2614,8 +2651,10 @@ CONTAINS
 
     NULLIFY(createValuesCache)
     CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
     NULLIFY(equations)
-    CALL EquationsMappingVector_EquationsGet(vectorMapping,equations,err,error,*999)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
     NULLIFY(equationsSet)
     CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
     
@@ -2765,7 +2804,7 @@ CONTAINS
 
     ENTERS("EquationsMapping_RHSMappingInitialise",err,error,*998)
 
-    IF(ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated.",err,error,*998)
     IF(ASSOCIATED(vectorMapping%rhsMapping)) &
       & CALL FlagError("Vector equations mapping RHS mapping is already associated.",err,error,*998)
     
@@ -2801,6 +2840,7 @@ CONTAINS
     INTEGER(INTG) :: matrixIdx
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(FIELD_TYPE), POINTER :: dependentField
     TYPE(VARYING_STRING) :: localError
@@ -2812,8 +2852,10 @@ CONTAINS
 
     NULLIFY(createValuesCache)
     CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
     NULLIFY(equations)
-    CALL EquationsMappingVector_EquationsGet(vectorMapping,equations,err,error,*999)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
     NULLIFY(equationsSet)
     CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
 
@@ -2871,7 +2913,99 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the coefficient applied to the equations set source vector.
+  !>Destroy an scalar equations mapping.
+  SUBROUTINE EquationsMapping_ScalarDestroy(scalarMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingScalarType), POINTER :: scalarMapping !<A pointer the scalar equations mapping to destroy
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsMapping_ScalarDestroy",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(scalarMapping)) CALL FlagError("Scalar equations mapping is not associated.",err,error,*999)
+    
+    CALL EquationsMapping_ScalarFinalise(scalarMapping,err,error,*999)
+        
+    EXITS("EquationsMapping_ScalarDestroy")
+    RETURN
+999 ERRORSEXITS("EquationsMapping_ScalarDestroy",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE EquationsMapping_ScalarDestroy
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises the scalar equations mapping and deallocates all memory.
+  SUBROUTINE EquationsMapping_ScalarFinalise(scalarMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingScalarType), POINTER :: scalarMapping !<A pointer to the scalar equations mapping to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsMapping_ScalarFinalise",err,error,*999)
+
+    IF(ASSOCIATED(scalarMapping)) THEN
+      DEALLOCATE(scalarMapping)
+    ENDIF
+    
+    EXITS("EquationsMapping_ScalarFinalise")
+    RETURN
+999 ERRORSEXITS("EquationsMapping_ScalarFinalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_ScalarFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises the scalar equations mapping.
+  SUBROUTINE EquationsMapping_ScalarInitialise(scalarEquations,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsScalarType), POINTER :: scalarEquations !<A pointer to the scalar equations to initialise the scalar equations mapping for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
+
+    ENTERS("EquationsMapping_ScalarInitialise",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(scalarEquations)) CALL FlagError("Scalar equations is not associated.",err,error,*998)
+    IF(ASSOCIATED(scalarEquations%scalarMapping)) CALL FlagError("Scalar equations mapping is already associated.",err,error,*998)
+     
+    ALLOCATE(scalarEquations%scalarMapping,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate scalar equations scalar mapping.",err,error,*999)
+    scalarEquations%scalarMapping%scalarEquations=>scalarEquations
+    scalarEquations%scalarMapping%scalarMappingFinished=.FALSE.
+    NULLIFY(scalarEquations%scalarMapping%scalarMatrices)
+    NULLIFY(scalarEquations%scalarMapping%functionMapping)
+    NULLIFY(scalarEquations%scalarMapping%normMapping)
+    NULLIFY(scalarEquations%scalarMapping%dotProductMapping)
+    NULLIFY(scalarEquations%scalarMapping%quadraticMapping)
+    NULLIFY(scalarEquations%scalarMapping%createValuesCache)
+    !CALL EquationsMapping_ScalarCreateValuesCacheInitialise(scalarEquations%scalarMapping,err,error,*999)        
+       
+    EXITS("EquationsMapping_ScalarInitialise")
+    RETURN
+999 CALL EquationsMapping_ScalarFinalise(scalarEquations%scalarMapping,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMapping_ScalarInitialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_ScalarInitialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the coefficient applied to the equations set source vectorQ.
   SUBROUTINE EquationsMapping_SourceCoeffSet(vectorMapping,sourceCoefficient,err,error,*)
 
     !Argument variables
@@ -2982,6 +3116,7 @@ CONTAINS
     !Local Variables
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(FIELD_TYPE), POINTER :: sourceField
     TYPE(VARYING_STRING) :: localError
@@ -2993,8 +3128,10 @@ CONTAINS
 
     NULLIFY(createValuesCache)
     CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
     NULLIFY(equations)
-    CALL EquationsMappingVector_EquationsGet(vectorMapping,equations,err,error,*999)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
     NULLIFY(equationsSet)
     CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
 
