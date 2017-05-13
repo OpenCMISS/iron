@@ -253,7 +253,7 @@ CONTAINS
        CALL FlagError(localError,err,error,*999)
     END SELECT
     !Set full specification
-    IF (.NOT.ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is already allocated.", &
+    IF (ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is already allocated.", &
          & err,error,*999)
     ALLOCATE(equationsSet%specification(3),stat=err)
     IF (err/=0) CALL FlagError("Could not allocate equations set specification.",err,error,*999)
