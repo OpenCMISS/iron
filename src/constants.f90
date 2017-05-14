@@ -305,7 +305,8 @@ MODULE CONSTANTS
   INTEGER(INTG), PARAMETER :: TENSOR_TO_VOIGT3(3,3)=RESHAPE([1,4,5,4,2,6,5,6,3],[3,3]) !<TENSOR_TO_VOIGT3(i,j) converts a pair (i,j) of rank 2 symmetric tensor indices to Voigt index (a) in 3 dimensions.
   INTEGER(INTG), PARAMETER :: VOIGT_TO_TENSOR3(2,6)=RESHAPE([1,1,2,2,3,3,1,2,1,3,2,3],[2,6]) !<VOIGT_TO_TENSOR3(k,a) converts a Voigt index (a) to a pair (k=1,k=2) of rank 2 symmetric tensor indices in 3 dimensions.
   INTEGER(INTG), PARAMETER :: TENSOR_TO_VOIGT(3,3,3)=RESHAPE([1,0,0,0,0,0,0,0,0,1,3,0,3,2,0,0,0,0,1,4,5,4,2,6,5,6,3],[3,3,3]) !<TENSOR_TO_VOIGT(i,j,numberOfDimensions) converts a pair of (i,j) of a symmetric tensor to Voigt index (a) for a rank 2 tensor with numberOfDimensions dimensions.
-  INTEGER(INTG), PARAMETER :: VOIGT_TO_TENSOR(2,6,3)=RESHAPE([1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,2,1,2,0,0,0,0,0,0,1,1,2,2,3,3,1,2,1,3,2,3],[2,6,3]) !<VOIGT_TO_TENSOR(k,a,numberOfDimensions). Converts a Voigt index (a) to a pair (k=1,k=2) of rank 2 symeetric tensor indices in numberOfDimensions dimensions. 
+  INTEGER(INTG), PARAMETER :: VOIGT_TO_TENSOR(2,6,3)= &
+    & RESHAPE([1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,2,1,2,0,0,0,0,0,0,1,1,2,2,3,3,1,2,1,3,2,3],[2,6,3]) !<VOIGT_TO_TENSOR(k,a,numberOfDimensions). Converts a Voigt index (a) to a pair (k=1,k=2) of rank 2 symeetric tensor indices in numberOfDimensions dimensions. 
   !>@}
 
 END MODULE CONSTANTS 
