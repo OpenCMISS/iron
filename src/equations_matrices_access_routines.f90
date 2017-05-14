@@ -483,7 +483,8 @@ CONTAINS
     IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector matrices is not associated.",err,error,*999)
 
     dynamicMatrices=>vectorMatrices%dynamicMatrices
-    IF(.NOT.ASSOCIATED(dynamicMatrices)) CALL FlagError("Dynamic matrices is not associated for the vector matrices.",err,error,*999)
+    IF(.NOT.ASSOCIATED(dynamicMatrices)) CALL FlagError("Dynamic matrices is not associated for the vector matrices.", &
+      & err,error,*999)
        
     EXITS("EquationsMatricesVector_DynamicMatricesGet")
     RETURN
@@ -634,7 +635,8 @@ CONTAINS
     IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector matrices is not associated.",err,error,*999)
 
     vectorEquations=>vectorMatrices%vectorEquations
-    IF(.NOT.ASSOCIATED(vectorEquations)) CALL FlagError("Vector equations is not associated for the vector matrices.",err,error,*999)
+    IF(.NOT.ASSOCIATED(vectorEquations)) CALL FlagError("Vector equations is not associated for the vector matrices.", &
+      & err,error,*999)
        
     EXITS("EquationsMatricesVector_VectorEquationsGet")
     RETURN
