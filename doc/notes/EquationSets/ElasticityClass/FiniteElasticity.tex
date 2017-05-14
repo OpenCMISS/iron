@@ -507,6 +507,36 @@ and the residual equation is
 \end{equation}
 where $N$ is the number of dimensions.
 
+In order to solve the nonlinear system of equations a Newton scheme can be
+used. To calculate the Jacobian of the system we need to calculate the
+variation of the virtual work statement.
+
+This requires a linerization.
+
+Consider a linearisation of the second Piola-Kirchoff stress.
+\begin{equation}
+  L\fnof{\tensor{T}}{\vectr{u},\delta\vectr{u}}=\fnof{\tensor{T}}{\vectr{u},\delta\vectr{u}}+
+          \delta\fnof{\tensor{T}}{\vectr{u},\delta\vectr{u}}
+\end{equation}
+
+A linearisation of the Kirchoff stress can thus be calculated from a push
+forward of the linearisation of the second Piola-Kirchoff stress
+
+\begin{equation}
+  \begin{split}
+    L\fnof{\tensor{\tau}}{\vectr{u},\delta\vectr{u}}&=\tensor{F}_{e}L\fnof{\tensor{T}}{\vectr{u},\delta\vectr{u}}\transpose{\tensor{F}_{e}} \\
+    &= \tensor{F}_{e}\pbrac{\fnof{\tensor{T}}{\vectr{u},\delta\vectr{u}}+
+      \delta\fnof{\tensor{T}}{\vectr{u},\delta\vectr{u}}}\transpose{\tensor{F}_{e}}
+    \\
+    &=
+    \tensor{F}_{e}\fnof{\tensor{T}}{\vectr{u},\delta\vectr{u}}\transpose{\tensor{F}_{e}}+
+    \tensor{F}_{e}\delta\fnof{\tensor{T}}{\vectr{u},\delta\vectr{u}}\transpose{\tensor{F}_{e}}
+    \\
+    & =\fnof{\tensor{\tau}}{\vectr{u},\delta\vectr{u}}+\tensor{F}_{e}\delta\fnof{\tensor{T}}{\vectr{u},\delta\vectr{u}}\transpose{\tensor{F}_{e}}
+  \end{split}
+\end{equation}
+
+
 \clearpage
 
 \subsection{Old Stuff}
