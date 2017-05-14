@@ -8753,7 +8753,8 @@ CONTAINS
     IF(ASSOCIATED(mesh)) THEN
       IF(mesh%MESH_FINISHED) THEN
         CALL MESH_TOPOLOGY_ELEMENTS_GET(mesh,meshComponentNumber,elements,err,error,*999)
-        CALL MeshTopology_ElementCheckExistsMeshElements(elements,userElementNumber,elementExists,globalElementNumber,err,error,*999)
+        CALL MeshTopology_ElementCheckExistsMeshElements(elements,userElementNumber,elementExists,globalElementNumber, &
+          & err,error,*999)
       ELSE
         CALL FlagError("Mesh has not been finished.",err,error,*999)
       ENDIF
@@ -8829,7 +8830,8 @@ CONTAINS
     
     ENTERS("MeshTopology_ElementGetMeshElements",err,error,*999)
 
-    CALL MeshTopology_ElementCheckExistsMeshElements(meshElements,userElementNumber,elementExists,globalElementNumber,err,error,*999)
+    CALL MeshTopology_ElementCheckExistsMeshElements(meshElements,userElementNumber,elementExists,globalElementNumber, &
+      & err,error,*999)
     IF(.NOT.elementExists) THEN
       meshComponentTopology=>meshElements%meshComponentTopology
       IF(ASSOCIATED(meshComponentTopology)) THEN
