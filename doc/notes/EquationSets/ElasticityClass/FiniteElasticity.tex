@@ -86,11 +86,11 @@ The \textit{right Cauchy-Green (or Green) deformation tensor}, $\tensor{C}$, is 
 \begin{equation}
   \mapping{\fnof{\tensor{C}}{X}}{\tangentspace{\embedmanifold{B}}{X}}{\tangentspace{\embedmanifold{B}}{X}}
 \end{equation}
-\ie $\fnof{\tensor{C}}{X}=\transpose{\fnof{\tensor{F}}{X}}\fnof{\tensor{F}}{X}$
-or $\tensor{C}=\transpose{\tensor{F}}\tensor{F}$. In terms of coordinates we
+as the pullback of the spatial metric tensor \ie $\fnof{\tensor{C}}{X}=\transpose{\fnof{\tensor{F}}{X}}\fnof{\tensor{g}}{x}\fnof{\tensor{F}}{X}$
+or $\tensor{C}=\transpose{\tensor{F}}\tensor{g}\tensor{F}$ where $x=\fnof{\chi}{X}$. In terms of coordinates we
 have
 \begin{equation}
-  C^{A}_{B}=\pbrac{\transpose{F}}^{A}_{a}F^{a}_{B}=g_{ab}G^{AC}\delby{\chi^{b}}{X^{C}}\delby{\chi^{a}}{X^{B}}
+  C_{AB}=g_{ab}F^{a}_{A}F^{b}_{B}
 \end{equation}
 
 If $\tensor{C}$ is invertible we also have $\tensor{B}=\inverse{\tensor{C}}$
@@ -100,11 +100,11 @@ The \textit{left Cauchy-Green (or Finger) deformation tensor}, $\tensor{b}$, is 
 \begin{equation}
   \mapping{\fnof{\tensor{b}}{x}}{\tangentspace{\fnof{\chi}{\embedmanifold{B}}}{x}}{\tangentspace{\fnof{\chi}{\embedmanifold{B}}}{x}}
 \end{equation}
-\ie $\fnof{\tensor{b}}{x}=\fnof{\tensor{F}}{X}\transpose{\fnof{\tensor{F}}{X}}$
-or $\tensor{b}=\tensor{F}\transpose{\tensor{F}}$ where $X=\fnof{\inverse{\chi}}{x}$. In terms of coordinates we
+as the push forward of the material metric tensor \ie $\fnof{\tensor{b}}{x}=\fnof{\tensor{F}}{X}\fnof{\tensor{G}}{X}\transpose{\fnof{\tensor{F}}{X}}$
+or $\tensor{b}=\tensor{F}\tensor{G}\transpose{\tensor{F}}$ where $X=\fnof{\inverse{\chi}}{x}$. In terms of coordinates we
 have
 \begin{equation}
-  b^{a}_{b}=\pbrac{\transpose{F}}^{A}_{a}F^{a}_{B}=g_{ab}G^{AC}\delby{\chi^{b}}{X^{C}}\delby{\chi^{a}}{X^{B}}
+  b^{ab}=G^{AB}F^{a}_{A}F^{b}_{B}
 \end{equation}
 
 We also have $\tensor{c}=\inverse{\tensor{b}}$.
@@ -146,7 +146,7 @@ where $\tensor{Q}$ is the rotation matrix from $\vectr{X}$ to $\vectr{\nu}$ \ie
 
 To allow for growth we use a multiplicative decomposition approach \ie
 \begin{equation}
-  \fnof{\tensor{F}}{\vectr{\nu}}=\fnof{\tensor{F}_{g}}{\vectr{\nu}}\fnof{\tensor{F}_{e}}{\vectr{\nu}}
+  \fnof{\tensor{F}}{\vectr{\nu}}=\fnof{\tensor{F}_{e}}{\vectr{\nu}}\fnof{\tensor{F}_{g}}{\vectr{\nu}}
 \end{equation}
 where $\fnof{\tensor{F}_{g}}{\vectr{\nu}}$ is the growth tensor with
 respect to fibre coordinates and $\fnof{\tensor{F}_{e}}{\vectr{\nu}}$ is the
@@ -155,16 +155,16 @@ elastic component of the deformation gradient tensor in fibre coordinates.
 The elastic component of the deformation gradient tensor can be calculated
 from
 \begin{equation}
-  \fnof{\tensor{F}_{e}}{\vectr{\nu}}=\fnof{\inverse{\tensor{F}_{g}}}{\vectr{\nu}}\fnof{\tensor{F}}{\vectr{\nu}}
+  \fnof{\tensor{F}_{e}}{\vectr{\nu}}=\fnof{\tensor{F}}{\vectr{\nu}}\fnof{\inverse{\tensor{F}_{g}}}{\vectr{\nu}}
 \end{equation}
 
 In component form we have
 \begin{equation}
-  F^{i}_{A}=\pbrac{F_{g}}^{B}_{A}\pbrac{F_{e}}^{i}_{B}
+  F^{i}_{A}=\pbrac{F_{e}}^{i}_{B}\pbrac{F_{g}}^{B}_{A}
 \end{equation}
 and
 \begin{equation}
-  \pbrac{F_{e}}^{i}_{B}=\pbrac{\inverse{F_{g}}}^{A}_{B}F^{i}_{A}
+  \pbrac{F_{e}}^{i}_{B}=F^{i}_{A}\pbrac{\inverse{F_{g}}}^{A}_{B}
 \end{equation}
 
 The Jacobian of the growth component of the deformation is given by
