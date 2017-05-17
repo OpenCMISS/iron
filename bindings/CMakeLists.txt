@@ -107,10 +107,13 @@ if (WITH_Python_BINDINGS)
         WORKING_DIRECTORY ${Iron_SOURCE_DIR}/bindings
     )
 
-    string(SUBSTRING ${PYTHONLIBS_VERSION_STRING} 0 1 PYTHONLIBS_MAJOR_VERSION)
+    three_part_version_to_vars(${PYTHONLIBS_VERSION_STRING} PYTHONLIBS_MAJOR_VERSION PYTHONLIBS_MINOR_VERSION PYTHONLIBS_PATCH_VERSION)
     if(${PYTHONLIBS_MAJOR_VERSION} STREQUAL "3")
         set(PYTHONLIBS_SWIG_FLAGS -py3)
     endif()
+
+    set(_PYTHON_DESTINATION_PREFIX lib/python${PYTHONLIBS_MAJOR_VERSION}.${PYTHONLIBS_MINOR_VERSION})
+    file(RELATIVE_PATH _REL_INSTALL_PATH ${CMAKE_INSTALL_PREFIX}/${_PYTHON_DESTINATION_PREFIX}/$<CONFIG>/opencmiss.iron/opencmiss/iron ${CMAKE_INSTALL_PREFIX}/lib)
 
     # Generate C wrapper
     set(PYTHON_WRAPPER "${CMAKE_CURRENT_BINARY_DIR}/iron_python_wrapper.c")
@@ -139,6 +142,14 @@ if (WITH_Python_BINDINGS)
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron
     )
+    if (APPLE)
+        set_target_properties(${IRON_PYTHON_MODULE} PROPERTIES
+            INSTALL_RPATH "@loader_path/${_REL_INSTALL_PATH}")
+    elseif (LINUX)
+        set_target_properties(${IRON_PYTHON_MODULE} PROPERTIES
+            INSTALL_RPATH "\$ORIGIN/${_REL_INSTALL_PATH}")
+    endif ()
+
     # "Bugfix": If we use the same source file name, there will be two processes messing with
     # the same fortran module file which can lead to errors using -j parallel builds.
     # By this we simply force to have iron_c build before the python module.
@@ -192,9 +203,6 @@ if (WITH_Python_BINDINGS)
         COMMAND ${CMAKE_COMMAND} -E copy ${IRON_PY} ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron/iron.py
     )
     
-    three_part_version_to_vars(${PYTHONLIBS_VERSION_STRING} PYTHONLIBS_MAJOR_VERSION PYTHONLIBS_MINOR_VERSION PYTHONLIBS_PATCH_VERSION)
-    set(_PYTHON_DESTINATION_PREFIX lib/python${PYTHONLIBS_MAJOR_VERSION}.${PYTHONLIBS_MINOR_VERSION})
-
     install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}/opencmiss
         DESTINATION ${_PYTHON_DESTINATION_PREFIX}/$<CONFIG>/opencmiss.iron
         COMPONENT PythonBindings)
