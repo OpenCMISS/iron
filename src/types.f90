@@ -1830,6 +1830,20 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     REAL(DP) :: sourceCoefficient !<The coefficient multiplying the source vector.
   END TYPE EquationsMappingVectorCreateValuesCacheType
 
+  !>Contains information on the vector equations LHS mapping i.e., how a field variable is mapped to the vector equations rows
+  !>for this equations mapping.
+  TYPE EquationsMappingLHSType
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations vector mapping
+    INTEGER(INTG) :: lhsVariableType !<The variable type number mapped to the RHS vector
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: lhsVariable !<A pointer to the variable that is mapped to the RHS vector
+    INTEGER(INTG) :: numberOfRows !<The number of local rows (excluding ghost rows) in the equations 
+    INTEGER(INTG) :: totalNumberOfRows !<The number of local rows (including ghost rows) in the equations 
+    INTEGER(INTG) :: numberOfGlobalRows !<The number of global rows in the equations 
+    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: rowDofsMapping !<A pointer to the RHS variable domain mapping
+    INTEGER(INTG), ALLOCATABLE :: lhsDOFToEquationsRowMap(:) !<lhsDOFToEquationsRowMap(dofIdx). The mapping from the dofIdx'th LHS dof to the vector equations row.   
+    INTEGER(INTG), ALLOCATABLE :: equationsRowToLHSDOFMap(:) !<equationsRowToLHSDOFMap(rowIdx). The mapping from the rowIdx'th row of the equations to the LHS dof.   
+  END TYPE EquationsMappingLHSType
+
   !>Contains information on the mapping of field variables for a scalar equation
   TYPE EquationsMappingScalarType
     TYPE(EquationsScalarType), POINTER :: scalarEquations !<A pointer to the scalar equations for the mapping.
@@ -1848,6 +1862,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     LOGICAL :: vectorMappingFinished !<Is .TRUE. if the vector mapping has been finished. .FALSE. if not.
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the equations vector matrices associated with this vector equations mapping.
     !Row mappings
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping !<A pointer to the LHS i.e., vector equations rows, mapping.
     INTEGER(INTG) :: numberOfRows !<The number of local rows (excluding ghost rows) in the equations matrices
     INTEGER(INTG) :: totalNumberOfRows !<The number of local rows (including ghost rows) in the equations matrices
     INTEGER(INTG) :: numberOfGlobalRows !<The number of global rows in the equations matrices

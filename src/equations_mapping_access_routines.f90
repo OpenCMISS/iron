@@ -71,6 +71,8 @@ MODULE EquationsMappingAccessRoutines
 
   PUBLIC EquationsMappingVector_DynamicMappingGet
   
+  PUBLIC EquationsMappingVector_LHSMapingGet
+  
   PUBLIC EquationsMappingVector_LinearMappingGet
   
   PUBLIC EquationsMappingVector_NonlinearMappingGet
@@ -209,6 +211,36 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMappingVector_DynamicMappingGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the LHS vector mapping for an vector mapping.
+  SUBROUTINE EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations vector mapping to get the LHS mapping for
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping !<On exit, a pointer to the LHS Mapping in the specified vector equations mapping. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingVector_LHSMappingGet",err,error,*998)
+
+    IF(ASSOCIATED(lhsMapping)) CALL FlagError("LHS mapping is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector mapping is not associated.",err,error,*999)
+
+    lhsMapping=>vectorMapping%lhsMapping
+    IF(.NOT.ASSOCIATED(lhsMapping)) CALL FlagError("LHS mapping is not associated for the vector mapping.",err,error,*999)
+       
+    EXITS("EquationsMappingVector_LHSMappingGet")
+    RETURN
+999 NULLIFY(lhsMapping)
+998 ERRORSEXITS("EquationsMappingVector_LHSMappingGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingVector_LHSMappingGet
 
   !
   !================================================================================================================================

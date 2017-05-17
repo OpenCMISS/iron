@@ -88,6 +88,8 @@ MODULE EquationsMappingRoutines
 
   PUBLIC EquationsMapping_DynamicVariableTypeSet
 
+  PUBLIC EquationsMapping_LHSVariableTypeSet
+
   PUBLIC EquationsMapping_LinearMatricesCoeffsSet
 
   PUBLIC EquationsMapping_LinearMatricesNumberSet
@@ -977,11 +979,12 @@ CONTAINS
   !
 
   !>Finishes the process of creating an equations vector mapping for an equations
-  SUBROUTINE EquationsMapping_VectorCreateStart(vectorEquations,vectorMapping,err,error,*)
+  SUBROUTINE EquationsMapping_VectorCreateStart(vectorEquations,lhsVariableType,vectorMapping,err,error,*)
 
     !Argument variables
     TYPE(EquationsVectorType), POINTER :: vectorEquations !<A pointer to the equations to create the equations vector mapping from.
-    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<On return, a pointer to the equations vector mapping. This must not be associated on entry
+    INTEGER(INTG), INTENT(IN) :: lhsVariableType !<The variable type associated with the equations left hand side (LHS). The LHS variable controls the row mappings for vector equations sets. 
+     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<On return, a pointer to the equations vector mapping. This must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code 
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -993,11 +996,28 @@ CONTAINS
     IF(.NOT.ASSOCIATED(vectorEquations)) CALL FlagError("Vector equations is not associated.",err,error,*999)
     NULLIFY(equations)
     CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
+    NULLIFY(equationsSet)
+    CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
+    NULLIFY(dependentField)
+    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
     IF(.NOT.equations%equationsFinished) CALL FlagError("Vector equations equations has not been finished.",err,error,*999)
+
+    NULIFY(lhsVariable)
+    CALL Field_VariableGet(dependentField,lhsVariableType,lhsVariable,err,error,*999)
+    IF(.NOT.ASSOCIATED(lhsVariable%DOMAIN_MAPPING))  &
+      & CALL FlagError("LHS variable domain mapping is not associated.",err,error,*999)
      
-    CALL EquationsMapping_VectorInitialise(vectorEquations,err,error,*999)
-    vectorMapping=>vectorEquations%vectorMapping
-       
+    CALL EquationsMapping_VectorInitialise(vectorEquations,lhsVariable,err,error,*999)
+    CALL EquationsMappingVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+    NULLIFY(lhsMapping)
+    CALL EquationsMapping_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
+    lhsMapping%lhsVariableType=lhsVariableType
+    lhsMapping%lhsVariable=>lhsVariable
+    lhsMapping%rowDofsMapping=>lhsVariable%DOMAIN_MAPPING
+    lhsMapping%numberOfRows=lhsVariable%NUMBER_OF_DOFS
+    lhsMapping%totalNumberOfRows=lhsVariable%TOTAL_NUMBER_OF_DOFS
+    lhsMapping%numberOfGlobalRows=lhsVariable%NUMBER_OF_GLOBAL
+   
     EXITS("EquationsMapping_VectorCreateStart")
     RETURN
 999 NULLIFY(vectorMapping)
@@ -2043,6 +2063,7 @@ CONTAINS
     vectorEquations%vectorMapping%vectorEquations=>vectorEquations
     vectorEquations%vectorMapping%vectorMappingFinished=.FALSE.
     NULLIFY(vectorEquations%vectorMapping%vectorMatrices)
+    NULLIFY(vectorEquations%vectorMapping%lhsMapping)
     NULLIFY(vectorEquations%vectorMapping%rowDofsMapping)
     NULLIFY(vectorEquations%vectorMapping%dynamicMapping)
     NULLIFY(vectorEquations%vectorMapping%linearMapping)
@@ -2050,6 +2071,8 @@ CONTAINS
     NULLIFY(vectorEquations%vectorMapping%rhsMapping)
     NULLIFY(vectorEquations%vectorMapping%sourceMapping)
     NULLIFY(vectorEquations%vectorMapping%createValuesCache)
+    CALL EquationsMapping_LHSMappingInitialise(vectorEquations%vectorMapping,err,error,*999)
+    
     CALL EquationsMapping_VectorCreateValuesCacheInitialise(vectorEquations%vectorMapping,err,error,*999)        
        
     EXITS("EquationsMapping_VectorInitialise")
@@ -2103,6 +2126,72 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMapping_ResidualVariablesNumberSet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises the vector equations mapping LHS mapping and deallocates all memory
+  SUBROUTINE EquationsMapping_LHSMappingFinalise(lhsMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping !<A pointer to the LHS mapping to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMapping_LHSMappingFinalise",err,error,*999)
+
+    IF(ASSOCIATED(lhsMapping)) THEN
+      IF(ALLOCATED(lhsMapping%lhsDOFToEquationsRowMap)) DEALLOCATE(lhsMapping%lhsDOFToEquationsRowMap)
+      IF(ALLOCATED(lhsMapping%equationsRowToLHSDOFMap)) DEALLOCATE(lhsMapping%equationsRowToLHSDOFMap)
+      DEALLOCATE(lhsMapping)
+    ENDIF
+       
+    EXITS("EquationsMapping_LHSMappingFinalise")
+    RETURN
+999 ERRORSEXITS("EquationsMapping_LHSMappingFinalise",err,error)
+    RETURN 1
+  END SUBROUTINE EquationsMapping_LHSMappingFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises the equations mapping LHS mapping
+  SUBROUTINE EquationsMapping_LHSMappingInitialise(vectorMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations mapping to initialise the LHS mapping for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
+
+    ENTERS("EquationsMapping_LHSMappingInitialise",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated.",err,error,*998)
+    IF(ASSOCIATED(vectorMapping%lhsMapping)) &
+      & CALL FlagError("Vector equations mapping LHS mapping is already associated.",err,error,*998)
+    
+    ALLOCATE(vectorMapping%lhsMapping,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate equations mapping LHS mapping.",err,error,*999)
+    vectorMapping%lhsMapping%vectorMapping=>vectorMapping        
+    vectorMapping%lhsMapping%lhsVariableType=0
+    NULLIFY(vectorMapping%lhsMapping%lhsVariable)
+    vectorMapping%lhsMapping%numberOfRows=0
+    vectorMapping%lhsMapping%totalNumberOfRows=0
+    vectorMapping%lhsMapping%numberOfGlobalRows=0
+    NULLIFY(vectorMapping%lhsMapping%rowDofsMapping)
+       
+    EXITS("EquationsMapping_LHSMappingInitialise")
+    RETURN
+999 CALL EquationsMapping_LHSMappingFinalise(vectorMapping%lhsMapping,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMapping_LHSMappingInitialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_LHSMappingInitialise
 
   !
   !================================================================================================================================
