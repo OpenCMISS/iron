@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -57,8 +57,6 @@ MODULE DIFFUSION_ADVECTION_DIFFUSION_ROUTINES
   USE DISTRIBUTED_MATRIX_VECTOR
   USE DOMAIN_MAPPINGS
   USE EquationsRoutines
-  USE EQUATIONS_MAPPING_ROUTINES
-  USE EQUATIONS_MATRICES_ROUTINES
   USE EQUATIONS_SET_CONSTANTS
   USE FIELD_ROUTINES
   USE FLUID_MECHANICS_IO_ROUTINES
