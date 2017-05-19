@@ -146,7 +146,7 @@ if (WITH_Python_BINDINGS)
     if (APPLE)
         set_target_properties(${IRON_PYTHON_MODULE} PROPERTIES
             INSTALL_RPATH "@loader_path/${_REL_INSTALL_PATH}")
-    elseif (LINUX)
+    elseif (UNIX)
         set_target_properties(${IRON_PYTHON_MODULE} PROPERTIES
             INSTALL_RPATH "\$ORIGIN/${_REL_INSTALL_PATH}")
     endif ()
