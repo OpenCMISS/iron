@@ -26,7 +26,7 @@
 !>
 !> The Initial Developer of the Original Code is University of Auckland,
 !> Auckland, New Zealand, the University of Oxford, Oxford, United
-!> Kingdom and King's College, London, United Kingdom. Portions created
+!> Kingdom and K   ing's College, London, United Kingdom. Portions created
 !> by the University of Auckland, the University of Oxford and King's
 !> College, London are Copyright (C) 2007-2010 by the University of
 !> Auckland, the University of Oxford and King's College, London.
@@ -49,10 +49,10 @@
 !>
 !> The top level OpenCMISS module. This module is the buffer Fortran module between the OpenCMISS library and user code.
 MODULE OpenCMISS
-  
+
   USE KINDS
 
-#include "macros.h"  
+#include "macros.h"
 
   IMPLICIT NONE
 

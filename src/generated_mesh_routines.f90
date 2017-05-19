@@ -59,7 +59,7 @@ MODULE GENERATED_MESH_ROUTINES
   USE STRINGS
   USE TYPES
 
-#include "macros.h"  
+#include "macros.h"
 
   IMPLICIT NONE
 
@@ -1383,13 +1383,15 @@ CONTAINS
   !
 
   !>Start to create the regular generated mesh type
-  SUBROUTINE GENERATED_MESH_REGULAR_CREATE_FINISH(GENERATED_MESH,MESH_USER_NUMBER,ERR,ERROR,*)
+  SUBROUTINE GENERATED_MESH_REGULAR_CREATE_FINISH(GENERATED_MESH,MESH_USER_NUMBER,ERR,ERROR,*,ElementNOdes)
 
     !Argument variables
     TYPE(GENERATED_MESH_TYPE), POINTER :: GENERATED_MESH !<A pointer to the generated mesh
     INTEGER(INTG), INTENT(IN) :: MESH_USER_NUMBER !<The user number for the mesh to generate
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+ !   TYPE(INTEGER)        ,ALLOCATABLE :: ElementNOdes(:,:)  ! mirzawd
+    TYPE(INTEGER) ,OPTIONAL,ALLOCATABLE :: ElementNOdes(:,:)
     !Local Variables
     INTEGER(INTG) :: coordinate_idx,COUNT,ELEMENT_FACTOR,grid_ne,GRID_NUMBER_OF_ELEMENTS,ni,ne,ne1,ne2,ne3,nn,nn1,nn2,nn3,np, &
       & NUMBER_OF_ELEMENTS_XI(3),TOTAL_NUMBER_OF_NODES_XI(3),TOTAL_NUMBER_OF_NODES,NUMBER_OF_CORNER_NODES, &
@@ -1488,6 +1490,12 @@ CONTAINS
                 NUMBER_OF_ELEMENTS_XI(ni)=REGULAR_MESH%NUMBER_OF_ELEMENTS_XI(ni)
                 GRID_NUMBER_OF_ELEMENTS=GRID_NUMBER_OF_ELEMENTS*REGULAR_MESH%NUMBER_OF_ELEMENTS_XI(ni)
               ENDDO
+              print *, GRID_NUMBER_OF_ELEMENTS , BASIS%NUMBER_OF_NODES+1
+
+              IF (PRESENT(ElementNOdes)) THEN
+                ALLOCATE(ElementNOdes(GRID_NUMBER_OF_ELEMENTS,BASIS%NUMBER_OF_NODES+1)) !mirzawd
+              END IF
+
               NUMBER_OF_CORNER_NODES=TOTAL_NUMBER_OF_NODES
               !Add extra nodes for each basis
               !Will end up with some duplicate nodes if bases have the same interpolation in one direction
@@ -1562,6 +1570,7 @@ CONTAINS
                 ALLOCATE(ELEMENT_NODES_USER_NUMBERS(BASIS%NUMBER_OF_NODES),STAT=ERR)
                 IF(ERR/=0) CALL FlagError("Could not allocate element nodes.",ERR,ERROR,*999)
                 !Step in the xi(3) direction
+
                 DO ne3=1,NUMBER_OF_ELEMENTS_XI(3)+1
                   DO ne2=1,NUMBER_OF_ELEMENTS_XI(2)+1
                     DO ne1=1,NUMBER_OF_ELEMENTS_XI(1)+1
@@ -1586,12 +1595,16 @@ CONTAINS
                               DO nn1=1,BASIS%NUMBER_OF_NODES_XIC(1)
                                 nn=nn+1
                                 ELEMENT_NODES(nn)=np+(nn1-1)
+                              !  print *, "first one"
+                              !  print *, "ELEMENT_NODES(nn)" , ELEMENT_NODES(nn)
                               ENDDO !nn1
                               IF(BASIS%NUMBER_OF_XI>1) THEN
                                 DO nn2=2,BASIS%NUMBER_OF_NODES_XIC(2)
                                   DO nn1=1,BASIS%NUMBER_OF_NODES_XIC(1)
                                     nn=nn+1
                                     ELEMENT_NODES(nn)=np+(nn1-1)+(nn2-1)*TOTAL_NUMBER_OF_NODES_XI(1)
+                              !  print *, "second one"
+                              !  print *, "ELEMENT_NODES(nn)" , ELEMENT_NODES(nn)
                                   ENDDO !nn1
                                 ENDDO !nn2
                                 IF(BASIS%NUMBER_OF_XI>2) THEN
@@ -1601,15 +1614,25 @@ CONTAINS
                                         nn=nn+1
                                         ELEMENT_NODES(nn)=np+(nn1-1)+(nn2-1)*TOTAL_NUMBER_OF_NODES_XI(1)+ &
                                             & (nn3-1)*TOTAL_NUMBER_OF_NODES_XI(1)*TOTAL_NUMBER_OF_NODES_XI(2)
+                              !  print *, "third one"
+                              !  print *, "ELEMENT_NODES(nn)" , ELEMENT_NODES(nn)
                                       ENDDO !nn1
                                     ENDDO !nn2
                                   ENDDO !nn3
+
                                 ENDIF
                               ENDIF
+
                               CALL GeneratedMesh_RegularComponentNodesToUserNumbers(REGULAR_MESH%GENERATED_MESH, &
                                 & basis_idx,ELEMENT_NODES,ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
+                              IF (PRESENT(ElementNOdes)) THEN
+                                ElementNOdes(ne,1) = ne
+                                ElementNOdes(ne,2:) = ELEMENT_NODES_USER_NUMBERS
+                              END IF
                               CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
                                 & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
+
+
                             ELSE
                               !Simplex elements
                               SELECT CASE(BASIS%NUMBER_OF_XI)
@@ -2167,9 +2190,13 @@ CONTAINS
                           ENDIF
                         ENDIF
                       ENDIF
+
                     ENDDO !ne1
+
                   ENDDO !ne2
+
                 ENDDO !ne3
+
                 CALL MESH_TOPOLOGY_ELEMENTS_CREATE_FINISH(MESH_ELEMENTS,ERR,ERROR,*999)
               ENDDO !basis_idx
               !Finish the mesh
@@ -3252,7 +3279,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("GeneratedMesh_GeometricParametersCalculate",ERR,ERROR)
     RETURN 1
-    
+
   END SUBROUTINE GeneratedMesh_GeometricParametersCalculate
 
   !
@@ -3475,7 +3502,7 @@ CONTAINS
 999 ERRORS("GeneratedMesh_RegularGeometricParametersCalculate",ERR,ERROR)
     EXITS("GeneratedMesh_RegularGeometricParametersCalculate")
     RETURN 1
-    
+
   END SUBROUTINE GeneratedMesh_RegularGeometricParametersCalculate
 
   !
@@ -5447,7 +5474,7 @@ CONTAINS
 999 ERRORS("GeneratedMesh_RegularComponentNodesToUserNumbers",ERR,ERROR)
     EXITS("GeneratedMesh_RegularComponentNodesToUserNumbers")
     RETURN 1
-    
+
   END SUBROUTINE GeneratedMesh_RegularComponentNodesToUserNumbers
 
   !
@@ -5588,7 +5615,7 @@ CONTAINS
 999 ERRORS("GeneratedMesh_RegularComponentNodeToUserNumber",ERR,ERROR)
     EXITS("GeneratedMesh_RegularComponentNodeToUserNumber")
     RETURN 1
-    
+
   END SUBROUTINE GeneratedMesh_RegularComponentNodeToUserNumber
 
   !
