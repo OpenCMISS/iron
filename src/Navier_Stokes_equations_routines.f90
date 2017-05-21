@@ -2241,7 +2241,7 @@ CONTAINS
                 NULLIFY(vectorEquations)
                 CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
                 !Create the equations mapping.
-                CALL EquationsMapping_VectorCreateStart(vectorEquations,vectorMapping,err,error,*999)
+                CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
                 CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
                 CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
                   & err,error,*999)
@@ -2281,7 +2281,7 @@ CONTAINS
                 NULLIFY(vectorEquations)
                 CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
                 !Create the equations mapping.
-                CALL EquationsMapping_VectorCreateStart(vectorEquations,vectorMapping,err,error,*999)
+                CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
                 CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
                 CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
                   & err,error,*999)
@@ -2369,7 +2369,7 @@ CONTAINS
                 NULLIFY(vectorEquations)
                 CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
                 !Create the equations mapping.
-                CALL EquationsMapping_VectorCreateStart(vectorEquations,vectorMapping,err,error,*999)
+                CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
                 CALL EquationsMapping_ResidualVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
                 CALL EquationsMapping_DynamicMatricesSet(vectorMapping,.TRUE.,.TRUE.,err,error,*999)
                 CALL EquationsMapping_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
@@ -2446,7 +2446,7 @@ CONTAINS
                 NULLIFY(vectorEquations)
                 CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)                
                 !Create the equations mapping.
-                CALL EquationsMapping_VectorCreateStart(vectorEquations,vectorMapping,err,error,*999)
+                CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
                 CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
                 CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
                   & err,error,*999)

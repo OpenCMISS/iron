@@ -995,7 +995,7 @@ CONTAINS
               NULLIFY(vectorEquations)
               CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
               !Create the equations mapping.
-              CALL EquationsMapping_VectorCreateStart(vectorEquations,vectorMapping,ERR,ERROR,*999)
+              CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,ERR,ERROR,*999)
               !!! Check this 
               !CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,ERR,ERROR,*999)
               CALL EquationsMapping_DynamicMatricesSet(vectorMapping,.TRUE.,.TRUE.,ERR,ERROR,*999)

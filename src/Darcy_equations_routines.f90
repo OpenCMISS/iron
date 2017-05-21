@@ -1409,7 +1409,7 @@ CONTAINS
                   NULLIFY(vectorEquations)
                   CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
                   !Create the equations mapping.
-                  CALL EquationsMapping_VectorCreateStart(vectorEquations,vectorMapping,err,error,*999)
+                  CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
                   CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
                   EQUATIONS_SET_FIELD_FIELD=>EQUATIONS_SET%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD
                   CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET_FIELD_FIELD,FIELD_U_VARIABLE_TYPE, &
@@ -1447,7 +1447,7 @@ CONTAINS
                   CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
                   CALL Equations_CreateFinish(equations,err,error,*999)
                   !Create the equations mapping.
-                  CALL EquationsMapping_VectorCreateStart(vectorEquations,vectorMapping,err,error,*999)
+                  CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
                   CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
                   CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
                     & err,error,*999)
@@ -1521,7 +1521,7 @@ CONTAINS
                 NULLIFY(vectorEquations)
                 CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
                 !Create the equations mapping.
-                CALL EquationsMapping_VectorCreateStart(vectorEquations,vectorMapping,err,error,*999)
+                CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
                 CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
                 SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
                 CASE(EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE)
@@ -1601,7 +1601,8 @@ CONTAINS
                     NULLIFY(vectorEquations)
                     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
                     !Create the equations mapping.
-                    CALL EquationsMapping_VectorCreateStart(vectorEquations,vectorMapping,err,error,*999)
+                    CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping, &
+                      & err,error,*999)
                     IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE .OR. &
                       & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
                       CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,0,err,error,*999)

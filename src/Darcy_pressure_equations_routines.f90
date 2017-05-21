@@ -766,7 +766,7 @@ CONTAINS
               NULLIFY(vectorEquations)
               CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
               !Create the equations mapping.
-              CALL EquationsMapping_VectorCreateStart(vectorEquations,vectorMapping,err,error,*999)
+              CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
               CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,0,err,error,*999)
               CALL EquationsMapping_ResidualVariablesNumberSet(vectorMapping,2,err,error,*999)
               CALL EquationsMapping_ResidualVariableTypesSet(vectorMapping, &

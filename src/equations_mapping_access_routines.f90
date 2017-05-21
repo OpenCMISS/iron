@@ -71,7 +71,7 @@ MODULE EquationsMappingAccessRoutines
 
   PUBLIC EquationsMappingVector_DynamicMappingGet
   
-  PUBLIC EquationsMappingVector_LHSMapingGet
+  PUBLIC EquationsMappingVector_LHSMappingGet
   
   PUBLIC EquationsMappingVector_LinearMappingGet
   

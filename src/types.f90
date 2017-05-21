@@ -1696,27 +1696,55 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: columnDOFSMapping !<A pointer to the column dofs domain mapping for the matrix variable
   END TYPE EquationsMatrixToVarMapType
 
-  !>Contains information for mapping field variables to functions in the equations set of the mapping
-  TYPE EquationsMappingFunctionType
+  !>Contains information for mapping field variables to functions in the scalar equations mapping
+  TYPE EquationsMappingFunctionsType
     TYPE(EquationsMappingScalarType), POINTER :: scalarMapping !<A pointer to the equations scalar mapping
-  END TYPE EquationsMappingFunctionType
+    INTEGER(INTG) :: numberOfFunctions !<The number of functions in the mapping
+  END TYPE EquationsMappingFunctionsType
     
-  !>Contains information for mapping field variables to norms in the equations set of the mapping
+  !>Contains information for mapping field variables to a norm i.e., ||x|| in the scalar equations mapping
   TYPE EquationsMappingNormType
-    TYPE(EquationsMappingScalarType), POINTER :: scalarMapping !<A pointer to the equations scalar mapping
+    INTEGER(INTG) :: normNumber !<The number of the norm in the norms scalar mapping
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: normVariable !<A pointer to the field variable for this norm mapping
+    REAL(DP) :: normCoefficient !<The multiplicative coefficient applied to the norm.
   END TYPE EquationsMappingNormType
     
-  !>Contains information for mapping field variables to dot products in the equations set of the mapping
-  TYPE EquationsMappingDotProductType
+  !>Contains information for mapping field variables to norms i.e., ||x|| in the scalar equations mapping
+  TYPE EquationsMappingNormsType
     TYPE(EquationsMappingScalarType), POINTER :: scalarMapping !<A pointer to the equations scalar mapping
+    INTEGER(INTG) :: numberOfNorms !<The number of norms in the scalar mapping
+    TYPE(EquationsMappingNormType), ALLOCATABLE :: norms(:) !<norms(normIdx). Information on the normIdx'th norm mapping.
+  END TYPE EquationsMappingNormsType
+    
+  !>Contains information for mapping field variables to a dot product i.e., x^T.y in the scalar equations mapping
+  TYPE EquationsMappingDotProductType
+    INTEGER(INTG) :: dotProductNumber !<The number of dot product in the dot products scalar mapping
+    TYPE(FIELD_VARIABLE_PTR_TYPE) :: dotProductVariables(2) !<dotProductVaraibles(variableIdx). The variableIdx'th field variable in the dot product. For x^T.y the first variable is x and the second variable is y.
+    REAL(DP) :: dotProductCoefficient !<The multiplicative coefficient applied to the dot product.
   END TYPE EquationsMappingDotProductType
     
-  !>Contains information for mapping field variables to quadratic forms in the equations set of the mapping
-  TYPE EquationsMappingQuadraticType
+   !>Contains information for mapping field variables to dot products i.e., x^T.y in the equations set of the mapping
+  TYPE EquationsMappingDotProductsType
     TYPE(EquationsMappingScalarType), POINTER :: scalarMapping !<A pointer to the equations scalar mapping
+    INTEGER(INTG) :: numberOfDotProducts !<The number of dot products in the scalar mapping
+    TYPE(EquationsMappingDotProductType), ALLOCATABLE :: dotProducts(:) !<dotProducts(dotProductIdx). Information on the dotProductIdx'th dot product mapping.
+  END TYPE EquationsMappingDotProductsType
+    
+  !>Contains information for mapping field variables to a quadratic form i.e., x^T.A.y in the scalar equations mapping
+  TYPE EquationsMappingQuadraticType
+    INTEGER(INTG) :: quadraticNumber !<The number of dot product in the dot products scalar mapping    
+    TYPE(FIELD_VARIABLE_PTR_TYPE) :: quadraticVariables(2) !<dotProductVaraibles(variableIdx). The variableIdx'th field variable in the dot product. For x^T.A.y the first variable is x and the second variable is y.
+    REAL(DP) :: quadraticCoefficient !<The multiplicative coefficient applied to the quadratic form.
   END TYPE EquationsMappingQuadraticType
     
-  !>Contains information for mapping field variables to the dynamic matrices in the equations set of the mapping
+  !>Contains information for mapping field variables to quadratic forms i.e., x^T.A.y in the scalar equations mapping
+  TYPE EquationsMappingQuadraticsType
+    TYPE(EquationsMappingScalarType), POINTER :: scalarMapping !<A pointer to the equations scalar mapping
+    INTEGER(INTG) :: numberOfQuadratics !<The number of quadratics in the scalar mapping
+    TYPE(EquationsMappingQuadraticType), ALLOCATABLE :: quadratics(:) !<quadratics(quadraticIdx). Information on the quadraticIdx'th quadratic mapping.
+  END TYPE EquationsMappingQuadraticsType
+    
+  !>Contains information for mapping field variables to the dynamic matrices in the vector equations mapping
   TYPE EquationsMappingDynamicType
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations vector mapping
     INTEGER(INTG) :: numberOfDynamicMatrices !<The number of dynamic equations matrices in this mapping
@@ -1731,7 +1759,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG), ALLOCATABLE :: equationsRowToVariableDOFMaps(:) !<equationsRowToVariableDOFMaps(rowIdx). The row mappings for the rowIdx'th row of the equations matrices to the dynamic variable.
   END TYPE EquationsMappingDynamicType
 
-  !>Contains information for mapping field variables to the linear matrices in the equations set of the mapping
+  !>Contains information for mapping field variables to the linear matrices in the vector equations mapping
   TYPE EquationsMappingLinearType
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations vector mapping
     INTEGER(INTG) :: numberOfLinearMatrices !<The number of linear equations matrices in this mapping
@@ -1765,9 +1793,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   END TYPE VarToEquationsJacobianMapType
 
   !>Contains information on the equations mapping for nonlinear matrices i.e., how a field variable is mapped to residual
-  !>vectors, and how the field variables are mapped to the rows and columns of the associated Jacobian matrices of the equations set
-  !>of this equations mapping.
-  !>There may be multiple residual variables with a Jacobian matrix for each variable
+  !>vectors, and how the field variables are mapped to the rows and columns of the associated Jacobian matrices of the
+  !>vector equations mapping. There may be multiple residual variables with a Jacobian matrix for each variable
   TYPE EquationsMappingNonlinearType
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations vector mapping
     INTEGER(INTG) :: numberOfResidualVariables !<The number of residual variables in this mapping
@@ -1779,7 +1806,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   END TYPE EquationsMappingNonlinearType
 
   !>Contains information on the equations mapping for a RHS i.e., how a field variable is mapped to the RHS vector for
-  !>the equations set of this equations mapping.
+  !>the vector equations mapping.
   TYPE EquationsMappingRHSType
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations vector mapping
     INTEGER(INTG) :: rhsVariableType !<The variable type number mapped to the RHS vector
@@ -1791,7 +1818,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   END TYPE EquationsMappingRHSType
 
   !>Contains information on the equations mapping for a source i.e., how a field variable is mapped to the source vector for
-  !>the equations set of this equations mapping.
+  !>the vector equation mapping.
   TYPE EquationsMappingSourceType
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations mapping
     INTEGER(INTG) :: sourceVariableType !<The variable type number mapped from the source vector
@@ -1849,10 +1876,10 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EquationsScalarType), POINTER :: scalarEquations !<A pointer to the scalar equations for the mapping.
     LOGICAL :: scalarMappingFinished !<Is .TRUE. if the scalar mapping has been finished. .FALSE. if not.
     TYPE(EquationsMatricesScalarType), POINTER :: scalarMatrices !<A pointer to the equations scalar matrices associated with this scalar equations mapping.
-    TYPE(EquationsMappingFunctionType), POINTER :: functionMapping !<A pointer to the equations mapping for functions
-    TYPE(EquationsMappingNormType), POINTER :: normMapping !<A pointer to the equations mapping for vector norms
-    TYPE(EquationsMappingDotProductType), POINTER :: dotProductMapping !<A pointer to the equations mapping for vector dot products i.e., x^T.y
-    TYPE(EquationsMappingQuadraticType), POINTER :: quadraticMapping !<A pointer to the equations mapping for the quadratic matrices i.e., x^T.A.y
+    TYPE(EquationsMappingFunctionsType), POINTER :: functionMappings !<A pointer to the equations mapping for functions
+    TYPE(EquationsMappingNormsType), POINTER :: normMappings !<A pointer to the equations mapping for vector norms
+    TYPE(EquationsMappingDotProductsType), POINTER :: dotProductMappings !<A pointer to the equations mapping for vector dot products i.e., x^T.y
+    TYPE(EquationsMappingQuadraticsType), POINTER :: quadraticMappings !<A pointer to the equations mapping for the quadratic matrices i.e., x^T.A.y
     TYPE(EquationsMappingScalarCreateValuesCacheType), POINTER :: createValuesCache !<The create values cache for the scalar equations mapping
    END TYPE EquationsMappingScalarType
   

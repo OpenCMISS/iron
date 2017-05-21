@@ -88,8 +88,6 @@ MODULE EquationsMappingRoutines
 
   PUBLIC EquationsMapping_DynamicVariableTypeSet
 
-  PUBLIC EquationsMapping_LHSVariableTypeSet
-
   PUBLIC EquationsMapping_LinearMatricesCoeffsSet
 
   PUBLIC EquationsMapping_LinearMatricesNumberSet
@@ -989,6 +987,10 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: lhsVariable
     
     ENTERS("EquationsMapping_VectorCreateStart",err,error,*998)
 
@@ -1002,12 +1004,12 @@ CONTAINS
     CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
     IF(.NOT.equations%equationsFinished) CALL FlagError("Vector equations equations has not been finished.",err,error,*999)
 
-    NULIFY(lhsVariable)
+    NULLIFY(lhsVariable)
     CALL Field_VariableGet(dependentField,lhsVariableType,lhsVariable,err,error,*999)
     IF(.NOT.ASSOCIATED(lhsVariable%DOMAIN_MAPPING))  &
       & CALL FlagError("LHS variable domain mapping is not associated.",err,error,*999)
      
-    CALL EquationsMapping_VectorInitialise(vectorEquations,lhsVariable,err,error,*999)
+    CALL EquationsMapping_VectorInitialise(vectorEquations,err,error,*999)
     CALL EquationsMappingVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
     NULLIFY(lhsMapping)
     CALL EquationsMapping_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
@@ -1016,7 +1018,7 @@ CONTAINS
     lhsMapping%rowDofsMapping=>lhsVariable%DOMAIN_MAPPING
     lhsMapping%numberOfRows=lhsVariable%NUMBER_OF_DOFS
     lhsMapping%totalNumberOfRows=lhsVariable%TOTAL_NUMBER_OF_DOFS
-    lhsMapping%numberOfGlobalRows=lhsVariable%NUMBER_OF_GLOBAL
+    lhsMapping%numberOfGlobalRows=lhsVariable%NUMBER_OF_GLOBAL_DOFS
    
     EXITS("EquationsMapping_VectorCreateStart")
     RETURN
@@ -1323,6 +1325,126 @@ CONTAINS
     RETURN 1
    
   END SUBROUTINE EquationsMapping_VectorDestroy
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises the scalar equations mapping dot product mapping and deallocates all memory
+  SUBROUTINE EquationsMapping_DotProductMappingFinalise(dotProductMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingDotProductType), POINTER :: dotProductMapping !<A pointer to the dot product mapping to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMapping_DotProductMappingFinalise",err,error,*999)
+
+    dotProductMapping%dotProductNumber=0
+    NULLIFY(dotProductMapping%dotProductVariables(1))
+    NULLIFY(dotProductMapping%dotProductVariables(2))    
+       
+    EXITS("EquationsMapping_DotProductMappingFinalise")
+    RETURN
+999 ERRORSEXITS("EquationsMapping_DotProductMappingFinalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_DotProductMappingFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises the scalar equations mapping dot product mapping
+  SUBROUTINE EquationsMapping_DotProductMappingInitialise(dotProductMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingDotProductType) :: dotProductMapping !<The dot product mapping to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsMapping_DotProductMappingInitialise",err,error,*999)
+
+    dotProductMapping%dotProductNumber=0
+    NULLIFY(dotProductMapping%dotProductVariables(1))
+    NULLIFY(dotProductMapping%dotProductVariables(2))
+    dotProductMapping%dotProductCoefficient=1.0_DP
+    
+    EXITS("EquationsMapping_DotProductMappingInitialise")
+    RETURN
+999 ERRORSEXITS("EquationsMapping_DotProductMappingInitialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_DotProductMappingInitialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises the scalar equations mapping dot product mappings and deallocates all memory
+  SUBROUTINE EquationsMapping_DotProductMappingsFinalise(dotProductMappings,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingDotProductsType), POINTER :: dotProductMappings !<A pointer to the dot product mappings to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dotProductIdx
+
+    ENTERS("EquationsMapping_DotProductMappingsFinalise",err,error,*999)
+
+    IF(ASSOCIATED(dotProductMappings)) THEN
+      IF(ALLOCATED(dotProductMappings%dotProducts)) THEN
+        DO dotProductIdx=1,SIZE(dotProductMappings%dotProducts,1)
+          CALL EquationsMapping_DotProductMappingFinalise(dotProductMappings%dotProductMappings(dotProductIdx),err,error,*999)
+        ENDDO !dotProductIdx
+        DEALLOCATE(dotProductMappings%dotProducts)
+      ENDIF
+      DEALLOCATE(dotProductMappings)
+    ENDIF
+       
+    EXITS("EquationsMapping_DotProductMappingsFinalise")
+    RETURN
+999 ERRORSEXITS("EquationsMapping_DotProductMappingsFinalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_DotProductMappingsFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises the scalar equations mapping dot product mappings
+  SUBROUTINE EquationsMapping_DotProductMappingsInitialise(scalarMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingScalarType), POINTER :: scalarMapping !<A pointer to the scalar equations mapping to initialise the dot product mappings for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
+
+    ENTERS("EquationsMapping_DotProductMappingsInitialise",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(scalarMapping)) CALL FlagError("Scalar equations mapping is not associated.",err,error,*998)
+    IF(ASSOCIATED(scalarMapping%dotProductMappings)) &
+      & CALL FlagError("Scalar equations mapping dot product mappings is already associated.",err,error,*998)
+    
+    ALLOCATE(scalarMapping%dotProductMappings,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate scalar equations mapping dot product mappings.",err,error,*999)
+    scalarMapping%dotProductMappings%scalarMapping=>scalarMapping
+    scalarMapping%dotProductMappings%numberOfDotProducts=0
+    
+    EXITS("EquationsMapping_DotProductMappingsInitialise")
+    RETURN
+999 CALL EquationsMapping_DotProductMappingsFinalise(scalarMapping%dotProductMappings,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMapping_DotProductMappingsInitialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_DotProductMappingsInitialise
 
   !
   !================================================================================================================================
@@ -2679,6 +2801,242 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMapping_NonlinearMappingInitialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises the scalar equations mapping norm mapping and deallocates all memory
+  SUBROUTINE EquationsMapping_NormMappingFinalise(normMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingNormType), POINTER :: normMapping !<A pointer to the norm mapping to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMapping_NormMappingFinalise",err,error,*999)
+
+    normMapping%normNumber=0
+    NULLIFY(normMapping%normVariable)
+       
+    EXITS("EquationsMapping_NormMappingFinalise")
+    RETURN
+999 ERRORSEXITS("EquationsMapping_NormMappingFinalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_NormMappingFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises the scalar equations mapping norm mapping
+  SUBROUTINE EquationsMapping_NormMappingInitialise(normMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingNormType) :: normMapping !<The norm mapping to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsMapping_NormMappingInitialise",err,error,*999)
+
+    normMapping%normNumber=0
+    NULLIFY(normMapping%normVariable)
+    normMapping%normCoefficient=1.0_DP
+    
+    EXITS("EquationsMapping_NormMappingInitialise")
+    RETURN
+999 ERRORSEXITS("EquationsMapping_NormMappingInitialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_NormMappingInitialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises the scalar equations mapping norm mappings and deallocates all memory
+  SUBROUTINE EquationsMapping_NormMappingsFinalise(normMappings,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingNormsType), POINTER :: normMappings !<A pointer to the norm mappings to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: normIdx
+
+    ENTERS("EquationsMapping_NormMappingsFinalise",err,error,*999)
+
+    IF(ASSOCIATED(normMappings)) THEN
+      IF(ALLOCATED(normMappings%norms)) THEN
+        DO normIdx=1,SIZE(normMappings%norms,1)
+          CALL EquationsMapping_NormMappingFinalise(normMappings%norms(normIdx),err,error,*999)
+        ENDDO !dotProductIdx
+        DEALLOCATE(normMappings%norms)
+      ENDIF
+      DEALLOCATE(normMappings)
+    ENDIF
+       
+    EXITS("EquationsMapping_NormMappingsFinalise")
+    RETURN
+999 ERRORSEXITS("EquationsMapping_NormMappingsFinalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_NormMappingsFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises the scalar equations mapping norm mappings
+  SUBROUTINE EquationsMapping_NormMappingsInitialise(scalarMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingScalarType), POINTER :: scalarMapping !<A pointer to the scalar equations mapping to initialise the norm mappings for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
+
+    ENTERS("EquationsMapping_NormMappingsInitialise",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(scalarMapping)) CALL FlagError("Scalar equations mapping is not associated.",err,error,*998)
+    IF(ASSOCIATED(scalarMapping%normMappings)) &
+      & CALL FlagError("Scalar equations mapping norm mappings is already associated.",err,error,*998)
+    
+    ALLOCATE(scalarMapping%normMappings,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate scalar equations mapping dot product mappings.",err,error,*999)
+    scalarMapping%normMappings%scalarMapping=>scalarMapping
+    scalarMapping%normMappings%numberOfNorms=0
+    
+    EXITS("EquationsMapping_NormMappingsInitialise")
+    RETURN
+999 CALL EquationsMapping_NormMappingsFinalise(scalarMapping%normMappings,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMapping_NormMappingsInitialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_NormMappingsInitialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises the scalar equations mapping quadratic form mapping and deallocates all memory
+  SUBROUTINE EquationsMapping_QuadraticMappingFinalise(quadraticMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingQuadraticType), POINTER :: quadraticMapping !<A pointer to the quadratic mapping to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMapping_QuadraticMappingFinalise",err,error,*999)
+
+    normMapping%normNumber=0
+    NULLIFY(normMapping%normVariable)
+       
+    EXITS("EquationsMapping_NormMappingFinalise")
+    RETURN
+999 ERRORSEXITS("EquationsMapping_NormMappingFinalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_NormMappingFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises the scalar equations mapping norm mapping
+  SUBROUTINE EquationsMapping_NormMappingInitialise(normMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingNormType) :: normMapping !<The norm mapping to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsMapping_NormMappingInitialise",err,error,*999)
+
+    normMapping%normNumber=0
+    NULLIFY(normMapping%normVariable)
+    normMapping%normCoefficient=1.0_DP
+    
+    EXITS("EquationsMapping_NormMappingInitialise")
+    RETURN
+999 ERRORSEXITS("EquationsMapping_NormMappingInitialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_NormMappingInitialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises the scalar equations mapping norm mappings and deallocates all memory
+  SUBROUTINE EquationsMapping_NormMappingsFinalise(normMappings,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingNormsType), POINTER :: normMappings !<A pointer to the norm mappings to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: normIdx
+
+    ENTERS("EquationsMapping_NormMappingsFinalise",err,error,*999)
+
+    IF(ASSOCIATED(normMappings)) THEN
+      IF(ALLOCATED(normMappings%norms)) THEN
+        DO normIdx=1,SIZE(normMappings%norms,1)
+          CALL EquationsMapping_NormMappingFinalise(normMappings%norms(normIdx),err,error,*999)
+        ENDDO !dotProductIdx
+        DEALLOCATE(normMappings%norms)
+      ENDIF
+      DEALLOCATE(normMappings)
+    ENDIF
+       
+    EXITS("EquationsMapping_NormMappingsFinalise")
+    RETURN
+999 ERRORSEXITS("EquationsMapping_NormMappingsFinalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_NormMappingsFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises the scalar equations mapping norm mappings
+  SUBROUTINE EquationsMapping_NormMappingsInitialise(scalarMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingScalarType), POINTER :: scalarMapping !<A pointer to the scalar equations mapping to initialise the norm mappings for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
+
+    ENTERS("EquationsMapping_NormMappingsInitialise",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(scalarMapping)) CALL FlagError("Scalar equations mapping is not associated.",err,error,*998)
+    IF(ASSOCIATED(scalarMapping%normMappings)) &
+      & CALL FlagError("Scalar equations mapping norm mappings is already associated.",err,error,*998)
+    
+    ALLOCATE(scalarMapping%normMappings,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate scalar equations mapping dot product mappings.",err,error,*999)
+    scalarMapping%normMappings%scalarMapping=>scalarMapping
+    scalarMapping%normMappings%numberOfNorms=0
+    
+    EXITS("EquationsMapping_NormMappingsInitialise")
+    RETURN
+999 CALL EquationsMapping_NormMappingsFinalise(scalarMapping%normMappings,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMapping_NormMappingsInitialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_NormMappingsInitialise
 
   !
   !================================================================================================================================
