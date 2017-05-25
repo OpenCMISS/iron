@@ -1915,16 +1915,12 @@ CONTAINS
             z=GEOMETRIC_INTERPOLATED_POINT%VALUES(3,NO_PART_DERIV)
 
             r=SQRT(x*x+y*y)
-            IF(ABS(x)>ZERO_TOLERANCE) THEN
-              theta=ATAN(y/x)
-            ELSE
-              theta=PI/2.0_DP
-            ENDIF
-                        
+            theta=ATAN2(x,y)
+              
             !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
-            CALL FiniteElasticity_GaussDeformationGradientTensor(DEPENDENT_INTERPOLATED_POINT_METRICS, &
-              & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,dZdXi,dZdNu,err,error,*999)
-
+             CALL MatrixProduct(DEPENDENT_INTERPOLATED_POINT_METRICS%DX_DXI(1:3,1:3), &
+              & GEOMETRIC_INTERPOLATED_POINT_METRICS%DXI_DX(1:3,1:3),dZdNu(1:3,1:3),err,error,*999)
+            
             Jxxi=GEOMETRIC_INTERPOLATED_POINT_METRICS%JACOBIAN
             
             Jzxi=DEPENDENT_INTERPOLATED_POINT_METRICS%JACOBIAN
@@ -1948,13 +1944,13 @@ CONTAINS
             Beprime=Beprime*Je**(2.0_DP/3.0_DP)
             CALL DoubleDotProduct(Beprime,Itens,alpha1,err,error,*999)
             bigQ=0.5_DP*(k1*(0.5_DP*(Je*Je-1.0_DP)-LOG(Je))+k2*(alpha1-3.0_DP))
-            delWdelQ=(mu0/rho0)*bigQ*EXP(q*bigQ)
-            delQdelJe=0.5_DP*k1*(Je*Je-1)*Je-0.5*k1/Je
-            delQdelAlpha= 0.5_DP*k2
+            delWdelQ=mu0*bigQ*EXP(q*bigQ)
+            delQdelJe=k1*(Je*Je-1)/(2.0_DP*Je)
+            delQdelAlpha=k2
             delWdelJe=delWdelQ*delQdelJe
             delWdelAlpha=delWdelQ*delQdelAlpha
 
-            cauchyTensor=rho0*delWdelJe*Itens+(2.0_DP*rho0/Je)*delWdelAlpha*(Beprime-(alpha1/3.0_DP)*Itens)
+            cauchyTensor=delWdelJe*Itens+(2.0_DP/Je)*delWdelAlpha*(Beprime-(alpha1/3.0_DP)*Itens)
 
             IF(DIAGNOSTICS1) THEN
               CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
@@ -3201,6 +3197,7 @@ CONTAINS
         & EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE,EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE, &
         & EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
         & EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE, &
+        & EQUATIONS_SET_GROWTH_LAW_IN_CELLML_SUBTYPE, &
         & EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
         & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
         !Do nothing ???
