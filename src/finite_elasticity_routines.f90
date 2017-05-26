@@ -1341,7 +1341,7 @@ CONTAINS
 
     ENTERS("FiniteElasticity_StrainTensor",err,error,*999)
     CALL MatrixTranspose(deformationGradientTensor, deformationGradientTensorT,err,error,*999)
-    CALL MatrixProduct(deformationGradientTensor, deformationGradientTensorT, rightCauchyDeformationTensor,err,error,*999)
+    CALL MatrixProduct(deformationGradientTensorT, deformationGradientTensor, rightCauchyDeformationTensor,err,error,*999)
     !CALL MatrixTransposeProduct(deformationGradientTensor,deformationGradientTensor,rightCauchyDeformationTensor,err,error,*999)
     CALL Invert(rightCauchyDeformationTensor,fingerDeformationTensor,I3,err,error,*999)
     Jacobian=I3**0.5_DP
