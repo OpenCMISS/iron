@@ -67,7 +67,7 @@ MY_PLOT_SRC=plots/Theory/*.gnu
 # Note that the actual file will be placed in the directory
 # MY_HTMLUPDATE_DIR/MY_MAINFILE with filename index.html
 
-MY_HTMLUPDATE_DIR=${OPENCMISS_ROOT}/cm/doc/www/help
+MY_HTMLUPDATE_DIR=${OPENCMISS_ROOT}/src/iron/doc/www/help
 
 #
 # This next option controls the type of backlinks to add to the footer
@@ -80,7 +80,7 @@ MY_HTMLIDXTYPE=user
 #
 # The name of the bibliography database for the document
 
-MY_BIBS=${OPENCMISS_ROOT}/cm/doc/references/references.bib
+MY_BIBS=${OPENCMISS_ROOT}/src/iron/doc/references/references.bib
 
 #
 # The name of the printer to print the document to
@@ -92,7 +92,7 @@ MY_PRINTER=laserjet_postscript
 #
 # Actual make command:
 #
-make -f ${OPENCMISS_ROOT}/cm/doc/latex/Latex_Makefile $* \
+make -f ${OPENCMISS_ROOT}/src/iron/doc/latex/Latex_Makefile $* \
 	MAINFILE=$MY_MAINFILE \
 	TEX_SRC="$MY_TEX_SRC" \
 	EPS_SRC="$MY_EPS_SRC" \

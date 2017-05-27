@@ -61,15 +61,15 @@ DVIPS_OPTS      =        -Z -n 500 -t a4 -K0 -N0
 # latex2html98.1 uses undef as a list operator which is not perl5.6
 LATEX2HTML      =       perl -S latex2html
 LATEX2HTML_OPTS =       -address ' ' -no_navigation -info ' ' -split 0 -tmp /tmp
-FIXL2HTML	=	${OPENCMISS_ROOT}/cm/doc/html_utils/fixl2html.sh
+FIXL2HTML	=	${OPENCMISS_ROOT}/src/iron/doc/html_utils/fixl2html.sh
 MAKEINDEX	=	makeindex
 PRINT           =       lpr
 PSNUP           =       psnup -2 -d0.1
 
 # plot, figure and svg files
-MAKEFIGS	=	make -f ${OPENCMISS_ROOT}/cm/doc/latex/Makefigs
-MAKESVGS	=	make -f ${OPENCMISS_ROOT}/cm/doc/latex/Makesvgs
-MAKEPLOTS	=	make -f ${OPENCMISS_ROOT}/cm/doc/latex/Makeplots
+MAKEFIGS	=	make -f ${OPENCMISS_ROOT}/src/iron/doc/latex/Makefigs
+MAKESVGS	=	make -f ${OPENCMISS_ROOT}/src/iron/doc/latex/Makesvgs
+MAKEPLOTS	=	make -f ${OPENCMISS_ROOT}/src/iron/doc/latex/Makeplots
 
 #
 # Standard TeX makefile follows
@@ -89,15 +89,15 @@ LATEX_PSQ	=	latex \\batchmode \
 
 $(MAINFILE).dvi	:	$(MAINFILE).tex $(TEX_SRC) $(BIBS) $(EPS_SRC) $(FIG_SRC) $(PLOT_SRC)
 	@if test -d figs ; \
-		then $(MAKE) -f ${OPENCMISS_ROOT}/cm/doc/latex/Latex_Makefile figsmake ; \
+		then $(MAKE) -f ${OPENCMISS_ROOT}/src/iron/doc/latex/Latex_Makefile figsmake ; \
 		else : ; \
 	fi
 	@if test -d svgs ; \
-		then $(MAKE) -f ${OPENCMISS_ROOT}/cm/doc/latex/Latex_Makefile svgsmake ; \
+		then $(MAKE) -f ${OPENCMISS_ROOT}/src/iron/doc/latex/Latex_Makefile svgsmake ; \
 		else : ; \
 	fi
 	@if test -d plots ; \
-		then $(MAKE) -f ${OPENCMISS_ROOT}/cm/doc/latex/Latex_Makefile plotsmake ; \
+		then $(MAKE) -f ${OPENCMISS_ROOT}/src/iron/doc/latex/Latex_Makefile plotsmake ; \
 		else : ; \
 	fi
 	@if test -r $(MAINFILE).aux ; \
@@ -181,29 +181,29 @@ quick	:
 
 pics :	$(FIG_SRC) $(SVG_SRC) $(PLOT_SRC)
 	@if test -d figs ; \
-		then $(MAKE) -f ${OPENCMISS_ROOT}/cm/doc/latex/Latex_Makefile figsmake ; \
+		then $(MAKE) -f ${OPENCMISS_ROOT}/src/iron/doc/latex/Latex_Makefile figsmake ; \
 		else : ; \
 	fi
 	@if test -d svgs ; \
-		then $(MAKE) -f ${OPENCMISS_ROOT}/cm/doc/latex/Latex_Makefile svgsmake ; \
+		then $(MAKE) -f ${OPENCMISS_ROOT}/src/iron/doc/latex/Latex_Makefile svgsmake ; \
 		else : ; \
 	fi
 	@if test -d plots ; \
-		then $(MAKE) -f ${OPENCMISS_ROOT}/cm/doc/latex/Latex_Makefile plotsmake ; \
+		then $(MAKE) -f ${OPENCMISS_ROOT}/src/iron/doc/latex/Latex_Makefile plotsmake ; \
 		else : ; \
 	fi
 
 pics_clean :
 	@if test -d figs ; \
-		then $(MAKE) -f ${OPENCMISS_ROOT}/cm/doc/latex/Latex_Makefile figsclean ; \
+		then $(MAKE) -f ${OPENCMISS_ROOT}/src/iron/doc/latex/Latex_Makefile figsclean ; \
 		else : ; \
 	fi
 	@if test -d svgs ; \
-		then $(MAKE) -f ${OPENCMISS_ROOT}/cm/doc/latex/Latex_Makefile svgsclean ; \
+		then $(MAKE) -f ${OPENCMISS_ROOT}/src/iron/doc/latex/Latex_Makefile svgsclean ; \
 		else : ; \
 	fi
 	@if test -d plots ; \
-		then $(MAKE) -f ${OPENCMISS_ROOT}/cm/doc/latex/Latex_Makefile plotsclean ; \
+		then $(MAKE) -f ${OPENCMISS_ROOT}/src/iron/doc/latex/Latex_Makefile plotsclean ; \
 		else : ; \
 	fi
 
@@ -255,15 +255,15 @@ qclean :
 
 clean :	qclean
 	@if test -d figs ; \
-		then $(MAKE) -f ${OPENCMISS_ROOT}/cm/doc/latex/Latex_Makefile figsclean ; \
+		then $(MAKE) -f ${OPENCMISS_ROOT}/src/iron/doc/latex/Latex_Makefile figsclean ; \
 		else : ; \
 	fi
 	@if test -d svgs ; \
-		then $(MAKE) -f ${OPENCMISS_ROOT}/cm/doc/latex/Latex_Makefile svgsclean ; \
+		then $(MAKE) -f ${OPENCMISS_ROOT}/src/iron/doc/latex/Latex_Makefile svgsclean ; \
 		else : ; \
 	fi
 	@if test -d plots ; \
-		then $(MAKE) -f ${OPENCMISS_ROOT}/cm/doc/latex/Latex_Makefile plotsclean ; \
+		then $(MAKE) -f ${OPENCMISS_ROOT}/src/iron/doc/latex/Latex_Makefile plotsclean ; \
 		else : ; \
 	fi
 

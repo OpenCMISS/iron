@@ -13,5 +13,5 @@ type=$1
 shift
 for filename
 do
-	${OPENCMISS_ROOT}/cm/doc/latex/genpstex1.sh $type $filename
+	${OPENCMISS_ROOT}/src/iron/doc/latex/genpstex1.sh $type $filename
 done

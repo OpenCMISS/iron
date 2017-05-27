@@ -11,5 +11,5 @@
 #
 for filename
 do
-	${OPENCMISS_ROOT}/cm/doc/latex/genfigs1.sh $filename
+	${OPENCMISS_ROOT}/src/iron/doc/latex/genfigs1.sh $filename
 done

@@ -9,4 +9,4 @@
 #   Chris Bradley
 # Updates:
 #
-make -f ${OPENCMISS_ROOT}/cm/doc/latex/Makeplots $1:r.fig
+make -f ${OPENCMISS_ROOT}/src/iron/doc/latex/Makeplots $1:r.fig
