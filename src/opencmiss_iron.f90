@@ -2631,9 +2631,12 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTITUTIVE_LAW_IN_CELLML_EVALUATE_SUBTYPE = &
     & EQUATIONS_SET_CONSTITUTIVE_LAW_IN_CELLML_EVALUATE_SUBTYPE !<In CellML evaluated incompressible material law for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE = EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE !<Rubin rate based smooth model for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE = EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE !<Rubin compressible rate based smooth model for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE = EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE !<Rubin rate based growth model for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE = EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE !<Rubin compressible rate based growth model for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE =  &
+    & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE !<Rubin compressible rate based smooth model for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE = &
+    & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE !<Rubin rate based growth model for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE = &
+    & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE !<Rubin compressible rate based growth model for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTIT_AND_GROWTH_LAW_IN_CELLML_SUBTYPE = &
     & EQUATIONS_SET_CONSTITUTIVE_AND_GROWTH_LAW_IN_CELLML_SUBTYPE !<CellML evaluated growth and constituative material law for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
 
@@ -22115,7 +22118,8 @@ CONTAINS
 
     EXITS("cmfe_DataProjection_ResultAnalysisOutputNumber")
     RETURN
-999 ERRORSEXITS("cmfe_DataProjection_ResultAnalysisOutputNumber",err,error)
+999 ERRORS("cmfe_DataProjection_ResultAnalysisOutputNumber",err,error)
+    EXITS("cmfe_DataProjection_ResultAnalysisOutputNumber")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -22526,7 +22530,8 @@ CONTAINS
  
     EXITS("cmfe_DataProjection_ResultMaximumErrorGetNumber")
     RETURN
-999 ERRORSEXITS("cmfe_DataProjection_ResultMaximumErrorGetNumber",err,error)
+999 ERRORS("cmfe_DataProjection_ResultMaximumErrorGetNumber",err,error)
+    EXITS("cmfe_DataProjection_ResultMaximumErrorGetNumber")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -22554,7 +22559,8 @@ CONTAINS
 
     EXITS("cmfe_DataProjection_ResultMaximumErrorGetObj")
     RETURN
-999 ERRORSEXITS("cmfe_DataProjection_ResultMaximumErrorGetObj",err,error)
+999 ERRORS("cmfe_DataProjection_ResultMaximumErrorGetObj",err,error)
+    EXITS("cmfe_DataProjection_ResultMaximumErrorGetObj")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -22593,7 +22599,8 @@ CONTAINS
 
     EXITS("cmfe_DataProjection_ResultMinimumErrorGetNumber")
     RETURN
-999 ERRORSEXITS("cmfe_DataProjection_ResultMinimumErrorGetNumber",err,error)
+999 ERRORS("cmfe_DataProjection_ResultMinimumErrorGetNumber",err,error)
+    EXITS("cmfe_DataProjection_ResultMinimumErrorGetNumber")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -22621,7 +22628,8 @@ CONTAINS
 
     EXITS("cmfe_DataProjection_ResultMinimumErrorGetObj")
     RETURN
-999 ERRORSEXITS("cmfe_DataProjection_ResultMinimumErrorGetObj",err,error)
+999 ERRORS("cmfe_DataProjection_ResultMinimumErrorGetObj",err,error)
+    EXITS("cmfe_DataProjection_ResultMinimumErrorGetObj")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -22897,8 +22905,8 @@ CONTAINS
   !
 
   !>Sets/changes the maximum number of iterations of data projection identified by a region user number.
-  SUBROUTINE cmfe_DataProjection_MaximumNumberOfIterationsSetNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
-      & maximumNumberOfIterations,err)
+  SUBROUTINE cmfe_DataProjection_MaximumNumberOfIterationsSetNumber(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,maximumNumberOfIterations,err)
     !DLLEXPORT(cmfe_DataProjection_MaximumNumberOfIterationsSetNumber)
 
     !Argument variables
@@ -37545,7 +37553,8 @@ CONTAINS
     
     EXITS("cmfe_Field_ParameterSetGetGaussPointCoordObj")
     RETURN
-999 ERRORSEXITS("cmfe_Field_ParameterSetGetGaussPointCoordObj",err,error)
+999 ERRORS("cmfe_Field_ParameterSetGetGaussPointCoordObj",err,error)
+    EXITS("cmfe_Field_ParameterSetGetGaussPointCoordObj")
     CALL cmfe_HandleError(err,error)
     RETURN
  
@@ -42802,7 +42811,8 @@ CONTAINS
 
     EXITS("cmfe_MeshElements_ElementOnBoundaryGetNumber")
     RETURN
-999 ERRORSEXITS("cmfe_MeshElements_ElementOnBoundaryGetNumber",err,error)
+999 ERRORS("cmfe_MeshElements_ElementOnBoundaryGetNumber",err,error)
+    EXITS("cmfe_MeshElements_ElementOnBoundaryGetNumber")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -47564,7 +47574,8 @@ CONTAINS
     
     EXITS("cmfe_CellMLEquations_TimeDependenceTypeGetNumber")
     RETURN
-999 ERRORSEXITS("cmfe_CellMLEquations_TimeDependenceTypeGetNumber",err,error)
+999 ERRORS("cmfe_CellMLEquations_TimeDependenceTypeGetNumber",err,error)
+    EXITS("cmfe_CellMLEquations_TimeDependenceTypeGetNumber")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -47590,7 +47601,8 @@ CONTAINS
 
     EXITS("cmfe_CellMLEquations_TimeDependenceTypeGetObj")
     RETURN
-999 ERRORSEXITS("cmfe_CellMLEquations_TimeDependenceTypeGetObj",err,error)
+999 ERRORS("cmfe_CellMLEquations_TimeDependenceTypeGetObj",err,error)
+    EXITS("cmfe_CellMLEquations_TimeDependenceTypeGetObj")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -47628,7 +47640,8 @@ CONTAINS
     
     EXITS("cmfe_CellMLEquations_TimeDependenceTypeSetNumber")
     RETURN
-999 ERRORSEXITS("cmfe_CellMLEquations_TimeDependenceTypeSetNumber",err,error)
+999 ERRORS("cmfe_CellMLEquations_TimeDependenceTypeSetNumber",err,error)
+    EXITS("cmfe_CellMLEquations_TimeDependenceTypeSetNumber")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -47654,7 +47667,8 @@ CONTAINS
 
     EXITS("cmfe_CellMLEquations_TimeDependenceTypeSetObj")
     RETURN
-999 ERRORSEXITS("cmfe_CellMLEquations_TimeDependenceTypeSetObj",err,error)
+999 ERRORS("cmfe_CellMLEquations_TimeDependenceTypeSetObj",err,error)
+    EXITS("cmfe_CellMLEquations_TimeDependenceTypeSetObj")
     CALL cmfe_HandleError(err,error)
     RETURN
 

@@ -2618,7 +2618,8 @@ CONTAINS
     EXITS("EquationsMatrices_EquationsMatrixDynamicInitialise")
     RETURN
 999 CALL EquationsMatrices_EquationsMatrixFinalise(dynamicMatrices%matrices(matrixNumber)%ptr,dummyErr,dummyError,*998)
-998 ERRORSEXITS("EquationsMatrices_EquationsMatrixDynamicInitialise",err,error)
+998 ERRORS("EquationsMatrices_EquationsMatrixDynamicInitialise",err,error)
+    EXITS("EquationsMatrices_EquationsMatrixDynamicInitialise")
     RETURN 1
     
   END SUBROUTINE EquationsMatrices_EquationsMatrixDynamicInitialise
@@ -2682,7 +2683,8 @@ CONTAINS
     EXITS("EquationsMatrices_EquationsMatrixLinearInitialise")
     RETURN
 999 CALL EquationsMatrices_EquationsMatrixFinalise(linearMatrices%matrices(matrixNumber)%ptr,dummyErr,dummyError,*998)
-998 ERRORSEXITS("EquationsMatrices_EquationsMatrixLinearInitialise",err,error)
+998 ERRORS("EquationsMatrices_EquationsMatrixLinearInitialise",err,error)
+    EXITS("EquationsMatrices_EquationsMatrixLinearInitialise")
     RETURN 1
     
   END SUBROUTINE EquationsMatrices_EquationsMatrixLinearInitialise

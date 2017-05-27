@@ -359,7 +359,8 @@ CONTAINS
     EXITS("EquationsMatricesNonlinear_JacobianMatrixGet")
     RETURN
 999 NULLIFY(jacobianMatrix)
-998 ERRORSEXITS("EquationsMatricesNonlinear_JacobianMatrixGet",err,error)
+998 ERRORS("EquationsMatricesNonlinear_JacobianMatrixGet",err,error)
+    EXITS("EquationsMatricesNonlinear_JacobianMatrixGet")
     RETURN 1
     
   END SUBROUTINE EquationsMatricesNonlinear_JacobianMatrixGet
@@ -396,7 +397,8 @@ CONTAINS
     EXITS("EquationsMatricesNonlinear_NonlinearMappingGet")
     RETURN
 999 NULLIFY(nonlinearMapping)
-998 ERRORSEXITS("EquationsMatricesNonlinear_NonlinearMappingGet",err,error)
+998 ERRORS("EquationsMatricesNonlinear_NonlinearMappingGet",err,error)
+    EXITS("EquationsMatricesNonlinear_NonlinearMappingGet")
     RETURN 1
     
   END SUBROUTINE EquationsMatricesNonlinear_NonlinearMappingGet
@@ -427,7 +429,8 @@ CONTAINS
     EXITS("EquationsMatricesNonlinear_VectorMatricesGet")
     RETURN
 999 NULLIFY(vectorMatrices)
-998 ERRORSEXITS("EquationsMatricesNonlinear_VectorMatricesGet",err,error)
+998 ERRORS("EquationsMatricesNonlinear_VectorMatricesGet",err,error)
+    EXITS("EquationsMatricesNonlinear_VectorMatricesGet")
     RETURN 1
     
   END SUBROUTINE EquationsMatricesNonlinear_VectorMatricesGet
@@ -550,7 +553,8 @@ CONTAINS
     EXITS("EquationsMatricesVector_NonlinearMatricesGet")
     RETURN
 999 NULLIFY(nonlinearMatrices)
-998 ERRORSEXITS("EquationsMatricesVector_NonlinearMatricesGet",err,error)
+998 ERRORS("EquationsMatricesVector_NonlinearMatricesGet",err,error)
+    EXITS("EquationsMatricesVector_NonlinearMatricesGet")
     RETURN 1
     
   END SUBROUTINE EquationsMatricesVector_NonlinearMatricesGet

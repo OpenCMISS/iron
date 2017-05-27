@@ -846,7 +846,8 @@ CONTAINS
     
     EXITS("DataProjection_DataProjectionCandidatesFinalise")
     RETURN
-999 ERRORSEXITS("DataProjection_DataProjectionCandidatesFinalise",err,error)
+999 ERRORS("DataProjection_DataProjectionCandidatesFinalise",err,error)
+    EXITS("DataProjection_DataProjectionCandidatesFinalise")
     RETURN 1
     
   END SUBROUTINE DataProjection_DataProjectionCandidatesFinalise
@@ -977,7 +978,8 @@ CONTAINS
     
     EXITS("DataProjection_DataProjectionResultsFinalise")
     RETURN
-999 ERRORSEXITS("DataProjection_DataProjectionResultsFinalise",err,error)
+999 ERRORS("DataProjection_DataProjectionResultsFinalise",err,error)
+    EXITS("DataProjection_DataProjectionResultsFinalise")
     RETURN 1
     
   END SUBROUTINE DataProjection_DataProjectionResultsFinalise
@@ -3455,7 +3457,8 @@ CONTAINS
     
     EXITS("DataProjection_ProjectionCancelByDataPoints0")
     RETURN
-999 ERRORSEXITS("DataProjection_ProjectionCancelByDataPoints0",err,error)    
+999 ERRORS("DataProjection_ProjectionCancelByDataPoints0",err,error)    
+    EXITS("DataProjection_ProjectionCancelByDataPoints0")    
     RETURN 1
 
   END SUBROUTINE DataProjection_ProjectionCancelByDataPoints0
@@ -3500,7 +3503,8 @@ CONTAINS
     
     EXITS("DataProjection_ProjectionCancelByDataPoints1")
     RETURN
-999 ERRORSEXITS("DataProjection_ProjectionCancelByDataPoints1",err,error)    
+999 ERRORS("DataProjection_ProjectionCancelByDataPoints1",err,error)    
+    EXITS("DataProjection_ProjectionCancelByDataPoints1")    
     RETURN 1
 
   END SUBROUTINE DataProjection_ProjectionCancelByDataPoints1
@@ -3753,7 +3757,8 @@ CONTAINS
     RETURN
 999 IF(ALLOCATED(dataProjection%dataProjectionCandidates(0)%candidateElementNumbers)) &
       & DEALLOCATE(dataProjection%dataProjectionCandidates(0)%candidateElementNumbers)
-998 ERRORSEXITS("DataProjection_ProjectionCandidateElementsSet",err,error)
+998 ERRORS("DataProjection_ProjectionCandidateElementsSet",err,error)
+    EXITS("DataProjection_ProjectionCandidateElementsSet")
     RETURN 1
     
   END SUBROUTINE DataProjection_ProjectionCandidateElementsSet
@@ -3830,7 +3835,8 @@ CONTAINS
     
     EXITS("DataProjection_ProjectionDataCandidateElementsSet")
     RETURN
-999 ERRORSEXITS("DataProjection_ProjectionDataCandidateElementsSet",err,error)
+999 ERRORS("DataProjection_ProjectionDataCandidateElementsSet",err,error)
+    EXITS("DataProjection_ProjectionDataCandidateElementsSet")
     RETURN 1
     
   END SUBROUTINE DataProjection_ProjectionDataCandidateElementsSet
@@ -4036,7 +4042,8 @@ CONTAINS
      
     EXITS("DataProjection_ProjectionDataCandidateFacesSet")
     RETURN
-999 ERRORSEXITS("DataProjection_ProjectionDataCandidateFacesSet",err,error)
+999 ERRORS("DataProjection_ProjectionDataCandidateFacesSet",err,error)
+    EXITS("DataProjection_ProjectionDataCandidateFacesSet")
     RETURN 1
 
   END SUBROUTINE DataProjection_ProjectionDataCandidateFacesSet
@@ -4250,7 +4257,8 @@ CONTAINS
      
     EXITS("DataProjection_ProjectionDataCandidateLinesSet")
     RETURN
-999 ERRORSEXITS("DataProjection_ProjectionDataCandidateLinesSet",err,error)
+999 ERRORS("DataProjection_ProjectionDataCandidateLinesSet",err,error)
+    EXITS("DataProjection_ProjectionDataCandidateLinesSet")
     RETURN 1
 
   END SUBROUTINE DataProjection_ProjectionDataCandidateLinesSet

@@ -1696,10 +1696,16 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: columnDOFSMapping !<A pointer to the column dofs domain mapping for the matrix variable
   END TYPE EquationsMatrixToVarMapType
 
+  !>Contains information for function mapping in the scalar equations mapping
+  TYPE EquationsMappingFunctionType
+    INTEGER(INTG) :: functionNumber !<The number of the function in the functions scalar mapping
+ END TYPE EquationsMappingFunctionType
+    
   !>Contains information for mapping field variables to functions in the scalar equations mapping
   TYPE EquationsMappingFunctionsType
     TYPE(EquationsMappingScalarType), POINTER :: scalarMapping !<A pointer to the equations scalar mapping
     INTEGER(INTG) :: numberOfFunctions !<The number of functions in the mapping
+    TYPE(EquationsMappingFunctionType), ALLOCATABLE :: functions(:) !<functions(functionIdx). Information on the functionIdx'th function mapping.
   END TYPE EquationsMappingFunctionsType
     
   !>Contains information for mapping field variables to a norm i.e., ||x|| in the scalar equations mapping
