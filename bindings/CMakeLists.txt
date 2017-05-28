@@ -107,10 +107,14 @@ if (WITH_Python_BINDINGS)
         WORKING_DIRECTORY ${Iron_SOURCE_DIR}/bindings
     )
 
-    string(SUBSTRING ${PYTHONLIBS_VERSION_STRING} 0 1 PYTHONLIBS_MAJOR_VERSION)
+    three_part_version_to_vars(${PYTHONLIBS_VERSION_STRING} PYTHONLIBS_MAJOR_VERSION PYTHONLIBS_MINOR_VERSION PYTHONLIBS_PATCH_VERSION)
     if(${PYTHONLIBS_MAJOR_VERSION} STREQUAL "3")
         set(PYTHONLIBS_SWIG_FLAGS -py3)
     endif()
+
+    set(_PYTHON_DESTINATION_PREFIX lib/python${PYTHONLIBS_MAJOR_VERSION}.${PYTHONLIBS_MINOR_VERSION})
+    set(IRON_PYTHON_PACKAGE_DESTINATION_PREFIX ${_PYTHON_DESTINATION_PREFIX}/$<CONFIG>/opencmiss.iron/opencmiss/iron)
+    file(RELATIVE_PATH _REL_INSTALL_PATH ${CMAKE_INSTALL_PREFIX}/${IRON_PYTHON_PACKAGE_DESTINATION_PREFIX} ${CMAKE_INSTALL_PREFIX}/lib)
 
     # Generate C wrapper
     set(PYTHON_WRAPPER "${CMAKE_CURRENT_BINARY_DIR}/iron_python_wrapper.c")
@@ -139,6 +143,14 @@ if (WITH_Python_BINDINGS)
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron
     )
+    if (APPLE)
+        set_target_properties(${IRON_PYTHON_MODULE} PROPERTIES
+            INSTALL_RPATH "@loader_path/${_REL_INSTALL_PATH}")
+    elseif (UNIX)
+        set_target_properties(${IRON_PYTHON_MODULE} PROPERTIES
+            INSTALL_RPATH "\$ORIGIN/${_REL_INSTALL_PATH}")
+    endif ()
+
     # "Bugfix": If we use the same source file name, there will be two processes messing with
     # the same fortran module file which can lead to errors using -j parallel builds.
     # By this we simply force to have iron_c build before the python module.
@@ -170,13 +182,17 @@ if (WITH_Python_BINDINGS)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/python/opencmiss/iron/_utils.in.py ${UTILS_PY} @ONLY)
             
     # Step 2: Generation phase - replaces remaining generator expressions
-    file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron/__init__.py"
+    set(IRON_PACKAGE_INIT_PY "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron/__init__.py")
+    file(GENERATE OUTPUT "${IRON_PACKAGE_INIT_PY}"
         INPUT ${INIT_PY})
-    file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/setup.py"
+    set(IRON_SETUP_PY "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/setup.py")
+    file(GENERATE OUTPUT "${IRON_SETUP_PY}"
         INPUT ${SETUP_PY})
-    file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron/_utils.py"
+    set(IRON_UTILS_PY "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron/_utils.py")
+    file(GENERATE OUTPUT "${IRON_UTILS_PY}"
         INPUT ${UTILS_PY})
-    file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/__init__.py"
+    set(OPENCMISS_PACKAGE_INIT_PY "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/__init__.py")
+    file(GENERATE OUTPUT "${OPENCMISS_PACKAGE_INIT_PY}"
         INPUT ${CMAKE_CURRENT_SOURCE_DIR}/python/opencmiss/__init__.py)
     
     set(IRON_PY ${CMAKE_CURRENT_BINARY_DIR}/iron.py) # see python.py script in generate_bindings for iron.py name
@@ -187,16 +203,23 @@ if (WITH_Python_BINDINGS)
         WORKING_DIRECTORY "${Iron_SOURCE_DIR}/bindings"
     )
     list(APPEND _CLEANUP ${IRON_PY})
+    set(IRON_IRON_PY "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron/iron.py")
     add_custom_target(collect_python_binding_files ALL
         DEPENDS "${IRON_PY}"
-        COMMAND ${CMAKE_COMMAND} -E copy ${IRON_PY} ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron/iron.py
+        COMMAND ${CMAKE_COMMAND} -E copy ${IRON_PY} ${IRON_IRON_PY}
     )
     
-    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}/opencmiss
-        DESTINATION python/$<CONFIG>
+    install(FILES ${IRON_SETUP_PY}
+        DESTINATION ${_PYTHON_DESTINATION_PREFIX}/$<CONFIG>/opencmiss.iron
         COMPONENT PythonBindings)
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}/setup.py
-        DESTINATION python/$<CONFIG>
+    install(FILES ${OPENCMISS_PACKAGE_INIT_PY}
+        DESTINATION ${_PYTHON_DESTINATION_PREFIX}/$<CONFIG>/opencmiss.iron/opencmiss
+        COMPONENT PythonBindings)
+    install(FILES ${IRON_PACKAGE_INIT_PY} ${IRON_IRON_PY} ${IRON_UTILS_PY}
+        DESTINATION ${IRON_PYTHON_PACKAGE_DESTINATION_PREFIX}
+        COMPONENT PythonBindings)
+    install(TARGETS ${IRON_PYTHON_MODULE}
+        DESTINATION ${IRON_PYTHON_PACKAGE_DESTINATION_PREFIX}
         COMPONENT PythonBindings)
     
     if (IRON_USE_VIRTUALENV)
