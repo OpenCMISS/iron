@@ -3090,7 +3090,7 @@ CONTAINS
           END IF
           ! determine step size
           CALL DistributedVector_L2Norm(parameters,delta,err,error,*999)
-          delta=(1.0_DP+delta)*1E-7_DP
+          delta=(1.0_DP+delta)*1E-6
           ! the actual finite differencing algorithm is about 4 lines but since the parameters are all
           ! distributed out, have to use proper field accessing routines..
           ! so let's just loop over component, node/el, derivative
