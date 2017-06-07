@@ -651,7 +651,7 @@ CONTAINS
     CALL MATRIX_PRODUCT(DZDNUT,DZDNU,AZL,ERR,ERROR,*999)
     CALL INVERT(AZL,AZU,I3,ERR,ERROR,*999)
 
-    ! Evaluate the derivative of AZU wrt to E (AZUE) for the hydrostatic term.
+    ! Evaluate the derivative of AZU wrt to E (AZUE) for the hydrostatic term. Formulation from Nam-Ho Kim book, pg.198.
     AZLv(1) = AZL(1,1)
     AZLv(2) = AZL(2,2)
     AZLv(3) = AZL(3,3)
@@ -712,7 +712,7 @@ CONTAINS
         ENDDO
       ENDIF
 
-      ! Calculate isochoric fictitious material elasticity tensor (in Voigt form), without the factor Jznu**(-4.0_DP/3.0_DP), as
+      ! Calculate material elasticity tensor (in Voigt form) as
       ! this will be compensated for in the push-forward with the modified deformation gradient.
       TEMPTERM1=4.0_DP*C(2)
       TEMPTERM2=-2.0_DP*C(2)
@@ -725,6 +725,7 @@ CONTAINS
       ELASTICITY_TENSOR(4,4)=TEMPTERM2
       ELASTICITY_TENSOR(5,5)=TEMPTERM2
       ELASTICITY_TENSOR(6,6)=TEMPTERM2
+      !Add volumetric part of elasticity tensor - p*d(C^-1)/dE.
       ELASTICITY_TENSOR=ELASTICITY_TENSOR + P*AZUE
 
       ! Do push-forward of 2nd Piola tensor and the material elasticity tensor.
@@ -773,6 +774,7 @@ CONTAINS
           ELASTICITY_TENSOR(i,j)=ELASTICITY_TENSOR(j,i)
         ENDDO
       ENDDO
+      !Add volumetric part of elasticity tensor - p*d(C^-1)/dE.
       ELASTICITY_TENSOR=ELASTICITY_TENSOR + P*AZUE
 
       !Do push-forward of 2nd Piola tensor and the material elasticity tensor.
