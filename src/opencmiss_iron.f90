@@ -4919,17 +4919,21 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_InterfaceCondition_OperatorSetObj
   END INTERFACE cmfe_InterfaceCondition_OperatorSet
 
-  !>Returns the sparsity for interface equations.
-  INTERFACE cmfe_InterfaceEquations_SparsityGet
-    MODULE PROCEDURE cmfe_InterfaceEquations_SparsityGetNumber
-    MODULE PROCEDURE cmfe_InterfaceEquations_SparsityGetObj
-  END INTERFACE cmfe_InterfaceEquations_SparsityGet
+  !>Returns the interface matrix time dependence type for interface equations.
+  INTERFACE cmfe_InterfaceEquations_MatrixTimeDependenceTypeGet
+    MODULE PROCEDURE cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber0
+    MODULE PROCEDURE cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber1
+    MODULE PROCEDURE cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetObj0
+    MODULE PROCEDURE cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetObj1
+  END INTERFACE cmfe_InterfaceEquations_MatrixTimeDependenceTypeGet
 
-  !>Sets/changes the sparsity for interface equations.
-  INTERFACE cmfe_InterfaceEquations_SparsitySet
-    MODULE PROCEDURE cmfe_InterfaceEquations_SparsitySetNumber
-    MODULE PROCEDURE cmfe_InterfaceEquations_SparsitySetObj
-  END INTERFACE cmfe_InterfaceEquations_SparsitySet
+  !>Sets/changes the interface matrix time dependence type for interface equations.
+  INTERFACE cmfe_InterfaceEquations_MatrixTimeDependenceTypeSet
+    MODULE PROCEDURE cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber0
+    MODULE PROCEDURE cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber1
+    MODULE PROCEDURE cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetObj0
+    MODULE PROCEDURE cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetObj1
+  END INTERFACE cmfe_InterfaceEquations_MatrixTimeDependenceTypeSet
 
   !>Returns the output type for interface equations.
   INTERFACE cmfe_InterfaceEquations_OutputTypeGet
@@ -4942,6 +4946,18 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_InterfaceEquations_OutputTypeSetNumber
     MODULE PROCEDURE cmfe_InterfaceEquations_OutputTypeSetObj
   END INTERFACE cmfe_InterfaceEquations_OutputTypeSet
+
+  !>Returns the sparsity for interface equations.
+  INTERFACE cmfe_InterfaceEquations_SparsityGet
+    MODULE PROCEDURE cmfe_InterfaceEquations_SparsityGetNumber
+    MODULE PROCEDURE cmfe_InterfaceEquations_SparsityGetObj
+  END INTERFACE cmfe_InterfaceEquations_SparsityGet
+
+  !>Sets/changes the sparsity for interface equations.
+  INTERFACE cmfe_InterfaceEquations_SparsitySet
+    MODULE PROCEDURE cmfe_InterfaceEquations_SparsitySetNumber
+    MODULE PROCEDURE cmfe_InterfaceEquations_SparsitySetObj
+  END INTERFACE cmfe_InterfaceEquations_SparsitySet
 
   PUBLIC CMFE_INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,CMFE_INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD, &
     & CMFE_INTERFACE_CONDITION_PENALTY_METHOD,CMFE_INTERFACE_CONDITION_POINT_TO_POINT_METHOD
@@ -4972,9 +4988,11 @@ MODULE OpenCMISS_Iron
 
   PUBLIC cmfe_InterfaceCondition_OperatorGet,cmfe_InterfaceCondition_OperatorSet
 
-  PUBLIC cmfe_InterfaceEquations_SparsityGet,cmfe_InterfaceEquations_SparsitySet
-
+  PUBLIC cmfe_InterfaceEquations_MatrixTimeDependenceTypeGet,cmfe_InterfaceEquations_MatrixTimeDependenceTypeSet
+  
   PUBLIC cmfe_InterfaceEquations_OutputTypeGet,cmfe_InterfaceEquations_OutputTypeSet
+
+  PUBLIC cmfe_InterfaceEquations_SparsityGet,cmfe_InterfaceEquations_SparsitySet
 
 !!==================================================================================================================================
 !!
@@ -4986,12 +5004,12 @@ MODULE OpenCMISS_Iron
 
   !> \addtogroup OPENCMISS_InterfaceMatricesTimeDependenceTypes OpenCMISS::Iron::InterfaceMatrices::TimeDependenceTypes
   !> \brief Interface matrices time dependency types
-  !>@{
-  INTEGER, PARAMETER :: CMFE_NUMBER_OF_INTERFACE_MATRIX_TYPES=NUMBER_OF_INTERFACE_MATRIX_TYPES
-  INTEGER, PARAMETER :: CMFE_INTERFACE_MATRIX_STATIC=INTERFACE_MATRIX_STATIC !<Interface matrix is of static type \see INTERFACE_MATRICES_ROUTINES_InterfaceMatricesTimeDependenceTypes,INTERFACE_MATRICES_ROUTINES
-  INTEGER, PARAMETER :: CMFE_INTERFACE_MATRIX_QUASI_STATIC=INTERFACE_MATRIX_QUASI_STATIC !<Interface matrix is of quasi-static type \see INTERFACE_MATRICES_ROUTINES_InterfaceMatricesTimeDependenceTypes,INTERFACE_MATRICES_ROUTINES
-  INTEGER, PARAMETER :: CMFE_INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC=INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC !<Interface matrix is of first order dynamic type \see INTERFACE_MATRICES_ROUTINES_InterfaceMatricesTimeDependenceTypes,INTERFACE_MATRICES_ROUTINES
-  INTEGER, PARAMETER :: CMFE_INTERFACE_MATRIX_SECOND_ORDER_DYNAMIC=INTERFACE_MATRIX_SECOND_ORDER_DYNAMIC !<Interface matrix is of second order dynamic type \see INTERFACE_MATRICES_ROUTINES_InterfaceMatricesTimeDependenceTypes,INTERFACE_MATRICES_ROUTINES
+  !> \see OPENCMISS::Iron::InterfaceEquations,OPENCMISS
+   !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_MATRIX_STATIC=INTERFACE_MATRIX_STATIC !<Interface matrix is of static type \see OPENCMISS_InterfaceMatricesTimeDependenceTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_MATRIX_QUASI_STATIC=INTERFACE_MATRIX_QUASI_STATIC !<Interface matrix is of quasi-static type \see OPENCMISS_InterfaceMatricesTimeDependenceTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC=INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC !<Interface matrix is of first order dynamic type \see OPENCMISS_InterfaceMatricesTimeDependenceTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_MATRIX_SECOND_ORDER_DYNAMIC=INTERFACE_MATRIX_SECOND_ORDER_DYNAMIC !<Interface matrix is of second order dynamic type \see OPENCMISS_InterfaceMatricesTimeDependenceTypes,OPENCMISS
   !>@}
 
   !Module types
@@ -4999,10 +5017,9 @@ MODULE OpenCMISS_Iron
   !Module variables
 
   !Interfaces
-  PUBLIC CMFE_NUMBER_OF_INTERFACE_MATRIX_TYPES,CMFE_INTERFACE_MATRIX_STATIC,CMFE_INTERFACE_MATRIX_QUASI_STATIC, &
-    & CMFE_INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC,CMFE_INTERFACE_MATRIX_SECOND_ORDER_DYNAMIC
-
-  PUBLIC cmfe_InterfaceMatrices_TimeDependenceTypeSet,cmfe_InterfaceMatrices_TimeDependenceTypeGet
+  
+  PUBLIC CMFE_INTERFACE_MATRIX_STATIC,CMFE_INTERFACE_MATRIX_QUASI_STATIC,CMFE_INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC, &
+    & CMFE_INTERFACE_MATRIX_SECOND_ORDER_DYNAMIC
 
 !!==================================================================================================================================
 !!
@@ -40387,6 +40404,322 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the matrix time dependence type for an interface equations identified by a user number.
+  SUBROUTINE cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber0(regionUserNumber,interfaceUserNumber, &
+    & interfaceConditionUserNumber,interfaceMatrixIdx,hasTranspose,timeDependenceType,err)
+    !DLLEXPORT(cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber0)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface, interface condition and interface equations to get the matrix time dependence type for type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface, interface condition and interface equations to get the matrix time dependence type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition and interface equation to get the matrix time dependence type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix to get the time dependence type for.
+    LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix transpose is to be set as well, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On return, the interface matrix time dependence type. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OPENCMISS_InterfaceMatricesTimeDependenceTypes 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: timeDependenceTypes(1)
+
+    ENTERS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber0",err,error,*999)
+
+    CALL cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber1(regionUserNumber,interfaceUserNumber, &
+      & interfaceConditionUserNumber,interfaceMatrixIdx,hasTranspose,timeDependenceTypes,err)
+    timeDependenceType=timeDependenceTypes(1)
+
+    EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber0")
+    RETURN
+999 ERRORSEXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber0",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber0
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the matrix time dependence type for an interface equations identified by a user number.
+  SUBROUTINE cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber1(regionUserNumber,interfaceUserNumber, &
+    & interfaceConditionUserNumber,interfaceMatrixIdx,hasTranspose,timeDependenceTypes,err)
+    !DLLEXPORT(cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber1)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface, interface condition and interface equations to get the matrix time dependence type for type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface, interface condition and interface equations to get the matrix time dependence type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition and interface equation to get the matrix time dependence type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix to get the time dependence type for.
+    LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix transpose is to be set as well, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceTypes(:) !<timeDependenceTypes(transposeIdx). On return, the interface matrix time dependence type. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OPENCMISS_InterfaceMatricesTimeDependenceTypes 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE
+    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
+    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
+    TYPE(REGION_TYPE), POINTER :: REGION
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber1",err,error,*999)
+
+    NULLIFY(REGION)
+    NULLIFY(INTERFACE)
+    NULLIFY(INTERFACE_CONDITION)
+    NULLIFY(INTERFACE_EQUATIONS)
+    CALL REGION_USER_NUMBER_FIND(regionUserNumber,REGION,err,error,*999)
+    IF(ASSOCIATED(REGION)) THEN
+      CALL INTERFACE_USER_NUMBER_FIND(interfaceUserNumber,REGION,INTERFACE,err,error,*999)
+      IF(ASSOCIATED(INTERFACE)) THEN
+        CALL INTERFACE_CONDITION_USER_NUMBER_FIND(interfaceConditionUserNumber,INTERFACE,INTERFACE_CONDITION,err,error,*999)
+        IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
+          CALL INTERFACE_CONDITION_EQUATIONS_GET(INTERFACE_CONDITION,INTERFACE_EQUATIONS,err,error,*999)
+          CALL InterfaceEquations_MatrixTimeDependenceTypeGet(INTERFACE_EQUATIONS,interfaceMatrixIdx,hasTranspose, &
+            & timeDependenceTypes,err,error,*999)
+        ELSE
+          localError="An interface condition with an user number of "// &
+            & TRIM(NumberToVString(interfaceConditionUserNumber,"*",err,error))// &
+            & " does not exist on the interface with a user number of "// &
+            & TRIM(NumberToVString(interfaceUserNumber,"*",err,error))// &
+            & " defined on a region with a user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        END IF
+      ELSE
+        localError="An interface with an user number of "//TRIM(NumberToVString(interfaceUserNumber,"*",err,error))// &
+          & " does not exist on region number "//TRIM(NumberToVString(regionUserNumber,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      END IF
+    ELSE
+      localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))//" does not exist."
+      CALL FlagError(localError,err,error,*999)
+    END IF
+
+    EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber1")
+    RETURN
+999 ERRORSEXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber1",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the matrix time dependence type for an interface equations identified by an object.
+  SUBROUTINE cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetObj0(interfaceEquations,interfaceMatrixIdx,hasTranspose, &
+    & timeDependenceType,err)
+    !DLLEXPORT(cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetObj0)
+
+    !Argument variables
+    TYPE(cmfe_InterfaceEquationsType), INTENT(IN) :: interfaceEquations !<The interface equations to get the matrix time dependence type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix to get the time dependence type for.
+    LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix transpose is to be set as well, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On return, the interface matrix time dependence type. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OPENCMISS_InterfaceMatricesTimeDependenceTypes 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: timeDependenceTypes(1)
+
+    ENTERS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetObj0",err,error,*999)
+
+    CALL cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetObj1(interfaceEquations,interfaceMatrixIdx,hasTranspose, &
+      & timeDependenceTypes,err)
+    timeDependenceType=timeDependenceTypes(1)
+
+    EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetObj0")
+    RETURN
+999 ERRORSEXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetObj0",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetObj0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the matrix time dependence type for an interface equations identified by an object.
+  SUBROUTINE cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetObj1(interfaceEquations,interfaceMatrixIdx,hasTranspose, &
+    & timeDependenceTypes,err)
+    !DLLEXPORT(cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetObj1)
+
+    !Argument variables
+    TYPE(cmfe_InterfaceEquationsType), INTENT(IN) :: interfaceEquations !<The interface equations to get the matrix time dependence type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix to get the time dependence type for.
+    LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix transpose is to be set as well, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceTypes(:) !<timeDependenceTypes(transposeIdx). On return, the interface matrix time dependence type. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OPENCMISS_InterfaceMatricesTimeDependenceTypes 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetObj1",err,error,*999)
+
+    CALL InterfaceEquations_MatrixTimeDependenceTypeGet(interfaceEquations%interfaceEquations,interfaceMatrixIdx,hasTranspose, &
+      & timeDependenceTypes,err,error,*999)
+
+    EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetObj1")
+    RETURN
+999 ERRORSEXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetObj1",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetObj1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the matrix time dependence type for an interface equations identified by a user number.
+  SUBROUTINE cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber0(regionUserNumber,interfaceUserNumber, &
+    & interfaceConditionUserNumber,interfaceMatrixIdx,hasTranspose,timeDependenceType,err)
+    !DLLEXPORT(cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber0)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface, interface condition and interface equations to set the matrix time dependence type for type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface, interface condition and interface equations to set the matrix time dependence type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition and interface equation to set the matrix time dependence type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix to set the time dependence type for.
+    LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix transpose is to be set as well, .FALSE. if not.
+    INTEGER(INTG), INTENT(IN) :: timeDependenceType !<The interface matrix time dependence type to set. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OPENCMISS_InterfaceMatricesTimeDependenceTypes 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber0",err,error,*999)
+
+    CALL cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber1(regionUserNumber,interfaceUserNumber, &
+      & interfaceConditionUserNumber,interfaceMatrixIdx,hasTranspose,[timeDependenceType],err)
+
+    EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber0")
+    RETURN
+999 ERRORSEXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber0",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber0
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the matrix time dependence type for an interface equations identified by a user number.
+  SUBROUTINE cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber1(regionUserNumber,interfaceUserNumber, &
+    & interfaceConditionUserNumber,interfaceMatrixIdx,hasTranspose,timeDependenceTypes,err)
+    !DLLEXPORT(cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber1)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface, interface condition and interface equations to set the matrix time dependence type for type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface, interface condition and interface equations to set the matrix time dependence type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition and interface equation to set the matrix time dependence type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix to set the time dependence type for.
+    LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix transpose is to be set as well, .FALSE. if not.
+    INTEGER(INTG), INTENT(IN) :: timeDependenceTypes(:) !<timeDependenceTypes(transposeIdx). The interface matrix time dependence type to set. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OPENCMISS_InterfaceMatricesTimeDependenceTypes 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE
+    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
+    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
+    TYPE(REGION_TYPE), POINTER :: REGION
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber1",err,error,*999)
+
+    NULLIFY(REGION)
+    NULLIFY(INTERFACE)
+    NULLIFY(INTERFACE_CONDITION)
+    NULLIFY(INTERFACE_EQUATIONS)
+    CALL REGION_USER_NUMBER_FIND(regionUserNumber,REGION,err,error,*999)
+    IF(ASSOCIATED(REGION)) THEN
+      CALL INTERFACE_USER_NUMBER_FIND(interfaceUserNumber,REGION,INTERFACE,err,error,*999)
+      IF(ASSOCIATED(INTERFACE)) THEN
+        CALL INTERFACE_CONDITION_USER_NUMBER_FIND(interfaceConditionUserNumber,INTERFACE,INTERFACE_CONDITION,err,error,*999)
+        IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
+          CALL INTERFACE_CONDITION_EQUATIONS_GET(INTERFACE_CONDITION,INTERFACE_EQUATIONS,err,error,*999)
+          CALL InterfaceEquations_MatrixTimeDependenceTypeSet(INTERFACE_EQUATIONS,interfaceMatrixIdx,hasTranspose, &
+            & timeDependenceTypes,err,error,*999)
+        ELSE
+          localError="An interface condition with an user number of "// &
+            & TRIM(NumberToVString(interfaceConditionUserNumber,"*",err,error))// &
+            & " does not exist on the interface with a user number of "// &
+            & TRIM(NumberToVString(interfaceUserNumber,"*",err,error))// &
+            & " defined on a region with a user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        END IF
+      ELSE
+        localError="An interface with an user number of "//TRIM(NumberToVString(interfaceUserNumber,"*",err,error))// &
+          & " does not exist on region number "//TRIM(NumberToVString(regionUserNumber,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      END IF
+    ELSE
+      localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))//" does not exist."
+      CALL FlagError(localError,err,error,*999)
+    END IF
+
+    EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber1")
+    RETURN
+999 ERRORSEXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber1",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the matrix time dependence type for an interface equations identified by an object.
+  SUBROUTINE cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetObj0(interfaceEquations,interfaceMatrixIdx,hasTranspose, &
+    & timeDependenceType,err)
+    !DLLEXPORT(cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetObj0)
+
+    !Argument variables
+    TYPE(cmfe_InterfaceEquationsType), INTENT(IN) :: interfaceEquations !<The interface equations to set the matrix time dependence type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix to set the time dependence type for.
+    LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix transpose is to be set as well, .FALSE. if not.
+    INTEGER(INTG), INTENT(IN) :: timeDependenceType !<The interface matrix time dependence type to set. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OPENCMISS_InterfaceMatricesTimeDependenceTypes 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetObj0",err,error,*999)
+
+    CALL cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetObj1(interfaceEquations,interfaceMatrixIdx,hasTranspose, &
+      & [timeDependenceType],err)
+
+    EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetObj0")
+    RETURN
+999 ERRORSEXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetObj0",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetObj0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the matrix time dependence type for an interface equations identified by an object.
+  SUBROUTINE cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetObj1(interfaceEquations,interfaceMatrixIdx,hasTranspose, &
+    & timeDependenceTypes,err)
+    !DLLEXPORT(cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetObj1)
+
+    !Argument variables
+    TYPE(cmfe_InterfaceEquationsType), INTENT(IN) :: interfaceEquations !<The interface equations to set the matrix time dependence type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix to set the time dependence type for.
+    LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix transpose is to be set as well, .FALSE. if not.
+    INTEGER(INTG), INTENT(IN) :: timeDependenceTypes(:) !<timeDependenceTypes(transposeIdx). The interface matrix time dependence type to set. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OPENCMISS_InterfaceMatricesTimeDependenceTypes 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetObj1",err,error,*999)
+
+    CALL InterfaceEquations_MatrixTimeDependenceTypeSet(interfaceEquations%interfaceEquations,interfaceMatrixIdx,hasTranspose, &
+      & timeDependenceTypes,err,error,*999)
+
+    EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetObj1")
+    RETURN
+999 ERRORSEXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetObj1",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetObj1
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns the output type for an interface equations identified by a user number.
   SUBROUTINE cmfe_InterfaceEquations_OutputTypeGetNumber(regionUserNumber,interfaceUserNumber,interfaceConditionUserNumber, &
     & outputType,err)
@@ -55528,96 +55861,6 @@ CONTAINS
 
   END SUBROUTINE cmfe_SolverEquations_InterfaceConditionAddObj
 
-  !
-  !================================================================================================================================
-  !
-  
-  !>Set the time dependence type of interface matrices
-  SUBROUTINE cmfe_InterfaceMatrices_TimeDependenceTypeSet(interfaceCondition, &
-    & interfaceMatrixIndex,hasTranspose,timeDependenceTypes,Err)
-    !DLLEXPORT(cmfe_InterfaceMatrices_TimeDependenceTypeSet)
-    
-    !Argument variables
-    TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to add.
-    INTEGER(INTG), INTENT(IN) :: timeDependenceTypes(:) !<Time dependence types for the given interface matrix and it's transpose (if any). \see INTERFACE_MATRICES_ROUTINES_InterfaceMatricesTimeDependenceTypes,INTERFACE_MATRICES_ROUTINES
-    INTEGER(INTG), INTENT(IN) :: interfaceMatrixIndex
-    LOGICAL, INTENT(IN) :: hasTranspose
-    INTEGER(INTG), INTENT(OUT) :: Err !<The error code
-    !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-    
-    ENTERS("cmfe_InterfaceMatrices_TimeDependenceTypeSet",err,error,*999)
-    
-    IF(SIZE(timeDependenceTypes)/=2) CALL FlagError("Invalid size of time dependence types array. Must be 2.",err,error,*999)
-    IF(timeDependenceTypes(1)>0.AND.timeDependenceTypes(1)<=CMFE_NUMBER_OF_INTERFACE_MATRIX_TYPES) THEN
-      CALL InterfaceMatrix_TimeDependenceTypeSet(interfaceCondition%interfaceCondition, &
-        & interfaceMatrixIndex,.FALSE.,timeDependenceTypes(1),err,error,*999)
-      IF(hasTranspose.AND.(timeDependenceTypes(2)>0.AND.timeDependenceTypes(2)<=CMFE_NUMBER_OF_INTERFACE_MATRIX_TYPES)) THEN
-        CALL InterfaceMatrix_TimeDependenceTypeSet(interfaceCondition%interfaceCondition, &
-          & interfaceMatrixIndex,.TRUE.,timeDependenceTypes(2),err,error,*999)
-      ELSE
-        IF(.NOT.hasTranspose) THEN
-          !ok)
-        ELSEIF(hasTranspose.AND. &
-          & .NOT.(timeDependenceTypes(2)>0.AND.timeDependenceTypes(2)<=CMFE_NUMBER_OF_INTERFACE_MATRIX_TYPES)) THEN
-          LOCAL_ERROR="Interface matrix number "//TRIM(NumberToVString(interfaceMatrixIndex,"*",err,error))// &
-            & " has transpose but invalid time dependence type of "//TRIM(NumberToVString(timeDependenceTypes(1), &
-            & "*",err,error))//" ."
-          CALL FlagError(LOCAL_ERROR,err,error,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      LOCAL_ERROR="Interface matrix time dependence type of "//TRIM(NumberToVString(timeDependenceTypes(1),"*",err,error))// &
-        & " is invalid for interface matrix number "//TRIM(NumberToVString(interfaceMatrixIndex,"*",err,error))// &
-        & " ."
-      CALL FlagError(LOCAL_ERROR,err,error,*999)
-    ENDIF
-    
-    EXITS("cmfe_InterfaceMatrices_TimeDependenceTypeSet")
-    RETURN
-999 ERRORS("cmfe_InterfaceMatrices_TimeDependenceTypeSet",err,error)
-    EXITS("cmfe_InterfaceMatrices_TimeDependenceTypeSet")
-    CALL cmfe_HandleError(err,error)
-    RETURN
-    
-  END SUBROUTINE cmfe_InterfaceMatrices_TimeDependenceTypeSet
-
-  !
-  !================================================================================================================================
-  !
-  
-  !>Get the time dependence type of interface matrices
-  SUBROUTINE cmfe_InterfaceMatrices_TimeDependenceTypeGet(interfaceCondition, &
-    & interfaceMatrixIndex,hasTranspose,timeDependenceTypes,Err)
-    !DLLEXPORT(cmfe_InterfaceMatrices_TimeDependenceTypeGet)
-    
-    !Argument variables
-    TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to add.
-    INTEGER(INTG), INTENT(OUT) :: timeDependenceTypes(:) !<Time dependence types for the given interface matrix and it's transpose (if any). \see INTERFACE_MATRICES_ROUTINES_InterfaceMatricesTimeDependenceTypes,INTERFACE_MATRICES_ROUTINES
-    INTEGER(INTG), INTENT(IN) :: interfaceMatrixIndex
-    LOGICAL, INTENT(IN) :: hasTranspose
-    INTEGER(INTG), INTENT(OUT) :: Err !<The error code
-    !Local Variables
-   
-    ENTERS("cmfe_InterfaceMatrices_TimeDependenceTypeGet",err,error,*999)
-    
-    IF(SIZE(timeDependenceTypes)/=2) CALL FlagError("Invalid size of time dependence types array. Must be 2.",err,error,*999)
-    CALL InterfaceMatrix_TimeDependenceTypeGet(interfaceCondition%interfaceCondition, &
-      & interfaceMatrixIndex,.FALSE.,timeDependenceTypes(1),err,error,*999)
-    IF(hasTranspose) THEN
-      CALL InterfaceMatrix_TimeDependenceTypeGet(interfaceCondition%interfaceCondition, &
-        & interfaceMatrixIndex,.TRUE.,timeDependenceTypes(2),err,error,*999)
-    ENDIF
-    
-    EXITS("cmfe_InterfaceMatrices_TimeDependenceTypeGet")
-    RETURN
-999 ERRORS("cmfe_InterfaceMatrices_TimeDependenceTypeGet",err,error)
-    EXITS("cmfe_InterfaceMatrices_TimeDependenceTypeGet")
-    CALL cmfe_HandleError(err,error)
-    RETURN
-    
-  END SUBROUTINE cmfe_InterfaceMatrices_TimeDependenceTypeGet
-  
   !
   !================================================================================================================================
   !

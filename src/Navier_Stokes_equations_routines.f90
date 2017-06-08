@@ -15,7 +15,7 @@
 !> basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
 !> License for the specific language governing rights and limitations
 !> under the License.
-!>
+!> 
 !> The Original Code is OpenCMISS
 !>
 !> The Initial Developer of the Original Code is University of Auckland,
@@ -7802,38 +7802,37 @@ CONTAINS
                 !                   & FIELD_MESH_DISPLACEMENT_SET_TYPE,MESH_DISPLACEMENT_VALUES,err,error,*999)
                 EQUATIONS=>SOLVER_MAPPING_ALE_NAVIER_STOKES%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
                 IF(ASSOCIATED(EQUATIONS)) THEN
-                  vectorMapping=>vectorEquations%vectorMapping
-                  IF(ASSOCIATED(vectorMapping)) THEN
-                    DO variable_idx=1,EQUATIONS_SET_ALE_NAVIER_STOKES%GEOMETRY%GEOMETRIC_FIELD%NUMBER_OF_VARIABLES
-                      variable_type=EQUATIONS_SET_ALE_NAVIER_STOKES%GEOMETRY%GEOMETRIC_FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE
-                      FIELD_VARIABLE=>EQUATIONS_SET_ALE_NAVIER_STOKES%GEOMETRY%GEOMETRIC_FIELD%VARIABLE_TYPE_MAP(variable_type)%ptr
-                      IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                        DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-                          DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
-                          IF(ASSOCIATED(DOMAIN)) THEN
-                            IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
-                              DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
-                              IF(ASSOCIATED(DOMAIN_NODES)) THEN
-                                !Loop over the local nodes excluding the ghosts.
-                                DO node_idx=1,DOMAIN_NODES%NUMBER_OF_NODES
-                                  DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%NUMBER_OF_DERIVATIVES
-                                    !Default to version 1 of each node derivative
-                                    local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
-                                      & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(1)
-                                    CALL FIELD_PARAMETER_SET_ADD_LOCAL_DOF(EQUATIONS_SET_ALE_NAVIER_STOKES%GEOMETRY% &
-                                      & GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,local_ny, & 
-                                      & MESH_DISPLACEMENT_VALUES(local_ny),err,error,*999)
-                                  END DO !deriv_idx
-                                END DO !node_idx
-                              END IF
+                  NULLIFY(vectorEquations)
+                  CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+                  NULLIFY(vectorMapping)
+                  CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+                  DO variable_idx=1,EQUATIONS_SET_ALE_NAVIER_STOKES%GEOMETRY%GEOMETRIC_FIELD%NUMBER_OF_VARIABLES
+                    variable_type=EQUATIONS_SET_ALE_NAVIER_STOKES%GEOMETRY%GEOMETRIC_FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE
+                    FIELD_VARIABLE=>EQUATIONS_SET_ALE_NAVIER_STOKES%GEOMETRY%GEOMETRIC_FIELD%VARIABLE_TYPE_MAP(variable_type)%ptr
+                    IF(ASSOCIATED(FIELD_VARIABLE)) THEN
+                      DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                        DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
+                        IF(ASSOCIATED(DOMAIN)) THEN
+                          IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
+                            DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
+                            IF(ASSOCIATED(DOMAIN_NODES)) THEN
+                              !Loop over the local nodes excluding the ghosts.
+                              DO node_idx=1,DOMAIN_NODES%NUMBER_OF_NODES
+                                DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%NUMBER_OF_DERIVATIVES
+                                  !Default to version 1 of each node derivative
+                                  local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
+                                    & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(1)
+                                  CALL FIELD_PARAMETER_SET_ADD_LOCAL_DOF(EQUATIONS_SET_ALE_NAVIER_STOKES%GEOMETRY% &
+                                    & GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,local_ny, & 
+                                    & MESH_DISPLACEMENT_VALUES(local_ny),err,error,*999)
+                                END DO !deriv_idx
+                              END DO !node_idx
                             END IF
                           END IF
-                        END DO !componentIdx
-                      END IF
-                    END DO !variable_idx
-                  ELSE
-                    CALL FlagError("Equations mapping is not associated.",err,error,*999)
-                  END IF
+                        END IF
+                      END DO !componentIdx
+                    END IF
+                  END DO !variable_idx
                 ELSE
                   CALL FlagError("Equations are not associated.",err,error,*999)
                 END IF
@@ -7911,39 +7910,38 @@ CONTAINS
                     & FIELD_MESH_DISPLACEMENT_SET_TYPE,MESH_DISPLACEMENT_VALUES,err,error,*999)
                   EQUATIONS=>SOLVER_MAPPING_LAPLACE%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
                   IF(ASSOCIATED(EQUATIONS)) THEN
-                    vectorMapping=>vectorEquations%vectorMapping
-                    IF(ASSOCIATED(vectorMapping)) THEN
-                      DO variable_idx=1,EQUATIONS_SET_ALE_NAVIER_STOKES%GEOMETRY%GEOMETRIC_FIELD%NUMBER_OF_VARIABLES
-                        variable_type=EQUATIONS_SET_ALE_NAVIER_STOKES%GEOMETRY%GEOMETRIC_FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE
-                        FIELD_VARIABLE=>EQUATIONS_SET_ALE_NAVIER_STOKES%GEOMETRY%GEOMETRIC_FIELD% &
-                          & VARIABLE_TYPE_MAP(variable_type)%ptr
-                        IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                          DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-                            DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
-                            IF(ASSOCIATED(DOMAIN)) THEN
-                              IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
-                                DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
-                                IF(ASSOCIATED(DOMAIN_NODES)) THEN
-                                  !Loop over the local nodes excluding the ghosts.
-                                  DO node_idx=1,DOMAIN_NODES%NUMBER_OF_NODES
-                                    DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%NUMBER_OF_DERIVATIVES
-                                      !Default to version 1 of each node derivative
-                                      local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
-                                        & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(1)
-                                      CALL FIELD_PARAMETER_SET_ADD_LOCAL_DOF(EQUATIONS_SET_ALE_NAVIER_STOKES%GEOMETRY% &
-                                        & GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,local_ny, & 
-                                        & MESH_DISPLACEMENT_VALUES(local_ny),err,error,*999)
-                                    END DO !deriv_idx
-                                  END DO !node_idx
-                                END IF
+                    NULLIFY(vectorEquations)
+                    CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+                    NULLIFY(vectorMapping)
+                    CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+                    DO variable_idx=1,EQUATIONS_SET_ALE_NAVIER_STOKES%GEOMETRY%GEOMETRIC_FIELD%NUMBER_OF_VARIABLES
+                      variable_type=EQUATIONS_SET_ALE_NAVIER_STOKES%GEOMETRY%GEOMETRIC_FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE
+                      FIELD_VARIABLE=>EQUATIONS_SET_ALE_NAVIER_STOKES%GEOMETRY%GEOMETRIC_FIELD% &
+                        & VARIABLE_TYPE_MAP(variable_type)%ptr
+                      IF(ASSOCIATED(FIELD_VARIABLE)) THEN
+                        DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                          DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
+                          IF(ASSOCIATED(DOMAIN)) THEN
+                            IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
+                              DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
+                              IF(ASSOCIATED(DOMAIN_NODES)) THEN
+                                !Loop over the local nodes excluding the ghosts.
+                                DO node_idx=1,DOMAIN_NODES%NUMBER_OF_NODES
+                                  DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%NUMBER_OF_DERIVATIVES
+                                    !Default to version 1 of each node derivative
+                                    local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
+                                      & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(1)
+                                    CALL FIELD_PARAMETER_SET_ADD_LOCAL_DOF(EQUATIONS_SET_ALE_NAVIER_STOKES%GEOMETRY% &
+                                      & GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,local_ny, & 
+                                      & MESH_DISPLACEMENT_VALUES(local_ny),err,error,*999)
+                                  END DO !deriv_idx
+                                END DO !node_idx
                               END IF
                             END IF
-                          END DO !componentIdx
-                        END IF
-                      END DO !variable_idx
-                    ELSE
-                      CALL FlagError("Equations mapping is not associated.",err,error,*999)
-                    END IF
+                          END IF
+                        END DO !componentIdx
+                      END IF
+                    END DO !variable_idx
                     CALL FIELD_PARAMETER_SET_DATA_RESTORE(INDEPENDENT_FIELD_ALE_NAVIER_STOKES,FIELD_U_VARIABLE_TYPE, & 
                       & FIELD_MESH_DISPLACEMENT_SET_TYPE,MESH_DISPLACEMENT_VALUES,err,error,*999)
                   ELSE
@@ -8053,7 +8051,10 @@ CONTAINS
                       & FIELD_MESH_DISPLACEMENT_SET_TYPE,MESH_DISPLACEMENT_VALUES,err,error,*999)
                     EQUATIONS=>SOLVER_MAPPING_LAPLACE%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
                     IF(ASSOCIATED(EQUATIONS)) THEN
-                      vectorMapping=>vectorEquations%vectorMapping
+                      NULLIFY(vectorEquations)
+                      CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+                      NULLIFY(vectorMapping)
+                      CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
                       IF(ASSOCIATED(vectorMapping)) THEN
                         DO variable_idx=1,EQUATIONS_SET_ALE_NAVIER_STOKES%GEOMETRY%GEOMETRIC_FIELD%NUMBER_OF_VARIABLES
                           variable_type=EQUATIONS_SET_ALE_NAVIER_STOKES%GEOMETRY%GEOMETRIC_FIELD%VARIABLES(variable_idx)% &
@@ -10177,6 +10178,7 @@ CONTAINS
         equations=>equationsSet%EQUATIONS
         IF(ASSOCIATED(equations)) THEN
           !Set general and specific pointers
+          NULLIFY(vectorEquations)
           CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
           vectorMapping=>vectorEquations%vectorMapping
           vectorMatrices=>vectorEquations%vectorMatrices

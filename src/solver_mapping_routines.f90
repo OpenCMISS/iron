@@ -405,156 +405,155 @@ CONTAINS
             IF(ASSOCIATED(EQUATIONS_SET)) THEN
               EQUATIONS=>EQUATIONS_SET%EQUATIONS
               IF(ASSOCIATED(EQUATIONS)) THEN
-                vectorMapping=>vectorEquations%vectorMapping
-                IF(ASSOCIATED(vectorMapping)) THEN
-                  dynamicMapping=>vectorMapping%dynamicMapping
-                  linearMapping=>vectorMapping%linearMapping
-                  nonlinearMapping=>vectorMapping%nonlinearMapping
-                  RHS_MAPPING=>vectorMapping%rhsMapping
-                  sourceMapping=>vectorMapping%sourceMapping
-                  ROW_DOFS_MAPPING=>vectorMapping%rowDOFSMapping
-                  IF(ASSOCIATED(ROW_DOFS_MAPPING)) THEN
-                    DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
-                    IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-                      !Loop over the global rows for this equations set
-                      DO global_row=1,vectorMapping%numberOfGlobalRows
-                        !Find the rank that owns this global row
-                        ROW_RANK=-1
-                        DO rank_idx=1,ROW_DOFS_MAPPING%GLOBAL_TO_LOCAL_MAP(global_row)%NUMBER_OF_DOMAINS
-                          IF(ROW_DOFS_MAPPING%GLOBAL_TO_LOCAL_MAP(global_row)%LOCAL_TYPE(rank_idx)/=DOMAIN_LOCAL_GHOST) THEN
-                            ROW_RANK=ROW_DOFS_MAPPING%GLOBAL_TO_LOCAL_MAP(global_row)%DOMAIN_NUMBER(rank_idx)
-                            local_row=ROW_DOFS_MAPPING%GLOBAL_TO_LOCAL_MAP(global_row)%LOCAL_NUMBER(rank_idx)
-                            EXIT
-                          ENDIF
-                        ENDDO !rank_idx
-                        IF(ROW_RANK>=0) THEN
-                          INCLUDE_ROW=.TRUE.
-                          CONSTRAINED_DOF=.FALSE.
-                          globalDofCouplingNumber=0
-                          IF(ASSOCIATED(dynamicMapping)) THEN
-                            DEPENDENT_VARIABLE=>dynamicMapping%dynamicVariable
-                            CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS,DEPENDENT_VARIABLE, &
-                                & BOUNDARY_CONDITIONS_VARIABLE,ERR,ERROR,*999)
-                            IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
-                              !This is wrong as we only have the mappings for the local rank not the global ranks.
-                              !For now assume 1-1 mapping between rows and dofs.
-                              global_dof=global_row
-                              INCLUDE_ROW=INCLUDE_ROW.AND.(BOUNDARY_CONDITIONS_VARIABLE%DOF_TYPES(global_dof)== &
-                                & BOUNDARY_CONDITION_DOF_FREE)
-                              CONSTRAINED_DOF=CONSTRAINED_DOF.OR.(BOUNDARY_CONDITIONS_VARIABLE%DOF_TYPES(global_dof)== &
-                                & BOUNDARY_CONDITION_DOF_CONSTRAINED)
-                              IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE%dofConstraints)) THEN
-                                dofConstraints=>BOUNDARY_CONDITIONS_VARIABLE%dofConstraints
-                                IF(dofConstraints%numberOfConstraints>0) THEN
-                                  IF(ALLOCATED(dofConstraints%dofCouplings)) THEN
-                                    IF(ASSOCIATED(dofConstraints%dofCouplings(global_dof)%ptr)) THEN
-                                      !This equations row is the owner of a solver row that is mapped to
-                                      !multiple other equations rows, add it to the list of global row
-                                      !couplings and remember the index into the global list for this solver row
-                                      CALL SolverDofCouplings_AddCoupling(rowCouplings, &
-                                        & dofConstraints%dofCouplings(global_dof)%ptr, &
-                                        & globalDofCouplingNumber,err,error,*999)
-                                    END IF
-                                  ELSE
-                                    CALL FlagError("DOF constraints DOF couplings are not allocated.",err,error,*999)
-                                  END IF
-                                END IF
-                              END IF
-                            ELSE
-                              CALL FlagError("Boundary condition variable is not associated.",ERR,ERROR,*999)
-                            ENDIF
-                          ENDIF
-                          IF(ASSOCIATED(nonlinearMapping)) THEN
-                            !Look at the boundary conditions for nonlinear variables for this row
-                            !Just look at first residual variable for now
-                            DEPENDENT_VARIABLE=>nonlinearMapping%jacobianToVarMap(1)%VARIABLE
-                            CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS,DEPENDENT_VARIABLE, &
-                                & BOUNDARY_CONDITIONS_VARIABLE,ERR,ERROR,*999)
-                            IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
-                              global_dof=global_row
-                              INCLUDE_ROW=INCLUDE_ROW.AND.(BOUNDARY_CONDITIONS_VARIABLE%DOF_TYPES(global_dof)== &
-                                & BOUNDARY_CONDITION_DOF_FREE)
-                              CONSTRAINED_DOF=CONSTRAINED_DOF.OR.(BOUNDARY_CONDITIONS_VARIABLE%DOF_TYPES(global_dof)== &
-                                & BOUNDARY_CONDITION_DOF_CONSTRAINED)
-                              IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE%dofConstraints)) THEN
-                                dofConstraints=>BOUNDARY_CONDITIONS_VARIABLE%dofConstraints
-                                IF(dofConstraints%numberOfConstraints>0) THEN
-                                  IF(ALLOCATED(dofConstraints%dofCouplings)) THEN
-                                    IF(ASSOCIATED(dofConstraints%dofCouplings(global_dof)%ptr)) THEN
-                                      CALL SolverDofCouplings_AddCoupling(rowCouplings, &
-                                        & dofConstraints%dofCouplings(global_dof)%ptr, &
-                                        & globalDofCouplingNumber,err,error,*999)
-                                    END IF
-                                  ELSE
-                                    CALL FlagError("DOF constraints DOF couplings are not allocated.",err,error,*999)
-                                  END IF
-                                END IF
-                              END IF
-                            ELSE
-                              CALL FlagError("Boundary condition variable is not associated.",ERR,ERROR,*999)
-                            ENDIF
-                          ENDIF
-                          IF(ASSOCIATED(linearMapping)) THEN
-                            !Loop over the variables in the equations set. Don't include the row in the solver matrices if
-                            !all the variable dofs associated with this equations row are fixed.
-                            DO equations_matrix_idx=1,linearMapping%numberOfLinearMatrixVariables
-                              DEPENDENT_VARIABLE=>linearMapping%equationsMatrixToVarMaps(equations_matrix_idx)% &
-                                & VARIABLE
-                              CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS,DEPENDENT_VARIABLE, &
-                                  & BOUNDARY_CONDITIONS_VARIABLE,ERR,ERROR,*999)
-                              IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
-                                !\todo This is wrong as we only have the mappings for the local rank not the global ranks. See below
-                                !\todo For now assume 1-1 mapping between rows and dofs.
-                                global_dof=global_row
-                                INCLUDE_ROW=INCLUDE_ROW.AND.(BOUNDARY_CONDITIONS_VARIABLE%DOF_TYPES(global_dof)== &
-                                  & BOUNDARY_CONDITION_DOF_FREE)
-                                CONSTRAINED_DOF=CONSTRAINED_DOF.OR.(BOUNDARY_CONDITIONS_VARIABLE%DOF_TYPES(global_dof)== &
-                                  & BOUNDARY_CONDITION_DOF_CONSTRAINED)
-                                IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE%dofConstraints)) THEN
-                                  dofConstraints=>BOUNDARY_CONDITIONS_VARIABLE%dofConstraints
-                                  IF(dofConstraints%numberOfConstraints>0) THEN
-                                    IF(ALLOCATED(dofConstraints%dofCouplings)) THEN
-                                      IF(ASSOCIATED(dofConstraints%dofCouplings(global_dof)%ptr)) THEN
-                                        CALL SolverDofCouplings_AddCoupling(rowCouplings, &
-                                          & dofConstraints%dofCouplings(global_dof)%ptr, &
-                                          & globalDofCouplingNumber,err,error,*999)
-                                      END IF
-                                    ELSE
-                                      CALL FlagError("DOF constraints DOF couplings are not allocated.",err,error,*999)
-                                    END IF
-                                  END IF
-                                END IF
-                              ELSE
-                                CALL FlagError("Boundary condition variable is not associated.",ERR,ERROR,*999)
-                              ENDIF
-                            ENDDO !matrix_idx
-                          ENDIF
-                          ROW_LIST_ITEM(1)=global_row
-                          ROW_LIST_ITEM(2)=local_row
-                          ROW_LIST_ITEM(4)=globalDofCouplingNumber
-                          IF(INCLUDE_ROW) THEN
-                            ROW_LIST_ITEM(3)=1
-                            NUMBER_OF_GLOBAL_SOLVER_ROWS=NUMBER_OF_GLOBAL_SOLVER_ROWS+1
-                            !Don't need to worry about ghosted rows.
-                            IF(ROW_RANK==myrank) NUMBER_OF_LOCAL_SOLVER_ROWS=NUMBER_OF_LOCAL_SOLVER_ROWS+1 !1-1 mapping
-                          ELSE IF(CONSTRAINED_DOF) THEN
-                            ROW_LIST_ITEM(3)=2
-                          ELSE
-                            ROW_LIST_ITEM(3)=0
-                          ENDIF !include row
-                          CALL LIST_ITEM_ADD(RANK_GLOBAL_ROWS_LISTS(equations_idx,ROW_RANK)%PTR,ROW_LIST_ITEM,ERR,ERROR,*999)
-                        ELSE
-                          CALL FlagError("Global row is not owned by a domain.",ERR,ERROR,*999)
+                NULLIFY(vectorEquations)
+                CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+                NULLIFY(vectorMapping)
+                CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+                dynamicMapping=>vectorMapping%dynamicMapping
+                linearMapping=>vectorMapping%linearMapping
+                nonlinearMapping=>vectorMapping%nonlinearMapping
+                RHS_MAPPING=>vectorMapping%rhsMapping
+                sourceMapping=>vectorMapping%sourceMapping
+                ROW_DOFS_MAPPING=>vectorMapping%rowDOFSMapping
+                IF(ASSOCIATED(ROW_DOFS_MAPPING)) THEN
+                  DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                  IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
+                    !Loop over the global rows for this equations set
+                    DO global_row=1,vectorMapping%numberOfGlobalRows
+                      !Find the rank that owns this global row
+                      ROW_RANK=-1
+                      DO rank_idx=1,ROW_DOFS_MAPPING%GLOBAL_TO_LOCAL_MAP(global_row)%NUMBER_OF_DOMAINS
+                        IF(ROW_DOFS_MAPPING%GLOBAL_TO_LOCAL_MAP(global_row)%LOCAL_TYPE(rank_idx)/=DOMAIN_LOCAL_GHOST) THEN
+                          ROW_RANK=ROW_DOFS_MAPPING%GLOBAL_TO_LOCAL_MAP(global_row)%DOMAIN_NUMBER(rank_idx)
+                          local_row=ROW_DOFS_MAPPING%GLOBAL_TO_LOCAL_MAP(global_row)%LOCAL_NUMBER(rank_idx)
+                          EXIT
                         ENDIF
-                      ENDDO !global_row
-                    ELSE
-                      CALL FlagError("Equations set dependent field is not associated.",ERR,ERROR,*999)
-                    ENDIF
+                      ENDDO !rank_idx
+                      IF(ROW_RANK>=0) THEN
+                        INCLUDE_ROW=.TRUE.
+                        CONSTRAINED_DOF=.FALSE.
+                        globalDofCouplingNumber=0
+                        IF(ASSOCIATED(dynamicMapping)) THEN
+                          DEPENDENT_VARIABLE=>dynamicMapping%dynamicVariable
+                          CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS,DEPENDENT_VARIABLE, &
+                            & BOUNDARY_CONDITIONS_VARIABLE,ERR,ERROR,*999)
+                          IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
+                            !This is wrong as we only have the mappings for the local rank not the global ranks.
+                            !For now assume 1-1 mapping between rows and dofs.
+                            global_dof=global_row
+                            INCLUDE_ROW=INCLUDE_ROW.AND.(BOUNDARY_CONDITIONS_VARIABLE%DOF_TYPES(global_dof)== &
+                              & BOUNDARY_CONDITION_DOF_FREE)
+                            CONSTRAINED_DOF=CONSTRAINED_DOF.OR.(BOUNDARY_CONDITIONS_VARIABLE%DOF_TYPES(global_dof)== &
+                              & BOUNDARY_CONDITION_DOF_CONSTRAINED)
+                            IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE%dofConstraints)) THEN
+                              dofConstraints=>BOUNDARY_CONDITIONS_VARIABLE%dofConstraints
+                              IF(dofConstraints%numberOfConstraints>0) THEN
+                                IF(ALLOCATED(dofConstraints%dofCouplings)) THEN
+                                  IF(ASSOCIATED(dofConstraints%dofCouplings(global_dof)%ptr)) THEN
+                                    !This equations row is the owner of a solver row that is mapped to
+                                    !multiple other equations rows, add it to the list of global row
+                                    !couplings and remember the index into the global list for this solver row
+                                    CALL SolverDofCouplings_AddCoupling(rowCouplings, &
+                                      & dofConstraints%dofCouplings(global_dof)%ptr, &
+                                      & globalDofCouplingNumber,err,error,*999)
+                                  END IF
+                                ELSE
+                                  CALL FlagError("DOF constraints DOF couplings are not allocated.",err,error,*999)
+                                END IF
+                              END IF
+                            END IF
+                          ELSE
+                            CALL FlagError("Boundary condition variable is not associated.",ERR,ERROR,*999)
+                          ENDIF
+                        ENDIF
+                        IF(ASSOCIATED(nonlinearMapping)) THEN
+                          !Look at the boundary conditions for nonlinear variables for this row
+                          !Just look at first residual variable for now
+                          DEPENDENT_VARIABLE=>nonlinearMapping%jacobianToVarMap(1)%VARIABLE
+                          CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS,DEPENDENT_VARIABLE, &
+                            & BOUNDARY_CONDITIONS_VARIABLE,ERR,ERROR,*999)
+                          IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
+                            global_dof=global_row
+                            INCLUDE_ROW=INCLUDE_ROW.AND.(BOUNDARY_CONDITIONS_VARIABLE%DOF_TYPES(global_dof)== &
+                              & BOUNDARY_CONDITION_DOF_FREE)
+                            CONSTRAINED_DOF=CONSTRAINED_DOF.OR.(BOUNDARY_CONDITIONS_VARIABLE%DOF_TYPES(global_dof)== &
+                              & BOUNDARY_CONDITION_DOF_CONSTRAINED)
+                            IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE%dofConstraints)) THEN
+                              dofConstraints=>BOUNDARY_CONDITIONS_VARIABLE%dofConstraints
+                              IF(dofConstraints%numberOfConstraints>0) THEN
+                                IF(ALLOCATED(dofConstraints%dofCouplings)) THEN
+                                  IF(ASSOCIATED(dofConstraints%dofCouplings(global_dof)%ptr)) THEN
+                                    CALL SolverDofCouplings_AddCoupling(rowCouplings, &
+                                      & dofConstraints%dofCouplings(global_dof)%ptr, &
+                                      & globalDofCouplingNumber,err,error,*999)
+                                  END IF
+                                ELSE
+                                  CALL FlagError("DOF constraints DOF couplings are not allocated.",err,error,*999)
+                                END IF
+                              END IF
+                            END IF
+                          ELSE
+                            CALL FlagError("Boundary condition variable is not associated.",ERR,ERROR,*999)
+                          ENDIF
+                        ENDIF
+                        IF(ASSOCIATED(linearMapping)) THEN
+                          !Loop over the variables in the equations set. Don't include the row in the solver matrices if
+                          !all the variable dofs associated with this equations row are fixed.
+                          DO equations_matrix_idx=1,linearMapping%numberOfLinearMatrixVariables
+                            DEPENDENT_VARIABLE=>linearMapping%equationsMatrixToVarMaps(equations_matrix_idx)% &
+                              & VARIABLE
+                            CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS,DEPENDENT_VARIABLE, &
+                              & BOUNDARY_CONDITIONS_VARIABLE,ERR,ERROR,*999)
+                            IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
+                              !\todo This is wrong as we only have the mappings for the local rank not the global ranks. See below
+                              !\todo For now assume 1-1 mapping between rows and dofs.
+                              global_dof=global_row
+                              INCLUDE_ROW=INCLUDE_ROW.AND.(BOUNDARY_CONDITIONS_VARIABLE%DOF_TYPES(global_dof)== &
+                                & BOUNDARY_CONDITION_DOF_FREE)
+                              CONSTRAINED_DOF=CONSTRAINED_DOF.OR.(BOUNDARY_CONDITIONS_VARIABLE%DOF_TYPES(global_dof)== &
+                                & BOUNDARY_CONDITION_DOF_CONSTRAINED)
+                              IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE%dofConstraints)) THEN
+                                dofConstraints=>BOUNDARY_CONDITIONS_VARIABLE%dofConstraints
+                                IF(dofConstraints%numberOfConstraints>0) THEN
+                                  IF(ALLOCATED(dofConstraints%dofCouplings)) THEN
+                                    IF(ASSOCIATED(dofConstraints%dofCouplings(global_dof)%ptr)) THEN
+                                      CALL SolverDofCouplings_AddCoupling(rowCouplings, &
+                                        & dofConstraints%dofCouplings(global_dof)%ptr, &
+                                        & globalDofCouplingNumber,err,error,*999)
+                                    END IF
+                                  ELSE
+                                    CALL FlagError("DOF constraints DOF couplings are not allocated.",err,error,*999)
+                                  END IF
+                                END IF
+                              END IF
+                            ELSE
+                              CALL FlagError("Boundary condition variable is not associated.",ERR,ERROR,*999)
+                            ENDIF
+                          ENDDO !matrix_idx
+                        ENDIF
+                        ROW_LIST_ITEM(1)=global_row
+                        ROW_LIST_ITEM(2)=local_row
+                        ROW_LIST_ITEM(4)=globalDofCouplingNumber
+                        IF(INCLUDE_ROW) THEN
+                          ROW_LIST_ITEM(3)=1
+                          NUMBER_OF_GLOBAL_SOLVER_ROWS=NUMBER_OF_GLOBAL_SOLVER_ROWS+1
+                          !Don't need to worry about ghosted rows.
+                          IF(ROW_RANK==myrank) NUMBER_OF_LOCAL_SOLVER_ROWS=NUMBER_OF_LOCAL_SOLVER_ROWS+1 !1-1 mapping
+                        ELSE IF(CONSTRAINED_DOF) THEN
+                          ROW_LIST_ITEM(3)=2
+                        ELSE
+                          ROW_LIST_ITEM(3)=0
+                        ENDIF !include row
+                        CALL LIST_ITEM_ADD(RANK_GLOBAL_ROWS_LISTS(equations_idx,ROW_RANK)%PTR,ROW_LIST_ITEM,ERR,ERROR,*999)
+                      ELSE
+                        CALL FlagError("Global row is not owned by a domain.",ERR,ERROR,*999)
+                      ENDIF
+                    ENDDO !global_row
                   ELSE
-                    CALL FlagError("Equations set row degree of freedom mappings is not associated.",ERR,ERROR,*999)
+                    CALL FlagError("Equations set dependent field is not associated.",ERR,ERROR,*999)
                   ENDIF
                 ELSE
-                  CALL FlagError("Equations equations mapping is not associated",ERR,ERROR,*999)
+                  CALL FlagError("Equations set row degree of freedom mappings is not associated.",ERR,ERROR,*999)
                 ENDIF
               ELSE
                 CALL FlagError("Equations set equations is not associated.",ERR,ERROR,*999)
@@ -690,7 +689,10 @@ CONTAINS
             !Note that pointers have been checked for association above
             EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
             EQUATIONS=>EQUATIONS_SET%EQUATIONS
-            vectorMapping=>vectorEquations%vectorMapping
+            NULLIFY(vectorEquations)
+            CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+            NULLIFY(vectorMapping)
+            CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
             
             !Allocate the equations set to solver maps for solver matrix (sm) indexing
             ALLOCATE(SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)%EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM( &
@@ -802,7 +804,10 @@ CONTAINS
               !Note that pointers have been checked for association above
               EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
               EQUATIONS=>EQUATIONS_SET%EQUATIONS
-              vectorMapping=>vectorEquations%vectorMapping
+              NULLIFY(vectorEquations)
+              CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+              NULLIFY(vectorMapping)
+              CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
               dynamicMapping=>vectorMapping%dynamicMapping
               linearMapping=>vectorMapping%linearMapping
               nonlinearMapping=>vectorMapping%nonlinearMapping
@@ -1291,7 +1296,10 @@ CONTAINS
               !The pointers below have been checked for association above.
               EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
               EQUATIONS=>EQUATIONS_SET%EQUATIONS
-              vectorMapping=>vectorEquations%vectorMapping
+              NULLIFY(vectorEquations)
+              CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+              NULLIFY(vectorMapping)
+              CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
               dynamicMapping=>vectorMapping%dynamicMapping
               linearMapping=>vectorMapping%linearMapping
               nonlinearMapping=>vectorMapping%nonlinearMapping
@@ -1879,7 +1887,10 @@ CONTAINS
 
               EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
               EQUATIONS=>EQUATIONS_SET%EQUATIONS
-              vectorMapping=>vectorEquations%vectorMapping
+              NULLIFY(vectorEquations)
+              CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+              NULLIFY(vectorMapping)
+              CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
               dynamicMapping=>vectorMapping%dynamicMapping
               linearMapping=>vectorMapping%linearMapping
               nonlinearMapping=>vectorMapping%nonlinearMapping
@@ -2307,7 +2318,10 @@ CONTAINS
                         !The pointers below have been checked for association above.
                         EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
                         EQUATIONS=>EQUATIONS_SET%EQUATIONS
-                        vectorMapping=>vectorEquations%vectorMapping
+                        NULLIFY(vectorEquations)
+                        CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+                        NULLIFY(vectorMapping)
+                        CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
                         dynamicMapping=>vectorMapping%dynamicMapping
                         linearMapping=>vectorMapping%linearMapping
                         nonlinearMapping=>vectorMapping%nonlinearMapping
@@ -3029,7 +3043,10 @@ CONTAINS
           DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
             EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
             EQUATIONS=>EQUATIONS_SET%EQUATIONS
-            vectorMapping=>vectorEquations%vectorMapping
+            NULLIFY(vectorEquations)
+            CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+            NULLIFY(vectorMapping)
+            CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
             dynamicMapping=>vectorMapping%dynamicMapping
             linearMapping=>vectorMapping%linearMapping
             IF(ASSOCIATED(dynamicMapping)) THEN
@@ -3377,8 +3394,10 @@ CONTAINS
       DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
         EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
         EQUATIONS=>EQUATIONS_SET%EQUATIONS
-        vectorEquations=>equations%vectorEquations
-        vectorMapping=>vectorEquations%vectorMapping
+        NULLIFY(vectorEquations)
+        CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+        NULLIFY(vectorMapping)
+        CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
         dynamicMapping=>vectorMapping%dynamicMapping
         linearMapping=>vectorMapping%linearMapping
         nonlinearMapping=>vectorMapping%nonlinearMapping
@@ -4416,47 +4435,46 @@ CONTAINS
               IF(ASSOCIATED(EQUATIONS_SET)) THEN                
                 EQUATIONS=>EQUATIONS_SET%EQUATIONS
                 IF(ASSOCIATED(EQUATIONS)) THEN
-                  vectorMapping=>vectorEquations%vectorMapping
-                  IF(ASSOCIATED(vectorMapping)) THEN
-                    linearMapping=>vectorMapping%linearMapping
-                    IF(ASSOCIATED(linearMapping)) THEN
-                      IF(SIZE(VARIABLE_TYPES,1)>=1.AND.SIZE(VARIABLE_TYPES,1)<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-                        DO variable_idx=1,SIZE(VARIABLE_TYPES,1)
+                  NULLIFY(vectorEquations)
+                  CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+                  NULLIFY(vectorMapping)
+                  CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+                  linearMapping=>vectorMapping%linearMapping
+                  IF(ASSOCIATED(linearMapping)) THEN
+                    IF(SIZE(VARIABLE_TYPES,1)>=1.AND.SIZE(VARIABLE_TYPES,1)<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+                      DO variable_idx=1,SIZE(VARIABLE_TYPES,1)
 !!TODO: CHECK THAT THE VARIABLE TYPE IS NOT REPEATED
-                          !write(*,*) VARIABLE_TYPES(variable_idx)
-                          IF(VARIABLE_TYPES(variable_idx)<1.OR. &
-                            & VARIABLE_TYPES(variable_idx)>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-                            LOCAL_ERROR="The variable type of "// &
-                              & TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPES(variable_idx),"*",ERR,ERROR))// &
-                              & " at position "//TRIM(NUMBER_TO_VSTRING(variable_idx,"*",ERR,ERROR))// &
-                              & " in the array is invalid. The number must be >=1 and <= "// &
-                              & TRIM(NUMBER_TO_VSTRING(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",ERR,ERROR))
-                            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                          ENDIF
-                          IF(linearMapping%varToEquationsMatricesMaps(VARIABLE_TYPES(variable_idx))% &
-                            & numberOfEquationsMatrices==0) THEN
-                            LOCAL_ERROR="The variable type of "// &
-                              & TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPES(variable_idx),"*",ERR,ERROR))// &
-                              & " at position "//TRIM(NUMBER_TO_VSTRING(variable_idx,"*",ERR,ERROR))// &
-                              & " in the array is invalid. That variable type is not mapped to any equations matrices"
-                          ENDIF
-                        ENDDO !variable_idx
-                        SOLVER_MAPPING%CREATE_VALUES_CACHE%MATRIX_VARIABLE_TYPES(0,EQUATIONS_SET_INDEX,SOLVER_MATRIX)= &
-                          & SIZE(VARIABLE_TYPES,1)
-                        SOLVER_MAPPING%CREATE_VALUES_CACHE%MATRIX_VARIABLE_TYPES(1:SIZE(VARIABLE_TYPES,1),EQUATIONS_SET_INDEX, &
-                          & SOLVER_MATRIX)=VARIABLE_TYPES
-                      ELSE
-                        LOCAL_ERROR="The supplied size of variable types array of "// &
-                          & TRIM(NUMBER_TO_VSTRING(SIZE(VARIABLE_TYPES,1),"*",ERR,ERROR))// &
-                          & " is invalid. The size must be between 1 and "// &
-                          & TRIM(NUMBER_TO_VSTRING(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",ERR,ERROR))
-                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                      ENDIF
+                        !write(*,*) VARIABLE_TYPES(variable_idx)
+                        IF(VARIABLE_TYPES(variable_idx)<1.OR. &
+                          & VARIABLE_TYPES(variable_idx)>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+                          LOCAL_ERROR="The variable type of "// &
+                            & TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPES(variable_idx),"*",ERR,ERROR))// &
+                            & " at position "//TRIM(NUMBER_TO_VSTRING(variable_idx,"*",ERR,ERROR))// &
+                            & " in the array is invalid. The number must be >=1 and <= "// &
+                            & TRIM(NUMBER_TO_VSTRING(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",ERR,ERROR))
+                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                        ENDIF
+                        IF(linearMapping%varToEquationsMatricesMaps(VARIABLE_TYPES(variable_idx))% &
+                          & numberOfEquationsMatrices==0) THEN
+                          LOCAL_ERROR="The variable type of "// &
+                            & TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPES(variable_idx),"*",ERR,ERROR))// &
+                            & " at position "//TRIM(NUMBER_TO_VSTRING(variable_idx,"*",ERR,ERROR))// &
+                            & " in the array is invalid. That variable type is not mapped to any equations matrices"
+                        ENDIF
+                      ENDDO !variable_idx
+                      SOLVER_MAPPING%CREATE_VALUES_CACHE%MATRIX_VARIABLE_TYPES(0,EQUATIONS_SET_INDEX,SOLVER_MATRIX)= &
+                        & SIZE(VARIABLE_TYPES,1)
+                      SOLVER_MAPPING%CREATE_VALUES_CACHE%MATRIX_VARIABLE_TYPES(1:SIZE(VARIABLE_TYPES,1),EQUATIONS_SET_INDEX, &
+                        & SOLVER_MATRIX)=VARIABLE_TYPES
                     ELSE
-                      CALL FlagError("Equations mapping linear mapping is not associated.",ERR,ERROR,*999)
+                      LOCAL_ERROR="The supplied size of variable types array of "// &
+                        & TRIM(NUMBER_TO_VSTRING(SIZE(VARIABLE_TYPES,1),"*",ERR,ERROR))// &
+                        & " is invalid. The size must be between 1 and "// &
+                        & TRIM(NUMBER_TO_VSTRING(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",ERR,ERROR))
+                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     ENDIF
                   ELSE
-                    CALL FlagError("Equations mapping is not associated.",ERR,ERROR,*999)
+                    CALL FlagError("Equations mapping linear mapping is not associated.",ERR,ERROR,*999)
                   ENDIF
                 ELSE
                   CALL FlagError("Equations is not associated.",ERR,ERROR,*999)
@@ -6650,7 +6668,10 @@ CONTAINS
           DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
             EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
             EQUATIONS=>EQUATIONS_SET%EQUATIONS
-            vectorMapping=>vectorEquations%vectorMapping
+            NULLIFY(vectorEquations)
+            CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+            NULLIFY(vectorMapping)
+            CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
             linearMapping=>vectorMapping%linearMapping
             IF(ASSOCIATED(linearMapping)) THEN
               IF(linearMapping%numberOfLinearMatrices>MAXIMUM_NUMBER_OF_EQUATIONS_MATRICES) &

@@ -48,8 +48,10 @@ MODULE INTERFACE_EQUATIONS_ROUTINES
   USE EquationsRoutines
   USE FIELD_ROUTINES
   USE INTERFACE_CONDITIONS_CONSTANTS
+  USE InterfaceEquationsAccessRoutines
   USE INTERFACE_MAPPING_ROUTINES
   USE INTERFACE_MATRICES_ROUTINES
+  USE INTERFACE_MATRICES_CONSTANTS
   USE ISO_VARYING_STRING
   USE KINDS
   USE STRINGS
@@ -87,6 +89,18 @@ MODULE INTERFACE_EQUATIONS_ROUTINES
 
   !Interfaces
 
+  !>Gets the time dependence type for an interface matrix
+  INTERFACE InterfaceEquations_MatrixTimeDependenceTypeGet
+    MODULE PROCEDURE InterfaceEquations_MatrixTimeDependenceTypeGet0
+    MODULE PROCEDURE InterfaceEquations_MatrixTimeDependenceTypeGet1
+  END INTERFACE InterfaceEquations_MatrixTimeDependenceTypeGet
+
+  !>Sets the time dependence type for an interface matrix
+  INTERFACE InterfaceEquations_MatrixTimeDependenceTypeSet
+    MODULE PROCEDURE InterfaceEquations_MatrixTimeDependenceTypeSet0
+    MODULE PROCEDURE InterfaceEquations_MatrixTimeDependenceTypeSet1
+  END INTERFACE InterfaceEquations_MatrixTimeDependenceTypeSet
+
   PUBLIC INTERFACE_EQUATIONS_NO_OUTPUT,INTERFACE_EQUATIONS_TIMING_OUTPUT,INTERFACE_EQUATIONS_MATRIX_OUTPUT, &
     & INTERFACE_EQUATIONS_ELEMENT_MATRIX_OUTPUT
 
@@ -98,6 +112,8 @@ MODULE INTERFACE_EQUATIONS_ROUTINES
 
   PUBLIC InterfaceEquations_InterfaceInterpSetsNumberSet
 
+  PUBLIC InterfaceEquations_MatrixTimeDependenceTypeSet,InterfaceEquations_MatrixTimeDependenceTypeGet
+  
   PUBLIC INTERFACE_EQUATIONS_OUTPUT_TYPE_GET,INTERFACE_EQUATIONS_OUTPUT_TYPE_SET
   
   PUBLIC INTERFACE_EQUATIONS_SPARSITY_TYPE_GET,INTERFACE_EQUATIONS_SPARSITY_TYPE_SET
@@ -106,7 +122,7 @@ MODULE INTERFACE_EQUATIONS_ROUTINES
 
   PUBLIC INTERFACE_EQUATIONS_LINEARITY_TYPE_GET,INTERFACE_EQUATIONS_LINEARITY_TYPE_SET
 
-  PUBLIC InterfaceEquations_TimeDependenceTypeGet,InterfaceEquationsTimeDependenceTypeSet
+  PUBLIC InterfaceEquations_TimeDependenceTypeGet,InterfaceEquations_TimeDependenceTypeSet
 
 CONTAINS
 
@@ -837,6 +853,201 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the time dependence type for an interface matrix
+  SUBROUTINE InterfaceEquations_MatrixTimeDependenceTypeGet0(interfaceEquations,interfaceMatrixIdx,hasTranspose, &
+    & timeDependenceType,err,error,*)
+    
+    !Argument variables
+    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer to the interface equations containing the interface matrix to get the time dependence type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix in the interface equations to get the time dependence for.
+    LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix has a transpose. .FALSE. if not. 
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<The interface matrix time dependence type to get. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see INTERFACE_MATRICES_ROUTINES_InterfaceMatricesTimeDependenceTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string    
+    !Local variables
+    INTEGER(INTG) :: timeDependenceTypes(1)
+    
+    ENTERS("InterfaceEquations_MatrixTimeDependenceTypeGet0",err,error,*999)
+
+    CALL InterfaceEquations_MatrixTimeDependenceTypeGet1(interfaceEquations,interfaceMatrixIdx,hasTranspose,timeDependenceTypes, &
+      & err,error,*999)
+    timeDependenceType=timeDependenceTypes(1)
+    
+    EXITS("InterfaceEquations_MatrixTimeDependenceTypeGet0")
+    RETURN
+999 ERRORSEXITS("InterfaceEquations_MatrixTimeDependenceTypeGet0",Err,Error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceEquations_MatrixTimeDependenceTypeGet0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the time dependence type for an interface matrix
+  SUBROUTINE InterfaceEquations_MatrixTimeDependenceTypeGet1(interfaceEquations,interfaceMatrixIdx,hasTranspose, &
+    & timeDependenceTypes,err,error,*)
+    
+    !Argument variables
+    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer to the interface equations containing the interface matrix to set the time dependence type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix in the interface equations to set the time dependence for.
+    LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix has a transpose. .FALSE. if not. 
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceTypes(:) !<timeDependenceTypes(transposeIdx). The interface matrix time dependence type to set. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see INTERFACE_MATRICES_ROUTINES_InterfaceMatricesTimeDependenceTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string    
+    !Local variables
+    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: interfaceMatrices
+    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: interfaceMatrix
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("InterfaceEquations_MatrixTimeDependenceTypeGet",err,error,*999)
+    
+    IF(.NOT.ASSOCIATED(InterfaceEquations)) CALL FlagError("Interface equations not associated.",err,error,*999)
+    NULLIFY(interfaceMatrices)
+    CALL InterfaceEquations_InterfaceMatricesGet(interfaceEquations,interfaceMatrices,err,error,*999)
+    NULLIFY(interfaceMatrix)
+    CALL InterfaceMatrices_MatrixGet(interfaceMatrices,interfaceMatrixIdx,interfaceMatrix,err,error,*999)
+    IF(hasTranspose) THEN
+      IF(.NOT.SIZE(timeDependenceTypes,1)==2) THEN
+        localError="The size of the time dependence types array of "// &
+          & TRIM(NumberToVString(SIZE(timeDependenceTypes,1),"*",err,error))// &
+          & " is invalid. The size needs to be 2 for an interface matrix that has a transpose."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ELSE
+      IF(.NOT.SIZE(timeDependenceTypes,1)==1) THEN
+        localError="The size of the time dependence types array of "// &
+          & TRIM(NumberToVString(SIZE(timeDependenceTypes,1),"*",err,error))// &
+          & " is invalid. The size needs to be 1 for an interface matrix that has a transpose."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ENDIF
+
+    timeDependenceTypes(1)=interfaceMatrix%INTERFACE_MATRIX_TIME_DEPENDENCE_TYPE
+    IF(hasTranspose) THEN
+      IF(interfaceMatrix%HAS_TRANSPOSE) THEN
+        timeDependenceTypes(2)=interfaceMatrix%INTERFACE_MATRIX_TRANSPOSE_TIME_DEPENDENCE_TYPE
+      ELSE
+        localError="Can not set the tranpose time dependence time for interface matrix index "// &
+          & TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))//" as that matrix does not have a transpose."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ENDIF
+    
+    EXITS("InterfaceEquations_MatrixTimeDependenceTypeGet1")
+    RETURN
+999 ERRORSEXITS("InterfaceEquations_MatrixTimeDependenceTypeGet1",Err,Error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceEquations_MatrixTimeDependenceTypeGet1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the time dependence type for an interface matrix
+  SUBROUTINE InterfaceEquations_MatrixTimeDependenceTypeSet0(interfaceEquations,interfaceMatrixIdx,hasTranspose, &
+    & timeDependenceType,err,error,*)
+    
+    !Argument variables
+    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer to the interface equations containing the interface matrix to set the time dependence type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix in the interface equations to set the time dependence for.
+    LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix has a transpose. .FALSE. if not. 
+    INTEGER(INTG), INTENT(IN) :: timeDependenceType !<The interface matrix time dependence type to set. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see INTERFACE_MATRICES_ROUTINES_InterfaceMatricesTimeDependenceTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string    
+    !Local variables
+    
+    ENTERS("InterfaceEquations_MatrixTimeDependenceTypeSet0",err,error,*999)
+
+    CALL InterfaceEquations_MatrixTimeDependenceTypeSet1(interfaceEquations,interfaceMatrixIdx,hasTranspose,[timeDependenceType], &
+      & err,error,*999)
+    
+    EXITS("InterfaceEquations_MatrixTimeDependenceTypeSet0")
+    RETURN
+999 ERRORSEXITS("InterfaceEquations_MatrixTimeDependenceTypeSet0",Err,Error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceEquations_MatrixTimeDependenceTypeSet0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the time dependence type for an interface matrix
+  SUBROUTINE InterfaceEquations_MatrixTimeDependenceTypeSet1(interfaceEquations,interfaceMatrixIdx,hasTranspose, &
+    & timeDependenceTypes,err,error,*)
+    
+    !Argument variables
+    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer to the interface equations containing the interface matrix to set the time dependence type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix in the interface equations to set the time dependence for.
+    LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix has a transpose. .FALSE. if not. 
+    INTEGER(INTG), INTENT(IN) :: timeDependenceTypes(:) !<timeDependenceTypes(transposeIdx). The interface matrix time dependence type to set. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see INTERFACE_MATRICES_ROUTINES_InterfaceMatricesTimeDependenceTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string    
+    !Local variables
+    INTEGER(INTG) :: transposeIdx
+    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: interfaceMatrices
+    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: interfaceMatrix
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("InterfaceEquations_MatrixTimeDependenceTypeSet",err,error,*999)
+    
+    IF(.NOT.ASSOCIATED(InterfaceEquations)) CALL FlagError("Interface equations not associated.",err,error,*999)
+    NULLIFY(interfaceMatrices)
+    CALL InterfaceEquations_InterfaceMatricesGet(interfaceEquations,interfaceMatrices,err,error,*999)
+    NULLIFY(interfaceMatrix)
+    CALL InterfaceMatrices_MatrixGet(interfaceMatrices,interfaceMatrixIdx,interfaceMatrix,err,error,*999)
+    IF(hasTranspose) THEN
+      IF(.NOT.SIZE(timeDependenceTypes,1)==2) THEN
+        localError="The size of the time dependence types array of "// &
+          & TRIM(NumberToVString(SIZE(timeDependenceTypes,1),"*",err,error))// &
+          & " is invalid. The size needs to be 2 for an interface matrix that has a transpose."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ELSE
+      IF(.NOT.SIZE(timeDependenceTypes,1)==1) THEN
+        localError="The size of the time dependence types array of "// &
+          & TRIM(NumberToVString(SIZE(timeDependenceTypes,1),"*",err,error))// &
+          & " is invalid. The size needs to be 1 for an interface matrix that has a transpose."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ENDIF
+    DO transposeIdx=1,SIZE(timeDependenceTypes,1)
+      SELECT CASE(timeDependenceTypes(transposeIdx))
+      CASE(INTERFACE_MATRIX_STATIC,INTERFACE_MATRIX_QUASI_STATIC,INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC, &
+        & INTERFACE_MATRIX_SECOND_ORDER_DYNAMIC)
+        !Good input
+      CASE DEFAULT
+        localError="The specified interface matrix time dependence type of "// &
+          & TRIM(NumberToVString(timeDependenceTypes(transposeIdx),"*",err,error))//" at position "// &
+          & TRIM(NumberToVString(transposeIdx,"*",err,error))//" in the array is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    ENDDO !transposeIdx
+
+    interfaceMatrix%INTERFACE_MATRIX_TIME_DEPENDENCE_TYPE=timeDependenceTypes(1)
+    IF(hasTranspose) THEN
+      IF(interfaceMatrix%HAS_TRANSPOSE) THEN
+        interfaceMatrix%INTERFACE_MATRIX_TRANSPOSE_TIME_DEPENDENCE_TYPE=timeDependenceTypes(2)
+      ELSE
+        localError="Can not set the tranpose time dependence time for interface matrix index "// &
+          & TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))//" as that matrix does not have a transpose."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ENDIF
+    
+    EXITS("InterfaceEquations_MatrixTimeDependenceTypeSet1")
+    RETURN
+999 ERRORSEXITS("InterfaceEquations_MatrixTimeDependenceTypeSet1",Err,Error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceEquations_MatrixTimeDependenceTypeSet1
+
+  !
+  !================================================================================================================================
+  !
+
   !>Sets/changes the output type for the interface equations.
   SUBROUTINE INTERFACE_EQUATIONS_OUTPUT_TYPE_SET(INTERFACE_EQUATIONS,OUTPUT_TYPE,ERR,ERROR,*)
 
@@ -1067,7 +1278,7 @@ CONTAINS
   !
 
   !>Sets/changes the time dependence type for interface equations.
-  SUBROUTINE InterfaceEquationsTimeDependenceTypeSet(INTERFACE_EQUATIONS,TIME_DEPENDENCE_TYPE,ERR,ERROR,*)
+  SUBROUTINE InterfaceEquations_TimeDependenceTypeSet(INTERFACE_EQUATIONS,TIME_DEPENDENCE_TYPE,ERR,ERROR,*)
 
     !Argument variables
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<A pointer to the interface equations to set the linearity for
@@ -1077,7 +1288,7 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
  
-    ENTERS("InterfaceEquationsTimeDependenceTypeSet",ERR,ERROR,*999)
+    ENTERS("InterfaceEquations_TimeDependenceTypeSet",ERR,ERROR,*999)
 
     IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
       IF(INTERFACE_EQUATIONS%INTERFACE_EQUATIONS_FINISHED) THEN
@@ -1102,12 +1313,12 @@ CONTAINS
       CALL FlagError("Interface equations is not associated.",ERR,ERROR,*999)
     ENDIF
        
-    EXITS("InterfaceEquationsTimeDependenceTypeSet")
+    EXITS("InterfaceEquations_TimeDependenceTypeSet")
     RETURN
-999 ERRORSEXITS("InterfaceEquationsTimeDependenceTypeSet",ERR,ERROR)
+999 ERRORSEXITS("InterfaceEquations_TimeDependenceTypeSet",ERR,ERROR)
     RETURN 1
     
-  END SUBROUTINE InterfaceEquationsTimeDependenceTypeSet
+  END SUBROUTINE InterfaceEquations_TimeDependenceTypeSet
 
   !
   !================================================================================================================================
