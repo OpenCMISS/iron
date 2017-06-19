@@ -3158,11 +3158,11 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_EquationsSet_DerivedVariableSetObj
   END INTERFACE cmfe_EquationsSet_DerivedVariableSet
 
-  !>Calculate the strain tensor at a given element xi location.
-  INTERFACE cmfe_EquationsSet_StrainInterpolateXi
-    MODULE PROCEDURE cmfe_EquationsSet_StrainInterpolateXiNumber
-    MODULE PROCEDURE cmfe_EquationsSet_StrainInterpolateXiObj
-  END INTERFACE cmfe_EquationsSet_StrainInterpolateXi
+  !>Evaluate a tensor at a given element xi location.
+  INTERFACE cmfe_EquationsSet_TensorInterpolateXi
+    MODULE PROCEDURE cmfe_EquationsSet_TensorInterpolateXiNumber
+    MODULE PROCEDURE cmfe_EquationsSet_TensorInterpolateXiObj
+  END INTERFACE cmfe_EquationsSet_TensorInterpolateXi
 
   !>Gets the equations set analytic user parameter
   INTERFACE cmfe_EquationsSet_AnalyticUserParamGet
@@ -3218,11 +3218,7 @@ MODULE OpenCMISS_Iron
 
   PUBLIC cmfe_EquationsSet_SpecificationGet,cmfe_EquationsSet_SpecificationSizeGet
 
-<<<<<<< HEAD
-  PUBLIC cmfe_EquationsSet_StrainInterpolateXi
-=======
   PUBLIC cmfe_EquationsSet_TensorInterpolateXi
->>>>>>> 5f6bcf0... Unloading functionality for transversely isotropic Guccione
 
   PUBLIC cmfe_EquationsSet_AnalyticUserParamSet,cmfe_EquationsSet_AnalyticUserParamGet
 
@@ -26260,23 +26256,25 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Calculate the strain tensor at a given element xi location, for an equations set identified by a user number.
-  SUBROUTINE cmfe_EquationsSet_StrainInterpolateXiNumber(regionUserNumber,equationsSetUserNumber,userElementNumber,xi,values,err)
-    !DLLEXPORT(cmfe_EquationsSet_StrainInterpolateXiNumber)
+!>Evaluate a tensor at a given element xi location, for an equations set identified by a user number.
+  SUBROUTINE cmfe_EquationsSet_TensorInterpolateXiNumber(regionUserNumber,equationsSetUserNumber,tensorEvaluateType, &
+    & userElementNumber,xi,values,err)
+    !DLLEXPORT(cmfe_EquationsSet_TensorInterpolateXiNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set.
-    INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to calculate the strain for.
+    INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to evalaute the tensor for.
+    INTEGER(INTG), INTENT(IN) :: tensorEvaluateType !<The type of tensor to evaluate.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
     REAL(DP), INTENT(IN) :: xi(:) !<The element xi to interpolate the field at.
-    REAL(DP), INTENT(OUT) :: values(6) !<The interpolated strain tensor values.
+    REAL(DP), INTENT(OUT) :: values(:,:) !<The interpolated tensor values.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(REGION_TYPE), POINTER :: region
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("cmfe_EquationsSet_StrainInterpolateXiNumber",err,error,*999)
+    ENTERS("cmfe_EquationsSet_TensorInterpolateXiNumber",err,error,*999)
 
     NULLIFY(equationsSet)
     NULLIFY(region)
@@ -26285,7 +26283,7 @@ CONTAINS
     IF(ASSOCIATED(region)) THEN
       CALL EQUATIONS_SET_USER_NUMBER_FIND(equationsSetUserNumber,region,equationsSet,err,error,*999)
       IF(ASSOCIATED(equationsSet)) THEN
-        CALL EquationsSet_StrainInterpolateXi(equationsSet,userElementNumber,xi, &
+        CALL EquationsSet_TensorInterpolateXi(equationsSet,tensorEvaluateType,userElementNumber,xi, &
           & values,err,error,*999)
       ELSE
         localError="An equations set with a user number of "//TRIM(NumberToVstring(equationsSetUserNumber,"*", &
@@ -26297,41 +26295,42 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     END IF
 
-    EXITS("cmfe_EquationsSet_StrainInterpolateXiNumber")
+    EXITS("cmfe_EquationsSet_TensorInterpolateXiNumber")
     RETURN
-999 ERRORSEXITS("cmfe_EquationsSet_StrainInterpolateXiNumber",err,error)
+999 ERRORSEXITS("cmfe_EquationsSet_TensorInterpolateXiNumber",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_EquationsSet_StrainInterpolateXiNumber
+  END SUBROUTINE cmfe_EquationsSet_TensorInterpolateXiNumber
 
   !
   !================================================================================================================================
   !
 
-  !>Calculate the strain tensor at a given element xi location, for an equations set identified by an object.
-  SUBROUTINE cmfe_EquationsSet_StrainInterpolateXiObj(equationsSet,userElementNumber,xi,values,err)
-    !DLLEXPORT(cmfe_EquationsSet_StrainInterpolateXiObj)
+  !>Evaluate a tensor at a given element xi location, for an equations set identified by an object.
+  SUBROUTINE cmfe_EquationsSet_TensorInterpolateXiObj(equationsSet,tensorEvaluateType,userElementNumber,xi,values,err)
+    !DLLEXPORT(cmfe_EquationsSet_TensorInterpolateXiObj)
 
     !Argument variables
-    TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<A pointer to the equations set to interpolate strain for.
+    TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<A pointer to the equations set to evaluate the tensor for.
+    INTEGER(INTG), INTENT(IN) :: tensorEvaluateType !<The type of tensor to evaluate.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
     REAL(DP), INTENT(IN) :: xi(:) !<The element xi to interpolate the field at.
-    REAL(DP), INTENT(OUT) :: values(6) !<The interpolated strain tensor values.
+    REAL(DP), INTENT(OUT) :: values(:,:) !<The interpolated strain tensor values.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
 
-    ENTERS("cmfe_EquationsSet_StrainInterpolateXiObj",err,error,*999)
+    ENTERS("cmfe_EquationsSet_TensorInterpolateXiObj",err,error,*999)
 
-    CALL EquationsSet_StrainInterpolateXi(equationsSet%equationsSet,userElementNumber,xi, &
+    CALL EquationsSet_TensorInterpolateXi(equationsSet%equationsSet,tensorEvaluateType,userElementNumber,xi, &
       & values,err,error,*999)
 
-    EXITS("cmfe_EquationsSet_StrainInterpolateXiObj")
+    EXITS("cmfe_EquationsSet_TensorInterpolateXiObj")
     RETURN
-999 ERRORSEXITS("cmfe_EquationsSet_StrainInterpolateXiObj",err,error)
+999 ERRORSEXITS("cmfe_EquationsSet_TensorInterpolateXiObj",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_EquationsSet_StrainInterpolateXiObj
+  END SUBROUTINE cmfe_EquationsSet_TensorInterpolateXiObj
 
 !!==================================================================================================================================
 !!

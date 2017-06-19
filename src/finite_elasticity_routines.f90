@@ -3319,7 +3319,7 @@ CONTAINS
     INTEGER(INTG) :: dependentVarType,meshComponentNumber
     INTEGER(INTG) :: numberOfDimensions,numberOfXi
     INTEGER(INTG) :: localElementNumber,i,nh,mh
-    REAL(DP) :: dZdNu(3,3),dZdXi(3,3),dZdNuT(3,3),AZL(3,3),E(3,3),cauchyStressTensor(3,3),cauchyStressVoigt(6),Jznu
+    REAL(DP) :: dZdNu(3,3),dZdNuT(3,3),AZL(3,3),E(3,3),cauchyStressTensor(3,3),cauchyStressVoigt(6),Jznu
 
     ENTERS("FiniteElasticity_TensorInterpolateXi",err,error,*999)
 
@@ -3414,7 +3414,7 @@ CONTAINS
     numberOfDimensions=equationsSet%region%coordinate_system%number_of_dimensions
     numberOfXi=elementBasis%number_of_xi
     CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpolatedPointMetrics, &
-      & geometricInterpolatedPointMetrics,fibreInterpolatedPoint,dZdXi,dZdNu,err,error,*999)
+      & geometricInterpolatedPointMetrics,fibreInterpolatedPoint,dZdNu,err,error,*999)
 
     IF(tensorEvaluateType==EQUATIONS_SET_EVALUATE_R_CAUCHY_GREEN_DEFORMATION_TENSOR .OR. &
       & tensorEvaluateType==EQUATIONS_SET_EVALUATE_GREEN_LAGRANGE_STRAIN_TENSOR) THEN
