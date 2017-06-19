@@ -44,7 +44,7 @@
 !> This module handles all distributed_matrix_vector_IO.
 MODULE DISTRIUBTED_MATRIX_VECTOR_IO
   
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE ISO_VARYING_STRING
   USE KINDS
   USE STRINGS

@@ -44,7 +44,7 @@
 !> This module handles all solver routines.
 MODULE SOLVER_ROUTINES
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE BOUNDARY_CONDITIONS_ROUTINES
 #ifdef WITH_CELLML
   USE CELLML_MODEL_DEFINITION
@@ -460,6 +460,30 @@ MODULE SOLVER_ROUTINES
     
   END INTERFACE
 
+  INTERFACE CellMLEquations_CreateFinish
+    MODULE PROCEDURE CELLML_EQUATIONS_CREATE_FINISH
+  END INTERFACE CellMLEquations_CreateFinish
+  
+  INTERFACE CellMLEquations_CreateStart
+    MODULE PROCEDURE CELLML_EQUATIONS_CREATE_START
+  END INTERFACE CellMLEquations_CreateStart
+
+  INTERFACE Solver_DynamicDegreeSet
+    MODULE PROCEDURE SOLVER_DYNAMIC_DEGREE_SET
+  END INTERFACE Solver_DynamicDegreeSet
+
+  INTERFACE Solver_DynamicLinearityTypeSet
+    MODULE PROCEDURE SOLVER_DYNAMIC_LINEARITY_TYPE_SET
+  END INTERFACE Solver_DynamicLinearityTypeSet
+
+  INTERFACE Solver_DynamicOrderSet
+    MODULE PROCEDURE SOLVER_DYNAMIC_ORDER_SET
+  END INTERFACE Solver_DynamicOrderSet
+
+  INTERFACE Solver_DynamicSchemeSet
+    MODULE PROCEDURE SOLVER_DYNAMIC_SCHEME_SET
+  END INTERFACE Solver_DynamicSchemeSet
+
   INTERFACE SOLVER_DYNAMIC_THETA_SET
     MODULE PROCEDURE SOLVER_DYNAMIC_THETA_SET_DP1
     MODULE PROCEDURE SOLVER_DYNAMIC_THETA_SET_DP
@@ -650,6 +674,8 @@ MODULE SOLVER_ROUTINES
 
   PUBLIC CELLML_EQUATIONS_CREATE_FINISH,CELLML_EQUATIONS_CREATE_START
 
+  PUBLIC CellMLEquations_CreateStart,CellMLEquations_CreateFinish
+
   PUBLIC CELLML_EQUATIONS_DESTROY
   
   PUBLIC CellMLEquations_LinearityTypeGet,CellMLEquations_LinearityTypeSet
@@ -670,17 +696,27 @@ MODULE SOLVER_ROUTINES
   
   PUBLIC SOLVER_DYNAMIC_DEGREE_GET,SOLVER_DYNAMIC_DEGREE_SET
 
+  PUBLIC Solver_DynamicDegreeSet
+
   PUBLIC SOLVER_DYNAMIC_LINEAR_SOLVER_GET,SOLVER_DYNAMIC_NONLINEAR_SOLVER_GET
 
   PUBLIC SOLVER_DYNAMIC_LINEARITY_TYPE_GET
+
+  PUBLIC Solver_DynamicLinearityTypeSet
   
   PUBLIC SOLVER_DYNAMIC_ORDER_SET
 
+  PUBLIC Solver_DynamicOrderSet
+
   PUBLIC SOLVER_DYNAMIC_SCHEME_SET
+
+  PUBLIC Solver_DynamicSchemeSet
 
   PUBLIC SOLVER_DYNAMIC_RESTART_GET,SOLVER_DYNAMIC_RESTART_SET
 
-  PUBLIC SOLVER_DYNAMIC_THETA_SET 
+  PUBLIC SOLVER_DYNAMIC_THETA_SET
+
+  PUBLIC Solver_DynamicThetaSet
 
   PUBLIC SOLVER_DYNAMIC_ALE_SET
 
@@ -904,7 +940,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds a CellML environment to a solvers CellML equations. \see OPENCMISS::CMISSCellMLEquationsCellMLAdd
+  !>Adds a CellML environment to a solvers CellML equations. \see OpenCMISS::Iron::cmfe_CellMLEquationsCellMLAdd
   SUBROUTINE CELLML_EQUATIONS_CELLML_ADD(CELLML_EQUATIONS,CELLML,CELLML_INDEX,ERR,ERROR,*)
 
     !Argument variables
@@ -5997,7 +6033,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the linearity type for the dynamic solver. \see OPENCMISS::CMISSSolverDynamicLinearityTypeGet
+  !>Returns the linearity type for the dynamic solver. \see OpenCMISS::Iron::cmfe_SolverDynamicLinearityTypeGet
   SUBROUTINE SOLVER_DYNAMIC_LINEARITY_TYPE_GET(SOLVER,LINEARITY_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -6036,7 +6072,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the linearity type for the dynamic solver. \see OPENCMISS::CMISSSolverDynamicLinearityTypeSet
+  !>Sets/changes the linearity type for the dynamic solver. \see OpenCMISS::Iron::cmfe_SolverDynamicLinearityTypeSet
   SUBROUTINE SOLVER_DYNAMIC_LINEARITY_TYPE_SET(SOLVER,LINEARITY_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -6163,7 +6199,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the linear solver associated with a dynamic solver \see OPENCMISS::CMISSSolverDynamicLinearSolverGet
+  !>Returns the linear solver associated with a dynamic solver \see OpenCMISS::Iron::cmfe_SolverDynamicLinearSolverGet
   SUBROUTINE SOLVER_DYNAMIC_LINEAR_SOLVER_GET(SOLVER,LINEAR_SOLVER,ERR,ERROR,*)
 
     !Argument variables
@@ -6665,7 +6701,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the scheme for a dynamic solver. \see OPENCMISS::CMISSSolverDynamicSchemeSet
+  !>Sets/changes the scheme for a dynamic solver. \see OpenCMISS::Iron::cmfe_SolverDynamicSchemeSet
   SUBROUTINE SOLVER_DYNAMIC_SCHEME_SET(SOLVER,SCHEME,ERR,ERROR,*)
 
     !Argument variables
@@ -6972,7 +7008,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes a single theta value for a dynamic solver. \see OPENCMISS::CMISSSolverDynamicThetaSet
+  !>Sets/changes a single theta value for a dynamic solver. \see OpenCMISS::Iron::cmfe_SolverDynamicThetaSet
   SUBROUTINE SOLVER_DYNAMIC_THETA_SET_DP1(SOLVER,THETA,ERR,ERROR,*)
 
     !Argument variables
@@ -6996,7 +7032,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the theta value for a dynamic solver. \see OPENCMISS::CMISSSolverDynamicThetaSet
+  !>Sets/changes the theta value for a dynamic solver. \see OpenCMISS::Iron::cmfe_SolverDynamicThetaSet
   SUBROUTINE SOLVER_DYNAMIC_THETA_SET_DP(SOLVER,THETA,ERR,ERROR,*)
 
     !Argument variables
@@ -7144,7 +7180,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the dynamic times for a dynamic solver. \see OPENCMISS::CMISSSolverDynamicTimesSet
+  !>Sets/changes the dynamic times for a dynamic solver. \see OpenCMISS::Iron::cmfe_SolverDynamicTimesSet
   SUBROUTINE SOLVER_DYNAMIC_TIMES_SET(SOLVER,CURRENT_TIME,TIME_INCREMENT,ERR,ERROR,*)
 
    !Argument variables
@@ -7541,7 +7577,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds equations sets to solver equations. \see OPENCMISS::CMISSSolverEquationsEquationsSetAdd
+  !>Adds equations sets to solver equations. \see OpenCMISS::Iron::cmfe_SolverEquationsEquationsSetAdd
   SUBROUTINE SOLVER_EQUATIONS_EQUATIONS_SET_ADD(SOLVER_EQUATIONS,EQUATIONS_SET,EQUATIONS_SET_INDEX,ERR,ERROR,*)
 
     !Argument variables
@@ -7758,7 +7794,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds an interface condition to the solver equations. \see OPENCMISS::CMISSSolverEquationsInterfaceConditionAdd
+  !>Adds an interface condition to the solver equations. \see OpenCMISS::Iron::cmfe_SolverEquationsInterfaceConditionAdd
   SUBROUTINE SOLVER_EQUATIONS_INTERFACE_CONDITION_ADD(SOLVER_EQUATIONS,INTERFACE_CONDITION,INTERFACE_CONDITION_INDEX,ERR,ERROR,*)
 
     !Argument variables
@@ -7976,7 +8012,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the sparsity type for solver equations. \see OPENCMISS::CMISSSolverEquationsSpartsityTypeSet
+  !>Sets/changes the sparsity type for solver equations. \see OpenCMISS::Iron::cmfe_SolverEquationsSpartsityTypeSet
   SUBROUTINE SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SPARSITY_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -9087,7 +9123,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the label of a solver. \see OPENCMISS::CMISSSolverLabelGet
+  !>Returns the label of a solver. \see OpenCMISS::Iron::cmfe_SolverLabelGet
   SUBROUTINE SOLVER_LABEL_GET_C(SOLVER,LABEL,ERR,ERROR,*)
 
     !Argument variables
@@ -9123,7 +9159,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the label of a solver. \see OPENCMISS::CMISSSolverLabelGet
+  !>Returns the label of a solver. \see OpenCMISS::Iron::cmfe_SolverLabelGet
   SUBROUTINE SOLVER_LABEL_GET_VS(SOLVER,LABEL,ERR,ERROR,*)
 
     !Argument variables
@@ -9152,7 +9188,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the label of a solver. \see OPENCMISS::CMISSSolverLabelSet
+  !>Sets the label of a solver. \see OpenCMISS::Iron::cmfe_SolverLabelSet
   SUBROUTINE SOLVER_LABEL_SET_C(SOLVER,LABEL,ERR,ERROR,*)
 
     !Argument variables
@@ -9185,7 +9221,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the label of a solver. \see OPENCMISS::CMISSSolverLabelSet
+  !>Sets the label of a solver. \see OpenCMISS::Iron::cmfe_SolverLabelSet
   SUBROUTINE SOLVER_LABEL_SET_VS(SOLVER,LABEL,ERR,ERROR,*)
 
     !Argument variables
@@ -9217,7 +9253,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the type of library to use for the solver \see OPENCMISS::CMISSSolverLibraryTypeGet
+  !>Gets the type of library to use for the solver \see OpenCMISS::Iron::cmfe_SolverLibraryTypeGet
   SUBROUTINE SOLVER_LIBRARY_TYPE_GET(SOLVER,SOLVER_LIBRARY_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -9309,7 +9345,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the type of library type to use for the solver. \see OPENCMISS::CMISSSolverLibraryTypeSet
+  !>Sets/changes the type of library type to use for the solver. \see OpenCMISS::Iron::cmfe_SolverLibraryTypeSet
   SUBROUTINE SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_LIBRARY_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -10607,7 +10643,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the type of direct linear solver. \see OPENCMISS::CMISSSolverLinearDirectTypeSet
+  !>Sets/changes the type of direct linear solver. \see OpenCMISS::Iron::cmfe_SolverLinearDirectTypeSet
   SUBROUTINE SOLVER_LINEAR_DIRECT_TYPE_SET(SOLVER,DIRECT_SOLVER_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -10756,7 +10792,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the maximum absolute tolerance for an iterative linear solver. \see OPENCMISS::CMISSSolverLinearIterativeAbsoluteToleranceSet
+  !>Sets/changes the maximum absolute tolerance for an iterative linear solver. \see OpenCMISS::Iron::cmfe_SolverLinearIterativeAbsoluteToleranceSet
   SUBROUTINE Solver_LinearIterativeAbsoluteToleranceSet(SOLVER,ABSOLUTE_TOLERANCE,ERR,ERROR,*)
 
     !Argument variables
@@ -11044,7 +11080,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the maximum divergence tolerance for an iterative linear solver. \see OPENCMISS::CMISSSolverLinearIterativeDivergenceToleranceSet
+  !>Sets/changes the maximum divergence tolerance for an iterative linear solver. \see OpenCMISS::Iron::cmfe_SolverLinearIterativeDivergenceToleranceSet
   SUBROUTINE Solver_LinearIterativeDivergenceToleranceSet(SOLVER,DIVERGENCE_TOLERANCE,ERR,ERROR,*)
 
     !Argument variables
@@ -11136,7 +11172,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the GMRES restart value for a GMRES iterative linear solver. \see OPENCMISS::CMISSSolverLinearIterativeGMRESRestartSet
+  !>Sets/changes the GMRES restart value for a GMRES iterative linear solver. \see OpenCMISS::Iron::cmfe_SolverLinearIterativeGMRESRestartSet
   SUBROUTINE SOLVER_LINEAR_ITERATIVE_GMRES_RESTART_SET(SOLVER,GMRES_RESTART,ERR,ERROR,*)
 
     !Argument variables
@@ -11434,7 +11470,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the maximum number of iterations for an iterative linear solver. \see OPENCMISS::CMISSSolverLinearIterativeMaximumIterationsSet
+  !>Sets/changes the maximum number of iterations for an iterative linear solver. \see OpenCMISS::Iron::cmfe_SolverLinearIterativeMaximumIterationsSet
   SUBROUTINE Solver_LinearIterativeMaximumIterationsSet(SOLVER,MAXIMUM_ITERATIONS,ERR,ERROR,*)
 
     !Argument variables
@@ -11490,7 +11526,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the type of preconditioner for an iterative linear solver. \see OPENCMISS::CMISSSolverLinearIterativePreconditionerTypeSet
+  !>Sets/changes the type of preconditioner for an iterative linear solver. \see OpenCMISS::Iron::cmfe_SolverLinearIterativePreconditionerTypeSet
   SUBROUTINE Solver_LinearIterativePreconditionerTypeSet(SOLVER,ITERATIVE_PRECONDITIONER_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -11575,7 +11611,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the relative tolerance for an iterative linear solver. \see OPENCMISS::CMISSSolverLinearIterativeRelativeToleranceSet
+  !>Sets/changes the relative tolerance for an iterative linear solver. \see OpenCMISS::Iron::cmfe_SolverLinearIterativeRelativeToleranceSet
   SUBROUTINE Solver_LinearIterativeRelativeToleranceSet(SOLVER,RELATIVE_TOLERANCE,ERR,ERROR,*)
 
     !Argument variables
@@ -11908,7 +11944,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the type of iterative linear solver. \see OPENCMISS::CMISSSolverLinearIterativeTypeSet
+  !>Sets/changes the type of iterative linear solver. \see OpenCMISS::Iron::cmfe_SolverLinearIterativeTypeSet
   SUBROUTINE SOLVER_LINEAR_ITERATIVE_TYPE_SET(SOLVER,ITERATIVE_SOLVER_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -12249,7 +12285,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the type of linear solver. \see OPENCMISS::CMISSSolverLinearTypeSet
+  !>Sets/changes the type of linear solver. \see OpenCMISS::Iron::cmfe_SolverLinearTypeSet
   SUBROUTINE SOLVER_LINEAR_TYPE_SET(SOLVER,LINEAR_SOLVE_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -15107,7 +15143,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the maximum absolute tolerance for a nonlinear Quasi-Newton solver. \see OPENCMISS::CMISSSolverQuasiNewtonAbsoluteToleranceSet
+  !>Sets/changes the maximum absolute tolerance for a nonlinear Quasi-Newton solver. \see OpenCMISS::Iron::cmfe_SolverQuasiNewtonAbsoluteToleranceSet
   SUBROUTINE SOLVER_QUASI_NEWTON_ABSOLUTE_TOLERANCE_SET(SOLVER,ABSOLUTE_TOLERANCE,ERR,ERROR,*)
 
     !Argument variables
@@ -15377,7 +15413,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the type of Jacobian calculation type for a Quasi-Newton solver. \see OPENCMISS::CMISSSolverQuasiNewtonJacobianCalculationSet
+  !>Sets/changes the type of Jacobian calculation type for a Quasi-Newton solver. \see OpenCMISS::Iron::cmfe_SolverQuasiNewtonJacobianCalculationSet
   SUBROUTINE Solver_QuasiNewtonJacobianCalculationTypeSet(SOLVER,JACOBIAN_CALCULATION_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -15567,7 +15603,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the linear solver associated with a Quasi-Newton solver \see OPENCMISS::CMISSSolverQuasiNewtonLinearSolverGetSet
+  !>Returns the linear solver associated with a Quasi-Newton solver \see OpenCMISS::Iron::cmfe_SolverQuasiNewtonLinearSolverGetSet
   SUBROUTINE SOLVER_QUASI_NEWTON_LINEAR_SOLVER_GET(SOLVER,LINEAR_SOLVER,ERR,ERROR,*)
 
     !Argument variables
@@ -15623,7 +15659,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Returns the CellML solver associated with a Quasi-Newton solver  \see OPENCMISS::CMISSSolverQuasiNewtonCellMLSolverGetSet
+  !>Returns the CellML solver associated with a Quasi-Newton solver  \see OpenCMISS::Iron::cmfe_SolverQuasiNewtonCellMLSolverGetSet
   SUBROUTINE SOLVER_QUASI_NEWTON_CELLML_SOLVER_GET(SOLVER,CELLML_SOLVER,ERR,ERROR,*)
 
     !Argument variables
@@ -15697,7 +15733,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Sets/changes the convergence test for a Quasi-Newton nonlinear solver \see OPENCMISS::CMISSSolverQuasiNewtonConvergenceTestSet
+  !>Sets/changes the convergence test for a Quasi-Newton nonlinear solver \see OpenCMISS::Iron::cmfe_SolverQuasiNewtonConvergenceTestSet
   SUBROUTINE Solver_QuasiNewtonConvergenceTestTypeSet(solver,convergenceTestType,err,error,*)
 
     !Argument variables
@@ -16282,7 +16318,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the line search maximum step for a nonlinear Quasi-Newton linesearch solver. \see OPENCMISS::CMISSSolverQuasiNewtonLineSearchMaxStepSet
+  !>Sets/changes the line search maximum step for a nonlinear Quasi-Newton linesearch solver. \see OpenCMISS::Iron::cmfe_SolverQuasiNewtonLineSearchMaxStepSet
   SUBROUTINE SOLVER_QUASI_NEWTON_LINESEARCH_MAXSTEP_SET(SOLVER,LINESEARCH_MAXSTEP,ERR,ERROR,*)
 
     !Argument variables
@@ -16506,7 +16542,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the line search step tolerance for a nonlinear Quasi-Newton line search solver. \see OPENCMISS::CMISSSolverQuasiNewtonLineSearchStepTolSet
+  !>Sets/changes the line search step tolerance for a nonlinear Quasi-Newton line search solver. \see OpenCMISS::Iron::cmfe_SolverQuasiNewtonLineSearchStepTolSet
   SUBROUTINE SOLVER_QUASI_NEWTON_LINESEARCH_STEPTOL_SET(SOLVER,LINESEARCH_STEPTOL,ERR,ERROR,*)
 
     !Argument variables
@@ -16577,7 +16613,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the line search type for a nonlinear Quasi-Newton linesearch solver \see OPENCMISS::CMISSSolverQuasiNewtonLineSearchTypeSet
+  !>Sets/changes the line search type for a nonlinear Quasi-Newton linesearch solver \see OpenCMISS::Iron::cmfe_SolverQuasiNewtonLineSearchTypeSet
   SUBROUTINE SOLVER_QUASI_NEWTON_LINESEARCH_TYPE_SET(SOLVER,LINESEARCH_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -16703,7 +16739,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the maximum number of function evaluations for a nonlinear Quasi-Newton solver. \see OPENCMISS::CMISSSolverQuasiNewtonMaximumFunctionEvaluationsSet
+  !>Sets/changes the maximum number of function evaluations for a nonlinear Quasi-Newton solver. \see OpenCMISS::Iron::cmfe_SolverQuasiNewtonMaximumFunctionEvaluationsSet
   SUBROUTINE Solver_QuasiNewtonMaximumFunctionEvaluationsSet(SOLVER,MAXIMUM_FUNCTION_EVALUATIONS,ERR,ERROR,*)
 
     !Argument variables
@@ -16765,7 +16801,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the maximum number of iterations for a nonlinear Quasi-Newton solver. \see OPENCMISS::CMISSSolverQuasiNewtonMaximumIterationsSet
+  !>Sets/changes the maximum number of iterations for a nonlinear Quasi-Newton solver. \see OpenCMISS::Iron::cmfe_SolverQuasiNewtonMaximumIterationsSet
   SUBROUTINE SOLVER_QUASI_NEWTON_MAXIMUM_ITERATIONS_SET(SOLVER,MAXIMUM_ITERATIONS,ERR,ERROR,*)
 
     !Argument variables
@@ -16825,7 +16861,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the relative tolerance for a nonlinear Quasi-Newton solver. \see OPENCMISS::CMISSSolverQuasiNewtonRelativeToleranceSet
+  !>Sets/changes the relative tolerance for a nonlinear Quasi-Newton solver. \see OpenCMISS::Iron::cmfe_SolverQuasiNewtonRelativeToleranceSet
   SUBROUTINE SOLVER_QUASI_NEWTON_RELATIVE_TOLERANCE_SET(SOLVER,RELATIVE_TOLERANCE,ERR,ERROR,*)
 
     !Argument variables
@@ -16950,7 +16986,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the solution tolerance for a nonlinear Quasi-Newton solver. \see OPENCMISS::CMISSSolverNewtonSolutionToleranceSet
+  !>Sets/changes the solution tolerance for a nonlinear Quasi-Newton solver. \see OpenCMISS::Iron::cmfe_SolverNewtonSolutionToleranceSet
   SUBROUTINE SOLVER_QUASI_NEWTON_SOLUTION_TOLERANCE_SET(SOLVER,SOLUTION_TOLERANCE,ERR,ERROR,*)
 
     !Argument variables
@@ -17227,7 +17263,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the trust region delta0 for a nonlinear Quasi-Newton trust region solver solver. \see OPENCMISS::CMISSSolverQuasiNewtonTrustRegionDelta0Set
+  !>Sets/changes the trust region delta0 for a nonlinear Quasi-Newton trust region solver solver. \see OpenCMISS::Iron::cmfe_SolverQuasiNewtonTrustRegionDelta0Set
   SUBROUTINE SOLVER_QUASI_NEWTON_TRUSTREGION_DELTA0_SET(SOLVER,TRUSTREGION_DELTA0,ERR,ERROR,*)
 
     !Argument variables
@@ -17435,7 +17471,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the trust region tolerance for a nonlinear Quasi-Newton trust region solver. \see OPENCMISS::CMISSSolverQuasiNewtonTrustRegionToleranceSet
+  !>Sets/changes the trust region tolerance for a nonlinear Quasi-Newton trust region solver. \see OpenCMISS::Iron::cmfe_SolverQuasiNewtonTrustRegionToleranceSet
   SUBROUTINE Solver_QuasiNewtonTrustRegionToleranceSet(SOLVER,TRUSTREGION_TOLERANCE,ERR,ERROR,*)
 
     !Argument variables
@@ -17506,7 +17542,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the restart of nonlinear Quasi-Newton solver. \see OPENCMISS::CMISSSolverQuasiNewtonRestartSet
+  !>Sets/changes the restart of nonlinear Quasi-Newton solver. \see OpenCMISS::Iron::cmfe_SolverQuasiNewtonRestartSet
   SUBROUTINE SOLVER_QUASI_NEWTON_RESTART_SET(SOLVER,RESTART,ERR,ERROR,*)
 
     !Argument variables
@@ -17559,7 +17595,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the restart type of nonlinear Quasi-Newton solver. \see OPENCMISS::CMISSSolverQuasiNewtonRestartTypeSet
+  !>Sets/changes the restart type of nonlinear Quasi-Newton solver. \see OpenCMISS::Iron::cmfe_SolverQuasiNewtonRestartTypeSet
   SUBROUTINE SOLVER_QUASI_NEWTON_RESTART_TYPE_SET(SOLVER,QUASI_NEWTON_RESTART_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -17628,7 +17664,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the scale type of nonlinear Quasi-Newton solver. \see OPENCMISS::CMISSSolverQuasiNewtonScaleTypeSet
+  !>Sets/changes the scale type of nonlinear Quasi-Newton solver. \see OpenCMISS::Iron::cmfe_SolverQuasiNewtonScaleTypeSet
   SUBROUTINE SOLVER_QUASI_NEWTON_SCALE_TYPE_SET(SOLVER,QUASI_NEWTON_SCALE_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -17699,7 +17735,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the type of nonlinear Quasi-Newton solver. \see OPENCMISS::CMISSSolverQuasiNewtonTypeSet
+  !>Sets/changes the type of nonlinear Quasi-Newton solver. \see OpenCMISS::Iron::cmfe_SolverQuasiNewtonTypeSet
   SUBROUTINE SOLVER_QUASI_NEWTON_TYPE_SET(SOLVER,QUASI_NEWTON_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -17767,7 +17803,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the solve type of nonlinear Quasi-Newton solver. \see OPENCMISS::CMISSSolverQuasiNewtonSolveTypeSet
+  !>Sets/changes the solve type of nonlinear Quasi-Newton solver. \see OpenCMISS::Iron::cmfe_SolverQuasiNewtonSolveTypeSet
   SUBROUTINE SOLVER_QUASI_NEWTON_SOLVE_TYPE_SET(SOLVER,QUASI_NEWTON_SOLVE_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -17853,7 +17889,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the maximum absolute tolerance for a nonlinear Newton solver. \todo should this be SOLVER_NONLINEAR_NEWTON_ABSOLUTE_TOLERANCE_SET??? \see OPENCMISS::CMISSSolverNewtonAbsoluteToleranceSet
+  !>Sets/changes the maximum absolute tolerance for a nonlinear Newton solver. \todo should this be SOLVER_NONLINEAR_NEWTON_ABSOLUTE_TOLERANCE_SET??? \see OpenCMISS::Iron::cmfe_SolverNewtonAbsoluteToleranceSet
   SUBROUTINE SOLVER_NEWTON_ABSOLUTE_TOLERANCE_SET(SOLVER,ABSOLUTE_TOLERANCE,ERR,ERROR,*)
 
     !Argument variables
@@ -18115,7 +18151,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the type of Jacobian calculation type for a Newton solver. \todo should this be SOLVER_NONLINEAR_NEWTON_JACOBIAN_CALCULATION_SET??? \see OPENCMISS::CMISSSolverNewtonJacobianCalculationSet
+  !>Sets/changes the type of Jacobian calculation type for a Newton solver. \todo should this be SOLVER_NONLINEAR_NEWTON_JACOBIAN_CALCULATION_SET??? \see OpenCMISS::Iron::cmfe_SolverNewtonJacobianCalculationSet
   SUBROUTINE SOLVER_NEWTON_JACOBIAN_CALCULATION_TYPE_SET(SOLVER,JACOBIAN_CALCULATION_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -18304,7 +18340,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the linear solver associated with a Newton solver \todo should this be SOLVER_NONLINEAR_NEWTON_LINEAR_SOLVER_GET??? \see OPENCMISS::CMISSSolverNewtonLinearSolverGetSet
+  !>Returns the linear solver associated with a Newton solver \todo should this be SOLVER_NONLINEAR_NEWTON_LINEAR_SOLVER_GET??? \see OpenCMISS::Iron::cmfe_SolverNewtonLinearSolverGetSet
   SUBROUTINE SOLVER_NEWTON_LINEAR_SOLVER_GET(SOLVER,LINEAR_SOLVER,ERR,ERROR,*)
 
     !Argument variables
@@ -18360,7 +18396,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Returns the CellML solver associated with a Newton solver \todo should this be SOLVER_NONLINEAR_NEWTON_CELLML_SOLVER_GET??? \see OPENCMISS::CMISSSolverNewtonCellMLSolverGetSet
+  !>Returns the CellML solver associated with a Newton solver \todo should this be SOLVER_NONLINEAR_NEWTON_CELLML_SOLVER_GET??? \see OpenCMISS::Iron::cmfe_SolverNewtonCellMLSolverGetSet
   SUBROUTINE SOLVER_NEWTON_CELLML_SOLVER_GET(SOLVER,CELLML_SOLVER,ERR,ERROR,*)
 
     !Argument variables
@@ -18434,7 +18470,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Sets/changes the convergence test for a Newton nonlinear solver \see OPENCMISS::CMISSSolverNewtonConvergenceTestSet
+  !>Sets/changes the convergence test for a Newton nonlinear solver \see OpenCMISS::Iron::cmfe_SolverNewtonConvergenceTestSet
   SUBROUTINE Solver_NewtonConvergenceTestTypeSet(solver,convergenceTestType,err,error,*)
 
     !Argument variables
@@ -18499,7 +18535,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the line search alpha for a Newton linesearch solver \todo should this be SOLVER_NONLINEAR_NEWTON_LINESEARCH_ALPHA_SET??? \see OPENCMISS::CMISSSolverNewtonLineSearchAlphaSet
+  !>Sets/changes the line search alpha for a Newton linesearch solver \todo should this be SOLVER_NONLINEAR_NEWTON_LINESEARCH_ALPHA_SET??? \see OpenCMISS::Iron::cmfe_SolverNewtonLineSearchAlphaSet
   SUBROUTINE SOLVER_NEWTON_LINESEARCH_ALPHA_SET(SOLVER,LINESEARCH_ALPHA,ERR,ERROR,*)
     
     !Argument variables
@@ -19066,7 +19102,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the line search maximum step for a nonlinear Newton linesearch solver. \todo should this be SOLVER_NONLINEAR_NEWTON_LINESEARCH_MAXSTEP_SET??? \see OPENCMISS::CMISSSolverNewtonLineSearchMaxStepSet
+  !>Sets/changes the line search maximum step for a nonlinear Newton linesearch solver. \todo should this be SOLVER_NONLINEAR_NEWTON_LINESEARCH_MAXSTEP_SET??? \see OpenCMISS::Iron::cmfe_SolverNewtonLineSearchMaxStepSet
   SUBROUTINE SOLVER_NEWTON_LINESEARCH_MAXSTEP_SET(SOLVER,LINESEARCH_MAXSTEP,ERR,ERROR,*)
 
     !Argument variables
@@ -19295,7 +19331,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the line search step tolerance for a nonlinear Newton line search solver. \todo should this be SOLVER_NONLINEAR_NEWTON_LINESEARCH_STEPTOL_SET??? \see OPENCMISS::CMISSSolverNewtonLineSearchStepTolSet
+  !>Sets/changes the line search step tolerance for a nonlinear Newton line search solver. \todo should this be SOLVER_NONLINEAR_NEWTON_LINESEARCH_STEPTOL_SET??? \see OpenCMISS::Iron::cmfe_SolverNewtonLineSearchStepTolSet
   SUBROUTINE SOLVER_NEWTON_LINESEARCH_STEPTOL_SET(SOLVER,LINESEARCH_STEPTOL,ERR,ERROR,*)
 
     !Argument variables
@@ -19366,7 +19402,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the line search type for a nonlinear Newton linesearch solver \todo should this be SOLVER_NONLINEAR_NEWTON_LINESEARCH_TYPE_SET??? \see OPENCMISS::CMISSSolverNewtonLineSearchTypeSet
+  !>Sets/changes the line search type for a nonlinear Newton linesearch solver \todo should this be SOLVER_NONLINEAR_NEWTON_LINESEARCH_TYPE_SET??? \see OpenCMISS::Iron::cmfe_SolverNewtonLineSearchTypeSet
   SUBROUTINE SOLVER_NEWTON_LINESEARCH_TYPE_SET(SOLVER,LINESEARCH_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -19494,7 +19530,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the maximum number of function evaluations for a nonlinear Newton solver. \todo should this be SOLVER_NONLINEAR_NEWTON_MAXIMUM_FUNCTION_EVALUATIONS_SET??? \see OPENCMISS::CMISSSolverNewtonMaximumFunctionEvaluationsSet
+  !>Sets/changes the maximum number of function evaluations for a nonlinear Newton solver. \todo should this be SOLVER_NONLINEAR_NEWTON_MAXIMUM_FUNCTION_EVALUATIONS_SET??? \see OpenCMISS::Iron::cmfe_SolverNewtonMaximumFunctionEvaluationsSet
   SUBROUTINE Solver_NewtonMaximumFunctionEvaluationsSet(SOLVER,MAXIMUM_FUNCTION_EVALUATIONS,ERR,ERROR,*)
 
     !Argument variables
@@ -19555,7 +19591,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the maximum number of iterations for a nonlinear Newton solver. \todo should this be SOLVER_NONLINEAR_NEWTON_MAXIMUM_ITERATIONS_SET??? \see OPENCMISS::CMISSSolverNewtonMaximumIterationsSet
+  !>Sets/changes the maximum number of iterations for a nonlinear Newton solver. \todo should this be SOLVER_NONLINEAR_NEWTON_MAXIMUM_ITERATIONS_SET??? \see OpenCMISS::Iron::cmfe_SolverNewtonMaximumIterationsSet
   SUBROUTINE SOLVER_NEWTON_MAXIMUM_ITERATIONS_SET(SOLVER,MAXIMUM_ITERATIONS,ERR,ERROR,*)
 
     !Argument variables
@@ -19615,7 +19651,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the relative tolerance for a nonlinear Newton solver. \todo should this be SOLVER_NONLINEAR_NEWTON_RELATIVE_TOLERANCE_SET??? \see OPENCMISS::CMISSSolverNewtonRelativeToleranceSet
+  !>Sets/changes the relative tolerance for a nonlinear Newton solver. \todo should this be SOLVER_NONLINEAR_NEWTON_RELATIVE_TOLERANCE_SET??? \see OpenCMISS::Iron::cmfe_SolverNewtonRelativeToleranceSet
   SUBROUTINE SOLVER_NEWTON_RELATIVE_TOLERANCE_SET(SOLVER,RELATIVE_TOLERANCE,ERR,ERROR,*)
 
     !Argument variables
@@ -19740,7 +19776,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the solution tolerance for a nonlinear Newton solver. \todo should this be SOLVER_NONLINEAR_NEWTON_SOLUTION_TOLERANCE_SET??? \see OPENCMISS::CMISSSolverNewtonSolutionToleranceSet
+  !>Sets/changes the solution tolerance for a nonlinear Newton solver. \todo should this be SOLVER_NONLINEAR_NEWTON_SOLUTION_TOLERANCE_SET??? \see OpenCMISS::Iron::cmfe_SolverNewtonSolutionToleranceSet
   SUBROUTINE SOLVER_NEWTON_SOLUTION_TOLERANCE_SET(SOLVER,SOLUTION_TOLERANCE,ERR,ERROR,*)
 
     !Argument variables
@@ -20019,7 +20055,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the trust region delta0 for a nonlinear Newton trust region solver solver. \todo should this be SOLVER_NONLINEAR_NEWTON_TRUSTREGION_DELTA0_SET??? \see OPENCMISS::CMISSSolverNewtonTrustRegionDelta0Set
+  !>Sets/changes the trust region delta0 for a nonlinear Newton trust region solver solver. \todo should this be SOLVER_NONLINEAR_NEWTON_TRUSTREGION_DELTA0_SET??? \see OpenCMISS::Iron::cmfe_SolverNewtonTrustRegionDelta0Set
   SUBROUTINE SOLVER_NEWTON_TRUSTREGION_DELTA0_SET(SOLVER,TRUSTREGION_DELTA0,ERR,ERROR,*)
 
     !Argument variables
@@ -20227,7 +20263,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the trust region tolerance for a nonlinear Newton trust region solver. \todo should this be SOLVER_NONLINEAR_NEWTON_TRUSTREGION_TOLERANCE_SET??? \see OPENCMISS::CMISSSolverNewtonTrustRegionToleranceSet
+  !>Sets/changes the trust region tolerance for a nonlinear Newton trust region solver. \todo should this be SOLVER_NONLINEAR_NEWTON_TRUSTREGION_TOLERANCE_SET??? \see OpenCMISS::Iron::cmfe_SolverNewtonTrustRegionToleranceSet
   SUBROUTINE SOLVER_NEWTON_TRUSTREGION_TOLERANCE_SET(SOLVER,TRUSTREGION_TOLERANCE,ERR,ERROR,*)
 
     !Argument variables
@@ -20298,7 +20334,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the type of nonlinear Newton solver. \todo should this be SOLVER_NONLINEAR_NEWTON_TYPE_SET??? \see OPENCMISS::CMISSSolverNewtonTypeSet
+  !>Sets/changes the type of nonlinear Newton solver. \todo should this be SOLVER_NONLINEAR_NEWTON_TYPE_SET??? \see OpenCMISS::Iron::cmfe_SolverNewtonTypeSet
   SUBROUTINE SOLVER_NEWTON_TYPE_SET(SOLVER,NEWTON_SOLVE_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -20994,7 +21030,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the type of nonlinear solver. \see OPENCMISS::CMISSSolverNonlinearTypeSet
+  !>Sets/changes the type of nonlinear solver. \see OpenCMISS::Iron::cmfe_SolverNonlinearTypeSet
   SUBROUTINE SOLVER_NONLINEAR_TYPE_SET(SOLVER,NONLINEAR_SOLVE_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -21677,7 +21713,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the output type for a solver. \see OPENCMISS::CMISSSolverOutputTypeSet
+  !>Sets/changes the output type for a solver. \see OpenCMISS::Iron::cmfe_SolverOutputTypeSet
   SUBROUTINE SOLVER_OUTPUT_TYPE_SET(SOLVER,OUTPUT_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -23631,7 +23667,7 @@ END MODULE SOLVER_ROUTINES
 !>Called from the PETSc TS solvers to monitor the dynamic solver
 SUBROUTINE SOLVER_TIME_STEPPING_MONITOR_PETSC(ts,STEPS,TIME,X,CTX,ERR)
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE CmissPetscTypes
   USE ISO_VARYING_STRING
   USE KINDS
@@ -23668,9 +23704,10 @@ SUBROUTINE SOLVER_TIME_STEPPING_MONITOR_PETSC(ts,STEPS,TIME,X,CTX,ERR)
   ENDIF
 
   RETURN
-999 CALL WRITE_ERROR(ERR,ERROR,*998)
-998 CALL FLAG_WARNING("Error monitoring differential-algebraic equations solve.",ERR,ERROR,*997)
+999 CALL WriteError(ERR,ERROR,*998)
+998 CALL FlagWarning("Error monitoring differential-algebraic equations solve.",ERR,ERROR,*997)
 997 RETURN
+  
 END SUBROUTINE SOLVER_TIME_STEPPING_MONITOR_PETSC
 
 
@@ -23680,7 +23717,7 @@ END SUBROUTINE SOLVER_TIME_STEPPING_MONITOR_PETSC
 !>Called from the PETSc SNES solvers to monitor the Newton nonlinear solver
 SUBROUTINE SOLVER_NONLINEAR_MONITOR_PETSC(snes,ITS,NORM,CTX,ERR)
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE CmissPetscTypes
   USE ISO_VARYING_STRING
   USE KINDS
@@ -23716,7 +23753,8 @@ SUBROUTINE SOLVER_NONLINEAR_MONITOR_PETSC(snes,ITS,NORM,CTX,ERR)
   ENDIF
 
   RETURN
-999 CALL WRITE_ERROR(ERR,ERROR,*998)
-998 CALL FLAG_WARNING("Error monitoring nonlinear solve.",ERR,ERROR,*997)
+999 CALL WriteError(ERR,ERROR,*998)
+998 CALL FlagWarning("Error monitoring nonlinear solve.",ERR,ERROR,*997)
 997 RETURN
+  
 END SUBROUTINE SOLVER_NONLINEAR_MONITOR_PETSC

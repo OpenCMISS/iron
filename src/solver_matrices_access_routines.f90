@@ -44,7 +44,7 @@
 !> This module contains all solver matrices access method routines.
 MODULE SolverMatricesAccessRoutines
   
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE Kinds
   USE Strings
   USE Types

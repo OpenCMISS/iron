@@ -1,6 +1,6 @@
 !> \file
 !> \author Chris Bradley
-!> \brief This module contains all solver mapping access method routines.
+!> \brief This module contains all profiling routines.
 !>
 !> \section LICENSE
 !>
@@ -41,13 +41,15 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> This module contains all solver mapping access method routines.
-MODULE SolverMappingAccessRoutines
+!> This module contains all profiling routines.
+MODULE ProfilingRoutines
   
   USE BaseRoutines
+  USE INPUT_OUTPUT
   USE Kinds
   USE Strings
   USE Types
+  USE ISO_VARYING_STRING
   
 #include "macros.h"  
 
@@ -60,59 +62,71 @@ MODULE SolverMappingAccessRoutines
   !Module types
 
   !Module variables
-
-  !Interfaces
-
-  PUBLIC SolverMapping_EquationsSetGet
-
   
+  !Interfaces
+  
+  PUBLIC Profiling_TimingsOutput
+
 CONTAINS
 
   !
   !================================================================================================================================
   !
- !>Returns a pointer to the equations set for solver mapping.
-  SUBROUTINE SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*)
+
+  !>Output timing information .
+  SUBROUTINE Profiling_TimingsOutput(index,string,userTime,systemTime,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping !<A pointer to the solver mapping to get the equations set for
-    INTEGER(INTG), INTENT(IN) :: equationsSetIdx !<The equations set index in the solver mapping to get the equations set for
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<On exit, a pointer to the specified equations set. Must not be associated on entry.
+    INTEGER(INTG), INTENT(IN) :: index !<The output line index. 0 will output a header, 1 will output a line format with total time, 2 will output a line format without totaltime
+    CHARACTER(LEN=*), INTENT(IN) :: string !<The string to output
+    REAL(SP), INTENT(IN) :: userTime !<The user time
+    REAL(SP), INTENT(IN) :: systemTime !<The system time
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: stringLength
+    CHARACTER(LEN=45) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString
     TYPE(VARYING_STRING) :: localError
- 
-    ENTERS("SolverMapping_EquationsSetGet",err,error,*998)
 
-    IF(ASSOCIATED(equationsSet)) CALL FlagError("Equations set is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(solverMapping)) CALL FlagError("Solver mapping is not associated.",err,error,*999)
-    IF(equationsSetIdx<0.OR.equationsSetIdx>solverMapping%NUMBER_OF_EQUATIONS_SETS) THEN
-      localError="The specified equations set index of "//TRIM(NumberToVString(equationsSetIdx,"*",err,error))// &
-        & " is invalid. The index must be > 0 and <= "// &
-          & TRIM(NumberToVString(SolverMapping%NUMBER_OF_EQUATIONS_SETS,"*",err,error))//"."      
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(.NOT.ALLOCATED(solverMapping%EQUATIONS_SETS)) &
-      & CALL FlagError("Solver mapping equations sets is not allocated.",err,error,*999)
+    ENTERS("Profiling_TimingsOutput",err,error,*999) 
 
-    equationsSet=>solverMapping%EQUATIONS_SETS(equationsSetIdx)%ptr
-    IF(.NOT.ASSOCIATED(equationsSet)) THEN
-      localError="The equations set for the specified equations set index of "// &
-        & TRIM(NumberToVString(equationsSetIdx,"*",err,error))//" is not associated."      
+    SELECT CASE(index)
+    CASE(0)
+      WRITE(outputString,'(49X,"    User time   System time    Total time")')
+      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
+    CASE(1)
+      stringLength=LEN_TRIM(string)
+      IF(stringLength<=45) THEN
+        localString=ADJUSTL(string(1:LEN_TRIM(string)))
+      ELSE
+        localString=ADJUSTL(string(1:45))
+      ENDIF
+      WRITE(outputString,'(A,4X,E13.6,X,E13.6,X,E13.6)') localString,userTime,systemTime,userTime+systemTime
+    CASE(2)
+      stringLength=LEN_TRIM(string)
+      IF(stringLength<=45) THEN
+        localString=ADJUSTL(string(1:LEN_TRIM(string)))
+      ELSE
+        localString=ADJUSTL(string(1:45))
+      ENDIF
+      WRITE(outputString,'(A,4X,E13.6,X,E13.6)') localString,userTime,systemTime
+    CASE DEFAULT
+      localError="The specified index of "//TRIM(NumberToVString(index,"*",err,error))//" is invalid."
       CALL FlagError(localError,err,error,*999)
-    ENDIF
+    END SELECT
+    CALL WriteString(GENERAL_OUTPUT_TYPE,outputString,err,error,*999)      
       
-    EXITS("SolverMapping_EquationsSetGet")
+       
+    EXITS("Profiling_TimingsOutput")
     RETURN
-999 NULLIFY(equationsSet)
-998 ERRORSEXITS("SolverMapping_EquationsSetGet",err,error)
+999 ERRORSEXITS("Profiling_TimingsOutput",err,error)
     RETURN 1
     
-  END SUBROUTINE SolverMapping_EquationsSetGet
+  END SUBROUTINE Profiling_TimingsOutput
   
   !
   !================================================================================================================================
   !
 
-END MODULE SolverMappingAccessRoutines
+END MODULE ProfilingRoutines

@@ -44,7 +44,7 @@
 !>This module handles all finite elasticity routines.
 MODULE FINITE_ELASTICITY_ROUTINES
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE BASIS_ROUTINES
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE COMP_ENVIRONMENT
@@ -6381,6 +6381,7 @@ CONTAINS
             !Default to FEM solution method
             CALL FiniteElasticity_EquationsSetSolutionMethodSet(EQUATIONS_SET,EQUATIONS_SET_FEM_SOLUTION_METHOD, &
               & err,error,*999)
+            CALL EquationsSet_LabelSet(EQUATIONS_SET,"Finite elasticity equations set",err,error,*999)
             IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
               !setup equations set field to store number of fluid compartments
               EQUATIONS_SET_FIELD_NUMBER_OF_VARIABLES = 1
@@ -9852,7 +9853,7 @@ CONTAINS
                 & " is not valid for a finite elasticity type of an elasticity problem class."
               CALL FlagError(localError,err,error,*999)
             END SELECT
-            !Create the solver equatgions
+            !Create the solver equations
             CALL SOLVER_EQUATIONS_CREATE_START(SOLVER,SOLVER_EQUATIONS,err,error,*999)
             CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
             CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_NONLINEAR,err,error,*999)
@@ -10944,9 +10945,6 @@ CONTAINS
       ! do nothing
     CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE, &
       & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
-      IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
-        CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Finite Elasticity pre-solve",err,error,*999)
-      ENDIF
       
       !--- Set 'SOLVER_MATRIX%updateMatrix=.TRUE.'
       SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS

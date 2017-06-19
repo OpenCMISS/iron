@@ -44,7 +44,7 @@
 !> This module is a CMISS buffer module to the PETSc library.
 MODULE CmissPetsc
   
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE CmissPetscTypes
   USE Kinds
   USE ISO_VARYING_STRING

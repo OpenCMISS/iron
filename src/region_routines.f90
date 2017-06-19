@@ -44,7 +44,7 @@
 !> This module contains all region routines.
 MODULE REGION_ROUTINES
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE COORDINATE_ROUTINES
   USE CoordinateSystemAccessRoutines
   USE CMISS_CELLML

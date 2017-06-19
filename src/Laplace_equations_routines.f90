@@ -44,7 +44,7 @@
 !>This module handles all Laplace equations routines.
 MODULE LAPLACE_EQUATIONS_ROUTINES
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE BASIS_ROUTINES
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE Constants
@@ -907,6 +907,7 @@ CONTAINS
           SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             CALL Laplace_EquationsSetSolutionMethodSet(EQUATIONS_SET,EQUATIONS_SET_FEM_SOLUTION_METHOD,err,error,*999)
+            CALL EquationsSet_LabelSet(EQUATIONS_SET,"Moving mesh Laplace equations set",err,error,*999)
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             !Do nothing
           CASE DEFAULT

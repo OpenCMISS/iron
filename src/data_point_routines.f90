@@ -45,7 +45,7 @@
 
 MODULE DataPointRoutines
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE COMP_ENVIRONMENT
   USE COORDINATE_ROUTINES
   USE DataPointAccessRoutines

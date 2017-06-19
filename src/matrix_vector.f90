@@ -128,7 +128,7 @@
 !>This module contains all routines dealing with (non-distributed) matrix and vectors types.
 MODULE MATRIX_VECTOR
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE CONSTANTS
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING

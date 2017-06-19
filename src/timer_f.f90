@@ -44,7 +44,7 @@
 !> This module contains routines for timing the program.
 MODULE Timer
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE Constants
   USE ISO_C_BINDING
   USE ISO_VARYING_STRING

@@ -44,7 +44,7 @@
 !>This module handles all boundary conditions routines.
 MODULE BOUNDARY_CONDITIONS_ROUTINES
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE BASIS_ROUTINES
   USE CMISS_MPI
   USE COMP_ENVIRONMENT

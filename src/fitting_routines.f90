@@ -44,7 +44,7 @@
 !>This module handles all fitting routines.
 MODULE FittingRoutines
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE BASIS_ROUTINES
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE CONSTANTS

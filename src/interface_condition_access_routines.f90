@@ -44,7 +44,7 @@
 !> This module contains all interface condition access method routines.
 MODULE InterfaceConditionAccessRoutines
   
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE Kinds
   USE Strings
   USE Types
@@ -67,6 +67,16 @@ MODULE InterfaceConditionAccessRoutines
     MODULE PROCEDURE InterfaceCondition_EquationsGet
   END INTERFACE INTERFACE_CONDITION_EQUATIONS_GET
 
+  INTERFACE InterfaceCondition_LabelGet
+    MODULE PROCEDURE InterfaceCondition_LabelGetC
+    MODULE PROCEDURE InterfaceCondition_LabelGetVS
+  END INTERFACE InterfaceCondition_LabelGet
+
+  INTERFACE InterfaceCondition_LabelSet
+    MODULE PROCEDURE InterfaceCondition_LabelSetC
+    MODULE PROCEDURE InterfaceCondition_LabelSetVS
+  END INTERFACE InterfaceCondition_LabelSet
+
   INTERFACE INTERFACE_CONDITION_USER_NUMBER_FIND
     MODULE PROCEDURE InterfaceCondition_UserNumberFind
   END INTERFACE INTERFACE_CONDITION_USER_NUMBER_FIND
@@ -74,6 +84,12 @@ MODULE InterfaceConditionAccessRoutines
   PUBLIC InterfaceCondition_EquationsGet
 
   PUBLIC INTERFACE_CONDITION_EQUATIONS_GET
+
+  PUBLIC InterfaceCondition_GeometricFieldGet
+
+  PUBLIC InterfaceCondition_InterfaceGet
+
+  PUBLIC InterfaceCondition_LabelGet,InterfaceCondition_LabelSet
 
   PUBLIC InterfaceCondition_UserNumberFind
 
@@ -112,6 +128,190 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfaceCondition_EquationsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the geometric field for an interface condition.
+  SUBROUTINE InterfaceCondition_GeometricFieldGet(interfaceCondition,geometricField,err,error,*)
+
+    !Argument variables
+    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<A pointer to the interface condition to get the geometric field for
+    TYPE(FIELD_TYPE), POINTER :: geometricField !<On exit, a pointer to the geometric field in the specified interface condition. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("InterfaceCondition_GeometricFieldGet",err,error,*998)
+
+    IF(ASSOCIATED(geometricField)) CALL FlagError("Geometric field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("InterfaceCondition is not associated.",err,error,*999)
+
+    geometricField=>interfaceCondition%geometry%GEOMETRIC_FIELD
+    IF(.NOT.ASSOCIATED(geometricField)) THEN
+      localError="Geometric field is not associated for interface condition number "// &
+      & TRIM(NumberToVString(interfaceCondition%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("InterfaceCondition_GeometricFieldGet")
+    RETURN
+999 NULLIFY(geometricField)
+998 ERRORSEXITS("InterfaceCondition_GeometricFieldGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceCondition_GeometricFieldGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the interface for an interface condition.
+  SUBROUTINE InterfaceCondition_InterfaceGet(interfaceCondition,interface,err,error,*)
+
+    !Argument variables
+    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<A pointer to the interface condition to get the interface for
+    TYPE(INTERFACE_TYPE), POINTER :: interface !<On exit, a pointer to the interface in the specified interface condition. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceCondition_InterfaceGet",err,error,*998)
+
+    IF(ASSOCIATED(interface)) CALL FlagError("Interface is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
+    IF(.NOT.interfaceCondition%INTERFACE_CONDITION_FINISHED) &
+      & CALL FlagError("Interface condition has not been finished.",err,error,*999)
+ 
+    INTERFACE=>interfaceCondition%INTERFACE
+    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface condition interface is not associated.",err,error,*999)
+       
+    EXITS("InterfaceCondition_InterfaceGet")
+    RETURN
+999 NULLIFY(interface)
+998 ERRORSEXITS("InterfaceCondition_InterfaceGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceCondition_InterfaceGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the label of an interface condition into a character string. \see OpenCMISS::cmfe_InterfaceCondition_LabelGet
+  SUBROUTINE InterfaceCondition_LabelGetC(interfaceCondition,label,err,error,*)
+
+    !Argument variables
+    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<A pointer to the interface condition to get the label for
+    CHARACTER(LEN=*), INTENT(OUT) :: label !<On return, the interface condition label.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: cLength,vsLength
+
+    ENTERS("InterfaceCondition_LabelGetC",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
+    
+    cLength=LEN(label)
+    vsLength=LEN_TRIM(interfaceCondition%label)
+    IF(cLength>vsLength) THEN
+      label=CHAR(interfaceCondition%label,vsLength)
+    ELSE
+      label=CHAR(interfaceCondition%label,cLength)
+    ENDIF
+    
+    EXITS("InterfaceCondition_LabelGetC")
+    RETURN
+999 ERRORSEXITS("InterfaceCondition_LabelGetC",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceCondition_LabelGetC
+
+   !
+  !================================================================================================================================
+  !
+
+  !>Returns the label of a interface condition into a varying string. \see OpenCMISS::cmfe_InterfaceCondition_LabelGet
+  SUBROUTINE InterfaceCondition_LabelGetVS(interfaceCondition,label,err,error,*)
+
+    !Argument variables
+    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<A pointer to the interface condition to get the label for
+    TYPE(VARYING_STRING), INTENT(OUT) :: label !<On return, the interface condition label.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("InterfaceCondition_LabelGetVS",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
+    
+    label=VAR_STR(CHAR(interfaceCondition%label))
+          
+    EXITS("InterfaceCondition_LabelGetVS")
+    RETURN
+999 ERRORSEXITS("InterfaceCondition_LabelGetVS",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceCondition_LabelGetVS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the label of an interface condition from a character string. \see OpenCMISS::cmfe_InterfaceCondition_LabelSet
+  SUBROUTINE InterfaceCondition_LabelSetC(interfaceCondition,label,err,error,*)
+
+    !Argument variables
+    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<A pointer to the interface condition to set the label for 
+    CHARACTER(LEN=*), INTENT(IN) :: label !<The label to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("InterfaceCondition_LabelSetC",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
+    IF(interfaceCondition%INTERFACE_CONDITION_FINISHED) CALL FlagError("Interface condition has been finished.",err,error,*999)
+    
+    interfaceCondition%label=label
+        
+    EXITS("InterfaceCondition_LabelSetC")
+    RETURN
+999 ERRORSEXITS("InterfaceCondition_LabelSetC",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceCondition_LabelSetC
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the label of an interface condition from a varying string. \see OpenCMISS::cmfe_InterfaceCondition_LabelSet
+  SUBROUTINE InterfaceCondition_LabelSetVS(interfaceCondition,label,err,error,*)
+
+    !Argument variables
+    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<A pointer to the interface condition to set the label for 
+    TYPE(VARYING_STRING), INTENT(IN) :: label !<The label to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("InterfaceCondition_LabelSetVS",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
+    IF(interfaceCondition%INTERFACE_CONDITION_FINISHED) CALL FlagError("Interface condition has been finished.",err,error,*999)
+    
+    interfaceCondition%label=label
+    
+    EXITS("InterfaceCondition_LabelSetVS")
+    RETURN
+999 ERRORSEXITS("InterfaceCondition_LabelSetVS",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceCondition_LabelSetVS
 
   !
   !================================================================================================================================

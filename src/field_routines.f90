@@ -44,7 +44,7 @@
 !> This module handles all field related routines.
 MODULE FIELD_ROUTINES
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE BASIS_ROUTINES
   USE COMP_ENVIRONMENT
   USE COORDINATE_ROUTINES

@@ -44,7 +44,7 @@
 !> This module contains all mathematics support routines.
 MODULE Maths
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE Constants
   USE Kinds
   USE ISO_VARYING_STRING

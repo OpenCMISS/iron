@@ -44,7 +44,7 @@
 !>This module handles all bioelectric domain equation routines.
 MODULE BIODOMAIN_EQUATION_ROUTINES
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE BASIS_ROUTINES
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE Constants

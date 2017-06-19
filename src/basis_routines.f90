@@ -44,7 +44,7 @@
 !> This module contains all basis function routines.
 MODULE BASIS_ROUTINES
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE BasisAccessRoutines
   USE CONSTANTS
   USE INPUT_OUTPUT

@@ -44,7 +44,7 @@
 !> This module contains all coordinate system access method routines.
 MODULE CoordinateSystemAccessRoutines
   
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE Kinds
   USE Strings
   USE Types

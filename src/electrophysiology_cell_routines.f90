@@ -42,7 +42,7 @@
 !>
 
 module electrophysiology_cell_routines
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE field_routines
   USE FieldAccessRoutines
   use kinds

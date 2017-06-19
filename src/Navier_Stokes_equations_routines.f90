@@ -46,7 +46,7 @@ MODULE NAVIER_STOKES_EQUATIONS_ROUTINES
 
   USE ADVECTION_EQUATION_ROUTINES
   USE ANALYTIC_ANALYSIS_ROUTINES
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE BASIS_ROUTINES
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE CHARACTERISTIC_EQUATION_ROUTINES
@@ -350,7 +350,8 @@ CONTAINS
               CALL NavierStokes_EquationsSetSolutionMethodSet(EQUATIONS_SET, &
                 & EQUATIONS_SET_FEM_SOLUTION_METHOD,err,error,*999)
               EQUATIONS_SET%SOLUTION_METHOD=EQUATIONS_SET_FEM_SOLUTION_METHOD
-            CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
+              CALL EquationsSet_LabelSet(EQUATIONS_SET,"Navier-Stokes equations set",err,error,*999)
+           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
               !Do nothing
             CASE DEFAULT
               localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE, &
@@ -2740,7 +2741,6 @@ CONTAINS
             CASE(PROBLEM_ALE_NAVIER_STOKES_SUBTYPE)
               !Pre solve for the linear solver
               IF(SOLVER%SOLVE_TYPE==SOLVER_LINEAR_TYPE) THEN
-                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Mesh movement pre solve... ",err,error,*999)
                 !Update boundary conditions for mesh-movement
                 CALL NavierStokes_PreSolveUpdateBoundaryConditions(SOLVER,err,error,*999)
                 CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,2,SOLVER2,err,error,*999)
@@ -2753,7 +2753,6 @@ CONTAINS
                 CALL NavierStokes_PreSolveALEUpdateParameters(SOLVER,err,error,*999)
                 !Pre solve for the linear solver
               ELSE IF(SOLVER%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
-                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"ALE Navier-Stokes pre solve... ",err,error,*999)
                 IF(SOLVER%DYNAMIC_SOLVER%ALE) THEN
                   !First update mesh and calculates boundary velocity values
                   CALL NAVIER_STOKES_PRE_SOLVE_ALE_UPDATE_MESH(SOLVER,err,error,*999)
@@ -2777,8 +2776,7 @@ CONTAINS
               CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE)
                 !Pre solve for the linear solver
                 IF(SOLVER%SOLVE_TYPE==SOLVER_LINEAR_TYPE) THEN
-                  CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Mesh movement pre solve... ",err,error,*999)
-                  !TODO if first time step smooth imported mesh with respect to absolute nodal position?
+                   !TODO if first time step smooth imported mesh with respect to absolute nodal position?
 
                   !Update boundary conditions for mesh-movement
                   CALL NavierStokes_PreSolveUpdateBoundaryConditions(SOLVER,err,error,*999)
@@ -2792,7 +2790,6 @@ CONTAINS
                   CALL NavierStokes_PreSolveALEUpdateParameters(SOLVER,err,error,*999)
                   !Pre solve for the dynamic solver which deals with the coupled FiniteElasticity-NavierStokes problem
                 ELSE IF(SOLVER%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
-                  CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"ALE Navier-Stokes pre solve... ",err,error,*999)
                   IF(SOLVER%DYNAMIC_SOLVER%ALE) THEN
                     !Apply both normal and moving mesh boundary conditions
                     CALL NavierStokes_PreSolveUpdateBoundaryConditions(SOLVER,err,error,*999)
@@ -6144,7 +6141,6 @@ CONTAINS
             CASE(PROBLEM_ALE_NAVIER_STOKES_SUBTYPE)
               !Post solve for the linear solver
               IF(SOLVER%SOLVE_TYPE==SOLVER_LINEAR_TYPE) THEN
-                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Mesh movement post solve... ",err,error,*999)
                 CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,2,SOLVER2,err,error,*999)
                 IF(ASSOCIATED(SOLVER2%DYNAMIC_SOLVER)) THEN
                   SOLVER2%DYNAMIC_SOLVER%ALE=.TRUE.
@@ -6153,8 +6149,7 @@ CONTAINS
                 END IF
               !Post solve for the dynamic solver
               ELSE IF(SOLVER%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
-                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"ALE Navier-Stokes post solve... ",err,error,*999)
-                CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(SOLVER,err,error,*999)
+                 CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(SOLVER,err,error,*999)
               END IF
             CASE DEFAULT
               localError="The third problem specification of  "// &
@@ -6340,8 +6335,9 @@ CONTAINS
                       INQUIRE(FILE=inputFile, EXIST=importDataFromFile)
                       IF(importDataFromFile) THEN
                         !Read fitted data from input file (if exists)
-                        CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Updating independent field and boundary nodes from "//inputFile, &
-                          & err,error,*999)
+                        IF(CONTROL_LOOP%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) &
+                          & CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Updating independent field and boundary nodes from "// &
+                          & inputFile,err,error,*999)
                         OPEN(UNIT=10, FILE=inputFile, STATUS='OLD')                  
                         !Loop over local nodes and update independent field and (and dependent field for any FIXED_FITTED nodes)
                         previousNodeNumber=0
@@ -7096,9 +7092,10 @@ CONTAINS
               CALL FIELD_PARAMETER_SET_UPDATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
                 & FIELD_VALUES_SET_TYPE,err,error,*999)
             CASE(PROBLEM_PGM_NAVIER_STOKES_SUBTYPE)
-             !Pre solve for the dynamic solver
-             IF(SOLVER%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
-               CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Mesh movement change boundary conditions... ",err,error,*999)
+              !Pre solve for the dynamic solver
+              IF(SOLVER%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
+                IF(CONTROL_LOOP%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) &
+                  & CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Mesh movement change boundary conditions... ",err,error,*999)
                 SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
                 IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                   SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
@@ -7186,7 +7183,8 @@ CONTAINS
             CASE(PROBLEM_ALE_NAVIER_STOKES_SUBTYPE)
               !Pre solve for the linear solver
               IF(SOLVER%SOLVE_TYPE==SOLVER_LINEAR_TYPE) THEN
-                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Mesh movement change boundary conditions... ",err,error,*999)
+                IF(CONTROL_LOOP%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) &
+                  & CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Mesh movement change boundary conditions... ",err,error,*999)
                 SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
                 IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                   SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
@@ -7267,7 +7265,8 @@ CONTAINS
                   & FIELD_VALUES_SET_TYPE,err,error,*999)
                 !Pre solve for the dynamic solver
               ELSE IF(SOLVER%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
-                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Mesh movement change boundary conditions... ",err,error,*999)
+                IF(CONTROL_LOOP%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) &
+                  & CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Mesh movement change boundary conditions... ",err,error,*999)
                 SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
                 IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                   SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
@@ -7370,7 +7369,8 @@ CONTAINS
                 NULLIFY(Solver2)
                 !Pre solve for the linear solver
                 IF(SOLVER%SOLVE_TYPE==SOLVER_LINEAR_TYPE) THEN
-                  CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Mesh movement change boundary conditions... ",err,error,*999)
+                  IF(CONTROL_LOOP%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) &
+                    & CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Mesh movement change boundary conditions... ",err,error,*999)
                   SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
                   IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                     SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
@@ -7563,103 +7563,103 @@ CONTAINS
                     & FIELD_VALUES_SET_TYPE,err,error,*999)
                   !Pre solve for the dynamic solver
                 ELSE IF(SOLVER%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
-                  CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Velocity field change boundary conditions... ",err,error,*999)
-                  SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
-                  IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                    SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
-                    !Find the NavierStokes equations set as there is a finite elasticity equations set too 
-                    EquationsSetIndex=1
-                    ALENavierStokesEquationsSetFound=.FALSE.
-                    DO WHILE (.NOT.ALENavierStokesEquationsSetFound &
-                      & .AND.EquationsSetIndex<=SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS)
-                      EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(EquationsSetIndex)%EQUATIONS
-                      IF(ASSOCIATED(EQUATIONS)) THEN
-                        EQUATIONS_SET=>equations%equationsSet
-                        IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                          IF(EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS &
-                            & .AND.EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE &
-                            & .AND.EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE) THEN
-                            ALENavierStokesEquationsSetFound=.TRUE.
-                          ELSE
-                            EquationsSetIndex=EquationsSetIndex+1
-                          END IF
-                        ELSE
-                          CALL FlagError("ALE Navier-Stokes equations set is not associated.",err,error,*999)
-                        END IF
-                      ELSE
-                        CALL FlagError("ALE equations not associated.",Err,Error,*999)
-                      END IF
-                    END DO
-                    IF(ALENavierStokesEquationsSetFound.EQV..FALSE.) THEN
-                      localError="ALE NavierStokes equations set not found when trying to update boundary conditions."
-                      CALL FlagError(localError,Err,Error,*999)
-                    END IF
-                    !Get boundary conditions
-                    BOUNDARY_CONDITIONS=>SOLVER_equations%BOUNDARY_CONDITIONS
-                    IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
-                      FIELD_VARIABLE=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr
-                      IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                        CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS,FIELD_VARIABLE, &
-                          & BOUNDARY_CONDITIONS_VARIABLE,err,error,*999)
-                      ELSE
-                        CALL FlagError("Field U variable is not associated",err,error,*999)
-                      END IF
-                      IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
-                        CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                          & NUMBER_OF_DIMENSIONS,err,error,*999)
-                        NULLIFY(MESH_VELOCITY_VALUES)
-                        CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
-                          & FIELD_MESH_VELOCITY_SET_TYPE,MESH_VELOCITY_VALUES,err,error,*999)
-                        NULLIFY(BOUNDARY_VALUES)
-                        CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
-                          & FIELD_BOUNDARY_SET_TYPE,BOUNDARY_VALUES,err,error,*999)
-                        !Get update for time-dependent boundary conditions
-                        IF(CONTROL_LOOP%TIME_LOOP%INPUT_NUMBER==1) THEN
-                          componentBC=1
-                          CALL FluidMechanics_IO_UpdateBoundaryConditionUpdateNodes(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD, &
-                            & SOLVER%SOLVE_TYPE,InletNodes, &
-                            & BoundaryValues,BOUNDARY_CONDITION_FIXED_INLET,CONTROL_LOOP%TIME_LOOP%INPUT_NUMBER, &
-                            & CURRENT_TIME,CONTROL_LOOP%TIME_LOOP%STOP_TIME,err,error,*999)
-                          DO node_idx=1,SIZE(InletNodes)
-                            CALL FIELD_PARAMETER_SET_UPDATE_NODE(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
-                              & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,InletNodes(node_idx),componentBC, &
-                              & BoundaryValues(node_idx),err,error,*999)
-                          END DO
-                        ELSE
-                          !Figure out which component we're applying BC at
-                          IF(CONTROL_LOOP%TIME_LOOP%INPUT_NUMBER==2) THEN
-                            componentBC=1
-                          ELSE
-                            componentBC=2
-                          END IF
-                          !Get inlet nodes and the corresponding velocities
-                          CALL FluidMechanics_IO_UpdateBoundaryConditionUpdateNodes(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD, &
-                            & SOLVER%SOLVE_TYPE,InletNodes, &
-                            & BoundaryValues,BOUNDARY_CONDITION_FIXED_INLET,CONTROL_LOOP%TIME_LOOP%INPUT_NUMBER, &
-                            & CURRENT_TIME,CONTROL_LOOP%TIME_LOOP%STOP_TIME,err,error,*999)
-                          DO node_idx=1,SIZE(InletNodes)
-                            CALL FIELD_PARAMETER_SET_UPDATE_NODE(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
-                              & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,InletNodes(node_idx),componentBC, &
-                              & BoundaryValues(node_idx),err,error,*999)
-                          END DO
-                        END IF
-                        CALL FIELD_PARAMETER_SET_DATA_RESTORE(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD, &
-                          & FIELD_U_VARIABLE_TYPE,FIELD_MESH_VELOCITY_SET_TYPE,MESH_VELOCITY_VALUES,err,error,*999)
-                        CALL FIELD_PARAMETER_SET_DATA_RESTORE(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD, &
-                          & FIELD_U_VARIABLE_TYPE,FIELD_BOUNDARY_SET_TYPE,BOUNDARY_VALUES,err,error,*999)
-                      ELSE
-                        CALL FlagError("Boundary condition variable is not associated.",err,error,*999)
-                      END IF
-                    ELSE
-                      CALL FlagError("Boundary conditions are not associated.",err,error,*999)
-                    END IF
-                  ELSE
-                    CALL FlagError("Solver equations are not associated.",err,error,*999)
-                  END IF
-                  CALL FIELD_PARAMETER_SET_UPDATE_START(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
-                    & FIELD_VALUES_SET_TYPE,err,error,*999)
-                  CALL FIELD_PARAMETER_SET_UPDATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
-                    & FIELD_VALUES_SET_TYPE,err,error,*999)
+                !   CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Velocity field change boundary conditions... ",err,error,*999)
+                !   SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+                !   IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
+                !     SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
+                !     !Find the NavierStokes equations set as there is a finite elasticity equations set too 
+                !     EquationsSetIndex=1
+                !     ALENavierStokesEquationsSetFound=.FALSE.
+                !     DO WHILE (.NOT.ALENavierStokesEquationsSetFound &
+                !       & .AND.EquationsSetIndex<=SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS)
+                !       EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(EquationsSetIndex)%EQUATIONS
+                !       IF(ASSOCIATED(EQUATIONS)) THEN
+                !         EQUATIONS_SET=>equations%equationsSet
+                !         IF(ASSOCIATED(EQUATIONS_SET)) THEN
+                !           IF(EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS &
+                !             & .AND.EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE &
+                !             & .AND.EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE) THEN
+                !             ALENavierStokesEquationsSetFound=.TRUE.
+                !           ELSE
+                !             EquationsSetIndex=EquationsSetIndex+1
+                !           END IF
+                !         ELSE
+                !           CALL FlagError("ALE Navier-Stokes equations set is not associated.",err,error,*999)
+                !         END IF
+                !       ELSE
+                !         CALL FlagError("ALE equations not associated.",Err,Error,*999)
+                !       END IF
+                !     END DO
+                !     IF(ALENavierStokesEquationsSetFound.EQV..FALSE.) THEN
+                !       localError="ALE NavierStokes equations set not found when trying to update boundary conditions."
+                !       CALL FlagError(localError,Err,Error,*999)
+                !     END IF
+                !     !Get boundary conditions
+                !     BOUNDARY_CONDITIONS=>SOLVER_equations%BOUNDARY_CONDITIONS
+                !     IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
+                !       FIELD_VARIABLE=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr
+                !       IF(ASSOCIATED(FIELD_VARIABLE)) THEN
+                !         CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS,FIELD_VARIABLE, &
+                !           & BOUNDARY_CONDITIONS_VARIABLE,err,error,*999)
+                !       ELSE
+                !         CALL FlagError("Field U variable is not associated",err,error,*999)
+                !       END IF
+                !       IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
+                !         CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
+                !           & NUMBER_OF_DIMENSIONS,err,error,*999)
+                !         NULLIFY(MESH_VELOCITY_VALUES)
+                !         CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
+                !           & FIELD_MESH_VELOCITY_SET_TYPE,MESH_VELOCITY_VALUES,err,error,*999)
+                !         NULLIFY(BOUNDARY_VALUES)
+                !         CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
+                !           & FIELD_BOUNDARY_SET_TYPE,BOUNDARY_VALUES,err,error,*999)
+                !         !Get update for time-dependent boundary conditions
+                !         IF(CONTROL_LOOP%TIME_LOOP%INPUT_NUMBER==1) THEN
+                !           componentBC=1
+                !           CALL FluidMechanics_IO_UpdateBoundaryConditionUpdateNodes(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD, &
+                !             & SOLVER%SOLVE_TYPE,InletNodes, &
+                !             & BoundaryValues,BOUNDARY_CONDITION_FIXED_INLET,CONTROL_LOOP%TIME_LOOP%INPUT_NUMBER, &
+                !             & CURRENT_TIME,CONTROL_LOOP%TIME_LOOP%STOP_TIME,err,error,*999)
+                !           DO node_idx=1,SIZE(InletNodes)
+                !             CALL FIELD_PARAMETER_SET_UPDATE_NODE(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
+                !               & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,InletNodes(node_idx),componentBC, &
+                !               & BoundaryValues(node_idx),err,error,*999)
+                !           END DO
+                !         ELSE
+                !           !Figure out which component we're applying BC at
+                !           IF(CONTROL_LOOP%TIME_LOOP%INPUT_NUMBER==2) THEN
+                !             componentBC=1
+                !           ELSE
+                !             componentBC=2
+                !           END IF
+                !           !Get inlet nodes and the corresponding velocities
+                !           CALL FluidMechanics_IO_UpdateBoundaryConditionUpdateNodes(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD, &
+                !             & SOLVER%SOLVE_TYPE,InletNodes, &
+                !             & BoundaryValues,BOUNDARY_CONDITION_FIXED_INLET,CONTROL_LOOP%TIME_LOOP%INPUT_NUMBER, &
+                !             & CURRENT_TIME,CONTROL_LOOP%TIME_LOOP%STOP_TIME,err,error,*999)
+                !           DO node_idx=1,SIZE(InletNodes)
+                !             CALL FIELD_PARAMETER_SET_UPDATE_NODE(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
+                !               & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,InletNodes(node_idx),componentBC, &
+                !               & BoundaryValues(node_idx),err,error,*999)
+                !           END DO
+                !         END IF
+                !         CALL FIELD_PARAMETER_SET_DATA_RESTORE(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD, &
+                !           & FIELD_U_VARIABLE_TYPE,FIELD_MESH_VELOCITY_SET_TYPE,MESH_VELOCITY_VALUES,err,error,*999)
+                !         CALL FIELD_PARAMETER_SET_DATA_RESTORE(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD, &
+                !           & FIELD_U_VARIABLE_TYPE,FIELD_BOUNDARY_SET_TYPE,BOUNDARY_VALUES,err,error,*999)
+                !       ELSE
+                !         CALL FlagError("Boundary condition variable is not associated.",err,error,*999)
+                !       END IF
+                !     ELSE
+                !       CALL FlagError("Boundary conditions are not associated.",err,error,*999)
+                !     END IF
+                !   ELSE
+                !     CALL FlagError("Solver equations are not associated.",err,error,*999)
+                !   END IF
+                !   CALL FIELD_PARAMETER_SET_UPDATE_START(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
+                !     & FIELD_VALUES_SET_TYPE,err,error,*999)
+                !   CALL FIELD_PARAMETER_SET_UPDATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
+                !     & FIELD_VALUES_SET_TYPE,err,error,*999)
                 END IF
                 ! do nothing ???
               CASE DEFAULT
@@ -7977,7 +7977,7 @@ CONTAINS
                   IF(SOLVER%DYNAMIC_SOLVER%ALE) THEN
                     !Get the dependent field for the Laplace problem
                     !     CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,1,SOLVER_LAPLACE,err,error,*999)
-                    CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,2,SOLVER_LAPLACE,err,error,*999)
+                    CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,3,SOLVER_LAPLACE,err,error,*999)
                     SOLVER_EQUATIONS_LAPLACE=>SOLVER_LAPLACE%SOLVER_EQUATIONS
                     IF(ASSOCIATED(SOLVER_EQUATIONS_LAPLACE)) THEN
                       SOLVER_MAPPING_LAPLACE=>SOLVER_EQUATIONS_LAPLACE%SOLVER_MAPPING
@@ -7998,7 +7998,7 @@ CONTAINS
                     END IF
                     !Get the independent field for the ALE Navier-Stokes problem
                     !    CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,2,SOLVER_ALE_NAVIER_STOKES,err,error,*999)
-                    CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,1,SOLVER_ALE_NAVIER_STOKES,err,error,*999)
+                    CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,2,SOLVER_ALE_NAVIER_STOKES,err,error,*999)
                     SOLVER_EQUATIONS_ALE_NAVIER_STOKES=>SOLVER_ALE_NAVIER_STOKES%SOLVER_EQUATIONS
                     IF(ASSOCIATED(SOLVER_EQUATIONS_ALE_NAVIER_STOKES)) THEN
                       SOLVER_MAPPING_ALE_NAVIER_STOKES=>SOLVER_EQUATIONS_ALE_NAVIER_STOKES%SOLVER_MAPPING
@@ -8419,14 +8419,18 @@ CONTAINS
                       OUTPUT_FILE = "StaticSolution"
                       FileNameLength = LEN_TRIM(OUTPUT_FILE)
                       VFileName = OUTPUT_FILE(1:FileNameLength)
-                      CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                      IF(CONTROL_LOOP%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) &
+                        & CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
                       Fields=>EQUATIONS_SET%REGION%FIELDS
                       CALL FIELD_IO_NODES_EXPORT(Fields,VFileName,METHOD,err,error,*999)
-                      CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export elements... ",err,error,*999)
+                      IF(CONTROL_LOOP%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) &
+                        & CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export elements... ",err,error,*999)
                       CALL FIELD_IO_ELEMENTS_EXPORT(Fields,VFileName,METHOD,err,error,*999)
                       NULLIFY(Fields)
-                      CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,OUTPUT_FILE,err,error,*999)
-                      CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                      IF(CONTROL_LOOP%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+                        CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,OUTPUT_FILE,err,error,*999)
+                        CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                      ENDIF
                     END IF
                   END DO
                 END IF 
@@ -8459,18 +8463,22 @@ CONTAINS
                         !Use standard field IO routines (also only export nodes after first step as not a moving mesh case)
                         FileNameLength = LEN_TRIM(OUTPUT_FILE)
                         VFileName = OUTPUT_FILE(1:FileNameLength)
-                        CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                        IF(CONTROL_LOOP%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) &
+                          & CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
                         Fields=>EQUATIONS_SET%REGION%FIELDS
                         CALL FIELD_IO_NODES_EXPORT(Fields,VFileName,METHOD,err,error,*999)
 !                            CALL FLUID_MECHANICS_IO_WRITE_CMGUI(EQUATIONS_SET%REGION,EQUATIONS_SET%GLOBAL_NUMBER,FILE, &
 !                              & err,error,*999)
                         IF(CURRENT_LOOP_ITERATION==0) THEN
-                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export elements... ",err,error,*999)
+                          IF(CONTROL_LOOP%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) &
+                            & CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export elements... ",err,error,*999)
                           CALL FIELD_IO_ELEMENTS_EXPORT(Fields,VFileName,METHOD,err,error,*999)
                         END IF
                         NULLIFY(Fields)
-                        CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,OUTPUT_FILE,err,error,*999)
-                        CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                        IF(CONTROL_LOOP%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,OUTPUT_FILE,err,error,*999)
+                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                        ENDIF
                       END IF                          
 !                       ELSE IF(EXPORT_FIELD) THEN          
 !                         IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER)==0)  THEN   
@@ -8544,12 +8552,16 @@ CONTAINS
                       EXPORT_FIELD=.TRUE.
                       IF(EXPORT_FIELD) THEN          
                         IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER)==0)  THEN   
-                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
-                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
+                          IF(CONTROL_LOOP%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
+                          ENDIF
                           CALL FIELD_IO_NODES_EXPORT(DEPENDENT_REGION%FIELDS,FILENAME,METHOD,err,error,*999)
                           CALL FIELD_IO_ELEMENTS_EXPORT(DEPENDENT_REGION%FIELDS,FILENAME,METHOD,err,error,*999)
-                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,FILENAME,err,error,*999)
-                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                          IF(CONTROL_LOOP%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,FILENAME,err,error,*999)
+                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                          ENDIF
                           CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
                             & NUMBER_OF_DIMENSIONS,err,error,*999)
                           IF(NUMBER_OF_DIMENSIONS==3) THEN
@@ -8557,8 +8569,10 @@ CONTAINS
                             IF(EXPORT_FIELD) THEN
                               CALL FLUID_MECHANICS_IO_WRITE_ENCAS(EQUATIONS_SET%REGION,EQUATIONS_SET%GLOBAL_NUMBER,FILE, &
                                 & err,error,*999)
-                              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,OUTPUT_FILE,err,error,*999)
-                              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                              IF(CONTROL_LOOP%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+                                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,OUTPUT_FILE,err,error,*999)
+                                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                              ENDIF
                             END IF
                           END IF
                         END IF

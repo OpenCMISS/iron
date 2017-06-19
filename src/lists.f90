@@ -45,7 +45,7 @@
 !> Implements lists of base types.
 MODULE LISTS
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE CONSTANTS
   USE ISO_VARYING_STRING
   USE KINDS

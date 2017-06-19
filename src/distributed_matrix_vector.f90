@@ -44,7 +44,7 @@
 !> This module handles all distributed matrix vector routines.
 MODULE DISTRIBUTED_MATRIX_VECTOR
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE CMISS_MPI
   USE CmissPetsc
   USE COMP_ENVIRONMENT

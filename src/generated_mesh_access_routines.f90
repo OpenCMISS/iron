@@ -44,7 +44,7 @@
 !> This module contains all generated mesh access method routines.
 MODULE GeneratedMeshAccessRoutines
   
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE Kinds
   USE MeshAccessRoutines
   USE Strings

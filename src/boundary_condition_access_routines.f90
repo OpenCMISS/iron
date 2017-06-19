@@ -44,7 +44,7 @@
 !> This module contains all boundary condition access method routines.
 MODULE BoundaryConditionAccessRoutines
   
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE Kinds
   USE Strings
   USE Types

@@ -44,7 +44,7 @@
 !> This module contains all solver access method routines.
 MODULE SolverAccessRoutines
   
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE Kinds
   USE Strings
   USE Types
@@ -99,6 +99,8 @@ MODULE SolverAccessRoutines
 
   PUBLIC SOLVER_EQUATIONS_BOUNDARY_CONDITIONS_GET
   
+  PUBLIC SolverEquations_SolverGet
+
   PUBLIC SolverEquations_SolverMappingGet
 
   PUBLIC SolverEquations_SolverMatricesGet
@@ -304,6 +306,37 @@ CONTAINS
     RETURN 1
 
   END SUBROUTINE SolverEquations_BoundaryConditionsGet
+     
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the solver for solver equations. 
+  SUBROUTINE SolverEquations_SolverGet(solverEquations,solver,err,error,*)
+
+    !Argument variables
+    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations !<A pointer to the solver equations to get the solver for
+    TYPE(SOLVER_TYPE), POINTER :: solver !<On exit, a pointer to the solver for the specified solver equations. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("SolverEquations_SolverGet",err,error,*998)
+
+    IF(ASSOCIATED(solver)) CALL FlagError("Solver is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solverEquations)) CALL FlagError("Solver equations is not associated.",err,error,*999)
+    IF(.NOT.solverEquations%SOLVER_EQUATIONS_FINISHED) CALL FlagError("Solver equations has not been finished.",err,error,*999)
+
+    solver=>solverEquations%solver
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver equations solver is not associated.",err,error,*999)
+ 
+    EXITS("SolverEquations_SolverGet")
+    RETURN
+998 NULLIFY(solver)
+999 ERRORSEXITS("SolverEquations_SolverGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE SolverEquations_SolverGet
      
   !
   !================================================================================================================================

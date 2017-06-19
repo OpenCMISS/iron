@@ -48,7 +48,7 @@
 !>This module handles all characteristic equation routines.
 MODULE CHARACTERISTIC_EQUATION_ROUTINES
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE BASIS_ROUTINES
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE Constants

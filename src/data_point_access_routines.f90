@@ -44,7 +44,7 @@
 !> This module contains all data point access method routines.
 MODULE DataPointAccessRoutines
   
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE Kinds
   USE Strings
   USE Types

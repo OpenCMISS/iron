@@ -44,7 +44,7 @@
 !> This module contains all data projection access method routines.
 MODULE DataProjectionAccessRoutines
   
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE Kinds
   USE Strings
   USE Types

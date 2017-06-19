@@ -44,7 +44,7 @@
 !> This module handles all control loop routines.
 MODULE CONTROL_LOOP_ROUTINES
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE ControlLoopAccessRoutines
   USE FIELD_ROUTINES
   USE INPUT_OUTPUT
@@ -352,7 +352,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the current time parameters for a time control loop. If the specified loop is not a time loop the next time loop up the chain will be used. \see OpenCMISS_cmfe_ControlLoop_CurrentTimesGet
+  !>Gets the current time parameters for a time control loop. If the specified loop is not a time loop the next time loop up the chain will be used. \see OpenCMISS::cmfe_ControlLoop_CurrentTimesGet
   SUBROUTINE ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*)
 
     !Argument variables
@@ -442,7 +442,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroy a control loop
+  !>Destroy a control loop \see OpenCMISS::cmfe_ControlLoop_Destroy
   SUBROUTINE CONTROL_LOOP_DESTROY(CONTROL_LOOP,ERR,ERROR,*)
 
     !Argument variables
@@ -990,7 +990,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the iteration parameters for a fixed control loop. \see OpenCMISS_cmfe_ControlLoop_IterationsSet
+  !>Sets the iteration parameters for a fixed control loop. \see OpenCMISS::cmfe_ControlLoop_IterationsSet
   SUBROUTINE CONTROL_LOOP_ITERATIONS_SET(CONTROL_LOOP,START_ITERATION,STOP_ITERATION,ITERATION_INCREMENT,ERR,ERROR,*)
 
     !Argument variables
@@ -1312,7 +1312,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the absolute tolerance (convergence condition tolerance) for a while control loop. \see OpenCMISS_cmfe_ControlLoop_AbsoluteToleranceSet
+  !>Sets the absolute tolerance (convergence condition tolerance) for a while control loop. \see OpenCMISS::cmfe_ControlLoop_AbsoluteToleranceSet
   SUBROUTINE ControlLoop_AbsoluteToleranceSet(controlLoop,absoluteTolerance,err,error,*)
 
     !Argument variables
@@ -1360,7 +1360,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the number of sub loops for a control loop. \see OpenCMISS_CMISScmfe_ControlLoop_NumberOfSubLoopsGet
+  !>Gets the number of sub loops for a control loop. \see OpenCMISS::cmfe_ControlLoop_NumberOfSubLoopsGet
   SUBROUTINE CONTROL_LOOP_NUMBER_OF_SUB_LOOPS_GET(CONTROL_LOOP,NUMBER_OF_SUB_LOOPS,ERR,ERROR,*)
 
     !Argument variables
@@ -1392,7 +1392,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Sets/changes the number of sub loops in a control loop. \see OpenCMISS_CMISScmfe_ControlLoop_NumberOfSubLoopsSet
+  !>Sets/changes the number of sub loops in a control loop. \see OpenCMISS::cmfe_ControlLoop_NumberOfSubLoopsSet
   SUBROUTINE CONTROL_LOOP_NUMBER_OF_SUB_LOOPS_SET(CONTROL_LOOP,NUMBER_OF_SUB_LOOPS,ERR,ERROR,*)
 
     !Argument variables
@@ -1919,7 +1919,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Gets the current time parameters for a time control loop. \see OpenCMISS_cmfe_ControlLoop_CurrentTimesGet
+  !>Gets the current time parameters for a time control loop. \see OpenCMISS::cmfe_ControlLoop_CurrentTimesGet
   SUBROUTINE CONTROL_LOOP_TIMES_GET(CONTROL_LOOP,START_TIME,STOP_TIME,CURRENT_TIME,TIME_INCREMENT, &
     & CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER,ERR,ERROR,*)
 
@@ -1984,7 +1984,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the time parameters for a time control loop. \see OpenCMISS_cmfe_ControlLoop_TimesSet
+  !>Sets the time parameters for a time control loop. \see OpenCMISS::cmfe_ControlLoop_TimesSet
   SUBROUTINE CONTROL_LOOP_TIMES_SET(CONTROL_LOOP,START_TIME,STOP_TIME,TIME_INCREMENT,ERR,ERROR,*)
 
     !Argument variables
@@ -2048,7 +2048,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the output parameters for a time control loop. \see OpenCMISS_cmfe_ControlLoop_TimeOutputSet
+  !>Sets the output parameters for a time control loop. \see OpenCMISS::cmfe_ControlLoop_TimeOutputSet
   SUBROUTINE CONTROL_LOOP_TIME_OUTPUT_SET(CONTROL_LOOP,OUTPUT_FREQUENCY,ERR,ERROR,*)
 
     !Argument variables
@@ -2095,7 +2095,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the input parameters for a time control loop. \see OpenCMISS_cmfe_ControlLoop_TimeInputSet
+  !>Sets the input parameters for a time control loop. \see OpenCMISS::cmfe_ControlLoop_TimeInputSet
   SUBROUTINE CONTROL_LOOP_TIME_INPUT_SET(CONTROL_LOOP,INPUT_OPTION,ERR,ERROR,*)
 
     !Argument variables

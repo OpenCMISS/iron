@@ -44,7 +44,7 @@
 !> This module handles all node routines.
 MODULE NODE_ROUTINES
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE KINDS

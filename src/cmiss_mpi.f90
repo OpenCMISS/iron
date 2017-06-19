@@ -44,14 +44,14 @@
 !> This module contains CMISS MPI routines.
 MODULE CMISS_MPI
   
-  USE BASE_ROUTINES
-  USE CONSTANTS
-  USE KINDS
+  USE BaseRoutines
+  USE Constants
+  USE Kinds
 #ifndef NOMPIMOD
   USE MPI
 #endif
   USE ISO_VARYING_STRING
-  USE STRINGS
+  USE Strings
 
 #include "macros.h"
 

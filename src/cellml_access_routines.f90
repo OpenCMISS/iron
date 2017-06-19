@@ -44,7 +44,7 @@
 !> This module contains all CellML access method routines.
 MODULE CellMLAccessRoutines
   
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE Kinds
   USE Strings
   USE Types

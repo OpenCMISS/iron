@@ -44,7 +44,7 @@
 !> This module contains all region access method routines.
 MODULE RegionAccessRoutines
   
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE CellMLAccessRoutines
   USE DataPointAccessRoutines
   USE EquationsSetAccessRoutines

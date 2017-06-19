@@ -44,7 +44,7 @@
 !> This module handles all domain mappings routines.
 MODULE DOMAIN_MAPPINGS
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE COMP_ENVIRONMENT
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING

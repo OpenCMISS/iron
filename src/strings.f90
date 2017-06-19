@@ -42,11 +42,11 @@
 !>
 
 !>This module contains all string manipulation and transformation routines.
-MODULE STRINGS
+MODULE Strings
 
-  USE BASE_ROUTINES
-  USE CONSTANTS
-  USE KINDS
+  USE BaseRoutines
+  USE Constants
+  USE Kinds
   USE ISO_VARYING_STRING
 
 #include "macros.h"  
@@ -2006,4 +2006,4 @@ CONTAINS
   !================================================================================================================================
   !
   
-END MODULE STRINGS
+END MODULE Strings

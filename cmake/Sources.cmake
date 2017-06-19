@@ -117,6 +117,7 @@ set(IRON_Fortran_SRC
     problem_constants.f90
     problem_routines.f90
     problem_access_routines.f90
+    profiling_routines.f90
     reaction_diffusion_equation_routines.f90
     reaction_diffusion_IO_routines.f90
     region_routines.f90

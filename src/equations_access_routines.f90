@@ -44,7 +44,7 @@
 !> This module contains all equations access method routines.
 MODULE EquationsAccessRoutines
   
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE Kinds
   USE Strings
   USE Types

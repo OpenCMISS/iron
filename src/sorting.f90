@@ -44,7 +44,7 @@
 !>This module contains all procedures for sorting. NOTE: THE ROUTINES IN THIS MODULE HAVE NOT BEEN TESTED!!!
 MODULE Sorting
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE Constants
   USE Kinds
   USE ISO_VARYING_STRING

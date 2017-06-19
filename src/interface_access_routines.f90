@@ -44,7 +44,7 @@
 !> This module contains all interface access method routines.
 MODULE InterfaceAccessRoutines
   
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE DataPointAccessRoutines
   USE FieldAccessRoutines
   USE InterfaceConditionAccessRoutines

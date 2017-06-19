@@ -52,22 +52,22 @@ MODULE Cmiss
 
   USE ISO_C_BINDING
   
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE BASIS_ROUTINES
   USE COMP_ENVIRONMENT
-  USE CONSTANTS
+  USE Constants
   USE COORDINATE_ROUTINES
   USE GENERATED_MESH_ROUTINES
   USE ISO_VARYING_STRING
-  USE KINDS
+  USE Kinds
   USE MACHINE_CONSTANTS
 #ifndef NOMPIMOD
   USE MPI
 #endif
   USE PROBLEM_ROUTINES
   USE REGION_ROUTINES
-  USE STRINGS
-  USE TYPES
+  USE Strings
+  USE Types
 
 #include "macros.h"
 
@@ -87,7 +87,7 @@ MODULE Cmiss
 
   CHARACTER(LEN=MAXSTRLEN), PARAMETER :: CMFE_BUILD_VERSION = "$Rev"
 
-  !> \addtogroup CMFE_ErrorHandlingModes CMISS::ErrorHandlingModes
+  !> \addtogroup CMFE_ErrorHandlingModes OpenCMISS::Iron::ErrorHandlingModes
   !> \brief Error handling mode parameters
   !> \see CMISS
   !>@{
@@ -135,7 +135,7 @@ CONTAINS
 
 !!TODO Underscore to avoid name clash. Can be removed upon prefix rename.
 
-  !>Returns the error handling mode for CMISS \see OPENCMISS::CMISSErrorHandlingModeGet
+  !>Returns the error handling mode for CMISS \see OPENOpenCMISS::Iron::CMISSErrorHandlingModeGet
   SUBROUTINE cmfe_ErrorHandlingModeGet_(errorHandlingMode,err,error,*)
   
     !Argument variables
@@ -161,7 +161,7 @@ CONTAINS
 
 !!TODO Underscore to avoid name clash. Can be removed upon prefix rename.
 
-  !>Sets the error handling mode for cmiss \see OPENCMISS::CMISSErrorHandlingModeSet
+  !>Sets the error handling mode for cmiss \see OPENOpenCMISS::Iron::CMISSErrorHandlingModeSet
   SUBROUTINE cmfe_ErrorHandlingModeSet_(errorHandlingMode,err,error,*)
   
     !Argument variables
@@ -199,7 +199,7 @@ CONTAINS
 
 !!TODO Underscore to avoid name clash. Can be removed upon prefix rename.
   
-  !>Finalises CMISS. \see OPENCMISS::CMISSFinalise
+  !>Finalises CMISS. \see OPENOpenCMISS::Iron::CMISSFinalise
   SUBROUTINE cmfe_Finalise_(err,error,*)
   
     !Argument variables
@@ -220,7 +220,7 @@ CONTAINS
     !Finalise computational enviroment
     CALL COMPUTATIONAL_ENVIRONMENT_FINALISE(err,error,*999)
     !Finalise the base routines
-    CALL BASE_ROUTINES_FINALISE(err,error,*999)
+    CALL BaseRoutinesFinalise(err,error,*999)
      
     RETURN
 999 RETURN 1
@@ -233,7 +233,7 @@ CONTAINS
 
 !!TODO Underscore to avoid name clash. Can be removed upon prefix rename.
 
-  !>Initialises CMISS. \see OPENCMISS::CMISSInitialise
+  !>Initialises CMISS. \see OPENOpenCMISS::Iron::CMISSInitialise
   SUBROUTINE cmfe_Initialise_(worldRegion,err,error,*)
   
     !Argument variables
@@ -246,7 +246,7 @@ CONTAINS
     !Initialise error mode
     cmfe_ErrorHandlingMode = CMFE_OUTPUT_ERROR !Default for now, maybe make CMFE_RETURN_ERROR_CODE the default
     !Initialise the base routines
-    CALL BASE_ROUTINES_INITIALISE(err,error,*999)
+    CALL BaseRoutinesInitialise(err,error,*999)
     !Intialise the computational environment
     CALL COMPUTATIONAL_ENVIRONMENT_INITIALISE(err,error,*999)
     !Setup signal handling

@@ -44,7 +44,7 @@
 !> This module handles all generated mesh routines.
 MODULE GENERATED_MESH_ROUTINES
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE BASIS_ROUTINES
   USE COMP_ENVIRONMENT
   USE CONSTANTS

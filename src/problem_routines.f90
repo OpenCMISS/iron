@@ -44,7 +44,7 @@
 !> This module handles all problem routines.
 MODULE PROBLEM_ROUTINES
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE BIOELECTRIC_ROUTINES
   USE CLASSICAL_FIELD_ROUTINES
   USE CONTROL_LOOP_ROUTINES
@@ -218,6 +218,10 @@ CONTAINS
 
     NULLIFY(solver)
     CALL CellMLEquations_SolverGet(cellMLEquations,solver,err,error,*999)
+    IF(solver%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
+      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
+      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"CellML equations solve: ",solver%label,err,error,*999)
+    ENDIF
 
     SELECT CASE(cellMLEquations%timeDependence)
     CASE(CELLML_EQUATIONS_STATIC)
@@ -1419,6 +1423,10 @@ CONTAINS
 
     IF(ASSOCIATED(SOLVER)) THEN
       IF(SOLVER%SOLVER_FINISHED) THEN
+        IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
+          CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solver pre-residual: ",SOLVER%LABEL,err,error,*999)
+        ENDIF
         SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
         IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
           SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
@@ -1556,6 +1564,10 @@ CONTAINS
 
     IF(ASSOCIATED(SOLVER)) THEN
       IF(SOLVER%SOLVER_FINISHED) THEN
+        IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
+          CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solver post-residual: ",SOLVER%LABEL,err,error,*999)
+        ENDIF
         SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
         IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
           SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
@@ -1839,6 +1851,10 @@ CONTAINS
     ENTERS("PROBLEM_CONTROL_LOOP_PRE_LOOP",err,error,*999)
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
+      IF(CONTROL_LOOP%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+        CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Control pre-loop: ",CONTROL_LOOP%LABEL,err,error,*999)
+      ENDIF
       IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
         !For all time loops, update the previous values from the current values
         IF(CONTROL_LOOP%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) THEN
@@ -1900,6 +1916,10 @@ CONTAINS
     ENTERS("PROBLEM_CONTROL_LOOP_POST_LOOP",err,error,*999)
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
+      IF(CONTROL_LOOP%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+        CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Control post-loop: ",CONTROL_LOOP%LABEL,err,error,*999)
+      ENDIF
       IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
         IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
           CALL FlagError("Problem specification is not allocated.",err,error,*999)
@@ -1972,6 +1992,10 @@ CONTAINS
     ENTERS("PROBLEM_SOLVER_PRE_SOLVE",err,error,*999)
 
     IF(ASSOCIATED(SOLVER)) THEN
+      IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
+        CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solver pre-solve: ",SOLVER%LABEL,err,error,*999)
+      ENDIF
       SOLVERS=>SOLVER%SOLVERS
       IF(ASSOCIATED(SOLVERS)) THEN
         CONTROL_LOOP=>SOLVERS%CONTROL_LOOP
@@ -2044,6 +2068,10 @@ CONTAINS
     ENTERS("PROBLEM_SOLVER_POST_SOLVE",err,error,*999)
 
     IF(ASSOCIATED(SOLVER)) THEN
+      IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
+        CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
+        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solver post-solve: ",SOLVER%LABEL,err,error,*999)
+      ENDIF
       SOLVERS=>SOLVER%SOLVERS
       IF(ASSOCIATED(SOLVERS)) THEN
         CONTROL_LOOP=>SOLVERS%CONTROL_LOOP
@@ -2109,12 +2137,19 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
     ENTERS("PROBLEM_SOLVER_EQUATIONS_SOLVE",err,error,*999)
     
     IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
       IF(SOLVER_EQUATIONS%SOLVER_EQUATIONS_FINISHED) THEN
+        NULLIFY(solver)
+        CALL SolverEquations_SolverGet(SOLVER_EQUATIONS,solver,err,error,*999)
+        IF(solver%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
+          CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
+          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solver equations solve: ",solver%label,err,error,*999)
+        ENDIF      
         SELECT CASE(SOLVER_EQUATIONS%timeDependence)
         CASE(SOLVER_EQUATIONS_STATIC)
           SELECT CASE(SOLVER_EQUATIONS%linearity)
@@ -3797,7 +3832,7 @@ END MODULE PROBLEM_ROUTINES
 !>Called from the PETSc SNES solvers to evaluate the Jacobian for a Newton like nonlinear solver
 SUBROUTINE Problem_SolverJacobianEvaluatePetsc(snes,x,A,B,ctx,err)
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE CmissPetscTypes
   USE DISTRIBUTED_MATRIX_VECTOR
   USE ISO_VARYING_STRING
@@ -3904,7 +3939,7 @@ END SUBROUTINE Problem_SolverJacobianEvaluatePetsc
 !>calculation.
 SUBROUTINE Problem_SolverJacobianFDCalculatePetsc(snes,x,A,B,ctx,err)
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE CmissPetsc
   USE CmissPetscTypes
   USE DISTRIBUTED_MATRIX_VECTOR
@@ -4036,7 +4071,7 @@ END SUBROUTINE Problem_SolverJacobianFDCalculatePetsc
 !>Called from the PETSc TAO solvers to evaluate the objective for an optimiser solver
 SUBROUTINE Problem_SolverObjectiveEvaluatePetsc(tao,x,f,ctx,err)
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE CmissPetscTypes
   USE DISTRIBUTED_MATRIX_VECTOR
   USE ISO_VARYING_STRING
@@ -4105,7 +4140,7 @@ END SUBROUTINE Problem_SolverObjectiveEvaluatePetsc
 !>Called from the PETSc SNES solvers to evaluate the residual for a Newton like nonlinear solver
 SUBROUTINE Problem_SolverResidualEvaluatePetsc(snes,x,f,ctx,err)
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE CmissPetscTypes
   USE DISTRIBUTED_MATRIX_VECTOR
   USE ISO_VARYING_STRING
@@ -4228,7 +4263,7 @@ END SUBROUTINE Problem_SolverResidualEvaluatePetsc
 !>Called from the PETSc SNES solvers to test convergence for a Newton like nonlinear solver
 SUBROUTINE Problem_SolverConvergenceTestPetsc(snes,iterationNumber,xnorm,gnorm,fnorm,reason,ctx,err)
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE CmissPetsc
   USE CmissPetscTypes
   USE DISTRIBUTED_MATRIX_VECTOR
@@ -4385,7 +4420,7 @@ END SUBROUTINE Problem_SolverConvergenceTestPetsc
 !>Called from the PETSc TS solvers to solve cellml DAE
 SUBROUTINE Problem_SolverDAECellMLRHSPetsc(ts,time,states,rates,ctx,err)
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE CmissPetscTypes
   USE CmissPetsc
   USE PROBLEM_ROUTINES
@@ -4451,7 +4486,7 @@ END SUBROUTINE Problem_SolverDAECellMLRHSPetsc
 !>Called from the PETSc SNES solvers to monitor a nonlinear solver
 SUBROUTINE Problem_SolverNonlinearMonitorPETSC(snes,iterationNumber,residualNorm,context,err)
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE CmissPetscTypes
   USE DISTRIBUTED_MATRIX_VECTOR
   USE ISO_VARYING_STRING
@@ -4504,7 +4539,7 @@ END SUBROUTINE Problem_SolverNonlinearMonitorPETSC
 !>Called from the PETSc TAO solvers to monitor an optimiser solver
 SUBROUTINE Problem_SolverOptimiserMonitorPETSC(tao,context,err)
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE CmissPetscTypes
   USE ISO_VARYING_STRING
   USE KINDS

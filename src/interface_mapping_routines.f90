@@ -44,7 +44,7 @@
 !>This module contains all interface mapping routines.
 MODULE INTERFACE_MAPPING_ROUTINES
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
   USE INPUT_OUTPUT

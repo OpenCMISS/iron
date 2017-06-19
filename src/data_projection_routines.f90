@@ -44,7 +44,7 @@
 !> This module handles all data projection routines.
 MODULE DataProjectionRoutines
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE BASIS_ROUTINES
   USE BasisAccessRoutines
   USE CMISS_MPI  

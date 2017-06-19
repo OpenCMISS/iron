@@ -44,7 +44,7 @@
 !> This module contains all control loop access method routines.
 MODULE ControlLoopAccessRoutines
   
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE Kinds
   USE Strings
   USE Types

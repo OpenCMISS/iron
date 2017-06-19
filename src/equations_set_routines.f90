@@ -44,7 +44,7 @@
 !> This module handles all equations set routines.
 MODULE EQUATIONS_SET_ROUTINES
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE BASIS_ROUTINES
   USE BIOELECTRIC_ROUTINES
   USE BOUNDARY_CONDITIONS_ROUTINES
@@ -78,6 +78,7 @@ MODULE EQUATIONS_SET_ROUTINES
 #endif
   USE MULTI_PHYSICS_ROUTINES
   USE NODE_ROUTINES
+  USE ProfilingRoutines
   USE Strings
   USE Timer
   USE Types
@@ -141,6 +142,8 @@ MODULE EQUATIONS_SET_ROUTINES
   PUBLIC EQUATIONS_SET_INDEPENDENT_DESTROY
   
   PUBLIC EquationsSet_JacobianEvaluate,EquationsSet_ResidualEvaluate
+
+  PUBLIC EquationsSet_OutputTypeGet,EquationsSet_OutputTypeSet
   
   PUBLIC EQUATIONS_SET_SOLUTION_METHOD_GET,EQUATIONS_SET_SOLUTION_METHOD_SET
   
@@ -1006,6 +1009,11 @@ CONTAINS
    
     IF(.NOT.equations%equationsFinished) CALL FlagError("Equations have not been finished.",err,error,*999)
     
+    IF(equationsSet%outputType>=EQUATIONS_SET_PROGRESS_OUTPUT) THEN
+      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
+      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Equations set assemble: ",equationsSet%label,err,error,*999)
+    ENDIF
+    
     SELECT CASE(equations%timeDependence)
     CASE(EQUATIONS_STATIC)
       SELECT CASE(equations%linearity)
@@ -1183,10 +1191,8 @@ CONTAINS
       CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
       userElapsed=userTime2(1)-userTime1(1)
       systemElapsed=systemTime2(1)-systemTime1(1)
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for equations setup and initialisation = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for equations setup and initialisation = ",systemElapsed, &
-        & err,error,*999)
+      CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Setup and initialisation",userElapsed,systemElapsed,err,error,*999)
       elementUserElapsed=0.0_SP
       elementSystemElapsed=0.0_SP
     ENDIF
@@ -1207,18 +1213,7 @@ CONTAINS
       systemElapsed=systemTime3(1)-systemTime2(1)
       elementUserElapsed=userElapsed
       elementSystemElapsed=systemElapsed
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for internal equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for internal equations assembly = ",systemElapsed,err,error,*999)
-    ENDIF
-    !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
-      CALL CPUTimer(USER_CPU,userTime4,err,error,*999)
-      CALL CPUTimer(SYSTEM_CPU,systemTime4,err,error,*999)
-      userElapsed=userTime4(1)-userTime3(1)
-      systemElapsed=systemTime4(1)-systemTime3(1)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for parameter transfer completion = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for parameter transfer completion = ",systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
     DO elementIdx=elementsMapping%BOUNDARY_START,elementsMapping%GHOST_FINISH
@@ -1232,34 +1227,27 @@ CONTAINS
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime5,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime5,err,error,*999)
-      userElapsed=userTime5(1)-userTime4(1)
-      systemElapsed=systemTime5(1)-systemTime4(1)
+      userElapsed=userTime5(1)-userTime3(1)
+      systemElapsed=systemTime5(1)-systemTime3(1)
       elementUserElapsed=elementUserElapsed+userElapsed
-      elementSystemElapsed=elementSystemElapsed+userElapsed
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for boundary+ghost equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for boundary+ghost equations assembly = ",systemElapsed,err,error,*999)
-      IF(numberOfTimes>0) THEN
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Average element user time for equations assembly = ", &
-          & elementUserElapsed/numberOfTimes,err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Average element system time for equations assembly = ", &
-          & elementSystemElapsed/numberOfTimes,err,error,*999)
-      ENDIF
+      elementSystemElapsed=elementSystemElapsed+systemElapsed
+      CALL Profiling_TimingsOutput(1,"Boundary+ghost elements equations assembly",userElapsed,systemElapsed,err,error,*999)
+      IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average element equations assembly", &
+        & elementUserElapsed/numberOfTimes,elementSystemElapsed/numberOfTimes,err,error,*999)
     ENDIF
     !Finalise the element matrices
     CALL EquationsMatrices_ElementFinalise(vectorMatrices,err,error,*999)
-    !Output equations matrices and RHS vector if required
-    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
-      CALL EquationsMatrices_VectorOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
-    ENDIF
     !Output timing information if required
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime6,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime6,err,error,*999)
       userElapsed=userTime6(1)-userTime1(1)
       systemElapsed=systemTime6(1)-systemTime1(1)
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total user time for equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total system time for equations assembly = ",systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Total equations assembly",userElapsed,systemElapsed,err,error,*999)
+    ENDIF
+    !Output equations matrices and RHS vector if required
+    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
+      CALL EquationsMatrices_VectorOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
     ENDIF
        
     EXITS("EquationsSet_AssembleDynamicLinearFEM")
@@ -1339,9 +1327,8 @@ CONTAINS
       CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
       userElapsed=userTime2(1)-userTime1(1)
       systemElapsed=systemTime2(1)-systemTime1(1)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for equations setup and initialisation = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for equations setup and initialisation = ",systemElapsed, &
-        & err,error,*999)
+      CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Setup and initialisation",userElapsed,systemElapsed,err,error,*999)
       elementUserElapsed=0.0_SP
       elementSystemElapsed=0.0_SP
     ENDIF
@@ -1378,18 +1365,7 @@ CONTAINS
       systemElapsed=systemTime3(1)-systemTime2(1)
       elementUserElapsed=userElapsed
       elementSystemElapsed=systemElapsed
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for internal equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for internal equations assembly = ",systemElapsed,err,error,*999)
-    ENDIF
-    !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
-      CALL CPUTimer(USER_CPU,userTime4,err,error,*999)
-      CALL CPUTimer(SYSTEM_CPU,systemTime4,err,error,*999)
-      userElapsed=userTime4(1)-userTime3(1)
-      systemElapsed=systemTime4(1)-systemTime3(1)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for parameter transfer completion = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for parameter transfer completion = ",systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
 #ifdef TAUPROF
@@ -1409,18 +1385,13 @@ CONTAINS
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime5,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime5,err,error,*999)
-      userElapsed=userTime5(1)-userTime4(1)
-      systemElapsed=systemTime5(1)-systemTime4(1)
+      userElapsed=userTime5(1)-userTime3(1)
+      systemElapsed=systemTime5(1)-systemTime3(1)
       elementUserElapsed=elementUserElapsed+userElapsed
-      elementSystemElapsed=elementSystemElapsed+userElapsed
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for boundary+ghost equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for boundary+ghost equations assembly = ",systemElapsed,err,error,*999)
-      IF(numberOfTimes>0) THEN
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Average element user time for equations assembly = ", &
-          & elementUserElapsed/numberOfTimes,err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Average element system time for equations assembly = ", &
-          & elementSystemElapsed/numberOfTimes,err,error,*999)
-      ENDIF
+      elementSystemElapsed=elementSystemElapsed+systemElapsed
+      CALL Profiling_TimingsOutput(1,"Boundary+ghost elements equations assembly",userElapsed,systemElapsed,err,error,*999)
+      IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average element equations assembly", &
+        & elementUserElapsed/numberOfTimes,elementSystemElapsed/numberOfTimes,err,error,*999)
     ENDIF
     !Finalise the element matrices
 #ifdef TAUPROF
@@ -1430,19 +1401,17 @@ CONTAINS
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP("EquationsMatrices_ElementFinalise()")
 #endif
-    !Output equations matrices and vector if required
-    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
-      CALL EquationsMatrices_VectorOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
-    ENDIF
     !Output timing information if required
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime6,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime6,err,error,*999)
       userElapsed=userTime6(1)-userTime1(1)
       systemElapsed=systemTime6(1)-systemTime1(1)
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total user time for equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total system time for equations assembly = ",systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Total equations assembly",userElapsed,systemElapsed,err,error,*999)
+    ENDIF
+    !Output equations matrices and vector if required
+    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
+      CALL EquationsMatrices_VectorOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
     ENDIF
        
     EXITS("EquationsSet_AssembleStaticLinearFEM")
@@ -1504,9 +1473,8 @@ CONTAINS
       CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
       userElapsed=userTime2(1)-userTime1(1)
       systemElapsed=systemTime2(1)-systemTime1(1)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for equations setup and initialisation = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for equations setup and initialisation = ",systemElapsed, &
-        & err,error,*999)
+      CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Setup and initialisation",userElapsed,systemElapsed,err,error,*999)
       elementUserElapsed=0.0_SP
       elementSystemElapsed=0.0_SP
     ENDIF
@@ -1527,18 +1495,7 @@ CONTAINS
       systemElapsed=systemTime3(1)-systemTime2(1)
       elementUserElapsed=userElapsed
       elementSystemElapsed=systemElapsed
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for internal equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for internal equations assembly = ",systemElapsed,err,error,*999)
-    ENDIF
-    !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
-      CALL CPUTimer(USER_CPU,userTime4,err,error,*999)
-      CALL CPUTimer(SYSTEM_CPU,systemTime4,err,error,*999)
-      userElapsed=userTime4(1)-userTime3(1)
-      systemElapsed=systemTime4(1)-systemTime3(1)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for parameter transfer completion = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for parameter transfer completion = ",systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
     DO elementIdx=elementsMapping%BOUNDARY_START,elementsMapping%GHOST_FINISH
@@ -1552,34 +1509,27 @@ CONTAINS
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime5,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime5,err,error,*999)
-      userElapsed=userTime5(1)-userTime4(1)
-      systemElapsed=systemTime5(1)-systemTime4(1)
+      userElapsed=userTime5(1)-userTime3(1)
+      systemElapsed=systemTime5(1)-systemTime3(1)
       elementUserElapsed=elementUserElapsed+userElapsed
-      elementSystemElapsed=elementSystemElapsed+userElapsed
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for boundary+ghost equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for boundary+ghost equations assembly = ",systemElapsed,err,error,*999)
-      IF(numberOfTimes>0) THEN
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Average element user time for equations assembly = ", &
-          & elementUserElapsed/numberOfTimes,err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Average element system time for equations assembly = ", &
-          & elementSystemElapsed/numberOfTimes,err,error,*999)
-      ENDIF
+      elementSystemElapsed=elementSystemElapsed+systemElapsed
+      CALL Profiling_TimingsOutput(1,"Boundary+ghost elements equations assembly",userElapsed,systemElapsed,err,error,*999)
+      IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average element equations assembly", &
+        & elementUserElapsed/numberOfTimes,elementSystemElapsed/numberOfTimes,err,error,*999)
     ENDIF
     !Finalise the element matrices
     CALL EquationsMatrices_ElementFinalise(vectorMatrices,err,error,*999)
-    !Output equations matrices and RHS vector if required
-    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
-      CALL EquationsMatrices_VectorOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
-    ENDIF
     !Output timing information if required
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime6,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime6,err,error,*999)
       userElapsed=userTime6(1)-userTime1(1)
       systemElapsed=systemTime6(1)-systemTime1(1)
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total user time for equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total system time for equations assembly = ",systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Total equations assembly",userElapsed,systemElapsed,err,error,*999)
+    ENDIF
+    !Output equations matrices and RHS vector if required
+    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
+      CALL EquationsMatrices_VectorOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
     ENDIF
        
     EXITS("EquationsSet_AssembleStaticNonlinearFEM")
@@ -1666,10 +1616,8 @@ CONTAINS
       CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
       userElapsed=userTime2(1)-userTime1(1)
       systemElapsed=systemTime2(1)-systemTime1(1)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for equations setup and initialisation = ",userElapsed, &
-        & err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for equations setup and initialisation = ",systemElapsed, &
-        & err,error,*999)
+      CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Setup and initialisation",userElapsed,systemElapsed,err,error,*999)
       elementUserElapsed=0.0_SP
       elementSystemElapsed=0.0_SP
     ENDIF
@@ -1690,22 +1638,7 @@ CONTAINS
       systemElapsed=systemTime3(1)-systemTime2(1)
       elementUserElapsed=userElapsed
       elementSystemElapsed=systemElapsed
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for internal equations assembly = ",userElapsed, &
-        & err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for internal equations assembly = ",systemElapsed, &
-        & err,error,*999)
-    ENDIF
-    !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
-      CALL CPUTimer(USER_CPU,userTime4,err,error,*999)
-      CALL CPUTimer(SYSTEM_CPU,systemTime4,err,error,*999)
-      userElapsed=userTime4(1)-userTime3(1)
-      systemElapsed=systemTime4(1)-systemTime3(1)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for parameter transfer completion = ",userElapsed, &
-        & err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for parameter transfer completion = ",systemElapsed, &
-        & err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
     DO elementIdx=elementsMapping%BOUNDARY_START,elementsMapping%GHOST_FINISH
@@ -1719,38 +1652,27 @@ CONTAINS
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime5,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime5,err,error,*999)
-      userElapsed=userTime5(1)-userTime4(1)
-      systemElapsed=systemTime5(1)-systemTime4(1)
+      userElapsed=userTime5(1)-userTime3(1)
+      systemElapsed=systemTime5(1)-systemTime3(1)
       elementUserElapsed=elementUserElapsed+userElapsed
-      elementSystemElapsed=elementSystemElapsed+userElapsed
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for boundary+ghost equations assembly = ",userElapsed, &
-        & err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for boundary+ghost equations assembly = ",systemElapsed, &
-        & err,error,*999)
-      IF(numberOfTimes>0) THEN
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Average element user time for equations assembly = ", &
-          & elementUserElapsed/numberOfTimes,err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Average element system time for equations assembly = ", &
-          & elementSystemElapsed/numberOfTimes,err,error,*999)
-      ENDIF
+      elementSystemElapsed=elementSystemElapsed+systemElapsed
+      CALL Profiling_TimingsOutput(1,"Boundary+ghost elements equations assembly",userElapsed,systemElapsed,err,error,*999)
+      IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average element equations assembly", &
+        & elementUserElapsed/numberOfTimes,elementSystemElapsed/numberOfTimes,err,error,*999)
     ENDIF
     !Finalise the element matrices
     CALL EquationsMatrices_ElementFinalise(vectorMatrices,err,error,*999)
-    !Output equations matrices and RHS vector if required
-    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
-      CALL EquationsMatrices_VectorOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
-    ENDIF
     !Output timing information if required
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime6,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime6,err,error,*999)
       userElapsed=userTime6(1)-userTime1(1)
       systemElapsed=systemTime6(1)-systemTime1(1)
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total user time for equations assembly = ",userElapsed, &
-        & err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total system time for equations assembly = ",systemElapsed, &
-        & err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Total equations assembly",userElapsed,systemElapsed,err,error,*999)
+    ENDIF
+    !Output equations matrices and RHS vector if required
+    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
+      CALL EquationsMatrices_VectorOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
     ENDIF
        
     EXITS("EquationsSet_AssembleQuasistaticLinearFEM")
@@ -2403,6 +2325,7 @@ CONTAINS
                       NEW_EQUATIONS_SET%USER_NUMBER=USER_NUMBER
                       NEW_EQUATIONS_SET%GLOBAL_NUMBER=REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS+1
                       NEW_EQUATIONS_SET%EQUATIONS_SETS=>REGION%EQUATIONS_SETS
+                      NEW_EQUATIONS_SET%label="Equations Set "//TRIM(NumberToVString(USER_NUMBER,"*",err,error))
                       NEW_EQUATIONS_SET%REGION=>REGION
                       !Set the equations set class, type and subtype
                       CALL EquationsSet_SpecificationSet(NEW_EQUATIONS_SET,EQUATIONS_SET_SPECIFICATION,err,error,*999)
@@ -2663,6 +2586,7 @@ CONTAINS
       CALL EquationsSet_DerivedFinalise(EQUATIONS_SET%derived,err,error,*999)
       IF(ASSOCIATED(EQUATIONS_SET%EQUATIONS)) CALL Equations_Destroy(EQUATIONS_SET%EQUATIONS,err,error,*999)
       IF(ALLOCATED(EQUATIONS_SET%SPECIFICATION)) DEALLOCATE(EQUATIONS_SET%SPECIFICATION)
+      EQUATIONS_SET%label=""
       DEALLOCATE(EQUATIONS_SET)
     ENDIF
        
@@ -3546,9 +3470,11 @@ CONTAINS
       EQUATIONS_SET%GLOBAL_NUMBER=0
       EQUATIONS_SET%EQUATIONS_SET_FINISHED=.FALSE.
       NULLIFY(EQUATIONS_SET%EQUATIONS_SETS)
+      EQUATIONS_SET%label=""
       NULLIFY(EQUATIONS_SET%REGION)
       EQUATIONS_SET%currentTime=0.0_DP
       EQUATIONS_SET%deltaTime=0.0_DP
+      EQUATIONS_SET%outputType=EQUATIONS_SET_NO_OUTPUT
       EQUATIONS_SET%SOLUTION_METHOD=0
       CALL EQUATIONS_SET_GEOMETRY_INITIALISE(EQUATIONS_SET,err,error,*999)
       CALL EQUATIONS_SET_DEPENDENT_INITIALISE(EQUATIONS_SET,err,error,*999)
@@ -4638,6 +4564,11 @@ CONTAINS
     NULLIFY(equations)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
 
+    IF(equationsSet%outputType>=EQUATIONS_SET_PROGRESS_OUTPUT) THEN
+      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
+      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Equations set Jacobian evaluate: ",equationsSet%label,err,error,*999)
+    ENDIF
+    
     SELECT CASE(equations%linearity)
     CASE(EQUATIONS_LINEAR)
       SELECT CASE(equations%timeDependence)
@@ -4839,9 +4770,8 @@ CONTAINS
       CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
       userElapsed=userTime2(1)-userTime1(1)
       systemElapsed=systemTime2(1)-systemTime1(1)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for equations setup and initialisation = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for equations setup and initialisation = ",systemElapsed, &
-        & err,error,*999)
+      CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Setup and initialisation",userElapsed,systemElapsed,err,error,*999)
       elementUserElapsed=0.0_SP
       elementSystemElapsed=0.0_SP
     ENDIF
@@ -4862,18 +4792,7 @@ CONTAINS
       systemElapsed=systemTime3(1)-systemTime2(1)
       elementUserElapsed=userElapsed
       elementSystemElapsed=systemElapsed
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for internal equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for internal equations assembly = ",systemElapsed,err,error,*999)
-    ENDIF
-    !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
-      CALL CPUTimer(USER_CPU,userTime4,err,error,*999)
-      CALL CPUTimer(SYSTEM_CPU,systemTime4,err,error,*999)
-      userElapsed=userTime4(1)-userTime3(1)
-      systemElapsed=systemTime4(1)-systemTime3(1)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for parameter transfer completion = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for parameter transfer completion = ",systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
     DO elementIdx=elementsMapping%BOUNDARY_START,elementsMapping%GHOST_FINISH
@@ -4887,34 +4806,27 @@ CONTAINS
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime5,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime5,err,error,*999)
-      userElapsed=userTime5(1)-userTime4(1)
-      systemElapsed=systemTime5(1)-systemTime4(1)
+      userElapsed=userTime5(1)-userTime3(1)
+      systemElapsed=systemTime5(1)-systemTime3(1)
       elementUserElapsed=elementUserElapsed+userElapsed
-      elementSystemElapsed=elementSystemElapsed+userElapsed
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for boundary+ghost equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for boundary+ghost equations assembly = ",systemElapsed,err,error,*999)
-      IF(numberOfTimes>0) THEN
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Average element user time for equations assembly = ", &
-          & elementUserElapsed/numberOfTimes,err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Average element system time for equations assembly = ", &
-          & elementSystemElapsed/numberOfTimes,err,error,*999)
-      ENDIF
+      elementSystemElapsed=elementSystemElapsed+systemElapsed
+      CALL Profiling_TimingsOutput(1,"Boundary+ghost elements equations assembly",userElapsed,systemElapsed,err,error,*999)
+      IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average element equations assembly", &
+        & elementUserElapsed/numberOfTimes,elementSystemElapsed/numberOfTimes,err,error,*999)
     ENDIF
     !Finalise the element matrices
     CALL EquationsMatrices_ElementFinalise(vectorMatrices,err,error,*999)
-    !Output equations matrices and RHS vector if required
-    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
-      CALL EquationsMatrices_JacobianOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
-    ENDIF
     !Output timing information if required
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime6,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime6,err,error,*999)
       userElapsed=userTime6(1)-userTime1(1)
       systemElapsed=systemTime6(1)-systemTime1(1)
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total user time for equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total system time for equations assembly = ",systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Total equations assembly",userElapsed,systemElapsed,err,error,*999)
+    ENDIF
+    !Output equations matrices and RHS vector if required
+    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
+      CALL EquationsMatrices_JacobianOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
     ENDIF
        
     EXITS("EquationsSet_JacobianEvaluateStaticFEM")
@@ -4975,9 +4887,8 @@ CONTAINS
       CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
       userElapsed=userTime2(1)-userTime1(1)
       systemElapsed=systemTime2(1)-systemTime1(1)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for equations setup and initialisation = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for equations setup and initialisation = ",systemElapsed, &
-        & err,error,*999)
+      CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Setup and initialisation",userElapsed,systemElapsed,err,error,*999)
       elementUserElapsed=0.0_SP
       elementSystemElapsed=0.0_SP
     ENDIF
@@ -4998,18 +4909,7 @@ CONTAINS
       systemElapsed=systemTime3(1)-systemTime2(1)
       elementUserElapsed=userElapsed
       elementSystemElapsed=systemElapsed
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for internal equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for internal equations assembly = ",systemElapsed,err,error,*999)
-    ENDIF
-    !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
-      CALL CPUTimer(USER_CPU,userTime4,err,error,*999)
-      CALL CPUTimer(SYSTEM_CPU,systemTime4,err,error,*999)
-      userElapsed=userTime4(1)-userTime3(1)
-      systemElapsed=systemTime4(1)-systemTime3(1)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for parameter transfer completion = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for parameter transfer completion = ",systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
     DO elementIdx=elementsMapping%BOUNDARY_START,elementsMapping%GHOST_FINISH
@@ -5023,36 +4923,29 @@ CONTAINS
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime5,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime5,err,error,*999)
-      userElapsed=userTime5(1)-userTime4(1)
-      systemElapsed=systemTime5(1)-systemTime4(1)
+      userElapsed=userTime5(1)-userTime3(1)
+      systemElapsed=systemTime5(1)-systemTime3(1)
       elementUserElapsed=elementUserElapsed+userElapsed
-      elementSystemElapsed=elementSystemElapsed+userElapsed
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for boundary+ghost equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for boundary+ghost equations assembly = ",systemElapsed,err,error,*999)
-      IF(numberOfTimes>0) THEN
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Average element user time for equations assembly = ", &
-          & elementUserElapsed/numberOfTimes,err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Average element system time for equations assembly = ", &
-          & elementSystemElapsed/numberOfTimes,err,error,*999)
-      ENDIF
+      elementSystemElapsed=elementSystemElapsed+systemElapsed
+      CALL Profiling_TimingsOutput(1,"Boundary+ghost elements equations assembly",userElapsed,systemElapsed,err,error,*999)
+      IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average element equations assembly", &
+        & elementUserElapsed/numberOfTimes,elementSystemElapsed/numberOfTimes,err,error,*999)
     ENDIF
     !Finalise the element matrices
     CALL EquationsMatrices_ElementFinalise(vectorMatrices,err,error,*999)
-    !Output equations matrices and RHS vector if required
-    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
-      CALL EquationsMatrices_JacobianOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
-    ENDIF
     !Output timing information if required
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime6,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime6,err,error,*999)
       userElapsed=userTime6(1)-userTime1(1)
       systemElapsed=systemTime6(1)-systemTime1(1)
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total user time for equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total system time for equations assembly = ",systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Total equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
-       
+    !Output equations matrices and RHS vector if required
+    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
+      CALL EquationsMatrices_JacobianOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
+    ENDIF
+      
     EXITS("EquationsSet_JacobianEvaluateDynamicFEM")
     RETURN
 999 ERRORSEXITS("EquationsSet_JacobianEvaluateDynamicFEM",err,error)
@@ -5099,6 +4992,11 @@ CONTAINS
     NULLIFY(nonlinearMatrices)
     CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
         
+    IF(equationsSet%outputType>=EQUATIONS_SET_PROGRESS_OUTPUT) THEN
+      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
+      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Equations set residual evaluate: ",equationsSet%label,err,error,*999)
+    ENDIF
+    
     SELECT CASE(equations%linearity)
     CASE(EQUATIONS_LINEAR)
       CALL FlagError("Can not evaluate a residual for linear equations.",err,error,*999)
@@ -5230,9 +5128,8 @@ CONTAINS
       CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
       userElapsed=userTime2(1)-userTime1(1)
       systemElapsed=systemTime2(1)-systemTime1(1)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for equations setup and initialisation = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for equations setup and initialisation = ",systemElapsed, &
-        & err,error,*999)
+      CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Setup and initialisation",userElapsed,systemElapsed,err,error,*999)
       elementUserElapsed=0.0_SP
       elementSystemElapsed=0.0_SP
     ENDIF
@@ -5253,18 +5150,7 @@ CONTAINS
       systemElapsed=systemTime3(1)-systemTime2(1)
       elementUserElapsed=userElapsed
       elementSystemElapsed=systemElapsed
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for internal equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for internal equations assembly = ",systemElapsed,err,error,*999)
-    ENDIF
-    !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
-      CALL CPUTimer(USER_CPU,userTime4,err,error,*999)
-      CALL CPUTimer(SYSTEM_CPU,systemTime4,err,error,*999)
-      userElapsed=userTime4(1)-userTime3(1)
-      systemElapsed=systemTime4(1)-systemTime3(1)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for parameter transfer completion = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for parameter transfer completion = ",systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
     DO elementIdx=elementsMapping%BOUNDARY_START,elementsMapping%GHOST_FINISH
@@ -5278,34 +5164,27 @@ CONTAINS
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime5,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime5,err,error,*999)
-      userElapsed=userTime5(1)-userTime4(1)
-      systemElapsed=systemTime5(1)-systemTime4(1)
+      userElapsed=userTime5(1)-userTime3(1)
+      systemElapsed=systemTime5(1)-systemTime3(1)
       elementUserElapsed=elementUserElapsed+userElapsed
-      elementSystemElapsed=elementSystemElapsed+userElapsed
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for boundary+ghost equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for boundary+ghost equations assembly = ",systemElapsed,err,error,*999)
-      IF(numberOfTimes>0) THEN
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Average element user time for equations assembly = ", &
-          & elementUserElapsed/numberOfTimes,err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Average element system time for equations assembly = ", &
-          & elementSystemElapsed/numberOfTimes,err,error,*999)
-      ENDIF
+      elementSystemElapsed=elementSystemElapsed+systemElapsed
+      CALL Profiling_TimingsOutput(1,"Boundary+ghost elements equations assembly",userElapsed,systemElapsed,err,error,*999)
+      IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average element equations assembly", &
+        & elementUserElapsed/numberOfTimes,elementSystemElapsed/numberOfTimes,err,error,*999)
     ENDIF
     !Finalise the element matrices
     CALL EquationsMatrices_ElementFinalise(vectorMatrices,err,error,*999)
-    !Output equations matrices and RHS vector if required
-    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
-      CALL EquationsMatrices_VectorOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
-    ENDIF
     !Output timing information if required
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime6,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime6,err,error,*999)
       userElapsed=userTime6(1)-userTime1(1)
       systemElapsed=systemTime6(1)-systemTime1(1)
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total user time for equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total system time for equations assembly = ",systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Total equations assembly",userElapsed,systemElapsed,err,error,*999)
+    ENDIF
+    !Output equations matrices and RHS vector if required
+    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
+      CALL EquationsMatrices_VectorOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
     ENDIF
       
     EXITS("EquationsSet_ResidualEvaluateDynamicFEM")
@@ -5367,9 +5246,8 @@ CONTAINS
       CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
       userElapsed=userTime2(1)-userTime1(1)
       systemElapsed=systemTime2(1)-systemTime1(1)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for equations setup and initialisation = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for equations setup and initialisation = ",systemElapsed, &
-        & err,error,*999)
+      CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Setup and initialisation",userElapsed,systemElapsed,err,error,*999)
       elementUserElapsed=0.0_SP
       elementSystemElapsed=0.0_SP
     ENDIF
@@ -5390,18 +5268,7 @@ CONTAINS
       systemElapsed=systemTime3(1)-systemTime2(1)
       elementUserElapsed=userElapsed
       elementSystemElapsed=systemElapsed
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for internal equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for internal equations assembly = ",systemElapsed,err,error,*999)
-    ENDIF
-    !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
-      CALL CPUTimer(USER_CPU,userTime4,err,error,*999)
-      CALL CPUTimer(SYSTEM_CPU,systemTime4,err,error,*999)
-      userElapsed=userTime4(1)-userTime3(1)
-      systemElapsed=systemTime4(1)-systemTime3(1)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for parameter transfer completion = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for parameter transfer completion = ",systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
     DO elementIdx=elementsMapping%BOUNDARY_START,elementsMapping%GHOST_FINISH
@@ -5415,34 +5282,27 @@ CONTAINS
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime5,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime5,err,error,*999)
-      userElapsed=userTime5(1)-userTime4(1)
-      systemElapsed=systemTime5(1)-systemTime4(1)
+      userElapsed=userTime5(1)-userTime3(1)
+      systemElapsed=systemTime5(1)-systemTime3(1)
       elementUserElapsed=elementUserElapsed+userElapsed
-      elementSystemElapsed=elementSystemElapsed+userElapsed
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for boundary+ghost equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for boundary+ghost equations assembly = ",systemElapsed,err,error,*999)
-      IF(numberOfTimes>0) THEN
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Average element user time for equations assembly = ", &
-          & elementUserElapsed/numberOfTimes,err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Average element system time for equations assembly = ", &
-          & elementSystemElapsed/numberOfTimes,err,error,*999)
-      ENDIF
+      elementSystemElapsed=elementSystemElapsed+systemElapsed
+      CALL Profiling_TimingsOutput(1,"Boundary+ghost elements equations assembly",userElapsed,systemElapsed,err,error,*999)
+      IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average element equations assembly", &
+        & elementUserElapsed/numberOfTimes,elementSystemElapsed/numberOfTimes,err,error,*999)
     ENDIF
     !Finalise the element matrices
     CALL EquationsMatrices_ElementFinalise(vectorMatrices,err,error,*999)
-    !Output equations matrices and RHS vector if required
-    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
-      CALL EquationsMatrices_VectorOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
-    ENDIF
     !Output timing information if required
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime6,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime6,err,error,*999)
       userElapsed=userTime6(1)-userTime1(1)
       systemElapsed=systemTime6(1)-systemTime1(1)
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total user time for equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total system time for equations assembly = ",systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Total equations assembly",userElapsed,systemElapsed,err,error,*999)
+    ENDIF
+    !Output equations matrices and RHS vector if required
+    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
+      CALL EquationsMatrices_VectorOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
     ENDIF
        
     EXITS("EquationsSet_ResidualEvaluateStaticFEM")
@@ -5505,6 +5365,71 @@ CONTAINS
     RETURN 1
   END SUBROUTINE EQUATIONS_SET_SETUP_INITIALISE
   
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the output type for an equations set.
+  SUBROUTINE EquationsSet_OutputTypeGet(equationsSet,outputType,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the output type for
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On exit, the output type of the equations set \see EQUATIONS_SET_CONSTANTS_OutputTypes,EQUATIONS_SET_CONSTANTS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsSet_OutputTypeGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.equationsSet%EQUATIONS_SET_FINISHED) CALL FlagError("Equations set has not been finished.",err,error,*999)
+    
+    outputType=equationsSet%outputType
+       
+    EXITS("EquationsSet_OutputTypeGet")
+    RETURN
+999 ERRORSEXITS("EquationsSet_OutputTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_OutputTypeGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the output type for an equations set.
+  SUBROUTINE EquationsSet_OutputTypeSet(equationsSet,outputType,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the output type for
+    INTEGER(INTG), INTENT(IN) :: outputType !<The output type to set \see EQUATIONS_SET_CONSTANTS_OutputTypes,EQUATIONS_SET_CONSTANTS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_OutputTypeSet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(equationsSet%EQUATIONS_SET_FINISHED) CALL FlagError("Equations set has already been finished.",err,error,*999)
+
+    SELECT CASE(outputType)
+    CASE(EQUATIONS_SET_NO_OUTPUT)
+      equationsSet%outputType=EQUATIONS_SET_NO_OUTPUT
+    CASE(EQUATIONS_SET_PROGRESS_OUTPUT)
+      equationsSet%outputType=EQUATIONS_SET_PROGRESS_OUTPUT
+    CASE DEFAULT
+      localError="The specified output type of "//TRIM(NumberToVString(outputType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+       
+    EXITS("EquationsSet_OutputTypeSet")
+    RETURN
+999 ERRORSEXITS("EquationsSet_OutputTypeSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_OutputTypeSet
+
   !
   !================================================================================================================================
   !
@@ -6011,6 +5936,9 @@ CONTAINS
     
   END SUBROUTINE EquationsSet_TimesSet
   
+  !
+  !================================================================================================================================
+  !
   !
   !================================================================================================================================
   !
@@ -6716,9 +6644,8 @@ CONTAINS
       CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
       userElapsed=userTime2(1)-userTime1(1)
       systemElapsed=systemTime2(1)-systemTime1(1)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for equations setup and initialisation = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for equations setup and initialisation = ",systemElapsed, &
-        & err,error,*999)
+      CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Setup and initialisation",userElapsed,systemElapsed,err,error,*999)
       nodeUserElapsed=0.0_SP
       nodeSystemElapsed=0.0_SP
     ENDIF
@@ -6739,18 +6666,7 @@ CONTAINS
       systemElapsed=systemTime3(1)-systemTime2(1)
       nodeUserElapsed=userElapsed
       nodeSystemElapsed=systemElapsed
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for internal equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for internal equations assembly = ",systemElapsed,err,error,*999)
-    ENDIF
-    !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
-      CALL CPUTimer(USER_CPU,userTime4,err,error,*999)
-      CALL CPUTimer(SYSTEM_CPU,systemTime4,err,error,*999)
-      userElapsed=userTime4(1)-userTime3(1)
-      systemElapsed=systemTime4(1)-systemTime3(1)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for parameter transfer completion = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for parameter transfer completion = ",systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Internal nodes equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost nodes
     DO nodeIdx=nodalMapping%BOUNDARY_START,nodalMapping%GHOST_FINISH
@@ -6764,34 +6680,27 @@ CONTAINS
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime5,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime5,err,error,*999)
-      userElapsed=userTime5(1)-userTime4(1)
-      systemElapsed=systemTime5(1)-systemTime4(1)
+      userElapsed=userTime5(1)-userTime3(1)
+      systemElapsed=systemTime5(1)-systemTime3(1)
       nodeUserElapsed=nodeUserElapsed+userElapsed
-      nodeSystemElapsed=nodeSystemElapsed+userElapsed
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for boundary+ghost equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for boundary+ghost equations assembly = ",systemElapsed,err,error,*999)
-      IF(numberOfTimes>0) THEN
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Average node user time for equations assembly = ", &
-          & nodeUserElapsed/numberOfTimes,err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Average node system time for equations assembly = ", &
-          & nodeSystemElapsed/numberOfTimes,err,error,*999)
-      ENDIF
+      nodeSystemElapsed=nodeSystemElapsed+systemElapsed
+      CALL Profiling_TimingsOutput(1,"Boundary+ghost nodes equations assembly",userElapsed,systemElapsed,err,error,*999)
+      IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average nodes equations assembly", &
+        & nodeUserElapsed/numberOfTimes,nodeSystemElapsed/numberOfTimes,err,error,*999)
     ENDIF
     !Finalise the nodal matrices
     CALL EquationsMatrices_NodalFinalise(vectorMatrices,err,error,*999)
-    !Output equations matrices and RHS vector if required
-    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
-      CALL EquationsMatrices_VectorOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
-    ENDIF
     !Output timing information if required
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime6,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime6,err,error,*999)
       userElapsed=userTime6(1)-userTime1(1)
       systemElapsed=systemTime6(1)-systemTime1(1)
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total user time for equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total system time for equations assembly = ",systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Total equations assembly",userElapsed,systemElapsed,err,error,*999)
+    ENDIF
+    !Output equations matrices and RHS vector if required
+    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
+      CALL EquationsMatrices_VectorOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
     ENDIF
        
     EXITS("EquationsSet_AssembleStaticNonlinearNodal")
@@ -7102,11 +7011,8 @@ CONTAINS
       CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
       userElapsed=userTime2(1)-userTime1(1)
       systemElapsed=systemTime2(1)-systemTime1(1)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for equations setup and initialisation = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for equations setup and initialisation = ",systemElapsed, &
-        & err,error,*999)
-      nodeUserElapsed=0.0_SP
-      nodeSystemElapsed=0.0_SP
+      CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Setup and initialisation",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     numberOfTimes=0
     !Loop over the internal nodes
@@ -7125,18 +7031,7 @@ CONTAINS
       systemElapsed=systemTime3(1)-systemTime2(1)
       nodeUserElapsed=userElapsed
       nodeSystemElapsed=systemElapsed
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for internal equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for internal equations assembly = ",systemElapsed,err,error,*999)
-    ENDIF
-    !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
-      CALL CPUTimer(USER_CPU,userTime4,err,error,*999)
-      CALL CPUTimer(SYSTEM_CPU,systemTime4,err,error,*999)
-      userElapsed=userTime4(1)-userTime3(1)
-      systemElapsed=systemTime4(1)-systemTime3(1)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for parameter transfer completion = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for parameter transfer completion = ",systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Internal nodes equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost nodes
     DO nodeIdx=nodalMapping%BOUNDARY_START,nodalMapping%GHOST_FINISH
@@ -7150,34 +7045,27 @@ CONTAINS
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime5,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime5,err,error,*999)
-      userElapsed=userTime5(1)-userTime4(1)
-      systemElapsed=systemTime5(1)-systemTime4(1)
+      userElapsed=userTime5(1)-userTime3(1)
+      systemElapsed=systemTime5(1)-systemTime3(1)
       nodeUserElapsed=nodeUserElapsed+userElapsed
-      nodeSystemElapsed=nodeSystemElapsed+userElapsed
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for boundary+ghost equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for boundary+ghost equations assembly = ",systemElapsed,err,error,*999)
-      IF(numberOfTimes>0) THEN
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Average node user time for equations assembly = ", &
-          & nodeUserElapsed/numberOfTimes,err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Average node system time for equations assembly = ", &
-          & nodeSystemElapsed/numberOfTimes,err,error,*999)
-      ENDIF
+      nodeSystemElapsed=nodeSystemElapsed+systemElapsed
+      CALL Profiling_TimingsOutput(1,"Boundary+ghost nodes equations assembly",userElapsed,systemElapsed,err,error,*999)
+      IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average node equations assembly", &
+        & nodeUserElapsed/numberOfTimes,nodeSystemElapsed/numberOfTimes,err,error,*999)
     ENDIF
     !Finalise the nodal matrices
     CALL EquationsMatrices_NodalFinalise(vectorMatrices,err,error,*999)
-    !Output equations matrices and RHS vector if required
-    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) &
-      & CALL EquationsMatrices_JacobianOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
     !Output timing information if required
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime6,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime6,err,error,*999)
       userElapsed=userTime6(1)-userTime1(1)
       systemElapsed=systemTime6(1)-systemTime1(1)
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total user time for equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total system time for equations assembly = ",systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Total equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
+    !Output equations Jacobian if required
+    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) &
+      & CALL EquationsMatrices_JacobianOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
        
     EXITS("EquationsSet_JacobianEvaluateStaticNodal")
     RETURN
@@ -7239,9 +7127,8 @@ CONTAINS
       CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
       userElapsed=userTime2(1)-userTime1(1)
       systemElapsed=systemTime2(1)-systemTime1(1)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for equations setup and initialisation = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for equations setup and initialisation = ",systemElapsed, &
-        & err,error,*999)
+      CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Setup and initialisation",userElapsed,systemElapsed,err,error,*999)
       nodeUserElapsed=0.0_SP
       nodeSystemElapsed=0.0_SP
     ENDIF
@@ -7262,18 +7149,7 @@ CONTAINS
       systemElapsed=systemTime3(1)-systemTime2(1)
       nodeUserElapsed=userElapsed
       nodeSystemElapsed=systemElapsed
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for internal equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for internal equations assembly = ",systemElapsed,err,error,*999)
-    ENDIF
-    !Output timing information if required
-    IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
-      CALL CPUTimer(USER_CPU,userTime4,err,error,*999)
-      CALL CPUTimer(SYSTEM_CPU,systemTime4,err,error,*999)
-      userElapsed=userTime4(1)-userTime3(1)
-      systemElapsed=systemTime4(1)-systemTime3(1)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for parameter transfer completion = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for parameter transfer completion = ",systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Internal nodes equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost nodes
     DO nodeIdx=nodalMapping%BOUNDARY_START,nodalMapping%GHOST_FINISH
@@ -7287,34 +7163,27 @@ CONTAINS
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime5,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime5,err,error,*999)
-      userElapsed=userTime5(1)-userTime4(1)
-      systemElapsed=systemTime5(1)-systemTime4(1)
+      userElapsed=userTime5(1)-userTime3(1)
+      systemElapsed=systemTime5(1)-systemTime3(1)
       nodeUserElapsed=nodeUserElapsed+userElapsed
-      nodeSystemElapsed=nodeSystemElapsed+userElapsed
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"User time for boundary+ghost equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"System time for boundary+ghost equations assembly = ",systemElapsed,err,error,*999)
-      IF(numberOfTimes>0) THEN
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Average node user time for equations assembly = ", &
-          & nodeUserElapsed/numberOfTimes,err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Average node system time for equations assembly = ", &
-          & nodeSystemElapsed/numberOfTimes,err,error,*999)
-      ENDIF
+      nodeSystemElapsed=nodeSystemElapsed+systemElapsed
+      CALL Profiling_TimingsOutput(1,"Boundary+ghost nodes equations assembly",userElapsed,systemElapsed,err,error,*999)
+      IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average node equations assembly", &
+        & nodeUserElapsed/numberOfTimes,nodeSystemElapsed/numberOfTimes,err,error,*999)
     ENDIF
     !Finalise the nodal matrices
     CALL EquationsMatrices_NodalFinalise(vectorMatrices,err,error,*999)
-    !Output equations matrices and RHS vector if required
-    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
-      CALL EquationsMatrices_VectorOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
-    ENDIF
     !Output timing information if required
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime6,err,error,*999)
       CALL CPUTimer(SYSTEM_CPU,systemTime6,err,error,*999)
       userElapsed=userTime6(1)-userTime1(1)
       systemElapsed=systemTime6(1)-systemTime1(1)
-      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total user time for equations assembly = ",userElapsed,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total system time for equations assembly = ",systemElapsed,err,error,*999)
+      CALL Profiling_TimingsOutput(1,"Total equations assembly",userElapsed,systemElapsed,err,error,*999)
+    ENDIF
+    !Output equations residual vector if required
+    IF(equations%outputType>=EQUATIONS_MATRIX_OUTPUT) THEN
+      CALL EquationsMatrices_VectorOutput(GENERAL_OUTPUT_TYPE,vectorMatrices,err,error,*999)
     ENDIF
        
     EXITS("EquationsSet_ResidualEvaluateStaticNodal")

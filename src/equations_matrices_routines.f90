@@ -44,7 +44,7 @@
 !> This module handles all equations matrix and rhs routines.
 MODULE EquationsMatricesRoutines
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE DISTRIBUTED_MATRIX_VECTOR
   USE EquationsAccessRoutines
   USE EquationsMappingAccessRoutines
@@ -2950,6 +2950,7 @@ CONTAINS
       CALL WriteString(id,"Jacobian matrices:",err,error,*999)
       CALL WriteStringValue(id,"Number of Jacobian matrices = ",nonlinearMatrices%numberOfJacobians,err,error,*999)
       DO jacobianMatrixIdx=1,nonlinearMatrices%numberOfJacobians
+        NULLIFY(jacobianMatrix)
         CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,jacobianMatrixIdx,jacobianMatrix,err,error,*999)
         CALL WriteStringValue(id,"Jacobian matrix: ",jacobianMatrixIdx,err,error,*999)
         CALL DistributedMatrix_Output(id,jacobianMatrix%jacobian,err,error,*999)
@@ -4544,9 +4545,9 @@ CONTAINS
       & numberOfVersions,version,versionIdx
     INTEGER(INTG), ALLOCATABLE :: columns(:)
     REAL(DP) :: sparsity
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BASIS_TYPE), POINTER :: basis,basis2
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: dependentDofsDomainMapping,rowDofsDomainMapping
-    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: domainElements
+    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: domainElements,domainElements2
     TYPE(DOMAIN_NODES_TYPE), POINTER :: domainNodes
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
@@ -4696,6 +4697,8 @@ CONTAINS
               & rowVariable%components(component)%maxNumberElementInterpolationParameters+1,err,error,*999) ! size = all nodal dofs + itself
             CALL List_CreateFinish(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
             DO componentIdx=1,fieldVariable%NUMBER_OF_COMPONENTS
+              domainElements2=>fieldVariable%components(componentIdx)%domain%topology%elements
+              basis2=>domainElements2%elements(element)%basis
               SELECT CASE(fieldVariable%components(componentIdx)%INTERPOLATION_TYPE)
               CASE(FIELD_CONSTANT_INTERPOLATION)
                 CALL FlagError("Constant interpolation is not implemented yet.",err,error,*999)
@@ -4707,11 +4710,11 @@ CONTAINS
                 CALL List_ItemAdd(columnIndicesLists(localDOFIdx)%ptr,globalColumn,err,error,*999)
               CASE(FIELD_NODE_BASED_INTERPOLATION)
                 ! loop over all nodes in the element (and dofs belonging to them)
-                DO localNodeIdx=1,basis%NUMBER_OF_NODES
-                  node2=domainElements%elements(element)%ELEMENT_NODES(localNodeIdx)
-                  DO derivativeIdx=1,basis%NUMBER_OF_DERIVATIVES(localNodeIdx)
-                    derivative=domainElements%elements(element)%ELEMENT_DERIVATIVES(derivativeIdx,localNodeIdx)
-                    version=domainElements%elements(element)%elementVersions(derivativeIdx,localNodeIdx)
+                DO localNodeIdx=1,basis2%NUMBER_OF_NODES
+                  node2=domainElements2%elements(element)%ELEMENT_NODES(localNodeIdx)
+                  DO derivativeIdx=1,basis2%NUMBER_OF_DERIVATIVES(localNodeIdx)
+                    derivative=domainElements2%elements(element)%ELEMENT_DERIVATIVES(derivativeIdx,localNodeIdx)
+                    version=domainElements2%elements(element)%elementVersions(derivativeIdx,localNodeIdx)
                     !Find the local and global column and add the global column to the indices list
                     localColumn=fieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% &
                       & nodes(node2)%derivatives(derivative)%versions(version)

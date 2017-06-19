@@ -44,7 +44,7 @@
 !>This module handles all Darcy pressure equations routines.
 MODULE DARCY_PRESSURE_EQUATIONS_ROUTINES
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE BASIS_ROUTINES
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE Constants

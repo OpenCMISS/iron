@@ -44,7 +44,7 @@
 !> This module contains all basis access method routines.
 MODULE BasisAccessRoutines
   
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE Kinds
   USE Strings
   USE Types

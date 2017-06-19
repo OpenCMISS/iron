@@ -44,15 +44,15 @@
 !> This module contains all coordinate transformation and support routines.
 MODULE COORDINATE_ROUTINES
 
-  USE BASE_ROUTINES
-  USE CONSTANTS
+  USE BaseRoutines
+  USE Constants
   USE CoordinateSystemAccessRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
-  USE KINDS
-  USE MATHS
-  USE STRINGS
-  USE TYPES
+  USE Kinds
+  USE Maths
+  USE Strings
+  USE Types
   
 #include "macros.h"
 

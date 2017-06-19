@@ -44,7 +44,7 @@
 !> This module contains all equations set access method routines.
 MODULE EquationsSetAccessRoutines
   
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE Kinds
   USE Strings
   USE Types
@@ -67,6 +67,16 @@ MODULE EquationsSetAccessRoutines
     MODULE PROCEDURE EquationsSet_EquationsGet
   END INTERFACE EQUATIONS_SET_EQUATIONS_GET
   
+  INTERFACE EquationsSet_LabelGet
+    MODULE PROCEDURE EquationsSet_LabelGetC
+    MODULE PROCEDURE EquationsSet_LabelGetVS
+  END INTERFACE EquationsSet_LabelGet
+
+   INTERFACE EquationsSet_LabelSet
+    MODULE PROCEDURE EquationsSet_LabelSetC
+    MODULE PROCEDURE EquationsSet_LabelSetVS
+  END INTERFACE EquationsSet_LabelSet
+
   INTERFACE EQUATIONS_SET_USER_NUMBER_FIND
     MODULE PROCEDURE EquationsSet_UserNumberFind
   END INTERFACE EQUATIONS_SET_USER_NUMBER_FIND
@@ -81,6 +91,8 @@ MODULE EquationsSetAccessRoutines
   
   PUBLIC EquationsSet_IndependentFieldGet
   
+  PUBLIC EquationsSet_LabelGet,EquationsSet_LabelSet
+
   PUBLIC EquationsSet_MaterialsFieldGet
   
   PUBLIC EquationsSet_SourceFieldGet
@@ -236,6 +248,123 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsSet_IndependentFieldGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the label of an equations set into a character string. \see OpenCMISS::cmfe_EquationsSet_LabelGet
+  SUBROUTINE EquationsSet_LabelGetC(equationsSet,label,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the label for
+    CHARACTER(LEN=*), INTENT(OUT) :: label !<On return, the equations set label.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: cLength,vsLength
+
+    ENTERS("EquationsSet_LabelGetC",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    
+    cLength=LEN(label)
+    vsLength=LEN_TRIM(equationsSet%label)
+    IF(cLength>vsLength) THEN
+      label=CHAR(equationsSet%label,vsLength)
+    ELSE
+      label=CHAR(equationsSet%label,cLength)
+    ENDIF
+    
+    EXITS("EquationsSet_LabelGetC")
+    RETURN
+999 ERRORSEXITS("EquationsSet_LabelGetC",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_LabelGetC
+
+   !
+  !================================================================================================================================
+  !
+
+  !>Returns the label of a equations set into a varying string. \see OpenCMISS::cmfe_EquationsSet_LabelGet
+  SUBROUTINE EquationsSet_LabelGetVS(equationsSet,label,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the label for
+    TYPE(VARYING_STRING), INTENT(OUT) :: label !<On return, the equations set label.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsSet_LabelGetVS",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    
+    label=VAR_STR(CHAR(equationsSet%label))
+          
+    EXITS("EquationsSet_LabelGetVS")
+    RETURN
+999 ERRORSEXITS("EquationsSet_LabelGetVS",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_LabelGetVS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the label of an equations set from a character string. \see OpenCMISS::cmfe_EquationsSet_LabelSet
+  SUBROUTINE EquationsSet_LabelSetC(equationsSet,label,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the label for 
+    CHARACTER(LEN=*), INTENT(IN) :: label !<The label to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsSet_LabelSetC",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(equationsSet%EQUATIONS_SET_FINISHED) CALL FlagError("Equations set has been finished.",err,error,*999)
+    
+    equationsSet%label=label
+        
+    EXITS("EquationsSet_LabelSetC")
+    RETURN
+999 ERRORSEXITS("EquationsSet_LabelSetC",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_LabelSetC
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the label of an equations set from a varying string. \see OpenCMISS::cmfe_EquationsSet_LabelSet
+  SUBROUTINE EquationsSet_LabelSetVS(equationsSet,label,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the label for 
+    TYPE(VARYING_STRING), INTENT(IN) :: label !<The label to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsSet_LabelSetVS",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(equationsSet%EQUATIONS_SET_FINISHED) CALL FlagError("Equations set has been finished.",err,error,*999)
+    
+    equationsSet%label=label
+    
+    EXITS("EquationsSet_LabelSetVS")
+    RETURN
+999 ERRORSEXITS("EquationsSet_LabelSetVS",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_LabelSetVS
 
   !
   !================================================================================================================================

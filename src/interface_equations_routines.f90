@@ -44,7 +44,7 @@
 !>This module handles all interface equations routines.
 MODULE INTERFACE_EQUATIONS_ROUTINES
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE EquationsRoutines
   USE FIELD_ROUTINES
   USE INTERFACE_CONDITIONS_CONSTANTS

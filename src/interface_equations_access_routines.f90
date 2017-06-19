@@ -44,7 +44,7 @@
 !> This module contains all interface equations access method routines.
 MODULE InterfaceEquationsAccessRoutines
   
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE Kinds
   USE Strings
   USE Types

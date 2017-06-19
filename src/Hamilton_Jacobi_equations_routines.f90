@@ -44,7 +44,7 @@
 !>This module handles all Hamilton-Jacobi equations routines.
 MODULE HAMILTON_JACOBI_EQUATIONS_ROUTINES
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE BASIS_ROUTINES
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE Constants

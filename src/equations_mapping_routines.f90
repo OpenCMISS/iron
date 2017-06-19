@@ -44,7 +44,7 @@
 !>This module handles all equations mapping routines.
 MODULE EquationsMappingRoutines
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE DOMAIN_MAPPINGS
   USE EquationsAccessRoutines
   USE EquationsMappingAccessRoutines

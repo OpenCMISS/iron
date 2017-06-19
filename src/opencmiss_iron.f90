@@ -56,7 +56,7 @@
 MODULE OpenCMISS_Iron
 
   USE ANALYTIC_ANALYSIS_ROUTINES
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE BASIS_ROUTINES
   USE BasisAccessRoutines
   USE BIOELECTRIC_FINITE_ELASTICITY_ROUTINES
@@ -565,7 +565,7 @@ MODULE OpenCMISS_Iron
 
 !!==================================================================================================================================
 !!
-!! BASE_ROUTINES
+!! BaseRoutines
 !!
 !!==================================================================================================================================
 
@@ -2334,9 +2334,8 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_Equations_TimeDependenceTypeGetObj
   END INTERFACE cmfe_Equations_TimeDependenceTypeGet
 
-  PUBLIC CMFE_EQUATIONS_NO_OUTPUT,CMFE_EQUATIONS_TIMING_OUTPUT,CMFE_EQUATIONS_MATRIX_OUTPUT
-
-  PUBLIC CMFE_EQUATIONS_ELEMENT_MATRIX_OUTPUT,CMFE_EQUATIONS_NODAL_MATRIX_OUTPUT
+  PUBLIC CMFE_EQUATIONS_NO_OUTPUT,CMFE_EQUATIONS_TIMING_OUTPUT,CMFE_EQUATIONS_MATRIX_OUTPUT, &
+    & CMFE_EQUATIONS_ELEMENT_MATRIX_OUTPUT,CMFE_EQUATIONS_NODAL_MATRIX_OUTPUT
 
   PUBLIC CMFE_EQUATIONS_SPARSE_MATRICES,CMFE_EQUATIONS_FULL_MATRICES
 
@@ -2793,6 +2792,13 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_MATRIX_DAMPING=EQUATIONS_MATRIX_DAMPING !<A damping matrix (multiplies velocity values)
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_MATRIX_MASS=EQUATIONS_MATRIX_MASS !<A mass matrix (multiplies acceleration values)
   !>@}
+  !> \addtogroup OPENCMISS_EquationsSetOutputTypes OpenCMISS::Iron::EquationsSet::OutputTypes
+  !> \brief Equations set output types
+  !> \see OpenCMISS::Iron::EquationsSet,OPENCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_OUTPUT = EQUATIONS_SET_NO_OUTPUT!<No output from the equations set \see OPENCMISS_EquationsSetOutputTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PROGRESS_OUTPUT = EQUATIONS_SET_PROGRESS_OUTPUT !<Progress information output for the equations set. \see OPENCMISS_EquationsSetOutputTypes,OPENCMISS
+  !>@}
 
   !> \addtogroup OPENCMISS_EquationsSetAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes
   !> \brief The analytic function types.
@@ -3125,7 +3131,10 @@ MODULE OpenCMISS_Iron
     & CMFE_EQUATIONS_SET_GFV_SOLUTION_METHOD
 
   PUBLIC CMFE_EQUATIONS_SET_DERIVED_STRAIN,CMFE_EQUATIONS_SET_DERIVED_STRESS
+  
   PUBLIC CMFE_EQUATIONS_MATRIX_STIFFNESS,CMFE_EQUATIONS_MATRIX_DAMPING,CMFE_EQUATIONS_MATRIX_MASS
+
+  PUBLIC CMFE_EQUATIONS_SET_NO_OUTPUT,CMFE_EQUATIONS_SET_PROGRESS_OUTPUT
 
   PUBLIC CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1,CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2, &
     & CMFE_EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1,CMFE_EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_2
@@ -3330,6 +3339,22 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_EquationsSet_IndependentDestroyObj
   END INTERFACE cmfe_EquationsSet_IndependentDestroy
 
+  !>Returns the label for an equations set.
+  INTERFACE cmfe_EquationsSet_LabelGet
+    MODULE PROCEDURE cmfe_EquationsSet_LabelGetCNumber
+    MODULE PROCEDURE cmfe_EquationsSet_LabelGetCObj
+    MODULE PROCEDURE cmfe_EquationsSet_LabelGetVSNumber
+    MODULE PROCEDURE cmfe_EquationsSet_LabelGetVSObj
+  END INTERFACE cmfe_EquationsSet_LabelGet
+
+  !>Sets/changes the label for an equations set.
+  INTERFACE cmfe_EquationsSet_LabelSet
+    MODULE PROCEDURE cmfe_EquationsSet_LabelSetCNumber
+    MODULE PROCEDURE cmfe_EquationsSet_LabelSetCObj
+    MODULE PROCEDURE cmfe_EquationsSet_LabelSetVSNumber
+    MODULE PROCEDURE cmfe_EquationsSet_LabelSetVSObj
+  END INTERFACE cmfe_EquationsSet_LabelSet
+
   !>Finish the creation of materials for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_MaterialsCreateStart
   INTERFACE cmfe_EquationsSet_MaterialsCreateFinish
     MODULE PROCEDURE cmfe_EquationsSet_MaterialsCreateFinishNumber
@@ -3347,6 +3372,18 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_EquationsSet_MaterialsDestroyNumber
     MODULE PROCEDURE cmfe_EquationsSet_MaterialsDestroyObj
   END INTERFACE cmfe_EquationsSet_MaterialsDestroy
+
+  !>Gets the output type for an equations set.
+  INTERFACE cmfe_EquationsSet_OutputTypeGet
+    MODULE PROCEDURE cmfe_EquationsSet_OutputTypeGetNumber
+    MODULE PROCEDURE cmfe_EquationsSet_OutputTypeGetObj
+  END INTERFACE cmfe_EquationsSet_OutputTypeGet
+
+  !>Sets/changes the output type an equations set.
+  INTERFACE cmfe_EquationsSet_OutputTypeSet
+    MODULE PROCEDURE cmfe_EquationsSet_OutputTypeSetNumber
+    MODULE PROCEDURE cmfe_EquationsSet_OutputTypeSetObj
+  END INTERFACE cmfe_EquationsSet_OutputTypeSet
 
   !>Returns the solution method for an equations set.
   INTERFACE cmfe_EquationsSet_SolutionMethodGet
@@ -3462,9 +3499,13 @@ MODULE OpenCMISS_Iron
 
   PUBLIC cmfe_EquationsSet_IndependentDestroy
 
+  PUBLIC cmfe_EquationsSet_LabelGet,cmfe_EquationsSet_LabelSet
+
   PUBLIC cmfe_EquationsSet_MaterialsCreateFinish,cmfe_EquationsSet_MaterialsCreateStart
 
   PUBLIC cmfe_EquationsSet_MaterialsDestroy
+
+  PUBLIC cmfe_Equationsset_OutputTypeGet,cmfe_EquationsSet_OutputTypeSet
 
   PUBLIC cmfe_EquationsSet_SolutionMethodGet,cmfe_EquationsSet_SolutionMethodSet
 
@@ -3778,8 +3819,8 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_Field_GeometricParametersElementLineLengthGetNumber
     MODULE PROCEDURE cmfe_Field_GeometricParametersElementLineLengthGetObj
   END INTERFACE cmfe_Field_GeometricParametersElementLineLengthGet
-
- !>Returns the label for a field.
+ 
+  !>Returns the label for a field.
   INTERFACE cmfe_Field_LabelGet
     MODULE PROCEDURE cmfe_Field_LabelGetCNumber
     MODULE PROCEDURE cmfe_Field_LabelGetCObj
@@ -4802,6 +4843,13 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_SOLID_FLUID_NORMAL_OPERATOR = &
     & INTERFACE_CONDITION_SOLID_FLUID_NORMAL_OPERATOR !<Solid fluid normal operator, i.e., lambda(v_f.n_f-du_s/dt.n_s). \see OPENCMISS_InterfaceConditionOperators,OPENCMISS
   !>@}
+  !> \addtogroup OPENCMISS_InterfaceConditionOutputTypes OpenCMISS::Iron::InterfaceConditions::OutputTypes
+  !> \brief Interface conditions output types
+  !> \see OpenCMISS::Iron::InterfaceConditions,OPENCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_NO_OUTPUT = INTERFACE_CONDITION_NO_OUTPUT!<No output from the interface condition \see OPENCMISS_InterfaceConditionOutputTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_PROGRESS_OUTPUT = INTERFACE_CONDITION_PROGRESS_OUTPUT !<Progress information output for the interface condition \see OPENCMISS_InterfaceConditionOutputTypes,OPENCMISS
+  !>@}
   !> \addtogroup OPENCMISS_InterfaceConditionIntegrationTypes OpenCMISS::Iron::InterfaceConditions::IntegrationTypes
   !> \brief Interface condition integration types.
   !> \see OpenCMISS::Iron::InterfaceConditions,OPENCMISS
@@ -4882,6 +4930,34 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_InterfaceCondition_LagrangeFieldCreateStartNumber
     MODULE PROCEDURE cmfe_InterfaceCondition_LagrangeFieldCreateStartObj
   END INTERFACE cmfe_InterfaceCondition_LagrangeFieldCreateStart
+
+  !>Returns the label for an interface condition.
+  INTERFACE cmfe_InterfaceCondition_LabelGet
+    MODULE PROCEDURE cmfe_InterfaceCondition_LabelGetCNumber
+    MODULE PROCEDURE cmfe_InterfaceCondition_LabelGetCObj
+    MODULE PROCEDURE cmfe_InterfaceCondition_LabelGetVSNumber
+    MODULE PROCEDURE cmfe_InterfaceCondition_LabelGetVSObj
+  END INTERFACE cmfe_InterfaceCondition_LabelGet
+
+  !>Sets/changes the label for an interface condition.
+  INTERFACE cmfe_InterfaceCondition_LabelSet
+    MODULE PROCEDURE cmfe_InterfaceCondition_LabelSetCNumber
+    MODULE PROCEDURE cmfe_InterfaceCondition_LabelSetCObj
+    MODULE PROCEDURE cmfe_InterfaceCondition_LabelSetVSNumber
+    MODULE PROCEDURE cmfe_InterfaceCondition_LabelSetVSObj
+  END INTERFACE cmfe_InterfaceCondition_LabelSet
+
+  !>Gets the output type for an interface condition.
+  INTERFACE cmfe_InterfaceCondition_OutputTypeGet
+    MODULE PROCEDURE cmfe_InterfaceCondition_OutputTypeGetNumber
+    MODULE PROCEDURE cmfe_InterfaceCondition_OutputTypeGetObj
+  END INTERFACE cmfe_InterfaceCondition_OutputTypeGet
+
+  !>Sets/changes the output type an equations set.
+  INTERFACE cmfe_InterfaceCondition_OutputTypeSet
+    MODULE PROCEDURE cmfe_InterfaceCondition_OutputTypeSetNumber
+    MODULE PROCEDURE cmfe_InterfaceCondition_OutputTypeSetObj
+  END INTERFACE cmfe_InterfaceCondition_OutputTypeSet
 
   !>Finishes the creation of a Penalty field for an interface condition. \see OpenCMISS::Iron::cmfe_InterfaceCondition_PenaltyFieldCreateStart
   INTERFACE cmfe_InterfaceCondition_PenaltyFieldCreateFinish
@@ -4968,6 +5044,8 @@ MODULE OpenCMISS_Iron
     
   PUBLIC CMFE_INTERFACE_CONDITION_GAUSS_INTEGRATION,CMFE_INTERFACE_CONDITION_DATA_POINTS_INTEGRATION
 
+  PUBLIC CMFE_INTERFACE_CONDITION_NO_OUTPUT,CMFE_INTERFACE_CONDITION_PROGRESS_OUTPUT
+
   PUBLIC cmfe_InterfaceCondition_CreateFinish,cmfe_InterfaceCondition_CreateStart
 
   PUBLIC cmfe_InterfaceCondition_DependentVariableAdd
@@ -4981,6 +5059,10 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_InterfaceCondition_IntegrationTypeGet,cmfe_InterfaceCondition_IntegrationTypeSet
 
   PUBLIC cmfe_InterfaceCondition_LagrangeFieldCreateFinish,cmfe_InterfaceCondition_LagrangeFieldCreateStart
+
+  PUBLIC cmfe_InterfaceCondition_LabelGet,cmfe_InterfaceCondition_LabelSet
+
+  PUBLIC cmfe_InterfaceCondition_OutputTypeGet,cmfe_InterfaceCondition_OutputTypeSet
 
   PUBLIC cmfe_InterfaceCondition_PenaltyFieldCreateFinish,cmfe_InterfaceCondition_PenaltyFieldCreateStart
 
@@ -10647,7 +10729,7 @@ CONTAINS
 
 !!==================================================================================================================================
 !!
-!! BASE_ROUTINES
+!! BaseRoutines
 !!
 !!==================================================================================================================================
 
@@ -10661,7 +10743,7 @@ CONTAINS
 
     ENTERS("cmfe_DiagnosticsSetOff",err,error,*999)
 
-    CALL DIAGNOSTICS_SET_OFF(err,error,*999)
+    CALL DiagnosticsSetOff(err,error,*999)
 
     EXITS("cmfe_DiagnosticsSetOff")
     RETURN
@@ -10691,7 +10773,7 @@ CONTAINS
     
 #ifdef WITH_DIAGNOSTICS
     
-    CALL DIAGNOSTICS_SET_ON(diagType,levelList,diagFilename,routineList,err,error,*999)
+    CALL DiagnosticsSetOn(diagType,levelList,diagFilename,routineList,err,error,*999)
 
 #else
 
@@ -10721,7 +10803,7 @@ CONTAINS
 
     ENTERS("cmfe_OutputSetOff",err,error,*999)
 
-    CALL OUTPUT_SET_OFF(err,error,*999)
+    CALL OutputSetOff(err,error,*999)
 
     EXITS("cmfe_OutputSetOff")
     RETURN
@@ -10746,7 +10828,7 @@ CONTAINS
 
     ENTERS("cmfe_OutputSetOn",err,error,*999)
 
-    CALL OUTPUT_SET_ON(echoFilename,err,error,*999)
+    CALL OutputSetOn(echoFilename,err,error,*999)
 
     EXITS("cmfe_OutputSetOn")
     RETURN
@@ -10770,7 +10852,7 @@ CONTAINS
 
     ENTERS("cmfe_TimingSetOff",err,error,*999)
 
-    CALL TIMING_SET_OFF(err,error,*999)
+    CALL TimingSetOff(err,error,*999)
 
     EXITS("cmfe_TimingSetOff")
     RETURN
@@ -10800,7 +10882,7 @@ CONTAINS
 
 #ifdef WITH_DIAGNOSTICS
     
-    CALL TIMING_SET_ON(timingType,timingSummaryFlag,timingFilename,routineList,err,error,*999)
+    CALL TimingSetOn(timingType,timingSummaryFlag,timingFilename,routineList,err,error,*999)
 
 #else
 
@@ -10830,7 +10912,7 @@ CONTAINS
 
     ENTERS("cmfe_TimingSummaryOutput",err,error,*999)
 
-    CALL TIMING_SUMMARY_OUTPUT(err,error,*999)
+    CALL TimingSummaryOutput(err,error,*999)
 
     EXITS("cmfe_TimingSummaryOutput")
     RETURN
@@ -13018,7 +13100,7 @@ CONTAINS
 
     ENTERS("cmfe_RandomSeedsGet0",err,error,*999)
 
-    CALL RANDOM_SEEDS_GET(RandomSeeds,err,error,*999)
+    CALL RandomSeedsGet(RandomSeeds,err,error,*999)
     randomSeed=RandomSeeds(1)
 
     EXITS("cmfe_RandomSeedsGet0")
@@ -13044,7 +13126,7 @@ CONTAINS
 
     ENTERS("cmfe_RandomSeedsGet1",err,error,*999)
 
-    CALL RANDOM_SEEDS_GET(randomSeeds,err,error,*999)
+    CALL RandomSeedsGet(randomSeeds,err,error,*999)
 
     EXITS("cmfe_RandomSeedsGet1")
     RETURN
@@ -13069,7 +13151,7 @@ CONTAINS
 
     ENTERS("cmfe_RandomSeedsSizeGet",err,error,*999)
 
-    CALL RANDOM_SEEDS_SIZE_GET(randomSeedsSize,err,error,*999)
+    CALL RandomSeedsSizeGet(randomSeedsSize,err,error,*999)
 
     EXITS("cmfe_RandomSeedsSizeGet")
     RETURN
@@ -13094,7 +13176,7 @@ CONTAINS
 
     ENTERS("cmfe_RandomSeedsSet0",err,error,*999)
 
-    CALL RANDOM_SEEDS_SET([randomSeed],err,error,*999)
+    CALL RandomSeedsSet([randomSeed],err,error,*999)
 
     EXITS("cmfe_RandomSeedsSet0")
     RETURN
@@ -13119,7 +13201,7 @@ CONTAINS
 
     ENTERS("cmfe_RandomSeedsSet1",err,error,*999)
 
-    CALL RANDOM_SEEDS_SET(randomSeeds,err,error,*999)
+    CALL RandomSeedsSet(randomSeeds,err,error,*999)
 
     EXITS("cmfe_RandomSeedsSet1")
     RETURN
@@ -26460,6 +26542,242 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the character string label for an equations set identified by a user number.
+  SUBROUTINE cmfe_EquationsSet_LabelGetCNumber(regionUserNumber,equationsSetUserNumber,label,err)
+    !DLLEXPORT(cmfe_EquationsSet_LabelGetCNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set to get the label for.
+    INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to get the label for.
+    CHARACTER(LEN=*), INTENT(OUT) :: label !<On return, the equationss set label.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_EquationsSet_LabelGetCNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(equationsSet)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
+    CALL EquationsSet_LabelGet(equationsSet,label,err,error,*999)
+
+    EXITS("cmfe_EquationsSet_LabelGetCNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_EquationsSet_LabelGetCNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_EquationsSet_LabelGetCNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the character string label for an equations set identified by an object.
+  SUBROUTINE cmfe_EquationsSet_LabelGetCObj(equationsSet,label,err)
+    !DLLEXPORT(cmfe_EquationsSet_LabelGetCObj)
+
+    !Argument variables
+    TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<The equations set to get the label for.
+    CHARACTER(LEN=*), INTENT(OUT) :: label !<On return, the equations set label.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_EquationsSet_LabelGetCObj",err,error,*999)
+
+    CALL EquationsSet_LabelGet(equationsSet%equationsSet,label,err,error,*999)
+
+    EXITS("cmfe_EquationsSet_LabelGetCObj")
+    RETURN
+999 ERRORSEXITS("cmfe_EquationsSet_LabelGetCObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_EquationsSet_LabelGetCObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the varying string label for an equations set identified by a user number.
+  SUBROUTINE cmfe_EquationsSet_LabelGetVSNumber(regionUserNumber,equationsSetUserNumber,label,err)
+    !DLLEXPORT(cmfe_EquationsSet_LabelGetVSNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set to get the label for.
+    INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to get the label for.
+    TYPE(VARYING_STRING), INTENT(OUT) :: label !<On return, the equations set label.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_EquationsSet_LabelGetVSNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(equationsSet)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
+    CALL EquationsSet_LabelGet(equationsSet,label,err,error,*999)
+
+    EXITS("cmfe_EquationsSet_LabelGetVSNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_EquationsSet_LabelGetVSNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_EquationsSet_LabelGetVSNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the varying string label for an equations set identified by an object.
+  SUBROUTINE cmfe_EquationsSet_LabelGetVSObj(equationsSet,label,err)
+    !DLLEXPORT(cmfe_EquationsSet_LabelGetVSObj)
+
+    !Argument variables
+    TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<The equations set to get the label for.
+    TYPE(VARYING_STRING), INTENT(OUT) :: label !<On return, the equations set label.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_EquationsSet_LabelGetVSObj",err,error,*999)
+
+    CALL EquationsSet_LabelGet(equationsSet%equationsSet,label,err,error,*999)
+
+    EXITS("cmfe_EquationsSet_LabelGetVSObj")
+    RETURN
+999 ERRORSEXITS("cmfe_EquationsSet_LabelGetVSObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_EquationsSet_LabelGetVSObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the character string label for an equations set identified by a user number.
+  SUBROUTINE cmfe_EquationsSet_LabelSetCNumber(regionUserNumber,equationsSetUserNumber,label,err)
+    !DLLEXPORT(cmfe_EquationsSet_LabelSetCNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set to set the label for.
+    INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to set the label for.
+    CHARACTER(LEN=*), INTENT(IN) :: label !<The equations set label to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_EquationsSet_LabelSetCNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(equationsSet)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
+    CALL EquationsSet_LabelSet(equationsSet,label,err,error,*999)
+
+    EXITS("cmfe_EquationsSet_LabelSetCNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_EquationsSet_LabelSetCNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_EquationsSet_LabelSetCNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the character string label for an equations set identified by an object.
+  SUBROUTINE cmfe_EquationsSet_LabelSetCObj(equationsSet,label,err)
+    !DLLEXPORT(cmfe_EquationsSet_LabelSetCObj)
+
+    !Argument variables
+    TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<The equations set to set the label for.
+    CHARACTER(LEN=*), INTENT(IN) :: label !<The equations set label to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_EquationsSet_LabelSetCObj",err,error,*999)
+
+    CALL EquationsSet_LabelSet(equationsSet%equationsSet,label,err,error,*999)
+
+    EXITS("cmfe_EquationsSet_LabelSetCObj")
+    RETURN
+999 ERRORSEXITS("cmfe_EquationsSet_LabelSetCObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_EquationsSet_LabelSetCObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the varying string label for an equations set identified by a user number.
+  SUBROUTINE cmfe_EquationsSet_LabelSetVSNumber(regionUserNumber,equationsSetUserNumber,label,err)
+    !DLLEXPORT(cmfe_EquationsSet_LabelSetVSNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set to set the label for.
+    INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to set the label for.
+    TYPE(VARYING_STRING), INTENT(IN) :: label !<The equations set label to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_EquationsSet_LabelSetVSNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(equationsSet)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
+    CALL EquationsSet_LabelSet(equationsSet,label,err,error,*999)
+
+    EXITS("cmfe_EquationsSet_LabelSetVSNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_EquationsSet_LabelSetVSNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_EquationsSet_LabelSetVSNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the varying string label for an equations set identified by an object.
+  SUBROUTINE cmfe_EquationsSet_LabelSetVSObj(equationsSet,label,err)
+    !DLLEXPORT(cmfe_EquationsSet_LabelSetVSObj)
+
+    !Argument variables
+    TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<The equations set to set the label for.
+    TYPE(VARYING_STRING), INTENT(IN) :: label !<The equations set label to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_EquationsSet_LabelSetVSObj",err,error,*999)
+
+    CALL EquationsSet_LabelSet(equationsSet%equationsSet,label,err,error,*999)
+
+    EXITS("cmfe_EquationsSet_LabelSetVSObj")
+    RETURN
+999 ERRORSEXITS("cmfe_EquationsSet_LabelSetVSObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_EquationsSet_LabelSetVSObj
+
+  !
+  !================================================================================================================================
+  !
+
   !>Finish the creation of materials for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_MaterialsCreateFinishNumber(regionUserNumber,equationsSetUserNumber,err)
     !DLLEXPORT(cmfe_EquationsSet_MaterialsCreateFinishNumber)
@@ -26635,6 +26953,124 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_EquationsSet_MaterialsDestroyObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the output type an equations set identified by a user number.
+  SUBROUTINE cmfe_EquationsSet_OutputTypeGetNumber(regionUserNumber,equationsSetUserNumber,outputType,err)
+    !DLLEXPORT(cmfe_EquationsSet_OutputTypeGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to get the output type for.
+    INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to get the output type for.
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the equations set \see OPENCMISS_EquationsSetOutputTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_EquationsSet_OutputTypeGetNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(equationsSet)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
+    CALL EquationsSet_OutputTypeGet(equationsSet,outputType,err,error,*999)
+
+    EXITS("cmfe_EquationsSet_OutputTypeGetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_EquationsSet_OutputTypeGetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_EquationsSet_OutputTypeGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the output type an equations set identified by an object.
+  SUBROUTINE cmfe_EquationsSet_OutputTypeGetObj(equationsSet,outputType,err)
+    !DLLEXPORT(cmfe_EquationsSet_OutputTypeGetObj)
+
+    !Argument variables
+    TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<The equations set to get the output type for.
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the equations set \see OPENCMISS_EquationsSetOutputTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_EquationsSet_OutputTypeGetObj",err,error,*999)
+
+    CALL EquationsSet_OutputTypeGet(equationsSet%equationsSet,outputType,err,error,*999)
+
+    EXITS("cmfe_EquationsSet_OutputTypeGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_EquationsSet_OutputTypeGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_EquationsSet_OutputTypeGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the output type for an equations set identified by a user number.
+  SUBROUTINE cmfe_EquationsSet_OutputTypeSetNumber(regionUserNumber,equationsSetUserNumber,outputType,err)
+    !DLLEXPORT(cmfe_EquationsSet_OutputTypeSetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to set the output type for.
+    INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to set the output type for.
+    INTEGER(INTG), INTENT(IN) :: outputType !<The output type of the equations set to set \see OPENCMISS_EquationsSetOutputTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_EquationsSet_OutputTypeSetNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(equationsSet)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
+    CALL EquationsSet_OutputTypeSet(equationsSet,outputType,err,error,*999)
+
+    EXITS("cmfe_EquationsSet_OutputTypeSetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_EquationsSet_OutputTypeSetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_EquationsSet_OutputTypeSetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the output type for an equations set identified by an object.
+  SUBROUTINE cmfe_EquationsSet_OutputTypeSetObj(equationsSet,outputType,err)
+    !DLLEXPORT(cmfe_EquationsSet_OutputTypeSetObj)
+
+    !Argument variables
+    TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to set the output type for.
+    INTEGER(INTG), INTENT(IN) :: outputType !<The output type of the equations set to set \see OPENCMISS_EquationsSetOutputTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_EquationsSet_OutputTypeSetObj",err,error,*999)
+
+    CALL EquationsSet_OutputTypeSet(equationsSet%equationsSet,outputType,err,error,*999)
+
+    EXITS("cmfe_EquationsSet_OutputTypeSetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_EquationsSet_OutputTypeSetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_EquationsSet_OutputTypeSetObj
 
   !
   !================================================================================================================================
@@ -39965,7 +40401,7 @@ CONTAINS
     NULLIFY(lagrangeField)
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,INTERFACE,err,error,*999)
-    CALL Interface_InterfaceConditionGet(INTERFACE,interfaceUserNumber,interfaceCondition,err,error,*999)
+    CALL Interface_InterfaceConditionGet(INTERFACE,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
     CALL InterfaceCondition_LagrangeFieldCreateStart(interfaceCondition,lagrangeFieldUserNumber,lagrangeField, &
       & err,error,*999)
 
@@ -40006,6 +40442,386 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_InterfaceCondition_LagrangeFieldCreateStartObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the character string label for an interface condition identified by a user number.
+  SUBROUTINE cmfe_InterfaceCondition_LabelGetCNumber(regionUserNumber,interfaceUserNumber,interfaceConditionUserNumber,label,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_LabelGetCNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface to get the label for.
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface containing the interface condition to get the label for.
+    INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition to get the label for.
+    CHARACTER(LEN=*), INTENT(OUT) :: label !<On return, the interface condition label.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_InterfaceCondition_LabelGetCNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(interface)
+    NULLIFY(interfaceCondition)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
+    CALL Interface_InterfaceConditionGet(interface,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
+    CALL InterfaceCondition_LabelGet(interfaceCondition,label,err,error,*999)
+
+    EXITS("cmfe_InterfaceCondition_LabelGetCNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_InterfaceCondition_LabelGetCNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_InterfaceCondition_LabelGetCNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the character string label for an interface condition identified by an object.
+  SUBROUTINE cmfe_InterfaceCondition_LabelGetCObj(interfaceCondition,label,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_LabelGetCObj)
+
+    !Argument variables
+    TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to get the label for.
+    CHARACTER(LEN=*), INTENT(OUT) :: label !<On return, the interface condition label.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_InterfaceCondition_LabelGetCObj",err,error,*999)
+
+    CALL InterfaceCondition_LabelGet(interfaceCondition%interfaceCondition,label,err,error,*999)
+
+    EXITS("cmfe_InterfaceCondition_LabelGetCObj")
+    RETURN
+999 ERRORSEXITS("cmfe_InterfaceCondition_LabelGetCObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_InterfaceCondition_LabelGetCObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the varying string label for an interface condition identified by a user number.
+  SUBROUTINE cmfe_InterfaceCondition_LabelGetVSNumber(regionUserNumber,interfaceUserNumber,interfaceConditionUserNumber,label,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_LabelGetVSNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface condition to get the label for.
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface containing the interface condition to get the label for.
+    INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition to get the label for.
+    TYPE(VARYING_STRING), INTENT(OUT) :: label !<On return, the interface condition label.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_InterfaceCondition_LabelGetVSNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(interface)
+    NULLIFY(interfaceCondition)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
+    CALL Interface_InterfaceConditionGet(interface,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
+    CALL InterfaceCondition_LabelGet(interfaceCondition,label,err,error,*999)
+
+    EXITS("cmfe_InterfaceCondition_LabelGetVSNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_InterfaceCondition_LabelGetVSNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_InterfaceCondition_LabelGetVSNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the varying string label for an interface condition identified by an object.
+  SUBROUTINE cmfe_InterfaceCondition_LabelGetVSObj(interfaceCondition,label,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_LabelGetVSObj)
+
+    !Argument variables
+    TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to get the label for.
+    TYPE(VARYING_STRING), INTENT(OUT) :: label !<On return, the interface condition label.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_InterfaceCondition_LabelGetVSObj",err,error,*999)
+
+    CALL InterfaceCondition_LabelGet(interfaceCondition%interfaceCondition,label,err,error,*999)
+
+    EXITS("cmfe_InterfaceCondition_LabelGetVSObj")
+    RETURN
+999 ERRORSEXITS("cmfe_InterfaceCondition_LabelGetVSObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_InterfaceCondition_LabelGetVSObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the character string label for an interface condition identified by a user number.
+  SUBROUTINE cmfe_InterfaceCondition_LabelSetCNumber(regionUserNumber,interfaceUserNumber,interfaceConditionUserNumber,label,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_LabelSetCNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface to set the label for.
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface containing the interface condition to set the label for.
+    INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition to set the label for.
+    CHARACTER(LEN=*), INTENT(IN) :: label !<The interface condition label to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_InterfaceCondition_LabelSetCNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(INTERFACE)
+    NULLIFY(interfaceCondition)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_InterfaceGet(region,interfaceUserNumber,INTERFACE,err,error,*999)
+    CALL Interface_InterfaceConditionGet(INTERFACE,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
+    CALL InterfaceCondition_LabelSet(interfaceCondition,label,err,error,*999)
+
+    EXITS("cmfe_InterfaceCondition_LabelSetCNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_InterfaceCondition_LabelSetCNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_InterfaceCondition_LabelSetCNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the character string label for an interface condition identified by an object.
+  SUBROUTINE cmfe_InterfaceCondition_LabelSetCObj(interfaceCondition,label,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_LabelSetCObj)
+
+    !Argument variables
+    TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to set the label for.
+    CHARACTER(LEN=*), INTENT(IN) :: label !<The interface condition label to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_InterfaceCondition_LabelSetCObj",err,error,*999)
+
+    CALL InterfaceCondition_LabelSet(interfaceCondition%interfaceCondition,label,err,error,*999)
+
+    EXITS("cmfe_InterfaceCondition_LabelSetCObj")
+    RETURN
+999 ERRORSEXITS("cmfe_InterfaceCondition_LabelSetCObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_InterfaceCondition_LabelSetCObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the varying string label for an interface condition identified by a user number.
+  SUBROUTINE cmfe_InterfaceCondition_LabelSetVSNumber(regionUserNumber,interfaceUserNumber,interfaceConditionUserNumber,label,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_LabelSetVSNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface to set the label for.
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface containing the interface condition to set the label for.
+    INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition to set the label for.
+    TYPE(VARYING_STRING), INTENT(IN) :: label !<The interface condition label to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(INTERFACE_TYPE), POINTER :: interface
+   TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_InterfaceCondition_LabelSetVSNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(INTERFACE)
+    NULLIFY(interfaceCondition)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_InterfaceGet(region,interfaceUserNumber,INTERFACE,err,error,*999)
+    CALL Interface_InterfaceConditionGet(INTERFACE,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
+    CALL InterfaceCondition_LabelSet(interfaceCondition,label,err,error,*999)
+
+    EXITS("cmfe_InterfaceCondition_LabelSetVSNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_InterfaceCondition_LabelSetVSNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_InterfaceCondition_LabelSetVSNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the varying string label for an interface condition identified by an object.
+  SUBROUTINE cmfe_InterfaceCondition_LabelSetVSObj(interfaceCondition,label,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_LabelSetVSObj)
+
+    !Argument variables
+    TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to set the label for.
+    TYPE(VARYING_STRING), INTENT(IN) :: label !<The interface condition label to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_InterfaceCondition_LabelSetVSObj",err,error,*999)
+
+    CALL InterfaceCondition_LabelSet(interfaceCondition%interfaceCondition,label,err,error,*999)
+
+    EXITS("cmfe_InterfaceCondition_LabelSetVSObj")
+    RETURN
+999 ERRORSEXITS("cmfe_InterfaceCondition_LabelSetVSObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_InterfaceCondition_LabelSetVSObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the output type an interface condition identified by a user number.
+  SUBROUTINE cmfe_InterfaceCondition_OutputTypeGetNumber(regionUserNumber,interfaceUserNumber,interfaceConditionUserNumber, &
+    & outputType,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_OutputTypeGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface to get the output type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface containing the interface condition to get the output type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition to get the output type for.
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the interface condition \see OPENCMISS_InterfaceConditionOutputTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_InterfaceCondition_OutputTypeGetNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(INTERFACE)
+    NULLIFY(interfaceCondition)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_InterfaceGet(region,interfaceUserNumber,INTERFACE,err,error,*999)
+    CALL Interface_InterfaceConditionGet(INTERFACE,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
+    CALL InterfaceCondition_OutputTypeGet(interfaceCondition,outputType,err,error,*999)
+
+    EXITS("cmfe_InterfaceCondition_OutputTypeGetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_InterfaceCondition_OutputTypeGetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_InterfaceCondition_OutputTypeGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the output type an interface condition identified by an object.
+  SUBROUTINE cmfe_InterfaceCondition_OutputTypeGetObj(interfaceCondition,outputType,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_OutputTypeGetObj)
+
+    !Argument variables
+    TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to get the output type for.
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the interface condition \see OPENCMISS_InterfaceConditionOutputTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_InterfaceCondition_OutputTypeGetObj",err,error,*999)
+
+    CALL InterfaceCondition_OutputTypeGet(interfaceCondition%interfaceCondition,outputType,err,error,*999)
+
+    EXITS("cmfe_InterfaceCondition_OutputTypeGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_InterfaceCondition_OutputTypeGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_InterfaceCondition_OutputTypeGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the output type for an interface condition identified by a user number.
+  SUBROUTINE cmfe_InterfaceCondition_OutputTypeSetNumber(regionUserNumber,interfaceUserNumber,interfaceConditionUserNumber, &
+    & outputType,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_OutputTypeSetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the interface to set the output type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface containing the interface condition to set the output type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition to set the output type for.
+    INTEGER(INTG), INTENT(IN) :: outputType !<The output type of the interface condition to set \see OPENCMISS_InterfaceConditionOutputTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE
+    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_InterfaceCondition_OutputTypeSetNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(INTERFACE)
+    NULLIFY(interfaceCondition)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_InterfaceGet(region,interfaceUserNumber,INTERFACE,err,error,*999)
+    CALL Interface_InterfaceConditionGet(INTERFACE,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
+    CALL InterfaceCondition_OutputTypeSet(interfaceCondition,outputType,err,error,*999)
+
+    EXITS("cmfe_InterfaceCondition_OutputTypeSetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_InterfaceCondition_OutputTypeSetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_InterfaceCondition_OutputTypeSetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the output type for an interface condition identified by an object.
+  SUBROUTINE cmfe_InterfaceCondition_OutputTypeSetObj(interfaceCondition,outputType,err)
+    !DLLEXPORT(cmfe_InterfaceCondition_OutputTypeSetObj)
+
+    !Argument variables
+    TYPE(cmfe_InterfaceConditionType), INTENT(INOUT) :: interfaceCondition !<The interface condition to set the output type for.
+    INTEGER(INTG), INTENT(IN) :: outputType !<The output type of the interface condition to set \see OPENCMISS_InterfaceConditionOutputTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_InterfaceCondition_OutputTypeSetObj",err,error,*999)
+
+    CALL InterfaceCondition_OutputTypeSet(interfaceCondition%interfaceCondition,outputType,err,error,*999)
+
+    EXITS("cmfe_InterfaceCondition_OutputTypeSetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_InterfaceCondition_OutputTypeSetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_InterfaceCondition_OutputTypeSetObj
 
   !
   !================================================================================================================================

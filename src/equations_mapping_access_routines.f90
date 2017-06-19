@@ -44,7 +44,7 @@
 !> This module contains all equations mapping access method routines.
 MODULE EquationsMappingAccessRoutines
   
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE Kinds
   USE Strings
   USE Types

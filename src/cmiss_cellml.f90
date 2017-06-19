@@ -47,7 +47,7 @@ MODULE CMISS_CELLML
   !Module imports
   USE ISO_C_BINDING
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE CellMLAccessRoutines
   
 #ifdef WITH_CELLML

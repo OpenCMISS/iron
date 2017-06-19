@@ -44,7 +44,7 @@
 !>This module contains all interface matrices routines.
 MODULE INTERFACE_MATRICES_ROUTINES
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE DISTRIBUTED_MATRIX_VECTOR
   USE EquationsMatricesRoutines
   USE FIELD_ROUTINES
