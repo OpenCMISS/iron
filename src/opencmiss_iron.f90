@@ -13024,7 +13024,7 @@ CONTAINS
 
   !>Constrain multiple nodal equations dependent field DOFs to be a single solver DOF in the solver equations
   SUBROUTINE cmfe_BoundaryConditions_ConstrainNodeDofsEqualNumber(regionUserNumber,problemUserNumber,controlLoopIdentifier, &
-    & solverIndex,fieldUserNumber,fieldVariableType,versionNumber,derivativeNumber,component,nodes,err)
+    & solverIndex,fieldUserNumber,fieldVariableType,versionNumber,derivativeNumber,component,nodes,coefficient,err)
     !DLLEXPORT(cmfe_BoundaryConditions_ConstrainNodeDofsEqualNumber)
 
     !Argument variables
@@ -13038,6 +13038,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number.
     INTEGER(INTG), INTENT(IN) :: component !<The field component number of the DOFs to be constrained.
     INTEGER(INTG), INTENT(IN) :: nodes(:) !<The user numbers of the nodes to be constrained to be equal.
+    REAL(DP), INTENT(IN) :: coefficient !<The coefficient of constraint, applied to all but the first node.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(REGION_TYPE), POINTER :: region
@@ -13065,7 +13066,7 @@ CONTAINS
             CALL Field_user_number_find(fieldUserNumber,region,field,err,error,*999)
             IF(ASSOCIATED(field)) THEN
               CALL BoundaryConditions_ConstrainNodeDofsEqual(boundaryConditions,field, &
-                & fieldVariableType,versionNumber,derivativeNumber,component,nodes,err,error,*999)
+                & fieldVariableType,versionNumber,derivativeNumber,component,nodes,coefficient,err,error,*999)
             ELSE
               localError="A field with a user number of "//TRIM(NumberToVString(fieldUserNumber,"*",err,error))// &
                 & " does not exist."
@@ -13102,7 +13103,7 @@ CONTAINS
 
   !>Constrain multiple nodal equations dependent field DOFs to be a single solver DOF in the solver equations
   SUBROUTINE cmfe_BoundaryConditions_ConstrainNodeDofsEqualObj( &
-      & boundaryConditions,field,fieldVariableType,versionNumber,derivativeNumber,component,nodes,err)
+      & boundaryConditions,field,fieldVariableType,versionNumber,derivativeNumber,component,nodes,coefficient,err)
     !DLLEXPORT(cmfe_BoundaryConditions_ConstrainNodeDofsEqualObj)
 
     !Argument variables
@@ -13113,12 +13114,13 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number.
     INTEGER(INTG), INTENT(IN) :: component !<The field component number of the DOFs to be constrained.
     INTEGER(INTG), INTENT(IN) :: nodes(:) !<The user numbers of the nodes to be constrained to be equal.
+    REAL(DP), INTENT(IN) :: coefficient !<The coefficient of constraint, applied to all but the first node.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
 
     ENTERS("cmfe_BoundaryConditions_ConstrainNodeDofsEqualObj",err,error,*999)
 
     CALL BoundaryConditions_ConstrainNodeDofsEqual(boundaryConditions%boundaryConditions,field%field, &
-      & fieldVariableType,versionNumber,derivativeNumber,component,nodes,err,error,*999)
+      & fieldVariableType,versionNumber,derivativeNumber,component,nodes,coefficient,err,error,*999)
 
     EXITS("cmfe_BoundaryConditions_ConstrainNodeDofsEqualObj")
     RETURN

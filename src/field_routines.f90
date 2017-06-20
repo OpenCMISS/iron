@@ -9693,7 +9693,14 @@ CONTAINS
                 NULLIFY(fieldScaleFactors)
                 CALL DISTRIBUTED_VECTOR_DATA_GET(field%SCALINGS%SCALINGS(scalingIdx)%SCALE_FACTORS, &
                   & fieldScaleFactors,err,error,*999)
-                fieldScaleFactors = scaleFactors
+                IF(SIZE(fieldScaleFactors,1)==SIZE(scaleFactors,1)) THEN
+                  fieldScaleFactors = scaleFactors
+                ELSE
+                  localError="The input scale factors have dimensions "//TRIM(NUMBER_TO_VSTRING(SIZE(scaleFactors),"*",err,error)) &
+                    & //" and does not match the expected scale factor dimensions of "// &
+                    & TRIM(NUMBER_TO_VSTRING(SIZE(fieldScaleFactors),"*",err,error))
+                  CALL FlagError(localError,err,error,*999)
+                ENDIF
                 CALL DISTRIBUTED_VECTOR_DATA_RESTORE(field%SCALINGS%SCALINGS(scalingIdx)% &
                   & SCALE_FACTORS,fieldScaleFactors,ERR,ERROR,*999)
               ELSE
