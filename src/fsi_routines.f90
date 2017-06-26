@@ -206,14 +206,14 @@ CONTAINS
           !Set the first solver to be an CellML Evaluator for time varying boundary conditions
           CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
           CALL Solver_TypeSet(solver,SOLVER_CELLML_EVALUATOR_TYPE,err,error,*999)
-          CALL Solver_LabelSet(solver,"FSI Boundary Condition CellML Evaluation Solver",err,error,*999)
+          CALL Solver_LabelSet(solver,"FSI boundary condition CellML evaluation solver",err,error,*999)
           !Set solver defaults
           CALL Solver_LibraryTypeSet(solver,SOLVER_CMISS_LIBRARY,err,error,*999)
           !Set the second solver to be a first order dynamic solver
           NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
           CALL Solver_TypeSet(solver,SOLVER_DYNAMIC_TYPE,err,error,*999)
-          CALL Solver_LabelSet(solver,"FSI Dynamic Nonlinear Solver",err,error,*999)
+          CALL Solver_LabelSet(solver,"FSI dynamic nonlinear solver",err,error,*999)
           CALL Solver_DynamicLinearityTypeSet(solver,SOLVER_DYNAMIC_NONLINEAR,err,error,*999)
           CALL Solver_DynamicOrderSet(solver,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
           !Set solver defaults
@@ -224,7 +224,7 @@ CONTAINS
           NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,3,solver,err,error,*999)
           CALL Solver_TypeSet(solver,SOLVER_LINEAR_TYPE,err,error,*999)
-          CALL Solver_LabelSet(solver,"FSI Mesh Movement Linear Solver",err,error,*999)
+          CALL Solver_LabelSet(solver,"FSI mesh movement linear solver",err,error,*999)
           !Set solver defaults
           CALL Solver_LibraryTypeSet(solver,SOLVER_PETSC_LIBRARY,err,error,*999)
         CASE(PROBLEM_SETUP_FINISH_ACTION)

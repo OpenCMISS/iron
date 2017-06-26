@@ -1213,6 +1213,8 @@ CONTAINS
       systemElapsed=systemTime3(1)-systemTime2(1)
       elementUserElapsed=userElapsed
       elementSystemElapsed=systemElapsed
+      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+        & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
@@ -1231,6 +1233,8 @@ CONTAINS
       systemElapsed=systemTime5(1)-systemTime3(1)
       elementUserElapsed=elementUserElapsed+userElapsed
       elementSystemElapsed=elementSystemElapsed+systemElapsed
+      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+        & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Boundary+ghost elements equations assembly",userElapsed,systemElapsed,err,error,*999)
       IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average element equations assembly", &
         & elementUserElapsed/numberOfTimes,elementSystemElapsed/numberOfTimes,err,error,*999)
@@ -1365,6 +1369,8 @@ CONTAINS
       systemElapsed=systemTime3(1)-systemTime2(1)
       elementUserElapsed=userElapsed
       elementSystemElapsed=systemElapsed
+      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+        & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
@@ -1389,6 +1395,8 @@ CONTAINS
       systemElapsed=systemTime5(1)-systemTime3(1)
       elementUserElapsed=elementUserElapsed+userElapsed
       elementSystemElapsed=elementSystemElapsed+systemElapsed
+      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+        & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Boundary+ghost elements equations assembly",userElapsed,systemElapsed,err,error,*999)
       IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average element equations assembly", &
         & elementUserElapsed/numberOfTimes,elementSystemElapsed/numberOfTimes,err,error,*999)
@@ -1495,6 +1503,8 @@ CONTAINS
       systemElapsed=systemTime3(1)-systemTime2(1)
       elementUserElapsed=userElapsed
       elementSystemElapsed=systemElapsed
+      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+        & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
@@ -1513,6 +1523,8 @@ CONTAINS
       systemElapsed=systemTime5(1)-systemTime3(1)
       elementUserElapsed=elementUserElapsed+userElapsed
       elementSystemElapsed=elementSystemElapsed+systemElapsed
+      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+        & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Boundary+ghost elements equations assembly",userElapsed,systemElapsed,err,error,*999)
       IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average element equations assembly", &
         & elementUserElapsed/numberOfTimes,elementSystemElapsed/numberOfTimes,err,error,*999)
@@ -1638,6 +1650,8 @@ CONTAINS
       systemElapsed=systemTime3(1)-systemTime2(1)
       elementUserElapsed=userElapsed
       elementSystemElapsed=systemElapsed
+      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+        & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
@@ -1656,6 +1670,8 @@ CONTAINS
       systemElapsed=systemTime5(1)-systemTime3(1)
       elementUserElapsed=elementUserElapsed+userElapsed
       elementSystemElapsed=elementSystemElapsed+systemElapsed
+      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+        & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Boundary+ghost elements equations assembly",userElapsed,systemElapsed,err,error,*999)
       IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average element equations assembly", &
         & elementUserElapsed/numberOfTimes,elementSystemElapsed/numberOfTimes,err,error,*999)
@@ -2690,13 +2706,13 @@ CONTAINS
             CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of columns = ",elementMatrix%maxNumberOfColumns, &
               & err,error,*999)
             CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfRows,8,8,elementMatrix%rowDOFS, &
-              & '("  Row dofs     :",8(X,I13))','(16X,8(X,I13))',err,error,*999)
+              & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
             CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfColumns,8,8,elementMatrix% &
-              & columnDOFS,'("  Column dofs  :",8(X,I13))','(16X,8(X,I13))',err,error,*999)
+              & columnDOFS,'("  Column dofs      :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
             CALL WriteStringMatrix(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfRows,1,1,elementMatrix% &
               & numberOfColumns,8,8,elementMatrix%matrix(1:elementMatrix%numberOfRows,1:elementMatrix% &
-              & numberOfColumns),WRITE_STRING_MATRIX_NAME_AND_INDICES,'("  Matrix','(",I2,",:)',' :",8(X,E13.6))', &
-              & '(16X,8(X,E13.6))',err,error,*999)
+              & numberOfColumns),WRITE_STRING_MATRIX_NAME_AND_INDICES,'("  Matrix','(",I2,",:)','     :",8(X,E13.6))', &
+              & '(20X,8(X,E13.6))',err,error,*999)
           ENDIF
         ENDDO !matrixIdx
       ENDIF
@@ -2717,13 +2733,13 @@ CONTAINS
             CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of columns = ",elementMatrix%maxNumberOfColumns, &
               & err,error,*999)
             CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfRows,8,8,elementMatrix%rowDOFS, &
-              & '("  Row dofs     :",8(X,I13))','(16X,8(X,I13))',err,error,*999)
+              & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
             CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfColumns,8,8,elementMatrix% &
-              & columnDOFS,'("  Column dofs  :",8(X,I13))','(16X,8(X,I13))',err,error,*999)
+              & columnDOFS,'("  Column dofs      :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
             CALL WriteStringMatrix(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfRows,1,1,elementMatrix% &
               & numberOfColumns,8,8,elementMatrix%matrix(1:elementMatrix%numberOfRows,1:elementMatrix% &
-              & numberOfColumns),WRITE_STRING_MATRIX_NAME_AND_INDICES,'("  Matrix','(",I2,",:)',' :",8(X,E13.6))', &
-              & '(16X,8(X,E13.6))',err,error,*999)
+              & numberOfColumns),WRITE_STRING_MATRIX_NAME_AND_INDICES,'("  Matrix','(",I2,",:)','     :",8(X,E13.6))', &
+              & '(20X,8(X,E13.6))',err,error,*999)
           ENDIF
         ENDDO !matrixIdx
       ENDIF
@@ -2737,9 +2753,9 @@ CONTAINS
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of rows = ",elementVector%maxNumberOfRows, &
             & err,error,*999)
           CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementVector%numberOfRows,8,8,elementVector%rowDOFS, &
-            & '("  Row dofs     :",8(X,I13))','(16X,8(X,I13))',err,error,*999)
+            & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
           CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementVector%numberOfRows,8,8,elementVector%vector, &
-            & '("  Vector(:):",8(X,E13.6))','(16X,8(X,E13.6))',err,error,*999)
+            & '("  Vector(:)        :",8(X,E13.6))','(20X,8(X,E13.6))',err,error,*999)
         ENDIF
       ENDIF
       sourceVector=>vectorMatrices%sourceVector
@@ -2752,9 +2768,9 @@ CONTAINS
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of rows = ",elementVector%maxNumberOfRows, &
             & err,error,*999)
           CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementVector%numberOfRows,8,8,elementVector%rowDOFS, &
-            & '("  Row dofs     :",8(X,I13))','(16X,8(X,I13))',err,error,*999)
+            & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
           CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementVector%numberOfRows,8,8,elementVector%vector, &
-            & '("  Vector(:):",8(X,E13.6))','(16X,8(X,E13.6))',err,error,*999)
+            & '("  Vector(:)        :",8(X,E13.6))','(20X,8(X,E13.6))',err,error,*999)
         ENDIF
       ENDIF
     ENDIF
@@ -3095,13 +3111,13 @@ CONTAINS
             CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of columns = ",elementMatrix% &
               & maxNumberOfColumns,err,error,*999)
             CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfRows,8,8,elementMatrix%rowDOFS, &
-              & '("  Row dofs     :",8(X,I13))','(16X,8(X,I13))',err,error,*999)
+              & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
             CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfColumns,8,8,elementMatrix% &
-              & columnDOFS,'("  Column dofs  :",8(X,I13))','(16X,8(X,I13))',err,error,*999)
+              & columnDOFS,'("  Column dofs      :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
             CALL WriteStringMatrix(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfRows,1,1,elementMatrix% &
               & numberOfColumns,8,8,elementMatrix%matrix(1:elementMatrix%numberOfRows,1:elementMatrix% &
-              & numberOfColumns),WRITE_STRING_MATRIX_NAME_AND_INDICES,'("  Matrix','(",I2,",:)',' :",8(X,E13.6))', &
-              & '(16X,8(X,E13.6))',err,error,*999)
+              & numberOfColumns),WRITE_STRING_MATRIX_NAME_AND_INDICES,'("  Matrix','(",I2,",:)','     :",8(X,E13.6))', &
+              & '(20X,8(X,E13.6))',err,error,*999)
           ENDIF
         ENDDO !matrixIdx
       ENDIF
@@ -3124,13 +3140,13 @@ CONTAINS
             CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of columns = ",elementMatrix% &
               & maxNumberOfColumns,err,error,*999)
             CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfRows,8,8,elementMatrix%rowDOFS, &
-              & '("  Row dofs     :",8(X,I13))','(16X,8(X,I13))',err,error,*999)
+              & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
             CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfColumns,8,8,elementMatrix% &
-              & columnDOFS,'("  Column dofs  :",8(X,I13))','(16X,8(X,I13))',err,error,*999)
+              & columnDOFS,'("  Column dofs      :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
             CALL WriteStringMatrix(GENERAL_OUTPUT_TYPE,1,1,elementMatrix%numberOfRows,1,1,elementMatrix% &
               & numberOfColumns,8,8,elementMatrix%matrix(1:elementMatrix%numberOfRows,1:elementMatrix% &
-              & numberOfColumns),WRITE_STRING_MATRIX_NAME_AND_INDICES,'("  Matrix','(",I2,",:)',' :",8(X,E13.6))', &
-              & '(16X,8(X,E13.6))',err,error,*999)
+              & numberOfColumns),WRITE_STRING_MATRIX_NAME_AND_INDICES,'("  Matrix','(",I2,",:)','     :",8(X,E13.6))', &
+              & '(20X,8(X,E13.6))',err,error,*999)
           ENDIF
         ENDDO !matrixIdx
       ENDIF
@@ -3142,9 +3158,9 @@ CONTAINS
         CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of rows = ",elementVector%maxNumberOfRows, &
           & err,error,*999)
         CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementVector%numberOfRows,8,8,elementVector%rowDOFS, &
-          & '("  Row dofs     :",8(X,I13))','(16X,8(X,I13))',err,error,*999)
+          & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
         CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementVector%numberOfRows,8,8,elementVector%vector, &
-          & '("  Vector(:):",8(X,E13.6))','(16X,8(X,E13.6))',err,error,*999)
+          & '("  Vector(:)        :",8(X,E13.6))','(20X,8(X,E13.6))',err,error,*999)
       ENDIF
       rhsVector=>vectorMatrices%rhsVector
       IF(ASSOCIATED(rhsVector)) THEN
@@ -3156,9 +3172,9 @@ CONTAINS
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of rows = ",elementVector%maxNumberOfRows, &
             & err,error,*999)
           CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementVector%numberOfRows,8,8,elementVector%rowDOFS, &
-            & '("  Row dofs     :",8(X,I13))','(16X,8(X,I13))',err,error,*999)
+            & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
           CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementVector%numberOfRows,8,8,elementVector%vector, &
-            & '("  Vector(:)    :",8(X,E13.6))','(16X,8(X,E13.6))',err,error,*999)
+            & '("  Vector(:)        :",8(X,E13.6))','(20X,8(X,E13.6))',err,error,*999)
         ENDIF
       ENDIF
       sourceVector=>vectorMatrices%sourceVector
@@ -3171,9 +3187,9 @@ CONTAINS
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of rows = ",elementVector%maxNumberOfRows, &
             & err,error,*999)
           CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementVector%numberOfRows,8,8,elementVector%rowDOFS, &
-            & '("  Row dofs     :",8(X,I13))','(16X,8(X,I13))',err,error,*999)
+            & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
           CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,elementVector%numberOfRows,8,8,elementVector%vector, &
-            & '("  Vector(:)    :",8(X,E13.6))','(16X,8(X,E13.6))',err,error,*999)
+            & '("  Vector(:)        :",8(X,E13.6))','(20X,8(X,E13.6))',err,error,*999)
         ENDIF
       ENDIF
     ENDIF
@@ -4792,6 +4808,8 @@ CONTAINS
       systemElapsed=systemTime3(1)-systemTime2(1)
       elementUserElapsed=userElapsed
       elementSystemElapsed=systemElapsed
+      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+        & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
@@ -4810,6 +4828,8 @@ CONTAINS
       systemElapsed=systemTime5(1)-systemTime3(1)
       elementUserElapsed=elementUserElapsed+userElapsed
       elementSystemElapsed=elementSystemElapsed+systemElapsed
+      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+        & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Boundary+ghost elements equations assembly",userElapsed,systemElapsed,err,error,*999)
       IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average element equations assembly", &
         & elementUserElapsed/numberOfTimes,elementSystemElapsed/numberOfTimes,err,error,*999)
@@ -4909,6 +4929,8 @@ CONTAINS
       systemElapsed=systemTime3(1)-systemTime2(1)
       elementUserElapsed=userElapsed
       elementSystemElapsed=systemElapsed
+      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+        & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
@@ -4927,6 +4949,8 @@ CONTAINS
       systemElapsed=systemTime5(1)-systemTime3(1)
       elementUserElapsed=elementUserElapsed+userElapsed
       elementSystemElapsed=elementSystemElapsed+systemElapsed
+      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+        & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Boundary+ghost elements equations assembly",userElapsed,systemElapsed,err,error,*999)
       IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average element equations assembly", &
         & elementUserElapsed/numberOfTimes,elementSystemElapsed/numberOfTimes,err,error,*999)
@@ -5150,6 +5174,8 @@ CONTAINS
       systemElapsed=systemTime3(1)-systemTime2(1)
       elementUserElapsed=userElapsed
       elementSystemElapsed=systemElapsed
+      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+        & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
@@ -5168,6 +5194,8 @@ CONTAINS
       systemElapsed=systemTime5(1)-systemTime3(1)
       elementUserElapsed=elementUserElapsed+userElapsed
       elementSystemElapsed=elementSystemElapsed+systemElapsed
+      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+        & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Boundary+ghost elements equations assembly",userElapsed,systemElapsed,err,error,*999)
       IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average element equations assembly", &
         & elementUserElapsed/numberOfTimes,elementSystemElapsed/numberOfTimes,err,error,*999)
@@ -5268,6 +5296,8 @@ CONTAINS
       systemElapsed=systemTime3(1)-systemTime2(1)
       elementUserElapsed=userElapsed
       elementSystemElapsed=systemElapsed
+      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+        & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
@@ -5286,6 +5316,8 @@ CONTAINS
       systemElapsed=systemTime5(1)-systemTime3(1)
       elementUserElapsed=elementUserElapsed+userElapsed
       elementSystemElapsed=elementSystemElapsed+systemElapsed
+      IF(equations%outputType>=EQUATIONS_ELEMENT_MATRIX_OUTPUT) &
+        & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Boundary+ghost elements equations assembly",userElapsed,systemElapsed,err,error,*999)
       IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average element equations assembly", &
         & elementUserElapsed/numberOfTimes,elementSystemElapsed/numberOfTimes,err,error,*999)
@@ -6666,6 +6698,8 @@ CONTAINS
       systemElapsed=systemTime3(1)-systemTime2(1)
       nodeUserElapsed=userElapsed
       nodeSystemElapsed=systemElapsed
+      IF(equations%outputType>=EQUATIONS_NODAL_MATRIX_OUTPUT) &
+        & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Internal nodes equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost nodes
@@ -6684,6 +6718,8 @@ CONTAINS
       systemElapsed=systemTime5(1)-systemTime3(1)
       nodeUserElapsed=nodeUserElapsed+userElapsed
       nodeSystemElapsed=nodeSystemElapsed+systemElapsed
+      IF(equations%outputType>=EQUATIONS_NODAL_MATRIX_OUTPUT) &
+        & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Boundary+ghost nodes equations assembly",userElapsed,systemElapsed,err,error,*999)
       IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average nodes equations assembly", &
         & nodeUserElapsed/numberOfTimes,nodeSystemElapsed/numberOfTimes,err,error,*999)
@@ -6900,13 +6936,13 @@ CONTAINS
             CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of columns = ",nodalMatrix%maxNumberOfColumns, &
               & err,error,*999)
             CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,nodalMatrix%numberOfRows,8,8,nodalMatrix%rowDofs, &
-              & '("  Row dofs     :",8(X,I13))','(16X,8(X,I13))',err,error,*999)
+              & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
             CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,nodalMatrix%numberOfColumns,8,8,nodalMatrix% &
-              & columnDofs,'("  Column dofs  :",8(X,I13))','(16X,8(X,I13))',err,error,*999)
+              & columnDofs,'("  Column dofs      :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
             CALL WriteStringMatrix(GENERAL_OUTPUT_TYPE,1,1,nodalMatrix%numberOfRows,1,1,nodalMatrix% &
               & numberOfColumns,8,8,nodalMatrix%matrix(1:nodalMatrix%numberOfRows,1:nodalMatrix% &
-              & numberOfColumns),WRITE_STRING_MATRIX_NAME_AND_INDICES,'("  Matrix','(",I2,",:)',' :",8(X,E13.6))', &
-              & '(16X,8(X,E13.6))',err,error,*999)
+              & numberOfColumns),WRITE_STRING_MATRIX_NAME_AND_INDICES,'("  Matrix','(",I2,",:)','     :",8(X,E13.6))', &
+              & '(20X,8(X,E13.6))',err,error,*999)
           ENDIF
         ENDDO !matrixIdx
       ENDIF
@@ -6917,9 +6953,9 @@ CONTAINS
         CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of rows = ",nodalVector%numberOfRows,err,error,*999)
         CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of rows = ",nodalVector%maxNumberOfRows,err,error,*999)
         CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,nodalVector%numberOfRows,8,8,nodalVector%rowDofs, &
-          & '("  Row dofs     :",8(X,I13))','(16X,8(X,I13))',err,error,*999)
+          & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
         CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,nodalVector%numberOfRows,8,8,nodalVector%vector, &
-          & '("  Vector(:)    :",8(X,E13.6))','(16X,8(X,E13.6))',err,error,*999)
+          & '("  Vector(:)        :",8(X,E13.6))','(20X,8(X,E13.6))',err,error,*999)
       ENDIF
       rhsVector=>vectorMatrices%rhsVector
       IF(ASSOCIATED(rhsVector)) THEN
@@ -6930,9 +6966,9 @@ CONTAINS
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of rows = ",nodalVector%numberOfRows,err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of rows = ",nodalVector%maxNumberOfRows,err,error,*999)
           CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,nodalVector%numberOfRows,8,8,nodalVector%rowDofs, &
-            & '("  Row dofs     :",8(X,I13))','(16X,8(X,I13))',err,error,*999)
+            & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
           CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,nodalVector%numberOfRows,8,8,nodalVector%vector, &
-            & '("  Vector(:)    :",8(X,E13.6))','(16X,8(X,E13.6))',err,error,*999)
+            & '("  Vector(:)        :",8(X,E13.6))','(20X,8(X,E13.6))',err,error,*999)
         ENDIF
       ENDIF
       sourceVector=>vectorMatrices%sourceVector
@@ -6944,9 +6980,9 @@ CONTAINS
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Number of rows = ",nodalVector%numberOfRows,err,error,*999)
           CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Maximum number of rows = ",nodalVector%maxNumberOfRows,err,error,*999)
           CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,nodalVector%numberOfRows,8,8,nodalVector%rowDofs, &
-            & '("  Row dofs     :",8(X,I13))','(16X,8(X,I13))',err,error,*999)
+            & '("  Row dofs         :",8(X,I13))','(20X,8(X,I13))',err,error,*999)
           CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,nodalVector%numberOfRows,8,8,nodalVector%vector, &
-            & '("  Vector(:)    :",8(X,E13.6))','(16X,8(X,E13.6))',err,error,*999)
+            & '("  Vector(:)        :",8(X,E13.6))','(20X,8(X,E13.6))',err,error,*999)
         ENDIF
       ENDIF
     ENDIF
@@ -7031,6 +7067,8 @@ CONTAINS
       systemElapsed=systemTime3(1)-systemTime2(1)
       nodeUserElapsed=userElapsed
       nodeSystemElapsed=systemElapsed
+      IF(equations%outputType>=EQUATIONS_NODAL_MATRIX_OUTPUT) &
+        & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Internal nodes equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost nodes
@@ -7049,6 +7087,8 @@ CONTAINS
       systemElapsed=systemTime5(1)-systemTime3(1)
       nodeUserElapsed=nodeUserElapsed+userElapsed
       nodeSystemElapsed=nodeSystemElapsed+systemElapsed
+      IF(equations%outputType>=EQUATIONS_NODAL_MATRIX_OUTPUT) &
+        & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Boundary+ghost nodes equations assembly",userElapsed,systemElapsed,err,error,*999)
       IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average node equations assembly", &
         & nodeUserElapsed/numberOfTimes,nodeSystemElapsed/numberOfTimes,err,error,*999)
@@ -7149,6 +7189,8 @@ CONTAINS
       systemElapsed=systemTime3(1)-systemTime2(1)
       nodeUserElapsed=userElapsed
       nodeSystemElapsed=systemElapsed
+      IF(equations%outputType>=EQUATIONS_NODAL_MATRIX_OUTPUT) &
+        & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Internal nodes equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost nodes
@@ -7167,6 +7209,8 @@ CONTAINS
       systemElapsed=systemTime5(1)-systemTime3(1)
       nodeUserElapsed=nodeUserElapsed+userElapsed
       nodeSystemElapsed=nodeSystemElapsed+systemElapsed
+      IF(equations%outputType>=EQUATIONS_NODAL_MATRIX_OUTPUT) &
+        & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
       CALL Profiling_TimingsOutput(1,"Boundary+ghost nodes equations assembly",userElapsed,systemElapsed,err,error,*999)
       IF(numberOfTimes>0) CALL Profiling_TimingsOutput(1,"Average node equations assembly", &
         & nodeUserElapsed/numberOfTimes,nodeSystemElapsed/numberOfTimes,err,error,*999)

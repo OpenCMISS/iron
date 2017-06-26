@@ -66,6 +66,7 @@ MODULE SOLVER_ROUTINES
   USE ISO_VARYING_STRING
   USE MATHS
   USE PROBLEM_CONSTANTS
+  USE ProfilingRoutines
   USE SolverAccessRoutines
   USE SOLVER_MAPPING_ROUTINES
   USE SOLVER_MATRICES_ROUTINES
@@ -12373,7 +12374,7 @@ CONTAINS
       & equations_column_number,dirichlet_row,dirichlet_idx, &
       & interface_condition_idx,interface_matrix_idx,interface_column_number,interface_row_number, &
       & interface_variable_type,number_of_interface_matrices
-    REAL(SP) :: SYSTEM_ELAPSED,SYSTEM_TIME1(1),SYSTEM_TIME2(1),USER_ELAPSED,USER_TIME1(1),USER_TIME2(1)
+    REAL(SP) :: systemElapsed,SYSTEM_TIME1(1),SYSTEM_TIME2(1),userElapsed,USER_TIME1(1),USER_TIME2(1)
     REAL(DP) :: DAMPING_MATRIX_COEFFICIENT,DELTA_T,DYNAMIC_VALUE,FIRST_UPDATE_FACTOR,RESIDUAL_VALUE, &
       & LINEAR_VALUE,LINEAR_VALUE_SUM,MASS_MATRIX_COEFFICIENT,RHS_VALUE,row_coupling_coefficient,PREVIOUS_RESIDUAL_VALUE, &
       & SECOND_UPDATE_FACTOR,SOURCE_VALUE,STIFFNESS_MATRIX_COEFFICIENT,VALUE,JACOBIAN_MATRIX_COEFFICIENT,ALPHA_VALUE, &
@@ -12576,8 +12577,8 @@ CONTAINS
                   & THEN
                   !Assemble solver matrices
                   IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
-                    CALL CPU_TIMER(USER_CPU,USER_TIME1,ERR,ERROR,*999)
-                    CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME1,ERR,ERROR,*999)
+                    CALL CPUTimer(USER_CPU,USER_TIME1,ERR,ERROR,*999)
+                    CALL CPUTimer(SYSTEM_CPU,SYSTEM_TIME1,ERR,ERROR,*999)
                   ENDIF
 !               DO solver_matrix_idx=1,SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES
 !                 SOLVER_MATRIX=>SOLVER_MATRICES%matrices(solver_matrix_idx)%ptr
@@ -12793,15 +12794,13 @@ CONTAINS
                     CALL DISTRIBUTED_MATRIX_UPDATE_FINISH(PREVIOUS_SOLVER_DISTRIBUTED_MATRIX,ERR,ERROR,*999)
                   ENDIF
                   IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
-                    CALL CPU_TIMER(USER_CPU,USER_TIME2,ERR,ERROR,*999)
-                    CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME2,ERR,ERROR,*999)
-                    USER_ELAPSED=USER_TIME2(1)-USER_TIME1(1)
-                    SYSTEM_ELAPSED=SYSTEM_TIME2(1)-SYSTEM_TIME1(1)
-                    CALL WriteString(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
-                    CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total user time for solver matrices assembly = ",USER_ELAPSED, &
-                      & ERR,ERROR,*999)
-                    CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total System time for solver matrices assembly = ", &
-                      & SYSTEM_ELAPSED,ERR,ERROR,*999)
+                    CALL CPUTimer(USER_CPU,USER_TIME2,ERR,ERROR,*999)
+                    CALL CPUTimer(SYSTEM_CPU,SYSTEM_TIME2,ERR,ERROR,*999)
+                    userElapsed=USER_TIME2(1)-USER_TIME1(1)
+                    systemElapsed=SYSTEM_TIME2(1)-SYSTEM_TIME1(1)
+                    IF(solver%outputType>=SOLVER_MATRIX_OUTPUT) &
+                      & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
+                    CALL Profiling_TimingsOutput(1,"Solver matrices assembly",userElapsed,systemElapsed,err,error,*999)
                   ENDIF
                 ENDIF
               ENDIF
@@ -12818,8 +12817,8 @@ CONTAINS
                   & THEN
                   !Assemble rhs vector
                   IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
-                    CALL CPU_TIMER(USER_CPU,USER_TIME1,ERR,ERROR,*999)
-                    CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME1,ERR,ERROR,*999)
+                    CALL CPUTimer(USER_CPU,USER_TIME1,ERR,ERROR,*999)
+                    CALL CPUTimer(SYSTEM_CPU,SYSTEM_TIME1,ERR,ERROR,*999)
                   ENDIF
                   IF(SOLVER_MATRICES%UPDATE_RHS_VECTOR) THEN
 
@@ -13479,15 +13478,13 @@ CONTAINS
                     ENDIF
                   ENDIF
                   IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
-                    CALL CPU_TIMER(USER_CPU,USER_TIME2,ERR,ERROR,*999)
-                    CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME2,ERR,ERROR,*999)
-                    USER_ELAPSED=USER_TIME2(1)-USER_TIME1(1)
-                    SYSTEM_ELAPSED=SYSTEM_TIME2(1)-SYSTEM_TIME1(1)
-                    CALL WriteString(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
-                    CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total user time for solver RHS assembly = ",USER_ELAPSED, &
-                      & ERR,ERROR,*999)
-                    CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total System time for solver RHS assembly = ",SYSTEM_ELAPSED, &
-                      & ERR,ERROR,*999)
+                    CALL CPUTimer(USER_CPU,USER_TIME2,ERR,ERROR,*999)
+                    CALL CPUTimer(SYSTEM_CPU,SYSTEM_TIME2,ERR,ERROR,*999)
+                    userElapsed=USER_TIME2(1)-USER_TIME1(1)
+                    systemElapsed=SYSTEM_TIME2(1)-SYSTEM_TIME1(1)
+                    IF(solver%outputType>=SOLVER_MATRIX_OUTPUT) &
+                      & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
+                    CALL Profiling_TimingsOutput(1,"Solver RHS assembly",userElapsed,systemElapsed,err,error,*999)
                   ENDIF
                 ENDIF
                 IF(ASSOCIATED(SOLVER_RHS_VECTOR)) THEN
@@ -13506,8 +13503,8 @@ CONTAINS
                   & THEN
                   !Assemble residual vector
                   IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
-                    CALL CPU_TIMER(USER_CPU,USER_TIME1,ERR,ERROR,*999)
-                    CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME1,ERR,ERROR,*999)
+                    CALL CPUTimer(USER_CPU,USER_TIME1,ERR,ERROR,*999)
+                    CALL CPUTimer(SYSTEM_CPU,SYSTEM_TIME1,ERR,ERROR,*999)
                   ENDIF
                   IF(SOLVER_MATRICES%UPDATE_RESIDUAL) THEN
                     SOLVER_RESIDUAL_VECTOR=>SOLVER_MATRICES%RESIDUAL
@@ -13926,16 +13923,14 @@ CONTAINS
                     CALL DISTRIBUTED_VECTOR_UPDATE_FINISH(SOLVER_RESIDUAL_VECTOR,ERR,ERROR,*999)
                   ENDIF
                   IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
-                    CALL CPU_TIMER(USER_CPU,USER_TIME2,ERR,ERROR,*999)
-                    CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME2,ERR,ERROR,*999)
-                    USER_ELAPSED=USER_TIME2(1)-USER_TIME1(1)
-                    SYSTEM_ELAPSED=SYSTEM_TIME2(1)-SYSTEM_TIME1(1)
-                    CALL WriteString(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
-                    CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total user time for solver residual assembly = ", & 
-                      & USER_ELAPSED,ERR,ERROR,*999)
-                    CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total System time for solver residual assembly = ", & 
-                      & SYSTEM_ELAPSED,ERR,ERROR,*999)
-                 ENDIF
+                    CALL CPUTimer(USER_CPU,USER_TIME2,ERR,ERROR,*999)
+                    CALL CPUTimer(SYSTEM_CPU,SYSTEM_TIME2,ERR,ERROR,*999)
+                    userElapsed=USER_TIME2(1)-USER_TIME1(1)
+                    systemElapsed=SYSTEM_TIME2(1)-SYSTEM_TIME1(1)
+                    IF(solver%outputType>=SOLVER_MATRIX_OUTPUT) &
+                      & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
+                    CALL Profiling_TimingsOutput(1,"Solver residual assembly",userElapsed,systemElapsed,err,error,*999)
+                  ENDIF
                 ENDIF
               ENDIF
 
@@ -14048,7 +14043,7 @@ CONTAINS
       & rhs_global_dof,equations_matrix_idx2,rhs_variable_dof,rhs_variable_type,variable_boundary_condition,solver_matrix_idx, &
       & solver_row_idx,solver_row_number,variable_dof,variable_global_dof,variable_idx,variable_type,&
       & dirichlet_idx,dirichlet_row,number_of_interface_matrices
-    REAL(SP) :: SYSTEM_ELAPSED,SYSTEM_TIME1(1),SYSTEM_TIME2(1),USER_ELAPSED,USER_TIME1(1),USER_TIME2(1)
+    REAL(SP) :: systemElapsed,SYSTEM_TIME1(1),SYSTEM_TIME2(1),userElapsed,USER_TIME1(1),USER_TIME2(1)
     REAL(DP) :: DEPENDENT_VALUE,LINEAR_VALUE,LINEAR_VALUE_SUM,MATRIX_VALUE,RESIDUAL_VALUE,RHS_VALUE,row_coupling_coefficient, &
       & SOURCE_VALUE,VALUE,RHS_INTEGRATED_VALUE
     REAL(DP), POINTER :: RHS_PARAMETERS(:),CHECK_DATA(:),CHECK_DATA2(:),CHECK_DATA3(:),CHECK_DATA4(:)
@@ -14112,8 +14107,8 @@ CONTAINS
               & SELECTION_TYPE==SOLVER_MATRICES_JACOBIAN_ONLY) THEN
               !Assemble solver matrices
               IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
-                CALL CPU_TIMER(USER_CPU,USER_TIME1,ERR,ERROR,*999)
-                CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME1,ERR,ERROR,*999)
+                CALL CPUTimer(USER_CPU,USER_TIME1,ERR,ERROR,*999)
+                CALL CPUTimer(SYSTEM_CPU,SYSTEM_TIME1,ERR,ERROR,*999)
               ENDIF
               !Loop over the solver matrices
               DO solver_matrix_idx=1,SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES
@@ -14208,15 +14203,13 @@ CONTAINS
                 CALL DISTRIBUTED_MATRIX_UPDATE_FINISH(PREVIOUS_SOLVER_DISTRIBUTED_MATRIX,ERR,ERROR,*999)
               ENDIF
               IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
-                CALL CPU_TIMER(USER_CPU,USER_TIME2,ERR,ERROR,*999)
-                CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME2,ERR,ERROR,*999)
-                USER_ELAPSED=USER_TIME2(1)-USER_TIME1(1)
-                SYSTEM_ELAPSED=SYSTEM_TIME2(1)-SYSTEM_TIME1(1)
-                CALL WriteString(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
-                CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total user time for solver matrices assembly = ",USER_ELAPSED, &
-                  & ERR,ERROR,*999)
-                CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total System time for solver matrices assembly = ",SYSTEM_ELAPSED, &
-                  & ERR,ERROR,*999)
+                CALL CPUTimer(USER_CPU,USER_TIME2,ERR,ERROR,*999)
+                CALL CPUTimer(SYSTEM_CPU,SYSTEM_TIME2,ERR,ERROR,*999)
+                userElapsed=USER_TIME2(1)-USER_TIME1(1)
+                systemElapsed=SYSTEM_TIME2(1)-SYSTEM_TIME1(1)
+                IF(solver%outputType>=SOLVER_MATRIX_OUTPUT) &
+                  & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
+                CALL Profiling_TimingsOutput(1,"Solver matrices assembly",userElapsed,systemElapsed,err,error,*999)
               ENDIF
             ENDIF
             !The solver matrices have only one residual vector
@@ -14230,8 +14223,8 @@ CONTAINS
               !the RHS terms for fixed BCs from the residual vector as this residual evaluation uses a matrix
               !vector product of the full equations matrix rather than the reduced solver matrix
               IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
-                CALL CPU_TIMER(USER_CPU,USER_TIME1,ERR,ERROR,*999)
-                CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME1,ERR,ERROR,*999)
+                CALL CPUTimer(USER_CPU,USER_TIME1,ERR,ERROR,*999)
+                CALL CPUTimer(SYSTEM_CPU,SYSTEM_TIME1,ERR,ERROR,*999)
               ENDIF
               IF(SOLVER_MATRICES%UPDATE_RESIDUAL) THEN
                 SOLVER_RESIDUAL_VECTOR=>SOLVER_MATRICES%RESIDUAL
@@ -14558,15 +14551,13 @@ CONTAINS
                 CALL DISTRIBUTED_VECTOR_UPDATE_FINISH(SOLVER_RESIDUAL_VECTOR,ERR,ERROR,*999)
               ENDIF
               IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
-                CALL CPU_TIMER(USER_CPU,USER_TIME2,ERR,ERROR,*999)
-                CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME2,ERR,ERROR,*999)
-                USER_ELAPSED=USER_TIME2(1)-USER_TIME1(1)
-                SYSTEM_ELAPSED=SYSTEM_TIME2(1)-SYSTEM_TIME1(1)
-                CALL WriteString(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
-                CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total user time for solver residual assembly = ",USER_ELAPSED, &
-                  & ERR,ERROR,*999)
-                CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total System time for solver residual assembly = ",SYSTEM_ELAPSED, &
-                  & ERR,ERROR,*999)
+                CALL CPUTimer(USER_CPU,USER_TIME2,ERR,ERROR,*999)
+                CALL CPUTimer(SYSTEM_CPU,SYSTEM_TIME2,ERR,ERROR,*999)
+                userElapsed=USER_TIME2(1)-USER_TIME1(1)
+                systemElapsed=SYSTEM_TIME2(1)-SYSTEM_TIME1(1)
+                IF(solver%outputType>=SOLVER_MATRIX_OUTPUT) &
+                  & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
+                CALL Profiling_TimingsOutput(1,"Solver residual assembly",userElapsed,systemElapsed,err,error,*999)
               ENDIF
             ENDIF
             NULLIFY(SOLVER_RHS_VECTOR)
@@ -14577,8 +14568,8 @@ CONTAINS
               & SELECTION_TYPE==SOLVER_MATRICES_RHS_RESIDUAL_ONLY) THEN
               !Assemble rhs vector
               IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
-                CALL CPU_TIMER(USER_CPU,USER_TIME1,ERR,ERROR,*999)
-                CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME1,ERR,ERROR,*999)
+                CALL CPUTimer(USER_CPU,USER_TIME1,ERR,ERROR,*999)
+                CALL CPUTimer(SYSTEM_CPU,SYSTEM_TIME1,ERR,ERROR,*999)
               ENDIF
               IF(SOLVER_MATRICES%UPDATE_RHS_VECTOR) THEN
                 SOLVER_RHS_VECTOR=>SOLVER_MATRICES%RHS_VECTOR
@@ -15029,15 +15020,13 @@ CONTAINS
                 ENDIF
               ENDIF
               IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
-                CALL CPU_TIMER(USER_CPU,USER_TIME2,ERR,ERROR,*999)
-                CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME2,ERR,ERROR,*999)
-                USER_ELAPSED=USER_TIME2(1)-USER_TIME1(1)
-                SYSTEM_ELAPSED=SYSTEM_TIME2(1)-SYSTEM_TIME1(1)
-                CALL WriteString(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
-                CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total user time for solver RHS assembly = ",USER_ELAPSED, &
-                  & ERR,ERROR,*999)
-                CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total System time for solver RHS assembly = ",SYSTEM_ELAPSED, &
-                  & ERR,ERROR,*999)
+                CALL CPUTimer(USER_CPU,USER_TIME2,ERR,ERROR,*999)
+                CALL CPUTimer(SYSTEM_CPU,SYSTEM_TIME2,ERR,ERROR,*999)
+                userElapsed=USER_TIME2(1)-USER_TIME1(1)
+                systemElapsed=SYSTEM_TIME2(1)-SYSTEM_TIME1(1)
+                IF(solver%outputType>=SOLVER_MATRIX_OUTPUT) &
+                  & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
+                CALL Profiling_TimingsOutput(1,"Solver RHS assembly",userElapsed,systemElapsed,err,error,*999)
               ENDIF
             ENDIF
             IF(ASSOCIATED(SOLVER_RHS_VECTOR)) THEN
@@ -21914,7 +21903,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    REAL(SP) :: SYSTEM_ELAPSED,SYSTEM_TIME1(1),SYSTEM_TIME2(1),USER_ELAPSED,USER_TIME1(1),USER_TIME2(1)
+    REAL(SP) :: systemElapsed,SYSTEM_TIME1(1),SYSTEM_TIME2(1),userElapsed,USER_TIME1(1),USER_TIME2(1)
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
     ENTERS("SOLVER_SOLVE",ERR,ERROR,*999)
@@ -21922,8 +21911,8 @@ CONTAINS
     IF(ASSOCIATED(SOLVER)) THEN
       IF(SOLVER%SOLVER_FINISHED) THEN
         IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
-          CALL CPU_TIMER(USER_CPU,USER_TIME1,ERR,ERROR,*999)
-          CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME1,ERR,ERROR,*999)          
+          CALL CPUTimer(USER_CPU,USER_TIME1,ERR,ERROR,*999)
+          CALL CPUTimer(SYSTEM_CPU,SYSTEM_TIME1,ERR,ERROR,*999)          
         ENDIF
         !Solve the system depending on the solver type
         SELECT CASE(SOLVER%SOLVE_TYPE)
@@ -21954,15 +21943,13 @@ CONTAINS
         END SELECT
         !If necessary output the timing information
         IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
-          CALL CPU_TIMER(USER_CPU,USER_TIME2,ERR,ERROR,*999)
-          CALL CPU_TIMER(SYSTEM_CPU,SYSTEM_TIME2,ERR,ERROR,*999)
-          USER_ELAPSED=USER_TIME2(1)-USER_TIME1(1)
-          SYSTEM_ELAPSED=SYSTEM_TIME2(1)-SYSTEM_TIME1(1)
-          CALL WriteString(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total user time for solve = ",USER_ELAPSED, &
-            & ERR,ERROR,*999)
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Total System time for solve = ",SYSTEM_ELAPSED, &
-            & ERR,ERROR,*999)
+          CALL CPUTimer(USER_CPU,USER_TIME2,ERR,ERROR,*999)
+          CALL CPUTimer(SYSTEM_CPU,SYSTEM_TIME2,ERR,ERROR,*999)
+          userElapsed=USER_TIME2(1)-USER_TIME1(1)
+          systemElapsed=SYSTEM_TIME2(1)-SYSTEM_TIME1(1)
+          IF(solver%outputType>=SOLVER_MATRIX_OUTPUT) &
+            & CALL Profiling_TimingsOutput(0,"",userElapsed,systemElapsed,err,error,*999)
+          CALL Profiling_TimingsOutput(1,"Total time for solve",userElapsed,systemElapsed,err,error,*999)
         ENDIF
       ELSE
         CALL FlagError("Solver has not been finished.",ERR,ERROR,*999)

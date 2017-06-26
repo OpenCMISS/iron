@@ -862,7 +862,9 @@ CONTAINS
                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 ENDIF
               ELSE
-                CALL FlagError("Decomposition mesh element corresponding to user number not found.",ERR,ERROR,*999)
+                LOCAL_ERROR="Decomposition mesh element corresponding to user element number "// &
+                  & TRIM(NumberToVString(USER_ELEMENT_NUMBER,"*",err,error))//" is not found."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             ELSE
               CALL FlagError("Decomposition mesh elements are not associated.",ERR,ERROR,*999)
@@ -10165,7 +10167,9 @@ CONTAINS
                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 ENDIF
               ELSE
-                CALL FlagError("Decomposition mesh node corresponding to user number not found.",ERR,ERROR,*999)
+                LOCAL_ERROR="Decomposition mesh node corresponding to user node number "// &
+                  & TRIM(NumberToVString(USER_NODE_NUMBER,"*",err,error))//" is not found."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             ELSE
               CALL FlagError("Decomposition mesh nodes are not associated.",ERR,ERROR,*999)
