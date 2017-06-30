@@ -6710,21 +6710,13 @@ CONTAINS
                   & " is invalid for the a 1D0D coupled Navier-Stokes problem."
                 CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END IF
-            !CASE(PROBLEM_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE)
-              ! Do nothing
             CASE(PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE,PROBLEM_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE)
-              ! !CALL CONTROL_LOOP_TIMES_GET(CONTROL_LOOP,startTime,stopTime,currentTime,timeIncrement, &
-              ! ! & timestep,outputIteration,ERR,ERROR,*999)
               IF(ASSOCIATED(SOLVER%SOLVER_EQUATIONS)) THEN
-                ! CALL NavierStokes_CalculateBoundaryFlux3D0D(SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING% &
-                !   & EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS%EQUATIONS_SET,err,error,*999)
                 convergedFlag = .FALSE.
                 CALL NavierStokes_CalculateBoundaryFlux3D0D(SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING% &
                   & EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS%EQUATIONS_SET,convergedFlag, &
                   & 1.0E-8_DP,1.0E-8_DP,err,error,*999)
               END IF
-              ! ! CALL NavierStokes_CalculateBoundaryFlux(SOLVER,ERR,ERROR,*999)
-              ! ! CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(SOLVER,err,error,*999)
             CASE(PROBLEM_CONSTITUTIVE_RBS_NAVIER_STOKES_SUBTYPE)
               DO equationsSetNumber=1,SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                 ! If this is a coupled constitutive (non-Newtonian) viscosity problem, update shear rate values
@@ -6970,7 +6962,6 @@ CONTAINS
                       END IF
 
                       ! Construct the filename based on the computational node and time step
-                      !inputFile = './../interpolatedData/fitData' // tempString(1:4) // '.dat'
                       inputFile = './../interpolatedData/fitData' //TRIM(NUMBER_TO_VSTRING(currentTimeLoopIteration, &
                         & "*",ERR,ERROR)) // '.dat'
 
@@ -7013,47 +7004,6 @@ CONTAINS
                           END IF
                         END DO
                         DEALLOCATE(fittedNodes)
-
-                      ! INQUIRE(FILE=inputFile, EXIST=importDataFromFile)
-                      ! IF(importDataFromFile) THEN
-                      !   !Read fitted data from input file (if exists)
-                      !   CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Updating independent field and boundary nodes from "//inputFile, &
-                      !     & ERR,ERROR,*999)
-                      !   OPEN(UNIT=10, FILE=inputFile, STATUS='OLD')                  
-                      !   !Loop over local nodes and update independent field and (and dependent field for any FIXED_FITTED nodes)
-                      !   previousNodeNumber=0
-                      !   DO nodeIdx=1,numberOfNodes
-                      !     userNodeNumber=DOMAIN_NODES%NODES(nodeIdx)%USER_NUMBER
-                      !     CALL DOMAIN_TOPOLOGY_NODE_CHECK_EXISTS(domain%Topology,userNodeNumber,nodeExists,localNodeNumber, &
-                      !       & ghostNode,err,error,*999)
-                      !     IF(nodeExists .AND. .NOT. ghostNode) THEN
-                      !       ! Move to line in file for this node (dummy read)
-                      !       ! NOTE: this takes advantage of the user number increasing ordering of domain nodes 
-                      !       DO search_idx=1,userNodeNumber-previousNodeNumber-1
-                      !         READ(10,*)
-                      !       END DO
-                      !       ! Read in the node data for this timestep file
-                      !       READ(10,*) (componentValues(componentIdx), componentIdx=1,numberOfDimensions)
-                      !       DO componentIdx=1,numberOfDimensions
-                      !         dependentDof = dependentFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% &
-                      !           & NODES(nodeIdx)%DERIVATIVES(1)%VERSIONS(1)
-                      !         independentDof = independentFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP% &
-                      !           & NODE_PARAM2DOF_MAP%NODES(nodeIdx)%DERIVATIVES(1)%VERSIONS(1)
-                      !         VALUE = componentValues(componentIdx)
-                      !         CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(INDEPENDENT_FIELD,independentVariableType, &
-                      !           & FIELD_VALUES_SET_TYPE,independentDof,VALUE,ERR,ERROR,*999)
-                      !         CALL FIELD_COMPONENT_DOF_GET_USER_NODE(DEPENDENT_FIELD,dependentVariableType,1,1,userNodeNumber, & 
-                      !           & componentIdx,localDof,globalDof,err,error,*999)
-                      !         BOUNDARY_CONDITION_CHECK_VARIABLE=BOUNDARY_CONDITIONS_VARIABLE%CONDITION_TYPES(globalDof)
-                      !         IF(BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_FIXED_FITTED) THEN
-                      !           CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(DEPENDENT_FIELD,dependentVariableType, &
-                      !             & FIELD_VALUES_SET_TYPE,localDof,VALUE,ERR,ERROR,*999)
-                      !         END IF
-                      !       END DO !componentIdx
-                      !       previousNodeNumber=userNodeNumber
-                      !     END IF ! ghost/exist check
-                      !   END DO !nodeIdx
-
                         CLOSE(UNIT=10)
                         ! Update any distributed field values
                         CALL FIELD_PARAMETER_SET_UPDATE_START(DEPENDENT_FIELD,dependentVariableType,FIELD_VALUES_SET_TYPE, &
@@ -7787,7 +7737,6 @@ CONTAINS
                               END IF
 
                               ! Construct the filename based on the computational node and time step
-                              !WRITE(tempString,"(I4.4)") currentTimeLoopIteration
                               inputFile = './../interpolatedData/fitData' //TRIM(NUMBER_TO_VSTRING(currentTimeLoopIteration, &
                                & "*",ERR,ERROR)) // '.dat'
 
@@ -7833,42 +7782,6 @@ CONTAINS
                                   END IF
                                 END DO
                                 DEALLOCATE(fittedNodes)
-
-                                ! !Loop over local nodes and update independent field 
-                                ! ! (and dependent field for any FIXED_FITTED nodes)
-                                ! previousNodeNumber=0
-                                ! DO nodeIdx=1,numberOfNodes
-                                !   userNodeNumber=DOMAIN_NODES%NODES(nodeIdx)%USER_NUMBER
-                                !   CALL DOMAIN_TOPOLOGY_NODE_CHECK_EXISTS(domain%Topology,userNodeNumber,nodeExists, &
-                                !     & localNodeNumber,ghostNode,err,error,*999)
-                                !   IF(nodeExists .AND. .NOT. ghostNode) THEN
-                                !     ! Move to line in file for this node (dummy read)
-                                !     ! NOTE: this takes advantage of the user number increasing ordering of domain nodes 
-                                !     DO search_idx=1,userNodeNumber-previousNodeNumber-1
-                                !       READ(10,*)
-                                !     END DO
-                                !     ! Read in the node data for this timestep file
-                                !     READ(10,*) (componentValues(componentIdx), componentIdx=1,numberOfDimensions)
-                                !     DO componentIdx=1,numberOfDimensions
-                                !       dependentDof = dependentFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP% &
-                                !         & NODE_PARAM2DOF_MAP%NODES(nodeIdx)%DERIVATIVES(1)%VERSIONS(1)
-                                !       independentDof = independentFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP% &
-                                !         & NODE_PARAM2DOF_MAP%NODES(nodeIdx)%DERIVATIVES(1)%VERSIONS(1)
-                                !       VALUE = componentValues(componentIdx)
-                                !       CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(INDEPENDENT_FIELD,independentVariableType, &
-                                !         & FIELD_VALUES_SET_TYPE,independentDof,VALUE,ERR,ERROR,*999)
-                                !       CALL FIELD_COMPONENT_DOF_GET_USER_NODE(DEPENDENT_FIELD,dependentVariableType,1,1, &
-                                !         & userNodeNumber,componentIdx,localDof,globalDof,err,error,*999)
-                                !       BOUNDARY_CONDITION_CHECK_VARIABLE=BOUNDARY_CONDITIONS_VARIABLE%CONDITION_TYPES(globalDof)
-                                !       IF(BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_FIXED_FITTED) THEN
-                                !         CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(DEPENDENT_FIELD,dependentVariableType, &
-                                !           & FIELD_VALUES_SET_TYPE,localDof,VALUE,ERR,ERROR,*999)
-                                !       END IF
-                                !     END DO !componentIdx
-                                !     previousNodeNumber=userNodeNumber
-                                !   END IF ! ghost/exist check
-                                ! END DO !nodeIdx
-
                                 CLOSE(UNIT=10)
                                 ! Update any distributed field values
                                 CALL FIELD_PARAMETER_SET_UPDATE_START(DEPENDENT_FIELD,dependentVariableType, &
@@ -12150,7 +12063,6 @@ CONTAINS
 
   !>Calculates the face integration term of the finite element formulation for Navier-Stokes equation,
   !>required for pressure and multidomain boundary conditions. 
-  !>portions based on DarcyEquation_FiniteElementFaceIntegrate by Adam Reeve.
   SUBROUTINE NavierStokes_FiniteElementFaceIntegrate(equationsSet,elementNumber,dependentVariable,jacobianFlag,err,error,*)
 
     !Argument variables
@@ -12195,10 +12107,9 @@ CONTAINS
     REAL(DP) :: pressure,viscosity,density,jacobianGaussWeights,beta,normalFlow,muScale
     REAL(DP) :: velocity(3),normalProjection(3),tangentProjection(2,3),unitNormal(3),stabilisationTerm
     REAL(DP) :: boundaryInPlaneVector1(3),boundaryInPlaneVector2(3),boundaryNormal(3),tempVector(3)
-    !REAL(DP) :: traction(3),correction1D_1(3),correction1D_2(3),correction1D_3(3),correct1D(3,3)
     REAL(DP) :: boundaryValue,normalDifference,normalTolerance,boundaryPressure
     REAL(DP) :: phim,phin,SUM,SUM2
-    REAL(DP) :: dXiDX(3,3),dPhinDXi(3)!,dUDXi(3,3),gradU(3,3),cauchy(3,3),cauchy2(3,3),cauchy3(3,3)
+    REAL(DP) :: dXiDX(3,3),dPhinDXi(3)
     TYPE(VARYING_STRING) :: LOCAL_ERROR, diagnosticString
     LOGICAL :: integratedBoundary
 
@@ -12305,24 +12216,6 @@ CONTAINS
         dependentBasis2=>decomposition%DOMAIN(meshComponentNumber2)%PTR%TOPOLOGY%ELEMENTS% &
           & ELEMENTS(elementNumber)%BASIS
         decompElement=>DECOMPOSITION%TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)
-        ! !Get the dependent interpolation parameters
-        ! dependentInterpolationParameters=>equations%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS( &
-        !   & dependentVariable%VARIABLE_TYPE)%PTR
-        ! dependentInterpolatedPoint=>equations%INTERPOLATION%DEPENDENT_INTERP_POINT( &
-        !   & dependentVariable%VARIABLE_TYPE)%PTR
-        ! !Get the geometric interpolation parameters
-        ! geometricInterpolationParameters=>equations%INTERPOLATION%GEOMETRIC_INTERP_PARAMETERS( &
-        !   & FIELD_U_VARIABLE_TYPE)%PTR
-        ! geometricInterpolatedPoint=>equations%INTERPOLATION%GEOMETRIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR
-
-        ! geometricField=>equationsSet%GEOMETRY%GEOMETRIC_FIELD
-        ! CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,ERR,ERROR,*999)
-        ! !Get access to geometric coordinates
-        ! CALL FIELD_VARIABLE_GET(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,ERR,ERROR,*999)
-        ! !Get the geometric distributed vector
-        ! CALL FIELD_PARAMETER_SET_DATA_GET(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-        !   & geometricParameters,ERR,ERROR,*999)
-        ! fieldVariable=>equations%EQUATIONS_MAPPING%NONLINEAR_MAPPING%RESIDUAL_VARIABLES(1)%PTR
 
         !Get the viscosity and density
         IF(equationsSet%specification(3)==EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE) THEN
@@ -12343,10 +12236,6 @@ CONTAINS
           CALL Field_ParameterSetGetLocalElement(equationsSetField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
            & elementNumber,componentIdx+4,boundaryNormal(componentIdx),err,error,*999)
         END DO
-
-        ! !DEBUG
-        ! userElementNumber = decomposition%DOMAIN(decomposition%MESH_COMPONENT_NUMBER)%PTR%MAPPINGS%ELEMENTS% &
-        !  & LOCAL_TO_GLOBAL_MAP(elementNumber)
         
         DO faceIdx=1,dependentBasis1%NUMBER_OF_LOCAL_FACES
           !Get the face normal and quadrature information
@@ -12395,12 +12284,6 @@ CONTAINS
           pointMetrics=>equations%INTERPOLATION%GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR
           ! Loop over face gauss points
           DO gaussIdx=1,faceQuadratureScheme1%NUMBER_OF_GAUSS
-            ! IF (userElementNumber == 2541) THEN
-            !   diagnosticString = " Element 2541 DEBUG 1: gauss point "// &
-            !    & TRIM(NUMBER_TO_VSTRING(gaussIdx,"*",err,error))//"  of "// &
-            !    & TRIM(NUMBER_TO_VSTRING(faceQuadratureScheme1%NUMBER_OF_GAUSS,"*",err,error))
-            !   CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,diagnosticString,err,error,*999)
-            ! END IF
 
             CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx, &
               & geometricInterpolatedPoint,err,error,*999)
@@ -12430,69 +12313,18 @@ CONTAINS
             velocity=dependentInterpolatedPoint%values(1:3,NO_PART_DERIV)
             pressure=dependentInterpolatedPoint%values(4,NO_PART_DERIV)
 
-            ! IF (userElementNumber == 2541) THEN
-            !   diagnosticString = " Element 2541 DEBUG 2: gauss point "// &
-            !    & TRIM(NUMBER_TO_VSTRING(gaussIdx,"*",err,error))
-            !   CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,diagnosticString,err,error,*999)
-            !   diagnosticString = "    velocity: "// &
-            !    & TRIM(NUMBER_TO_VSTRING(velocity(1),"*",err,error))//" "// &
-            !    & TRIM(NUMBER_TO_VSTRING(velocity(2),"*",err,error))//" "// &
-            !    & TRIM(NUMBER_TO_VSTRING(velocity(3),"*",err,error))
-            !   CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,diagnosticString,err,error,*999)
-            !   diagnosticString = "    pressure: "// &
-            !    & TRIM(NUMBER_TO_VSTRING(pressure,"*",err,error))
-            !   CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,diagnosticString,err,error,*999)
-            ! END IF
-
             ! Stabilisation term to correct for possible retrograde flow divergence.
             ! See: Moghadam et al 2011 “A comparison of outlet boundary treatments for prevention of backflow divergence..." and
             !      Ismail et al 2014 "A stable approach for coupling multidimensional cardiovascular and pulmonary networks..."
             ! Note: beta is a relative scaling factor 0 <= beta <= 1; default 1.0
             stabilisationTerm = 0.0_DP
-            !normalFlow = DOT_PRODUCT(velocity,normalProjection)
             normalFlow = DOT_PRODUCT(velocity,unitNormal)
-
-            ! IF (userElementNumber == 2541) THEN
-            !   diagnosticString = " Element 2541 DEBUG 3: gauss point "// &
-            !    & TRIM(NUMBER_TO_VSTRING(gaussIdx,"*",err,error))//".    normalFlow: "// &
-            !    & TRIM(NUMBER_TO_VSTRING(normalFlow,"*",err,error))
-            !   CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,diagnosticString,err,error,*999)
-            !   diagnosticString = "    velocity: "// &
-            !    & TRIM(NUMBER_TO_VSTRING(velocity(1),"*",err,error))//" "// &
-            !    & TRIM(NUMBER_TO_VSTRING(velocity(2),"*",err,error))//" "// &
-            !    & TRIM(NUMBER_TO_VSTRING(velocity(3),"*",err,error))
-            !   CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,diagnosticString,err,error,*999)
-            !   diagnosticString = "    unitNormal: "// &
-            !    & TRIM(NUMBER_TO_VSTRING(unitNormal(1),"*",err,error))//" "// &
-            !    & TRIM(NUMBER_TO_VSTRING(unitNormal(2),"*",err,error))//" "// &
-            !    & TRIM(NUMBER_TO_VSTRING(unitNormal(3),"*",err,error))
-            !   CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,diagnosticString,err,error,*999)
-            ! END IF
 
             IF(normalFlow < -ZERO_TOLERANCE) THEN
               stabilisationTerm = normalFlow - ABS(normalFlow)
-              !DO componentIdx=1,dependentVariable%NUMBER_OF_COMPONENTS-1
-              !  stabilisationTerm(componentIdx) = 0.5_DP*beta*density*velocity(componentIdx)*(normalFlow - ABS(normalFlow))
-              !END DO
-              ! !DEBUG: detect retrograde flow
-              ! IF (stabilisationTerm < -0.001) THEN
-              !   diagnosticString = "Retrograde flow detected at boundary "//TRIM(NUMBER_TO_VSTRING(boundaryID,"*",err, &
-              !    & error))//"  element "//TRIM(NUMBER_TO_VSTRING(userElementNumber,"*",err,error))//"  stabilisationTerm "// &
-              !    & TRIM(NUMBER_TO_VSTRING(stabilisationTerm,"*",err,error))//"  gauss point "// &
-              !    & TRIM(NUMBER_TO_VSTRING(gaussIdx,"*",err,error))//"  of "// &
-              !    & TRIM(NUMBER_TO_VSTRING(faceQuadratureScheme1%NUMBER_OF_GAUSS,"*",err,error))
-              !   CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,diagnosticString,err,error,*999)
-              ! END IF
             ELSE
               stabilisationTerm = 0.0_DP
             END IF
-
-            ! IF (userElementNumber == 2541) THEN
-            !   diagnosticString = " Element 2541 DEBUG 4: gauss point "// &
-            !    & TRIM(NUMBER_TO_VSTRING(gaussIdx,"*",err,error))//"  of "// &
-            !    & TRIM(NUMBER_TO_VSTRING(faceQuadratureScheme1%NUMBER_OF_GAUSS,"*",err,error))
-            !   CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,diagnosticString,err,error,*999)
-            ! END IF
 
             ! Check for Neumann integrated boundary types rather than fixed pressure types
             IF(boundaryType==BOUNDARY_CONDITION_COUPLING_STRESS .OR. &
@@ -12507,10 +12339,6 @@ CONTAINS
                 & pressureInterpolationParameters,err,error,*999)
               CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx, &
                 & pressureInterpolatedPoint,ERR,ERROR,*999)
-              ! CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_PRESSURE_VALUES_SET_TYPE,elementNumber, &
-              !  & pressureInterpolationParameters,ERR,ERROR,*999)
-              ! CALL FIELD_INTERPOLATE_LOCAL_FACE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,faceIdx,gaussIdx, &
-              !  & pressureInterpolatedPoint,ERR,ERROR,*999)
               boundaryPressure=pressureInterpolatedPoint%VALUES(4,NO_PART_DERIV)
               pressure = -boundaryPressure
               IF(boundaryType==BOUNDARY_CONDITION_FIXED_CELLML) THEN
@@ -12539,10 +12367,8 @@ CONTAINS
                       & boundaryType==BOUNDARY_CONDITION_FIXED_CELLML .OR. &
                       & boundaryType==BOUNDARY_CONDITION_COUPLING_STRESS) THEN
                       ! RHS contribution is integrated pressure term
-                      !rhsVector%ELEMENT_VECTOR%VECTOR(elementDof) = rhsVector%ELEMENT_VECTOR%VECTOR(elementDof) + &
                       nonlinearMatrices%ELEMENT_RESIDUAL%VECTOR(elementDof)=nonlinearMatrices%ELEMENT_RESIDUAL%VECTOR(elementDof)-&
                        &  pressure*unitNormal(componentIdx)*phim*jacobianGaussWeights
-!                       &  pressure*normalProjection(componentIdx)*phim*jacobianGaussWeights
                     END IF
                     ! nonlinear contribution is boundary stabilisation (if necessary )
                     IF (ABS(beta) > ZERO_TOLERANCE) THEN
@@ -12587,10 +12413,6 @@ CONTAINS
             END DO !componentIdx
           END DO !gaussIdx
         END DO !faceIdx
-
-        ! !Restore the distributed geometric data used for the normal calculation
-        ! CALL FIELD_PARAMETER_SET_DATA_RESTORE(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-        !   & geometricParameters,ERR,ERROR,*999)
       END IF !decomposition%calculate_faces
 
     CASE DEFAULT
@@ -12923,16 +12745,10 @@ CONTAINS
                   DO j = 1,3
                     ! DEBUG: pressure only?
                     cauchy(i,j) = mu*(gradU(i,j)+gradU(j,i))
-                    ! !cauchy(i,j) = 0.0_DP
-                    ! IF(i==j) THEN
-                    !   cauchy(i,j) = cauchy(i,j) - pressureGauss
-                    ! END IF
                   END DO
                 END DO
                 !DEBUG
                 viscousTerm = MATMUL(cauchy,faceNormal)
-                !traction = MATMUL(cauchy,faceNormal)
-                !traction = MATMUL(cauchy,unitNormal)
               ELSE
                 !Get interpolated velocity
                 CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementIdx, &
@@ -12953,7 +12769,6 @@ CONTAINS
                  & boundaryType==BOUNDARY_CONDITION_COUPLING_FLOW) THEN
                   faceTraction = faceTraction + (viscousTerm(componentIdx) - pressureGauss)* &
                     & faceNormal(componentIdx)*gaussWeight*pointMetrics%JACOBIAN
-                  !faceTraction = faceTraction + traction(componentIdx)*faceNormal(componentIdx)*gaussWeight*pointMetrics%JACOBIAN
                 END IF
               END DO !componentIdx
             END DO !gaussIdx
@@ -13041,7 +12856,7 @@ CONTAINS
         IF(ASSOCIATED(equations3D)) THEN
           dependentField3D=>coupledEquationsSet%DEPENDENT%DEPENDENT_FIELD
           IF(ASSOCIATED(dependentField3D)) THEN
-            !CALL Field_ParameterSetEnsureCreated(dependentField3D,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,err,error,*999)
+            ! Do nothing
           ELSE
             CALL FlagError("Coupled 3D dependent field is not associated.",err,error,*999)
           END IF
@@ -13087,8 +12902,7 @@ CONTAINS
       CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)     
     END SELECT
 
-    !CALL Field_ParameterSetEnsureCreated(equationsSetField3D,FIELD_U_VARIABLE_TYPE, &
-    !  & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,err,error,*999)
+    ! ------------------------------------------------------------------------------------
     ! C o p y    i n t e g r a t e d   v a l u e s    t o    t a r g e t    f i e l d s
     ! ------------------------------------------------------------------------------------
     convergedFlag = .TRUE.
@@ -13119,9 +12933,6 @@ CONTAINS
         ! --------------------------------------------------------
         IF(boundaryType==BOUNDARY_CONDITION_COUPLING_STRESS .OR. &
           & boundaryType==BOUNDARY_CONDITION_COUPLING_FLOW) THEN
-          ! Determine sign of 1D coupling flux based on whether it is inlet/outlet
-          !CALL Field_ParameterSetGetLocalNode(independentField1D,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, & 
-          !  & 1,1,coupledNodeNumber,1,normalWave,err,error,*999)
           ! Note: the coupled node number here is the user number- not the local number
           normal = 0.0_DP
           DO componentIdx =1,2
@@ -13159,24 +12970,9 @@ CONTAINS
             CALL FIELD_PARAMETER_SET_GET_CONSTANT(equationsSet%MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
               & FIELD_VALUES_SET_TYPE,2,rho,err,error,*999)
             ! Convert 1D flow and pressure to coupling stress and flow
-            !p3D = p1D! + rho/2.0_DP*ABS(q1D/a1D)**2.0_DP
-            ! CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"1D boundary ",boundaryID,"  pressure:  ", &
-            !   & p1D,err,error,*999)
             couplingStress = -p1D
             couplingFlow = q1D
             p3D = couplingStress
-            ! ! TODO: need to be able to set this elsewhere!
-            ! tolerance = 1.0E-8_DP
-            ! ! 1D pressure solution converged but 3D stress is off a bit since we are applying as an average
-            ! IF (iteration3D1D > 1 .AND. ABS(couplingStress-stress1DPrevious) < tolerance) THEN
-            !   CALL Field_ParameterSetEnsureCreated(dependentField1D,FIELD_U1_VARIABLE_TYPE, &
-            !     & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,ERR,ERROR,*999)
-            !   CALL Field_ParameterSetGetLocalNode(dependentField1D,FIELD_U1_VARIABLE_TYPE, &
-            !     & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,1,1,coupledNodeNumber,2,stress3DPrevious,err,error,*999)
-            !   ! increment p-applied as the difference between 1D and 3D
-            !   p3D = p3D + (couplingStress - stress3DPrevious)/2.0_DP
-            ! END IF
-            !couplingFlow = -normal*q1D
             ! Update the coupling flow and stress values from the 3D equations set to the coupled 1D field
             CALL FIELD_PARAMETER_SET_UPDATE_NODE(dependentField1D,FIELD_U2_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
               & 1,1,coupledNodeNumber,2,couplingStress,err,error,*999)
@@ -13258,10 +13054,6 @@ CONTAINS
                    & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,1,1,nodeNumber,1,q0D,err,error,*999)
                   CALL Field_ParameterSetGetLocalNode(equationsSetField3D,FIELD_U_VARIABLE_TYPE, &
                    & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,1,1,nodeNumber,2,p0D,err,error,*999)
-                  ! CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"0D boundary ",boundaryID,"  flow:  ", &
-                  !   & q0D,err,error,*999)
-                  ! CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"0D boundary ",boundaryID,"  pressure:  ", &
-                  !   & p0D,err,error,*999)
                   flowError = globalBoundaryFlux(boundaryID)-q0D
                   pressureError = globalBoundaryMeanPressure(boundaryID)+p0D
                   IF ((ABS(flowError) < absolute3D0DTolerance .AND. ABS(pressureError) < absolute3D0DTolerance)) THEN
@@ -13269,8 +13061,6 @@ CONTAINS
                   ELSE IF (ABS(flowError/globalBoundaryFlux(boundaryID)) < relative3D0DTolerance .AND. &
                     &  ABS(pressureError/globalBoundaryMeanPressure(boundaryID)) < relative3D0DTolerance) THEN
                     ! CONVERGED RELATIVE TOLERANCE
-                  !IF (ABS(flowError) < absolute3D0DTolerance .AND. ABS(pressureError) < 1.0E-4_DP) THEN
-                  !  !convergedFlag = .TRUE.
                   ELSE
                     IF (.NOT. boundary3D0DFound(boundaryID)) THEN
                       CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"  0D boundary ",boundaryID,"  flow: ", &
@@ -13782,11 +13572,6 @@ CONTAINS
           & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,err,error,*999)
         CALL Field_ParameterSetEnsureCreated(dependentField1D,FIELD_U2_VARIABLE_TYPE, &
           & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,err,error,*999)
-        ! !Get 1D flow and stress from previous iteration
-        ! CALL Field_ParameterSetGetLocalNode(dependentField1D,FIELD_U2_VARIABLE_TYPE,FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE, &
-        !   & versionIdx,derivativeIdx,nodeNumber,2,stress1DPrevious,err,error,*999)  
-        ! CALL Field_ParameterSetGetLocalNode(dependentField1D,FIELD_U2_VARIABLE_TYPE,FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE, &
-        !   & versionIdx,derivativeIdx,nodeNumber,3,flow1DPrevious,err,error,*999)  
         !Get 1D flow and stress from current iteration
         CALL Field_ParameterSetGetLocalNode(dependentField1D,FIELD_U2_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
           & versionIdx,derivativeIdx,nodeNumber,2,stress1D,err,error,*999)  
@@ -14310,20 +14095,15 @@ CONTAINS
             strainRate=0.0_DP
 
             CALL MATRIX_PRODUCT(dUdXi,dXidX,dUdX,ERR,ERROR,*999) !dU/dX = dU/dxi * dxi/dX (deformation gradient tensor)
-            !CALL MATRIX_TRANSPOSE(dUdX,dUdXTrans,ERR,ERROR,*999)
             DO i=1,3
               DO j=1,3
-                !strainRate = strainRate + (dUdX(i,j)*dUdXTrans(i,j))
                 D(i,j) = (dUdX(i,j) + dUdX(j,i))/2.0_DP
               END DO
             END DO  
-            !rateOfStrainMag= 0.5_DP*(D(1,1)*D(2,2)+D(1,1)*D(3,3)+D(3,3)*D(2,2)+D(1,2)*D(2,1)+D(1,3)*D(3,1)+D(3,2)*D(2,3))
             rateOfStrainMag= 0.5_DP*(D(1,1)*D(1,1)+D(1,2)*D(1,2)+D(1,3)*D(1,3)+D(2,1)*D(2,1)+ &
               & D(2,2)*D(2,2)+D(2,3)*D(2,3) + D(3,1)*D(3,1)+ D(3,2)*D(3,2)+D(3,3)*D(3,3))
             shearRate=SQRT(ABS(2.0_DP*rateOfStrainMag))
 
-            !DEBUG
-            !shearRate = 10000.0_DP
             ! TODO: hard coded fix for milliseconds to seconds conversion- need to fix this to be more general!
             shearRate = shearRate*1000.0_DP
             CALL Field_ParameterSetUpdateLocalGaussPoint(materialsField,FIELD_V_VARIABLE_TYPE, &
@@ -14386,7 +14166,6 @@ CONTAINS
          convergedFlag = .FALSE.
          CALL NavierStokes_CalculateBoundaryFlux3D0D(equationsSet,convergedFlag, &
            & 1.0E-8_DP,1.0E-8_DP,err,error,*999)
-        !CALL NavierStokes_CalculateBoundaryFlux3D0D(equationsSet,err,error,*999) 
       CASE(EQUATIONS_SET_STATIC_NAVIER_STOKES_SUBTYPE, &
          & EQUATIONS_SET_LAPLACE_NAVIER_STOKES_SUBTYPE, &
          & EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE, &
@@ -14476,8 +14255,6 @@ CONTAINS
             equationsSet=>navierStokesSolver%SOLVER_EQUATIONS%SOLVER_MAPPING%EQUATIONS_SETS(1)%PTR
             dependentField=>equationsSet%DEPENDENT%DEPENDENT_FIELD
             IF(dependentField%DECOMPOSITION%CALCULATE_FACES) THEN
-              !CALL NavierStokes_CalculateBoundaryFlux(equationsSet,coupledEquationsSet,0,convergedFlag, &
-              !  & absolute3D0DTolerance,relative3D0DTolerance,ERR,ERROR,*999)
               CALL NavierStokes_CalculateBoundaryFlux3D0D(equationsSet,convergedFlag, &
                 & absolute3D0DTolerance,relative3D0DTolerance,ERR,ERROR,*999)
             END IF
@@ -14607,110 +14384,7 @@ CONTAINS
                           CALL FlagError("Unrecognized subloop pattern for 3D-1D-0D!.",ERR,ERROR,*999)
                         END IF ! check for futher subloops
                       END IF
-                      ! ! Have the 3D N-S equations set, now find the 1D from the parent loop
-                      ! DO subloopIdx=1,controlLoop%PARENT_LOOP%NUMBER_OF_SUB_LOOPS
-                      !   !subloop=>controlLoop%PARENT_LOOP%SUB_LOOPS(subloopIdx)%PTR
-                      !   ! 3D-1D
-                      !   IF(subloop%NUMBER_OF_SUB_LOOPS==0) THEN
-                      !     DO solverIdx2=1,subloop%SOLVERS%NUMBER_OF_SOLVERS
-                      !       solverMapping2=>subloop%SOLVERS%SOLVERS(solverIdx2)%PTR%SOLVER_EQUATIONS%SOLVER_MAPPING
-                      !       IF(ASSOCIATED(solverMapping2)) THEN
-                      !         DO equationsSetIdx2 = 1,solverMapping2%NUMBER_OF_EQUATIONS_SETS
-                      !           equationsSet2=>solverMapping2%EQUATIONS_SETS(equationsSetIdx)%PTR
-                      !           IF(ASSOCIATED(equationsSet2)) THEN
-                      !             SELECT CASE(equationsSet2%SUBTYPE)
-                      !             CASE(EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE, &
-                      !               &  EQUATIONS_SET_COUPLED1D0D_NAVIER_STOKES_SUBTYPE))
-                      !               IF(ASSOCIATED(coupledEquationsSet)) THEN
-                      !                 localError="Coupled 3D-1D equations set already found for multiscale Navier-Stokes problem."
-                      !                 CALL FlagError(localError,err,error,*999)                                     
-                      !               ELSE
-                      !                 coupledEquationsSet=>equationsSet2
-                      !               END IF
-                      !             CASE DEFAULT  
-                      !               ! Do nothing
-                      !             END SELECT
-                      !           ELSE
-                      !             CALL FlagError("Equations set 2 is not associated.",err,error,*999)
-                      !           END IF
-                      !         END DO ! equations set loop 2
-                      !       ELSE
-                      !         CALL FlagError("Solver mapping 2 is not associated.",ERR,ERROR,*999)
-                      !       END IF !
-                      !     END DO ! solverIdx2
-                      !   ELSE IF(subloop%LOOP_TYPE==PROBLEM_CONTROL_WHILE_LOOP_TYPE) THEN
-                      !     iteration = subloop%WHILE_LOOP%ITERATION_NUMBER
-                      !   END IF ! check for futher subloops
-                      ! END DO ! subloopIdx
-
                       controlLoop%PARENT_LOOP%WHILE_LOOP%CONTINUE_LOOP=.FALSE.
-
-                      ! dependentField=>equationsSet%DEPENDENT%DEPENDENT_FIELD
-                      ! IF(dependentField%DECOMPOSITION%CALCULATE_FACES) THEN
-                      !   !absolute3D0DTolerance = controlLoop%PARENT_LOOP%WHILE_LOOP%ABSOLUTE_TOLERANCE
-                      !   !relative3D0DTolerance = controlLoop%PARENT_LOOP%WHILE_LOOP%RELATIVE_TOLERANCE
-
-                      !   !CALL Petsc_SnesGetFunction(solver%DYNAMIC_SOLVER%NONLINEAR_SOLVER%NONLINEAR_SOLVER% &
-                      !   !  & NEWTON_SOLVER%LINESEARCH_SOLVER%snes,FUNCTION_VECTOR,ERR,ERROR,*999)
-                      !   !CALL Petsc_VecNorm(FUNCTION_VECTOR,PETSC_NORM_2,FUNCTION_NORM,ERR,ERROR,*999)
-                      !   CALL Petsc_SnesGetConvergedReason(solver%DYNAMIC_SOLVER%NONLINEAR_SOLVER%NONLINEAR_SOLVER% &
-                      !     & NEWTON_SOLVER%LINESEARCH_SOLVER%snes,CONVERGED_REASON,ERR,ERROR,*999)
-                      !   convergedFlag = .FALSE.
-                      !   !IF (iteration3D1D > 1) THEN
-                      !     IF (CONVERGED_REASON > 0) THEN
-                      !       convergedFlag = .TRUE.
-                      !     END IF
-                      !   !END IF
-
-                      !   ! IF (FUNCTION_NORM < absolute3D0DTolerance) THEN
-                      !   !   IF (iteration3D1D > 1) THEN
-                      !   !     convergedFlag = .TRUE.
-                      !   !   END IF
-                      !   ! END IF
-
-                      !   ! !CALL NavierStokes_CalculateBoundaryFlux(equationsSet,coupledEquationsSet,iteration3D1D, &
-                      !   ! !  & convergedFlag,absolute3D0DTolerance,relative3D0DTolerance,ERR,ERROR,*999)
-                      !   ! convergedFlag = .FALSE.
-                      !   ! CALL NavierStokes_CalculateBoundaryFlux3D0D(equationsSet,convergedFlag, &
-                      !   !   & absolute3D0DTolerance,relative3D0DTolerance,ERR,ERROR,*999)
-
-                      !   ! Check for 3D-0D convergence
-                      !   IF (controlLoop%PROBLEM%SPECIFICATION(3)==PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE) THEN
-                      !     IF (convergedFlag) THEN
-                      !       controlLoop%PARENT_LOOP%WHILE_LOOP%CONTINUE_LOOP=.FALSE.
-                      !       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"---------------------------",err,error,*999)
-                      !       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"3D-0D converged. Iterations: ", &
-                      !         & iteration3D1D,err,error,*999)
-                      !       SELECT CASE(CONVERGED_REASON)
-                      !       CASE(PETSC_SNES_CONVERGED_FNORM_ABS)
-                      !         CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged F Norm absolute.", &
-                      !           & ERR,ERROR,*999)
-                      !       CASE(PETSC_SNES_CONVERGED_FNORM_RELATIVE)
-                      !         CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged F Norm relative.", &
-                      !           & ERR,ERROR,*999)
-                      !       CASE(PETSC_SNES_CONVERGED_SNORM_RELATIVE)
-                      !         CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged S Norm relative.", &
-                      !           & ERR,ERROR,*999)
-                      !       CASE(PETSC_SNES_CONVERGED_ITS)
-                      !         CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged its.",ERR,ERROR,*999)
-                      !       CASE(PETSC_SNES_CONVERGED_ITERATING)
-                      !         CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged iterating.",ERR,ERROR,*999)
-                      !       END SELECT
-                      !       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"---------------------------",err,error,*999)
-                      !     ELSE
-                      !       !CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"3D-0D iteration: ", &
-                      !       !  & iteration3D1D,err,error,*999)
-                      !       ! ! Reset 3D values if not converged
-                      !       ! CALL FIELD_PARAMETER_SETS_COPY(dependentField,equationsSet%EQUATIONS%EQUATIONS_MAPPING% &
-                      !       !   & DYNAMIC_MAPPING%DYNAMIC_VARIABLE_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_VALUES_SET_TYPE, &
-                      !       !   & 1.0_DP,ERR,ERROR,*999)
-                      !       ! CALL FIELD_PARAMETER_SETS_COPY(dependentField,equationsSet%EQUATIONS%EQUATIONS_MAPPING% &
-                      !       !   & DYNAMIC_MAPPING%DYNAMIC_VARIABLE_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE,FIELD_RESIDUAL_SET_TYPE,&
-                      !       !   & 1.0_DP,ERR,ERROR,*999)
-                      !       controlLoop%PARENT_LOOP%WHILE_LOOP%CONTINUE_LOOP=.TRUE.                            
-                      !     END IF
-                      !   END IF
-                      ! END IF
                     CASE DEFAULT  
                       localError="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(equationsSet%Specification(3),"*",err,error))// &
                         & " is not valid for a dynamic solver in a simple loop for a multiscale Navier-Stokes problem."
@@ -14724,32 +14398,7 @@ CONTAINS
                 CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
               END IF !
             CASE(SOLVER_DAE_TYPE)
-              ! CellML solver simple loop
-              ! iteration3D1D=controlLoop%PARENT_LOOP%WHILE_LOOP%ITERATION_NUMBER
-              ! ! DEBUG: Only use cellml values from the first newton iteration (we won't have the new boundary flux before, and don't want to cause
-              ! !  the 3D solver to diverge after...)
-              ! IF (iteration3D1D == 1) THEN
-              !  equationsSet=>controlLoop%PARENT_LOOP%SUB_LOOPS(2)%PTR%SOLVERS%SOLVERS(1)%PTR% &
-              !    & SOLVER_EQUATIONS%SOLVER_MAPPING%EQUATIONS_SETS(1)%PTR
-              !  ! P0D is previous value
-              !  CALL FIELD_PARAMETER_SETS_COPY(equationsSet%DEPENDENT%DEPENDENT_FIELD,equationsSet%EQUATIONS% &
-              !    & EQUATIONS_MAPPING%DYNAMIC_MAPPING%DYNAMIC_VARIABLE_TYPE,FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE, &
-              !    & FIELD_PRESSURE_VALUES_SET_TYPE,1.0_DP,ERR,ERROR,*999)
-              !  ! Q0D is previous value
-              !  CALL FIELD_PARAMETER_SETS_COPY(equationsSet%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD,equationsSet%EQUATIONS% &
-              !    & EQUATIONS_MAPPING%DYNAMIC_MAPPING%DYNAMIC_VARIABLE_TYPE,FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE, &
-              !    & FIELD_VALUES_SET_TYPE,1.0_DP,ERR,ERROR,*999)
-              ! ELSE 
-              !   CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"----- Updating 0D boundary values, iteration: ", &
-              !     & iteration3D1D,err,error,*999)
-              !   ! ! Reset 3D values to resolve with new 
-              !   ! CALL FIELD_PARAMETER_SETS_COPY(dependentField,equationsSet%EQUATIONS%EQUATIONS_MAPPING% &
-              !   !      & DYNAMIC_MAPPING%DYNAMIC_VARIABLE_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_VALUES_SET_TYPE, &
-              !   !      & 1.0_DP,ERR,ERROR,*999)
-              !   ! CALL FIELD_PARAMETER_SETS_COPY(dependentField,equationsSet%EQUATIONS%EQUATIONS_MAPPING% &
-              !   !      & DYNAMIC_MAPPING%DYNAMIC_VARIABLE_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE,FIELD_RESIDUAL_SET_TYPE,&
-              !   !      & 1.0_DP,ERR,ERROR,*999)
-              ! END IF
+              ! CellML solver simple loop - do nothing
             CASE DEFAULT
               localError="The solve type of "//TRIM(NUMBER_TO_VSTRING(solver%SOLVE_TYPE,"*",ERR,ERROR))// &
                 & " is invalid for a simple loop in a Navier-Stokes multiscale problem."
@@ -14849,19 +14498,6 @@ CONTAINS
           CASE("1D Iterative Loop")
             ! No longer using the NS/C coupling loop
             controlLoop%WHILE_LOOP%CONTINUE_LOOP=.FALSE.
-
-            ! ! 1D Navier-Stokes/Characteristics loop
-            ! navierStokesSolver=>controlLoop%SOLVERS%SOLVERS(2)%PTR
-            ! !CALL NavierStokes_CoupleCharacteristics(controlLoop,navierStokesSolver,ERR,ERROR,*999)
-            ! controlLoop%WHILE_LOOP%CONTINUE_LOOP=.FALSE.
-            ! ! Get the equations set from the 1D solver
-            ! equationsSet=>navierStokesSolver%SOLVER_EQUATIONS%SOLVER_MAPPING%EQUATIONS_SETS(1)%PTR
-            ! ! Get the 3D solver
-            ! ! TODO: make this more general!
-            ! navierStokesSolver=>controlLoop%PARENT_LOOP%SUB_LOOPS(2)%PTR%SOLVERS%SOLVERS(1)%PTR
-            ! coupledEquationsSet=>navierStokesSolver%SOLVER_EQUATIONS%SOLVER_MAPPING%EQUATIONS_SETS(1)%PTR
-            ! iteration=controlLoop%PARENT_LOOP%WHILE_LOOP%ITERATION_NUMBER
-            ! CALL NavierStokes_CalculateBoundaryFlux(equationsSet,coupledEquationsSet,ERR,ERROR,*999)
           CASE DEFAULT
             localError="The iterative loop label of "//label// &
               & " does not correspond to a recognised loop type for a Navier-Stokes multiscale problem."
@@ -15374,10 +15010,6 @@ CONTAINS
           & ELEMENTS(elementIdx)%BASIS
         decompElement=>DECOMPOSITION3D%TOPOLOGY%ELEMENTS%ELEMENTS(elementIdx)
 
-        ! !DEBUG
-        ! userElementNumber = decomposition3D%DOMAIN(meshComponentNumber)%PTR%MAPPINGS%ELEMENTS% &
-        !  & LOCAL_TO_GLOBAL_MAP(elementIdx)
-
         ! Note: if CFL tolerance = 0, we'll skip this step, which speeds things up a bit
         IF (toleranceCourant > ZERO_TOLERANCE) THEN
           ! C F L  c o n d i t i o n   c h e c k
@@ -15487,20 +15119,6 @@ CONTAINS
               velocityGauss=dependentInterpolatedPoint%values(1:3,NO_PART_DERIV)
               pressureGauss=dependentInterpolatedPoint%values(4,NO_PART_DERIV)
 
-              ! IF (userElementNumber == 2541) THEN
-              !   diagnosticString = "   Boundary flux Element 2541 DEBUG: gauss point "// &
-              !    & TRIM(NUMBER_TO_VSTRING(gaussIdx,"*",err,error))
-              !   CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,diagnosticString,err,error,*999)
-              !   diagnosticString = "      velocity: "// &
-              !    & TRIM(NUMBER_TO_VSTRING(velocityGauss(1),"*",err,error))//" "// &
-              !    & TRIM(NUMBER_TO_VSTRING(velocityGauss(2),"*",err,error))//" "// &
-              !    & TRIM(NUMBER_TO_VSTRING(velocityGauss(3),"*",err,error))
-              !   CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,diagnosticString,err,error,*999)
-              !   diagnosticString = "    pressure: "// &
-              !    & TRIM(NUMBER_TO_VSTRING(pressureGauss,"*",err,error))
-              !   CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,diagnosticString,err,error,*999)
-              ! END IF
-
               gaussWeight=faceQuadratureScheme%GAUSS_WEIGHTS(gaussIdx)
               ! I n t e g r a t e    f a c e   a r e a ,   v e l o c i t y   a n d   p r e s s u r e
               ! ----------------------------------------------------------------------------------------
@@ -15559,8 +15177,6 @@ CONTAINS
           IF(computationalNode==0) THEN
             CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"3D boundary ",boundaryID,"  flow:  ", &
               & globalBoundaryFlux(boundaryID),err,error,*999)
-            !CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"3D boundary ",boundaryID,"  area:  ", &
-            !  & globalBoundaryArea(boundaryID),err,error,*999)
             CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"3D boundary ",boundaryID,"  mean pressure:  ", &
               & globalBoundaryMeanPressure(boundaryID),err,error,*999)
             IF (toleranceCourant > ZERO_TOLERANCE) THEN
@@ -15665,42 +15281,10 @@ CONTAINS
               versionNumber=1
               IF(boundaryType==BOUNDARY_CONDITION_FIXED_CELLML) THEN
                 ! Check current values against those passed to the CellML solver
-                !CALL Field_ParameterSetGetLocalNode(equationsSetField3D,FIELD_U_VARIABLE_TYPE, &
-                !  & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,1,1,nodeNumber,1,q0D,err,error,*999)
                 CALL Field_ParameterSetGetLocalNode(equationsSetField3D,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_VALUES_SET_TYPE,1,1,nodeNumber,1,q0D,err,error,*999)
-                !CALL Field_ParameterSetGetLocalNode(equationsSetField3D,FIELD_U_VARIABLE_TYPE, &
-                ! & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,1,1,nodeNumber,2,p0D,err,error,*999)
-                !CALL Field_ParameterSetGetLocalNode(dependentField3D,FIELD_U_VARIABLE_TYPE, &
-                !  & FIELD_PRESSURE_VALUES_SET_TYPE,1,1,nodeNumber,1,q0D,err,error,*999)
                 CALL Field_ParameterSetGetLocalNode(dependentField3D,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_PRESSURE_VALUES_SET_TYPE,1,1,nodeNumber,4,p0D,err,error,*999)
-                ! flowError = globalBoundaryFlux(boundaryID)-q0D
-                ! pressureError = globalBoundaryMeanPressure(boundaryID)-p0D
-                ! IF ((ABS(flowError) < absolute3D0DTolerance .AND. ABS(pressureError) < absolute3D0DTolerance)) THEN
-                !   ! CONVERGED ABSOLUTE TOLERANCE
-                !   !CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"3D-0D converged ABSOLUTE",err,error,*999)
-                ! ELSE IF (ABS(flowError/(globalBoundaryFlux(boundaryID)+ZERO_TOLERANCE)) < relative3D0DTolerance .AND. &
-                !   &  ABS(pressureError/(globalBoundaryMeanPressure(boundaryID)+ZERO_TOLERANCE)) < relative3D0DTolerance) THEN
-                !   ! CONVERGED RELATIVE TOLERANCE
-                !   !CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"3D-0D converged RELATIVE",err,error,*999)
-                ! ELSE
-                !   IF (.NOT. boundary3D0DFound(boundaryID)) THEN
-                !     ! CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"  0D boundary ",boundaryID,"  flow: ", &
-                !     !   & q0D,err,error,*999)
-                !     ! CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"  0D boundary ",boundaryID,"  pressure: ", &
-                !     !   & p0D,err,error,*999)
-                !     ! CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"  0D boundary ",boundaryID,"  flow error: ", &
-                !     !   & flowError,err,error,*999)
-                !     ! CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"  0D boundary ",boundaryID,"  pressure error: ", &
-                !     !   & pressureError,err,error,*999)
-                !     boundary3D0DFound(boundaryID) = .TRUE.
-                !   END IF
-                !   convergedFlag = .FALSE.
-                ! END IF
-                ! Update flow rates on 3D boundary equations set field
-                !CALL Field_ParameterSetGetLocalNode(equationsSetField3D,FIELD_U_VARIABLE_TYPE, &
-                ! & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,1,1,nodeNumber,1,q0D,err,error,*999)
                 CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(dependentField3D,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,versionNumber,faceNodeDerivativeIdx,nodeNumber,4, &
                   & p0D,err,error,*999) 
@@ -15709,26 +15293,12 @@ CONTAINS
                   & q0D,err,error,*999) 
                 CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(equationsSetField3D,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                   & versionNumber,faceNodeDerivativeIdx,nodeNumber,1,globalBoundaryFlux(boundaryID),err,error,*999) 
-                ! CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(equationsSetField3D,FIELD_U_VARIABLE_TYPE, &
-                !   & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,versionNumber,faceNodeDerivativeIdx,nodeNumber,1, &
-                !   & q0D,err,error,*999) 
-                !CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(equationsSetField3D,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                !  & versionNumber,faceNodeDerivativeIdx,nodeNumber,2,globalBoundaryMeanPressure(boundaryID),err,error,*999) 
               END IF
             END DO !nodeDerivativeIdx
           END DO !faceNodeIdx
         END DO !faceIdx
       END IF !boundaryIdentifier
     END DO !elementIdx
-
-    ! ! Check global mass conservation
-    ! flowError = 0.0_DP
-    ! DO boundaryID=1,SIZE(globalBoundaryFlux)
-    !   flowError = flowError + globalBoundaryFlux(boundaryID)
-    ! END DO
-    ! IF (ABS(flowError) > absolute3D0DTolerance) THEN
-    !   convergedFlag = .FALSE.
-    ! END IF
 
     !allocate array for mpi communication
     IF(numberOfComputationalNodes>1) THEN !use mpi
