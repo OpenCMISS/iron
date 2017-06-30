@@ -6714,8 +6714,7 @@ CONTAINS
               IF(ASSOCIATED(SOLVER%SOLVER_EQUATIONS)) THEN
                 convergedFlag = .FALSE.
                 CALL NavierStokes_CalculateBoundaryFlux3D0D(SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING% &
-                  & EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS%EQUATIONS_SET,convergedFlag, &
-                  & 1.0E-8_DP,1.0E-8_DP,err,error,*999)
+                  & EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS%EQUATIONS_SET,err,error,*999)
               END IF
             CASE(PROBLEM_CONSTITUTIVE_RBS_NAVIER_STOKES_SUBTYPE)
               DO equationsSetNumber=1,SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
@@ -14164,8 +14163,7 @@ CONTAINS
         !CALL NavierStokes_ShearRateCalculate(equationsSet,err,error,*999)
       CASE(EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE)
          convergedFlag = .FALSE.
-         CALL NavierStokes_CalculateBoundaryFlux3D0D(equationsSet,convergedFlag, &
-           & 1.0E-8_DP,1.0E-8_DP,err,error,*999)
+         CALL NavierStokes_CalculateBoundaryFlux3D0D(equationsSet,err,error,*999)
       CASE(EQUATIONS_SET_STATIC_NAVIER_STOKES_SUBTYPE, &
          & EQUATIONS_SET_LAPLACE_NAVIER_STOKES_SUBTYPE, &
          & EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE, &
@@ -14255,8 +14253,7 @@ CONTAINS
             equationsSet=>navierStokesSolver%SOLVER_EQUATIONS%SOLVER_MAPPING%EQUATIONS_SETS(1)%PTR
             dependentField=>equationsSet%DEPENDENT%DEPENDENT_FIELD
             IF(dependentField%DECOMPOSITION%CALCULATE_FACES) THEN
-              CALL NavierStokes_CalculateBoundaryFlux3D0D(equationsSet,convergedFlag, &
-                & absolute3D0DTolerance,relative3D0DTolerance,ERR,ERROR,*999)
+              CALL NavierStokes_CalculateBoundaryFlux3D0D(equationsSet,ERR,ERROR,*999)
             END IF
             CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(navierStokesSolver,err,error,*999)
           ELSE
@@ -14864,14 +14861,10 @@ CONTAINS
   !
 
   !> Calculate the fluid flux through 3D boundaries for use in problems with coupled solutions (e.g. multidomain)
-  SUBROUTINE NavierStokes_CalculateBoundaryFlux3D0D(equationsSet,convergedFlag, &
-    &absolute3D0DTolerance,relative3D0DTolerance,err,error,*)
+  SUBROUTINE NavierStokes_CalculateBoundaryFlux3D0D(equationsSet,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
-    REAL(DP), INTENT(IN) :: absolute3D0DTolerance !<absolute convergence criteria for 3D-0D coupling
-    REAL(DP), INTENT(IN) :: relative3D0DTolerance !<relative convergence criteria for 3D-0D coupling
-    LOGICAL, INTENT(INOUT) :: convergedFlag !<convergence flag for 3D-0D coupling
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -14919,6 +14912,7 @@ CONTAINS
     REAL(DP) :: couplingFlow,couplingStress,p1D,q1D,a1D,p3D,stress3DPrevious,stress1DPrevious,tolerance,p0D,q0D
     REAL(DP) :: flowError,pressureError
     LOGICAL :: couple1DTo3D,couple3DTo1D,boundary3D0DFound(10),boundary3D0DConverged(10)
+    LOGICAL :: convergedFlag !<convergence flag for 3D-0D coupling
     LOGICAL, ALLOCATABLE :: globalConverged(:)
     TYPE(VARYING_STRING) :: LOCAL_ERROR, diagnosticString
 
