@@ -14870,16 +14870,11 @@ CONTAINS
     !Local Variables
     TYPE(EQUATIONS_TYPE), POINTER :: equations3D
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: elementsMapping3D
-    TYPE(FIELD_TYPE), POINTER :: geometricField
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: dependentVariable3D
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,geometricVariable
     TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition3D
-    TYPE(DECOMPOSITION_TYPE), POINTER :: geometricDecomposition
     TYPE(DECOMPOSITION_ELEMENT_TYPE), POINTER :: decompElement
     TYPE(BASIS_TYPE), POINTER :: dependentBasis
     TYPE(BASIS_TYPE), POINTER :: dependentBasis2
-    TYPE(BASIS_TYPE), POINTER :: geometricFaceBasis
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices
     TYPE(DECOMPOSITION_FACE_TYPE), POINTER :: face
     TYPE(BASIS_TYPE), POINTER :: faceBasis
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: dependentInterpolatedPoint
@@ -14888,64 +14883,46 @@ CONTAINS
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: geometricInterpolatedPoint
     TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: geometricInterpolationParameters
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: pointMetrics
-    TYPE(EQUATIONS_SET_EQUATIONS_SET_FIELD_TYPE), POINTER :: equationsEquationsSetField
     TYPE(FIELD_TYPE), POINTER :: equationsSetField3D
     TYPE(FIELD_TYPE), POINTER :: dependentField3D
-    TYPE(EQUATIONS_MATRICES_RHS_TYPE), POINTER :: rhsVector
     INTEGER(INTG) :: faceIdx, faceNumber,elementIdx,nodeNumber,versionNumber
     INTEGER(INTG) :: componentIdx,gaussIdx
     INTEGER(INTG) :: faceNodeIdx, elementNodeIdx
     INTEGER(INTG) :: faceNodeDerivativeIdx, meshComponentNumber
-    INTEGER(INTG) :: normalComponentIdx,nonNormalComponent(2)
-    INTEGER(INTG) :: boundaryID,numberOfBoundaries,boundaryType,coupledNodeNumber,numberOfGlobalBoundaries,boundaryIDTest
+    INTEGER(INTG) :: boundaryID,numberOfBoundaries,boundaryType,coupledNodeNumber,numberOfGlobalBoundaries
     INTEGER(INTG) :: MPI_IERROR,numberOfComputationalNodes
-    INTEGER(INTG) :: i,j,computationalNode,xiDirection(3),orientation,userElementNumber
-    REAL(DP) :: gaussWeight, normalProjection,elementNormal(3)
+    INTEGER(INTG) :: computationalNode,xiDirection(3),orientation
+    REAL(DP) :: gaussWeight, elementNormal(3)
     REAL(DP) :: normalDifference,normalTolerance
     REAL(DP) :: courant,maxCourant,toleranceCourant,boundaryValueTemp
     REAL(DP) :: velocityGauss(3),faceNormal(3),unitNormal(3),boundaryValue,faceArea,faceVelocity,facePressure
-    REAL(DP) :: pressureGauss,faceTraction,mu,muScale,normal,rho,viscousTerm(3)
-    REAL(DP) :: dUDXi(3,3),dXiDX(3,3),gradU(3,3),cauchy(3,3),traction(3),normalWave(2)
+    REAL(DP) :: pressureGauss,faceTraction,mu,muScale
     REAL(DP) :: localBoundaryFlux(10),localBoundaryArea(10),globalBoundaryFlux(10),globalBoundaryArea(10)
     REAL(DP) :: localBoundaryPressure(10),globalBoundaryPressure(10),globalBoundaryMeanPressure(10)
     REAL(DP) :: localBoundaryNormalStress(10),globalBoundaryNormalStress(10),globalBoundaryMeanNormalStress(10)
-    REAL(DP) :: couplingFlow,couplingStress,p1D,q1D,a1D,p3D,stress3DPrevious,stress1DPrevious,tolerance,p0D,q0D
-    REAL(DP) :: flowError,pressureError
-    LOGICAL :: couple1DTo3D,couple3DTo1D,boundary3D0DFound(10),boundary3D0DConverged(10)
+    REAL(DP) :: p0D,q0D
+    LOGICAL :: boundary3D0DFound(10)
     LOGICAL :: convergedFlag !<convergence flag for 3D-0D coupling
     LOGICAL, ALLOCATABLE :: globalConverged(:)
     TYPE(VARYING_STRING) :: LOCAL_ERROR, diagnosticString
 
-    REAL(DP), POINTER :: geometricParameters(:)
-
     ENTERS("NavierStokes_CalculateBoundaryFlux3D0D",err,error,*999)
 
     NULLIFY(decomposition3D)
-    NULLIFY(geometricDecomposition)
-    NULLIFY(geometricParameters)
     NULLIFY(decompElement)
     NULLIFY(dependentBasis)
     NULLIFY(dependentBasis2)
-    NULLIFY(geometricFaceBasis)
-    NULLIFY(geometricVariable)
     NULLIFY(equations3D)
-    NULLIFY(equationsMatrices)
     NULLIFY(face)
     NULLIFY(faceBasis)
     NULLIFY(faceQuadratureScheme)
-    NULLIFY(fieldVariable)
     NULLIFY(dependentInterpolatedPoint)
     NULLIFY(dependentInterpolationParameters)
     NULLIFY(geometricInterpolatedPoint)
     NULLIFY(geometricInterpolationParameters)
-    NULLIFY(rhsVector)
     NULLIFY(dependentField3D)
-    NULLIFY(geometricField)
-    NULLIFY(equationsEquationsSetField)
     NULLIFY(equationsSetField3D)
 
-    couple1DTo3D = .FALSE.
-    couple3DTo1D = .FALSE.
     boundary3D0DFound = .FALSE.
 
     SELECT CASE(equationsSet%Specification(3))
