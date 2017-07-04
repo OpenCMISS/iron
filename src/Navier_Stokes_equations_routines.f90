@@ -14541,8 +14541,6 @@ CONTAINS
     TYPE(EQUATIONS_TYPE), POINTER :: equations
     TYPE(FIELD_TYPE), POINTER :: dependentField,materialsField,independentField,geometricField
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
     TYPE(VARYING_STRING) :: localError
     REAL(DP) :: rho,A0,H0,E,beta,pExternal,lengthScale,timeScale,massScale
     REAL(DP) :: pCellml,qCellml,ABoundary,QBoundary,W1,W2,ACellML,normalWave(2,7)
@@ -14560,8 +14558,6 @@ CONTAINS
     NULLIFY(independentField)
     NULLIFY(materialsField)
     NULLIFY(fieldVariable)
-    NULLIFY(solverEquations)
-    NULLIFY(solverMapping)
 
     ! Preliminary checks; get field and domain pointers
     IF(ASSOCIATED(equationsSet)) THEN
