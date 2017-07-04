@@ -7666,7 +7666,7 @@ CONTAINS
               END IF ! solver equations associated
               ! Update any multiscale boundary values (coupled 0D or non-reflecting)
               CALL NavierStokes_UpdateMultiscaleBoundary(EQUATIONS_SET,BOUNDARY_CONDITIONS, &
-                & CURRENT_TIME,TIME_INCREMENT,err,error,*999)
+                & TIME_INCREMENT,err,error,*999)
 
             CASE(PROBLEM_MULTISCALE_NAVIER_STOKES_SUBTYPE, &
                & PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE)
@@ -7978,7 +7978,7 @@ CONTAINS
                           END IF ! solver equations associated
                           ! Update any multiscale boundary values (coupled 0D or non-reflecting)
                           CALL NavierStokes_UpdateMultiscaleBoundary(EQUATIONS_SET,BOUNDARY_CONDITIONS, &
-                            & CURRENT_TIME,TIME_INCREMENT,err,error,*999)
+                            & TIME_INCREMENT,err,error,*999)
                         CASE DEFAULT  
                           LOCAL_ERROR="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*", &
                             & err,error))//" is not valid for a multiscale dynamic Navier-Stokes solver."
@@ -14527,12 +14527,11 @@ CONTAINS
   !
 
   !>Updates boundary conditions for multiscale fluid problems
-  SUBROUTINE NavierStokes_UpdateMultiscaleBoundary(equationsSet,boundaryConditions,currentTime,timeIncrement,err,error,*)
+  SUBROUTINE NavierStokes_UpdateMultiscaleBoundary(equationsSet,boundaryConditions,timeIncrement,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet 
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
-    REAL(DP), INTENT(IN) :: currentTime 
     REAL(DP), INTENT(IN) :: timeIncrement 
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
