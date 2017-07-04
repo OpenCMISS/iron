@@ -1404,12 +1404,19 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_ControlLoop_MaximumIterationsSetObj
   END INTERFACE cmfe_ControlLoop_MaximumIterationsSet
 
-  !>Sets/changes the convergence tolerance for a while control loop. \todo need a get method
+  !>Sets/changes the absolute convergence tolerance for a while control loop. \todo need a get method
   INTERFACE cmfe_ControlLoop_AbsoluteToleranceSet
     MODULE PROCEDURE cmfe_ControlLoop_AbsoluteToleranceSetNumber0
     MODULE PROCEDURE cmfe_ControlLoop_AbsoluteToleranceSetNumber1
     MODULE PROCEDURE cmfe_ControlLoop_AbsoluteToleranceSetObj
   END INTERFACE cmfe_ControlLoop_AbsoluteToleranceSet
+
+  !>Sets/changes the relative convergence tolerance for a while control loop. \todo need a get method
+  INTERFACE cmfe_ControlLoop_RelativeToleranceSet
+    MODULE PROCEDURE cmfe_ControlLoop_RelativeToleranceSetNumber0
+    MODULE PROCEDURE cmfe_ControlLoop_RelativeToleranceSetNumber1
+    MODULE PROCEDURE cmfe_ControlLoop_RelativeToleranceSetObj
+  END INTERFACE cmfe_ControlLoop_RelativeToleranceSet
 
   !>Returns the number of sub loops for a control loop.
   INTERFACE cmfe_ControlLoop_NumberOfSubLoopsGet
@@ -1490,7 +1497,7 @@ MODULE OpenCMISS_Iron
 
   PUBLIC cmfe_ControlLoop_MaximumIterationsSet
 
-  PUBLIC cmfe_ControlLoop_AbsoluteToleranceSet
+  PUBLIC cmfe_ControlLoop_AbsoluteToleranceSet,cmfe_ControlLoop_RelativeToleranceSet
 
   PUBLIC cmfe_ControlLoop_NumberOfSubLoopsGet,cmfe_ControlLoop_NumberOfSubLoopsSet
 
@@ -3380,6 +3387,7 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_FIELD_INTEGRATED_NEUMANN_SET_TYPE = FIELD_INTEGRATED_NEUMANN_SET_TYPE !<Stores integrated Neumann values calculated from Neumann point values. \see OPENCMISS_FieldParameterSetTypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_FIELD_MESH_DISPLACEMENT_SET_TYPE=FIELD_MESH_DISPLACEMENT_SET_TYPE !<The parameter set corresponding to the mesh displacement values for ALE \see OPENCMISS_FieldParameterSetTypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_FIELD_MESH_VELOCITY_SET_TYPE=FIELD_MESH_VELOCITY_SET_TYPE !<The parameter set corresponding to the mesh velocity values for ALE \see OPENCMISS_FieldParameterSetTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE = FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE !<The parameter set corresponding to the previous iteration field values (at iteration n) \see OPENCMISS_FieldParameterSetTypes,OPENCMISS
   !>@}
   !> \addtogroup OPENCMISS_FieldScalingTypes OPENCMISS::Field::ScalingTypes
   !> \brief Field scaling type parameters
@@ -3973,7 +3981,7 @@ MODULE OpenCMISS_Iron
     & CMFE_FIELD_ACCELERATION_VALUES_SET_TYPE,CMFE_FIELD_INITIAL_ACCELERATION_SET_TYPE, &
     & CMFE_FIELD_PREVIOUS_ACCELERATION_SET_TYPE, &
     & CMFE_FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE, CMFE_FIELD_PRESSURE_VALUES_SET_TYPE, &
-    & CMFE_FIELD_PREVIOUS_PRESSURE_SET_TYPE, &
+    & CMFE_FIELD_PREVIOUS_PRESSURE_SET_TYPE, CMFE_FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE, &
     & CMFE_FIELD_IMPERMEABLE_FLAG_VALUES_SET_TYPE,CMFE_FIELD_INTEGRATED_NEUMANN_SET_TYPE, &
     & CMFE_FIELD_MESH_DISPLACEMENT_SET_TYPE,CMFE_FIELD_MESH_VELOCITY_SET_TYPE
 
@@ -5398,6 +5406,7 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LAPLACE_NAVIER_STOKES_SUBTYPE = PROBLEM_LAPLACE_NAVIER_STOKES_SUBTYPE !<Laplace type Navier-Stokes problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_TRANSIENT_NAVIER_STOKES_SUBTYPE = PROBLEM_TRANSIENT_NAVIER_STOKES_SUBTYPE !<Transient Navier-Stokes problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE = PROBLEM_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE !<Transient stabilised Navier-Stokes problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE = PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE !<Coupled 3D-DAE Navier-Stokes problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MULTISCALE_NAVIER_STOKES_SUBTYPE = &
     & PROBLEM_MULTISCALE_NAVIER_STOKES_SUBTYPE !<Transient stabilised Navier-Stokes problem with multiscale boundary coupling subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_TRANSIENT1D_NAVIER_STOKES_SUBTYPE = PROBLEM_TRANSIENT1D_NAVIER_STOKES_SUBTYPE !<TRANSIENT1D Navier-Stokes problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
@@ -5597,7 +5606,8 @@ MODULE OpenCMISS_Iron
     & CMFE_PROBLEM_TRANSIENT1D_NAVIER_STOKES_SUBTYPE,CMFE_PROBLEM_COUPLED1D0D_NAVIER_STOKES_SUBTYPE, &
     & CMFE_PROBLEM_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE,CMFE_PROBLEM_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE, &
     & CMFE_PROBLEM_STREE1D0D_ADV_SUBTYPE,CMFE_PROBLEM_STREE1D0D_SUBTYPE, &
-    & CMFE_PROBLEM_ALE_NAVIER_STOKES_SUBTYPE,CMFE_PROBLEM_MULTISCALE_NAVIER_STOKES_SUBTYPE
+    & CMFE_PROBLEM_ALE_NAVIER_STOKES_SUBTYPE,CMFE_PROBLEM_MULTISCALE_NAVIER_STOKES_SUBTYPE, &
+    & CMFE_PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE
 
   PUBLIC CMFE_PROBLEM_STANDARD_DARCY_SUBTYPE,CMFE_PROBLEM_QUASISTATIC_DARCY_SUBTYPE,CMFE_PROBLEM_ALE_DARCY_SUBTYPE, &
     & CMFE_PROBLEM_TRANSIENT_DARCY_SUBTYPE,CMFE_PROBLEM_PGM_DARCY_SUBTYPE,CMFE_PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE
@@ -17000,6 +17010,112 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_ControlLoop_AbsoluteToleranceSetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the maximum iterations for a while control loop identified by user numbers.
+  SUBROUTINE cmfe_ControlLoop_RelativeToleranceSetNumber0(problemUserNumber,controlLoopIdentifier,relativeTolerance,err)
+    !DLLEXPORT(cmfe_ControlLoop_RelativeToleranceSetNumber0)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the maximum iterations for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier.
+    REAL(DP), INTENT(IN) :: relativeTolerance !<The relative tolerance value for a control loop.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP
+    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("cmfe_ControlLoop_RelativeToleranceSetNumber0",err,error,*999)
+
+    NULLIFY(CONTROL_LOOP)
+    NULLIFY(PROBLEM)
+    CALL PROBLEM_USER_NUMBER_FIND(problemUserNumber,PROBLEM,err,error,*999)
+    IF(ASSOCIATED(PROBLEM)) THEN
+      CALL PROBLEM_CONTROL_LOOP_GET(PROBLEM,controlLoopIdentifier,CONTROL_LOOP,err,error,*999)
+      CALL ControlLoop_RelativeToleranceSet(CONTROL_LOOP,relativeTolerance,err,error,*999)
+    ELSE
+      localError="A problem with an user number of "//TRIM(NumberToVString(problemUserNumber,"*",err,error))//" does not exist."
+      CALL FlagError(localError,err,error,*999)
+    END IF
+
+    EXITS("cmfe_ControlLoop_RelativeToleranceSetNumber0")
+    RETURN
+999 ERRORS("cmfe_ControlLoop_RelativeToleranceSetNumber0",err,error)
+    EXITS("cmfe_ControlLoop_RelativeToleranceSetNumber0")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_RelativeToleranceSetNumber0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the maximum iterations for a while control loop identified by user numbers.
+  SUBROUTINE cmfe_ControlLoop_RelativeToleranceSetNumber1(problemUserNumber,controlLoopIdentifiers,relativeTolerance,err)
+    !DLLEXPORT(cmfe_ControlLoop_RelativeToleranceSetNumber1)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the maximum iterations for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<The control loop identifiers.
+    REAL(DP), INTENT(IN) :: relativeTolerance !<The relative tolerance value for a control loop.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP
+    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("cmfe_ControlLoop_RelativeToleranceSetNumber1",err,error,*999)
+
+    NULLIFY(CONTROL_LOOP)
+    NULLIFY(PROBLEM)
+    CALL PROBLEM_USER_NUMBER_FIND(problemUserNumber,PROBLEM,err,error,*999)
+    IF(ASSOCIATED(PROBLEM)) THEN
+      CALL PROBLEM_CONTROL_LOOP_GET(PROBLEM,controlLoopIdentifiers,CONTROL_LOOP,err,error,*999)
+      CALL ControlLoop_RelativeToleranceSet(CONTROL_LOOP,relativeTolerance,err,error,*999)
+    ELSE
+      localError="A problem with an user number of "//TRIM(NumberToVString(problemUserNumber,"*",err,error))//" does not exist."
+      CALL FlagError(localError,err,error,*999)
+    END IF
+
+    EXITS("cmfe_ControlLoop_RelativeToleranceSetNumber1")
+    RETURN
+999 ERRORS("cmfe_ControlLoop_RelativeToleranceSetNumber1",err,error)
+    EXITS("cmfe_ControlLoop_RelativeToleranceSetNumber1")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_RelativeToleranceSetNumber1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the maximum iterations for a while control loop identified by an object.
+  SUBROUTINE cmfe_ControlLoop_RelativeToleranceSetObj(controlLoop,relativeTolerance,err)
+    !DLLEXPORT(cmfe_ControlLoop_RelativeToleranceSetObj)
+
+    !Argument variables
+    TYPE(cmfe_ControlLoopType), INTENT(INOUT) :: controlLoop !<The control loop to set the maximum iterations for.
+    REAL(DP), INTENT(IN) :: relativeTolerance !<The relative tolerance value for a control loop.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_ControlLoop_RelativeToleranceSetObj",err,error,*999)
+
+    CALL ControlLoop_RelativeToleranceSet(controlLoop%controlLoop,relativeTolerance,err,error,*999)
+
+    EXITS("cmfe_ControlLoop_RelativeToleranceSetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_ControlLoop_RelativeToleranceSetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_RelativeToleranceSetObj
 
   !
   !================================================================================================================================
