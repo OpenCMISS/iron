@@ -224,9 +224,7 @@ CONTAINS
       & RESHAPE([ 0.5, 0.5, 0.5,  0.0, 0.1, 0.2,  0.0, 0.0, 0.0,  0.667, 0.123, 0.456], [3, 4])
     INTEGER(CMISSIntg), PARAMETER :: elementUserNumber = 1
     REAL(CMISSRP), DIMENSION(3) :: values
-    !REAL(CMISSRP), PARAMETER :: tolerance = MERGE(1.0E-6_CMISSRP, 1.0E-14_CMISSRP, KIND(0.0_CMISSRP) == KIND(0.0_CMISSSP))
-    ! Apparently intel can't use MERGE intrinsic function in a constant expression
-    REAL(CMISSRP), PARAMETER :: tolerance = 1.0E-14_CMISSRP
+    REAL(CMISSRP), PARAMETER :: tolerance = MERGE(1.0E-6_CMISSRP, 1.0E-14_CMISSRP, KIND(0.0_CMISSRP) == KIND(0.0_CMISSSP))
     INTEGER :: i, p
     TYPE(cmfe_MeshNodesType) :: meshNodes
     INTEGER(CMISSIntg) :: elementCount, err, meshComponentCount, nodeCount
