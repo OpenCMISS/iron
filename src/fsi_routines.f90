@@ -539,7 +539,8 @@ CONTAINS
         solidEquationsSetFound=.TRUE.
       ELSE IF(equationsSet%specification(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS &
         & .AND.equationsSet%specification(2)==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE &
-        & .AND.equationsSet%specification(3)==EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE) THEN
+        & .AND.(equationsSet%specification(3)==EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE &
+        & .OR.equationsSet%specification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE)) THEN
         fluidEquationsSet=>equationsSet
         fluidEquationsSetFound=.TRUE.
       ELSE
