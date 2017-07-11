@@ -5850,11 +5850,9 @@ CONTAINS
           END IF
 
           ! F a c e   I n t e g r a t i o n
-          IF(RHS_VECTOR%UPDATE_VECTOR) THEN
-            !If specified, also perform face integration for neumann boundary conditions
-            IF(DEPENDENT_FIELD%DECOMPOSITION%CALCULATE_FACES) THEN
-              CALL NavierStokes_FiniteElementFaceIntegrate(EQUATIONS_SET,ELEMENT_NUMBER,FIELD_VARIABLE,.FALSE.,ERR,ERROR,*999)
-            END IF
+          IF(UPDATE_NONLINEAR_RESIDUAL) THEN
+            !If specified, also perform boundary line (2D) or face (3D) integration for neumann boundary conditions
+            CALL NavierStokes_FiniteElementBoundaryIntegrate(EQUATIONS_SET,ELEMENT_NUMBER,FIELD_VARIABLE,.FALSE.,ERR,ERROR,*999)
           END IF
 
           !!!--   A S S E M B L E   M A T R I C E S  &  V E C T O R S   --!!!
@@ -6352,22 +6350,20 @@ CONTAINS
               END IF
             END DO !ng
 
-            ! F a c e   I n t e g r a t i o n
-            IF(DEPENDENT_FIELD%DECOMPOSITION%CALCULATE_FACES) THEN
-              SELECT CASE(EQUATIONS_SET%specification(3))
-              CASE(EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE, &
-                 & EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE, &
-                 & EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE)
-                ! Calculate the Jacobian of the nonlinear boundary stabilisation term if beta > 0
-                CALL FIELD_PARAMETER_SET_GET_CONSTANT(EQUATIONS_SET%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD, &
-                  & FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,beta,err,error,*999)
-                IF (beta > ZERO_TOLERANCE) THEN
-                  CALL NavierStokes_FiniteElementFaceIntegrate(EQUATIONS_SET,ELEMENT_NUMBER,FIELD_VARIABLE,.TRUE.,ERR,ERROR,*999)
-                END IF
-              CASE DEFAULT
-                ! Do nothing for other equation set subtypes
-              END SELECT
-            END IF
+            ! B o u n d a r y   I n t e g r a t i o n
+            SELECT CASE(EQUATIONS_SET%specification(3))
+            CASE(EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE, &
+               & EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE, &
+               & EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE)
+              ! Calculate the Jacobian of the nonlinear boundary stabilisation term if beta > 0
+              CALL FIELD_PARAMETER_SET_GET_CONSTANT(EQUATIONS_SET%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD, &
+                & FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,beta,err,error,*999)
+              IF (beta > ZERO_TOLERANCE) THEN
+                CALL NavierStokes_FiniteElementBoundaryIntegrate(EQUATIONS_SET,ELEMENT_NUMBER,FIELD_VARIABLE,.TRUE.,ERR,ERROR,*999)
+              END IF
+            CASE DEFAULT
+              ! Do nothing for other equation set subtypes
+            END SELECT
 
           IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE .OR. &
             & EQUATIONS_SET%specification(3)==EQUATIONS_SET_COUPLED1D0D_NAVIER_STOKES_SUBTYPE .OR. &
@@ -12060,9 +12056,9 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Calculates the face integration term of the finite element formulation for Navier-Stokes equation,
-  !>required for pressure and multidomain boundary conditions. 
-  SUBROUTINE NavierStokes_FiniteElementFaceIntegrate(equationsSet,elementNumber,dependentVariable,jacobianFlag,err,error,*)
+  !>Calculates the boundary integration term of the finite element formulation for Navier-Stokes equation,
+  !>required for pressure and multidomain boundary conditions. Optionally also includes a boundary stabilisation term.
+  SUBROUTINE NavierStokes_FiniteElementBoundaryIntegrate(equationsSet,elementNumber,dependentVariable,jacobianFlag,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<The equations set to calculate the RHS term for
@@ -12072,74 +12068,62 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(FIELD_TYPE), POINTER :: geometricField
     TYPE(EQUATIONS_SET_EQUATIONS_SET_FIELD_TYPE), POINTER :: equationsEquationsSetField
     TYPE(FIELD_TYPE), POINTER :: equationsSetField
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,geometricVariable
     TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
     TYPE(DECOMPOSITION_ELEMENT_TYPE), POINTER :: decompElement
     TYPE(BASIS_TYPE), POINTER :: dependentBasis1,dependentBasis2
     TYPE(EQUATIONS_TYPE), POINTER :: equations
     TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices
     TYPE(DECOMPOSITION_FACE_TYPE), POINTER :: face
-    TYPE(BASIS_TYPE), POINTER :: faceBasis1,faceBasis2
+    TYPE(DECOMPOSITION_LINE_TYPE), POINTER :: line
+    TYPE(BASIS_TYPE), POINTER :: basis1,basis2
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: dependentInterpolatedPoint,pressureInterpolatedPoint
     TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: dependentInterpolationParameters,pressureInterpolationParameters
-    TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: faceQuadratureScheme1,faceQuadratureScheme2
+    TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: quadratureScheme1,quadratureScheme2
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: geometricInterpolatedPoint
     TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: geometricInterpolationParameters
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: pointMetrics
     TYPE(FIELD_TYPE), POINTER :: dependentField
-    TYPE(EQUATIONS_MATRICES_RHS_TYPE), POINTER :: rhsVector
     TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: nonlinearMatrices
-    TYPE(EQUATIONS_MATRICES_DYNAMIC_TYPE), POINTER :: dynamicMatrices
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: stiffnessMatrix
     TYPE(EQUATIONS_JACOBIAN_TYPE), POINTER :: jacobianMatrix
-    INTEGER(INTG) :: faceIdx, faceNumber, xiDirection(3), orientation
-    INTEGER(INTG) :: componentIdx, componentIdx2, gaussIdx, userElementNumber
-    INTEGER(INTG) :: elementBaseDofIdx, faceNodeIdx, elementNodeIdx
-    INTEGER(INTG) :: faceNodeDerivativeIdx, meshComponentNumber1, nodeDerivativeIdx,elementParameterIdx
-    INTEGER(INTG) :: faceParameterIdx,elementDof,normalComponentIdx
-    INTEGER(INTG) :: faceParameterIdx2,elementDof2,elementBaseDofIdx2,faceNodeIdx2,elementNodeIdx2,faceNodeDerivativeIdx2
-    INTEGER(INTG) :: meshComponentNumber2,nodeDerivativeIdx2,elementParameterIdx2
-    INTEGER(INTG) :: numberOfDimensions,boundaryType,mi,ni,boundaryID
-    REAL(DP) :: pressure,viscosity,density,jacobianGaussWeights,beta,normalFlow,muScale
-    REAL(DP) :: velocity(3),normalProjection(3),tangentProjection(2,3),unitNormal(3),stabilisationTerm
-    REAL(DP) :: boundaryInPlaneVector1(3),boundaryInPlaneVector2(3),boundaryNormal(3),tempVector(3)
-    REAL(DP) :: boundaryValue,normalDifference,normalTolerance,boundaryPressure
-    REAL(DP) :: phim,phin,SUM,SUM2
-    REAL(DP) :: dXiDX(3,3),dPhinDXi(3)
-    TYPE(VARYING_STRING) :: LOCAL_ERROR, diagnosticString
+    INTEGER(INTG) :: boundaryIdx, boundaryNumber, xiDirection(3), orientation
+    INTEGER(INTG) :: componentIdx, componentIdx2, gaussIdx
+    INTEGER(INTG) :: elementBaseDofIdx, nodeIdx, elementNodeIdx
+    INTEGER(INTG) :: nodeDerivativeIdx,meshComponentNumber1,globalNodeDerivativeIdx,elementParameterIdx
+    INTEGER(INTG) :: parameterIdx,elementDof
+    INTEGER(INTG) :: parameterIdx2,elementDof2,elementBaseDofIdx2,nodeIdx2,elementNodeIdx2,nodeDerivativeIdx2
+    INTEGER(INTG) :: meshComponentNumber2,globalNodeDerivativeIdx2,elementParameterIdx2
+    INTEGER(INTG) :: numberOfDimensions,numberOfElementBoundaries,boundaryType,ni
+    REAL(DP) :: pressure,density,jacobianGaussWeights,beta,normalFlow
+    REAL(DP) :: velocity(3),normalProjection(3),unitNormal(3),stabilisationTerm
+    REAL(DP) :: boundaryNormal(3)
+    REAL(DP) :: boundaryValue,normalDifference,normalTolerance
+    REAL(DP) :: phim,phin
+    REAL(DP) :: dPhinDXi(3)
+    TYPE(VARYING_STRING) :: LOCAL_ERROR
     LOGICAL :: integratedBoundary
 
-    REAL(DP), POINTER :: geometricParameters(:)
-
-    ENTERS("NavierStokes_FiniteElementFaceIntegrate",err,error,*999)
+    ENTERS("NavierStokes_FiniteElementBoundaryIntegrate",err,error,*999)
 
     NULLIFY(decomposition)
     NULLIFY(decompElement)
     NULLIFY(dependentBasis1,dependentBasis2)
-    NULLIFY(geometricVariable)
-    NULLIFY(geometricParameters)
     NULLIFY(equations)
     NULLIFY(equationsSetField)
     NULLIFY(equationsEquationsSetField)
     NULLIFY(equationsMatrices)
-    NULLIFY(face)
-    NULLIFY(faceBasis1,faceBasis2)
-    NULLIFY(faceQuadratureScheme1,faceQuadratureScheme2)
+    NULLIFY(face,line)
+    NULLIFY(basis1,basis2)
+    NULLIFY(quadratureScheme1,quadratureScheme2)
     NULLIFY(dependentInterpolatedPoint)
     NULLIFY(dependentInterpolationParameters)
     NULLIFY(pressureInterpolatedPoint)
     NULLIFY(pressureInterpolationParameters)
     NULLIFY(geometricInterpolatedPoint)
     NULLIFY(geometricInterpolationParameters)
-    NULLIFY(rhsVector)
     NULLIFY(nonlinearMatrices)
-    NULLIFY(dynamicMatrices)
-    NULLIFY(stiffnessMatrix)
     NULLIFY(dependentField)
-    NULLIFY(geometricField)
 
     ! Get pointers and perform sanity checks
     IF(ASSOCIATED(equationsSet)) THEN
@@ -12151,17 +12135,12 @@ CONTAINS
       IF(ASSOCIATED(equations)) THEN
         equationsMatrices=>equations%EQUATIONS_MATRICES
         IF(ASSOCIATED(equationsMatrices)) THEN
-          rhsVector=>equationsMatrices%RHS_VECTOR
           nonlinearMatrices=>equationsMatrices%NONLINEAR_MATRICES
           IF(.NOT. ASSOCIATED(nonlinearMatrices)) THEN
             CALL FlagError("Nonlinear Matrices not associated.",err,error,*999)
           END IF
           IF (jacobianFlag) THEN
-             jacobianMatrix=>nonlinearMatrices%JACOBIANS(1)%PTR
-          ELSE
-            rhsVector=>equationsMatrices%RHS_VECTOR
-            dynamicMatrices=>equationsMatrices%DYNAMIC_MATRICES
-            stiffnessMatrix=>dynamicMatrices%MATRICES(1)%PTR
+            jacobianMatrix=>nonlinearMatrices%JACOBIANS(1)%PTR
           END IF
         END IF
       ELSE
@@ -12189,11 +12168,6 @@ CONTAINS
         CALL FlagError("Equations set field (EQUATIONS_EQUATIONS_SET_FIELD_FIELD) is not associated.",err,error,*999)
       END IF
 
-      !DEBUG: get boundary ID
-      CALL Field_ParameterSetGetLocalElement(equationsSetField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-       & elementNumber,8,boundaryValue,err,error,*999)
-      boundaryID=NINT(boundaryValue)
-
       ! Check whether this element contains an integrated boundary type
       CALL Field_ParameterSetGetLocalElement(equationsSetField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
        & elementNumber,9,boundaryValue,err,error,*999)
@@ -12205,28 +12179,37 @@ CONTAINS
       IF(boundaryType == BOUNDARY_CONDITION_FIXED_CELLML) integratedBoundary = .TRUE.
 
       !Get the mesh decomposition and basis
-      decomposition=>dependentVariable%FIELD%DECOMPOSITION
-      !Check that face geometric parameters have been calculated
-      IF(decomposition%CALCULATE_FACES .AND. integratedBoundary) THEN
-        meshComponentNumber1=dependentVariable%COMPONENTS(1)%MESH_COMPONENT_NUMBER
-        meshComponentNumber2=dependentVariable%COMPONENTS(4)%MESH_COMPONENT_NUMBER
-        dependentBasis1=>decomposition%DOMAIN(meshComponentNumber1)%PTR%TOPOLOGY%ELEMENTS% &
-          & ELEMENTS(elementNumber)%BASIS
-        dependentBasis2=>decomposition%DOMAIN(meshComponentNumber2)%PTR%TOPOLOGY%ELEMENTS% &
-          & ELEMENTS(elementNumber)%BASIS
-        decompElement=>DECOMPOSITION%TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)
+      numberOfDimensions = dependentVariable%NUMBER_OF_COMPONENTS - 1
+      decomposition=>dependentVariable%FIELD%DECOMPOSITION      
+      meshComponentNumber1=dependentVariable%COMPONENTS(1)%MESH_COMPONENT_NUMBER
+      meshComponentNumber2=dependentVariable%COMPONENTS(numberOfDimensions+1)%MESH_COMPONENT_NUMBER
+      dependentBasis1=>decomposition%DOMAIN(meshComponentNumber1)%PTR%TOPOLOGY%ELEMENTS% &
+        & ELEMENTS(elementNumber)%BASIS
+      dependentBasis2=>decomposition%DOMAIN(meshComponentNumber2)%PTR%TOPOLOGY%ELEMENTS% &
+        & ELEMENTS(elementNumber)%BASIS
+      decompElement=>DECOMPOSITION%TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)
 
-        !Get the viscosity and density
-        IF(equationsSet%specification(3)==EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE) THEN
-          CALL FIELD_PARAMETER_SET_GET_CONSTANT(equationsSet%MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-            & FIELD_VALUES_SET_TYPE,1,muScale,err,error,*999)
-        ELSE
-          CALL FIELD_PARAMETER_SET_GET_CONSTANT(equationsSet%MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-            & FIELD_VALUES_SET_TYPE,1,viscosity,err,error,*999)
+      !Determine if this is a 2D or 3D problem with line/face parameters calculated
+      IF(integratedBoundary) THEN
+        IF(numberOfDimensions /= 2 .AND. numberOfDimensions /=3) THEN
+          LOCAL_ERROR="Invalid number of dimensions ("//TRIM(NUMBER_TO_VSTRING(numberOfDimensions,"*",ERR,ERROR))// &
+            & ") for a 2D or 3D Navier-Stokes problem."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END IF
+        IF(numberOfDimensions == 3 .AND. decomposition%CALCULATE_FACES) THEN
+          numberOfElementBoundaries = dependentBasis1%NUMBER_OF_LOCAL_FACES
+        ELSE IF(numberOfDimensions == 2 .AND. decomposition%CALCULATE_LINES) THEN
+          numberOfElementBoundaries = dependentBasis1%NUMBER_OF_LOCAL_LINES
+        ELSE
+          integratedBoundary = .FALSE.
+        END IF
+      END IF
+     
+      !Only apply to required element boundaries
+      IF(integratedBoundary) THEN
+        !Get the density
         CALL FIELD_PARAMETER_SET_GET_CONSTANT(equationsSet%MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE,&
          & FIELD_VALUES_SET_TYPE,2,density,err,error,*999)
-
         ! Get the boundary element parameters
         CALL FIELD_PARAMETER_SET_GET_CONSTANT(equationsSetField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
          & 1,beta,err,error,*999)
@@ -12235,90 +12218,109 @@ CONTAINS
           CALL Field_ParameterSetGetLocalElement(equationsSetField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
            & elementNumber,componentIdx+4,boundaryNormal(componentIdx),err,error,*999)
         END DO
-        
-        DO faceIdx=1,dependentBasis1%NUMBER_OF_LOCAL_FACES
-          !Get the face normal and quadrature information
-          IF(ALLOCATED(decompElement%ELEMENT_FACES)) THEN
-            faceNumber=decompElement%ELEMENT_FACES(faceIdx)
-          ELSE
-            CALL FlagError("Decomposition element faces is not allocated.",err,error,*999)
-          END IF
-          face=>decomposition%TOPOLOGY%FACES%FACES(faceNumber)
-          !This speeds things up but is also important, as non-boundary faces have an XI_DIRECTION that might
-          !correspond to the other element.
-          IF(.NOT.(face%BOUNDARY_FACE)) CYCLE
 
-          SELECT CASE(dependentBasis1%TYPE)
-          CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
-            xiDirection(3)=ABS(face%XI_DIRECTION)
-            !normalComponentIdx=ABS(face%XI_DIRECTION)
-          CASE DEFAULT
-            LOCAL_ERROR="Face integration for basis type "//TRIM(NUMBER_TO_VSTRING(dependentBasis1%TYPE,"*",ERR,ERROR))// &
-              & " is not yet implemented for Navier-Stokes."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-
-          faceBasis1=>decomposition%DOMAIN(meshComponentNumber1)%PTR%TOPOLOGY%FACES%FACES(faceNumber)%BASIS
-          faceBasis2=>decomposition%DOMAIN(meshComponentNumber2)%PTR%TOPOLOGY%FACES%FACES(faceNumber)%BASIS
-          faceQuadratureScheme1=>faceBasis1%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
-          faceQuadratureScheme2=>faceBasis2%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
-
-          !Use the geometric field to find the face normal and Jacobian for the face integral
+        ! Loop over the boundaries (lines or faces) for this element
+        DO boundaryIdx=1,numberOfElementBoundaries
           geometricInterpolationParameters=>equations%INTERPOLATION%GEOMETRIC_INTERP_PARAMETERS( &
             & FIELD_U_VARIABLE_TYPE)%PTR
-          CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_VALUES_SET_TYPE,faceNumber, &
-            & geometricInterpolationParameters,err,error,*999)
-          geometricInterpolatedPoint=>equations%INTERPOLATION%GEOMETRIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR
-
           dependentInterpolationParameters=>equations%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS( &
             & FIELD_U_VARIABLE_TYPE)%PTR
-          CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_VALUES_SET_TYPE,faceNumber, &
-            & dependentInterpolationParameters,err,error,*999)
-          dependentInterpolatedPoint=>equations%INTERPOLATION%DEPENDENT_INTERP_POINT( &
-            & dependentVariable%VARIABLE_TYPE)%PTR
+          
+          ! Get 3D face specific parameters
+          IF(numberOfDimensions == 3) THEN           
+            IF(ALLOCATED(decompElement%ELEMENT_FACES)) THEN
+              boundaryNumber=decompElement%ELEMENT_FACES(boundaryIdx)
+            ELSE
+              CALL FlagError("Decomposition element faces is not allocated.",err,error,*999)
+            END IF
+            face=>decomposition%TOPOLOGY%FACES%FACES(boundaryNumber)
+            !This speeds things up but is also important, as non-boundary faces have an XI_DIRECTION that might
+            !correspond to the other element.
+            IF(.NOT.(face%BOUNDARY_FACE)) CYCLE
+            SELECT CASE(dependentBasis1%TYPE)
+            CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
+              xiDirection(3)=ABS(face%XI_DIRECTION)
+            CASE DEFAULT
+              LOCAL_ERROR="Face integration for basis type "//TRIM(NUMBER_TO_VSTRING(dependentBasis1%TYPE,"*",ERR,ERROR))// &
+                & " is not yet implemented for Navier-Stokes."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            END SELECT
+            xiDirection(1)=OTHER_XI_DIRECTIONS3(xiDirection(3),2,1)
+            xiDirection(2)=OTHER_XI_DIRECTIONS3(xiDirection(3),3,1)
+            orientation=SIGN(1,OTHER_XI_ORIENTATIONS3(xiDirection(1),xiDirection(2))*face%XI_DIRECTION)            
+            basis1=>decomposition%DOMAIN(meshComponentNumber1)%PTR%TOPOLOGY%FACES%FACES(boundaryNumber)%BASIS
+            basis2=>decomposition%DOMAIN(meshComponentNumber2)%PTR%TOPOLOGY%FACES%FACES(boundaryNumber)%BASIS
+            CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
+              & geometricInterpolationParameters,err,error,*999)
+            CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
+              & dependentInterpolationParameters,err,error,*999)
 
-          xiDirection(1)=OTHER_XI_DIRECTIONS3(xiDirection(3),2,1)
-          xiDirection(2)=OTHER_XI_DIRECTIONS3(xiDirection(3),3,1)
-          orientation=SIGN(1,OTHER_XI_ORIENTATIONS3(xiDirection(1),xiDirection(2))*face%XI_DIRECTION)
+          ! Get 2D line specific parameters            
+          ELSE IF(numberOfDimensions == 2) THEN           
+            IF(ALLOCATED(decompElement%ELEMENT_LINES)) THEN
+              boundaryNumber=decompElement%ELEMENT_LINES(boundaryIdx)
+            ELSE
+              CALL FlagError("Decomposition element lines is not allocated.",err,error,*999)
+            END IF
+            line=>decomposition%TOPOLOGY%LINES%LINES(boundaryNumber)
+            !This speeds things up but is also important, as non-boundary lines have an XI_DIRECTION that might
+            !correspond to the other element.
+            IF(.NOT.(line%BOUNDARY_LINE)) CYCLE
+            xiDirection(1)=OTHER_XI_DIRECTIONS2(xiDirection(2))
+            orientation=SIGN(1,OTHER_XI_ORIENTATIONS2(xiDirection(1))*line%XI_DIRECTION)
+            basis1=>decomposition%DOMAIN(meshComponentNumber1)%PTR%TOPOLOGY%LINES%LINES(boundaryNumber)%BASIS
+            basis2=>decomposition%DOMAIN(meshComponentNumber2)%PTR%TOPOLOGY%LINES%LINES(boundaryNumber)%BASIS
+            CALL FIELD_INTERPOLATION_PARAMETERS_LINE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
+              & geometricInterpolationParameters,err,error,*999)
+            CALL FIELD_INTERPOLATION_PARAMETERS_LINE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
+              & dependentInterpolationParameters,err,error,*999)            
+          END IF
+
+          quadratureScheme1=>basis1%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
+          quadratureScheme2=>basis2%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
+          geometricInterpolatedPoint=>equations%INTERPOLATION%GEOMETRIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR
+          dependentInterpolatedPoint=>equations%INTERPOLATION%DEPENDENT_INTERP_POINT(dependentVariable%VARIABLE_TYPE)%PTR
           pointMetrics=>equations%INTERPOLATION%GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR
-          ! Loop over face gauss points
-          DO gaussIdx=1,faceQuadratureScheme1%NUMBER_OF_GAUSS
-
+          ! Loop over gauss points
+          DO gaussIdx=1,quadratureScheme1%NUMBER_OF_GAUSS
             CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx, &
               & geometricInterpolatedPoint,err,error,*999)
-            CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(COORDINATE_JACOBIAN_AREA_TYPE,pointMetrics,err,error,*999)
-
-            ! Make sure this is the boundary face that corresponds with boundaryID (could be a wall rather than inlet/outlet)
-            CALL CROSS_PRODUCT(pointMetrics%DX_DXI(:,1),pointMetrics%DX_DXI(:,2),normalProjection,ERR,ERROR,*999)
-            normalProjection = normalProjection*orientation
-            unitNormal=normalProjection/L2NORM(normalProjection)
-            normalDifference=L2NORM(boundaryNormal-unitNormal)
             normalTolerance=0.1_DP
-            IF(normalDifference>normalTolerance) EXIT
-
-            ! Get the constitutive law (non-Newtonian) viscosity based on shear rate if needed
-            IF(equationsSet%Specification(3)==EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE) THEN
-              ! Get the gauss point based value returned from the CellML solver
-              CALL Field_ParameterSetGetLocalGaussPoint(equationsSet%MATERIALS%MATERIALS_FIELD,FIELD_V_VARIABLE_TYPE, &
-                & FIELD_VALUES_SET_TYPE,gaussIdx,elementNumber,1,viscosity,err,error,*999)
-              viscosity=viscosity*muScale
+            unitNormal = 0.0_DP
+            velocity = 0.0_DP
+            pressure = 0.0_DP
+            IF(numberOfDimensions == 3) THEN
+              CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(COORDINATE_JACOBIAN_AREA_TYPE,pointMetrics,err,error,*999)
+              ! Make sure this is the boundary that corresponds with the provided normal (could be a wall rather than inlet/outlet)
+              CALL CROSS_PRODUCT(pointMetrics%DX_DXI(:,1),pointMetrics%DX_DXI(:,2),normalProjection,ERR,ERROR,*999)
+              normalProjection = normalProjection*orientation
+              unitNormal=normalProjection/L2NORM(normalProjection)
+              normalDifference=L2NORM(boundaryNormal-unitNormal)
+              IF(normalDifference>normalTolerance) EXIT
+              CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
+                & dependentInterpolationParameters,err,error,*999)
+            ELSE
+              CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(COORDINATE_JACOBIAN_LINE_TYPE,pointMetrics,err,error,*999)
+              ! Make sure this is the boundary that corresponds with the provided normal (could be a wall rather than inlet/outlet)
+              normalProjection = [pointMetrics%DX_DXI(2,1),pointMetrics%DX_DXI(1,1),0.0_DP]*orientation
+              unitNormal=normalProjection/L2NORM(normalProjection)
+              normalDifference=L2NORM(boundaryNormal-unitNormal)
+              IF(normalDifference>normalTolerance) EXIT
+              CALL FIELD_INTERPOLATION_PARAMETERS_LINE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
+                & dependentInterpolationParameters,err,error,*999)
             END IF
 
-            !Get interpolated velocity and pressure
-            CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_VALUES_SET_TYPE,faceNumber, &
-              & dependentInterpolationParameters,err,error,*999)
+            !Get interpolated velocity and pressure            
             CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx, &
               & dependentInterpolatedPoint,ERR,ERROR,*999)
-            velocity=dependentInterpolatedPoint%values(1:3,NO_PART_DERIV)
-            pressure=dependentInterpolatedPoint%values(4,NO_PART_DERIV)
+            velocity=dependentInterpolatedPoint%values(1:numberOfDimensions,NO_PART_DERIV)
 
             ! Stabilisation term to correct for possible retrograde flow divergence.
             ! See: Moghadam et al 2011 “A comparison of outlet boundary treatments for prevention of backflow divergence..." and
             !      Ismail et al 2014 "A stable approach for coupling multidimensional cardiovascular and pulmonary networks..."
-            ! Note: beta is a relative scaling factor 0 <= beta <= 1; default 1.0
+            ! Note: beta is a relative scaling factor 0 <= beta <= 1; default 0.0
             stabilisationTerm = 0.0_DP
             normalFlow = DOT_PRODUCT(velocity,unitNormal)
-
             IF(normalFlow < -ZERO_TOLERANCE) THEN
               stabilisationTerm = normalFlow - ABS(normalFlow)
             ELSE
@@ -12334,42 +12336,50 @@ CONTAINS
                & FIELD_U_VARIABLE_TYPE)%PTR
               pressureInterpolatedPoint=>equations%INTERPOLATION%DEPENDENT_INTERP_POINT( &
                & FIELD_U_VARIABLE_TYPE)%PTR
-              CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_PRESSURE_VALUES_SET_TYPE,faceNumber, &
-                & pressureInterpolationParameters,err,error,*999)
+              IF(numberOfDimensions == 3) THEN
+                CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_PRESSURE_VALUES_SET_TYPE,boundaryNumber, &
+                  & pressureInterpolationParameters,err,error,*999)
+              ELSE
+                CALL FIELD_INTERPOLATION_PARAMETERS_LINE_GET(FIELD_PRESSURE_VALUES_SET_TYPE,boundaryNumber, &
+                  & pressureInterpolationParameters,err,error,*999)
+              END IF
               CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx, &
                 & pressureInterpolatedPoint,ERR,ERROR,*999)
-              boundaryPressure=pressureInterpolatedPoint%VALUES(4,NO_PART_DERIV)
-              pressure = -boundaryPressure
-              IF(boundaryType==BOUNDARY_CONDITION_FIXED_CELLML) THEN
-                pressure = -(boundaryPressure)
-              END IF
+              pressure=pressureInterpolatedPoint%VALUES(numberOfDimensions+1,NO_PART_DERIV)
             END IF
 
             !Jacobian and Gauss weighting term
-            jacobianGaussWeights=pointMetrics%JACOBIAN*faceQuadratureScheme1%GAUSS_WEIGHTS(gaussIdx)
-
+            jacobianGaussWeights=pointMetrics%JACOBIAN*quadratureScheme1%GAUSS_WEIGHTS(gaussIdx)
             !Loop over field components
             DO componentIdx=1,dependentVariable%NUMBER_OF_COMPONENTS-1
-              !Work out the first index of the rhs vector for this element - (i.e. the number of previous)
+              !Work out the first index of the vector for this element - (i.e. the number of previous)
               elementBaseDofIdx=dependentBasis1%NUMBER_OF_ELEMENT_PARAMETERS*(componentIdx-1)
-              DO faceNodeIdx=1,faceBasis1%NUMBER_OF_NODES
-                elementNodeIdx=dependentBasis1%NODE_NUMBERS_IN_LOCAL_FACE(faceNodeIdx,faceIdx)
-                DO faceNodeDerivativeIdx=1,faceBasis1%NUMBER_OF_DERIVATIVES(faceNodeIdx)
-                  nodeDerivativeIdx=dependentBasis1%DERIVATIVE_NUMBERS_IN_LOCAL_FACE(faceNodeDerivativeIdx,faceNodeIdx,faceIdx)
-                  elementParameterIdx=dependentBasis1%ELEMENT_PARAMETER_INDEX(nodeDerivativeIdx,elementNodeIdx)
-                  faceParameterIdx=faceBasis1%ELEMENT_PARAMETER_INDEX(faceNodeDerivativeIdx,faceNodeIdx)
+              DO nodeIdx=1,basis1%NUMBER_OF_NODES
+                IF(numberOfDimensions == 3) THEN
+                  elementNodeIdx=dependentBasis1%NODE_NUMBERS_IN_LOCAL_FACE(nodeIdx,boundaryIdx)
+                ELSE
+                  elementNodeIdx=dependentBasis1%NODE_NUMBERS_IN_LOCAL_LINE(nodeIdx,boundaryIdx)
+                END IF
+                DO nodeDerivativeIdx=1,basis1%NUMBER_OF_DERIVATIVES(nodeIdx)
+                  IF(numberOfDimensions == 3) THEN
+                    globalNodeDerivativeIdx=dependentBasis1%DERIVATIVE_NUMBERS_IN_LOCAL_FACE(nodeDerivativeIdx,nodeIdx,boundaryIdx)
+                  ELSE
+                    globalNodeDerivativeIdx=dependentBasis1%DERIVATIVE_NUMBERS_IN_LOCAL_LINE(nodeIdx,boundaryIdx)
+                  END IF
+                  elementParameterIdx=dependentBasis1%ELEMENT_PARAMETER_INDEX(globalNodeDerivativeIdx,elementNodeIdx)
+                  parameterIdx=basis1%ELEMENT_PARAMETER_INDEX(nodeDerivativeIdx,nodeIdx)
                   elementDof=elementBaseDofIdx+elementParameterIdx
-                  phim = faceQuadratureScheme1%GAUSS_BASIS_FNS(faceParameterIdx,NO_PART_DERIV,gaussIdx)
+                  phim = quadratureScheme1%GAUSS_BASIS_FNS(parameterIdx,NO_PART_DERIV,gaussIdx)
 
                   IF (.NOT. jacobianFlag) THEN
                     IF (boundaryType==BOUNDARY_CONDITION_PRESSURE .OR. &
                       & boundaryType==BOUNDARY_CONDITION_FIXED_CELLML .OR. &
                       & boundaryType==BOUNDARY_CONDITION_COUPLING_STRESS) THEN
-                      ! RHS contribution is integrated pressure term
+                      ! Integrated boundary pressure term                       
                       nonlinearMatrices%ELEMENT_RESIDUAL%VECTOR(elementDof)=nonlinearMatrices%ELEMENT_RESIDUAL%VECTOR(elementDof)-&
-                       &  pressure*unitNormal(componentIdx)*phim*jacobianGaussWeights
+                        &  pressure*unitNormal(componentIdx)*phim*jacobianGaussWeights
                     END IF
-                    ! nonlinear contribution is boundary stabilisation (if necessary )
+                    ! Boundary stabilisation term (if necessary )
                     IF (ABS(beta) > ZERO_TOLERANCE) THEN
                       nonlinearMatrices%ELEMENT_RESIDUAL%VECTOR(elementDof)=nonlinearMatrices%ELEMENT_RESIDUAL%VECTOR(elementDof)-&
                         & 0.5_DP*beta*density*phim*velocity(componentIdx)*stabilisationTerm*jacobianGaussWeights
@@ -12381,17 +12391,25 @@ CONTAINS
                       DO componentIdx2=1,dependentVariable%NUMBER_OF_COMPONENTS-1
                         !Work out the first index of the rhs vector for this element - (i.e. the number of previous)
                         elementBaseDofIdx2=dependentBasis2%NUMBER_OF_ELEMENT_PARAMETERS*(componentIdx2-1)
-                        DO faceNodeIdx2=1,faceBasis2%NUMBER_OF_NODES
-                          elementNodeIdx2=dependentBasis2%NODE_NUMBERS_IN_LOCAL_FACE(faceNodeIdx2,faceIdx)
-                          DO faceNodeDerivativeIdx2=1,faceBasis2%NUMBER_OF_DERIVATIVES(faceNodeIdx2)
-                            nodeDerivativeIdx2=dependentBasis2%DERIVATIVE_NUMBERS_IN_LOCAL_FACE(faceNodeDerivativeIdx2, &
-                             & faceNodeIdx2,faceIdx)
-                            elementParameterIdx2=dependentBasis2%ELEMENT_PARAMETER_INDEX(nodeDerivativeIdx2,elementNodeIdx2)
-                            faceParameterIdx2=faceBasis2%ELEMENT_PARAMETER_INDEX(faceNodeDerivativeIdx2,faceNodeIdx2)
+                        DO nodeIdx2=1,basis2%NUMBER_OF_NODES
+                          IF(numberOfDimensions == 3) THEN
+                            elementNodeIdx2=dependentBasis2%NODE_NUMBERS_IN_LOCAL_FACE(nodeIdx2,boundaryIdx)
+                          ELSE
+                            elementNodeIdx2=dependentBasis2%NODE_NUMBERS_IN_LOCAL_LINE(nodeIdx2,boundaryIdx)
+                          END IF
+                          DO nodeDerivativeIdx2=1,basis2%NUMBER_OF_DERIVATIVES(nodeIdx2)
+                            IF(numberOfDimensions == 3) THEN 
+                              globalNodeDerivativeIdx2=dependentBasis2%DERIVATIVE_NUMBERS_IN_LOCAL_FACE(nodeDerivativeIdx2, &
+                                & nodeIdx2,boundaryIdx)
+                            ELSE
+                              globalNodeDerivativeIdx2=dependentBasis2%DERIVATIVE_NUMBERS_IN_LOCAL_LINE(nodeIdx2,boundaryIdx)
+                            END IF
+                            elementParameterIdx2=dependentBasis2%ELEMENT_PARAMETER_INDEX(globalNodeDerivativeIdx2,elementNodeIdx2)
+                            parameterIdx2=basis2%ELEMENT_PARAMETER_INDEX(nodeDerivativeIdx2,nodeIdx2)
                             elementDof2=elementBaseDofIdx2+elementParameterIdx2
-                            phin = faceQuadratureScheme2%GAUSS_BASIS_FNS(faceParameterIdx2,NO_PART_DERIV,gaussIdx)
-                            DO ni=1,faceBasis2%NUMBER_OF_XI
-                              dPhinDXi(ni) = faceQuadratureScheme2%GAUSS_BASIS_FNS(faceParameterIdx2, &
+                            phin = quadratureScheme2%GAUSS_BASIS_FNS(parameterIdx2,NO_PART_DERIV,gaussIdx)
+                            DO ni=1,basis2%NUMBER_OF_XI
+                              dPhinDXi(ni) = quadratureScheme2%GAUSS_BASIS_FNS(parameterIdx2, &
                                 & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),gaussIdx)
                             END DO
                             ! Jacobian term
@@ -12408,19 +12426,19 @@ CONTAINS
                   END IF
 
                 END DO !nodeDerivativeIdx
-              END DO !faceNodeIdx
+              END DO !nodeIdx
             END DO !componentIdx
           END DO !gaussIdx
-        END DO !faceIdx
-      END IF !decomposition%calculate_faces
+        END DO !boundaryIdx
+      END IF 
 
     CASE DEFAULT
       ! Do nothing for other equation set subtypes
     END SELECT
 
-    EXITS("NavierStokes_FiniteElementFaceIntegrate")
+    EXITS("NavierStokes_FiniteElementBoundaryIntegrate")
     RETURN
-999 ERRORSEXITS("NavierStokes_FiniteElementFaceIntegrate",err,error)
+999 ERRORSEXITS("NavierStokes_FiniteElementBoundaryIntegrate",err,error)
     RETURN 1
   END SUBROUTINE
 
