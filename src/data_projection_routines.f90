@@ -105,7 +105,7 @@ MODULE DataProjectionRoutines
   !Module variables
 
   !Interfaces
-  
+
   !>Gets the label for a data projection.
   INTERFACE DataProjection_LabelGet
     MODULE PROCEDURE DataProjection_LabelGetC
@@ -143,7 +143,7 @@ MODULE DataProjectionRoutines
   PUBLIC DataProjection_Destroy
   
   PUBLIC DataProjection_DataPointsProjectionEvaluate
-  
+
   PUBLIC DataProjection_DataPointsPositionEvaluate
   
   PUBLIC DataProjection_ElementSet
@@ -151,9 +151,9 @@ MODULE DataProjectionRoutines
   PUBLIC DataProjection_LabelGet,DataProjection_LabelSet
 
   PUBLIC DataProjection_MaximumInterationUpdateGet,DataProjection_MaximumInterationUpdateSet
-  
+
   PUBLIC DataProjection_MaximumNumberOfIterationsGet,DataProjection_MaximumNumberOfIterationsSet
-  
+
   PUBLIC DataProjection_NumberOfClosestElementsGet,DataProjection_NumberOfClosestElementsSet
   
   PUBLIC DataProjection_ProjectionCancelByDataPoints
@@ -201,7 +201,7 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
+
   !>Gets the absolute tolerance for a data projection.
   SUBROUTINE DataProjection_AbsoluteToleranceGet(dataProjection,absoluteTolerance,err,error,*)
 
@@ -229,7 +229,7 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
+
   !>Sets the absolute tolerance for a data projection.
   SUBROUTINE DataProjection_AbsoluteToleranceSet(dataProjection,absoluteTolerance,err,error,*)
 
@@ -259,7 +259,7 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
+
   !>Find the closest elements to a data point based on starting xi guess.
   SUBROUTINE DataProjection_ClosestElementsFind(dataProjection,interpolatedPoint,dataPointLocation,numberOfCandidates, &
     & candidateElements,closestElements,closestDistances,err,error,*)
@@ -349,7 +349,7 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
+
   !>Find the closest faces to a data point base on starting xi guess.
   SUBROUTINE DataProjection_ClosestFacesFind(dataProjection,interpolatedPoint,dataPointLocation,numberOfCandidates, &
     & candidateElements,candidateElementFaces,closestElements,closestElementFaces,closestDistances,err,error,*)
@@ -452,7 +452,7 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
+
   !>Find the closest lines to a data point base on starting xi guess.
   SUBROUTINE DataProjection_ClosestLinesFind(dataProjection,interpolatedPoint,dataPointLocation,numberOfCandidates, &
     & candidateElements,candidateElementLines,closestElements,closestElementLines,closestDistances,err,error,*)
@@ -555,7 +555,7 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
+
   !>Finishes the process of creating data projection.
   SUBROUTINE DataProjection_CreateFinish(dataProjection,err,error,*)
     
@@ -612,7 +612,7 @@ CONTAINS
   
   !
   !================================================================================================================================
-  !  
+  !
   !>Starts the process of creating data projection.
   SUBROUTINE DataProjection_CreateStart(dataProjectionUserNumber,dataPoints,projectionField,projectionVariableType, &
     & dataProjection,err,error,*)
@@ -2115,7 +2115,7 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
+
   !>Sets the maximum iteration update for a data projection.
   SUBROUTINE DataProjection_MaximumInterationUpdateSet(dataProjection,maximumIterationUpdate,err,error,*)
 
@@ -4266,7 +4266,7 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
+
   !>Gets the projection type for a data projection.
   SUBROUTINE DataProjection_ProjectionTypeGet(dataProjection,projectionType,err,error,*)
 
@@ -4294,7 +4294,7 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
+
   !>Sets the projection type for a data projection.
   SUBROUTINE DataProjection_ProjectionTypeSet(dataProjection,projectionType,err,error,*)
 
@@ -4349,7 +4349,7 @@ CONTAINS
    !
   !================================================================================================================================
   !
-  
+
   !>Gets the relative tolerance for a data projection.
   SUBROUTINE DataProjection_RelativeToleranceGet(dataProjection,relativeTolerance,err,error,*)
 
@@ -4377,7 +4377,7 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
+
   !>Sets the relative tolerance for a data projection.
   SUBROUTINE DataProjection_RelativeToleranceSet(dataProjection,relativeTolerance,err,error,*)
 
@@ -4406,7 +4406,7 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
+
   !>Gets the starting xi for a data projection.
   SUBROUTINE DataProjection_StartingXiGet(dataProjection,startingXi,err,error,*)
 
@@ -4440,7 +4440,7 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
+
   !>Sets the starting xi for a data projection.
   SUBROUTINE DataProjection_StartingXiSet(dataProjection,startingXi,err,error,*)
 
@@ -4484,7 +4484,7 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
+
   !>Sets the element for a data projection.
   SUBROUTINE DataProjection_ElementSet(dataProjection,dataPointUserNumber,elementUserNumber,err,error,*)
 
@@ -4533,7 +4533,7 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
+
   !>Gets the projection distance for a data point identified by a given global number.
   SUBROUTINE DataProjection_ResultDistanceGet(dataProjection,dataPointUserNumber,projectionDistance,err,error,*)
 
@@ -4895,7 +4895,7 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
+
   !>Gets the projection element face number for a data point identified by a given global number.
   SUBROUTINE DataProjection_ResultElementFaceNumberGet(dataProjection,dataPointUserNumber,projectionElementFaceNumber &
     & ,err,error,*)
@@ -4922,18 +4922,18 @@ CONTAINS
     ELSE
       CALL FlagError("Data projection type is not set to a boundary faces projection type.",err,error,*999)
     ENDIF
-    
+
     EXITS("DataProjection_ResultElementFaceNumberGet")
     RETURN
 999 ERRORSEXITS("DataProjection_ResultElementFaceNumberGet",err,error)    
     RETURN 1
 
   END SUBROUTINE DataProjection_ResultElementFaceNumberGet
-  
+
   !
   !================================================================================================================================
   !
-  
+
   !>Gets the projection element line number for a data point identified by a given global number.
   SUBROUTINE DataProjection_ResultElementLineNumberGet(dataProjection,dataPointUserNumber,projectionElementLineNumber &
     & ,err,error,*)
@@ -5003,7 +5003,7 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
+
   !>Gets the projection xi for a data point identified by a given global number.
   SUBROUTINE DataProjection_ResultXiGet(dataProjection,dataPointUserNumber,projectionXi,err,error,*)
 
@@ -5042,7 +5042,7 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
+
   !>Sets the projection xi for a data point identified by a given global number.
   SUBROUTINE DataProjection_ResultXiSet(dataProjection,dataPointUserNumber,projectionXi,err,error,*)
 
