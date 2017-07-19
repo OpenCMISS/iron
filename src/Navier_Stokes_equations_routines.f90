@@ -1178,7 +1178,8 @@ CONTAINS
         !-----------------------------------------------------------------
         CASE(EQUATIONS_SET_SETUP_INDEPENDENT_TYPE)
           SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-          CASE(EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_PGM_NAVIER_STOKES_SUBTYPE)
+          CASE(EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE, &
+            & EQUATIONS_SET_PGM_NAVIER_STOKES_SUBTYPE)
             SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
             !Set start action
             CASE(EQUATIONS_SET_SETUP_START_ACTION)
@@ -2196,7 +2197,8 @@ CONTAINS
           SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
           CASE(EQUATIONS_SET_STATIC_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_LAPLACE_NAVIER_STOKES_SUBTYPE, &
             & EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE, &
-            & EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE, & 
+            & EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE, &
+            & EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE, & 
             & EQUATIONS_SET_PGM_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_QUASISTATIC_NAVIER_STOKES_SUBTYPE, &
             & EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_COUPLED1D0D_NAVIER_STOKES_SUBTYPE, &
             & EQUATIONS_SET_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE, &
@@ -4528,7 +4530,8 @@ CONTAINS
         SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
         CASE(EQUATIONS_SET_STATIC_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_LAPLACE_NAVIER_STOKES_SUBTYPE, &
           & EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE, &
-          & EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE, &
+          & EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE, &
+          & EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE, &
           & EQUATIONS_SET_PGM_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_QUASISTATIC_NAVIER_STOKES_SUBTYPE, &
           & EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_COUPLED1D0D_NAVIER_STOKES_SUBTYPE, &
           & EQUATIONS_SET_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE, &
@@ -4645,7 +4648,8 @@ CONTAINS
             IF(ASSOCIATED(dampingMatrix)) updateDampingMatrix=dampingMatrix%updateMatrix
             IF(ASSOCIATED(rhsVector)) updateRHSVector=rhsVector%updateVector
             IF(ASSOCIATED(nonlinearMatrices)) updateNonlinearResidual=nonlinearMatrices%updateResidual
-          CASE(EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_PGM_NAVIER_STOKES_SUBTYPE)
+          CASE(EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE, &
+            & EQUATIONS_SET_PGM_NAVIER_STOKES_SUBTYPE)
             independentField=>equations%interpolation%independentField
             INDEPENDENT_BASIS=>independentField%DECOMPOSITION%DOMAIN(independentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)% & 
               & PTR%TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
@@ -5547,7 +5551,8 @@ CONTAINS
             FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
             linearMapping=>vectorMapping%linearMapping
             IF(ASSOCIATED(jacobianMatrix)) updateJacobianMatrix=jacobianMatrix%updateJacobian
-          CASE(EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_PGM_NAVIER_STOKES_SUBTYPE)
+          CASE(EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE,EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE, &
+            & EQUATIONS_SET_PGM_NAVIER_STOKES_SUBTYPE)
             independentField=>equations%interpolation%independentField
             INDEPENDENT_BASIS=>independentField%DECOMPOSITION%DOMAIN(independentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)% & 
               & PTR%TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
@@ -6411,8 +6416,8 @@ CONTAINS
                               ! Read in the node data for this timestep file
                               READ(10,*) (componentValues(componentIdx), componentIdx=1,numberOfDimensions)
                               DO componentIdx=1,numberOfDimensions
-                                dependentDof = dependentFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% &
-                                  & NODES(nodeIdx)%DERIVATIVES(1)%VERSIONS(1)
+                                dependentDof = dependentFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP% &
+                                  & NODE_PARAM2DOF_MAP%NODES(nodeIdx)%DERIVATIVES(1)%VERSIONS(1)
                                 independentDof = independentFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP% &
                                   & NODE_PARAM2DOF_MAP%NODES(nodeIdx)%DERIVATIVES(1)%VERSIONS(1)
                                 VALUE = componentValues(componentIdx)
@@ -6449,7 +6454,8 @@ CONTAINS
                         END IF
                       ELSE IF(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE== &
                         & EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_TAYLOR_GREEN.OR. &
-                        & EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_POISEUILLE) THEN
+                        & EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE== &
+                        & EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_POISEUILLE) THEN
                         IF(ASSOCIATED(EQUATIONS_SET)) THEN
                           IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
                             dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
@@ -6513,8 +6519,8 @@ CONTAINS
                                                     & GLOBAL_DERIVATIVE_INDEX
                                                   CALL NAVIER_STOKES_ANALYTIC_FUNCTIONS_EVALUATE(ANALYTIC_FUNCTION_TYPE,X, &
                                                     & CURRENT_TIME,variable_type,GLOBAL_DERIV_INDEX,componentIdx, &
-                                                    & NUMBER_OF_DIMENSIONS,FIELD_VARIABLE%NUMBER_OF_COMPONENTS,ANALYTIC_PARAMETERS, &
-                                                    & MATERIALS_PARAMETERS,VALUE,err,error,*999)
+                                                    & NUMBER_OF_DIMENSIONS,FIELD_VARIABLE%NUMBER_OF_COMPONENTS, &
+                                                    & ANALYTIC_PARAMETERS,MATERIALS_PARAMETERS,VALUE,err,error,*999)
                                                   DO version_idx=1, &
                                                     & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%numberOfVersions
                                                     local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
@@ -6780,9 +6786,9 @@ CONTAINS
                                                 RHO_PARAM=materialsField%variables(1)%parameter_sets%parameter_sets(1)%ptr% &
                                                   & parameters%cmiss%data_dp(2)
                                                 CALL NAVIER_STOKES_ANALYTIC_FUNCTIONS_EVALUATE(ANALYTIC_FUNCTION_TYPE,X, &
-                                                  & CURRENT_TIME,variable_type,GLOBAL_DERIV_INDEX,componentIdx,NUMBER_OF_DIMENSIONS,& 
-                                                  & FIELD_VARIABLE%NUMBER_OF_COMPONENTS,ANALYTIC_PARAMETERS, &
-                                                  & MATERIALS_PARAMETERS,VALUE,err,error,*999)
+                                                  & CURRENT_TIME,variable_type,GLOBAL_DERIV_INDEX,componentIdx, &
+                                                  & NUMBER_OF_DIMENSIONS,FIELD_VARIABLE%NUMBER_OF_COMPONENTS, &
+                                                  & ANALYTIC_PARAMETERS,MATERIALS_PARAMETERS,VALUE,err,error,*999)
                                                 !Default to version 1 of each node derivative
                                                 local_ny=FIELD_VARIABLE%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP% &
                                                   & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(1)
@@ -7512,7 +7518,8 @@ CONTAINS
                                       IF(FLUID_EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS &
                                         & .AND.FLUID_EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE &
                                         & .AND.FLUID_EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE &
-                                        & .AND.FLUID_EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE) THEN
+                                        & .AND.FLUID_EQUATIONS_SET%SPECIFICATION(3)== &
+                                        & EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE) THEN
                                         FluidEquationsSetFound=.TRUE.
                                       ELSE
                                         EquationsSetIndex=EquationsSetIndex+1
@@ -8072,8 +8079,9 @@ CONTAINS
                           IF(ASSOCIATED(EQUATIONS_SET_ALE_NAVIER_STOKES)) THEN
                             IF(EQUATIONS_SET_ALE_NAVIER_STOKES%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS &
                               & .AND.EQUATIONS_SET_ALE_NAVIER_STOKES%SPECIFICATION(2)==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE &
-                              & .AND.EQUATIONS_SET_ALE_NAVIER_STOKES%SPECIFICATION(3)==EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE &
-                              & .AND.EQUATIONS_SET_ALE_NAVIER_STOKES%SPECIFICATION(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE) THEN
+                              & .AND.(EQUATIONS_SET_ALE_NAVIER_STOKES%SPECIFICATION(3)==EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE &
+                              & .OR.EQUATIONS_SET_ALE_NAVIER_STOKES%SPECIFICATION(3)== &
+                              & EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE)) THEN
                               INDEPENDENT_FIELD_ALE_NAVIER_STOKES=>EQUATIONS_SET_ALE_NAVIER_STOKES%INDEPENDENT%INDEPENDENT_FIELD
                               IF(ASSOCIATED(INDEPENDENT_FIELD_ALE_NAVIER_STOKES)) ALENavierStokesEquationsSetFound=.TRUE.
                             ELSE

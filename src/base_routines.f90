@@ -488,7 +488,8 @@ CONTAINS
               IF(ASSOCIATED(routinePtr%routineListItem)) THEN
                 WRITE(outputString,'("***    Number of invocations: ",I10)') routinePtr%routineListItem%numberOfInvocations
                 CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
-                WRITE(outputString,'("***    Routine times:  Call Inclusive   Call Exclusive   Total Inclusive   Average Inclusive")')
+                WRITE(outputString, &
+                  & '("***    Routine times:  Call Inclusive   Call Exclusive   Total Inclusive   Average Inclusive")')
                 CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
                 WRITE(outputString,'("***    CPU       (s):  ",E14.6,"   ",E14.6,"   ",E15.6,"   ",E17.6)')  &
                   & routinePtr%inclusiveCPUTime,routinePtr%inclusiveCPUTime-routinePtr%exclusiveCPUTime, &

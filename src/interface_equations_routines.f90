@@ -875,7 +875,8 @@ CONTAINS
     
     EXITS("InterfaceEquations_MatrixTimeDependenceTypeGet0")
     RETURN
-999 ERRORSEXITS("InterfaceEquations_MatrixTimeDependenceTypeGet0",Err,Error)
+999 ERRORS("InterfaceEquations_MatrixTimeDependenceTypeGet0",Err,Error)
+    EXITS("InterfaceEquations_MatrixTimeDependenceTypeGet0")
     RETURN 1
     
   END SUBROUTINE InterfaceEquations_MatrixTimeDependenceTypeGet0
@@ -936,7 +937,8 @@ CONTAINS
     
     EXITS("InterfaceEquations_MatrixTimeDependenceTypeGet1")
     RETURN
-999 ERRORSEXITS("InterfaceEquations_MatrixTimeDependenceTypeGet1",Err,Error)
+999 ERRORS("InterfaceEquations_MatrixTimeDependenceTypeGet1",Err,Error)
+    EXITS("InterfaceEquations_MatrixTimeDependenceTypeGet1")
     RETURN 1
     
   END SUBROUTINE InterfaceEquations_MatrixTimeDependenceTypeGet1
@@ -965,7 +967,8 @@ CONTAINS
     
     EXITS("InterfaceEquations_MatrixTimeDependenceTypeSet0")
     RETURN
-999 ERRORSEXITS("InterfaceEquations_MatrixTimeDependenceTypeSet0",Err,Error)
+999 ERRORS("InterfaceEquations_MatrixTimeDependenceTypeSet0",Err,Error)
+    EXITS("InterfaceEquations_MatrixTimeDependenceTypeSet0")
     RETURN 1
     
   END SUBROUTINE InterfaceEquations_MatrixTimeDependenceTypeSet0
@@ -1039,7 +1042,8 @@ CONTAINS
     
     EXITS("InterfaceEquations_MatrixTimeDependenceTypeSet1")
     RETURN
-999 ERRORSEXITS("InterfaceEquations_MatrixTimeDependenceTypeSet1",Err,Error)
+999 ERRORS("InterfaceEquations_MatrixTimeDependenceTypeSet1",Err,Error)
+    EXITS("InterfaceEquations_MatrixTimeDependenceTypeSet1")
     RETURN 1
     
   END SUBROUTINE InterfaceEquations_MatrixTimeDependenceTypeSet1
