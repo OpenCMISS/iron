@@ -27537,7 +27537,7 @@ CONTAINS
     NULLIFY(region)
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EquationsSet_StrainInterpolateXi(equationsSet,tensorEvaluateType,userElementNumber,xi,values,err,error,*999)
+    CALL EquationsSet_TensorInterpolateXi(equationsSet,tensorEvaluateType,userElementNumber,xi,values,err,error,*999)
  
     EXITS("cmfe_EquationsSet_TensorInterpolateXiNumber")
     RETURN

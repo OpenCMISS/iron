@@ -669,9 +669,9 @@ CONTAINS
     !P is the hydrostatic pressure
 
     ! Evaluate the Cauchy strain tensor C.
-    CALL MATRIX_TRANSPOSE(DZDNU,DZDNUT,ERR,ERROR,*999)
-    CALL MATRIX_PRODUCT(DZDNUT,DZDNU,AZL,ERR,ERROR,*999)
-    CALL INVERT(AZL,AZU,I3,ERR,ERROR,*999)
+    CALL MatrixTranspose(DZDNU,DZDNUT,ERR,ERROR,*999)
+    CALL MatrixProduct(DZDNUT,DZDNU,AZL,ERR,ERROR,*999)
+    CALL Invert(AZL,AZU,I3,ERR,ERROR,*999)
 
     ! Evaluate the derivative of AZU wrt to E (AZUE) for the hydrostatic term. Formulation from Nam-Ho Kim book, pg.198.
     AZLv(1) = AZL(1,1)
@@ -724,7 +724,7 @@ CONTAINS
         !add active contraction stress values
         !Be aware for modified DZDNU, should active contraction be added here? Normally should be okay as modified DZDNU and DZDNU
         !converge during the Newton iteration.
-        CALL FIELD_VARIABLE_GET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
+        CALL Field_VariableGet(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
         DO i=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
           dof_idx=FIELD_VARIABLE%COMPONENTS(i)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP% &
             & GAUSS_POINTS(GAUSS_POINT_NUMBER,ELEMENT_NUMBER)
@@ -769,7 +769,7 @@ CONTAINS
       STRESS_TENSOR=TEMPTERM1*DQ_DE
       IF(EQUATIONS_SET%specification(3)==EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE) THEN
         !add active contraction stress values
-        CALL FIELD_VARIABLE_GET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
+        CALL Field_VariableGet(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
         DO i=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
           dof_idx=FIELD_VARIABLE%COMPONENTS(i)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP% &
             & GAUSS_POINTS(GAUSS_POINT_NUMBER,ELEMENT_NUMBER)
@@ -10138,6 +10138,11 @@ CONTAINS
               CALL SOLVER_TYPE_SET(SOLVER,SOLVER_NONLINEAR_TYPE,err,error,*999)
               !Set solver defaults
               CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,err,error,*999)
+              !Create the CellML evaluator solver
+              NULLIFY(CELLML_SOLVER)
+              CALL SOLVER_NEWTON_CELLML_EVALUATOR_CREATE(SOLVER,CELLML_SOLVER,err,error,*999)
+              !Link the CellML evaluator solver to the solver
+              CALL SOLVER_LINKED_SOLVER_ADD(SOLVER,CELLML_SOLVER,SOLVER_CELLML_EVALUATOR_TYPE,err,error,*999)
             CASE(PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE)
               CALL SOLVERS_NUMBER_SET(SOLVERS,1,err,error,*999)
               !Set the solver to be a nonlinear solver
