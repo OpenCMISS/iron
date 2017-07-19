@@ -1079,9 +1079,8 @@ CONTAINS
             ENDIF
           ENDDO !coupledMeshXiIdx
           IF(constantXiIdx==0) THEN
-            localError= &
-              & "Invalid xi connectivity. There is no xi direction that is constant across all interface nodes for coupled mesh number "// &
-              & TRIM(NumberToVString(coupledMeshIdx,"*",err,error))//"."
+            localError="Invalid xi connectivity. There is no xi direction that is constant across all interface nodes "// &
+              & "for coupled mesh number "//TRIM(NumberToVString(coupledMeshIdx,"*",err,error))//"."
             CALL FlagError(localError,err,error,*999)
           ELSE
             IF(ABS(elementConnectivity%xi(constantXiIdx,1,1))<ZERO_TOLERANCE) THEN
@@ -1091,8 +1090,8 @@ CONTAINS
             ENDIF
           ENDIF
         CASE DEFAULT 
-          localError="The number of interface mesh dimension of "//TRIM(NUMBER_TO_VSTRING(numberOfInterfaceMeshXi,"*",err,error))// &
-            & " is invalid"
+          localError="The number of interface mesh dimension of "// &
+            & TRIM(NUMBER_TO_VSTRING(numberOfInterfaceMeshXi,"*",err,error))//" is invalid"
           CALL FlagError(localError,err,error,*999)
         ENDSELECT
       ENDDO

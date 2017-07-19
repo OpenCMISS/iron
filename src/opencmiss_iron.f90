@@ -41268,7 +41268,8 @@ CONTAINS
 
     EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber0")
     RETURN
-999 ERRORSEXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber0",err,error)
+999 ERRORS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber0",err,error)
+    EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber0")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -41332,7 +41333,8 @@ CONTAINS
 
     EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber1")
     RETURN
-999 ERRORSEXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber1",err,error)
+999 ERRORS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber1",err,error)
+    EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber1")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -41364,7 +41366,8 @@ CONTAINS
 
     EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetObj0")
     RETURN
-999 ERRORSEXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetObj0",err,error)
+999 ERRORS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetObj0",err,error)
+    EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetObj0")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -41394,7 +41397,8 @@ CONTAINS
 
     EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetObj1")
     RETURN
-999 ERRORSEXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetObj1",err,error)
+999 ERRORS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetObj1",err,error)
+    EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetObj1")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -41426,7 +41430,8 @@ CONTAINS
 
     EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber0")
     RETURN
-999 ERRORSEXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber0",err,error)
+999 ERRORS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber0",err,error)
+    EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber0")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -41490,7 +41495,8 @@ CONTAINS
 
     EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber1")
     RETURN
-999 ERRORSEXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber1",err,error)
+999 ERRORS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber1",err,error)
+    EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber1")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -41520,7 +41526,8 @@ CONTAINS
 
     EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetObj0")
     RETURN
-999 ERRORSEXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetObj0",err,error)
+999 ERRORS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetObj0",err,error)
+    EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetObj0")
     CALL cmfe_HandleError(err,error)
     RETURN
 
@@ -41550,7 +41557,8 @@ CONTAINS
 
     EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetObj1")
     RETURN
-999 ERRORSEXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetObj1",err,error)
+999 ERRORS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetObj1",err,error)
+    EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetObj1")
     CALL cmfe_HandleError(err,error)
     RETURN
 
