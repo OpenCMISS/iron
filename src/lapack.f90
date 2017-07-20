@@ -83,6 +83,19 @@ MODULE LAPACK
       INTEGER(INTG), INTENT(OUT) :: INFO ! 0 if successful exit; < 0 if INFO = -i (the i-th argument had an illegal value); > 0 if DBDSQR did not converge
     END SUBROUTINE DGESVD
     
+    SUBROUTINE DSYEV( JOBZ, UPLO, N, A, LDA, W, WORK, LWORK, INFO )
+      USE KINDS
+      CHARACTER(LEN=1), INTENT(IN) :: JOBZ
+      CHARACTER(LEN=1), INTENT(IN) :: UPLO
+      INTEGER(INTG), INTENT(IN) :: N
+      REAL(DP), INTENT(INOUT) :: A(LDA,N)
+      INTEGER(INTG), INTENT(IN) :: LDA
+      REAL(DP), INTENT(OUT) :: W(N)
+      REAL(DP), INTENT(OUT) :: WORK(LWORK)
+      INTEGER(INTG), INTENT(IN) :: LWORK
+      INTEGER(INTG), INTENT(OUT) :: INFO
+    END SUBROUTINE DSYEV
+      
   END INTERFACE
 
 END MODULE LAPACK

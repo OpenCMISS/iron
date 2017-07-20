@@ -275,7 +275,7 @@ CONTAINS
         !versionString=versionString//TRIM(CMFE_BUILD_VERSION(6:))
         !versionString=versionString//" )"
         
-        WRITE(*,'(A)') CHAR(versionString)
+        !WRITE(*,'(A)') CHAR(versionString)
 
       ENDIF
     ENDIF
