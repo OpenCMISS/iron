@@ -84,16 +84,19 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !> Asserts that the FieldML Info is associated and created for input
   SUBROUTINE FIELDML_ASSERT_IS_IN( FIELDML_INFO, ERR, ERROR, * )
     !Argument variables
-    TYPE(FIELDML_IO_TYPE), INTENT(IN) :: FIELDML_INFO !<The FieldML parsing state.
+    TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
     
     ENTERS( "FIELDML_ASSERT_IS_IN", ERR, ERROR, *999 )
 
-    IF( FIELDML_INFO%IS_OUT ) THEN
-      CALL FlagError( "Outbound FieldML handle used four an input-only operation.", ERR, ERROR, *999 )
+    IF(.NOT.ASSOCIATED(FIELDML_INFO)) THEN
+      CALL FlagError( "FieldML Info is not associated.", ERR, ERROR, *999 )
+    ELSE IF( FIELDML_INFO%IS_OUT ) THEN
+      CALL FlagError( "Outbound FieldML Info used for an input-only operation.", ERR, ERROR, *999 )
     ENDIF
     
     EXITS( "FIELDML_ASSERT_IS_IN" )
@@ -558,7 +561,7 @@ CONTAINS
   SUBROUTINE FieldmlInput_CoordinateSystemCreateStart( FIELDML_INFO, EVALUATOR_NAME, COORDINATE_SYSTEM, USER_NUMBER, &
     & ERR, ERROR, * )
     !Arguments
-    TYPE(FIELDML_IO_TYPE), INTENT(INOUT) :: FIELDML_INFO !<The FieldML parsing state.
+    TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     TYPE(VARYING_STRING), INTENT(IN) :: EVALUATOR_NAME !<The name of the coordinate system evaluator.
     TYPE(COORDINATE_SYSTEM_TYPE), POINTER, INTENT(IN) :: COORDINATE_SYSTEM !<The OpenCMISS coordinate system to initialize.
     INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number to assign to the coordinate system.
@@ -618,7 +621,7 @@ CONTAINS
   !>Creates an OpenCMISS nodes object using relevant parameters from FieldML. Does not call CreateFinish.
   SUBROUTINE FIELDML_INPUT_NODES_CREATE_START( FIELDML_INFO, NODES_ARGUMENT_NAME, REGION, NODES, ERR, ERROR, * )
     !Arguments
-    TYPE(FIELDML_IO_TYPE), INTENT(INOUT) :: FIELDML_INFO !<The FieldML parsing state.
+    TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     TYPE(VARYING_STRING), INTENT(IN) :: NODES_ARGUMENT_NAME !<The argument evaluator used as the node index in relevant evaluators.
     TYPE(REGION_TYPE), POINTER, INTENT(IN) :: REGION !<The region in which to create the nodes.
     TYPE(NODES_TYPE), POINTER, INTENT(INOUT) :: NODES !<The OpenCMISS nodes object to create.
@@ -668,7 +671,7 @@ CONTAINS
   !>Creates an OpenCMISS mesh using relevant parameters from FieldML. Does not call CreateFinish.
   SUBROUTINE FIELDML_INPUT_MESH_CREATE_START( FIELDML_INFO, MESH_ARGUMENT_NAME, MESH, MESH_NUMBER, REGION, ERR, ERROR, * )
     !Arguments
-    TYPE(FIELDML_IO_TYPE), INTENT(INOUT) :: FIELDML_INFO !<The FieldML parsing state.
+    TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     TYPE(VARYING_STRING), INTENT(IN) :: MESH_ARGUMENT_NAME !<The argument evaluator used as the mesh location in relevant evaluators.
     TYPE(MESH_TYPE), POINTER, INTENT(INOUT) :: MESH !<The OpenCMISS mesh object to create.
     INTEGER(INTG), INTENT(IN) :: MESH_NUMBER !<The user number to assign to the mesh.
@@ -729,7 +732,7 @@ CONTAINS
   !>Creates an OpenCMISS basis object using relevant parameters from FieldML. Does not call CreateFinish.
   SUBROUTINE FIELDML_INPUT_BASIS_CREATE_START( FIELDML_INFO, EVALUATOR_NAME, USER_NUMBER, BASIS, ERR, ERROR, * )
     !Arguments
-    TYPE(FIELDML_IO_TYPE), INTENT(INOUT) :: FIELDML_INFO !<The FieldML parsing state.
+    TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     TYPE(VARYING_STRING), INTENT(IN) :: EVALUATOR_NAME !<The name of the basis evaluator.
     INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number to assign to the basis.
     TYPE(BASIS_TYPE), POINTER, INTENT(INOUT) :: BASIS !<The OpenCMISS basis object to create.
@@ -923,7 +926,7 @@ CONTAINS
   !>Creates an OpenCMISS mesh component using relevant parameters from FieldML. Does not call CreateFinish.
   SUBROUTINE FIELDML_INPUT_CREATE_MESH_COMPONENT( FIELDML_INFO, MESH, COMPONENT_NUMBER, EVALUATOR_NAME, ERR, ERROR, * )
     !Arguments
-    TYPE(FIELDML_IO_TYPE), INTENT(INOUT) :: FIELDML_INFO !<The FieldML parsing state.
+    TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     TYPE(MESH_TYPE), POINTER, INTENT(IN) :: MESH !<The OpenCMISS mesh in which to create the component.
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The component number to create.
     TYPE(VARYING_STRING), INTENT(IN) :: EVALUATOR_NAME !<The name of the mesh component evaluator.
@@ -1116,7 +1119,7 @@ CONTAINS
   SUBROUTINE FIELDML_INPUT_FIELD_CREATE_START( FIELDML_INFO, REGION, DECOMPOSITION, FIELD_NUMBER, FIELD, VARIABLE_TYPE, &
     & EVALUATOR_NAME, ERR, ERROR, * )
     !Arguments
-    TYPE(FIELDML_IO_TYPE), INTENT(INOUT) :: FIELDML_INFO !<The FieldML parsing state.
+    TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     TYPE(REGION_TYPE), POINTER, INTENT(IN) :: REGION !<The region in which to create the field.
     TYPE(DECOMPOSITION_TYPE), POINTER, INTENT(IN) :: DECOMPOSITION !<The decomposition to use when creating the field.
     INTEGER(INTG), INTENT(IN) :: FIELD_NUMBER !<The user number to assign to the created field.
@@ -1259,8 +1262,6 @@ CONTAINS
     INTEGER(INTG) :: myComputationalNodeNumber,nodeDomain,meshComponentNumber
     
     ENTERS( "FieldmlInput_FieldNodalParametersUpdate", ERR, ERROR, *999 )
-    
-    CALL FIELDML_ASSERT_IS_IN( FIELDML_INFO, ERR, ERROR, *999 )
     
     MESH => FIELD%DECOMPOSITION%MESH
 

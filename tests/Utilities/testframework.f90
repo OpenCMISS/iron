@@ -49,6 +49,10 @@ MODULE IRON_TEST_FRAMEWORK
     MODULE PROCEDURE EXPECT_EQ_INTG
   END INTERFACE EXPECT_EQ
 
+  INTERFACE EXPECT_NE
+    MODULE PROCEDURE EXPECT_NE_INTG
+  END INTERFACE EXPECT_NE
+
   INTERFACE EXPECT_NEAR
     MODULE PROCEDURE EXPECT_NEAR_DP
     MODULE PROCEDURE EXPECT_NEAR_SP
@@ -58,7 +62,7 @@ MODULE IRON_TEST_FRAMEWORK
   INTEGER(CMISSIntg), SAVE :: testErr = 0
 
   PUBLIC INITIALISE_TESTS, FINALISE_TESTS, BEGIN_TEST, END_TEST, &
-    & AUTO_USER_NUMBER, EXPECT_EQ, EXPECT_NEAR
+    & AUTO_USER_NUMBER, EXPECT_EQ, EXPECT_NE, EXPECT_NEAR
 
 CONTAINS
 
@@ -125,6 +129,19 @@ CONTAINS
       CALL SetError()
     ENDIF
   END SUBROUTINE EXPECT_EQ_INTG
+
+  !> Check actual value is not equal to notExpected, integer variant. Reports and records any error and continues.
+  SUBROUTINE EXPECT_NE_INTG(description, notExpected, actual)
+    CHARACTER(LEN=*), INTENT(IN) :: description !< Description of quantity being compared.
+    INTEGER(CMISSIntg), INTENT(IN) :: notExpected !< Value NOT expected/
+    INTEGER(CMISSIntg), INTENT(IN) :: actual !< Actual value.
+
+    IF (actual == notExpected) THEN
+      WRITE(*, '("The value of ",a," should not equal ",i0)') &
+        & description, actual
+      CALL SetError()
+    ENDIF
+  END SUBROUTINE EXPECT_NE_INTG
 
   !> Check actual value is within tolerance of expected. Reports and records any error and continues.
   SUBROUTINE EXPECT_NEAR_DP(description, expected, actual, tolerance)

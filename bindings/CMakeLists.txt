@@ -71,8 +71,9 @@ if (WITH_Python_BINDINGS)
     if(NOT PYTHONLIBS_FOUND)
         message(FATAL_ERROR "No Python development libraries found. Unable to generate Python bindings for Iron.")
     endif()
+    three_part_version_to_vars(${PYTHONLIBS_VERSION_STRING} PYTHONLIBS_MAJOR_VERSION PYTHONLIBS_MINOR_VERSION PYTHONLIBS_PATCH_VERSION)
     # I know there's also a UseSWIG.cmake file (http://www.cmake.org/cmake/help/v3.3/module/UseSWIG.html)
-    # This did not seem to be very flexible at the current stage.
+    # This did not seem to be very flexible at the time of writing this.
     find_package(SWIG QUIET)
     if (NOT SWIG_FOUND)
         message(FATAL_ERROR "SWIG could not be found. Unable to generate Python bindings for Iron.")
@@ -106,10 +107,14 @@ if (WITH_Python_BINDINGS)
         WORKING_DIRECTORY ${Iron_SOURCE_DIR}/bindings
     )
 
-    string(SUBSTRING ${PYTHONLIBS_VERSION_STRING} 0 1 PYTHONLIBS_MAJOR_VERSION)
+    three_part_version_to_vars(${PYTHONLIBS_VERSION_STRING} PYTHONLIBS_MAJOR_VERSION PYTHONLIBS_MINOR_VERSION PYTHONLIBS_PATCH_VERSION)
     if(${PYTHONLIBS_MAJOR_VERSION} STREQUAL "3")
         set(PYTHONLIBS_SWIG_FLAGS -py3)
     endif()
+
+    set(_PYTHON_DESTINATION_PREFIX lib/python${PYTHONLIBS_MAJOR_VERSION}.${PYTHONLIBS_MINOR_VERSION})
+    set(IRON_PYTHON_PACKAGE_DESTINATION_PREFIX ${_PYTHON_DESTINATION_PREFIX}/$<CONFIG>/opencmiss.iron/opencmiss/iron)
+    file(RELATIVE_PATH _REL_INSTALL_PATH ${CMAKE_INSTALL_PREFIX}/${IRON_PYTHON_PACKAGE_DESTINATION_PREFIX} ${CMAKE_INSTALL_PREFIX}/lib)
 
     # Generate C wrapper
     set(PYTHON_WRAPPER "${CMAKE_CURRENT_BINARY_DIR}/iron_python_wrapper.c")
@@ -138,6 +143,14 @@ if (WITH_Python_BINDINGS)
         LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron
     )
+    if (APPLE)
+        set_target_properties(${IRON_PYTHON_MODULE} PROPERTIES
+            INSTALL_RPATH "@loader_path/${_REL_INSTALL_PATH}")
+    elseif (UNIX)
+        set_target_properties(${IRON_PYTHON_MODULE} PROPERTIES
+            INSTALL_RPATH "\$ORIGIN/${_REL_INSTALL_PATH}")
+    endif ()
+
     # "Bugfix": If we use the same source file name, there will be two processes messing with
     # the same fortran module file which can lead to errors using -j parallel builds.
     # By this we simply force to have iron_c build before the python module.
@@ -169,16 +182,18 @@ if (WITH_Python_BINDINGS)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/python/opencmiss/iron/_utils.in.py ${UTILS_PY} @ONLY)
             
     # Step 2: Generation phase - replaces remaining generator expressions
-    file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron/__init__.py"
+    set(IRON_PACKAGE_INIT_PY "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron/__init__.py")
+    file(GENERATE OUTPUT "${IRON_PACKAGE_INIT_PY}"
         INPUT ${INIT_PY})
-    file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/setup.py"
+    set(IRON_SETUP_PY "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/setup.py")
+    file(GENERATE OUTPUT "${IRON_SETUP_PY}"
         INPUT ${SETUP_PY})
-    file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron/_utils.py"
+    set(IRON_UTILS_PY "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron/_utils.py")
+    file(GENERATE OUTPUT "${IRON_UTILS_PY}"
         INPUT ${UTILS_PY})
-    file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/__init__.py"
+    set(OPENCMISS_PACKAGE_INIT_PY "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/__init__.py")
+    file(GENERATE OUTPUT "${OPENCMISS_PACKAGE_INIT_PY}"
         INPUT ${CMAKE_CURRENT_SOURCE_DIR}/python/opencmiss/__init__.py)
-    file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/zinc/__init__.py"
-        CONTENT "")
     
     set(IRON_PY ${CMAKE_CURRENT_BINARY_DIR}/iron.py) # see python.py script in generate_bindings for iron.py name
     add_custom_command(OUTPUT ${IRON_PY}
@@ -188,45 +203,33 @@ if (WITH_Python_BINDINGS)
         WORKING_DIRECTORY "${Iron_SOURCE_DIR}/bindings"
     )
     list(APPEND _CLEANUP ${IRON_PY})
+    set(IRON_IRON_PY "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron/iron.py")
     add_custom_target(collect_python_binding_files ALL
         DEPENDS "${IRON_PY}"
-        COMMAND ${CMAKE_COMMAND} -E copy ${IRON_PY} ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/opencmiss/iron/iron.py
+        COMMAND ${CMAKE_COMMAND} -E copy ${IRON_PY} ${IRON_IRON_PY}
     )
     
-    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}/opencmiss
-        DESTINATION python/$<CONFIG>
+    install(FILES ${IRON_SETUP_PY}
+        DESTINATION ${_PYTHON_DESTINATION_PREFIX}/$<CONFIG>/opencmiss.iron
         COMPONENT PythonBindings)
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}/setup.py
-        DESTINATION python/$<CONFIG>
-        COMPONENT PythonBindings
-)
+    install(FILES ${OPENCMISS_PACKAGE_INIT_PY}
+        DESTINATION ${_PYTHON_DESTINATION_PREFIX}/$<CONFIG>/opencmiss.iron/opencmiss
+        COMPONENT PythonBindings)
+    install(FILES ${IRON_PACKAGE_INIT_PY} ${IRON_IRON_PY} ${IRON_UTILS_PY}
+        DESTINATION ${IRON_PYTHON_PACKAGE_DESTINATION_PREFIX}
+        COMPONENT PythonBindings)
+    install(TARGETS ${IRON_PYTHON_MODULE}
+        DESTINATION ${IRON_PYTHON_PACKAGE_DESTINATION_PREFIX}
+        COMPONENT PythonBindings)
     
-    if (INSTALL_TO_VIRTUALENV)
-        # The binary directories for the python environments are different on windows (for what reason exactly?)
-        # So we need different subpaths
-        set(VENV_BINDIR bin)
-        if (WIN32)
-            set(VENV_BINDIR Scripts)
-        endif()
-        # Convention between manage and iron CMake scripts: On multiconfig-environments, the 
-        # installation directories have the build type path element inside the INSTALL_TO_VIRTUALENV
-        if (HAVE_MULTICONFIG_ENV)
-            set(VENV_BINDIR $<LOWER_CASE:$<CONFIG>>/${VENV_BINDIR})
-        endif()
-        # We need a native path to pass to the pip program
-        file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>" NATIVE_CMAKE_CURRENT_BINARY_DIR)
-        # This target takes care to install the python package generated in the build tree to the specified virtual
-        # environment.
-        add_custom_target(install_venv
-            DEPENDS collect_python_binding_files
-            COMMAND ${VENV_BINDIR}/pip install --upgrade "${NATIVE_CMAKE_CURRENT_BINARY_DIR}"
-            WORKING_DIRECTORY "${INSTALL_TO_VIRTUALENV}"
-            COMMENT "Installing: opencmiss.iron package for Python virtual environment ..."
-        )
-        install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" --build . --target install_venv --config \${CMAKE_INSTALL_CONFIG_NAME} WORKING_DIRECTORY \"${Iron_BINARY_DIR}\")"
-            COMPONENT VirtualEnv)
-    endif()
-    
+    if (IRON_USE_VIRTUALENV)
+        # Variables required for OCPythonBindingsVirtualEnv.
+        set(VIRTUALENV_INSTALL_PREFIX ${IRON_VIRTUALENV_INSTALL_PREFIX})
+        set(PYTHON_PACKAGE_CURRENT_NAME iron)
+        # Virtual environment creation target.
+        include(OCPythonBindingsVirtualEnv)    
+    endif ()
+
     if (BUILD_TESTS)
         add_subdirectory(python/tests)
     endif()

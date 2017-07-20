@@ -4161,7 +4161,7 @@ CONTAINS
                 CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             CASE(FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER)
-              IF(FIELD_VARIABLE%DATA_TYPE/=FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER) THEN
+              IF(FIELD_VARIABLE%DOF_ORDER_TYPE/=FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER) THEN
                 LOCAL_ERROR="Invalid DOF order type. The DOF order type for variable type "// &
                   & TRIM(NUMBER_TO_VSTRING(VARIABLE_TYPE,"*",ERR,ERROR))//" of field number "// &
                   & TRIM(NUMBER_TO_VSTRING(FIELD%USER_NUMBER,"*",ERR,ERROR))//" is "// &

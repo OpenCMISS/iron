@@ -115,9 +115,11 @@ CONTAINS
           & "Bioelectric-finite elasticity type equations set.",err,error,*999)
       END IF
       SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-        !\todo what are problem constants doing here???
-      CASE(EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE,EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE, &
-        & EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
+      CASE(EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE, &
+        & EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE, &
+        & EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE, &
+        & EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
+        & EQUATIONS_SET_1D3D_MONODOMAIN_ACTIVE_STRAIN_SUBTYPE)
         SELECT CASE(SOLUTION_METHOD)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           EQUATIONS_SET%SOLUTION_METHOD=EQUATIONS_SET_FEM_SOLUTION_METHOD
@@ -227,7 +229,8 @@ CONTAINS
         CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE, &
             & PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE, &
             & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE, &
-            & PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
+            & PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
+            & PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
           !ok
         CASE DEFAULT
           localError="The third problem specification of "//TRIM(NumberToVstring(problemSubtype,"*",err,error))// &
@@ -302,7 +305,8 @@ CONTAINS
       !   Transient Gudunov monodomain, simple finite elasticity  
       !--------------------------------------------------------------------
       CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE,PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE, &
-        & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
+        & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
+        & PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
         SELECT CASE(PROBLEM_SETUP%SETUP_TYPE)
         CASE(PROBLEM_SETUP_INITIAL_TYPE)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
@@ -552,7 +556,7 @@ CONTAINS
           END IF
           SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
           CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE,PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE, &
-              & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE)
+            & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
             SELECT CASE(CONTROL_LOOP%LOOP_TYPE)
             CASE(PROBLEM_CONTROL_TIME_LOOP_TYPE)
               CALL BIODOMAIN_PRE_SOLVE(SOLVER,ERR,ERROR,*999)
@@ -625,7 +629,8 @@ CONTAINS
           END IF
           SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
           CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE,PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE, &
-            & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
+            & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
+            & PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
             SELECT CASE(SOLVER%SOLVE_TYPE)
             CASE(SOLVER_DAE_TYPE)
               CALL BIOELECTRIC_POST_SOLVE(SOLVER,ERR,ERROR,*999)
@@ -694,7 +699,7 @@ CONTAINS
               !do nothing ???
             CASE(PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE)
               SELECT CASE(PROBLEM%SPECIFICATION(3))
-              CASE(PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE)
+              CASE(PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE,PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
                 CALL BioelectricFiniteElasticity_IndependentFieldInterpolate(CONTROL_LOOP,ERR,ERROR,*999)
               CASE(PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE)
                 CALL BIOELECTRIC_FINITE_ELASTICITY_COMPUTE_TITIN(CONTROL_LOOP,ERR,ERROR,*999)
@@ -1437,7 +1442,8 @@ CONTAINS
               ENDIF
               IF((PROBLEM%SPECIFICATION(3)==PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE).OR. &
                & (PROBLEM%SPECIFICATION(3)==PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE).OR. &
-               & (PROBLEM%SPECIFICATION(3)==PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)) THEN
+               & (PROBLEM%SPECIFICATION(3)==PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE).OR. &
+               & (PROBLEM%SPECIFICATION(3)==PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)) THEN
                 NULLIFY(SOLVERS)
                 NULLIFY(SOLVER)
                 NULLIFY(SOLVER_EQUATIONS)
@@ -1675,8 +1681,11 @@ CONTAINS
     INTEGER(INTG) :: DEPENDENT_FIELD_INTERPOLATION,GEOMETRIC_FIELD_INTERPOLATION
     INTEGER(INTG) :: node_idx,node_idx_2,GAUSS_POINT,gauss_idx,fibre_idx
     INTEGER(INTG) :: nodes_in_Xi_1,nodes_in_Xi_2,nodes_in_Xi_3,n3,n2,n1,dof_idx,dof_idx2,idx,my_element_idx
-    REAL(DP) :: VALUE,VALUE_LEFT,DISTANCE,VELOCITY,VELOCITY_MAX,OLD_DIST
+    INTEGER(INTG) :: offset,n4
+    REAL(DP) :: XVALUE_M,XVALUE_FE,DIST_LEFT,DIST_RIGHT,VALUE,VALUE_LEFT,VALUE_RIGHT,DISTANCE,VELOCITY,VELOCITY_MAX,OLD_DIST
+    REAL(DP) :: OLD_DIST_2,OLD_DIST_3,OLD_DIST_4
     REAL(DP) :: XI(3),PREVIOUS_NODE(3),DIST_INIT,SARCO_LENGTH_INIT,TIME_STEP,DIST
+    LOGICAL :: OUTSIDE_NODE
     REAL(DP), POINTER :: GAUSS_POSITIONS(:,:)
 
     ENTERS("BioelectricFiniteElasticity_UpdateGeometricField",ERR,ERROR,*999)
@@ -1794,7 +1803,8 @@ CONTAINS
                 ENDIF
               ENDDO
 
-            CASE(PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE)
+            CASE(PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE, &
+              & PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
 
               CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
               CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP_PARENT,ERR,ERROR,*999)
@@ -1990,9 +2000,29 @@ CONTAINS
                             & DERIVATIVES(1)%VERSIONS(1)
                           CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
                             & FIELD_VALUES_SET_TYPE,dof_idx,OLD_DIST,ERR,ERROR,*999)
+
+                          !get the distance between the 2 nodes before two time step
+                          dof_idx=FIELD_VAR_IND_M_2%COMPONENTS(4)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)% &
+                            & DERIVATIVES(1)%VERSIONS(1)
+                          CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+                            & FIELD_VALUES_SET_TYPE,dof_idx,OLD_DIST_2,ERR,ERROR,*999)
+			    
+                  			  !get the distance between the 2 nodes before three time step
+                          dof_idx=FIELD_VAR_IND_M_2%COMPONENTS(5)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)% &
+                            & DERIVATIVES(1)%VERSIONS(1)
+                          CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+                            & FIELD_VALUES_SET_TYPE,dof_idx,OLD_DIST_3,ERR,ERROR,*999)
+			  
+                  			  !get the distance between the 2 nodes before four time step
+                          dof_idx=FIELD_VAR_IND_M_2%COMPONENTS(6)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)% &
+                            & DERIVATIVES(1)%VERSIONS(1)
+                          CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+                            & FIELD_VALUES_SET_TYPE,dof_idx,OLD_DIST_4,ERR,ERROR,*999)
                           
                           !compute the new contraction velocity
-                          VELOCITY=(DIST-OLD_DIST)/TIME_STEP
+                          !VELOCITY=(DIST-OLD_DIST)/TIME_STEP
+                          VELOCITY=0.25_DP*((DIST-OLD_DIST)/TIME_STEP+(DIST-OLD_DIST_2)/(2.0_DP*TIME_STEP)+ &
+                  			    & (DIST-OLD_DIST_3)/(3.0_DP*TIME_STEP)+(DIST-OLD_DIST_4)/(4.0_DP*TIME_STEP))
                           IF(.NOT. CALC_CLOSEST_GAUSS_POINT) THEN
                             !NOTE: VELOCITY_MAX is the max shortening velocity, and hence negative!!!
                             IF(VELOCITY<VELOCITY_MAX) THEN
@@ -2012,6 +2042,18 @@ CONTAINS
                           !store the node distance for contraction velocity calculation
                           CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
                             & FIELD_VALUES_SET_TYPE,1,1,node_idx,1,DIST,ERR,ERROR,*999)
+
+                          !store the node distance for contraction velocity calculation
+                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+                            & FIELD_VALUES_SET_TYPE,1,1,node_idx,4,OLD_DIST,ERR,ERROR,*999)
+			    
+                  			  !store the node distance for contraction velocity calculation
+                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+                            & FIELD_VALUES_SET_TYPE,1,1,node_idx,5,OLD_DIST_2,ERR,ERROR,*999)
+			    
+                  			  !store the node distance for contraction velocity calculation
+                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE, &
+                            & FIELD_VALUES_SET_TYPE,1,1,node_idx,6,OLD_DIST_3,ERR,ERROR,*999)
 
 
 
@@ -2597,11 +2639,14 @@ CONTAINS
     REAL(DP) :: TITIN_STRESS_UNBOUND,TITIN_STRESS_BOUND,TITIN_STRESS_CROSS_FIBRE_UNBOUND,TITIN_STRESS_CROSS_FIBRE_BOUND,ACTIVATION
     INTEGER(INTG), PARAMETER :: MAX_NUMBER_OF_GAUSS_POINTS=64
     INTEGER(INTG) :: NUMBER_OF_NODES(MAX_NUMBER_OF_GAUSS_POINTS)
-    REAL(DP):: ACTIVE_STRESS_VALUES(MAX_NUMBER_OF_GAUSS_POINTS)
-    REAL(DP):: TITIN_STRESS_VALUES_UNBOUND(MAX_NUMBER_OF_GAUSS_POINTS),TITIN_STRESS_VALUES_BOUND(MAX_NUMBER_OF_GAUSS_POINTS)
-    REAL(DP):: TITIN_STRESS_VALUES_CROSS_FIBRE_UNBOUND(MAX_NUMBER_OF_GAUSS_POINTS)
-    REAL(DP):: TITIN_STRESS_VALUES_CROSS_FIBRE_BOUND(MAX_NUMBER_OF_GAUSS_POINTS)
-    REAL(DP):: ACTIVATION_VALUES(MAX_NUMBER_OF_GAUSS_POINTS)
+    REAL(DP) :: ACTIVE_STRESS_VALUES(MAX_NUMBER_OF_GAUSS_POINTS)
+    REAL(DP) :: TITIN_STRESS_VALUES_UNBOUND(MAX_NUMBER_OF_GAUSS_POINTS),TITIN_STRESS_VALUES_BOUND(MAX_NUMBER_OF_GAUSS_POINTS)
+    REAL(DP) :: TITIN_STRESS_VALUES_CROSS_FIBRE_UNBOUND(MAX_NUMBER_OF_GAUSS_POINTS)
+    REAL(DP) :: TITIN_STRESS_VALUES_CROSS_FIBRE_BOUND(MAX_NUMBER_OF_GAUSS_POINTS)
+    REAL(DP) :: ACTIVATION_VALUES(MAX_NUMBER_OF_GAUSS_POINTS)
+    REAL(DP) :: A_1,A_2,x_1,x_2
+    REAL(DP) :: A_1_VALUES(MAX_NUMBER_OF_GAUSS_POINTS),A_2_VALUES(MAX_NUMBER_OF_GAUSS_POINTS), &
+      & x_1_VALUES(MAX_NUMBER_OF_GAUSS_POINTS),x_2_VALUES(MAX_NUMBER_OF_GAUSS_POINTS)
 
     NULLIFY(CONTROL_LOOP_PARENT)
     NULLIFY(CONTROL_LOOP_MONODOMAIN)
@@ -2625,7 +2670,7 @@ CONTAINS
         END IF
         SELECT CASE(PROBLEM%SPECIFICATION(3))
         CASE(PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE, &
-          & PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
+          & PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE,PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
           IF(CONTROL_LOOP%NUMBER_OF_SUB_LOOPS==0) THEN
             CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP_PARENT,ERR,ERROR,*999)
@@ -2705,6 +2750,10 @@ CONTAINS
               TITIN_STRESS_VALUES_CROSS_FIBRE_UNBOUND=0.0_DP
               TITIN_STRESS_VALUES_CROSS_FIBRE_BOUND=0.0_DP
               ACTIVATION_VALUES=0.0_DP
+              A_1_VALUES=0.0_DP
+              A_2_VALUES=0.0_DP
+              x_1_VALUES=0.0_DP
+              x_2_VALUES=0.0_DP
               
               !loop over the bioelectrics nodes
               DO node_idx=1,NODES_MAPPING%NUMBER_OF_LOCAL
@@ -2722,18 +2771,34 @@ CONTAINS
                     & dof_idx,nearestGP,ERR,ERROR,*999)
                   IF(nearestGP>MAX_NUMBER_OF_GAUSS_POINTS) CALL FlagError( &
                     & "Nearest Gauss Point is greater than MAX_NUMBER_OF_GAUSS_POINTS.",ERR,ERROR,*999)
-                  !component 1 of variable U contains the active stress
-                  dof_idx=FIELD_VARIABLE_U%COMPONENTS(1)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(1)% &
-                    & VERSIONS(1)
-                  CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                    & dof_idx,ACTIVE_STRESS,ERR,ERROR,*999)
-                  
-                  !count the number of bioelectrics nodes that are closest to each finite elasticity Gauss point
-                  NUMBER_OF_NODES(nearestGP)=NUMBER_OF_NODES(nearestGP)+1
-                  !add up the active stress value
-                  ACTIVE_STRESS_VALUES(nearestGP)=ACTIVE_STRESS_VALUES(nearestGP)+ACTIVE_STRESS
 
-                  IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE) THEN
+                  SELECT CASE(PROBLEM%SPECIFICATION(3))
+                  CASE(PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
+
+                    !component 1 of variable U contains the active stress
+                    dof_idx=FIELD_VARIABLE_U%COMPONENTS(1)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(1)% &
+                      & VERSIONS(1)
+                    CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
+                      & FIELD_VALUES_SET_TYPE,dof_idx,ACTIVE_STRESS,ERR,ERROR,*999)
+                    
+                    !count the number of bioelectrics nodes that are closest to each finite elasticity Gauss point
+                    NUMBER_OF_NODES(nearestGP)=NUMBER_OF_NODES(nearestGP)+1
+                    !add up the active stress value
+                    ACTIVE_STRESS_VALUES(nearestGP)=ACTIVE_STRESS_VALUES(nearestGP)+ACTIVE_STRESS
+                    
+                  CASE(PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE)
+
+                    !component 1 of variable U contains the active stress
+                    dof_idx=FIELD_VARIABLE_U%COMPONENTS(1)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(1)% &
+                      & VERSIONS(1)
+                    CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
+                      & FIELD_VALUES_SET_TYPE,dof_idx,ACTIVE_STRESS,ERR,ERROR,*999)
+                    
+                    !count the number of bioelectrics nodes that are closest to each finite elasticity Gauss point
+                    NUMBER_OF_NODES(nearestGP)=NUMBER_OF_NODES(nearestGP)+1
+                    !add up the active stress value
+                    ACTIVE_STRESS_VALUES(nearestGP)=ACTIVE_STRESS_VALUES(nearestGP)+ACTIVE_STRESS
+                    
                     !component 2 of variable U contains the titin stress unbound
                     dof_idx=FIELD_VARIABLE_U%COMPONENTS(2)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(1)% &
                       & VERSIONS(1)
@@ -2767,7 +2832,38 @@ CONTAINS
                     TITIN_STRESS_VALUES_CROSS_FIBRE_BOUND(nearestGP)=TITIN_STRESS_VALUES_CROSS_FIBRE_BOUND(nearestGP) + &
                       & TITIN_STRESS_CROSS_FIBRE_BOUND
                     ACTIVATION_VALUES(nearestGP)=ACTIVATION_VALUES(nearestGP)+ACTIVATION
-                  ENDIF
+                    
+                  CASE(PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
+
+                    !count the number of bioelectrics nodes that are closest to each finite elasticity Gauss point
+                    NUMBER_OF_NODES(nearestGP)=NUMBER_OF_NODES(nearestGP)+1
+
+                    !component 1 of variable U contains A_1
+                    dof_idx=FIELD_VARIABLE_U%COMPONENTS(1)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(1)% &
+                      & VERSIONS(1)
+                    CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
+                      & FIELD_VALUES_SET_TYPE,dof_idx,A_1,ERR,ERROR,*999)
+                    !component 2 of variable U contains A_2
+                    dof_idx=FIELD_VARIABLE_U%COMPONENTS(2)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(1)% &
+                      & VERSIONS(1)
+                    CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
+                      & FIELD_VALUES_SET_TYPE,dof_idx,A_2,ERR,ERROR,*999)
+                    !component 3 of variable U contains x_1
+                    dof_idx=FIELD_VARIABLE_U%COMPONENTS(3)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(1)% &
+                      & VERSIONS(1)
+                    CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
+                      & FIELD_VALUES_SET_TYPE,dof_idx,x_1,ERR,ERROR,*999)
+                    !component 4 of variable U contains x_2
+                    dof_idx=FIELD_VARIABLE_U%COMPONENTS(4)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(1)% &
+                      & VERSIONS(1)
+                    CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE, &
+                      & FIELD_VALUES_SET_TYPE,dof_idx,x_2,ERR,ERROR,*999)
+
+                    A_1_VALUES(nearestGP)=A_1_VALUES(nearestGP)+A_1
+                    A_2_VALUES(nearestGP)=A_2_VALUES(nearestGP)+A_2
+                    x_1_VALUES(nearestGP)=x_1_VALUES(nearestGP)+x_1
+                    x_2_VALUES(nearestGP)=x_2_VALUES(nearestGP)+x_2
+                  END SELECT
 
                 ENDIF
               ENDDO
@@ -2782,6 +2878,10 @@ CONTAINS
                   TITIN_STRESS_CROSS_FIBRE_UNBOUND=0.0_DP
                   TITIN_STRESS_CROSS_FIBRE_BOUND=0.0_DP
                   ACTIVATION=0.0_DP
+                  A_1=0.0_DP
+                  A_2=0.0_DP
+                  x_1=0.0_DP
+                  x_2=0.0_DP
                 ELSE
                   ACTIVE_STRESS=ACTIVE_STRESS_VALUES(gauss_idx)/NUMBER_OF_NODES(gauss_idx)
                   TITIN_STRESS_UNBOUND=TITIN_STRESS_VALUES_UNBOUND(gauss_idx)/NUMBER_OF_NODES(gauss_idx)
@@ -2790,13 +2890,24 @@ CONTAINS
                   TITIN_STRESS_CROSS_FIBRE_BOUND=TITIN_STRESS_VALUES_CROSS_FIBRE_BOUND(gauss_idx)/ &
                     & NUMBER_OF_NODES(gauss_idx)
                   ACTIVATION=ACTIVATION_VALUES(gauss_idx)/NUMBER_OF_NODES(gauss_idx)
+                  A_1=A_1_VALUES(gauss_idx)/NUMBER_OF_NODES(gauss_idx)
+                  A_2=A_2_VALUES(gauss_idx)/NUMBER_OF_NODES(gauss_idx)
+                  x_1=x_1_VALUES(gauss_idx)/NUMBER_OF_NODES(gauss_idx)
+                  x_2=x_2_VALUES(gauss_idx)/NUMBER_OF_NODES(gauss_idx)
                 ENDIF
 
-                dof_idx=FIELD_VARIABLE_FE%COMPONENTS(1)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gauss_idx,ne)
-                CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(INDEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,dof_idx,ACTIVE_STRESS,ERR,ERROR,*999)
+                SELECT CASE(PROBLEM%SPECIFICATION(3))
+                CASE(PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
 
-                IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE) THEN
+                  dof_idx=FIELD_VARIABLE_FE%COMPONENTS(1)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gauss_idx,ne)
+                  CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(INDEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_VALUES_SET_TYPE,dof_idx,ACTIVE_STRESS,ERR,ERROR,*999)
+
+                CASE(PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE)
+
+                  dof_idx=FIELD_VARIABLE_FE%COMPONENTS(1)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gauss_idx,ne)
+                  CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(INDEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_VALUES_SET_TYPE,dof_idx,ACTIVE_STRESS,ERR,ERROR,*999)
                   dof_idx=FIELD_VARIABLE_FE%COMPONENTS(2)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gauss_idx,ne)
                   CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(INDEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
                     & FIELD_VALUES_SET_TYPE,dof_idx,TITIN_STRESS_UNBOUND,ERR,ERROR,*999)
@@ -2812,7 +2923,23 @@ CONTAINS
                   dof_idx=FIELD_VARIABLE_FE%COMPONENTS(6)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gauss_idx,ne)
                   CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(INDEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
                     & FIELD_VALUES_SET_TYPE,dof_idx,ACTIVATION,ERR,ERROR,*999)
-                ENDIF
+
+                CASE(PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
+
+                  dof_idx=FIELD_VARIABLE_FE%COMPONENTS(1)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gauss_idx,ne)
+                  CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(INDEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_VALUES_SET_TYPE,dof_idx,A_1,ERR,ERROR,*999)
+                  dof_idx=FIELD_VARIABLE_FE%COMPONENTS(2)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gauss_idx,ne)
+                  CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(INDEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_VALUES_SET_TYPE,dof_idx,A_2,ERR,ERROR,*999)
+                  dof_idx=FIELD_VARIABLE_FE%COMPONENTS(3)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gauss_idx,ne)
+                  CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(INDEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_VALUES_SET_TYPE,dof_idx,x_1,ERR,ERROR,*999)
+                  dof_idx=FIELD_VARIABLE_FE%COMPONENTS(4)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gauss_idx,ne)
+                  CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(INDEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_VALUES_SET_TYPE,dof_idx,x_2,ERR,ERROR,*999)
+
+                END SELECT
 
               ENDDO !gauss_idx
             ENDDO !element_idx
@@ -3028,6 +3155,7 @@ CONTAINS
                       ! calculate x-fibre titin stress (trigonometry):                      
                       ! fitting function to calculate the filament-lattice parameter d10 in nanometer (from Elliot 1963 -mammalian muscle)
                       d10=-13.39_DP*SARCO_LENGTH+58.37_DP
+                      ! d10=-13.39_DP*1.0_DP+58.37_DP
                       ! calculate the distance between actin and myosin filament in micro meter (geometrical relationship)
                       ACTIN_MYOSIN_DISTANCE=0.001_DP*(2.0_DP/3.0_DP*d10)  
                       ! calculate x-fibre stress with tangens-function (unbound titin)
@@ -3179,6 +3307,7 @@ CONTAINS
                       ! calculate x-fibre titin stress                       
                       ! fitting function to calculate the filament-lattice parameter d10 in nanometer (from Elliot 1963 -mammalian muscle)
                       d10=-13.39_DP*SARCO_LENGTH+58.37_DP
+                      ! d10=-13.39_DP*1.0_DP+58.37_DP
                       ! calculate the distance between actin and myosin filament in micro meter (geometrical relationship)
                       ACTIN_MYOSIN_DISTANCE=0.001_DP*(2.0_DP/3.0_DP*d10) 
                       ! calculate x-fibre stress with tangent (unbound titin)
@@ -3194,6 +3323,7 @@ CONTAINS
                         & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,node_idx,4,TITIN_XF_UNBOUND,ERR,ERROR,*999)
                       CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(INDEPENDENT_FIELD_MONODOMAIN, &
                         & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,node_idx,5,TITIN_XF_BOUND,ERR,ERROR,*999)
+
                     ENDIF ! Check if elongation is positive or not
                   ENDDO ! Over the nodes
 

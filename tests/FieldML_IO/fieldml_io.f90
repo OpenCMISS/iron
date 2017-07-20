@@ -43,6 +43,7 @@ PROGRAM IRON_TEST_FIELDML_IO
   USE OpenCMISS_Iron
   USE IRON_TEST_FRAMEWORK
   USE IRON_TEST_FIELDML_CUBE
+  USE IRON_TEST_FIELDML_ARGUMENTS
 
   IMPLICIT NONE
 
@@ -68,6 +69,7 @@ PROGRAM IRON_TEST_FIELDML_IO
   CALL cmfe_ComputationalNodeNumberGet(computationalNodeNumber, err)
 
   CALL TestFieldMLIOCube(worldRegion)
+  CALL TestFieldMLArguments(worldRegion)
 
   CALL cmfe_Finalise(err)
 
