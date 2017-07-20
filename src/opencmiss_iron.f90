@@ -3523,6 +3523,12 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_Field_GeometricParametersElementLineLengthGetObj
   END INTERFACE cmfe_Field_GeometricParametersElementLineLengthGet
 
+  !>Gets volumes from a geometric field given an element number.
+  INTERFACE cmfe_Field_GeometricParametersElementVolumeGet
+    MODULE PROCEDURE cmfe_Field_GeometricParametersElementVolumeGetNumber
+    MODULE PROCEDURE cmfe_Field_GeometricParametersElementVolumeGetObj
+  END INTERFACE cmfe_Field_GeometricParametersElementVolumeGet
+
  !>Returns the label for a field.
   INTERFACE cmfe_Field_LabelGet
     MODULE PROCEDURE cmfe_Field_LabelGetCNumber
@@ -3987,7 +3993,7 @@ MODULE OpenCMISS_Iron
 
   PUBLIC cmfe_Field_GeometricFieldGet,cmfe_Field_GeometricFieldSet
 
-  PUBLIC cmfe_Field_GeometricParametersElementLineLengthGet
+  PUBLIC cmfe_Field_GeometricParametersElementLineLengthGet, cmfe_Field_GeometricParametersElementVolumeGet
 
   PUBLIC cmfe_Field_LabelGet,cmfe_Field_LabelSet
 
@@ -28307,6 +28313,54 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Field_GeometricParametersElementLineLengthGetNumber
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the volume for a given element number by a user number.
+  SUBROUTINE cmfe_Field_GeometricParametersElementVolumeGetNumber(regionUserNumber,geometricFieldUserNumber,elementNumber, &
+    & elementVolume,err)
+    !DLLEXPORT(cmfe_Field_GeometricParametersElementLineLengthGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to obtain the volume from
+    INTEGER(INTG), INTENT(IN) :: geometricFieldUserNumber !<The geometric field user number to obtain the volume from
+    INTEGER(INTG),  INTENT(IN) :: elementNumber !<The element to get the volume for
+    REAL(DP), INTENT(OUT) :: elementVolume !<The volume of the chosen element number
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(FIELD_TYPE), POINTER :: geometricField
+    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("cmfe_Field_GeometricParametersElementVolumeGetNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(geometricField)
+    CALL REGION_USER_NUMBER_FIND(regionUserNumber,region,err,error,*999)
+    IF(ASSOCIATED(region)) THEN
+      CALL FIELD_USER_NUMBER_FIND(geometricFieldUserNumber,region,geometricField,err,error,*999)
+      IF(ASSOCIATED(geometricField)) THEN
+        CALL Field_GeometricParametersElementVolumeGet(geometricField,elementNumber,elementVolume, &
+          & err,error,*999)
+      ELSE
+        localError="A field with an user number of "//TRIM(NumberToVString(geometricFieldUserNumber,"*",err,error))// &
+          & " does not exist on region number "//TRIM(NumberToVString(regionUserNumber,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      END IF
+    ELSE
+      localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))//" does not exist."
+      CALL FlagError(localError,err,error,*999)
+    END IF
+
+    EXITS("cmfe_Field_GeometricParametersElementVolumeGetNumber")
+    RETURN
+999 ERRORS("cmfe_Field_GeometricParametersElementVolumeGetNumber",err,error)
+    EXITS("cmfe_Field_GeometricParametersElementVolumeGetNumber")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Field_GeometricParametersElementVolumeGetNumber
 
   !
   !================================================================================================================================
@@ -28337,6 +28391,37 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Field_GeometricParametersElementLineLengthGetObj
+
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the volume for a given element number by an object.
+  SUBROUTINE cmfe_Field_GeometricParametersElementVolumeGetObj(geometricField,elementNumber,elementVolume,err)
+    !DLLEXPORT(cmfe_Field_GeometricParametersElementLineLengthGetObj)
+
+    !Argument variables
+    TYPE(cmfe_FieldType), INTENT(IN) :: geometricField !<The geometric field to obtain the volume from
+    INTEGER(INTG),  INTENT(IN) :: elementNumber !<The element to get the volume for
+    REAL(DP), INTENT(OUT) :: elementVolume !<The volume of the chosen element 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_Field_GeometricParametersElementVolumeGetObj",err,error,*999)
+
+    CALL Field_GeometricParametersElementVolumeGet(geometricField%field,elementNumber,elementVolume, &
+      & err,error,*999)
+
+    EXITS("cmfe_Field_GeometricParametersElementVolumeGetObj")
+    RETURN
+999 ERRORS("cmfe_Field_GeometricParametersElementVolumeGetObj",err,error)
+    EXITS("cmfe_Field_GeometricParametersElementVolumeGetObj")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Field_GeometricParametersElementVolumeGetObj
+
 
   !
   !================================================================================================================================
