@@ -1322,7 +1322,7 @@ CONTAINS
             !Following call is necessary, otherwise wrong face scale factors from function call to surface pressure jacobian are
             !used.
             CALL Field_InterpolationParametersScaleFactorsElementGet(ELEMENT_NUMBER, &
-              & equations%interpolation%dependentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999) 
+              & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr,err,error,*999) 
             nhs=0          
             ! Loop over element columns
             DO nh=1,NUMBER_OF_DIMENSIONS
@@ -1333,8 +1333,8 @@ CONTAINS
                 DO ms=ns,NUMBER_OF_ELEMENT_PARAMETERS(nh)
                   mhs=mhs+1
                   jacobianMatrix%elementJacobian%matrix(mhs,nhs)=jacobianMatrix%elementJacobian%matrix(mhs,nhs)* &
-                    & equations%interpolation%dependentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%SCALE_FACTORS(ms,nh)* &
-                    & equations%interpolation%dependentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%SCALE_FACTORS(ns,nh)
+                    & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%SCALE_FACTORS(ms,nh)* &
+                    & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%SCALE_FACTORS(ns,nh)
                 ENDDO !ms
               ENDDO !ns
             ENDDO !nh
@@ -1349,8 +1349,8 @@ CONTAINS
                 DO ms=1,NUMBER_OF_ELEMENT_PARAMETERS(mh)
                   mhs=mhs+1
                   jacobianMatrix%elementJacobian%matrix(mhs,nhs)=jacobianMatrix%elementJacobian%matrix(mhs,nhs)* &
-                    & equations%interpolation%dependentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%SCALE_FACTORS(ms,mh)* &
-                    & equations%interpolation%dependentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%SCALE_FACTORS(ns,nh)
+                    & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%SCALE_FACTORS(ms,mh)* &
+                    & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%SCALE_FACTORS(ns,nh)
                 ENDDO !ms    
               ENDDO !ns
             ENDDO
@@ -1366,9 +1366,9 @@ CONTAINS
                   DO ms=1,NUMBER_OF_ELEMENT_PARAMETERS(PRESSURE_COMPONENT)
                     mhs=mhs+1
                     jacobianMatrix%elementJacobian%matrix(mhs,nhs)=jacobianMatrix%elementJacobian%matrix(mhs,nhs)* &
-                      & equations%interpolation%dependentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr% &
+                      & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr% &
                       & SCALE_FACTORS(ms,PRESSURE_COMPONENT)* &
-                      & equations%interpolation%dependentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%SCALE_FACTORS(ns,nh)
+                      & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%SCALE_FACTORS(ns,nh)
                   ENDDO !ms    
                 ENDDO !ns
               ENDDO !nh
@@ -1380,7 +1380,7 @@ CONTAINS
                   !Loop over element rows belonging to hydrostatic pressure
                   mhs=ELEMENT_BASE_DOF_INDEX(PRESSURE_COMPONENT)+1
                   jacobianMatrix%elementJacobian%matrix(mhs,nhs)=jacobianMatrix%elementJacobian%matrix(mhs,nhs)* &
-                    & equations%interpolation%dependentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%SCALE_FACTORS(ns,nh)
+                    & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%SCALE_FACTORS(ns,nh)
                 ENDDO !ns
               ENDDO !nh
             ENDIF
@@ -1549,8 +1549,8 @@ CONTAINS
     INTEGER(INTG) :: var1 ! Variable number corresponding to 'U' in single physics case
     INTEGER(INTG) :: var2 ! Variable number corresponding to 'DELUDLEN' in single physics case
     INTEGER(INTG), POINTER :: EQUATIONS_SET_FIELD_DATA(:)
-    REAL(DP) :: DZDNU(3,3),DZDNUT(3,3),dZdXi(3,3),AZL(3,3),AZU(3,3),Fe(3,3),FeT(3,3),Fg(3,3),C(3,3),f(3,3),E(3,3),I3,P, &
-      & piolaTensor(3,3),TEMP(3,3),prevdZdXi(3,3),prevdZdNu(3,3),invPrevdZdNu(3,3)
+    REAL(DP) :: DZDNU(3,3),DZDNUT(3,3),dzdx(3,3),AZL(3,3),AZU(3,3),Fe(3,3),FeT(3,3),Fg(3,3),C(3,3),f(3,3),E(3,3),I3,P, &
+      & piolaTensor(3,3),TEMP(3,3),prevdzdx(3,3),prevdZdNu(3,3),invPrevdZdNu(3,3)
     REAL(DP) :: cauchyTensor(3,3),JGW_CAUCHY_TENSOR(3,3),kirchoffTensor(3,3),STRESS_TENSOR(6)
     REAL(DP) :: deformationGradientTensor(3,3),growthTensor(3,3),growthTensorInverse(3,3),growthTensorInverseTranspose(3,3), &
       & Jg,Je,Jc,Jv,fibreGrowth,sheetGrowth,normalGrowth,fibreVector(3),sheetVector(3),normalVector(3)
@@ -1632,7 +1632,7 @@ CONTAINS
         rhsVector=>vectorMatrices%rhsVector
         vectorMapping =>vectorEquations%vectorMapping
 
-IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE) THEN
+        IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE) THEN
           DEPENDENT_FIELD  =>equations%interpolation%geometricField
           GEOMETRIC_FIELD  =>equations%interpolation%dependentField
         ELSE
@@ -1689,7 +1689,7 @@ IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_S
         !Grab interpolation parameters
         FIELD_VARIABLE=>EQUATIONS_SET%equations%vectorEquations%vectorMapping%nonlinearMapping%residualVariables(1)%ptr
         FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
-IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE) THEN
+        IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE) THEN
           GEOMETRIC_INTERPOLATION_PARAMETERS=>equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr
           DEPENDENT_INTERPOLATION_PARAMETERS=>equations%interpolation%geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr
         ELSE
@@ -1823,7 +1823,7 @@ IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_S
             ENDDO !nh
 
             CALL FiniteElasticity_GaussDeformationGradientTensor(DEPENDENT_INTERPOLATED_POINT_METRICS, &
-              & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,dZdXi,DZDNU,err,error,*999)
+              & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,dzdx,DZDNU,err,error,*999)
 
             Jznu=DEPENDENT_INTERPOLATED_POINT_METRICS%JACOBIAN/GEOMETRIC_INTERPOLATED_POINT_METRICS%JACOBIAN
             JGW=DEPENDENT_INTERPOLATED_POINT_METRICS%JACOBIAN*DEPENDENT_QUADRATURE_SCHEME%GAUSS_WEIGHTS(gauss_idx)
@@ -1984,7 +1984,7 @@ IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_S
 
             !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
             CALL FiniteElasticity_GaussDeformationGradientTensor(DEPENDENT_INTERPOLATED_POINT_METRICS, &
-              & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,dZdXi,DZDNU,err,error,*999)
+              & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,dzdx,DZDNU,err,error,*999)
 
             Jzxi=DEPENDENT_INTERPOLATED_POINT_METRICS%JACOBIAN
             Jxxi=GEOMETRIC_INTERPOLATED_POINT_METRICS%JACOBIAN
@@ -2036,6 +2036,9 @@ IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_S
               ENDIF
             ENDIF
 
+            !Calculate the combined Jacobian
+            JGW=Jzxi*DEPENDENT_QUADRATURE_SCHEME%GAUSS_WEIGHTS(gauss_idx)
+            
             !Loop over geometric dependent basis functions and evaluate dPhidZ.
             DO nh=1,numberOfDimensions
               MESH_COMPONENT_NUMBER=FIELD_VARIABLE%COMPONENTS(nh)%MESH_COMPONENT_NUMBER
@@ -2055,8 +2058,6 @@ IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_S
               ENDDO !ns
             ENDDO !nh
             
-            !Calculate the combined Jacobian
-            JGW=Jzxi*DEPENDENT_QUADRATURE_SCHEME%GAUSS_WEIGHTS(gauss_idx)
             !Now add up the residual terms
             element_dof_idx=0
             DO component_idx=1,numberOfDimensions
@@ -2287,7 +2288,7 @@ IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_S
 
             !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
             CALL FiniteElasticity_GaussDeformationGradientTensor(DEPENDENT_INTERPOLATED_POINT_METRICS, &
-              & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,dZdXi,dZdNu,err,error,*999)
+              & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,dzdx,dZdNu,err,error,*999)
 
             Jxxi=GEOMETRIC_INTERPOLATED_POINT_METRICS%JACOBIAN
             
@@ -2524,12 +2525,12 @@ IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_S
             
              !Calculate F=dZ/dNu, the deformation gradient tensor at the gauss point
             CALL FiniteElasticity_GaussDeformationGradientTensor(DEPENDENT_INTERPOLATED_POINT_METRICS, &
-              & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,dZdXi,dZdNu,err,error,*999)
+              & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,dzdx,dZdNu,err,error,*999)
 
             !Calculate prevF=prevdZ/dNu, the relative deformation gradient tensor at the gauss point
 !!TODO: What happens with the fibres here! They will not be in an orthogonal system
             CALL FiniteElasticity_GaussDeformationGradientTensor(prevDependentInterpPointMetrics, &
-              & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,prevdZdXi,prevdZdNu,err,error,*999)
+              & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,prevdzdx,prevdZdNu,err,error,*999)
 
             !Get BePrime from the start of the time step
             DO rowIdx=1,numberOfDimensions
@@ -3122,7 +3123,7 @@ IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_S
 
             !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
             CALL FiniteElasticity_GaussDeformationGradientTensor(DEPENDENT_INTERPOLATED_POINT_METRICS, &
-              & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,dZdXi,DZDNU,err,error,*999)
+              & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,dzdx,DZDNU,err,error,*999)
 
             Jxxi=GEOMETRIC_INTERPOLATED_POINT_METRICS%JACOBIAN
 
@@ -3233,7 +3234,7 @@ IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_S
 
             !Calculate F=dZ/dNU at the gauss point
             CALL FiniteElasticity_GaussDeformationGradientTensor(DEPENDENT_INTERPOLATED_POINT_METRICS, &
-              & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,dZdXi,DZDNU,err,error,*999)
+              & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,dzdx,DZDNU,err,error,*999)
 
             Jxxi=GEOMETRIC_INTERPOLATED_POINT_METRICS%JACOBIAN
 
