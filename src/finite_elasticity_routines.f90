@@ -5068,7 +5068,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP) :: growthTensorInverse(3,3)
+    REAL(DP) :: growthTensorInverse(3,3),growthTensorInverseTranspose(3,3)
     
     ENTERS("FiniteElasticity_GaussGrowthTensor",ERR,ERROR,*999)
 
