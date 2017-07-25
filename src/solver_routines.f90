@@ -416,10 +416,11 @@ MODULE SOLVER_ROUTINES
   !> \see SOLVER_ROUTINES
   !>@{
   INTEGER(INTG), PARAMETER :: SOLVER_NO_OUTPUT=0 !<No output from the solver routines \see SOLVER_ROUTINES_OutputTypes,SOLVER_ROUTINES
-  INTEGER(INTG), PARAMETER :: SOLVER_PROGRESS_OUTPUT=1 !<Progress output from solver routines \see SOLVER_ROUTINES_OutputTypes,SOLVER_ROUTINES
-  INTEGER(INTG), PARAMETER :: SOLVER_TIMING_OUTPUT=2 !<Timing output from the solver routines plus below \see SOLVER_ROUTINES_OutputTypes,SOLVER_ROUTINES
-  INTEGER(INTG), PARAMETER :: SOLVER_SOLVER_OUTPUT=3 !<Solver specific output from the solver routines plus below \see SOLVER_ROUTINES_OutputTypes,SOLVER_ROUTINES
-  INTEGER(INTG), PARAMETER :: SOLVER_MATRIX_OUTPUT=4 !<Solver matrices output from the solver routines plus below\see SOLVER_ROUTINES_OutputTypes,SOLVER_ROUTINES
+  INTEGER(INTG), PARAMETER :: SOLVER_MONITOR_OUTPUT=1 !<Monitor output from solver routines \see SOLVER_ROUTINES_OutputTypes,SOLVER_ROUTINES
+  INTEGER(INTG), PARAMETER :: SOLVER_PROGRESS_OUTPUT=2 !<Progress output from solver routines \see SOLVER_ROUTINES_OutputTypes,SOLVER_ROUTINES
+  INTEGER(INTG), PARAMETER :: SOLVER_TIMING_OUTPUT=3 !<Timing output from the solver routines plus below \see SOLVER_ROUTINES_OutputTypes,SOLVER_ROUTINES
+  INTEGER(INTG), PARAMETER :: SOLVER_SOLVER_OUTPUT=4 !<Solver specific output from the solver routines plus below \see SOLVER_ROUTINES_OutputTypes,SOLVER_ROUTINES
+  INTEGER(INTG), PARAMETER :: SOLVER_MATRIX_OUTPUT=5 !<Solver matrices output from the solver routines plus below\see SOLVER_ROUTINES_OutputTypes,SOLVER_ROUTINES
   !>@}
 
   !> \addtogroup SOLVER_ROUTINES_SparsityTypes SOLVER_ROUTINES::SparsityTypes
@@ -16152,7 +16153,7 @@ CONTAINS
                         & TRIM(NumberToVString(SOLVER_MATRICES%NUMBER_OF_MATRICES,"*",ERR,ERROR))//" and it should be 1."
                       CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     ENDIF
-                    IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
+                    IF(SOLVER%outputType>=SOLVER_MONITOR_OUTPUT) THEN
                       !Set the monitor
                       !Pass the linesearch solver object rather than the temporary solver
                       CALL Petsc_SnesMonitorSet(LINESEARCH_SOLVER%snes,Problem_SolverNonlinearMonitorPETSC, &
@@ -18920,7 +18921,7 @@ CONTAINS
                         & TRIM(NumberToVString(SOLVER_MATRICES%NUMBER_OF_MATRICES,"*",ERR,ERROR))//" and it should be 1."
                       CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     ENDIF
-                    IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
+                    IF(SOLVER%outputType>=SOLVER_MONITOR_OUTPUT) THEN
                       !Set the monitor
                       !Pass the linesearch solver object rather than the temporary solver
                       CALL Petsc_SnesMonitorSet(LINESEARCH_SOLVER%snes,Problem_SolverNonlinearMonitorPETSC, &
@@ -21722,6 +21723,8 @@ CONTAINS
         SELECT CASE(OUTPUT_TYPE)
         CASE(SOLVER_NO_OUTPUT)
           SOLVER%outputType=SOLVER_NO_OUTPUT
+        CASE(SOLVER_MONITOR_OUTPUT)
+          SOLVER%outputType=SOLVER_MONITOR_OUTPUT
         CASE(SOLVER_PROGRESS_OUTPUT)
           SOLVER%outputType=SOLVER_PROGRESS_OUTPUT
         CASE(SOLVER_TIMING_OUTPUT)
