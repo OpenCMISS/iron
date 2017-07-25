@@ -613,11 +613,13 @@ CONTAINS
 
   !>Evaluates the spatial elasticity and stress tensor in Voigt form at a given Gauss point.
   SUBROUTINE FINITE_ELASTICITY_GAUSS_ELASTICITY_TENSOR(EQUATIONS_SET,DEPENDENT_INTERPOLATED_POINT, &
-      & MATERIALS_INTERPOLATED_POINT,ELASTICITY_TENSOR,STRESS_TENSOR,DZDNU,Jznu,ELEMENT_NUMBER,GAUSS_POINT_NUMBER,ERR,ERROR,*)
+      & MATERIALS_INTERPOLATED_POINT,ELASTICITY_TENSOR,HYDRO_ELASTICITY_VOIGT,STRESS_TENSOR,DZDNU, &
+      & Jznu,ELEMENT_NUMBER,GAUSS_POINT_NUMBER,ERR,ERROR,*)
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: EQUATIONS_SET !<A pointer to the equations set
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: DEPENDENT_INTERPOLATED_POINT,MATERIALS_INTERPOLATED_POINT
     REAL(DP), INTENT(OUT) :: ELASTICITY_TENSOR(:,:) !< Rank 4 elasticity tensor in Voigt notation
+    REAL(DP), INTENT(OUT) :: HYDRO_ELASTICITY_VOIGT(:) !<Rank 2 hydrostatic portion of the elasticity tensor in Voigt notation
     REAL(DP), INTENT(OUT) :: STRESS_TENSOR(:) !< Rank 2 stress tensor in Voigt notation
     REAL(DP), INTENT(IN) :: DZDNU(:,:)!< The deformation gradient
     REAL(DP), INTENT(IN) :: Jznu !< The Jacobian
@@ -664,7 +666,7 @@ CONTAINS
     AZUv(4) = AZU(1,2)
     AZUv(5) = AZU(2,3)
     AZUv(6) = AZU(1,3)
-    I3EE = RESHAPE([0.0_DP, 4.0_DP*AZLv(3), 4.0_DP*AZLv(2), 0.0_DP, 4.0_DP*AZLv(5), 0.0_DP, &
+    I3EE = RESHAPE([0.0_DP, 4.0_DP*AZLv(3), 4.0_DP*AZLv(2), 0.0_DP, -4.0_DP*AZLv(5), 0.0_DP, &
       & 4.0_DP*AZLv(3), 0.0_DP, 4.0_DP*AZLv(1), 0.0_DP, 0.0_DP, -4.0_DP*AZLv(6), &
       & 4.0_DP*AZLv(2), 4.0_DP*AZLv(1), 0.0_DP, -4.0_DP*AZLv(4), 0.0_DP, 0.0_DP, &
       & 0.0_DP, 0.0_DP, -4.0_DP*AZLv(4), -2.0_DP*AZLv(3), 2.0_DP*AZLv(6), 2.0_DP*AZLv(5), &
@@ -672,7 +674,7 @@ CONTAINS
       & 0.0_DP, -4.0_DP*AZLv(6), 0.0_DP, 2.0_DP*AZLv(5), 2.0_DP*AZLv(4), -2.0_DP*AZLv(2)],[6,6])
     DO i=1,6
       DO j=1,6
-        AZUE(i,j) = Jznu*AZUv(i)*AZUv(j)
+        AZUE(i,j) = -Jznu*AZUv(i)*AZUv(j)
       ENDDO
     ENDDO
     AZUE = AZUE + 0.5_DP/Jznu*I3EE
@@ -728,8 +730,12 @@ CONTAINS
       !Add volumetric part of elasticity tensor - p*d(C^-1)/dE.
       ELASTICITY_TENSOR=ELASTICITY_TENSOR + P*AZUE
 
+      !Hydrostatic portion of the elasticity tensor (dS/dp)
+      HYDRO_ELASTICITY_VOIGT = AZUv
+
       ! Do push-forward of 2nd Piola tensor and the material elasticity tensor.
       CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(STRESS_TENSOR,DZDNU,Jznu,ERR,ERROR,*999)
+      CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(HYDRO_ELASTICITY_VOIGT,DZDNU,Jznu,ERR,ERROR,*999)
       CALL FINITE_ELASTICITY_PUSH_ELASTICITY_TENSOR(ELASTICITY_TENSOR,DZDNU,Jznu,ERR,ERROR,*999)
 
       ! Add volumetric parts.
@@ -743,7 +749,7 @@ CONTAINS
       DQ_DE=B*E
       TEMPTERM1=0.5_DP*C(1)*EXP(0.5_DP*DOT_PRODUCT(E,DQ_DE))
       !Calculate 2nd Piola tensor (in Voigt form)
-      STRESS_TENSOR=TEMPTERM1*DQ_DE
+      STRESS_TENSOR=TEMPTERM1*DQ_DE + P*AZUv
       IF(EQUATIONS_SET%specification(3)==EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE) THEN
         !add active contraction stress values
         CALL FIELD_VARIABLE_GET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
@@ -777,12 +783,13 @@ CONTAINS
       !Add volumetric part of elasticity tensor - p*d(C^-1)/dE.
       ELASTICITY_TENSOR=ELASTICITY_TENSOR + P*AZUE
 
+      !Hydrostatic portion of the elasticity tensor (dS/dp)
+      HYDRO_ELASTICITY_VOIGT = AZUv
+
       !Do push-forward of 2nd Piola tensor and the material elasticity tensor.
       CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(STRESS_TENSOR,DZDNU,Jznu,ERR,ERROR,*999)
+      CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(HYDRO_ELASTICITY_VOIGT,DZDNU,Jznu,ERR,ERROR,*999)
       CALL FINITE_ELASTICITY_PUSH_ELASTICITY_TENSOR(ELASTICITY_TENSOR,DZDNU,Jznu,ERR,ERROR,*999)
-
-      !Add volumetric parts.
-      STRESS_TENSOR(1:3)=STRESS_TENSOR(1:3)+P
     CASE DEFAULT
       LOCAL_ERROR="The third equations set specification of "// &
         & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%specification(3),"*",ERR,ERROR))// &
@@ -1049,12 +1056,12 @@ CONTAINS
     INTEGER(INTG) :: ELEMENT_BASE_DOF_INDEX(4)
     INTEGER(INTG), PARAMETER :: OFF_DIAG_COMP(3)=[0,1,3],OFF_DIAG_DEP_VAR1(3)=[1,1,2],OFF_DIAG_DEP_VAR2(3)=[2,3,3]
     INTEGER(INTG) :: MESH_COMPONENT_NUMBER,NUMBER_OF_ELEMENT_PARAMETERS(4)
-    REAL(DP) :: DZDNU(3,3),CAUCHY_TENSOR(3,3)
+    REAL(DP) :: DZDNU(3,3),CAUCHY_TENSOR(3,3),HYDRO_ELASTICITY_TENSOR(3,3)
     REAL(DP) :: JGW_SUB_MAT(3,3)
     REAL(DP) :: TEMPVEC(3)
-    REAL(DP) :: STRESS_TENSOR(6),ELASTICITY_TENSOR(6,6)
+    REAL(DP) :: STRESS_TENSOR(6),ELASTICITY_TENSOR(6,6),HYDRO_ELASTICITY_VOIGT(6)
     REAL(DP) :: DPHIDZ(3,64,3)
-    REAL(DP) :: JGW_DPHINS_DZ,PHIMS
+    REAL(DP) :: JGW_DPHINS_DZ,JGW_DPHIMS_DZ,PHIMS,PHINS
     REAL(DP) :: Jznu,JGW,SUM1
     TYPE(QUADRATURE_SCHEME_PTR_TYPE) :: QUADRATURE_SCHEMES(4)
     TYPE(BASIS_TYPE), POINTER :: DEPENDENT_BASIS
@@ -1185,12 +1192,14 @@ CONTAINS
               & GEOMETRIC_INTERP_POINT_METRICS,FIBRE_INTERP_POINT,DZDNU,ERR,ERROR,*999)
 
             CALL FINITE_ELASTICITY_GAUSS_ELASTICITY_TENSOR(EQUATIONS_SET,DEPENDENT_INTERP_POINT, &
-              & MATERIALS_INTERP_POINT,ELASTICITY_TENSOR,STRESS_TENSOR,DZDNU,Jznu,ELEMENT_NUMBER,ng,ERR,ERROR,*999)
+              & MATERIALS_INTERP_POINT,ELASTICITY_TENSOR,HYDRO_ELASTICITY_VOIGT,STRESS_TENSOR, &
+              & DZDNU,Jznu,ELEMENT_NUMBER,ng,ERR,ERROR,*999)
 
             !Convert from Voigt form to tensor form.
             DO nh=1,NUMBER_OF_DIMENSIONS
               DO mh=1,NUMBER_OF_DIMENSIONS
                 CAUCHY_TENSOR(mh,nh)=STRESS_TENSOR(TENSOR_TO_VOIGT3(mh,nh))
+                HYDRO_ELASTICITY_TENSOR(mh,nh)=HYDRO_ELASTICITY_VOIGT(TENSOR_TO_VOIGT3(mh,nh))
               ENDDO
             ENDDO
 
@@ -1262,6 +1271,40 @@ CONTAINS
                     & JGW_DPHINS_DZ
                 ENDDO !ns
               ENDDO !nh
+            ENDIF
+
+            !4) Loop over all mh pressure component
+            mhs=0
+            IF(FIELD_VARIABLE%COMPONENTS(PRESSURE_COMPONENT)%INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN !node based
+              !Loop over element columns belonging to geometric dependent variables.
+              DO mh=1,NUMBER_OF_DIMENSIONS
+                DO ms=1,NUMBER_OF_ELEMENT_PARAMETERS(mh)
+                  TEMPVEC=MATMUL(HYDRO_ELASTICITY_TENSOR,DPHIDZ(:,ms,mh))
+                  JGW_DPHIMS_DZ=JGW*TEMPVEC(mh)
+                  mhs=mhs+1
+                  !Loop over element columns belonging to hydrostatic pressure
+                  nhs=ELEMENT_BASE_DOF_INDEX(PRESSURE_COMPONENT)
+                  DO ns=1,NUMBER_OF_ELEMENT_PARAMETERS(PRESSURE_COMPONENT)
+                    nhs=nhs+1
+                    PHINS=QUADRATURE_SCHEMES(PRESSURE_COMPONENT)%PTR%GAUSS_BASIS_FNS(ns,NO_PART_DERIV,ng)
+                    JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(mhs,nhs)=JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(mhs,nhs)+ &
+                      & JGW_DPHIMS_DZ*PHINS
+                  ENDDO !ns
+                ENDDO !ms
+              ENDDO !mh
+            ELSEIF(FIELD_VARIABLE%COMPONENTS(PRESSURE_COMPONENT)%INTERPOLATION_TYPE==FIELD_ELEMENT_BASED_INTERPOLATION) THEN !element based
+              !Loop over element columns belonging to geometric dependent variables.
+              DO mh=1,NUMBER_OF_DIMENSIONS
+                DO ms=1,NUMBER_OF_ELEMENT_PARAMETERS(mh)
+                  TEMPVEC=MATMUL(HYDRO_ELASTICITY_TENSOR,DPHIDZ(:,ms,mh))
+                  JGW_DPHIMS_DZ=JGW*TEMPVEC(mh)
+                  mhs=mhs+1
+                  !Loop over element columns belonging to hydrostatic pressure.
+                  nhs=ELEMENT_BASE_DOF_INDEX(PRESSURE_COMPONENT)+1
+                  JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(mhs,nhs)=JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(mhs,nhs) + &
+                    & JGW_DPHIMS_DZ
+                ENDDO !ms
+              ENDDO !mh
             ENDIF
             ! No loop over element columns and rows belonging both to hydrostatic pressure because it is zero.
           ENDDO !ng
@@ -1342,7 +1385,8 @@ CONTAINS
             ENDIF
           ENDIF
 
-          DO nhs=2,SIZE(JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX,2)
+          !Mirror the Jacobian matrix except for the hydrostatic rows and columns, which are not necessarily symmetric.
+          DO nhs=2,SIZE(JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX,2)-1
             DO mhs=1,nhs-1
               JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(mhs,nhs)=JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(nhs,mhs)
             ENDDO !mhs
@@ -2008,7 +2052,7 @@ CONTAINS
               CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  gauss_idx = ",gauss_idx,ERR,ERROR,*999)
             ENDIF
 
-            !Calculate Jacobian of deformation. 
+            !Calculate Jacobian of deformation.
             CALL FiniteElasticity_GaussGrowthTensor(EQUATIONS_SET,NUMBER_OF_DIMENSIONS,gauss_idx,ELEMENT_NUMBER,DEPENDENT_FIELD, &
               & dZdNu,Fg,Fe,Jg,Je,err,error,*999)
 
