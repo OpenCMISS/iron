@@ -9790,6 +9790,11 @@ CONTAINS
               CALL SOLVER_TYPE_SET(SOLVER,SOLVER_NONLINEAR_TYPE,err,error,*999)
               !Set solver defaults
               CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,err,error,*999)
+              !Create the CellML evaluator solver
+              NULLIFY(CELLML_SOLVER)
+              CALL SOLVER_NEWTON_CELLML_EVALUATOR_CREATE(SOLVER,CELLML_SOLVER,err,error,*999)
+              !Link the CellML evaluator solver to the solver
+              CALL SOLVER_LINKED_SOLVER_ADD(SOLVER,CELLML_SOLVER,SOLVER_CELLML_EVALUATOR_TYPE,err,error,*999)
             CASE(PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE)
               CALL SOLVERS_NUMBER_SET(SOLVERS,1,err,error,*999)
               !Set the solver to be a nonlinear solver
