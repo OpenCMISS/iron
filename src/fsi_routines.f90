@@ -204,6 +204,7 @@ CONTAINS
           CALL Solvers_CreateStart(controlLoop,solvers,err,error,*999)
           CALL Solvers_NumberSet(solvers,3,err,error,*999)
           !Set the first solver to be an CellML Evaluator for time varying boundary conditions
+          NULLIFY(solver)
           CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
           CALL Solver_TypeSet(solver,SOLVER_CELLML_EVALUATOR_TYPE,err,error,*999)
           CALL Solver_LabelSet(solver,"FSI boundary condition CellML evaluation solver",err,error,*999)
