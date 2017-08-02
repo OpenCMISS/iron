@@ -3089,7 +3089,7 @@ CONTAINS
             cauchyStressTensor(mh,nh)=cauchyStressVoigt(TENSOR_TO_VOIGT3(mh,nh))
           ENDDO
         ENDDO
-      CASE(EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE)
+      CASE(EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE, EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE)
         CALL FINITE_ELASTICITY_GAUSS_CAUCHY_TENSOR(equationsSet,dependentInterpolatedPoint, &
           & materialsInterpolatedPoint,darcyInterpolatedPoint, &
           & independentInterpolatedPoint,cauchyStressTensor,Jznu,dZdNu,localElementNumber,0,ERR,ERROR,*999)
