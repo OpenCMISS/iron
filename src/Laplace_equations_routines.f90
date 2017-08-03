@@ -650,6 +650,10 @@ CONTAINS
             ENDIF
   
             !rotate the conductivity from material coordinates into xi-space to get the effective conductivity
+            dNudX=0.0_RP
+            dXdNu=0.0_RP
+            dNudXi=0.0_RP
+            dXidNu=0.0_RP
             CALL Coordinates_MaterialSystemCalculate(GEOMETRIC_INTERP_POINT_METRICS,FIBRE_INTERPOLATED_POINT, &
               & dNudX,dXdNu,dNudXi,dXidNu,ERR,ERROR,*999)
 
