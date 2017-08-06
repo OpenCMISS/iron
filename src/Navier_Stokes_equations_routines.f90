@@ -2785,14 +2785,21 @@ CONTAINS
             SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(2))
             CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_TYPE)
               SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-              CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE)
+              CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
+                & PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, & 
+                & PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, & 
+                & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
                 !Pre solve for the linear solver
                 IF(SOLVER%SOLVE_TYPE==SOLVER_LINEAR_TYPE) THEN
-                   !TODO if first time step smooth imported mesh with respect to absolute nodal position?
-
+                  !TODO if first time step smooth imported mesh with respect to absolute nodal position?
                   !Update boundary conditions for mesh-movement
                   CALL NavierStokes_PreSolveUpdateBoundaryConditions(SOLVER,err,error,*999)
-                  CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,1,SOLVER2,err,error,*999)
+                  IF(CONTROL_LOOP%problem%specification(3)==PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
+                    & CONTROL_LOOP%problem%specification(3)==PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE) THEN
+                    CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,2,SOLVER2,err,error,*999)
+                  ELSE
+                    CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,3,SOLVER2,err,error,*999)
+                  ENDIF
                   IF(ASSOCIATED(SOLVER2%DYNAMIC_SOLVER)) THEN
                     SOLVER2%DYNAMIC_SOLVER%ALE=.FALSE.
                   ELSE  
@@ -7429,7 +7436,10 @@ CONTAINS
             SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(2))
             CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_TYPE)
               SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-              CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE)
+              CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
+                & PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, & 
+                & PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, & 
+                & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
                 NULLIFY(Solver2)
                 !Pre solve for the linear solver
                 IF(SOLVER%SOLVE_TYPE==SOLVER_LINEAR_TYPE) THEN
@@ -7456,7 +7466,12 @@ CONTAINS
                               & NUMBER_OF_DIMENSIONS,err,error,*999)
                             !Update moving wall nodes from solid/fluid gap (as we solve for displacements of the mesh
                             !in Laplacian smoothing step).
-                            CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,1,Solver2,err,error,*999)
+                            IF(CONTROL_LOOP%problem%specification(3)==PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
+                              & CONTROL_LOOP%problem%specification(3)==PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE) THEN
+                              CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,2,Solver2,err,error,*999)
+                            ELSE
+                              CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,3,Solver2,err,error,*999)
+                            ENDIF
                             IF(.NOT.ASSOCIATED(Solver2)) CALL FlagError("Dynamic solver is not associated.",Err,Error,*999)
                             !Find the FiniteElasticity equations set as there is a NavierStokes equations set too
                             SOLID_SOLVER_EQUATIONS=>Solver2%SOLVER_EQUATIONS
@@ -7473,9 +7488,11 @@ CONTAINS
                                     IF(ASSOCIATED(SOLID_EQUATIONS_SET)) THEN
                                       IF(SOLID_EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_ELASTICITY_CLASS &
                                         & .AND.SOLID_EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE &
-                                        & .AND.((SOLID_EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE).OR. &
-                                        & (SOLID_EQUATIONS_SET%SPECIFICATION(3)== &
-                                        & EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE))) THEN
+                                        & .AND.((SOLID_EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE) &
+                                        & .OR.(SOLID_EQUATIONS_SET%SPECIFICATION(3)== &
+                                        & EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE) &
+                                        & .OR.(SOLID_EQUATIONS_SET%SPECIFICATION(3)== &
+                                        & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE))) THEN
                                         SolidEquationsSetFound=.TRUE.
                                       ELSE
                                         EquationsSetIndex=EquationsSetIndex+1
@@ -8038,13 +8055,20 @@ CONTAINS
             SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(2))
             CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_TYPE)
               SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-              CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE)
+              CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
+                & PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, & 
+                & PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, & 
+                & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
                 !Update mesh within the dynamic solver
                 IF(SOLVER%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
                   IF(SOLVER%DYNAMIC_SOLVER%ALE) THEN
                     !Get the dependent field for the Laplace problem
-                    !     CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,1,SOLVER_LAPLACE,err,error,*999)
-                    CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,3,SOLVER_LAPLACE,err,error,*999)
+                    IF(CONTROL_LOOP%problem%specification(3)==PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
+                      & CONTROL_LOOP%problem%specification(3)==PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE) THEN
+                      CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,3,SOLVER_LAPLACE,err,error,*999)
+                    ELSE                      
+                      CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,4,SOLVER_LAPLACE,err,error,*999)
+                    ENDIF
                     SOLVER_EQUATIONS_LAPLACE=>SOLVER_LAPLACE%SOLVER_EQUATIONS
                     IF(ASSOCIATED(SOLVER_EQUATIONS_LAPLACE)) THEN
                       SOLVER_MAPPING_LAPLACE=>SOLVER_EQUATIONS_LAPLACE%SOLVER_MAPPING
@@ -8065,7 +8089,12 @@ CONTAINS
                     END IF
                     !Get the independent field for the ALE Navier-Stokes problem
                     !    CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,2,SOLVER_ALE_NAVIER_STOKES,err,error,*999)
-                    CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,2,SOLVER_ALE_NAVIER_STOKES,err,error,*999)
+                    IF(CONTROL_LOOP%problem%specification(3)==PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
+                      & CONTROL_LOOP%problem%specification(3)==PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE) THEN
+                      CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,2,SOLVER_ALE_NAVIER_STOKES,err,error,*999)
+                    ELSE
+                      CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,3,SOLVER_ALE_NAVIER_STOKES,err,error,*999)
+                    ENDIF
                     SOLVER_EQUATIONS_ALE_NAVIER_STOKES=>SOLVER_ALE_NAVIER_STOKES%SOLVER_EQUATIONS
                     IF(ASSOCIATED(SOLVER_EQUATIONS_ALE_NAVIER_STOKES)) THEN
                       SOLVER_MAPPING_ALE_NAVIER_STOKES=>SOLVER_EQUATIONS_ALE_NAVIER_STOKES%SOLVER_MAPPING
@@ -8332,7 +8361,10 @@ CONTAINS
             SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(2))
             CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_TYPE)
               SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-              CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE)
+              CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
+                & PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, & 
+                & PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, & 
+                & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
                 IF(SOLVER%SOLVE_TYPE==SOLVER_LINEAR_TYPE) THEN
                   !Get the independent field for the ALE Navier-Stokes problem
                   SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
