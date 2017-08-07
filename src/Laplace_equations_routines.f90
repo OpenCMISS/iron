@@ -451,7 +451,7 @@ CONTAINS
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE),  POINTER :: geometricInterpPointMetrics
     TYPE(VARYING_STRING)                                  :: localError
     INTEGER(INTG)                                         :: numberOfDimensions
-    REAL(DP),                                 ALLOCATABLE :: dNudXi(:,:),dXidNu(:,:),dXdNu(:,:),dNudX(:,:)
+    REAL(DP)                                              :: dNudXi(3,3),dXidNu(3,3),dXdNu(3,3),dNudX(3,3)
     
 #ifdef TAUPROF
     CHARACTER(26) :: CVAR
@@ -593,7 +593,6 @@ CONTAINS
           quadratureScheme=>dependentBasis%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
                   
           numberOfDimensions=equationsSet%REGION%COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS
-            & ELEMENTS%ELEMENTS(elementNumber)%BASIS%NUMBER_OF_XI
                     
           CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementNumber,equations%INTERPOLATION% &
             & GEOMETRIC_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
@@ -655,6 +654,8 @@ CONTAINS
               & dNudXi(1:numberOfDimensions,1:numberOfDimensions),dXidNu(1:numberOfDimensions,1:numberOfDimensions), &
               & err,error,*999)
 
+            conductivityTemp=0.0_RP
+            conductivity=0.0_RP
             CALL MATRIX_PRODUCT(dNudXi(1:numberOfDimensions,1:numberOfDimensions), &
               & conductivityMaterial(1:numberOfDimensions,1:numberOfDimensions), &
               & conductivityTemp(1:numberOfDimensions,1:numberOfDimensions),err,error,*999)
