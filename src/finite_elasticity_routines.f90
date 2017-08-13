@@ -2052,7 +2052,7 @@ CONTAINS
                 !Loop over derivative directions.
                 DO mh=1,numberOfDimensions
                   SUM1=0.0_DP
-                  DO mi=1,NUMBER_OF_XI
+                  DO mi=1,DEPENDENT_BASIS%NUMBER_OF_XI
                     SUM1=SUM1+DEPENDENT_INTERPOLATED_POINT_METRICS%DXI_DX(mi,mh)* &
                       & COMPONENT_QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(mi),gauss_idx)
                   ENDDO !mi

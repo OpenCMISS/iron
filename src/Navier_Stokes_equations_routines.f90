@@ -7534,9 +7534,9 @@ CONTAINS
                                     IF(ASSOCIATED(FLUID_EQUATIONS_SET)) THEN
                                       IF(FLUID_EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS &
                                         & .AND.FLUID_EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE &
-                                        & .AND.FLUID_EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE &
-                                        & .AND.FLUID_EQUATIONS_SET%SPECIFICATION(3)== &
-                                        & EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE) THEN
+                                        & .AND.(FLUID_EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE &
+                                        & .OR.FLUID_EQUATIONS_SET%SPECIFICATION(3)== &
+                                        & EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE)) THEN
                                         FluidEquationsSetFound=.TRUE.
                                       ELSE
                                         EquationsSetIndex=EquationsSetIndex+1
