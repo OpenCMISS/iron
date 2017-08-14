@@ -10333,8 +10333,9 @@ CONTAINS
             ! Skip if type 0
             IF(stabilisationType > 0) THEN
               ! Get time step size and calc time derivative
-              CALL Field_ParameterSetGetConstant(equationsSetField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-               & 3,timeIncrement,err,error,*999)
+              timeIncrement=equationsSet%timeIncrement
+              !CALL Field_ParameterSetGetConstant(equationsSetField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+              ! & 3,timeIncrement,err,error,*999)
               ! TODO: put this somewhere more sensible. This is a workaround since we don't have access to the dynamic solver values
               !       at this level in the element loop
               IF(equationsSet%specification(3)/=EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE &
@@ -10905,8 +10906,9 @@ CONTAINS
             IF(ASSOCIATED(equationsSetField)) THEN
 
               ! Get time step size
-              CALL Field_ParameterSetGetConstant(equationsSetField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-               & 3,timeIncrement,err,error,*999)
+              timeIncrement=equationsSet%timeIncrement
+              !CALL Field_ParameterSetGetConstant(equationsSetField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+              ! & 3,timeIncrement,err,error,*999)
 
               ! Loop over gauss points
               CMatrix = 0.0_DP
