@@ -11185,19 +11185,16 @@ CONTAINS
     !Local Variables                        
     TYPE(BASIS_TYPE), POINTER :: basisVelocity,basisPressure
     TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
-    TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(EQUATIONS_SET_EQUATIONS_SET_FIELD_TYPE), POINTER :: equationsEquationsSetField
-    TYPE(FIELD_TYPE), POINTER :: equationsSetField
-    TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: quadratureVelocity,quadraturePressure
-    TYPE(FIELD_TYPE), POINTER :: dependentField,geometricField,independentField
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: pointMetrics
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
-    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
-
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(FIELD_TYPE), POINTER :: dependentField,equationsSetField,geometricField,independentField
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: pointMetrics
+    TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: quadratureVelocity,quadraturePressure
     INTEGER(INTG) :: fieldVariableType,meshComponent1,meshComponent2
     INTEGER(INTG) :: numberOfDimensions
     INTEGER(INTG) :: i,j,k,l,mhs,nhs,ms,ns,nh,mh,nj,ni,pressureIndex
@@ -11206,7 +11203,7 @@ CONTAINS
     REAL(DP) :: dPhi_dX_Velocity(27,3),dPhi_dX_Pressure(27,3),DPHINS2_DXI(3,3)
     REAL(DP) :: jacobianMomentum(3),jacobianContinuity
     REAL(DP) :: DXI_DX(3,3)
-    REAL(DP) :: meshVelocity(3),previousMeshVelocity(3),velocity(3),velocityPrevious(3),velocityDeriv(3,3), &
+    REAL(DP) :: meshVelocity(3),velocity(3),velocityPrevious(3),velocityDeriv(3,3), &
       & velocity2Deriv(3,3,3),pressure,pressureDeriv(3)
     REAL(DP) :: JGW,SUM,SUM2,SUPG,PSPG,LSIC,crossStress,reynoldsStress,momentumTerm
     REAL(DP) :: uDotGu,doubleDotG,tauSUPS,traceG,nuLSIC,timeIncrement,elementInverse,C1,stabilisationValueDP
@@ -11223,7 +11220,6 @@ CONTAINS
     NULLIFY(equations)
     NULLIFY(vectorMapping)
     NULLIFY(nonlinearMapping)
-    NULLIFY(equationsEquationsSetField)
     NULLIFY(equationsSetField)
     NULLIFY(quadratureVelocity)
     NULLIFY(quadraturePressure)
@@ -11236,558 +11232,541 @@ CONTAINS
     NULLIFY(jacobianMatrix)
     NULLIFY(vectorEquations)
 
-    IF(ASSOCIATED(equationsSet))THEN
-      IF(.NOT.ALLOCATED(equationsSet%specification)) THEN
-        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(equationsSet%specification,1)/=3) THEN
-        CALL FlagError("Equations set specification must have three entries for a Navier-Stokes type equations set.", &
-          & err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<3) &
+      & CALL FlagError("Equations set specification must have at least three entries for a Navier-Stokes type equations set.", &
+      & err,error,*999)
+    
+    SELECT CASE(equationsSet%specification(3))      
+    CASE(EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE, &
+      & EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE, &
+      & EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE, &
+      & EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE, &
+      & EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE)
+
+      CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+      CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+      CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+      CALL EquationsSet_EquationsSetFieldGet(equationsSet,equationsSetField,err,error,*999)
+      IF(equationsSet%specification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE) &
+        & CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
+      CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+      CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+      CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+      CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+      CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
+      CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,1,jacobianMatrix,err,error,*999)
+     
+      !Set general and specific pointers
+      fieldVariable=>nonlinearMapping%residualVariables(1)%ptr
+      fieldVariableType=fieldVariable%VARIABLE_TYPE
+      numberOfDimensions=fieldVariable%NUMBER_OF_COMPONENTS - 1
+      meshComponent1=fieldVariable%components(1)%MESH_COMPONENT_NUMBER
+      meshComponent2=fieldVariable%components(fieldVariable%NUMBER_OF_COMPONENTS)%MESH_COMPONENT_NUMBER
+      basisVelocity=>dependentField%decomposition%domain(meshComponent1)%ptr%topology%elements%elements(elementNumber)%basis
+      basisPressure=>dependentField%decomposition%domain(meshComponent2)%ptr%topology%elements%elements(elementNumber)%basis
+
+      IF(basisVelocity%INTERPOLATION_ORDER(1).LE.1) THEN
+        linearElement = .TRUE.
+      ELSE
+        ! higher order element type- can calculate 2nd order terms
+        linearElement = .FALSE.
       END IF
-      SELECT CASE(equationsSet%specification(3))
-      CASE(EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE, &
-        & EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE, &
-        & EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE, &
-        & EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE, &
-        & EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE)
-        equations=>equationsSet%EQUATIONS
-        IF(ASSOCIATED(equations)) THEN
-          !Set general and specific pointers
-          NULLIFY(vectorEquations)
-          CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-          vectorMapping=>vectorEquations%vectorMapping
-          vectorMatrices=>vectorEquations%vectorMatrices
-          nonlinearMapping=>vectorMapping%nonlinearMapping
-          nonlinearMatrices=>vectorMatrices%nonlinearMatrices
-          jacobianMatrix=>nonlinearMatrices%jacobians(1)%ptr
-          fieldVariable=>nonlinearMapping%residualVariables(1)%ptr
-          fieldVariableType=fieldVariable%VARIABLE_TYPE
-          geometricField=>equations%interpolation%geometricField
-          numberOfDimensions=fieldVariable%NUMBER_OF_COMPONENTS - 1
-          equationsEquationsSetField=>equationsSet%EQUATIONS_SET_FIELD
-          meshComponent1=fieldVariable%COMPONENTS(1)%MESH_COMPONENT_NUMBER
-          meshComponent2=fieldVariable%COMPONENTS(fieldVariable%NUMBER_OF_COMPONENTS)%MESH_COMPONENT_NUMBER
-          dependentField=>equations%interpolation%dependentField
-          basisVelocity=>dependentField%DECOMPOSITION%DOMAIN(meshComponent1)%ptr% &
-            & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
-          basisPressure=>dependentField%DECOMPOSITION%DOMAIN(meshComponent2)%ptr% &
-            & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
 
-          IF(basisVelocity%INTERPOLATION_ORDER(1).LE.1) THEN
-            linearElement = .TRUE.
-          ELSE
-            ! higher order element type- can calculate 2nd order terms
-            linearElement = .FALSE.
+      quadratureVelocity=>basisVelocity%quadrature%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
+      quadraturePressure=>basisPressure%quadrature%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
+      
+      ! Stabilisation type (default 1 for RBS, 2 for RBVM, 0 for none)            
+      CALL Field_ParameterSetGetConstant(equationsSetField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,4,stabilisationValueDP, &
+        & err,error,*999)
+      stabilisationType=NINT(stabilisationValueDP)
+      ! Skip if type 0
+      IF(stabilisationType > 0) THEN
+        ! Get time step size and calc time derivative
+        timeIncrement=equationsSet%deltaTime
+        !CALL Field_ParameterSetGetConstant(equationsSetField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+        ! & 3,timeIncrement,err,error,*999)
+        ! TODO: put this somewhere more sensible. This is a workaround since we don't have access to the dynamic solver values
+        !       at this level in the element loop
+        IF(equationsSet%specification(3)/=EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE.AND.timeIncrement < ZERO_TOLERANCE) THEN
+          CALL FlagError("Please set the equations set field time increment to a value > 0.",err,error,*999)                
+        END IF
+        ! Stabilisation type (default 1 for RBS)
+        CALL Field_ParameterSetGetConstant(equationsSetField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,4,stabilisationValueDP, &
+          & err,error,*999)
+        stabilisationType=NINT(stabilisationValueDP)
+        ! User specified or previously calculated C1
+        CALL Field_ParameterSetGetLocalElement(equationsSetField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,elementNumber,10, &
+          & elementInverse,err,error,*999)
+
+        ! Get previous timestep values
+        velocityPrevious=0.0_DP
+        IF(equationsSet%specification(3) /= EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE) THEN
+          CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_PREVIOUS_VALUES_SET_TYPE,elementNumber,equations% &
+            & interpolation%prevDependentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+          CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussNumber,equations%interpolation% &
+            & prevDependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+          velocityPrevious(1:numberOfDimensions)=equations%interpolation%prevDependentInterpPoint(fieldVariableType)%ptr% &
+            & values(1:numberOfDimensions,NO_PART_DERIV)
+        END IF
+
+        ! Interpolate current solution velocity/pressure field values
+        CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementNumber,equations%interpolation% &
+          & dependentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)              
+        IF(linearElement) THEN
+          ! Get 1st order derivatives for current timestep value
+          CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussNumber,equations%interpolation% &
+            & dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+        ELSE
+          ! Get 2nd order derivatives for current timestep value
+          CALL FIELD_INTERPOLATE_GAUSS(SECOND_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussNumber,equations%interpolation%&
+            & dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+        END IF
+        velocity=0.0_DP
+        velocityDeriv=0.0_DP
+        velocity2Deriv=0.0_DP
+        pressure=0.0_DP
+        pressureDeriv=0.0_DP
+        DO i=1,numberOfDimensions
+          velocity(i)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr%VALUES(i,NO_PART_DERIV)
+          velocityDeriv(i,1)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr%VALUES(i,PART_DERIV_S1)
+          velocityDeriv(i,2)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr%VALUES(i,PART_DERIV_S2)
+          IF(.NOT. linearElement) THEN
+            velocity2Deriv(i,1,1)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr% &
+              & VALUES(i,PART_DERIV_S1_S1)
+            velocity2Deriv(i,1,2)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr% &
+              & VALUES(i,PART_DERIV_S1_S2)
+            velocity2Deriv(i,2,1)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr% &
+              & VALUES(i,PART_DERIV_S1_S2)
+            velocity2Deriv(i,2,2)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr% &
+              & VALUES(i,PART_DERIV_S2_S2)
           END IF
+          IF(numberOfDimensions > 2) THEN
+            velocityDeriv(i,3)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr%VALUES(i,PART_DERIV_S3)
+            IF(.NOT. linearElement) THEN                  
+              velocity2Deriv(i,1,3)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr% &
+                & VALUES(i,PART_DERIV_S1_S3)
+              velocity2Deriv(i,2,3)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr% &
+                & VALUES(i,PART_DERIV_S2_S3)
+              velocity2Deriv(i,3,1)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr% &
+                & VALUES(i,PART_DERIV_S1_S3)
+              velocity2Deriv(i,3,2)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr% &
+                & VALUES(i,PART_DERIV_S2_S3)
+              velocity2Deriv(i,3,3)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr% &
+                & VALUES(i,PART_DERIV_S3_S3)
+            END IF
+          END IF
+        END DO
+        pressureIndex = numberOfDimensions + 1
+        pressure=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr%VALUES(pressureIndex,NO_PART_DERIV)
+        pressureDeriv(1)=equations%interpolation%dependentInterpPoint(fieldVariableType)% &
+          & PTR%VALUES(pressureIndex,PART_DERIV_S1)
+        pressureDeriv(2)=equations%interpolation%dependentInterpPoint(fieldVariableType)% &
+          & PTR%VALUES(pressureIndex,PART_DERIV_S2)
+        IF(numberOfDimensions > 2) THEN
+          pressureDeriv(3)=equations%interpolation%dependentInterpPoint(fieldVariableType)% &
+            & PTR%VALUES(pressureIndex,PART_DERIV_S3)
+        END IF
+        DXI_DX=0.0_DP
+        DO i=1,numberOfDimensions
+          DO j=1,numberOfDimensions
+            DXI_DX(j,i)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr% &
+              & DXI_DX(j,i)
+          END DO
+        END DO
 
-          quadratureVelocity=>basisVelocity%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-          quadraturePressure=>basisPressure%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-          equationsSetField=>equationsEquationsSetField%EQUATIONS_SET_FIELD_FIELD
-          IF(ASSOCIATED(equationsSetField)) THEN
-            ! Stabilisation type (default 1 for RBS, 2 for RBVM, 0 for none)
-            CALL Field_ParameterSetGetConstant(equationsSetField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-             & 4,stabilisationValueDP,err,error,*999)
-            stabilisationType=NINT(stabilisationValueDP)
-            ! Skip if type 0
-            IF(stabilisationType > 0) THEN
-              ! Get time step size and calc time derivative
-              timeIncrement=equationsSet%deltaTime
-              !CALL Field_ParameterSetGetConstant(equationsSetField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-              ! & 3,timeIncrement,err,error,*999)
-              ! TODO: put this somewhere more sensible. This is a workaround since we don't have access to the dynamic solver values
-              !       at this level in the element loop
-              IF(equationsSet%specification(3)/=EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE &
-                & .AND. timeIncrement < ZERO_TOLERANCE) THEN
-                CALL FlagError("Please set the equations set field time increment to a value > 0.",err,error,*999)                
-              END IF
-              ! Stabilisation type (default 1 for RBS)
-              CALL Field_ParameterSetGetConstant(equationsSetField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-               & 4,stabilisationValueDP,err,error,*999)
-              stabilisationType=NINT(stabilisationValueDP)
-              ! User specified or previously calculated C1
-              CALL Field_ParameterSetGetLocalElement(equationsSetField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-               & elementNumber,10,elementInverse,err,error,*999)
-
-              ! Get previous timestep values
-              velocityPrevious=0.0_DP
-              IF(equationsSet%specification(3) /= EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE) THEN
-                CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_PREVIOUS_VALUES_SET_TYPE,elementNumber,equations% &
-                 & interpolation%dependentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-                CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussNumber,equations%interpolation% &
-                 & dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-                velocityPrevious=0.0_DP
-                DO i=1,numberOfDimensions
-                  velocityPrevious(i)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr%VALUES(i,NO_PART_DERIV)
+        meshVelocity=0.0_DP
+        IF(equationsSet%specification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE) THEN
+          CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_PREVIOUS_VALUES_SET_TYPE,elementNumber,equations% &
+            & interpolation%independentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+          CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussNumber,equations%interpolation% &
+            & independentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)          
+          meshVelocity(1:numberOfDimensions)=equations%interpolation%independentInterpPoint(fieldVariableType)%ptr% &
+            & values(1:numberOfDimensions,NO_PART_DERIV)
+        ENDIF
+        
+        ! Get number of element parameters for each dependent component
+        numberOfElementParameters=basisVelocity%NUMBER_OF_ELEMENT_PARAMETERS              
+        numberOfElementParameters(numberOfDimensions+1)=basisPressure%NUMBER_OF_ELEMENT_PARAMETERS              
+        ! Calculate dPhi/dX
+        dPhi_dX_Velocity=0.0_DP
+        dPhi_dX_Pressure=0.0_DP
+        DO ms=1,numberOfElementParameters(1)
+          DO nj=1,numberOfDimensions
+            dPhi_dX_Velocity(ms,nj)=0.0_DP
+            DO ni=1,numberOfDimensions
+              dPhi_dX_Velocity(ms,nj)=dPhi_dX_Velocity(ms,nj) + &
+                & quadratureVelocity%GAUSS_BASIS_FNS(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),gaussNumber)* &
+                & DXI_DX(ni,nj)
+            END DO
+          END DO
+        END DO
+        DO ms=1,numberOfElementParameters(numberOfDimensions+1)
+          DO nj=1,numberOfDimensions
+            dPhi_dX_Pressure(ms,nj)=0.0_DP
+            DO ni=1,numberOfDimensions
+              dPhi_dX_Pressure(ms,nj)=dPhi_dX_Pressure(ms,nj) + &
+                & quadraturePressure%GAUSS_BASIS_FNS(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),gaussNumber)* &
+                & DXI_DX(ni,nj)
+            END DO
+          END DO
+        END DO
+        JGW=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%JACOBIAN* &
+          & quadratureVelocity%GAUSS_WEIGHTS(gaussNumber)
+        
+        !----------------------------------------------------------------------------------
+        ! C a l c u l a t e   d i s c r e t e   r e s i d u a l s 
+        !----------------------------------------------------------------------------------
+        SUM = 0.0_DP
+        residualMomentum = 0.0_DP
+        residualContinuity = 0.0_DP
+        ! Calculate momentum residual
+        DO i=1,numberOfDimensions    
+          SUM = 0.0_DP
+          ! velocity time derivative              
+          IF(equationsSet%specification(3) /= EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE) THEN
+!!TODO: Should interpolate previous mesh velocity so that the delta velocity should be
+!!      ((velocity - meshVelocity) - (previousVelocity - previousMeshVelocity)) however
+!!      mesh velocity doesn't really change that much and so previousMeshVelocity ~ meshVelocity
+!!      and so it will cancel out.            
+            SUM = rho*(velocity(i)-velocityPrevious(i))/timeIncrement
+          END IF
+          DO j=1,numberOfDimensions
+            ! pressure gradient
+            SUM = SUM + pressureDeriv(j)*DXI_DX(j,i)
+            DO k=1,numberOfDimensions
+              !Convective term
+              SUM = SUM +rho*((velocity(j)-meshVelocity(j))*(velocityDeriv(i,k)*DXI_DX(k,j)))
+              IF(.NOT. linearElement) THEN
+                DO l=1,numberOfDimensions
+                  ! viscous stress: only if quadratic or higher basis defined for laplacian
+                  SUM = SUM - mu*(velocity2Deriv(i,k,l)*DXI_DX(k,j)*DXI_DX(l,j))
                 END DO
               END IF
-
-              ! Interpolate current solution velocity/pressure field values
-              CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementNumber,equations%interpolation% &
-               & dependentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)              
-              IF(linearElement) THEN
-                ! Get 1st order derivatives for current timestep value
-                CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussNumber,equations%interpolation% &
-                 & dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-              ELSE
-                ! Get 2nd order derivatives for current timestep value
-                CALL FIELD_INTERPOLATE_GAUSS(SECOND_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussNumber,equations%interpolation%&
-                 & dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-              END IF
-              velocity=0.0_DP
-              velocityDeriv=0.0_DP
-              velocity2Deriv=0.0_DP
-              pressure=0.0_DP
-              pressureDeriv=0.0_DP
-              DO i=1,numberOfDimensions
-                velocity(i)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr%VALUES(i,NO_PART_DERIV)
-                velocityDeriv(i,1)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr%VALUES(i,PART_DERIV_S1)
-                velocityDeriv(i,2)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr%VALUES(i,PART_DERIV_S2)
-                IF(.NOT. linearElement) THEN
-                  velocity2Deriv(i,1,1)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr% &
-                   & VALUES(i,PART_DERIV_S1_S1)
-                  velocity2Deriv(i,1,2)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr% &
-                   & VALUES(i,PART_DERIV_S1_S2)
-                  velocity2Deriv(i,2,1)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr% &
-                   & VALUES(i,PART_DERIV_S1_S2)
-                  velocity2Deriv(i,2,2)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr% &
-                   & VALUES(i,PART_DERIV_S2_S2)
-                END IF
-                IF(numberOfDimensions > 2) THEN
-                  velocityDeriv(i,3)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr%VALUES(i,PART_DERIV_S3)
-                  IF(.NOT. linearElement) THEN                  
-                    velocity2Deriv(i,1,3)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr% &
-                     & VALUES(i,PART_DERIV_S1_S3)
-                    velocity2Deriv(i,2,3)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr% &
-                     & VALUES(i,PART_DERIV_S2_S3)
-                    velocity2Deriv(i,3,1)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr% &
-                     & VALUES(i,PART_DERIV_S1_S3)
-                    velocity2Deriv(i,3,2)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr% &
-                     & VALUES(i,PART_DERIV_S2_S3)
-                    velocity2Deriv(i,3,3)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr% &
-                     & VALUES(i,PART_DERIV_S3_S3)
-                  END IF
-                END IF
-              END DO
-              pressureIndex = numberOfDimensions + 1
-              pressure=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr%VALUES(pressureIndex,NO_PART_DERIV)
-              pressureDeriv(1)=equations%interpolation%dependentInterpPoint(fieldVariableType)% &
-               & PTR%VALUES(pressureIndex,PART_DERIV_S1)
-              pressureDeriv(2)=equations%interpolation%dependentInterpPoint(fieldVariableType)% &
-               & PTR%VALUES(pressureIndex,PART_DERIV_S2)
-              IF(numberOfDimensions > 2) THEN
-                pressureDeriv(3)=equations%interpolation%dependentInterpPoint(fieldVariableType)% &
-                 & PTR%VALUES(pressureIndex,PART_DERIV_S3)
-              END IF
-              DXI_DX=0.0_DP
-              DO i=1,numberOfDimensions
-                DO j=1,numberOfDimensions
-                  DXI_DX(j,i)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr% &
-                    & DXI_DX(j,i)
-                END DO
-              END DO
-
-              meshVelocity=0.0_DP
-              previousMeshVelocity=0.0_DP
-              IF(equationsSet%specification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE) THEN
-                CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_PREVIOUS_VALUES_SET_TYPE,elementNumber,equations% &
-                  & interpolation%dependentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-                CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussNumber,equations%interpolation% &
-                  & dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-                DO i=1,numberOfDimensions
-                  velocityPrevious(i)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr%VALUES(i,NO_PART_DERIV)
-                END DO
-              ENDIF
-
-              ! Get number of element parameters for each dependent component
-              numberOfElementParameters=0
-              DO i=1,numberOfDimensions
-                numberOfElementParameters(i)=basisVelocity%NUMBER_OF_ELEMENT_PARAMETERS              
-              END DO
-              numberOfElementParameters(numberOfDimensions+1)=basisPressure%NUMBER_OF_ELEMENT_PARAMETERS              
-              ! Calculate dPhi/dX
-              dPhi_dX_Velocity=0.0_DP
-              dPhi_dX_Pressure=0.0_DP
-              DO ms=1,numberOfElementParameters(1)
-                DO nj=1,numberOfDimensions
-                  dPhi_dX_Velocity(ms,nj)=0.0_DP
-                  DO ni=1,numberOfDimensions
-                    dPhi_dX_Velocity(ms,nj)=dPhi_dX_Velocity(ms,nj) + &
-                     & quadratureVelocity%GAUSS_BASIS_FNS(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),gaussNumber)* &
-                     & DXI_DX(ni,nj)
-                  END DO
-                END DO
-              END DO
-              DO ms=1,numberOfElementParameters(numberOfDimensions+1)
-                DO nj=1,numberOfDimensions
-                  dPhi_dX_Pressure(ms,nj)=0.0_DP
-                  DO ni=1,numberOfDimensions
-                    dPhi_dX_Pressure(ms,nj)=dPhi_dX_Pressure(ms,nj) + &
-                     & quadraturePressure%GAUSS_BASIS_FNS(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),gaussNumber)* &
-                     & DXI_DX(ni,nj)
-                  END DO
-                END DO
-              END DO
+            END DO
+          END DO
+          residualMomentum(i) = SUM
+        END DO
+        ! Calculate continuity residual
+        SUM = 0.0_DP
+        DO i=1,numberOfDimensions
+          DO j=1,numberOfDimensions
+            SUM= SUM + velocityDeriv(i,j)*DXI_DX(j,i)
+          END DO
+        END DO
+        residualContinuity = SUM
+        
+        ! Constant of element inverse inequality
+        IF(elementInverse > -ZERO_TOLERANCE) THEN
+          ! Use user-defined value if specified (default -1)
+          C1 = elementInverse
+        ELSE IF(linearElement) THEN
+          C1=3.0_DP
+        ELSE
+          IF(numberOfDimensions==2 .AND. basisVelocity%NUMBER_OF_ELEMENT_PARAMETERS==9 &
+            & .AND. basisVelocity%INTERPOLATION_ORDER(1)==2) THEN
+            C1=24.0_DP
+          ELSE IF(numberOfDimensions==3 .AND. basisVelocity%NUMBER_OF_ELEMENT_PARAMETERS==27 &
+            & .AND. basisVelocity%INTERPOLATION_ORDER(1)==2) THEN
+            C1=12.0_DP
+            !TODO: Expand C1 for more element types
+          ELSE
+            CALL FlagError("Element inverse estimate undefined on element " &
+              & //TRIM(NumberToVString(elementNumber,"*",err,error)),err,error,*999)                              
+          END IF
+        END IF
+        ! Update element inverse value if calculated
+        IF(ABS(C1-elementInverse) > ZERO_TOLERANCE) THEN
+          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_ELEMENT(equationsSetField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+            & elementNumber,10,C1,err,error,*999)          
+          ! Should probably move this field update it only happens one time for each element, when C1 undefined
+!!TODO: CHANGE THIS. IT WILL CURRENTLY UPDATE FOR EVERY GAUSS POINT FOR EVERY ELEMENT.           
+          CALL FIELD_PARAMETER_SET_UPDATE_START(equationsSetField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+            & err,error,*999)
+          CALL FIELD_PARAMETER_SET_UPDATE_FINISH(equationsSetField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+            & err,error,*999)
+        END IF
+        
+        !----------------------------------------------------------
+        ! S t a b i l i z a t i o n    C o n s t a n t s    (Taus)
+        !----------------------------------------------------------
+        IF(stabilisationType == 1 .OR. stabilisationType == 2) THEN
+          ! Bazilevs method for calculating tau
+          pointMetrics=>equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr
+          uDotGu = 0.0_DP
+          DO i=1,numberOfDimensions
+            DO j=1,numberOfDimensions
+              uDotGu = uDotGu + (velocity(i)-meshVelocity(i))*pointMetrics%GU(i,j)*(velocity(j)-meshVelocity(j))
+            END DO
+          END DO
+          doubleDotG = 0.0_DP
+          DO i=1,numberOfDimensions
+            DO j=1,numberOfDimensions
+              doubleDotG = doubleDotG + pointMetrics%GU(i,j)*pointMetrics%GU(i,j)
+            END DO
+          END DO
+          ! Calculate tauSUPS (used for both PSPG and SUPG weights)
+          IF(equationsSet%specification(3) == EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE) THEN
+            tauSUPS = (uDotGu + (C1*((mu/rho)**2.0_DP)*doubleDotG))**(-0.5_DP)
+          ELSE
+            tauSUPS = ((4.0_DP/(timeIncrement**2.0_DP)) + uDotGu + (C1*((mu/rho)**2.0_DP)*doubleDotG))**(-0.5_DP)
+          END IF
+          
+          ! Calculate nu_LSIC (Least-squares incompressibility constraint)
+          CALL Trace(pointMetrics%GU(1:numberOfDimensions,1:numberOfDimensions),traceG,err,error,*999)
+          nuLSIC = 1.0_DP/(tauSUPS*traceG)            
+          
+          tauMp = tauSUPS
+          tauMu = tauSUPS
+          tauC = nuLSIC
+          
+        ELSE 
+          CALL FlagError("A tau factor has not been defined for the stabilisation type of " &
+            & //TRIM(NumberToVString(stabilisationType,"*",err,error)),err,error,*999)
+        END IF
+        
+        !-------------------------------------------------------------------------------------------------
+        ! A d d   s t a b i l i z a t i o n   f a c t o r s   t o   e l e m e n t   m a t r i c e s
+        !-------------------------------------------------------------------------------------------------
+        jacobianMomentum = 0.0_DP
+        jacobianContinuity = 0.0_DP
+        mhs = 0
+        DO mh=1,numberOfDimensions+1
+          DO ms=1,numberOfElementParameters(mh)
+            mhs = mhs + 1
+            IF(mh <= numberOfDimensions) THEN
+              PHIMS=quadratureVelocity%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,gaussNumber)
               JGW=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%JACOBIAN* &
-               & quadratureVelocity%GAUSS_WEIGHTS(gaussNumber)
-
-              !----------------------------------------------------------------------------------
-              ! C a l c u l a t e   d i s c r e t e   r e s i d u a l s 
-              !----------------------------------------------------------------------------------
-              SUM = 0.0_DP
-              residualMomentum = 0.0_DP
-              residualContinuity = 0.0_DP
-              ! Calculate momentum residual
-              DO i=1,numberOfDimensions    
-                SUM = 0.0_DP
-                ! velocity time derivative              
-                IF(equationsSet%specification(3) /= EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE) THEN
-                  SUM = rho*(velocity(i)-velocityPrevious(i))/timeIncrement
-                END IF
-                DO j=1,numberOfDimensions
-                  ! pressure gradient
-                  SUM = SUM + pressureDeriv(j)*DXI_DX(j,i)
-                  DO k=1,numberOfDimensions
-                    !Convective term
-                    SUM = SUM +rho*((velocity(j))*(velocityDeriv(i,k)*DXI_DX(k,j)))
-                    IF(.NOT. linearElement) THEN
-                      DO l=1,numberOfDimensions
-                        ! viscous stress: only if quadratic or higher basis defined for laplacian
-                        SUM = SUM - mu*(velocity2Deriv(i,k,l)*DXI_DX(k,j)*DXI_DX(l,j))
-                      END DO
-                    END IF
-                  END DO
-                END DO
-                residualMomentum(i) = SUM
-              END DO
-              ! Calculate continuity residual
-              SUM = 0.0_DP
-              DO i=1,numberOfDimensions
-                DO j=1,numberOfDimensions
-                  SUM= SUM + velocityDeriv(i,j)*DXI_DX(j,i)
-                END DO
-              END DO
-              residualContinuity = SUM
-
-              ! Constant of element inverse inequality
-              IF(elementInverse > -ZERO_TOLERANCE) THEN
-                ! Use user-defined value if specified (default -1)
-                C1 = elementInverse
-              ELSE IF(linearElement) THEN
-                C1=3.0_DP
-              ELSE
-                IF(numberOfDimensions==2 .AND. basisVelocity%NUMBER_OF_ELEMENT_PARAMETERS==9 &
-                  & .AND. basisVelocity%INTERPOLATION_ORDER(1)==2) THEN
-                  C1=24.0_DP
-                ELSE IF(numberOfDimensions==3 .AND. basisVelocity%NUMBER_OF_ELEMENT_PARAMETERS==27 &
-                  & .AND. basisVelocity%INTERPOLATION_ORDER(1)==2) THEN
-                  C1=12.0_DP
-                !TODO: Expand C1 for more element types
-                ELSE
-                  CALL FlagError("Element inverse estimate undefined on element " &
-                   & //TRIM(NumberToVString(elementNumber,"*",err,error)),err,error,*999)                              
-                END IF
-              END IF
-              ! Update element inverse value if calculated
-              IF(ABS(C1-elementInverse) > ZERO_TOLERANCE) THEN
-                CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_ELEMENT(equationsSetField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                  & elementNumber,10,C1,err,error,*999)
-                ! Should probably move this field update it only happens one time for each element, when C1 undefined
-                CALL FIELD_PARAMETER_SET_UPDATE_START(equationsSetField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                  & err,error,*999)
-                CALL FIELD_PARAMETER_SET_UPDATE_FINISH(equationsSetField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                  & err,error,*999)
-              END IF
-
-              !----------------------------------------------------------
-              ! S t a b i l i z a t i o n    C o n s t a n t s    (Taus)
-              !----------------------------------------------------------
-              IF(stabilisationType == 1 .OR. stabilisationType == 2) THEN
-                ! Bazilevs method for calculating tau
-                pointMetrics=>equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr
-                uDotGu = 0.0_DP
-                DO i=1,numberOfDimensions
-                  DO j=1,numberOfDimensions
-                    uDotGu = uDotGu + velocity(i)*pointMetrics%GU(i,j)*velocity(j)
-                  END DO
-                END DO
-                doubleDotG = 0.0_DP
-                DO i=1,numberOfDimensions
-                  DO j=1,numberOfDimensions
-                    doubleDotG = doubleDotG + pointMetrics%GU(i,j)*pointMetrics%GU(i,j)
-                  END DO
-                END DO
-                ! Calculate tauSUPS (used for both PSPG and SUPG weights)
-                IF(equationsSet%specification(3) == EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE) THEN
-                  tauSUPS = (uDotGu + (C1*((mu/rho)**2.0_DP)*doubleDotG))**(-0.5_DP)
-                ELSE
-                  tauSUPS = ((4.0_DP/(timeIncrement**2.0_DP)) + uDotGu + (C1*((mu/rho)**2.0_DP)*doubleDotG))**(-0.5_DP)
-                END IF
-
-                ! Calculate nu_LSIC (Least-squares incompressibility constraint)
-                traceG = 0.0_DP
-                DO i=1,numberOfDimensions
-                  traceG = traceG + pointMetrics%GU(i,i)
-                END DO
-                nuLSIC = 1.0_DP/(tauSUPS*traceG)            
-
-                tauMp = tauSUPS
-                tauMu = tauSUPS
-                tauC = nuLSIC
-
-              ELSE 
-                CALL FlagError("A tau factor has not been defined for the stabilisation type of " &
-                 & //TRIM(NumberToVString(stabilisationType,"*",err,error)),err,error,*999)
-              END IF
-
-              !-------------------------------------------------------------------------------------------------
-              ! A d d   s t a b i l i z a t i o n   f a c t o r s   t o   e l e m e n t   m a t r i c e s
-              !-------------------------------------------------------------------------------------------------
-              jacobianMomentum = 0.0_DP
-              jacobianContinuity = 0.0_DP
-              mhs = 0
-              DO mh=1,numberOfDimensions+1
-                DO ms=1,numberOfElementParameters(mh)
-                  mhs = mhs + 1
-                  IF(mh <= numberOfDimensions) THEN
-                    PHIMS=quadratureVelocity%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,gaussNumber)
-                    JGW=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%JACOBIAN* &
-                      & quadratureVelocity%GAUSS_WEIGHTS(gaussNumber)
+                & quadratureVelocity%GAUSS_WEIGHTS(gaussNumber)
+            ELSE
+              PHIMS=quadraturePressure%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,gaussNumber)
+              JGW=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%JACOBIAN* &
+                & quadraturePressure%GAUSS_WEIGHTS(gaussNumber)
+            END IF
+            !------------------
+            ! J A C O B I A N 
+            !------------------
+            IF(jacobianFlag) THEN
+              nhs = 0
+              DO nh=1,numberOfDimensions+1
+                DO ns=1,numberOfElementParameters(nh)
+                  nhs=nhs+1
+                  ! Note that we still need to assemble the vector momentum jacobian for PSPG in the continuity row
+                  IF(nh <= numberOfDimensions) THEN
+                    PHINS=quadratureVelocity%GAUSS_BASIS_FNS(ns,NO_PART_DERIV,gaussNumber)
                   ELSE
-                    PHIMS=quadraturePressure%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,gaussNumber)
-                    JGW=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%JACOBIAN* &
-                      & quadraturePressure%GAUSS_WEIGHTS(gaussNumber)
+                    PHINS=quadraturePressure%GAUSS_BASIS_FNS(ns,NO_PART_DERIV,gaussNumber)
                   END IF
-                  !------------------
-                  ! J A C O B I A N 
-                  !------------------
-                  IF(jacobianFlag) THEN
-                    nhs = 0
-                    DO nh=1,numberOfDimensions+1
-                      DO ns=1,numberOfElementParameters(nh)
-                        nhs=nhs+1
-                        ! Note that we still need to assemble the vector momentum jacobian for PSPG in the continuity row
-                        IF(nh <= numberOfDimensions) THEN
-                          PHINS=quadratureVelocity%GAUSS_BASIS_FNS(ns,NO_PART_DERIV,gaussNumber)
-                        ELSE
-                          PHINS=quadraturePressure%GAUSS_BASIS_FNS(ns,NO_PART_DERIV,gaussNumber)
-                        END IF
-
-                        ! Calculate jacobians of the discrete residual terms
-                        jacobianMomentum = 0.0_DP
-                        IF(nh == numberOfDimensions+1) THEN
-                          ! d(Momentum(mh))/d(Pressure)
-                          DO i=1,numberOfDimensions
-                            jacobianMomentum(i) = dPhi_dX_Pressure(ns,i)
-                          END DO
-                          jacobianContinuity=0.0_DP
-                        ELSE
-                          DPHINS2_DXI=0.0_DP
-                          IF(.NOT. linearElement) THEN
-                            DPHINS2_DXI(1,1)=quadratureVelocity%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S1,gaussNumber)
-                            DPHINS2_DXI(1,2)=quadratureVelocity%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S2,gaussNumber)
-                            DPHINS2_DXI(2,1)=quadratureVelocity%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S2,gaussNumber)
-                            DPHINS2_DXI(2,2)=quadratureVelocity%GAUSS_BASIS_FNS(ns,PART_DERIV_S2_S2,gaussNumber)
-                            IF(numberOfDimensions > 2) THEN
-                              DPHINS2_DXI(1,3)=quadratureVelocity%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S3,gaussNumber)
-                              DPHINS2_DXI(2,3)=quadratureVelocity%GAUSS_BASIS_FNS(ns,PART_DERIV_S2_S3,gaussNumber)
-                              DPHINS2_DXI(3,1)=quadratureVelocity%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S3,gaussNumber)
-                              DPHINS2_DXI(3,2)=quadratureVelocity%GAUSS_BASIS_FNS(ns,PART_DERIV_S2_S3,gaussNumber)
-                              DPHINS2_DXI(3,3)=quadratureVelocity%GAUSS_BASIS_FNS(ns,PART_DERIV_S3_S3,gaussNumber)
-                            END IF
-                          END IF
-                          ! d(Momentum)/d(Velocity(nh))
-                          jacobianMomentum = 0.0_DP
-                          DO i=1,numberOfDimensions 
-                            SUM = 0.0_DP
-                            !Note: Convective term split using product rule
-                            !Convective term 1: applies to all velocity components
-                            DO j=1,numberOfDimensions
-                              SUM = SUM + rho*PHINS*velocityDeriv(i,j)*DXI_DX(j,nh)
-                            END DO
-                            !Diagonal terms
-                            IF(i==nh) THEN
-                              !Transient
-                              IF(equationsSet%specification(3) /= EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE) THEN
-                                SUM = SUM + rho*PHINS/timeIncrement
-                              END IF
-                              !Convective 2: nh component only
-                              DO j=1,numberOfDimensions
-                                SUM = SUM + rho*velocity(j)*dPhi_dX_Velocity(ns,j)
-                              END DO
-                              IF(.NOT. linearElement) THEN
-                                !Viscous laplacian term
-                                DO j=1,numberOfDimensions
-                                  DO k=1,numberOfDimensions
-                                    DO l=1,numberOfDimensions
-                                      SUM=SUM-mu*DPHINS2_DXI(k,l)*DXI_DX(k,j)*DXI_DX(l,j)
-                                    END DO 
-                                  END DO 
-                                END DO 
-                              END IF
-                            END IF
-                            jacobianMomentum(i)=SUM
-                          END DO
-                          ! Continuity/velocity
-                          jacobianContinuity = dPhi_dX_Velocity(ns,nh)
-                        END IF
-                        ! Calculate jacobian of discrete residual * RBS factors (apply product rule if neccesary)
-
-                        ! PSPG: Pressure stabilising Petrov-Galerkin
-                        IF(mh == numberOfDimensions+1) THEN
-                          PSPG = 0.0_DP
-                          SUM = 0.0_DP
-                          DO i=1,numberOfDimensions
-                            SUM = SUM + dPhi_dX_Pressure(ms,i)*jacobianMomentum(i)
-                          END DO
-                          PSPG = tauMp*SUM/rho*JGW
-
-                          jacobianMatrix%elementJacobian%matrix(mhs,nhs)=jacobianMatrix%elementJacobian%matrix(mhs,nhs)+PSPG
-
-                        ! SUPG: Streamline upwind/Petrov-Galerkin
-                        ! LSIC: Least-squares incompressibility constraint
-                        ELSE
-                          SUPG=0.0_DP
-                          LSIC=0.0_DP
-
-                          SUM=0.0_DP
-                          IF(nh <= numberOfDimensions) THEN
-                            SUPG= SUPG + PHINS*dPhi_dX_Velocity(ms,nh)*residualMomentum(mh)                            
-                          END IF
-                          DO i=1,numberOfDimensions
-                            SUM = SUM + velocity(i)*dPhi_dX_Velocity(ms,i)
-                          END DO
-                          SUPG = tauMu*(SUPG + SUM*jacobianMomentum(mh))
-
-                          SUM=0.0_DP
-                          DO i=1,numberOfDimensions
-                            SUM = SUM + dPhi_dX_Velocity(ms,i)
-                          END DO
-                          LSIC = tauC*rho*dPhi_dX_Velocity(ms,mh)*jacobianContinuity                        
-
-                          momentumTerm = (SUPG + LSIC)*JGW
-
-                          IF(stabilisationType == 2) THEN
-                            ! Additional terms for RBVM
-                            crossStress=0.0_DP
-                            reynoldsStress=0.0_DP
-                            crossStress = 0.0_DP
-                            IF(nh <= numberOfDimensions) THEN
-                              IF(mh == nh) THEN
-                                DO i=1,numberOfDimensions
-                                  crossStress= crossStress + dPhi_dX_Velocity(ns,i)*residualMomentum(i)                            
-                                END DO
-                              END IF
-                            END IF
-                            SUM2=0.0_DP
-                            DO i=1,numberOfDimensions
-                              SUM=0.0_DP
-                              ! dU_mh/dX_i
-                              DO j=1,numberOfDimensions                        
-                                SUM= SUM + velocityDeriv(mh,j)*DXI_DX(j,i)
-                              END DO
-                              ! Jm_i*dU_mh/dX_i
-                              SUM2 = SUM2 + jacobianMomentum(i)*SUM
-                            END DO
-                            crossStress = -tauMu*(crossStress + SUM2)                          
-
-                            reynoldsStress = 0.0_DP
-                            SUM = 0.0_DP
-                            !Rm_mh.Rm_i.dPhi/dX_i
-                            DO i=1,numberOfDimensions
-                              SUM = SUM + jacobianMomentum(mh)*residualMomentum(i)*dPhi_DX_Velocity(ms,i)
-                              SUM = SUM + jacobianMomentum(i)*residualMomentum(mh)*dPhi_DX_Velocity(ms,i)
-                            END DO
-                            reynoldsStress = -tauMu*tauMu*SUM
-
-                            momentumTerm = momentumTerm + (crossStress + reynoldsStress)*JGW
-                          END IF
-                          
-                          ! Add stabilisation to element jacobian
-                          jacobianMatrix%elementJacobian%matrix(mhs,nhs)= &
-                           & jacobianMatrix%elementJacobian%matrix(mhs,nhs)+momentumTerm
-
-                        END IF
-                      END DO
-                    END DO                    
-
-                  !-----------------
-                  ! R E S I D U A L
-                  !-----------------
+                  
+                  ! Calculate jacobians of the discrete residual terms
+                  jacobianMomentum = 0.0_DP
+                  IF(nh == numberOfDimensions+1) THEN
+                    ! d(Momentum(mh))/d(Pressure)
+                    DO i=1,numberOfDimensions
+                      jacobianMomentum(i) = dPhi_dX_Pressure(ns,i)
+                    END DO
+                    jacobianContinuity=0.0_DP
                   ELSE
-                    ! PSPG: Pressure stabilising Petrov-Galerkin
-                    IF(mh == numberOfDimensions+1) THEN
+                    DPHINS2_DXI=0.0_DP
+                    IF(.NOT. linearElement) THEN
+                      DPHINS2_DXI(1,1)=quadratureVelocity%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S1,gaussNumber)
+                      DPHINS2_DXI(1,2)=quadratureVelocity%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S2,gaussNumber)
+                      DPHINS2_DXI(2,1)=quadratureVelocity%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S2,gaussNumber)
+                      DPHINS2_DXI(2,2)=quadratureVelocity%GAUSS_BASIS_FNS(ns,PART_DERIV_S2_S2,gaussNumber)
+                      IF(numberOfDimensions > 2) THEN
+                        DPHINS2_DXI(1,3)=quadratureVelocity%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S3,gaussNumber)
+                        DPHINS2_DXI(2,3)=quadratureVelocity%GAUSS_BASIS_FNS(ns,PART_DERIV_S2_S3,gaussNumber)
+                        DPHINS2_DXI(3,1)=quadratureVelocity%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S3,gaussNumber)
+                        DPHINS2_DXI(3,2)=quadratureVelocity%GAUSS_BASIS_FNS(ns,PART_DERIV_S2_S3,gaussNumber)
+                        DPHINS2_DXI(3,3)=quadratureVelocity%GAUSS_BASIS_FNS(ns,PART_DERIV_S3_S3,gaussNumber)
+                      END IF
+                    END IF
+                    ! d(Momentum)/d(Velocity(nh))
+                    jacobianMomentum = 0.0_DP
+                    DO i=1,numberOfDimensions 
                       SUM = 0.0_DP
-                      DO i=1,numberOfDimensions
-                        SUM = SUM + dPhi_dX_Pressure(ms,i)*residualMomentum(i)
+                      !Note: Convective term split using product rule
+                      !Convective term 1: applies to all velocity components
+                      DO j=1,numberOfDimensions
+                        SUM = SUM + rho*PHINS*velocityDeriv(i,j)*DXI_DX(j,nh)
                       END DO
-                      PSPG = SUM*(tauMp/rho)*JGW
-                      nonlinearMatrices%elementResidual%vector(mhs)= &
-                       & nonlinearMatrices%elementResidual%vector(mhs) + PSPG
-
+                      !Diagonal terms
+                      IF(i==nh) THEN
+                        !Transient
+                        IF(equationsSet%specification(3) /= EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE) THEN
+                          SUM = SUM + rho*PHINS/timeIncrement
+                        END IF
+                        !Convective 2: nh component only
+                        DO j=1,numberOfDimensions
+                          SUM = SUM + rho*(velocity(j)-meshVelocity(j))*dPhi_dX_Velocity(ns,j)
+                        END DO
+                        IF(.NOT. linearElement) THEN
+                          !Viscous laplacian term
+                          DO j=1,numberOfDimensions
+                            DO k=1,numberOfDimensions
+                              DO l=1,numberOfDimensions
+                                SUM=SUM-mu*DPHINS2_DXI(k,l)*DXI_DX(k,j)*DXI_DX(l,j)
+                              END DO
+                            END DO
+                          END DO
+                        END IF
+                      END IF
+                      jacobianMomentum(i)=SUM
+                    END DO
+                    ! Continuity/velocity
+                    jacobianContinuity = dPhi_dX_Velocity(ns,nh)
+                  END IF
+                  ! Calculate jacobian of discrete residual * RBS factors (apply product rule if neccesary)
+                  
+                  ! PSPG: Pressure stabilising Petrov-Galerkin
+                  IF(mh == numberOfDimensions+1) THEN
+                    PSPG = 0.0_DP
+                    SUM = 0.0_DP
+                    DO i=1,numberOfDimensions
+                      SUM = SUM + dPhi_dX_Pressure(ms,i)*jacobianMomentum(i)
+                    END DO
+                    PSPG = tauMp*SUM/rho*JGW
+                    
+                    jacobianMatrix%elementJacobian%matrix(mhs,nhs)=jacobianMatrix%elementJacobian%matrix(mhs,nhs)+PSPG
+                    
                     ! SUPG: Streamline upwind/Petrov-Galerkin
                     ! LSIC: Least-squares incompressibility constraint
-                    ELSE
-                      SUPG=0.0_DP
-                      LSIC=0.0_DP
-
-                      ! u_i*Rm_mh*dv_mh/dx_i
-                      SUM=0.0_DP
-                      DO i=1,numberOfDimensions
-                        SUM = SUM + velocity(i)*dPhi_dX_Velocity(ms,i)
-                      END DO
-                      SUPG = tauMu*SUM*residualMomentum(mh)
-
-                      LSIC = tauC*rho*dPhi_dX_Velocity(ms,mh)*residualContinuity                        
-                      momentumTerm = (SUPG + LSIC)*JGW
-
-                      IF(stabilisationType ==2) THEN
-                        ! Additional terms for RBVM
-                        crossStress=0.0_DP
-                        reynoldsStress=0.0_DP
-                        SUM2 = 0.0_DP
-                        DO i=1,numberOfDimensions                        
-                          SUM = 0.0_DP
-                          ! dU_mh/dX_i
-                          DO j=1,numberOfDimensions                        
-                            SUM= SUM + velocityDeriv(mh,j)*DXI_DX(j,i)
-                          END DO
-                          ! Rm_i.dU_mh/dX_i
-                          SUM2= SUM2 + residualMomentum(i)*SUM
-                        END DO
-                        crossStress= -tauMu*PHIMS*SUM2
-
-                        reynoldsStress = 0.0_DP
-                        SUM = 0.0_DP
-                        !Rm_mh.Rm_i.dPhi/dX_i
-                        DO i=1,numberOfDimensions
-                          SUM = SUM + dPhi_dX_Velocity(ms,i)*residualMomentum(i)*residualMomentum(mh)
-                        END DO
-                        reynoldsStress = -SUM*(tauMu*tauMu)/rho
-                        momentumTerm = momentumTerm + (crossStress + reynoldsStress)*JGW
-                      END IF
-
-                      ! Add stabilisation to element residual
-                      nonlinearMatrices%elementResidual%vector(mhs)= &
-                       & nonlinearMatrices%elementResidual%vector(mhs) + momentumTerm
+                  ELSE
+                    SUPG=0.0_DP
+                    LSIC=0.0_DP
+                    
+                    SUM=0.0_DP
+                    IF(nh <= numberOfDimensions) THEN
+                      SUPG= SUPG + PHINS*dPhi_dX_Velocity(ms,nh)*residualMomentum(mh)                            
                     END IF
-                  END IF ! jacobian/residual
-                END DO !ms
-              END DO !mh
+                    DO i=1,numberOfDimensions
+                      SUM = SUM + (velocity(i)-meshVelocity(i))*dPhi_dX_Velocity(ms,i)
+                    END DO
+                    SUPG = tauMu*(SUPG + SUM*jacobianMomentum(mh))
+                    
+                    SUM=0.0_DP
+                    DO i=1,numberOfDimensions
+                      SUM = SUM + dPhi_dX_Velocity(ms,i)
+                    END DO
+                    LSIC = tauC*rho*dPhi_dX_Velocity(ms,mh)*jacobianContinuity                        
+                    
+                    momentumTerm = (SUPG + LSIC)*JGW
+                    
+                    IF(stabilisationType == 2) THEN
+                      ! Additional terms for RBVM
+                      crossStress=0.0_DP
+                      reynoldsStress=0.0_DP
+                      crossStress = 0.0_DP
+                      IF(nh <= numberOfDimensions) THEN
+                        IF(mh == nh) THEN
+                          DO i=1,numberOfDimensions
+                            crossStress= crossStress + dPhi_dX_Velocity(ns,i)*residualMomentum(i)                            
+                          END DO
+                        END IF
+                      END IF
+                      SUM2=0.0_DP
+                      DO i=1,numberOfDimensions
+                        SUM=0.0_DP
+                        ! dU_mh/dX_i
+                        DO j=1,numberOfDimensions                        
+                          SUM= SUM + velocityDeriv(mh,j)*DXI_DX(j,i)
+                        END DO
+                        ! Jm_i*dU_mh/dX_i
+                        SUM2 = SUM2 + jacobianMomentum(i)*SUM
+                      END DO
+                      crossStress = -tauMu*(crossStress + SUM2)                          
+                      
+                      reynoldsStress = 0.0_DP
+                      SUM = 0.0_DP
+                      !Rm_mh.Rm_i.dPhi/dX_i
+                      DO i=1,numberOfDimensions
+                        SUM = SUM + jacobianMomentum(mh)*residualMomentum(i)*dPhi_DX_Velocity(ms,i)
+                        SUM = SUM + jacobianMomentum(i)*residualMomentum(mh)*dPhi_DX_Velocity(ms,i)
+                      END DO
+                      reynoldsStress = -tauMu*tauMu*SUM
+                      
+                      momentumTerm = momentumTerm + (crossStress + reynoldsStress)*JGW
+                    END IF
+                    
+                    ! Add stabilisation to element jacobian
+                    jacobianMatrix%elementJacobian%matrix(mhs,nhs)= &
+                      & jacobianMatrix%elementJacobian%matrix(mhs,nhs)+momentumTerm
 
-            END IF ! check stabilisation type               
-          ELSE
-            CALL FlagError("Equations equations set field is not associated.",err,error,*999)
-          END IF               
-        ELSE
-          CALL FlagError("Equations set equations is not associated.",err,error,*999)
-        END IF               
-      CASE DEFAULT
-        localError="Equations set subtype "//TRIM(NumberToVString(equationsSet%specification(3),"*",err,error))// &
-          & " is not a valid subtype to use SUPG weighting functions."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    END IF
+                  END IF
+                END DO
+              END DO
+                    
+              !-----------------
+              ! R E S I D U A L
+              !-----------------
+            ELSE
+              ! PSPG: Pressure stabilising Petrov-Galerkin
+              IF(mh == numberOfDimensions+1) THEN
+                SUM = 0.0_DP
+                DO i=1,numberOfDimensions
+                  SUM = SUM + dPhi_dX_Pressure(ms,i)*residualMomentum(i)
+                END DO
+                PSPG = SUM*(tauMp/rho)*JGW
+                nonlinearMatrices%elementResidual%vector(mhs)= &
+                  & nonlinearMatrices%elementResidual%vector(mhs) + PSPG
+                
+                ! SUPG: Streamline upwind/Petrov-Galerkin
+                ! LSIC: Least-squares incompressibility constraint
+              ELSE
+                SUPG=0.0_DP
+                LSIC=0.0_DP
+
+                ! u_i*Rm_mh*dv_mh/dx_i
+                SUM=0.0_DP
+                DO i=1,numberOfDimensions
+                  SUM = SUM + (velocity(i)-meshVelocity(i))*dPhi_dX_Velocity(ms,i)
+                END DO
+                SUPG = tauMu*SUM*residualMomentum(mh)
+                
+                LSIC = tauC*rho*dPhi_dX_Velocity(ms,mh)*residualContinuity                        
+                momentumTerm = (SUPG + LSIC)*JGW
+                
+                IF(stabilisationType ==2) THEN
+                  ! Additional terms for RBVM
+                  crossStress=0.0_DP
+                  reynoldsStress=0.0_DP
+                  SUM2 = 0.0_DP
+                  DO i=1,numberOfDimensions                        
+                    SUM = 0.0_DP
+                    ! dU_mh/dX_i
+                    DO j=1,numberOfDimensions                        
+                      SUM= SUM + velocityDeriv(mh,j)*DXI_DX(j,i)
+                    END DO
+                    ! Rm_i.dU_mh/dX_i
+                    SUM2= SUM2 + residualMomentum(i)*SUM
+                  END DO
+                  crossStress= -tauMu*PHIMS*SUM2
+                  
+                  reynoldsStress = 0.0_DP
+                  SUM = 0.0_DP
+                  !Rm_mh.Rm_i.dPhi/dX_i
+                  DO i=1,numberOfDimensions
+                    SUM = SUM + dPhi_dX_Velocity(ms,i)*residualMomentum(i)*residualMomentum(mh)
+                  END DO
+                  reynoldsStress = -SUM*(tauMu*tauMu)/rho
+                  momentumTerm = momentumTerm + (crossStress + reynoldsStress)*JGW
+                END IF
+                
+                ! Add stabilisation to element residual
+                nonlinearMatrices%elementResidual%vector(mhs)= &
+                  & nonlinearMatrices%elementResidual%vector(mhs) + momentumTerm
+              END IF
+            END IF ! jacobian/residual
+          END DO !ms
+        END DO !mh
+
+      END IF ! check stabilisation type               
+    CASE DEFAULT
+      localError="Equations set subtype "//TRIM(NumberToVString(equationsSet%specification(3),"*",err,error))// &
+        & " is not a valid subtype to use SUPG weighting functions."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
     
     EXITS("NavierStokes_ResidualBasedStabilisation")
     RETURN
