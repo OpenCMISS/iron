@@ -10237,7 +10237,7 @@ CONTAINS
     TYPE(EQUATIONS_SET_EQUATIONS_SET_FIELD_TYPE), POINTER :: equationsEquationsSetField
     TYPE(FIELD_TYPE), POINTER :: equationsSetField
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: quadratureVelocity,quadraturePressure
-    TYPE(FIELD_TYPE), POINTER :: dependentField,geometricField
+    TYPE(FIELD_TYPE), POINTER :: dependentField,geometricField,independentField
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: pointMetrics
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
@@ -10252,7 +10252,8 @@ CONTAINS
     REAL(DP) :: dPhi_dX_Velocity(27,3),dPhi_dX_Pressure(27,3),DPHINS2_DXI(3,3)
     REAL(DP) :: jacobianMomentum(3),jacobianContinuity
     REAL(DP) :: DXI_DX(3,3)
-    REAL(DP) :: velocity(3),velocityPrevious(3),velocityDeriv(3,3),velocity2Deriv(3,3,3),pressure,pressureDeriv(3)
+    REAL(DP) :: meshVelocity(3),previousMeshVelocity(3),velocity(3),velocityPrevious(3),velocityDeriv(3,3), &
+      & velocity2Deriv(3,3,3),pressure,pressureDeriv(3)
     REAL(DP) :: JGW,SUM,SUM2,SUPG,PSPG,LSIC,crossStress,reynoldsStress,momentumTerm
     REAL(DP) :: uDotGu,doubleDotG,tauSUPS,traceG,nuLSIC,timeIncrement,elementInverse,C1,stabilisationValueDP
     REAL(DP) :: tauC,tauMp,tauMu
@@ -10273,6 +10274,7 @@ CONTAINS
     NULLIFY(quadratureVelocity)
     NULLIFY(quadraturePressure)
     NULLIFY(dependentField)
+    NULLIFY(independentField)
     NULLIFY(geometricField)
     NULLIFY(fieldVariable)
     NULLIFY(vectorMatrices)
@@ -10289,9 +10291,10 @@ CONTAINS
       END IF
       SELECT CASE(equationsSet%specification(3))
       CASE(EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE, &
-        &  EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE, &
-        &  EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE, &
-        &  EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE)
+        & EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE, &
+        & EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE, &
+        & EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE, &
+        & EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE)
         equations=>equationsSet%EQUATIONS
         IF(ASSOCIATED(equations)) THEN
           !Set general and specific pointers
@@ -10427,6 +10430,18 @@ CONTAINS
                     & DXI_DX(j,i)
                 END DO
               END DO
+
+              meshVelocity=0.0_DP
+              previousMeshVelocity=0.0_DP
+              IF(equationsSet%specification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE) THEN
+                CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_PREVIOUS_VALUES_SET_TYPE,elementNumber,equations% &
+                  & interpolation%dependentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+                CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussNumber,equations%interpolation% &
+                  & dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+                DO i=1,numberOfDimensions
+                  velocityPrevious(i)=equations%interpolation%dependentInterpPoint(fieldVariableType)%ptr%VALUES(i,NO_PART_DERIV)
+                END DO
+              ENDIF
 
               ! Get number of element parameters for each dependent component
               numberOfElementParameters=0
@@ -11128,8 +11143,7 @@ CONTAINS
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(EQUATIONS_SET_EQUATIONS_SET_FIELD_TYPE), POINTER :: equationsEquationsSetField
-    TYPE(FIELD_TYPE), POINTER :: geometricField,equationsSetField,dependentField
+    TYPE(FIELD_TYPE), POINTER :: geometricField,equationsSetField,dependentField,independentField
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,geometricVariable
     TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: dependentInterpolationParameters,geometricInterpolationParameters
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: dependentInterpolatedPoint, geometricInterpolatedPoint
@@ -11142,7 +11156,7 @@ CONTAINS
     INTEGER(INTG) :: faceParameterIdx,elementDof,normalComponentIdx
     INTEGER(INTG) :: numberOfDimensions,boundaryType
     REAL(DP) :: pressure,density,jacobianGaussWeights,beta,normalFlow
-    REAL(DP) :: velocity(3),normalProjection(3),unitNormal(3),stabilisationTerm(3),boundaryNormal(3)
+    REAL(DP) :: meshVelocity(3),velocity(3),normalProjection(3),unitNormal(3),stabilisationTerm(3),boundaryNormal(3)
     REAL(DP) :: boundaryValue,normalDifference,normalTolerance,boundaryPressure
     REAL(DP) :: dUDXi(3,3)
     TYPE(VARYING_STRING) :: localError
@@ -11172,6 +11186,7 @@ CONTAINS
     NULLIFY(nonlinearMatrices)
     NULLIFY(dependentField)
     NULLIFY(geometricField)
+    NULLIFY(independentField)
     NULLIFY(vectorEquations)
     NULLIFY(vectorMapping)
     NULLIFY(nonlinearMapping)
@@ -11179,32 +11194,30 @@ CONTAINS
 
     ! Get pointers and perform sanity checks
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-    CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-    CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
-    CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
-    CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
-    CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
-    CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
 
     SELECT CASE(equationsSet%specification(3))
     CASE(EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE, &
        & EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE, &
+       & EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE, &
+       & EQUATIONS_SET_RBS_ALE_NAVIER_STOKES_SUBTYPE, &
        & EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE, &
        & EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE)
 
-      !Check for the equations set field
-      equationsEquationsSetField=>equationsSet%EQUATIONS_SET_FIELD
-      IF(ASSOCIATED(equationsEquationsSetField)) THEN
-        equationsSetField=>equationsEquationsSetField%EQUATIONS_SET_FIELD_FIELD
-        IF(.NOT.ASSOCIATED(equationsSetField)) THEN
-          CALL FlagError("Equations set field (EQUATIONS_SET_FIELD_FIELD) is not associated.",err,error,*999)
-        END IF
-      ELSE
-        CALL FlagError("Equations set field (EQUATIONS_EQUATIONS_SET_FIELD_FIELD) is not associated.",err,error,*999)
-      END IF
+      CALL EquationsSet_EquationsSetFieldGet(equationsSet,equationsSetField,err,error,*999)
+      CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+      CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+      CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+      CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+      CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+      CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+      CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
+      CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
 
+      IF(equationsSet%specification(3)==EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE.OR. &
+        & equationsSet%specification(3)==EQUATIONS_SET_RBS_ALE_NAVIER_STOKES_SUBTYPE) THEN
+        CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
+      ENDIF
+      
       ! Check whether this element contains an integrated boundary type
       CALL Field_ParameterSetGetLocalElement(equationsSetField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
        & elementNumber,9,boundaryValue,err,error,*999)

@@ -87,6 +87,8 @@ MODULE EquationsSetAccessRoutines
 
   PUBLIC EQUATIONS_SET_EQUATIONS_GET
   
+  PUBLIC EquationsSet_EquationsSetFieldGet
+  
   PUBLIC EquationsSet_GeometricFieldGet
   
   PUBLIC EquationsSet_IndependentFieldGet
@@ -178,6 +180,46 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the equations set field for an equations set.
+  SUBROUTINE EquationsSet_EquationsSetFieldGet(equationsSet,equationsSetField,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the equations set field for
+    TYPE(FIELD_TYPE), POINTER :: equationsSetField !<On exit, a pointer to the equations set field in the specified equations set. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_EquationsSetFieldGet",err,error,*998)
+
+    IF(ASSOCIATED(equationsSetField)) CALL FlagError("Equations set field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet%EQUATIONS_SET_FIELD)) THEN
+      localError="Equations set field information is not associated for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    equationsSetField=>equationsSet%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD
+    IF(.NOT.ASSOCIATED(equationsSetField)) THEN
+      localError="Equations set field is not associated for equations set number "// &
+      & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsSet_EquationsSetFieldGet")
+    RETURN
+999 NULLIFY(equationsSetField)
+998 ERRORSEXITS("EquationsSet_EquationsSetFieldGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_EquationsSetFieldGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the geometric field for an equations set.
   SUBROUTINE EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*)
 
@@ -197,10 +239,10 @@ CONTAINS
     geometricField=>equationsSet%geometry%GEOMETRIC_FIELD
     IF(.NOT.ASSOCIATED(geometricField)) THEN
       localError="Geometric field is not associated for equations set number "// &
-      & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-       
+      
     EXITS("EquationsSet_GeometricFieldGet")
     RETURN
 999 NULLIFY(geometricField)
