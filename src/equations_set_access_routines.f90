@@ -196,11 +196,6 @@ CONTAINS
     IF(ASSOCIATED(equationsSetField)) CALL FlagError("Equations set field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet%EQUATIONS_SET_FIELD)) THEN
-      localError="Equations set field information is not associated for equations set number "// &
-        & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
     equationsSetField=>equationsSet%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD
     IF(.NOT.ASSOCIATED(equationsSetField)) THEN
       localError="Equations set field is not associated for equations set number "// &

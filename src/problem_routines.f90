@@ -1413,6 +1413,9 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: equations_set_idx
+    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
+    TYPE(SOLVER_TYPE), POINTER :: cellmlSolver,linkingSolver
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
@@ -1533,6 +1536,25 @@ CONTAINS
     ELSE
       CALL FlagError("Solver is not associated.",err,error,*999)
     ENDIF    
+
+    ! DEBUG: hack to evaluate 0D in coupled 3D-0D at each residual evaluation
+    linkingSolver=>SOLVER%LINKING_SOLVER
+    IF (ASSOCIATED(linkingSolver)) THEN
+      SOLVERS=>linkingSolver%SOLVERS
+      IF (ASSOCIATED(SOLVERS)) THEN
+        controlLoop=>SOLVERS%CONTROL_LOOP
+        IF (ASSOCIATED(controlLoop)) THEN
+           IF (controlLoop%PROBLEM%SPECIFICATION(3)==PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE) THEN
+             IF (controlLoop%CONTROL_LOOP_LEVEL==3 .AND. controlLoop%SUB_LOOP_INDEX==2) THEN
+               cellmlSolver=>controlLoop%PARENT_LOOP%SUB_LOOPS(1)%PTR%SOLVERS%SOLVERS(1)%PTR
+               IF (ASSOCIATED(cellmlSolver)) THEN
+                  CALL SOLVER_SOLVE(cellmlSolver,ERR,ERROR,*999)
+               END IF
+             END IF
+           END IF
+        END IF
+      END IF
+    END IF
        
     EXITS("PROBLEM_PRE_RESIDUAL_EVALUATE")
     RETURN
