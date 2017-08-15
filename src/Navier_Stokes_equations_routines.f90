@@ -11815,10 +11815,9 @@ CONTAINS
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(EQUATIONS_SET_EQUATIONS_SET_FIELD_TYPE), POINTER :: equationsEquationsSetField
     TYPE(FIELD_TYPE), POINTER :: equationsSetField
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: quadratureVelocity
-    TYPE(FIELD_TYPE), POINTER :: dependentField,geometricField
+    TYPE(FIELD_TYPE), POINTER :: dependentField,geometricField,independentField
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
 
     INTEGER(INTG) :: fieldVariableType,meshComponent1
@@ -11830,7 +11829,7 @@ CONTAINS
     REAL(DP) :: cellReynoldsNumber,cellCourantNumber,timeIncrement
     REAL(DP) :: dPhi_dX_Velocity(27,3)
     REAL(DP) :: DXI_DX(3,3)
-    REAL(DP) :: velocity(3),avgVelocity(3),velocityNorm,velocityPrevious(3),velocityDeriv(3,3)
+    REAL(DP) :: velocity(3),meshVelocity(3),avgVelocity(3),velocityNorm,velocityPrevious(3),velocityDeriv(3,3)
     REAL(DP) :: PHIMS,JGW,SUM,SUM2,mu,rho,normCMatrix,normKMatrix,normMMatrix,muScale
     REAL(DP) :: CMatrix(27,3),KMatrix(27,3),MMatrix(27,3)
     REAL(DP) :: svd(3),U(27,27),VT(3,3)
@@ -11845,234 +11844,232 @@ CONTAINS
     NULLIFY(vectorEquations)
     NULLIFY(vectorMapping)
     NULLIFY(nonlinearMapping)
-    NULLIFY(equationsEquationsSetField)
     NULLIFY(equationsSetField)
     NULLIFY(quadratureVelocity)
     NULLIFY(dependentField)
     NULLIFY(geometricField)
+    NULLIFY(independentField)
     NULLIFY(fieldVariable)
 
-    IF(ASSOCIATED(equationsSet))THEN
-      SELECT CASE(equationsSet%specification(3))
-      CASE(EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE, &
-        &  EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE, &
-        &  EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE, &
-        &  EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE, & 
-        &  EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE)
-        equations=>equationsSet%EQUATIONS
-        IF(ASSOCIATED(equations)) THEN
-          !Set general and specific pointers
-          CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-          vectorMapping=>vectorEquations%vectorMapping
-          nonlinearMapping=>vectorMapping%nonlinearMapping
-          fieldVariable=>nonlinearMapping%residualVariables(1)%ptr
-          fieldVariableType=fieldVariable%VARIABLE_TYPE
-          geometricField=>equations%interpolation%geometricField
-          numberOfDimensions=fieldVariable%NUMBER_OF_COMPONENTS - 1
-          equationsEquationsSetField=>equationsSet%EQUATIONS_SET_FIELD
-          meshComponent1=fieldVariable%COMPONENTS(1)%MESH_COMPONENT_NUMBER
-          dependentField=>equations%interpolation%dependentField
-          basisVelocity=>dependentField%DECOMPOSITION%DOMAIN(meshComponent1)%ptr% &
-            & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
-          quadratureVelocity=>basisVelocity%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    
+    SELECT CASE(equationsSet%specification(3))
+    CASE(EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE, &
+      &  EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE, &
+      &  EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE, &
+      &  EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE, & 
+      &  EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE)
+      CALL EquationsSet_EquationsSetFieldGet(equationsSet,equationsSetField,err,error,*999)
+      CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+      CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+      IF(equationsSet%specification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE) THEN
+        CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
+      ENDIF
+      CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+      CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+      CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+      CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+      !Set general and specific pointers
+      fieldVariable=>nonlinearMapping%residualVariables(1)%ptr
+      fieldVariableType=fieldVariable%VARIABLE_TYPE
+      numberOfDimensions=fieldVariable%NUMBER_OF_COMPONENTS - 1
+      meshComponent1=fieldVariable%COMPONENTS(1)%MESH_COMPONENT_NUMBER
+      basisVelocity=>dependentField%DECOMPOSITION%DOMAIN(meshComponent1)%ptr% &
+        & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
+      quadratureVelocity=>basisVelocity%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
+      numberOfElementParameters=basisVelocity%NUMBER_OF_ELEMENT_PARAMETERS              
 
-          IF(ASSOCIATED(equationsEquationsSetField)) THEN
-            equationsSetField=>equationsEquationsSetField%EQUATIONS_SET_FIELD_FIELD
-            IF(ASSOCIATED(equationsSetField)) THEN
-
-              ! Get time step size
-              timeIncrement=equationsSet%deltaTime
-              !CALL Field_ParameterSetGetConstant(equationsSetField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-              ! & 3,timeIncrement,err,error,*999)
-
-              ! Loop over gauss points
-              CMatrix = 0.0_DP
-              MMatrix = 0.0_DP
-              KMatrix = 0.0_DP
-              CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementNumber,equations%INTERPOLATION% &
-                & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
-              IF(equationsSet%specification(3)==EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE) THEN
-                CALL FIELD_PARAMETER_SET_GET_CONSTANT(equationsSet%MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,1,muScale,err,error,*999)
-              ELSE
-                CALL FIELD_PARAMETER_SET_GET_CONSTANT(equationsSet%MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,1,mu,err,error,*999)
-              END IF
-              CALL FIELD_PARAMETER_SET_GET_CONSTANT(equationsSet%MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_VALUES_SET_TYPE,2,rho,err,error,*999)
-
-              avgVelocity = 0.0_DP
-              DO gaussNumber = 1,quadratureVelocity%NUMBER_OF_GAUSS
-
-                ! Get the constitutive law (non-Newtonian) viscosity based on shear rate
-                IF(equationsSet%specification(3)==EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE) THEN
-                  ! Note the constant from the U_VARIABLE is a scale factor
-                  muScale = mu
-                  ! Get the gauss point based value returned from the CellML solver
-                  CALL Field_ParameterSetGetLocalGaussPoint(equationsSet%MATERIALS%MATERIALS_FIELD,FIELD_V_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,gaussNumber,elementNumber,1,mu,err,error,*999)
-                  mu=mu*muScale
-                END IF
+      ! Get time step size
+      timeIncrement=equationsSet%deltaTime
+      !CALL Field_ParameterSetGetConstant(equationsSetField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+      ! & 3,timeIncrement,err,error,*999)
+      
+      ! Loop over gauss points
+      CMatrix = 0.0_DP
+      MMatrix = 0.0_DP
+      KMatrix = 0.0_DP
+      CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,equations%INTERPOLATION% &
+        & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
+      IF(equationsSet%specification(3)==EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE) THEN
+        CALL FIELD_PARAMETER_SET_GET_CONSTANT(equationsSet%MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+          & FIELD_VALUES_SET_TYPE,1,muScale,err,error,*999)
+      ELSE
+        CALL FIELD_PARAMETER_SET_GET_CONSTANT(equationsSet%MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+          & FIELD_VALUES_SET_TYPE,1,mu,err,error,*999)
+      END IF
+      CALL FIELD_PARAMETER_SET_GET_CONSTANT(equationsSet%MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+        & FIELD_VALUES_SET_TYPE,2,rho,err,error,*999)
+      
+      CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber, &
+        & equations%interpolation%dependentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)              
+      CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber, &
+        & equations%interpolation%prevDependentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)              
+      IF(equationsSet%specification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE) THEN
+        CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber, &
+          & equations%interpolation%independentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)              
+      ENDIF
+        
+      avgVelocity = 0.0_DP              
+      DO gaussNumber = 1,quadratureVelocity%NUMBER_OF_GAUSS
+        
+        ! Get the constitutive law (non-Newtonian) viscosity based on shear rate
+        IF(equationsSet%specification(3)==EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE) THEN
+          ! Note the constant from the U_VARIABLE is a scale factor
+          muScale = mu
+          ! Get the gauss point based value returned from the CellML solver
+          CALL Field_ParameterSetGetLocalGaussPoint(equationsSet%MATERIALS%MATERIALS_FIELD,FIELD_V_VARIABLE_TYPE, &
+            & FIELD_VALUES_SET_TYPE,gaussNumber,elementNumber,1,mu,err,error,*999)
+          mu=mu*muScale
+        END IF
    
-                ! Get previous timestep values
-                velocityPrevious=0.0_DP
-                CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_PREVIOUS_VALUES_SET_TYPE,elementNumber,equations% &
-                 & interpolation%dependentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-                CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussNumber,equations%interpolation%&
-                 & dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-                velocityPrevious=0.0_DP
-                DO i=1,numberOfDimensions
-                  velocityPrevious(i)=equations%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
-                   & VALUES(i,NO_PART_DERIV)
-                END DO
+        ! Get previous timestep values
+        velocityPrevious=0.0_DP
+        CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussNumber,equations%interpolation%&
+          & prevDependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+        velocityPrevious(1:numberOfDimensions)=equations%interpolation%prevDependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
+          & values(1:numberOfDimensions,NO_PART_DERIV)
+        
+        ! Interpolate current solution velocity and first deriv field values
+        ! Get 1st order derivatives for current timestep value
+        CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussNumber, &
+          & equations%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+        velocity=0.0_DP
+        velocityDeriv=0.0_DP
+        DO i=1,numberOfDimensions
+          velocity(i)=equations%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(i,NO_PART_DERIV)
+          velocityDeriv(i,1)=equations%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)% &
+            & PTR%VALUES(i,PART_DERIV_S1)
+          velocityDeriv(i,2)=equations%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)% &
+            & PTR%VALUES(i,PART_DERIV_S2)
+          IF(numberOfDimensions > 2) THEN
+            velocityDeriv(i,3)=equations%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)% &
+              & PTR%VALUES(i,PART_DERIV_S3)
+          END IF
+        END DO
 
-                ! Interpolate current solution velocity and first deriv field values
-                CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementNumber, &
-                 & equations%interpolation%dependentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)              
-                ! Get 1st order derivatives for current timestep value
-                CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussNumber, &
-                 & equations%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-                velocity=0.0_DP
-                velocityDeriv=0.0_DP
-                DO i=1,numberOfDimensions
-                  velocity(i)=equations%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(i,NO_PART_DERIV)
-                  velocityDeriv(i,1)=equations%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)% &
-                   & PTR%VALUES(i,PART_DERIV_S1)
-                  velocityDeriv(i,2)=equations%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)% &
-                   & PTR%VALUES(i,PART_DERIV_S2)
-                  IF(numberOfDimensions > 2) THEN
-                    velocityDeriv(i,3)=equations%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)% &
-                     & PTR%VALUES(i,PART_DERIV_S3)
-                  END IF
-                END DO
+        meshVelocity=0.0_DP
+        IF(equationsSet%specification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE) THEN
+          CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussNumber, &
+            & equations%interpolation%independentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+          meshVelocity(1:numberOfDimensions)=equations%interpolation%independentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
+            & values(1:numberOfDimensions,NO_PART_DERIV)
+        ENDIF
+        
+        ! get dXi/dX deriv
+        CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussNumber,equations%interpolation%&
+          & geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+        DXI_DX=0.0_DP
+        DXI_DX(1:numberOfDimensions,1:numberOfDimensions)= &
+          & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr% &
+          & DXI_DX(1:numberOfDimensions,1:numberOfDimensions)
+        
+        ! Calculate dPhi/dX
+        dPhi_dX_Velocity=0.0_DP
+        DO ms=1,numberOfElementParameters
+          DO i=1,numberOfDimensions
+            dPhi_dX_Velocity(ms,i)=0.0_DP
+            DO j=1,numberOfDimensions
+              dPhi_dX_Velocity(ms,i)=dPhi_dX_Velocity(ms,i) + &
+                & quadratureVelocity%GAUSS_BASIS_FNS(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(j),gaussNumber)* &
+                & DXI_DX(j,i)
+            END DO
+          END DO
+        END DO
+        
+        JGW=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%JACOBIAN* &
+          & quadratureVelocity%GAUSS_WEIGHTS(gaussNumber)
+        DO mh=1,numberOfDimensions
+          DO ms=1,numberOfElementParameters
+            PHIMS=quadratureVelocity%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,gaussNumber)
+            
+            ! c_(a,i)
+            SUM=0.0_DP
+            DO i=1,numberOfDimensions
+              DO j=1,numberOfDimensions                        
+                SUM = SUM + (velocity(i)-meshVelocity(i))*velocityDeriv(mh,j)*DXI_DX(j,i)
+              END DO
+            END DO
+            CMatrix(ms,mh)=CMatrix(ms,mh) + rho*PHIMS*SUM*JGW
+            
+            ! ~k_(a,i)
+            SUM=0.0_DP
+            DO i=1,numberOfDimensions
+              SUM = SUM + (velocity(i)-meshVelocity(i))*dPhi_dX_Velocity(ms,i)
+            END DO
+            SUM2=0.0_DP
+            DO i=1,numberOfDimensions
+              DO j=1,numberOfDimensions                        
+                SUM2 = SUM2 + (velocity(i)-meshVelocity(i))*velocityDeriv(mh,j)*DXI_DX(j,i)
+              END DO
+            END DO
+            KMatrix(ms,mh)=KMatrix(ms,mh)+rho*SUM*SUM2*JGW
+            
+            ! m_(a,i)
+!!TODO: Should interpolate previous mesh velocity so that the delta velocity should be
+!!      ((velocity - meshVelocity) - (previousVelocity - previousMeshVelocity)) however
+!!      mesh velocity doesn't really change that much and so previousMeshVelocity ~ meshVelocity
+!!      and so it will cancel out.            
+            MMatrix(ms,mh)=MMatrix(ms,mh)+rho*PHIMS*(velocity(mh)-velocityPrevious(mh))/timeIncrement*JGW
+            
+          END DO !ms
+        END DO !mh
 
-                ! get dXi/dX deriv
-                CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussNumber,equations%interpolation%&
-                & geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-                DXI_DX=0.0_DP
-                DO i=1,numberOfDimensions
-                  DO j=1,numberOfDimensions
-                    DXI_DX(j,i)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr% &
-                      & DXI_DX(j,i)
-                  END DO
-                END DO
+        avgVelocity= avgVelocity + (velocity-meshVelocity)/quadratureVelocity%NUMBER_OF_GAUSS
+      END DO ! gauss loop
+      
+      LWORK=MAX(1,3*MIN(numberOfElementParameters,numberOfDimensions)+ &
+        & MAX(numberOfElementParameters,numberOfDimensions),5*MIN(numberOfElementParameters,numberOfDimensions))
+      ALLOCATE(WORK(LWORK))
 
-                numberOfElementParameters=basisVelocity%NUMBER_OF_ELEMENT_PARAMETERS              
-                ! Calculate dPhi/dX
-                dPhi_dX_Velocity=0.0_DP
-                DO ms=1,numberOfElementParameters
-                  DO i=1,numberOfDimensions
-                    dPhi_dX_Velocity(ms,i)=0.0_DP
-                    DO j=1,numberOfDimensions
-                      dPhi_dX_Velocity(ms,i)=dPhi_dX_Velocity(ms,i) + &
-                       & quadratureVelocity%GAUSS_BASIS_FNS(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(j),gaussNumber)* &
-                       & DXI_DX(j,i)
-                    END DO
-                  END DO
-                END DO
-
-                JGW=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%JACOBIAN* &
-                 & quadratureVelocity%GAUSS_WEIGHTS(gaussNumber)
-                DO mh=1,numberOfDimensions
-                  DO ms=1,numberOfElementParameters
-                    PHIMS=quadratureVelocity%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,gaussNumber)
-
-                    ! c_(a,i)
-                    SUM=0.0_DP
-                    DO i=1,numberOfDimensions
-                      DO j=1,numberOfDimensions                        
-                        SUM = SUM + velocity(i)*velocityDeriv(mh,j)*DXI_DX(j,i)
-                      END DO
-                    END DO
-                    CMatrix(ms,mh)=CMatrix(ms,mh) + rho*PHIMS*SUM*JGW
-
-                    ! ~k_(a,i)
-                    SUM=0.0_DP
-                    DO i=1,numberOfDimensions
-                      SUM = SUM + velocity(i)*dPhi_dX_Velocity(ms,i)
-                    END DO
-                    SUM2=0.0_DP
-                    DO i=1,numberOfDimensions
-                      DO j=1,numberOfDimensions                        
-                        SUM2 = SUM2 + velocity(i)*velocityDeriv(mh,j)*DXI_DX(j,i)
-                      END DO
-                    END DO
-                    KMatrix(ms,mh)=KMatrix(ms,mh)+rho*SUM*SUM2*JGW
-
-                    ! m_(a,i)
-                    MMatrix(ms,mh)=MMatrix(ms,mh)+rho*PHIMS*(velocity(mh)-velocityPrevious(mh))/timeIncrement*JGW
-
-                  END DO !ms
-                END DO !mh
-
-                avgVelocity= avgVelocity + velocity/quadratureVelocity%NUMBER_OF_GAUSS
-              END DO ! gauss loop
-
-              LWORK=MAX(1,3*MIN(numberOfElementParameters,numberOfDimensions)+ &
-               & MAX(numberOfElementParameters,numberOfDimensions),5*MIN(numberOfElementParameters,numberOfDimensions))
-              ALLOCATE(WORK(LWORK))
-
-              ! compute the singular value decomposition (SVD) using LAPACK
-              CALL DGESVD('A','A',numberOfElementParameters,numberOfDimensions,CMatrix,numberOfElementParameters,svd, &
-               & U,numberOfElementParameters,VT,numberOfDimensions,WORK,LWORK,INFO)
-              normCMatrix=svd(1)
-              IF(INFO /= 0) THEN
-                localError="Error calculating SVD on element "//TRIM(NumberToVString(elementNumber,"*",err,error))//"."
-                CALL FlagError(localError,err,error,*999)
-              END IF
-
-              CALL DGESVD('A','A',numberOfElementParameters,numberOfDimensions,KMatrix,numberOfElementParameters,svd, &
-               & U,numberOfElementParameters,VT,numberOfDimensions,WORK,LWORK,INFO)
-              normKMatrix=svd(1)
-              IF(INFO /= 0) THEN
-                localError="Error calculating SVD on element "//TRIM(NumberToVString(elementNumber,"*",err,error))//"."
-                CALL FlagError(localError,err,error,*999)
-              END IF
-
-              CALL DGESVD('A','A',numberOfElementParameters,numberOfDimensions,MMatrix,numberOfElementParameters,svd, &
-               & U,numberOfElementParameters,VT,numberOfDimensions,WORK,LWORK,INFO)
-              normMMatrix=svd(1)
-              IF(INFO /= 0) THEN
-                localError="Error calculating SVD on element "//TRIM(NumberToVString(elementNumber,"*",err,error))//"."
-                CALL FlagError(localError,err,error,*999)
-              END IF
-              DEALLOCATE(WORK)
-
-              CALL L2Norm(avgVelocity,velocityNorm,err,error,*999)
-              cellReynoldsNumber = 0.0_DP
-              cellCourantNumber = 0.0_DP
-              IF(velocityNorm > ZERO_TOLERANCE) THEN
-                IF(normKMatrix > ZERO_TOLERANCE) THEN
-                  cellReynoldsNumber = velocityNorm**2.0_DP/(mu/rho)*normCMatrix/normKMatrix
-                END IF
-                IF(normMMatrix > ZERO_TOLERANCE) THEN
-                  cellCourantNumber = timeIncrement/2.0_DP*normCMatrix/normMMatrix
-                END IF
-              END IF
-              CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_ELEMENT(equationsSetField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-               & elementNumber,2,velocityNorm,err,error,*999)
-              CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_ELEMENT(equationsSetField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-               & elementNumber,3,cellCourantNumber,err,error,*999)
-              CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_ELEMENT(equationsSetField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-               & elementNumber,4,cellReynoldsNumber,err,error,*999)
-
-            ELSE
-              CALL FlagError("Equations set field field is not associated.",err,error,*999)
-            END IF               
-          ELSE
-            CALL FlagError("Equations equations set field is not associated.",err,error,*999)
-          END IF               
-        ELSE
-          CALL FlagError("Equations set equations is not associated.",err,error,*999)
-        END IF               
-      CASE DEFAULT
-        localError="Equations set subtype "//TRIM(NumberToVString(equationsSet%specification(3),"*",err,error))// &
-          & " is not a valid subtype to use SUPG weighting functions."
+      ! compute the singular value decomposition (SVD) using LAPACK
+      CALL DGESVD('A','A',numberOfElementParameters,numberOfDimensions,CMatrix,numberOfElementParameters,svd, &
+        & U,numberOfElementParameters,VT,numberOfDimensions,WORK,LWORK,INFO)
+      normCMatrix=svd(1)
+      IF(INFO /= 0) THEN
+        localError="Error calculating SVD on element "//TRIM(NumberToVString(elementNumber,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    END IF
+      END IF
+      
+      CALL DGESVD('A','A',numberOfElementParameters,numberOfDimensions,KMatrix,numberOfElementParameters,svd, &
+        & U,numberOfElementParameters,VT,numberOfDimensions,WORK,LWORK,INFO)
+      normKMatrix=svd(1)
+      IF(INFO /= 0) THEN
+        localError="Error calculating SVD on element "//TRIM(NumberToVString(elementNumber,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      END IF
+
+      CALL DGESVD('A','A',numberOfElementParameters,numberOfDimensions,MMatrix,numberOfElementParameters,svd, &
+        & U,numberOfElementParameters,VT,numberOfDimensions,WORK,LWORK,INFO)
+      normMMatrix=svd(1)
+      IF(INFO /= 0) THEN
+        localError="Error calculating SVD on element "//TRIM(NumberToVString(elementNumber,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      END IF
+      DEALLOCATE(WORK)
+      
+      CALL L2Norm(avgVelocity,velocityNorm,err,error,*999)
+      cellReynoldsNumber = 0.0_DP
+      cellCourantNumber = 0.0_DP
+      IF(velocityNorm > ZERO_TOLERANCE) THEN
+        IF(normKMatrix > ZERO_TOLERANCE) THEN
+          cellReynoldsNumber = velocityNorm**2.0_DP/(mu/rho)*normCMatrix/normKMatrix
+        END IF
+        IF(normMMatrix > ZERO_TOLERANCE) THEN
+          cellCourantNumber = timeIncrement/2.0_DP*normCMatrix/normMMatrix
+        END IF
+      END IF
+      CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_ELEMENT(equationsSetField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+        & elementNumber,2,velocityNorm,err,error,*999)
+      CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_ELEMENT(equationsSetField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+        & elementNumber,3,cellCourantNumber,err,error,*999)
+      CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_ELEMENT(equationsSetField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+        & elementNumber,4,cellReynoldsNumber,err,error,*999)
+      
+    CASE DEFAULT
+      localError="Equations set subtype "//TRIM(NumberToVString(equationsSet%specification(3),"*",err,error))// &
+        & " is not a valid subtype to use SUPG weighting functions."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
     
     EXITS("NavierStokes_CalculateElementMetrics")
     RETURN
@@ -12759,7 +12756,7 @@ CONTAINS
               !Use the geometric field to find the face normal and Jacobian for the face integral
               geometricInterpolationParameters=>equations3D%INTERPOLATION%geometricInterpParameters( &
                 & FIELD_U_VARIABLE_TYPE)%PTR
-              CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementIdx, &
+              CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
                 & geometricInterpolationParameters,err,error,*999)
               geometricInterpolatedPoint=>equations3D%INTERPOLATION%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%PTR
               CALL FIELD_INTERPOLATE_LOCAL_FACE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,faceIdx,gaussIdx, &
@@ -12805,7 +12802,7 @@ CONTAINS
                   mu=mu*muScale
                 END IF
                 !Get the pressure and velocity interpolation parameters
-                CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementIdx, &
+                CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
                   & dependentInterpolationParameters,ERR,ERROR,*999)
                 CALL FIELD_INTERPOLATE_LOCAL_FACE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,faceIdx,gaussIdx, &
                  & dependentInterpolatedPoint,ERR,ERROR,*999)
@@ -12836,7 +12833,7 @@ CONTAINS
                 viscousTerm = MATMUL(cauchy,faceNormal)
               ELSE
                 !Get interpolated velocity
-                CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementIdx, &
+                CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
                   & dependentInterpolationParameters,ERR,ERROR,*999)
                 CALL FIELD_INTERPOLATE_LOCAL_FACE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,faceIdx,gaussIdx, &
                  & dependentInterpolatedPoint,ERR,ERROR,*999)
@@ -13086,7 +13083,7 @@ CONTAINS
             normalComponentIdx=ABS(face%XI_DIRECTION)
             geometricInterpolationParameters=>equations3D%INTERPOLATION%geometricInterpParameters( &
               & FIELD_U_VARIABLE_TYPE)%PTR
-            CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementIdx, &
+            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
               & geometricInterpolationParameters,err,error,*999)
             geometricInterpolatedPoint=>equations3D%INTERPOLATION%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%PTR
             CALL FIELD_INTERPOLATE_LOCAL_FACE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,faceIdx,1, &
@@ -14177,9 +14174,9 @@ CONTAINS
           dependentBasis=>decomposition%DOMAIN(meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(localElementNumber)%BASIS
           quadratureScheme=>dependentBasis%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
 
-          CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,localElementNumber,equations%interpolation% &
+          CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,localElementNumber,equations%interpolation% &
             & dependentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-          CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,localElementNumber,equations%interpolation% &
+          CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,localElementNumber,equations%interpolation% &
             & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
 
           ! Loop over gauss points
