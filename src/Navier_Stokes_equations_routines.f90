@@ -12072,9 +12072,7 @@ CONTAINS
     LOGICAL, INTENT(IN) ::  jacobianFlag !<Flag indicating whether this was called from the jacobian or residual evaluation routine
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local variables
-
-    
+    !Local variables    
     TYPE(BASIS_TYPE), POINTER :: basis1,basis2,dependentBasis1,dependentBasis2
     TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
     TYPE(DECOMPOSITION_ELEMENT_TYPE), POINTER :: decompElement
@@ -12156,9 +12154,9 @@ CONTAINS
       CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
       CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
       CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+      CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+      CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
       IF(jacobianFlag) THEN
-        CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
-        CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
         jacobianMatrix=>nonlinearMatrices%JACOBIANS(1)%PTR
       ENDIF
       IF(equationsSet%specification(3)==EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE.OR. &
