@@ -2255,26 +2255,16 @@ CONTAINS
           IF(ASSOCIATED(CONTROL_LOOP)) THEN
             SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
             IF(ASSOCIATED(SOLVER_MAPPING)) THEN
+              !Get current control loop times
+              CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
               !Make sure the equations sets are up to date
               DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                 EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
+                !Set the equations set times
+                CALL EquationsSet_TimesSet(EQUATIONS_SET,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
                 !Assemble the equations for linear problems
                 CALL EQUATIONS_SET_ASSEMBLE(EQUATIONS_SET,err,error,*999)
               ENDDO !equations_set_idx
-              !Get current control loop times. The control loop may be a sub loop below a time loop, so iterate up
-              !through loops checking for the time loop
-              CONTROL_TIME_LOOP=>CONTROL_LOOP
-              DO loop_idx=1,CONTROL_LOOP%CONTROL_LOOP_LEVEL
-                IF(CONTROL_TIME_LOOP%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) THEN
-                  CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_TIME_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
-                  EXIT
-                ENDIF
-                IF(ASSOCIATED(CONTROL_LOOP%PARENT_LOOP)) THEN
-                  CONTROL_TIME_LOOP=>CONTROL_TIME_LOOP%PARENT_LOOP
-                ELSE
-                  CALL FlagError("Could not find a time control loop.",err,error,*999)
-                ENDIF
-              ENDDO
               !Set the solver time
               CALL SOLVER_DYNAMIC_TIMES_SET(SOLVER,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
               !Solve for the next time i.e., current time + time increment
@@ -2344,8 +2334,12 @@ CONTAINS
             IF(ASSOCIATED(CONTROL_LOOP)) THEN
               SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
               IF(ASSOCIATED(SOLVER_MAPPING)) THEN
+                !Get current control loop times
+                CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
                 DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                   EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
+                  !Set the equations set times
+                  CALL EquationsSet_TimesSet(EQUATIONS_SET,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
                   IF(DYNAMIC_SOLVER%RESTART.OR..NOT.DYNAMIC_SOLVER%SOLVER_INITIALISED) THEN!.OR.DYNAMIC_SOLVER%FSI) THEN
                     !If we need to restart or we haven't initialised yet or we have an FSI scheme, make sure the equations sets are up to date
                     EQUATIONS=>EQUATIONS_SET%EQUATIONS
@@ -2375,20 +2369,6 @@ CONTAINS
                   INTERFACE_CONDITION=>SOLVER_MAPPING%INTERFACE_CONDITIONS(interface_condition_idx)%PTR
                   CALL INTERFACE_CONDITION_ASSEMBLE(INTERFACE_CONDITION,err,error,*999)
                 ENDDO !interface_condition_idx
-                !Get current control loop times. The control loop may be a sub loop below a time loop, so iterate up
-                !through loops checking for the time loop
-                CONTROL_TIME_LOOP=>CONTROL_LOOP
-                DO loop_idx=1,CONTROL_LOOP%CONTROL_LOOP_LEVEL
-                  IF(CONTROL_TIME_LOOP%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) THEN
-                    CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_TIME_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
-                    EXIT
-                  ENDIF
-                  IF(ASSOCIATED(CONTROL_LOOP%PARENT_LOOP)) THEN
-                    CONTROL_TIME_LOOP=>CONTROL_TIME_LOOP%PARENT_LOOP
-                  ELSE
-                    CALL FlagError("Could not find a time control loop.",err,error,*999)
-                  ENDIF
-                ENDDO
                 !Set the solver time
                 CALL SOLVER_DYNAMIC_TIMES_SET(SOLVER,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
                 !Solve for the next time i.e., current time + time increment

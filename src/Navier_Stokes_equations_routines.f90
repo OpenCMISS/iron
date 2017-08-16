@@ -11378,7 +11378,7 @@ CONTAINS
 
         meshVelocity=0.0_DP
         IF(equationsSet%specification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE) THEN
-          CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_PREVIOUS_VALUES_SET_TYPE,elementNumber,equations% &
+          CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementNumber,equations% &
             & interpolation%independentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
           CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussNumber,equations%interpolation% &
             & independentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)          
@@ -12085,7 +12085,6 @@ CONTAINS
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
-    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FIELD_TYPE), POINTER :: geometricField,equationsSetField,dependentField,independentField
@@ -12157,7 +12156,6 @@ CONTAINS
       CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
       CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
       CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
-      CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
       IF(jacobianFlag) THEN
         CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
         CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
@@ -12471,7 +12469,8 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("NavierStokes_FiniteElementBoundaryIntegrate",err,error)
     RETURN 1
-  END SUBROUTINE
+    
+  END SUBROUTINE NavierStokes_FiniteElementBoundaryIntegrate
 
   !
   !================================================================================================================================
@@ -13190,7 +13189,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("NavierStokes_CalculateBoundaryFlux",err,error)
     RETURN 1
-  END SUBROUTINE
+  END SUBROUTINE NavierStokes_CalculateBoundaryFlux
 
   !
   !================================================================================================================================
@@ -13487,7 +13486,7 @@ CONTAINS
 999 ERRORSEXITS("NavierStokes_Couple1D0D",err,error)
     RETURN 1
 
-  END SUBROUTINE
+  END SUBROUTINE NavierStokes_Couple1D0D
 
   !
   !================================================================================================================================
@@ -15032,7 +15031,8 @@ CONTAINS
       & EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE, &
       & EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE, &
       & EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE, &
-      & EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE)
+      & EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE, &
+      & EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE)
 
       ! Get 3D field pointers
       IF(ASSOCIATED(equationsSet)) THEN
