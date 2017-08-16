@@ -12263,17 +12263,6 @@ CONTAINS
             basis2=>decomposition%DOMAIN(meshComponentNumber2)%PTR%TOPOLOGY%FACES%FACES(boundaryNumber)%BASIS
             CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
               & geometricInterpolationParameters,err,error,*999)
-            CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
-              & dependentInterpolationParameters,err,error,*999)
-            IF(boundaryType==BOUNDARY_CONDITION_COUPLING_STRESS .OR. &
-              & boundaryType==BOUNDARY_CONDITION_FIXED_CELLML .OR. &
-              & boundaryType==BOUNDARY_CONDITION_PRESSURE) THEN
-              !Get the pressure value interpolation parameters
-              CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_PRESSURE_VALUES_SET_TYPE,boundaryNumber, &
-                & pressureInterpolationParameters,err,error,*999)
-              CALL FIELD_INTERPOLATION_PARAMETERS_LINE_GET(FIELD_PRESSURE_VALUES_SET_TYPE,boundaryNumber, &
-                & pressureInterpolationParameters,err,error,*999)
-            END IF
             IF(equationsSet%specification(3)==EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE.OR. &
               & equationsSet%specification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE) THEN
               CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
@@ -12297,15 +12286,6 @@ CONTAINS
             basis2=>decomposition%DOMAIN(meshComponentNumber2)%PTR%TOPOLOGY%LINES%LINES(boundaryNumber)%BASIS
             CALL FIELD_INTERPOLATION_PARAMETERS_LINE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
               & geometricInterpolationParameters,err,error,*999)
-            CALL FIELD_INTERPOLATION_PARAMETERS_LINE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
-              & dependentInterpolationParameters,err,error,*999)            
-            IF(boundaryType==BOUNDARY_CONDITION_COUPLING_STRESS .OR. &
-              & boundaryType==BOUNDARY_CONDITION_FIXED_CELLML .OR. &
-              & boundaryType==BOUNDARY_CONDITION_PRESSURE) THEN
-              !Get the pressure value interpolation parameters
-              CALL FIELD_INTERPOLATION_PARAMETERS_LINE_GET(FIELD_PRESSURE_VALUES_SET_TYPE,boundaryNumber, &
-                & pressureInterpolationParameters,err,error,*999)
-            END IF
             IF(equationsSet%specification(3)==EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE.OR. &
               & equationsSet%specification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE) THEN
               CALL FIELD_INTERPOLATION_PARAMETERS_LINE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
@@ -12342,6 +12322,13 @@ CONTAINS
             END IF
 
             !Get interpolated velocity and pressure            
+            IF(numberOfDimensions == 3) THEN
+              CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
+                & dependentInterpolationParameters,err,error,*999)            
+            ELSE
+              CALL FIELD_INTERPOLATION_PARAMETERS_LINE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
+                & dependentInterpolationParameters,err,error,*999)            
+            ENDIF
             CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx, &
               & dependentInterpolatedPoint,ERR,ERROR,*999)
             velocity(1:numberOfDimensions)=dependentInterpolatedPoint%values(1:numberOfDimensions,NO_PART_DERIV)
@@ -12350,6 +12337,13 @@ CONTAINS
               & boundaryType==BOUNDARY_CONDITION_FIXED_CELLML .OR. &
               & boundaryType==BOUNDARY_CONDITION_PRESSURE) THEN
               !Get the pressure value interpolation parameters
+              IF(numberOfDimensions==3) THEN
+                CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_PRESSURE_VALUES_SET_TYPE,boundaryNumber, &
+                  & pressureInterpolationParameters,err,error,*999)
+              ELSE
+                CALL FIELD_INTERPOLATION_PARAMETERS_LINE_GET(FIELD_PRESSURE_VALUES_SET_TYPE,boundaryNumber, &
+                  & pressureInterpolationParameters,err,error,*999)
+              ENDIF
               CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx, &
                 & pressureInterpolatedPoint,ERR,ERROR,*999)
               pressure=pressureInterpolatedPoint%VALUES(numberOfDimensions+1,NO_PART_DERIV)
