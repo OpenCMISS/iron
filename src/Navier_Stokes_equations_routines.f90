@@ -12185,24 +12185,11 @@ CONTAINS
         & ELEMENTS(elementNumber)%BASIS
       decompElement=>DECOMPOSITION%TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)
       
-      geometricInterpolationParameters=>equations%interpolation%geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr
-      geometricInterpolatedPoint=>equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
-      pointMetrics=>equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr
-      dependentInterpolationParameters=>equations%interpolation%dependentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr
-      dependentInterpolatedPoint=>equations%interpolation%dependentInterpPoint(dependentVariable%VARIABLE_TYPE)%ptr
       IF(equationsSet%specification(3)==EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE.OR. &
         & equationsSet%specification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE) THEN
         independentInterpolationParameters=>equations%interpolation%independentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr
         independentInterpolatedPoint=>equations%interpolation%independentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
       ENDIF
-      ! Check for Neumann integrated boundary types rather than fixed pressure types
-      IF(boundaryType==BOUNDARY_CONDITION_COUPLING_STRESS .OR. &
-        & boundaryType==BOUNDARY_CONDITION_FIXED_CELLML .OR. &
-        & boundaryType==BOUNDARY_CONDITION_PRESSURE) THEN
-        !Get the pressure value interpolation parameters
-        pressureInterpolationParameters=>equations%interpolation%dependentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr
-        pressureInterpolatedPoint=>equations%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
-      END IF
 
       !Determine if this is a 2D or 3D problem with line/face parameters calculated
       IF(integratedBoundary) THEN
@@ -12236,7 +12223,9 @@ CONTAINS
 
         ! Loop over the boundaries (lines or faces) for this element
         DO boundaryIdx=1,numberOfElementBoundaries
-          
+          geometricInterpolationParameters=>equations%interpolation%geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr
+          dependentInterpolationParameters=>equations%interpolation%dependentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr
+         
           ! Get 3D face specific parameters
           IF(numberOfDimensions == 3) THEN           
             IF(ALLOCATED(decompElement%ELEMENT_FACES)) THEN
@@ -12263,6 +12252,8 @@ CONTAINS
             basis2=>decomposition%DOMAIN(meshComponentNumber2)%PTR%TOPOLOGY%FACES%FACES(boundaryNumber)%BASIS
             CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
               & geometricInterpolationParameters,err,error,*999)
+            CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
+              & dependentInterpolationParameters,err,error,*999)            
             IF(equationsSet%specification(3)==EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE.OR. &
               & equationsSet%specification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE) THEN
               CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
@@ -12286,6 +12277,8 @@ CONTAINS
             basis2=>decomposition%DOMAIN(meshComponentNumber2)%PTR%TOPOLOGY%LINES%LINES(boundaryNumber)%BASIS
             CALL FIELD_INTERPOLATION_PARAMETERS_LINE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
               & geometricInterpolationParameters,err,error,*999)
+            CALL FIELD_INTERPOLATION_PARAMETERS_LINE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
+              & dependentInterpolationParameters,err,error,*999)            
             IF(equationsSet%specification(3)==EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE.OR. &
               & equationsSet%specification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE) THEN
               CALL FIELD_INTERPOLATION_PARAMETERS_LINE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
@@ -12295,6 +12288,9 @@ CONTAINS
 
           quadratureScheme1=>basis1%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
           quadratureScheme2=>basis2%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
+          geometricInterpolatedPoint=>equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
+          dependentInterpolatedPoint=>equations%interpolation%dependentInterpPoint(dependentVariable%VARIABLE_TYPE)%ptr
+          pointMetrics=>equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr
           ! Loop over gauss points
           DO gaussIdx=1,quadratureScheme1%NUMBER_OF_GAUSS
             CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx, &
@@ -12312,6 +12308,8 @@ CONTAINS
               CALL Normalise(normalProjection,unitNormal,err,error,*999)
               CALL L2Norm(boundaryNormal-unitNormal,normalDifference,err,error,*999)
               IF(normalDifference>normalTolerance) EXIT
+              CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
+                & dependentInterpolationParameters,err,error,*999)            
             ELSE
               CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(COORDINATE_JACOBIAN_LINE_TYPE,pointMetrics,err,error,*999)
               ! Make sure this is the boundary that corresponds with the provided normal (could be a wall rather than inlet/outlet)
@@ -12319,35 +12317,14 @@ CONTAINS
               CALL Normalise(normalProjection,unitNormal,err,error,*999)
               CALL L2Norm(boundaryNormal-unitNormal,normalDifference,err,error,*999)
               IF(normalDifference>normalTolerance) EXIT
+              CALL FIELD_INTERPOLATION_PARAMETERS_LINE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
+                & dependentInterpolationParameters,err,error,*999)            
             END IF
 
             !Get interpolated velocity and pressure            
-            IF(numberOfDimensions == 3) THEN
-              CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
-                & dependentInterpolationParameters,err,error,*999)            
-            ELSE
-              CALL FIELD_INTERPOLATION_PARAMETERS_LINE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
-                & dependentInterpolationParameters,err,error,*999)            
-            ENDIF
             CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx, &
               & dependentInterpolatedPoint,ERR,ERROR,*999)
             velocity(1:numberOfDimensions)=dependentInterpolatedPoint%values(1:numberOfDimensions,NO_PART_DERIV)
-            ! Check for Neumann integrated boundary types rather than fixed pressure types
-            IF(boundaryType==BOUNDARY_CONDITION_COUPLING_STRESS .OR. &
-              & boundaryType==BOUNDARY_CONDITION_FIXED_CELLML .OR. &
-              & boundaryType==BOUNDARY_CONDITION_PRESSURE) THEN
-              !Get the pressure value interpolation parameters
-              IF(numberOfDimensions==3) THEN
-                CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_PRESSURE_VALUES_SET_TYPE,boundaryNumber, &
-                  & pressureInterpolationParameters,err,error,*999)
-              ELSE
-                CALL FIELD_INTERPOLATION_PARAMETERS_LINE_GET(FIELD_PRESSURE_VALUES_SET_TYPE,boundaryNumber, &
-                  & pressureInterpolationParameters,err,error,*999)
-              ENDIF
-              CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx, &
-                & pressureInterpolatedPoint,ERR,ERROR,*999)
-              pressure=pressureInterpolatedPoint%VALUES(numberOfDimensions+1,NO_PART_DERIV)
-            END IF
             IF(equationsSet%specification(3)==EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE.OR. &
               & equationsSet%specification(3)==EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE) THEN
               !Get interpolated mesh velocity          
@@ -12368,7 +12345,26 @@ CONTAINS
               stabilisationTerm = 0.0_DP
             END IF
 
-            !Jacobian and Gauss weighting term
+            ! Check for Neumann integrated boundary types rather than fixed pressure types
+            IF(boundaryType==BOUNDARY_CONDITION_COUPLING_STRESS .OR. &
+              & boundaryType==BOUNDARY_CONDITION_FIXED_CELLML .OR. &
+              & boundaryType==BOUNDARY_CONDITION_PRESSURE) THEN
+              !Get the pressure value interpolation parameters
+              pressureInterpolationParameters=>equations%interpolation%dependentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr
+              pressureInterpolatedPoint=>equations%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
+              IF(numberOfDimensions==3) THEN
+                CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_PRESSURE_VALUES_SET_TYPE,boundaryNumber, &
+                  & pressureInterpolationParameters,err,error,*999)
+              ELSE
+                CALL FIELD_INTERPOLATION_PARAMETERS_LINE_GET(FIELD_PRESSURE_VALUES_SET_TYPE,boundaryNumber, &
+                  & pressureInterpolationParameters,err,error,*999)
+              ENDIF
+              CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussIdx, &
+                & pressureInterpolatedPoint,ERR,ERROR,*999)
+              pressure=pressureInterpolatedPoint%VALUES(numberOfDimensions+1,NO_PART_DERIV)
+            END IF
+            
+            !Jacobian and Gauss weighting term            
             jacobianGaussWeights=pointMetrics%JACOBIAN*quadratureScheme1%GAUSS_WEIGHTS(gaussIdx)
             !Loop over field components
             DO componentIdx=1,dependentVariable%NUMBER_OF_COMPONENTS-1
