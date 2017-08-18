@@ -65,13 +65,16 @@ MODULE SolverMatricesAccessRoutines
 
   PUBLIC SolverMatrices_SolverMappingGet
 
+  PUBLIC SolverMatrices_SolverMatrixGet
+
   
 CONTAINS
 
   !
   !================================================================================================================================
   !
- !>Returns a pointer to the solver mapping for solver matrices.
+  
+  !>Returns a pointer to the solver mapping for solver matrices.
   SUBROUTINE SolverMatrices_SolverMappingGet(solverMatrices,solverMapping,err,error,*)
 
     !Argument variables
@@ -96,6 +99,49 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE SolverMatrices_SolverMappingGet
+  
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to specified solver matrix for solver matrices.
+  SUBROUTINE SolverMatrices_SolverMatrixGet(solverMatrices,matrixIdx,solverMatrix,err,error,*)
+
+    !Argument variables
+    TYPE(SOLVER_MATRICES_TYPE), POINTER :: solverMatrices !<A pointer to the solver matrices to get the solver matrix for
+    INTEGER(INTG), INTENT(IN) :: matrixIdx !<The matrix index of the solver matrix to get.
+    TYPE(SOLVER_MATRIX_TYPE), POINTER :: solverMatrix !<On exit, a pointer to the solver matrix. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("SolverMatrices_SolverMatrixGet",err,error,*998)
+
+    IF(ASSOCIATED(solverMatrix)) CALL FlagError("Solver matrix is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solverMatrices)) CALL FlagError("Solver matrices is not associated.",err,error,*999)
+    IF(matrixIdx<1.OR.matrixIdx>solverMatrices%NUMBER_OF_MATRICES) THEN
+      localError="The specified solver matrix index of "// &
+        & TRIM(NumberToVString(matrixIdx,"*",err,error))//" is invalid. The matrix index needs to be >= 1 and <= "// &
+        & TRIM(NumberToVString(solverMatrices%NUMBER_OF_MATRICES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(solverMatrices%matrices)) CALL FlagError("Solver matrices matrices is not allocated.",err,error,*999)
+    
+    solverMatrix=>solverMatrices%matrices(matrixIdx)%ptr
+    IF(.NOT.ASSOCIATED(solverMatrix)) THEN
+      localError="The solver matrix for index "//TRIM(NumberToVString(matrixIdx,"*",err,error))//" is not associated."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+      
+    EXITS("SolverMatrices_SolverMatrixGet")
+    RETURN
+999 NULLIFY(solverMatrix)
+998 ERRORSEXITS("SolverMatrices_SolverMatrixGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMatrices_SolverMatrixGet
   
   !
   !================================================================================================================================

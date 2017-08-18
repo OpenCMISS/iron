@@ -48,11 +48,12 @@ MODULE SOLVER_MATRICES_ROUTINES
   USE DISTRIBUTED_MATRIX_VECTOR
   USE INTERFACE_CONDITIONS_CONSTANTS
   USE ISO_VARYING_STRING
-  USE KINDS
+  USE Kinds
   USE MATRIX_VECTOR
   USE PROBLEM_CONSTANTS
-  USE STRINGS
-  USE TYPES
+  USE SolverMatricesAccessRoutines
+  USE Strings
+  USE Types
 
 #include "macros.h"  
 
@@ -84,14 +85,87 @@ MODULE SOLVER_MATRICES_ROUTINES
 
   !Interfaces
 
+  INTERFACE SolverMatrix_EquationsMatrixAdd
+    MODULE PROCEDURE SOLVER_MATRIX_EQUATIONS_MATRIX_ADD
+  END INTERFACE SolverMatrix_EquationsMatrixAdd
+  
+  INTERFACE SolverMatrix_InterfaceMatrixAdd
+    MODULE PROCEDURE SOLVER_MATRIX_INTERFACE_MATRIX_ADD
+  END INTERFACE SolverMatrix_InterfaceMatrixAdd
+  
+  INTERFACE SolverMatrix_JacobianMatrixAdd
+    MODULE PROCEDURE SOLVER_MATRIX_JACOBIAN_MATRIX_ADD
+  END INTERFACE SolverMatrix_JacobianMatrixAdd
+
+  INTERFACE SolverMatrices_CreateFinish
+    MODULE PROCEDURE SOLVER_MATRICES_CREATE_FINISH
+  END INTERFACE SolverMatrices_CreateFinish
+  
+  INTERFACE SolverMatrices_CreateStart
+    MODULE PROCEDURE SOLVER_MATRICES_CREATE_START
+  END INTERFACE SolverMatrices_CreateStart
+  
+  INTERFACE SolverMatrices_Destroy
+    MODULE PROCEDURE SOLVER_MATRICES_DESTROY
+  END INTERFACE SolverMatrices_Destroy
+  
+  INTERFACE SolverMatrices_LibraryTypeGet
+    MODULE PROCEDURE SOLVER_MATRICES_LIBRARY_TYPE_GET
+  END INTERFACE SolverMatrices_LibraryTypeGet
+  
+  INTERFACE SolverMatrices_LibraryTypeSet
+    MODULE PROCEDURE SOLVER_MATRICES_LIBRARY_TYPE_SET
+  END INTERFACE SolverMatrices_LibraryTypeSet
+  
+  INTERFACE SolverMatrices_Output
+    MODULE PROCEDURE SOLVER_MATRICES_OUTPUT
+  END INTERFACE SolverMatrices_Output
+  
+  INTERFACE SolverMatrices_StorageTypeGet
+    MODULE PROCEDURE SOLVER_MATRICES_STORAGE_TYPE_GET
+  END INTERFACE SolverMatrices_StorageTypeGet
+
+  INTERFACE SolverMatrices_StorageTypeSet
+    MODULE PROCEDURE SOLVER_MATRICES_STORAGE_TYPE_SET
+  END INTERFACE SolverMatrices_StorageTypeSet  
+
   PUBLIC SOLVER_MATRICES_ALL,SOLVER_MATRICES_LINEAR_ONLY,SOLVER_MATRICES_NONLINEAR_ONLY, &
     & SOLVER_MATRICES_JACOBIAN_ONLY,SOLVER_MATRICES_RESIDUAL_ONLY,SOLVER_MATRICES_RHS_ONLY, & 
     & SOLVER_MATRICES_RHS_RESIDUAL_ONLY !,SOLVER_MATRICES_DYNAMIC_ONLY
 
-  PUBLIC SOLVER_MATRIX_EQUATIONS_MATRIX_ADD,SOLVER_MATRIX_INTERFACE_MATRIX_ADD,SOLVER_MATRIX_JACOBIAN_MATRIX_ADD
-  
-  PUBLIC SOLVER_MATRICES_CREATE_FINISH,SOLVER_MATRICES_CREATE_START,SOLVER_MATRICES_DESTROY,SOLVER_MATRICES_LIBRARY_TYPE_SET, &
-    & SOLVER_MATRICES_OUTPUT,SOLVER_MATRICES_STORAGE_TYPE_SET
+  PUBLIC SOLVER_MATRIX_EQUATIONS_MATRIX_ADD
+
+  PUBLIC SolverMatrix_EquationsMatrixAdd
+
+  PUBLIC SOLVER_MATRIX_INTERFACE_MATRIX_ADD
+
+  PUBLIC SolverMatrix_InterfaceMatrixAdd
+
+  PUBLIC SOLVER_MATRIX_JACOBIAN_MATRIX_ADD
+
+  PUBLIC SolverMatrix_JacobianMatrixAdd
+
+  PUBLIC SOLVER_MATRICES_CREATE_FINISH,SOLVER_MATRICES_CREATE_START
+
+  PUBLIC SolverMatrices_CreateFinish,SolverMatrices_CreateStart
+
+  PUBLIC SOLVER_MATRICES_DESTROY
+
+  PUBLIC SolverMatrices_Destroy
+
+  PUBLIC SOLVER_MATRICES_LIBRARY_TYPE_GET,SOLVER_MATRICES_LIBRARY_TYPE_SET
+
+  PUBLIC SolverMatrices_LibraryTypeGet,SolverMatrices_LibraryTypeSet
+
+  PUBLIC SOLVER_MATRICES_OUTPUT
+
+  PUBLIC SolverMatrices_Output
+
+  PUBLIC SOLVER_MATRICES_STORAGE_TYPE_GET,SOLVER_MATRICES_STORAGE_TYPE_SET
+
+  PUBLIC SolverMatrices_StorageTypeGet,SolverMatrices_StorageTypeSet
+
+  PUBLIC SolverMatrices_SymmetryTypeGet,SolverMatrices_SymmetryTypeSet
 
 CONTAINS
 
@@ -154,6 +228,7 @@ CONTAINS
                       IF(ASSOCIATED(ROW_INDICES)) DEALLOCATE(ROW_INDICES)
                       IF(ASSOCIATED(COLUMN_INDICES)) DEALLOCATE(COLUMN_INDICES)
                     ENDIF
+                    CALL DistributedMatrix_SymmetryTypeSet(SOLVER_MATRIX%matrix,SOLVER_MATRIX%symmetryType,err,error,*999)
                     CALL DISTRIBUTED_MATRIX_CREATE_FINISH(SOLVER_MATRIX%MATRIX,ERR,ERROR,*999)
                     !Allocate the distributed solver vector
                     CALL DISTRIBUTED_VECTOR_CREATE_START(COLUMN_DOMAIN_MAP,SOLVER_MATRICES%MATRICES(matrix_idx)% &
@@ -669,6 +744,87 @@ CONTAINS
 999 ERRORSEXITS("SOLVER_MATRICES_STORAGE_TYPE_SET",ERR,ERROR)
     RETURN 1
   END SUBROUTINE SOLVER_MATRICES_STORAGE_TYPE_SET
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Gets the symmetry type of the solver matrices
+  SUBROUTINE SolverMatrices_SymmetryTypeGet(solverMatrices,symmetryTypes,err,error,*)
+
+    !Argument variables
+    TYPE(SOLVER_MATRICES_TYPE), POINTER :: solverMatrices !<A pointer to the solver matrices
+    INTEGER(INTG), INTENT(OUT) :: symmetryTypes(:) !<symmetryTypes(matrixIdx). On return, the symmtry type for the matrixIdx'th solver matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: matrixIdx
+    TYPE(SOLVER_MATRIX_TYPE), POINTER :: solverMatrix
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("SolverMatrices_SymmetryTypeGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(solverMatrices)) CALL FlagError("Solver matrices is not associated.",ERR,ERROR,*999)
+    IF(.NOT.solverMatrices%SOLVER_MATRICES_FINISHED) CALL FlagError("Solver matrices have not finished.",ERR,ERROR,*999)
+    IF(SIZE(symmetryTypes,1)<solverMatrices%NUMBER_OF_MATRICES) THEN
+      localError="The size of symmetry types is too small. The supplied size is "// &
+        & TRIM(NumberToVString(SIZE(symmetryTypes,1),"*",err,error))//" and it needs to be >= "// &
+        & TRIM(NumberToVString(solverMatrices%NUMBER_OF_MATRICES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    DO matrixIdx=1,solverMatrices%NUMBER_OF_MATRICES
+      NULLIFY(solverMatrix)
+      CALL SolverMatrices_SolverMatrixGet(solverMatrices,matrixIdx,solverMatrix,err,error,*999)
+      symmetryTypes(matrixIdx)=solverMatrix%symmetryType
+    ENDDO !matrixIdx
+    
+    EXITS("SolverMatrices_SymmetryTypeGet")
+    RETURN
+999 ERRORSEXITS("SolverMatrices_SymmetryTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMatrices_SymmetryTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the symmetry type of the solver matrices
+  SUBROUTINE SolverMatrices_SymmetryTypeSet(solverMatrices,symmetryTypes,err,error,*)
+
+    !Argument variables
+    TYPE(SOLVER_MATRICES_TYPE), POINTER :: solverMatrices !<A pointer to the solver matrices to set the symmetry types for
+    INTEGER(INTG), INTENT(IN) :: symmetryTypes(:) !<symmetryTypes(matrixIdx). The symmetry type for the matrixIdx'th solver matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: matrixIdx
+    TYPE(SOLVER_MATRIX_TYPE), POINTER :: solverMatrix
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("SolverMatrices_SymmetryTypeSet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(solverMatrices)) CALL FlagError("Solver matrices is not associated.",err,error,*999)
+    IF(solverMatrices%SOLVER_MATRICES_FINISHED) CALL FlagError("Solver matrices have been finished.",ERR,ERROR,*999)
+    IF(SIZE(symmetryTypes,1)/=solverMatrices%NUMBER_OF_MATRICES) THEN
+      localError="The size of the symmetry types array of "//TRIM(NumberToVString(SIZE(symmetryTypes,1),"*",err,error))// &
+        & " is not equal to the number of matrices of "//TRIM(NumberToVString(solverMatrices%NUMBER_OF_MATRICES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+      
+    DO matrixIdx=1,solverMatrices%NUMBER_OF_MATRICES
+      NULLIFY(solverMatrix)
+      CALL SolverMatrices_SolverMatrixGet(solverMatrices,matrixIdx,solverMatrix,err,error,*999)
+      solverMatrix%symmetryType=symmetryTypes(matrixIdx)
+    ENDDO !matrixIdx
+    
+    EXITS("SolverMatrices_SymmetryTypeSet")
+    RETURN
+999 ERRORSEXITS("SolverMatrices_SymmetryTypeSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMatrices_SymmetryTypeSet
 
   !
   !================================================================================================================================

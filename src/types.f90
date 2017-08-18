@@ -845,7 +845,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE DISTRIBUTED_MATRIX_CMISS_TYPE
     TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: DISTRIBUTED_MATRIX !<A pointer to the distributed matrix
     INTEGER(INTG) :: BASE_TAG_NUMBER !<The base number for the MPI tag numbers that will be used to communicate the distributed matrix data amongst the domains. The base tag number can be thought of as the identification number for the distributed matrix object.
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix to store the rows corresponding to this domain.
+    TYPE(MATRIX_TYPE), POINTER :: matrix !<A pointer to the matrix to store the rows corresponding to this domain.
 !   TYPE(LINKEDLIST),POINTER :: LIST(:) !< \todo Comment
   END TYPE DISTRIBUTED_MATRIX_CMISS_TYPE
 
@@ -857,6 +857,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: GLOBAL_M !<The number of global rows in the PETSc matrix
     INTEGER(INTG) :: GLOBAL_N !<The number of global columns in the PETSc matrix
     INTEGER(INTG) :: STORAGE_TYPE !<The storage type (sparsity) of the PETSc matrix
+    INTEGER(INTG) :: symmetryType !<The symmetry type of the PETSc matrix
     INTEGER(INTG) :: NUMBER_NON_ZEROS !<The number of non-zeros in the PETSc matrix
     INTEGER(INTG) :: DATA_SIZE !<The size of the allocated data in the PETSc matrix
     INTEGER(INTG) :: MAXIMUM_COLUMN_INDICES_PER_ROW !<The maximum number of column indicies for the rows.
@@ -913,6 +914,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: MAX_N !<The maximum number of rows in the matrix storage
     INTEGER(INTG) :: DATA_TYPE !<The data type of the matrix  \see MATRIX_VECTOR_DataTypes 
     INTEGER(INTG) :: STORAGE_TYPE !<The storage type of the matrix \see MATRIX_VECTOR_StorageTypes 
+    INTEGER(INTG) :: symmetryType !<The symmetry type of the matrix \see MATRIX_VECTOR_SymmetryTypes 
     INTEGER(INTG) :: NUMBER_NON_ZEROS !<The number of non-zero elements in the matrix 
     INTEGER(INTG) :: SIZE !<The size of the data arrays
     INTEGER(INTG) :: MAXIMUM_COLUMN_INDICES_PER_ROW !<The maximum number of column indicies for the rows.
@@ -1486,6 +1488,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: storageType !<The storage (sparsity) type for this matrix
     INTEGER(INTG) :: structureType !<The structure (sparsity) type for this matrix
     LOGICAL :: lumped !<Is .TRUE. if the equations matrix is lumped
+    LOGICAL :: symmetric !<Is .TRUE. if the equations matrix is symmetric
     INTEGER(INTG) :: numberOfColumns !<The number of columns in this equations matrix
     LOGICAL :: updateMatrix !<Is .TRUE. if this equations matrix is to be updated
     LOGICAL :: firstAssembly !<Is .TRUE. if this equations matrix has not been assembled
@@ -1506,6 +1509,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices !<A pointer back to the nonlinear matrices for this Jacobian
     INTEGER(INTG) :: storageType !<The storage (sparsity) type for this matrix
     INTEGER(INTG) :: structureType !<The structure (sparsity) type for this matrix
+    LOGICAL :: symmetric !<Is .TRUE. if the Jacobian matrix is symmetric
     INTEGER(INTG) :: numberOfColumns !<The number of columns in this global matrix
     LOGICAL :: updateJacobian !<Is .TRUE. if this Jacobian matrix is to be updated
     TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: jacobian !<A pointer to the distributed jacobian matrix data
@@ -1526,6 +1530,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EquationsMatricesOptimisationType), POINTER :: optimisationMatrices !<A pointer back to the optimisation matrices for this Hessian
     INTEGER(INTG) :: storageType !<The storage (sparsity) type for this matrix
     INTEGER(INTG) :: structureType!<The structure (sparsity) type for this matrix
+    LOGICAL :: symmetric !<Is .TRUE. if the Hessian matrix is symmetric
     INTEGER(INTG) :: numberOfColumns !<The number of columns in this global matrix
     LOGICAL :: updateHessian !<Is .TRUE. if this Hessian matrix is to be updated
     TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: hessian !<A pointer to the distributed Hessian matrix data
@@ -1609,7 +1614,6 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     LOGICAL :: firstAssembly !<Is .TRUE. if this residual vector has not been assembled
     TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: residual !<A pointer to the distributed residual vector for optimisation equations
     TYPE(ElementVectorType) :: elementResidual !<The element residual information for optimisation equations. Old CMISS name RE1
-
   END TYPE EquationsMatricesOptimisationType
 
   !>Contains information of the RHS vector for equations matrices
@@ -2652,6 +2656,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES !<A pointer to the solver matrices for this solver matrix
     LOGICAL :: UPDATE_MATRIX !<Is .TRUE. if the solver matrix is to be updated
     INTEGER(INTG) :: STORAGE_TYPE !<The storage type for the solver matrix.
+    INTEGER(INTG) :: symmetryType !<The solver matrix symmetry type.
     INTEGER(INTG) :: NUMBER_OF_COLUMNS !<The number of columns in the distributed solver matrix
     TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: SOLVER_VECTOR !<A pointer to the distributed solver vector associated with the matrix
     TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the distributed solver matrix data
@@ -2699,6 +2704,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: timeDependence !<The time dependence type of the solver equations
 
     INTEGER(INTG) :: sparsityType !<The type of sparsity to use in the solver matrices \see SOLVER_ROUTINES_SparsityTypes,SOLVER_ROUTINES
+
+    INTEGER(INTG) :: symmetryType !<The type of symmetry to use in the solver matrices \see SOLVER_ROUTINES_SymmetryTypes,SOLVER_ROUTINES
 
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES !<A pointer to the solver matrices for the problem
@@ -2835,7 +2842,6 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE LINEAR_DIRECT_SOLVER_TYPE
     TYPE(LINEAR_SOLVER_TYPE), POINTER :: LINEAR_SOLVER !<A pointer to the linear solver
     INTEGER(INTG) :: SOLVER_LIBRARY !<The library type for the linear direct solver \see SOLVER_ROUTINES_SolverLibraries,SOLVER_ROUTINES
-    INTEGER(INTG) :: SOLVER_MATRICES_LIBRARY !<The library type for the linear direct solver matrices \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
     INTEGER(INTG) :: DIRECT_SOLVER_TYPE !<The type of direct linear solver
     TYPE(PetscPCType) :: PC !<The PETSc preconditioner object
     TYPE(PetscKspType) :: KSP !<The PETSc solver object
@@ -2845,7 +2851,6 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE LINEAR_ITERATIVE_SOLVER_TYPE
     TYPE(LINEAR_SOLVER_TYPE), POINTER :: LINEAR_SOLVER !<A pointer to the linear solver
     INTEGER(INTG) :: SOLVER_LIBRARY !<The library type for the linear solver \see SOLVER_ROUTINES_SolverLibraries,SOLVER_ROUTINES
-    INTEGER(INTG) :: SOLVER_MATRICES_LIBRARY !<The library type for the linear iterative solver matrices \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
     INTEGER(INTG) :: ITERATIVE_SOLVER_TYPE !<The type of iterative solver \see SOLVER_ROUTINES_IterativeLinearSolverTypes,SOLVER_ROUTINES
     INTEGER(INTG) :: ITERATIVE_PRECONDITIONER_TYPE !<The type of iterative preconditioner \see SOLVER_ROUTINES_IterativePreconditionerTypes,SOLVER_ROUTINES
     INTEGER(INTG) :: SOLUTION_INITIALISE_TYPE !<The type of solution vector initialisation \see SOLVER_ROUTINES_SolutionInitialiseTypes,SOLVER_ROUTINES
@@ -2871,7 +2876,6 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE NEWTON_LINESEARCH_SOLVER_TYPE
     TYPE(NEWTON_SOLVER_TYPE), POINTER :: NEWTON_SOLVER !<A pointer to the Newton solver
     INTEGER(INTG) :: SOLVER_LIBRARY !<The library type for the Newton linesearch solver \see SOLVER_ROUTINES_SolverLibraries,SOLVER_ROUTINES
-    INTEGER(INTG) :: SOLVER_MATRICES_LIBRARY !<The library type for the Newton linesearch solver matrices \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
     INTEGER(INTG) :: LINESEARCH_TYPE !<The line search type \see SOLVER_ROUTINES_NonlinearLineSearchTypes,SOLVER_ROUTINES
     REAL(DP) :: LINESEARCH_ALPHA !<The line search alpha
     REAL(DP) :: LINESEARCH_MAXSTEP !<The line search maximum step
@@ -2888,7 +2892,6 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE NEWTON_TRUSTREGION_SOLVER_TYPE
     TYPE(NEWTON_SOLVER_TYPE), POINTER :: NEWTON_SOLVER !<A pointer to the Newton solver 
     INTEGER(INTG) :: SOLVER_LIBRARY !<The library type for the nonlinear solver \see SOLVER_ROUTINES_SolverLibraries,SOLVER_ROUTINES
-    INTEGER(INTG) :: SOLVER_MATRICES_LIBRARY !<The library type for the Newton trustregion solver matrices \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
     REAL(DP) :: TRUSTREGION_TOLERANCE !<The trust region tolerance
     REAL(DP) :: TRUSTREGION_DELTA0 !<The trust region delta0
     TYPE(PetscSnesType) :: snes !<The PETSc nonlinear solver object
@@ -2925,7 +2928,6 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE QUASI_NEWTON_LINESEARCH_SOLVER_TYPE
     TYPE(QUASI_NEWTON_SOLVER_TYPE), POINTER :: QUASI_NEWTON_SOLVER !<A pointer to the Quasi-Newton solver
     INTEGER(INTG) :: SOLVER_LIBRARY !<The library type for the Quasi-Newton linesearch solver \see SOLVER_ROUTINES_SolverLibraries,SOLVER_ROUTINES
-    INTEGER(INTG) :: SOLVER_MATRICES_LIBRARY !<The library type for the Quasi-Newton linesearch solver matrices \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
     INTEGER(INTG) :: LINESEARCH_TYPE !<The line search type \see SOLVER_ROUTINES_NonlinearLineSearchTypes,SOLVER_ROUTINES
     REAL(DP) :: LINESEARCH_MAXSTEP !<The line search maximum step
     REAL(DP) :: LINESEARCH_STEPTOLERANCE !<The line search step tolerance
@@ -2941,7 +2943,6 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE QUASI_NEWTON_TRUSTREGION_SOLVER_TYPE
     TYPE(QUASI_NEWTON_SOLVER_TYPE), POINTER :: QUASI_NEWTON_SOLVER !<A pointer to the Quasi-Newton solver 
     INTEGER(INTG) :: SOLVER_LIBRARY !<The library type for the nonlinear solver \see SOLVER_ROUTINES_SolverLibraries,SOLVER_ROUTINES
-    INTEGER(INTG) :: SOLVER_MATRICES_LIBRARY !<The library type for the Quasi-Newton trustregion solver matrices \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
     REAL(DP) :: TRUSTREGION_TOLERANCE !<The trust region tolerance
     REAL(DP) :: TRUSTREGION_DELTA0 !<The trust region delta0
     TYPE(PetscSnesType) :: snes !<The PETSc nonlinear solver object
@@ -2984,14 +2985,12 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE EIGENPROBLEM_SOLVER_TYPE
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG) :: SOLVER_LIBRARY !<The library type for the eigenproblem solver \see SOLVER_ROUTINES_SolverLibraries,SOLVER_ROUTINES
-    INTEGER(INTG) :: SOLVER_MATRICES_LIBRARY !<The library type for the eigenproblem solver matrices \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
   END TYPE EIGENPROBLEM_SOLVER_TYPE
   
   !>Contains information for an optimiser solver
   TYPE OptimiserSolverType
     TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
     INTEGER(INTG) :: solverLibrary !<The library type for the optimiser solver \see SOLVER_ROUTINES_SolverLibraries,SOLVER_ROUTINES
-    INTEGER(INTG) :: solverMatricesLibrary !<The library type for the optimiser solver matrices \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
     INTEGER(INTG) :: objectiveType !The type of objective for the optimiser solver \see SOLVER_ROUTINES_OptimiserObjectiveTypes,SOLVER_ROUTINES
     INTEGER(INTG) :: constraintType !The type of constraints for the optimiser solver \see SOLVER_ROUTINES_OptimiserConstraintTypes,SOLVER_ROUTINES
     INTEGER(INTG) :: certaintyType !The type of certainty for the optimiser solver \see SOLVER_ROUTINES_OptimiserCertaintyTypes,SOLVER_ROUTINES

@@ -325,7 +325,6 @@ CONTAINS
 
     IF(ASSOCIATED(solver)) CALL FlagError("Solver is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(solverEquations)) CALL FlagError("Solver equations is not associated.",err,error,*999)
-    IF(.NOT.solverEquations%SOLVER_EQUATIONS_FINISHED) CALL FlagError("Solver equations has not been finished.",err,error,*999)
 
     solver=>solverEquations%solver
     IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver equations solver is not associated.",err,error,*999)

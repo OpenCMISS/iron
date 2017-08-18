@@ -53,26 +53,27 @@ MODULE SOLVER_ROUTINES
   USE CmissPetsc
   USE CmissPetscTypes
   USE COMP_ENVIRONMENT
-  USE CONSTANTS
+  USE Constants
   USE DISTRIBUTED_MATRIX_VECTOR
   USE EquationsAccessRoutines
   USE EQUATIONS_SET_CONSTANTS
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
-  USE KINDS
+  USE Kinds
   USE INPUT_OUTPUT
   USE INTERFACE_CONDITIONS_CONSTANTS
   USE INTERFACE_MATRICES_CONSTANTS
   USE ISO_VARYING_STRING
-  USE MATHS
+  USE Maths
   USE PROBLEM_CONSTANTS
   USE ProfilingRoutines
   USE SolverAccessRoutines
   USE SOLVER_MAPPING_ROUTINES
   USE SOLVER_MATRICES_ROUTINES
-  USE STRINGS
-  USE TIMER
-  USE TYPES
+  USE SolverMatricesAccessRoutines
+  USE Strings
+  USE Timer
+  USE Types
 
 #include "macros.h"  
 
@@ -430,6 +431,17 @@ MODULE SOLVER_ROUTINES
   INTEGER(INTG), PARAMETER :: SOLVER_SPARSE_MATRICES=1 !<Use sparse solver matrices \see SOLVER_ROUTINES_SparsityTypes,SOLVER_ROUTINES
   INTEGER(INTG), PARAMETER :: SOLVER_FULL_MATRICES=2 !<Use fully populated solver matrices \see SOLVER_ROUTINES_SparsityTypes,SOLVER_ROUTINES
   !>@}
+
+  
+  !> \addtogroup SOLVER_ROUTINES_SymmetryTypes SOLVER_ROUTINES::SymmetryTypes
+  !> \brief The types of symmetry in the solver matrices
+  !> \see SOLVER_ROUTINES
+  !>@{
+  INTEGER(INTG), PARAMETER :: SOLVER_SYMMETRIC_MATRICES=1 !<Use symmetric solver matrices \see SOLVER_ROUTINES_SymmetryTypes,SOLVER_ROUTINES
+  INTEGER(INTG), PARAMETER :: SOLVER_UNSYMMETRIC_MATRICES=2 !<Use unsymmetric solver matrices \see SOLVER_ROUTINES_SymmetryTypes,SOLVER_ROUTINES
+  !>@}
+
+  
   !Module types
 
   !Module variables
@@ -668,6 +680,8 @@ MODULE SOLVER_ROUTINES
   
   PUBLIC SOLVER_SPARSE_MATRICES,SOLVER_FULL_MATRICES
 
+  PUBLIC SOLVER_SYMMETRIC_MATRICES,SOLVER_UNSYMMETRIC_MATRICES
+
   PUBLIC SOLVER_EQUATIONS_LINEAR,SOLVER_EQUATIONS_NONLINEAR
 
   PUBLIC SOLVER_EQUATIONS_STATIC,SOLVER_EQUATIONS_QUASISTATIC,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC, &
@@ -752,6 +766,8 @@ MODULE SOLVER_ROUTINES
   PUBLIC SOLVER_EQUATIONS_SPARSITY_TYPE_SET
 
   PUBLIC SolverEquations_SparsityTypeSet
+
+  PUBLIC SolverEquations_SymmetryTypeGet,SolverEquations_SymmetryTypeSet
 
   PUBLIC SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET
 
@@ -5464,9 +5480,9 @@ CONTAINS
     TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD !, INDEPENDENT_FIELD
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: DYNAMIC_VARIABLE,LINEAR_VARIABLE,ResidualVariable
     TYPE(SOLVER_TYPE), POINTER :: SOLVER,LINEAR_SOLVER,NONLINEAR_SOLVER
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
+    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: linearSolverEquations,nonlinearSolverEquations,SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
-    TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
+    TYPE(SOLVER_MATRICES_TYPE), POINTER :: linearSolverMatrices,nonlinearSolverMatrices,SOLVER_MATRICES
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
     ENTERS("SOLVER_DYNAMIC_CREATE_FINISH",ERR,ERROR,*999)
@@ -5660,9 +5676,9 @@ CONTAINS
                 IF(DYNAMIC_SOLVER%linearity==SOLVER_DYNAMIC_LINEAR) THEN
                   LINEAR_SOLVER=>DYNAMIC_SOLVER%LINEAR_SOLVER
                   IF(ASSOCIATED(LINEAR_SOLVER)) THEN
+                    CALL SOLVER_LIBRARY_TYPE_GET(LINEAR_SOLVER,LINEAR_LIBRARY_TYPE,ERR,ERROR,*999)
                     NULLIFY(SOLVER_MATRICES)
                     CALL SOLVER_MATRICES_CREATE_START(SOLVER_EQUATIONS,SOLVER_MATRICES,ERR,ERROR,*999)
-                    CALL SOLVER_MATRICES_LIBRARY_TYPE_GET(LINEAR_SOLVER,LINEAR_LIBRARY_TYPE,ERR,ERROR,*999)
                     CALL SOLVER_MATRICES_LIBRARY_TYPE_SET(SOLVER_MATRICES,LINEAR_LIBRARY_TYPE,ERR,ERROR,*999)
                     IF(DYNAMIC_SOLVER%EXPLICIT) THEN
                       CALL SOLVER_MATRICES_STORAGE_TYPE_SET(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE], &
@@ -5681,6 +5697,17 @@ CONTAINS
                           & " is invalid."
                         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                       END SELECT
+                      SELECT CASE(SOLVER_EQUATIONS%symmetryType)
+                      CASE(SOLVER_SYMMETRIC_MATRICES)
+                        CALL SolverMatrices_SymmetryTypeSet(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_SYMMETRIC_TYPE],ERR,ERROR,*999)
+                      CASE(SOLVER_UNSYMMETRIC_MATRICES)
+                        CALL SolverMatrices_SymmetryTypeSet(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE],ERR,ERROR,*999)
+                      CASE DEFAULT
+                        LOCAL_ERROR="The specified solver equations symmetry type of "// &
+                          & TRIM(NumberToVString(SOLVER_EQUATIONS%symmetryType,"*",ERR,ERROR))// &
+                          & " is invalid."
+                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                      END SELECT
                     ENDIF
                     CALL SOLVER_MATRICES_CREATE_FINISH(SOLVER_MATRICES,ERR,ERROR,*999)
                     !Link linear solver
@@ -5693,9 +5720,9 @@ CONTAINS
                 ELSE IF(DYNAMIC_SOLVER%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
                   NONLINEAR_SOLVER=>DYNAMIC_SOLVER%NONLINEAR_SOLVER
                   IF(ASSOCIATED(NONLINEAR_SOLVER)) THEN
+                    CALL SOLVER_LIBRARY_TYPE_GET(NONLINEAR_SOLVER,NONLINEAR_LIBRARY_TYPE,ERR,ERROR,*999)
                     NULLIFY(SOLVER_MATRICES)
                     CALL SOLVER_MATRICES_CREATE_START(SOLVER_EQUATIONS,SOLVER_MATRICES,ERR,ERROR,*999)
-                    CALL SOLVER_MATRICES_LIBRARY_TYPE_GET(NONLINEAR_SOLVER,NONLINEAR_LIBRARY_TYPE,ERR,ERROR,*999)
                     CALL SOLVER_MATRICES_LIBRARY_TYPE_SET(SOLVER_MATRICES,NONLINEAR_LIBRARY_TYPE,ERR,ERROR,*999)
                     IF(DYNAMIC_SOLVER%EXPLICIT) THEN
                       CALL SOLVER_MATRICES_STORAGE_TYPE_SET(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE], &
@@ -5711,6 +5738,17 @@ CONTAINS
                       CASE DEFAULT
                         LOCAL_ERROR="The specified solver equations sparsity type of "// &
                           & TRIM(NumberToVString(SOLVER_EQUATIONS%sparsityType,"*",ERR,ERROR))// &
+                          & " is invalid."
+                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                      END SELECT
+                      SELECT CASE(SOLVER_EQUATIONS%symmetryType)
+                      CASE(SOLVER_SYMMETRIC_MATRICES)
+                        CALL SolverMatrices_SymmetryTypeSet(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_SYMMETRIC_TYPE],ERR,ERROR,*999)
+                      CASE(SOLVER_UNSYMMETRIC_MATRICES)
+                        CALL SolverMatrices_SymmetryTypeSet(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE],ERR,ERROR,*999)
+                      CASE DEFAULT
+                        LOCAL_ERROR="The specified solver equations symmetry type of "// &
+                          & TRIM(NumberToVString(SOLVER_EQUATIONS%symmetryType,"*",ERR,ERROR))// &
                           & " is invalid."
                         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                       END SELECT
@@ -7306,7 +7344,6 @@ CONTAINS
         IF(ERR/=0) CALL FlagError("Could not allocate solver eigenproblem solver.",ERR,ERROR,*999)
         SOLVER%EIGENPROBLEM_SOLVER%SOLVER=>SOLVER
         SOLVER%EIGENPROBLEM_SOLVER%SOLVER_LIBRARY=SOLVER_PETSC_LIBRARY
-        SOLVER%EIGENPROBLEM_SOLVER%SOLVER_MATRICES_LIBRARY=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
       ENDIF
     ELSE
       CALL FlagError("Solver is not associated.",ERR,ERROR,*998)
@@ -7385,35 +7422,6 @@ CONTAINS
     RETURN 1
    
   END SUBROUTINE SOLVER_EIGENPROBLEM_LIBRARY_TYPE_SET
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns the type of library to use for an eigenproblem solver matrices.
-  SUBROUTINE Solver_EigenproblemMatricesLibraryTypeGet(EIGENPROBLEM_SOLVER,MATRICES_LIBRARY_TYPE,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(EIGENPROBLEM_SOLVER_TYPE), POINTER :: EIGENPROBLEM_SOLVER !<A pointer the eigenproblem solver to get the library type for.
-    INTEGER(INTG), INTENT(OUT) :: MATRICES_LIBRARY_TYPE !<On exit, the type of library used for the eigenproblem solver matrices \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
- 
-    ENTERS("Solver_EigenproblemMatricesLibraryTypeGet",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(EIGENPROBLEM_SOLVER)) THEN
-      MATRICES_LIBRARY_TYPE=EIGENPROBLEM_SOLVER%SOLVER_MATRICES_LIBRARY
-    ELSE
-      CALL FlagError("Eigenproblem solver is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("Solver_EigenproblemMatricesLibraryTypeGet")
-    RETURN
-999 ERRORSEXITS("Solver_EigenproblemMatricesLibraryTypeGet",ERR,ERROR)
-    RETURN 1
-   
-  END SUBROUTINE Solver_EigenproblemMatricesLibraryTypeGet
 
   !
   !================================================================================================================================
@@ -7777,6 +7785,7 @@ CONTAINS
         SOLVER%SOLVER_EQUATIONS%SOLVER=>SOLVER
         SOLVER%SOLVER_EQUATIONS%SOLVER_EQUATIONS_FINISHED=.FALSE.
         SOLVER%SOLVER_EQUATIONS%sparsityType=SOLVER_SPARSE_MATRICES
+        SOLVER%SOLVER_EQUATIONS%symmetryType=SOLVER_SYMMETRIC_MATRICES
         NULLIFY(SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING)
         NULLIFY(SOLVER%SOLVER_EQUATIONS%SOLVER_MATRICES)
         NULLIFY(SOLVER%SOLVER_EQUATIONS%BOUNDARY_CONDITIONS)
@@ -8015,7 +8024,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the sparsity type for solver equations. \see OpenCMISS::Iron::cmfe_SolverEquationsSpartsityTypeSet
+  !>Sets/changes the sparsity type for solver equations. \see OpenCMISS::Iron::cmfe_SolverEquations_SparsityTypeSet
   SUBROUTINE SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SPARSITY_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -8064,6 +8073,84 @@ CONTAINS
     RETURN 1
    
   END SUBROUTINE SOLVER_EQUATIONS_SPARSITY_TYPE_SET
+        
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the symmetry type for solver equations. \see OpenCMISS::Iron::cmfe_SolverEquations_SymmetryTypeGet
+  SUBROUTINE SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*)
+
+    !Argument variables
+    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations !<A pointer the solver equations to get the symmetry type for
+    INTEGER(INTG), INTENT(OUT) :: symmetryType !<On return, the type of solver equations symmetry \see SOLVER_ROUTINES_SymmetryTypes,SOLVER_ROUTINES
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("SolverEquations_SymmetryTypeGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(solverEquations)) CALL FlagError("Solver equations is not associated.",err,error,*999)
+
+    NULLIFY(solver)
+    CALL SolverEquations_SolverGet(solverEquations,solver,err,error,*999)
+    IF(ASSOCIATED(solver%LINKING_SOLVER)) CALL FlagError("Can not get equations sparsity for a solver that has been linked.", &
+      & err,error,*999)
+    
+    symmetryType=solverEquations%symmetryType
+    
+    EXITS("SolverEquations_SymmetryTypeGet")
+    RETURN
+999 ERRORSEXITS("SolverEquations_SymmetryTypeGet",err,error)
+    RETURN 1
+   
+  END SUBROUTINE SolverEquations_SymmetryTypeGet
+        
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the symmetry type for solver equations. \see OpenCMISS::Iron::cmfe_SolverEquations_SymmetryTypeSet
+  SUBROUTINE SolverEquations_SymmetryTypeSet(solverEquations,symmetryType,err,error,*)
+
+    !Argument variables
+    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations !<A pointer the solver equations to set the symmetry type for
+    INTEGER(INTG), INTENT(IN) :: symmetryType !<The type of solver equations symmetry to be set \see SOLVER_ROUTINES_SymmetryTypes,SOLVER_ROUTINES
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("SolverEquations_SymmetryTypeSet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(solverEquations)) CALL FlagError("Solver equations is not associated.",err,error,*999)
+    IF(solverEquations%SOLVER_EQUATIONS_FINISHED) CALL FlagError("Solver equations has already been finished.",err,error,*999)
+
+    NULLIFY(solver)
+    CALL SolverEquations_SolverGet(solverEquations,solver,err,error,*999)
+    IF(ASSOCIATED(solver%LINKING_SOLVER)) CALL FlagError("Can not set equations symmetry for a solver that has been linked.", &
+      & err,error,*999)
+    
+    SELECT CASE(symmetryType)
+    CASE(SOLVER_SYMMETRIC_MATRICES)
+      solverEquations%symmetryType=SOLVER_SYMMETRIC_MATRICES
+    CASE(SOLVER_FULL_MATRICES)
+      solverEquations%symmetryType=SOLVER_UNSYMMETRIC_MATRICES
+    CASE DEFAULT
+      localError="The specified solver equations symmetry type of "// &
+        & TRIM(NumberToVString(symmetryType,"*",ERR,ERROR))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("SolverEquations_SymmetryTypeSet")
+    RETURN
+999 ERRORSEXITS("SolverEquations_SymmetryTypeSet",err,error)
+    RETURN 1
+   
+  END SUBROUTINE SolverEquations_SymmetryTypeSet
         
   !
   !================================================================================================================================
@@ -9697,6 +9784,17 @@ CONTAINS
                     & " is invalid."
                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 END SELECT
+                SELECT CASE(SOLVER_EQUATIONS%symmetryType)
+                CASE(SOLVER_SYMMETRIC_MATRICES)
+                  CALL SolverMatrices_SymmetryTypeSet(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_SYMMETRIC_TYPE],ERR,ERROR,*999)
+                CASE(SOLVER_UNSYMMETRIC_MATRICES)
+                  CALL SolverMatrices_SymmetryTypeSet(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE],ERR,ERROR,*999)
+                CASE DEFAULT
+                  LOCAL_ERROR="The specified solver equations symmetry type of "// &
+                    & TRIM(NumberToVString(SOLVER_EQUATIONS%symmetryType,"*",ERR,ERROR))// &
+                    & " is invalid."
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                END SELECT
                 CALL SOLVER_MATRICES_CREATE_FINISH(SOLVER_MATRICES,ERR,ERROR,*999)
               ELSE
                 CALL FlagError("Solver solver equations is not associated.",ERR,ERROR,*999)
@@ -9946,10 +10044,8 @@ CONTAINS
           CALL FlagError("Not implemeted.",ERR,ERROR,*999)
         CASE(SOLVER_MUMPS_LIBRARY)
           DIRECT_SOLVER%SOLVER_LIBRARY=SOLVER_MUMPS_LIBRARY
-          DIRECT_SOLVER%SOLVER_MATRICES_LIBRARY=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
         CASE(SOLVER_SUPERLU_LIBRARY)
           DIRECT_SOLVER%SOLVER_LIBRARY=SOLVER_SUPERLU_LIBRARY
-          DIRECT_SOLVER%SOLVER_MATRICES_LIBRARY=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
         CASE(SOLVER_SPOOLES_LIBRARY)
           CALL FlagError("Not implemeted.",ERR,ERROR,*999)
         CASE(SOLVER_LUSOL_LIBRARY)
@@ -9958,10 +10054,8 @@ CONTAINS
           CALL FlagError("Not implemeted.",ERR,ERROR,*999)
         CASE(SOLVER_LAPACK_LIBRARY)
           DIRECT_SOLVER%SOLVER_LIBRARY=SOLVER_LAPACK_LIBRARY
-          DIRECT_SOLVER%SOLVER_MATRICES_LIBRARY=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
         CASE(SOLVER_PASTIX_LIBRARY)
           DIRECT_SOLVER%SOLVER_LIBRARY=SOLVER_PASTIX_LIBRARY
-          DIRECT_SOLVER%SOLVER_MATRICES_LIBRARY=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
         CASE DEFAULT
           LOCAL_ERROR="The specified solver library type of "// &
             & TRIM(NumberToVString(SOLVER_LIBRARY_TYPE,"*",ERR,ERROR))// &
@@ -10068,7 +10162,6 @@ CONTAINS
       !Default to MUMPS library
       DIRECT_SOLVER%SOLVER_LIBRARY=SOLVER_MUMPS_LIBRARY
       !Call MUMPS through PETSc
-      DIRECT_SOLVER%SOLVER_MATRICES_LIBRARY=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
       CALL Petsc_PCInitialise(DIRECT_SOLVER%PC,ERR,ERROR,*999)
       CALL Petsc_KSPInitialise(DIRECT_SOLVER%KSP,ERR,ERROR,*999)
     ELSE
@@ -10082,35 +10175,6 @@ CONTAINS
     RETURN 1
    
   END SUBROUTINE SOLVER_LINEAR_DIRECT_LU_INITIALISE
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns the type of library to use for a direct linear solver matrices.
-  SUBROUTINE Solver_LinearDirectMatricesLibraryTypeGet(DIRECT_SOLVER,MATRICES_LIBRARY_TYPE,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(LINEAR_DIRECT_SOLVER_TYPE), POINTER :: DIRECT_SOLVER !<A pointer the direct linear solver to get the library type for.
-    INTEGER(INTG), INTENT(OUT) :: MATRICES_LIBRARY_TYPE !<On exit, the type of library used for the direct linear solver \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
- 
-    ENTERS("Solver_LinearDirectMatricesLibraryTypeGet",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(DIRECT_SOLVER)) THEN
-      MATRICES_LIBRARY_TYPE=DIRECT_SOLVER%SOLVER_MATRICES_LIBRARY
-    ELSE
-      CALL FlagError("Direct linear solver is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("Solver_LinearDirectMatricesLibraryTypeGet")
-    RETURN
-999 ERRORSEXITS("Solver_LinearDirectMatricesLibraryTypeGet",ERR,ERROR)
-    RETURN 1
-   
-  END SUBROUTINE Solver_LinearDirectMatricesLibraryTypeGet
 
   !
   !================================================================================================================================
@@ -10914,6 +10978,17 @@ CONTAINS
                     & " is invalid."
                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 END SELECT
+                SELECT CASE(SOLVER_EQUATIONS%symmetryType)
+                CASE(SOLVER_SYMMETRIC_MATRICES)
+                  CALL SolverMatrices_SymmetryTypeSet(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_SYMMETRIC_TYPE],ERR,ERROR,*999)
+                CASE(SOLVER_UNSYMMETRIC_MATRICES)
+                  CALL SolverMatrices_SymmetryTypeSet(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE],ERR,ERROR,*999)
+                CASE DEFAULT
+                  LOCAL_ERROR="The specified solver equations symmetry type of "// &
+                    & TRIM(NumberToVString(SOLVER_EQUATIONS%symmetryType,"*",ERR,ERROR))// &
+                    & " is invalid."
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                END SELECT
                 CALL SOLVER_MATRICES_CREATE_FINISH(SOLVER_MATRICES,ERR,ERROR,*999)
               ELSE
                 CALL FlagError("Solver solver equations is not associated.",ERR,ERROR,*999)
@@ -11261,7 +11336,6 @@ CONTAINS
         IF(ERR/=0) CALL FlagError("Could not allocate linear solver iterative solver.",ERR,ERROR,*999)
         LINEAR_SOLVER%ITERATIVE_SOLVER%LINEAR_SOLVER=>LINEAR_SOLVER
         LINEAR_SOLVER%ITERATIVE_SOLVER%SOLVER_LIBRARY=SOLVER_PETSC_LIBRARY
-        LINEAR_SOLVER%ITERATIVE_SOLVER%SOLVER_MATRICES_LIBRARY=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
         LINEAR_SOLVER%ITERATIVE_SOLVER%ITERATIVE_SOLVER_TYPE=SOLVER_ITERATIVE_GMRES
         LINEAR_SOLVER%ITERATIVE_SOLVER%ITERATIVE_PRECONDITIONER_TYPE=SOLVER_ITERATIVE_JACOBI_PRECONDITIONER
         LINEAR_SOLVER%ITERATIVE_SOLVER%SOLUTION_INITIALISE_TYPE=SOLVER_SOLUTION_INITIALISE_CURRENT_FIELD
@@ -11357,7 +11431,6 @@ CONTAINS
           CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(SOLVER_PETSC_LIBRARY)
           ITERATIVE_SOLVER%SOLVER_LIBRARY=SOLVER_PETSC_LIBRARY
-          ITERATIVE_SOLVER%SOLVER_MATRICES_LIBRARY=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
         CASE DEFAULT
           LOCAL_ERROR="The specified solver library type of "// &
             & TRIM(NumberToVString(SOLVER_LIBRARY_TYPE,"*",ERR,ERROR))// &
@@ -11369,7 +11442,6 @@ CONTAINS
           CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(SOLVER_PETSC_LIBRARY)
           ITERATIVE_SOLVER%SOLVER_LIBRARY=SOLVER_PETSC_LIBRARY
-          ITERATIVE_SOLVER%SOLVER_MATRICES_LIBRARY=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
        CASE DEFAULT
           LOCAL_ERROR="The specified solver library type of "// &
             & TRIM(NumberToVString(SOLVER_LIBRARY_TYPE,"*",ERR,ERROR))// &
@@ -11381,7 +11453,6 @@ CONTAINS
           CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(SOLVER_PETSC_LIBRARY)
           ITERATIVE_SOLVER%SOLVER_LIBRARY=SOLVER_PETSC_LIBRARY
-          ITERATIVE_SOLVER%SOLVER_MATRICES_LIBRARY=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
         CASE DEFAULT
           LOCAL_ERROR="The specified solver library type of "// &
             & TRIM(NumberToVString(SOLVER_LIBRARY_TYPE,"*",ERR,ERROR))// &
@@ -11393,7 +11464,6 @@ CONTAINS
           CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(SOLVER_PETSC_LIBRARY)
           ITERATIVE_SOLVER%SOLVER_LIBRARY=SOLVER_PETSC_LIBRARY
-          ITERATIVE_SOLVER%SOLVER_MATRICES_LIBRARY=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
        CASE DEFAULT
           LOCAL_ERROR="The specified solver library type of "// &
             & TRIM(NumberToVString(SOLVER_LIBRARY_TYPE,"*",ERR,ERROR))// &
@@ -11405,7 +11475,6 @@ CONTAINS
           CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(SOLVER_PETSC_LIBRARY)
           ITERATIVE_SOLVER%SOLVER_LIBRARY=SOLVER_PETSC_LIBRARY
-          ITERATIVE_SOLVER%SOLVER_MATRICES_LIBRARY=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
        CASE DEFAULT
           LOCAL_ERROR="The specified solver library type of "// &
             & TRIM(NumberToVString(SOLVER_LIBRARY_TYPE,"*",ERR,ERROR))// &
@@ -11417,7 +11486,6 @@ CONTAINS
           CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(SOLVER_PETSC_LIBRARY)
           ITERATIVE_SOLVER%SOLVER_LIBRARY=SOLVER_PETSC_LIBRARY
-          ITERATIVE_SOLVER%SOLVER_MATRICES_LIBRARY=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
        CASE DEFAULT
           LOCAL_ERROR="The specified solver library type of "// &
             & TRIM(NumberToVString(SOLVER_LIBRARY_TYPE,"*",ERR,ERROR))// &
@@ -11438,36 +11506,6 @@ CONTAINS
     RETURN 1
    
   END SUBROUTINE SOLVER_LINEAR_ITERATIVE_LIBRARY_TYPE_SET
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns the type of library to use for an iterative linear solver matrices.
-  SUBROUTINE Solver_LinearIterativeMatricesLibraryTypeGet(ITERATIVE_SOLVER,MATRICES_LIBRARY_TYPE,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(LINEAR_ITERATIVE_SOLVER_TYPE), POINTER :: ITERATIVE_SOLVER !<A pointer the iterative linear solver to get the library type for.
-    INTEGER(INTG), INTENT(OUT) :: MATRICES_LIBRARY_TYPE !<On exit, the type of library used for the iterative linear solver matrices \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    
-    ENTERS("Solver_LinearIterativeMatricesLibraryTypeGet",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(ITERATIVE_SOLVER)) THEN
-      MATRICES_LIBRARY_TYPE=ITERATIVE_SOLVER%SOLVER_MATRICES_LIBRARY
-    ELSE
-      CALL FlagError("Iterative linear solver is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("Solver_LinearIterativeMatricesLibraryTypeGet")
-    RETURN
-999 ERRORS("Solver_LinearIterativeMatricesLibraryTypeGet",ERR,ERROR)
-    EXITS("Solver_LinearIterativeMatricesLibraryTypeGet")
-    RETURN 1
-   
-  END SUBROUTINE Solver_LinearIterativeMatricesLibraryTypeGet
 
   !
   !================================================================================================================================
@@ -12124,57 +12162,6 @@ CONTAINS
     RETURN 1
    
   END SUBROUTINE SOLVER_LINEAR_LIBRARY_TYPE_SET
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns the type of library to use for a linear solver matrices.
-  SUBROUTINE SOLVER_LINEAR_MATRICES_LIBRARY_TYPE_GET(LINEAR_SOLVER,MATRICES_LIBRARY_TYPE,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(LINEAR_SOLVER_TYPE), POINTER :: LINEAR_SOLVER !<A pointer the linear solver to get the library type for.
-     INTEGER(INTG), INTENT(OUT) :: MATRICES_LIBRARY_TYPE !<On exit, the type of library used for the linear solver matrices \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(LINEAR_DIRECT_SOLVER_TYPE), POINTER :: DIRECT_SOLVER
-    TYPE(LINEAR_ITERATIVE_SOLVER_TYPE), POINTER :: ITERATIVE_SOLVER
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("SOLVER_LINEAR_MATRICES_LIBRARY_TYPE_GET",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(LINEAR_SOLVER)) THEN
-      SELECT CASE(LINEAR_SOLVER%LINEAR_SOLVE_TYPE)
-      CASE(SOLVER_LINEAR_DIRECT_SOLVE_TYPE)
-        DIRECT_SOLVER=>LINEAR_SOLVER%DIRECT_SOLVER
-        IF(ASSOCIATED(DIRECT_SOLVER)) THEN
-          CALL Solver_LinearDirectMatricesLibraryTypeGet(DIRECT_SOLVER,MATRICES_LIBRARY_TYPE,ERR,ERROR,*999)
-        ELSE
-          CALL FlagError("Linear solver direct solver is not associated.",ERR,ERROR,*999)
-        ENDIF
-      CASE(SOLVER_LINEAR_ITERATIVE_SOLVE_TYPE)
-        ITERATIVE_SOLVER=>LINEAR_SOLVER%ITERATIVE_SOLVER
-        IF(ASSOCIATED(ITERATIVE_SOLVER)) THEN
-          CALL Solver_LinearIterativeMatricesLibraryTypeGet(ITERATIVE_SOLVER,MATRICES_LIBRARY_TYPE,ERR,ERROR,*999)
-        ELSE
-          CALL FlagError("Linear solver iterative solver is not associated.",ERR,ERROR,*999)
-        ENDIF
-      CASE DEFAULT
-        LOCAL_ERROR="The linear solver type of "//TRIM(NumberToVString(LINEAR_SOLVER%LINEAR_SOLVE_TYPE,"*",ERR,ERROR))// &
-          & " is invalid."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Linear solver is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("SOLVER_LINEAR_MATRICES_LIBRARY_TYPE_GET")
-    RETURN
-999 ERRORSEXITS("SOLVER_LINEAR_MATRICES_LIBRARY_TYPE_GET",ERR,ERROR)
-    RETURN 1
-   
-  END SUBROUTINE SOLVER_LINEAR_MATRICES_LIBRARY_TYPE_GET
 
   !
   !================================================================================================================================
@@ -15062,78 +15049,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the type of library to use for the solver matrices 
-  SUBROUTINE SOLVER_MATRICES_LIBRARY_TYPE_GET(SOLVER,MATRICES_LIBRARY_TYPE,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer the solver to get the matrices library type of
-    INTEGER(INTG), INTENT(OUT) :: MATRICES_LIBRARY_TYPE !<On exit, the type of library used for the solver matrices \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(EIGENPROBLEM_SOLVER_TYPE), POINTER :: EIGENPROBLEM_SOLVER
-    TYPE(LINEAR_SOLVER_TYPE), POINTER :: LINEAR_SOLVER
-    TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: NONLINEAR_SOLVER
-    TYPE(OptimiserSolverType), POINTER :: optimiserSolver
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("SOLVER_MATRICES_LIBRARY_TYPE_GET",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(SOLVER)) THEN
-      SELECT CASE(SOLVER%SOLVE_TYPE)
-      CASE(SOLVER_LINEAR_TYPE)
-        LINEAR_SOLVER=>SOLVER%LINEAR_SOLVER
-        IF(ASSOCIATED(LINEAR_SOLVER)) THEN
-          CALL SOLVER_LINEAR_MATRICES_LIBRARY_TYPE_GET(LINEAR_SOLVER,MATRICES_LIBRARY_TYPE,ERR,ERROR,*999)
-        ELSE
-          CALL FlagError("Solver linear solver is not associated.",ERR,ERROR,*999)
-        ENDIF
-      CASE(SOLVER_NONLINEAR_TYPE)
-        NONLINEAR_SOLVER=>SOLVER%NONLINEAR_SOLVER
-        IF(ASSOCIATED(NONLINEAR_SOLVER)) THEN
-          CALL SOLVER_nonlinearMatrices_LIBRARY_TYPE_GET(NONLINEAR_SOLVER,MATRICES_LIBRARY_TYPE,ERR,ERROR,*999)
-        ELSE
-          CALL FlagError("Solver nonlinear solver is not associated.",ERR,ERROR,*999)
-        ENDIF
-      CASE(SOLVER_DYNAMIC_TYPE)
-        CALL FlagError("Cannot get the solver matrices library for a dynamic solver.",ERR,ERROR,*999)
-      CASE(SOLVER_DAE_TYPE)
-        CALL FlagError("Cannot get the solver matrices library for an differential-algebraic equations solver.",ERR,ERROR,*999)
-      CASE(SOLVER_EIGENPROBLEM_TYPE)
-        EIGENPROBLEM_SOLVER=>SOLVER%EIGENPROBLEM_SOLVER
-        IF(ASSOCIATED(EIGENPROBLEM_SOLVER)) THEN
-          CALL Solver_EigenproblemMatricesLibraryTypeGet(EIGENPROBLEM_SOLVER,MATRICES_LIBRARY_TYPE,ERR,ERROR,*999)
-        ELSE
-          CALL FlagError("Solver eigenproblem solver is not associated.",ERR,ERROR,*999)
-        ENDIF
-      CASE(SOLVER_OPTIMISER_TYPE)
-        optimiserSolver=>solver%optimiserSolver
-        IF(ASSOCIATED(optimiserSolver)) THEN
-          CALL Solver_OptimiserMatricesLibraryTypeGet(optimiserSolver,MATRICES_LIBRARY_TYPE,err,error,*999)
-        ELSE
-          CALL FlagError("Solver optimiser solver is not associated.",err,error,*999)
-        ENDIF
-      CASE(SOLVER_CELLML_EVALUATOR_TYPE)
-        CALL FlagError("Cannot get the solver matrices library for a CellML evaluator solver.",ERR,ERROR,*999)
-      CASE DEFAULT
-        LOCAL_ERROR="The solver type of "//TRIM(NumberToVString(SOLVER%SOLVE_TYPE,"*",ERR,ERROR))//" is invalid."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Solver is not associated.",ERR,ERROR,*999)
-    ENDIF
-        
-    EXITS("SOLVER_MATRICES_LIBRARY_TYPE_GET")
-    RETURN
-999 ERRORSEXITS("SOLVER_MATRICES_LIBRARY_TYPE_GET",ERR,ERROR)
-    RETURN 1
-   
-  END SUBROUTINE SOLVER_MATRICES_LIBRARY_TYPE_GET
-
-  !
-  !================================================================================================================================
-  !
-
   !>Sets/changes the maximum absolute tolerance for a nonlinear Quasi-Newton solver. \see OpenCMISS::Iron::cmfe_SolverQuasiNewtonAbsoluteToleranceSet
   SUBROUTINE SOLVER_QUASI_NEWTON_ABSOLUTE_TOLERANCE_SET(SOLVER,ABSOLUTE_TOLERANCE,ERR,ERROR,*)
 
@@ -15548,7 +15463,6 @@ CONTAINS
             CALL FlagError("Not implemented.",ERR,ERROR,*999)
           CASE(SOLVER_PETSC_LIBRARY)
             LINESEARCH_SOLVER%SOLVER_LIBRARY=SOLVER_PETSC_LIBRARY
-            LINESEARCH_SOLVER%SOLVER_MATRICES_LIBRARY=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
           CASE DEFAULT
             LOCAL_ERROR="The solver library type of "//TRIM(NumberToVString(SOLVER_LIBRARY_TYPE,"*",ERR,ERROR))// &
               & " is invalid for a Quasi-Newton linesearch solver."
@@ -15565,7 +15479,6 @@ CONTAINS
             CALL FlagError("Not implemented.",ERR,ERROR,*999)
           CASE(SOLVER_PETSC_LIBRARY)
             TRUSTREGION_SOLVER%SOLVER_LIBRARY=SOLVER_PETSC_LIBRARY
-            TRUSTREGION_SOLVER%SOLVER_MATRICES_LIBRARY=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
           CASE DEFAULT
             LOCAL_ERROR="The solver library type of "//TRIM(NumberToVString(SOLVER_LIBRARY_TYPE,"*",ERR,ERROR))// &
               & " is invalid for a Quasi-Newton trustregion solver."
@@ -16046,6 +15959,17 @@ CONTAINS
                         & TRIM(NumberToVString(SOLVER_EQUATIONS%sparsityType,"*",ERR,ERROR))//" is invalid."
                       CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     END SELECT
+                    SELECT CASE(SOLVER_EQUATIONS%symmetryType)
+                    CASE(SOLVER_SYMMETRIC_MATRICES)
+                      CALL SolverMatrices_SymmetryTypeSet(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_SYMMETRIC_TYPE],ERR,ERROR,*999)
+                    CASE(SOLVER_UNSYMMETRIC_MATRICES)
+                      CALL SolverMatrices_SymmetryTypeSet(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE],ERR,ERROR,*999)
+                    CASE DEFAULT
+                      LOCAL_ERROR="The specified solver equations symmetry type of "// &
+                        & TRIM(NumberToVString(SOLVER_EQUATIONS%symmetryType,"*",ERR,ERROR))// &
+                        & " is invalid."
+                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                    END SELECT
                     CALL SOLVER_MATRICES_CREATE_FINISH(SOLVER_MATRICES,ERR,ERROR,*999)
                     !Link linear solver
                     LINEAR_SOLVER%SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
@@ -16282,7 +16206,6 @@ CONTAINS
         IF(ERR/=0) CALL FlagError("Could not allocate nonlinear solver Quasi-Newton line search solver.",ERR,ERROR,*999)
         QUASI_NEWTON_SOLVER%LINESEARCH_SOLVER%QUASI_NEWTON_SOLVER=>QUASI_NEWTON_SOLVER
         QUASI_NEWTON_SOLVER%LINESEARCH_SOLVER%SOLVER_LIBRARY=SOLVER_PETSC_LIBRARY
-        QUASI_NEWTON_SOLVER%LINESEARCH_SOLVER%SOLVER_MATRICES_LIBRARY=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
         QUASI_NEWTON_SOLVER%LINESEARCH_SOLVER%LINESEARCH_TYPE=SOLVER_QUASI_NEWTON_LINESEARCH_CP
         QUASI_NEWTON_SOLVER%LINESEARCH_SOLVER%LINESEARCH_MAXSTEP=1.0E8_DP
         QUASI_NEWTON_SOLVER%LINESEARCH_SOLVER%LINESEARCH_STEPTOLERANCE=CONVERGENCE_TOLERANCE
@@ -16675,57 +16598,6 @@ CONTAINS
     
   END SUBROUTINE SOLVER_QUASI_NEWTON_LINESEARCH_TYPE_SET
         
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns the type of library to use for a Quasi-Newton solver matrices.
-  SUBROUTINE Solver_QuasiNewtonMatricesLibraryTypeGet(QUASI_NEWTON_SOLVER,MATRICES_LIBRARY_TYPE,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(QUASI_NEWTON_SOLVER_TYPE), POINTER :: QUASI_NEWTON_SOLVER !<A pointer the Quasi-Newton solver to get the library type for.
-    INTEGER(INTG), INTENT(OUT) :: MATRICES_LIBRARY_TYPE !<On exit, the type of library used for the Quasi-Newton solver matrices \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(QUASI_NEWTON_LINESEARCH_SOLVER_TYPE), POINTER :: LINESEARCH_SOLVER
-    TYPE(QUASI_NEWTON_TRUSTREGION_SOLVER_TYPE), POINTER :: TRUSTREGION_SOLVER
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
- 
-    ENTERS("Solver_QuasiNewtonMatricesLibraryTypeGet",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(QUASI_NEWTON_SOLVER)) THEN
-      SELECT CASE(QUASI_NEWTON_SOLVER%QUASI_NEWTON_SOLVE_TYPE)
-      CASE(SOLVER_QUASI_NEWTON_LINESEARCH)
-        LINESEARCH_SOLVER=>QUASI_NEWTON_SOLVER%LINESEARCH_SOLVER
-        IF(ASSOCIATED(LINESEARCH_SOLVER)) THEN
-          MATRICES_LIBRARY_TYPE=LINESEARCH_SOLVER%SOLVER_MATRICES_LIBRARY
-        ELSE
-          CALL FlagError("Quasi-Newton line search solver is not associated.",ERR,ERROR,*999)
-        ENDIF
-      CASE(SOLVER_QUASI_NEWTON_TRUSTREGION)
-        TRUSTREGION_SOLVER=>QUASI_NEWTON_SOLVER%TRUSTREGION_SOLVER
-        IF(ASSOCIATED(TRUSTREGION_SOLVER)) THEN
-          MATRICES_LIBRARY_TYPE=TRUSTREGION_SOLVER%SOLVER_MATRICES_LIBRARY
-        ELSE
-          CALL FlagError("Quasi-Newton trust region solver is not associated.",ERR,ERROR,*999)
-        ENDIF
-      CASE DEFAULT
-        LOCAL_ERROR="The Quasi-Newton solver type of "// &
-          & TRIM(NumberToVString(QUASI_NEWTON_SOLVER%QUASI_NEWTON_SOLVE_TYPE,"*",ERR,ERROR))//" is invalid."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Quasi-Newton solver is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("Solver_QuasiNewtonMatricesLibraryTypeGet")
-    RETURN
-999 ERRORSEXITS("Solver_QuasiNewtonMatricesLibraryTypeGet",ERR,ERROR)
-    RETURN 1
-   
-  END SUBROUTINE Solver_QuasiNewtonMatricesLibraryTypeGet
-
   !
   !================================================================================================================================
   !
@@ -17190,6 +17062,17 @@ CONTAINS
                   CALL SOLVER_MATRICES_CREATE_START(SOLVER_EQUATIONS,SOLVER_MATRICES,ERR,ERROR,*999)
                   CALL SOLVER_MATRICES_LIBRARY_TYPE_SET(SOLVER_MATRICES,SOLVER_PETSC_LIBRARY,ERR,ERROR,*999)
 !!TODO: set up the matrix structure if using an analytic Jacobian
+                  SELECT CASE(SOLVER_EQUATIONS%symmetryType)
+                  CASE(SOLVER_SYMMETRIC_MATRICES)
+                    CALL SolverMatrices_SymmetryTypeSet(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_SYMMETRIC_TYPE],ERR,ERROR,*999)
+                  CASE(SOLVER_UNSYMMETRIC_MATRICES)
+                    CALL SolverMatrices_SymmetryTypeSet(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE],ERR,ERROR,*999)
+                  CASE DEFAULT
+                    LOCAL_ERROR="The specified solver equations symmetry type of "// &
+                      & TRIM(NumberToVString(SOLVER_EQUATIONS%symmetryType,"*",ERR,ERROR))// &
+                      & " is invalid."
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                  END SELECT
                   CALL SOLVER_MATRICES_CREATE_FINISH(SOLVER_MATRICES,ERR,ERROR,*999)
                   !Create the PETSc SNES solver
                   CALL Petsc_SnesCreate(COMPUTATIONAL_ENVIRONMENT%MPI_COMM,TRUSTREGION_SOLVER%snes,ERR,ERROR,*999)
@@ -17373,7 +17256,6 @@ CONTAINS
         IF(ERR/=0) CALL FlagError("Could not allocate Quasi-Newton solver trust region solver.",ERR,ERROR,*999)
         QUASI_NEWTON_SOLVER%TRUSTREGION_SOLVER%QUASI_NEWTON_SOLVER=>QUASI_NEWTON_SOLVER
         QUASI_NEWTON_SOLVER%TRUSTREGION_SOLVER%SOLVER_LIBRARY=SOLVER_PETSC_LIBRARY
-        QUASI_NEWTON_SOLVER%TRUSTREGION_SOLVER%SOLVER_MATRICES_LIBRARY=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
 !!TODO: set this properly
         QUASI_NEWTON_SOLVER%TRUSTREGION_SOLVER%TRUSTREGION_DELTA0=0.01_DP
         CALL Petsc_SnesInitialise(QUASI_NEWTON_SOLVER%TRUSTREGION_SOLVER%snes,ERR,ERROR,*999)
@@ -18285,7 +18167,6 @@ CONTAINS
             CALL FlagError("Not implemented.",ERR,ERROR,*999)
           CASE(SOLVER_PETSC_LIBRARY)
             LINESEARCH_SOLVER%SOLVER_LIBRARY=SOLVER_PETSC_LIBRARY
-            LINESEARCH_SOLVER%SOLVER_MATRICES_LIBRARY=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
           CASE DEFAULT
             LOCAL_ERROR="The solver library type of "//TRIM(NumberToVString(SOLVER_LIBRARY_TYPE,"*",ERR,ERROR))// &
               & " is invalid for a Newton linesearch solver."
@@ -18302,7 +18183,6 @@ CONTAINS
             CALL FlagError("Not implemented.",ERR,ERROR,*999)
           CASE(SOLVER_PETSC_LIBRARY)
             TRUSTREGION_SOLVER%SOLVER_LIBRARY=SOLVER_PETSC_LIBRARY
-            TRUSTREGION_SOLVER%SOLVER_MATRICES_LIBRARY=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
           CASE DEFAULT
             LOCAL_ERROR="The solver library type of "//TRIM(NumberToVString(SOLVER_LIBRARY_TYPE,"*",ERR,ERROR))// &
               & " is invalid for a Newton trustregion solver."
@@ -18809,6 +18689,17 @@ CONTAINS
                         & TRIM(NumberToVString(SOLVER_EQUATIONS%sparsityType,"*",ERR,ERROR))//" is invalid."
                       CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     END SELECT
+                    SELECT CASE(SOLVER_EQUATIONS%symmetryType)
+                    CASE(SOLVER_SYMMETRIC_MATRICES)
+                      CALL SolverMatrices_SymmetryTypeSet(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_SYMMETRIC_TYPE],ERR,ERROR,*999)
+                    CASE(SOLVER_UNSYMMETRIC_MATRICES)
+                      CALL SolverMatrices_SymmetryTypeSet(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE],ERR,ERROR,*999)
+                    CASE DEFAULT
+                      LOCAL_ERROR="The specified solver equations symmetry type of "// &
+                        & TRIM(NumberToVString(SOLVER_EQUATIONS%symmetryType,"*",ERR,ERROR))// &
+                        & " is invalid."
+                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                    END SELECT
                     CALL SOLVER_MATRICES_CREATE_FINISH(SOLVER_MATRICES,ERR,ERROR,*999)
                     !Link linear solver
                     LINEAR_SOLVER%SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
@@ -19065,7 +18956,6 @@ CONTAINS
         IF(ERR/=0) CALL FlagError("Could not allocate nonlinear solver Newton line search solver.",ERR,ERROR,*999)
         NEWTON_SOLVER%LINESEARCH_SOLVER%NEWTON_SOLVER=>NEWTON_SOLVER
         NEWTON_SOLVER%LINESEARCH_SOLVER%SOLVER_LIBRARY=SOLVER_PETSC_LIBRARY
-        NEWTON_SOLVER%LINESEARCH_SOLVER%SOLVER_MATRICES_LIBRARY=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
         NEWTON_SOLVER%LINESEARCH_SOLVER%LINESEARCH_TYPE=SOLVER_NEWTON_LINESEARCH_CUBIC
         NEWTON_SOLVER%LINESEARCH_SOLVER%LINESEARCH_ALPHA=0.0001_DP
         NEWTON_SOLVER%LINESEARCH_SOLVER%LINESEARCH_MAXSTEP=1.0E8_DP
@@ -19466,57 +19356,6 @@ CONTAINS
     
   END SUBROUTINE SOLVER_NEWTON_LINESEARCH_TYPE_SET
         
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns the type of library to use for a Newton solver matrices.
-  SUBROUTINE SOLVER_NEWTON_MATRICES_LIBRARY_TYPE_GET(NEWTON_SOLVER,MATRICES_LIBRARY_TYPE,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(NEWTON_SOLVER_TYPE), POINTER :: NEWTON_SOLVER !<A pointer the Newton solver to get the library type for.
-    INTEGER(INTG), INTENT(OUT) :: MATRICES_LIBRARY_TYPE !<On exit, the type of library used for the Newton solver matrices \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(NEWTON_LINESEARCH_SOLVER_TYPE), POINTER :: LINESEARCH_SOLVER
-    TYPE(NEWTON_TRUSTREGION_SOLVER_TYPE), POINTER :: TRUSTREGION_SOLVER
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
- 
-    ENTERS("SOLVER_NEWTON_MATRICES_LIBRARY_TYPE_GET",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(NEWTON_SOLVER)) THEN
-      SELECT CASE(NEWTON_SOLVER%NEWTON_SOLVE_TYPE)
-      CASE(SOLVER_NEWTON_LINESEARCH)
-        LINESEARCH_SOLVER=>NEWTON_SOLVER%LINESEARCH_SOLVER
-        IF(ASSOCIATED(LINESEARCH_SOLVER)) THEN
-          MATRICES_LIBRARY_TYPE=LINESEARCH_SOLVER%SOLVER_MATRICES_LIBRARY
-        ELSE
-          CALL FlagError("Newton line search solver is not associated.",ERR,ERROR,*999)
-        ENDIF
-      CASE(SOLVER_NEWTON_TRUSTREGION)
-        TRUSTREGION_SOLVER=>NEWTON_SOLVER%TRUSTREGION_SOLVER
-        IF(ASSOCIATED(TRUSTREGION_SOLVER)) THEN
-          MATRICES_LIBRARY_TYPE=TRUSTREGION_SOLVER%SOLVER_MATRICES_LIBRARY
-        ELSE
-          CALL FlagError("Newton trust region solver is not associated.",ERR,ERROR,*999)
-        ENDIF
-      CASE DEFAULT
-        LOCAL_ERROR="The Newton solver type of "// &
-          & TRIM(NumberToVString(NEWTON_SOLVER%NEWTON_SOLVE_TYPE,"*",ERR,ERROR))//" is invalid."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Newton solver is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("SOLVER_NEWTON_MATRICES_LIBRARY_TYPE_GET")
-    RETURN
-999 ERRORSEXITS("SOLVER_NEWTON_MATRICES_LIBRARY_TYPE_GET",ERR,ERROR)
-    RETURN 1
-   
-  END SUBROUTINE SOLVER_NEWTON_MATRICES_LIBRARY_TYPE_GET
-
   !
   !================================================================================================================================
   !
@@ -19980,6 +19819,17 @@ CONTAINS
                   CALL SOLVER_MATRICES_CREATE_START(SOLVER_EQUATIONS,SOLVER_MATRICES,ERR,ERROR,*999)
                   CALL SOLVER_MATRICES_LIBRARY_TYPE_SET(SOLVER_MATRICES,SOLVER_PETSC_LIBRARY,ERR,ERROR,*999)
 !!TODO: set up the matrix structure if using an analytic Jacobian
+                  SELECT CASE(SOLVER_EQUATIONS%symmetryType)
+                  CASE(SOLVER_SYMMETRIC_MATRICES)
+                    CALL SolverMatrices_SymmetryTypeSet(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_SYMMETRIC_TYPE],ERR,ERROR,*999)
+                  CASE(SOLVER_UNSYMMETRIC_MATRICES)
+                    CALL SolverMatrices_SymmetryTypeSet(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE],ERR,ERROR,*999)
+                  CASE DEFAULT
+                    LOCAL_ERROR="The specified solver equations symmetry type of "// &
+                      & TRIM(NumberToVString(SOLVER_EQUATIONS%symmetryType,"*",ERR,ERROR))// &
+                      & " is invalid."
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                  END SELECT
                   CALL SOLVER_MATRICES_CREATE_FINISH(SOLVER_MATRICES,ERR,ERROR,*999)
                   !Create the PETSc SNES solver
                   CALL Petsc_SnesCreate(COMPUTATIONAL_ENVIRONMENT%MPI_COMM,TRUSTREGION_SOLVER%snes,ERR,ERROR,*999)
@@ -20165,7 +20015,6 @@ CONTAINS
         IF(ERR/=0) CALL FlagError("Could not allocate Newton solver trust region solver.",ERR,ERROR,*999)
         NEWTON_SOLVER%TRUSTREGION_SOLVER%NEWTON_SOLVER=>NEWTON_SOLVER
         NEWTON_SOLVER%TRUSTREGION_SOLVER%SOLVER_LIBRARY=SOLVER_PETSC_LIBRARY
-        NEWTON_SOLVER%TRUSTREGION_SOLVER%SOLVER_MATRICES_LIBRARY=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
 !!TODO: set this properly
         NEWTON_SOLVER%TRUSTREGION_SOLVER%TRUSTREGION_DELTA0=0.01_DP
         CALL Petsc_SnesInitialise(NEWTON_SOLVER%TRUSTREGION_SOLVER%snes,ERR,ERROR,*999)
@@ -20755,62 +20604,6 @@ CONTAINS
     RETURN 1
    
   END SUBROUTINE SOLVER_NONLINEAR_LIBRARY_TYPE_SET
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns the type of library to use for a nonlinear solver matrices.
-  SUBROUTINE SOLVER_nonlinearMatrices_LIBRARY_TYPE_GET(NONLINEAR_SOLVER,MATRICES_LIBRARY_TYPE,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: NONLINEAR_SOLVER !<A pointer the nonlinear solver to get the library type for.
-    INTEGER(INTG), INTENT(OUT) :: MATRICES_LIBRARY_TYPE !<On exit, the type of library used for the nonlinear solver matrices \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(NEWTON_SOLVER_TYPE), POINTER :: NEWTON_SOLVER
-    TYPE(QUASI_NEWTON_SOLVER_TYPE), POINTER :: QUASI_NEWTON_SOLVER
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("SOLVER_nonlinearMatrices_LIBRARY_TYPE_GET",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(NONLINEAR_SOLVER)) THEN
-      SELECT CASE(NONLINEAR_SOLVER%NONLINEAR_SOLVE_TYPE)
-      CASE(SOLVER_NONLINEAR_NEWTON)
-        NEWTON_SOLVER=>NONLINEAR_SOLVER%NEWTON_SOLVER
-        IF(ASSOCIATED(NEWTON_SOLVER)) THEN
-          CALL SOLVER_NEWTON_MATRICES_LIBRARY_TYPE_GET(NEWTON_SOLVER,MATRICES_LIBRARY_TYPE,ERR,ERROR,*999)
-        ELSE
-          CALL FlagError("Nonlinear solver Newton solver is not associated.",ERR,ERROR,*999)
-        ENDIF
-      CASE(SOLVER_NONLINEAR_BFGS_INVERSE)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
-      CASE(SOLVER_NONLINEAR_SQP)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
-      CASE(SOLVER_NONLINEAR_QUASI_NEWTON)
-        QUASI_NEWTON_SOLVER=>NONLINEAR_SOLVER%QUASI_NEWTON_SOLVER
-        IF(ASSOCIATED(QUASI_NEWTON_SOLVER)) THEN
-          CALL Solver_QuasiNewtonMatricesLibraryTypeGet(QUASI_NEWTON_SOLVER, &
-            & MATRICES_LIBRARY_TYPE,ERR,ERROR,*999)
-        ELSE
-          CALL FlagError("Nonlinear solver Quasi-Newton solver is not associated.",ERR,ERROR,*999)
-        ENDIF
-      CASE DEFAULT
-        LOCAL_ERROR="The nonlinear solver type of "// &
-          & TRIM(NumberToVString(NONLINEAR_SOLVER%NONLINEAR_SOLVE_TYPE,"*",ERR,ERROR))//" is invalid."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Nonlinear solver is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("SOLVER_nonlinearMatrices_LIBRARY_TYPE_GET")
-    RETURN
-999 ERRORSEXITS("SOLVER_nonlinearMatrices_LIBRARY_TYPE_GET",ERR,ERROR)
-    RETURN 1
-   
-  END SUBROUTINE SOLVER_nonlinearMatrices_LIBRARY_TYPE_GET
 
   !
   !================================================================================================================================
@@ -21407,7 +21200,6 @@ CONTAINS
     IF(ERR/=0) CALL FlagError("Could not allocate solver optimiser solver.",err,error,*999)
     solver%optimiserSolver%solver=>solver
     solver%optimiserSolver%solverLibrary=SOLVER_PETSC_LIBRARY
-    solver%optimiserSolver%solverMatricesLibrary=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
     solver%optimiserSolver%variableType=SOLVER_OPTIMISER_CONTINUOUS_VARIABLES
     solver%optimiserSolver%objectiveType=SOLVER_OPTIMISER_ONE_OBJECTIVE
     solver%optimiserSolver%constraintType=SOLVER_OPTIMISER_UNCONSTRAINED
@@ -21474,7 +21266,6 @@ CONTAINS
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(SOLVER_PETSC_LIBRARY)
       optimiserSolver%solverLibrary=SOLVER_PETSC_LIBRARY
-      optimiserSolver%solverMatricesLibrary=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
     CASE DEFAULT
       localError="The specified solver library type of "//TRIM(NumberToVString(solverLibraryType,"*",err,error))// &
         & " is invalid for an optimiser solver."
@@ -21487,33 +21278,6 @@ CONTAINS
     RETURN 1
    
   END SUBROUTINE Solver_OptimiserLibraryTypeSet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns the type of library to use for an optimiser solver matrices.
-  SUBROUTINE Solver_OptimiserMatricesLibraryTypeGet(optimiserSolver,matricesLibraryType,err,error,*)
-
-    !Argument variables
-    TYPE(OptimiserSolverType), POINTER :: optimiserSolver !<A pointer the optimiser solver to get the library type for.
-    INTEGER(INTG), INTENT(OUT) :: matricesLibrarytype !<On exit, the type of library used for the optimiser solver matrices \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
- 
-    ENTERS("Solver_OptimiserMatricesLibraryTypeGet",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(optimiserSolver)) CALL FlagError("Optimiser solver is not associated.",err,error,*999)
-
-    matricesLibraryType=optimiserSolver%solverMatricesLibrary
-    
-    EXITS("Solver_OptimiserMatricesLibraryTypeGet")
-    RETURN
-999 ERRORSEXITS("Solver_OptimiserMatricesLibraryTypeGet",err,error)
-    RETURN 1
-   
-  END SUBROUTINE Solver_OptimiserMatricesLibraryTypeGet
 
   !
   !================================================================================================================================

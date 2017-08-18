@@ -6642,6 +6642,13 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_SOLVER_SPARSE_MATRICES = SOLVER_SPARSE_MATRICES !<Use sparse solver matrices. \see OPENCMISS_SolverEquationsSparsityTypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_SOLVER_FULL_MATRICES = SOLVER_FULL_MATRICES !<Use fully populated solver matrices. \see OPENCMISS_SolverEquationsSparsityTypes,OPENCMISS
   !>@}
+  !> \addtogroup OPENCMISS_SolverEquationsSymmetryTypes OpenCMISS::Iron::SolverEquations::SymmetryTypes
+  !> \brief The types of symmetry for the solver equations matrices.
+  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_SYMMETRIC_MATRICES = SOLVER_SYMMETRIC_MATRICES !<Use symmetric solver matrices. \see OPENCMISS_SolverEquationsSymmetryTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_UNSYMMETRIC_MATRICES = SOLVER_UNSYMMETRIC_MATRICES !<Use unsymmetric solver matrices. \see OPENCMISS_SolverEquationsSymmetryTypes,OPENCMISS
+  !>@}
   !>@}
 
   !Module types
@@ -7241,6 +7248,20 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_SolverEquations_SparsityTypeSetObj
   END INTERFACE cmfe_SolverEquations_SparsityTypeSet
 
+  !>Gets the symmetry type for solver equations.
+  INTERFACE cmfe_SolverEquations_SymmetryTypeGet
+    MODULE PROCEDURE cmfe_SolverEquations_SymmetryTypeGetNumber0
+    MODULE PROCEDURE cmfe_SolverEquations_SymmetryTypeGetNumber1
+    MODULE PROCEDURE cmfe_SolverEquations_SymmetryTypeGetObj
+  END INTERFACE cmfe_SolverEquations_SymmetryTypeGet
+  
+  !>Sets/changes the symmetry type for solver equations.
+  INTERFACE cmfe_SolverEquations_SymmetryTypeSet
+    MODULE PROCEDURE cmfe_SolverEquations_SymmetryTypeSetNumber0
+    MODULE PROCEDURE cmfe_SolverEquations_SymmetryTypeSetNumber1
+    MODULE PROCEDURE cmfe_SolverEquations_SymmetryTypeSetObj
+  END INTERFACE cmfe_SolverEquations_SymmetryTypeSet
+
   !>Finish the creation of boundary conditions for solver equations. \see OpenCMISS::Iron::cmfe_SolverEquations_BoundaryConditionsCreateStart
   INTERFACE cmfe_SolverEquations_BoundaryConditionsCreateFinish
     MODULE PROCEDURE cmfe_SolverEquations_BoundaryConditionsCreateFinishNumber0
@@ -7345,6 +7366,8 @@ MODULE OpenCMISS_Iron
     & CMFE_SOLVER_SOLVER_OUTPUT,CMFE_SOLVER_MATRIX_OUTPUT
 
   PUBLIC CMFE_SOLVER_SPARSE_MATRICES,CMFE_SOLVER_FULL_MATRICES
+
+  PUBLIC CMFE_SOLVER_SYMMETRIC_MATRICES,CMFE_SOLVER_UNSYMMETRIC_MATRICES
 
   PUBLIC cmfe_Solver_CellMLEquationsGet
 
@@ -7488,27 +7511,29 @@ MODULE OpenCMISS_Iron
 
   PUBLIC cmfe_Solver_SolverEquationsGet
 
-  PUBLIC cmfe_SolverEquations_EquationsSetAdd
-
-  PUBLIC cmfe_SolverEquations_InterfaceConditionAdd
-
-  PUBLIC cmfe_SolverEquations_SparsityTypeSet
-
   PUBLIC cmfe_SolverEquations_BoundaryConditionsCreateFinish,cmfe_SolverEquations_BoundaryConditionsCreateStart
 
   PUBLIC cmfe_SolverEquations_BoundaryConditionsGet
 
-  PUBLIC cmfe_SolverEquations_NumberOfMatricesGet
+  PUBLIC cmfe_SolverEquations_EquationsSetAdd
 
-  PUBLIC cmfe_SolverEquations_MatrixGet
+  PUBLIC cmfe_SolverEquations_InterfaceConditionAdd
 
   PUBLIC cmfe_SolverEquations_JacobianMatrixGet
 
-  PUBLIC cmfe_SolverEquations_VectorGet
+  PUBLIC cmfe_SolverEquations_MatrixGet
+
+  PUBLIC cmfe_SolverEquations_NumberOfMatricesGet
 
   PUBLIC cmfe_SolverEquations_ResidualVectorGet
 
   PUBLIC cmfe_SolverEquations_RhsVectorGet
+
+  PUBLIC cmfe_SolverEquations_SparsityTypeSet
+
+  PUBLIC cmfe_SolverEquations_SymmetryTypeGet,cmfe_SolverEquations_SymmetryTypeSet
+
+  PUBLIC cmfe_SolverEquations_VectorGet
 
   PUBLIC cmfe_BioelectricsFiniteElasticity_UpdateGeometricField
 
@@ -56936,6 +56961,204 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_SolverEquations_SparsityTypeSetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the symmetry type for solver equations identified by an user number.
+  SUBROUTINE cmfe_SolverEquations_SymmetryTypeGetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,symmetryType,err)
+    !DLLEXPORT(cmfe_SolverEquations_SymmetryTypeGetNumber0)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the  type for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to get the symmetry type for.
+    INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the symmetry type for.
+    INTEGER(INTG), INTENT(OUT) :: symmetryType !<On return, the solver equations symmetry type. \see OPENCMISS_SolverEquationsSymmetryTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+
+    ENTERS("cmfe_SolverEquations_SymmetryTypeGetNumber0",err,error,*999)
+
+    NULLIFY(problem)
+    NULLIFY(solver)
+    NULLIFY(solverEquations)
+    CALL Problem_Get(problemUserNumber,problem,err,error,*999)
+    CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
+    CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+    CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
+    
+    EXITS("cmfe_SolverEquations_SymmetryTypeGetNumber0")
+    RETURN
+999 ERRORSEXITS("cmfe_SolverEquations_SymmetryTypeGetNumber0",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_SolverEquations_SymmetryTypeGetNumber0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the symmetry type for solver equations identified by an user number.
+  SUBROUTINE cmfe_SolverEquations_SymmetryTypeGetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,symmetryType,err)
+    !DLLEXPORT(cmfe_SolverEquations_SymmetryTypeGetNumber1)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the symmetry type for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to get the symmetry type for.
+    INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the symmetry type for.
+    INTEGER(INTG), INTENT(OUT) :: symmetryType !<On return, the symmetry type. \see OPENCMISS_SolverEquationsSymmetryTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+
+    ENTERS("cmfe_SolverEquations_SymmetryTypeGetNumber1",err,error,*999)
+
+    NULLIFY(problem)
+    NULLIFY(solver)
+    NULLIFY(solverEquations)
+    CALL Problem_Get(problemUserNumber,problem,err,error,*999)
+    CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
+    CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+    CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
+    
+    EXITS("cmfe_SolverEquations_SymmetryTypeGetNumber1")
+    RETURN
+999 ERRORSEXITS("cmfe_SolverEquations_SymmetryTypeGetNumber1",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_SolverEquations_SymmetryTypeGetNumber1
+
+  !================================================================================================================================
+  !
+
+  !>Gets the symmetry type for solver equations identified by an object.
+  SUBROUTINE cmfe_SolverEquations_SymmetryTypeGetObj(solverEquations,symmetryType,err)
+    !DLLEXPORT(cmfe_SolverEquations_SymmetryTypeGetObj)
+
+    !Argument variables
+    TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to get the symmetry type for.
+    INTEGER(INTG), INTENT(OUT) :: symmetryType !<On return, the symmetry type. \see OPENCMISS_SolverEquationsSymmetryTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_SolverEquations_SymmetryTypeGetObj",err,error,*999)
+
+    CALL SolverEquations_SymmetryTypeGet(solverEquations%solverEquations,symmetryType,err,error,*999)
+
+    EXITS("cmfe_SolverEquations_SymmetryTypeGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_SolverEquations_SymmetryTypeGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_SolverEquations_SymmetryTypeGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the symmetry type for solver equations identified by an user number.
+  SUBROUTINE cmfe_SolverEquations_SymmetryTypeSetNumber0(problemUserNumber,controlLoopIdentifier,solverIndex,symmetryType,err)
+    !DLLEXPORT(cmfe_SolverEquations_SymmetryTypeSetNumber0)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the  type for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to set the symmetry type for.
+    INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the symmetry type for.
+    INTEGER(INTG), INTENT(IN) :: symmetryType !<The symmetry type to set. \see OPENCMISS_SolverEquationsSymmetryTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+
+    ENTERS("cmfe_SolverEquations_SymmetryTypeSetNumber0",err,error,*999)
+
+    NULLIFY(problem)
+    NULLIFY(solver)
+    NULLIFY(solverEquations)
+    CALL Problem_Get(problemUserNumber,problem,err,error,*999)
+    CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
+    CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+    CALL SolverEquations_SymmetryTypeSet(solverEquations,symmetryType,err,error,*999)
+    
+    EXITS("cmfe_SolverEquations_SymmetryTypeSetNumber0")
+    RETURN
+999 ERRORSEXITS("cmfe_SolverEquations_SymmetryTypeSetNumber0",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_SolverEquations_SymmetryTypeSetNumber0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the symmetry type for solver equations identified by an user number.
+  SUBROUTINE cmfe_SolverEquations_SymmetryTypeSetNumber1(problemUserNumber,controlLoopIdentifiers,solverIndex,symmetryType,err)
+    !DLLEXPORT(cmfe_SolverEquations_SymmetryTypeSetNumber1)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the symmetry type for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to set the symmetry type for.
+    INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the symmetry type for.
+    INTEGER(INTG), INTENT(IN) :: symmetryType !<The symmetry type to set. \see OPENCMISS_SolverEquationsSymmetryTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+
+    ENTERS("cmfe_SolverEquations_SymmetryTypeSetNumber1",err,error,*999)
+
+    NULLIFY(problem)
+    NULLIFY(solver)
+    NULLIFY(solverEquations)
+    CALL Problem_Get(problemUserNumber,problem,err,error,*999)
+    CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
+    CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+    CALL SolverEquations_SymmetryTypeSet(solverEquations,symmetryType,err,error,*999)
+    
+    EXITS("cmfe_SolverEquations_SymmetryTypeSetNumber1")
+    RETURN
+999 ERRORSEXITS("cmfe_SolverEquations_SymmetryTypeSetNumber1",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_SolverEquations_SymmetryTypeSetNumber1
+
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the symmetry type for solver equations identified by an object.
+  SUBROUTINE cmfe_SolverEquations_SymmetryTypeSetObj(solverEquations,symmetryType,err)
+    !DLLEXPORT(cmfe_SolverEquations_SymmetryTypeSetObj)
+
+    !Argument variables
+    TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to set the symmetry type for.
+    INTEGER(INTG), INTENT(IN) :: symmetryType !<The symmetry type to set. \see OPENCMISS_SolverEquationsSymmetryTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_SolverEquations_SymmetryTypeSetObj",err,error,*999)
+
+    CALL SolverEquations_SymmetryTypeSet(solverEquations%solverEquations,symmetryType,err,error,*999)
+
+    EXITS("cmfe_SolverEquations_SymmetryTypeSetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_SolverEquations_SymmetryTypeSetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_SolverEquations_SymmetryTypeSetObj
 
   !
   !================================================================================================================================
