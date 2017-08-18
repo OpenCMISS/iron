@@ -458,6 +458,12 @@ MODULE CmissPetsc
       PetscInt ierr
     END SUBROUTINE PetscLogView
 
+    SUBROUTINE PetscOptionSetValue(name,value,ierr)
+      CHARACTER(LEN=*) name
+      CHARACTER(LEN=*) value
+      PetscInt ierr
+    END SUBROUTINE PetscOptionSetValue
+
     !IS routines
     
     SUBROUTINE ISDestroy(indexset,ierr)
@@ -1682,6 +1688,8 @@ MODULE CmissPetsc
 
   PUBLIC Petsc_LogView
   
+  PUBLIC Petsc_OptionsSetValue
+  
   !Value insert constants
 
   PUBLIC PETSC_ADD_VALUES,PETSC_INSERT_VALUES
@@ -2031,6 +2039,37 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Petsc_LogView
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Buffer routine to the PETSc PetscOptionsSetValue routine.
+  SUBROUTINE Petsc_OptionsSetValue(name,VALUE,err,error,*)
+
+    !Argument Variables
+    CHARACTER(LEN=*), INTENT(IN) :: name !<The name of the option to set
+    CHARACTER(LEN=*), INTENT(IN) :: value !<The value of the option to set    
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Petsc_OptionSetValue",err,error,*999)
+
+    CALL PetscOptionsSetValue(name,value,err)
+    IF(err/=0) THEN
+      IF(petscHandleError) THEN
+        CHKERRQ(err)
+      ENDIF
+      CALL FlagError("PETSc error in PetscOptionsSetValue.",err,error,*999)
+    ENDIF
+    
+    EXITS("Petsc_OptionsSetValue")
+    RETURN
+999 ERRORSEXITS("Petsc_OptionsSetValue",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Petsc_OptionsSetValue
   
   !
   !================================================================================================================================

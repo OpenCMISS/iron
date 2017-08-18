@@ -62,6 +62,7 @@ MODULE OpenCMISS_Iron
   USE BIOELECTRIC_FINITE_ELASTICITY_ROUTINES
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE Cmiss
+  USE CmissPetsc
   USE CMISS_CELLML
   USE COMP_ENVIRONMENT
   USE Constants
@@ -348,6 +349,8 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_Finalise,cmfe_Initialise
 
   PUBLIC cmfe_WorkingRealPrecisionGet
+
+  PUBLIC cmfe_PetscOptionsSetValue
 
   PUBLIC cmfe_BasisType,cmfe_BasisTypesCopy,cmfe_Basis_Finalise,cmfe_Basis_Initialise
 
@@ -7764,6 +7767,32 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_InitialiseObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets a PETSc option (so that they can be set from python when we don't have the command line.)
+  SUBROUTINE cmfe_PetscOptionsSetValue(name,VALUE,err)
+    !DLLEXPORT(cmfe_WorkingRealPrecisionGet)
+
+    !Argument variables
+    CHARACTER(LEN=*), INTENT(IN) :: name !<The name of the PETSc option
+    CHARACTER(LEN=*), INTENT(IN) :: value !<The value of the PETSc option
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+ 
+    ENTERS("cmfe_PetscOptionsSetValue",err,error,*999)
+    
+    CALL Petsc_OptionsSetValue(name,VALUE,err,error,*999)
+    
+    EXITS("cmfe_PetscOptionsSetValue")
+    RETURN
+999 ERRORSEXITS("cmfe_PetscOptionsSetValue",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_PetscOptionsSetValue
 
   !
   !================================================================================================================================
