@@ -1238,7 +1238,7 @@ CONTAINS
             !Convert from Voigt form to tensor form.
             DO nh=1,NUMBER_OF_DIMENSIONS
               DO mh=1,NUMBER_OF_DIMENSIONS
-                CAUCHY_TENSOR(mh,nh)=STRESS_TENSOR(TENSOR_TO_VOIGT3(mh,nh))
+                CAUCHY_TENSOR(mh,nh)=STRESS_TENSOR(TENSOR_TO_VOIGT(mh,nh,NUMBER_OF_DIMENSIONS))
               ENDDO
             ENDDO
 
@@ -1246,16 +1246,18 @@ CONTAINS
             !Loop over element columns belonging to geometric dependent variables
             nhs=0
             DO nh=1,NUMBER_OF_DIMENSIONS
-              JGW_SUB_MAT=JGW*(ELASTICITY_TENSOR(TENSOR_TO_VOIGT3(:,nh),TENSOR_TO_VOIGT3(:,nh))+CAUCHY_TENSOR)
+              JGW_SUB_MAT=JGW*(ELASTICITY_TENSOR(TENSOR_TO_VOIGT(1:NUMBER_OF_DIMENSIONS,nh,NUMBER_OF_DIMENSIONS), &
+                & TENSOR_TO_VOIGT(1:NUMBER_OF_DIMENSIONS,nh,NUMBER_OF_DIMENSIONS))+ &
+                & CAUCHY_TENSOR(1:NUMBER_OF_DIMENSIONS,1:NUMBER_OF_DIMENSIONS))              
               DO ns=1,NUMBER_OF_ELEMENT_PARAMETERS(nh)
-                TEMPVEC=MATMUL(JGW_SUB_MAT,DPHIDZ(:,ns,nh))
+                TEMPVEC=MATMUL(JGW_SUB_MAT,DPHIDZ(1:NUMBER_OF_DIMENSIONS,ns,nh))
                 nhs=nhs+1
                 mhs=nhs-1
                 !Loop over element rows belonging to geometric dependent variables
                 DO ms=ns,NUMBER_OF_ELEMENT_PARAMETERS(nh)
                   mhs=mhs+1
                   jacobianMatrix%elementJacobian%matrix(mhs,nhs)=jacobianMatrix%elementJacobian%matrix(mhs,nhs)+ &
-                    & DOT_PRODUCT(DPHIDZ(:,ms,nh),TEMPVEC)
+                    & DOT_PRODUCT(DPHIDZ(1:NUMBER_OF_DIMENSIONS,ms,nh),TEMPVEC)
                 ENDDO !ms
               ENDDO !ns
             ENDDO !nh
@@ -1266,16 +1268,17 @@ CONTAINS
               nh=OFF_DIAG_DEP_VAR1(oh)
               mh=OFF_DIAG_DEP_VAR2(oh)
               nhs=ELEMENT_BASE_DOF_INDEX(nh)
-              JGW_SUB_MAT=JGW*ELASTICITY_TENSOR(TENSOR_TO_VOIGT3(:,mh),TENSOR_TO_VOIGT3(:,nh))
+              JGW_SUB_MAT=JGW*ELASTICITY_TENSOR(TENSOR_TO_VOIGT(1:NUMBER_OF_DIMENSIONS,mh,NUMBER_OF_DIMENSIONS), &
+                & TENSOR_TO_VOIGT(1:NUMBER_OF_DIMENSIONS,nh,NUMBER_OF_DIMENSIONS))
               DO ns=1,NUMBER_OF_ELEMENT_PARAMETERS(nh)
                 !Loop over element rows belonging to geometric dependent variables
-                TEMPVEC=MATMUL(JGW_SUB_MAT,DPHIDZ(:,ns,nh))
+                TEMPVEC=MATMUL(JGW_SUB_MAT,DPHIDZ(1:NUMBER_OF_DIMENSIONS,ns,nh))
                 nhs=nhs+1
                 mhs=ELEMENT_BASE_DOF_INDEX(mh)
                 DO ms=1,NUMBER_OF_ELEMENT_PARAMETERS(mh)
                   mhs=mhs+1
                   jacobianMatrix%elementJacobian%matrix(mhs,nhs)=jacobianMatrix%elementJacobian%matrix(mhs,nhs)+ &
-                    & DOT_PRODUCT(DPHIDZ(:,ms,mh),TEMPVEC)
+                    & DOT_PRODUCT(DPHIDZ(1:NUMBER_OF_DIMENSIONS,ms,mh),TEMPVEC(1:NUMBER_OF_DIMENSIONS))
                 ENDDO !ms
               ENDDO !ns
             ENDDO
@@ -1852,7 +1855,7 @@ CONTAINS
               DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
                 mhs=mhs+1
                 nonlinearMatrices%elementResidual%vector(mhs)=nonlinearMatrices%elementResidual%vector(mhs)+ &
-                  & DOT_PRODUCT(DPHIDZ(:,ms,mh),JGW_CAUCHY_TENSOR(:,mh))
+                  & DOT_PRODUCT(DPHIDZ(1:numberOfDimensions,ms,mh),JGW_CAUCHY_TENSOR(1:numberOfDimensions,mh))
               ENDDO !ms
             ENDDO !mh
 
@@ -2073,7 +2076,7 @@ CONTAINS
                   element_dof_idx=element_dof_idx+1
                   nonlinearMatrices%elementResidual%vector(element_dof_idx)= &
                     & nonlinearMatrices%elementResidual%vector(element_dof_idx)+ &
-                    & JGW*DOT_PRODUCT(DPhiDZ(:,parameter_idx,mh),cauchyTensor(:,mh))
+                    & JGW*DOT_PRODUCT(DPhiDZ(1:numberOfDimensions,parameter_idx,mh),cauchyTensor(1:numberOfDimensions,mh))
                 ENDDO ! parameter_idx (residual vector loop)
               ELSEIF(DEPENDENT_COMPONENT_INTERPOLATION_TYPE==FIELD_ELEMENT_BASED_INTERPOLATION) THEN
                 !Will probably never be used
@@ -2232,7 +2235,7 @@ CONTAINS
               DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
                 mhs=mhs+1
                 nonlinearMatrices%elementResidual%vector(mhs)=nonlinearMatrices%elementResidual%vector(mhs)+ &
-                  & DOT_PRODUCT(DPHIDZ(:,ms,mh),JGW_CAUCHY_TENSOR(:,mh))
+                  & DOT_PRODUCT(DPHIDZ(1:numberOfDimensions,ms,mh),JGW_CAUCHY_TENSOR(1:numberOfDimensions,mh))
               ENDDO !ms
             ENDDO !mh
             
@@ -2416,7 +2419,7 @@ CONTAINS
               DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
                 mhs=mhs+1
                 nonlinearMatrices%elementResidual%vector(mhs)=nonlinearMatrices%elementResidual%vector(mhs)+ &
-                  & JGW*DOT_PRODUCT(DPHIDZ(:,ms,mh),cauchyTensor(:,mh))
+                  & JGW*DOT_PRODUCT(DPHIDZ(1:numberOfDimensions,ms,mh),cauchyTensor(1:numberOfDimensions,mh))
               ENDDO !ms
             ENDDO !mh
 
@@ -2603,7 +2606,7 @@ CONTAINS
               DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
                 mhs=mhs+1
                 nonlinearMatrices%elementResidual%vector(mhs)=nonlinearMatrices%elementResidual%vector(mhs)+ &
-                  & JGW*DOT_PRODUCT(DPHIDZ(:,ms,mh),cauchyTensor(:,mh))
+                  & JGW*DOT_PRODUCT(DPHIDZ(1:numberOfDimensions,ms,mh),cauchyTensor(1:numberOfDimensions,mh))
               ENDDO !ms
             ENDDO !mh
             
@@ -3170,8 +3173,8 @@ CONTAINS
               DO rowElementParameterIdx=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
                 rowElementDofIdx=rowElementDofIdx+1
                 nonlinearMatrices%elementResidual%vector(rowElementDofIdx)=nonlinearMatrices%elementResidual% &
-                  & vector(rowElementDofIdx)+JGw*DOT_PRODUCT(dPhiDz(:,rowElementParameterIdx,rowComponentIdx), &
-                  & cauchyTensor(:,rowComponentIdx))
+                  & vector(rowElementDofIdx)+JGw*DOT_PRODUCT(dPhiDz(1:numberOfDimensions,rowElementParameterIdx,rowComponentIdx), &
+                  & cauchyTensor(1:numberOfDimensions,rowComponentIdx))
               ENDDO !rowElementParameterIdx
             ENDDO !rowComponentIdx
             
@@ -10409,9 +10412,9 @@ IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_S
       PROBLEM_SUBTYPE=PROBLEM%SPECIFICATION(3)
       SELECT CASE(PROBLEM_SUBTYPE)
       CASE(PROBLEM_NO_SUBTYPE,PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE, &
-        & PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_MULTISCALE_FINITE_ELASTICITY_SUBTYPE, &
-        & PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE,PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE, &
-        & PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE)
+        & PROBLEM_QUASISTATIC_FINITE_ELASTICITY_WITH_GROWTH_SUBTYPE,PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE, &
+        & PROBLEM_MULTISCALE_FINITE_ELASTICITY_SUBTYPE,PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE, &
+        & PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE,PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE)
         SELECT CASE(PROBLEM_SETUP%SETUP_TYPE)
         CASE(PROBLEM_SETUP_INITIAL_TYPE)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
@@ -10433,8 +10436,9 @@ IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_S
             SELECT CASE(PROBLEM_SUBTYPE)
             CASE(PROBLEM_NO_SUBTYPE,PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE)
               CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE,err,error,*999)
-            CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE, &
-              & PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE,PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE)
+            CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_QUASISTATIC_FINITE_ELASTICITY_WITH_GROWTH_SUBTYPE, &
+              & PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE, &
+              & PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE)
 !!TODO: Should we have a load step loop inside the time loop?
               CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,PROBLEM_CONTROL_TIME_LOOP_TYPE,err,error,*999)
               CALL ControlLoop_LabelSet(CONTROL_LOOP,"Time Loop",err,error,*999)
@@ -10486,20 +10490,40 @@ IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_S
               CALL Solver_LabelSet(solver,"Nonlinear Solver",err,error,*999)
               !Set solver defaults
               CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,err,error,*999)
-            CASE(PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE) 
-               CALL SOLVERS_NUMBER_SET(SOLVERS,2,err,error,*999)
-              !Set the first solver to be an ODE integrator
+            CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_WITH_GROWTH_SUBTYPE)
+              CALL SOLVERS_NUMBER_SET(SOLVERS,3,err,error,*999)
+              !Set the first solver to be an CellML Evaluator for time varying boundary conditions
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
+              CALL SOLVER_TYPE_SET(SOLVER,SOLVER_CELLML_EVALUATOR_TYPE,err,error,*999)
+              CALL Solver_LabelSet(solver,"Boundary Condition Evaluation Solver",err,error,*999)
+              !Set solver defaults
+              CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,err,error,*999)
+              !Set the second solver to be an ODE integrator for growth
+              NULLIFY(SOLVER)
+              CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,err,error,*999)
               CALL SOLVER_TYPE_SET(SOLVER,SOLVER_DAE_TYPE,err,error,*999)
               !Set solver defaults
               CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,err,error,*999)
-              !Set the second solver to be a nonlinear solver
+              !Set the third solver to be a nonlinear solver for elasticity
               NULLIFY(SOLVER)
-              CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,err,error,*999)
+              CALL SOLVERS_SOLVER_GET(SOLVERS,3,SOLVER,err,error,*999)
               CALL SOLVER_TYPE_SET(SOLVER,SOLVER_NONLINEAR_TYPE,err,error,*999)
               !Set solver defaults
               CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,err,error,*999)
-              !Create the CellML evaluator solver
+            CASE(PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE) 
+              CALL SOLVERS_NUMBER_SET(SOLVERS,2,err,error,*999)
+              !Set the first solver to be an ODE integrator for growth
+              CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,err,error,*999)
+              CALL SOLVER_TYPE_SET(SOLVER,SOLVER_DAE_TYPE,err,error,*999)
+              !Set solver defaults
+              CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,err,error,*999)
+              !Set the second solver to be a nonlinear solver for elasticity
+              NULLIFY(SOLVER)
+              CALL SOLVERS_SOLVER_GET(SOLVERS,3,SOLVER,err,error,*999)
+              CALL SOLVER_TYPE_SET(SOLVER,SOLVER_NONLINEAR_TYPE,err,error,*999)
+              !Set solver defaults
+              CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,err,error,*999)
+              !Create the CellML evaluator solver for a constituative law via CellML
               NULLIFY(CELLML_SOLVER)
               CALL SOLVER_NEWTON_CELLML_EVALUATOR_CREATE(SOLVER,CELLML_SOLVER,err,error,*999)
               !Link the CellML evaluator solver to the solver
@@ -10562,6 +10586,8 @@ IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_S
             CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_MULTISCALE_FINITE_ELASTICITY_SUBTYPE, &
               & PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE)
               CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,err,error,*999)
+            CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_WITH_GROWTH_SUBTYPE)
+              CALL SOLVERS_SOLVER_GET(SOLVERS,3,SOLVER,err,error,*999)
             CASE DEFAULT
               localError="The third problem specification of "//TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
                 & " is not valid for a finite elasticity type of an elasticity problem class."
@@ -10576,8 +10602,8 @@ IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_S
             CASE(PROBLEM_NO_SUBTYPE,PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_MULTISCALE_FINITE_ELASTICITY_SUBTYPE, &
               & PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE)
               CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_STATIC,err,error,*999)
-            CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE, &
-              & PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE)
+            CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_QUASISTATIC_FINITE_ELASTICITY_WITH_GROWTH_SUBTYPE, & 
+              & PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE,PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE)
               CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_QUASISTATIC,err,error,*999)
             CASE(PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE)
               CALL FlagError("Not implemented.",err,error,*999)
@@ -10599,6 +10625,8 @@ IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_S
             CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_MULTISCALE_FINITE_ELASTICITY_SUBTYPE, &
               & PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE)
               CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,err,error,*999)
+            CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_WITH_GROWTH_SUBTYPE)
+              CALL SOLVERS_SOLVER_GET(SOLVERS,3,SOLVER,err,error,*999)
             CASE DEFAULT
               localError="The third problem specification of "//TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
                 & " is not valid for a finite elasticity type of an elasticity problem class."
@@ -10628,6 +10656,21 @@ IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_S
               !Get the CellML solver
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,CELLML_SOLVER,err,error,*999)
               !Create the CellML equations
+              CALL CELLML_EQUATIONS_CREATE_START(CELLML_SOLVER,CELLML_EQUATIONS,err,error,*999)
+              !Set the time dependence
+              CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_QUASISTATIC,err,error,*999)
+            CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_WITH_GROWTH_SUBTYPE)
+              !Get the CellML BC solver 
+              CALL SOLVERS_SOLVER_GET(SOLVERS,1,CELLML_SOLVER,err,error,*999)
+              !Create the CellML equations
+              CALL CELLML_EQUATIONS_CREATE_START(CELLML_SOLVER,CELLML_EQUATIONS,err,error,*999)
+              !Set the time dependence
+              CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_QUASISTATIC,err,error,*999)
+              !Get the CellML Growth solver
+              NULLIFY(CELLML_SOLVER)
+              CALL SOLVERS_SOLVER_GET(SOLVERS,2,CELLML_SOLVER,err,error,*999)
+              !Create the CellML equations
+              NULLIFY(CELLML_EQUATIONS)
               CALL CELLML_EQUATIONS_CREATE_START(CELLML_SOLVER,CELLML_EQUATIONS,err,error,*999)
               !Set the time dependence
               CALL CellMLEquations_TimeDependenceTypeSet(CELLML_EQUATIONS,CELLML_EQUATIONS_QUASISTATIC,err,error,*999)
@@ -10673,6 +10716,21 @@ IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_S
               !Get the CellML evaluator solver
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,CELLML_SOLVER,err,error,*999)
               !Get the CellML equations for the CellML evaluator solver
+              CALL SOLVER_CELLML_EQUATIONS_GET(CELLML_SOLVER,CELLML_EQUATIONS,err,error,*999)
+              !Finish the CellML equations creation
+              CALL CELLML_EQUATIONS_CREATE_FINISH(CELLML_EQUATIONS,err,error,*999)
+            CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_WITH_GROWTH_SUBTYPE)
+              !Get the CellML BC evaluator solver
+              CALL SOLVERS_SOLVER_GET(SOLVERS,1,CELLML_SOLVER,err,error,*999)
+              !Get the CellML equations for the CellML evaluator solver
+              CALL SOLVER_CELLML_EQUATIONS_GET(CELLML_SOLVER,CELLML_EQUATIONS,err,error,*999)
+              !Finish the CellML equations creation
+              CALL CELLML_EQUATIONS_CREATE_FINISH(CELLML_EQUATIONS,err,error,*999)
+              !Get the CellML growth integration solver
+              NULLIFY(CELLML_SOLVER)
+              CALL SOLVERS_SOLVER_GET(SOLVERS,2,CELLML_SOLVER,err,error,*999)
+              !Get the CellML equations for the CellML integration solver
+              NULLIFY(CELLML_EQUATIONS)
               CALL SOLVER_CELLML_EQUATIONS_GET(CELLML_SOLVER,CELLML_EQUATIONS,err,error,*999)
               !Finish the CellML equations creation
               CALL CELLML_EQUATIONS_CREATE_FINISH(CELLML_EQUATIONS,err,error,*999)
@@ -11006,6 +11064,8 @@ IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_S
           !ok
         CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE)
           !ok
+        CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_WITH_GROWTH_SUBTYPE)
+          !ok
         CASE(PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE)
           !ok
         CASE(PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE)
@@ -11174,6 +11234,13 @@ IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_S
         !Output results
         CALL FiniteElasticity_PostSolveOutputData(solver,err,error,*999)          
       ENDIF
+    CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_WITH_GROWTH_SUBTYPE)
+      !Add in other quasi-static stuff
+      IF(solver%GLOBAL_NUMBER==3) THEN
+        !Nonlinear solver
+        CALL Solver_NonlinearDivergenceExit(solver,err,error,*999)
+        CALL FiniteElasticity_PostSolveOutputData(solver,err,error,*999)          
+      ENDIF
     CASE(PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE)
       IF(solver%GLOBAL_NUMBER==2) THEN
         !Nonlinear solver
@@ -11294,7 +11361,8 @@ IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_S
           ENDDO
         ENDIF
       ENDIF
-    CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE)
+    CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_QUASISTATIC_FINITE_ELASTICITY_WITH_GROWTH_SUBTYPE, &
+      & PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE)
       !Get the current time information
       CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
         & outputIteration,err,error,*999)
@@ -11303,8 +11371,8 @@ IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_S
         IF(outputIteration/=0) THEN
           IF(MOD(currentIteration,outputIteration)==0) THEN
             !Output 
-            WRITE(fileName,'("Elasticity_",I4.4)') currentIteration
-            outputFile=fileName
+            WRITE(fileName,'("Elasticity_",I0)') currentIteration
+            outputFile=fileName(1:LEN_TRIM(filename))
             method="FORTRAN"
             !Loop over the equations sets and output
             NULLIFY(solverEquations)
@@ -11583,6 +11651,11 @@ IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_S
       !Do nothing ???
     CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE)
       !Do nothing ???
+    CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_WITH_GROWTH_SUBTYPE)
+      IF(SOLVER%GLOBAL_NUMBER==2) THEN
+        CALL CONTROL_LOOP_CURRENT_TIMES_GET(controlLoop,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
+        CALL SOLVER_DAE_TIMES_SET(SOLVER,CURRENT_TIME,CURRENT_TIME+TIME_INCREMENT,err,error,*999)
+      ENDIF
     CASE(PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE)
       !Do nothing ???
     CASE(PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE, &
@@ -11626,13 +11699,14 @@ IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_S
                 ENDIF
               ENDIF
             ENDDO !equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-            IF(VALID_SUBTYPE .NEQV. .TRUE.) THEN
-              LOCAL_ERROR="The third equations set specification of "// &
-                & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%specification(3),"*",ERR, &
-                & ERROR))//"is not valid for a finite elasticity third problem specification of "//TRIM( &
-                & NUMBER_TO_VSTRING(problem%specification(3),"*",err,error))//"."
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            ENDIF
+            !Doesn't matter if other equations sets are used. It will just do nothing.
+            !IF(VALID_SUBTYPE .NEQV. .TRUE.) THEN
+            !  LOCAL_ERROR="The third equations set specification of "// &
+            !    & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%specification(3),"*",ERR, &
+            !    & ERROR))//" is not valid for a finite elasticity third problem specification of "//TRIM( &
+            !    & NUMBER_TO_VSTRING(problem%specification(3),"*",err,error))//"."
+            !  CALL FlagError(LOCAL_ERROR,err,error,*999)
+            !ENDIF
           ELSE
             CALL FlagError("Solver mapping is not associated.",err,error,*999)
           ENDIF

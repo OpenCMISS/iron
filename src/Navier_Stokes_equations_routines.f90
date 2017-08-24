@@ -7367,25 +7367,27 @@ CONTAINS
                               CALL FlagError("Equations set dependent field is not associated.",err,error,*999)
                             END IF
                           ELSE
-                            CALL FlagError("Equations set is not associated.",err,error,*999)
-                          END IF
-                        END IF !Standard/unit analytic subtypes
+                            CALL FlagError("Equations set analytic is not associated.",err,error,*999)
+                          ENDIF
+                        ELSE
+                          CALL FlagError("Equations set is not associated.",err,error,*999)
+                        END IF
+                      END IF !Standard/unit analytic subtypes
 
-                      END IF ! Analytic boundary conditions
+                    END IF ! Analytic boundary conditions
 
-                      !TODO implement non-analytic time-varying boundary conditions (i.e. from file)
-                    ELSE
-                      CALL FlagError("Equations are not associated.",err,error,*999)
-                    END IF
+                    !TODO implement non-analytic time-varying boundary conditions (i.e. from file)
                   ELSE
-                    CALL FlagError("Solver equations are not associated.",err,error,*999)
+                    CALL FlagError("Equations are not associated.",err,error,*999)
                   END IF
-                  CALL FIELD_PARAMETER_SET_UPDATE_START(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,err,error,*999)
-                  CALL FIELD_PARAMETER_SET_UPDATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,err,error,*999)
-                ENDIF
-              ENDIF
+                ELSE
+                  CALL FlagError("Solver equations are not associated.",err,error,*999)
+                END IF
+                CALL FIELD_PARAMETER_SET_UPDATE_START(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  & FIELD_VALUES_SET_TYPE,err,error,*999)
+                CALL FIELD_PARAMETER_SET_UPDATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  & FIELD_VALUES_SET_TYPE,err,error,*999)
+               ENDIF
 
             CASE(PROBLEM_TRANSIENT1D_NAVIER_STOKES_SUBTYPE, &
               & PROBLEM_COUPLED1D0D_NAVIER_STOKES_SUBTYPE, &
@@ -12142,9 +12144,7 @@ CONTAINS
     SELECT CASE(equationsSet%specification(3))
     CASE(EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE, &
        & EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE, &
-       & EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE, &
        & EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE, &
-       & EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE, &
        & EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE, &
        & EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE)
 
@@ -12242,7 +12242,7 @@ CONTAINS
               xiDirection(3)=ABS(face%XI_DIRECTION)
             CASE DEFAULT
               localError="Face integration for basis type "//TRIM(NUMBER_TO_VSTRING(dependentBasis1%TYPE,"*",ERR,ERROR))// &
-                & " is not yet implemented for Navier-Stokes."
+                & " is not yet implemented for Navier-Stokes boundary integration."
               CALL FlagError(localError,ERR,ERROR,*999)
             END SELECT
             xiDirection(1)=OTHER_XI_DIRECTIONS3(xiDirection(3),2,1)
@@ -12271,6 +12271,14 @@ CONTAINS
             !This speeds things up but is also important, as non-boundary lines have an XI_DIRECTION that might
             !correspond to the other element.
             IF(.NOT.(line%BOUNDARY_LINE)) CYCLE
+            SELECT CASE(dependentBasis1%TYPE)
+            CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
+              xiDirection(2)=ABS(line%XI_DIRECTION)
+            CASE DEFAULT
+              localError="Line integration for basis type "//TRIM(NUMBER_TO_VSTRING(dependentBasis1%TYPE,"*",ERR,ERROR))// &
+                & " is not yet implemented for Navier-Stokes boundary integration."
+              CALL FlagError(localError,ERR,ERROR,*999)
+            END SELECT
             xiDirection(1)=OTHER_XI_DIRECTIONS2(xiDirection(2))
             orientation=SIGN(1,OTHER_XI_ORIENTATIONS2(xiDirection(1))*line%XI_DIRECTION)
             basis1=>decomposition%DOMAIN(meshComponentNumber1)%PTR%TOPOLOGY%LINES%LINES(boundaryNumber)%BASIS
@@ -14327,14 +14335,18 @@ CONTAINS
          & PROBLEM_CONSTITUTIVE_RBS_NAVIER_STOKES_SUBTYPE)
         SELECT CASE(controlLoop%LOOP_TYPE)
         CASE(PROBLEM_CONTROL_TIME_LOOP_TYPE)
-          navierStokesSolver=>controlLoop%SOLVERS%SOLVERS(1)%PTR
+          navierStokesSolver=>controlLoop%SOLVERS%SOLVERS(2)%PTR
           IF(ASSOCIATED(navierStokesSolver)) THEN
             NULLIFY(coupledEquationsSet)
             equationsSet=>navierStokesSolver%SOLVER_EQUATIONS%SOLVER_MAPPING%EQUATIONS_SETS(1)%PTR
-            dependentField=>equationsSet%DEPENDENT%DEPENDENT_FIELD
-            IF(dependentField%DECOMPOSITION%CALCULATE_FACES) THEN
-              CALL NavierStokes_CalculateBoundaryFlux3D0D(equationsSet,ERR,ERROR,*999)
-            END IF
+            IF(ASSOCIATED(equationsSet)) THEN
+              dependentField=>equationsSet%DEPENDENT%DEPENDENT_FIELD
+              IF(dependentField%DECOMPOSITION%CALCULATE_FACES) THEN
+                CALL NavierStokes_CalculateBoundaryFlux3D0D(equationsSet,ERR,ERROR,*999)
+              END IF
+            ELSE
+              CALL FlagError("Equations set is not associated.",err,error,*999)
+            ENDIF
             CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(navierStokesSolver,err,error,*999)
           ELSE
             CALL FlagError("Navier-Stokes solver not associated.",ERR,ERROR,*999)
