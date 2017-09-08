@@ -63,8 +63,10 @@ MODULE EquationsMappingAccessRoutines
 
   !Interfaces
 
+  PUBLIC EquationsMappingNonlinear_ResidualVariableGet
+  
   PUBLIC EquationsMappingScalar_CreateValuesCacheGet
-
+  
   PUBLIC EquationsMappingScalar_ScalarEquationsGet
 
   PUBLIC EquationsMappingVector_CreateValuesCacheGet
@@ -91,6 +93,58 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the specified residual variable for a nonlinear mapping.
+  SUBROUTINE EquationsMappingNonlinear_ResidualVariableGet(nonlinearMapping,residualIdx,variableIdx,fieldVariable,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping !<A pointer to the nonlinear mapping to get the residual variable for
+    INTEGER(INTG), INTENT(IN) :: residualIdx !<The index of the residual to get the field variable for. Currently will just be 1.
+    INTEGER(INTG), INTENT(IN) :: variableIdx !<The index of the variable in the residual to get the field variable for. 
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<On exit, a pointer to the requested field variable. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsMappingNonlinear_ResidualVariableGet",err,error,*998)
+
+    IF(ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(nonlinearMapping)) CALL FlagError("Nonlinear mapping is not associated.",err,error,*999)
+    IF(residualIdx<1.OR.residualIdx>nonlinearMapping%numberOfResiduals) THEN
+      localError="The specified residual index of "//TRIM(NumberToVString(residualIdx,"*",err,error))// &
+        & " is invalid. The residual index must be >= 1 and <= "// &
+        & TRIM(NumberToVString(nonlinearMapping%numberOfResiduals,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(variableIdx<1.OR.variableIdx>nonlinearMapping%numberOfResidualVariables) THEN
+      localError="The specified residual variable index of "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
+        & " is invalid for residual index "//TRIM(NumberToVString(residualIdx,"*",err,error))//" which has "// &
+        & TRIM(NumberToVString(nonlinearMapping%numberOfResidualVariables,"*",err,error))//" variables."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(nonlinearMapping%residualVariables)) &
+      & CALL FlagError("Nonlinear mapping residual variables is not allocated.",err,error,*999)
+    
+    fieldVariable=>nonlinearMapping%residualVariables(variableIdx)%ptr
+    IF(.NOT.ASSOCIATED(fieldVariable)) THEN
+      localError="The field variable is not associated for variable index "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
+        & " of residual index "//TRIM(NumberToVString(residualIdx,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("EquationsMappingNonlinear_ResidualVariableGet")
+    RETURN
+999 NULLIFY(fieldVariable)
+998 ERRORS("EquationsMappingNonlinear_ResidualVariableGet",err,error)
+    EXITS("EquationsMappingNonlinear_ResidualVariableGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingNonlinear_ResidualVariableGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the create values cache for an scalar equations mapping.
   SUBROUTINE EquationsMappingScalar_CreateValuesCacheGet(scalarMapping,createValuesCache,err,error,*)
 
@@ -100,7 +154,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
  
     ENTERS("EquationsMappingScalar_CreateValuesCacheGet",err,error,*998)
 
@@ -132,7 +185,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
  
     ENTERS("EquationsMappingScalar_ScalarEquationsGet",err,error,*998)
 
@@ -163,7 +215,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
  
     ENTERS("EquationsMappingVector_CreateValuesCacheGet",err,error,*998)
 

@@ -91,6 +91,10 @@ MODULE SolverAccessRoutines
 
   PUBLIC SOLVER_SOLVER_EQUATIONS_GET
 
+  PUBLIC Solver_SolversGet
+
+  PUBLIC Solvers_ControlLoopGet
+
   PUBLIC Solvers_SolverGet
 
   PUBLIC SOLVERS_SOLVER_GET
@@ -233,6 +237,68 @@ CONTAINS
     
   END SUBROUTINE Solver_SolverEquationsGet
   
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the solvers for a solver.
+  SUBROUTINE Solver_SolversGet(solver,solvers,err,error,*)
+
+    !Argument variables
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver to get the solvers for.
+    TYPE(SOLVERS_TYPE), POINTER :: solvers !<On exit, A pointer to the solvers for the solver. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Solver_SolversGet",err,error,*998)
+
+    IF(ASSOCIATED(solvers)) CALL FlagError("Solvers is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+      
+    solvers=>solver%solvers
+    IF(.NOT.ASSOCIATED(solvers)) CALL FlagError("The solver solvers is not associated.",err,error,*999)
+       
+    EXITS("Solver_SolversGet")
+    RETURN
+999 NULLIFY(solvers)
+998 ERRORSEXITS("Solver_SolversGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Solver_SolversGet
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the control loop for a solvers.
+  SUBROUTINE Solvers_ControlLoopGet(solvers,controlLoop,err,error,*)
+
+    !Argument variables
+    TYPE(SOLVERS_TYPE), POINTER :: solvers !<A pointer to the solvers to get the control loop for.
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop !<On exit, A pointer to the control loop for the solvers. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Solvers_ControlLoopGet",err,error,*998)
+
+    IF(ASSOCIATED(controlLoop)) CALL FlagError("Control loop is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solvers)) CALL FlagError("Solvers is not associated.",err,error,*999)
+      
+    controlLoop=>solvers%CONTROL_LOOP
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("The solvers control loop is not associated.",err,error,*999)
+       
+    EXITS("Solvers_ControlLoopGet")
+    RETURN
+999 NULLIFY(controlLoop)
+998 ERRORSEXITS("Solvers_ControlLoopGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Solvers_ControlLoopGet
+
   !
   !================================================================================================================================
   !

@@ -10513,13 +10513,13 @@ IF (EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_S
             CASE(PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE) 
               CALL SOLVERS_NUMBER_SET(SOLVERS,2,err,error,*999)
               !Set the first solver to be an ODE integrator for growth
-              CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,err,error,*999)
+              CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
               CALL SOLVER_TYPE_SET(SOLVER,SOLVER_DAE_TYPE,err,error,*999)
               !Set solver defaults
               CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,err,error,*999)
               !Set the second solver to be a nonlinear solver for elasticity
               NULLIFY(SOLVER)
-              CALL SOLVERS_SOLVER_GET(SOLVERS,3,SOLVER,err,error,*999)
+              CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,err,error,*999)
               CALL SOLVER_TYPE_SET(SOLVER,SOLVER_NONLINEAR_TYPE,err,error,*999)
               !Set solver defaults
               CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,err,error,*999)

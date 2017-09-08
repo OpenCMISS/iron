@@ -279,7 +279,7 @@ MODULE Constants
   INTEGER(INTG) :: OTHER_XI_ORIENTATIONS3(3,3) = RESHAPE([0,-1,1,1,0,-1,-1,1,0],[3,3]) !<OTHER_XI_ORIENTATIONSS3(ni,nii) gives the orientation of the given two xi directions. Is equal to leviCivita(ni,nii,OTHER_XI_DIRECTIONS3(ni,nii,2)) where leviCivita is the Levi-Civita or alternating symbol
   !>
 
-  !> \addtogroup Constants_ElementNormalXiDirections Constants::ElementNormalXiDirections
+  !> \addtogroup Constants_ElementNormalXiDirections OpenCMISS::iron::Constants::ElementNormalXiDirections
   !> \brief Xi normal directions
   !> \see Constants
   !>@{ 
@@ -293,7 +293,7 @@ MODULE Constants
   INTEGER(INTG), PARAMETER :: ELEMENT_NORMAL_PLUS_XI4=4 !<Positive xi 4 normal 
   !>@}
     
-  !> \addtogroup Constants_VoigtTensorIndices Constants::VoigtTensorIndices
+  !> \addtogroup Constants_VoigtTensorIndices OpenCMISS::iron::Constants::VoigtTensorIndices
   !> \brief The indices for converting back and forth between Voigt indices and symmetric rank 2 tensor indices.
   !> \see Constants
   !>@{ 

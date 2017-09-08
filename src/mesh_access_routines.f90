@@ -106,6 +106,10 @@ MODULE MeshAccessRoutines
   PUBLIC Domain_TopologyGet
 
   PUBLIC DomainElements_BasisGet
+
+  PUBLIC DomainFaces_FaceGet
+
+  PUBLIC DomainLines_LineGet
   
   PUBLIC DomainMappings_ElementsGet
 
@@ -116,6 +120,8 @@ MODULE MeshAccessRoutines
   PUBLIC DomainTopology_FacesGet
 
   PUBLIC DomainTopology_LinesGet
+  
+  PUBLIC DomainTopology_NodesGet
   
   PUBLIC Mesh_DecompositionGet
 
@@ -308,7 +314,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology !<A pointer to the decomposition topology to get the faces for.
-     TYPE(DECOMPOSITION_FACES_TYPE), POINTER :: decompositionFaces !<On exit, a pointer to the decomposition topology faces. Must not be associated on entry.
+    TYPE(DECOMPOSITION_FACES_TYPE), POINTER :: decompositionFaces !<On exit, a pointer to the decomposition topology faces. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -458,6 +464,90 @@ CONTAINS
     
   END SUBROUTINE DomainElements_BasisGet
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Get the face in the domain faces identified by its local number
+  SUBROUTINE DomainFaces_FaceGet(domainFaces,faceNumber,face,err,error,*)
+
+    !Argument variables
+    TYPE(DOMAIN_FACES_TYPE), POINTER :: domainFaces !<A pointer to the domain faces to get the face for
+    INTEGER(INTG), INTENT(IN) :: faceNumber !<The face number to get
+    TYPE(DOMAIN_FACE_TYPE), POINTER, INTENT(OUT) :: face !<On return, a pointer to the specified face. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("DomainFaces_FaceGet",err,error,*999)
+
+    IF(ASSOCIATED(face)) CALL FlagError("Face is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(domainFaces)) CALL FlagError("Domain faces is not associated.",err,error,*999)
+    IF(faceNumber<=0.OR.faceNumber>domainFaces%NUMBER_OF_FACES) THEN
+      localError="The face number of "//TRIM(NumberToVString(faceNumber,"*",err,error))// &
+        & " is invalid. The face number must be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainFaces%NUMBER_OF_FACES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(domainFaces%faces)) CALL FlagError("Domain faces faces is not associated.",err,error,*999)
+      
+    face=>domainFaces%faces(faceNumber)
+    IF(.NOT.ASSOCIATED(face)) THEN
+      localError="Face number "//TRIM(NumberToVString(faceNumber,"*",err,error))//" is not associated."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("DomainFaces_FaceGet")
+    RETURN
+999 NULLIFY(face)
+998 ERRORSEXITS("DomainFaces_FaceGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainFaces_FaceGet    
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Get the line in the domain faces identified by its local number
+  SUBROUTINE DomainLines_LineGet(domainLines,lineNumber,line,err,error,*)
+
+    !Argument variables
+    TYPE(DOMAIN_LINES_TYPE), POINTER :: domainLines !<A pointer to the domain lines to get the line for
+    INTEGER(INTG), INTENT(IN) :: lineNumber !<The line number to get
+    TYPE(DOMAIN_LINE_TYPE), POINTER, INTENT(OUT) :: line !<On return, a pointer to the specified line. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("DomainLines_LineGet",err,error,*999)
+
+    IF(ASSOCIATED(line)) CALL FlagError("Line is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(domainLines)) CALL FlagError("Domain lines is not associated.",err,error,*999)
+    IF(lineNumber<=0.OR.lineNumber>domainLines%NUMBER_OF_LINES) THEN
+      localError="The line number of "//TRIM(NumberToVString(lineNumber,"*",err,error))// &
+        & " is invalid. The line number must be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainLines%NUMBER_OF_LINES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(domainLines%lines)) CALL FlagError("Domain lines lines is not associated.",err,error,*999)
+      
+    line=>domainLines%lines(lineNumber)
+    IF(.NOT.ASSOCIATED(line)) THEN
+      localError="Line number "//TRIM(NumberToVString(lineNumber,"*",err,error))//" is not associated."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("DomainLines_LineGet")
+    RETURN
+999 NULLIFY(line)
+998 ERRORSEXITS("DomainLines_LineGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainLines_LineGet
+  
   !
   !================================================================================================================================
   !
@@ -657,6 +747,39 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE DomainTopology_LinesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets nodes from a domain topology.
+  SUBROUTINE DomainTopology_NodesGet(domainTopology,domainNodes,err,error,*)
+
+    !Argument variables
+    TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology !<A pointer to the domain topology to get the nodes for.
+    TYPE(DOMAIN_NODES_TYPE), POINTER :: domainNodes !<On exit, a pointer to the domain topology nodes. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("DomainTopology_NodesGet",err,error,*999)
+
+    !Check input arguments
+    IF(ASSOCIATED(domainNodes)) CALL FlagError("Domain lines is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(domainTopology)) CALL FlagError("Domain is not associated.",err,error,*999)
+
+    !Get the domain nodes
+    domainNodes=>domainTopology%nodes
+    !Check domain nodes is associated.
+    IF(.NOT.ASSOCIATED(domainNodes)) CALL FlagError("Domain topology nodes is not associated.",err,error,*999)
+    
+    EXITS("DomainTopology_NodesGet")
+    RETURN
+999 NULLIFY(domainNodes)
+998 ERRORSEXITS("DomainTopology_NodesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainTopology_NodesGet
 
   !
   !================================================================================================================================

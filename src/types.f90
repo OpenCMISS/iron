@@ -1807,6 +1807,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>vector equations mapping. There may be multiple residual variables with a Jacobian matrix for each variable
   TYPE EquationsMappingNonlinearType
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations vector mapping
+    INTEGER(INTG) :: numberOfResiduals !<The number of residuals in this mapping. Currently just one.
     INTEGER(INTG) :: numberOfResidualVariables !<The number of residual variables in this mapping
     TYPE(FIELD_VARIABLE_PTR_TYPE), ALLOCATABLE :: residualVariables(:) !<residualVariables(variableIdx). The variableIdx'th residual variable.
     TYPE(VarToEquationsJacobianMapType), ALLOCATABLE :: varToJacobianMap(:) !<varToJacobianMap(variableIdx). The mapping from the residual variable to the Jacobain matrix for the variableIdx'th residual variable.

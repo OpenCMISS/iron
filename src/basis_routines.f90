@@ -146,6 +146,15 @@ MODULE BASIS_ROUTINES
   INTEGER(INTG), PARAMETER :: BASIS_NOT_COLLAPSED=4 !<The Xi direction is not collapsed \see BASIS_ROUTINES_XiCollapse,BASIS_ROUTINES
   !>@}
   
+  !> \addtogroup BASIS_ROUTINES_BoundaryXiType BASIS_ROUTINES::BoundaryXiType
+  !> \brief The boundary xi types
+  !> \see BASIS_ROUTINES
+  !>@{
+  INTEGER(INTG), PARAMETER :: BASIS_NO_BOUNDARY_XI=0 !<The xi is not on a boundary \see BASIS_ROUTINES_XiBoundaryType,BASIS_ROUTINES
+  INTEGER(INTG), PARAMETER :: BASIS_LINE_BOUNDARY_XI=1 !<The xi is on a boundary line \see BASIS_ROUTINES_XiBoundaryType,BASIS_ROUTINES
+  INTEGER(INTG), PARAMETER :: BASIS_FACE_BOUNDARY_XI=2 !<The xi is on a boundary face \see BASIS_ROUTINES_XiBoundaryType,BASIS_ROUTINES
+  !>@}
+  
   !!Module types
   ! 
   !!>Contains information on the defined basis functions
@@ -383,7 +392,9 @@ MODULE BASIS_ROUTINES
 
   PUBLIC BASIS_XI_COLLAPSED,BASIS_COLLAPSED_AT_XI0,BASIS_COLLAPSED_AT_XI1,BASIS_NOT_COLLAPSED
 
-  PUBLIC Basis_BoundaryXiToXi
+  PUBLIC BASIS_NO_BOUNDARY_XI,BASIS_LINE_BOUNDARY_XI,BASIS_FACE_BOUNDARY_XI
+
+  PUBLIC Basis_BoundaryXiToXi,Basis_XiToBoundaryXi
   
   PUBLIC BASIS_COLLAPSED_XI_SET
 
@@ -1412,6 +1423,293 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Basis_BoundaryXiToXi
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Converts a full xi location on a boundary face or line if the xi location is on a face or line.
+  SUBROUTINE Basis_XiToBoundaryXi(basis,fullXi,boundaryXiType,localLineFaceNumber,boundaryXi,err,error,*)
+
+    !Argument variables
+    TYPE(BASIS_TYPE), POINTER :: basis !<A pointer to the basis to convert the full xi for
+    REAL(DP), INTENT(IN) :: fullXi(:) !<The equivalent full xi location to find the boundary xi location
+    INTEGER(INTG), INTENT(OUT) :: boundaryXiType !<On exit, the type of boundary xi location. If the fullXi location is not on the boundary the the xi type will be BASIS_NO_BOUNDARY_XI. If the fullXi location is on a line then the type will be BASIS_LINE_BOUNDARY_XI. If the fullXi location is on a face then the type will be BASIS_FACE_BOUNDARY_XI.
+    INTEGER(INTG), INTENT(OUT) :: localLineFaceNumber !<On exit, the local line/face number containing the boundary xi. The the full xi location is not on a face or line the the localLineFaceNumber will be zero.
+    REAL(DP), INTENT(OUT) :: boundaryXi(:) !<On exit, the equivalent boundary xi location for the full xi location. Note the size of the boundary xi array will determine if we are dealing with a line xi or a face xi.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: normalDirection1,normalDirection2,numberOfBoundaries,numberOfXi,numberOfXiCoordinates,onBoundary(4),xiIdx
+    TYPE(VARYING_STRING) :: localError
+        
+    ENTERS("Basis_XiToBoundaryXi",err,error,*999)
+
+    boundaryXiType=BASIS_NO_BOUNDARY_XI
+    localLineFaceNumber=0
+    boundaryXi=0.0_DP
+    
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(.NOT.basis%BASIS_FINISHED) CALL FlagError("Basis has not been finished.",err,error,*999)
+    numberOfXi=basis%NUMBER_OF_XI
+    numberOfXiCoordinates=basis%NUMBER_OF_XI_COORDINATES
+    IF(SIZE(fullXi,1)<numberOfXi) THEN
+      localError="The size of the full xi array of "//TRIM(NumberToVString(SIZE(fullXi,1),"*",err,error))// &
+        & " must be >= the number of basis xi directions of "//TRIM(NumberToVString(numberOfXi,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    !Determine if we are near the boundary
+    onBoundary=0
+    numberOfBoundaries=0
+    DO xiIdx=1,numberOfXi
+      IF(ABS(fullXi(xiIdx))<ZERO_TOLERANCE) THEN
+        onBoundary(xiIdx)=-1
+        numberOfBoundaries=numberOfBoundaries+1
+      ELSE IF(ABS(fullXi(xiIdx)-1.0_DP)<ZERO_TOLERANCE) THEN
+        onBoundary(xiIdx)=+1
+        numberOfBoundaries=numberOfBoundaries+1
+      ENDIF
+    ENDDO !xiIdx
+    SELECT CASE(numberOfBoundaries)
+    CASE(0) 
+      !The xi location is not near the boundary. Return zero
+      localLineFaceNumber=0
+      boundaryXiType=BASIS_NO_BOUNDARY_XI
+      boundaryXi=0.0_DP
+    CASE(1)
+      !The xi location is on a face in 3D or a line in 2D.
+      IF(SIZE(boundaryXi,1)<(numberOfXi-1)) THEN
+        localError="The size of the boundary xi array of "//TRIM(NumberToVString(SIZE(boundaryXi,1),"*",err,error))// &
+          & " must be >= 2."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      !Find the normal
+      normalDirection1=0
+      DO xiIdx=1,numberOfXi
+        IF(onBoundary(xiIdx)/=0) THEN
+          normalDirection1=onBoundary(xiIdx)
+          EXIT
+        ENDIF
+      ENDDO !xiIdx
+      IF(normalDirection1==0) CALL FlagError("Could not find normal direction.",err,error,*999)
+      SELECT CASE(basis%TYPE)
+      CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
+        SELECT CASE(numberOfXi)
+        CASE(2)
+          localLineFaceNumber=basis%xiNormalsLocalLine(normalDirection1,1)
+          boundaryXiType=BASIS_LINE_BOUNDARY_XI
+          SELECT CASE(normalDirection1)
+          CASE(-2)
+            boundaryXi(1)=fullXi(1)
+          CASE(-1)
+            boundaryXi(1)=fullXi(2)
+          CASE(1)
+            boundaryXi(1)=fullXi(2)
+          CASE(2)
+            boundaryXi(1)=fullXi(1)
+          CASE DEFAULT
+            localError="The normal xi direction of "//TRIM(NumberToVString(normalDirection1,"*",err,error))// &
+              & " is invalid on a Lagrange-Hermite basis with two xi directions."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE(3)
+          localLineFaceNumber=basis%xiNormalLocalFace(normalDirection1)
+          boundaryXiType=BASIS_FACE_BOUNDARY_XI
+          SELECT CASE(normalDirection1)
+          CASE(-3)
+            boundaryXi(1)=fullXi(2)
+            boundaryXi(2)=fullXi(1)
+          CASE(-2)
+            boundaryXi(1)=fullXi(1)
+            boundaryXi(2)=fullXi(3)
+          CASE(-1)
+            boundaryXi(1)=fullXi(3)
+            boundaryXi(2)=fullXi(2)
+          CASE(1)
+            boundaryXi(1)=fullXi(2)
+            boundaryXi(2)=fullXi(3)
+          CASE(2)
+            boundaryXi(1)=fullXi(3)
+            boundaryXi(2)=fullXi(1)
+          CASE(3)
+            boundaryXi(1)=fullXi(1)
+            boundaryXi(2)=fullXi(2)
+          CASE DEFAULT
+            localError="The normal xi direction of "//TRIM(NumberToVString(normalDirection1,"*",err,error))// &
+              & " is invalid on a Lagrange-Hermite basis with three xi directions."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE DEFAULT
+          localError="The number of xi directions of "//TRIM(NumberToVString(numberOfXi,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(BASIS_SIMPLEX_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(BASIS_SERENDIPITY_TYPE,BASIS_AUXILLIARY_TYPE,BASIS_B_SPLINE_TP_TYPE, &
+        & BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE,BASIS_EXTENDED_LAGRANGE_TP_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE DEFAULT
+        localError="The basis type of "//TRIM(NumberToVString(basis%TYPE,"*",err,error))// &
+          & " for basis number "//TRIM(NumberToVString(basis%USER_NUMBER,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(2)
+      !The xi location is on a line in 3D
+      IF(SIZE(boundaryXi,1)<(numberOfXi-1)) THEN
+        localError="The size of the boundary xi array of "//TRIM(NumberToVString(SIZE(boundaryXi,1),"*",err,error))// &
+          & " must be >= 2."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      !Find the normal
+      normalDirection1=0
+      normalDirection2=0
+      DO xiIdx=1,numberOfXi
+        IF(onBoundary(xiIdx)/=0) THEN
+          IF(normalDirection1==0) THEN
+            normalDirection1=onBoundary(xiIdx)
+          ELSE
+            normalDirection2=onBoundary(xiIdx)
+            EXIT
+          ENDIF
+        ENDIF
+      ENDDO !xiIdx
+      IF(normalDirection1==0) CALL FlagError("Could not find normal direction 1.",err,error,*999)
+      IF(normalDirection2==0) CALL FlagError("Could not find normal direction 2.",err,error,*999)
+      SELECT CASE(basis%TYPE)
+      CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
+        SELECT CASE(numberOfXi)
+        CASE(3)
+          localLineFaceNumber=basis%xiNormalsLocalLine(normalDirection1,normalDirection2)
+          boundaryXiType=BASIS_LINE_BOUNDARY_XI
+          SELECT CASE(normalDirection1)
+          CASE(-3)
+            SELECT CASE(normalDirection2)
+            CASE(-2)
+              boundaryXi(1)=fullXi(1)
+            CASE(-1)
+              boundaryXi(1)=fullXi(2)
+            CASE(1)
+              boundaryXi(1)=fullXi(2)
+            CASE(2)
+              boundaryXi(1)=fullXi(1)
+            CASE DEFAULT
+              localError="The second normal xi direction of "//TRIM(NumberToVString(normalDirection2,"*",err,error))// &
+                & " is invalid on a Lagrange-Hermite basis with a first normal direction of "// &
+                & TRIM(NumberToVString(normalDirection1,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT            
+          CASE(-2)
+            SELECT CASE(normalDirection2)
+            CASE(-3)
+              boundaryXi(1)=fullXi(1)
+            CASE(-1)
+              boundaryXi(1)=fullXi(3)
+            CASE(1)
+              boundaryXi(1)=fullXi(3)
+            CASE(3)
+              boundaryXi(1)=fullXi(1)
+            CASE DEFAULT
+              localError="The second normal xi direction of "//TRIM(NumberToVString(normalDirection2,"*",err,error))// &
+                & " is invalid on a Lagrange-Hermite basis with a first normal direction of "// &
+                & TRIM(NumberToVString(normalDirection1,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT            
+          CASE(-1)
+            SELECT CASE(normalDirection2)
+            CASE(-3)
+              boundaryXi(1)=fullXi(2)
+            CASE(-2)
+              boundaryXi(1)=fullXi(3)
+            CASE(2)
+              boundaryXi(1)=fullXi(3)
+            CASE(3)
+              boundaryXi(1)=fullXi(2)
+            CASE DEFAULT
+              localError="The second normal xi direction of "//TRIM(NumberToVString(normalDirection2,"*",err,error))// &
+                & " is invalid on a Lagrange-Hermite basis with a first normal direction of "// &
+                & TRIM(NumberToVString(normalDirection1,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT            
+          CASE(1)
+            SELECT CASE(normalDirection2)
+            CASE(-3)
+              boundaryXi(1)=fullXi(2)
+            CASE(-2)
+              boundaryXi(1)=fullXi(3)
+            CASE(2)
+              boundaryXi(1)=fullXi(3)
+            CASE(3)
+              boundaryXi(1)=fullXi(2)
+            CASE DEFAULT
+              localError="The second normal xi direction of "//TRIM(NumberToVString(normalDirection2,"*",err,error))// &
+                & " is invalid on a Lagrange-Hermite basis with a first normal direction of "// &
+                & TRIM(NumberToVString(normalDirection1,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT            
+            boundaryXi(1)=fullXi(2)
+          CASE(2)
+            SELECT CASE(normalDirection2)
+            CASE(-3)
+              boundaryXi(1)=fullXi(1)
+            CASE(-1)
+              boundaryXi(1)=fullXi(3)
+            CASE(1)
+              boundaryXi(1)=fullXi(3)
+            CASE(3)
+              boundaryXi(1)=fullXi(1)
+            CASE DEFAULT
+              localError="The second normal xi direction of "//TRIM(NumberToVString(normalDirection2,"*",err,error))// &
+                & " is invalid on a Lagrange-Hermite basis with a first normal direction of "// &
+                & TRIM(NumberToVString(normalDirection1,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT            
+            boundaryXi(1)=fullXi(1)
+          CASE(3)
+            SELECT CASE(normalDirection2)
+            CASE(-2)
+              boundaryXi(1)=fullXi(1)
+            CASE(-1)
+              boundaryXi(1)=fullXi(2)
+            CASE(1)
+              boundaryXi(1)=fullXi(2)
+            CASE(2)
+              boundaryXi(1)=fullXi(1)
+            CASE DEFAULT
+              localError="The second normal xi direction of "//TRIM(NumberToVString(normalDirection2,"*",err,error))// &
+                & " is invalid on a Lagrange-Hermite basis with three xi directions."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT            
+          CASE DEFAULT
+            localError="The first normal xi direction of "//TRIM(NumberToVString(normalDirection1,"*",err,error))// &
+              & " is invalid on a Lagrange-Hermite basis with three xi directions."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE DEFAULT
+          localError="The number of xi directions of "//TRIM(NumberToVString(numberOfXi,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(BASIS_SIMPLEX_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(BASIS_SERENDIPITY_TYPE,BASIS_AUXILLIARY_TYPE,BASIS_B_SPLINE_TP_TYPE, &
+        & BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE,BASIS_EXTENDED_LAGRANGE_TP_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE DEFAULT
+        localError="The basis type of "//TRIM(NumberToVString(basis%TYPE,"*",err,error))// &
+          & " for basis number "//TRIM(NumberToVString(basis%USER_NUMBER,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The number of boundary xi locations of "//TRIM(NumberToVString(numberOfBoundaries,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+          
+    EXITS("Basis_XiToBoundaryXi")
+    RETURN
+999 ERRORSEXITS("Basis_XiToBoundaryXi",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_XiToBoundaryXi
 
   !
   !================================================================================================================================

@@ -59,19 +59,21 @@ MODULE SolverMappingAccessRoutines
 
   !Module types
 
-  !Module variables
+  !Module variables 
 
   !Interfaces
 
   PUBLIC SolverMapping_EquationsSetGet
 
+  PUBLIC SolverMapping_InterfaceConditionGet
   
 CONTAINS
 
   !
   !================================================================================================================================
   !
- !>Returns a pointer to the equations set for solver mapping.
+  
+  !>Returns a pointer to the equations set for solver mapping.
   SUBROUTINE SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*)
 
     !Argument variables
@@ -110,6 +112,50 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE SolverMapping_EquationsSetGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the interface condition for solver mapping.
+  SUBROUTINE SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*)
+
+    !Argument variables
+    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping !<A pointer to the solver mapping to get the interface condition for
+    INTEGER(INTG), INTENT(IN) :: interfaceConditionIdx !<The interface condition index in the solver mapping to get the interface condition for
+    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<On exit, a pointer to the specified interface condition. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("SolverMapping_InterfaceConditionGet",err,error,*998)
+
+    IF(ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solverMapping)) CALL FlagError("Solver mapping is not associated.",err,error,*999)
+    IF(interfaceConditionIdx<1.OR.interfaceConditionIdx>solverMapping%NUMBER_OF_INTERFACE_CONDITIONS) THEN
+      localError="The specified interface condition index of "//TRIM(NumberToVString(interfaceConditionIdx,"*",err,error))// &
+        & " is invalid. The index must be > 1 and <= "// &
+        & TRIM(NumberToVString(SolverMapping%NUMBER_OF_INTERFACE_CONDITIONS,"*",err,error))//"."      
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(solverMapping%INTERFACE_CONDITIONS)) &
+      & CALL FlagError("Solver mapping interface conditions is not allocated.",err,error,*999)
+
+    interfaceCondition=>solverMapping%INTERFACE_CONDITIONS(interfaceConditionIdx)%ptr
+    IF(.NOT.ASSOCIATED(interfaceCondition)) THEN
+      localError="The interface condition for the specified interface condition index of "// &
+        & TRIM(NumberToVString(interfaceConditionIdx,"*",err,error))//" is not associated."      
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+      
+    EXITS("SolverMapping_InterfaceConditionGet")
+    RETURN
+999 NULLIFY(interfaceCondition)
+998 ERRORSEXITS("SolverMapping_InterfaceConditionGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMapping_InterfaceConditionGet
   
   !
   !================================================================================================================================

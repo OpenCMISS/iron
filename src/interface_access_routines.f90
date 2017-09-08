@@ -97,9 +97,13 @@ MODULE InterfaceAccessRoutines
 
   PUBLIC Interface_MeshGet
 
+  PUBLIC Interface_MeshConnectivityGet
+
   PUBLIC Interface_NodesGet
 
   PUBLIC INTERFACE_NODES_GET
+
+  PUBLIC Interface_PointsConnectivityGet
 
   PUBLIC Interface_UserNumberFind
 
@@ -302,6 +306,42 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns a pointer to the mesh connectivity for a given interface.
+  SUBROUTINE Interface_MeshConnectivityGet(INTERFACE,meshConnectivity,err,error,*)
+
+    !Argument variables
+    TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer to the interface to get the mesh connectivity for
+    TYPE(INTERFACE_MESH_CONNECTIVITY_TYPE), POINTER :: meshConnectivity !<On exit, a pointer to the mesh connectivity for the interface. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Interface_MeshConnectivityGet",err,error,*998)
+
+    IF(ASSOCIATED(meshConnectivity)) CALL FlagError("Mesh connectivity is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*998)
+    IF(.NOT.interface%INTERFACE_FINISHED) CALL FlagError("Interface has not been finished.",err,error,*998)
+    
+    meshConnectivity=>interface%MESH_CONNECTIVITY
+    IF(.NOT.ASSOCIATED(meshConnectivity)) THEN
+      localError="Mesh connectivity is not associated on intereface number "// &
+        & TRIM(NumberToVString(interface%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Interface_MeshConnectivityGet")
+    RETURN
+999 NULLIFY(meshConnectivity)
+998 ERRORSEXITS("Interface_MeshConnectivityGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Interface_MeshConnectivityGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns a pointer to the nodes for a interface. \see OPENCMISS::Iron::cmfe_InterfaceNodesGet
   SUBROUTINE Interface_NodesGet(interface,nodes,err,error,*)
 
@@ -328,6 +368,42 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Interface_NodesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the points connectivity for a given interface.
+  SUBROUTINE Interface_PointsConnectivityGet(INTERFACE,pointsConnectivity,err,error,*)
+
+    !Argument variables
+    TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer to the interface to get the points connectivity for
+    TYPE(InterfacePointsConnectivityType), POINTER :: pointsConnectivity !<On exit, a pointer to the points connectivity for the interface. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Interface_PointConnectivityGet",err,error,*998)
+
+    IF(ASSOCIATED(pointsConnectivity)) CALL FlagError("Point connectivity is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*999)
+    IF(.NOT.interface%INTERFACE_FINISHED) CALL FlagError("Interface has not been finished.",err,error,*999)
+    
+    pointsConnectivity=>interface%pointsConnectivity
+    IF(.NOT.ASSOCIATED(pointsConnectivity)) THEN
+      localError="Points connectivity is not associated on intereface number "// &
+        & TRIM(NumberToVString(interface%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Interface_PointsConnectivityGet")
+    RETURN
+999 NULLIFY(pointsConnectivity)
+998 ERRORSEXITS("Interface_PointsConnectivityGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Interface_PointsConnectivityGet
 
   !
   !================================================================================================================================

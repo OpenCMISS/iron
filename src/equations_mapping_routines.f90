@@ -2914,6 +2914,7 @@ CONTAINS
     ALLOCATE(vectorMapping%nonlinearMapping,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate equations mapping nonlinear mapping.",err,error,*999)
     vectorMapping%nonlinearMapping%vectorMapping=>vectorMapping
+    vectorMapping%nonlinearMapping%numberOfResiduals=1
     vectorMapping%nonlinearMapping%numberOfResidualVariables=0
     vectorMapping%nonlinearMapping%residualCoefficient=1.0_DP
 

@@ -7119,114 +7119,107 @@ CONTAINS
   !
 
   !>Computes the geometric position, normal and tangent vectors at a interpolated point metrics in a field. 
-  SUBROUTINE Field_PositionNormalTangentsCalculateIntPtMetric(INTERPOLATED_POINT_METRICS,reverseNormal, &
-    & POSITION,NORMAL,TANGENTS,ERR,ERROR,*)
+  SUBROUTINE Field_PositionNormalTangentsCalculateIntPtMetric(interpolatedPointMetrics,reverseNormal,position,normal,tangents, &
+    & err,error,*)
 
     !Argument variables
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER, INTENT(IN) :: INTERPOLATED_POINT_METRICS !<A pointer to the interpolated point metric information to calculate the position etc. for
+    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER, INTENT(IN) :: interpolatedPointMetrics !<A pointer to the interpolated point metric information to calculate the position etc. for
     LOGICAL, INTENT(IN) :: reverseNormal !<Reverse normal diretion if .TRUE.
-    REAL(DP), INTENT(OUT) :: POSITION(:) !<POSITION(coordinate_idx), on exit the geometric position of the node
-    REAL(DP), INTENT(OUT) :: NORMAL(:) !<NORMAL(coordinate_idx), on exit the normal vector
-    REAL(DP), INTENT(OUT) :: TANGENTS(:,:) !<TANGENTS(coordinate_idx,tangent_idx), on exit the tangent vectors for the tangent_idx'th tangent at the node. There are number_of_xi-1 tangent vectors.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    REAL(DP), INTENT(OUT) :: position(:) !<position(coordinate_idx), on exit the geometric position of the node
+    REAL(DP), INTENT(OUT) :: normal(:) !<normal(coordinate_idx), on exit the normal vector
+    REAL(DP), INTENT(OUT) :: tangents(:,:) !<tangents(coordinate_idx,tangent_idx), on exit the tangent vectors for the tangent_idx'th tangent at the node. There are number_of_xi-1 tangent vectors.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dimension_idx,xi_idx
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: INTERPOLATED_POINT
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: coordinateIdx,numberOfXDimensions,numberOfXiDimensions,xiIdx
+    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: interpolatedPoint
+    TYPE(VARYING_STRING) :: localError
  
-    ENTERS("Field_PositionNormalTangentsCalculateIntPtMetric",ERR,ERROR,*999)
+    ENTERS("Field_PositionNormalTangentsCalculateIntPtMetric",err,error,*999)
 
-    IF(ASSOCIATED(INTERPOLATED_POINT_METRICS)) THEN
-      IF(SIZE(POSITION,1)>=INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS) THEN
-        IF(SIZE(NORMAL,1)>=INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS) THEN
-          IF(SIZE(TANGENTS,1)>=INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS) THEN
-            IF(SIZE(TANGENTS,2)>=INTERPOLATED_POINT_METRICS%NUMBER_OF_XI_DIMENSIONS) THEN
-              INTERPOLATED_POINT=>INTERPOLATED_POINT_METRICS%INTERPOLATED_POINT
-              IF(ASSOCIATED(INTERPOLATED_POINT)) THEN
-                POSITION=INTERPOLATED_POINT%VALUES(1:INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS,NO_PART_DERIV)
-                SELECT CASE(INTERPOLATED_POINT_METRICS%NUMBER_OF_XI_DIMENSIONS)
-                CASE(1) !For lines
-                  NORMAL=0.0_DP
-                  DO dimension_idx=1,INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS
-                    TANGENTS(dimension_idx,1)=INTERPOLATED_POINT_METRICS%DX_DXI &
-                      & (dimension_idx,1)
-                  ENDDO !dimension_idx 
-                  CALL Normalise(TANGENTS(1:INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS,1), &
-                    TANGENTS(1:INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS,1),ERR,ERROR,*999)
-                  NORMAL(1)=TANGENTS(2,1)
-                  NORMAL(2)=TANGENTS(1,1)
-                  IF(ERR/=0) GOTO 999     
-                CASE(2) !For faces
-                  NORMAL=0.0_DP
-                  DO xi_idx=1,INTERPOLATED_POINT_METRICS%NUMBER_OF_XI_DIMENSIONS
-                    DO dimension_idx=1,INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS
-                      TANGENTS(dimension_idx,xi_idx)=INTERPOLATED_POINT_METRICS%DX_DXI(dimension_idx,xi_idx)
-                    ENDDO !dimension_idx
-                    CALL Normalise(TANGENTS(1:INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS,xi_idx), &
-                       TANGENTS(1:INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS,xi_idx),ERR,ERROR,*999)
-                    IF(ERR/=0) GOTO 999
-                  ENDDO !xi_idx
-                  CALL CrossProduct(TANGENTS(1:INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS,1), &
-                    & TANGENTS(1:INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS,2),NORMAL,ERR,ERROR,*999)
-                  IF(reverseNormal) NORMAL=-NORMAL
-                CASE DEFAULT
-                  LOCAL_ERROR="The interpolated metrics must be for lines/faces, dimension of " &
-                    & //TRIM(NUMBER_TO_VSTRING(INTERPOLATED_POINT_METRICS%NUMBER_OF_XI_DIMENSIONS,"*",ERR,ERROR))//" is invalid."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)    
-                END SELECT
-              ELSE
-                CALL FlagError("Interpolated point metrics interpolated point is not associted.",ERR,ERROR,*999)
-              ENDIF
-            ELSE
-              LOCAL_ERROR="The size of the 2nd dimension of tangents of "// &
-                & TRIM(NUMBER_TO_VSTRING(SIZE(TANGENTS,2),"*",ERR,ERROR))//" is too small. The size must be >= "// &
-                & TRIM(NUMBER_TO_VSTRING(INTERPOLATED_POINT_METRICS%NUMBER_OF_XI_DIMENSIONS,"*",ERR,ERROR))//"."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The size of the 1st dimension of tangents of "// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(TANGENTS,1),"*",ERR,ERROR))//" is too small. The size must be >= "// &
-              & TRIM(NUMBER_TO_VSTRING(INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS,"*",ERR,ERROR))//"."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of normal of "//TRIM(NUMBER_TO_VSTRING(SIZE(NORMAL,1),"*",ERR,ERROR))// &
-            & " is too small. The size must be >= "// &
-            & TRIM(NUMBER_TO_VSTRING(INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)          
-        ENDIF
-      ELSE
-        LOCAL_ERROR="The size of position of "//TRIM(NUMBER_TO_VSTRING(SIZE(POSITION,1),"*",ERR,ERROR))// &
-          & " is too small. The size must be >= "// &
-          & TRIM(NUMBER_TO_VSTRING(INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS,"*",ERR,ERROR))//"."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)          
-      ENDIF
-    ELSE
-      CALL FlagError("Interpolated point metrics is not associated.",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(interpolatedPointMetrics)) CALL FlagError("Interpolated point metrics is not associated.",err,error,*999)
+    numberOfXDimensions=interpolatedPointMetrics%NUMBER_OF_X_DIMENSIONS
+    numberOfXiDimensions=interpolatedPointMetrics%NUMBER_OF_XI_DIMENSIONS
+    IF(SIZE(position,1)<numberOfXDimensions) THEN
+      localError="The size of position of "//TRIM(NumberToVString(SIZE(position,1),"*",err,error))// &
+        & " is too small. The size must be >= "//TRIM(NumberToVString(numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)          
     ENDIF
+    IF(SIZE(normal,1)<numberOfXDimensions) THEN
+      localError="The size of normal of "//TRIM(NumberToVString(SIZE(normal,1),"*",err,error))// &
+        & " is too small. The size must be >= "//TRIM(NumberToVString(numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(tangents,1)<numberOfXDimensions) THEN
+      localError="The size of the 1st dimension of tangents of "// &
+        & TRIM(NumberToVString(SIZE(tangents,1),"*",err,error))//" is too small. The size must be >= "// &
+        & TRIM(NumberToVString(numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(tangents,2)<numberOfXiDimensions) THEN
+      localError="The size of the 2nd dimension of tangents of "// &
+        & TRIM(NumberToVString(SIZE(tangents,2),"*",err,error))//" is too small. The size must be >= "// &
+        & TRIM(NumberToVString(numberOfXiDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    interpolatedPoint=>interpolatedPointMetrics%INTERPOLATED_POINT
+    IF(.NOT.ASSOCIATED(interpolatedPoint)) &
+      & CALL FlagError("Interpolated point metrics interpolated point is not associated.",err,error,*999)
+    
+    position(1:numberOfXDimensions)=interpolatedPoint%values(1:numberOfXDimensions,NO_PART_DERIV)
+    normal(1:numberOfXDimensions)=0.0_DP
+    SELECT CASE(numberOfXiDimensions)
+    CASE(1) !For lines
+      normal(1:numberOfXDimensions)=0.0_DP
+      DO coordinateIdx=1,numberOfXDimensions
+        tangents(coordinateIdx,1)=interpolatedPointMetrics%DX_DXI(coordinateIdx,1)
+      ENDDO !coordinateIdx 
+      CALL Normalise(tangents(1:numberOfXDimensions,1),tangents(1:numberOfXDimensions,1),err,error,*999)
+      SELECT CASE(numberOfXDimensions)
+      CASE(2)
+        normal(1)=-tangents(2,1)
+        normal(2)=tangents(1,1)
+      CASE(3)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE DEFAULT
+        localError="The number of coordinate dimensions of "//TRIM(NumberToVString(numberOfXDimensions,"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(2) !For faces
+      DO xiIdx=1,numberOfXiDimensions
+        DO coordinateIdx=1,numberOfXDimensions
+          tangents(coordinateIdx,xiIdx)=interpolatedPointMetrics%DX_DXI(coordinateIdx,xiIdx)
+        ENDDO !coordinateIdx
+        CALL Normalise(tangents(1:numberOfXDimensions,xiIdx),tangents(1:numberOfXDimensions,xiIdx),err,error,*999)
+      ENDDO !xiIdx
+      CALL CrossProduct(tangents(1:numberOfXDimensions,1),tangents(1:numberOfXDimensions,2),normal,err,error,*999)
+    CASE DEFAULT
+      localError="The interpolated metrics must be for lines/faces, dimension of " &
+        & //TRIM(NumberToVString(numberOfXiDimensions,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)    
+    END SELECT
+    IF(reverseNormal) normal(1:numberOfXDimensions)=-normal(1:numberOfXDimensions)
 
-    IF(DIAGNOSTICS1) THEN
-      CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Interpolated point metrics data:",ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of X dimensions = ", &
-        & INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi dimensions = ", &
-        & INTERPOLATED_POINT_METRICS%NUMBER_OF_XI_DIMENSIONS,ERR,ERROR,*999)
-      CALL WRITE_STRING_VECTOR(GENERAL_OUTPUT_TYPE,1,1,INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS,3,3, &
-        & POSITION,'("  Position    :",3(X,E13.6))','(15X,3(X,E13.6))',ERR,ERROR,*999)
-      CALL WRITE_STRING_VECTOR(GENERAL_OUTPUT_TYPE,1,1,INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS,3,3, &
-        & NORMAL,'("  Normal      :",3(X,E13.6))','(15X,3(X,E13.6))',ERR,ERROR,*999)
-      CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Tangents:",ERR,ERROR,*999)
-      DO xi_idx=1,INTERPOLATED_POINT_METRICS%NUMBER_OF_XI_DIMENSIONS
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Tangent : ",xi_idx,ERR,ERROR,*999)
-        CALL WRITE_STRING_VECTOR(GENERAL_OUTPUT_TYPE,1,1,INTERPOLATED_POINT_METRICS%NUMBER_OF_X_DIMENSIONS,3,3, &
-          & TANGENTS(:,xi_idx),'("      Tangent :",3(X,E13.6))','(15X,3(X,E13.6))',ERR,ERROR,*999)        
-      ENDDO !xi_idx
+    IF(diagnostics1) THEN
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Interpolated point metrics data:",err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of X dimensions = ",numberOfXDimensions,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi dimensions = ",numberOfXiDimensions,err,error,*999)
+      CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,numberOfXDimensions,3,3,position, &
+        & '("  Position    :",3(X,E13.6))','(15X,3(X,E13.6))',err,error,*999)
+      CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,numberOfXDimensions,3,3,normal, &
+        & '("  Normal      :",3(X,E13.6))','(15X,3(X,E13.6))',err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Tangents:",err,error,*999)
+      DO xiIdx=1,numberOfXiDimensions
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Tangent : ",xiIdx,err,error,*999)
+        CALL WriteStringVector(GENERAL_OUTPUT_TYPE,1,1,numberOfXDimensions,3,3,tangents(:,xiIdx), &
+          & '("      Tangent :",3(X,E13.6))','(15X,3(X,E13.6))',err,error,*999)        
+      ENDDO !xiIdx
     ENDIF
     
     EXITS("Field_PositionNormalTangentsCalculateIntPtMetric")
     RETURN
-999 ERRORS("Field_PositionNormalTangentsCalculateIntPtMetric",ERR,ERROR)
+999 ERRORS("Field_PositionNormalTangentsCalculateIntPtMetric",err,error)
     EXITS("Field_PositionNormalTangentsCalculateIntPtMetric")
     RETURN 1
     
@@ -31539,7 +31532,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_TYPE), POINTER :: field
     TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: fromParameterSet,toParameterSet
     TYPE(VARYING_STRING) :: localError
 
