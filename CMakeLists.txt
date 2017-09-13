@@ -200,7 +200,7 @@ foreach(irontarget ${IRON_TARGETS})
     if(WITH_FIELDML)
         target_link_libraries(${irontarget} PUBLIC $<BUILD_INTERFACE:fieldml-api>)
     endif()
-    # Dont use "USEQ MPI" instructions if the percompiled mpi module files are incompatible.
+    # Dont use "USE MPI" instructions if the precompiled mpi module files are incompatible.
     # This happens when the fortran compiler used to build mpi differs from the currently used one.
     # This holds on windows (only pre-compiled mpi implementations available; MPICH2 and MSMPI)
     # and on e.g. clusters with inappropriately configured toolchain environments.
