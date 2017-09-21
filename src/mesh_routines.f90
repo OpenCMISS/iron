@@ -46,9 +46,9 @@ MODULE MESH_ROUTINES
 
   USE BaseRoutines
   USE BASIS_ROUTINES
-  USE CMISS_MPI
+  USE CmissMPI
   USE CMISS_PARMETIS
-  USE COMP_ENVIRONMENT
+  USE ComputationEnvironment
   USE COORDINATE_ROUTINES
   USE DataProjectionAccessRoutines
   USE DOMAIN_MAPPINGS
@@ -621,9 +621,9 @@ CONTAINS
 
           component_idx=DECOMPOSITION%MESH_COMPONENT_NUMBER
           
-          number_computational_nodes=COMPUTATIONAL_NODES_NUMBER_GET(ERR,ERROR)
+          number_computational_nodes=ComputationalEnvironment_NumberOfNodesGet(ERR,ERROR)
           IF(ERR/=0) GOTO 999
-          my_computational_node_number=COMPUTATIONAL_NODE_NUMBER_GET(ERR,ERROR)
+          my_computational_node_number=ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
           IF(ERR/=0) GOTO 999
           
           SELECT CASE(DECOMPOSITION%DECOMPOSITION_TYPE)
@@ -635,7 +635,7 @@ CONTAINS
             IF(DECOMPOSITION%NUMBER_OF_DOMAINS==1) THEN
               DECOMPOSITION%ELEMENT_DOMAIN=0
             ELSE
-              number_computational_nodes=COMPUTATIONAL_NODES_NUMBER_GET(ERR,ERROR)
+              number_computational_nodes=ComputationalEnvironment_NumberOfNodesGet(ERR,ERROR)
               IF(ERR/=0) GOTO 999
               
               NUMBER_ELEMENTS_PER_NODE=REAL(MESH%NUMBER_OF_ELEMENTS,DP)/REAL(number_computational_nodes,DP)
@@ -722,13 +722,13 @@ CONTAINS
               CALL PARMETIS_PARTMESHKWAY(ELEMENT_DISTANCE,ELEMENT_PTR,ELEMENT_INDICIES,ELEMENT_WEIGHT,WEIGHT_FLAG,NUMBER_FLAG, &
                 & NUMBER_OF_CONSTRAINTS,NUMBER_OF_COMMON_NODES,DECOMPOSITION%NUMBER_OF_DOMAINS,TPWGTS,UBVEC,PARMETIS_OPTIONS, &
                 & DECOMPOSITION%NUMBER_OF_EDGES_CUT,DECOMPOSITION%ELEMENT_DOMAIN(DISPLACEMENTS(my_computational_node_number)+1:), &
-                & COMPUTATIONAL_ENVIRONMENT%MPI_COMM,ERR,ERROR,*999)
+                & computationalEnvironment%mpiCommunicator,ERR,ERROR,*999)
               
               !Transfer all the element domain information to the other computational nodes so that each rank has all the info
               IF(number_computational_nodes>1) THEN
                 !This should work on a single processor but doesn't for mpich2 under windows. Maybe a bug? Avoid for now.
                 CALL MPI_ALLGATHERV(MPI_IN_PLACE,MAX_NUMBER_ELEMENTS_PER_NODE,MPI_INTEGER,DECOMPOSITION%ELEMENT_DOMAIN, &
-                  & RECEIVE_COUNTS,DISPLACEMENTS,MPI_INTEGER,COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPI_IERROR)
+                  & RECEIVE_COUNTS,DISPLACEMENTS,MPI_INTEGER,computationalEnvironment%mpiCommunicator,MPI_IERROR)
                 CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPI_IERROR,ERR,ERROR,*999)
               ENDIF
               
@@ -920,7 +920,7 @@ CONTAINS
           MESH_TOPOLOGY=>MESH%TOPOLOGY(DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR
           IF(ASSOCIATED(MESH_TOPOLOGY)) THEN
             IF(GLOBAL_ELEMENT_NUMBER>0.AND.GLOBAL_ELEMENT_NUMBER<=MESH_TOPOLOGY%ELEMENTS%NUMBER_OF_ELEMENTS) THEN
-              number_computational_nodes=COMPUTATIONAL_NODES_NUMBER_GET(ERR,ERROR)
+              number_computational_nodes=ComputationalEnvironment_NumberOfNodesGet(ERR,ERROR)
               IF(ERR/=0) GOTO 999
               IF(DOMAIN_NUMBER>=0.AND.DOMAIN_NUMBER<number_computational_nodes) THEN
                 DECOMPOSITION%ELEMENT_DOMAIN(GLOBAL_ELEMENT_NUMBER)=DOMAIN_NUMBER
@@ -1163,7 +1163,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: NUMBER_COMPUTATIONAL_NODES
+    INTEGER(INTG) :: numberOfComputationalNodes
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
     ENTERS("DECOMPOSITION_NUMBER_OF_DOMAINS_SET",ERR,ERROR,*999)
@@ -1184,15 +1184,15 @@ CONTAINS
             !wolfye???<=?
             IF(NUMBER_OF_DOMAINS<=DECOMPOSITION%numberOfElements) THEN
               !Get the number of computational nodes
-              NUMBER_COMPUTATIONAL_NODES=COMPUTATIONAL_NODES_NUMBER_GET(ERR,ERROR)
+              numberOfComputationalNodes=ComputationalEnvironment_NumberOfNodesGet(ERR,ERROR)
               IF(ERR/=0) GOTO 999
               !!TODO: relax this later
-              !IF(NUMBER_OF_DOMAINS==NUMBER_COMPUTATIONAL_NODES) THEN
+              !IF(NUMBER_OF_DOMAINS==numberOfComputationalNodes) THEN
                 DECOMPOSITION%NUMBER_OF_DOMAINS=NUMBER_OF_DOMAINS             
               !ELSE
               !  LOCAL_ERROR="The number of domains ("//TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DOMAINSS,"*",ERR,ERROR))// &
               !    & ") is not equal to the number of computational nodes ("// &
-              !    & TRIM(NUMBER_TO_VSTRING(NUMBER_COMPUTATIONAL_NODES,"*",ERR,ERROR))//")"
+              !    & TRIM(NUMBER_TO_VSTRING(numberOfComputationalNodes,"*",ERR,ERROR))//")"
               !  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               !ENDIF
             ELSE
@@ -1275,7 +1275,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     INTEGER(INTG) :: localElement,globalElement,dataPointIdx,localData,meshComponentNumber
-    INTEGER(INTG) :: INSERT_STATUS,MPI_IERROR,NUMBER_OF_COMPUTATIONAL_NODES,MY_COMPUTATIONAL_NODE_NUMBER,NUMBER_OF_GHOST_DATA, &
+    INTEGER(INTG) :: INSERT_STATUS,MPI_IERROR,NUMBER_OF_COMPUTATIONAL_NODES,myComputationalNodeNumber,NUMBER_OF_GHOST_DATA, &
       & NUMBER_OF_LOCAL_DATA
     TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
     TYPE(DECOMPOSITION_ELEMENTS_TYPE), POINTER :: decompositionElements
@@ -1297,9 +1297,9 @@ CONTAINS
               meshComponentNumber=decomposition%MESH_COMPONENT_NUMBER
               meshData=>decomposition%MESH%TOPOLOGY(meshComponentNumber)%PTR%dataPoints
               IF(ASSOCIATED(meshData)) THEN
-                NUMBER_OF_COMPUTATIONAL_NODES=COMPUTATIONAL_NODES_NUMBER_GET(ERR,ERROR)
+                NUMBER_OF_COMPUTATIONAL_NODES=ComputationalEnvironment_NumberOfNodesGet(ERR,ERROR)
                 IF(ERR/=0) GOTO 999
-                MY_COMPUTATIONAL_NODE_NUMBER=COMPUTATIONAL_NODE_NUMBER_GET(ERR,ERROR)
+                myComputationalNodeNumber=ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
                 IF(ERR/=0) GOTO 999
                 ALLOCATE(decompositionData%numberOfDomainLocal(0:NUMBER_OF_COMPUTATIONAL_NODES-1),STAT=ERR)
                 ALLOCATE(decompositionData%numberOfDomainGhost(0:NUMBER_OF_COMPUTATIONAL_NODES-1),STAT=ERR)
@@ -1345,11 +1345,11 @@ CONTAINS
                 NUMBER_OF_GHOST_DATA=decompositionData%totalNumberOfDataPoints-decompositionData%numberOfDataPoints
                 !Gather number of local data points on all computational nodes
                 CALL MPI_ALLGATHER(NUMBER_OF_LOCAL_DATA,1,MPI_INTEGER,decompositionData% &
-                  & numberOfDomainLocal,1,MPI_INTEGER,COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPI_IERROR)
+                  & numberOfDomainLocal,1,MPI_INTEGER,computationalEnvironment%mpiCommunicator,MPI_IERROR)
                 CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPI_IERROR,ERR,ERROR,*999)
                 !Gather number of ghost data points on all computational nodes
                 CALL MPI_ALLGATHER(NUMBER_OF_GHOST_DATA,1,MPI_INTEGER,decompositionData% &
-                  & numberOfDomainGhost,1,MPI_INTEGER,COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPI_IERROR)
+                  & numberOfDomainGhost,1,MPI_INTEGER,computationalEnvironment%mpiCommunicator,MPI_IERROR)
                 CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPI_IERROR,ERR,ERROR,*999)
               ELSE
                 CALL FlagError("Mesh data points topology is not associated.",ERR,ERROR,*999)
@@ -4050,7 +4050,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     INTEGER(INTG) :: DUMMY_ERR,no_adjacent_element,adjacent_element,domain_no,domain_idx,ne,nn,np,NUMBER_OF_DOMAINS, &
-      & NUMBER_OF_ADJACENT_ELEMENTS,my_computational_node_number,component_idx
+      & NUMBER_OF_ADJACENT_ELEMENTS,myComputationalNodeNumber,component_idx
     INTEGER(INTG), ALLOCATABLE :: ADJACENT_ELEMENTS(:),DOMAINS(:),LOCAL_ELEMENT_NUMBERS(:)
     TYPE(LIST_TYPE), POINTER :: ADJACENT_DOMAINS_LIST
     TYPE(LIST_PTR_TYPE), ALLOCATABLE :: ADJACENT_ELEMENTS_LIST(:)
@@ -4071,7 +4071,7 @@ CONTAINS
             IF(ASSOCIATED(DOMAIN%MESH)) THEN
               MESH=>DOMAIN%MESH
               component_idx=DOMAIN%MESH_COMPONENT_NUMBER
-              my_computational_node_number=COMPUTATIONAL_NODE_NUMBER_GET(ERR,ERROR)
+              myComputationalNodeNumber=ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
               IF(ERR/=0) GOTO 999        
               
               !Calculate the local and global numbers and set up the mappings
@@ -4409,7 +4409,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: DUMMY_ERR,no_adjacent_element,no_computational_node,no_ghost_node,adjacent_element,ghost_node, &
       & NUMBER_OF_NODES_PER_DOMAIN,domain_idx,domain_idx2,domain_no,node_idx,derivative_idx,version_idx,ny,NUMBER_OF_DOMAINS, &
-      & MAX_NUMBER_DOMAINS,NUMBER_OF_GHOST_NODES,my_computational_node_number,number_computational_nodes,component_idx
+      & MAX_NUMBER_DOMAINS,NUMBER_OF_GHOST_NODES,myComputationalNodeNumber,numberOfComputationalNodes,component_idx
     INTEGER(INTG), ALLOCATABLE :: LOCAL_NODE_NUMBERS(:),LOCAL_DOF_NUMBERS(:),NODE_COUNT(:),NUMBER_INTERNAL_NODES(:), &
       & NUMBER_BOUNDARY_NODES(:)
     INTEGER(INTG), ALLOCATABLE :: DOMAINS(:),ALL_DOMAINS(:),GHOST_NODES(:)
@@ -4441,9 +4441,9 @@ CONTAINS
                   component_idx=DOMAIN%MESH_COMPONENT_NUMBER
                   MESH_TOPOLOGY=>MESH%TOPOLOGY(component_idx)%PTR
                   
-                  number_computational_nodes=COMPUTATIONAL_NODES_NUMBER_GET(ERR,ERROR)
+                  numberOfComputationalNodes=ComputationalEnvironment_NumberOfNodesGet(ERR,ERROR)
                   IF(ERR/=0) GOTO 999
-                  my_computational_node_number=COMPUTATIONAL_NODE_NUMBER_GET(ERR,ERROR)
+                  myComputationalNodeNumber=ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
                   IF(ERR/=0) GOTO 999
                   
                   !Calculate the local and global numbers and set up the mappings
@@ -4677,23 +4677,23 @@ CONTAINS
                   ENDDO !domain_idx
                   
                   !Check decomposition and check that each domain has a node in it.
-                  ALLOCATE(NODE_COUNT(0:number_computational_nodes-1),STAT=ERR)
+                  ALLOCATE(NODE_COUNT(0:numberOfComputationalNodes-1),STAT=ERR)
                   IF(ERR/=0) CALL FlagError("Could not allocate node count.",ERR,ERROR,*999)
                   NODE_COUNT=0
                   DO node_idx=1,MESH_TOPOLOGY%NODES%numberOfNodes
                     no_computational_node=DOMAIN%NODE_DOMAIN(node_idx)
-                    IF(no_computational_node>=0.AND.no_computational_node<number_computational_nodes) THEN
+                    IF(no_computational_node>=0.AND.no_computational_node<numberOfComputationalNodes) THEN
                       NODE_COUNT(no_computational_node)=NODE_COUNT(no_computational_node)+1
                     ELSE
                       LOCAL_ERROR="The computational node number of "// &
                         & TRIM(NUMBER_TO_VSTRING(no_computational_node,"*",ERR,ERROR))// &
                         & " for node number "//TRIM(NUMBER_TO_VSTRING(node_idx,"*",ERR,ERROR))// &
                         & " is invalid. The computational node number must be between 0 and "// &
-                        & TRIM(NUMBER_TO_VSTRING(number_computational_nodes-1,"*",ERR,ERROR))//"."
+                        & TRIM(NUMBER_TO_VSTRING(numberOfComputationalNodes-1,"*",ERR,ERROR))//"."
                       CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     ENDIF
                   ENDDO !node_idx
-                  DO no_computational_node=0,number_computational_nodes-1
+                  DO no_computational_node=0,numberOfComputationalNodes-1
                     IF(NODE_COUNT(no_computational_node)==0) THEN
                       LOCAL_ERROR="Invalid decomposition. There are no nodes in computational node "// &
                         & TRIM(NUMBER_TO_VSTRING(no_computational_node,"*",ERR,ERROR))//"."

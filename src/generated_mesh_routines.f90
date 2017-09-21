@@ -46,7 +46,7 @@ MODULE GENERATED_MESH_ROUTINES
 
   USE BaseRoutines
   USE BASIS_ROUTINES
-  USE COMP_ENVIRONMENT
+  USE ComputationEnvironment
   USE CONSTANTS
   USE COORDINATE_ROUTINES
   USE FIELD_ROUTINES
@@ -3586,7 +3586,7 @@ CONTAINS
 
     ENTERS("GeneratedMesh_EllipsoidGeometricParametersCalculate",ERR,ERROR,*999)
 
-    MY_COMPUTATIONAL_NODE=COMPUTATIONAL_NODE_NUMBER_GET(ERR,ERROR)
+    MY_COMPUTATIONAL_NODE=ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
 
     ! assign to the field
     np=0

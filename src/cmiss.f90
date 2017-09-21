@@ -54,7 +54,7 @@ MODULE Cmiss
   
   USE BaseRoutines
   USE BASIS_ROUTINES
-  USE COMP_ENVIRONMENT
+  USE ComputationEnvironment
   USE Constants
   USE COORDINATE_ROUTINES
   USE GENERATED_MESH_ROUTINES
@@ -218,7 +218,7 @@ CONTAINS
     !Reset the signal handler
     CALL cmfe_ResetFatalHandler()
     !Finalise computational enviroment
-    CALL COMPUTATIONAL_ENVIRONMENT_FINALISE(err,error,*999)
+    CALL ComputationalEnvironment_Finalise(err,error,*999)
     !Finalise the base routines
     CALL BaseRoutinesFinalise(err,error,*999)
      
@@ -248,7 +248,7 @@ CONTAINS
     !Initialise the base routines
     CALL BaseRoutinesInitialise(err,error,*999)
     !Intialise the computational environment
-    CALL COMPUTATIONAL_ENVIRONMENT_INITIALISE(err,error,*999)
+    CALL ComputationalEnvironment_Initialise(err,error,*999)
     !Setup signal handling
     CALL cmfe_InitFatalHandler()
     CALL cmfe_SetFatalHandler()
@@ -265,7 +265,7 @@ CONTAINS
       CALL PROBLEMS_INITIALISE(err,error,*999)
       
       !Write out the CMISS version
-      IF(COMPUTATIONAL_ENVIRONMENT%MY_COMPUTATIONAL_NODE_NUMBER==0) THEN
+      IF(computationalEnvironment%myComputationalNodeNumber==0) THEN
         versionString="OpenCMISS(Iron) version "//TRIM(NumberToVString(CMFE_MAJOR_VERSION,"*",err,error))
         versionString=versionString//"."
         versionString=versionString//TRIM(NumberToVString(CMFE_MINOR_VERSION,"*",err,error))

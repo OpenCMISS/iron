@@ -64,7 +64,7 @@ MODULE OpenCMISS_Iron
   USE Cmiss
   USE CmissPetsc
   USE CMISS_CELLML
-  USE COMP_ENVIRONMENT
+  USE ComputationEnvironment
   USE Constants
   USE CONTROL_LOOP_ROUTINES
   USE ControlLoopAccessRoutines
@@ -324,7 +324,7 @@ MODULE OpenCMISS_Iron
   !>Contains information on a computational work group
   TYPE cmfe_ComputationalWorkGroupType
     PRIVATE
-    TYPE(COMPUTATIONAL_WORK_GROUP_TYPE), POINTER :: computationalWorkGroup
+    TYPE(ComputationalWorkGroupType), POINTER :: computationalWorkGroup
   END TYPE cmfe_ComputationalWorkGroupType
 
   !Module variables
@@ -1258,7 +1258,7 @@ MODULE OpenCMISS_Iron
 
 !!==================================================================================================================================
 !!
-!! COMP_ENVIRONMENT
+!! ComputationalEnvironment
 !!
 !!==================================================================================================================================
 
@@ -1269,7 +1269,9 @@ MODULE OpenCMISS_Iron
   !Module variables
 
   !Interfaces
-
+  
+  PUBLIC cmfe_ComputationalWorldCommunicatorGet,cmfe_ComputationalWorldCommunicatorSet
+  
   PUBLIC cmfe_ComputationalNodeNumberGet
 
   PUBLIC cmfe_ComputationalNumberOfNodesGet
@@ -1281,6 +1283,7 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_ComputationalWorkGroup_SubgroupAdd
 
   PUBLIC cmfe_Decomposition_WorldWorkGroupSet
+  
 !!==================================================================================================================================
 !!
 !! CONSTANTS
@@ -15710,9 +15713,63 @@ CONTAINS
 
 !!==================================================================================================================================
 !!
-!! COMP_ENVIRONMENT
+!! Computational Environment
 !!
 !!==================================================================================================================================
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the current world communicator.
+  SUBROUTINE cmfe_ComputationalWorldCommunicatorGet(worldCommunicator,err)
+    !DLLEXPORT(cmfe_ComputationalWorldCommunicatorGet)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(OUT) :: worldCommunicator !<On return, the current world communicator.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_ComputationalWorldCommunicatorGet",err,error,*999)
+
+    CALL ComputationalEnvironment_WorldCommunicatorGet(worldCommunicator,err,error,*999)
+
+    EXITS("cmfe_ComputationalWorldCommunicatorGet")
+    RETURN
+999 ERRORSEXITS("cmfe_ComputationalWorldCommunicatorGet",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ComputationalWorldCommunicatorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the current world communicator.
+  SUBROUTINE cmfe_ComputationalWorldCommunicatorSet(worldCommunicator,err)
+    !DLLEXPORT(cmfe_ComputationalWorldCommunicatorSet)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: worldCommunicator !<The world communicator to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_ComputationalWorldCommunicatorSet",err,error,*999)
+
+    CALL ComputationalEnvironment_WorldCommunicatorSet(worldCommunicator,err,error,*999)
+
+    EXITS("cmfe_ComputationalWorldCommunicatorSet")
+    RETURN
+999 ERRORSEXITS("cmfe_ComputationalWorldCommunicatorSet",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ComputationalWorldCommunicatorSet
+
+  !
+  !================================================================================================================================
+  !
 
   !>Returns the computational node number of the running process.
   SUBROUTINE cmfe_ComputationalNodeNumberGet(nodeNumber,err)
@@ -15725,7 +15782,7 @@ CONTAINS
 
     ENTERS("cmfe_ComputationalNodeNumberGet",err,error,*999)
 
-    nodeNumber = COMPUTATIONAL_NODE_NUMBER_GET(err,error)
+    nodeNumber = ComputationalEnvironment_NodeNumberGet(err,error)
 
     EXITS("cmfe_ComputationalNodeNumberGet")
     RETURN
@@ -15734,10 +15791,6 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_ComputationalNodeNumberGet
-
-  !
-  !================================================================================================================================
-  !
 
   !>Returns the number of computational nodes for the running process.
   SUBROUTINE cmfe_ComputationalNumberOfNodesGet(numberOfNodes,err)
@@ -15750,7 +15803,7 @@ CONTAINS
 
     ENTERS("cmfe_ComputationalNumberOfNodesGet",err,error,*999)
 
-    numberOfNodes = COMPUTATIONAL_NODES_NUMBER_GET(err,error)
+    numberOfNodes = ComputationalEnvironment_NumberOfNodesGet(err,error)
 
     EXITS("cmfe_ComputationalNumberOfNodesGet")
     RETURN

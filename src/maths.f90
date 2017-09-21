@@ -293,6 +293,7 @@ MODULE Maths
   INTERFACE Trace
     MODULE PROCEDURE TraceSP
     MODULE PROCEDURE TraceDP
+    MODULE PROCEDURE TraceIntg
   END INTERFACE Trace
   
   !>Returns the transpose of a matrix A in A^T.
@@ -3308,7 +3309,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) :: i,j
-    REAL(SP) :: columnSum
+    REAL(DP) :: columnSum
 
     ENTERS("L1NormMatrixDP",err,error,*999)
 
@@ -3552,7 +3553,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) :: i,j
-    REAL(SP) :: rowSum
+    REAL(DP) :: rowSum
 
     ENTERS("LInfNormMatrixDP",err,error,*999)
 

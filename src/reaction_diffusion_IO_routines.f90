@@ -47,7 +47,7 @@
 MODULE REACTION_DIFFUSION_IO_ROUTINES
 
  USE BaseRoutines
- USE COMP_ENVIRONMENT
+ USE ComputationEnvironment
  USE EQUATIONS_SET_CONSTANTS
  USE FIELD_ROUTINES
  USE FieldAccessRoutines
@@ -106,14 +106,14 @@ CONTAINS
 
     ENTERS("REACTION_DIFFUSION_IO_WRITE_CMGUI",ERR,ERROR,*999)
 
-    myComputationalNodeNumber = COMPUTATIONAL_NODE_NUMBER_GET(err,error)
+    myComputationalNodeNumber = ComputationalEnvironment_NodeNumberGet(err,error)
 
     EQUATIONS_SET => REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr
     NULLIFY(SOURCE_FIELD)
     COMPUTATIONAL_DOMAIN=>REGION%MESHES%MESHES(1) & 
       & %ptr%DECOMPOSITIONS%DECOMPOSITIONS(1)%ptr%DOMAIN(1)%ptr
 
-    myComputationalNodeNumber = COMPUTATIONAL_NODE_NUMBER_GET(ERR,ERROR)
+    myComputationalNodeNumber = ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
     NumberOfDimensions = COMPUTATIONAL_DOMAIN%NUMBER_OF_DIMENSIONS
     NumberOfNodes = COMPUTATIONAL_DOMAIN%TOPOLOGY%NODES%NUMBER_OF_NODES
     NodesInMeshComponent = REGION%meshes%meshes(1)%ptr%topology(1)%ptr%nodes%numberOfNodes

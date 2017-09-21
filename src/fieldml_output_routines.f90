@@ -49,7 +49,7 @@ MODULE FIELDML_OUTPUT_ROUTINES
   USE BASIS_ROUTINES
   USE COORDINATE_ROUTINES
   USE CONSTANTS
-  USE COMP_ENVIRONMENT
+  USE ComputationEnvironment
   USE FIELD_ROUTINES
   USE FIELDML_API
   USE FIELDML_TYPES
@@ -1629,7 +1629,7 @@ CONTAINS
             !Default to version 1 of each node derivative (value hardcoded in loop)
             VERSION_NUMBER = 1
 
-            myComputationalNodeNumber = COMPUTATIONAL_NODE_NUMBER_GET(err,error)
+            myComputationalNodeNumber = ComputationalEnvironment_NodeNumberGet(err,error)
             CALL DECOMPOSITION_MESH_COMPONENT_NUMBER_GET(FIELD%DECOMPOSITION,meshComponentNumber,err,error,*999)
             CALL DECOMPOSITION_NODE_DOMAIN_GET(FIELD%DECOMPOSITION,I,meshComponentNumber,nodeDomain,err,error,*999)
             IF(nodeDomain==myComputationalNodeNumber) THEN

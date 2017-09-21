@@ -47,7 +47,7 @@ MODULE REACTION_DIFFUSION_EQUATION_ROUTINES
   USE BaseRoutines
   USE BASIS_ROUTINES
   USE BOUNDARY_CONDITIONS_ROUTINES
-  USE COMP_ENVIRONMENT
+  USE ComputationEnvironment
   USE Constants
   USE CONTROL_LOOP_ROUTINES
   USE ControlLoopAccessRoutines
@@ -1558,7 +1558,7 @@ CONTAINS
 
                     CURRENT_LOOP_ITERATION=CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER
                     OUTPUT_FREQUENCY=CONTROL_LOOP%TIME_LOOP%OUTPUT_NUMBER
-                    myComputationalNodeNumber = COMPUTATIONAL_NODE_NUMBER_GET(err,error)
+                    myComputationalNodeNumber = ComputationalEnvironment_NodeNumberGet(err,error)
                     IF(OUTPUT_FREQUENCY>0) THEN
                       IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_FREQUENCY)==0) THEN
                         IF(CONTROL_LOOP%TIME_LOOP%CURRENT_TIME<=CONTROL_LOOP%TIME_LOOP%STOP_TIME) THEN

@@ -50,10 +50,10 @@ MODULE NAVIER_STOKES_EQUATIONS_ROUTINES
   USE BASIS_ROUTINES
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE CHARACTERISTIC_EQUATION_ROUTINES
-  USE CMISS_MPI  
+  USE CmissMPI  
   USE CmissPetsc
   USE CmissPetscTypes
-  USE COMP_ENVIRONMENT
+  USE ComputationEnvironment
   USE Constants
   USE CONTROL_LOOP_ROUTINES
   USE COORDINATE_ROUTINES
@@ -7769,7 +7769,7 @@ CONTAINS
                               INQUIRE(FILE=inputFile, EXIST=importDataFromFile)
                               IF(importDataFromFile) THEN
                                 !Read fitted data from input file (if exists)
-                                computationalNode = COMPUTATIONAL_NODE_NUMBER_GET(ERR,ERROR)
+                                computationalNode = ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
                                 IF(computationalNode==0) THEN
                                   CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Updating independent field and boundary nodes from " &
                                     & //inputFile,ERR,ERROR,*999)
@@ -12881,22 +12881,22 @@ CONTAINS
       globalBoundaryArea = 0.0_DP      
       globalBoundaryPressure = 0.0_DP
       globalBoundaryNormalStress = 0.0_DP
-      numberOfComputationalNodes=COMPUTATIONAL_ENVIRONMENT%NUMBER_COMPUTATIONAL_NODES
+      numberOfComputationalNodes=computationalEnvironment%numberOfComputationalNodes
       IF(numberOfComputationalNodes>1) THEN !use mpi
         CALL MPI_ALLREDUCE(localBoundaryFlux,globalBoundaryFlux,10,MPI_DOUBLE_PRECISION,MPI_SUM,   &
-	 & COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPI_IERROR)
+	 & computationalEnvironment%mpiCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,err,error,*999)
         CALL MPI_ALLREDUCE(localBoundaryArea,globalBoundaryArea,10,MPI_DOUBLE_PRECISION,MPI_SUM,   &
-	 & COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPI_IERROR)
+	 & computationalEnvironment%mpiCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
         CALL MPI_ALLREDUCE(localBoundaryNormalStress,globalBoundaryNormalStress,10,MPI_DOUBLE_PRECISION,MPI_SUM,  &
-	 & COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPI_IERROR)
+	 & computationalEnvironment%mpiCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
         CALL MPI_ALLREDUCE(localBoundaryPressure,globalBoundaryPressure,10,MPI_DOUBLE_PRECISION,MPI_SUM,  &
-	 & COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPI_IERROR)
+	 & computationalEnvironment%mpiCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
         CALL MPI_ALLREDUCE(numberOfBoundaries,numberOfGlobalBoundaries,1,MPI_INTEGER,MPI_MAX,  &
-	 & COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPI_IERROR)
+	 & computationalEnvironment%mpiCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
       ELSE
         numberOfGlobalBoundaries = numberOfBoundaries
@@ -12914,7 +12914,7 @@ CONTAINS
       END DO
       DO boundaryID=2,numberOfGlobalBoundaries
         IF(globalBoundaryArea(boundaryID) > ZERO_TOLERANCE) THEN
-          computationalNode = COMPUTATIONAL_NODE_NUMBER_GET(ERR,ERROR)
+          computationalNode = ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
           IF(computationalNode==0) THEN
             CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"3D boundary ",boundaryID,"  flow:  ", &
               & globalBoundaryFlux(boundaryID),err,error,*999)
@@ -13183,7 +13183,7 @@ CONTAINS
       ALLOCATE(globalConverged(numberOfComputationalNodes),STAT=ERR) 
       IF(ERR/=0) CALL FlagError("Could not allocate global convergence check array.",ERR,ERROR,*999)
       CALL MPI_ALLGATHER(convergedFlag,1,MPI_LOGICAL,globalConverged,1,MPI_LOGICAL, &
-       & COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPI_IERROR)
+       & computationalEnvironment%mpiCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPI_IERROR,ERR,ERROR,*999)
       IF(ALL(globalConverged)) THEN
         convergedFlag = .TRUE.
@@ -13475,13 +13475,13 @@ CONTAINS
         localConverged = .FALSE.
       END IF
       ! Need to check that boundaries have converged globally (on all domains) if this is a parallel problem
-      numberOfComputationalNodes=COMPUTATIONAL_ENVIRONMENT%NUMBER_COMPUTATIONAL_NODES
+      numberOfComputationalNodes=computationalEnvironment%numberOfComputationalNodes
       IF(numberOfComputationalNodes>1) THEN !use mpi
         !allocate array for mpi communication
         ALLOCATE(globalConverged(numberOfComputationalNodes),STAT=ERR) 
         IF(ERR/=0) CALL FlagError("Could not allocate global convergence check array.",ERR,ERROR,*999)
         CALL MPI_ALLGATHER(localConverged,1,MPI_LOGICAL,globalConverged,1,MPI_LOGICAL, &
-         & COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPI_IERROR)
+         & computationalEnvironment%mpiCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPI_IERROR,err,error,*999)
         IF(ALL(globalConverged)) THEN
           !CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"1D/0D coupling converged; # iterations: ", &
@@ -13764,19 +13764,19 @@ CONTAINS
       localConverged = .TRUE.
     END IF
     ! Need to check that boundaries have converged globally (on all domains) if this is a MPI problem
-    numberOfComputationalNodes=COMPUTATIONAL_ENVIRONMENT%NUMBER_COMPUTATIONAL_NODES
+    numberOfComputationalNodes=computationalEnvironment%numberOfComputationalNodes
     IF(numberOfComputationalNodes>1) THEN !use mpi
       !allocate array for mpi communication
 
       IF(ERR/=0) CALL FlagError("Could not allocate global convergence check array.",ERR,ERROR,*999)
-      CALL MPI_ALLREDUCE(localConverged,globalConverged,1,MPI_LOGICAL,MPI_LAND,COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPI_IERROR)
+      CALL MPI_ALLREDUCE(localConverged,globalConverged,1,MPI_LOGICAL,MPI_LAND,computationalEnvironment%mpiCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
       IF(globalConverged) THEN
         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"3D/1D coupling converged; # iterations: ", &
           & iteration,err,error,*999)
         iterativeLoop%CONTINUE_LOOP=.FALSE.
       ELSE
-        computationalNode = COMPUTATIONAL_NODE_NUMBER_GET(ERR,ERROR)
+        computationalNode = ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
         CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"Rank ",computationalNode," 3D/1D max flow error:  ", &
           & maxFlowError,err,error,*999)
         CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"Rank ",computationalNode," 3D/1D max stress error:  ", &
@@ -14055,13 +14055,13 @@ CONTAINS
       localConverged = .FALSE.
     END IF
     ! Need to check that boundaries have converged globally (on all domains) if this is a parallel problem
-    numberOfComputationalNodes=COMPUTATIONAL_ENVIRONMENT%NUMBER_COMPUTATIONAL_NODES
+    numberOfComputationalNodes=computationalEnvironment%numberOfComputationalNodes
     IF(numberOfComputationalNodes>1) THEN !use mpi
       !allocate array for mpi communication
       ALLOCATE(globalConverged(numberOfComputationalNodes),STAT=ERR) 
       IF(ERR/=0) CALL FlagError("Could not allocate global convergence check array.",ERR,ERROR,*999)
       CALL MPI_ALLGATHER(localConverged,1,MPI_LOGICAL,globalConverged,1,MPI_LOGICAL, &
-       & COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPI_IERROR)
+       & computationalEnvironment%mpiCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPI_IERROR,err,error,*999)
       IF(ALL(globalConverged)) THEN
         !CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"Navier-Stokes/Characteristic converged; # iterations: ", &
@@ -15253,19 +15253,19 @@ CONTAINS
       globalBoundaryFlux = 0.0_DP
       globalBoundaryArea = 0.0_DP      
       globalBoundaryPressure = 0.0_DP
-      numberOfComputationalNodes=COMPUTATIONAL_ENVIRONMENT%NUMBER_COMPUTATIONAL_NODES
+      numberOfComputationalNodes=computationalEnvironment%numberOfComputationalNodes
       IF(numberOfComputationalNodes>1) THEN !use mpi
         CALL MPI_ALLREDUCE(localBoundaryFlux,globalBoundaryFlux,10,MPI_DOUBLE_PRECISION,MPI_SUM,   &
-	 & COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPI_IERROR)
+	 & computationalEnvironment%mpiCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
         CALL MPI_ALLREDUCE(localBoundaryArea,globalBoundaryArea,10,MPI_DOUBLE_PRECISION,MPI_SUM,   &
-	 & COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPI_IERROR)
+	 & computationalEnvironment%mpiCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
         CALL MPI_ALLREDUCE(localBoundaryPressure,globalBoundaryPressure,10,MPI_DOUBLE_PRECISION,MPI_SUM,  &
-	 & COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPI_IERROR)
+	 & computationalEnvironment%mpiCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
         CALL MPI_ALLREDUCE(numberOfBoundaries,numberOfGlobalBoundaries,1,MPI_INTEGER,MPI_MAX,  &
-	 & COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPI_IERROR)
+	 & computationalEnvironment%mpiCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
       ELSE
         numberOfGlobalBoundaries = numberOfBoundaries
@@ -15281,7 +15281,7 @@ CONTAINS
       END DO
       DO boundaryID=2,numberOfGlobalBoundaries
         IF(globalBoundaryArea(boundaryID) > ZERO_TOLERANCE) THEN
-          computationalNode = COMPUTATIONAL_NODE_NUMBER_GET(ERR,ERROR)
+          computationalNode = ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
           IF(computationalNode==0) THEN
             CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"3D boundary ",boundaryID,"  flow:  ", &
               & globalBoundaryFlux(boundaryID),err,error,*999)
@@ -15413,7 +15413,7 @@ CONTAINS
       ALLOCATE(globalConverged(numberOfComputationalNodes),STAT=ERR) 
       IF(ERR/=0) CALL FlagError("Could not allocate global convergence check array.",ERR,ERROR,*999)
       CALL MPI_ALLGATHER(convergedFlag,1,MPI_LOGICAL,globalConverged,1,MPI_LOGICAL, &
-       & COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPI_IERROR)
+       & computationalEnvironment%mpiCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPI_IERROR,ERR,ERROR,*999)
       IF(ALL(globalConverged)) THEN
         convergedFlag = .TRUE.

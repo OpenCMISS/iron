@@ -47,9 +47,9 @@ MODULE DataProjectionRoutines
   USE BaseRoutines
   USE BASIS_ROUTINES
   USE BasisAccessRoutines
-  USE CMISS_MPI  
-  USE COMP_ENVIRONMENT
-  USE CONSTANTS
+  USE CmissMPI  
+  USE ComputationEnvironment
+  USE Constants
   USE CoordinateSystemAccessRoutines
   USE DataPointAccessRoutines
   USE DataProjectionAccessRoutines
@@ -1413,9 +1413,9 @@ CONTAINS
     IF(.NOT.ASSOCIATED(domainElements%elements)) CALL FlagError("Domain elements elements is not associated.",err,error,*999)
     
     numberOfDataPoints=dataPoints%numberOfDataPoints
-    myComputationalNode=Computational_NodeNumberGet(err,error)
+    myComputationalNode=ComputationalEnvironment_NodeNumberGet(err,error)
     IF(err/=0) GOTO 999
-    numberOfComputationalNodes=Computational_NumberOfNodesGet(err,error)
+    numberOfComputationalNodes=ComputationalEnvironment_NumberOfNodesGet(err,error)
     IF(err/=0) GOTO 999
     boundaryProjection=(dataProjection%projectionType==DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE).OR. &
       & (dataProjection%projectionType==DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE)          
@@ -1686,7 +1686,7 @@ CONTAINS
       IF(err/=0) CALL FlagError("Could not allocate sorting indices 2.",err,error,*999)          
       !gather and distribute the number of closest elements from all computational nodes
       CALL MPI_ALLGATHER(numberOfClosestCandidates,1,MPI_INTEGER,globalNumberOfClosestCandidates,1,MPI_INTEGER, &
-        & COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPIIError)
+        & computationalEnvironment%mpiCommunicator,MPIIError)
       CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPIIError,err,error,*999)
       !Sum all number of closest candidates from all computational nodes
       totalNumberOfClosestCandidates=SUM(globalNumberOfClosestCandidates,1) 
@@ -1711,7 +1711,7 @@ CONTAINS
       !Share closest element distances between all domains
       CALL MPI_ALLGATHERV(closestDistances(1,1),numberOfClosestCandidates,MPIClosestDistances, &
         & globalClosestDistances,globalNumberOfClosestCandidates,globalMPIDisplacements, &
-        & MPIClosestDistances,COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPIIError)
+        & MPIClosestDistances,computationalEnvironment%mpiCommunicator,MPIIError)
       CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
       reducedNumberOfCLosestCandidates=MIN(dataProjection%numberOfClosestElements,totalNumberOfClosestCandidates)
       projectedDistance(2,:)=myComputationalNode
@@ -1818,7 +1818,7 @@ CONTAINS
       END SELECT
       !Find the shortest projected distance in all domains
       CALL MPI_ALLREDUCE(MPI_IN_PLACE,projectedDistance,numberOfDataPoints,MPI_2DOUBLE_PRECISION,MPI_MINLOC, &
-        & COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPIIError)
+        & computationalEnvironment%mpiCommunicator,MPIIError)
       CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPIIError,err,error,*999)
       !Sort the computational node/rank from 0 to number of computational node
       CALL Sorting_BubbleIndexSort(projectedDistance(2,:),sortingIndices2,err,error,*999)
@@ -1836,29 +1836,29 @@ CONTAINS
       !Shares minimum projection information between all domains
       CALL MPI_ALLGATHERV(projectedElement(sortingIndices2(startIdx:finishIdx)),globalNumberOfProjectedPoints( &
         & myComputationalNode+1),MPI_INTEGER,projectedElement,globalNumberOfProjectedPoints, &
-        & globalMPIDisplacements,MPI_INTEGER,COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPIIError) !projectedElement
+        & globalMPIDisplacements,MPI_INTEGER,computationalEnvironment%mpiCommunicator,MPIIError) !projectedElement
       CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
       IF(boundaryProjection) THEN
         CALL MPI_ALLGATHERV(projectedLineFace(sortingIndices2(startIdx:finishIdx)),globalNumberOfProjectedPoints( &
           & myComputationalNode+1),MPI_INTEGER,projectedLineFace,globalNumberOfProjectedPoints, &
-          & globalMPIDisplacements,MPI_INTEGER,COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPIIError) !projectedLineFace
+          & globalMPIDisplacements,MPI_INTEGER,computationalEnvironment%mpiCommunicator,MPIIError) !projectedLineFace
         CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999) 
       ENDIF
       DO xiIdx=1,dataProjection%numberOfXi
         CALL MPI_ALLGATHERV(projectedXi(xiIdx,sortingIndices2(startIdx:finishIdx)),globalNumberOfProjectedPoints( &
           & myComputationalNode+1),MPI_DOUBLE_PRECISION,projectedXi(xiIdx,:),globalNumberOfProjectedPoints, &
-          & globalMPIDisplacements,MPI_DOUBLE_PRECISION,COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPIIError) !projectedXi
+          & globalMPIDisplacements,MPI_DOUBLE_PRECISION,computationalEnvironment%mpiCommunicator,MPIIError) !projectedXi
         CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
       ENDDO !xiIdx
       CALL MPI_ALLGATHERV(projectionExitTag(sortingIndices2(startIdx:finishIdx)),globalNumberOfProjectedPoints( &
         & myComputationalNode+1),MPI_INTEGER,projectionExitTag,globalNumberOfProjectedPoints, &
-        & globalMPIDisplacements,MPI_INTEGER,COMPUTATIONAL_ENVIRONMENT%MPI_COMM,MPIIError) !projectionExitTag
+        & globalMPIDisplacements,MPI_INTEGER,computationalEnvironment%mpiCommunicator,MPIIError) !projectionExitTag
       CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
       DO xiIdx=1,dataProjection%numberOfCoordinates
         CALL MPI_ALLGATHERV(projectionVectors(xiIdx, sortingIndices2(startIdx:finishIdx)), &
           & globalNumberOfProjectedPoints(myComputationalNode+1),MPI_DOUBLE_PRECISION,projectionVectors(xiIdx,:), &
-          & globalNumberOfProjectedPoints,globalMPIDisplacements,MPI_DOUBLE_PRECISION,COMPUTATIONAL_ENVIRONMENT% &
-          & MPI_COMM,MPIIError)  !projectionVectors
+          & globalNumberOfProjectedPoints,globalMPIDisplacements,MPI_DOUBLE_PRECISION,computationalEnvironment% &
+          & mpiCommunicator,MPIIError)  !projectionVectors
         CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
       ENDDO
       !Assign projection information to projected points
@@ -4727,9 +4727,9 @@ CONTAINS
     CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
     NULLIFY(domainElements)
     CALL DomainTopology_ElementsGet(domainTopology,domainElements,err,error,*999)
-    numberOfComputationalNodes=Computational_NumberOfNodesGet(err,error)
+    numberOfComputationalNodes=ComputationalEnvironment_NumberOfNodesGet(err,error)
     IF(err/=0) GOTO 999
-    myComputationalNodeNumber=Computational_NodeNumberGet(err,error)
+    myComputationalNodeNumber=ComputationalEnvironment_NodeNumberGet(err,error)
     IF(err/=0) GOTO 999
     !Find the correct output ID and open a file if necessary
     filenameLength=LEN_TRIM(filename)

@@ -539,7 +539,7 @@ CONTAINS
 
 #include "macros.h"
 
-  !>Set the computational node numbers. Note: this is done as a subroutine as COMPUTATIONAL_ENVIRONMENT depends on BaseRoutines.
+  !>Set the computational node numbers. Note: this is done as a subroutine as ComputationalEnvironment depends on BaseRoutines.
   SUBROUTINE ComputationalNodeNumbersSet(myNodeNumber,numberOfNodes,err,error,*)
 
     !Argument variables

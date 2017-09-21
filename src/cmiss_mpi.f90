@@ -42,7 +42,7 @@
 !>
 
 !> This module contains CMISS MPI routines.
-MODULE CMISS_MPI
+MODULE CmissMPI
   
   USE BaseRoutines
   USE Constants
@@ -111,4 +111,4 @@ CONTAINS
   !================================================================================================================================
   !
     
-END MODULE CMISS_MPI
+END MODULE CmissMPI
