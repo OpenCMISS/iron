@@ -538,6 +538,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: COMPUTATIONAL_NODE,MPI_IERROR
+    LOGICAL :: mpiFinalised
 
     ENTERS("COMPUTATIONAL_ENVIRONMENT_FINALISE",err,error,*999)
 
@@ -561,8 +562,13 @@ CONTAINS
     CALL Petsc_Finalise(err,error,*999)
 
     IF(computationalEnvironment%cmissMPIInitialised) THEN
-      CALL MPI_FINALIZE(MPI_IERROR)
-      CALL MPI_ERROR_CHECK("MPI_FINALIZE",MPI_IERROR,err,error,*999)
+      !Check if MPI has been finalised
+      CALL MPI_FINALIZED(mpiFinalised,MPI_IERROR)
+      CALL MPI_ERROR_CHECK("MPI_FINALIZED",MPI_IERROR,err,error,*999)
+      IF(.NOT.mpiFinalised) THEN
+        CALL MPI_FINALIZE(MPI_IERROR)
+        CALL MPI_ERROR_CHECK("MPI_FINALIZE",MPI_IERROR,err,error,*999)
+      ENDIF
     ENDIF
 
     EXITS("COMPUTATIONAL_ENVIRONMENT_FINALISE")
