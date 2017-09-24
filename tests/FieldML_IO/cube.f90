@@ -121,15 +121,15 @@ CONTAINS
     TYPE(cmfe_DecompositionType) :: decomposition
     TYPE(cmfe_NodesType) :: nodes
     TYPE(cmfe_FieldMLIOType) :: fieldmlInfo
-    INTEGER(CMISSIntg) :: numberOfComputationalNodes, computationalNodeNumber
+    INTEGER(CMISSIntg) :: numberOfComputationNodes, computationNodeNumber
     INTEGER(CMISSIntg) :: err
 
     err = 0
 
-    ! Get computational nodes information
+    ! Get computation nodes information
 
-    CALL cmfe_ComputationalNumberOfNodesGet(numberOfComputationalNodes, err)
-    CALL cmfe_ComputationalNodeNumberGet(computationalNodeNumber, err)
+    CALL cmfe_ComputationNumberOfNodesGet(numberOfComputationNodes, err)
+    CALL cmfe_ComputationNodeNumberGet(computationNodeNumber, err)
 
     ! Initialise FieldML and parse input file
 
@@ -178,7 +178,7 @@ CONTAINS
     CALL cmfe_Decomposition_Initialise(decomposition, err)
     CALL cmfe_Decomposition_CreateStart(AUTO_USER_NUMBER(), mesh, decomposition, err)
     CALL cmfe_Decomposition_TypeSet(decomposition, CMFE_DECOMPOSITION_ALL_TYPE, err)
-    CALL cmfe_Decomposition_NumberOfDomainsSet(decomposition, numberOfComputationalNodes, err)
+    CALL cmfe_Decomposition_NumberOfDomainsSet(decomposition, numberOfComputationNodes, err)
     CALL cmfe_Decomposition_CreateFinish(decomposition, err)
 
     ! Define Geometric Field

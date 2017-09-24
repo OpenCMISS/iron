@@ -146,8 +146,8 @@ MODULE BaseRoutines
 
   !Module variables
 
-  INTEGER(INTG), SAVE :: myComputationalNodeNumber !<The computational rank for this node
-  INTEGER(INTG), SAVE :: numberOfComputationalNodes !<The number of computational nodes
+  INTEGER(INTG), SAVE :: myComputationNodeNumber !<The computation rank for this node
+  INTEGER(INTG), SAVE :: numberOfComputationNodes !<The number of computation nodes
   INTEGER(INTG), ALLOCATABLE :: cmissRandomSeeds(:) !<The current error handling seeds for OpenCMISS
   LOGICAL, SAVE :: diagnostics !<.TRUE. if diagnostic output is required in any routines.
   LOGICAL, SAVE :: diagnostics1 !<.TRUE. if level 1 diagnostic output is active in the current routine
@@ -246,7 +246,7 @@ MODULE BaseRoutines
 
   PUBLIC BaseRoutinesFinalise,BaseRoutinesInitialise
 
-  PUBLIC ComputationalNodeNumbersSet
+  PUBLIC ComputationNodeNumbersSet
 
   PUBLIC DiagnosticsSetOn,DiagnosticsSetOff
 
@@ -539,22 +539,22 @@ CONTAINS
 
 #include "macros.h"
 
-  !>Set the computational node numbers. Note: this is done as a subroutine as ComputationalEnvironment depends on BaseRoutines.
-  SUBROUTINE ComputationalNodeNumbersSet(myNodeNumber,numberOfNodes,err,error,*)
+  !>Set the computation node numbers. Note: this is done as a subroutine as ComputationEnvironment depends on BaseRoutines.
+  SUBROUTINE ComputationNodeNumbersSet(myNodeNumber,numberOfNodes,err,error,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: myNodeNumber !<The node number for this rank.
-    INTEGER(INTG), INTENT(IN) :: numberOfNodes !<The number of computational nodes.
+    INTEGER(INTG), INTENT(IN) :: numberOfNodes !<The number of computation nodes.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
 
-    ENTERS("ComputationalNodeNumbersSet",err,error,*999)
+    ENTERS("ComputationNodeNumbersSet",err,error,*999)
 
     IF(numberOfNodes>0) THEN
       IF(myNodeNumber>=0.AND.myNodeNumber<=numberOfNodes-1) THEN        
-        myComputationalNodeNumber=myNodeNumber
-        numberOfComputationalNodes=numberOfNodes        
+        myComputationNodeNumber=myNodeNumber
+        numberOfComputationNodes=numberOfNodes        
       ELSE
         CALL FlagError("Invalid node number.",err,error,*999)
       ENDIF
@@ -562,12 +562,12 @@ CONTAINS
        CALL FlagError("Invalid number of nodes.",err,error,*999)
     ENDIF
     
-    EXITS("ComputationalNodeNumbersSet")
+    EXITS("ComputationNodeNumbersSet")
     RETURN 
-999 ERRORSEXITS("ComputationalNodeNumbersSet",err,error)
+999 ERRORSEXITS("ComputationNodeNumbersSet",err,error)
     RETURN 1
     
-  END SUBROUTINE ComputationalNodeNumbersSet
+  END SUBROUTINE ComputationNodeNumbersSet
 
   !
   !================================================================================================================================
@@ -708,8 +708,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
 
-    IF(numberOfComputationalNodes>1) THEN
-      WRITE(outputString,'(">>WARNING (",I0,"): ",A)') myComputationalNodeNumber,string
+    IF(numberOfComputationNodes>1) THEN
+      WRITE(outputString,'(">>WARNING (",I0,"): ",A)') myComputationNodeNumber,string
     ELSE
       WRITE(outputString,'(">>WARNING: ",A)') string
     ENDIF
@@ -734,8 +734,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
 
-    IF(numberOfComputationalNodes>1) THEN
-      WRITE(outputString,'(">>WARNING (",I0,"): ",A)') myComputationalNodeNumber,CHAR(string)
+    IF(numberOfComputationNodes>1) THEN
+      WRITE(outputString,'(">>WARNING (",I0,"): ",A)') myComputationNodeNumber,CHAR(string)
     ELSE
       WRITE(outputString,'(">>WARNING: ",A)') CHAR(string)
     ENDIF
@@ -783,8 +783,8 @@ CONTAINS
 
     err=0
     error=""
-    myComputationalNodeNumber=0
-    numberOfComputationalNodes=1
+    myComputationNodeNumber=0
+    numberOfComputationNodes=1
     diagnostics=.FALSE.
     diagnostics1=.FALSE.
     diagnostics2=.FALSE.
@@ -928,8 +928,8 @@ CONTAINS
 
     IF(LEN_TRIM(diagFilename)>=1) THEN
       IF(diagFileOpen) CLOSE(UNIT=DIAGNOSTICS_FILE_UNIT)
-      IF(numberOfComputationalNodes>1) THEN
-        WRITE(filename,'(A,".diag.",I0)') diagFilename(1:LEN_TRIM(diagFilename)),myComputationalNodeNumber
+      IF(numberOfComputationNodes>1) THEN
+        WRITE(filename,'(A,".diag.",I0)') diagFilename(1:LEN_TRIM(diagFilename)),myComputationNodeNumber
       ELSE
         filename=diagFilename(1:LEN_TRIM(diagFilename))//".diag"
       ENDIF
@@ -1063,8 +1063,8 @@ CONTAINS
     IF(echoOutput) THEN
       CALL FlagError("Write output is already on.",err,error,*999)
     ELSE
-      IF(numberOfComputationalNodes>1) THEN
-        WRITE(filename,'(A,".out.",I0)') echoFilename(1:LEN_TRIM(echoFilename)),myComputationalNodeNumber        
+      IF(numberOfComputationNodes>1) THEN
+        WRITE(filename,'(A,".out.",I0)') echoFilename(1:LEN_TRIM(echoFilename)),myComputationNodeNumber        
       ELSE
         filename=echoFilename(1:LEN_TRIM(echoFilename))//".out"
       ENDIF
@@ -1233,8 +1233,8 @@ CONTAINS
     NULLIFY(routine)
     IF(LEN_TRIM(timingFilename)>=1) THEN
       IF(timingFileOpen) CLOSE(UNIT=TIMING_FILE_UNIT)
-      IF(numberOfComputationalNodes>1) THEN
-        WRITE(filename,'(A,".timing.",I0)') timingFilename(1:LEN_TRIM(timingFilename)),myComputationalNodeNumber
+      IF(numberOfComputationNodes>1) THEN
+        WRITE(filename,'(A,".timing.",I0)') timingFilename(1:LEN_TRIM(timingFilename)),myComputationNodeNumber
       ELSE
         filename=timingFilename(1:LEN_TRIM(timingFilename))//".timing"
       ENDIF
@@ -1389,8 +1389,8 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError,localError2
 
     indent=2
-    IF(numberOfComputationalNodes>1) THEN
-      WRITE(startString,'(A,A,I0,A,X,I0,A)') indentString(1:indent),"ERROR (",myComputationalNodeNumber,"):", &
+    IF(numberOfComputationNodes>1) THEN
+      WRITE(startString,'(A,A,I0,A,X,I0,A)') indentString(1:indent),"ERROR (",myComputationNodeNumber,"):", &
         & ERR,":"
       startStringLength=LEN_TRIM(startString)
     ELSE

@@ -32,7 +32,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -54,7 +54,7 @@ MODULE Cmiss
   
   USE BaseRoutines
   USE BASIS_ROUTINES
-  USE ComputationEnvironment
+  USE ComputationRoutines
   USE Constants
   USE COORDINATE_ROUTINES
   USE GENERATED_MESH_ROUTINES
@@ -217,8 +217,8 @@ CONTAINS
     CALL BASES_FINALISE(err,error,*999)
     !Reset the signal handler
     CALL cmfe_ResetFatalHandler()
-    !Finalise computational enviroment
-    CALL ComputationalEnvironment_Finalise(err,error,*999)
+    !Finalise computation enviroment
+    CALL Computation_EnvironmentFinalise(err,error,*999)
     !Finalise the base routines
     CALL BaseRoutinesFinalise(err,error,*999)
      
@@ -233,7 +233,7 @@ CONTAINS
 
 !!TODO Underscore to avoid name clash. Can be removed upon prefix rename.
 
-  !>Initialises CMISS. \see OPENOpenCMISS::Iron::CMISSInitialise
+  !>Initialises CMISS. \see OpenCMISS::Iron::cmfe_Initialise
   SUBROUTINE cmfe_Initialise_(worldRegion,err,error,*)
   
     !Argument variables
@@ -247,8 +247,8 @@ CONTAINS
     cmfe_ErrorHandlingMode = CMFE_OUTPUT_ERROR !Default for now, maybe make CMFE_RETURN_ERROR_CODE the default
     !Initialise the base routines
     CALL BaseRoutinesInitialise(err,error,*999)
-    !Intialise the computational environment
-    CALL ComputationalEnvironment_Initialise(err,error,*999)
+    !Intialise the computation environment
+    CALL Computation_EnvironmentInitialise(err,error,*999)
     !Setup signal handling
     CALL cmfe_InitFatalHandler()
     CALL cmfe_SetFatalHandler()
@@ -265,7 +265,7 @@ CONTAINS
       CALL PROBLEMS_INITIALISE(err,error,*999)
       
       !Write out the CMISS version
-      IF(computationalEnvironment%myComputationalNodeNumber==0) THEN
+      IF(computationEnvironment%myComputationNodeNumber==0) THEN
         versionString="OpenCMISS(Iron) version "//TRIM(NumberToVString(CMFE_MAJOR_VERSION,"*",err,error))
         versionString=versionString//"."
         versionString=versionString//TRIM(NumberToVString(CMFE_MINOR_VERSION,"*",err,error))

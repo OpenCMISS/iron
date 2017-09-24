@@ -47,7 +47,7 @@ MODULE DISTRIBUTED_MATRIX_VECTOR
   USE BaseRoutines
   USE CmissMPI
   USE CmissPetsc
-  USE ComputationEnvironment
+  USE ComputationRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE ISO_C_BINDING
@@ -1150,7 +1150,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: DISTRIBUTED_MATRIX !<A pointer to the distributed matrix
-    INTEGER(INTG), POINTER :: DATA(:) !<On return a pointer to the distributed matrix data for this computational node
+    INTEGER(INTG), POINTER :: DATA(:) !<On return a pointer to the distributed matrix data for this computation node
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -1201,7 +1201,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: DISTRIBUTED_MATRIX !<A pointer to the distributed matrix
-    REAL(SP), POINTER :: DATA(:) !<On return a pointer to the distributed matrix data for this computational node
+    REAL(SP), POINTER :: DATA(:) !<On return a pointer to the distributed matrix data for this computation node
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -1252,7 +1252,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: DISTRIBUTED_MATRIX !<A pointer to the distributed matrix
-    REAL(DP), POINTER :: DATA(:) !<On return a pointer to the distributed matrix data for this computational node
+    REAL(DP), POINTER :: DATA(:) !<On return a pointer to the distributed matrix data for this computation node
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -1379,7 +1379,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: DISTRIBUTED_MATRIX !<A pointer to the distributed matrix
-    LOGICAL, POINTER :: DATA(:) !<On return a pointer to the distributed matrix data for this computational node
+    LOGICAL, POINTER :: DATA(:) !<On return a pointer to the distributed matrix data for this computation node
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -1430,7 +1430,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: DISTRIBUTED_MATRIX !<A pointer to the distributed matrix
-    INTEGER(INTG), POINTER :: DATA(:) !<The a pointer to the distributed matrix data for this computational node
+    INTEGER(INTG), POINTER :: DATA(:) !<The a pointer to the distributed matrix data for this computation node
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -1476,7 +1476,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: DISTRIBUTED_MATRIX !<A pointer to the distributed matrix
-    REAL(SP), POINTER :: DATA(:) !<A pointer to the distributed matrix data for this computational node
+    REAL(SP), POINTER :: DATA(:) !<A pointer to the distributed matrix data for this computation node
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -1522,7 +1522,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: DISTRIBUTED_MATRIX !<A pointer to the distributed matrix
-    REAL(DP), POINTER :: DATA(:) !<A pointer to the distributed matrix data for this computational node
+    REAL(DP), POINTER :: DATA(:) !<A pointer to the distributed matrix data for this computation node
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -1642,7 +1642,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: DISTRIBUTED_MATRIX !<A pointer to the distributed matrix
-    LOGICAL, POINTER :: DATA(:) !<A pointer to the distributed matrix data for this computational node
+    LOGICAL, POINTER :: DATA(:) !<A pointer to the distributed matrix data for this computation node
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -1777,7 +1777,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the dimensions of a matrix on this computational node.
+  !>Gets the dimensions of a matrix on this computation node.
   SUBROUTINE DistributedMatrix_DimensionsGet(distributedMatrix,m,n,err,error,*)
 
     !Argument variables
@@ -2713,7 +2713,7 @@ CONTAINS
               !Set up the matrix
               ALLOCATE(PETSC_MATRIX%DATA_DP(PETSC_MATRIX%DATA_SIZE),STAT=ERR)
               IF(ERR/=0) CALL FlagError("Could not allocate PETSc matrix data.",ERR,ERROR,*999)
-              CALL Petsc_MatCreateDense(computationalEnvironment%mpiCommunicator,PETSC_MATRIX%M,PETSC_MATRIX%N, &
+              CALL Petsc_MatCreateDense(computationEnvironment%mpiCommunicator,PETSC_MATRIX%M,PETSC_MATRIX%N, &
                 & PETSC_MATRIX%GLOBAL_M,PETSC_MATRIX%GLOBAL_N,PETSC_MATRIX%DATA_DP,PETSC_MATRIX%MATRIX,ERR,ERROR,*999)
             CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
               PETSC_MATRIX%NUMBER_NON_ZEROS=PETSC_MATRIX%M
@@ -2733,7 +2733,7 @@ CONTAINS
               PETSC_MATRIX%DIAGONAL_NUMBER_NON_ZEROS=1
               PETSC_MATRIX%OFFDIAGONAL_NUMBER_NON_ZEROS=0
               !Create the PETsc AIJ matrix
-              CALL Petsc_MatCreateAIJ(computationalEnvironment%mpiCommunicator,PETSC_MATRIX%M,PETSC_MATRIX%N, &
+              CALL Petsc_MatCreateAIJ(computationEnvironment%mpiCommunicator,PETSC_MATRIX%M,PETSC_MATRIX%N, &
                 & PETSC_MATRIX%GLOBAL_M,PETSC_MATRIX%GLOBAL_N,PETSC_NULL_INTEGER,PETSC_MATRIX%DIAGONAL_NUMBER_NON_ZEROS, &
                 & PETSC_NULL_INTEGER,PETSC_MATRIX%OFFDIAGONAL_NUMBER_NON_ZEROS,PETSC_MATRIX%MATRIX,ERR,ERROR,*999)
             CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
@@ -2744,7 +2744,7 @@ CONTAINS
               IF(ALLOCATED(PETSC_MATRIX%DIAGONAL_NUMBER_NON_ZEROS)) THEN
                 IF(ALLOCATED(PETSC_MATRIX%OFFDIAGONAL_NUMBER_NON_ZEROS)) THEN
                   !Create the PETSc AIJ matrix
-                  CALL Petsc_MatCreateAIJ(computationalEnvironment%mpiCommunicator,PETSC_MATRIX%M,PETSC_MATRIX%N, &
+                  CALL Petsc_MatCreateAIJ(computationEnvironment%mpiCommunicator,PETSC_MATRIX%M,PETSC_MATRIX%N, &
                     & PETSC_MATRIX%GLOBAL_M,PETSC_MATRIX%GLOBAL_N,PETSC_NULL_INTEGER,PETSC_MATRIX%DIAGONAL_NUMBER_NON_ZEROS, &
                     & PETSC_NULL_INTEGER,PETSC_MATRIX%OFFDIAGONAL_NUMBER_NON_ZEROS,PETSC_MATRIX%MATRIX,ERR,ERROR,*999)
                   !Set matrix options
@@ -6439,7 +6439,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: domain_idx,domain_idx2,domain_no,DUMMY_ERR,my_computational_node_number
+    INTEGER(INTG) :: domain_idx,domain_idx2,domain_no,DUMMY_ERR,my_computation_node_number
     LOGICAL :: FOUND
     TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: DISTRIBUTED_VECTOR
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: DOMAIN_MAPPING
@@ -6483,7 +6483,7 @@ CONTAINS
               & DOMAIN_MAPPING%ADJACENT_DOMAINS_PTR(DOMAIN_MAPPING%NUMBER_OF_DOMAINS)
           END IF
           IF(DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS>0) THEN
-            my_computational_node_number=ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
+            my_computation_node_number=ComputationEnvironment_NodeNumberGet(ERR,ERROR)
             IF(ERR/=0) GOTO 999
             IF(DISTRIBUTED_VECTOR%GHOSTING_TYPE==DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE) THEN
               ALLOCATE(CMISS_VECTOR%TRANSFERS(DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS),STAT=ERR)
@@ -6496,11 +6496,11 @@ CONTAINS
                   & DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%NUMBER_OF_RECEIVE_GHOSTS
                 CMISS_VECTOR%TRANSFERS(domain_idx)%DATA_TYPE=DISTRIBUTED_VECTOR%DATA_TYPE
                 CMISS_VECTOR%TRANSFERS(domain_idx)%SEND_TAG_NUMBER=CMISS_VECTOR%BASE_TAG_NUMBER + &
-                  & DOMAIN_MAPPING%ADJACENT_DOMAINS_PTR(my_computational_node_number)+domain_idx-1
+                  & DOMAIN_MAPPING%ADJACENT_DOMAINS_PTR(my_computation_node_number)+domain_idx-1
                 domain_no=DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER
                 FOUND=.FALSE.
                 DO domain_idx2=DOMAIN_MAPPING%ADJACENT_DOMAINS_PTR(domain_no),DOMAIN_MAPPING%ADJACENT_DOMAINS_PTR(domain_no+1)-1
-                  IF(DOMAIN_MAPPING%ADJACENT_DOMAINS_LIST(domain_idx2)==my_computational_node_number) THEN
+                  IF(DOMAIN_MAPPING%ADJACENT_DOMAINS_LIST(domain_idx2)==my_computation_node_number) THEN
                     FOUND=.TRUE.
                     EXIT
                   ENDIF
@@ -7152,7 +7152,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: DISTRIBUTED_VECTOR !<A pointer to the distributed vector
-    INTEGER(INTG), POINTER :: DATA(:) !<The a pointer to the distributed vector data for this computational node
+    INTEGER(INTG), POINTER :: DATA(:) !<The a pointer to the distributed vector data for this computation node
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -7198,7 +7198,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: DISTRIBUTED_VECTOR !<A pointer to the distributed vector
-    REAL(SP), POINTER :: DATA(:) !<A pointer to the distributed vector data for this computational node
+    REAL(SP), POINTER :: DATA(:) !<A pointer to the distributed vector data for this computation node
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -7244,7 +7244,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: DISTRIBUTED_VECTOR !<A pointer to the distributed vector
-    REAL(DP), POINTER :: DATA(:) !<A pointer to the distributed vector data for this computational node
+    REAL(DP), POINTER :: DATA(:) !<A pointer to the distributed vector data for this computation node
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -7298,7 +7298,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: DISTRIBUTED_VECTOR !<A pointer to the distributed vector
-    LOGICAL, POINTER :: DATA(:) !<A pointer to the distributed vector data for this computational node
+    LOGICAL, POINTER :: DATA(:) !<A pointer to the distributed vector data for this computation node
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -7675,7 +7675,7 @@ CONTAINS
         IF(ASSOCIATED(DOMAIN_MAPPING)) THEN
           !Create the PETSc vector
           PETSC_VECTOR%DATA_SIZE=PETSC_VECTOR%N
-          CALL Petsc_VecCreateMPI(computationalEnvironment%mpiCommunicator,PETSC_VECTOR%N,PETSC_VECTOR%GLOBAL_N, &
+          CALL Petsc_VecCreateMPI(computationEnvironment%mpiCommunicator,PETSC_VECTOR%N,PETSC_VECTOR%GLOBAL_N, &
             & PETSC_VECTOR%VECTOR,ERR,ERROR,*999)
           !Set up the Local to Global Mappings
           DO i=1,PETSC_VECTOR%N
@@ -7901,7 +7901,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: domain_idx,i,NUMBER_OF_COMPUTATIONAL_NODES
+    INTEGER(INTG) :: domain_idx,i,NUMBER_OF_COMPUTATION_NODES
     TYPE(VARYING_STRING) :: LOCAL_ERROR
    
     ENTERS("DISTRIBUTED_VECTOR_UPDATE_FINISH",ERR,ERROR,*999)
@@ -7912,9 +7912,9 @@ CONTAINS
         CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_VECTOR%CMISS)) THEN
             IF(ASSOCIATED(DISTRIBUTED_VECTOR%DOMAIN_MAPPING)) THEN
-              NUMBER_OF_COMPUTATIONAL_NODES=ComputationalEnvironment_NumberOfNodesGet(ERR,ERROR)
+              NUMBER_OF_COMPUTATION_NODES=ComputationEnvironment_NumberOfNodesGet(ERR,ERROR)
               IF(ERR/=0) GOTO 999
-              IF(NUMBER_OF_COMPUTATIONAL_NODES>1) THEN
+              IF(NUMBER_OF_COMPUTATION_NODES>1) THEN
                 CALL DISTRIBUTED_VECTOR_UPDATE_WAITFINISHED(DISTRIBUTED_VECTOR,ERR,ERROR,*999)
                 !Copy the receive buffers back to the ghost positions in the data vector
                 DO domain_idx=1,DISTRIBUTED_VECTOR%DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS
@@ -8170,7 +8170,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: domain_idx,i,MPI_IERROR,NUMBER_OF_COMPUTATIONAL_NODES
+    INTEGER(INTG) :: domain_idx,i,MPI_IERROR,NUMBER_OF_COMPUTATION_NODES
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
     ENTERS("DISTRIBUTED_VECTOR_UPDATE_START",ERR,ERROR,*999)
@@ -8181,9 +8181,9 @@ CONTAINS
         CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_VECTOR%CMISS)) THEN
             IF(ASSOCIATED(DISTRIBUTED_VECTOR%DOMAIN_MAPPING)) THEN
-              NUMBER_OF_COMPUTATIONAL_NODES=ComputationalEnvironment_NumberOfNodesGet(ERR,ERROR)
+              NUMBER_OF_COMPUTATION_NODES=ComputationEnvironment_NumberOfNodesGet(ERR,ERROR)
               IF(ERR/=0) GOTO 999
-              IF(NUMBER_OF_COMPUTATIONAL_NODES>1) THEN
+              IF(NUMBER_OF_COMPUTATION_NODES>1) THEN
                 IF(DISTRIBUTED_VECTOR%DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS>0) THEN
                   !Fill in the send buffers with the send ghost values
                   DO domain_idx=1,DISTRIBUTED_VECTOR%DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS
@@ -8230,7 +8230,7 @@ CONTAINS
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_BUFFER_SIZE,MPI_INTEGER, &
                         & DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_TAG_NUMBER, &
-                        & computationalEnvironment%mpiCommunicator, &
+                        & computationEnvironment%mpiCommunicator, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%MPI_RECEIVE_REQUEST,MPI_IERROR)
                       CALL MPI_ERROR_CHECK("MPI_IRECV",MPI_IERROR,ERR,ERROR,*999)
                       IF(DIAGNOSTICS5) THEN
@@ -8243,7 +8243,7 @@ CONTAINS
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive tag = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%RECEIVE_TAG_NUMBER,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ", &
-                          & computationalEnvironment%mpiCommunicator,ERR,ERROR,*999)
+                          & computationEnvironment%mpiCommunicator,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive request = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%MPI_RECEIVE_REQUEST,ERR,ERROR,*999)                
                       ENDIF
@@ -8252,7 +8252,7 @@ CONTAINS
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_BUFFER_SIZE,MPI_REAL, &
                         & DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_TAG_NUMBER, &
-                        & computationalEnvironment%mpiCommunicator, &
+                        & computationEnvironment%mpiCommunicator, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%MPI_RECEIVE_REQUEST,MPI_IERROR)
                       CALL MPI_ERROR_CHECK("MPI_IRECV",MPI_IERROR,ERR,ERROR,*999)
                       IF(DIAGNOSTICS5) THEN
@@ -8265,7 +8265,7 @@ CONTAINS
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive tag = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%RECEIVE_TAG_NUMBER,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ", &
-                          & computationalEnvironment%mpiCommunicator,ERR,ERROR,*999)
+                          & computationEnvironment%mpiCommunicator,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive request = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%MPI_RECEIVE_REQUEST,ERR,ERROR,*999)                
                       ENDIF
@@ -8274,7 +8274,7 @@ CONTAINS
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_BUFFER_SIZE,MPI_DOUBLE_PRECISION, &
                         & DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_TAG_NUMBER, &
-                        & computationalEnvironment%mpiCommunicator, &
+                        & computationEnvironment%mpiCommunicator, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%MPI_RECEIVE_REQUEST,MPI_IERROR)
                       CALL MPI_ERROR_CHECK("MPI_IRECV",MPI_IERROR,ERR,ERROR,*999)
                       IF(DIAGNOSTICS5) THEN
@@ -8287,7 +8287,7 @@ CONTAINS
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive tag = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%RECEIVE_TAG_NUMBER,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ", &
-                          & computationalEnvironment%mpiCommunicator,ERR,ERROR,*999)
+                          & computationEnvironment%mpiCommunicator,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive request = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%MPI_RECEIVE_REQUEST,ERR,ERROR,*999)                
                       ENDIF
@@ -8296,7 +8296,7 @@ CONTAINS
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_BUFFER_SIZE,MPI_LOGICAL, &
                         & DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_TAG_NUMBER, &
-                        & computationalEnvironment%mpiCommunicator, &
+                        & computationEnvironment%mpiCommunicator, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%MPI_RECEIVE_REQUEST,MPI_IERROR)
                       CALL MPI_ERROR_CHECK("MPI_IRECV",MPI_IERROR,ERR,ERROR,*999)
                       IF(DIAGNOSTICS5) THEN
@@ -8309,7 +8309,7 @@ CONTAINS
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive tag = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%RECEIVE_TAG_NUMBER,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ", &
-                          & computationalEnvironment%mpiCommunicator,ERR,ERROR,*999)
+                          & computationEnvironment%mpiCommunicator,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive request = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%MPI_RECEIVE_REQUEST,ERR,ERROR,*999)                
                       ENDIF
@@ -8331,7 +8331,7 @@ CONTAINS
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_BUFFER_SIZE,MPI_INTEGER, &
                         & DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_TAG_NUMBER, &
-                        & computationalEnvironment%mpiCommunicator, &
+                        & computationEnvironment%mpiCommunicator, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%MPI_SEND_REQUEST,MPI_IERROR)
                       CALL MPI_ERROR_CHECK("MPI_ISEND",MPI_IERROR,ERR,ERROR,*999)
                       IF(DIAGNOSTICS5) THEN
@@ -8344,7 +8344,7 @@ CONTAINS
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send tag = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%SEND_TAG_NUMBER,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ", &
-                          & computationalEnvironment%mpiCommunicator,ERR,ERROR,*999)
+                          & computationEnvironment%mpiCommunicator,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send request = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%MPI_SEND_REQUEST,ERR,ERROR,*999)                
                       ENDIF
@@ -8353,7 +8353,7 @@ CONTAINS
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_BUFFER_SIZE,MPI_REAL, &
                         & DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_TAG_NUMBER, &
-                        & computationalEnvironment%mpiCommunicator, &
+                        & computationEnvironment%mpiCommunicator, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%MPI_SEND_REQUEST,MPI_IERROR)
                       CALL MPI_ERROR_CHECK("MPI_ISEND",MPI_IERROR,ERR,ERROR,*999)
                       IF(DIAGNOSTICS5) THEN
@@ -8366,7 +8366,7 @@ CONTAINS
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send tag = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%SEND_TAG_NUMBER,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ", &
-                          & computationalEnvironment%mpiCommunicator,ERR,ERROR,*999)
+                          & computationEnvironment%mpiCommunicator,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send request = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%MPI_SEND_REQUEST,ERR,ERROR,*999)                
                       ENDIF
@@ -8375,7 +8375,7 @@ CONTAINS
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_BUFFER_SIZE,MPI_DOUBLE_PRECISION, &
                         & DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_TAG_NUMBER, &
-                        & computationalEnvironment%mpiCommunicator, &
+                        & computationEnvironment%mpiCommunicator, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%MPI_SEND_REQUEST,MPI_IERROR)
                       CALL MPI_ERROR_CHECK("MPI_ISEND",MPI_IERROR,ERR,ERROR,*999)
                       IF(DIAGNOSTICS5) THEN
@@ -8387,7 +8387,7 @@ CONTAINS
                           & ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send tag = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%SEND_TAG_NUMBER,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ",computationalEnvironment%mpiCommunicator, &
+                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ",computationEnvironment%mpiCommunicator, &
                           & ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send request = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%MPI_SEND_REQUEST,ERR,ERROR,*999)                
@@ -8397,7 +8397,7 @@ CONTAINS
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_BUFFER_SIZE,MPI_LOGICAL, &
                         & DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_TAG_NUMBER, &
-                        & computationalEnvironment%mpiCommunicator, &
+                        & computationEnvironment%mpiCommunicator, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%MPI_SEND_REQUEST,MPI_IERROR)
                       CALL MPI_ERROR_CHECK("MPI_ISEND",MPI_IERROR,ERR,ERROR,*999)
                       IF(DIAGNOSTICS5) THEN
@@ -8410,7 +8410,7 @@ CONTAINS
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send tag = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%SEND_TAG_NUMBER,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ", &
-                          & computationalEnvironment%mpiCommunicator,ERR,ERROR,*999)
+                          & computationEnvironment%mpiCommunicator,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send request = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%MPI_SEND_REQUEST,ERR,ERROR,*999)                
                       ENDIF
@@ -8522,12 +8522,12 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Calculates the L2 norm of a distributed vector values on this computational node
+  !>Calculates the L2 norm of a distributed vector values on this computation node
   SUBROUTINE DistributedVector_L2Norm(distributedVector,norm,err,error,*)
 
     !Argument variables
     TYPE(DISTRIBUTED_VECTOR_TYPE), INTENT(IN), POINTER :: distributedVector !<A pointer to the distributed vector
-    REAL(DP), INTENT(OUT) :: norm !<The L2 norm of values from this computational node
+    REAL(DP), INTENT(OUT) :: norm !<The L2 norm of values from this computation node
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -8586,13 +8586,13 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Calculates the dot product of 2 distributed integer vectors on this computational node
+  !>Calculates the dot product of 2 distributed integer vectors on this computation node
   SUBROUTINE DistributedVector_VecDotIntg(distributedVectorA,distributedVectorB,dotProduct,err,error,*)
 
     !Argument variables
     TYPE(DISTRIBUTED_VECTOR_TYPE), INTENT(IN), POINTER :: distributedVectorA !<A pointer to the distributed vector A
     TYPE(DISTRIBUTED_VECTOR_TYPE), INTENT(IN), POINTER :: distributedVectorB !<A pointer to the distributed vector B
-    INTEGER(INTG), INTENT(OUT) :: dotProduct !<The dot product on this computational node
+    INTEGER(INTG), INTENT(OUT) :: dotProduct !<The dot product on this computation node
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -8655,13 +8655,13 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Calculates the dot product of 2 distributed single-precision vectors on this computational node
+  !>Calculates the dot product of 2 distributed single-precision vectors on this computation node
   SUBROUTINE DistributedVector_VecDotSp(distributedVectorA,distributedVectorB,dotProduct,err,error,*)
 
     !Argument variables
     TYPE(DISTRIBUTED_VECTOR_TYPE), INTENT(IN), POINTER :: distributedVectorA !<A pointer to the distributed vector A
     TYPE(DISTRIBUTED_VECTOR_TYPE), INTENT(IN), POINTER :: distributedVectorB !<A pointer to the distributed vector B
-    REAL(SP), INTENT(OUT) :: dotProduct !<The dot product on this computational node
+    REAL(SP), INTENT(OUT) :: dotProduct !<The dot product on this computation node
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -8718,19 +8718,20 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("DistributedVector_VecDotSp",err,error)
     RETURN 1
+    
   END SUBROUTINE DistributedVector_VecDotSp
 
   !
   !================================================================================================================================
   !
 
-  !>Calculates the dot product of 2 distributed double-precision vectors on this computational node
+  !>Calculates the dot product of 2 distributed double-precision vectors on this computation node
   SUBROUTINE DistributedVector_VecDotDp(distributedVectorA,distributedVectorB,dotProduct,err,error,*)
 
     !Argument variables
     TYPE(DISTRIBUTED_VECTOR_TYPE), INTENT(IN), POINTER :: distributedVectorA !<A pointer to the distributed vector A
     TYPE(DISTRIBUTED_VECTOR_TYPE), INTENT(IN), POINTER :: distributedVectorB !<A pointer to the distributed vector B
-    REAL(DP), INTENT(OUT) :: dotProduct !<The dot product on this computational node
+    REAL(DP), INTENT(OUT) :: dotProduct !<The dot product on this computation node
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables

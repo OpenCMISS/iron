@@ -49,7 +49,7 @@ MODULE FIELDML_OUTPUT_ROUTINES
   USE BASIS_ROUTINES
   USE COORDINATE_ROUTINES
   USE CONSTANTS
-  USE ComputationEnvironment
+  USE ComputationRoutines
   USE FIELD_ROUTINES
   USE FIELDML_API
   USE FIELDML_TYPES
@@ -1532,7 +1532,7 @@ CONTAINS
     LOGICAL, ALLOCATABLE :: IS_NODE_BASED(:)
     TYPE(C_PTR) :: SIZE_POINTER
     TYPE(VARYING_STRING) :: ARRAY_LOCATION
-    INTEGER(INTG) :: myComputationalNodeNumber,nodeDomain,meshComponentNumber
+    INTEGER(INTG) :: myComputationNodeNumber,nodeDomain,meshComponentNumber
 
     ENTERS( "FIELDML_OUTPUT_ADD_FIELD_NODE_DOFS", ERR, ERROR, *999 )
     
@@ -1629,10 +1629,10 @@ CONTAINS
             !Default to version 1 of each node derivative (value hardcoded in loop)
             VERSION_NUMBER = 1
 
-            myComputationalNodeNumber = ComputationalEnvironment_NodeNumberGet(err,error)
+            myComputationNodeNumber = ComputationEnvironment_NodeNumberGet(err,error)
             CALL DECOMPOSITION_MESH_COMPONENT_NUMBER_GET(FIELD%DECOMPOSITION,meshComponentNumber,err,error,*999)
             CALL DECOMPOSITION_NODE_DOMAIN_GET(FIELD%DECOMPOSITION,I,meshComponentNumber,nodeDomain,err,error,*999)
-            IF(nodeDomain==myComputationalNodeNumber) THEN
+            IF(nodeDomain==myComputationNodeNumber) THEN
               CALL FIELD_PARAMETER_SET_GET_NODE( FIELD, VARIABLE_TYPE, SET_TYPE, VERSION_NUMBER, &
                 & NO_GLOBAL_DERIV, I, FIELD_COMPONENT_NUMBERS(J), DVALUE, ERR, ERROR, *999 )
             ENDIF

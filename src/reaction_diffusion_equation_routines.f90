@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s): Chris Bradley
+!> Contributor(s): Vijay Rajagopal,Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -47,7 +47,7 @@ MODULE REACTION_DIFFUSION_EQUATION_ROUTINES
   USE BaseRoutines
   USE BASIS_ROUTINES
   USE BOUNDARY_CONDITIONS_ROUTINES
-  USE ComputationEnvironment
+  USE ComputationRoutines
   USE Constants
   USE CONTROL_LOOP_ROUTINES
   USE ControlLoopAccessRoutines
@@ -1529,7 +1529,7 @@ CONTAINS
 
     REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
     INTEGER(INTG) :: EQUATIONS_SET_IDX,CURRENT_LOOP_ITERATION,OUTPUT_FREQUENCY
-    INTEGER(INTG) :: myComputationalNodeNumber
+    INTEGER(INTG) :: myComputationNodeNumber
 
     CHARACTER(28) :: FILE
     CHARACTER(28) :: OUTPUT_FILE
@@ -1558,20 +1558,20 @@ CONTAINS
 
                     CURRENT_LOOP_ITERATION=CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER
                     OUTPUT_FREQUENCY=CONTROL_LOOP%TIME_LOOP%OUTPUT_NUMBER
-                    myComputationalNodeNumber = ComputationalEnvironment_NodeNumberGet(err,error)
+                    myComputationNodeNumber = ComputationEnvironment_NodeNumberGet(err,error)
                     IF(OUTPUT_FREQUENCY>0) THEN
                       IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_FREQUENCY)==0) THEN
                         IF(CONTROL_LOOP%TIME_LOOP%CURRENT_TIME<=CONTROL_LOOP%TIME_LOOP%STOP_TIME) THEN
                           IF(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS.EQ.1) THEN
                             IF(CURRENT_LOOP_ITERATION<10) THEN
                               WRITE(OUTPUT_FILE,'("TIME_STEP_SPEC_1.part",I2.2,".000",I0)') &
-                              & myComputationalNodeNumber, CURRENT_LOOP_ITERATION
+                              & myComputationNodeNumber, CURRENT_LOOP_ITERATION
                             ELSE IF(CURRENT_LOOP_ITERATION<100) THEN
                               WRITE(OUTPUT_FILE,'("TIME_STEP_SPEC_1.part",I2.2,".00",I0)') &
-                              & myComputationalNodeNumber,CURRENT_LOOP_ITERATION
+                              & myComputationNodeNumber,CURRENT_LOOP_ITERATION
                             ELSE IF(CURRENT_LOOP_ITERATION<1000) THEN
                               WRITE(OUTPUT_FILE,'("TIME_STEP_SPEC_1.part",I2.2,".0",I0)') &
-                              & myComputationalNodeNumber,CURRENT_LOOP_ITERATION
+                              & myComputationNodeNumber,CURRENT_LOOP_ITERATION
                             ELSE IF(CURRENT_LOOP_ITERATION<10000) THEN
                               WRITE(OUTPUT_FILE,'("TIME_STEP_SPEC_1.part",I2.2,".",I0)') &
                               & CURRENT_LOOP_ITERATION
@@ -1579,16 +1579,16 @@ CONTAINS
                           ELSE
                             IF(CURRENT_LOOP_ITERATION<10) THEN
                               WRITE(OUTPUT_FILE, '("TIME_STEP_SPEC_",I0,".part",I2.2,".000",I0)') &
-                                & equations_set_idx,myComputationalNodeNumber,CURRENT_LOOP_ITERATION
+                                & equations_set_idx,myComputationNodeNumber,CURRENT_LOOP_ITERATION
                             ELSE IF(CURRENT_LOOP_ITERATION<100) THEN
                               WRITE(OUTPUT_FILE, '("TIME_STEP_SPEC_",I0,".part",I2.2,".00",I0)') &
-                                & equations_set_idx,myComputationalNodeNumber,CURRENT_LOOP_ITERATION
+                                & equations_set_idx,myComputationNodeNumber,CURRENT_LOOP_ITERATION
                             ELSE IF(CURRENT_LOOP_ITERATION<1000) THEN
                               WRITE(OUTPUT_FILE, '("TIME_STEP_SPEC_",I0,".part",I2.2,".0",I0)') &
-                                & equations_set_idx,myComputationalNodeNumber,CURRENT_LOOP_ITERATION
+                                & equations_set_idx,myComputationNodeNumber,CURRENT_LOOP_ITERATION
                             ELSE IF(CURRENT_LOOP_ITERATION<10000) THEN
                               WRITE(OUTPUT_FILE, '("TIME_STEP_SPEC_",I0,".part",I2.2,".",I0)') &
-                                & equations_set_idx,myComputationalNodeNumber,CURRENT_LOOP_ITERATION
+                                & equations_set_idx,myComputationNodeNumber,CURRENT_LOOP_ITERATION
                             END IF
                           ENDIF
                           WRITE(*,*) OUTPUT_FILE

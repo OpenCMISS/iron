@@ -116,7 +116,7 @@ PROGRAM NONLINEARPOISSONEXAMPLE
 
   INTEGER(CMISSIntg) :: EquationsSetIndex
   INTEGER(CMISSIntg) :: Err
-  INTEGER(CMISSIntg) :: NumberOfComputationalNodes,ComputationalNodeNumber
+  INTEGER(CMISSIntg) :: NumberOfComputationNodes,ComputationNodeNumber
 
 #ifdef WIN32
   !Quickwin type
@@ -179,9 +179,9 @@ PROGRAM NONLINEARPOISSONEXAMPLE
   !Output to a file
   CALL cmfe_OutputSetOn("NonlinearPoisson",Err)
 
-  !Get the computational nodes information
-  CALL cmfe_ComputationalNumberOfNodesGet(NumberOfComputationalNodes,Err)
-  CALL cmfe_ComputationalNodeNumberGet(ComputationalNodeNumber,Err)
+  !Get the computation nodes information
+  CALL cmfe_ComputationNumberOfNodesGet(NumberOfComputationNodes,Err)
+  CALL cmfe_ComputationNodeNumberGet(ComputationNodeNumber,Err)
 
   !Start the creation of a new RC coordinate system
   CALL cmfe_CoordinateSystem_Initialise(CoordinateSystem,Err)
@@ -268,7 +268,7 @@ PROGRAM NONLINEARPOISSONEXAMPLE
   CALL cmfe_Decomposition_CreateStart(DecompositionUserNumber,Mesh,Decomposition,Err)
   !Set the decomposition to be a general decomposition with the specified number of domains
   CALL cmfe_Decomposition_TypeSet(Decomposition,CMFE_DECOMPOSITION_CALCULATED_TYPE,Err)
-  CALL cmfe_Decomposition_NumberOfDomainsSet(Decomposition,NumberOfComputationalNodes,Err)
+  CALL cmfe_Decomposition_NumberOfDomainsSet(Decomposition,NumberOfComputationNodes,Err)
   !Finish the decomposition
   CALL cmfe_Decomposition_CreateFinish(Decomposition,Err)
 

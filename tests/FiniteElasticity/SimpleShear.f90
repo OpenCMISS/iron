@@ -100,7 +100,7 @@ PROGRAM SIMPLESHEAREXAMPLE
 
   INTEGER(CMISSIntg) :: NumberGlobalXElements,NumberGlobalYElements,NumberGlobalZElements
   INTEGER(CMISSIntg) :: EquationsSetIndex
-  INTEGER(CMISSIntg) :: NumberOfComputationalNodes,NumberOfDomains,ComputationalNodeNumber
+  INTEGER(CMISSIntg) :: NumberOfComputationNodes,NumberOfDomains,ComputationNodeNumber
   INTEGER(CMISSIntg) :: NodeNumber,NodeDomain,node_idx
   INTEGER(CMISSIntg),ALLOCATABLE :: LeftSurfaceNodes(:)
   INTEGER(CMISSIntg),ALLOCATABLE :: RightSurfaceNodes(:)
@@ -158,14 +158,14 @@ PROGRAM SIMPLESHEAREXAMPLE
 
   CALL cmfe_OutputSetOn("SimpleShear",Err)
   
-  !Get the number of computational nodes and this computational node number
-  CALL cmfe_ComputationalNumberOfNodesGet(NumberOfComputationalNodes,Err)
-  CALL cmfe_ComputationalNodeNumberGet(ComputationalNodeNumber,Err)
+  !Get the number of computation nodes and this computation node number
+  CALL cmfe_ComputationNumberOfNodesGet(NumberOfComputationNodes,Err)
+  CALL cmfe_ComputationNodeNumberGet(ComputationNodeNumber,Err)
 
   NumberGlobalXElements=2
   NumberGlobalYElements=2
   NumberGlobalZElements=2
-  NumberOfDomains=NumberOfComputationalNodes
+  NumberOfDomains=NumberOfComputationNodes
 
   !Create a 3D rectangular cartesian coordinate system
   CALL cmfe_CoordinateSystem_Initialise(CoordinateSystem,Err)
@@ -396,7 +396,7 @@ PROGRAM SIMPLESHEAREXAMPLE
   DO node_idx=1,SIZE(TopSurfaceNodes,1)
     NodeNumber=TopSurfaceNodes(node_idx)
     CALL cmfe_Decomposition_NodeDomainGet(Decomposition,NodeNumber,1,NodeDomain,Err)
-    IF(NodeDomain==ComputationalNodeNumber) THEN
+    IF(NodeDomain==ComputationNodeNumber) THEN
       ! x-direction
       CALL cmfe_Field_ParameterSetGetNode(GeometricField,CMFE_FIELD_U_VARIABLE_TYPE,CMFE_FIELD_VALUES_SET_TYPE,1,1,NodeNumber,1,&
         & VALUE,Err)
@@ -419,7 +419,7 @@ PROGRAM SIMPLESHEAREXAMPLE
   DO node_idx=1,SIZE(BottomSurfaceNodes,1)
     NodeNumber=BottomSurfaceNodes(node_idx)
     CALL cmfe_Decomposition_NodeDomainGet(Decomposition,NodeNumber,1,NodeDomain,Err)
-    IF(NodeDomain==ComputationalNodeNumber) THEN
+    IF(NodeDomain==ComputationNodeNumber) THEN
       ! x-direction
       CALL cmfe_Field_ParameterSetGetNode(GeometricField,CMFE_FIELD_U_VARIABLE_TYPE,CMFE_FIELD_VALUES_SET_TYPE,1,1,NodeNumber,1,&
         & VALUE,Err)

@@ -50,7 +50,7 @@ MODULE FIELD_IO_ROUTINES
   USE BasisAccessRoutines
   USE MESH_ROUTINES
   USE NODE_ROUTINES
-  USE ComputationEnvironment
+  USE ComputationRoutines
   USE COORDINATE_ROUTINES
   USE ISO_VARYING_STRING
   USE MACHINE_CONSTANTS
@@ -1007,7 +1007,7 @@ CONTAINS
   SUBROUTINE FIELD_IO_CREATE_FIELDS(NAME, REGION, DECOMPOSITION, FIELD_VALUES_SET_TYPE, NUMBER_OF_FIELDS, &
     !&USER_NODAL_NUMBER_MAP_GLOBAL_NODAL_NUMBER,
     &MESH_COMPONENTS_OF_FIELD_COMPONENTS, COMPONENTS_IN_FIELDS, NUMBER_OF_EXNODE_FILES, &
-    &MASTER_COMPUTATIONAL_NUMBER, myComputationalNodeNumber, FIELD_SCALING_TYPE, ERR, ERROR, *)
+    &MASTER_COMPUTATION_NUMBER, myComputationNodeNumber, FIELD_SCALING_TYPE, ERR, ERROR, *)
     !Argument variables
     TYPE(VARYING_STRING), INTENT(IN) :: NAME
     TYPE(REGION_TYPE), POINTER :: REGION !<region
@@ -1018,8 +1018,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: MESH_COMPONENTS_OF_FIELD_COMPONENTS(:)
     INTEGER(INTG), INTENT(IN) :: COMPONENTS_IN_FIELDS(:)
     INTEGER(INTG), INTENT(IN) :: NUMBER_OF_EXNODE_FILES
-    INTEGER(INTG), INTENT(IN) :: MASTER_COMPUTATIONAL_NUMBER
-    INTEGER(INTG), INTENT(IN) :: myComputationalNodeNumber
+    INTEGER(INTG), INTENT(IN) :: MASTER_COMPUTATION_NUMBER
+    INTEGER(INTG), INTENT(IN) :: myComputationNodeNumber
     INTEGER(INTG), INTENT(IN) :: FIELD_SCALING_TYPE
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -1070,7 +1070,7 @@ CONTAINS
     NUMBER_OF_COMPONENTS=SUM(COMPONENTS_IN_FIELDS)
 
     !checking the field strings in exnode files
-    IF(MASTER_COMPUTATIONAL_NUMBER==myComputationalNodeNumber) THEN
+    IF(MASTER_COMPUTATION_NUMBER==myComputationNodeNumber) THEN
 
       CALL REALLOCATE( LIST_STR, NUMBER_OF_FIELDS, "can not allocate list of strings for fields", ERR, ERROR, *999 )
 
@@ -1125,7 +1125,7 @@ CONTAINS
         CALL FIELD_IO_FORTRAN_FILE_CLOSE(FILE_ID, ERR,ERROR,*999)
         idx_exnode=idx_exnode+1
       ENDDO !idx_exnode<NUMBER_OF_EXNODE_FILES
-    ENDIF !MASTER_COMPUTATIONAL_NUMBER==myComputationalNodeNumber
+    ENDIF !MASTER_COMPUTATION_NUMBER==myComputationNodeNumber
 
     idx_comp1=0
     DO idx_field=1,NUMBER_OF_FIELDS
@@ -1146,10 +1146,10 @@ CONTAINS
       !Set the scaling factor
       CALL FIELD_SCALING_TYPE_SET(FIELD, FIELD_SCALING_TYPE, ERR, ERROR, *999)
 
-      IF(MASTER_COMPUTATIONAL_NUMBER==myComputationalNodeNumber) THEN
+      IF(MASTER_COMPUTATION_NUMBER==myComputationNodeNumber) THEN
         CALL FIELD_IO_FIELD_INFO(LIST_STR(idx_field), FIELD_IO_FIELD_LABEL, FIELDTYPE, ERR, ERROR, *999)
       ENDIF
-      CALL MPI_BCAST(FIELDTYPE,1,MPI_LOGICAL,MASTER_COMPUTATIONAL_NUMBER,computationalEnvironment%mpiCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(FIELDTYPE,1,MPI_LOGICAL,MASTER_COMPUTATION_NUMBER,computationEnvironment%mpiCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
       !Set FIELD TYPE
       CALL FIELD_TYPE_SET(FIELD, FIELDTYPE, ERR, ERROR, *999)
@@ -1157,7 +1157,7 @@ CONTAINS
       CALL FIELD_CREATE_FINISH(FIELD,ERR,ERROR,*999)
     ENDDO
 
-    IF(MASTER_COMPUTATIONAL_NUMBER==myComputationalNodeNumber) THEN
+    IF(MASTER_COMPUTATION_NUMBER==myComputationNodeNumber) THEN
       CALL CHECKED_DEALLOCATE( LIST_STR )
     ENDIF
 
@@ -1167,8 +1167,8 @@ CONTAINS
     FILE_STATUS="OLD"
 
     !broadcasting total_number_of_comps
-    CALL MPI_BCAST(total_number_of_comps,1,MPI_INTEGER,MASTER_COMPUTATIONAL_NUMBER, &
-      & computationalEnvironment%mpiCommunicator,MPI_IERROR)
+    CALL MPI_BCAST(total_number_of_comps,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
+      & computationEnvironment%mpiCommunicator,MPI_IERROR)
     CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
 
     CALL REALLOCATE( LIST_DEV_POS, total_number_of_comps, &
@@ -1176,7 +1176,7 @@ CONTAINS
 
     DO WHILE(idx_exnode<NUMBER_OF_EXNODE_FILES)
 
-      CALL MPI_BCAST(FILE_END,1,MPI_LOGICAL,MASTER_COMPUTATIONAL_NUMBER,computationalEnvironment%mpiCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(FILE_END,1,MPI_LOGICAL,MASTER_COMPUTATION_NUMBER,computationEnvironment%mpiCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
 
       IF(FILE_END) THEN
@@ -1186,10 +1186,10 @@ CONTAINS
         IF(idx_exnode>=NUMBER_OF_EXNODE_FILES) EXIT
       ENDIF
 
-      !IF(MASTER_COMPUTATIONAL_NUMBER/=myComputationalNodeNumber) PRINT * , idx_exnode
+      !IF(MASTER_COMPUTATION_NUMBER/=myComputationNodeNumber) PRINT * , idx_exnode
 
       !goto the start of mesh part
-      IF(MASTER_COMPUTATIONAL_NUMBER==myComputationalNodeNumber) THEN
+      IF(MASTER_COMPUTATION_NUMBER==myComputationNodeNumber) THEN
 
         IF(FILE_END) THEN
           FILE_ID=1030+idx_exnode
@@ -1286,14 +1286,14 @@ CONTAINS
             NODE_SECTION=.TRUE.
           ENDDO !idx_field
         ENDIF  !FILE_END==.FALSE..AND.SECTION_START=.TRUE..AND.NODE_SECTION=.FALSE.
-      ENDIF !MASTER_COMPUTATIONAL_NUMBER
+      ENDIF !MASTER_COMPUTATION_NUMBER
 
       !broadcasting total_number_of_devs
-      CALL MPI_BCAST(total_number_of_devs,1,MPI_INTEGER,MASTER_COMPUTATIONAL_NUMBER, &
-        & computationalEnvironment%mpiCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(total_number_of_devs,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
+        & computationEnvironment%mpiCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
 
-      IF(MASTER_COMPUTATIONAL_NUMBER/=myComputationalNodeNumber) THEN
+      IF(MASTER_COMPUTATION_NUMBER/=myComputationNodeNumber) THEN
         CALL REALLOCATE( LIST_DEV, total_number_of_devs, &
           & "Could not allocate memory for nodal derivative index in non-master node", ERR, ERROR, *999 )
       ENDIF
@@ -1302,16 +1302,16 @@ CONTAINS
         & "Could not allocate memory for nodal derivative index in non-master node", ERR, ERROR, *999 )
 
       !broadcasting total_number_of_comps
-      CALL MPI_BCAST(LIST_DEV_POS,total_number_of_comps,MPI_INTEGER,MASTER_COMPUTATIONAL_NUMBER, &
-        & computationalEnvironment%mpiCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(LIST_DEV_POS,total_number_of_comps,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
+        & computationEnvironment%mpiCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
       !broadcasting total_number_of_devs
-      CALL MPI_BCAST(LIST_DEV,total_number_of_devs,MPI_INTEGER,MASTER_COMPUTATIONAL_NUMBER, &
-        & computationalEnvironment%mpiCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(LIST_DEV,total_number_of_devs,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
+        & computationEnvironment%mpiCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
 
       !goto the start of mesh part
-      IF(MASTER_COMPUTATIONAL_NUMBER==myComputationalNodeNumber) THEN
+      IF(MASTER_COMPUTATION_NUMBER==myComputationNodeNumber) THEN
 
         !have not touched the end
         IF((.NOT.FILE_END).AND.SECTION_START.AND.NODE_SECTION) THEN
@@ -1363,17 +1363,17 @@ CONTAINS
             IF(VERIFY(CMISS_KEYWORD_NODE, LINE)/=0) NODE_SECTION=.FALSE.
           ENDIF
         ENDIF !FILE_END==.FALSE..AND.SECTION_START=.TRUE..AND.NODE_SECTION=.TRUE.
-      ENDIF  !(MASTER_COMPUTATIONAL_NUMBER==myComputationalNodeNumber)
+      ENDIF  !(MASTER_COMPUTATION_NUMBER==myComputationNodeNumber)
 
       !broadcasting total_number_of_devs
-      CALL MPI_BCAST(LIST_DEV_VALUE,total_number_of_devs,MPI_REAL8,MASTER_COMPUTATIONAL_NUMBER, &
-        & computationalEnvironment%mpiCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(LIST_DEV_VALUE,total_number_of_devs,MPI_REAL8,MASTER_COMPUTATION_NUMBER, &
+        & computationEnvironment%mpiCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
-      CALL MPI_BCAST(NODAL_USER_NUMBER,1,MPI_INTEGER,MASTER_COMPUTATIONAL_NUMBER, &
-        & computationalEnvironment%mpiCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(NODAL_USER_NUMBER,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
+        & computationEnvironment%mpiCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
 
-      !IF(MASTER_COMPUTATIONAL_NUMBER/=myComputationalNodeNumber) THEN
+      !IF(MASTER_COMPUTATION_NUMBER/=myComputationNodeNumber) THEN
       print *, "user number:"
       print *, NODAL_USER_NUMBER
       print *, LIST_DEV_VALUE
@@ -1491,7 +1491,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Import fields from files into different computational nodes
+  !>Import fields from files into different computation nodes
   SUBROUTINE FIELD_IO_FIELDS_IMPORT(NAME, METHOD, REGION, MESH, MESH_USER_NUMBER, DECOMPOSITION, DECOMPOSITION_USER_NUMBER, &
     &DECOMPOSITION_METHOD, FIELD_VALUES_SET_TYPE, FIELD_SCALING_TYPE, ERR, ERROR, *)
     !Argument variables
@@ -1509,9 +1509,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: myComputationalNodeNumber !local process number
-    INTEGER(INTG) :: computational_node_numbers   !total process numbers
-    INTEGER(INTG) :: MASTER_COMPUTATIONAL_NUMBER  !master computational number
+    INTEGER(INTG) :: myComputationNodeNumber !local process number
+    INTEGER(INTG) :: computation_node_numbers   !total process numbers
+    INTEGER(INTG) :: MASTER_COMPUTATION_NUMBER  !master computation number
     INTEGER(INTG) :: NUMBER_OF_FIELDS
     INTEGER(INTG) :: NUMBER_OF_EXNODE_FILES
     !INTEGER(INTG), ALLOCATABLE :: USER_NODAL_NUMBER_MAP_GLOBAL_NODAL_NUMBER(:)
@@ -1520,28 +1520,28 @@ CONTAINS
 
     ENTERS("FIELD_IO_FIELDS_IMPORT",ERR,ERROR,*999)
 
-    !Get the number of computational nodes
-    computational_node_numbers=ComputationalEnvironment_NumberOfNodesGet(ERR,ERROR)
+    !Get the number of computation nodes
+    computation_node_numbers=ComputationEnvironment_NumberOfNodesGet(ERR,ERROR)
     IF(ERR/=0) GOTO 999
-    !Get my computational node number
-    myComputationalNodeNumber=ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
+    !Get my computation node number
+    myComputationNodeNumber=ComputationEnvironment_NodeNumberGet(ERR,ERROR)
     IF(ERR/=0) GOTO 999
 
-    MASTER_COMPUTATIONAL_NUMBER=0
+    MASTER_COMPUTATION_NUMBER=0
 
     IF(METHOD=="FORTRAN") THEN
-      CALL FIELD_IO_IMPORT_GLOBAL_MESH(NAME, REGION, MESH, MESH_USER_NUMBER, MASTER_COMPUTATIONAL_NUMBER, &
-          & myComputationalNodeNumber, &!USER_NODAL_NUMBER_MAP_GLOBAL_NODAL_NUMBER,
+      CALL FIELD_IO_IMPORT_GLOBAL_MESH(NAME, REGION, MESH, MESH_USER_NUMBER, MASTER_COMPUTATION_NUMBER, &
+          & myComputationNodeNumber, &!USER_NODAL_NUMBER_MAP_GLOBAL_NODAL_NUMBER,
           &MESH_COMPONENTS_OF_FIELD_COMPONENTS, &
           & COMPONENTS_IN_FIELDS, NUMBER_OF_FIELDS, NUMBER_OF_EXNODE_FILES, ERR, ERROR, *999)
 
       CALL FIELD_IO_CREATE_DECOMPISTION(DECOMPOSITION, DECOMPOSITION_USER_NUMBER, DECOMPOSITION_METHOD, MESH, &
-          &computational_node_numbers, ERR, ERROR, *999)
+          &computation_node_numbers, ERR, ERROR, *999)
 
       CALL FIELD_IO_CREATE_FIELDS(NAME, REGION, DECOMPOSITION, FIELD_VALUES_SET_TYPE, NUMBER_OF_FIELDS, &
           !&USER_NODAL_NUMBER_MAP_GLOBAL_NODAL_NUMBER,
           &MESH_COMPONENTS_OF_FIELD_COMPONENTS, COMPONENTS_IN_FIELDS, &
-          & NUMBER_OF_EXNODE_FILES, MASTER_COMPUTATIONAL_NUMBER, myComputationalNodeNumber, FIELD_SCALING_TYPE, &
+          & NUMBER_OF_EXNODE_FILES, MASTER_COMPUTATION_NUMBER, myComputationNodeNumber, FIELD_SCALING_TYPE, &
           & ERR, ERROR, *999)
     ELSE IF(METHOD=="MPIIO") THEN
       CALL FlagError("MPI IO has not been implemented",ERR,ERROR,*999)
@@ -1608,9 +1608,9 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Read the global mesh into one computational node first and then broadcasting to others nodes
-  SUBROUTINE FIELD_IO_IMPORT_GLOBAL_MESH(NAME, REGION, MESH, MESH_USER_NUMBER, MASTER_COMPUTATIONAL_NUMBER, &
-    & myComputationalNodeNumber, &!USER_NODAL_NUMBER_MAP_GLOBAL_NODAL_NUMBER,
+  !>Read the global mesh into one computation node first and then broadcasting to others nodes
+  SUBROUTINE FIELD_IO_IMPORT_GLOBAL_MESH(NAME, REGION, MESH, MESH_USER_NUMBER, MASTER_COMPUTATION_NUMBER, &
+    & myComputationNodeNumber, &!USER_NODAL_NUMBER_MAP_GLOBAL_NODAL_NUMBER,
     &MESH_COMPONENTS_OF_FIELD_COMPONENTS, &
     & COMPONENTS_IN_FIELDS, NUMBER_OF_FIELDS, NUMBER_OF_EXNODE_FILES, ERR, ERROR, *)
     !Argument variables
@@ -1618,8 +1618,8 @@ CONTAINS
     TYPE(MESH_TYPE), POINTER :: MESH !<mesh type
     TYPE(REGION_TYPE), POINTER :: REGION !<region
     INTEGER(INTG), INTENT(IN) :: MESH_USER_NUMBER !< user number of mesh
-    INTEGER(INTG), INTENT(IN) :: MASTER_COMPUTATIONAL_NUMBER
-    INTEGER(INTG), INTENT(IN) :: myComputationalNodeNumber
+    INTEGER(INTG), INTENT(IN) :: MASTER_COMPUTATION_NUMBER
+    INTEGER(INTG), INTENT(IN) :: myComputationNodeNumber
     !INTEGER(INTG), INTENT(INOUT), ALLOCATABLE :: USER_NODAL_NUMBER_MAP_GLOBAL_NODAL_NUMBER(:)
     INTEGER(INTG), INTENT(INOUT), ALLOCATABLE :: MESH_COMPONENTS_OF_FIELD_COMPONENTS(:)
     INTEGER(INTG), INTENT(INOUT), ALLOCATABLE :: COMPONENTS_IN_FIELDS(:)
@@ -1687,7 +1687,7 @@ CONTAINS
     CALL MESH_CREATE_START(MESH_USER_NUMBER,REGION,NUMBER_OF_DIMENSIONS,MESH,ERR,ERROR,*999)
 
     !calculate the number of elements, number of fields and number of field components
-    IF(MASTER_COMPUTATIONAL_NUMBER==myComputationalNodeNumber) THEN
+    IF(MASTER_COMPUTATION_NUMBER==myComputationNodeNumber) THEN
 
       !the file name has to start from zero in an ascended order without break
       idx_exelem=0
@@ -1779,13 +1779,13 @@ CONTAINS
       !CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Total number of exelment files = ",idx_exelem, ERR,ERROR,*999)
       NUMBER_OF_ELEMENTS=idx_elem
       NUMBER_OF_EXELEM_FILES=idx_exelem
-    ENDIF !MASTER_COMPUTATIONAL_NUMBER==myComputationalNodeNumber
+    ENDIF !MASTER_COMPUTATION_NUMBER==myComputationNodeNumber
 
     !broadcasting the number of components in each field
-    CALL MPI_BCAST(NUMBER_OF_FIELDS,1,MPI_INTEGER,MASTER_COMPUTATIONAL_NUMBER, &
-      & computationalEnvironment%mpiCommunicator,MPI_IERROR)
+    CALL MPI_BCAST(NUMBER_OF_FIELDS,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
+      & computationEnvironment%mpiCommunicator,MPI_IERROR)
     CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
-    IF(MASTER_COMPUTATIONAL_NUMBER/=myComputationalNodeNumber) THEN
+    IF(MASTER_COMPUTATION_NUMBER/=myComputationNodeNumber) THEN
       CALL REALLOCATE( COMPONENTS_IN_FIELDS, NUMBER_OF_FIELDS, &
           & "can not allocate the memory for outputing components in field", ERR, ERROR, *999 )
       !IF(ALLOCATED(LIST_FIELD_TYPE)) DEALLOCATE(LIST_FIELD_TYPE)
@@ -1793,20 +1793,20 @@ CONTAINS
       !IF(ERR/=0) CALL FlagError("can not allocate the memory for list of field types",ERR,ERROR,*999)
       !LIST_FIELD_TYPE(:)=0
     ENDIF
-    CALL MPI_BCAST(COMPONENTS_IN_FIELDS,NUMBER_OF_FIELDS,MPI_INTEGER,MASTER_COMPUTATIONAL_NUMBER, &
-      & computationalEnvironment%mpiCommunicator,MPI_IERROR)
+    CALL MPI_BCAST(COMPONENTS_IN_FIELDS,NUMBER_OF_FIELDS,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
+      & computationEnvironment%mpiCommunicator,MPI_IERROR)
     CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
-    !CALL MPI_BCAST(LIST_FIELD_TYPE,NUMBER_OF_FIELDS,MPI_INTEGER,MASTER_COMPUTATIONAL_NUMBER, &
-    !  & computationalEnvironment%mpiCommunicator,MPI_IERROR)
+    !CALL MPI_BCAST(LIST_FIELD_TYPE,NUMBER_OF_FIELDS,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
+    !  & computationEnvironment%mpiCommunicator,MPI_IERROR)
     !CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
     !broadcasting the number of elements
-    CALL MPI_BCAST(NUMBER_OF_ELEMENTS,1,MPI_INTEGER,MASTER_COMPUTATIONAL_NUMBER, &
-      & computationalEnvironment%mpiCommunicator,MPI_IERROR)
+    CALL MPI_BCAST(NUMBER_OF_ELEMENTS,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
+      & computationEnvironment%mpiCommunicator,MPI_IERROR)
     CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
     CALL MESH_NUMBER_OF_ELEMENTS_SET(MESH,NUMBER_OF_ELEMENTS,ERR,ERROR,*999)
 
     !calculate the number of nodes
-    IF(MASTER_COMPUTATIONAL_NUMBER==myComputationalNodeNumber) THEN
+    IF(MASTER_COMPUTATION_NUMBER==myComputationNodeNumber) THEN
       !the file name has to start from zero in a ascended order without break
       idx_exnode=0
       idx_node=0
@@ -1835,14 +1835,14 @@ CONTAINS
       !CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Total number of exnode files = ",idx_exnode, ERR,ERROR,*999)
       NUMBER_OF_NODES=idx_node
       NUMBER_OF_EXNODE_FILES=idx_exnode
-    ENDIF !MASTER_COMPUTATIONAL_NUMBER==myComputationalNodeNumber
+    ENDIF !MASTER_COMPUTATION_NUMBER==myComputationNodeNumber
 
-    CALL MPI_BCAST(NUMBER_OF_EXNODE_FILES,1,MPI_INTEGER,MASTER_COMPUTATIONAL_NUMBER, &
-      & computationalEnvironment%mpiCommunicator,MPI_IERROR)
+    CALL MPI_BCAST(NUMBER_OF_EXNODE_FILES,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
+      & computationEnvironment%mpiCommunicator,MPI_IERROR)
     CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
     !broadcasting the number of nodes
-    CALL MPI_BCAST(NUMBER_OF_NODES,1,MPI_INTEGER,MASTER_COMPUTATIONAL_NUMBER, &
-      & computationalEnvironment%mpiCommunicator,MPI_IERROR)
+    CALL MPI_BCAST(NUMBER_OF_NODES,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
+      & computationEnvironment%mpiCommunicator,MPI_IERROR)
     CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
     NULLIFY(NODES)
     CALL NODES_CREATE_START(REGION,NUMBER_OF_NODES,NODES,ERR,ERROR,*999)
@@ -1850,7 +1850,7 @@ CONTAINS
     !collect the nodal numberings (nodal labels) to change the nodal user number by reading exnode files
     CALL REALLOCATE( USER_NODAL_NUMBER_MAP_GLOBAL_NODAL_NUMBER, NUMBER_OF_NODES, &
       & "can not allocate list of nodal number.", ERR, ERROR, *999 )
-    IF(MASTER_COMPUTATIONAL_NUMBER==myComputationalNodeNumber) THEN
+    IF(MASTER_COMPUTATION_NUMBER==myComputationNodeNumber) THEN
       !the file name has to start from zero in a ascended order without break
       idx_node=1
       DO idx_exnode=0, NUMBER_OF_EXNODE_FILES-1
@@ -1870,11 +1870,11 @@ CONTAINS
         CALL FIELD_IO_FORTRAN_FILE_CLOSE(FILE_ID, ERR,ERROR,*999)
       ENDDO !FILE_EXIST==.TRUE.
       CALL LIST_SORT(USER_NODAL_NUMBER_MAP_GLOBAL_NODAL_NUMBER, ERR, ERROR, *999)
-    ENDIF !MASTER_COMPUTATIONAL_NUMBER==myComputationalNodeNumber
+    ENDIF !MASTER_COMPUTATION_NUMBER==myComputationNodeNumber
 
     !broadcast the nodal numberings (nodal labels)
-    CALL MPI_BCAST(USER_NODAL_NUMBER_MAP_GLOBAL_NODAL_NUMBER,NUMBER_OF_NODES,MPI_INTEGER,MASTER_COMPUTATIONAL_NUMBER, &
-        & computationalEnvironment%mpiCommunicator,MPI_IERROR)
+    CALL MPI_BCAST(USER_NODAL_NUMBER_MAP_GLOBAL_NODAL_NUMBER,NUMBER_OF_NODES,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
+        & computationEnvironment%mpiCommunicator,MPI_IERROR)
     CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
     DO idx_node=1, NUMBER_OF_NODES
       IF(idx_node/=USER_NODAL_NUMBER_MAP_GLOBAL_NODAL_NUMBER(idx_node)) CALL NODES_USER_NUMBER_SET(NODES,idx_node, &
@@ -1890,7 +1890,7 @@ CONTAINS
     !IF(ALLOCATED(LIST_NODAL_NUMBER)) DEALLOCATE(LIST_NODAL_NUMBER)
 
     !calculate the number of mesh components
-    IF(MASTER_COMPUTATIONAL_NUMBER==myComputationalNodeNumber) THEN
+    IF(MASTER_COMPUTATION_NUMBER==myComputationNodeNumber) THEN
 
       !MESH_COMPONENT_LOOKUP is used to store the difference between field components in term of basis property.
       CALL REALLOCATE_2D( MESH_COMPONENT_LOOKUP, NUMBER_OF_COMPONENTS, NUMBER_OF_COMPONENTS, &
@@ -2021,14 +2021,14 @@ CONTAINS
       !      LIST_MESH_COMPONENTS(idx_comp1)=idx_comp
       !   ENDIF
       !ENDDO
-    ENDIF !MASTER_COMPUTATIONAL_NUMBER==myComputationalNodeNumber
+    ENDIF !MASTER_COMPUTATION_NUMBER==myComputationNodeNumber
 
     !broadcasting the number of mesh components
-    CALL MPI_BCAST(NUMBER_OF_COMPONENTS,1,MPI_INTEGER,MASTER_COMPUTATIONAL_NUMBER, &
-      & computationalEnvironment%mpiCommunicator,MPI_IERROR)
+    CALL MPI_BCAST(NUMBER_OF_COMPONENTS,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
+      & computationEnvironment%mpiCommunicator,MPI_IERROR)
     CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
-    CALL MPI_BCAST(NUMBER_OF_MESH_COMPONENTS,1,MPI_INTEGER,MASTER_COMPUTATIONAL_NUMBER, &
-      & computationalEnvironment%mpiCommunicator,MPI_IERROR)
+    CALL MPI_BCAST(NUMBER_OF_MESH_COMPONENTS,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
+      & computationEnvironment%mpiCommunicator,MPI_IERROR)
     CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
     CALL MESH_NUMBER_OF_COMPONENTS_SET(MESH,NUMBER_OF_MESH_COMPONENTS,ERR,ERROR,*999)
 
@@ -2050,7 +2050,7 @@ CONTAINS
     CALL REALLOCATE( LIST_ELEMENT_NUMBER, NUMBER_OF_ELEMENTS, &
         & "can not allocate list of elemental number", ERR, ERROR, *999 )
 
-    IF(MASTER_COMPUTATIONAL_NUMBER==myComputationalNodeNumber) THEN
+    IF(MASTER_COMPUTATION_NUMBER==myComputationNodeNumber) THEN
       !the file name has to start from zero in a ascended order without break
       idx_elem=1
       DO idx_exelem=0, NUMBER_OF_EXELEM_FILES-1
@@ -2090,11 +2090,11 @@ CONTAINS
          CALL FIELD_IO_FORTRAN_FILE_CLOSE(FILE_ID, ERR,ERROR,*999)
       ENDDO !idx_exelem=0
       CALL LIST_SORT(LIST_ELEMENT_NUMBER, ERR, ERROR, *999)
-    ENDIF !MASTER_COMPUTATIONAL_NUMBER==myComputationalNodeNumber
+    ENDIF !MASTER_COMPUTATION_NUMBER==myComputationNodeNumber
 
     !broadcast the list of elements for mapping gloabl numbers and user numbers (elemental labels)
-    CALL MPI_BCAST(LIST_ELEMENT_NUMBER,NUMBER_OF_ELEMENTS,MPI_INTEGER,MASTER_COMPUTATIONAL_NUMBER, &
-      & computationalEnvironment%mpiCommunicator,MPI_IERROR)
+    CALL MPI_BCAST(LIST_ELEMENT_NUMBER,NUMBER_OF_ELEMENTS,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
+      & computationEnvironment%mpiCommunicator,MPI_IERROR)
     CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
     !change the mapping between global elemental numbering and user elemental numbering
 
@@ -2107,8 +2107,8 @@ CONTAINS
     ENDDO
 
     !creating topological information for each mesh component
-    CALL MPI_BCAST(NUMBER_OF_EXELEM_FILES,1,MPI_INTEGER,MASTER_COMPUTATIONAL_NUMBER, &
-      & computationalEnvironment%mpiCommunicator,MPI_IERROR)
+    CALL MPI_BCAST(NUMBER_OF_EXELEM_FILES,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
+      & computationEnvironment%mpiCommunicator,MPI_IERROR)
     CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
     !ALLOCATE(LIST_BASES(NUMBER_OF_COMPONENTS),STAT=ERR)
     !IF(ERR/=0) CALL FlagError("can not allocate list of bases",ERR,ERROR,*999)
@@ -2122,7 +2122,7 @@ CONTAINS
 
     DO WHILE(idx_exelem<NUMBER_OF_EXELEM_FILES)
 
-      CALL MPI_BCAST(FILE_END,1,MPI_LOGICAL,MASTER_COMPUTATIONAL_NUMBER,computationalEnvironment%mpiCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(FILE_END,1,MPI_LOGICAL,MASTER_COMPUTATION_NUMBER,computationEnvironment%mpiCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
 
       IF(FILE_END) THEN
@@ -2133,7 +2133,7 @@ CONTAINS
       ENDIF
 
       !goto the start of mesh part
-      IF(MASTER_COMPUTATIONAL_NUMBER==myComputationalNodeNumber) THEN
+      IF(MASTER_COMPUTATION_NUMBER==myComputationNodeNumber) THEN
 
         !IF(FILE_END==.FALSE..AND.START_OF_ELEMENT_SECTION==.FALSE.) THEN
         !  !check the beginning of element section
@@ -2266,13 +2266,13 @@ CONTAINS
           ENDIF
           !CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"FILE_END:",FILE_END,ERR,ERROR,*999)
         ENDIF
-      ENDIF !MASTER_COMPUTATIONAL_NUMBER
+      ENDIF !MASTER_COMPUTATION_NUMBER
 
-      CALL MPI_BCAST(number_of_node,1,MPI_INTEGER,MASTER_COMPUTATIONAL_NUMBER,computationalEnvironment%mpiCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(number_of_node,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER,computationEnvironment%mpiCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
       !CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"SIZE LIST_ELEMENTAL_NODES:",SIZE(LIST_ELEMENTAL_NODES),ERR,ERROR,*999)
 
-      IF(MASTER_COMPUTATIONAL_NUMBER/=myComputationalNodeNumber) THEN
+      IF(MASTER_COMPUTATION_NUMBER/=myComputationNodeNumber) THEN
         CALL REALLOCATE( LIST_ELEMENTAL_NODES, number_of_node, &
           & "Could not allocate list of elemental nodes", ERR, ERROR, *999 )
         CALL REALLOCATE_2D( LIST_COMP_NODAL_INDEX, NUMBER_OF_COMPONENTS, number_of_node, &
@@ -2293,26 +2293,26 @@ CONTAINS
         !    CALL FieldIO_TranslateLabelIntoInterpolationType(INTERPOLATION_XI(idx_comp, idx_dim), LINE, ERR, ERROR, *999)
         !  ENDDO
         !ENDDO
-      ENDIF !MASTER_COMPUTATIONAL_NUMBER/=myComputationalNodeNumber
+      ENDIF !MASTER_COMPUTATION_NUMBER/=myComputationNodeNumber
 
       !CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"LIST_ELEMENTAL_NODES:",LIST_ELEMENTAL_NODES(1),ERR,ERROR,*999)
-      CALL MPI_BCAST(LIST_ELEMENTAL_NODES,number_of_node,MPI_INTEGER,MASTER_COMPUTATIONAL_NUMBER, &
-        & computationalEnvironment%mpiCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(LIST_ELEMENTAL_NODES,number_of_node,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
+        & computationEnvironment%mpiCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
-      CALL MPI_BCAST(LIST_COMP_NODAL_INDEX,number_of_node*NUMBER_OF_COMPONENTS,MPI_INTEGER,MASTER_COMPUTATIONAL_NUMBER, &
-          & computationalEnvironment%mpiCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(LIST_COMP_NODAL_INDEX,number_of_node*NUMBER_OF_COMPONENTS,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
+          & computationEnvironment%mpiCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
-      CALL MPI_BCAST(SHAPE_INDEX,SHAPE_SIZE,MPI_INTEGER,MASTER_COMPUTATIONAL_NUMBER, &
-        & computationalEnvironment%mpiCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(SHAPE_INDEX,SHAPE_SIZE,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
+        & computationEnvironment%mpiCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
-      CALL MPI_BCAST(LIST_COMP_NODES,NUMBER_OF_COMPONENTS,MPI_INTEGER,MASTER_COMPUTATIONAL_NUMBER, &
-        & computationalEnvironment%mpiCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(LIST_COMP_NODES,NUMBER_OF_COMPONENTS,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
+        & computationEnvironment%mpiCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
-      CALL MPI_BCAST(MESH_COMPONENTS_OF_FIELD_COMPONENTS,NUMBER_OF_COMPONENTS,MPI_INTEGER,MASTER_COMPUTATIONAL_NUMBER, &
-          & computationalEnvironment%mpiCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(MESH_COMPONENTS_OF_FIELD_COMPONENTS,NUMBER_OF_COMPONENTS,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
+          & computationEnvironment%mpiCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
-      CALL MPI_BCAST(INTERPOLATION_XI,NUMBER_OF_COMPONENTS*NUMBER_OF_DIMENSIONS,MPI_INTEGER,MASTER_COMPUTATIONAL_NUMBER,&
-          & computationalEnvironment%mpiCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(INTERPOLATION_XI,NUMBER_OF_COMPONENTS*NUMBER_OF_DIMENSIONS,MPI_INTEGER,MASTER_COMPUTATION_NUMBER,&
+          & computationEnvironment%mpiCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
       !CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"LIST_ELEMENTAL_NODES:",LIST_ELEMENTAL_NODES(1),ERR,ERROR,*999)
       current_mesh_comp=1
@@ -2520,9 +2520,9 @@ CONTAINS
   !================================================================================================================================
   !
 
-  FUNCTION FindMyLocalDomainNumber( mapping, myComputationalNodeNumber )
+  FUNCTION FindMyLocalDomainNumber( mapping, myComputationNodeNumber )
     TYPE(DOMAIN_GLOBAL_MAPPING_TYPE) :: mapping
-    INTEGER(INTG), INTENT(IN) :: myComputationalNodeNumber
+    INTEGER(INTG), INTENT(IN) :: myComputationNodeNumber
 
     INTEGER(INTG) :: FindMyLocalDomainNumber
 
@@ -2530,7 +2530,7 @@ CONTAINS
     INTEGER(INTG) :: myDomainIndex
 
     DO domainIndex = 1, mapping%NUMBER_OF_DOMAINS
-      IF( mapping%DOMAIN_NUMBER( domainIndex ) == myComputationalNodeNumber ) THEN
+      IF( mapping%DOMAIN_NUMBER( domainIndex ) == myComputationNodeNumber ) THEN
         myDomainIndex = domainIndex
         EXIT
       ENDIF
@@ -2545,13 +2545,13 @@ CONTAINS
 
   !>Write the header of a group elements using FORTRAN
   SUBROUTINE FieldIO_ExportElementalGroupHeaderFortran( global_number, MAX_NODE_COMP_INDEX,NUM_OF_SCALING_FACTOR_SETS, &
-    & LIST_COMP_SCALE, myComputationalNodeNumber, elementalInfoSet, sessionHandle, ERR,ERROR, *)
+    & LIST_COMP_SCALE, myComputationNodeNumber, elementalInfoSet, sessionHandle, ERR,ERROR, *)
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: global_number !<element number in my elemental IO list
     INTEGER(INTG), INTENT(INOUT) ::  MAX_NODE_COMP_INDEX !<MAX_NODE_INDEX
     INTEGER(INTG), INTENT(INOUT) :: NUM_OF_SCALING_FACTOR_SETS !<NUM_OF_SCALING_FACTOR_SETS
     INTEGER(INTG), INTENT(INOUT) :: LIST_COMP_SCALE(:)
-    INTEGER(INTG), INTENT(IN) :: myComputationalNodeNumber !<local process number
+    INTEGER(INTG), INTENT(IN) :: myComputationNodeNumber !<local process number
     TYPE(FIELD_IO_COMPONENT_INFO_SET), INTENT(INOUT) :: elementalInfoSet
     INTEGER(INTG), INTENT(IN) :: sessionHandle
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
@@ -2615,7 +2615,7 @@ CONTAINS
       componentDomain=>elementalInfoSet%COMPONENTS(comp_idx)%PTR%DOMAIN
       !get the domain index for this variable component according to my own computional node number
       local_number = FindMyLocalDomainNumber( componentDomain%MAPPINGS%ELEMENTS%GLOBAL_TO_LOCAL_MAP( global_number ),&
-          & myComputationalNodeNumber )
+          & myComputationNodeNumber )
       GROUP_LOCAL_NUMBER(comp_idx)=local_number
       !use local domain information find the out the maximum number of derivatives
       DOMAIN_ELEMENTS=>componentDomain%TOPOLOGY%ELEMENTS
@@ -3444,13 +3444,13 @@ CONTAINS
   !
 
   SUBROUTINE FIELD_IO_EXPORT_ELEMENT_SCALE_FACTORS( sessionHandle, components, componentScales, globalNumber, &
-    & myComputationalNodeNumber, ERR, ERROR, * )
+    & myComputationNodeNumber, ERR, ERROR, * )
     !Argument variables
     INTEGER(INTG) :: sessionHandle
     TYPE(FIELD_IO_COMPONENT_INFO_SET), INTENT(INOUT) :: components !<nodal information in this process
     INTEGER(INTG) :: componentScales(:)
     INTEGER(INTG) :: globalNumber
-    INTEGER(INTG) :: myComputationalNodeNumber
+    INTEGER(INTG) :: myComputationNodeNumber
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
@@ -3479,7 +3479,7 @@ CONTAINS
       !get the domain index for this variable component according to my own computional node number
 
       localNumber = FindMyLocalDomainNumber( domainElementMapping%GLOBAL_TO_LOCAL_MAP( globalNumber ), &
-        & myComputationalNodeNumber )
+        & myComputationNodeNumber )
       !use local domain information find the out the maximum number of derivatives
       domainElements => component%DOMAIN%TOPOLOGY%ELEMENTS
       domainNodes => component%DOMAIN%TOPOLOGY%NODES
@@ -3558,13 +3558,13 @@ CONTAINS
   !
 
   !>Write all the elemental information from LOCAL_PROCESS_NODAL_INFO_SET to exelem files
-  SUBROUTINE FIELD_IO_EXPORT_ELEMENTS_INTO_LOCAL_FILE(ELEMENTAL_INFO_SET, NAME, myComputationalNodeNumber, &
+  SUBROUTINE FIELD_IO_EXPORT_ELEMENTS_INTO_LOCAL_FILE(ELEMENTAL_INFO_SET, NAME, myComputationNodeNumber, &
       & ERR, ERROR, *)
-    !the reason that myComputationalNodeNumber is used in the argument is for future extension
+    !the reason that myComputationNodeNumber is used in the argument is for future extension
     !Argument variables
     TYPE(FIELD_IO_INFO_SET), INTENT(INOUT) :: ELEMENTAL_INFO_SET !<nodal information in this process
     TYPE(VARYING_STRING), INTENT(IN) :: NAME !<the prefix name of file.
-    INTEGER(INTG), INTENT(IN):: myComputationalNodeNumber !<local process number
+    INTEGER(INTG), INTENT(IN):: myComputationNodeNumber !<local process number
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -3588,11 +3588,11 @@ CONTAINS
 
     ENTERS("FIELD_IO_EXPORT_ELEMENTS_INTO_LOCAL_FILE",ERR,ERROR,*999)
 
-    !is not necessarily equal to numbering of computional node, so use method ComputationalEnvironment_NodeNumberGet
+    !is not necessarily equal to numbering of computional node, so use method ComputationEnvironment_NodeNumberGet
     !will be a secured way to get the number
-    !myComputationalNodeNumber=ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
+    !myComputationNodeNumber=ComputationEnvironment_NodeNumberGet(ERR,ERROR)
     !IF(ERR/=0) GOTO 999
-    FILE_NAME=NAME//".part"//TRIM(NUMBER_TO_VSTRING(myComputationalNodeNumber,"*",ERR,ERROR))//".exelem"
+    FILE_NAME=NAME//".part"//TRIM(NUMBER_TO_VSTRING(myComputationNodeNumber,"*",ERR,ERROR))//".exelem"
     NUM_OF_SCALING_FACTOR_SETS=0
 
     IF(.NOT.ALLOCATED(ELEMENTAL_INFO_SET%COMPONENT_INFO_SET)) THEN
@@ -3663,7 +3663,7 @@ CONTAINS
       IF(.NOT.components%SAME_HEADER) THEN
         !write out the nodal header
         CALL FieldIO_ExportElementalGroupHeaderFortran( global_number, MAX_NODE_COMP_INDEX, NUM_OF_SCALING_FACTOR_SETS, &
-          & LIST_COMP_SCALE, myComputationalNodeNumber, components, sessionHandle, ERR, ERROR, *999)
+          & LIST_COMP_SCALE, myComputationNodeNumber, components, sessionHandle, ERR, ERROR, *999)
       ENDIF
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -3687,7 +3687,7 @@ CONTAINS
         DOMAIN_ELEMENTS=>component%DOMAIN%TOPOLOGY%ELEMENTS
         !get the domain index for this variable component according to my own computional node number
         local_number = FindMyLocalDomainNumber( DOMAIN_MAPPING_ELEMENTS%GLOBAL_TO_LOCAL_MAP( global_number ), &
-          & myComputationalNodeNumber )
+          & myComputationNodeNumber )
         !use local domain information find the out the maximum number of derivatives
         BASIS => DOMAIN_ELEMENTS%ELEMENTS( local_number )%BASIS
 
@@ -3861,7 +3861,7 @@ CONTAINS
       ENDIF
 
       CALL FIELD_IO_EXPORT_ELEMENT_SCALE_FACTORS( sessionHandle, components, &
-        & LIST_COMP_SCALE, global_number, myComputationalNodeNumber, ERR, ERROR, *999 )
+        & LIST_COMP_SCALE, global_number, myComputationNodeNumber, ERR, ERROR, *999 )
 
     ENDDO !elem_idx
 
@@ -3887,10 +3887,10 @@ CONTAINS
   !
 
   !>Sort the Elemental_info_set according to the type of field variable components
-  SUBROUTINE FIELD_IO_ELEMENTAL_INFO_SET_SORT(ELEMENTAL_INFO_SET, myComputationalNodeNumber, ERR,ERROR,*)
+  SUBROUTINE FIELD_IO_ELEMENTAL_INFO_SET_SORT(ELEMENTAL_INFO_SET, myComputationNodeNumber, ERR,ERROR,*)
     !Argument variables
     TYPE(FIELD_IO_INFO_SET), INTENT(INOUT) :: ELEMENTAL_INFO_SET !<elemental information in this process
-    INTEGER(INTG), INTENT(IN):: myComputationalNodeNumber !<local process number
+    INTEGER(INTG), INTENT(IN):: myComputationNodeNumber !<local process number
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -3914,9 +3914,9 @@ CONTAINS
 
 
     !!get my own computianal node number--be careful the rank of process in the MPI pool
-    !!is not necessarily equal to numbering of computional node, so use method ComputationalEnvironment_NodeNumberGet
+    !!is not necessarily equal to numbering of computional node, so use method ComputationEnvironment_NodeNumberGet
     !!will be a secured way to get the number
-    !myComputationalNodeNumber=ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
+    !myComputationNodeNumber=ComputationEnvironment_NodeNumberGet(ERR,ERROR)
     !IF(ERR/=0) GOTO 999
 
     !group nodal information set according to its components, i.e. put all the nodes with the same components together
@@ -3979,7 +3979,7 @@ CONTAINS
               !get the domain index for this variable component according to my own computional node number
               !local number of nn1'th node in the damain assoicated with component(component_idx)
               local_number1 = FindMyLocalDomainNumber( DOMAIN_MAPPING_ELEMENTS%GLOBAL_TO_LOCAL_MAP( global_number1 ), &
-                & myComputationalNodeNumber )
+                & myComputationNodeNumber )
               DOMAIN_ELEMENTS1=>&
                 & ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn1)%PTR%COMPONENTS(component_idx)%PTR% &
                 & DOMAIN%TOPOLOGY%ELEMENTS
@@ -3991,7 +3991,7 @@ CONTAINS
               !get the domain index for this variable component according to my own computional node number
               !local number of nn2'th node in the damain assoicated with component(component_idx)
               local_number2 = FindMyLocalDomainNumber( DOMAIN_MAPPING_ELEMENTS%GLOBAL_TO_LOCAL_MAP( global_number2 ), &
-                & myComputationalNodeNumber )
+                & myComputationNodeNumber )
               DOMAIN_ELEMENTS2=>&
                 & ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn2)%PTR%COMPONENTS(component_idx)%PTR% &
                 & DOMAIN%TOPOLOGY%ELEMENTS
@@ -4281,23 +4281,23 @@ CONTAINS
   !  TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
   !  !Local Variables
   !  TYPE(FIELD_IO_INFO_SET) :: LOCAL_PROCESS_NODAL_INFO_SET !<nodal information in this process
-  !  INTEGER(INTG):: myComputationalNodeNumber !<local process number
-  !  INTEGER(INTG):: computational_node_numbers   !<total process number
+  !  INTEGER(INTG):: myComputationNodeNumber !<local process number
+  !  INTEGER(INTG):: computation_node_numbers   !<total process number
   !
   !  ENTERS("FIELD_IO_NODES_IMPORT", ERR,ERROR,*999)
   !
-  !  !Get the number of computational nodes
-  !  computational_node_numbers=ComputationalEnvironment_NumberOfNodesGet(ERR,ERROR)
+  !  !Get the number of computation nodes
+  !  computation_node_numbers=ComputationEnvironment_NumberOfNodesGet(ERR,ERROR)
   !  IF(ERR/=0) GOTO 999
-  !  !Get my computational node number
-  !  myComputationalNodeNumber=ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
+  !  !Get my computation node number
+  !  myComputationNodeNumber=ComputationEnvironment_NodeNumberGet(ERR,ERROR)
   !  IF(ERR/=0) GOTO 999
   !  IF(METHOD=="FORTRAN") THEN
   !     CALL FIELD_IO_INFO_SET_INITIALISE(LOCAL_PROCESS_NODAL_INFO_SET, FIELDS, ERR,ERROR,*999)
   !     CALL FieldIO_NodelInfoSetAttachLocalProcess(LOCAL_PROCESS_NODAL_INFO_SET, ERR,ERROR,*999)
-  !     CALL FIELD_IO_NODAL_INFO_SET_SORT(LOCAL_PROCESS_NODAL_INFO_SET, myComputationalNodeNumber, ERR,ERROR,*999)
-  !     CALL FIELD_IO_IMPORT_NODES_FROM_LOCAL_FILE(LOCAL_PROCESS_NODAL_INFO_SET, FILE_NAME, myComputationalNodeNumber, &
-  !          &computational_node_numbers, ERR, ERROR, *999)
+  !     CALL FIELD_IO_NODAL_INFO_SET_SORT(LOCAL_PROCESS_NODAL_INFO_SET, myComputationNodeNumber, ERR,ERROR,*999)
+  !     CALL FIELD_IO_IMPORT_NODES_FROM_LOCAL_FILE(LOCAL_PROCESS_NODAL_INFO_SET, FILE_NAME, myComputationNodeNumber, &
+  !          &computation_node_numbers, ERR, ERROR, *999)
   !     CALL FIELD_IO_NODAL_INFO_SET_FINALIZE(LOCAL_PROCESS_NODAL_INFO_SET, ERR,ERROR,*999)
   !  ELSE IF(METHOD=="MPIIO") THEN
   !     CALL FlagError("what are u thinking, of course not!",ERR,ERROR,*999)
@@ -4374,12 +4374,12 @@ CONTAINS
   !================================================================================================================================
   !
 
-  SUBROUTINE FIELD_IO_COMPARE_INFO_SET_DERIVATIVES( SET1, SET2, myComputationalNodeNumber, global_number1, global_number2, &
+  SUBROUTINE FIELD_IO_COMPARE_INFO_SET_DERIVATIVES( SET1, SET2, myComputationNodeNumber, global_number1, global_number2, &
     & doesMatch, ERR, ERROR, * )
     !Argument variables
     TYPE(FIELD_IO_COMPONENT_INFO_SET) :: SET1
     TYPE(FIELD_IO_COMPONENT_INFO_SET) :: SET2
-    INTEGER(INTG) :: myComputationalNodeNumber
+    INTEGER(INTG) :: myComputationNodeNumber
     INTEGER(INTG) :: global_number1
     INTEGER(INTG) :: global_number2
     LOGICAL :: doesMatch
@@ -4479,10 +4479,10 @@ CONTAINS
   !
 
   !>Sort nodal information according to the type of field variable component
-  SUBROUTINE FIELD_IO_NODAL_INFO_SET_SORT(NODAL_INFO_SET, myComputationalNodeNumber, ERR,ERROR,*)
+  SUBROUTINE FIELD_IO_NODAL_INFO_SET_SORT(NODAL_INFO_SET, myComputationNodeNumber, ERR,ERROR,*)
     !Argument variables
     TYPE(FIELD_IO_INFO_SET), INTENT(INOUT) :: NODAL_INFO_SET !<nodal information in this process
-    INTEGER(INTG), INTENT(IN):: myComputationalNodeNumber !<local process number
+    INTEGER(INTG), INTENT(IN):: myComputationNodeNumber !<local process number
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -4516,7 +4516,7 @@ CONTAINS
         !check whether correspoding two components have the same partial derivatives
         IF( SAME_NODAL_INFO ) THEN
           CALL FIELD_IO_COMPARE_INFO_SET_DERIVATIVES( NODAL_INFO_SET%COMPONENT_INFO_SET(nn1)%PTR, &
-              & NODAL_INFO_SET%COMPONENT_INFO_SET(nn2)%PTR, myComputationalNodeNumber, global_number1, global_number2, &
+              & NODAL_INFO_SET%COMPONENT_INFO_SET(nn2)%PTR, myComputationNodeNumber, global_number1, global_number2, &
               & SAME_NODAL_INFO, ERR, ERROR, *999 )
         ENDIF !SAME_NODAL_INFO==.TRUE.
 
@@ -4932,12 +4932,12 @@ CONTAINS
 
   !!>Write the header of a group nodes using FORTRAIN
   !SUBROUTINE FIELD_IO_IMPORT_NODAL_GROUP_HEADER_FORTRAN(NODAL_INFO_SET, LOCAL_NODAL_NUMBER, MAX_NUM_OF_NODAL_DERIVATIVES, &
-  !&myComputationalNodeNumber, FILE_ID, ERR,ERROR, *)
+  !&myComputationNodeNumber, FILE_ID, ERR,ERROR, *)
   !  !Argument variables
   !  TYPE(FIELD_IO_INFO_SET), INTENT(INOUT) :: NODAL_INFO_SET  !<NODAL_INFO_SET
   !  INTEGER(INTG), INTENT(IN) :: LOCAL_NODAL_NUMBER !<LOCAL_NUMBER IN THE NODAL IO LIST
   !  INTEGER(INTG), INTENT(INOUT) :: MAX_NUM_OF_NODAL_DERIVATIVES !<MAX_NUM_OF_NODAL_DERIVATIVES
-  !  INTEGER(INTG), INTENT(IN) :: myComputationalNodeNumber !<local process number
+  !  INTEGER(INTG), INTENT(IN) :: myComputationNodeNumber !<local process number
   !  INTEGER(INTG), INTENT(IN) :: FILE_ID !< FILE ID
   !  INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
   !  TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -4956,8 +4956,8 @@ CONTAINS
   !
   !  !colllect nodal header information for IO first
   !
-  !  !!get the number of this computational node from mpi pool
-  !  !myComputationalNodeNumber=ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
+  !  !!get the number of this computation node from mpi pool
+  !  !myComputationNodeNumber=ComputationEnvironment_NodeNumberGet(ERR,ERROR)
   !  !IF(ERR/=0) GOTO 999
   !
   !  !attach the temporary pointer
@@ -4989,7 +4989,7 @@ CONTAINS
   !     DOMAIN_MAPPING_NODES=>NODAL_INFO_SET%COMPONENT_INFO_SET(LOCAL_NODAL_NUMBER)%&
   !         &COMPONENTS(comp_idx)%PTR%DOMAIN%MAPPINGS%NODES
   !     !get the domain index for this variable component according to my own computional node number
-  !     local_number = FindMyLocalDomainNumber( DOMAIN_MAPPING_NODES%GLOBAL_TO_LOCAL_MAP(global_number), myComputationalNodeNumber )
+  !     local_number = FindMyLocalDomainNumber( DOMAIN_MAPPING_NODES%GLOBAL_TO_LOCAL_MAP(global_number), myComputationNodeNumber )
   !     !use local domain information find the out the maximum number of derivatives
   !     DOMAIN_NODES=>NODAL_INFO_SET%COMPONENT_INFO_SET(LOCAL_NODAL_NUMBER)%COMPONENTS(comp_idx)%PTR%DOMAIN%TOPOLOGY%NODES
   !     MAX_NUM_OF_NODAL_DERIVATIVES=MAX(DOMAIN_NODES%NODES(local_number)%NUMBER_OF_DERIVATIVES,MAX_NUM_OF_NODAL_DERIVATIVES)
@@ -5091,7 +5091,7 @@ CONTAINS
   !           DOMAIN_MAPPING_NODES=>NODAL_INFO_SET%COMPONENT_INFO_SET(LOCAL_NODAL_NUMBER)%COMPONENTS(comp_idx)%PTR%&
   !              &DOMAIN%MAPPINGS%NODES
   !           !get the domain index for this variable component according to my own computional node number
-  !           local_number = FindMyLocalDomainNumber( DOMAIN_MAPPING_NODES%GLOBAL_TO_LOCAL_MAP(global_number), myComputationalNodeNumber )
+  !           local_number = FindMyLocalDomainNumber( DOMAIN_MAPPING_NODES%GLOBAL_TO_LOCAL_MAP(global_number), myComputationNodeNumber )
   !           !use local domain information find the out the maximum number of derivatives
   !           DOMAIN_NODES=>NODAL_INFO_SET%COMPONENT_INFO_SET(LOCAL_NODAL_NUMBER)%COMPONENTS(comp_idx)%PTR%DOMAIN%TOPOLOGY%NODES
   !           !get the nodal partial derivatives
@@ -5137,12 +5137,12 @@ CONTAINS
 
   !>Write the header of a group nodes using FORTRAIN
   SUBROUTINE FIELD_IO_EXPORT_NODAL_GROUP_HEADER_FORTRAN(fieldInfoSet, global_number, MAX_NUM_OF_NODAL_DERIVATIVES, &
-  &myComputationalNodeNumber, sessionHandle, paddingInfo, ERR,ERROR, *)
+  &myComputationNodeNumber, sessionHandle, paddingInfo, ERR,ERROR, *)
     !Argument variables
     TYPE(FIELD_IO_COMPONENT_INFO_SET), INTENT(IN) :: fieldInfoSet
     INTEGER(INTG), INTENT(IN) :: global_number
     INTEGER(INTG), INTENT(INOUT) :: MAX_NUM_OF_NODAL_DERIVATIVES !<MAX_NUM_OF_NODAL_DERIVATIVES
-    INTEGER(INTG), INTENT(IN) :: myComputationalNodeNumber !<local process number
+    INTEGER(INTG), INTENT(IN) :: myComputationNodeNumber !<local process number
     INTEGER(INTG), INTENT(IN) :: sessionHandle
     INTEGER(INTG), ALLOCATABLE, INTENT(INOUT) :: paddingInfo(:)
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
@@ -5166,8 +5166,8 @@ CONTAINS
 
     !colllect nodal header information for IO first
 
-    !!get the number of this computational node from mpi pool
-    !myComputationalNodeNumber=ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
+    !!get the number of this computation node from mpi pool
+    !myComputationNodeNumber=ComputationEnvironment_NodeNumberGet(ERR,ERROR)
     !IF(ERR/=0) GOTO 999
 
     !attach the temporary pointer
@@ -5390,12 +5390,12 @@ CONTAINS
   !
 
   !>Write all the nodal information from NODAL_INFO_SET to local exnode files
-  SUBROUTINE FIELD_IO_EXPORT_NODES_INTO_LOCAL_FILE(NODAL_INFO_SET, NAME, myComputationalNodeNumber,ERR, ERROR, *)
-    !the reason that myComputationalNodeNumber is used in the argument is for future extension
+  SUBROUTINE FIELD_IO_EXPORT_NODES_INTO_LOCAL_FILE(NODAL_INFO_SET, NAME, myComputationNodeNumber,ERR, ERROR, *)
+    !the reason that myComputationNodeNumber is used in the argument is for future extension
     !Argument variables
     TYPE(FIELD_IO_INFO_SET), INTENT(INOUT):: NODAL_INFO_SET !<nodal information in this process
     TYPE(VARYING_STRING), INTENT(IN) :: NAME !<the prefix name of file.
-    INTEGER(INTG), INTENT(IN):: myComputationalNodeNumber !<local process number
+    INTEGER(INTG), INTENT(IN):: myComputationNodeNumber !<local process number
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -5419,9 +5419,9 @@ CONTAINS
     ENTERS("FIELD_IO_EXPORT_NODES_INTO_LOCAL_FILE",ERR,ERROR,*999)
 
     !get my own computianal node number--be careful the rank of process in the MPI pool
-    !is not necessarily equal to numbering of computional node, so use method ComputationalEnvironment_NodeNumberGet
+    !is not necessarily equal to numbering of computional node, so use method ComputationEnvironment_NodeNumberGet
     !will be a secured way to get the number
-    FILE_NAME=NAME//".part"//TRIM(NUMBER_TO_VSTRING(myComputationalNodeNumber,"*",ERR,ERROR))//".exnode"
+    FILE_NAME=NAME//".part"//TRIM(NUMBER_TO_VSTRING(myComputationNodeNumber,"*",ERR,ERROR))//".exnode"
     MAX_NUM_OF_NODAL_DERIVATIVES=0
 
     IF(.NOT.ALLOCATED(NODAL_INFO_SET%COMPONENT_INFO_SET)) THEN
@@ -5465,7 +5465,7 @@ CONTAINS
         !write out the nodal header
 
         CALL FIELD_IO_EXPORT_NODAL_GROUP_HEADER_FORTRAN(NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR, &
-          & global_number, MAX_NUM_OF_NODAL_DERIVATIVES, myComputationalNodeNumber, sessionHandle, &
+          & global_number, MAX_NUM_OF_NODAL_DERIVATIVES, myComputationNodeNumber, sessionHandle, &
           & paddingInfo, ERR,ERROR,*999)
         MAX_NUMBER_VERSIONS = MAXVAL(NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENT_VERSIONS)
         !value_idx=value_idx-1 !the len of NODAL_BUFFER
@@ -5942,11 +5942,11 @@ CONTAINS
   !!
 
   !>Collect nodal information from each MPI process
-  SUBROUTINE FieldIO_NodelInfoSetAttachLocalProcess(NODAL_INFO_SET, FIELDS, myComputationalNodeNumber, ERR,ERROR,*)
+  SUBROUTINE FieldIO_NodelInfoSetAttachLocalProcess(NODAL_INFO_SET, FIELDS, myComputationNodeNumber, ERR,ERROR,*)
     !Argument variables
     TYPE(FIELD_IO_INFO_SET), INTENT(INOUT):: NODAL_INFO_SET !<nodal information in this process
     TYPE(FIELDS_TYPE), POINTER ::FIELDS !<the field object
-    INTEGER(INTG), INTENT(IN):: myComputationalNodeNumber !<myComputationalNodeNumber
+    INTEGER(INTG), INTENT(IN):: myComputationNodeNumber !<myComputationNodeNumber
     INTEGER(INTG), INTENT(OUT):: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
@@ -6202,22 +6202,22 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(FIELD_IO_INFO_SET) :: NODAL_INFO_SET !<nodal information in this process
-    INTEGER(INTG):: myComputationalNodeNumber !<local process number
-    INTEGER(INTG):: computational_node_numbers   !<total process number
+    INTEGER(INTG):: myComputationNodeNumber !<local process number
+    INTEGER(INTG):: computation_node_numbers   !<total process number
 
     ENTERS("FIELD_IO_NODES_EXPORT", ERR,ERROR,*999)
 
-    !Get the number of computational nodes
-    computational_node_numbers=ComputationalEnvironment_NumberOfNodesGet(ERR,ERROR)
+    !Get the number of computation nodes
+    computation_node_numbers=ComputationEnvironment_NumberOfNodesGet(ERR,ERROR)
     IF(ERR/=0) GOTO 999
-    !Get my computational node number
-    myComputationalNodeNumber=ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
+    !Get my computation node number
+    myComputationNodeNumber=ComputationEnvironment_NodeNumberGet(ERR,ERROR)
     IF(ERR/=0) GOTO 999
     IF(METHOD=="FORTRAN") THEN
       CALL FIELD_IO_INFO_SET_INITIALISE(NODAL_INFO_SET, ERR,ERROR,*999)
-      CALL FieldIO_NodelInfoSetAttachLocalProcess(NODAL_INFO_SET, FIELDS, myComputationalNodeNumber, ERR,ERROR,*999)
-      CALL FIELD_IO_NODAL_INFO_SET_SORT(NODAL_INFO_SET, myComputationalNodeNumber, ERR,ERROR,*999)
-      CALL FIELD_IO_EXPORT_NODES_INTO_LOCAL_FILE(NODAL_INFO_SET, FILE_NAME, myComputationalNodeNumber, &
+      CALL FieldIO_NodelInfoSetAttachLocalProcess(NODAL_INFO_SET, FIELDS, myComputationNodeNumber, ERR,ERROR,*999)
+      CALL FIELD_IO_NODAL_INFO_SET_SORT(NODAL_INFO_SET, myComputationNodeNumber, ERR,ERROR,*999)
+      CALL FIELD_IO_EXPORT_NODES_INTO_LOCAL_FILE(NODAL_INFO_SET, FILE_NAME, myComputationNodeNumber, &
           & ERR, ERROR, *999)
       CALL FIELD_IO_INFO_SET_INITIALISE(NODAL_INFO_SET, ERR,ERROR,*999)
     ELSE IF(METHOD=="MPIIO") THEN
@@ -6252,22 +6252,22 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(FIELD_IO_INFO_SET) :: LOCAL_PROCESS_ELEMENTAL_INFO_SET !<elemental information in this process
-    INTEGER(INTG):: myComputationalNodeNumber !<local process number
-    INTEGER(INTG):: computational_node_numbers   !<total process numbers
+    INTEGER(INTG):: myComputationNodeNumber !<local process number
+    INTEGER(INTG):: computation_node_numbers   !<total process numbers
 
     ENTERS("FIELD_IO_ELEMENTS_EXPORT", ERR,ERROR,*999)
 
-    !Get the number of computational nodes
-    computational_node_numbers=ComputationalEnvironment_NumberOfNodesGet(ERR,ERROR)
+    !Get the number of computation nodes
+    computation_node_numbers=ComputationEnvironment_NumberOfNodesGet(ERR,ERROR)
     IF(ERR/=0) GOTO 999
-    !Get my computational node number
-    myComputationalNodeNumber=ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
+    !Get my computation node number
+    myComputationNodeNumber=ComputationEnvironment_NodeNumberGet(ERR,ERROR)
     IF(ERR/=0) GOTO 999
     IF(METHOD=="FORTRAN") THEN
       CALL FIELD_IO_INFO_SET_INITIALISE( LOCAL_PROCESS_ELEMENTAL_INFO_SET, ERR, ERROR, *999 )
       CALL FieldIO_ElementalInfoSetAttachLocalProcess( LOCAL_PROCESS_ELEMENTAL_INFO_SET, FIELDS, ERR, ERROR, *999 )
-      CALL FIELD_IO_ELEMENTAL_INFO_SET_SORT(LOCAL_PROCESS_ELEMENTAL_INFO_SET, myComputationalNodeNumber, ERR,ERROR,*999)
-      CALL FIELD_IO_EXPORT_ELEMENTS_INTO_LOCAL_FILE(LOCAL_PROCESS_ELEMENTAL_INFO_SET, FILE_NAME, myComputationalNodeNumber, &
+      CALL FIELD_IO_ELEMENTAL_INFO_SET_SORT(LOCAL_PROCESS_ELEMENTAL_INFO_SET, myComputationNodeNumber, ERR,ERROR,*999)
+      CALL FIELD_IO_EXPORT_ELEMENTS_INTO_LOCAL_FILE(LOCAL_PROCESS_ELEMENTAL_INFO_SET, FILE_NAME, myComputationNodeNumber, &
           & ERR, ERROR, *999)
       CALL FIELD_IO_INFO_SET_INITIALISE(LOCAL_PROCESS_ELEMENTAL_INFO_SET, ERR,ERROR,*999)
     ELSE IF(METHOD=="MPIIO") THEN

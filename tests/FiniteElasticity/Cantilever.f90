@@ -98,7 +98,7 @@ PROGRAM CANTILEVEREXAMPLE
   !Program variables
   INTEGER(CMISSIntg) :: NumberGlobalXElements,NumberGlobalYElements,NumberGlobalZElements
   INTEGER(CMISSIntg) :: EquationsSetIndex
-  INTEGER(CMISSIntg) :: NumberOfComputationalNodes,NumberOfDomains,ComputationalNodeNumber
+  INTEGER(CMISSIntg) :: NumberOfComputationNodes,NumberOfDomains,ComputationNodeNumber
   INTEGER(CMISSIntg) :: NodeNumber,NodeDomain,node_idx,component_idx,deriv_idx
   INTEGER(CMISSIntg),ALLOCATABLE :: LeftSurfaceNodes(:)
   INTEGER(CMISSIntg) :: LeftNormalXi
@@ -208,11 +208,11 @@ PROGRAM CANTILEVEREXAMPLE
   WRITE(*,'("Elements: ", 3 i3)') NumberGlobalXElements,NumberGlobalYElements,NumberGlobalZElements
   WRITE(*,'("Scaling type: ", i3)') ScalingType
 
-  !Get the number of computational nodes and this computational node number
-  CALL cmfe_ComputationalNumberOfNodesGet(NumberOfComputationalNodes,Err)
-  CALL cmfe_ComputationalNodeNumberGet(ComputationalNodeNumber,Err)
+  !Get the number of computation nodes and this computation node number
+  CALL cmfe_ComputationNumberOfNodesGet(NumberOfComputationNodes,Err)
+  CALL cmfe_ComputationNodeNumberGet(ComputationNodeNumber,Err)
 
-  NumberOfDomains=NumberOfComputationalNodes
+  NumberOfDomains=NumberOfComputationNodes
 
   !Create a 3D rectangular cartesian coordinate system
   CALL cmfe_CoordinateSystem_Initialise(CoordinateSystem,Err)
@@ -430,7 +430,7 @@ PROGRAM CANTILEVEREXAMPLE
   DO node_idx=1,SIZE(LeftSurfaceNodes,1)
     NodeNumber=LeftSurfaceNodes(node_idx)
     CALL cmfe_Decomposition_NodeDomainGet(Decomposition,NodeNumber,1,NodeDomain,Err)
-    IF(NodeDomain==ComputationalNodeNumber) THEN
+    IF(NodeDomain==ComputationNodeNumber) THEN
       DO component_idx=1,3
         CALL cmfe_BoundaryConditions_AddNode(BoundaryConditions,DependentField,CMFE_FIELD_U_VARIABLE_TYPE,1,1,NodeNumber, &
           & component_idx,CMFE_BOUNDARY_CONDITION_FIXED,0.0_CMISSRP,Err)

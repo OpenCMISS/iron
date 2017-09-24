@@ -237,7 +237,7 @@ CONTAINS
     INTEGER(CMISSIntg) :: FieldGeometryNumberOfComponents,FieldDependentNumberOfComponents,NumberOfElements(3)
     INTEGER(CMISSIntg) :: MPI_IERROR
     INTEGER(CMISSIntg) :: EquationsSetIndex,FieldComponentIndex,FieldMaterialNumberOfComponents,NumberOfXi
-    INTEGER(CMISSIntg) :: NumberOfComputationalNodes,ComputationalNodeNumber
+    INTEGER(CMISSIntg) :: NumberOfComputationNodes,ComputationNodeNumber
 
     !CMISS variables
 
@@ -284,11 +284,11 @@ CONTAINS
     FieldGeometryNumberOfComponents=NumberOfXi
     FieldDependentNumberOfComponents=NumberOfXi
 
-    !Get the number of computational nodes and this computational node number
-    CALL cmfe_ComputationalNumberOfNodesGet(NumberOfComputationalNodes,Err)
-    CALL cmfe_ComputationalNodeNumberGet(ComputationalNodeNumber,Err)
+    !Get the number of computation nodes and this computation node number
+    CALL cmfe_ComputationNumberOfNodesGet(NumberOfComputationNodes,Err)
+    CALL cmfe_ComputationNodeNumberGet(ComputationNodeNumber,Err)
 
-    !Broadcast the number of elements in the X,Y and Z directions and the number of partitions to the other computational nodes
+    !Broadcast the number of elements in the X,Y and Z directions and the number of partitions to the other computation nodes
     CALL MPI_BCAST(NumberGlobalXElements,1,MPI_INTEGER,0,MPI_COMM_WORLD,MPI_IERROR)
     CALL MPI_BCAST(NumberGlobalYElements,1,MPI_INTEGER,0,MPI_COMM_WORLD,MPI_IERROR)
     CALL MPI_BCAST(NumberGlobalZElements,1,MPI_INTEGER,0,MPI_COMM_WORLD,MPI_IERROR)

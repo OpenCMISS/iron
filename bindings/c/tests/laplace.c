@@ -103,7 +103,7 @@ int main()
   cmfe_SolverType Solver=(cmfe_SolverType)NULL;
   cmfe_SolverEquationsType SolverEquations=(cmfe_SolverEquationsType)NULL;
 
-  int NumberOfComputationalNodes,ComputationalNodeNumber;
+  int NumberOfComputationNodes,ComputationNodeNumber;
   int EquationsSetIndex;
   int FirstNodeNumber,LastNodeNumber;
   int FirstNodeDomain,LastNodeDomain;
@@ -127,8 +127,8 @@ int main()
   CHECK_ERROR("Initialising OpenCMISS-Iron");
   Err = cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR);
 
-  Err = cmfe_ComputationalNumberOfNodesGet(&NumberOfComputationalNodes);
-  Err = cmfe_ComputationalNodeNumberGet(&ComputationalNodeNumber);
+  Err = cmfe_ComputationNumberOfNodesGet(&NumberOfComputationNodes);
+  Err = cmfe_ComputationNodeNumberGet(&ComputationNodeNumber);
 
   /* Start the creation of a new RC coordinate system */
   Err = cmfe_CoordinateSystem_Initialise(&CoordinateSystem);
@@ -200,7 +200,7 @@ int main()
   Err = cmfe_Decomposition_CreateStart(DECOMPOSITION_USER_NUMBER,Mesh,Decomposition);
   /* Set the decomposition to be a general decomposition with the specified number of domains */
   Err = cmfe_Decomposition_TypeSet(Decomposition,CMFE_DECOMPOSITION_CALCULATED_TYPE);
-  Err = cmfe_Decomposition_NumberOfDomainsSet(Decomposition,NumberOfComputationalNodes);
+  Err = cmfe_Decomposition_NumberOfDomainsSet(Decomposition,NumberOfComputationNodes);
   /* Finish the decomposition */
   Err = cmfe_Decomposition_CreateFinish(Decomposition);
 
@@ -313,12 +313,12 @@ int main()
     }
   Err = cmfe_Decomposition_NodeDomainGet(Decomposition,FirstNodeNumber,1,&FirstNodeDomain);
   Err = cmfe_Decomposition_NodeDomainGet(Decomposition,LastNodeNumber,1,&LastNodeDomain);
-  if(FirstNodeDomain==ComputationalNodeNumber)
+  if(FirstNodeDomain==ComputationNodeNumber)
     {
       Err = cmfe_BoundaryConditions_SetNode(BoundaryConditions,DependentField,CMFE_FIELD_U_VARIABLE_TYPE,1,1,FirstNodeNumber,1, \
         CMFE_BOUNDARY_CONDITION_FIXED,0.0);
     }
-  if(LastNodeDomain==ComputationalNodeNumber)
+  if(LastNodeDomain==ComputationNodeNumber)
     {
       Err = cmfe_BoundaryConditions_SetNode(BoundaryConditions,DependentField,CMFE_FIELD_U_VARIABLE_TYPE,1,1,LastNodeNumber,1, \
         CMFE_BOUNDARY_CONDITION_FIXED,1.0);
