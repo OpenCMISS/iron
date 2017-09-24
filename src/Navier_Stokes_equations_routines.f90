@@ -12560,7 +12560,7 @@ CONTAINS
     INTEGER(INTG) :: faceNodeDerivativeIdx, meshComponentNumber
     INTEGER(INTG) :: normalComponentIdx
     INTEGER(INTG) :: boundaryID,numberOfBoundaries,boundaryType,coupledNodeNumber,numberOfGlobalBoundaries
-    INTEGER(INTG) :: MPI_IERROR,numberOfComputationNodes
+    INTEGER(INTG) :: MPI_IERROR,numberOfWorldComputationNodes
     INTEGER(INTG) :: i,j,computationNode
     REAL(DP) :: gaussWeight, normalProjection,elementNormal(3)
     REAL(DP) :: normalDifference,normalTolerance
@@ -12881,22 +12881,22 @@ CONTAINS
       globalBoundaryArea = 0.0_DP      
       globalBoundaryPressure = 0.0_DP
       globalBoundaryNormalStress = 0.0_DP
-      numberOfComputationNodes=computationEnvironment%numberOfComputationNodes
-      IF(numberOfComputationNodes>1) THEN !use mpi
+      numberOfWorldComputationNodes=computationEnvironment%numberOfWorldComputationNodes
+      IF(numberOfWorldComputationNodes>1) THEN !use mpi
         CALL MPI_ALLREDUCE(localBoundaryFlux,globalBoundaryFlux,10,MPI_DOUBLE_PRECISION,MPI_SUM,   &
-	 & computationEnvironment%mpiCommunicator,MPI_IERROR)
+	 & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,err,error,*999)
         CALL MPI_ALLREDUCE(localBoundaryArea,globalBoundaryArea,10,MPI_DOUBLE_PRECISION,MPI_SUM,   &
-	 & computationEnvironment%mpiCommunicator,MPI_IERROR)
+	 & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
         CALL MPI_ALLREDUCE(localBoundaryNormalStress,globalBoundaryNormalStress,10,MPI_DOUBLE_PRECISION,MPI_SUM,  &
-	 & computationEnvironment%mpiCommunicator,MPI_IERROR)
+	 & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
         CALL MPI_ALLREDUCE(localBoundaryPressure,globalBoundaryPressure,10,MPI_DOUBLE_PRECISION,MPI_SUM,  &
-	 & computationEnvironment%mpiCommunicator,MPI_IERROR)
+	 & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
         CALL MPI_ALLREDUCE(numberOfBoundaries,numberOfGlobalBoundaries,1,MPI_INTEGER,MPI_MAX,  &
-	 & computationEnvironment%mpiCommunicator,MPI_IERROR)
+	 & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
       ELSE
         numberOfGlobalBoundaries = numberOfBoundaries
@@ -13179,11 +13179,11 @@ CONTAINS
     END DO !elementIdx                 
 
     !allocate array for mpi communication
-    IF(numberOfComputationNodes>1) THEN !use mpi
-      ALLOCATE(globalConverged(numberOfComputationNodes),STAT=ERR) 
+    IF(numberOfWorldComputationNodes>1) THEN !use mpi
+      ALLOCATE(globalConverged(numberOfWorldComputationNodes),STAT=ERR) 
       IF(ERR/=0) CALL FlagError("Could not allocate global convergence check array.",ERR,ERROR,*999)
       CALL MPI_ALLGATHER(convergedFlag,1,MPI_LOGICAL,globalConverged,1,MPI_LOGICAL, &
-       & computationEnvironment%mpiCommunicator,MPI_IERROR)
+       & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPI_IERROR,ERR,ERROR,*999)
       IF(ALL(globalConverged)) THEN
         convergedFlag = .TRUE.
@@ -13253,7 +13253,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: nodeNumber,nodeIdx,derivativeIdx,versionIdx,componentIdx,numberOfLocalNodes1D
     INTEGER(INTG) :: solver1dNavierStokesNumber,solverNumber,MPI_IERROR,timestep,iteration
-    INTEGER(INTG) :: boundaryNumber,numberOfBoundaries,numberOfComputationNodes
+    INTEGER(INTG) :: boundaryNumber,numberOfBoundaries,numberOfWorldComputationNodes
     INTEGER(INTG) :: dependentDof,boundaryConditionType
     REAL(DP) :: A0_PARAM,E_PARAM,H_PARAM,beta,pCellML,normalWave(2)
     REAL(DP) :: qPrevious,pPrevious,aPrevious,q1d,a1d,qError,aError,couplingTolerance
@@ -13475,13 +13475,13 @@ CONTAINS
         localConverged = .FALSE.
       END IF
       ! Need to check that boundaries have converged globally (on all domains) if this is a parallel problem
-      numberOfComputationNodes=computationEnvironment%numberOfComputationNodes
-      IF(numberOfComputationNodes>1) THEN !use mpi
+      numberOfWorldComputationNodes=computationEnvironment%numberOfWorldComputationNodes
+      IF(numberOfWorldComputationNodes>1) THEN !use mpi
         !allocate array for mpi communication
-        ALLOCATE(globalConverged(numberOfComputationNodes),STAT=ERR) 
+        ALLOCATE(globalConverged(numberOfWorldComputationNodes),STAT=ERR) 
         IF(ERR/=0) CALL FlagError("Could not allocate global convergence check array.",ERR,ERROR,*999)
         CALL MPI_ALLGATHER(localConverged,1,MPI_LOGICAL,globalConverged,1,MPI_LOGICAL, &
-         & computationEnvironment%mpiCommunicator,MPI_IERROR)
+         & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPI_IERROR,err,error,*999)
         IF(ALL(globalConverged)) THEN
           !CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"1D/0D coupling converged; # iterations: ", &
@@ -13544,7 +13544,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: nodeNumber,nodeIdx,derivativeIdx,versionIdx,componentIdx,numberOfLocalNodes1D
     INTEGER(INTG) :: solver1dNavierStokesNumber,MPI_IERROR,timestep,iteration
-    INTEGER(INTG) :: boundaryNumber,boundaryType1D,numberOfBoundaries,numberOfComputationNodes
+    INTEGER(INTG) :: boundaryNumber,boundaryType1D,numberOfBoundaries,numberOfWorldComputationNodes
     INTEGER(INTG) :: solver3dNavierStokesNumber,userNodeNumber,localDof,globalDof,computationNode
     REAL(DP) :: normalWave(2)
     REAL(DP) :: flow1D,stress1D,flow1DPrevious,stress1DPrevious,flow3D,stress3D,flowError,stressError
@@ -13764,12 +13764,13 @@ CONTAINS
       localConverged = .TRUE.
     END IF
     ! Need to check that boundaries have converged globally (on all domains) if this is a MPI problem
-    numberOfComputationNodes=computationEnvironment%numberOfComputationNodes
-    IF(numberOfComputationNodes>1) THEN !use mpi
+    numberOfWorldComputationNodes=computationEnvironment%numberOfWorldComputationNodes
+    IF(numberOfWorldComputationNodes>1) THEN !use mpi
       !allocate array for mpi communication
 
       IF(ERR/=0) CALL FlagError("Could not allocate global convergence check array.",ERR,ERROR,*999)
-      CALL MPI_ALLREDUCE(localConverged,globalConverged,1,MPI_LOGICAL,MPI_LAND,computationEnvironment%mpiCommunicator,MPI_IERROR)
+      CALL MPI_ALLREDUCE(localConverged,globalConverged,1,MPI_LOGICAL,MPI_LAND, &
+        & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
       IF(globalConverged) THEN
         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"3D/1D coupling converged; # iterations: ", &
@@ -13844,7 +13845,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: nodeNumber,nodeIdx,derivativeIdx,versionIdx,componentIdx,i
     INTEGER(INTG) :: solver1dNavierStokesNumber,solverNumber
-    INTEGER(INTG) :: branchNumber,numberOfBranches,numberOfComputationNodes,numberOfVersions
+    INTEGER(INTG) :: branchNumber,numberOfBranches,numberOfWorldComputationNodes,numberOfVersions
     INTEGER(INTG) :: MPI_IERROR,timestep,iteration,outputIteration
     REAL(DP) :: couplingTolerance,l2ErrorW(30),wPrevious(2,7),wNavierStokes(2,7),wCharacteristic(2,7),wError(2,7)
     REAL(DP) :: l2ErrorQ(100),qCharacteristic(7),qNavierStokes(7),wNext(2,7)
@@ -14055,13 +14056,13 @@ CONTAINS
       localConverged = .FALSE.
     END IF
     ! Need to check that boundaries have converged globally (on all domains) if this is a parallel problem
-    numberOfComputationNodes=computationEnvironment%numberOfComputationNodes
-    IF(numberOfComputationNodes>1) THEN !use mpi
+    numberOfWorldComputationNodes=computationEnvironment%numberOfWorldComputationNodes
+    IF(numberOfWorldComputationNodes>1) THEN !use mpi
       !allocate array for mpi communication
-      ALLOCATE(globalConverged(numberOfComputationNodes),STAT=ERR) 
+      ALLOCATE(globalConverged(numberOfWorldComputationNodes),STAT=ERR) 
       IF(ERR/=0) CALL FlagError("Could not allocate global convergence check array.",ERR,ERROR,*999)
       CALL MPI_ALLGATHER(localConverged,1,MPI_LOGICAL,globalConverged,1,MPI_LOGICAL, &
-       & computationEnvironment%mpiCommunicator,MPI_IERROR)
+       & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPI_IERROR,err,error,*999)
       IF(ALL(globalConverged)) THEN
         !CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"Navier-Stokes/Characteristic converged; # iterations: ", &
@@ -15020,7 +15021,7 @@ CONTAINS
     INTEGER(INTG) :: faceNodeIdx, elementNodeIdx
     INTEGER(INTG) :: faceNodeDerivativeIdx, meshComponentNumber
     INTEGER(INTG) :: boundaryID,numberOfBoundaries,boundaryType,coupledNodeNumber,numberOfGlobalBoundaries
-    INTEGER(INTG) :: MPI_IERROR,numberOfComputationNodes
+    INTEGER(INTG) :: MPI_IERROR,numberOfWorldComputationNodes
     INTEGER(INTG) :: computationNode,xiDirection(3),orientation
     REAL(DP) :: gaussWeight, elementNormal(3)
     REAL(DP) :: normalDifference,normalTolerance
@@ -15253,19 +15254,19 @@ CONTAINS
       globalBoundaryFlux = 0.0_DP
       globalBoundaryArea = 0.0_DP      
       globalBoundaryPressure = 0.0_DP
-      numberOfComputationNodes=computationEnvironment%numberOfComputationNodes
-      IF(numberOfComputationNodes>1) THEN !use mpi
+      numberOfWorldComputationNodes=computationEnvironment%numberOfWorldComputationNodes
+      IF(numberOfWorldComputationNodes>1) THEN !use mpi
         CALL MPI_ALLREDUCE(localBoundaryFlux,globalBoundaryFlux,10,MPI_DOUBLE_PRECISION,MPI_SUM,   &
-	 & computationEnvironment%mpiCommunicator,MPI_IERROR)
+	 & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
         CALL MPI_ALLREDUCE(localBoundaryArea,globalBoundaryArea,10,MPI_DOUBLE_PRECISION,MPI_SUM,   &
-	 & computationEnvironment%mpiCommunicator,MPI_IERROR)
+	 & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
         CALL MPI_ALLREDUCE(localBoundaryPressure,globalBoundaryPressure,10,MPI_DOUBLE_PRECISION,MPI_SUM,  &
-	 & computationEnvironment%mpiCommunicator,MPI_IERROR)
+	 & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
         CALL MPI_ALLREDUCE(numberOfBoundaries,numberOfGlobalBoundaries,1,MPI_INTEGER,MPI_MAX,  &
-	 & computationEnvironment%mpiCommunicator,MPI_IERROR)
+	 & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
       ELSE
         numberOfGlobalBoundaries = numberOfBoundaries
@@ -15409,11 +15410,11 @@ CONTAINS
     END DO !elementIdx
 
     !allocate array for mpi communication
-    IF(numberOfComputationNodes>1) THEN !use mpi
-      ALLOCATE(globalConverged(numberOfComputationNodes),STAT=ERR) 
+    IF(numberOfWorldComputationNodes>1) THEN !use mpi
+      ALLOCATE(globalConverged(numberOfWorldComputationNodes),STAT=ERR) 
       IF(ERR/=0) CALL FlagError("Could not allocate global convergence check array.",ERR,ERROR,*999)
       CALL MPI_ALLGATHER(convergedFlag,1,MPI_LOGICAL,globalConverged,1,MPI_LOGICAL, &
-       & computationEnvironment%mpiCommunicator,MPI_IERROR)
+       & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPI_IERROR,ERR,ERROR,*999)
       IF(ALL(globalConverged)) THEN
         convergedFlag = .TRUE.

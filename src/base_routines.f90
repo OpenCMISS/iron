@@ -146,8 +146,8 @@ MODULE BaseRoutines
 
   !Module variables
 
-  INTEGER(INTG), SAVE :: myComputationNodeNumber !<The computation rank for this node
-  INTEGER(INTG), SAVE :: numberOfComputationNodes !<The number of computation nodes
+  INTEGER(INTG), SAVE :: myWorldComputationNodeNumber !<The computation rank for this node
+  INTEGER(INTG), SAVE :: numberOfWorldComputationNodes !<The number of computation nodes
   INTEGER(INTG), ALLOCATABLE :: cmissRandomSeeds(:) !<The current error handling seeds for OpenCMISS
   LOGICAL, SAVE :: diagnostics !<.TRUE. if diagnostic output is required in any routines.
   LOGICAL, SAVE :: diagnostics1 !<.TRUE. if level 1 diagnostic output is active in the current routine
@@ -553,8 +553,8 @@ CONTAINS
 
     IF(numberOfNodes>0) THEN
       IF(myNodeNumber>=0.AND.myNodeNumber<=numberOfNodes-1) THEN        
-        myComputationNodeNumber=myNodeNumber
-        numberOfComputationNodes=numberOfNodes        
+        myWorldComputationNodeNumber=myNodeNumber
+        numberOfWorldComputationNodes=numberOfNodes        
       ELSE
         CALL FlagError("Invalid node number.",err,error,*999)
       ENDIF
@@ -708,8 +708,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
 
-    IF(numberOfComputationNodes>1) THEN
-      WRITE(outputString,'(">>WARNING (",I0,"): ",A)') myComputationNodeNumber,string
+    IF(numberOfWorldComputationNodes>1) THEN
+      WRITE(outputString,'(">>WARNING (",I0,"): ",A)') myWorldComputationNodeNumber,string
     ELSE
       WRITE(outputString,'(">>WARNING: ",A)') string
     ENDIF
@@ -734,8 +734,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
 
-    IF(numberOfComputationNodes>1) THEN
-      WRITE(outputString,'(">>WARNING (",I0,"): ",A)') myComputationNodeNumber,CHAR(string)
+    IF(numberOfWorldComputationNodes>1) THEN
+      WRITE(outputString,'(">>WARNING (",I0,"): ",A)') myWorldComputationNodeNumber,CHAR(string)
     ELSE
       WRITE(outputString,'(">>WARNING: ",A)') CHAR(string)
     ENDIF
@@ -783,8 +783,8 @@ CONTAINS
 
     err=0
     error=""
-    myComputationNodeNumber=0
-    numberOfComputationNodes=1
+    myWorldComputationNodeNumber=0
+    numberOfWorldComputationNodes=1
     diagnostics=.FALSE.
     diagnostics1=.FALSE.
     diagnostics2=.FALSE.
@@ -928,8 +928,8 @@ CONTAINS
 
     IF(LEN_TRIM(diagFilename)>=1) THEN
       IF(diagFileOpen) CLOSE(UNIT=DIAGNOSTICS_FILE_UNIT)
-      IF(numberOfComputationNodes>1) THEN
-        WRITE(filename,'(A,".diag.",I0)') diagFilename(1:LEN_TRIM(diagFilename)),myComputationNodeNumber
+      IF(numberOfWorldComputationNodes>1) THEN
+        WRITE(filename,'(A,".diag.",I0)') diagFilename(1:LEN_TRIM(diagFilename)),myWorldComputationNodeNumber
       ELSE
         filename=diagFilename(1:LEN_TRIM(diagFilename))//".diag"
       ENDIF
@@ -1063,8 +1063,8 @@ CONTAINS
     IF(echoOutput) THEN
       CALL FlagError("Write output is already on.",err,error,*999)
     ELSE
-      IF(numberOfComputationNodes>1) THEN
-        WRITE(filename,'(A,".out.",I0)') echoFilename(1:LEN_TRIM(echoFilename)),myComputationNodeNumber        
+      IF(numberOfWorldComputationNodes>1) THEN
+        WRITE(filename,'(A,".out.",I0)') echoFilename(1:LEN_TRIM(echoFilename)),myWorldComputationNodeNumber        
       ELSE
         filename=echoFilename(1:LEN_TRIM(echoFilename))//".out"
       ENDIF
@@ -1233,8 +1233,8 @@ CONTAINS
     NULLIFY(routine)
     IF(LEN_TRIM(timingFilename)>=1) THEN
       IF(timingFileOpen) CLOSE(UNIT=TIMING_FILE_UNIT)
-      IF(numberOfComputationNodes>1) THEN
-        WRITE(filename,'(A,".timing.",I0)') timingFilename(1:LEN_TRIM(timingFilename)),myComputationNodeNumber
+      IF(numberOfWorldComputationNodes>1) THEN
+        WRITE(filename,'(A,".timing.",I0)') timingFilename(1:LEN_TRIM(timingFilename)),myWorldComputationNodeNumber
       ELSE
         filename=timingFilename(1:LEN_TRIM(timingFilename))//".timing"
       ENDIF
@@ -1389,8 +1389,8 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError,localError2
 
     indent=2
-    IF(numberOfComputationNodes>1) THEN
-      WRITE(startString,'(A,A,I0,A,X,I0,A)') indentString(1:indent),"ERROR (",myComputationNodeNumber,"):", &
+    IF(numberOfWorldComputationNodes>1) THEN
+      WRITE(startString,'(A,A,I0,A,X,I0,A)') indentString(1:indent),"ERROR (",myWorldComputationNodeNumber,"):", &
         & ERR,":"
       startStringLength=LEN_TRIM(startString)
     ELSE

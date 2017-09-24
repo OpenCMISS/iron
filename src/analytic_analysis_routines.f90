@@ -147,9 +147,9 @@ CONTAINS
         IF(FIELD%DEPENDENT_TYPE==FIELD_DEPENDENT_TYPE) THEN
           IF(LEN_TRIM(FILENAME)>=1) THEN
 !!TODO \todo have more general ascii file mechanism
-            IF(computationEnvironment%numberOfComputationNodes>1) THEN
+            IF(computationEnvironment%numberOfWorldComputationNodes>1) THEN
               WRITE(FILE_NAME,'(A,".opanal.",I0)') FILENAME(1:LEN_TRIM(FILENAME)),computationEnvironment% &
-                & myComputationNodeNumber
+                & myWorldComputationNodeNumber
             ELSE
               FILE_NAME=FILENAME(1:LEN_TRIM(FILENAME))//".opanal"
             ENDIF
@@ -270,7 +270,7 @@ CONTAINS
                                   !Output RMS errors                  
                                   CALL WRITE_STRING(OUTPUT_ID,"",ERR,ERROR,*999)
                                   IF(NUMBER(1)>0) THEN
-                                    IF(computationEnvironment%numberOfComputationNodes>1) THEN
+                                    IF(computationEnvironment%numberOfWorldComputationNodes>1) THEN
                                       !Local elements only
                                       CALL WRITE_STRING(OUTPUT_ID,"Local RMS errors:",ERR,ERROR,*999)
                                       LOCAL_STRING= &
@@ -294,16 +294,16 @@ CONTAINS
                                       !Global RMS values
                                       !Collect the values across the ranks
                                       CALL MPI_ALLREDUCE(MPI_IN_PLACE,NUMBER,1,MPI_INTEGER,MPI_SUM, &
-                                        & computationEnvironment%mpiCommunicator,MPI_IERROR)
+                                        & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
                                       CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                                       CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR_PER,1,MPI_DOUBLE_PRECISION,MPI_SUM, &
-                                        & computationEnvironment%mpiCommunicator,MPI_IERROR)
+                                        & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
                                       CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                                       CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR_ABS,1,MPI_DOUBLE_PRECISION,MPI_SUM, &
-                                        & computationEnvironment%mpiCommunicator,MPI_IERROR)
+                                        & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
                                       CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                                       CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR_REL,1,MPI_DOUBLE_PRECISION,MPI_SUM, &
-                                        & computationEnvironment%mpiCommunicator,MPI_IERROR)
+                                        & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
                                       CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                                       CALL WRITE_STRING(OUTPUT_ID,"Global RMS errors:",ERR,ERROR,*999)
                                       LOCAL_STRING= &
@@ -400,7 +400,7 @@ CONTAINS
                             ENDDO !node_idx
                             !Output RMS errors                  
                             CALL WRITE_STRING(OUTPUT_ID,"",ERR,ERROR,*999)
-                            IF(computationEnvironment%numberOfComputationNodes>1) THEN
+                            IF(computationEnvironment%numberOfWorldComputationNodes>1) THEN
                               IF(ANY(NUMBER>0)) THEN
                                 !Local nodes only
                                 CALL WRITE_STRING(OUTPUT_ID,"Local RMS errors:",ERR,ERROR,*999)
@@ -438,16 +438,16 @@ CONTAINS
                                 !Global RMS values
                                 !Collect the values across the ranks
                                 CALL MPI_ALLREDUCE(MPI_IN_PLACE,NUMBER,8,MPI_INTEGER,MPI_SUM, &
-                                  & computationEnvironment%mpiCommunicator,MPI_IERROR)
+                                  & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
                                 CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                                 CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR_PER,8,MPI_DOUBLE_PRECISION,MPI_SUM, &
-                                  & computationEnvironment%mpiCommunicator,MPI_IERROR)
+                                  & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
                                 CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                                 CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR_ABS,8,MPI_DOUBLE_PRECISION,MPI_SUM, &
-                                  & computationEnvironment%mpiCommunicator,MPI_IERROR)
+                                  & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
                                 CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                                 CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR_REL,8,MPI_DOUBLE_PRECISION,MPI_SUM, &
-                                  & computationEnvironment%mpiCommunicator,MPI_IERROR)
+                                  & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
                                 CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                                 CALL WRITE_STRING(OUTPUT_ID,"Global RMS errors:",ERR,ERROR,*999)
                                 LOCAL_STRING= &
@@ -517,7 +517,7 @@ CONTAINS
                   ALLOCATE(GHOST_INTEGRAL_ERRORS(6,FIELD_VARIABLE%NUMBER_OF_COMPONENTS),STAT=ERR)
                   IF(ERR/=0) CALL FlagError("Could not allocate ghost integral errors.",ERR,ERROR,*999)
                   CALL ANALYTIC_ANALYSIS_INTEGRAL_ERRORS(FIELD_VARIABLE,INTEGRAL_ERRORS,GHOST_INTEGRAL_ERRORS,ERR,ERROR,*999)
-                  IF(computationEnvironment%numberOfComputationNodes>1) THEN
+                  IF(computationEnvironment%numberOfWorldComputationNodes>1) THEN
                     CALL WRITE_STRING(OUTPUT_ID,"Local Integral errors:",ERR,ERROR,*999)
                     LOCAL_STRING="Component#             Numerical      Analytic       % error  Absolute err  Relative err"
                     CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
@@ -590,7 +590,7 @@ CONTAINS
                     ENDDO !component_idx
                     !Collect the values across the ranks
                     CALL MPI_ALLREDUCE(MPI_IN_PLACE,INTEGRAL_ERRORS,6*FIELD_VARIABLE%NUMBER_OF_COMPONENTS,MPI_DOUBLE_PRECISION, &
-                      & MPI_SUM,computationEnvironment%mpiCommunicator,MPI_IERROR)
+                      & MPI_SUM,computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
                     CALL WRITE_STRING(OUTPUT_ID,"Global Integral errors:",ERR,ERROR,*999)
                     LOCAL_STRING="Component#             Numerical      Analytic       % error  Absolute err  Relative err"
                     CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
@@ -1709,7 +1709,7 @@ CONTAINS
           ENDDO !deriv_idx
         ENDDO !node_idx
 
-        IF(computationEnvironment%numberOfComputationNodes>1) THEN
+        IF(computationEnvironment%numberOfWorldComputationNodes>1) THEN
           IF(ANY(NUMBER>0)) THEN
             DO deriv_idx=1,8
               IF(NUMBER(deriv_idx)>0) THEN
@@ -1724,9 +1724,9 @@ CONTAINS
             ENDDO !deriv_idx
             !Global RMS values
             !Collect the values across the ranks
-            CALL MPI_ALLREDUCE(MPI_IN_PLACE,NUMBER,8,MPI_INTEGER,MPI_SUM,computationEnvironment%mpiCommunicator,MPI_IERROR)
+            CALL MPI_ALLREDUCE(MPI_IN_PLACE,NUMBER,8,MPI_INTEGER,MPI_SUM,computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
             CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
-            CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR,8,MPI_DOUBLE_PRECISION,MPI_SUM,computationEnvironment%mpiCommunicator, &
+            CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR,8,MPI_DOUBLE_PRECISION,MPI_SUM,computationEnvironment%mpiWorldCommunicator, &
               & MPI_IERROR)
             CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
             DO deriv_idx=1,8
@@ -1838,7 +1838,7 @@ CONTAINS
                 GHOST_RMS_ERROR=GHOST_RMS_ERROR+ERROR_VALUE*ERROR_VALUE
               ENDDO !element_idx
               IF(NUMBER>0) THEN
-                IF(computationEnvironment%numberOfComputationNodes>1) THEN
+                IF(computationEnvironment%numberOfWorldComputationNodes>1) THEN
                   !Local elements only
                   LOCAL_RMS=SQRT(RMS_ERROR/NUMBER)
                   !Local and ghost elements
@@ -1846,10 +1846,10 @@ CONTAINS
                   !Global RMS values
                   !Collect the values across the ranks
                   CALL MPI_ALLREDUCE(MPI_IN_PLACE,NUMBER,1,MPI_INTEGER,MPI_SUM, &
-                    & computationEnvironment%mpiCommunicator,MPI_IERROR)
+                    & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
                   CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                   CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR,1,MPI_DOUBLE_PRECISION,MPI_SUM, &
-                    & computationEnvironment%mpiCommunicator,MPI_IERROR)
+                    & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
                   CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                   GLOBAL_RMS=SQRT(RMS_ERROR/NUMBER)
                 ENDIF

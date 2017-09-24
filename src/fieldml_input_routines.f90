@@ -1261,7 +1261,7 @@ CONTAINS
     INTEGER(INTG), TARGET :: OFFSETS(2), SIZES(2)
     REAL(C_DOUBLE), ALLOCATABLE, TARGET :: BUFFER(:)
     INTEGER(INTG) :: READER
-    INTEGER(INTG) :: myComputationNodeNumber,nodeDomain,meshComponentNumber
+    INTEGER(INTG) :: myWorldComputationNodeNumber,nodeDomain,meshComponentNumber
     
     ENTERS( "FieldmlInput_FieldNodalParametersUpdate", ERR, ERROR, *999 )
     
@@ -1312,10 +1312,10 @@ CONTAINS
         !Default to version 1 of each node derivative (value hardcoded in loop)
         VERSION_NUMBER = 1
 
-        myComputationNodeNumber = ComputationEnvironment_NodeNumberGet(err,error)
+        myWorldComputationNodeNumber = ComputationEnvironment_NodeNumberGet(err,error)
         CALL DECOMPOSITION_MESH_COMPONENT_NUMBER_GET(FIELD%DECOMPOSITION,meshComponentNumber,err,error,*999)
         CALL DECOMPOSITION_NODE_DOMAIN_GET(FIELD%DECOMPOSITION,NODE_NUMBER,meshComponentNumber,nodeDomain,err,error,*999)
-        IF(nodeDomain==myComputationNodeNumber) THEN
+        IF(nodeDomain==myWorldComputationNodeNumber) THEN
           CALL FIELD_PARAMETER_SET_UPDATE_NODE( FIELD, VARIABLE_TYPE, SET_TYPE, VERSION_NUMBER, &
             & NO_GLOBAL_DERIV, NODE_NUMBER, COMPONENT_NUMBER, BUFFER( COMPONENT_NUMBER ), ERR, ERROR, *999 )
         ENDIF

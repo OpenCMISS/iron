@@ -1529,7 +1529,7 @@ CONTAINS
 
     REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
     INTEGER(INTG) :: EQUATIONS_SET_IDX,CURRENT_LOOP_ITERATION,OUTPUT_FREQUENCY
-    INTEGER(INTG) :: myComputationNodeNumber
+    INTEGER(INTG) :: myWorldComputationNodeNumber
 
     CHARACTER(28) :: FILE
     CHARACTER(28) :: OUTPUT_FILE
@@ -1558,20 +1558,20 @@ CONTAINS
 
                     CURRENT_LOOP_ITERATION=CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER
                     OUTPUT_FREQUENCY=CONTROL_LOOP%TIME_LOOP%OUTPUT_NUMBER
-                    myComputationNodeNumber = ComputationEnvironment_NodeNumberGet(err,error)
+                    myWorldComputationNodeNumber = ComputationEnvironment_NodeNumberGet(err,error)
                     IF(OUTPUT_FREQUENCY>0) THEN
                       IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_FREQUENCY)==0) THEN
                         IF(CONTROL_LOOP%TIME_LOOP%CURRENT_TIME<=CONTROL_LOOP%TIME_LOOP%STOP_TIME) THEN
                           IF(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS.EQ.1) THEN
                             IF(CURRENT_LOOP_ITERATION<10) THEN
                               WRITE(OUTPUT_FILE,'("TIME_STEP_SPEC_1.part",I2.2,".000",I0)') &
-                              & myComputationNodeNumber, CURRENT_LOOP_ITERATION
+                              & myWorldComputationNodeNumber, CURRENT_LOOP_ITERATION
                             ELSE IF(CURRENT_LOOP_ITERATION<100) THEN
                               WRITE(OUTPUT_FILE,'("TIME_STEP_SPEC_1.part",I2.2,".00",I0)') &
-                              & myComputationNodeNumber,CURRENT_LOOP_ITERATION
+                              & myWorldComputationNodeNumber,CURRENT_LOOP_ITERATION
                             ELSE IF(CURRENT_LOOP_ITERATION<1000) THEN
                               WRITE(OUTPUT_FILE,'("TIME_STEP_SPEC_1.part",I2.2,".0",I0)') &
-                              & myComputationNodeNumber,CURRENT_LOOP_ITERATION
+                              & myWorldComputationNodeNumber,CURRENT_LOOP_ITERATION
                             ELSE IF(CURRENT_LOOP_ITERATION<10000) THEN
                               WRITE(OUTPUT_FILE,'("TIME_STEP_SPEC_1.part",I2.2,".",I0)') &
                               & CURRENT_LOOP_ITERATION
@@ -1579,16 +1579,16 @@ CONTAINS
                           ELSE
                             IF(CURRENT_LOOP_ITERATION<10) THEN
                               WRITE(OUTPUT_FILE, '("TIME_STEP_SPEC_",I0,".part",I2.2,".000",I0)') &
-                                & equations_set_idx,myComputationNodeNumber,CURRENT_LOOP_ITERATION
+                                & equations_set_idx,myWorldComputationNodeNumber,CURRENT_LOOP_ITERATION
                             ELSE IF(CURRENT_LOOP_ITERATION<100) THEN
                               WRITE(OUTPUT_FILE, '("TIME_STEP_SPEC_",I0,".part",I2.2,".00",I0)') &
-                                & equations_set_idx,myComputationNodeNumber,CURRENT_LOOP_ITERATION
+                                & equations_set_idx,myWorldComputationNodeNumber,CURRENT_LOOP_ITERATION
                             ELSE IF(CURRENT_LOOP_ITERATION<1000) THEN
                               WRITE(OUTPUT_FILE, '("TIME_STEP_SPEC_",I0,".part",I2.2,".0",I0)') &
-                                & equations_set_idx,myComputationNodeNumber,CURRENT_LOOP_ITERATION
+                                & equations_set_idx,myWorldComputationNodeNumber,CURRENT_LOOP_ITERATION
                             ELSE IF(CURRENT_LOOP_ITERATION<10000) THEN
                               WRITE(OUTPUT_FILE, '("TIME_STEP_SPEC_",I0,".part",I2.2,".",I0)') &
-                                & equations_set_idx,myComputationNodeNumber,CURRENT_LOOP_ITERATION
+                                & equations_set_idx,myWorldComputationNodeNumber,CURRENT_LOOP_ITERATION
                             END IF
                           ENDIF
                           WRITE(*,*) OUTPUT_FILE

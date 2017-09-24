@@ -9807,7 +9807,7 @@ CONTAINS
               !Nothing else to do
             CASE(SOLVER_MUMPS_LIBRARY,SOLVER_SUPERLU_LIBRARY,SOLVER_PASTIX_LIBRARY,SOLVER_LAPACK_LIBRARY)
               !Set up solver through PETSc
-              CALL Petsc_KSPCreate(computationEnvironment%mpiCommunicator,LINEAR_DIRECT_SOLVER%KSP,ERR,ERROR,*999)
+              CALL Petsc_KSPCreate(computationEnvironment%mpiWorldCommunicator,LINEAR_DIRECT_SOLVER%KSP,ERR,ERROR,*999)
 
               !Set any further KSP options from the command line options
               CALL Petsc_KSPSetFromOptions(LINEAR_DIRECT_SOLVER%KSP,ERR,ERROR,*999)
@@ -11060,7 +11060,7 @@ CONTAINS
                 CALL FlagError("Solver linking solve is not associated.",ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL Petsc_KSPCreate(computationEnvironment%mpiCommunicator,LINEAR_ITERATIVE_SOLVER%KSP,ERR,ERROR,*999)
+              CALL Petsc_KSPCreate(computationEnvironment%mpiWorldCommunicator,LINEAR_ITERATIVE_SOLVER%KSP,ERR,ERROR,*999)
             ENDIF
             !Set the iterative solver type
             SELECT CASE(LINEAR_ITERATIVE_SOLVER%ITERATIVE_SOLVER_TYPE)
@@ -15893,7 +15893,7 @@ CONTAINS
                     ENDIF
                   ENDDO !interface_idx
                   !Create the PETSc SNES solver
-                  CALL Petsc_SnesCreate(computationEnvironment%mpiCommunicator,LINESEARCH_SOLVER%snes,ERR,ERROR,*999)
+                  CALL Petsc_SnesCreate(computationEnvironment%mpiWorldCommunicator,LINESEARCH_SOLVER%snes,ERR,ERROR,*999)
                   !Set the nonlinear solver type to be a Quasi-Newton line search solver
                   CALL Petsc_SnesSetType(LINESEARCH_SOLVER%snes,PETSC_SNESQN,ERR,ERROR,*999)
                   !Following routines don't work for petsc version < 3.5.
@@ -17075,7 +17075,7 @@ CONTAINS
                   END SELECT
                   CALL SOLVER_MATRICES_CREATE_FINISH(SOLVER_MATRICES,ERR,ERROR,*999)
                   !Create the PETSc SNES solver
-                  CALL Petsc_SnesCreate(computationEnvironment%mpiCommunicator,TRUSTREGION_SOLVER%snes,ERR,ERROR,*999)
+                  CALL Petsc_SnesCreate(computationEnvironment%mpiWorldCommunicator,TRUSTREGION_SOLVER%snes,ERR,ERROR,*999)
                   !Set the nonlinear solver type to be a Quasi-Newton trust region solver
                   CALL Petsc_SnesSetType(TRUSTREGION_SOLVER%snes,PETSC_SNESNEWTONTR,ERR,ERROR,*999)
                   !Set the nonlinear function
@@ -18667,7 +18667,7 @@ CONTAINS
                     ENDIF
                   ENDDO !interface_idx
                   !Create the PETSc SNES solver
-                  CALL Petsc_SnesCreate(computationEnvironment%mpiCommunicator,LINESEARCH_SOLVER%snes,ERR,ERROR,*999)
+                  CALL Petsc_SnesCreate(computationEnvironment%mpiWorldCommunicator,LINESEARCH_SOLVER%snes,ERR,ERROR,*999)
                   !Set the nonlinear solver type to be a Newton line search solver
                   CALL Petsc_SnesSetType(LINESEARCH_SOLVER%snes,PETSC_SNESNEWTONLS,ERR,ERROR,*999)
                   
@@ -19832,7 +19832,7 @@ CONTAINS
                   END SELECT
                   CALL SOLVER_MATRICES_CREATE_FINISH(SOLVER_MATRICES,ERR,ERROR,*999)
                   !Create the PETSc SNES solver
-                  CALL Petsc_SnesCreate(computationEnvironment%mpiCommunicator,TRUSTREGION_SOLVER%snes,ERR,ERROR,*999)
+                  CALL Petsc_SnesCreate(computationEnvironment%mpiWorldCommunicator,TRUSTREGION_SOLVER%snes,ERR,ERROR,*999)
                   !Set the nonlinear solver type to be a Newton trust region solver
                   CALL Petsc_SnesSetType(TRUSTREGION_SOLVER%snes,PETSC_SNESNEWTONTR,ERR,ERROR,*999)
                   !Set the solver as the SNES application context

@@ -89,18 +89,18 @@ MODULE Cmiss
 
   !> \addtogroup CMFE_ErrorHandlingModes OpenCMISS::Iron::ErrorHandlingModes
   !> \brief Error handling mode parameters
-  !> \see CMISS
+  !> \see OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_RETURN_ERROR_CODE = 0 !<Just return the error code \see CMFE_ErrorHandlingModes,CMISS
-  INTEGER(INTG), PARAMETER :: CMFE_OUTPUT_ERROR = 1 !<Output the error traceback and return the error code \see CMFE_ErrorHandlingModes,CMISS
-  INTEGER(INTG), PARAMETER :: CMFE_TRAP_ERROR = 2 !<Trap the error by outputing the error traceback and stopping the program \see CMFE_ErrorHandlingModes,CMISS
+  INTEGER(INTG), PARAMETER :: CMFE_RETURN_ERROR_CODE = 0 !<Just return the error code \see cmfe_ErrorHandlingModes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_OUTPUT_ERROR = 1 !<Output the error traceback and return the error code \see cmfe_ErrorHandlingModes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_TRAP_ERROR = 2 !<Trap the error by outputing the error traceback and stopping the program \see cmfe_ErrorHandlingModes,OpenCMISS
   !>@}
   
   !Module types
 
   !Module variables
 
-  INTEGER(INTG), SAVE :: cmfe_ErrorHandlingMode !<The current error handling mode for OpenCMISS \see CMFE_ErrorHandlingModes
+  INTEGER(INTG), SAVE :: cmfe_ErrorHandlingMode !<The current error handling mode for OpenCMISS \see cmfe_ErrorHandlingModes
  
   !Interfaces
 
@@ -135,11 +135,11 @@ CONTAINS
 
 !!TODO Underscore to avoid name clash. Can be removed upon prefix rename.
 
-  !>Returns the error handling mode for CMISS \see OPENOpenCMISS::Iron::CMISSErrorHandlingModeGet
+  !>Returns the error handling mode for OpenCMISS \see OpenCMISS::Iron::cmfe_ErrorHandlingModeGet
   SUBROUTINE cmfe_ErrorHandlingModeGet_(errorHandlingMode,err,error,*)
   
     !Argument variables
-    INTEGER(INTG), INTENT(OUT) :: errorHandlingMode !<On return, the error handling mode. \see CMFE_ErrorHandlingModes,CMISS
+    INTEGER(INTG), INTENT(OUT) :: errorHandlingMode !<On return, the error handling mode. \see cmfe_ErrorHandlingModes,OpenCMISS
     INTEGER(INTG), INTENT(INOUT) :: err !<The error string
     TYPE(VARYING_STRING), INTENT(INOUT) :: error !<The error code
     !Local Variables
@@ -161,11 +161,11 @@ CONTAINS
 
 !!TODO Underscore to avoid name clash. Can be removed upon prefix rename.
 
-  !>Sets the error handling mode for cmiss \see OPENOpenCMISS::Iron::CMISSErrorHandlingModeSet
+  !>Sets the error handling mode for cmiss \see OpenCMISS::Iron::cmfe_ErrorHandlingModeSet
   SUBROUTINE cmfe_ErrorHandlingModeSet_(errorHandlingMode,err,error,*)
   
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: errorHandlingMode !<The error handling mode to set. \see CMFE_ErrorHandlingModes,CMISS
+    INTEGER(INTG), INTENT(IN) :: errorHandlingMode !<The error handling mode to set. \see cmfe_ErrorHandlingModes,OpenCMISS
     INTEGER(INTG), INTENT(INOUT) :: err !<The error string
     TYPE(VARYING_STRING), INTENT(INOUT) :: error !<The error code
     !Local Variables
@@ -199,7 +199,7 @@ CONTAINS
 
 !!TODO Underscore to avoid name clash. Can be removed upon prefix rename.
   
-  !>Finalises CMISS. \see OPENOpenCMISS::Iron::CMISSFinalise
+  !>Finalises OpenCMISS. \see OpenCMISS::Iron::cmfe_Finalise
   SUBROUTINE cmfe_Finalise_(err,error,*)
   
     !Argument variables
@@ -217,8 +217,8 @@ CONTAINS
     CALL BASES_FINALISE(err,error,*999)
     !Reset the signal handler
     CALL cmfe_ResetFatalHandler()
-    !Finalise computation enviroment
-    CALL Computation_EnvironmentFinalise(err,error,*999)
+    !Finalise computation
+    CALL Computation_Finalise(err,error,*999)
     !Finalise the base routines
     CALL BaseRoutinesFinalise(err,error,*999)
      
@@ -233,7 +233,7 @@ CONTAINS
 
 !!TODO Underscore to avoid name clash. Can be removed upon prefix rename.
 
-  !>Initialises CMISS. \see OpenCMISS::Iron::cmfe_Initialise
+  !>Initialises OpenCMISS. \see OpenCMISS::Iron::cmfe_Initialise
   SUBROUTINE cmfe_Initialise_(worldRegion,err,error,*)
   
     !Argument variables
@@ -247,8 +247,8 @@ CONTAINS
     cmfe_ErrorHandlingMode = CMFE_OUTPUT_ERROR !Default for now, maybe make CMFE_RETURN_ERROR_CODE the default
     !Initialise the base routines
     CALL BaseRoutinesInitialise(err,error,*999)
-    !Intialise the computation environment
-    CALL Computation_EnvironmentInitialise(err,error,*999)
+    !Intialise the computation
+    CALL Computation_Initialise(err,error,*999)
     !Setup signal handling
     CALL cmfe_InitFatalHandler()
     CALL cmfe_SetFatalHandler()
@@ -265,7 +265,7 @@ CONTAINS
       CALL PROBLEMS_INITIALISE(err,error,*999)
       
       !Write out the CMISS version
-      IF(computationEnvironment%myComputationNodeNumber==0) THEN
+      IF(computationEnvironment%myWorldComputationNodeNumber==0) THEN
         versionString="OpenCMISS(Iron) version "//TRIM(NumberToVString(CMFE_MAJOR_VERSION,"*",err,error))
         versionString=versionString//"."
         versionString=versionString//TRIM(NumberToVString(CMFE_MINOR_VERSION,"*",err,error))

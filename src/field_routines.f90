@@ -10011,7 +10011,7 @@ CONTAINS
       & NUMBER_OF_LOCAL_VARIABLE_DOFS,TOTAL_NUMBER_OF_VARIABLE_DOFS,NUMBER_OF_DOMAINS,variable_global_ny, &
       & variable_local_ny,domain_idx,domain_no,constant_nyy,element_ny,element_nyy,node_ny,node_nyy,grid_point_nyy, &
       & Gauss_point_nyy,version_idx,derivative_idx,ny,NUMBER_OF_COMPUTATION_NODES, &
-      & myComputationNodeNumber,domain_type_stop,start_idx,stop_idx,element_idx,node_idx,NUMBER_OF_LOCAL, NGP, MAX_NGP, &
+      & myWorldComputationNodeNumber,domain_type_stop,start_idx,stop_idx,element_idx,node_idx,NUMBER_OF_LOCAL, NGP, MAX_NGP, &
       & gp,MPI_IERROR,NUMBER_OF_GLOBAL_DOFS,gauss_point_idx,NUMBER_OF_DATA_POINT_DOFS,data_point_nyy,dataPointIdx,elementIdx, &
       & localDataNumber,globalElementNumber
     INTEGER(INTG), ALLOCATABLE :: VARIABLE_LOCAL_DOFS_OFFSETS(:),VARIABLE_GHOST_DOFS_OFFSETS(:), &
@@ -10030,7 +10030,7 @@ CONTAINS
     IF(ASSOCIATED(FIELD)) THEN
       NUMBER_OF_COMPUTATION_NODES=ComputationEnvironment_NumberOfNodesGet(ERR,ERROR)
       IF(ERR/=0) GOTO 999
-      myComputationNodeNumber=ComputationEnvironment_NodeNumberGet(ERR,ERROR)
+      myWorldComputationNodeNumber=ComputationEnvironment_NodeNumberGet(ERR,ERROR)
       IF(ERR/=0) GOTO 999
       !Calculate the number of global and local degrees of freedom for the field variables and components. Each field variable
       !component has a set of DOFs so loop over the components for each variable component and count up the DOFs.
@@ -10077,7 +10077,7 @@ CONTAINS
               NGP=BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR%NUMBER_OF_GAUSS
               MAX_NGP=MAX(MAX_NGP,NGP)
             ENDDO !element_idx
-            CALL MPI_ALLREDUCE(MPI_IN_PLACE,MAX_NGP,1,MPI_INTEGER,MPI_MAX,computationEnvironment%mpiCommunicator,MPI_IERROR)
+            CALL MPI_ALLREDUCE(MPI_IN_PLACE,MAX_NGP,1,MPI_INTEGER,MPI_MAX,computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
             CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)             
             NUMBER_OF_GAUSS_POINT_DOFS=NUMBER_OF_GAUSS_POINT_DOFS+DOMAIN_TOPOLOGY%ELEMENTS%TOTAL_NUMBER_OF_ELEMENTS*MAX_NGP
             NUMBER_OF_LOCAL_VARIABLE_DOFS=NUMBER_OF_LOCAL_VARIABLE_DOFS+DOMAIN_TOPOLOGY%ELEMENTS%NUMBER_OF_ELEMENTS*MAX_NGP
@@ -10720,7 +10720,7 @@ CONTAINS
             CASE(FIELD_CONSTANT_INTERPOLATION)
               DO component_idx=1,FIELD%VARIABLES(variable_idx)%NUMBER_OF_COMPONENTS
                 FIELD_COMPONENT=>FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)
-                variable_local_ny=1+VARIABLE_LOCAL_DOFS_OFFSETS(myComputationNodeNumber)
+                variable_local_ny=1+VARIABLE_LOCAL_DOFS_OFFSETS(myWorldComputationNodeNumber)
                 !Allocate and set up global to local domain map for variable mapping
                 IF(ASSOCIATED(FIELD_VARIABLE_DOFS_MAPPING)) THEN
                   variable_global_ny=1+VARIABLE_GLOBAL_DOFS_OFFSET
@@ -10828,7 +10828,7 @@ CONTAINS
                   DO component_idx=1,FIELD%VARIABLES(variable_idx)%NUMBER_OF_COMPONENTS
                     FIELD_COMPONENT=>FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)
                     element_ny=element_ny+1
-                    variable_local_ny=element_ny+VARIABLE_LOCAL_DOFS_OFFSETS(myComputationNodeNumber)
+                    variable_local_ny=element_ny+VARIABLE_LOCAL_DOFS_OFFSETS(myWorldComputationNodeNumber)
                     element_nyy=element_nyy+1
                     !Setup dof to parameter map
                     FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DOF_TYPE(1,variable_local_ny)=FIELD_ELEMENT_DOF_TYPE
@@ -10935,7 +10935,7 @@ CONTAINS
                     FIELD_COMPONENT=>FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)
                     DOMAIN=>FIELD_COMPONENT%DOMAIN
                     node_ny=node_ny+1
-                    variable_local_ny=node_ny+VARIABLE_LOCAL_DOFS_OFFSETS(myComputationNodeNumber)
+                    variable_local_ny=node_ny+VARIABLE_LOCAL_DOFS_OFFSETS(myWorldComputationNodeNumber)
                     node_nyy=node_nyy+1
                     version_idx=DOMAIN%TOPOLOGY%DOFS%DOF_INDEX(1,ny)
                     derivative_idx=DOMAIN%TOPOLOGY%DOFS%DOF_INDEX(2,ny)
@@ -11036,7 +11036,7 @@ CONTAINS
                       FIELD_COMPONENT=>FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)
                       DOMAIN=>FIELD_COMPONENT%DOMAIN
                       element_ny=element_ny+1
-                      variable_local_ny=element_ny+VARIABLE_LOCAL_DOFS_OFFSETS(myComputationNodeNumber)
+                      variable_local_ny=element_ny+VARIABLE_LOCAL_DOFS_OFFSETS(myWorldComputationNodeNumber)
                       node_nyy=node_nyy+1
                       !Setup dof to parameter map
                       FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DOF_TYPE(1,variable_local_ny)=FIELD_GAUSS_POINT_DOF_TYPE

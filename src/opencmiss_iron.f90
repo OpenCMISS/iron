@@ -331,10 +331,6 @@ MODULE OpenCMISS_Iron
 
   TYPE(VARYING_STRING) :: error
 
-  !INTERFACE cmfe_Finalise_
-  !  MODULE PROCEDURE cmfe_Finalise
-  !END INTERFACE cmfe_Finalise_
-
   INTERFACE cmfe_Initialise
     MODULE PROCEDURE cmfe_InitialiseNumber
     MODULE PROCEDURE cmfe_InitialiseObj
@@ -345,7 +341,6 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_Fields_CreateRegion
   END INTERFACE cmfe_Fields_Create
 
-  !PUBLIC cmfe_Finalise,cmfe_Initialise
   PUBLIC cmfe_Finalise,cmfe_Initialise
 
   PUBLIC cmfe_WorkingRealPrecisionGet
@@ -15817,17 +15812,19 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of a computation work group
-  SUBROUTINE cmfe_Computation_WorkGroupCreateStart(worldWorkGroup,numberComputationNodes,err)
+  !>Start the creation of a computation work group under a parent work group
+  SUBROUTINE cmfe_Computation_WorkGroupCreateStart(parentWorkGroup,numberOfComputationNodes,workGroup,err)
     !DLLEXPORT(cmfe_Computation_WorkGroupCreateStart)
     !Argument Variables
-    TYPE(cmfe_ComputationWorkGroupType), INTENT(INOUT) :: worldWorkGroup
-    INTEGER(INTG),INTENT(IN) :: numberComputationNodes
+    TYPE(cmfe_ComputationWorkGroupType), INTENT(INOUT) :: parentWorkGroup !<The parent work group to create the work group under
+    INTEGER(INTG),INTENT(IN) :: numberOfComputationNodes !<The number of computation nodes in the work group
+    TYPE(cmfe_ComputationWorkGroupType), INTENT(INOUT) :: workGroup !<On exit, the created work group. 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
 
     ENTERS("cmfe_Computation_WorkGroupCreateStart",err,error,*999)
 
-    CALL Computation_WorkGroupCreateStart(worldWorkGroup%computationWorkGroup,numberComputationNodes,err,error,*999)
+    CALL Computation_WorkGroupCreateStart(parentWorkGroup%computationWorkGroup,numberOfComputationNodes, &
+      & workGroup%computationWorkGroup,err,error,*999)
 
     EXITS("cmfe_Computation_WorkGroupCreateStart")
     RETURN
@@ -15842,15 +15839,15 @@ CONTAINS
   !
 
   !>Finish the creation of a computation work group
-  SUBROUTINE cmfe_Computation_WorkGroupCreateFinish(worldWorkGroup, err)
+  SUBROUTINE cmfe_Computation_WorkGroupCreateFinish(workGroup,err)
     !DLLEXPORT(cmfe_Computation_WorkGroupCreateFinish)
     !Argument Variables
-    TYPE(cmfe_ComputationWorkGroupType), INTENT(INOUT) :: worldWorkGroup
+    TYPE(cmfe_ComputationWorkGroupType), INTENT(INOUT) :: workGroup !<The work group to finish the creation of
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
 
     ENTERS("cmfe_Computation_WorkGroupCreateFinish",err,error,*999)
 
-    CALL Computation_WorkGroupCreateFinish(worldWorkGroup%computationWorkGroup,err,error,*999)
+    CALL Computation_WorkGroupCreateFinish(workGroup%computationWorkGroup,err,error,*999)
 
     EXITS("cmfe_Computation_WorkGroupCreateFinish")
     RETURN
@@ -15890,12 +15887,12 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Set the working group tree in order to performe mesh decomposition
-  SUBROUTINE cmfe_Decomposition_WorldWorkGroupSet(decomposition, worldWorkGroup, err)
+  !>Set the decomposition work group
+  SUBROUTINE cmfe_Decomposition_WorldWorkGroupSet(decomposition,workGroup,err)
     !DLLEXPORT(cmfe_Decomposition_WorldWorkGroupSet)
     !Argument Variables
-    TYPE(cmfe_DecompositionType), INTENT(INOUT) :: decomposition
-    TYPE(cmfe_ComputationWorkGroupType),INTENT(IN) :: worldWorkGroup
+    TYPE(cmfe_DecompositionType), INTENT(INOUT) :: decomposition !<The decomposition to set the work group for
+    TYPE(cmfe_ComputationWorkGroupType),INTENT(IN) :: workGroup !<The work group to set for the decomposition
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
 
     ENTERS("cmfe_Decomposition_WorldWorkGroupSet",err,error,*999)
