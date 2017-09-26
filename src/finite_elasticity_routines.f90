@@ -633,7 +633,7 @@ CONTAINS
     REAL(DP) :: AZLv(6), AZUv(6) !<Voigt forms of the C and C^-1 tensors.
     REAL(DP) :: TEMPTERM1,TEMPTERM2,VALUE
     REAL(DP), POINTER :: C(:) !Parameters for constitutive laws
-    REAL(DP) :: B(6),E(6),DQ_DE(6)
+    REAL(DP) :: B(6),E(6),DQ_DE(6),Q
     REAL(DP) :: I3EE(6,6) !<Derivative of I3 wrt E
     REAL(DP) :: AZUE(6,6) !<Derivative of C^-1 wrt E
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
@@ -658,26 +658,25 @@ CONTAINS
     AZLv(2) = AZL(2,2)
     AZLv(3) = AZL(3,3)
     AZLv(4) = AZL(1,2)
-    AZLv(5) = AZL(2,3)
-    AZLv(6) = AZL(1,3)
+    AZLv(5) = AZL(1,3)
+    AZLv(6) = AZL(2,3)
     AZUv(1) = AZU(1,1)
     AZUv(2) = AZU(2,2)
     AZUv(3) = AZU(3,3)
     AZUv(4) = AZU(1,2)
-    AZUv(5) = AZU(2,3)
-    AZUv(6) = AZU(1,3)
-    I3EE = RESHAPE([0.0_DP, 4.0_DP*AZLv(3), 4.0_DP*AZLv(2), 0.0_DP, -4.0_DP*AZLv(5), 0.0_DP, &
-      & 4.0_DP*AZLv(3), 0.0_DP, 4.0_DP*AZLv(1), 0.0_DP, 0.0_DP, -4.0_DP*AZLv(6), &
-      & 4.0_DP*AZLv(2), 4.0_DP*AZLv(1), 0.0_DP, -4.0_DP*AZLv(4), 0.0_DP, 0.0_DP, &
+    AZUv(5) = AZU(1,3)
+    AZUv(6) = AZU(2,3)
+    I3EE = RESHAPE([0.0_DP, 4.0_DP*AZLv(3), 4.0_DP*AZLv(2), 0.0_DP,  0.0_DP,-4.0_DP*AZLv(6), &
+      & 4.0_DP*AZLv(3), 0.0_DP, 4.0_DP*AZLv(1), 0.0_DP,-4.0_DP*AZLv(5), 0.0_DP,  &
+      & 4.0_DP*AZLv(2), 4.0_DP*AZLv(1), 0.0_DP, -2.0_DP*AZLv(4), 0.0_DP, 0.0_DP, &
       & 0.0_DP, 0.0_DP, -4.0_DP*AZLv(4), -2.0_DP*AZLv(3), 2.0_DP*AZLv(6), 2.0_DP*AZLv(5), &
-      & -4.0_DP*AZLv(5), 0.0_DP, 0.0_DP, 2.0_DP*AZLv(6), -2.0_DP*AZLv(1), 2.0_DP*AZLv(4), &
-      & 0.0_DP, -4.0_DP*AZLv(6), 0.0_DP, 2.0_DP*AZLv(5), 2.0_DP*AZLv(4), -2.0_DP*AZLv(2)],[6,6])
+      & 0.0_DP, -4.0_DP*AZLv(5), 0.0_DP, 2.0_DP*AZLv(6), -2.0_DP*AZLv(2), 2.0_DP*AZLv(4), &
+      & -4.0_DP*AZLv(6), 0.0_DP, 0.0_DP, 2.0_DP*AZLv(5), 2.0_DP*AZLv(4), -2.0_DP*AZLv(1)], [6,6])
     DO i=1,6
       DO j=1,6
-        AZUE(i,j) = -Jznu*AZUv(i)*AZUv(j)
+        AZUE(i,j) = -2.0_DP*AZUv(i)*AZUv(j) + 0.5_DP*I3EE(i,j)/I3
       ENDDO
     ENDDO
-    AZUE = AZUE + 0.5_DP/Jznu*I3EE
 
     C=>MATERIALS_INTERPOLATED_POINT%VALUES(:,NO_PART_DERIV)
 
@@ -780,6 +779,7 @@ CONTAINS
           ELASTICITY_TENSOR(i,j)=ELASTICITY_TENSOR(j,i)
         ENDDO
       ENDDO
+
       !Add volumetric part of elasticity tensor - p*d(C^-1)/dE.
       ELASTICITY_TENSOR=ELASTICITY_TENSOR + P*AZUE
 
@@ -1053,16 +1053,16 @@ CONTAINS
     INTEGER(INTG) :: PRESSURE_COMPONENT
     INTEGER(INTG) :: SUM_ELEMENT_PARAMETERS,TOTAL_NUMBER_OF_SURFACE_PRESSURE_CONDITIONS
     INTEGER(INTG) :: NUMBER_OF_DIMENSIONS,NUMBER_OF_XI
-    INTEGER(INTG) :: ELEMENT_BASE_DOF_INDEX(4)
+    INTEGER(INTG) :: ELEMENT_BASE_DOF_INDEX(4),component_idx,component_idx2
     INTEGER(INTG), PARAMETER :: OFF_DIAG_COMP(3)=[0,1,3],OFF_DIAG_DEP_VAR1(3)=[1,1,2],OFF_DIAG_DEP_VAR2(3)=[2,3,3]
     INTEGER(INTG) :: MESH_COMPONENT_NUMBER,NUMBER_OF_ELEMENT_PARAMETERS(4)
     REAL(DP) :: DZDNU(3,3),CAUCHY_TENSOR(3,3),HYDRO_ELASTICITY_TENSOR(3,3)
     REAL(DP) :: JGW_SUB_MAT(3,3)
     REAL(DP) :: TEMPVEC(3)
     REAL(DP) :: STRESS_TENSOR(6),ELASTICITY_TENSOR(6,6),HYDRO_ELASTICITY_VOIGT(6)
-    REAL(DP) :: DPHIDZ(3,64,3)
-    REAL(DP) :: JGW_DPHINS_DZ,JGW_DPHIMS_DZ,PHIMS,PHINS
-    REAL(DP) :: Jznu,JGW,SUM1
+    REAL(DP) :: DPHIDZ(3,64,3),DJDZ(64,3)
+    REAL(DP) :: JGW_DPHINS_DZ,JGW_DPHIMS_DZ,PHIMS,PHINS,TEMPTERM
+    REAL(DP) :: Jznu,JGW,SUM1,SUM2
     TYPE(QUADRATURE_SCHEME_PTR_TYPE) :: QUADRATURE_SCHEMES(4)
     TYPE(BASIS_TYPE), POINTER :: DEPENDENT_BASIS
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
@@ -1177,14 +1177,18 @@ CONTAINS
             DO nh=1,NUMBER_OF_DIMENSIONS
               DO ns=1,NUMBER_OF_ELEMENT_PARAMETERS(nh)
                 !Loop over derivative directions.
+                SUM2=0.0_DP
                 DO mh=1,NUMBER_OF_DIMENSIONS
                   SUM1=0.0_DP
                   DO ni=1,NUMBER_OF_XI
                     SUM1=SUM1+QUADRATURE_SCHEMES(nh)%PTR%GAUSS_BASIS_FNS(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)* &
                       & DEPENDENT_INTERP_POINT_METRICS%DXI_DX(ni,mh)
+                    SUM2=SUM2+QUADRATURE_SCHEMES(mh)%PTR%GAUSS_BASIS_FNS(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)* &
+                      & DEPENDENT_INTERP_POINT_METRICS%DXI_DX(ni,mh)*DEPENDENT_INTERP_POINT_METRICS%GU(ni,mh)
                   ENDDO !mi
                   DPHIDZ(mh,ns,nh)=SUM1
                 ENDDO !mh
+                DJDZ(ns,nh)=SUM2*DEPENDENT_INTERP_POINT_METRICS%JACOBIAN
               ENDDO !ns
             ENDDO !nh
 
@@ -1217,6 +1221,14 @@ CONTAINS
                   mhs=mhs+1
                   JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(mhs,nhs)=JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(mhs,nhs)+ &
                     & DOT_PRODUCT(DPHIDZ(:,ms,nh),TEMPVEC)
+                  DO component_idx=1,NUMBER_OF_DIMENSIONS
+                    DO component_idx2=1,NUMBER_OF_DIMENSIONS
+                      TEMPTERM=CAUCHY_TENSOR(component_idx,component_idx2)* &
+                      & DPHIDZ(component_idx2,ms,component_idx)
+                    ENDDO
+                  ENDDO
+                  !JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(mhs,nhs)=JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(mhs,nhs)+ &
+                  !  & TEMPTERM*DJDZ(ms,nh)*DEPENDENT_QUADRATURE_SCHEME%GAUSS_WEIGHTS(ng)
                 ENDDO !ms
               ENDDO !ns
             ENDDO !nh
@@ -1227,7 +1239,7 @@ CONTAINS
               nh=OFF_DIAG_DEP_VAR1(oh)
               mh=OFF_DIAG_DEP_VAR2(oh)
               nhs=ELEMENT_BASE_DOF_INDEX(nh)
-              JGW_SUB_MAT=JGW*ELASTICITY_TENSOR(TENSOR_TO_VOIGT3(:,mh),TENSOR_TO_VOIGT3(:,nh))
+              JGW_SUB_MAT=JGW*(ELASTICITY_TENSOR(TENSOR_TO_VOIGT3(:,mh),TENSOR_TO_VOIGT3(:,nh)))
               DO ns=1,NUMBER_OF_ELEMENT_PARAMETERS(nh)
                 !Loop over element rows belonging to geometric dependent variables
                 TEMPVEC=MATMUL(JGW_SUB_MAT,DPHIDZ(:,ns,nh))
@@ -1237,6 +1249,14 @@ CONTAINS
                   mhs=mhs+1
                   JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(mhs,nhs)=JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(mhs,nhs)+ &
                     & DOT_PRODUCT(DPHIDZ(:,ms,mh),TEMPVEC)
+                  DO component_idx=1,NUMBER_OF_DIMENSIONS
+                    DO component_idx2=1,NUMBER_OF_DIMENSIONS
+                      TEMPTERM=CAUCHY_TENSOR(component_idx,component_idx2)* &
+                      & DPHIDZ(component_idx2,ms,component_idx)
+                    ENDDO
+                  ENDDO
+                  !JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(mhs,nhs)=JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(mhs,nhs)+ &
+                  !  & TEMPTERM*DJDZ(ms,nh)*DEPENDENT_QUADRATURE_SCHEME%GAUSS_WEIGHTS(ng)
                 ENDDO !ms
               ENDDO !ns
             ENDDO
@@ -1309,13 +1329,6 @@ CONTAINS
             ! No loop over element columns and rows belonging both to hydrostatic pressure because it is zero.
           ENDDO !ng
 
-          !If symmetric pressure Jacobian uncomment this.
-          !Call surface pressure term here: should only be executed if THIS element has surface pressure on it (direct or incremented)
-!          IF(DEPENDENT_FIELD%DECOMPOSITION%TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BOUNDARY_ELEMENT.AND. &
-!            & TOTAL_NUMBER_OF_SURFACE_PRESSURE_CONDITIONS>0) THEN    !
-!            CALL FiniteElasticity_SurfacePressureJacobianEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
-!          ENDIF
-
           !Scale factor adjustment
           IF(DEPENDENT_FIELD%SCALINGS%SCALING_TYPE/=FIELD_NO_SCALING) THEN
             !Following call is necessary, otherwise wrong face scale factors from function call to surface pressure jacobian are
@@ -1364,6 +1377,10 @@ CONTAINS
                   mhs=ELEMENT_BASE_DOF_INDEX(PRESSURE_COMPONENT)
                   DO ms=1,NUMBER_OF_ELEMENT_PARAMETERS(PRESSURE_COMPONENT)
                     mhs=mhs+1
+                    JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(nhs,mhs)=JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(nhs,mhs)* &
+                      & EQUATIONS%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(FIELD_VAR_TYPE)%PTR% &
+                      & SCALE_FACTORS(ms,PRESSURE_COMPONENT)* &
+                      & EQUATIONS%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(FIELD_VAR_TYPE)%PTR%SCALE_FACTORS(ns,nh)
                     JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(mhs,nhs)=JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(mhs,nhs)* &
                       & EQUATIONS%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(FIELD_VAR_TYPE)%PTR% &
                       & SCALE_FACTORS(ms,PRESSURE_COMPONENT)* &
@@ -1386,14 +1403,14 @@ CONTAINS
           ENDIF
 
           !Mirror the Jacobian matrix except for the hydrostatic rows and columns, which are not necessarily symmetric.
-          DO nhs=2,SIZE(JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX,2)-1
+          DO nhs=2,ELEMENT_BASE_DOF_INDEX(PRESSURE_COMPONENT)
             DO mhs=1,nhs-1
               JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(mhs,nhs)=JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(nhs,mhs)
             ENDDO !mhs
           ENDDO !nhs
 
-!         !If unsymmetric pressure Jacobian uncomment this.
-!         !Call surface pressure term here: should only be executed if THIS element has surface pressure on it (direct or incremented)
+          !If unsymmetric pressure Jacobian uncomment this.
+          !Call surface pressure term here: should only be executed if THIS element has surface pressure on it (direct or incremented)
           IF(DEPENDENT_FIELD%DECOMPOSITION%TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BOUNDARY_ELEMENT.AND. &
             & TOTAL_NUMBER_OF_SURFACE_PRESSURE_CONDITIONS>0) THEN    !
             CALL FiniteElasticity_SurfacePressureJacobianEvaluate(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*999)
@@ -3485,7 +3502,8 @@ CONTAINS
     INTEGER(INTG) :: ELEMENT_BASE_DOF_INDEX(3),NUMBER_OF_FACE_PARAMETERS(3)
     INTEGER(INTG), PARAMETER :: OFF_DIAG_COMP(3)=[0,1,3],OFF_DIAG_DEP_VAR1(3)=[1,1,2],OFF_DIAG_DEP_VAR2(3)=[2,3,3]
     REAL(DP) :: PRESSURE_GAUSS,GW_PRESSURE
-    REAL(DP) :: NORMAL(3),GW_PRESSURE_W(2),TEMPVEC1(2),TEMPVEC2(2)
+    REAL(DP) :: NORMAL(3),GW_PRESSURE_W(2),TEMP3, TEMP4
+    REAL(DP) :: TEMPVEC1(3),TEMPVEC2(3),TEMPVEC3(3),TEMPVEC4(3),TEMPVEC5(3)
     LOGICAL :: NONZERO_PRESSURE
 
     ENTERS("FiniteElasticity_SurfacePressureJacobianEvaluate",ERR,ERROR,*999)
@@ -3577,18 +3595,18 @@ CONTAINS
               & DEPENDENT_INTERP_POINT_METRICS%DX_DXI(:,2),NORMAL,ERR,ERROR,*999)
             PRESSURE_GAUSS=PRESSURE_INTERP_POINT%VALUES(xiDirection(3),NO_PART_DERIV)*orientation
             GW_PRESSURE=DEPENDENT_QUADRATURE_SCHEME%GAUSS_WEIGHTS(ng)*PRESSURE_GAUSS
-            !Loop over element columns belonging to geometric dependent variables
+
             DO oh=1,OFF_DIAG_COMP(NUMBER_OF_DIMENSIONS)
               nh=OFF_DIAG_DEP_VAR1(oh)
               mh=OFF_DIAG_DEP_VAR2(oh)
-              GW_PRESSURE_W(1:2)=(NORMAL(mh)*DEPENDENT_INTERP_POINT_METRICS%DXI_DX(1:2,nh)- &
-                & DEPENDENT_INTERP_POINT_METRICS%DXI_DX(1:2,mh)*NORMAL(nh))*GW_PRESSURE
+              GW_PRESSURE_W(1:3)=(NORMAL(mh)*DEPENDENT_INTERP_POINT_METRICS%DXI_DX(1:3,nh)- &
+                & DEPENDENT_INTERP_POINT_METRICS%DXI_DX(1:3,mh)*NORMAL(nh))*GW_PRESSURE
               DO ns=1,NUMBER_OF_FACE_PARAMETERS(nh)
                 !Loop over element rows belonging to geometric dependent variables
                 nhs=ELEMENT_BASE_DOF_INDEX(nh)+ &
                   & BASES(nh)%PTR%ELEMENT_PARAMETERS_IN_LOCAL_FACE(ns,naf)
-                TEMPVEC1(1:2)=GW_PRESSURE_W(1:2)*QUADRATURE_SCHEMES(nh)%PTR% &
-                  & GAUSS_BASIS_FNS(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(1:2),ng)
+                TEMPVEC1(1:3)=GW_PRESSURE_W(1:3)*QUADRATURE_SCHEMES(nh)%PTR% &
+                  & GAUSS_BASIS_FNS(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(1:3),ng)
                 DO ms=1,NUMBER_OF_FACE_PARAMETERS(mh)
                   mhs=ELEMENT_BASE_DOF_INDEX(mh)+ &
                     & BASES(mh)%PTR%ELEMENT_PARAMETERS_IN_LOCAL_FACE(ms,naf)
@@ -3597,6 +3615,27 @@ CONTAINS
                     DOT_PRODUCT(TEMPVEC1,TEMPVEC2)
                 ENDDO !ms
               ENDDO !ns
+            ENDDO !oh
+
+            DO oh=1,OFF_DIAG_COMP(NUMBER_OF_DIMENSIONS)
+              nh=OFF_DIAG_DEP_VAR1(oh)
+              mh=OFF_DIAG_DEP_VAR2(oh)
+              GW_PRESSURE_W(1:3)=(NORMAL(nh)*DEPENDENT_INTERP_POINT_METRICS%DXI_DX(1:3,mh)- &
+                & DEPENDENT_INTERP_POINT_METRICS%DXI_DX(1:3,nh)*NORMAL(mh))*GW_PRESSURE
+              DO ms=1,NUMBER_OF_FACE_PARAMETERS(mh)
+                !Loop over element rows belonging to geometric dependent variables
+                mhs=ELEMENT_BASE_DOF_INDEX(mh)+ &
+                  & BASES(mh)%PTR%ELEMENT_PARAMETERS_IN_LOCAL_FACE(ms,naf)
+                TEMPVEC1(1:3)=GW_PRESSURE_W(1:3)*QUADRATURE_SCHEMES(mh)%PTR% &
+                  & GAUSS_BASIS_FNS(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(1:3),ng)
+                DO ns=1,NUMBER_OF_FACE_PARAMETERS(nh)
+                  nhs=ELEMENT_BASE_DOF_INDEX(nh)+ &
+                    & BASES(nh)%PTR%ELEMENT_PARAMETERS_IN_LOCAL_FACE(ns,naf)
+                  TEMPVEC2=QUADRATURE_SCHEMES(nh)%PTR%GAUSS_BASIS_FNS(ns,NO_PART_DERIV,ng)
+                  JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(nhs,mhs)=JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(nhs,mhs)+ &
+                    DOT_PRODUCT(TEMPVEC1,TEMPVEC2)
+                ENDDO !ns
+              ENDDO !ms
             ENDDO !oh
           ENDDO !ng
         ENDIF !Non-zero pressure on face
@@ -7419,7 +7458,7 @@ CONTAINS
               END SELECT
               SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
               CASE(EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE,EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE, &
-                  & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE,EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE)
+                & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE,EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE)
                 ! Use the analytic Jacobian calculation
                 CALL EquationsMatrices_JacobianTypesSet(EQUATIONS_MATRICES,[EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED], &
                   & ERR,ERROR,*999)
