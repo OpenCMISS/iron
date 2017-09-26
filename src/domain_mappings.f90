@@ -46,6 +46,7 @@ MODULE DOMAIN_MAPPINGS
 
   USE BaseRoutines
   USE ComputationRoutines
+  USE ComputationAccessRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE KINDS
@@ -150,6 +151,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
+    INTEGER(INTG) :: myWorldComputationNodeNumber
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
     ENTERS("DOMAIN_MAPPINGS_GLOBAL_TO_LOCAL_GET",ERR,ERROR,*999)
@@ -158,8 +160,8 @@ CONTAINS
     LOCAL_NUMBER=0
     IF(ASSOCIATED(DOMAIN_MAPPING)) THEN
       IF(GLOBAL_NUMBER>=1.AND.GLOBAL_NUMBER<=DOMAIN_MAPPING%NUMBER_OF_GLOBAL) THEN
-        IF(DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(GLOBAL_NUMBER)%DOMAIN_NUMBER(1)== &
-          & computationEnvironment%myWorldComputationNodeNumber) THEN
+        CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
+        IF(DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(GLOBAL_NUMBER)%DOMAIN_NUMBER(1)==myWorldComputationNodeNumber) THEN
           LOCAL_NUMBER=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(GLOBAL_NUMBER)%LOCAL_NUMBER(1)
           LOCAL_EXISTS=.TRUE.
         ENDIF
@@ -203,7 +205,7 @@ CONTAINS
     ENTERS("DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE",ERR,ERROR,*999)
 
     IF(ASSOCIATED(DOMAIN_MAPPING)) THEN
-      myWorldComputationNodeNumber=ComputationEnvironment_NodeNumberGet(ERR,ERROR)
+      CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
       IF(ERR/=0) GOTO 999        
       !Calculate local to global maps from global to local map
       ALLOCATE(DOMAIN_MAPPING%NUMBER_OF_DOMAIN_LOCAL(0:DOMAIN_MAPPING%NUMBER_OF_DOMAINS-1),STAT=ERR)

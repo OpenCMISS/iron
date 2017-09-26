@@ -53,6 +53,7 @@ MODULE SOLVER_ROUTINES
   USE CmissPetsc
   USE CmissPetscTypes
   USE ComputationRoutines
+  USE ComputationAccessRoutines
   USE Constants
   USE DISTRIBUTED_MATRIX_VECTOR
   USE EquationsAccessRoutines
@@ -9717,6 +9718,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
+    INTEGER(INTG) :: worldCommunicator
     TYPE(LINEAR_SOLVER_TYPE), POINTER :: LINEAR_SOLVER
     TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: SOLVER_MATRIX
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
@@ -9731,6 +9733,7 @@ CONTAINS
       IF(ASSOCIATED(LINEAR_SOLVER)) THEN
         SOLVER=>LINEAR_SOLVER%SOLVER
         IF(ASSOCIATED(SOLVER)) THEN
+          CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
           SELECT CASE(LINEAR_DIRECT_SOLVER%DIRECT_SOLVER_TYPE)
           CASE(SOLVER_DIRECT_LU)
             IF(ASSOCIATED(SOLVER%LINKING_SOLVER)) THEN
@@ -9807,7 +9810,7 @@ CONTAINS
               !Nothing else to do
             CASE(SOLVER_MUMPS_LIBRARY,SOLVER_SUPERLU_LIBRARY,SOLVER_PASTIX_LIBRARY,SOLVER_LAPACK_LIBRARY)
               !Set up solver through PETSc
-              CALL Petsc_KSPCreate(computationEnvironment%mpiWorldCommunicator,LINEAR_DIRECT_SOLVER%KSP,ERR,ERROR,*999)
+              CALL Petsc_KSPCreate(worldCommunicator,LINEAR_DIRECT_SOLVER%KSP,ERR,ERROR,*999)
 
               !Set any further KSP options from the command line options
               CALL Petsc_KSPSetFromOptions(LINEAR_DIRECT_SOLVER%KSP,ERR,ERROR,*999)
@@ -10923,6 +10926,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
+    INTEGER(INTG) :: worldCommunicator
     TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: SOLVER_MATRIX
     TYPE(LINEAR_SOLVER_TYPE), POINTER :: LINEAR_SOLVER
     TYPE(NEWTON_SOLVER_TYPE), POINTER :: NEWTON_SOLVER
@@ -10944,6 +10948,7 @@ CONTAINS
       IF(ASSOCIATED(LINEAR_SOLVER)) THEN
         SOLVER=>LINEAR_SOLVER%SOLVER
         IF(ASSOCIATED(SOLVER)) THEN
+          CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
           !Should really check iterative types here and then the solver library but as they are all PETSc for now hold off.
           SELECT CASE(LINEAR_ITERATIVE_SOLVER%SOLVER_LIBRARY)
           CASE(SOLVER_CMISS_LIBRARY)
@@ -11060,7 +11065,7 @@ CONTAINS
                 CALL FlagError("Solver linking solve is not associated.",ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL Petsc_KSPCreate(computationEnvironment%mpiWorldCommunicator,LINEAR_ITERATIVE_SOLVER%KSP,ERR,ERROR,*999)
+              CALL Petsc_KSPCreate(worldCommunicator,LINEAR_ITERATIVE_SOLVER%KSP,ERR,ERROR,*999)
             ENDIF
             !Set the iterative solver type
             SELECT CASE(LINEAR_ITERATIVE_SOLVER%ITERATIVE_SOLVER_TYPE)
@@ -15715,7 +15720,7 @@ CONTAINS
     EXTERNAL :: Problem_SolverResidualEvaluatePetsc
     EXTERNAL :: Problem_SolverConvergenceTestPetsc
     EXTERNAL :: Problem_SolverNonlinearMonitorPETSC
-    INTEGER(INTG) :: equations_matrix_idx,equations_set_idx,interface_condition_idx,interface_matrix_idx
+    INTEGER(INTG) :: equations_matrix_idx,equations_set_idx,interface_condition_idx,interface_matrix_idx,worldCommunicator
     TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: JACOBIAN_MATRIX
     TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: RESIDUAL_VECTOR
     TYPE(EquationsType), POINTER :: equations
@@ -15752,6 +15757,7 @@ CONTAINS
         IF(ASSOCIATED(NONLINEAR_SOLVER)) THEN
           SOLVER=>NONLINEAR_SOLVER%SOLVER
           IF(ASSOCIATED(SOLVER)) THEN
+            CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
             SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
             IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
               SELECT CASE(LINESEARCH_SOLVER%SOLVER_LIBRARY)
@@ -15893,7 +15899,7 @@ CONTAINS
                     ENDIF
                   ENDDO !interface_idx
                   !Create the PETSc SNES solver
-                  CALL Petsc_SnesCreate(computationEnvironment%mpiWorldCommunicator,LINESEARCH_SOLVER%snes,ERR,ERROR,*999)
+                  CALL Petsc_SnesCreate(worldCommunicator,LINESEARCH_SOLVER%snes,ERR,ERROR,*999)
                   !Set the nonlinear solver type to be a Quasi-Newton line search solver
                   CALL Petsc_SnesSetType(LINESEARCH_SOLVER%snes,PETSC_SNESQN,ERR,ERROR,*999)
                   !Following routines don't work for petsc version < 3.5.
@@ -16956,7 +16962,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     EXTERNAL :: Problem_SolverResidualEvaluatePetsc
-    INTEGER(INTG) :: equations_matrix_idx,equations_set_idx
+    INTEGER(INTG) :: equations_matrix_idx,equations_set_idx,worldCommunicator
     TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: RESIDUAL_VECTOR
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
@@ -16985,6 +16991,7 @@ CONTAINS
         IF(ASSOCIATED(NONLINEAR_SOLVER)) THEN
           SOLVER=>NONLINEAR_SOLVER%SOLVER
           IF(ASSOCIATED(SOLVER)) THEN
+            CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
             SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
             IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
               SELECT CASE(TRUSTREGION_SOLVER%SOLVER_LIBRARY)
@@ -17075,7 +17082,7 @@ CONTAINS
                   END SELECT
                   CALL SOLVER_MATRICES_CREATE_FINISH(SOLVER_MATRICES,ERR,ERROR,*999)
                   !Create the PETSc SNES solver
-                  CALL Petsc_SnesCreate(computationEnvironment%mpiWorldCommunicator,TRUSTREGION_SOLVER%snes,ERR,ERROR,*999)
+                  CALL Petsc_SnesCreate(worldCommunicator,TRUSTREGION_SOLVER%snes,ERR,ERROR,*999)
                   !Set the nonlinear solver type to be a Quasi-Newton trust region solver
                   CALL Petsc_SnesSetType(TRUSTREGION_SOLVER%snes,PETSC_SNESNEWTONTR,ERR,ERROR,*999)
                   !Set the nonlinear function
@@ -18489,7 +18496,7 @@ CONTAINS
     EXTERNAL :: Problem_SolverResidualEvaluatePetsc
     EXTERNAL :: Problem_SolverConvergenceTestPetsc
     EXTERNAL :: Problem_SolverNonlinearMonitorPetsc
-    INTEGER(INTG) :: equations_matrix_idx,equations_set_idx,interface_condition_idx,interface_matrix_idx
+    INTEGER(INTG) :: equations_matrix_idx,equations_set_idx,interface_condition_idx,interface_matrix_idx,worldCommunicator
     TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: JACOBIAN_MATRIX
     TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: RESIDUAL_VECTOR
     TYPE(EquationsType), POINTER :: equations
@@ -18526,6 +18533,7 @@ CONTAINS
         IF(ASSOCIATED(NONLINEAR_SOLVER)) THEN
           SOLVER=>NONLINEAR_SOLVER%SOLVER
           IF(ASSOCIATED(SOLVER)) THEN
+            CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
             SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
             IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
               SELECT CASE(LINESEARCH_SOLVER%SOLVER_LIBRARY)
@@ -18667,7 +18675,7 @@ CONTAINS
                     ENDIF
                   ENDDO !interface_idx
                   !Create the PETSc SNES solver
-                  CALL Petsc_SnesCreate(computationEnvironment%mpiWorldCommunicator,LINESEARCH_SOLVER%snes,ERR,ERROR,*999)
+                  CALL Petsc_SnesCreate(worldCommunicator,LINESEARCH_SOLVER%snes,ERR,ERROR,*999)
                   !Set the nonlinear solver type to be a Newton line search solver
                   CALL Petsc_SnesSetType(LINESEARCH_SOLVER%snes,PETSC_SNESNEWTONLS,ERR,ERROR,*999)
                   
@@ -19713,7 +19721,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     EXTERNAL :: Problem_SolverResidualEvaluatePetsc
-    INTEGER(INTG) :: equations_matrix_idx,equations_set_idx
+    INTEGER(INTG) :: equations_matrix_idx,equations_set_idx,worldCommunicator
     TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: RESIDUAL_VECTOR
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
@@ -19742,6 +19750,7 @@ CONTAINS
         IF(ASSOCIATED(NONLINEAR_SOLVER)) THEN
           SOLVER=>NONLINEAR_SOLVER%SOLVER
           IF(ASSOCIATED(SOLVER)) THEN
+            CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
             SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
             IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
               SELECT CASE(TRUSTREGION_SOLVER%SOLVER_LIBRARY)
@@ -19832,7 +19841,7 @@ CONTAINS
                   END SELECT
                   CALL SOLVER_MATRICES_CREATE_FINISH(SOLVER_MATRICES,ERR,ERROR,*999)
                   !Create the PETSc SNES solver
-                  CALL Petsc_SnesCreate(computationEnvironment%mpiWorldCommunicator,TRUSTREGION_SOLVER%snes,ERR,ERROR,*999)
+                  CALL Petsc_SnesCreate(worldCommunicator,TRUSTREGION_SOLVER%snes,ERR,ERROR,*999)
                   !Set the nonlinear solver type to be a Newton trust region solver
                   CALL Petsc_SnesSetType(TRUSTREGION_SOLVER%snes,PETSC_SNESNEWTONTR,ERR,ERROR,*999)
                   !Set the solver as the SNES application context

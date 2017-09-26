@@ -27,7 +27,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Heye Zhang
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -51,6 +51,7 @@ MODULE FIELD_IO_ROUTINES
   USE MESH_ROUTINES
   USE NODE_ROUTINES
   USE ComputationRoutines
+  USE ComputationAccessRoutines
   USE COORDINATE_ROUTINES
   USE ISO_VARYING_STRING
   USE MACHINE_CONSTANTS
@@ -1031,7 +1032,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: CMISS_KEYWORD_FIELDS, CMISS_KEYWORD_NODE, CMISS_KEYWORD_COMPONENTS
     TYPE(VARYING_STRING) :: CMISS_KEYWORD_VALUE_INDEX, CMISS_KEYWORD_DERIVATIVE
     INTEGER(INTG), ALLOCATABLE :: tmp_pointer(:), LIST_DEV(:), LIST_DEV_POS(:)
-    INTEGER(INTG) :: FILE_ID
+    INTEGER(INTG) :: FILE_ID,worldCommunicator
     !INTEGER(INTG) :: NUMBER_FIELDS
     INTEGER(INTG) :: NODAL_USER_NUMBER, NODAL_LOCAL_NUMBER, FIELDTYPE, NUMBER_NODAL_VALUE_LINES, NUMBER_OF_LINES, &
       & NUMBER_OF_COMPONENTS !, LABEL_TYPE, FOCUS
@@ -1055,6 +1056,8 @@ CONTAINS
       GOTO 999
     ENDIF
 
+    CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
+    
     CMISS_KEYWORD_FIELDS="#Fields="
     CMISS_KEYWORD_COMPONENTS="#Components="
     CMISS_KEYWORD_VALUE_INDEX="Value index="
@@ -1149,7 +1152,7 @@ CONTAINS
       IF(MASTER_COMPUTATION_NUMBER==myWorldComputationNodeNumber) THEN
         CALL FIELD_IO_FIELD_INFO(LIST_STR(idx_field), FIELD_IO_FIELD_LABEL, FIELDTYPE, ERR, ERROR, *999)
       ENDIF
-      CALL MPI_BCAST(FIELDTYPE,1,MPI_LOGICAL,MASTER_COMPUTATION_NUMBER,computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(FIELDTYPE,1,MPI_LOGICAL,MASTER_COMPUTATION_NUMBER,worldCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
       !Set FIELD TYPE
       CALL FIELD_TYPE_SET(FIELD, FIELDTYPE, ERR, ERROR, *999)
@@ -1167,8 +1170,7 @@ CONTAINS
     FILE_STATUS="OLD"
 
     !broadcasting total_number_of_comps
-    CALL MPI_BCAST(total_number_of_comps,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
-      & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+    CALL MPI_BCAST(total_number_of_comps,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER,worldCommunicator,MPI_IERROR)
     CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
 
     CALL REALLOCATE( LIST_DEV_POS, total_number_of_comps, &
@@ -1176,7 +1178,7 @@ CONTAINS
 
     DO WHILE(idx_exnode<NUMBER_OF_EXNODE_FILES)
 
-      CALL MPI_BCAST(FILE_END,1,MPI_LOGICAL,MASTER_COMPUTATION_NUMBER,computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(FILE_END,1,MPI_LOGICAL,MASTER_COMPUTATION_NUMBER,worldCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
 
       IF(FILE_END) THEN
@@ -1289,8 +1291,7 @@ CONTAINS
       ENDIF !MASTER_COMPUTATION_NUMBER
 
       !broadcasting total_number_of_devs
-      CALL MPI_BCAST(total_number_of_devs,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
-        & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(total_number_of_devs,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER,worldCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
 
       IF(MASTER_COMPUTATION_NUMBER/=myWorldComputationNodeNumber) THEN
@@ -1302,12 +1303,10 @@ CONTAINS
         & "Could not allocate memory for nodal derivative index in non-master node", ERR, ERROR, *999 )
 
       !broadcasting total_number_of_comps
-      CALL MPI_BCAST(LIST_DEV_POS,total_number_of_comps,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
-        & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(LIST_DEV_POS,total_number_of_comps,MPI_INTEGER,MASTER_COMPUTATION_NUMBER,worldCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
       !broadcasting total_number_of_devs
-      CALL MPI_BCAST(LIST_DEV,total_number_of_devs,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
-        & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(LIST_DEV,total_number_of_devs,MPI_INTEGER,MASTER_COMPUTATION_NUMBER,worldCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
 
       !goto the start of mesh part
@@ -1366,11 +1365,9 @@ CONTAINS
       ENDIF  !(MASTER_COMPUTATION_NUMBER==myWorldComputationNodeNumber)
 
       !broadcasting total_number_of_devs
-      CALL MPI_BCAST(LIST_DEV_VALUE,total_number_of_devs,MPI_REAL8,MASTER_COMPUTATION_NUMBER, &
-        & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(LIST_DEV_VALUE,total_number_of_devs,MPI_REAL8,MASTER_COMPUTATION_NUMBER,worldCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
-      CALL MPI_BCAST(NODAL_USER_NUMBER,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
-        & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(NODAL_USER_NUMBER,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER,worldCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
 
       !IF(MASTER_COMPUTATION_NUMBER/=myWorldComputationNodeNumber) THEN
@@ -1521,11 +1518,9 @@ CONTAINS
     ENTERS("FIELD_IO_FIELDS_IMPORT",ERR,ERROR,*999)
 
     !Get the number of computation nodes
-    computation_node_numbers=ComputationEnvironment_NumberOfNodesGet(ERR,ERROR)
-    IF(ERR/=0) GOTO 999
+    CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,computation_node_numbers,err,error,*999)
     !Get my computation node number
-    myWorldComputationNodeNumber=ComputationEnvironment_NodeNumberGet(ERR,ERROR)
-    IF(ERR/=0) GOTO 999
+    CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
 
     MASTER_COMPUTATION_NUMBER=0
 
@@ -1641,7 +1636,7 @@ CONTAINS
     INTEGER(INTG), ALLOCATABLE :: USER_NODAL_NUMBER_MAP_GLOBAL_NODAL_NUMBER(:)
     INTEGER(INTG) :: FILE_ID, NUMBER_OF_EXELEM_FILES, NUMBER_OF_ELEMENTS, NUMBER_OF_NODES, NUMBER_OF_DIMENSIONS
     INTEGER(INTG) :: NUMBER_OF_MESH_COMPONENTS, NUMBER_OF_COMPONENTS, NUMBER_SCALING_FACTOR_LINES
-    INTEGER(INTG) :: GLOBAL_ELEMENT_NUMBER
+    INTEGER(INTG) :: GLOBAL_ELEMENT_NUMBER,worldCommunicator
     INTEGER(INTG) :: MPI_IERROR
     INTEGER(INTG) :: SHAPE_INDEX(SHAPE_SIZE)
     INTEGER(INTG) :: idx_comp, idx_comp1, pos, idx_node, idx_node1, idx_field, idx_elem, idx_exnode, idx_exelem, number_of_comp
@@ -1668,6 +1663,8 @@ CONTAINS
       GOTO 999
     ENDIF
 
+    CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
+    
     !IF(ASSOCIATED(BASES%BASES)) THEN
     !   CALL FlagError("bases are associated, pls release the memory first",ERR,ERROR,*999)
     !   GOTO 999
@@ -1793,15 +1790,13 @@ CONTAINS
       !IF(ERR/=0) CALL FlagError("can not allocate the memory for list of field types",ERR,ERROR,*999)
       !LIST_FIELD_TYPE(:)=0
     ENDIF
-    CALL MPI_BCAST(COMPONENTS_IN_FIELDS,NUMBER_OF_FIELDS,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
-      & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+    CALL MPI_BCAST(COMPONENTS_IN_FIELDS,NUMBER_OF_FIELDS,MPI_INTEGER,MASTER_COMPUTATION_NUMBER,worldCommunicator,MPI_IERROR)
     CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
     !CALL MPI_BCAST(LIST_FIELD_TYPE,NUMBER_OF_FIELDS,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
     !  & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
     !CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
     !broadcasting the number of elements
-    CALL MPI_BCAST(NUMBER_OF_ELEMENTS,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
-      & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+    CALL MPI_BCAST(NUMBER_OF_ELEMENTS,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER,worldCommunicator,MPI_IERROR)
     CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
     CALL MESH_NUMBER_OF_ELEMENTS_SET(MESH,NUMBER_OF_ELEMENTS,ERR,ERROR,*999)
 
@@ -1837,12 +1832,10 @@ CONTAINS
       NUMBER_OF_EXNODE_FILES=idx_exnode
     ENDIF !MASTER_COMPUTATION_NUMBER==myWorldComputationNodeNumber
 
-    CALL MPI_BCAST(NUMBER_OF_EXNODE_FILES,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
-      & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+    CALL MPI_BCAST(NUMBER_OF_EXNODE_FILES,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER,worldCommunicator,MPI_IERROR)
     CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
     !broadcasting the number of nodes
-    CALL MPI_BCAST(NUMBER_OF_NODES,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
-      & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+    CALL MPI_BCAST(NUMBER_OF_NODES,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER,worldCommunicator,MPI_IERROR)
     CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
     NULLIFY(NODES)
     CALL NODES_CREATE_START(REGION,NUMBER_OF_NODES,NODES,ERR,ERROR,*999)
@@ -1874,7 +1867,7 @@ CONTAINS
 
     !broadcast the nodal numberings (nodal labels)
     CALL MPI_BCAST(USER_NODAL_NUMBER_MAP_GLOBAL_NODAL_NUMBER,NUMBER_OF_NODES,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
-        & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+      & worldCommunicator,MPI_IERROR)
     CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
     DO idx_node=1, NUMBER_OF_NODES
       IF(idx_node/=USER_NODAL_NUMBER_MAP_GLOBAL_NODAL_NUMBER(idx_node)) CALL NODES_USER_NUMBER_SET(NODES,idx_node, &
@@ -2024,11 +2017,9 @@ CONTAINS
     ENDIF !MASTER_COMPUTATION_NUMBER==myWorldComputationNodeNumber
 
     !broadcasting the number of mesh components
-    CALL MPI_BCAST(NUMBER_OF_COMPONENTS,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
-      & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+    CALL MPI_BCAST(NUMBER_OF_COMPONENTS,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER,worldCommunicator,MPI_IERROR)
     CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
-    CALL MPI_BCAST(NUMBER_OF_MESH_COMPONENTS,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
-      & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+    CALL MPI_BCAST(NUMBER_OF_MESH_COMPONENTS,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER,worldCommunicator,MPI_IERROR)
     CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
     CALL MESH_NUMBER_OF_COMPONENTS_SET(MESH,NUMBER_OF_MESH_COMPONENTS,ERR,ERROR,*999)
 
@@ -2043,7 +2034,7 @@ CONTAINS
 
     DO idx_comp=1, NUMBER_OF_MESH_COMPONENTS
       CALL MESH_TOPOLOGY_ELEMENTS_CREATE_START(MESH,idx_comp,basisFunctions%BASES(1)%PTR,ELEMENTS_PTR(idx_comp)%PTR, &
-          & ERR,ERROR,*999)
+        & ERR,ERROR,*999)
     ENDDO
 
     !Collect the elemental numberings (elemental labels)
@@ -2107,8 +2098,7 @@ CONTAINS
     ENDDO
 
     !creating topological information for each mesh component
-    CALL MPI_BCAST(NUMBER_OF_EXELEM_FILES,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
-      & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+    CALL MPI_BCAST(NUMBER_OF_EXELEM_FILES,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, worldCommunicator,MPI_IERROR)
     CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
     !ALLOCATE(LIST_BASES(NUMBER_OF_COMPONENTS),STAT=ERR)
     !IF(ERR/=0) CALL FlagError("can not allocate list of bases",ERR,ERROR,*999)
@@ -2122,7 +2112,7 @@ CONTAINS
 
     DO WHILE(idx_exelem<NUMBER_OF_EXELEM_FILES)
 
-      CALL MPI_BCAST(FILE_END,1,MPI_LOGICAL,MASTER_COMPUTATION_NUMBER,computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(FILE_END,1,MPI_LOGICAL,MASTER_COMPUTATION_NUMBER,worldCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
 
       IF(FILE_END) THEN
@@ -2268,7 +2258,7 @@ CONTAINS
         ENDIF
       ENDIF !MASTER_COMPUTATION_NUMBER
 
-      CALL MPI_BCAST(number_of_node,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER,computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(number_of_node,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER,worldCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
       !CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"SIZE LIST_ELEMENTAL_NODES:",SIZE(LIST_ELEMENTAL_NODES),ERR,ERROR,*999)
 
@@ -2296,23 +2286,20 @@ CONTAINS
       ENDIF !MASTER_COMPUTATION_NUMBER/=myWorldComputationNodeNumber
 
       !CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"LIST_ELEMENTAL_NODES:",LIST_ELEMENTAL_NODES(1),ERR,ERROR,*999)
-      CALL MPI_BCAST(LIST_ELEMENTAL_NODES,number_of_node,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
-        & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(LIST_ELEMENTAL_NODES,number_of_node,MPI_INTEGER,MASTER_COMPUTATION_NUMBER,worldCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
       CALL MPI_BCAST(LIST_COMP_NODAL_INDEX,number_of_node*NUMBER_OF_COMPONENTS,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
-          & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+        & worldCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
-      CALL MPI_BCAST(SHAPE_INDEX,SHAPE_SIZE,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
-        & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(SHAPE_INDEX,SHAPE_SIZE,MPI_INTEGER,MASTER_COMPUTATION_NUMBER,worldCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
-      CALL MPI_BCAST(LIST_COMP_NODES,NUMBER_OF_COMPONENTS,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
-        & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(LIST_COMP_NODES,NUMBER_OF_COMPONENTS,MPI_INTEGER,MASTER_COMPUTATION_NUMBER,worldCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
       CALL MPI_BCAST(MESH_COMPONENTS_OF_FIELD_COMPONENTS,NUMBER_OF_COMPONENTS,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
-          & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+        & worldCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
       CALL MPI_BCAST(INTERPOLATION_XI,NUMBER_OF_COMPONENTS*NUMBER_OF_DIMENSIONS,MPI_INTEGER,MASTER_COMPUTATION_NUMBER,&
-          & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+        & worldCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
       !CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"LIST_ELEMENTAL_NODES:",LIST_ELEMENTAL_NODES(1),ERR,ERROR,*999)
       current_mesh_comp=1
@@ -6208,11 +6195,9 @@ CONTAINS
     ENTERS("FIELD_IO_NODES_EXPORT", ERR,ERROR,*999)
 
     !Get the number of computation nodes
-    computation_node_numbers=ComputationEnvironment_NumberOfNodesGet(ERR,ERROR)
-    IF(ERR/=0) GOTO 999
+    CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,computation_node_numbers,err,error,*999)
     !Get my computation node number
-    myWorldComputationNodeNumber=ComputationEnvironment_NodeNumberGet(ERR,ERROR)
-    IF(ERR/=0) GOTO 999
+    CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
     IF(METHOD=="FORTRAN") THEN
       CALL FIELD_IO_INFO_SET_INITIALISE(NODAL_INFO_SET, ERR,ERROR,*999)
       CALL FieldIO_NodelInfoSetAttachLocalProcess(NODAL_INFO_SET, FIELDS, myWorldComputationNodeNumber, ERR,ERROR,*999)
@@ -6258,11 +6243,9 @@ CONTAINS
     ENTERS("FIELD_IO_ELEMENTS_EXPORT", ERR,ERROR,*999)
 
     !Get the number of computation nodes
-    computation_node_numbers=ComputationEnvironment_NumberOfNodesGet(ERR,ERROR)
-    IF(ERR/=0) GOTO 999
+    CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,computation_node_numbers,err,error,*999)
     !Get my computation node number
-    myWorldComputationNodeNumber=ComputationEnvironment_NodeNumberGet(ERR,ERROR)
-    IF(ERR/=0) GOTO 999
+    CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
     IF(METHOD=="FORTRAN") THEN
       CALL FIELD_IO_INFO_SET_INITIALISE( LOCAL_PROCESS_ELEMENTAL_INFO_SET, ERR, ERROR, *999 )
       CALL FieldIO_ElementalInfoSetAttachLocalProcess( LOCAL_PROCESS_ELEMENTAL_INFO_SET, FIELDS, ERR, ERROR, *999 )

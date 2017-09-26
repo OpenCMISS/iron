@@ -65,8 +65,8 @@ PROGRAM IRON_TEST_FIELDML_IO
 
   ! Get computation nodes information
 
-  CALL cmfe_ComputationNumberOfNodesGet(numberOfComputationNodes, err)
-  CALL cmfe_ComputationNodeNumberGet(computationNodeNumber, err)
+  CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(numberOfComputationNodes, err)
+  CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(computationNodeNumber, err)
 
   CALL TestFieldMLIOCube(worldRegion)
   CALL TestFieldMLArguments(worldRegion)

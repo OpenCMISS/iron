@@ -47,6 +47,7 @@ MODULE FIELD_ROUTINES
   USE BaseRoutines
   USE BASIS_ROUTINES
   USE ComputationRoutines
+  USE ComputationAccessRoutines
   USE COORDINATE_ROUTINES
   USE CmissMPI
   USE DISTRIBUTED_MATRIX_VECTOR
@@ -10013,7 +10014,7 @@ CONTAINS
       & Gauss_point_nyy,version_idx,derivative_idx,ny,NUMBER_OF_COMPUTATION_NODES, &
       & myWorldComputationNodeNumber,domain_type_stop,start_idx,stop_idx,element_idx,node_idx,NUMBER_OF_LOCAL, NGP, MAX_NGP, &
       & gp,MPI_IERROR,NUMBER_OF_GLOBAL_DOFS,gauss_point_idx,NUMBER_OF_DATA_POINT_DOFS,data_point_nyy,dataPointIdx,elementIdx, &
-      & localDataNumber,globalElementNumber
+      & localDataNumber,globalElementNumber,worldCommunicator
     INTEGER(INTG), ALLOCATABLE :: VARIABLE_LOCAL_DOFS_OFFSETS(:),VARIABLE_GHOST_DOFS_OFFSETS(:), &
       & localDataParamCount(:),ghostDataParamCount(:)
     TYPE(DECOMPOSITION_TYPE), POINTER :: DECOMPOSITION
@@ -10028,10 +10029,9 @@ CONTAINS
     ENTERS("FIELD_MAPPINGS_CALCULATE",ERR,ERROR,*999)
     
     IF(ASSOCIATED(FIELD)) THEN
-      NUMBER_OF_COMPUTATION_NODES=ComputationEnvironment_NumberOfNodesGet(ERR,ERROR)
-      IF(ERR/=0) GOTO 999
-      myWorldComputationNodeNumber=ComputationEnvironment_NodeNumberGet(ERR,ERROR)
-      IF(ERR/=0) GOTO 999
+      CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
+      CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,NUMBER_OF_COMPUTATION_NODES,err,error,*999)
+      CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
       !Calculate the number of global and local degrees of freedom for the field variables and components. Each field variable
       !component has a set of DOFs so loop over the components for each variable component and count up the DOFs.
       DO variable_idx=1,FIELD%NUMBER_OF_VARIABLES
@@ -10077,7 +10077,7 @@ CONTAINS
               NGP=BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR%NUMBER_OF_GAUSS
               MAX_NGP=MAX(MAX_NGP,NGP)
             ENDDO !element_idx
-            CALL MPI_ALLREDUCE(MPI_IN_PLACE,MAX_NGP,1,MPI_INTEGER,MPI_MAX,computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+            CALL MPI_ALLREDUCE(MPI_IN_PLACE,MAX_NGP,1,MPI_INTEGER,MPI_MAX,worldCommunicator,MPI_IERROR)
             CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)             
             NUMBER_OF_GAUSS_POINT_DOFS=NUMBER_OF_GAUSS_POINT_DOFS+DOMAIN_TOPOLOGY%ELEMENTS%TOTAL_NUMBER_OF_ELEMENTS*MAX_NGP
             NUMBER_OF_LOCAL_VARIABLE_DOFS=NUMBER_OF_LOCAL_VARIABLE_DOFS+DOMAIN_TOPOLOGY%ELEMENTS%NUMBER_OF_ELEMENTS*MAX_NGP

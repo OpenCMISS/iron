@@ -47,6 +47,7 @@ MODULE SOLVER_MAPPING_ROUTINES
   USE BaseRoutines
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE ComputationRoutines
+  USE ComputationAccessRoutines
   USE DISTRIBUTED_MATRIX_VECTOR
   USE EquationsAccessRoutines
   USE DOMAIN_MAPPINGS
@@ -139,7 +140,7 @@ CONTAINS
       & numberOfLinearMatrices,NUMBER_OF_LOCAL_SOLVER_DOFS,NUMBER_OF_LOCAL_SOLVER_ROWS,NUMBER_OF_RANK_COLS, &
       & NUMBER_OF_RANK_ROWS,NUMBER_OF_VARIABLES,rank,rank_idx,row_idx,ROW_LIST_ITEM(4),ROW_RANK,solver_global_dof, &
       & solver_matrix_idx,solver_variable_idx,TOTAL_NUMBER_OF_LOCAL_SOLVER_DOFS,variable_idx,variableIdx, &
-      & VARIABLE_LIST_ITEM(3),variable_position_idx,variable_type, &
+      & VARIABLE_LIST_ITEM(3),variable_position_idx,variable_type,numberOfWorldComputationNodes, &
       & numberRowEquationsRows,numberColEquationsCols,rowEquationsRowIdx,colEquationsColIdx, &
       & globalDofCouplingNumber,equationsRow,eqnLocalDof,numberOfEquationsRHSVariables,rhsVariableType,equationsSetIdx
     INTEGER(INTG) :: temp_offset, solver_variable_idx_temp
@@ -319,7 +320,8 @@ CONTAINS
           !    for each rank.
           !
           !Calculate the row mappings.
-          myrank=computationEnvironment%myWorldComputationNodeNumber
+          CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfWorldComputationNodes,err,error,*999)
+          CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myrank,err,error,*999)
           NUMBER_OF_GLOBAL_SOLVER_ROWS=0
           NUMBER_OF_LOCAL_SOLVER_ROWS=0
           !Add in the rows from any equations sets that have been added to the solver equations
@@ -327,10 +329,10 @@ CONTAINS
           !
           !Allocate and initialise the rank lists.
           ALLOCATE(RANK_GLOBAL_ROWS_LISTS(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+SOLVER_MAPPING% &
-            & NUMBER_OF_INTERFACE_CONDITIONS,0:computationEnvironment%numberOfWorldComputationNodes-1),STAT=ERR)
+            & NUMBER_OF_INTERFACE_CONDITIONS,0:numberOfWorldComputationNodes-1),STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate rank global rows lists.",ERR,ERROR,*999)
           CALL SolverDofCouplings_Initialise(rowCouplings,err,error,*999)
-          DO rank=0,computationEnvironment%numberOfWorldComputationNodes-1
+          DO rank=0,numberOfWorldComputationNodes-1
             equations_idx=0
             DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
               equations_idx=equations_idx+1
@@ -346,8 +348,7 @@ CONTAINS
                 CALL LIST_CREATE_START(RANK_GLOBAL_ROWS_LISTS(equations_idx,rank)%PTR,ERR,ERROR,*999)
                 CALL LIST_DATA_TYPE_SET(RANK_GLOBAL_ROWS_LISTS(equations_idx,rank)%PTR,LIST_INTG_TYPE,ERR,ERROR,*999)
                 CALL LIST_INITIAL_SIZE_SET(RANK_GLOBAL_ROWS_LISTS(equations_idx,rank)%PTR,INT(vectorMapping% &
-                  & numberOfGlobalRows/computationEnvironment%numberOfWorldComputationNodes,INTG), &
-                  & ERR,ERROR,*999)
+                  & numberOfGlobalRows/numberOfWorldComputationNodes,INTG),ERR,ERROR,*999)
                 CALL LIST_DATA_DIMENSION_SET(RANK_GLOBAL_ROWS_LISTS(equations_idx,rank)%PTR,4,ERR,ERROR,*999)
                 CALL LIST_KEY_DIMENSION_SET(RANK_GLOBAL_ROWS_LISTS(equations_idx,rank)%PTR,1,ERR,ERROR,*999)
                 CALL LIST_CREATE_FINISH(RANK_GLOBAL_ROWS_LISTS(equations_idx,rank)%PTR,ERR,ERROR,*999)  
@@ -369,8 +370,7 @@ CONTAINS
                       CALL LIST_CREATE_START(RANK_GLOBAL_ROWS_LISTS(equations_idx,rank)%PTR,ERR,ERROR,*999)
                       CALL LIST_DATA_TYPE_SET(RANK_GLOBAL_ROWS_LISTS(equations_idx,rank)%PTR,LIST_INTG_TYPE,ERR,ERROR,*999)
                       CALL LIST_INITIAL_SIZE_SET(RANK_GLOBAL_ROWS_LISTS(equations_idx,rank)%PTR, &
-                        & INT(INTERFACE_MAPPING%NUMBER_OF_GLOBAL_COLUMNS/computationEnvironment%numberOfWorldComputationNodes, &
-                        & INTG),ERR,ERROR,*999)
+                        & INT(INTERFACE_MAPPING%NUMBER_OF_GLOBAL_COLUMNS/numberOfWorldComputationNodes,INTG),ERR,ERROR,*999)
                       CALL LIST_DATA_DIMENSION_SET(RANK_GLOBAL_ROWS_LISTS(equations_idx,rank)%PTR,4,ERR,ERROR,*999)
                       CALL LIST_KEY_DIMENSION_SET(RANK_GLOBAL_ROWS_LISTS(equations_idx,rank)%PTR,1,ERR,ERROR,*999)
                       CALL LIST_CREATE_FINISH(RANK_GLOBAL_ROWS_LISTS(equations_idx,rank)%PTR,ERR,ERROR,*999)
@@ -676,8 +676,7 @@ CONTAINS
           ALLOCATE(SOLVER_MAPPING%ROW_DOFS_MAPPING,STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate solver mapping row dofs mapping.",ERR,ERROR,*999)
 !!TODO: what is the real number of domains for a solver???
-          CALL DOMAIN_MAPPINGS_MAPPING_INITIALISE(SOLVER_MAPPING%ROW_DOFS_MAPPING,computationEnvironment% &
-            & numberOfWorldComputationNodes,ERR,ERROR,*999)
+          CALL DOMAIN_MAPPINGS_MAPPING_INITIALISE(SOLVER_MAPPING%ROW_DOFS_MAPPING,numberOfWorldComputationNodes,ERR,ERROR,*999)
           ROW_DOMAIN_MAPPING=>SOLVER_MAPPING%ROW_DOFS_MAPPING
           ALLOCATE(ROW_DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(NUMBER_OF_GLOBAL_SOLVER_ROWS),STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate row dofs mapping global to local map.",ERR,ERROR,*999)
@@ -788,7 +787,7 @@ CONTAINS
           IF(err/=0) CALL FlagError("Could not allocate dummy DOF coupling values.",err,error,*999)
           dummyDofCoupling%numberOfDofs=1
           !Loop over the ranks to  ensure that the lowest ranks have the lowest numbered solver variables
-          DO rank=0,computationEnvironment%numberOfWorldComputationNodes-1
+          DO rank=0,numberOfWorldComputationNodes-1
             NUMBER_OF_LOCAL_SOLVER_ROWS=0
 
             !Calculate the solver row <-> equations row & interface row mappings.
@@ -1226,9 +1225,9 @@ CONTAINS
             !dof_type is 1 for domain local DOFs and 2 for ghost DOFs
             ALLOCATE(RANK_GLOBAL_COLS_LISTS(2,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+SOLVER_MAPPING% &
               & NUMBER_OF_INTERFACE_CONDITIONS,SOLVER_MAPPING%VARIABLES_LIST(solver_matrix_idx)%NUMBER_OF_VARIABLES, &
-              & 0:computationEnvironment%numberOfWorldComputationNodes-1),STAT=ERR)
+              & 0:numberOfWorldComputationNodes-1),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate rank global columns lists.",ERR,ERROR,*999)
-            DO rank=0,computationEnvironment%numberOfWorldComputationNodes-1
+            DO rank=0,numberOfWorldComputationNodes-1
               DO solver_variable_idx=1,SOLVER_MAPPING%VARIABLES_LIST(solver_matrix_idx)%NUMBER_OF_VARIABLES
                 DO equations_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS+SOLVER_MAPPING%NUMBER_OF_INTERFACE_CONDITIONS
                   DO dof_type=1,2
@@ -1870,13 +1869,13 @@ CONTAINS
             IF(ERR/=0) CALL FlagError("Could not allocate solver col to equations sets map column dofs mapping.",ERR,ERROR,*999)
 !!TODO: what is the real number of domains for a solver???
             CALL DOMAIN_MAPPINGS_MAPPING_INITIALISE(SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)% &
-              & COLUMN_DOFS_MAPPING,computationEnvironment%numberOfWorldComputationNodes,ERR,ERROR,*999)
+              & COLUMN_DOFS_MAPPING,numberOfWorldComputationNodes,ERR,ERROR,*999)
             COL_DOMAIN_MAPPING=>SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%COLUMN_DOFS_MAPPING
             ALLOCATE(COL_DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(NUMBER_OF_GLOBAL_SOLVER_DOFS),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate column dofs mapping global to local.",ERR,ERROR,*999)
             COL_DOMAIN_MAPPING%NUMBER_OF_GLOBAL=NUMBER_OF_GLOBAL_SOLVER_DOFS
             ALLOCATE(VARIABLE_RANK_PROCESSED(SOLVER_MAPPING%VARIABLES_LIST(solver_matrix_idx)%NUMBER_OF_VARIABLES, &
-              & 0:computationEnvironment%numberOfWorldComputationNodes-1),STAT=ERR)
+              & 0:numberOfWorldComputationNodes-1),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate variable rank processed.",ERR,ERROR,*999)
             VARIABLE_RANK_PROCESSED=.FALSE.
             !Calculate the column mappings
@@ -2260,7 +2259,7 @@ CONTAINS
               DOF_MAP(solver_variable_idx)%PTR=0
             ENDDO !solver_variable_idx
 
-            ALLOCATE(solver_local_dof(0:computationEnvironment%numberOfWorldComputationNodes-1),STAT=ERR)
+            ALLOCATE(solver_local_dof(0:numberOfWorldComputationNodes-1),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate solver local dof array.",ERR,ERROR,*999)
 
             !
@@ -2271,7 +2270,7 @@ CONTAINS
             solver_global_dof=0
             solver_local_dof=0
             DO dof_type=1,2
-              DO rank=0,computationEnvironment%numberOfWorldComputationNodes-1
+              DO rank=0,numberOfWorldComputationNodes-1
                 
                 DO solver_variable_idx=1,SOLVER_MAPPING%VARIABLES_LIST(solver_matrix_idx)%NUMBER_OF_VARIABLES
 

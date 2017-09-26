@@ -181,8 +181,8 @@ PROGRAM MONODOMAINEXAMPLE
   CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
   
   !Get the computation nodes information
-  CALL cmfe_ComputationNumberOfNodesGet(NumberOfComputationNodes,Err)
-  CALL cmfe_ComputationNodeNumberGet(ComputationNodeNumber,Err)
+  CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(NumberOfComputationNodes,Err)
+  CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(ComputationNodeNumber,Err)
 
   !CALL cmfe_OutputSetOn("Monodomain",Err)
     

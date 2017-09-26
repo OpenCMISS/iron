@@ -55,6 +55,7 @@ MODULE Cmiss
   USE BaseRoutines
   USE BASIS_ROUTINES
   USE ComputationRoutines
+  USE ComputationAccessRoutines
   USE Constants
   USE COORDINATE_ROUTINES
   USE GENERATED_MESH_ROUTINES
@@ -241,6 +242,7 @@ CONTAINS
     INTEGER(INTG), INTENT(INOUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(INOUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: myWorldComputationNodeNumber
     TYPE(VARYING_STRING) :: versionString
 
     !Initialise error mode
@@ -265,7 +267,8 @@ CONTAINS
       CALL PROBLEMS_INITIALISE(err,error,*999)
       
       !Write out the CMISS version
-      IF(computationEnvironment%myWorldComputationNodeNumber==0) THEN
+      CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
+      IF(myWorldComputationNodeNumber==0) THEN
         versionString="OpenCMISS(Iron) version "//TRIM(NumberToVString(CMFE_MAJOR_VERSION,"*",err,error))
         versionString=versionString//"."
         versionString=versionString//TRIM(NumberToVString(CMFE_MINOR_VERSION,"*",err,error))

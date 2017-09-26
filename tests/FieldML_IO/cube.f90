@@ -128,8 +128,8 @@ CONTAINS
 
     ! Get computation nodes information
 
-    CALL cmfe_ComputationNumberOfNodesGet(numberOfComputationNodes, err)
-    CALL cmfe_ComputationNodeNumberGet(computationNodeNumber, err)
+    CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(numberOfComputationNodes, err)
+    CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(computationNodeNumber, err)
 
     ! Initialise FieldML and parse input file
 

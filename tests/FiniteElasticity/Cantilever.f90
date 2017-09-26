@@ -209,8 +209,8 @@ PROGRAM CANTILEVEREXAMPLE
   WRITE(*,'("Scaling type: ", i3)') ScalingType
 
   !Get the number of computation nodes and this computation node number
-  CALL cmfe_ComputationNumberOfNodesGet(NumberOfComputationNodes,Err)
-  CALL cmfe_ComputationNodeNumberGet(ComputationNodeNumber,Err)
+  CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(NumberOfComputationNodes,Err)
+  CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(ComputationNodeNumber,Err)
 
   NumberOfDomains=NumberOfComputationNodes
 

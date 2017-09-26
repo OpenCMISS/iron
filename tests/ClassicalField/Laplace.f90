@@ -184,8 +184,8 @@ PROGRAM LAPLACEEXAMPLE
   CALL cmfe_OutputSetOn(Filename,Err)
 
   !Get the computation nodes information
-  CALL cmfe_ComputationNumberOfNodesGet(NumberOfComputationNodes,Err)
-  CALL cmfe_ComputationNodeNumberGet(ComputationNodeNumber,Err)
+  CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(NumberOfComputationNodes,Err)
+  CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(ComputationNodeNumber,Err)
     
   !Start the creation of a new RC coordinate system
   CALL cmfe_CoordinateSystem_Initialise(CoordinateSystem,Err)

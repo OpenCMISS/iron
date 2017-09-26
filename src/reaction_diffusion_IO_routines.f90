@@ -48,6 +48,7 @@ MODULE REACTION_DIFFUSION_IO_ROUTINES
 
  USE BaseRoutines
  USE ComputationRoutines
+ USE ComputationAccessRoutines
  USE EQUATIONS_SET_CONSTANTS
  USE FIELD_ROUTINES
  USE FieldAccessRoutines
@@ -96,7 +97,7 @@ CONTAINS
     INTEGER(INTG):: myWorldComputationNodeNumber,NumberOfOutputFields,NumberOfDimensions,NumberOfElements,NumberOfNodes
     INTEGER(INTG):: NumberOfVariableComponents,NumberOfSourceComponents,I,J,K,ValueIndex,NODE_GLOBAL_NUMBER
     INTEGER(INTG) :: NodesInMeshComponent,BasisType,MaxNodesPerElement,NumberOfFieldComponents(3),ELEMENT_GLOBAL_NUMBER
-    INTEGER(INTG) :: NODE_LOCAL_NUMBER
+    INTEGER(INTG) :: NODE_LOCAL_NUMBER,numberOfWorldComputationNodes
     INTEGER(INTG),ALLOCATABLE :: ElementNodes(:,:),SimplexOutputHelp(:)
     REAL(DP), ALLOCATABLE :: ElementNodesScales(:,:)
     LOGICAL :: OUTPUT_SOURCE
@@ -106,14 +107,14 @@ CONTAINS
 
     ENTERS("REACTION_DIFFUSION_IO_WRITE_CMGUI",ERR,ERROR,*999)
 
-    myWorldComputationNodeNumber = ComputationEnvironment_NodeNumberGet(err,error)
+    CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfWorldComputationNodes,err,error,*999)
+    CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
 
     EQUATIONS_SET => REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr
     NULLIFY(SOURCE_FIELD)
     COMPUTATION_DOMAIN=>REGION%MESHES%MESHES(1) & 
       & %ptr%DECOMPOSITIONS%DECOMPOSITIONS(1)%ptr%DOMAIN(1)%ptr
 
-    myWorldComputationNodeNumber = ComputationEnvironment_NodeNumberGet(ERR,ERROR)
     NumberOfDimensions = COMPUTATION_DOMAIN%NUMBER_OF_DIMENSIONS
     NumberOfNodes = COMPUTATION_DOMAIN%TOPOLOGY%NODES%NUMBER_OF_NODES
     NodesInMeshComponent = REGION%meshes%meshes(1)%ptr%topology(1)%ptr%nodes%numberOfNodes

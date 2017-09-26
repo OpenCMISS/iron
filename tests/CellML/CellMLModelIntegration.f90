@@ -189,8 +189,8 @@ PROGRAM CELLMLINTEGRATIONFORTRANEXAMPLE
   CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
   
   !Get the computation nodes information
-  CALL cmfe_ComputationNumberOfNodesGet(NumberOfComputationNodes,Err)
-  CALL cmfe_ComputationNodeNumberGet(ComputationNodeNumber,Err)
+  CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(NumberOfComputationNodes,Err)
+  CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(ComputationNodeNumber,Err)
 
 !  IF (NumberOfComputationNodes .gt. 2)
 !    WRITE(*,'(">>NOTE: ",A)') "It doesn't make any sense to use more than 2 computation nodes for this example?"

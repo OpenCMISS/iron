@@ -49,6 +49,7 @@ MODULE DataProjectionRoutines
   USE BasisAccessRoutines
   USE CmissMPI  
   USE ComputationRoutines
+  USE ComputationAccessRoutines
   USE Constants
   USE CoordinateSystemAccessRoutines
   USE DataPointAccessRoutines
@@ -1364,7 +1365,7 @@ CONTAINS
     INTEGER(INTG), ALLOCATABLE :: globalMPIDisplacements(:),sortingIndices1(:),sortingIndices2(:)
     INTEGER(INTG), ALLOCATABLE :: globalNumberOfProjectedPoints(:)
     INTEGER(INTG) :: MPIClosestDistances,dataProjectionGlobalNumber
-    INTEGER(INTG) :: MPIIError
+    INTEGER(INTG) :: MPIIError,worldCommunicator
     INTEGER(INTG), ALLOCATABLE :: projectedElement(:),projectedLineFace(:),projectionExitTag(:)
     REAL(DP) :: distance
     REAL(DP), ALLOCATABLE :: closestDistances(:,:),globalClosestDistances(:,:)
@@ -1413,10 +1414,9 @@ CONTAINS
     IF(.NOT.ASSOCIATED(domainElements%elements)) CALL FlagError("Domain elements elements is not associated.",err,error,*999)
     
     numberOfDataPoints=dataPoints%numberOfDataPoints
-    myComputationNode=ComputationEnvironment_NodeNumberGet(err,error)
-    IF(err/=0) GOTO 999
-    numberOfWorldComputationNodes=ComputationEnvironment_NumberOfNodesGet(err,error)
-    IF(err/=0) GOTO 999
+    CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfWorldComputationNodes,err,error,*999)
+    CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myComputationNode,err,error,*999)
+    CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
     boundaryProjection=(dataProjection%projectionType==DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE).OR. &
       & (dataProjection%projectionType==DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE)          
     !#########################################################################################################
@@ -1686,7 +1686,7 @@ CONTAINS
       IF(err/=0) CALL FlagError("Could not allocate sorting indices 2.",err,error,*999)          
       !gather and distribute the number of closest elements from all computation nodes
       CALL MPI_ALLGATHER(numberOfClosestCandidates,1,MPI_INTEGER,globalNumberOfClosestCandidates,1,MPI_INTEGER, &
-        & computationEnvironment%mpiWorldCommunicator,MPIIError)
+        & worldCommunicator,MPIIError)
       CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPIIError,err,error,*999)
       !Sum all number of closest candidates from all computation nodes
       totalNumberOfClosestCandidates=SUM(globalNumberOfClosestCandidates,1) 
@@ -1711,7 +1711,7 @@ CONTAINS
       !Share closest element distances between all domains
       CALL MPI_ALLGATHERV(closestDistances(1,1),numberOfClosestCandidates,MPIClosestDistances, &
         & globalClosestDistances,globalNumberOfClosestCandidates,globalMPIDisplacements, &
-        & MPIClosestDistances,computationEnvironment%mpiWorldCommunicator,MPIIError)
+        & MPIClosestDistances,worldCommunicator,MPIIError)
       CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
       reducedNumberOfCLosestCandidates=MIN(dataProjection%numberOfClosestElements,totalNumberOfClosestCandidates)
       projectedDistance(2,:)=myComputationNode
@@ -1818,7 +1818,7 @@ CONTAINS
       END SELECT
       !Find the shortest projected distance in all domains
       CALL MPI_ALLREDUCE(MPI_IN_PLACE,projectedDistance,numberOfDataPoints,MPI_2DOUBLE_PRECISION,MPI_MINLOC, &
-        & computationEnvironment%mpiWorldCommunicator,MPIIError)
+        & worldCommunicator,MPIIError)
       CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPIIError,err,error,*999)
       !Sort the computation node/rank from 0 to number of computation node
       CALL Sorting_BubbleIndexSort(projectedDistance(2,:),sortingIndices2,err,error,*999)
@@ -1836,29 +1836,29 @@ CONTAINS
       !Shares minimum projection information between all domains
       CALL MPI_ALLGATHERV(projectedElement(sortingIndices2(startIdx:finishIdx)),globalNumberOfProjectedPoints( &
         & myComputationNode+1),MPI_INTEGER,projectedElement,globalNumberOfProjectedPoints, &
-        & globalMPIDisplacements,MPI_INTEGER,computationEnvironment%mpiWorldCommunicator,MPIIError) !projectedElement
+        & globalMPIDisplacements,MPI_INTEGER,worldCommunicator,MPIIError) !projectedElement
       CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
       IF(boundaryProjection) THEN
         CALL MPI_ALLGATHERV(projectedLineFace(sortingIndices2(startIdx:finishIdx)),globalNumberOfProjectedPoints( &
           & myComputationNode+1),MPI_INTEGER,projectedLineFace,globalNumberOfProjectedPoints, &
-          & globalMPIDisplacements,MPI_INTEGER,computationEnvironment%mpiWorldCommunicator,MPIIError) !projectedLineFace
+          & globalMPIDisplacements,MPI_INTEGER,worldCommunicator,MPIIError) !projectedLineFace
         CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999) 
       ENDIF
       DO xiIdx=1,dataProjection%numberOfXi
         CALL MPI_ALLGATHERV(projectedXi(xiIdx,sortingIndices2(startIdx:finishIdx)),globalNumberOfProjectedPoints( &
           & myComputationNode+1),MPI_DOUBLE_PRECISION,projectedXi(xiIdx,:),globalNumberOfProjectedPoints, &
-          & globalMPIDisplacements,MPI_DOUBLE_PRECISION,computationEnvironment%mpiWorldCommunicator,MPIIError) !projectedXi
+          & globalMPIDisplacements,MPI_DOUBLE_PRECISION,worldCommunicator,MPIIError) !projectedXi
         CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
       ENDDO !xiIdx
       CALL MPI_ALLGATHERV(projectionExitTag(sortingIndices2(startIdx:finishIdx)),globalNumberOfProjectedPoints( &
         & myComputationNode+1),MPI_INTEGER,projectionExitTag,globalNumberOfProjectedPoints, &
-        & globalMPIDisplacements,MPI_INTEGER,computationEnvironment%mpiWorldCommunicator,MPIIError) !projectionExitTag
+        & globalMPIDisplacements,MPI_INTEGER,worldCommunicator,MPIIError) !projectionExitTag
       CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
       DO xiIdx=1,dataProjection%numberOfCoordinates
         CALL MPI_ALLGATHERV(projectionVectors(xiIdx, sortingIndices2(startIdx:finishIdx)), &
           & globalNumberOfProjectedPoints(myComputationNode+1),MPI_DOUBLE_PRECISION,projectionVectors(xiIdx,:), &
-          & globalNumberOfProjectedPoints,globalMPIDisplacements,MPI_DOUBLE_PRECISION,computationEnvironment% &
-          & mpiWorldCommunicator,MPIIError)  !projectionVectors
+          & globalNumberOfProjectedPoints,globalMPIDisplacements,MPI_DOUBLE_PRECISION,worldCommunicator, &
+          & MPIIError)  !projectionVectors
         CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
       ENDDO
       !Assign projection information to projected points
@@ -4727,10 +4727,8 @@ CONTAINS
     CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
     NULLIFY(domainElements)
     CALL DomainTopology_ElementsGet(domainTopology,domainElements,err,error,*999)
-    numberOfWorldComputationNodes=ComputationEnvironment_NumberOfNodesGet(err,error)
-    IF(err/=0) GOTO 999
-    myWorldComputationNodeNumber=ComputationEnvironment_NodeNumberGet(err,error)
-    IF(err/=0) GOTO 999
+    CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfWorldComputationNodes,err,error,*999)
+    CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
     !Find the correct output ID and open a file if necessary
     filenameLength=LEN_TRIM(filename)
     IF(filenameLength>=1) THEN

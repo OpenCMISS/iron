@@ -49,6 +49,7 @@ MODULE MESH_ROUTINES
   USE CmissMPI
   USE CMISS_PARMETIS
   USE ComputationRoutines
+  USE ComputationAccessRoutines
   USE COORDINATE_ROUTINES
   USE DataProjectionAccessRoutines
   USE DOMAIN_MAPPINGS
@@ -602,6 +603,7 @@ CONTAINS
       & RECEIVE_COUNTS(:)
     INTEGER(INTG) :: ELEMENT_WEIGHT(1),WEIGHT_FLAG,NUMBER_FLAG,NUMBER_OF_CONSTRAINTS, &
       & NUMBER_OF_COMMON_NODES,PARMETIS_OPTIONS(0:2)
+    INTEGER(INTG) :: worldCommunicator
     !ParMETIS now has double for these
     !REAL(SP) :: UBVEC(1)
     !REAL(SP), ALLOCATABLE :: TPWGTS(:)
@@ -620,11 +622,10 @@ CONTAINS
         IF(ASSOCIATED(MESH%TOPOLOGY)) THEN
 
           component_idx=DECOMPOSITION%MESH_COMPONENT_NUMBER
-          
-          number_computation_nodes=ComputationEnvironment_NumberOfNodesGet(ERR,ERROR)
-          IF(ERR/=0) GOTO 999
-          my_computation_node_number=ComputationEnvironment_NodeNumberGet(ERR,ERROR)
-          IF(ERR/=0) GOTO 999
+
+          CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
+          CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,number_computation_nodes,err,error,*999)
+          CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,my_computation_node_number,err,error,*999)
           
           SELECT CASE(DECOMPOSITION%DECOMPOSITION_TYPE)
           CASE(DECOMPOSITION_ALL_TYPE)
@@ -634,10 +635,7 @@ CONTAINS
 
             IF(DECOMPOSITION%NUMBER_OF_DOMAINS==1) THEN
               DECOMPOSITION%ELEMENT_DOMAIN=0
-            ELSE
-              number_computation_nodes=ComputationEnvironment_NumberOfNodesGet(ERR,ERROR)
-              IF(ERR/=0) GOTO 999
-              
+            ELSE              
               NUMBER_ELEMENTS_PER_NODE=REAL(MESH%NUMBER_OF_ELEMENTS,DP)/REAL(number_computation_nodes,DP)
               ELEMENT_START=1
               ELEMENT_STOP=0
@@ -702,7 +700,7 @@ CONTAINS
               !Set up ParMETIS variables
               WEIGHT_FLAG=0 !No weights
               ELEMENT_WEIGHT(1)=1 !Isn't used due to weight flag
-              NUMBER_FLAG=0 !C Numbering as there is a bug with Fortran numbering
+              NUMBER_FLAG=0 !C Numbering as there is a bug with Fortran numbering              
               NUMBER_OF_CONSTRAINTS=1
               IF(minNumberXi==1) THEN
                 NUMBER_OF_COMMON_NODES=1
@@ -722,13 +720,13 @@ CONTAINS
               CALL PARMETIS_PARTMESHKWAY(ELEMENT_DISTANCE,ELEMENT_PTR,ELEMENT_INDICIES,ELEMENT_WEIGHT,WEIGHT_FLAG,NUMBER_FLAG, &
                 & NUMBER_OF_CONSTRAINTS,NUMBER_OF_COMMON_NODES,DECOMPOSITION%NUMBER_OF_DOMAINS,TPWGTS,UBVEC,PARMETIS_OPTIONS, &
                 & DECOMPOSITION%NUMBER_OF_EDGES_CUT,DECOMPOSITION%ELEMENT_DOMAIN(DISPLACEMENTS(my_computation_node_number)+1:), &
-                & computationEnvironment%mpiWorldCommunicator,ERR,ERROR,*999)
+                & worldCommunicator,ERR,ERROR,*999)
               
               !Transfer all the element domain information to the other computation nodes so that each rank has all the info
               IF(number_computation_nodes>1) THEN
                 !This should work on a single processor but doesn't for mpich2 under windows. Maybe a bug? Avoid for now.
                 CALL MPI_ALLGATHERV(MPI_IN_PLACE,MAX_NUMBER_ELEMENTS_PER_NODE,MPI_INTEGER,DECOMPOSITION%ELEMENT_DOMAIN, &
-                  & RECEIVE_COUNTS,DISPLACEMENTS,MPI_INTEGER,computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+                  & RECEIVE_COUNTS,DISPLACEMENTS,MPI_INTEGER,worldCommunicator,MPI_IERROR)
                 CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPI_IERROR,ERR,ERROR,*999)
               ENDIF
               
@@ -920,8 +918,8 @@ CONTAINS
           MESH_TOPOLOGY=>MESH%TOPOLOGY(DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR
           IF(ASSOCIATED(MESH_TOPOLOGY)) THEN
             IF(GLOBAL_ELEMENT_NUMBER>0.AND.GLOBAL_ELEMENT_NUMBER<=MESH_TOPOLOGY%ELEMENTS%NUMBER_OF_ELEMENTS) THEN
-              number_computation_nodes=ComputationEnvironment_NumberOfNodesGet(ERR,ERROR)
-              IF(ERR/=0) GOTO 999
+              CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,number_computation_nodes, &
+                & err,error,*999)
               IF(DOMAIN_NUMBER>=0.AND.DOMAIN_NUMBER<number_computation_nodes) THEN
                 DECOMPOSITION%ELEMENT_DOMAIN(GLOBAL_ELEMENT_NUMBER)=DOMAIN_NUMBER
               ELSE
@@ -1184,8 +1182,8 @@ CONTAINS
             !wolfye???<=?
             IF(NUMBER_OF_DOMAINS<=DECOMPOSITION%numberOfElements) THEN
               !Get the number of computation nodes
-              numberOfWorldComputationNodes=ComputationEnvironment_NumberOfNodesGet(ERR,ERROR)
-              IF(ERR/=0) GOTO 999
+              CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfWorldComputationNodes, &
+                & err,error,*999)
               !!TODO: relax this later
               !IF(NUMBER_OF_DOMAINS==numberOfWorldComputationNodes) THEN
                 DECOMPOSITION%NUMBER_OF_DOMAINS=NUMBER_OF_DOMAINS             
@@ -1274,7 +1272,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: localElement,globalElement,dataPointIdx,localData,meshComponentNumber
+    INTEGER(INTG) :: localElement,globalElement,dataPointIdx,localData,meshComponentNumber,worldCommunicator
     INTEGER(INTG) :: INSERT_STATUS,MPI_IERROR,NUMBER_OF_COMPUTATION_NODES,myWorldComputationNodeNumber,NUMBER_OF_GHOST_DATA, &
       & NUMBER_OF_LOCAL_DATA
     TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
@@ -1290,17 +1288,18 @@ CONTAINS
       IF(ASSOCIATED(decompositionData)) THEN
         decomposition=>decompositionData%DECOMPOSITION
         IF(ASSOCIATED(decomposition)) THEN
-         decompositionElements=>TOPOLOGY%ELEMENTS
-         IF(ASSOCIATED(decompositionElements)) THEN
-           elementsMapping=>decomposition%DOMAIN(decomposition%MESH_COMPONENT_NUMBER)%PTR%MAPPINGS%ELEMENTS
-           IF(ASSOCIATED(elementsMapping)) THEN
+          CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
+          decompositionElements=>TOPOLOGY%ELEMENTS
+          IF(ASSOCIATED(decompositionElements)) THEN
+            elementsMapping=>decomposition%DOMAIN(decomposition%MESH_COMPONENT_NUMBER)%PTR%MAPPINGS%ELEMENTS
+            IF(ASSOCIATED(elementsMapping)) THEN
               meshComponentNumber=decomposition%MESH_COMPONENT_NUMBER
               meshData=>decomposition%MESH%TOPOLOGY(meshComponentNumber)%PTR%dataPoints
               IF(ASSOCIATED(meshData)) THEN
-                NUMBER_OF_COMPUTATION_NODES=ComputationEnvironment_NumberOfNodesGet(ERR,ERROR)
-                IF(ERR/=0) GOTO 999
-                myWorldComputationNodeNumber=ComputationEnvironment_NodeNumberGet(ERR,ERROR)
-                IF(ERR/=0) GOTO 999
+                CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,NUMBER_OF_COMPUTATION_NODES, &
+                  & err,error,*999)
+                CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber, &
+                  & err,error,*999)
                 ALLOCATE(decompositionData%numberOfDomainLocal(0:NUMBER_OF_COMPUTATION_NODES-1),STAT=ERR)
                 ALLOCATE(decompositionData%numberOfDomainGhost(0:NUMBER_OF_COMPUTATION_NODES-1),STAT=ERR)
                 ALLOCATE(decompositionData%numberOfElementDataPoints(decompositionElements%NUMBER_OF_GLOBAL_ELEMENTS),STAT=ERR)
@@ -1345,11 +1344,11 @@ CONTAINS
                 NUMBER_OF_GHOST_DATA=decompositionData%totalNumberOfDataPoints-decompositionData%numberOfDataPoints
                 !Gather number of local data points on all computation nodes
                 CALL MPI_ALLGATHER(NUMBER_OF_LOCAL_DATA,1,MPI_INTEGER,decompositionData% &
-                  & numberOfDomainLocal,1,MPI_INTEGER,computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+                  & numberOfDomainLocal,1,MPI_INTEGER,worldCommunicator,MPI_IERROR)
                 CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPI_IERROR,ERR,ERROR,*999)
                 !Gather number of ghost data points on all computation nodes
                 CALL MPI_ALLGATHER(NUMBER_OF_GHOST_DATA,1,MPI_INTEGER,decompositionData% &
-                  & numberOfDomainGhost,1,MPI_INTEGER,computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+                  & numberOfDomainGhost,1,MPI_INTEGER,worldCommunicator,MPI_IERROR)
                 CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPI_IERROR,ERR,ERROR,*999)
               ELSE
                 CALL FlagError("Mesh data points topology is not associated.",ERR,ERROR,*999)
@@ -1374,6 +1373,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("DecompositionTopology_DataPointsCalculate",ERR,ERROR)
     RETURN 1
+    
   END SUBROUTINE DecompositionTopology_DataPointsCalculate
 
   !
@@ -4071,10 +4071,11 @@ CONTAINS
             IF(ASSOCIATED(DOMAIN%MESH)) THEN
               MESH=>DOMAIN%MESH
               component_idx=DOMAIN%MESH_COMPONENT_NUMBER
-              myWorldComputationNodeNumber=ComputationEnvironment_NodeNumberGet(ERR,ERROR)
-              IF(ERR/=0) GOTO 999        
               
-              !Calculate the local and global numbers and set up the mappings
+              CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber, &
+                & err,error,*999)
+              
+              !Calculate the local and global numbers and set up the mappings                           
               ALLOCATE(ELEMENTS_MAPPING%GLOBAL_TO_LOCAL_MAP(MESH%NUMBER_OF_ELEMENTS),STAT=ERR)
               IF(ERR/=0) CALL FlagError("Could not allocate element mapping global to local map.",ERR,ERROR,*999)
               ELEMENTS_MAPPING%NUMBER_OF_GLOBAL=MESH%TOPOLOGY(component_idx)%PTR%ELEMENTS%NUMBER_OF_ELEMENTS
@@ -4440,12 +4441,12 @@ CONTAINS
                   MESH=>DOMAIN%MESH
                   component_idx=DOMAIN%MESH_COMPONENT_NUMBER
                   MESH_TOPOLOGY=>MESH%TOPOLOGY(component_idx)%PTR
-                  
-                  numberOfWorldComputationNodes=ComputationEnvironment_NumberOfNodesGet(ERR,ERROR)
-                  IF(ERR/=0) GOTO 999
-                  myWorldComputationNodeNumber=ComputationEnvironment_NodeNumberGet(ERR,ERROR)
-                  IF(ERR/=0) GOTO 999
-                  
+
+                  CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfWorldComputationNodes, &
+                    & err,error,*999)
+                  CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber, &
+                    & err,error,*999)
+                   
                   !Calculate the local and global numbers and set up the mappings
                   ALLOCATE(NODES_MAPPING%GLOBAL_TO_LOCAL_MAP(MESH_TOPOLOGY%NODES%numberOfNodes),STAT=ERR)
                   IF(ERR/=0) CALL FlagError("Could not allocate node mapping global to local map.",ERR,ERROR,*999)
@@ -9791,11 +9792,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: meshComponentNumber,meshNumber
-    LOGICAL :: nodeExists
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(MeshComponentTopologyType), POINTER :: meshComponentTopology
-    TYPE(VARYING_STRING) :: localError
+    INTEGER(INTG) :: meshNumber
 
     ENTERS("MeshTopology_NodeOnBoundaryGet",err,error,*999)
 

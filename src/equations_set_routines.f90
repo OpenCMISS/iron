@@ -51,6 +51,7 @@ MODULE EQUATIONS_SET_ROUTINES
   USE CLASSICAL_FIELD_ROUTINES
   USE CmissMPI
   USE ComputationRoutines
+  USE ComputationAccessRoutines
   USE Constants
   USE COORDINATE_ROUTINES
   USE DISTRIBUTED_MATRIX_VECTOR
@@ -6320,9 +6321,9 @@ CONTAINS
     NULLIFY(PREV_LOADS)
     NULLIFY(CURRENT_LOADS)
 
-    myWorldComputationNodeNumber=ComputationEnvironment_NodeNumberGet(err,error)
+    CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
     
-    !Take the stored load, scale it down appropriately then apply to the unknown variables
+    !Take the stored load, scale it down appropriately then apply to the unknown variables    
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(DIAGNOSTICS1) THEN
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  equations set",EQUATIONS_SET%USER_NUMBER,err,error,*999)

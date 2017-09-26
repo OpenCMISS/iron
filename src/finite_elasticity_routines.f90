@@ -48,6 +48,7 @@ MODULE FINITE_ELASTICITY_ROUTINES
   USE BASIS_ROUTINES
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE ComputationRoutines
+  USE ComputationAccessRoutines
   USE Constants
   USE CONTROL_LOOP_ROUTINES
   USE ControlLoopAccessRoutines
@@ -152,7 +153,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local variables
     INTEGER(INTG) :: node_idx,component_idx,deriv_idx,variable_idx,dim_idx,local_ny,variable_type
-    INTEGER(INTG) :: NUMBER_OF_DIMENSIONS,user_node,global_node,local_node
+    INTEGER(INTG) :: NUMBER_OF_DIMENSIONS,user_node,global_node,local_node,worldCommunicator
     REAL(DP) :: X(3),DEFORMED_X(3),P
     REAL(DP), POINTER :: GEOMETRIC_PARAMETERS(:)
     TYPE(DOMAIN_TYPE), POINTER :: DOMAIN,DOMAIN_PRESSURE
@@ -175,7 +176,8 @@ CONTAINS
 
     ENTERS("FiniteElasticity_BoundaryConditionsAnalyticCalculate",err,error,*999)
 
-    myWorldComputationNodeNumber=ComputationEnvironment_NodeNumberGet(err,error)
+    CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
+    CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
@@ -303,8 +305,8 @@ CONTAINS
                         ENDIF
                       ENDDO
                       !Check it went well
-                      CALL MPI_REDUCE(X_FIXED,X_OKAY,1,MPI_LOGICAL,MPI_LOR,0,computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
-                      CALL MPI_REDUCE(Y_FIXED,Y_OKAY,1,MPI_LOGICAL,MPI_LOR,0,computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+                      CALL MPI_REDUCE(X_FIXED,X_OKAY,1,MPI_LOGICAL,MPI_LOR,0,worldCommunicator,MPI_IERROR)
+                      CALL MPI_REDUCE(Y_FIXED,Y_OKAY,1,MPI_LOGICAL,MPI_LOR,0,worldCommunicator,MPI_IERROR)
                       IF(myWorldComputationNodeNumber==0) THEN
                         IF(.NOT.(X_OKAY.AND.Y_OKAY)) THEN
                           CALL FlagError("Could not fix nodes to prevent rigid body motion",err,error,*999)

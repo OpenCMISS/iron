@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s): Chris Bradley
+!> Contributor(s): Ting Yu, Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -48,6 +48,7 @@ MODULE BOUNDARY_CONDITIONS_ROUTINES
   USE BASIS_ROUTINES
   USE CmissMPI
   USE ComputationRoutines
+  USE ComputationAccessRoutines
   USE CONSTANTS
   USE COORDINATE_ROUTINES
   USE DISTRIBUTED_MATRIX_VECTOR
@@ -192,7 +193,7 @@ CONTAINS
     INTEGER(INTG) :: MPI_IERROR,SEND_COUNT,STORAGE_TYPE, NUMBER_OF_NON_ZEROS, NUMBER_OF_ROWS,COUNT
     INTEGER(INTG) :: variable_idx,dof_idx, equ_matrix_idx, dirichlet_idx, row_idx, DUMMY, LAST, DIRICHLET_DOF
     INTEGER(INTG) :: col_idx,equations_set_idx,parameterSetIdx
-    INTEGER(INTG) :: pressureIdx,neumannIdx
+    INTEGER(INTG) :: pressureIdx,neumannIdx,numberOfWorldComputationNodes,myWorldComputationNodeNumber,worldCommunicator
     INTEGER(INTG), POINTER :: ROW_INDICES(:), COLUMN_INDICES(:)
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITION_VARIABLE
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: VARIABLE_DOMAIN_MAPPING
@@ -222,7 +223,10 @@ CONTAINS
         CALL FlagError("Boundary conditions have already been finished.",ERR,ERROR,*999)
       ELSE
         IF(ALLOCATED(BOUNDARY_CONDITIONS%BOUNDARY_CONDITIONS_VARIABLES)) THEN
-          IF(computationEnvironment%numberOfWorldComputationNodes>0) THEN
+          CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfWorldComputationNodes,err,error,*999)
+          CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
+          CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
+          IF(numberOfWorldComputationNodes>0) THEN
             !Transfer all the boundary conditions to all the computation nodes.
             !\todo Look at this.
             DO variable_idx=1,BOUNDARY_CONDITIONS%NUMBER_OF_BOUNDARY_CONDITIONS_VARIABLES
@@ -236,10 +240,10 @@ CONTAINS
                     !\todo This operation is a little expensive as we are doing an unnecessary sum across all the ranks in order to combin
                     !\todo the data from each rank into all ranks. We will see how this goes for now.
                     CALL MPI_ALLREDUCE(MPI_IN_PLACE,BOUNDARY_CONDITION_VARIABLE%DOF_TYPES, &
-                      & SEND_COUNT,MPI_INTEGER,MPI_SUM,computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+                      & SEND_COUNT,MPI_INTEGER,MPI_SUM,worldCommunicator,MPI_IERROR)
                     CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                     CALL MPI_ALLREDUCE(MPI_IN_PLACE,BOUNDARY_CONDITION_VARIABLE%CONDITION_TYPES, &
-                      & SEND_COUNT,MPI_INTEGER,MPI_SUM,computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+                      & SEND_COUNT,MPI_INTEGER,MPI_SUM,worldCommunicator,MPI_IERROR)
                     CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                   ELSE
                     LOCAL_ERROR="Field variable domain mapping is not associated for variable type "// &
@@ -249,10 +253,10 @@ CONTAINS
 
                   ! Update the total number of boundary condition types by summing across all nodes
                   CALL MPI_ALLREDUCE(MPI_IN_PLACE,BOUNDARY_CONDITION_VARIABLE%DOF_COUNTS, &
-                    & MAX_BOUNDARY_CONDITION_NUMBER,MPI_INTEGER,MPI_SUM,computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+                    & MAX_BOUNDARY_CONDITION_NUMBER,MPI_INTEGER,MPI_SUM,worldCommunicator,MPI_IERROR)
                   CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                   CALL MPI_ALLREDUCE(MPI_IN_PLACE,BOUNDARY_CONDITION_VARIABLE%NUMBER_OF_DIRICHLET_CONDITIONS, &
-                    & 1,MPI_INTEGER,MPI_SUM,computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+                    & 1,MPI_INTEGER,MPI_SUM,worldCommunicator,MPI_IERROR)
                   CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
 
                   ! Check that the boundary conditions set are appropriate for equations sets
@@ -260,7 +264,7 @@ CONTAINS
 
                   !Make sure the required parameter sets are created on all computation nodes and begin updating them
                   CALL MPI_ALLREDUCE(MPI_IN_PLACE,BOUNDARY_CONDITION_VARIABLE%parameterSetRequired, &
-                    & FIELD_NUMBER_OF_SET_TYPES,MPI_LOGICAL,MPI_LOR,computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+                    & FIELD_NUMBER_OF_SET_TYPES,MPI_LOGICAL,MPI_LOR,worldCommunicator,MPI_IERROR)
                   CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                   DO parameterSetIdx=1,FIELD_NUMBER_OF_SET_TYPES
                     IF(BOUNDARY_CONDITION_VARIABLE%parameterSetRequired(parameterSetIdx)) THEN
@@ -1141,7 +1145,7 @@ CONTAINS
     
     ENTERS("BOUNDARY_CONDITIONS_ADD_LOCAL_DOF1",ERR,ERROR,*999)
 
-    CALL BOUNDARY_CONDITIONS_ADD_LOCAL_DOFS(BOUNDARY_CONDITIONS,FIELD,VARIABLE_TYPE,(/DOF_INDEX/),(/CONDITION/),(/VALUE/), &
+    CALL BOUNDARY_CONDITIONS_ADD_LOCAL_DOFS(BOUNDARY_CONDITIONS,FIELD,VARIABLE_TYPE,[DOF_INDEX],[CONDITION],[VALUE], &
         & ERR,ERROR,*999)
 
     EXITS("BOUNDARY_CONDITIONS_ADD_LOCAL_DOF1")
@@ -1335,7 +1339,7 @@ CONTAINS
 
     ENTERS("BOUNDARY_CONDITIONS_SET_LOCAL_DOF1",ERR,ERROR,*999)
 
-    CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOFS(BOUNDARY_CONDITIONS,FIELD,VARIABLE_TYPE,(/DOF_INDEX/),(/CONDITION/),(/VALUE/), &
+    CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOFS(BOUNDARY_CONDITIONS,FIELD,VARIABLE_TYPE,[DOF_INDEX],[CONDITION],[VALUE], &
       & ERR,ERROR,*999)
 
     EXITS("BOUNDARY_CONDITIONS_SET_LOCAL_DOF1")
@@ -2420,7 +2424,7 @@ CONTAINS
         !Set up vector of Neumann point values
         CALL DISTRIBUTED_VECTOR_CREATE_START(pointDofMapping,boundaryConditionsNeumann%pointValues,err,error,*999)
         CALL DISTRIBUTED_VECTOR_CREATE_FINISH(boundaryConditionsNeumann%pointValues,err,error,*999)
-        myWorldComputationNodeNumber=ComputationEnvironment_NodeNumberGet(err,error)
+        CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
         !Set point values vector from boundary conditions field parameter set
         DO neumannIdx=1,numberOfPointDofs
           globalDof=boundaryConditionsNeumann%setDofs(neumannIdx)
@@ -2592,7 +2596,7 @@ CONTAINS
 
       numberOfNeumann=rhsBoundaryConditions%DOF_COUNTS(BOUNDARY_CONDITION_NEUMANN_POINT) + &
         & rhsBoundaryConditions%DOF_COUNTS(BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED)
-      myWorldComputationNodeNumber=ComputationEnvironment_NodeNumberGet(err,error)
+      CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
 
       ! Initialise field interpolation parameters for the geometric field, which are required for the
       ! face/line Jacobian and scale factors

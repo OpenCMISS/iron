@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Caton Little
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -51,6 +51,7 @@ MODULE FIELDML_INPUT_ROUTINES
   USE CMISS
   USE CONSTANTS
   USE ComputationRoutines
+  USE ComputationAccessRoutines
   USE COORDINATE_ROUTINES
   USE FIELD_ROUTINES
   USE FIELDML_API
@@ -1312,7 +1313,7 @@ CONTAINS
         !Default to version 1 of each node derivative (value hardcoded in loop)
         VERSION_NUMBER = 1
 
-        myWorldComputationNodeNumber = ComputationEnvironment_NodeNumberGet(err,error)
+        CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
         CALL DECOMPOSITION_MESH_COMPONENT_NUMBER_GET(FIELD%DECOMPOSITION,meshComponentNumber,err,error,*999)
         CALL DECOMPOSITION_NODE_DOMAIN_GET(FIELD%DECOMPOSITION,NODE_NUMBER,meshComponentNumber,nodeDomain,err,error,*999)
         IF(nodeDomain==myWorldComputationNodeNumber) THEN

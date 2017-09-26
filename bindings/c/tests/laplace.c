@@ -127,8 +127,8 @@ int main()
   CHECK_ERROR("Initialising OpenCMISS-Iron");
   Err = cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR);
 
-  Err = cmfe_ComputationNumberOfNodesGet(&NumberOfComputationNodes);
-  Err = cmfe_ComputationNodeNumberGet(&ComputationNodeNumber);
+  Err = cmfe_ComputationEnvironment_NumberOfWorldNodesGet(&NumberOfComputationNodes);
+  Err = cmfe_ComputationEnvironment_WorldNodeNumberGet(&ComputationNodeNumber);
 
   /* Start the creation of a new RC coordinate system */
   Err = cmfe_CoordinateSystem_Initialise(&CoordinateSystem);

@@ -47,6 +47,7 @@ MODULE ANALYTIC_ANALYSIS_ROUTINES
   USE BASIS_ROUTINES
   USE CmissMPI
   USE ComputationRoutines
+  USE ComputationAccessRoutines
   USE CONSTANTS
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
@@ -107,7 +108,7 @@ MODULE ANALYTIC_ANALYSIS_ROUTINES
 CONTAINS  
 
   !
-  !================================================================================================================================
+  !=================================================================================================================================
   !  
 
   !>Output the analytic error analysis for a dependent field compared to the analytic values parameter set. \see OPENCMISS::CMISSAnalyticAnalytisOutput
@@ -120,7 +121,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     INTEGER(INTG) :: component_idx,deriv_idx,element_idx,GHOST_NUMBER(8),local_ny,MESH_COMPONENT,MPI_IERROR,node_idx, &
-      & NUMBER(8),OUTPUT_ID,var_idx,variable_type
+      & NUMBER(8),OUTPUT_ID,var_idx,variable_type,numberOfWorldComputationNodes,myWorldComputationNodeNumber,worldCommunicator
     REAL(DP) :: GHOST_RMS_ERROR_PER(8),GHOST_RMS_ERROR_ABS(8),GHOST_RMS_ERROR_REL(8),RMS_ERROR_PER(8),RMS_ERROR_ABS(8), &
       & RMS_ERROR_REL(8),VALUES(5)
     REAL(DP), POINTER :: ANALYTIC_VALUES(:),NUMERICAL_VALUES(:)
@@ -145,24 +146,26 @@ CONTAINS
     IF(ASSOCIATED(FIELD)) THEN
       IF(FIELD%FIELD_FINISHED) THEN
         IF(FIELD%DEPENDENT_TYPE==FIELD_DEPENDENT_TYPE) THEN
-          IF(LEN_TRIM(FILENAME)>=1) THEN
-!!TODO \todo have more general ascii file mechanism
-            IF(computationEnvironment%numberOfWorldComputationNodes>1) THEN
-              WRITE(FILE_NAME,'(A,".opanal.",I0)') FILENAME(1:LEN_TRIM(FILENAME)),computationEnvironment% &
-                & myWorldComputationNodeNumber
-            ELSE
-              FILE_NAME=FILENAME(1:LEN_TRIM(FILENAME))//".opanal"
-            ENDIF
-            OUTPUT_ID=IO1_FILE_UNIT
-            OPEN(UNIT=OUTPUT_ID,FILE=FILE_NAME(1:LEN_TRIM(FILE_NAME)),STATUS="REPLACE",FORM="FORMATTED",IOSTAT=ERR)
-            IF(ERR/=0) CALL FlagError("Error opening analysis output file.",ERR,ERROR,*999)            
-          ELSE
-            OUTPUT_ID=GENERAL_OUTPUT_TYPE
-          ENDIF
           DECOMPOSITION=>FIELD%DECOMPOSITION
           IF(ASSOCIATED(DECOMPOSITION)) THEN
+            CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfWorldComputationNodes,err,error,*999)
+            CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
+            CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
             DECOMPOSITION_TOPOLOGY=>DECOMPOSITION%TOPOLOGY
             IF(ASSOCIATED(DECOMPOSITION_TOPOLOGY)) THEN
+              IF(LEN_TRIM(FILENAME)>=1) THEN
+!!TODO \todo have more general ascii file mechanism
+                IF(numberOfWorldComputationNodes>1) THEN
+                  WRITE(FILE_NAME,'(A,".opanal.",I0)') FILENAME(1:LEN_TRIM(FILENAME)),myWorldComputationNodeNumber
+                ELSE
+                  FILE_NAME=FILENAME(1:LEN_TRIM(FILENAME))//".opanal"
+                ENDIF
+                OUTPUT_ID=IO1_FILE_UNIT
+                OPEN(UNIT=OUTPUT_ID,FILE=FILE_NAME(1:LEN_TRIM(FILE_NAME)),STATUS="REPLACE",FORM="FORMATTED",IOSTAT=ERR)
+                IF(ERR/=0) CALL FlagError("Error opening analysis output file.",ERR,ERROR,*999)            
+              ELSE
+                OUTPUT_ID=GENERAL_OUTPUT_TYPE
+              ENDIF
               CALL WRITE_STRING(OUTPUT_ID,"Analytic error analysis:",ERR,ERROR,*999)
               CALL WRITE_STRING(OUTPUT_ID,"",ERR,ERROR,*999)
               LOCAL_STRING="Field "//TRIM(NUMBER_TO_VSTRING(FIELD%USER_NUMBER,"*",ERR,ERROR))//" : "//FIELD%LABEL
@@ -270,7 +273,7 @@ CONTAINS
                                   !Output RMS errors                  
                                   CALL WRITE_STRING(OUTPUT_ID,"",ERR,ERROR,*999)
                                   IF(NUMBER(1)>0) THEN
-                                    IF(computationEnvironment%numberOfWorldComputationNodes>1) THEN
+                                    IF(numberOfWorldComputationNodes>1) THEN
                                       !Local elements only
                                       CALL WRITE_STRING(OUTPUT_ID,"Local RMS errors:",ERR,ERROR,*999)
                                       LOCAL_STRING= &
@@ -293,17 +296,16 @@ CONTAINS
                                         & ERR,ERROR,*999)
                                       !Global RMS values
                                       !Collect the values across the ranks
-                                      CALL MPI_ALLREDUCE(MPI_IN_PLACE,NUMBER,1,MPI_INTEGER,MPI_SUM, &
-                                        & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+                                      CALL MPI_ALLREDUCE(MPI_IN_PLACE,NUMBER,1,MPI_INTEGER,MPI_SUM,worldCommunicator,MPI_IERROR)
                                       CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                                       CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR_PER,1,MPI_DOUBLE_PRECISION,MPI_SUM, &
-                                        & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+                                        & worldCommunicator,MPI_IERROR)
                                       CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                                       CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR_ABS,1,MPI_DOUBLE_PRECISION,MPI_SUM, &
-                                        & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+                                        & worldCommunicator,MPI_IERROR)
                                       CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                                       CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR_REL,1,MPI_DOUBLE_PRECISION,MPI_SUM, &
-                                        & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+                                        & worldCommunicator,MPI_IERROR)
                                       CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                                       CALL WRITE_STRING(OUTPUT_ID,"Global RMS errors:",ERR,ERROR,*999)
                                       LOCAL_STRING= &
@@ -400,7 +402,7 @@ CONTAINS
                             ENDDO !node_idx
                             !Output RMS errors                  
                             CALL WRITE_STRING(OUTPUT_ID,"",ERR,ERROR,*999)
-                            IF(computationEnvironment%numberOfWorldComputationNodes>1) THEN
+                            IF(numberOfWorldComputationNodes>1) THEN
                               IF(ANY(NUMBER>0)) THEN
                                 !Local nodes only
                                 CALL WRITE_STRING(OUTPUT_ID,"Local RMS errors:",ERR,ERROR,*999)
@@ -437,17 +439,16 @@ CONTAINS
                                 ENDDO !deriv_idx
                                 !Global RMS values
                                 !Collect the values across the ranks
-                                CALL MPI_ALLREDUCE(MPI_IN_PLACE,NUMBER,8,MPI_INTEGER,MPI_SUM, &
-                                  & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+                                CALL MPI_ALLREDUCE(MPI_IN_PLACE,NUMBER,8,MPI_INTEGER,MPI_SUM,worldCommunicator,MPI_IERROR)
                                 CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                                 CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR_PER,8,MPI_DOUBLE_PRECISION,MPI_SUM, &
-                                  & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+                                  & worldCommunicator,MPI_IERROR)
                                 CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                                 CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR_ABS,8,MPI_DOUBLE_PRECISION,MPI_SUM, &
-                                  & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+                                  & worldCommunicator,MPI_IERROR)
                                 CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                                 CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR_REL,8,MPI_DOUBLE_PRECISION,MPI_SUM, &
-                                  & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+                                  & worldCommunicator,MPI_IERROR)
                                 CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                                 CALL WRITE_STRING(OUTPUT_ID,"Global RMS errors:",ERR,ERROR,*999)
                                 LOCAL_STRING= &
@@ -517,7 +518,7 @@ CONTAINS
                   ALLOCATE(GHOST_INTEGRAL_ERRORS(6,FIELD_VARIABLE%NUMBER_OF_COMPONENTS),STAT=ERR)
                   IF(ERR/=0) CALL FlagError("Could not allocate ghost integral errors.",ERR,ERROR,*999)
                   CALL ANALYTIC_ANALYSIS_INTEGRAL_ERRORS(FIELD_VARIABLE,INTEGRAL_ERRORS,GHOST_INTEGRAL_ERRORS,ERR,ERROR,*999)
-                  IF(computationEnvironment%numberOfWorldComputationNodes>1) THEN
+                  IF(numberOfWorldComputationNodes>1) THEN
                     CALL WRITE_STRING(OUTPUT_ID,"Local Integral errors:",ERR,ERROR,*999)
                     LOCAL_STRING="Component#             Numerical      Analytic       % error  Absolute err  Relative err"
                     CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
@@ -590,7 +591,7 @@ CONTAINS
                     ENDDO !component_idx
                     !Collect the values across the ranks
                     CALL MPI_ALLREDUCE(MPI_IN_PLACE,INTEGRAL_ERRORS,6*FIELD_VARIABLE%NUMBER_OF_COMPONENTS,MPI_DOUBLE_PRECISION, &
-                      & MPI_SUM,computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+                      & MPI_SUM,worldCommunicator,MPI_IERROR)
                     CALL WRITE_STRING(OUTPUT_ID,"Global Integral errors:",ERR,ERROR,*999)
                     LOCAL_STRING="Component#             Numerical      Analytic       % error  Absolute err  Relative err"
                     CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
@@ -1648,7 +1649,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     REAL(DP) :: ERROR_VALUE
-    INTEGER(INTG) :: GHOST_NUMBER(8),NUMBER(8),MPI_IERROR
+    INTEGER(INTG) :: GHOST_NUMBER(8),NUMBER(8),MPI_IERROR,numberOfWorldComputationNodes,myWorldComputationNodeNumber, &
+      & worldCommunicator
     REAL(DP) :: RMS_ERROR(8),GHOST_RMS_ERROR(8)
     TYPE(DOMAIN_NODES_TYPE), POINTER :: NODES_DOMAIN
     INTEGER(INTG) :: node_idx,deriv_idx
@@ -1656,6 +1658,9 @@ CONTAINS
     ENTERS("AnalyticAnalysis_RMSErrorGetNode",ERR,ERROR,*999)
 
     IF(ASSOCIATED(FIELD)) THEN
+      CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfWorldComputationNodes,err,error,*999)
+      CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
+      CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
       NODES_DOMAIN=>FIELD%VARIABLE_TYPE_MAP(VARIABLE_TYPE)%PTR%COMPONENTS(COMPONENT_NUMBER)%DOMAIN%TOPOLOGY%NODES
       IF(ASSOCIATED(NODES_DOMAIN)) THEN
         NUMBER=0
@@ -1709,7 +1714,7 @@ CONTAINS
           ENDDO !deriv_idx
         ENDDO !node_idx
 
-        IF(computationEnvironment%numberOfWorldComputationNodes>1) THEN
+        IF(numberOfWorldComputationNodes>1) THEN
           IF(ANY(NUMBER>0)) THEN
             DO deriv_idx=1,8
               IF(NUMBER(deriv_idx)>0) THEN
@@ -1719,15 +1724,14 @@ CONTAINS
             DO deriv_idx=1,8
               IF(NUMBER(deriv_idx)>0) THEN
                 LOCAL_GHOST_RMS(deriv_idx)=SQRT((RMS_ERROR(deriv_idx)+GHOST_RMS_ERROR(deriv_idx))/(NUMBER(deriv_idx) &
-                      & +GHOST_NUMBER(deriv_idx)))
+                  & +GHOST_NUMBER(deriv_idx)))
               ENDIF
             ENDDO !deriv_idx
             !Global RMS values
             !Collect the values across the ranks
-            CALL MPI_ALLREDUCE(MPI_IN_PLACE,NUMBER,8,MPI_INTEGER,MPI_SUM,computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+            CALL MPI_ALLREDUCE(MPI_IN_PLACE,NUMBER,8,MPI_INTEGER,MPI_SUM,worldCommunicator,MPI_IERROR)
             CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
-            CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR,8,MPI_DOUBLE_PRECISION,MPI_SUM,computationEnvironment%mpiWorldCommunicator, &
-              & MPI_IERROR)
+            CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR,8,MPI_DOUBLE_PRECISION,MPI_SUM,worldCommunicator,MPI_IERROR)
             CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
             DO deriv_idx=1,8
               IF(NUMBER(deriv_idx)>0) THEN
@@ -1756,6 +1760,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("AnalyticAnalysis_RMSErrorGetNode",ERR,ERROR)
     RETURN 1
+    
   END SUBROUTINE AnalyticAnalysis_RMSErrorGetNode
 
   !
@@ -1778,7 +1783,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     REAL(DP) :: ERROR_VALUE
-    INTEGER(INTG) :: GHOST_NUMBER,NUMBER,MPI_IERROR
+    INTEGER(INTG) :: GHOST_NUMBER,NUMBER,MPI_IERROR,numberOfWorldComputationNodes,myWorldComputationNodeNumber,worldCommunicator
     REAL(DP) :: RMS_ERROR,GHOST_RMS_ERROR
     TYPE(DECOMPOSITION_TYPE), POINTER :: DECOMPOSITION
     TYPE(DECOMPOSITION_ELEMENTS_TYPE), POINTER :: ELEMENTS_DECOMPOSITION
@@ -1790,6 +1795,9 @@ CONTAINS
     ENTERS("AnalyticAnalysis_RMSErrorGetElement",ERR,ERROR,*999)
 
     IF(ASSOCIATED(FIELD)) THEN
+      CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfWorldComputationNodes,err,error,*999)
+      CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
+      CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
       DOMAIN=>FIELD%VARIABLE_TYPE_MAP(VARIABLE_TYPE)%PTR%COMPONENTS(COMPONENT_NUMBER)%DOMAIN
       ELEMENTS_DOMAIN=>DOMAIN%TOPOLOGY%ELEMENTS
       IF(ASSOCIATED(ELEMENTS_DOMAIN)) THEN
@@ -1838,18 +1846,16 @@ CONTAINS
                 GHOST_RMS_ERROR=GHOST_RMS_ERROR+ERROR_VALUE*ERROR_VALUE
               ENDDO !element_idx
               IF(NUMBER>0) THEN
-                IF(computationEnvironment%numberOfWorldComputationNodes>1) THEN
+                IF(numberOfWorldComputationNodes>1) THEN
                   !Local elements only
                   LOCAL_RMS=SQRT(RMS_ERROR/NUMBER)
                   !Local and ghost elements
                   LOCAL_GHOST_RMS=SQRT((RMS_ERROR+GHOST_RMS_ERROR)/(NUMBER+GHOST_NUMBER))
                   !Global RMS values
                   !Collect the values across the ranks
-                  CALL MPI_ALLREDUCE(MPI_IN_PLACE,NUMBER,1,MPI_INTEGER,MPI_SUM, &
-                    & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+                  CALL MPI_ALLREDUCE(MPI_IN_PLACE,NUMBER,1,MPI_INTEGER,MPI_SUM,worldCommunicator,MPI_IERROR)
                   CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
-                  CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR,1,MPI_DOUBLE_PRECISION,MPI_SUM, &
-                    & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+                  CALL MPI_ALLREDUCE(MPI_IN_PLACE,RMS_ERROR,1,MPI_DOUBLE_PRECISION,MPI_SUM,worldCommunicator,MPI_IERROR)
                   CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                   GLOBAL_RMS=SQRT(RMS_ERROR/NUMBER)
                 ENDIF

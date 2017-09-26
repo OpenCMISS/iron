@@ -285,8 +285,8 @@ CONTAINS
     FieldDependentNumberOfComponents=NumberOfXi
 
     !Get the number of computation nodes and this computation node number
-    CALL cmfe_ComputationNumberOfNodesGet(NumberOfComputationNodes,Err)
-    CALL cmfe_ComputationNodeNumberGet(ComputationNodeNumber,Err)
+    CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(NumberOfComputationNodes,Err)
+    CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(ComputationNodeNumber,Err)
 
     !Broadcast the number of elements in the X,Y and Z directions and the number of partitions to the other computation nodes
     CALL MPI_BCAST(NumberGlobalXElements,1,MPI_INTEGER,0,MPI_COMM_WORLD,MPI_IERROR)

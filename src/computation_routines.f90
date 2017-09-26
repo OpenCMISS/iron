@@ -48,6 +48,7 @@ MODULE ComputationRoutines
   USE BaseRoutines
   USE CmissMPI
   USE CmissPetsc
+  USE ComputationAccessRoutines
   USE Constants
   USE Kinds
 #ifndef NOMPIMOD
@@ -55,394 +56,47 @@ MODULE ComputationRoutines
 #endif
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
+  USE Sorting
   USE Strings
  
 #include "macros.h"
 
   IMPLICIT NONE
 
+  PRIVATE
+  
 #ifdef NOMPIMOD
 #include "mpif.h"
 #endif
 
-  PRIVATE
-  
   !Module parameters  
 
   !Module types
   
-  !>pointer type to ComputationWorkGroupType
-  TYPE :: ComputationWorkGroupPtrType
-    TYPE(ComputationWorkGroupType), POINTER :: ptr
-  END TYPE ComputationWorkGroupPtrType
-  
-  !>Contains information on logical working groups
-  TYPE :: ComputationWorkGroupType
-    LOGICAL :: workGroupFinished !<Is .TRUE. if the work group has been finished. .FALSE. if not. 
-    TYPE(ComputationWorkGroupType), POINTER:: parent !<Parent of this working groups
-    INTEGER(INTG) :: numberOfComputationNodes !<size of the total compurational nodes belonging to this group
-    INTEGER(INTG) :: numberOfAvailableRanks !<The number of available ranks for this work group.
-    INTEGER(INTG), ALLOCATABLE :: availableRanks(:) !<The list of available ranks for this work group.
-    INTEGER(INTG) :: numberOfSubGroups !<The number of sub work groups
-    TYPE(ComputationWorkGroupPtrType), ALLOCATABLE:: subGroups(:) !<subGroups(subGroupIdx). A pointer to the subGroupIdx'th sub work group.
-    TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment !<pointer to the actual working environment
-    LOGICAL :: computationEnvironmentFinished !<Is .TURE. if the actual working environment has been generated, .FALSE. if not
-    INTEGER(INTG) :: mpiGroupCommunicator !<The MPI communicator for this work group
-    INTEGER(INTG) :: mpiGroup !<The MPI communicator for this work group
-    INTEGER(INTG) :: myComputationNodeNumber !<The index of the running process
-  END TYPE ComputationWorkGroupType
-
-  !>Contains information on a cache heirarchy
-  TYPE ComputationCacheType
-    INTEGER(INTG) :: numberOfLevels !<The number of levels in the cache hierarchy
-    INTEGER(INTG), ALLOCATABLE :: size(:) !<size(levelIdx). The size of the levelIdx'th cache level.
-  END TYPE ComputationCacheType
-
-  !>Contains information on a computation node containing a number of processors
-  TYPE ComputationNodeType
-    INTEGER(INTG) :: numberOfProcessors !<The number of processors for this computation node
-    INTEGER(INTG) :: rank !<The MPI rank of this computation node in the world communicator
-    !TYPE(ComputationCacheType) :: CACHE 
-    INTEGER(INTG) :: nodeNameLength !<The length of the name of the computation node
-    CHARACTER(LEN=MPI_MAX_PROCESSOR_NAME) :: nodeName !<The name of the computation node
-  END TYPE ComputationNodeType
-
-  !>Contains information on the MPI type to transfer information about a computation node
-  TYPE MPIComputationNodeType
-    INTEGER(INTG) :: mpiType !<The MPI data type
-    INTEGER(INTG) :: numberOfBlocks !<The number of blocks in the MPI data type. This will be equal to 4.
-    INTEGER(INTG) :: blockLengths(4) !<The length of each block.
-    INTEGER(INTG) :: types(4) !<The data types of each block.
-    INTEGER(MPI_ADDRESS_KIND) :: displacements(4) !<The address displacements to each block.
-  END TYPE MPIComputationNodeType
-
-  !>Contains information on the computation environment the program is running in.
-  TYPE ComputationEnvironmentType
-    INTEGER(INTG) :: mpiVersion !<The version of MPI that we are running with
-    INTEGER(INTG) :: mpiSubVersion !<The sub-version of MPI that we are running with
-    INTEGER(INTG) :: mpiWorldCommunicator !<The MPI world communicator for OpenCMISS
-    INTEGER(INTG) :: mpiCommWorld !<The clone of the MPI world communicator for OpenCMISS
-    INTEGER(INTG) :: numberOfWorldComputationNodes !<The number of computation nodes in the world communicator
-    INTEGER(INTG) :: myWorldComputationNodeNumber !<The rank of the running process in the world communicator
-    TYPE(ComputationNodeType), ALLOCATABLE :: computationNodes(:) !<computationNodes(node_idx). Contains information on the node_idx'th computation node.
-    TYPE(MPIComputationNodeType) :: mpiComputationNode !<The MPI data type information to transfer the computation node information.
-    TYPE(ComputationWorkGroupType), POINTER :: worldWorkGroup !<A pointer to the work group corresponding to the world communicator
-  END TYPE ComputationEnvironmentType
-
   !Module variables
 
   LOGICAL, SAVE :: cmissMPIInitialised !<Is .TRUE. if OpenCMISS has initialised MPI
-  TYPE(ComputationEnvironmentType), TARGET :: computationEnvironment !<The computation environment the program is running in.
 
   !Interfaces
-  
-  ! Access specifiers for subroutines and interfaces(if any)
-  PUBLIC ComputationEnvironmentType
-  
-  PUBLIC ComputationNodeType
 
-  PUBLIC ComputationWorkGroupType
+  INTERFACE WorkGroup_LabelSet
+    MODULE PROCEDURE WorkGroup_LabelSetC
+    MODULE PROCEDURE WorkGroup_LabelSetVS
+  END INTERFACE WorkGroup_LabelSet
   
   PUBLIC Computation_Initialise,Computation_Finalise
-
-  PUBLIC ComputationEnvironment_WorldCommunicatorGet,ComputationEnvironment_WorldCommunicatorSet
   
-  PUBLIC ComputationEnvironment_NodeNumberGet,ComputationEnvironment_NumberOfNodesGet
-
-  PUBLIC Computation_WorkGroupCreateFinish,Computation_WorkGroupCreateStart
+  PUBLIC ComputationEnvironment_WorldCommunicatorSet
   
-  PUBLIC Computation_WorkGroupSubGroupAdd
-  
-  PUBLIC computationEnvironment
+  PUBLIC WorkGroup_CreateFinish,WorkGroup_CreateStart
 
+  PUBLIC WorkGroup_Destroy
+
+  PUBLIC WorkGroup_LabelSet
+
+  PUBLIC WorkGroup_NumberOfGroupNodesSet
+  
 CONTAINS
-
-  
-  !
-  !================================================================================================================================
-  !
-
-  !>Finalise a work group and deallocate all memory
-  RECURSIVE SUBROUTINE Computation_WorkGroupFinalise(workGroup,err,error,*)
-
-    !Argument Variables
-    TYPE(ComputationWorkGroupType),POINTER :: workGroup !<A pointer to the work group to finalise.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: subGroupIdx
-
-    ENTERS("Computation_WorkGroupFinalise",err,error,*999)
-
-    IF(ASSOCIATED(workGroup)) THEN
-    
-      IF(ALLOCATED(workGroup%availableRanks)) DEALLOCATE(workGroup%availableRanks)
-      IF(ALLOCATED(workGroup%subGroups)) THEN
-        DO subGroupIdx=1,SIZE(workGroup%subGroups,1)
-          CALL Computation_WorkGroupFinalise(workGroup%subGroups(subGroupIdx)%ptr,err,error,*999)
-        ENDDO !subGroupIdx
-        DEALLOCATE(workGroup%subGroups)
-      ENDIF
-      DEALLOCATE(workGroup)
-    ENDIF
-    
-    EXITS("Computation_WorkGroupFinalise")
-    RETURN
-999 ERRORSEXITS("Computation_WorkGroupFinalise",err,error)    
-    RETURN 1
-    
-  END SUBROUTINE Computation_WorkGroupFinalise
-  
-  !
-  !================================================================================================================================
-  !
-
-  !>Add the work sub-group to the parent group based on the computation requirements (called by user)
-  SUBROUTINE Computation_WorkGroupInitialise(workGroup,err,error,*)
-
-    !Argument Variables
-    TYPE(ComputationWorkGroupType),POINTER, INTENT(OUT) :: workGroup !<A pointer to the work group to initialise. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG):: dummyErr
-    TYPE(ComputationWorkgroupPtrType) newWorkGroup
-    TYPE(ComputationWorkGroupType),POINTER ::  tmpParentWorkGroup
-    TYPE(ComputationWorkgroupPtrType), ALLOCATABLE :: subGroups(:)
-    TYPE(VARYING_STRING) :: dummyError
-
-    ENTERS("Computation_WorkGroupInitialise",err,error,*998)
-
-    IF(ASSOCIATED(workGroup)) CALL FlagError("Work group is already associated.",err,error,*998)
-    
-    ALLOCATE(workGroup,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate work group.",err,error,*999)
-    workGroup%workGroupFinished=.FALSE.
-    NULLIFY(workGroup%parent)
-    workGroup%numberOfComputationNodes=0
-    workGroup%numberOfSubGroups=0
-    NULLIFY(workGroup%computationEnvironment)
-    workGroup%mpiGroupCommunicator=MPI_COMM_NULL
-    workGroup%mpiGroup=MPI_GROUP_NULL
-    workGroup%myComputationNodeNumber=0
-    
-    EXITS("Computation_WorkGroupInitialise")
-    RETURN
-999 CALL Computation_WorkGroupFinalise(workGroup,dummyErr,dummyError,*998)
-998 ERRORSEXITS("Computation_WorkGroupIntialise",err,error)    
-    RETURN 1
-    
-  END SUBROUTINE Computation_WorkGroupInitialise
-  
-  !
-  !================================================================================================================================
-  !
-
-  !>Add the work sub-group to the parent group based on the computation requirements (called by user)
-  SUBROUTINE Computation_WorkGroupSubGroupAdd(parentWorkGroup,numberOfComputationNodes,subWorkGroup,err,error,*)
-
-    !Argument Variables
-    TYPE(ComputationWorkGroupType),POINTER, INTENT(INOUT) :: parentWorkGroup
-    TYPE(ComputationWorkGroupType),POINTER, INTENT(INOUT) :: subWorkGroup
-    INTEGER(INTG),INTENT(IN) :: numberOfComputationNodes
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    TYPE(ComputationWorkgroupPtrType) newWorkGroup
-    TYPE(ComputationWorkGroupType),POINTER ::  tmpParentWorkGroup
-    TYPE(ComputationWorkgroupPtrType), ALLOCATABLE :: subGroups(:)
-    INTEGER(INTG):: I
-
-    ENTERS("Computation_WorkGroupSubGroupAdd",err,error,*999)
-
-    ALLOCATE(newWorkGroup%ptr)
-    newWorkGroup%ptr%numberOfComputationNodes = numberOfComputationNodes
-    newWorkGroup%ptr%numberOfSubGroups = 0
-
-    IF(ASSOCIATED(parentWorkGroup)) THEN 
-      ALLOCATE(subGroups(parentWorkGroup%numberOfSubGroups+1))
-      DO I=1,parentWorkGroup%numberOfSubGroups
-        subGroups(I)%ptr=>parentWorkGroup%subGroups(I)%ptr
-      ENDDO
-      !subGroups(1:parentWorkGroup%numberOfSubGroups)=>parentWorkGroup%subGroups(:)
-      
-      IF(ALLOCATED(parentWorkGroup%subGroups)) THEN 
-        DEALLOCATE(parentWorkGroup%subGroups)
-      ENDIF
-      subGroups(1+parentWorkGroup%numberOfSubGroups)%ptr=>newWorkGroup%ptr
-      ALLOCATE(parentWorkGroup%subGroups(SIZE(subGroups,1)))
-      DO I=1,SIZE(subGroups,1)
-        parentWorkGroup%subGroups(I)%ptr => subGroups(I)%ptr
-      ENDDO
-      !parentWorkGroup%subGroups(:) => subGroups(:)
-      
-      DEALLOCATE(subGroups)
-      parentWorkGroup%numberOfSubGroups = 1+parentWorkGroup%numberOfSubGroups
-      newWorkGroup%ptr%PARENT => parentWorkGroup
-      tmpParentWorkGroup => parentWorkGroup 
-      DO WHILE(ASSOCIATED(tmpParentWorkGroup)) !Update the computation number of its ancestors
-        tmpParentWorkGroup%numberOfComputationNodes = tmpParentWorkGroup%numberOfComputationNodes &
-          & + newWorkGroup%ptr%numberOfComputationNodes
-        tmpParentWorkGroup => tmpParentWorkGroup%PARENT
-      ENDDO
-    ELSE !Top level group
-      CALL FlagError('parentWorkGroup is not associated, call COMPUTATION_WORK_GROUP_CREATE_START first',&
-      & err,error,*999)
-    ENDIF
-    subWorkGroup => newWorkGroup%ptr
-
-    EXITS("Computation_WorkGroupSubGroupAdd")
-    RETURN
-999 ERRORSEXITS("Computation_WorkGroupSubGroupAdd",err,error)
-    RETURN 1
-    
-  END SUBROUTINE Computation_WorkGroupSubGroupAdd
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Start the creation of a work group
-  SUBROUTINE Computation_WorkGroupCreateStart(parentWorkGroup,numberOfComputationNodes,workGroup,err,error,*)
-
-    !Argument Variables
-    TYPE(ComputationWorkGroupType), POINTER, INTENT(INOUT) :: parentWorkGroup !<The parent work group to create the work group as a sub group for.
-    INTEGER(INTG),INTENT(IN) :: numberOfComputationNodes !<The number of nodes to be created in the work group. 
-    TYPE(ComputationWorkGroupType), POINTER, INTENT(OUT) :: workGroup !<On exit, the created work group. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: localError
-
-    ENTERS("Computation_WorkGroupCreateStart",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(parentWorkGroup)) CALL FlagError('Parent work group is not associated.',err,error,*999)
-    IF(ASSOCIATED(workGroup)) CALL FlagError("Work group is already associated.",err,error,*999)
-    IF(numberOfComputationNodes<1.OR.numberOfComputationNodes>parentWorkGroup%numberOfAvailableRanks) THEN
-      localError="The requested number of computation nodes is invalid. The number of computation nodes must be > 0 and <= "// &
-        & TRIM(NumberToVString(parentWorkGroup%numberOfAvailableRanks,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-
-    CALL Computation_WorkGroupInitialise(workGroup,err,error,*999)
-    
-    EXITS("Computation_WorkGroupCreateStart")
-    RETURN
-999 ERRORSEXITS("Computation_WorkGroupCreateStart",err,error)
-    RETURN 1
-    
-  END SUBROUTINE Computation_WorkGroupCreateStart
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Generate computation environment for current level work group tree and all it's subgroups recursively 
-  RECURSIVE SUBROUTINE Computation_WorkGroupGenerateCompEnviron(workGroup,availableRankList,err,error,*)
-
-    !Argument Variables
-    TYPE(ComputationWorkGroupType),POINTER, INTENT(INOUT) :: workGroup
-    INTEGER(INTG), ALLOCATABLE, INTENT(INOUT) :: availableRankList(:)
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: rankIdx,mpiIError,rank,originalGroup,newGroup,subGroupIdx
-    INTEGER(INTG), ALLOCATABLE :: newAvailableRankList(:)
-    
-    ENTERS("Computation_WorkGroupGenerateCompEnviron",err,error,*999)
-    
-    ALLOCATE(workGroup%computationEnvironment)
-
-    !Set size of computation nodes in this communicator
-    workGroup%computationEnvironment%numberOfWorldComputationNodes = workGroup%numberOfComputationNodes
-    
-    !Determine my processes rank
-    CALL MPI_COMM_RANK(computationEnvironment%mpiWorldCommunicator,rank,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_COMM_RANK",mpiIError,err,error,*999)
-    workGroup%computationEnvironment%myWorldComputationNodeNumber=rank
-    
-    !Fill in the information for every computation node in this group
-    ALLOCATE(workGroup%computationEnvironment%computationNodes(workGroup%computationEnvironment%numberOfWorldComputationNodes))
-    IF(SIZE(availableRankList,1)-workGroup%computationEnvironment%numberOfWorldComputationNodes < 0) THEN
-      CALL FlagError("NOT ENOUGH RANKS",err,error,*999)
-    ENDIF
-    DO rankIdx=1,workGroup%computationEnvironment%numberOfWorldComputationNodes,1
-      workGroup%computationEnvironment%computationNodes(rankIdx) = &
-        & computationEnvironment%computationNodes(availableRankList(rankIdx))
-    ENDDO !rankIdx
-
-    !Create a communicator
-    CALL MPI_COMM_GROUP(MPI_COMM_WORLD,originalGroup,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_COMM_RANK",mpiIError,err,error,*999)    
-    CALL MPI_GROUP_INCL(originalGroup,rankIdx-1,availableRankList(1:rankIdx-1),newGroup,mpiIError)  !Choose the first I-1 ranks
-    CALL MPI_ERROR_CHECK("MPI_COMM_RANK",mpiIError,err,error,*999)    
-    CALL MPI_COMM_CREATE(MPI_COMM_WORLD,newGroup,workGroup%computationEnvironment%mpiWorldCommunicator,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_COMM_RANK",mpiIError,err,error,*999)    
-    CALL MPI_GROUP_FREE(originalGroup,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_COMM_RANK",mpiIError,err,error,*999)    
-    CALL MPI_GROUP_FREE(newGroup,mpiIError) 
-    CALL MPI_ERROR_CHECK("MPI_COMM_RANK",mpiIError,err,error,*999)    
-
-    !Shrink the availableRankList
-    ALLOCATE(newAvailableRankList(SIZE(availableRankList,1)-workGroup%computationEnvironment%numberOfWorldComputationNodes))  
-    newAvailableRankList(1:SIZE(newAvailableRankList)) = availableRankList(rankIdx:SIZE(availableRankList,1))
-    DEALLOCATE(availableRankList)
-    ALLOCATE(availableRankList(SIZE(newAvailableRankList,1)))
-    availableRankList(:) = newAvailableRankList(:)
-
-    workGroup%computationEnvironmentFinished = .TRUE.
-
-    !Recursively do this to all its subgroups
-    DO subGroupIdx=1,workGroup%numberOfSubGroups,1
-      CALL Computation_WorkGroupGenerateCompEnviron(workGroup%subGroups(subGroupIdx)%ptr,&
-        & availableRankList,err,error,*999)      
-    ENDDO !subGroupIdx
-
-    EXITS("Computation_WorkGroupGenerateCompEnviron")
-    RETURN
-999 ERRORSEXITS("Computation_WorkGroupGenerateCompEnviron",err,error)
-    RETURN 1
-    
-  END SUBROUTINE Computation_WorkGroupGenerateCompEnviron
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Generate the hierarchy computation environment based on work group tree
-  SUBROUTINE Computation_WorkGroupCreateFinish(worldWorkGroup,err,error,*)
-
-    !Argument Variables
-    TYPE(ComputationWorkGroupType),POINTER,INTENT(INOUT) :: worldWorkGroup
-    INTEGER(INTG),INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING),INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG),ALLOCATABLE:: availableRankList(:)
-    INTEGER(INTG) :: rankIdx,subGroupIdx
-
-    ENTERS("Computation_WorkGroupCreateFinish",err,error,*999)
-
-    !Set the computation environment of the world work group to be the global computation environment
-    !(the default communicator in OpenCMISS)
-    worldWorkGroup%computationEnvironment => computationEnvironment 
-    worldWorkGroup%computationEnvironmentFinished = .TRUE.
-
-    !generate the communicators for subgroups if any
-    ALLOCATE(availableRankList(worldWorkGroup%computationEnvironment%numberOfWorldComputationNodes))
-    DO rankIdx=0,SIZE(availableRankList,1)-1
-      availableRankList(rankIdx+1) = rankIdx
-    ENDDO !rankIdx
-    DO subGroupIdx=1,worldWorkGroup%numberOfSubGroups,1
-      CALL Computation_WorkGroupGenerateCompEnviron(worldWorkGroup%subGroups(subGroupIdx)%ptr,availableRankList, &
-        & err,error,*999)
-    ENDDO !subGroupIdx
-
-    EXITS("Computation_WorkGroupCreateFinish")
-    RETURN
-999 ERRORSEXITS("Computation_WorkGroupCreateFinish",err,error)
-    RETURN 1
-    
-  END SUBROUTINE Computation_WorkGroupCreateFinish
 
   !
   !================================================================================================================================
@@ -630,163 +284,6 @@ CONTAINS
   !=================================================================================================================================
   !
 
-  !>Finalises the computation environment data structures and deallocates all memory.
-  SUBROUTINE Computation_ComputationEnvironmentFinalise(computationEnvironment,err,error,*)
-
-    !Argument Variables
-    TYPE(ComputationEnvironmentType) :: computationEnvironment !<A pointer to the computation environment to finalise
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: computationNodeIdx,mpiIError
-    LOGICAL :: mpiFinalised
-
-    ENTERS("Computation_ComputationEnvironmentFinalise",err,error,*999)
-
-    !IF(ASSOCIATED(computationEnvironment)) THEN
-    IF(ALLOCATED(computationEnvironment%computationNodes)) THEN      
-      DO computationNodeIdx=0,computationEnvironment%numberOfWorldComputationNodes-1
-        CALL Computation_ComputationNodeFinalise(computationEnvironment%computationNodes(computationNodeIdx), &
-          & err,error,*999)
-      ENDDO !computationNodeIdx
-      DEALLOCATE(computationEnvironment%computationNodes)
-    ENDIF
-    computationEnvironment%numberOfWorldComputationNodes=0
-    
-    CALL Computation_MPIComputationNodeFinalise(computationEnvironment%mpiComputationNode,err,error,*999)
-    
-    IF(computationEnvironment%mpiCommWorld /= MPI_COMM_NULL) THEN
-      CALL MPI_COMM_FREE(computationEnvironment%mpiCommWorld,mpiIError)
-      CALL MPI_ERROR_CHECK("MPI_COMM_FREE",mpiIError,err,error,*999)
-    ENDIF
-    
-    !DEALLOCATE(computationEnvironment)
-    !ENDIF
-
-    EXITS("Computation_ComputationEnvironmentFinalise")
-    RETURN
-999 ERRORS("Computation_ComputationEnvironmentFinalise",err,error)
-    EXITS("Computation_ComputationEnvironmentFinalise")
-    RETURN 1
-    
-  END SUBROUTINE Computation_ComputationEnvironmentFinalise
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Initialises the computation environment data structures.
-  SUBROUTINE Computation_ComputationEnvironmentInitialise(computationEnvironment,err,error,*)
-
-    !Argument Variables
-    TYPE(ComputationEnvironmentType) :: computationEnvironment !<A pointer to the comptuation environment to initialise. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: computationNodeIdx,dummyErr,mpiIError,rank
-    LOGICAL :: mpiInitialised
-    TYPE(VARYING_STRING) :: dummyError
-
-    ENTERS("Computation_ComputationEnvironmentInitialise",err,error,*999)
-
-    !IF(ASSOCIATED(computationEnvironment)) CALL FlagError("Computation environment is already associated.",err,error,*999)
-
-    !ALLOCATE(computationEnvironment,STAT=err)
-    !IF(err/=0) CALL FlagError("Computation environment could not be allocated.",err,error,*999)
-
-    
-    computationEnvironment%mpiVersion=0
-    computationEnvironment%mpiSubversion=0
-    computationEnvironment%mpiWorldCommunicator=MPI_COMM_NULL    
-    computationEnvironment%mpiCommWorld=MPI_COMM_NULL
-    computationEnvironment%numberOfWorldComputationNodes=0
-    computationEnvironment%myWorldComputationNodeNumber=-1
-    NULLIFY(computationEnvironment%worldWorkGroup)
-
-    !Get the version of MPI that we are running with
-    CALL MPI_GET_VERSION(computationEnvironment%mpiVersion,computationEnvironment%mpiSubversion,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_GET_VERSION",mpiIError,err,error,*999)
-    
-    !Create a (private) communicator for OpenCMISS as a duplicate MPI_COMM_WORLD
-    CALL MPI_COMM_DUP(MPI_COMM_WORLD,computationEnvironment%mpiCommWorld,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_COMM_DUP",mpiIError,err,error,*999)
-    !Set the default MPI world communicator to be the duplicate of MPI_COMM_WORLD
-    computationEnvironment%mpiWorldCommunicator=computationEnvironment%mpiCommWorld
-    
-    !Determine the number of ranks/computation nodes we have in our world computation environment
-    CALL MPI_COMM_SIZE(computationEnvironment%mpiWorldCommunicator,computationEnvironment%numberOfWorldComputationNodes,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_COMM_SIZE",mpiIError,err,error,*999)
-
-    !Allocate the computation node data structures
-    ALLOCATE(computationEnvironment%computationNodes(0:computationEnvironment%numberOfWorldComputationNodes-1),STAT=ERR)
-    IF(ERR /=0) CALL FlagError("Could not allocate computational environment computation nodes.",err,error,*999)
-
-    !Determine my processes rank in the world communicator
-    CALL MPI_COMM_RANK(computationEnvironment%mpiWorldCommunicator,rank,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_COMM_RANK",mpiIError,err,error,*999)
-    computationEnvironment%myWorldComputationNodeNumber=rank
-    
-#ifdef TAUPROF
-    CALL TAU_PROFILE_SET_NODE(rank)
-#endif
-    
-    !Create the MPI type information for the ComputationNodeType
-    CALL Computation_MPIComputationNodeInitialise(computationEnvironment,rank,err,error,*999)
-    !Fill in all the computation node data structures for this rank at the root position (will be changed later with an
-    !allgather call)
-    CALL Computation_ComputationNodeInitialise(computationEnvironment%computationNodes(0),rank,err,error,*999)
-
-    !Now transfer all the computation node information to the other computation nodes so that each rank has all the
-    !information.
-    CALL MPI_ALLGATHER(MPI_IN_PLACE,1,computationEnvironment%mpiComputationNode%mpiType, &
-      & computationEnvironment%computationNodes(0),1,computationEnvironment%mpiComputationNode%mpiType, &
-      & computationEnvironment%mpiWorldCommunicator,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_ALLGATHER",mpiIError,err,error,*999)
-    
-    !Setup the world work group.
-    !Initialise
-    CALL Computation_WorkGroupInitialise(computationEnvironment%worldWorkGroup,err,error,*999)
-    !Set the world work group to have all the ranks in the world communicator
-    
-    IF(diagnostics1) THEN
-      !Just let the master node write out this information
-      IF(RANK==0) THEN
-        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Computation environment:",err,error,*999)
-        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  MPI version = ", &
-          & computationEnvironment%mpiVersion,err,error,*999)
-        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  MPI subversion = ", &
-          & computationEnvironment%mpiSubversion,err,error,*999)
-        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of world computation nodes = ", &
-          & computationEnvironment%numberOfWorldComputationNodes,err,error,*999)
-        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  My world computation node number = ", &
-          & computationEnvironment%myWorldComputationNodeNumber,err,error,*999)
-        IF(diagnostics2) THEN
-          DO computationNodeIdx=0,computationEnvironment%numberOfWorldComputationNodes-1
-            CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Computation Node:",err,error,*999)
-            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of Processors = ", &
-              & computationEnvironment%computationNodes(computationNodeIdx)%numberOfProcessors,err,error,*999)
-            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    MPI rank = ", &
-              & computationEnvironment%computationNodes(computationNodeIdx)%rank,err,error,*999)
-            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Node Name = ", &
-              & computationEnvironment%computationNodes(computationNodeIdx)%nodeName,err,error,*999)
-          ENDDO !computationNodeIdx
-        ENDIF
-      ENDIF
-    ENDIF
-    
-    EXITS("Computation_ComputationEnvironmentInitialise")    
-    RETURN
-999 CALL Computation_ComputationEnvironmentFinalise(computationEnvironment,dummyErr,dummyError,*998)
-998 ERRORS("Computation_ComputationEnvironmentInitialise",err,error)
-    EXITS("Computation_ComputationEnvironmentInitialise")
-    RETURN 1
-    
-  END SUBROUTINE Computation_ComputationEnvironmentInitialise
-
-  !
-  !=================================================================================================================================
-  !
-
   !>Finalises the computation data structures and deallocates all memory.
   SUBROUTINE Computation_Finalise(err,error,*)
 
@@ -799,7 +296,7 @@ CONTAINS
 
     ENTERS("Computation_Finalise",err,error,*999)
 
-    CALL Computation_ComputationEnvironmentFinalise(computationEnvironment,err,error,*999)
+    CALL ComputationEnvironment_Finalise(computationEnvironment,err,error,*999)
     
     !Finalise PETSc
     !Call this after MPI_COMM_FREE as PETSc routines are called when some MPI comm attributes are freed.
@@ -834,7 +331,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: computationNodeIdx,dummyErr,mpiIError,rank
+    INTEGER(INTG) :: dummyErr,mpiIError
     LOGICAL :: mpiInitialised
     TYPE(VARYING_STRING) :: dummyError
 
@@ -851,7 +348,7 @@ CONTAINS
       cmissMPIInitialised=.TRUE.
     ENDIF
 
-    CALL Computation_ComputationEnvironmentInitialise(computationEnvironment,err,error,*999)
+    CALL ComputationEnvironment_Initialise(computationEnvironment,err,error,*999)
 
     !Initialise node numbers in base routines.
     CALL ComputationNodeNumbersSet(computationEnvironment%myWorldComputationNodeNumber,computationEnvironment% &
@@ -871,6 +368,202 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Computation_Initialise
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Finalises the computation environment data structures and deallocates all memory.
+  SUBROUTINE ComputationEnvironment_Finalise(computationEnvironment,err,error,*)
+
+    !Argument Variables
+    TYPE(ComputationEnvironmentType) :: computationEnvironment !<A pointer to the computation environment to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: computationNodeIdx,mpiIError
+
+    ENTERS("Computation_EnvironmentFinalise",err,error,*999)
+
+    !IF(ASSOCIATED(computationEnvironment)) THEN
+    IF(ALLOCATED(computationEnvironment%computationNodes)) THEN      
+      DO computationNodeIdx=0,computationEnvironment%numberOfWorldComputationNodes-1
+        CALL Computation_ComputationNodeFinalise(computationEnvironment%computationNodes(computationNodeIdx), &
+          & err,error,*999)
+      ENDDO !computationNodeIdx
+      DEALLOCATE(computationEnvironment%computationNodes)
+    ENDIF
+    computationEnvironment%numberOfWorldComputationNodes=0
+    
+    CALL Computation_MPIComputationNodeFinalise(computationEnvironment%mpiComputationNode,err,error,*999)
+    
+    IF(computationEnvironment%mpiGroupWorld /= MPI_GROUP_NULL) THEN
+      CALL MPI_GROUP_FREE(computationEnvironment%mpiGroupWorld,mpiIError)
+      CALL MPI_ERROR_CHECK("MPI_GROUP_FREE",mpiIError,err,error,*999)
+    ENDIF
+    IF(computationEnvironment%mpiCommWorld /= MPI_COMM_NULL) THEN
+      CALL MPI_COMM_FREE(computationEnvironment%mpiCommWorld,mpiIError)
+      CALL MPI_ERROR_CHECK("MPI_COMM_FREE",mpiIError,err,error,*999)
+    ENDIF
+    
+    !DEALLOCATE(computationEnvironment)
+    !ENDIF
+
+    EXITS("ComputationEnvironment_Finalise")
+    RETURN
+999 ERRORS("ComputationEnvironment_Finalise",err,error)
+    EXITS("ComputationEnvironment_Finalise")
+    RETURN 1
+    
+  END SUBROUTINE ComputationEnvironment_Finalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises the computation environment data structures.
+  SUBROUTINE ComputationEnvironment_Initialise(computationEnvironment,err,error,*)
+
+    !Argument Variables
+    TYPE(ComputationEnvironmentType) :: computationEnvironment !<A pointer to the comptuation environment to initialise. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: computationNodeIdx,dummyErr,mpiIError,rank,rankIdx
+    TYPE(VARYING_STRING) :: dummyError
+
+    ENTERS("ComputationEnvironment_Initialise",err,error,*999)
+
+    !IF(ASSOCIATED(computationEnvironment)) CALL FlagError("Computation environment is already associated.",err,error,*999)
+
+    !ALLOCATE(computationEnvironment,STAT=err)
+    !IF(err/=0) CALL FlagError("Computation environment could not be allocated.",err,error,*999)
+    
+    computationEnvironment%mpiVersion=0
+    computationEnvironment%mpiSubversion=0
+    computationEnvironment%mpiWorldCommunicator=MPI_COMM_NULL    
+    computationEnvironment%mpiCommWorld=MPI_COMM_NULL
+    computationEnvironment%mpiGroupWorld=MPI_GROUP_NULL
+    computationEnvironment%numberOfWorldComputationNodes=0
+    computationEnvironment%myWorldComputationNodeNumber=-1
+    NULLIFY(computationEnvironment%worldWorkGroup)
+
+    !Get the version of MPI that we are running with
+    CALL MPI_GET_VERSION(computationEnvironment%mpiVersion,computationEnvironment%mpiSubversion,mpiIError)
+    CALL MPI_ERROR_CHECK("MPI_GET_VERSION",mpiIError,err,error,*999)
+    
+    !Create a (private) communicator for OpenCMISS as a duplicate MPI_COMM_WORLD
+    CALL MPI_COMM_DUP(MPI_COMM_WORLD,computationEnvironment%mpiCommWorld,mpiIError)
+    CALL MPI_ERROR_CHECK("MPI_COMM_DUP",mpiIError,err,error,*999)
+    !Get the default MPI_COMM_GROUP for the world communicator
+    CALL MPI_COMM_GROUP(computationEnvironment%mpiCommWorld,computationEnvironment%mpiGroupWorld,mpiIError)
+    CALL MPI_ERROR_CHECK("MPI_COMM_GROUP",mpiIError,err,error,*999)
+    !Set the default MPI world communicator to be the cloned communicator
+    computationEnvironment%mpiWorldCommunicator=computationEnvironment%mpiCommWorld
+    
+    !Determine the number of ranks/computation nodes we have in our world computation environment
+    CALL MPI_COMM_SIZE(computationEnvironment%mpiWorldCommunicator,computationEnvironment%numberOfWorldComputationNodes,mpiIError)
+    CALL MPI_ERROR_CHECK("MPI_COMM_SIZE",mpiIError,err,error,*999)
+
+    !Allocate the computation node data structures
+    ALLOCATE(computationEnvironment%computationNodes(0:computationEnvironment%numberOfWorldComputationNodes-1),STAT=ERR)
+    IF(ERR /=0) CALL FlagError("Could not allocate computation environment computation nodes.",err,error,*999)
+
+    !Determine my processes rank in the world communicator
+    CALL MPI_COMM_RANK(computationEnvironment%mpiWorldCommunicator,rank,mpiIError)
+    CALL MPI_ERROR_CHECK("MPI_COMM_RANK",mpiIError,err,error,*999)
+    computationEnvironment%myWorldComputationNodeNumber=rank
+    
+#ifdef TAUPROF
+    CALL TAU_PROFILE_SET_NODE(rank)
+#endif
+    
+    !Create the MPI type information for the ComputationNodeType
+    CALL Computation_MPIComputationNodeInitialise(computationEnvironment,rank,err,error,*999)
+    !Fill in all the computation node data structures for this rank at the root position (will be changed later with an
+    !allgather call)
+    CALL Computation_ComputationNodeInitialise(computationEnvironment%computationNodes(0),rank,err,error,*999)
+
+    !Now transfer all the computation node information to the other computation nodes so that each rank has all the
+    !information.
+    CALL MPI_ALLGATHER(MPI_IN_PLACE,1,computationEnvironment%mpiComputationNode%mpiType, &
+      & computationEnvironment%computationNodes(0),1,computationEnvironment%mpiComputationNode%mpiType, &
+      & computationEnvironment%mpiWorldCommunicator,mpiIError)
+    CALL MPI_ERROR_CHECK("MPI_ALLGATHER",mpiIError,err,error,*999)
+    
+    !Setup the world work group.
+    !Initialise
+    CALL WorkGroup_Initialise(computationEnvironment%worldWorkGroup,err,error,*999)
+    !Set the world work group to have all the ranks in the world communicator
+    computationEnvironment%worldWorkGroup%userNumber=0
+    computationEnvironment%worldWorkGroup%label="World Work Group"
+    computationEnvironment%worldWorkGroup%parentWorkGroup=>computationEnvironment%worldWorkGroup
+    computationEnvironment%worldWorkGroup%numberOfGroupComputationNodes=computationEnvironment%numberOfWorldComputationNodes
+    !computationEnvironment%worldWorkGroup%computationEnvironment=>computationEnvironment
+    ALLOCATE(computationEnvironment%worldWorkGroup%worldRanks(computationEnvironment%numberOfWorldComputationNodes),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate world work group world ranks.",err,error,*999)
+    ALLOCATE(computationEnvironment%worldWorkGroup%availableRanks(computationEnvironment%numberOfWorldComputationNodes),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate world work group available ranks.",err,error,*999)
+    DO rankIdx=1,computationEnvironment%numberOfWorldComputationNodes
+      computationEnvironment%worldWorkGroup%worldRanks(rankIdx)=rankIdx-1
+      computationEnvironment%worldWorkGroup%availableRanks(rankIdx)=rankIdx-1
+    ENDDO !rankIdx
+    computationEnvironment%worldWorkGroup%numberOfAvailableRanks=computationEnvironment%numberOfWorldComputationNodes
+    !Create a new MPI group
+    CALL MPI_GROUP_INCL(computationEnvironment%mpiGroupWorld,computationEnvironment%worldWorkGroup%numberOfGroupComputationNodes, &
+      & computationEnvironment%worldWorkGroup%worldRanks,computationEnvironment%worldWorkGroup%mpiGroup,mpiIError)
+    CALL MPI_ERROR_CHECK("MPI_GROUP_INCL",mpiIError,err,error,*999)    
+    CALL MPI_COMM_CREATE(computationEnvironment%mpiWorldCommunicator,computationEnvironment%worldWorkGroup%mpiGroup, &
+      & computationEnvironment%worldWorkGroup%mpiGroupCommunicator,mpiIError)
+    CALL MPI_ERROR_CHECK("MPI_COMM_CREATE",mpiIError,err,error,*999)
+    !Determine ranks
+    CALL MPI_COMM_RANK(computationEnvironment%mpiWorldCommunicator,rank,mpiIError)
+    CALL MPI_ERROR_CHECK("MPI_COMM_RANK",mpiIError,err,error,*999)
+    computationEnvironment%worldWorkGroup%myWorldComputationNodeNumber=rank
+    CALL MPI_COMM_RANK(computationEnvironment%worldWorkGroup%mpiGroupCommunicator,rank,mpiIError)
+    CALL MPI_ERROR_CHECK("MPI_COMM_RANK",mpiIError,err,error,*999)
+    computationEnvironment%worldWorkGroup%myWorldComputationNodeNumber=rank
+    
+    computationEnvironment%worldWorkGroup%workGroupFinished=.TRUE.
+    
+    IF(diagnostics1) THEN
+      !Just let the master node write out this information
+      IF(rank==0) THEN
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Computation environment:",err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  MPI version = ", &
+          & computationEnvironment%mpiVersion,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  MPI subversion = ", &
+          & computationEnvironment%mpiSubversion,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  MPI world communicator = ", &
+          & computationEnvironment%mpiCommWorld,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  MPI world group = ", &
+          & computationEnvironment%mpiGroupWorld,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of world computation nodes = ", &
+          & computationEnvironment%numberOfWorldComputationNodes,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  My world computation node number = ", &
+          & computationEnvironment%myWorldComputationNodeNumber,err,error,*999)
+        IF(diagnostics2) THEN
+          DO computationNodeIdx=0,computationEnvironment%numberOfWorldComputationNodes-1
+            CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Computation Node:",err,error,*999)
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of Processors = ", &
+              & computationEnvironment%computationNodes(computationNodeIdx)%numberOfProcessors,err,error,*999)
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    MPI rank = ", &
+              & computationEnvironment%computationNodes(computationNodeIdx)%rank,err,error,*999)
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Node Name = ", &
+              & computationEnvironment%computationNodes(computationNodeIdx)%nodeName,err,error,*999)
+          ENDDO !computationNodeIdx
+        ENDIF
+      ENDIF
+    ENDIF
+    
+    EXITS("ComputationEnvironment_Initialise")    
+    RETURN
+999 CALL ComputationEnvironment_Finalise(computationEnvironment,dummyErr,dummyError,*998)
+998 ERRORS("ComputationEnvironment_Initialise",err,error)
+    EXITS("ComputationEnvironment_Initialise")
+    RETURN 1
+    
+  END SUBROUTINE ComputationEnvironment_Initialise
 
   !
   !================================================================================================================================
@@ -917,92 +610,426 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE ComputationEnvironment_WorldCommunicatorSet
-
+  
   !
-  !================================================================================================================================
+  !=================================================================================================================================
   !
 
-  !>Gets the current world communicator.
-  SUBROUTINE ComputationEnvironment_WorldCommunicatorGet(worldCommunicator,err,error,*)
+  !>Start the creation of a work group \see OpenCMISS::Iron::cmfe_WorkGroup_CreateStart
+  SUBROUTINE WorkGroup_CreateStart(userNumber,parentWorkGroup,workGroup,err,error,*)
 
     !Argument Variables
-    INTEGER(INTG), INTENT(OUT) :: worldCommunicator !<On return, the current world communicator
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the work group.
+    TYPE(WorkGroupType), POINTER, INTENT(INOUT) :: parentWorkGroup !<The parent work group to create the work group as a sub group for.
+    TYPE(WorkGroupType), POINTER, INTENT(OUT) :: workGroup !<On exit, the created work group. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: subGroupIdx
+    TYPE(WorkGroupPtrType), ALLOCATABLE :: newSubGroups(:)
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("ComputationEnvironment_WorldCommunicatorGet",err,error,*999)
+    ENTERS("WorkGroup_CreateStart",err,error,*999)
 
-    worldCommunicator=computationEnvironment%mpiWorldCommunicator
- 
-    EXITS("ComputationEnvironment_WorldCommunicatorGet")
+    IF(.NOT.ASSOCIATED(parentWorkGroup)) CALL FlagError('Parent work group is not associated.',err,error,*999)
+    IF(ASSOCIATED(workGroup)) CALL FlagError("Work group is already associated.",err,error,*999)
+    CALL WorkGroup_UserNumberFind(userNumber,computationEnvironment,workGroup,err,error,*999)
+    IF(ASSOCIATED(workGroup)) THEN
+      localError="The user number of "//TRIM(NumberToVString(userNumber,"*",err,error))//" is already is use."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    CALL WorkGroup_Initialise(workGroup,err,error,*999)
+    !Set the defaults
+    workGroup%userNumber=userNumber
+    workGroup%label="Work Group "//TRIM(NumberToVString(userNumber,"*",err,error))
+    workGroup%numberOfGroupComputationNodes=1    
+    !workGroup%computationEnvironment=>parentWorkGroup%computationEnvironment
+    !Add the work group to the list of parent sub groups
+    ALLOCATE(newSubGroups(parentWorkGroup%numberOfSubGroups+1),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate new sub groups.",err,error,*999)
+    workGroup%parentWorkGroup=>parentWorkGroup
+    DO subGroupIdx=1,parentWorkGroup%numberOfSubGroups
+      newSubGroups(subGroupIdx)%ptr=parentWorkGroup%subGroups(subGroupIdx)%ptr
+    ENDDO !subGroupIdx
+    newSubGroups(parentWorkGroup%numberOfSubGroups+1)%ptr=>workGroup
+    CALL MOVE_ALLOC(newSubGroups,parentWorkGroup%subGroups)
+    parentWorkGroup%numberOfSubGroups=parentWorkGroup%numberOfSubGroups+1
+    
+    EXITS("WorkGroup_CreateStart")
     RETURN
-999 ERRORS("ComputationEnvironment_WorldCommunicatorGet",err,error)
-    EXITS("ComputationEnvironment_WorldCommunicatorGet")
+999 ERRORSEXITS("WorkGroup_CreateStart",err,error)
     RETURN 1
     
-  END SUBROUTINE ComputationEnvironment_WorldCommunicatorGet
+  END SUBROUTINE WorkGroup_CreateStart
 
   !
   !================================================================================================================================
   !
 
-  !>Returns the number/rank of the computation nodes.
-  FUNCTION ComputationEnvironment_NodeNumberGet(err,error)
-      
+  !>Finish the creation of a work group \see OpenCMISS::Iron::cmfe_WorkGroup_CreateFinish
+  SUBROUTINE WorkGroup_CreateFinish(workGroup,err,error,*)
+
     !Argument Variables
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Function variable
-    INTEGER(INTG) :: ComputationEnvironment_NodeNumberGet !<On exit the computation node number/rank of the current process.
+    TYPE(WorkGroupType), POINTER, INTENT(INOUT) :: workGroup !<A pointer to the work group to finish the creation of
+    INTEGER(INTG),INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING),INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG),ALLOCATABLE:: newAvailableRanks(:)
+    INTEGER(INTG) :: groupRank,mpiIError,newNumberOfAvailableRanks,rankIdx
+    TYPE(WorkGroupType), POINTER :: parentWorkGroup
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("ComputationEnvironment_NodeNumberGet",err,error,*999)
+    ENTERS("WorkGroup_CreateFinish",err,error,*999)
 
-    IF(ALLOCATED(computationEnvironment%computationNodes)) THEN
-      ComputationEnvironment_NodeNumberGet=computationEnvironment%myWorldComputationNodeNumber
-    ELSE
-      CALL FlagError("Computation environment not initialised",err,error,*999)
+    IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
+    IF(workGroup%workGroupFinished) CALL FlagError("Work group has already been finished.",err,error,*999)
+    NULLIFY(parentWorkGroup)
+    CALL WorkGroup_ParentWorkGroupGet(workGroup,parentWorkGroup,err,error,*999)
+    IF(.NOT.ALLOCATED(parentWorkGroup%availableRanks)) &
+      & CALL FlagError("Parent work group available ranks is not allocated.",err,error,*999)
+    IF(workGroup%numberOfGroupComputationNodes>SIZE(parentWorkGroup%availableRanks,1)) THEN
+      localError="There are insufficient parent work group available ranks. There are "// &
+        & TRIM(NumberToVString(SIZE(parentWorkGroup%availableRanks,1),"*",err,error))// &
+        & " parent ranks available and "// &
+        & TRIM(NumberToVString(workGroup%numberOfGroupComputationNodes,"*",err,error))//" ranks are required."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    EXITS("ComputationEnvironment_NodeNumberGet")
-    RETURN
-999 ERRORSEXITS("ComputationEnvironment_NodeNumberGet",err,error)
-    RETURN
+    !Get the ranks from the list of available ranks of the parent.
+    ALLOCATE(workGroup%worldRanks(workGroup%numberOfGroupComputationNodes),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate work group world ranks.",err,error,*999)
+    newNumberOfAvailableRanks=parentWorkGroup%numberOfAvailableRanks-workGroup%numberOfGroupComputationNodes
+    ALLOCATE(newAvailableRanks(newNumberOfAvailableRanks),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate work group parent new available ranks.",err,error,*999)
+    DO rankIdx=1,workGroup%numberOfGroupComputationNodes
+      workGroup%worldRanks(rankIdx)=parentWorkGroup%availableRanks(rankIdx)
+    ENDDO !rankIdx
+    DO rankIdx=1,newNumberOfAvailableRanks
+      newAvailableRanks(rankIdx)=parentWorkGroup%availableRanks(rankIdx+workGroup%numberOfGroupComputationNodes)
+    ENDDO !rankIdx
+    CALL Sorting_HeapSort(newAvailableRanks,err,error,*999)
+    CALL MOVE_ALLOC(newAvailableRanks,parentWorkGroup%availableRanks)
+    parentWorkGroup%numberOfAvailableRanks=newNumberOfAvailableRanks
     
-  END FUNCTION ComputationEnvironment_NodeNumberGet
+    !Create a new MPI group
+    CALL MPI_GROUP_INCL(computationEnvironment%mpiGroupWorld,workGroup%numberOfGroupComputationNodes,workGroup%worldRanks, &
+      & workGroup%mpiGroup,mpiIError)
+    CALL MPI_ERROR_CHECK("MPI_GROUP_INCL",mpiIError,err,error,*999)    
+    CALL MPI_COMM_CREATE(computationEnvironment%mpiGroupWorld,workGroup%mpiGroup,workGroup%mpiGroupCommunicator,mpiIError)
+    CALL MPI_ERROR_CHECK("MPI_COMM_CREATE",mpiIError,err,error,*999)
+    
+    !Determine my processes rank in the group communicator
+    CALL MPI_COMM_RANK(workGroup%mpiGroupCommunicator,groupRank,mpiIError)
+    CALL MPI_ERROR_CHECK("MPI_COMM_RANK",mpiIError,err,error,*999)
+    workGroup%myGroupComputationNodeNumber=groupRank
+
+    workGroup%workGroupFinished=.TRUE.
+    
+    EXITS("WorkGroup_CreateFinish")
+    RETURN
+999 IF(ALLOCATED(newAvailableRanks)) DEALLOCATE(newAvailableRanks)
+    ERRORSEXITS("WorkGroup_CreateFinish",err,error)
+    RETURN 1
+    
+  END SUBROUTINE WorkGroup_CreateFinish
 
   !
-  !================================================================================================================================
+  !=================================================================================================================================
   !
+
+  !>Destroy a work group \see OpenCMISS::Iron::cmfe_WorkGroup_Destroy
+  SUBROUTINE WorkGroup_Destroy(workGroup,err,error,*)
+
+    !Argument Variables
+    TYPE(WorkGroupType), POINTER, INTENT(INOUT) :: workGroup !<The work group to destroy
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: userNumber
+ 
+    ENTERS("WorkGroup_Destroy",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
+    IF(workGroup%userNumber==0) CALL FlagError("Cannot destroy the world work group.",err,error,*999)
+    
+    userNumber=workGroup%userNumber
+    CALL WorkGroup_DestroyNumber(userNumber,err,error,*999)
+    
+    EXITS("WorkGroup_Destroy")
+    RETURN
+999 ERRORSEXITS("WorkGroup_Destroy",err,error)
+    RETURN 1
+    
+  END SUBROUTINE WorkGroup_Destroy
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Destroy a work group given by a user number and all sub groups under it
+  RECURSIVE SUBROUTINE WorkGroup_DestroyNumber(workGroupUserNumber,err,error,*)
+
+    !Argument Variables
+    INTEGER(INTG), INTENT(IN) :: workGroupUserNumber !<The work group user number to destroy
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: count,subGroupIdx,rankIdx
+    INTEGER(INTG), ALLOCATABLE :: newAvailableRanks(:)
+    TYPE(WorkGroupType), POINTER :: parentWorkGroup,subGroup,workGroup,workGroup2
+    TYPE(WorkGroupPtrType), ALLOCATABLE :: newSubGroups(:)
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("WorkGroup_DestroyNumber",err,error,*999)
+
+    NULLIFY(workGroup)
+    CALL WorkGroup_UserNumberFind(workGroupUserNumber,computationEnvironment,workGroup,err,error,*999)
+    IF(.NOT.ASSOCIATED(workGroup)) THEN
+      localError="A work group with a user number of "//TRIM(NumberToVString(workGroupUserNumber,"*",err,error))// &
+        & " does not exist."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+!!NOTE: We have to find a pointer to the work group to destroy within this routine rather than passing in a pointer to a
+!!WorkGroup_DestroyPtr routine because we need to change workGroup%subGroups of the parent work group and this would violate section
+!!12.4.1.6 of the Fortran standard if the dummy workGroup pointer argument was associated with the subGroups(x)%ptr actual
+!!argument.
+    
+    IF(workGroup%numberOfSubGroups==0) THEN
+      !No work sub groups so delete this instance
+      NULLIFY(parentWorkGroup)
+      CALL WorkGroup_ParentWorkGroupGet(workGroup,parentWorkGroup,err,error,*999)
+      IF(parentWorkGroup%numberOfSubGroups>1) THEN
+        !If the parentWorkGroup has more than one sub groups then remove this work group from the list of sub groups.
+        ALLOCATE(newSubGroups(parentWorkGroup%numberOfSubGroups-1),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate new sub groups.",err,error,*999)
+        count=0
+        DO subGroupIdx=1,parentWorkGroup%numberOfSubGroups
+          NULLIFY(subGroup)
+          CALL WorkGroup_WorkSubGroupGet(workGroup,subGroupIdx,subGroup,err,error,*999)
+          IF(subGroup%userNumber/=workGroup%userNumber) THEN
+            count=count+1
+            newSubGroups(count)%ptr=>parentWorkGroup%subGroups(subGroupIdx)%ptr
+          ENDIF
+        ENDDO !subGroupIdx
+        CALL MOVE_ALLOC(newSubGroups,parentWorkGroup%subGroups)
+        parentWorkGroup%numberOfSubGroups=parentWorkGroup%numberOfSubGroups-1
+      ELSE
+        IF(ALLOCATED(parentWorkGroup%subGroups)) DEALLOCATE(parentWorkGroup%subGroups)
+        parentWorkGroup%numberOfSubGroups=0
+      ENDIF
+      !Put the work group ranks back into the parent work group available ranks
+      ALLOCATE(newAvailableRanks(parentWorkGroup%numberOfAvailableRanks+workGroup%numberOfGroupComputationNodes),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate new available ranks.",err,error,*999)
+      DO rankIdx=1,parentWorkGroup%numberOfAvailableRanks
+        newAvailableRanks(rankIdx)=parentWorkGroup%availableRanks(rankIdx)
+      ENDDO !rankIdx
+      DO rankIdx=1,workGroup%numberOfGroupComputationNodes
+        newAvailableRanks(parentWorkGroup%numberOfAvailableRanks+rankIdx)=workGroup%worldRanks(rankIdx)
+      ENDDO !rankIdx
+      CALL Sorting_HeapSort(newAvailableRanks,err,error,*999)
+      CALL MOVE_ALLOC(newAvailableRanks,parentWorkGroup%availableRanks)
+      parentWorkGroup%numberOfAvailableRanks=parentWorkGroup%numberOfAvailableRanks+workGroup%numberOfGroupComputationNodes
+      !Finalise the work group
+      CALL WorkGroup_Finalise(workGroup,err,error,*999)
+    ELSE
+      !Recursively delete the sub groups first
+      DO WHILE(workGroup%numberOfSubGroups>0)
+        NULLIFY(workGroup2)
+        CALL WorkGroup_WorkSubGroupGet(workGroup,1,workGroup2,err,error,*999)
+        CALL WorkGroup_DestroyNumber(workGroup2%userNumber,err,error,*999)
+      ENDDO
+      !Now delete this instance
+      CALL WorkGroup_DestroyNumber(workGroup%userNumber,err,error,*999)     
+    ENDIF
+
+    EXITS("WorkGroup_DestroyNumber")
+    RETURN
+999 IF(ALLOCATED(newSubGroups)) DEALLOCATE(newSubGroups)
+    IF(ALLOCATED(newAvailableRanks)) DEALLOCATE(newAvailableRanks)
+    ERRORSEXITS("WorkGroup_DestroyNumber",err,error)
+    RETURN 1
+    
+  END SUBROUTINE WorkGroup_DestroyNumber
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Finalise a work group and deallocate all memory
+  RECURSIVE SUBROUTINE WorkGroup_Finalise(workGroup,err,error,*)
+
+    !Argument Variables
+    TYPE(WorkGroupType),POINTER :: workGroup !<A pointer to the work group to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: mpiIError,subGroupIdx
+
+    ENTERS("WorkGroup_Finalise",err,error,*999)
+
+    IF(ASSOCIATED(workGroup)) THEN
+      workGroup%label=""
+      IF(ALLOCATED(workGroup%availableRanks)) DEALLOCATE(workGroup%availableRanks)
+      IF(ALLOCATED(workGroup%subGroups)) THEN
+        DO subGroupIdx=1,SIZE(workGroup%subGroups,1)
+          CALL WorkGroup_Finalise(workGroup%subGroups(subGroupIdx)%ptr,err,error,*999)
+        ENDDO !subGroupIdx
+        DEALLOCATE(workGroup%subGroups)
+      ENDIF
+      IF(workGroup%mpiGroupCommunicator/=MPI_COMM_NULL) THEN
+        CALL MPI_COMM_FREE(workGroup%mpiGroupCommunicator,mpiIError) 
+        CALL MPI_ERROR_CHECK("MPI_COMM_FREE",mpiIError,err,error,*999)
+      ENDIF
+      IF(workGroup%mpiGroup/=MPI_GROUP_NULL) THEN
+        CALL MPI_GROUP_FREE(workGroup%mpiGroup,mpiIError) 
+        CALL MPI_ERROR_CHECK("MPI_GROUP_FREE",mpiIError,err,error,*999)
+      ENDIF
+      DEALLOCATE(workGroup)
+    ENDIF
+    
+    EXITS("WorkGroup_Finalise")
+    RETURN
+999 ERRORSEXITS("WorkGroup_Finalise",err,error)    
+    RETURN 1
+    
+  END SUBROUTINE WorkGroup_Finalise
   
-  !>Returns the number of computation nodes.
-  FUNCTION ComputationEnvironment_NumberOfNodesGet(err,error)
-     
+  !
+  !=================================================================================================================================
+  !
+
+  !>Add the work sub-group to the parent group based on the computation requirements (called by user)
+  SUBROUTINE WorkGroup_Initialise(workGroup,err,error,*)
+
     !Argument Variables
+    TYPE(WorkGroupType),POINTER, INTENT(OUT) :: workGroup !<A pointer to the work group to initialise. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Function variable
-    INTEGER(INTG) :: ComputationEnvironment_NumberOfNodesGet !<On exit, the number of computation nodes for the program.
+    !Local Variables
+    INTEGER(INTG):: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
+
+    ENTERS("WorkGroup_Initialise",err,error,*998)
+
+    IF(ASSOCIATED(workGroup)) CALL FlagError("Work group is already associated.",err,error,*998)
+    
+    ALLOCATE(workGroup,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate work group.",err,error,*999)
+    workGroup%userNumber=0
+    workGroup%workGroupFinished=.FALSE.    
+    NULLIFY(workGroup%parentWorkGroup)
+    workGroup%label=""
+    workGroup%numberOfGroupComputationNodes=0
+    workGroup%numberOfSubGroups=0
+    NULLIFY(workGroup%computationEnvironment)
+    workGroup%mpiGroupCommunicator=MPI_COMM_NULL
+    workGroup%mpiGroup=MPI_GROUP_NULL
+    workGroup%myGroupComputationNodeNumber=0
+    
+    EXITS("WorkGroup_Initialise")
+    RETURN
+999 CALL WorkGroup_Finalise(workGroup,dummyErr,dummyError,*998)
+998 ERRORSEXITS("WorkGroup_Intialise",err,error)    
+    RETURN 1
+    
+  END SUBROUTINE WorkGroup_Initialise
+  
+  !
+  !=================================================================================================================================
+  !
+
+  !>Set the character label of a work group \see OpenCMISS::Iron::cmfe_WorkGroup_LabelSet
+  SUBROUTINE WorkGroup_LabelSetC(workGroup,label,err,error,*)
+
+    !Argument Variables
+    TYPE(WorkGroupType), POINTER, INTENT(IN) :: workGroup !<The work group to set the label for
+    CHARACTER(LEN=*), INTENT(IN) :: label !<The label to set for the work group
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("ComputationEnvironment_NumberOfNodesGet",err,error,*999)
+    ENTERS("WorkGroup_LabelSetC",err,error,*999)
 
-    IF(ALLOCATED(computationEnvironment%computationNodes)) THEN
-      ComputationEnvironment_NumberOfNodesGet=computationEnvironment%numberOfWorldComputationNodes
-    ELSE
-      CALL FlagError("Computation environment not initialised",err,error,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
+
+    workGroup%label=label
     
-    EXITS("ComputationEnvironment_NumberOfNodesGet")
+    EXITS("WorkGroup_LabelSetC")
     RETURN
-999 ERRORSEXITS("ComputationEnvironment_NumberOfNodesGet",err,error)
-    RETURN
+999 ERRORSEXITS("WorkGroup_LabelSetC",err,error)
+    RETURN 1
     
-  END FUNCTION ComputationEnvironment_NumberOfNodesGet
+  END SUBROUTINE WorkGroup_LabelSetC
 
   !
-  !================================================================================================================================
+  !=================================================================================================================================
+  !
+
+  !>Set the varying string label of a work group \see OpenCMISS::Iron::cmfe_WorkGroup_LabelSet
+  SUBROUTINE WorkGroup_LabelSetVS(workGroup,label,err,error,*)
+
+    !Argument Variables
+    TYPE(WorkGroupType), POINTER, INTENT(IN) :: workGroup !<The work group to set the label for
+    TYPE(VARYING_STRING), INTENT(IN) :: label !<The label to set for the work group
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("WorkGroup_LabelSetVS",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
+
+    workGroup%label=label
+    
+    EXITS("WorkGroup_LabelSetVS")
+    RETURN
+999 ERRORSEXITS("WorkGroup_LabelSetVS",err,error)
+    RETURN 1
+    
+  END SUBROUTINE WorkGroup_LabelSetVS
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Set the number of group nodes in a work group \see OpenCMISS::Iron::cmfe_WorkGroup_NumberOfGroupNodesSet
+  SUBROUTINE WorkGroup_NumberOfGroupNodesSet(workGroup,numberOfGroupComputationNodes,err,error,*)
+
+    !Argument Variables
+    TYPE(WorkGroupType), POINTER, INTENT(OUT) :: workGroup !<The work group to set the number of group nodes for
+    INTEGER(INTG), INTENT(IN) :: numberOfGroupComputationNodes !<The number of group nodes to set for the work group
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(WorkGroupType), POINTER :: parentWorkGroup
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("WorkGroup_NumberOfGroupNodesSet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
+    IF(workGroup%workGroupFinished) CALL FlagError("Work group has already been finished.",err,error,*999)
+    NULLIFY(parentWorkGroup)
+    CALL WorkGroup_ParentWorkGroupGet(workGroup,parentWorkGroup,err,error,*999)
+    IF(numberOfGroupComputationNodes<1.OR.numberOfGroupComputationNodes>parentWorkGroup%numberOfAvailableRanks) THEN
+      localError="The number of group nodes of "//TRIM(NumberToVString(numberOfGroupComputationNodes,"*",err,error))// &
+        & " is invalid. The number of group nodes should be > 0 and <= "// &
+        & TRIM(NumberToVString(parentWorkGroup%numberOfAvailableRanks,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    workGroup%numberOfGroupComputationNodes=numberOfGroupComputationNodes
+    
+    EXITS("WorkGroup_NumberOfGroupNodesSet")
+    RETURN
+999 ERRORSEXITS("WorkGroup_NumberOfGroupNodesSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE WorkGroup_NumberOfGroupNodesSet
+
+  !
+  !=================================================================================================================================
   !
 
 END MODULE ComputationRoutines
