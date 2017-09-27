@@ -190,6 +190,7 @@ CONTAINS
     !CMISS variables
 
     TYPE(cmfe_BasisType) :: Basis
+    TYPE(cmfe_ComputationEnvironmentType) :: ComputationEnvironment
     TYPE(cmfe_CoordinateSystemType) :: CoordinateSystem
     TYPE(cmfe_GeneratedMeshType) :: GeneratedMesh
     TYPE(cmfe_DecompositionType) :: Decomposition
@@ -233,8 +234,9 @@ CONTAINS
     FieldDependentNumberOfComponents=NumberOfXi
 
     !Get the number of computation nodes and this computation node number
-    CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(NumberOfComputationNodes,Err)
-    CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(ComputationNodeNumber,Err)
+    CALL cmfe_ComputationEnvironment_Initialise(ComputationEnvironment,Err)
+    CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(ComputationEnvironment,NumberOfComputationNodes,Err)
+    CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(ComputationEnvironment,ComputationNodeNumber,Err)
 
     !Broadcast the number of elements in the X,Y and Z directions and the number of partitions to the other computation nodes
     CALL MPI_BCAST(NumberGlobalXElements,1,MPI_INTEGER,0,MPI_COMM_WORLD,MPI_IERROR)

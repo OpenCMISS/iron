@@ -130,7 +130,7 @@ MODULE ComputationAccessRoutines
 
   !Module variables
   
-  TYPE(ComputationEnvironmentType), TARGET :: computationEnvironment !<The computation environment the program is running in.  
+  TYPE(ComputationEnvironmentType), POINTER, SAVE :: computationEnvironment !<The computation environment the program is running in.  
 
   !Interfaces
 
@@ -180,10 +180,10 @@ CONTAINS
   !
 
   !>Gets the current world communicator.
-  SUBROUTINE ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*)
+  SUBROUTINE ComputationEnvironment_WorldCommunicatorGet(computationEnviron,worldCommunicator,err,error,*)
 
     !Argument Variables
-    TYPE(ComputationEnvironmentType), INTENT(IN) :: computationEnvironment !<The computational environment to get the world node number for.
+    TYPE(ComputationEnvironmentType), POINTER, INTENT(IN) :: computationEnviron !<The computational environment to get the world node number for.
     INTEGER(INTG), INTENT(OUT) :: worldCommunicator !<On return, the current world communicator
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -191,9 +191,9 @@ CONTAINS
 
     ENTERS("ComputationEnvironment_WorldCommunicatorGet",err,error,*999)
 
-    !IF(.NOT.ASSOCIATED(computationEnvironment)) CALL FlagError("Computation environment is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(computationEnviron)) CALL FlagError("Computation environment is not associated.",err,error,*999)
     
-    worldCommunicator=computationEnvironment%mpiWorldCommunicator
+    worldCommunicator=computationEnviron%mpiWorldCommunicator
  
     EXITS("ComputationEnvironment_WorldCommunicatorGet")
     RETURN
@@ -208,10 +208,10 @@ CONTAINS
   !
   
   !>Returns the number/rank of the computation node in the world communicator  
-  SUBROUTINE ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,worldNodeNumber,err,error,*)
+  SUBROUTINE ComputationEnvironment_WorldNodeNumberGet(computationEnviron,worldNodeNumber,err,error,*)
       
     !Argument Variables
-    TYPE(ComputationEnvironmentType), INTENT(IN) :: computationEnvironment !<The computational environment to get the world node number for.
+    TYPE(ComputationEnvironmentType), POINTER, INTENT(IN) :: computationEnviron !<The computational environment to get the world node number for.
     INTEGER(INTG), INTENT(OUT) :: worldNodeNumber !<On return, the node number in the world communicator.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -219,9 +219,9 @@ CONTAINS
 
     ENTERS("ComputationEnvironment_WorldNodeNumberGet",err,error,*999)
 
-    !IF(.NOT.ASSOCIATED(computationEnvironment)) CALL FlagError("Computation environment is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(computationEnviron)) CALL FlagError("Computation environment is not associated.",err,error,*999)
     
-    worldNodeNumber=computationEnvironment%myWorldComputationNodeNumber
+    worldNodeNumber=computationEnviron%myWorldComputationNodeNumber
         
     EXITS("ComputationEnvironment_WorldNodeNumberGet")
     RETURN
@@ -236,10 +236,10 @@ CONTAINS
   !
   
   !>Gets the number of computation nodes in the world communicator.
-  SUBROUTINE ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfWorldNodes,err,error,*)
+  SUBROUTINE ComputationEnvironment_NumberOfWorldNodesGet(computationEnviron,numberOfWorldNodes,err,error,*)
      
     !Argument Variables
-    TYPE(ComputationEnvironmentType), INTENT(IN) :: computationEnvironment !<The computational environment to get the world number of nodes for.
+    TYPE(ComputationEnvironmentType), POINTER, INTENT(IN) :: computationEnviron !<The computational environment to get the world number of nodes for.
     INTEGER(INTG), INTENT(OUT) :: numberOfWorldNodes !<On return, the number of nodes in the world communicator.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -247,7 +247,9 @@ CONTAINS
     
     ENTERS("ComputationEnvironment_NumberOfWorldNodesGet",err,error,*999)
 
-    numberOfWorldNodes=computationEnvironment%numberOfWorldComputationNodes
+    IF(.NOT.ASSOCIATED(computationEnviron)) CALL FlagError("Computation environment is not associated.",err,error,*999)
+    
+    numberOfWorldNodes=computationEnviron%numberOfWorldComputationNodes    
     
     EXITS("ComputationEnvironment_NumberOfWorldNodesGet")
     RETURN
@@ -262,10 +264,10 @@ CONTAINS
   !
 
   !>Gets the world work group from a computational environment.
-  SUBROUTINE ComputationEnvironment_WorldWorkGroupGet(computationEnvironment,worldWorkGroup,err,error,*)
+  SUBROUTINE ComputationEnvironment_WorldWorkGroupGet(computationEnviron,worldWorkGroup,err,error,*)
 
     !Argument variables
-    TYPE(ComputationEnvironmentType), INTENT(IN) :: computationEnvironment !<The computational environment to get the world work group for.
+    TYPE(ComputationEnvironmentType), POINTER, INTENT(IN) :: computationEnviron !<The computational environment to get the world work group for.
     TYPE(WorkGroupType), POINTER, INTENT(OUT) :: worldWorkGroup !<On exit, a pointer to the world work group for the computation environment. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -275,10 +277,10 @@ CONTAINS
 
     !Check input arguments
     IF(ASSOCIATED(worldWorkGroup)) CALL FlagError("World work group is already associated.",err,error,*998)
-    !IF(.NOT.ASSOCIATED(computationEnvironment)) CALL FlagError("Computation environment is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(computationEnviron)) CALL FlagError("Computation environment is not associated.",err,error,*999)
 
     !Get the world work group
-    worldWorkGroup=>computationEnvironment%worldWorkGroup
+    worldWorkGroup=>computationEnviron%worldWorkGroup
     !Check world work group is associated.
     IF(.NOT.ASSOCIATED(worldWorkGroup)) &
       & CALL FlagError("World work group is not associated for the computation environment.",err,error,*999)

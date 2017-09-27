@@ -8763,7 +8763,7 @@ CONTAINS
     LOGICAL :: fluidEquationsSetFound=.FALSE.
     LOGICAL :: solidEquationsSetFound=.FALSE.
 
-    ENTERS("NavierStokes_PreSolveALEUpdateMesh",err,error,*999)
+    ENTERS("NavierStokes_PreSolveAleUpdateMesh",err,error,*999)
 
     NULLIFY(controlLoop)
     NULLIFY(dynamicSolver)

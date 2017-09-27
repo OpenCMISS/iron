@@ -117,6 +117,7 @@ CONTAINS
     TYPE(cmfe_FieldType), INTENT(OUT) :: geometricField
     ! local variables
     TYPE(cmfe_BasisType) :: basis
+    TYPE(cmfe_ComputationEnvironmentType) :: ComputationEnvironment
     TYPE(cmfe_CoordinateSystemType) :: coordinateSystem
     TYPE(cmfe_DecompositionType) :: decomposition
     TYPE(cmfe_NodesType) :: nodes
@@ -127,9 +128,9 @@ CONTAINS
     err = 0
 
     ! Get computation nodes information
-
-    CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(numberOfComputationNodes, err)
-    CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(computationNodeNumber, err)
+    CALL cmfe_ComputationEnvironment_Initialise(ComputationEnvironment,Err)
+    CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(ComputationEnvironment,NumberOfComputationNodes,Err)
+    CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(ComputationEnvironment,ComputationNodeNumber,Err)
 
     ! Initialise FieldML and parse input file
 

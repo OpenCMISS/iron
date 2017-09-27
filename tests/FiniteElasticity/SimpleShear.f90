@@ -115,6 +115,7 @@ PROGRAM SIMPLESHEAREXAMPLE
   !CMISS variables
   TYPE(cmfe_BasisType) :: Basis, PressureBasis
   TYPE(cmfe_BoundaryConditionsType) :: BoundaryConditions
+  TYPE(cmfe_ComputationEnvironmentType) :: ComputationEnvironment
   TYPE(cmfe_CoordinateSystemType) :: CoordinateSystem, WorldCoordinateSystem
   TYPE(cmfe_MeshType) :: Mesh
   TYPE(cmfe_DecompositionType) :: Decomposition
@@ -159,8 +160,9 @@ PROGRAM SIMPLESHEAREXAMPLE
   CALL cmfe_OutputSetOn("SimpleShear",Err)
   
   !Get the number of computation nodes and this computation node number
-  CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(NumberOfComputationNodes,Err)
-  CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(ComputationNodeNumber,Err)
+  CALL cmfe_ComputationEnvironment_Initialise(ComputationEnvironment,Err)
+  CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(ComputationEnvironment,NumberOfComputationNodes,Err)
+  CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(ComputationEnvironment,ComputationNodeNumber,Err)
 
   NumberGlobalXElements=2
   NumberGlobalYElements=2

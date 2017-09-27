@@ -362,7 +362,7 @@ CONTAINS
        
     EXITS("Equations_EquationTypeGet")
     RETURN
-999 ERRORSEXITS("Equations_EquaitonTypeGet",err,error)
+999 ERRORSEXITS("Equations_EquationTypeGet",err,error)
     RETURN 1
     
   END SUBROUTINE Equations_EquationTypeGet

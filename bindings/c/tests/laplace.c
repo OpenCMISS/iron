@@ -90,6 +90,7 @@ int main()
 {
   cmfe_BasisType Basis = (cmfe_BasisType)NULL;
   cmfe_BoundaryConditionsType BoundaryConditions=(cmfe_BoundaryConditionsType)NULL;
+  cmfe_ComputationEnvironmentType ComputationEnvironment = (cmfe_ComputationEnvironmentType)NULL;
   cmfe_CoordinateSystemType CoordinateSystem=(cmfe_CoordinateSystemType)NULL,WorldCoordinateSystem=(cmfe_CoordinateSystemType)NULL;
   cmfe_DecompositionType Decomposition=(cmfe_DecompositionType)NULL;
   cmfe_EquationsType Equations=(cmfe_EquationsType)NULL;
@@ -127,8 +128,9 @@ int main()
   CHECK_ERROR("Initialising OpenCMISS-Iron");
   Err = cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR);
 
-  Err = cmfe_ComputationEnvironment_NumberOfWorldNodesGet(&NumberOfComputationNodes);
-  Err = cmfe_ComputationEnvironment_WorldNodeNumberGet(&ComputationNodeNumber);
+  Err = cmfe_ComputationEnvironment_Initialise(&ComputationEnvironment);
+  Err = cmfe_ComputationEnvironment_NumberOfWorldNodesGet(ComputationEnvironment,&NumberOfComputationNodes);
+  Err = cmfe_ComputationEnvironment_WorldNodeNumberGet(ComputationEnvironment,&ComputationNodeNumber);
 
   /* Start the creation of a new RC coordinate system */
   Err = cmfe_CoordinateSystem_Initialise(&CoordinateSystem);
