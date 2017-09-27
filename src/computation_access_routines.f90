@@ -45,12 +45,12 @@
 MODULE ComputationAccessRoutines
   
   USE BaseRoutines
+  USE ISO_VARYING_STRING
   USE Kinds
 #ifndef NOMPIMOD
   USE MPI
 #endif
   USE Strings
-  USE Types
 
 #include "macros.h"  
 
@@ -118,7 +118,6 @@ MODULE ComputationAccessRoutines
   TYPE ComputationEnvironmentType
     INTEGER(INTG) :: mpiVersion !<The version of MPI that we are running with
     INTEGER(INTG) :: mpiSubVersion !<The sub-version of MPI that we are running with
-    INTEGER(INTG) :: mpiWorldCommunicator !<The MPI world communicator for OpenCMISS
     INTEGER(INTG) :: mpiCommWorld !<The clone of the MPI world communicator for OpenCMISS
     INTEGER(INTG) :: mpiGroupWorld !<The group of the cloned MPI world communicator for OpenCMISS
     INTEGER(INTG) :: numberOfWorldComputationNodes !<The number of computation nodes in the world communicator
@@ -157,6 +156,8 @@ MODULE ComputationAccessRoutines
 
   PUBLIC ComputationEnvironment_WorldWorkGroupGet
 
+  PUBLIC WorkGroup_Get
+
   PUBLIC WorkGroup_GroupCommunicatorGet
 
   PUBLIC WorkGroup_GroupNodeNumberGet
@@ -193,7 +194,7 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(computationEnviron)) CALL FlagError("Computation environment is not associated.",err,error,*999)
     
-    worldCommunicator=computationEnviron%mpiWorldCommunicator
+    worldCommunicator=computationEnviron%mpiCommWorld
  
     EXITS("ComputationEnvironment_WorldCommunicatorGet")
     RETURN
@@ -292,6 +293,38 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE ComputationEnvironment_WorldWorkGroupGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finds and returns a pointer to the work group with the given user number.
+  SUBROUTINE WorkGroup_Get(computationEnvironment,workGroupUserNumber,workGroup,err,error,*)
+
+    !Argument variables
+    TYPE(ComputationEnvironmentType), POINTER, INTENT(IN) :: computationEnvironment !<The computational environment
+    INTEGER(INTG), INTENT(IN) :: workGroupUserNumber !<The user number of the work group to get
+    TYPE(WorkGroupType), POINTER, INTENT(OUT) :: workGroup !<On return, the work group corresponding to the user number. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("WorkGroup_Get",err,error,*999)
+
+    CALL WorkGroup_UserNumberFind(workGroupUserNumber,computationEnvironment,workGroup,err,error,*999)
+    IF(.NOT.ASSOCIATED(workGroup)) THEN
+      localError="A work group with an user number of "//TRIM(NumberToVString(workGroupUserNumber,"*",err,error))// &
+        & " does not exist."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("WorkGroup_Get")
+    RETURN
+999 ERRORSEXITS("WorkGroup_Get",err,error)
+    RETURN 1
+    
+  END SUBROUTINE WorkGroup_Get
 
   !
   !================================================================================================================================

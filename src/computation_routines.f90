@@ -86,8 +86,6 @@ MODULE ComputationRoutines
   
   PUBLIC Computation_Initialise,Computation_Finalise
   
-  PUBLIC ComputationEnvironment_WorldCommunicatorSet
-  
   PUBLIC WorkGroup_CreateFinish,WorkGroup_CreateStart
 
   PUBLIC WorkGroup_Destroy
@@ -442,7 +440,6 @@ CONTAINS
     
     computationEnvironment%mpiVersion=0
     computationEnvironment%mpiSubversion=0
-    computationEnvironment%mpiWorldCommunicator=MPI_COMM_NULL    
     computationEnvironment%mpiCommWorld=MPI_COMM_NULL
     computationEnvironment%mpiGroupWorld=MPI_GROUP_NULL
     computationEnvironment%numberOfWorldComputationNodes=0
@@ -460,10 +457,10 @@ CONTAINS
     CALL MPI_COMM_GROUP(computationEnvironment%mpiCommWorld,computationEnvironment%mpiGroupWorld,mpiIError)
     CALL MPI_ERROR_CHECK("MPI_COMM_GROUP",mpiIError,err,error,*999)
     !Set the default MPI world communicator to be the cloned communicator
-    computationEnvironment%mpiWorldCommunicator=computationEnvironment%mpiCommWorld
+    computationEnvironment%mpiCommWorld=computationEnvironment%mpiCommWorld
     
     !Determine the number of ranks/computation nodes we have in our world computation environment
-    CALL MPI_COMM_SIZE(computationEnvironment%mpiWorldCommunicator,computationEnvironment%numberOfWorldComputationNodes,mpiIError)
+    CALL MPI_COMM_SIZE(computationEnvironment%mpiCommWorld,computationEnvironment%numberOfWorldComputationNodes,mpiIError)
     CALL MPI_ERROR_CHECK("MPI_COMM_SIZE",mpiIError,err,error,*999)
 
     !Allocate the computation node data structures
@@ -471,7 +468,7 @@ CONTAINS
     IF(ERR /=0) CALL FlagError("Could not allocate computation environment computation nodes.",err,error,*999)
 
     !Determine my processes rank in the world communicator
-    CALL MPI_COMM_RANK(computationEnvironment%mpiWorldCommunicator,rank,mpiIError)
+    CALL MPI_COMM_RANK(computationEnvironment%mpiCommWorld,rank,mpiIError)
     CALL MPI_ERROR_CHECK("MPI_COMM_RANK",mpiIError,err,error,*999)
     computationEnvironment%myWorldComputationNodeNumber=rank
     
@@ -489,7 +486,7 @@ CONTAINS
     !information.
     CALL MPI_ALLGATHER(MPI_IN_PLACE,1,computationEnvironment%mpiComputationNode%mpiType, &
       & computationEnvironment%computationNodes(0),1,computationEnvironment%mpiComputationNode%mpiType, &
-      & computationEnvironment%mpiWorldCommunicator,mpiIError)
+      & computationEnvironment%mpiCommWorld,mpiIError)
     CALL MPI_ERROR_CHECK("MPI_ALLGATHER",mpiIError,err,error,*999)
     
     !Setup the world work group.
@@ -514,11 +511,11 @@ CONTAINS
     CALL MPI_GROUP_INCL(computationEnvironment%mpiGroupWorld,computationEnvironment%worldWorkGroup%numberOfGroupComputationNodes, &
       & computationEnvironment%worldWorkGroup%worldRanks,computationEnvironment%worldWorkGroup%mpiGroup,mpiIError)
     CALL MPI_ERROR_CHECK("MPI_GROUP_INCL",mpiIError,err,error,*999)    
-    CALL MPI_COMM_CREATE(computationEnvironment%mpiWorldCommunicator,computationEnvironment%worldWorkGroup%mpiGroup, &
+    CALL MPI_COMM_CREATE(computationEnvironment%mpiCommWorld,computationEnvironment%worldWorkGroup%mpiGroup, &
       & computationEnvironment%worldWorkGroup%mpiGroupCommunicator,mpiIError)
     CALL MPI_ERROR_CHECK("MPI_COMM_CREATE",mpiIError,err,error,*999)
     !Determine ranks
-    CALL MPI_COMM_RANK(computationEnvironment%mpiWorldCommunicator,rank,mpiIError)
+    CALL MPI_COMM_RANK(computationEnvironment%mpiCommWorld,rank,mpiIError)
     CALL MPI_ERROR_CHECK("MPI_COMM_RANK",mpiIError,err,error,*999)
     computationEnvironment%worldWorkGroup%myWorldComputationNodeNumber=rank
     CALL MPI_COMM_RANK(computationEnvironment%worldWorkGroup%mpiGroupCommunicator,rank,mpiIError)
@@ -567,52 +564,6 @@ CONTAINS
   END SUBROUTINE ComputationEnvironment_Initialise
 
   !
-  !================================================================================================================================
-  !
-
-  !>Sets the world communicator to the given on. Note: This routine should be called straight after the main OpenCMISS initialise
-  !>routine. If it is called after objects have started to be setup then good luck!
-  SUBROUTINE ComputationEnvironment_WorldCommunicatorSet(worldCommunicator,err,error,*)
-    
-    !Argument Variables
-    INTEGER(INTG), INTENT(IN) :: worldCommunicator !<The world communicator to set
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: compareResult,mpiIError
-    TYPE(VARYING_STRING) :: localError
-    
-    ENTERS("ComputationEnvironment_WorldCommunicatorSet",err,error,*999)
-    
-    !Perform a sanity check to see if the communicator is valid
-    CALL MPI_COMM_COMPARE(worldCommunicator,computationEnvironment%mpiWorldCommunicator,compareResult,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_COMM_COMPARE",mpiIError,err,error,*999)
-    SELECT CASE(compareResult)
-    CASE(MPI_IDENT,MPI_CONGRUENT,MPI_SIMILAR)
-       !OK to use. 
-       !!\TODO We should re-initialise the computation environment.   
-       computationEnvironment%mpiWorldCommunicator=worldCommunicator
-    CASE(MPI_UNEQUAL)
-       !Vastly different to the current communicator. Stop.
-       localError="The supplied world communicator of "//TRIM(NumberToVString(worldCommunicator,"*",err,error))// &      
-            & " is unequal in structure to the current communicator of "// &
-            & TRIM(NumberToVString(computationEnvironment%mpiWorldCommunicator,"*",err,error))//"."
-       CALL FlagError(localError,err,error,*999)
-    CASE DEFAULT
-       localError="The MPI compare result of "//TRIM(NumberToVString(compareResult,"*",err,error))// &
-            & " for world communicator "//TRIM(NumberToVString(worldCommunicator,"*",err,error))//" is invalid."
-       CALL FlagError(localError,err,error,*999)
-    END SELECT
- 
-    EXITS("ComputationEnvironment_WorldCommunicatorSet")
-    RETURN
-999 ERRORS("ComputationEnvironment_WorldCommunicatorSet",err,error)
-    EXITS("ComputationEnvironment_WorldCommunicatorSet")
-    RETURN 1
-    
-  END SUBROUTINE ComputationEnvironment_WorldCommunicatorSet
-  
-  !
   !=================================================================================================================================
   !
 
@@ -651,7 +602,7 @@ CONTAINS
     IF(err/=0) CALL FlagError("Could not allocate new sub groups.",err,error,*999)
     workGroup%parentWorkGroup=>parentWorkGroup
     DO subGroupIdx=1,parentWorkGroup%numberOfSubGroups
-      newSubGroups(subGroupIdx)%ptr=parentWorkGroup%subGroups(subGroupIdx)%ptr
+      newSubGroups(subGroupIdx)%ptr=>parentWorkGroup%subGroups(subGroupIdx)%ptr
     ENDDO !subGroupIdx
     newSubGroups(parentWorkGroup%numberOfSubGroups+1)%ptr=>workGroup
     CALL MOVE_ALLOC(newSubGroups,parentWorkGroup%subGroups)
@@ -736,7 +687,7 @@ CONTAINS
       workGroup%myGroupComputationNodeNumber=-1
     ENDIF
     !Determine my process rank in the world communicator
-    CALL MPI_COMM_RANK(computationEnvironment%mpiWorldCommunicator,worldRank,mpiIError)
+    CALL MPI_COMM_RANK(computationEnvironment%mpiCommWorld,worldRank,mpiIError)
     CALL MPI_ERROR_CHECK("MPI_COMM_RANK",mpiIError,err,error,*999)
     workGroup%myWorldComputationNodeNumber=worldRank
 
@@ -824,7 +775,7 @@ CONTAINS
         count=0
         DO subGroupIdx=1,parentWorkGroup%numberOfSubGroups
           NULLIFY(subGroup)
-          CALL WorkGroup_WorkSubGroupGet(workGroup,subGroupIdx,subGroup,err,error,*999)
+          CALL WorkGroup_WorkSubGroupGet(parentWorkGroup,subGroupIdx,subGroup,err,error,*999)
           IF(subGroup%userNumber/=workGroup%userNumber) THEN
             count=count+1
             newSubGroups(count)%ptr=>parentWorkGroup%subGroups(subGroupIdx)%ptr

@@ -71,6 +71,7 @@ MODULE Types
 
   USE CmissPetscTypes, ONLY : PetscISColoringType,PetscKspType,PetscMatType,PetscMatColoringType,PetscMatFDColoringType, &
     & PetscPCType,PetscSnesType,PetscSnesLineSearchType,PetscTaoType,PetscVecType
+  USE ComputationAccessRoutines
   USE Constants
   USE Kinds
   USE ISO_C_BINDING
@@ -1122,6 +1123,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: numberOfComponents !<The number of mesh components in this decomposition/mesh.
     INTEGER(INTG) :: MESH_COMPONENT_NUMBER !<The component number (index) of the mesh component that this decomposition belongs to (i.e., was generated from).
     INTEGER(INTG) :: DECOMPOSITION_TYPE !<The type of the domain decomposition \see MESH_ROUTINES_DecompositionTypes.
+    TYPE(WorkGroupType), POINTER :: workGroup !<The work group to use for this decomposition
     INTEGER(INTG) :: NUMBER_OF_DOMAINS !<The number of domains that this decomposition contains.
     INTEGER(INTG) :: NUMBER_OF_EDGES_CUT !<For automatically calculated decompositions, the number of edges of the mesh dual graph that were cut for the composition. It provides an indication of the optimally of the automatic decomposition.
     INTEGER(INTG) :: numberOfElements !<The number of elements in the decomposition
@@ -3492,6 +3494,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     LOGICAL :: PROBLEM_FINISHED !<Is .TRUE. if the problem has finished being created, .FALSE. if not.
     TYPE(PROBLEMS_TYPE), POINTER :: PROBLEMS !<A pointer to the problems for this problem.
     INTEGER(INTG), ALLOCATABLE :: SPECIFICATION(:) !<The problem specification array, eg. [class, type, subtype], although there can be more or fewer identifiers. Unused identifiers are set to zero.
+    TYPE(WorkGroupType), POINTER :: workGroup !<The work group to use for the problem.
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop information for the problem.
   END TYPE PROBLEM_TYPE
   

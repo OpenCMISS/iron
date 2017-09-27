@@ -1780,7 +1780,7 @@ CONTAINS
 
     !broadcasting the number of components in each field
     CALL MPI_BCAST(NUMBER_OF_FIELDS,1,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
-      & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+      & worldCommunicator,MPI_IERROR)
     CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
     IF(MASTER_COMPUTATION_NUMBER/=myWorldComputationNodeNumber) THEN
       CALL REALLOCATE( COMPONENTS_IN_FIELDS, NUMBER_OF_FIELDS, &
@@ -2085,7 +2085,7 @@ CONTAINS
 
     !broadcast the list of elements for mapping gloabl numbers and user numbers (elemental labels)
     CALL MPI_BCAST(LIST_ELEMENT_NUMBER,NUMBER_OF_ELEMENTS,MPI_INTEGER,MASTER_COMPUTATION_NUMBER, &
-      & computationEnvironment%mpiWorldCommunicator,MPI_IERROR)
+      & worldCommunicator,MPI_IERROR)
     CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
     !change the mapping between global elemental numbering and user elemental numbering
 
