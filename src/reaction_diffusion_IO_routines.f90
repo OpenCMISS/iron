@@ -83,7 +83,7 @@ CONTAINS
 
     !Argument variables
     TYPE(REGION_TYPE), INTENT(IN), POINTER :: REGION !<A pointer to the region to get the coordinate system for
-    CHARACTER(28), INTENT(IN) :: NAME !<the prefix name of file.
+    CHARACTER(30),INTENT(IN) :: NAME !<the prefix name of file.
     INTEGER(INTG) :: ERR !<The error code
     INTEGER(INTG), INTENT(IN) :: EQUATIONS_SET_GLOBAL_NUMBER
     TYPE(VARYING_STRING):: ERROR !<The error string
@@ -140,7 +140,7 @@ CONTAINS
 
     CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Writing Nodes...",ERR,ERROR,*999)
 
-    FILENAME="./output/"//NAME//".exnode"
+    FILENAME="./output/"//TRIM(NAME)//".exnode"
 
     OPEN(UNIT=myComputationalNodeNumber, FILE=CHAR(FILENAME),STATUS='unknown')
     ! WRITING HEADER INFORMATION
@@ -245,7 +245,7 @@ CONTAINS
         & interpolation%geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%type
     ENDIF
     CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Writing Elements...",ERR,ERROR,*999)
-    FILENAME="./output/"//NAME//".exelem"
+    FILENAME="./output/"//TRIM(NAME)//".exelem"
     OPEN(UNIT=myComputationalNodeNumber, FILE=CHAR(FILENAME),STATUS='unknown')
     WRITE(myComputationalNodeNumber,*) 'Group name: Cell'
     IF (BasisType==1) THEN !lagrange basis in 1 and 2D

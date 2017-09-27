@@ -322,7 +322,7 @@ CONTAINS
                 CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  CellML user number = ",CELLML%USER_NUMBER,ERR,ERROR,*999)
               ENDIF
               !Loop over the dofs in the models field
-              DO dofIdx=1,MODELS_VARIABLE%NUMBER_OF_DOFS
+              DO dofIdx=1,MODELS_VARIABLE%TOTAL_NUMBER_OF_DOFS
                 modelIdx=MODELS_DATA(dofIdx)
                 IF(modelIdx>0) THEN
                   MODEL_MAPS=>FIELD_MAPS%MODEL_MAPS(modelIdx)%PTR
@@ -868,7 +868,7 @@ CONTAINS
                 CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  CellML user number = ",CELLML%USER_NUMBER,ERR,ERROR,*999)
               ENDIF
               !Loop over the dofs in the models field
-              DO dofIdx=1,MODELS_VARIABLE%NUMBER_OF_DOFS
+              DO dofIdx=1,MODELS_VARIABLE%TOTAL_NUMBER_OF_DOFS
                 modelIdx=MODELS_DATA(dofIdx)
                 IF(modelIdx>0) THEN
                   MODEL_MAPS=>FIELD_MAPS%MODEL_MAPS(modelIdx)%PTR
@@ -2536,7 +2536,7 @@ CONTAINS
               !check for the first non-zero model index
               source_dof_idx=0
               first_dof_idx=1
-              DO source_dof_idx=1,MODELS_VARIABLE%NUMBER_OF_DOFS
+              DO source_dof_idx=1,MODELS_VARIABLE%TOTAL_NUMBER_OF_DOFS
                 model_idx=MODELS_DATA(source_dof_idx)
                 IF(model_idx>=0) THEN
                   MODELS_FIELD%ONLY_ONE_MODEL_INDEX=model_idx
@@ -2552,7 +2552,7 @@ CONTAINS
                 ENDIF
               ENDDO
               IF(model_idx>=0.AND.model_idx<=CELLML%NUMBER_OF_MODELS) THEN
-                DO source_dof_idx=(first_dof_idx+1),MODELS_VARIABLE%NUMBER_OF_DOFS
+                DO source_dof_idx=(first_dof_idx+1),MODELS_VARIABLE%TOTAL_NUMBER_OF_DOFS
                   model_idx=MODELS_DATA(source_dof_idx)
                   IF(model_idx>=0.AND.model_idx<=CELLML%NUMBER_OF_MODELS) THEN
                     IF(model_idx/=MODELS_FIELD%ONLY_ONE_MODEL_INDEX.AND.model_idx/=0) THEN
