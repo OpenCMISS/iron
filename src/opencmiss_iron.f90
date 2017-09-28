@@ -41533,44 +41533,23 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: timeDependenceTypes(:) !<timeDependenceTypes(transposeIdx). On return, the interface matrix time dependence type. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OPENCMISS_InterfaceMatricesTimeDependenceTypes 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
-    TYPE(REGION_TYPE), POINTER :: REGION
-    TYPE(VARYING_STRING) :: localError
+    TYPE(INTERFACE_TYPE), POINTER :: int
+    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
+    TYPE(REGION_TYPE), POINTER :: region
 
     ENTERS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber1",err,error,*999)
 
-    NULLIFY(REGION)
-    NULLIFY(INTERFACE)
-    NULLIFY(INTERFACE_CONDITION)
-    NULLIFY(INTERFACE_EQUATIONS)
-    CALL REGION_USER_NUMBER_FIND(regionUserNumber,REGION,err,error,*999)
-    IF(ASSOCIATED(REGION)) THEN
-      CALL INTERFACE_USER_NUMBER_FIND(interfaceUserNumber,REGION,INTERFACE,err,error,*999)
-      IF(ASSOCIATED(INTERFACE)) THEN
-        CALL INTERFACE_CONDITION_USER_NUMBER_FIND(interfaceConditionUserNumber,INTERFACE,INTERFACE_CONDITION,err,error,*999)
-        IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
-          CALL INTERFACE_CONDITION_EQUATIONS_GET(INTERFACE_CONDITION,INTERFACE_EQUATIONS,err,error,*999)
-          CALL InterfaceEquations_MatrixTimeDependenceTypeGet(INTERFACE_EQUATIONS,interfaceMatrixIdx,hasTranspose, &
-            & timeDependenceTypes,err,error,*999)
-        ELSE
-          localError="An interface condition with an user number of "// &
-            & TRIM(NumberToVString(interfaceConditionUserNumber,"*",err,error))// &
-            & " does not exist on the interface with a user number of "// &
-            & TRIM(NumberToVString(interfaceUserNumber,"*",err,error))// &
-            & " defined on a region with a user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))//"."
-          CALL FlagError(localError,err,error,*999)
-        END IF
-      ELSE
-        localError="An interface with an user number of "//TRIM(NumberToVString(interfaceUserNumber,"*",err,error))// &
-          & " does not exist on region number "//TRIM(NumberToVString(regionUserNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      END IF
-    ELSE
-      localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))//" does not exist."
-      CALL FlagError(localError,err,error,*999)
-    END IF
+    NULLIFY(region)
+    NULLIFY(interface)
+    NULLIFY(interfaceCondition)
+    NULLIFY(interfaceEquations)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
+    CALL Interface_InterfaceConditionGet(interface,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
+    CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
+    CALL InterfaceEquations_MatrixTimeDependenceTypeGet(interfaceEquations,interfaceMatrixIdx,hasTranspose, &
+      & timeDependenceTypes,err,error,*999)
 
     EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber1")
     RETURN
@@ -41695,44 +41674,24 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: timeDependenceTypes(:) !<timeDependenceTypes(transposeIdx). The interface matrix time dependence type to set. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OPENCMISS_InterfaceMatricesTimeDependenceTypes 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
-    TYPE(REGION_TYPE), POINTER :: REGION
+    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
+    TYPE(REGION_TYPE), POINTER :: region
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber1",err,error,*999)
 
-    NULLIFY(REGION)
-    NULLIFY(INTERFACE)
-    NULLIFY(INTERFACE_CONDITION)
-    NULLIFY(INTERFACE_EQUATIONS)
-    CALL REGION_USER_NUMBER_FIND(regionUserNumber,REGION,err,error,*999)
-    IF(ASSOCIATED(REGION)) THEN
-      CALL INTERFACE_USER_NUMBER_FIND(interfaceUserNumber,REGION,INTERFACE,err,error,*999)
-      IF(ASSOCIATED(INTERFACE)) THEN
-        CALL INTERFACE_CONDITION_USER_NUMBER_FIND(interfaceConditionUserNumber,INTERFACE,INTERFACE_CONDITION,err,error,*999)
-        IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
-          CALL INTERFACE_CONDITION_EQUATIONS_GET(INTERFACE_CONDITION,INTERFACE_EQUATIONS,err,error,*999)
-          CALL InterfaceEquations_MatrixTimeDependenceTypeSet(INTERFACE_EQUATIONS,interfaceMatrixIdx,hasTranspose, &
-            & timeDependenceTypes,err,error,*999)
-        ELSE
-          localError="An interface condition with an user number of "// &
-            & TRIM(NumberToVString(interfaceConditionUserNumber,"*",err,error))// &
-            & " does not exist on the interface with a user number of "// &
-            & TRIM(NumberToVString(interfaceUserNumber,"*",err,error))// &
-            & " defined on a region with a user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))//"."
-          CALL FlagError(localError,err,error,*999)
-        END IF
-      ELSE
-        localError="An interface with an user number of "//TRIM(NumberToVString(interfaceUserNumber,"*",err,error))// &
-          & " does not exist on region number "//TRIM(NumberToVString(regionUserNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      END IF
-    ELSE
-      localError="A region with an user number of "//TRIM(NumberToVString(regionUserNumber,"*",err,error))//" does not exist."
-      CALL FlagError(localError,err,error,*999)
-    END IF
+    NULLIFY(region)
+    NULLIFY(interface)
+    NULLIFY(interfaceCondition)
+    NULLIFY(interfaceEquations)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
+    CALL Interface_InterfaceConditionGet(interface,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
+    CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
+    CALL InterfaceEquations_MatrixTimeDependenceTypeSet(interfaceEquations,interfaceMatrixIdx,hasTranspose, &
+      & timeDependenceTypes,err,error,*999)
 
     EXITS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber1")
     RETURN
