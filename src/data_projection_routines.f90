@@ -620,14 +620,13 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The user number of the data projection
     TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points in which to create data projection
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition !<A pointer to the decomposition where the data points are projected
     TYPE(FIELD_TYPE), POINTER :: projectionField !<A pointer to the field for the data projection
     INTEGER(INTG), INTENT(IN) :: projectionVariableType !<The field variable type of the projection field for the data projection \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     TYPE(DataProjectionType), POINTER :: dataProjection !<On exit, a pointer to the created data projection. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dataProjectionIdx,decompositionNumberOfCoordinates,dummyErr,insertStatus,numberOfCoordinates,xiIdx
+    INTEGER(INTG) :: dataProjectionIdx,dummyErr,insertStatus,numberOfCoordinates
     TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: dataPointsCoordinateSystem,fieldCoordinateSystem
     TYPE(DataProjectionPtrType), ALLOCATABLE :: newDataProjections(:)
     TYPE(DECOMPOSITION_TYPE), POINTER :: fieldDecomposition
@@ -866,7 +865,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: dataPointIdx,dummyErr,numberOfDataPoints
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(VARYING_STRING) :: dummyError,localError
+    TYPE(VARYING_STRING) :: dummyError
     
     ENTERS("DataProjection_DataProjectionCandidatesInitialise",err,error,*998)
 
@@ -1063,7 +1062,6 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: position,projectionIdx
     LOGICAL :: found
-    TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: listDataProjection
     TYPE(DataProjectionPtrType), ALLOCATABLE :: newDataProjections(:)
     TYPE(DataProjectionsType), POINTER :: dataProjections
@@ -1211,7 +1209,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dataPointIdx
        
     ENTERS("DataProjection_Finalise",err,error,*999)
 
@@ -1355,7 +1352,7 @@ CONTAINS
     TYPE(DOMAIN_MAPPINGS_TYPE), POINTER :: domainMappings
     TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology
     INTEGER(INTG) :: myComputationalNode,numberOfComputationalNodes !<computational node/rank of the current process    
-    INTEGER(INTG) :: meshComponentNumber,numberOfDataPoints
+    INTEGER(INTG) :: numberOfDataPoints
     INTEGER(INTG) :: numberOfElements,numberOfFaces,numberOfLines,numberOfCandidates,dataNumberOfCandidates
     INTEGER(INTG) :: numberOfClosestCandidates,totalNumberOfClosestCandidates,reducedNumberOfCLosestCandidates
     INTEGER(INTG), ALLOCATABLE :: globalToLocalNumberOfClosestCandidates(:) 
@@ -1366,12 +1363,11 @@ CONTAINS
     INTEGER(INTG) :: MPIClosestDistances,dataProjectionGlobalNumber
     INTEGER(INTG) :: MPIIError
     INTEGER(INTG), ALLOCATABLE :: projectedElement(:),projectedLineFace(:),projectionExitTag(:)
-    REAL(DP) :: distance
     REAL(DP), ALLOCATABLE :: closestDistances(:,:),globalClosestDistances(:,:)
     REAL(DP), ALLOCATABLE :: projectedDistance(:,:),projectedXi(:,:),projectionVectors(:,:)   
     INTEGER(INTG) :: elementIdx,elementNumber,lineFaceIdx,lineFaceNumber,computationalNodeIdx,xiIdx,localElementNumber, &
       & localLineFaceNumber
-    INTEGER(INTG) :: tempNumber,startIdx,finishIdx,dataPointIdx
+    INTEGER(INTG) :: startIdx,finishIdx,dataPointIdx
     LOGICAL :: boundaryProjection,elementExists,ghostElement
     TYPE(VARYING_STRING) :: localError
     
@@ -2039,7 +2035,6 @@ CONTAINS
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: interpolatedPoint
     TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: interpolationParameters(:)
     TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: fieldParameterSet
-    TYPE(VARYING_STRING) :: localError
     
     ENTERS("DataProjection_DataPointsPositionEvaluate",err,error,*999)
     

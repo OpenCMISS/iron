@@ -12224,7 +12224,6 @@ CONTAINS
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_BoundaryConditions_DestroyNumber0",err,error,*999)
 
@@ -12753,7 +12752,6 @@ CONTAINS
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(FIELD_TYPE), POINTER :: dependentField
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_BoundaryConditions_SetNodeNumber0",err,error,*999)
 
@@ -18290,7 +18288,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_CoordinateSystem_FocusSetNumber",err,error,*999)
 
@@ -19430,7 +19427,6 @@ CONTAINS
     !Local variables
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(REGION_TYPE), POINTER :: region
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_DataPoints_PositionGetNumber",err,error,*999)
 
@@ -41533,7 +41529,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: timeDependenceTypes(:) !<timeDependenceTypes(transposeIdx). On return, the interface matrix time dependence type. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OPENCMISS_InterfaceMatricesTimeDependenceTypes 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(INTERFACE_TYPE), POINTER :: int
+    TYPE(INTERFACE_TYPE), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
     TYPE(REGION_TYPE), POINTER :: region
@@ -41547,7 +41543,7 @@ CONTAINS
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_InterfaceConditionGet(interface,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
-    CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
+    CALL InterfaceCondition_EquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
     CALL InterfaceEquations_MatrixTimeDependenceTypeGet(interfaceEquations,interfaceMatrixIdx,hasTranspose, &
       & timeDependenceTypes,err,error,*999)
 
@@ -41689,7 +41685,7 @@ CONTAINS
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_InterfaceConditionGet(interface,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
-    CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
+    CALL InterfaceCondition_EquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
     CALL InterfaceEquations_MatrixTimeDependenceTypeSet(interfaceEquations,interfaceMatrixIdx,hasTranspose, &
       & timeDependenceTypes,err,error,*999)
 

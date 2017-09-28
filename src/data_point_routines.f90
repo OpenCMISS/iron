@@ -618,7 +618,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dataPointIdx,dataProjectionIdx
+    INTEGER(INTG) :: dataPointIdx
 
     ENTERS("DataPoints_Finalise",err,error,*999)
 
@@ -1197,8 +1197,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: globalNumber
-    TYPE(TREE_NODE_TYPE), POINTER :: treeNode
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DataPoints_DataProjectionGet",err,error,*999)
