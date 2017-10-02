@@ -635,6 +635,7 @@ CONTAINS
     REAL(DP), POINTER :: C(:) !Parameters for constitutive laws
     REAL(DP) :: B(6),E(6),DQ_DE(6),Q
     REAL(DP) :: I3EE(6,6) !<Derivative of I3 wrt E
+    REAL(DP) :: ADJCC(6,6) !<Derivative of adj(C) wrt C
     REAL(DP) :: AZUE(6,6) !<Derivative of C^-1 wrt E
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: LOCAL_ERROR
@@ -672,6 +673,18 @@ CONTAINS
       & 0.0_DP, 0.0_DP, -4.0_DP*AZLv(4), -2.0_DP*AZLv(3), 2.0_DP*AZLv(6), 2.0_DP*AZLv(5), &
       & 0.0_DP, -4.0_DP*AZLv(5), 0.0_DP, 2.0_DP*AZLv(6), -2.0_DP*AZLv(2), 2.0_DP*AZLv(4), &
       & -4.0_DP*AZLv(6), 0.0_DP, 0.0_DP, 2.0_DP*AZLv(5), 2.0_DP*AZLv(4), -2.0_DP*AZLv(1)], [6,6])
+    ADJCC = RESHAPE([0.0_DP, AZLv(3), AZLv(2), 0.0_DP,  0.0_DP,-AZLv(6), &
+      & AZLv(3), 0.0_DP, AZLv(1), 0.0_DP,-AZLv(5), 0.0_DP,  &
+      & AZLv(2), AZLv(1), 0.0_DP, -AZLv(4), 0.0_DP, 0.0_DP, &
+      & 0.0_DP, 0.0_DP, -AZLv(4), -0.5_DP*AZLv(3), 0.5_DP*AZLv(6), 0.5_DP*AZLv(5), &
+      & 0.0_DP, -AZLv(5), 0.0_DP,0.5_DP*AZLv(6), -0.5_DP*AZLv(2), 0.5_DP*AZLv(4), &
+      & -AZLv(6), 0.0_DP, 0.0_DP, 0.5_DP*AZLv(5), 0.5_DP*AZLv(4), -0.5_DP*AZLv(1)], [6,6])
+    !DO i=1,6
+    !  DO j=1,6
+    !    AZUE(i,j) = -2.0_DP*AZUv(i)*AZUv(j) + 2.0_DP*ADJCC(i,j)/I3
+    !  ENDDO
+    !ENDDO
+
     DO i=1,6
       DO j=1,6
         AZUE(i,j) = -2.0_DP*AZUv(i)*AZUv(j) + 0.5_DP*I3EE(i,j)/I3
@@ -770,6 +783,7 @@ CONTAINS
           ELASTICITY_TENSOR(i,j)=TEMPTERM1*DQ_DE(i)*DQ_DE(j)
         ENDDO
       ENDDO
+      B=[2.0_DP*C(2),2.0_DP*C(3),2.0_DP*C(3),C(4),C(4),C(3)]
       DO i=1,6
         ELASTICITY_TENSOR(i,i)=ELASTICITY_TENSOR(i,i)+TEMPTERM1*B(i)
       ENDDO
@@ -3503,7 +3517,7 @@ CONTAINS
     INTEGER(INTG), PARAMETER :: OFF_DIAG_COMP(3)=[0,1,3],OFF_DIAG_DEP_VAR1(3)=[1,1,2],OFF_DIAG_DEP_VAR2(3)=[2,3,3]
     REAL(DP) :: PRESSURE_GAUSS,GW_PRESSURE
     REAL(DP) :: NORMAL(3),GW_PRESSURE_W(2),TEMP3, TEMP4
-    REAL(DP) :: TEMPVEC1(3),TEMPVEC2(3),TEMPVEC3(3),TEMPVEC4(3),TEMPVEC5(3)
+    REAL(DP) :: TEMPVEC1(2),TEMPVEC2(2),TEMPVEC3(3),TEMPVEC4(3),TEMPVEC5(3)
     LOGICAL :: NONZERO_PRESSURE
 
     ENTERS("FiniteElasticity_SurfacePressureJacobianEvaluate",ERR,ERROR,*999)
@@ -3599,14 +3613,14 @@ CONTAINS
             DO oh=1,OFF_DIAG_COMP(NUMBER_OF_DIMENSIONS)
               nh=OFF_DIAG_DEP_VAR1(oh)
               mh=OFF_DIAG_DEP_VAR2(oh)
-              GW_PRESSURE_W(1:3)=(NORMAL(mh)*DEPENDENT_INTERP_POINT_METRICS%DXI_DX(1:3,nh)- &
-                & DEPENDENT_INTERP_POINT_METRICS%DXI_DX(1:3,mh)*NORMAL(nh))*GW_PRESSURE
+              GW_PRESSURE_W(1:2)=(NORMAL(mh)*DEPENDENT_INTERP_POINT_METRICS%DXI_DX(1:2,nh)- &
+                & DEPENDENT_INTERP_POINT_METRICS%DXI_DX(1:2,mh)*NORMAL(nh))*GW_PRESSURE
               DO ns=1,NUMBER_OF_FACE_PARAMETERS(nh)
                 !Loop over element rows belonging to geometric dependent variables
                 nhs=ELEMENT_BASE_DOF_INDEX(nh)+ &
                   & BASES(nh)%PTR%ELEMENT_PARAMETERS_IN_LOCAL_FACE(ns,naf)
-                TEMPVEC1(1:3)=GW_PRESSURE_W(1:3)*QUADRATURE_SCHEMES(nh)%PTR% &
-                  & GAUSS_BASIS_FNS(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(1:3),ng)
+                TEMPVEC1(1:2)=GW_PRESSURE_W(1:2)*QUADRATURE_SCHEMES(nh)%PTR% &
+                  & GAUSS_BASIS_FNS(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(1:2),ng)
                 DO ms=1,NUMBER_OF_FACE_PARAMETERS(mh)
                   mhs=ELEMENT_BASE_DOF_INDEX(mh)+ &
                     & BASES(mh)%PTR%ELEMENT_PARAMETERS_IN_LOCAL_FACE(ms,naf)
@@ -3620,14 +3634,14 @@ CONTAINS
             DO oh=1,OFF_DIAG_COMP(NUMBER_OF_DIMENSIONS)
               nh=OFF_DIAG_DEP_VAR1(oh)
               mh=OFF_DIAG_DEP_VAR2(oh)
-              GW_PRESSURE_W(1:3)=(NORMAL(nh)*DEPENDENT_INTERP_POINT_METRICS%DXI_DX(1:3,mh)- &
-                & DEPENDENT_INTERP_POINT_METRICS%DXI_DX(1:3,nh)*NORMAL(mh))*GW_PRESSURE
+              GW_PRESSURE_W(1:2)=(NORMAL(nh)*DEPENDENT_INTERP_POINT_METRICS%DXI_DX(1:2,mh)- &
+                & DEPENDENT_INTERP_POINT_METRICS%DXI_DX(1:2,nh)*NORMAL(mh))*GW_PRESSURE
               DO ms=1,NUMBER_OF_FACE_PARAMETERS(mh)
                 !Loop over element rows belonging to geometric dependent variables
                 mhs=ELEMENT_BASE_DOF_INDEX(mh)+ &
                   & BASES(mh)%PTR%ELEMENT_PARAMETERS_IN_LOCAL_FACE(ms,naf)
-                TEMPVEC1(1:3)=GW_PRESSURE_W(1:3)*QUADRATURE_SCHEMES(mh)%PTR% &
-                  & GAUSS_BASIS_FNS(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(1:3),ng)
+                TEMPVEC1(1:2)=GW_PRESSURE_W(1:2)*QUADRATURE_SCHEMES(mh)%PTR% &
+                  & GAUSS_BASIS_FNS(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(1:2),ng)
                 DO ns=1,NUMBER_OF_FACE_PARAMETERS(nh)
                   nhs=ELEMENT_BASE_DOF_INDEX(nh)+ &
                     & BASES(nh)%PTR%ELEMENT_PARAMETERS_IN_LOCAL_FACE(ns,naf)
