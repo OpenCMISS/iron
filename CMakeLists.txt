@@ -121,7 +121,7 @@ endforeach()
 
 # Platform-checks
 include(CheckSymbolExists)
-CHECK_SYMBOL_EXISTS(SA_NODEFER "" HAVE_SA_NODEFER)
+CHECK_SYMBOL_EXISTS(SA_NODEFER "signal.h" HAVE_SA_NODEFER)
 CHECK_SYMBOL_EXISTS(sigaction "signal.h" HAVE_SIGACTION_STRUCT)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmiss.in.h ${CMAKE_CURRENT_BINARY_DIR}/cmiss.h)
