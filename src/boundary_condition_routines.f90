@@ -1,4 +1,4 @@
-!!> \file 
+!!> \file
 !> \author Ting Yu
 !> \brief This module set the boundary conditions for the given equation set
 !>
@@ -145,7 +145,7 @@ MODULE BOUNDARY_CONDITIONS_ROUTINES
     MODULE PROCEDURE BOUNDARY_CONDITIONS_ADD_LOCAL_DOFS
   END INTERFACE !BOUNDARY_CONDITIONS_ADD_LOCAL_DOF
 
-  !>Sets a boundary condition on the specified local DOF. 
+  !>Sets a boundary condition on the specified local DOF.
   INTERFACE BOUNDARY_CONDITIONS_SET_LOCAL_DOF
     MODULE PROCEDURE BOUNDARY_CONDITIONS_SET_LOCAL_DOF1
     MODULE PROCEDURE BOUNDARY_CONDITIONS_SET_LOCAL_DOFS
@@ -166,7 +166,7 @@ MODULE BOUNDARY_CONDITIONS_ROUTINES
   PUBLIC BOUNDARY_CONDITION_SPARSE_MATRICES,BOUNDARY_CONDITION_FULL_MATRICES
 
   PUBLIC BOUNDARY_CONDITIONS_CREATE_FINISH,BOUNDARY_CONDITIONS_CREATE_START,BOUNDARY_CONDITIONS_DESTROY
-  
+
   PUBLIC BOUNDARY_CONDITIONS_ADD_CONSTANT,BOUNDARY_CONDITIONS_ADD_LOCAL_DOF,BOUNDARY_CONDITIONS_ADD_ELEMENT, &
     & BOUNDARY_CONDITIONS_ADD_NODE,BOUNDARY_CONDITIONS_VARIABLE_GET
 
@@ -175,7 +175,7 @@ MODULE BOUNDARY_CONDITIONS_ROUTINES
 
   PUBLIC BoundaryConditions_ConstrainNodeDofsEqual
 
-CONTAINS  
+CONTAINS
 
   !
   !================================================================================================================================
@@ -241,7 +241,7 @@ CONTAINS
                       CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                       CALL MPI_ALLREDUCE(MPI_IN_PLACE,BOUNDARY_CONDITION_VARIABLE%CONDITION_TYPES, &
                         & SEND_COUNT,MPI_INTEGER,MPI_SUM,computationalEnvironment%mpiCommunicator,MPI_IERROR)
-                      CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)                      
+                      CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                     ENDIF !mpi_in_place bug workaround - only do this when num comp nodes > 1
 
                   ELSE
@@ -249,7 +249,7 @@ CONTAINS
                       & TRIM(NUMBER_TO_VSTRING(variable_idx,"*",ERR,ERROR))//"."
                     CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
-                  
+
                   IF(computationalEnvironment%numberOfComputationalNodes>1) THEN
 
                     ! Update the total number of boundary condition types by summing across all nodes
@@ -260,10 +260,10 @@ CONTAINS
                       & 1,MPI_INTEGER,MPI_SUM,computationalEnvironment%mpiCommunicator,MPI_IERROR)
                     CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                   ENDIF !mpi_in_place bug workaround - only do this when num comp nodes > 1
-                  
+
                   ! Check that the boundary conditions set are appropriate for equations sets
                   CALL BoundaryConditions_CheckEquations(BOUNDARY_CONDITION_VARIABLE,ERR,ERROR,*999)
-                  
+
                   IF(computationalEnvironment%numberOfComputationalNodes>1) THEN
                     !Make sure the required parameter sets are created on all computational nodes and begin updating them
                     CALL MPI_ALLREDUCE(MPI_IN_PLACE,BOUNDARY_CONDITION_VARIABLE%parameterSetRequired, &
@@ -416,7 +416,7 @@ CONTAINS
                                   ENDIF
                                 ENDDO
                               ENDIF
-                              
+
                               dynamicMatrices=>vectorMatrices%dynamicMatrices
                               IF(ASSOCIATED(dynamicMatrices)) THEN
                                 !Iterate through equations matrices
@@ -664,12 +664,12 @@ CONTAINS
         ENDIF
       ENDDO !variable_idx
     ENDIF
-    
+
     EXITS("BOUNDARY_CONDITIONS_CREATE_FINISH")
     RETURN
 999 ERRORSEXITS("BOUNDARY_CONDITIONS_CREATE_FINISH",ERR,ERROR)
     RETURN 1
-    
+
   END SUBROUTINE BOUNDARY_CONDITIONS_CREATE_FINISH
 
   !
@@ -738,12 +738,12 @@ CONTAINS
     ELSE
       CALL FlagError("Boundary conditions is not associated.",ERR,ERROR,*999)
     ENDIF
-       
+
     EXITS("BOUNDARY_CONDITIONS_DESTROY")
     RETURN
 999 ERRORSEXITS("BOUNDARY_CONDITIONS_DESTROY",ERR,ERROR)
     RETURN 1
-    
+
   END SUBROUTINE BOUNDARY_CONDITIONS_DESTROY
 
   !
@@ -1015,7 +1015,7 @@ CONTAINS
 
   !>Adds to the value of the specified constant and sets this as a boundary condition on the specified constant. \see OPENCMISS::CMISSBoundaryConditionAddConstant
   SUBROUTINE BOUNDARY_CONDITIONS_ADD_CONSTANT(BOUNDARY_CONDITIONS,FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,CONDITION,VALUE,ERR,ERROR,*)
-    
+
     !Argument variables
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS !<A pointer to the boundary conditions to set the boundary condition for
     TYPE(FIELD_TYPE), POINTER :: FIELD !<The dependent field to set the boundary condition on.
@@ -1030,7 +1030,7 @@ CONTAINS
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: DEPENDENT_FIELD_VARIABLE
     TYPE(VARYING_STRING) :: LOCAL_ERROR
- 
+
     ENTERS("BOUNDARY_CONDITIONS_ADD_CONSTANT",ERR,ERROR,*999)
 
     NULLIFY(BOUNDARY_CONDITIONS_VARIABLE)
@@ -1063,20 +1063,20 @@ CONTAINS
     ELSE
       CALL FlagError("Boundary conditions is not associated.",ERR,ERROR,*999)
     ENDIF
-       
+
     EXITS("BOUNDARY_CONDITIONS_ADD_CONSTANT")
     RETURN
 999 ERRORSEXITS("BOUNDARY_CONDITIONS_ADD_CONSTANT",ERR,ERROR)
     RETURN 1
   END SUBROUTINE BOUNDARY_CONDITIONS_ADD_CONSTANT
-  
+
  !
   !================================================================================================================================
   !
- 
+
   !>Sets a boundary condition on the specified constant. \see OPENCMISS::CMISSBoundaryConditionsSetConstant
   SUBROUTINE BOUNDARY_CONDITIONS_SET_CONSTANT(BOUNDARY_CONDITIONS,FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,CONDITION,VALUE,ERR,ERROR,*)
-    
+
     !Argument variables
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS !<A pointer to the boundary conditions to set the boundary condition for
     TYPE(FIELD_TYPE), POINTER :: FIELD !<The dependent field to set the boundary condition on.
@@ -1091,7 +1091,7 @@ CONTAINS
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: LOCAL_ERROR
- 
+
     ENTERS("BOUNDARY_CONDITIONS_SET_CONSTANT",ERR,ERROR,*999)
 
     !Note: This routine is for constant interpolation
@@ -1120,21 +1120,21 @@ CONTAINS
     ELSE
       CALL FlagError("Boundary conditions is not associated.",ERR,ERROR,*999)
     ENDIF
-       
+
     EXITS("BOUNDARY_CONDITIONS_SET_CONSTANT")
     RETURN
 999 ERRORSEXITS("BOUNDARY_CONDITIONS_SET_CONSTANT",ERR,ERROR)
     RETURN 1
-    
+
   END SUBROUTINE BOUNDARY_CONDITIONS_SET_CONSTANT
-  
+
   !
   !================================================================================================================================
   !
- 
+
   !>Adds to the value of the specified DOF and sets this as a boundary condition on the specified DOF.
   SUBROUTINE BOUNDARY_CONDITIONS_ADD_LOCAL_DOF1(BOUNDARY_CONDITIONS,FIELD,VARIABLE_TYPE,DOF_INDEX,CONDITION,VALUE,ERR,ERROR,*)
-    
+
     !Argument variables
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS !<A pointer to the boundary conditions to set the boundary condition for
     TYPE(FIELD_TYPE), POINTER :: FIELD !<The dependent field to set the boundary condition on.
@@ -1145,7 +1145,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    
+
     ENTERS("BOUNDARY_CONDITIONS_ADD_LOCAL_DOF1",ERR,ERROR,*999)
 
     CALL BOUNDARY_CONDITIONS_ADD_LOCAL_DOFS(BOUNDARY_CONDITIONS,FIELD,VARIABLE_TYPE,(/DOF_INDEX/),(/CONDITION/),(/VALUE/), &
@@ -1156,11 +1156,11 @@ CONTAINS
 999 ERRORSEXITS("BOUNDARY_CONDITIONS_ADD_LOCAL_DOF1",ERR,ERROR)
     RETURN 1
   END SUBROUTINE BOUNDARY_CONDITIONS_ADD_LOCAL_DOF1
-  
+
   !
   !================================================================================================================================
   !
- 
+
   !>Adds to the value of the specified DOF and sets this as a boundary condition on the specified DOFs.
   SUBROUTINE BOUNDARY_CONDITIONS_ADD_LOCAL_DOFS(BOUNDARY_CONDITIONS,FIELD,VARIABLE_TYPE,DOF_INDICES,CONDITIONS,VALUES,ERR,ERROR,*)
 
@@ -1315,20 +1315,20 @@ CONTAINS
     ELSE
       CALL FlagError("Boundary conditions is not associated.",ERR,ERROR,*999)
     ENDIF
-       
+
     EXITS("BOUNDARY_CONDITIONS_ADD_LOCAL_DOFS")
     RETURN
 999 ERRORSEXITS("BOUNDARY_CONDITIONS_ADD_LOCAL_DOFS",ERR,ERROR)
     RETURN 1
   END SUBROUTINE BOUNDARY_CONDITIONS_ADD_LOCAL_DOFS
-  
+
   !
   !================================================================================================================================
   !
- 
+
   !>Sets a boundary condition on the specified DOF.
   SUBROUTINE BOUNDARY_CONDITIONS_SET_LOCAL_DOF1(BOUNDARY_CONDITIONS,FIELD,VARIABLE_TYPE,DOF_INDEX,CONDITION,VALUE,ERR,ERROR,*)
-    
+
     !Argument variables
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS !<A pointer to the boundary conditions to set the boundary condition for
     TYPE(FIELD_TYPE), POINTER :: FIELD !<The dependent field to set the boundary condition on.
@@ -1349,14 +1349,14 @@ CONTAINS
 999 ERRORSEXITS("BOUNDARY_CONDITIONS_SET_LOCAL_DOF1",ERR,ERROR)
     RETURN 1
   END SUBROUTINE BOUNDARY_CONDITIONS_SET_LOCAL_DOF1
-  
+
   !
   !================================================================================================================================
   !
- 
+
   !>Sets a boundary condition on the specified DOFs.
   SUBROUTINE BOUNDARY_CONDITIONS_SET_LOCAL_DOFS(BOUNDARY_CONDITIONS,FIELD,VARIABLE_TYPE,DOF_INDICES,CONDITIONS,VALUES,ERR,ERROR,*)
-    
+
     !Argument variables
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS !<A pointer to the boundary conditions to set the boundary condition for
     TYPE(FIELD_TYPE), POINTER :: FIELD !<The dependent field to set the boundary condition on.
@@ -1372,7 +1372,7 @@ CONTAINS
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: DOMAIN_MAPPING
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: DEPENDENT_VARIABLE
     TYPE(VARYING_STRING) :: LOCAL_ERROR
- 
+
     ENTERS("BOUNDARY_CONDITIONS_SET_LOCAL_DOFS",ERR,ERROR,*999)
 
     IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
@@ -1500,7 +1500,7 @@ CONTAINS
     ELSE
       CALL FlagError("Boundary conditions is not associated.",ERR,ERROR,*999)
     ENDIF
-       
+
     EXITS("BOUNDARY_CONDITIONS_SET_LOCAL_DOFS")
     RETURN
 999 ERRORSEXITS("BOUNDARY_CONDITIONS_SET_LOCAL_DOFS",ERR,ERROR)
@@ -1654,7 +1654,7 @@ CONTAINS
   !>Adds to the value of the specified constant and sets this as a boundary condition on the specified user element. \see OPENCMISS_CMISSBoundaryConditionsAddElement
   SUBROUTINE BOUNDARY_CONDITIONS_ADD_ELEMENT(BOUNDARY_CONDITIONS,FIELD,VARIABLE_TYPE,USER_ELEMENT_NUMBER,COMPONENT_NUMBER, &
     & CONDITION,VALUE,ERR,ERROR,*)
-    
+
     !Argument variables
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS !<A pointer to the boundary conditions to set the boundary condition for
     TYPE(FIELD_TYPE), POINTER :: FIELD !<The dependent field to set the boundary condition on.
@@ -1705,17 +1705,17 @@ CONTAINS
     ELSE
       CALL FlagError("Boundary conditions is not associated.",ERR,ERROR,*999)
     ENDIF
-       
+
     EXITS("BOUNDARY_CONDITIONS_ADD_ELEMENT")
     RETURN
 999 ERRORSEXITS("BOUNDARY_CONDITIONS_ADD_ELEMENT",ERR,ERROR)
     RETURN 1
   END SUBROUTINE BOUNDARY_CONDITIONS_ADD_ELEMENT
-  
+
   !
   !================================================================================================================================
   !
- 
+
   !> Checks that the specified boundary condition is appropriate for the field variable interpolation type
   SUBROUTINE BoundaryConditions_CheckInterpolationType(condition,field,variableType,componentNumber,err,error,*)
 
@@ -1864,6 +1864,7 @@ CONTAINS
             IF(specificationSize>=2) THEN
               IF(equationsSet%specification(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS.AND. &
                   & (equationsSet%specification(2)==EQUATIONS_SET_STOKES_EQUATION_TYPE.OR. &
+                  & equationsSet%specification(2)==EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE.OR. &
                   & equationsSet%specification(2)==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE.OR. &
                   & equationsSet%specification(2)==EQUATIONS_SET_DARCY_EQUATION_TYPE)) THEN
                 validEquationsSetFound=.TRUE.
@@ -1886,7 +1887,8 @@ CONTAINS
                 & equationsSet%specification(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE) THEN
                 validEquationsSetFound=.TRUE.
               ELSE IF(equationsSet%specification(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS .AND. &
-                & equationsSet%specification(2)==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE) THEN
+                & (equationsSet%specification(2)==EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE.OR. &
+                & equationsSet%specification(2)==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)) THEN
                 validEquationsSetFound=.TRUE.
               END IF
             ENDIF
@@ -1910,6 +1912,7 @@ CONTAINS
           CASE(BOUNDARY_CONDITION_FIXED_FITTED)
             IF(equationsSet%specification(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS.AND. &
               & (equationsSet%specification(2)==EQUATIONS_SET_STOKES_EQUATION_TYPE.OR. &
+              & equationsSet%specification(2)==EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE.OR. &
               & equationsSet%specification(2)==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)) THEN
               validEquationsSetFound=.TRUE.
             END IF
@@ -1947,7 +1950,7 @@ CONTAINS
   !>Sets a boundary condition on the specified user element. \see OPENCMISS_CMISSBoundaryConditionsSetElement
   SUBROUTINE BOUNDARY_CONDITIONS_SET_ELEMENT(BOUNDARY_CONDITIONS,FIELD,VARIABLE_TYPE,USER_ELEMENT_NUMBER,COMPONENT_NUMBER, &
     & CONDITION,VALUE,ERR,ERROR,*)
-    
+
     !Argument variables
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS !<A pointer to the boundary conditions to set the boundary condition for
     TYPE(FIELD_TYPE), POINTER :: FIELD !<The dependent field to set the boundary condition on.
@@ -1963,7 +1966,7 @@ CONTAINS
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: LOCAL_ERROR
- 
+
     ENTERS("BOUNDARY_CONDITIONS_SET_ELEMENT",ERR,ERROR,*999)
 
     !Note: this routine is for element based interpolation
@@ -1998,17 +2001,17 @@ CONTAINS
     ELSE
       CALL FlagError("Boundary conditions is not associated.",ERR,ERROR,*999)
     ENDIF
-       
+
     EXITS("BOUNDARY_CONDITIONS_SET_ELEMENT")
     RETURN
 999 ERRORSEXITS("BOUNDARY_CONDITIONS_SET_ELEMENT",ERR,ERROR)
     RETURN 1
   END SUBROUTINE BOUNDARY_CONDITIONS_SET_ELEMENT
-  
+
   !
   !================================================================================================================================
   !
- 
+
   !>Adds to the value of the specified constant and sets this as a boundary condition on the specified user node. \see OPENCMISS_CMISSBoundaryConditionsAddNode
   SUBROUTINE BOUNDARY_CONDITIONS_ADD_NODE(BOUNDARY_CONDITIONS,FIELD,VARIABLE_TYPE,VERSION_NUMBER,DERIVATIVE_NUMBER, &
     & USER_NODE_NUMBER,COMPONENT_NUMBER,CONDITION,VALUE,ERR,ERROR,*)
@@ -2065,7 +2068,7 @@ CONTAINS
     ELSE
       CALL FlagError("Boundary conditions is not associated.",ERR,ERROR,*999)
     ENDIF
-       
+
     EXITS("BOUNDARY_CONDITIONS_ADD_NODE")
     RETURN
 999 ERRORSEXITS("BOUNDARY_CONDITIONS_ADD_NODE",ERR,ERROR)
@@ -2336,7 +2339,7 @@ CONTAINS
                     END DO
                   END DO
                 CASE(3)
-                  ! Loop over all faces for this node and find any DOFs that have a Neumann point condition set 
+                  ! Loop over all faces for this node and find any DOFs that have a Neumann point condition set
                   DO faceIdx=1,topology%NODES%NODES(nodeNumber)%NUMBER_OF_NODE_FACES
                     IF(.NOT.ALLOCATED(topology%faces%faces)) THEN
                       CALL FlagError("Topology faces have not been calculated.",err,error,*999)
@@ -2475,7 +2478,7 @@ CONTAINS
 998 ERRORS("BoundaryConditions_NeumannMatricesInitialise",err,error)
     EXITS("BoundaryConditions_NeumannMatricesInitialise")
     RETURN 1
-    
+
   END SUBROUTINE BoundaryConditions_NeumannMatricesInitialise
 
   !
@@ -2744,7 +2747,7 @@ CONTAINS
               IF(.NOT.ASSOCIATED(faces)) THEN
                 CALL FlagError("Mesh topology faces is not associated.",err,error,*999)
               END IF
-              facesLoop: DO faceIdx=1,topology%NODES%NODES(neumannNodeNumber)%NUMBER_OF_NODE_FACES 
+              facesLoop: DO faceIdx=1,topology%NODES%NODES(neumannNodeNumber)%NUMBER_OF_NODE_FACES
                 faceNumber=topology%NODES%NODES(neumannNodeNumber)%NODE_FACES(faceIdx)
                 face=>topology%FACES%FACES(faceNumber)
                 IF(.NOT.face%BOUNDARY_FACE) &
@@ -2989,13 +2992,13 @@ CONTAINS
     ELSE
       CALL FlagError("Boundary conditions is not associated.",ERR,ERROR,*999)
     ENDIF
-       
+
     EXITS("BOUNDARY_CONDITIONS_SET_NODE")
     RETURN
 999 ERRORSEXITS("BOUNDARY_CONDITIONS_SET_NODE",ERR,ERROR)
     RETURN 1
   END SUBROUTINE BOUNDARY_CONDITIONS_SET_NODE
-  
+
   !
   !================================================================================================================================
   !
@@ -3501,7 +3504,7 @@ CONTAINS
       END IF
       DEALLOCATE(BOUNDARY_CONDITIONS_VARIABLE)
     ENDIF
-       
+
     EXITS("BOUNDARY_CONDITIONS_VARIABLE_FINALISE")
     RETURN
 999 ERRORSEXITS("BOUNDARY_CONDITIONS_VARIABLE_FINALISE",ERR,ERROR)
@@ -3514,7 +3517,7 @@ CONTAINS
 
   !>Finalise an array of sparcity indices and deallocate all memory.
   SUBROUTINE BoundaryConditions_SparsityIndicesArrayFinalise(SPARSITY_INDICES_ARRAY,ERR,ERROR,*)
-    
+
     !Argument variables
     TYPE(BOUNDARY_CONDITIONS_SPARSITY_INDICES_PTR_TYPE), ALLOCATABLE :: SPARSITY_INDICES_ARRAY(:,:)
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
@@ -3522,9 +3525,9 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: equ_set_idx, equ_matrix_idx
     TYPE(BOUNDARY_CONDITIONS_SPARSITY_INDICES_TYPE), POINTER :: SPARSITY_INDICES
-    
+
     ENTERS("BoundaryConditions_SparsityIndicesArrayFinalise",ERR,ERROR,*999)
-    
+
     IF (ALLOCATED(SPARSITY_INDICES_ARRAY)) THEN
       DO equ_set_idx=1,SIZE(SPARSITY_INDICES_ARRAY,1)
         DO equ_matrix_idx=1,SIZE(SPARSITY_INDICES_ARRAY,2)
@@ -3542,13 +3545,13 @@ CONTAINS
       ENDDO
       DEALLOCATE(SPARSITY_INDICES_ARRAY)
     ENDIF
-    
+
     EXITS("BoundaryConditions_SparsityIndicesArrayFinalise")
     RETURN
 999 ERRORS("BoundaryConditions_SparsityIndicesArrayFinalise",ERR,ERROR)
     EXITS("BoundaryConditions_SparsityIndicesArrayFinalise")
     RETURN 1
-    
+
   END SUBROUTINE BoundaryConditions_SparsityIndicesArrayFinalise
 
   !
@@ -3622,7 +3625,7 @@ CONTAINS
             ALLOCATE(boundary_conditions_variable%DofConstraints,stat=err)
             IF(err/=0) CALL FlagError("Could not allocate boundary conditions dof constraints.",err,error,*999)
             CALL BoundaryConditions_DofConstraintsInitialise(boundary_conditions_variable%DofConstraints,err,error,*999)
-            
+
           END IF
         ELSE
           CALL FlagError("Field variable domain mapping is not associated.",ERR,ERROR,*998)
@@ -3796,7 +3799,7 @@ CONTAINS
 !!TODO \todo write BOUNDARY_CONDITIONS_DIRICHLET_FINALISE
 999 ERRORSEXITS("BOUNDARY_CONDITIONS_DIRICHLET_INITIALISE",ERR,ERROR)
     RETURN 1
-    
+
   END SUBROUTINE BOUNDARY_CONDITIONS_DIRICHLET_INITIALISE
 
   !
@@ -3830,7 +3833,7 @@ CONTAINS
 999 ERRORS("BoundaryConditions_SparsityIndicesInitialise",ERR,ERROR)
     EXITS("BoundaryConditions_SparsityIndicesInitialise")
     RETURN 1
-    
+
   END SUBROUTINE BoundaryConditions_SparsityIndicesInitialise
 
   !
@@ -3872,7 +3875,7 @@ CONTAINS
 999 ERRORS("BOUNDARY_CONDITIONS_PRESSURE_INCREMENTED_INITIALISE",ERR,ERROR)
     EXITS("BOUNDARY_CONDITIONS_PRESSURE_INCREMENTED_INITIALISE")
     RETURN 1
-    
+
   END SUBROUTINE BOUNDARY_CONDITIONS_PRESSURE_INCREMENTED_INITIALISE
 
   !
