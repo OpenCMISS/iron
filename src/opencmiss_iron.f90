@@ -8121,7 +8121,7 @@ CONTAINS
     ENTERS("cmfe_ControlLoop_Finalise",err,error,*999)
 
     IF(ASSOCIATED(cmfe_ControlLoop%controlLoop))  &
-      & CALL CONTROL_LOOP_DESTROY(cmfe_ControlLoop%controlLoop,err,error,*999)
+      & CALL ControlLoop_Destroy(cmfe_ControlLoop%controlLoop,err,error,*999)
 
     EXITS("cmfe_ControlLoop_Finalise")
     RETURN
@@ -16030,7 +16030,7 @@ CONTAINS
     NULLIFY(problem)
     CALL Problem_Get(problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_DESTROY(controlLoop,err,error,*999)
+    CALL ControlLoop_Destroy(controlLoop,err,error,*999)
 
     EXITS("cmfe_ControlLoop_DestroyNumber0")
     RETURN
@@ -16062,7 +16062,7 @@ CONTAINS
     NULLIFY(problem)
     CALL Problem_Get(problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_DESTROY(controlLoop,err,error,*999)
+    CALL ControlLoop_Destroy(controlLoop,err,error,*999)
 
     EXITS("cmfe_ControlLoop_DestroyNumber1")
     RETURN
@@ -16087,7 +16087,7 @@ CONTAINS
 
     ENTERS("cmfe_ControlLoop_DestroyObj",err,error,*999)
 
-    CALL CONTROL_LOOP_DESTROY(controlLoop%controlLoop,err,error,*999)
+    CALL ControlLoop_Destroy(controlLoop%controlLoop,err,error,*999)
 
     EXITS("cmfe_ControlLoop_DestroyObj")
     RETURN

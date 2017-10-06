@@ -58,7 +58,9 @@ MODULE CHARACTERISTIC_EQUATION_ROUTINES
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
+  USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
+  USE EquationsMatricesAccessRoutines
   USE EQUATIONS_SET_CONSTANTS
   USE EquationsSetAccessRoutines
   USE FIELD_ROUTINES
@@ -885,7 +887,7 @@ CONTAINS
     ENTERS("Characteristic_NodalResidualEvaluate",err,error,*999)
 
     NULLIFY(equations)
-    NULLIFY(vectorMapping)
+    NULLIFY(vectorEquations)
     NULLIFY(vectorMapping)
     NULLIFY(vectorMatrices)
     NULLIFY(linearMapping)
@@ -906,25 +908,15 @@ CONTAINS
     updateStiffnessMatrix=.FALSE.
     updateNonlinearResidual=.FALSE.
 
-    IF(ASSOCIATED(equationsSet)) THEN
-      equations=>equationsSet%EQUATIONS
-      IF(ASSOCIATED(equations)) THEN
-        dependentField=>equations%equationsSet%DEPENDENT%DEPENDENT_FIELD
-        IF(ASSOCIATED(dependentField)) THEN
-          domain=>dependentField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR
-          IF(ASSOCIATED(domain)) THEN
-            domainNodes=>domain%TOPOLOGY%NODES
-          ELSE
-            CALL FlagError("Domain is not associated.",err,error,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Dependent Field is not associated.",err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Equations set equations is not associated.",err,error,*999)
-      ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+    CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+    domain=>dependentField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR
+    IF(ASSOCIATED(domain)) THEN
+      domainNodes=>domain%TOPOLOGY%NODES
     ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
+      CALL FlagError("Domain is not associated.",err,error,*999)
     ENDIF
 
     IF(.NOT.ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is not allocated.",err,error,*999)
@@ -934,15 +926,15 @@ CONTAINS
     SELECT CASE(equationsSet%specification(3))
     CASE(EQUATIONS_SET_CHARACTERISTIC_SUBTYPE)
       !Set General and Specific Pointers
-      independentField=>equations%interpolation%independentField
-      materialsField=>equations%interpolation%materialsField
-      vectorMatrices=>vectorEquations%vectorMatrices
-      vectorMapping=>vectorEquations%vectorMapping
-      linearMatrices=>vectorMatrices%linearMatrices
-      nonlinearMatrices=>vectorMatrices%nonlinearMatrices
-      stiffnessMatrix=>linearMatrices%matrices(1)%PTR
-      linearMapping=>vectorMapping%linearMapping
-      nonlinearMapping=>vectorMapping%nonlinearMapping
+      CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999) 
+      CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)       
+      CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+      CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+      CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
+      CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
+      CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,1,stiffnessMatrix,err,error,*999)
+      CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
+      CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
       stiffnessMatrix%nodalMatrix%matrix=0.0_DP
       nonlinearMatrices%NodalResidual%vector=0.0_DP
       IF(ASSOCIATED(stiffnessMatrix)) updateStiffnessMatrix=stiffnessMatrix%updateMatrix

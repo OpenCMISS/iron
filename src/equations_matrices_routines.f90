@@ -1441,6 +1441,7 @@ CONTAINS
       NULLIFY(linearMapping)
       CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
       DO matrixIdx=1,linearMatrices%numberOfLinearMatrices
+        NULLIFY(equationsMatrix)
         CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIdx,equationsMatrix,err,error,*999)
         fieldVariable=>linearMapping%equationsMatrixToVarMaps(matrixIdx)%VARIABLE
         CALL EquationsMatrices_NodalMatrixCalculate(equationsMatrix%nodalMatrix,equationsMatrix%updateMatrix, &

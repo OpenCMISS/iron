@@ -110,10 +110,6 @@ MODULE CONTROL_LOOP_ROUTINES
     MODULE PROCEDURE ControlLoop_CurrentTimesGet
   END INTERFACE CONTROL_LOOP_CURRENT_TIMES_GET
 
-  INTERFACE ControlLoop_Destroy
-    MODULE PROCEDURE CONTROL_LOOP_DESTROY
-  END INTERFACE ControlLoop_Destroy
-
   INTERFACE ControlLoop_IterationsSet
     MODULE PROCEDURE CONTROL_LOOP_ITERATIONS_SET
   END INTERFACE ControlLoop_IterationsSet
@@ -206,8 +202,6 @@ MODULE CONTROL_LOOP_ROUTINES
 
   PUBLIC ControlLoop_CurrentTimeInformationGet
   
-  PUBLIC CONTROL_LOOP_DESTROY
-
   PUBLIC ControlLoop_Destroy
 
   PUBLIC ControlLoop_FieldVariablesCalculate
@@ -326,8 +320,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
 
     ENTERS("CONTROL_LOOP_CREATE_START",ERR,ERROR,*998)
 
@@ -335,8 +327,9 @@ CONTAINS
       IF(ASSOCIATED(CONTROL_LOOP)) THEN
         CALL FlagError("Control loop is already associated.",ERR,ERROR,*998)
       ELSE
-        NULLIFY(CONTROL_LOOP)
-        CALL CONTROL_LOOP_INITIALISE(PROBLEM,ERR,ERROR,*999)
+        CALL ControlLoop_Initialise(problem%CONTROL_LOOP,err,error,*999)        
+        PROBLEM%CONTROL_LOOP%PROBLEM=>PROBLEM
+        PROBLEM%CONTROL_LOOP%CONTROL_LOOP_LEVEL=1
         CONTROL_LOOP=>PROBLEM%CONTROL_LOOP
       ENDIF
     ELSE
@@ -345,9 +338,10 @@ CONTAINS
               
     EXITS("CONTROL_LOOP_CREATE_START")
     RETURN
-999 CALL CONTROL_LOOP_FINALISE(PROBLEM%CONTROL_LOOP,DUMMY_ERR,DUMMY_ERROR,*998)
+999 NULLIFY(CONTROL_LOOP)
 998 ERRORSEXITS("CONTROL_LOOP_CREATE_START",ERR,ERROR)
     RETURN 1
+    
   END SUBROUTINE CONTROL_LOOP_CREATE_START
 
   !
@@ -445,27 +439,26 @@ CONTAINS
   !
 
   !>Destroy a control loop \see OpenCMISS::cmfe_ControlLoop_Destroy
-  SUBROUTINE CONTROL_LOOP_DESTROY(CONTROL_LOOP,ERR,ERROR,*)
+  SUBROUTINE ControlLoop_Destroy(controlLoop,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER, INTENT(INOUT) :: CONTROL_LOOP !<A pointer to the control loop to destroy.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(CONTROL_LOOP_TYPE), POINTER, INTENT(INOUT) :: controlLoop !<A pointer to the control loop to destroy.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
    
-    ENTERS("CONTROL_LOOP_DESTROY",ERR,ERROR,*999)
+    ENTERS("ControlLoop_Destroy",err,error,*999)
 
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      CALL CONTROL_LOOP_FINALISE(CONTROL_LOOP,ERR,ERROR,*999)
-    ELSE
-      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+    
+    CALL ControlLoop_Finalise(controlLoop,err,error,*999)
        
-    EXITS("CONTROL_LOOP_DESTROY")
+    EXITS("ControlLoop_Destroy")
     RETURN
-999 ERRORSEXITS("CONTROL_LOOP_DESTROY",ERR,ERROR)
+999 ERRORSEXITS("ControlLoop_Destroy",err,error)
     RETURN 1
-  END SUBROUTINE CONTROL_LOOP_DESTROY
+    
+  END SUBROUTINE ControlLoop_Destroy
 
   !
   !================================================================================================================================
@@ -574,6 +567,7 @@ CONTAINS
           & controlLoopFieldVariables%fieldVariables(variableIdx)%linearity
       ENDDO !variableIdx
       !Add in the field variable and it's information
+      CALL ControlLoop_FieldVariableInitialise(newFieldVariables(controlLoopFieldVariables%numberOfFieldVariables+1),err,error,*999)
       newFieldVariables(controlLoopFieldVariables%numberOfFieldVariables+1)%fieldVariable=>fieldVariable
       newFieldVariables(controlLoopFieldVariables%numberOfFieldVariables+1)%timeDependence=variableTimeDependence
       newFieldVariables(controlLoopFieldVariables%numberOfFieldVariables+1)%linearity=variableLinearity
@@ -618,74 +612,104 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
 
-    !Recursively calculate the field variables for the underlying control loops
     IF(controlLoop%NUMBER_OF_SUB_LOOPS>0) THEN
+      !We have sub loops so recursively calculate the field variables for the underlying control loops
       DO loopIdx=1,controlLoop%NUMBER_OF_SUB_LOOPS
         controlLoop2=>controlLoop%SUB_LOOPS(loopIdx)%PTR
         CALL ControlLoop_FieldVariablesCalculate(controlLoop2,err,error,*999)
       ENDDO !loopIdx
-    ENDIF
-    
-    !Initialise this control loop field variables
-    CALL ControlLoop_FieldVariablesInitialise(controlLoop,err,error,*999)
-    !There are no sub loops so process the solvers for this loop to calculate the field variables
-    NULLIFY(solvers)
-    CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
-    !Loop over the solvers
-    DO solverIdx=1,solvers%NUMBER_OF_SOLVERS
-      !Get the solver
-      NULLIFY(solver)
-      CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
-      solverEquations=>solver%SOLVER_EQUATIONS
-!!TODO: Need to think about solvers that do not have solver equations.
-      IF(ASSOCIATED(solverEquations)) THEN
-        !If we have solver equations then find the variables.
-!!TODO: could flag the linearity and time dependence of variable in equations.
-        SELECT CASE(solverEquations%linearity)
-        CASE(SOLVER_EQUATIONS_LINEAR)
-          variableLinearity=CONTROL_LOOP_FIELD_VARIABLE_LINEAR
-        CASE(SOLVER_EQUATIONS_NONLINEAR)
-          variableLinearity=CONTROL_LOOP_FIELD_VARIABLE_NONLINEAR
-        CASE DEFAULT
-          localError="The solver equations linearity type of "//TRIM(NumberToVString(solverEquations%linearity,"*",err,error))// &
-            & " is invalid."
+      !Add all the variables from the sub-loops to this loop
+      !Initialise this control loop field variables
+      CALL ControlLoop_FieldVariablesInitialise(controlLoop,err,error,*999)
+      DO loopIdx=1,controlLoop%NUMBER_OF_SUB_LOOPS
+        controlLoop2=>controlLoop%SUB_LOOPS(loopIdx)%ptr
+        IF(.NOT.ASSOCIATED(controlLoop2%fieldVariables)) THEN
+          localError="Field variables is not associated for sub loop index "// &
+            & TRIM(NumberToVString(loopIdx,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
-        END SELECT
-        SELECT CASE(solverEquations%timeDependence)
-        CASE(SOLVER_EQUATIONS_STATIC)
-          variableTimeDependence=CONTROL_LOOP_FIELD_VARIABLE_STATIC
-        CASE(SOLVER_EQUATIONS_QUASISTATIC)
-          variableTimeDependence=CONTROL_LOOP_FIELD_VARIABLE_QUASISTATIC
-        CASE(SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,SOLVER_EQUATIONS_SECOND_ORDER_DYNAMIC)
-          dynamicSolver=>solver%DYNAMIC_SOLVER
-          IF(ASSOCIATED(dynamicSolver)) THEN
-            IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE)  THEN
-              IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE)  THEN
-                variableTimeDependence=CONTROL_LOOP_FIELD_VARIABLE_SECOND_DEGREE_DYNAMIC
+        ENDIF
+        DO variableIdx=1,controlLoop2%fieldVariables%numberOfFieldVariables
+          fieldVariable=>controlLoop2%fieldVariables%fieldVariables(variableIdx)%fieldVariable
+          variableLinearity=controlLoop2%fieldVariables%fieldVariables(variableIdx)%linearity
+          variableTimeDependence=controlLoop2%fieldVariables%fieldVariables(variableIdx)%timeDependence
+          CALL ControlLoop_FieldVariableAdd(controlLoop%fieldVariables,variableLinearity,variableTimeDependence, &
+            & fieldVariable,err,error,*999)
+        ENDDO !variableIdx
+      ENDDO !loopIdx
+    ELSE
+      !There are no sub loops so process the solvers for this loop to calculate the field variables
+      !Initialise this control loop field variables
+      CALL ControlLoop_FieldVariablesInitialise(controlLoop,err,error,*999)
+      NULLIFY(solvers)
+      CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+      !Loop over the solvers
+      DO solverIdx=1,solvers%NUMBER_OF_SOLVERS
+        !Get the solver
+        NULLIFY(solver)
+        CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
+        solverEquations=>solver%SOLVER_EQUATIONS
+!!TODO: Need to think about solvers that do not have solver equations.
+        IF(ASSOCIATED(solverEquations)) THEN
+          !If we have solver equations then find the variables.
+!!TODO: could flag the linearity and time dependence of variable in equations.
+          SELECT CASE(solverEquations%linearity)
+          CASE(SOLVER_EQUATIONS_LINEAR)
+            variableLinearity=CONTROL_LOOP_FIELD_VARIABLE_LINEAR
+          CASE(SOLVER_EQUATIONS_NONLINEAR)
+            variableLinearity=CONTROL_LOOP_FIELD_VARIABLE_NONLINEAR
+          CASE DEFAULT
+            localError="The solver equations linearity type of "//TRIM(NumberToVString(solverEquations%linearity,"*",err,error))// &
+              & " is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+          SELECT CASE(solverEquations%timeDependence)
+          CASE(SOLVER_EQUATIONS_STATIC)
+            variableTimeDependence=CONTROL_LOOP_FIELD_VARIABLE_STATIC
+          CASE(SOLVER_EQUATIONS_QUASISTATIC)
+            variableTimeDependence=CONTROL_LOOP_FIELD_VARIABLE_QUASISTATIC
+          CASE(SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,SOLVER_EQUATIONS_SECOND_ORDER_DYNAMIC)
+            dynamicSolver=>solver%DYNAMIC_SOLVER
+            IF(ASSOCIATED(dynamicSolver)) THEN
+              IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE)  THEN
+                IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE)  THEN
+                  variableTimeDependence=CONTROL_LOOP_FIELD_VARIABLE_SECOND_DEGREE_DYNAMIC
+                ELSE
+                  variableTimeDependence=CONTROL_LOOP_FIELD_VARIABLE_FIRST_DEGREE_DYNAMIC
+                ENDIF
               ELSE
-                variableTimeDependence=CONTROL_LOOP_FIELD_VARIABLE_FIRST_DEGREE_DYNAMIC
+                variableTimeDependence=CONTROL_LOOP_FIELD_VARIABLE_QUASISTATIC
               ENDIF
             ELSE
-              variableTimeDependence=CONTROL_LOOP_FIELD_VARIABLE_QUASISTATIC
+              CALL FlagError("Solver dynamic solver is not associated.",err,error,*999)
             ENDIF
-          ELSE
-            CALL FlagError("Solver dynamic solver is not associated.",err,error,*999)
-          ENDIF          
-        CASE DEFAULT
-          localError="The solver equations time dependence type of "// &
-            & TRIM(NumberToVString(solverEquations%timeDependence,"*",err,error))//" is invalid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-        !Get the solver mapping
-        NULLIFY(solverMatrices)
-        CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
-        NULLIFY(solverMapping)
-        CALL SolverMatrices_SolverMappingGet(solverMatrices,solverMapping,err,error,*999)
-        !Loop over the solver matrices
-        DO matrixIdx=1,solverMatrices%NUMBER_OF_MATRICES
-          !Loop over the field variables associated with the solver mapping
-          DO variableIdx=1,solverMapping%VARIABLES_LIST(matrixIdx)%NUMBER_OF_VARIABLES
-            fieldVariable=>solverMapping%VARIABLES_LIST(matrixIdx)%variables(variableIdx)%variable
+          CASE DEFAULT
+            localError="The solver equations time dependence type of "// &
+              & TRIM(NumberToVString(solverEquations%timeDependence,"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+          !Get the solver mapping
+          NULLIFY(solverMatrices)
+          CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
+          NULLIFY(solverMapping)
+          CALL SolverMatrices_SolverMappingGet(solverMatrices,solverMapping,err,error,*999)
+          !Loop over the solver matrices
+          DO matrixIdx=1,solverMatrices%NUMBER_OF_MATRICES
+            !Loop over the field variables associated with the solver mapping
+            DO variableIdx=1,solverMapping%VARIABLES_LIST(matrixIdx)%NUMBER_OF_VARIABLES
+              fieldVariable=>solverMapping%VARIABLES_LIST(matrixIdx)%variables(variableIdx)%variable
+              IF(ASSOCIATED(fieldVariable)) THEN
+                CALL ControlLoop_FieldVariableAdd(controlLoop%fieldVariables,variableLinearity,variableTimeDependence, &
+                  & fieldVariable,err,error,*999)
+              ELSE
+                localError="The field variable for variable index "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
+                  & " of matrix index "//TRIM(NumberToVString(matrixIdx,"*",err,error))//" is not associated."
+                CALL FlagError(localError,err,error,*999)
+              ENDIF
+            ENDDO !variableIdx
+          ENDDO !matrixIdx
+          !Add in the RHS
+          DO variableIdx=1,solverMapping%rhsVariablesList%NUMBER_OF_VARIABLES
+            fieldVariable=>solverMapping%rhsVariablesList%variables(variableIdx)%variable
             IF(ASSOCIATED(fieldVariable)) THEN
               CALL ControlLoop_FieldVariableAdd(controlLoop%fieldVariables,variableLinearity,variableTimeDependence, &
                 & fieldVariable,err,error,*999)
@@ -694,22 +718,10 @@ CONTAINS
                 & " of matrix index "//TRIM(NumberToVString(matrixIdx,"*",err,error))//" is not associated."
               CALL FlagError(localError,err,error,*999)
             ENDIF
-          ENDDO !variableIdx
-        ENDDO !matrixIdx
-        !Add in the RHS
-        DO variableIdx=1,solverMapping%rhsVariablesList%NUMBER_OF_VARIABLES
-          fieldVariable=>solverMapping%rhsVariablesList%variables(variableIdx)%variable
-          IF(ASSOCIATED(fieldVariable)) THEN
-            CALL ControlLoop_FieldVariableAdd(controlLoop%fieldVariables,variableLinearity,variableTimeDependence, &
-              & fieldVariable,err,error,*999)
-          ELSE
-            localError="The field variable for variable index "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
-              & " of matrix index "//TRIM(NumberToVString(matrixIdx,"*",err,error))//" is not associated."
-            CALL FlagError(localError,err,error,*999)
-          ENDIF
-        ENDDO !equationSetIdx
-      ENDIF
-    ENDDO !solverIdx
+          ENDDO !equationSetIdx
+        ENDIF
+      ENDDO !solverIdx
+    ENDIF
 
     IF(diagnostics1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
@@ -827,101 +839,97 @@ CONTAINS
   END SUBROUTINE ControlLoop_FieldVariablesInitialise
 
   !
-  !================================================================================================================================
+  !=================================================================================================================================
   !
 
   !>Finalise a control loop and deallocate all memory
-  RECURSIVE SUBROUTINE CONTROL_LOOP_FINALISE(CONTROL_LOOP,ERR,ERROR,*)
+  RECURSIVE SUBROUTINE ControlLoop_Finalise(controlLoop,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER, INTENT(INOUT) :: CONTROL_LOOP !<A pointer to the control loop to finalise.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(CONTROL_LOOP_TYPE), POINTER, INTENT(INOUT) :: controlLoop !<A pointer to the control loop to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: loop_idx
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP2
+    INTEGER(INTG) :: loopIdx
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop2
  
-    ENTERS("CONTROL_LOOP_FINALISE",ERR,ERROR,*999)
+    ENTERS("ControlLoop_Finalise",err,error,*999)
 
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
+    IF(ASSOCIATED(controlLoop)) THEN
       !Finalise any sub control loops first
-      IF(CONTROL_LOOP%NUMBER_OF_SUB_LOOPS>0) THEN
-        DO loop_idx=1,CONTROL_LOOP%NUMBER_OF_SUB_LOOPS
-          CONTROL_LOOP2=>CONTROL_LOOP%SUB_LOOPS(loop_idx)%PTR
-          CALL CONTROL_LOOP_FINALISE(CONTROL_LOOP2,ERR,ERROR,*999)
+      IF(controlLoop%NUMBER_OF_SUB_LOOPS>0) THEN
+        DO loopIdx=1,controlLoop%NUMBER_OF_SUB_LOOPS
+          controlLoop2=>controlLoop%SUB_LOOPS(loopIdx)%ptr
+          CALL ControlLoop_Finalise(controlLoop2,err,error,*999)
         ENDDO !loop_idx
-        DEALLOCATE(CONTROL_LOOP%SUB_LOOPS)
+        DEALLOCATE(controlLoop%SUB_LOOPS)
       ENDIF
       !Finalise any solvers
-      IF(ASSOCIATED(CONTROL_LOOP%SOLVERS)) CALL SOLVERS_DESTROY(CONTROL_LOOP%SOLVERS,ERR,ERROR,*999)
+      IF(ASSOCIATED(controlLoop%solvers)) CALL SOLVERS_DESTROY(controlLoop%solvers,err,error,*999)
       !Now finalise this control loop
-      CONTROL_LOOP%LABEL=""
-      CALL CONTROL_LOOP_SIMPLE_FINALISE(CONTROL_LOOP%SIMPLE_LOOP,ERR,ERROR,*999)
-      CALL CONTROL_LOOP_FIXED_FINALISE(CONTROL_LOOP%FIXED_LOOP,ERR,ERROR,*999)
-      CALL CONTROL_LOOP_LOAD_INCREMENT_FINALISE(CONTROL_LOOP%LOAD_INCREMENT_LOOP,ERR,ERROR,*999)
-      CALL CONTROL_LOOP_TIME_FINALISE(CONTROL_LOOP%TIME_LOOP,ERR,ERROR,*999)
-      CALL CONTROL_LOOP_WHILE_FINALISE(CONTROL_LOOP%WHILE_LOOP,ERR,ERROR,*999)
-      CALL ControlLoop_FieldVariablesFinalise(CONTROL_LOOP%fieldVariables,err,error,*999)
-      DEALLOCATE(CONTROL_LOOP)
+      controlLoop%label=""
+      CALL CONTROL_LOOP_SIMPLE_FINALISE(controlLoop%SIMPLE_LOOP,err,error,*999)
+      CALL CONTROL_LOOP_FIXED_FINALISE(controlLoop%FIXED_LOOP,err,error,*999)
+      CALL CONTROL_LOOP_LOAD_INCREMENT_FINALISE(controlLoop%LOAD_INCREMENT_LOOP,err,error,*999)
+      CALL CONTROL_LOOP_TIME_FINALISE(controlLoop%TIME_LOOP,err,error,*999)
+      CALL CONTROL_LOOP_WHILE_FINALISE(controlLoop%WHILE_LOOP,err,error,*999)
+      CALL ControlLoop_FieldVariablesFinalise(controlLoop%fieldVariables,err,error,*999)
+      DEALLOCATE(controlLoop)
     ENDIF
        
-    EXITS("CONTROL_LOOP_FINALISE")
+    EXITS("ControlLoop_Finalise")
     RETURN
-999 ERRORSEXITS("CONTROL_LOOP_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("ControlLoop_Finalise",err,error)
     RETURN 1
-  END SUBROUTINE CONTROL_LOOP_FINALISE
+    
+  END SUBROUTINE ControlLoop_Finalise
 
   !
-  !================================================================================================================================
+  !=================================================================================================================================
   !
 
-  !>Initialise the control for a problem.
-  SUBROUTINE CONTROL_LOOP_INITIALISE(PROBLEM,ERR,ERROR,*)
+  !>Initialise a control loop.
+  SUBROUTINE ControlLoop_Initialise(controlLoop,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER, INTENT(INOUT) :: PROBLEM !<A pointer to the problem to initialise the control for.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(CONTROL_LOOP_TYPE), POINTER, INTENT(INOUT) :: controlLoop !<A pointer to the control loop to initialise. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
 
-    ENTERS("CONTROL_LOOP_INITIALISE",ERR,ERROR,*998)
+    ENTERS("ControlLoop_Initialise",err,error,*998)
 
-    IF(ASSOCIATED(PROBLEM)) THEN
-      IF(ASSOCIATED(PROBLEM%CONTROL_LOOP)) THEN
-        CALL FlagError("Control loop is already associated for this problem.",ERR,ERROR,*998)
-      ELSE
-        ALLOCATE(PROBLEM%CONTROL_LOOP,STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate problem control loop.",ERR,ERROR,*999)
-        PROBLEM%CONTROL_LOOP%PROBLEM=>PROBLEM
-        NULLIFY(PROBLEM%CONTROL_LOOP%PARENT_LOOP)
-        PROBLEM%CONTROL_LOOP%CONTROL_LOOP_FINISHED=.FALSE.
-        PROBLEM%CONTROL_LOOP%LABEL=" "
-        PROBLEM%CONTROL_LOOP%LOOP_TYPE=PROBLEM_CONTROL_SIMPLE_TYPE
-        PROBLEM%CONTROL_LOOP%CONTROL_LOOP_LEVEL=1
-        PROBLEM%CONTROL_LOOP%SUB_LOOP_INDEX=0
-        PROBLEM%CONTROL_LOOP%outputType=CONTROL_LOOP_NO_OUTPUT
-        NULLIFY(PROBLEM%CONTROL_LOOP%SIMPLE_LOOP)
-        NULLIFY(PROBLEM%CONTROL_LOOP%FIXED_LOOP)
-        NULLIFY(PROBLEM%CONTROL_LOOP%TIME_LOOP)
-        NULLIFY(PROBLEM%CONTROL_LOOP%WHILE_LOOP)
-        NULLIFY(PROBLEM%CONTROL_LOOP%LOAD_INCREMENT_LOOP)
-        PROBLEM%CONTROL_LOOP%NUMBER_OF_SUB_LOOPS=0
-        NULLIFY(problem%CONTROL_LOOP%fieldVariables)
-        NULLIFY(PROBLEM%CONTROL_LOOP%SOLVERS)
-        CALL CONTROL_LOOP_SIMPLE_INITIALISE(PROBLEM%CONTROL_LOOP,ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Problem is not associated.",ERR,ERROR,*998)
-    ENDIF
+    IF(ASSOCIATED(controlLoop)) CALL FlagError("Control loop is already associated.",err,error,*998)
+    
+    ALLOCATE(controlLoop,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate control loop.",err,error,*999)
+    NULLIFY(controlLoop%problem)
+    NULLIFY(controlLoop%PARENT_LOOP)
+    controlLoop%CONTROL_LOOP_FINISHED=.FALSE.
+    controlLoop%label=" "
+    controlLoop%CONTROL_LOOP_LEVEL=0
+    controlLoop%SUB_LOOP_INDEX=0
+    controlLoop%outputType=CONTROL_LOOP_NO_OUTPUT
+    NULLIFY(controlLoop%SIMPLE_LOOP)
+    NULLIFY(controlLoop%FIXED_LOOP)
+    NULLIFY(controlLoop%TIME_LOOP)
+    NULLIFY(controlLoop%WHILE_LOOP)
+    NULLIFY(controlLoop%LOAD_INCREMENT_LOOP)
+    controlLoop%NUMBER_OF_SUB_LOOPS=0
+    NULLIFY(controlLoop%fieldVariables)
+    NULLIFY(controlLoop%solvers)
+    controlLoop%LOOP_TYPE=PROBLEM_CONTROL_SIMPLE_TYPE
+    CALL CONTROL_LOOP_SIMPLE_INITIALISE(controlLoop,err,error,*999)
               
-    EXITS("CONTROL_LOOP_INITIALISE")
+    EXITS("ControlLoop_Initialise")
     RETURN
-999 CALL CONTROL_LOOP_FINALISE(PROBLEM%CONTROL_LOOP,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("CONTROL_LOOP_INITIALISE",ERR,ERROR)
+999 CALL ControlLoop_Finalise(controlLoop,dummyErr,dummyError,*998)
+998 ERRORSEXITS("ControlLoop_Initialise",err,error)
     RETURN 1
-  END SUBROUTINE CONTROL_LOOP_INITIALISE
+    
+  END SUBROUTINE ControlLoop_Initialise
 
   !
   !================================================================================================================================
@@ -1477,29 +1485,19 @@ CONTAINS
                 CONTROL_LOOP%SUB_LOOPS(loop_idx)%PTR=>OLD_SUB_LOOPS(loop_idx)%PTR
               ENDDO !loop_idx
               DO loop_idx=CONTROL_LOOP%NUMBER_OF_SUB_LOOPS+1,NUMBER_OF_SUB_LOOPS
-                ALLOCATE(CONTROL_LOOP%SUB_LOOPS(loop_idx)%PTR,STAT=ERR)
-                IF(ERR/=0) CALL FlagError("Could not allocate sub loops control loop.",ERR,ERROR,*999)
+                NULLIFY(CONTROL_LOOP%SUB_LOOPS(loop_idx)%ptr)
+                CALL ControlLoop_Initialise(CONTROL_LOOP%SUB_LOOPS(loop_idx)%ptr,err,error,*999)
                 CONTROL_LOOP%SUB_LOOPS(loop_idx)%PTR%PROBLEM=>CONTROL_LOOP%PROBLEM
                 CONTROL_LOOP%SUB_LOOPS(loop_idx)%PTR%PARENT_LOOP=>CONTROL_LOOP
-                CONTROL_LOOP%SUB_LOOPS(loop_idx)%PTR%CONTROL_LOOP_FINISHED=.FALSE.
-                CONTROL_LOOP%SUB_LOOPS(loop_idx)%PTR%LOOP_TYPE=PROBLEM_CONTROL_SIMPLE_TYPE
                 CONTROL_LOOP%SUB_LOOPS(loop_idx)%PTR%CONTROL_LOOP_LEVEL=CONTROL_LOOP%CONTROL_LOOP_LEVEL+1
                 CONTROL_LOOP%SUB_LOOPS(loop_idx)%PTR%SUB_LOOP_INDEX=loop_idx
-                NULLIFY(CONTROL_LOOP%SUB_LOOPS(loop_idx)%PTR%SIMPLE_LOOP)
-                NULLIFY(CONTROL_LOOP%SUB_LOOPS(loop_idx)%PTR%FIXED_LOOP)
-                NULLIFY(CONTROL_LOOP%SUB_LOOPS(loop_idx)%PTR%TIME_LOOP)
-                NULLIFY(CONTROL_LOOP%SUB_LOOPS(loop_idx)%PTR%WHILE_LOOP)
-                NULLIFY(CONTROL_LOOP%SUB_LOOPS(loop_idx)%PTR%LOAD_INCREMENT_LOOP)
-                CONTROL_LOOP%SUB_LOOPS(loop_idx)%PTR%NUMBER_OF_SUB_LOOPS=0
-                NULLIFY(CONTROL_LOOP%SUB_LOOPS(loop_idx)%PTR%SOLVERS)
-                CALL CONTROL_LOOP_SIMPLE_INITIALISE(CONTROL_LOOP%SUB_LOOPS(loop_idx)%PTR,ERR,ERROR,*999)
               ENDDO !loop_idx
             ELSE
               DO loop_idx=1,NUMBER_OF_SUB_LOOPS
                 CONTROL_LOOP%SUB_LOOPS(loop_idx)%PTR=>OLD_SUB_LOOPS(loop_idx)%PTR
               ENDDO !loop_idx
               DO loop_idx=NUMBER_OF_SUB_LOOPS+1,CONTROL_LOOP%NUMBER_OF_SUB_LOOPS
-                CALL CONTROL_LOOP_FINALISE(OLD_SUB_LOOPS(loop_idx)%PTR,ERR,ERROR,*999)
+                CALL ControlLoop_Finalise(OLD_SUB_LOOPS(loop_idx)%PTR,ERR,ERROR,*999)
               ENDDO !loop_idx
             ENDIF
             IF(ALLOCATED(OLD_SUB_LOOPS)) DEALLOCATE(OLD_SUB_LOOPS)
