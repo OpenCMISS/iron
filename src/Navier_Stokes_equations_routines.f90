@@ -7476,222 +7476,224 @@ CONTAINS
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                   EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
                   IF(ASSOCIATED(EQUATIONS)) THEN
-                    EQUATIONS_SET=>equations%equationsSet
-                    IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
-                      SELECT CASE(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE)
-                      CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_FLOWRATE_AORTA, &
-                        & EQUATIONS_SET_NAVIER_STOKES_EQUATION_FLOWRATE_OLUFSEN)
-                        EQUATIONS_SET%ANALYTIC%ANALYTIC_TIME=CURRENT_TIME
-                        BOUNDARY_CONDITIONS=>SOLVER_equations%BOUNDARY_CONDITIONS
-                        IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
+                    BOUNDARY_CONDITIONS=>SOLVER_equations%BOUNDARY_CONDITIONS
+                    IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
+                      EQUATIONS_SET=>equations%equationsSet
+                      IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
+                        SELECT CASE(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE)
+                        CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_FLOWRATE_AORTA, &
+                          & EQUATIONS_SET_NAVIER_STOKES_EQUATION_FLOWRATE_OLUFSEN)
+                          EQUATIONS_SET%ANALYTIC%ANALYTIC_TIME=CURRENT_TIME
                           ! Calculate analytic values
                           CALL NavierStokes_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,err,error,*999)
-                        ELSE
-                          CALL FlagError("Boundary conditions are not associated.",err,error,*999)
-                        END IF
-                      CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_SPLINT_FROM_FILE)
-                        ! Perform spline interpolation of values from a file
-                        EQUATIONS_SET%ANALYTIC%ANALYTIC_TIME=CURRENT_TIME
-                        BOUNDARY_CONDITIONS=>SOLVER_equations%BOUNDARY_CONDITIONS
-                        dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
-                        ANALYTIC_FIELD=>EQUATIONS_SET%ANALYTIC%ANALYTIC_FIELD
-                        DO variableIdx=1,dependentField%NUMBER_OF_VARIABLES
-                          dependentVariableType=dependentField%VARIABLES(variableIdx)%VARIABLE_TYPE
-                          NULLIFY(dependentFieldVariable)
-                          CALL Field_VariableGet(dependentField,dependentVariableType,dependentFieldVariable,err,error,*999)
-                          CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS, &
-                            & dependentFieldVariable,BOUNDARY_CONDITIONS_VARIABLE,err,error,*999)
-                          IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
-                            IF(ASSOCIATED(dependentFieldVariable)) THEN
-                              DO componentIdx=1,dependentFieldVariable%NUMBER_OF_COMPONENTS
-                                IF(dependentFieldVariable%COMPONENTS(componentIdx)%INTERPOLATION_TYPE== &
-                                  & FIELD_NODE_BASED_INTERPOLATION) THEN
-                                  domain=>dependentFieldVariable%COMPONENTS(componentIdx)%DOMAIN
-                                  IF(ASSOCIATED(domain)) THEN
-                                    IF(ASSOCIATED(domain%TOPOLOGY)) THEN
-                                      DOMAIN_NODES=>domain%TOPOLOGY%NODES
-                                      IF(ASSOCIATED(DOMAIN_NODES)) THEN
-                                        ! Create the analytic field values type on the dependent field if it does not exist
-                                        CALL FIELD_PARAMETER_SET_CREATED(dependentField,dependentVariableType, &
-                                          & FIELD_ANALYTIC_VALUES_SET_TYPE,parameterSetCreated,ERR,ERROR,*999)
-                                        IF (.NOT. parameterSetCreated) THEN
-                                          CALL FIELD_PARAMETER_SET_CREATE(dependentField,dependentVariableType, &
-                                            & FIELD_ANALYTIC_VALUES_SET_TYPE,ERR,ERROR,*999)
+                        CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_SPLINT_FROM_FILE)
+                          ! Perform spline interpolation of values from a file
+                          EQUATIONS_SET%ANALYTIC%ANALYTIC_TIME=CURRENT_TIME
+                          dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                          ANALYTIC_FIELD=>EQUATIONS_SET%ANALYTIC%ANALYTIC_FIELD
+                          DO variableIdx=1,dependentField%NUMBER_OF_VARIABLES
+                            dependentVariableType=dependentField%VARIABLES(variableIdx)%VARIABLE_TYPE
+                            NULLIFY(dependentFieldVariable)
+                            CALL Field_VariableGet(dependentField,dependentVariableType,dependentFieldVariable,err,error,*999)
+                            CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS, &
+                              & dependentFieldVariable,BOUNDARY_CONDITIONS_VARIABLE,err,error,*999)
+                            IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
+                              IF(ASSOCIATED(dependentFieldVariable)) THEN
+                                DO componentIdx=1,dependentFieldVariable%NUMBER_OF_COMPONENTS
+                                  IF(dependentFieldVariable%COMPONENTS(componentIdx)%INTERPOLATION_TYPE== &
+                                    & FIELD_NODE_BASED_INTERPOLATION) THEN
+                                    domain=>dependentFieldVariable%COMPONENTS(componentIdx)%DOMAIN
+                                    IF(ASSOCIATED(domain)) THEN
+                                      IF(ASSOCIATED(domain%TOPOLOGY)) THEN
+                                        DOMAIN_NODES=>domain%TOPOLOGY%NODES
+                                        IF(ASSOCIATED(DOMAIN_NODES)) THEN
+                                          ! Create the analytic field values type on the dependent field if it does not exist
+                                          CALL FIELD_PARAMETER_SET_CREATED(dependentField,dependentVariableType, &
+                                            & FIELD_ANALYTIC_VALUES_SET_TYPE,parameterSetCreated,ERR,ERROR,*999)
+                                          IF (.NOT. parameterSetCreated) THEN
+                                            CALL FIELD_PARAMETER_SET_CREATE(dependentField,dependentVariableType, &
+                                              & FIELD_ANALYTIC_VALUES_SET_TYPE,ERR,ERROR,*999)
+                                          END IF
+                                          !Loop over the local nodes excluding the ghosts.
+                                          DO nodeIdx=1,DOMAIN_NODES%NUMBER_OF_NODES
+                                            userNodeNumber=DOMAIN_NODES%NODES(nodeIdx)%USER_NUMBER
+                                            DO derivativeIdx=1,DOMAIN_NODES%NODES(nodeIdx)%NUMBER_OF_DERIVATIVES
+                                              DO versionIdx=1,DOMAIN_NODES%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)% &
+                                                  & numberOfVersions
+                                                dependentDof = dependentFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP% &
+                                                  & NODE_PARAM2DOF_MAP%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)% &
+                                                  & VERSIONS(versionIdx)
+                                                ! Update dependent field value if this is a splint BC
+                                                BOUNDARY_CONDITION_CHECK_VARIABLE=BOUNDARY_CONDITIONS_VARIABLE% &
+                                                  & CONDITION_TYPES(dependentDof)
+                                                IF(BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_FIXED_FITTED) THEN
+                                                  !Update analytic field if file exists and dependent field if boundary condition set
+                                                  inputFile = './input/interpolatedData/1D/'
+                                                  IF(dependentVariableType == FIELD_U_VARIABLE_TYPE) THEN
+                                                    inputFile = TRIM(inputFile) // 'U/component'
+                                                  END IF
+                                                  WRITE(tempString,"(I1.1)") componentIdx
+                                                  inputFile = TRIM(inputFile) // tempString(1:1) // '/derivative'
+                                                  WRITE(tempString,"(I1.1)") derivativeIdx
+                                                  inputFile = TRIM(inputFile) // tempString(1:1) // '/version'
+                                                  WRITE(tempString,"(I1.1)") versionIdx
+                                                  inputFile = TRIM(inputFile) // tempString(1:1) // '/'
+                                                  WRITE(tempString,"(I4.4)") userNodeNumber
+                                                  inputFile = TRIM(inputFile) // tempString(1:4) // '.dat'
+                                                  inputFile = TRIM(inputFile)
+                                                  INQUIRE(FILE=inputFile, EXIST=importDataFromFile)
+                                                  IF(importDataFromFile) THEN
+                                                    !Read fitted data from input file (if exists)
+                                                    OPEN(UNIT=10, FILE=inputFile, STATUS='OLD')
+                                                    ! Header timeData = numberOfTimesteps
+                                                    READ(10,*) timeData
+                                                    numberOfSourceTimesteps = INT(timeData)
+                                                    ALLOCATE(nodeData(numberOfSourceTimesteps,2))
+                                                    ALLOCATE(qValues(numberOfSourceTimesteps))
+                                                    ALLOCATE(tValues(numberOfSourceTimesteps))
+                                                    ALLOCATE(qSpline(numberOfSourceTimesteps))
+                                                    nodeData = 0.0_DP
+                                                    ! Read in time and dependent value
+                                                    DO timeIdx=1,numberOfSourceTimesteps
+                                                      READ(10,*) (nodeData(timeIdx,component_idx), component_idx=1,2)
+                                                    END DO
+                                                    CLOSE(UNIT=10)
+                                                    tValues = nodeData(:,1)
+                                                    qValues = nodeData(:,2)
+                                                    CALL spline_cubic_set(numberOfSourceTimesteps,tValues,qValues, &
+                                                      & 2,0.0_DP,2,0.0_DP,qSpline,err,error,*999)
+                                                    CALL spline_cubic_val(numberOfSourceTimesteps,tValues,qValues,qSpline, &
+                                                      & CURRENT_TIME,VALUE,QP,QPP,err,error,*999)
+                                                    DEALLOCATE(nodeData)
+                                                    DEALLOCATE(qSpline)
+                                                    DEALLOCATE(qValues)
+                                                    DEALLOCATE(tValues)
+                                                    CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(dependentField, &
+                                                      & dependentVariableType,FIELD_VALUES_SET_TYPE,dependentDof, &
+                                                      & VALUE,ERR,ERROR,*999)
+                                                    CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(dependentField, &
+                                                      & dependentVariableType,FIELD_ANALYTIC_VALUES_SET_TYPE,dependentDof, &
+                                                      & VALUE,ERR,ERROR,*999)
+                                                  END IF
+                                                END IF ! check if import data file exists
+                                              END DO !versionIdx
+                                            END DO !derivativeIdx
+                                          END DO !nodeIdx
+                                          ! Update distributed field values
+                                          CALL Field_ParameterSetUpdateStart(dependentField,dependentVariableType, &
+                                            & FIELD_VALUES_SET_TYPE,err,error,*999)
+                                          CALL Field_ParameterSetUpdateFinish(dependentField,dependentVariableType, &
+                                            & FIELD_VALUES_SET_TYPE,err,error,*999)
+                                          CALL Field_ParameterSetUpdateStart(dependentField,dependentVariableType, &
+                                            & FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+                                          CALL Field_ParameterSetUpdateFinish(dependentField,dependentVariableType, &
+                                            & FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+                                        ELSE
+                                          CALL FlagError("Domain topology nodes is not associated.",err,error,*999)
                                         END IF
-                                        !Loop over the local nodes excluding the ghosts.
-                                        DO nodeIdx=1,DOMAIN_NODES%NUMBER_OF_NODES
-                                          userNodeNumber=DOMAIN_NODES%NODES(nodeIdx)%USER_NUMBER
-                                          DO derivativeIdx=1,DOMAIN_NODES%NODES(nodeIdx)%NUMBER_OF_DERIVATIVES
-                                            DO versionIdx=1,DOMAIN_NODES%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%numberOfVersions
-                                              dependentDof = dependentFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP% &
-                                                & NODE_PARAM2DOF_MAP%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%VERSIONS(versionIdx)
-                                              ! Update dependent field value if this is a splint BC
-                                              BOUNDARY_CONDITION_CHECK_VARIABLE=BOUNDARY_CONDITIONS_VARIABLE% &
-                                                & CONDITION_TYPES(dependentDof)
-                                              IF(BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_FIXED_FITTED) THEN
-                                                ! Update analytic field if file exists and dependent field if boundary condition set
-                                                inputFile = './input/interpolatedData/1D/'
-                                                IF(dependentVariableType == FIELD_U_VARIABLE_TYPE) THEN
-                                                  inputFile = TRIM(inputFile) // 'U/component'
-                                                END IF
-                                                WRITE(tempString,"(I1.1)") componentIdx
-                                                inputFile = TRIM(inputFile) // tempString(1:1) // '/derivative'
-                                                WRITE(tempString,"(I1.1)") derivativeIdx
-                                                inputFile = TRIM(inputFile) // tempString(1:1) // '/version'
-                                                WRITE(tempString,"(I1.1)") versionIdx
-                                                inputFile = TRIM(inputFile) // tempString(1:1) // '/'
-                                                WRITE(tempString,"(I4.4)") userNodeNumber
-                                                inputFile = TRIM(inputFile) // tempString(1:4) // '.dat'
-                                                inputFile = TRIM(inputFile)
-                                                INQUIRE(FILE=inputFile, EXIST=importDataFromFile)
-                                                IF(importDataFromFile) THEN
-                                                  !Read fitted data from input file (if exists)
-                                                  OPEN(UNIT=10, FILE=inputFile, STATUS='OLD')
-                                                  ! Header timeData = numberOfTimesteps
-                                                  READ(10,*) timeData
-                                                  numberOfSourceTimesteps = INT(timeData)
-                                                  ALLOCATE(nodeData(numberOfSourceTimesteps,2))
-                                                  ALLOCATE(qValues(numberOfSourceTimesteps))
-                                                  ALLOCATE(tValues(numberOfSourceTimesteps))
-                                                  ALLOCATE(qSpline(numberOfSourceTimesteps))
-                                                  nodeData = 0.0_DP
-                                                  ! Read in time and dependent value
-                                                  DO timeIdx=1,numberOfSourceTimesteps
-                                                    READ(10,*) (nodeData(timeIdx,component_idx), component_idx=1,2)
-                                                  END DO
-                                                  CLOSE(UNIT=10)
-                                                  tValues = nodeData(:,1)
-                                                  qValues = nodeData(:,2)
-                                                  CALL spline_cubic_set(numberOfSourceTimesteps,tValues,qValues,2,0.0_DP,2,0.0_DP, &
-                                                    & qSpline,err,error,*999)
-                                                  CALL spline_cubic_val(numberOfSourceTimesteps,tValues,qValues,qSpline, &
-                                                    & CURRENT_TIME,VALUE,QP,QPP,err,error,*999)
-                                                  DEALLOCATE(nodeData)
-                                                  DEALLOCATE(qSpline)
-                                                  DEALLOCATE(qValues)
-                                                  DEALLOCATE(tValues)
-                                                  CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(dependentField,dependentVariableType, &
-                                                    & FIELD_VALUES_SET_TYPE,dependentDof,VALUE,ERR,ERROR,*999)
-                                                  CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(dependentField,dependentVariableType, &
-                                                    & FIELD_ANALYTIC_VALUES_SET_TYPE,dependentDof,VALUE,ERR,ERROR,*999)
-                                                END IF
-                                              END IF ! check if import data file exists
-                                            END DO !versionIdx
-                                          END DO !derivativeIdx
-                                        END DO !nodeIdx
-                                        ! Update distributed field values
-                                        CALL Field_ParameterSetUpdateStart(dependentField,dependentVariableType, &
-                                          & FIELD_VALUES_SET_TYPE,err,error,*999)
-                                        CALL Field_ParameterSetUpdateFinish(dependentField,dependentVariableType, &
-                                          & FIELD_VALUES_SET_TYPE,err,error,*999)
-                                        CALL Field_ParameterSetUpdateStart(dependentField,dependentVariableType, &
-                                          & FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-                                        CALL Field_ParameterSetUpdateFinish(dependentField,dependentVariableType, &
-                                          & FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
                                       ELSE
-                                        CALL FlagError("Domain topology nodes is not associated.",err,error,*999)
+                                        CALL FlagError("Domain topology is not associated.",err,error,*999)
                                       END IF
                                     ELSE
-                                      CALL FlagError("Domain topology is not associated.",err,error,*999)
+                                      CALL FlagError("Domain is not associated.",err,error,*999)
                                     END IF
                                   ELSE
-                                    CALL FlagError("Domain is not associated.",err,error,*999)
+                                    CALL FlagError("Only node based interpolation is implemented.",err,error,*999)
                                   END IF
-                                ELSE
-                                  CALL FlagError("Only node based interpolation is implemented.",err,error,*999)
-                                END IF
-                              END DO !componentIdx
-                            ELSE
-                              CALL FlagError("Dependent field variable is not associated.",err,error,*999)
+                                END DO !componentIdx
+                              ELSE
+                                CALL FlagError("Dependent field variable is not associated.",err,error,*999)
+                              END IF
                             END IF
-                          END IF
-                        END DO !variableIdx
-                      CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_FLOWRATE_HEART)
-                        ! Using heart lumped parameter model for input
-                        EQUATIONS_SET%ANALYTIC%ANALYTIC_TIME=CURRENT_TIME
-                        BOUNDARY_CONDITIONS=>SOLVER_equations%BOUNDARY_CONDITIONS
-                        dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
-                        materialsField=>EQUATIONS_SET%MATERIALS%MATERIALS_FIELD
-                        CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,5, &
-                          & Lref,err,error,*999)
-                        CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,6, &
-                          & Tref,err,error,*999)
-                        CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,7, &
-                          & Mref,err,error,*999)
-                        DO variableIdx=1,dependentField%NUMBER_OF_VARIABLES
-                          dependentVariableType=dependentField%VARIABLES(variableIdx)%VARIABLE_TYPE
-                          NULLIFY(dependentFieldVariable)
-                          CALL Field_VariableGet(dependentField,dependentVariableType,dependentFieldVariable,err,error,*999)
-                          CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS,dependentFieldVariable, &
-                            & BOUNDARY_CONDITIONS_VARIABLE,err,error,*999)
-                          IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
-                            IF(ASSOCIATED(dependentFieldVariable)) THEN
-                              DO componentIdx=1,dependentFieldVariable%NUMBER_OF_COMPONENTS
-                                IF(dependentFieldVariable%COMPONENTS(componentIdx)%INTERPOLATION_TYPE== &
-                                  & FIELD_NODE_BASED_INTERPOLATION) THEN
-                                  domain=>dependentFieldVariable%COMPONENTS(componentIdx)%DOMAIN
-                                  IF(ASSOCIATED(domain)) THEN
-                                    IF(ASSOCIATED(domain%TOPOLOGY)) THEN
-                                      DOMAIN_NODES=>domain%TOPOLOGY%NODES
-                                      IF(ASSOCIATED(DOMAIN_NODES)) THEN
-                                        !Loop over the local nodes excluding the ghosts.
-                                        DO nodeIdx=1,DOMAIN_NODES%NUMBER_OF_NODES
-                                          userNodeNumber=DOMAIN_NODES%NODES(nodeIdx)%USER_NUMBER
-                                          DO derivativeIdx=1,DOMAIN_NODES%NODES(nodeIdx)%NUMBER_OF_DERIVATIVES
-                                            DO versionIdx=1,DOMAIN_NODES%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%numberOfVersions
-                                              dependentDof = dependentFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP% &
-                                                & NODE_PARAM2DOF_MAP%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%VERSIONS(versionIdx)
-                                              BOUNDARY_CONDITION_CHECK_VARIABLE=BOUNDARY_CONDITIONS_VARIABLE% &
-                                                & CONDITION_TYPES(dependentDof)
-                                              IF(BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_FIXED_INLET) THEN
-                                                CALL Field_ParameterSetGetLocalNode(dependentField,FIELD_U1_VARIABLE_TYPE, &
-                                                  & FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx,userNodeNumber,1,VALUE, &
-                                                  & err,error,*999)
-                                                ! Convert Q from ml/s to non-dimensionalised form.
-                                                CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(dependentField,dependentVariableType, &
-                                                  & FIELD_VALUES_SET_TYPE,dependentDof,((Lref**3.0)/Tref)*VALUE,err,error,*999)
-                                              END IF
-                                            END DO !versionIdx
-                                          END DO !derivativeIdx
-                                        END DO !nodeIdx
-                                        ! Update distributed field values
-                                        CALL Field_ParameterSetUpdateStart(dependentField,dependentVariableType, &
-                                          & FIELD_VALUES_SET_TYPE,err,error,*999)
-                                        CALL Field_ParameterSetUpdateFinish(dependentField,dependentVariableType, &
-                                          & FIELD_VALUES_SET_TYPE,err,error,*999)
+                          END DO !variableIdx
+                        CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_FLOWRATE_HEART)
+                          ! Using heart lumped parameter model for input
+                          EQUATIONS_SET%ANALYTIC%ANALYTIC_TIME=CURRENT_TIME
+                          dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+                          materialsField=>EQUATIONS_SET%MATERIALS%MATERIALS_FIELD
+                          CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,5, &
+                            & Lref,err,error,*999)
+                          CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,6, &
+                            & Tref,err,error,*999)
+                          CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,7, &
+                            & Mref,err,error,*999)
+                          DO variableIdx=1,dependentField%NUMBER_OF_VARIABLES
+                            dependentVariableType=dependentField%VARIABLES(variableIdx)%VARIABLE_TYPE
+                            NULLIFY(dependentFieldVariable)
+                            CALL Field_VariableGet(dependentField,dependentVariableType,dependentFieldVariable,err,error,*999)
+                            CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS,dependentFieldVariable, &
+                              & BOUNDARY_CONDITIONS_VARIABLE,err,error,*999)
+                            IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
+                              IF(ASSOCIATED(dependentFieldVariable)) THEN
+                                DO componentIdx=1,dependentFieldVariable%NUMBER_OF_COMPONENTS
+                                  IF(dependentFieldVariable%COMPONENTS(componentIdx)%INTERPOLATION_TYPE== &
+                                    & FIELD_NODE_BASED_INTERPOLATION) THEN
+                                    domain=>dependentFieldVariable%COMPONENTS(componentIdx)%DOMAIN
+                                    IF(ASSOCIATED(domain)) THEN
+                                      IF(ASSOCIATED(domain%TOPOLOGY)) THEN
+                                        DOMAIN_NODES=>domain%TOPOLOGY%NODES
+                                        IF(ASSOCIATED(DOMAIN_NODES)) THEN
+                                          !Loop over the local nodes excluding the ghosts.
+                                          DO nodeIdx=1,DOMAIN_NODES%NUMBER_OF_NODES
+                                            userNodeNumber=DOMAIN_NODES%NODES(nodeIdx)%USER_NUMBER
+                                            DO derivativeIdx=1,DOMAIN_NODES%NODES(nodeIdx)%NUMBER_OF_DERIVATIVES
+                                              DO versionIdx=1,DOMAIN_NODES%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)% &
+                                                 & numberOfVersions
+                                                dependentDof = dependentFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP% &
+                                                  & NODE_PARAM2DOF_MAP%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)% &
+                                                  & VERSIONS(versionIdx)
+                                                BOUNDARY_CONDITION_CHECK_VARIABLE=BOUNDARY_CONDITIONS_VARIABLE% &
+                                                  & CONDITION_TYPES(dependentDof)
+                                                IF(BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_FIXED_INLET) THEN
+                                                  CALL Field_ParameterSetGetLocalNode(dependentField,FIELD_U1_VARIABLE_TYPE, &
+                                                    & FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx,userNodeNumber,1,VALUE, &
+                                                    & err,error,*999)
+                                                  ! Convert Q from ml/s to non-dimensionalised form.
+                                                  CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(dependentField,dependentVariableType, &
+                                                    & FIELD_VALUES_SET_TYPE,dependentDof,((Lref**3.0)/Tref)*VALUE,err,error,*999)
+                                                END IF
+                                              END DO !versionIdx
+                                            END DO !derivativeIdx
+                                          END DO !nodeIdx
+                                          ! Update distributed field values
+                                          CALL Field_ParameterSetUpdateStart(dependentField,dependentVariableType, &
+                                            & FIELD_VALUES_SET_TYPE,err,error,*999)
+                                          CALL Field_ParameterSetUpdateFinish(dependentField,dependentVariableType, &
+                                            & FIELD_VALUES_SET_TYPE,err,error,*999)
+                                        ELSE
+                                          CALL FlagError("Domain topology nodes is not associated.",err,error,*999)
+                                        END IF
                                       ELSE
-                                        CALL FlagError("Domain topology nodes is not associated.",err,error,*999)
+                                        CALL FlagError("Domain topology is not associated.",err,error,*999)
                                       END IF
                                     ELSE
-                                      CALL FlagError("Domain topology is not associated.",err,error,*999)
+                                      CALL FlagError("Domain is not associated.",err,error,*999)
                                     END IF
                                   ELSE
-                                    CALL FlagError("Domain is not associated.",err,error,*999)
+                                    CALL FlagError("Only node based interpolation is implemented.",err,error,*999)
                                   END IF
-                                ELSE
-                                  CALL FlagError("Only node based interpolation is implemented.",err,error,*999)
-                                END IF
-                              END DO !componentIdx
-                            ELSE
-                              CALL FlagError("Dependent field variable is not associated.",err,error,*999)
+                                END DO !componentIdx
+                              ELSE
+                                CALL FlagError("Dependent field variable is not associated.",err,error,*999)
+                              END IF
                             END IF
-                          END IF
-                        END DO !variableIdx
-                      CASE DEFAULT
-                        ! Do nothing (might have another use for analytic equations)
-                      END SELECT
-                    END IF ! Check for analytic equations
+                          END DO !variableIdx
+                        CASE DEFAULT
+                          ! Do nothing (might have another use for analytic equations)
+                        END SELECT
+                      END IF ! Check for analytic equations
+                      ELSE
+                        CALL FlagError("Boundary conditions are not associated.",err,error,*999)
+                      END IF
+                    ELSE
+                      CALL FlagError("Equations are not associated.",err,error,*999)
+                    END IF
                   ELSE
-                    CALL FlagError("Equations are not associated.",err,error,*999)
+                    CALL FlagError("Solver mapping is not associated.",err,error,*999)
                   END IF
-                ELSE
-                  CALL FlagError("Solver mapping is not associated.",err,error,*999)
-                END IF
-              END IF ! solver equations associated
-              ! Update any multiscale boundary values (coupled 0D or non-reflecting)
-              CALL NavierStokes_UpdateMultiscaleBoundary(EQUATIONS_SET,BOUNDARY_CONDITIONS, &
-                & TIME_INCREMENT,err,error,*999)
-
+                END IF ! solver equations associated
+                ! Update any multiscale boundary values (coupled 0D or non-reflecting)
+                CALL NavierStokes_UpdateMultiscaleBoundary(EQUATIONS_SET,BOUNDARY_CONDITIONS,TIME_INCREMENT,err,error,*999)
             CASE(PROBLEM_MULTISCALE_NAVIER_STOKES_SUBTYPE, &
               & PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE)
               ! TODO: this should be set up so it uses the same pre_solve steps as the individual 3D/1D equations sets
@@ -13913,6 +13915,7 @@ CONTAINS
       CALL FlagError("Control Loop is not associated.",err,error,*999)
     END IF
 
+    !Get the number of local nodes
     domainNodes=>dependentField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%ptr% &
       & TOPOLOGY%NODES
     branchNumber = 0
@@ -13946,7 +13949,8 @@ CONTAINS
       !DEBUG
       CALL Field_ParameterSetGetLocalNode(independentField,FIELD_U_VARIABLE_TYPE, &
        & FIELD_VALUES_SET_TYPE,1,1,nodeNumber,1,normalWave,err,error,*999)
-      IF(ABS(normalWave) > ZERO_TOLERANCE) THEN
+      !Find branch nodes
+      IF(numberOfVersions>1) THEN
         branchNumber = branchNumber + 1
         branchConverged(branchNumber) = .FALSE.
 
@@ -14777,8 +14781,7 @@ CONTAINS
             DO componentIdx=1,2
               dependentDof = fieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP% &
                & NODE_PARAM2DOF_MAP%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%VERSIONS(versionIdx)
-              CALL BOUNDARY_CONDITIONS_VARIABLE_GET(boundaryConditions, &
-               & fieldVariable,boundaryConditionsVariable,err,error,*999)
+              CALL BOUNDARY_CONDITIONS_VARIABLE_GET(boundaryConditions,fieldVariable,boundaryConditionsVariable,err,error,*999)
               boundaryConditionType=boundaryConditionsVariable%CONDITION_TYPES(dependentDof)
               SELECT CASE(boundaryConditionType)
 
