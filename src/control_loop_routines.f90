@@ -961,25 +961,21 @@ CONTAINS
     ENTERS("CONTROL_LOOP_NUMBER_OF_ITERATIONS_SET",ERR,ERROR,*999)
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(CONTROL_LOOP%CONTROL_LOOP_FINISHED) THEN
-        CALL FlagError("Control loop has been finished.",ERR,ERROR,*999)
-      ELSE
-        IF(CONTROL_LOOP%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) THEN
-          TIME_LOOP=>CONTROL_LOOP%TIME_LOOP
-          IF(ASSOCIATED(TIME_LOOP)) THEN
-            IF(NUMBER_OF_ITERATIONS<0) THEN
-              LOCAL_ERROR="The specified number of iterations of "//TRIM(NUMBER_TO_VSTRING(NUMBER_OF_ITERATIONS,"*",ERR,ERROR))// &
-                & " is invalid. The number must be non-negative."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-            TIME_LOOP%NUMBER_OF_ITERATIONS=NUMBER_OF_ITERATIONS
-          ELSE
-            CALL FlagError("Control loop time loop is not associated.",ERR,ERROR,*999)
+      IF(CONTROL_LOOP%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) THEN
+        TIME_LOOP=>CONTROL_LOOP%TIME_LOOP
+        IF(ASSOCIATED(TIME_LOOP)) THEN
+          IF(NUMBER_OF_ITERATIONS<0) THEN
+            LOCAL_ERROR="The specified number of iterations of "//TRIM(NUMBER_TO_VSTRING(NUMBER_OF_ITERATIONS,"*",ERR,ERROR))// &
+              & " is invalid. The number must be non-negative."
+            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
+          TIME_LOOP%NUMBER_OF_ITERATIONS=NUMBER_OF_ITERATIONS
         ELSE
-          CALL FlagError("The specified control loop is not a time control loop.",ERR,ERROR,*999)
+          CALL FlagError("Control loop time loop is not associated.",ERR,ERROR,*999)
         ENDIF
-      ENDIF          
+      ELSE
+        CALL FlagError("The specified control loop is not a time control loop.",ERR,ERROR,*999)
+      ENDIF
     ELSE
       CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
     ENDIF
