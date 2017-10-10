@@ -1635,6 +1635,7 @@ CONTAINS
           TIME_LOOP%START_TIME=START_TIME
           TIME_LOOP%STOP_TIME=STOP_TIME
           TIME_LOOP%TIME_INCREMENT=TIME_INCREMENT
+          TIME_LOOP%NUMBER_OF_ITERATIONS=0    ! reset number of iterations
         ELSE
           CALL FlagError("Control loop time loop is not associated.",ERR,ERROR,*999)
         ENDIF
