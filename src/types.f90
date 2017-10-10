@@ -3150,12 +3150,13 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: ITERATION_NUMBER
     INTEGER(INTG) :: GLOBAL_ITERATION_NUMBER
 ! sebk: is thei usefull?
-    INTEGER(INTG) :: OUTPUT_NUMBER
+    INTEGER(INTG) :: OUTPUT_NUMBER          !< The frequency of output, is only used if the specific problem implementation accesses it
     INTEGER(INTG) :: INPUT_NUMBER
     REAL(DP) :: CURRENT_TIME
     REAL(DP) :: START_TIME
     REAL(DP) :: STOP_TIME
     REAL(DP) :: TIME_INCREMENT
+    INTEGER(INTG) :: NUMBER_OF_ITERATIONS   !< The total number of iterations for this loop, if 0 it will be computed from time span and increment
   END TYPE CONTROL_LOOP_TIME_TYPE
 
   !>Contains information on a do-while control loop

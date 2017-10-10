@@ -122,6 +122,8 @@ MODULE CONTROL_LOOP_ROUTINES
 
   PUBLIC CONTROL_LOOP_NUMBER_OF_SUB_LOOPS_GET,CONTROL_LOOP_NUMBER_OF_SUB_LOOPS_SET
 
+  PUBLIC CONTROL_LOOP_NUMBER_OF_ITERATIONS_GET,CONTROL_LOOP_NUMBER_OF_ITERATIONS_SET
+  
   PUBLIC CONTROL_LOOP_OUTPUT_TYPE_GET,CONTROL_LOOP_OUTPUT_TYPE_SET
 
   PUBLIC CONTROL_LOOP_SUB_LOOP_GET
@@ -944,6 +946,93 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Sets the number of iterations for a time type control loop. If set to 0 (default), it will be computed by start and stop time and time increment. \see OPENCMISS_CMISSControlLoopNumberOfIterationsSet
+  SUBROUTINE CONTROL_LOOP_NUMBER_OF_ITERATIONS_SET(CONTROL_LOOP,NUMBER_OF_ITERATIONS,ERR,ERROR,*)
+
+    !Argument variables
+    TYPE(CONTROL_LOOP_TYPE), POINTER, INTENT(IN) :: CONTROL_LOOP !<A pointer to time control loop to set the number of iterations for
+    INTEGER(INTG), INTENT(IN) :: NUMBER_OF_ITERATIONS !<The number of iterations for the time control loop.
+    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    !Local Variables
+    TYPE(CONTROL_LOOP_TIME_TYPE), POINTER :: TIME_LOOP
+    TYPE(VARYING_STRING) :: LOCAL_ERROR
+ 
+    ENTERS("CONTROL_LOOP_NUMBER_OF_ITERATIONS_SET",ERR,ERROR,*999)
+
+    IF(ASSOCIATED(CONTROL_LOOP)) THEN
+      IF(CONTROL_LOOP%CONTROL_LOOP_FINISHED) THEN
+        CALL FlagError("Control loop has been finished.",ERR,ERROR,*999)
+      ELSE
+        IF(CONTROL_LOOP%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) THEN
+          TIME_LOOP=>CONTROL_LOOP%TIME_LOOP
+          IF(ASSOCIATED(TIME_LOOP)) THEN
+            IF(NUMBER_OF_ITERATIONS<0) THEN
+              LOCAL_ERROR="The specified number of iterations of "//TRIM(NUMBER_TO_VSTRING(NUMBER_OF_ITERATIONS,"*",ERR,ERROR))// &
+                & " is invalid. The number must be non-negative."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            ENDIF
+            TIME_LOOP%NUMBER_OF_ITERATIONS=NUMBER_OF_ITERATIONS
+          ELSE
+            CALL FlagError("Control loop time loop is not associated.",ERR,ERROR,*999)
+          ENDIF
+        ELSE
+          CALL FlagError("The specified control loop is not a time control loop.",ERR,ERROR,*999)
+        ENDIF
+      ENDIF          
+    ELSE
+      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
+    ENDIF
+       
+    EXITS("CONTROL_LOOP_NUMBER_OF_ITERATIONS_SET")
+    RETURN
+999 ERRORSEXITS("CONTROL_LOOP_NUMBER_OF_ITERATIONS_SET",ERR,ERROR)
+    RETURN 1
+  END SUBROUTINE CONTROL_LOOP_NUMBER_OF_ITERATIONS_SET
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of iterations for a time type control loop. If the value is not set to something /=0, it will be computed the first time the loop is executed. If it is retrieved earlier and 0 is returned, this means the value was not yet computed. \see OPENCMISS_CMISSControlLoopNumberOfIterationsGet
+  SUBROUTINE CONTROL_LOOP_NUMBER_OF_ITERATIONS_GET(CONTROL_LOOP,NUMBER_OF_ITERATIONS,ERR,ERROR,*)
+
+    !Argument variables
+    TYPE(CONTROL_LOOP_TYPE), POINTER, INTENT(IN) :: CONTROL_LOOP !<A pointer to time control loop to set the number of iterations for
+    INTEGER(INTG), INTENT(OUT) :: NUMBER_OF_ITERATIONS !<The number of iterations for the time control loop.
+    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    !Local Variables
+    TYPE(CONTROL_LOOP_TIME_TYPE), POINTER :: TIME_LOOP
+    TYPE(VARYING_STRING) :: LOCAL_ERROR
+ 
+    ENTERS("CONTROL_LOOP_NUMBER_OF_ITERATIONS_GET",ERR,ERROR,*999)
+
+    IF(ASSOCIATED(CONTROL_LOOP)) THEN
+      IF(CONTROL_LOOP%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) THEN
+        TIME_LOOP=>CONTROL_LOOP%TIME_LOOP
+        IF(ASSOCIATED(TIME_LOOP)) THEN
+          NUMBER_OF_ITERATIONS=TIME_LOOP%NUMBER_OF_ITERATIONS
+        ELSE
+          CALL FlagError("Control loop time loop is not associated.",ERR,ERROR,*999)
+        ENDIF
+      ELSE
+        CALL FlagError("The specified control loop is not a time control loop.",ERR,ERROR,*999)
+      ENDIF
+    ELSE
+      CALL FlagError("Control loop is not associated.",ERR,ERROR,*999)
+    ENDIF
+       
+    EXITS("CONTROL_LOOP_NUMBER_OF_ITERATIONS_GET")
+    RETURN
+999 ERRORSEXITS("CONTROL_LOOP_NUMBER_OF_ITERATIONS_GET",ERR,ERROR)
+    RETURN 1
+  END SUBROUTINE CONTROL_LOOP_NUMBER_OF_ITERATIONS_GET
+  
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the number of sub loops for a control loop. \see OPENCMISS_CMISSCMISSControlLoopNumberOfSubLoopsGet
   SUBROUTINE CONTROL_LOOP_NUMBER_OF_SUB_LOOPS_GET(CONTROL_LOOP,NUMBER_OF_SUB_LOOPS,ERR,ERROR,*)
 
@@ -1409,6 +1498,7 @@ CONTAINS
         IF(ERR/=0) CALL FlagError("Could not allocate time loop for the control loop.",ERR,ERROR,*999)
         CONTROL_LOOP%TIME_LOOP%CONTROL_LOOP=>CONTROL_LOOP
         CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER=0
+        CONTROL_LOOP%TIME_LOOP%NUMBER_OF_ITERATIONS=0
         CONTROL_LOOP%TIME_LOOP%GLOBAL_ITERATION_NUMBER=0
         CONTROL_LOOP%TIME_LOOP%CURRENT_TIME=0.0_DP
         CONTROL_LOOP%TIME_LOOP%START_TIME=0.0_DP

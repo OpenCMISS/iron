@@ -1411,6 +1411,20 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_ControlLoop_AbsoluteToleranceSetObj
   END INTERFACE cmfe_ControlLoop_AbsoluteToleranceSet
 
+  !>Returns the number of iterations for a time control loop. If the returned value is 0, that means that the number has not yet been computed. 
+  INTERFACE cmfe_ControlLoop_NumberOfIterationsGet
+    MODULE PROCEDURE cmfe_ControlLoop_NumberOfIterationsGetNumber0
+    MODULE PROCEDURE cmfe_ControlLoop_NumberOfIterationsGetNumber1
+    MODULE PROCEDURE cmfe_ControlLoop_NumberOfIterationsGetObj
+  END INTERFACE cmfe_ControlLoop_NumberOfIterationsGet
+
+  !>Sets/changes the number of iterations for a time control loop. If set to 0, it will be computed from time increment and start/stop time
+  INTERFACE cmfe_ControlLoop_NumberOfIterationsSet
+    MODULE PROCEDURE cmfe_ControlLoop_NumberOfIterationsSetNumber0
+    MODULE PROCEDURE cmfe_ControlLoop_NumberOfIterationsSetNumber1
+    MODULE PROCEDURE cmfe_ControlLoop_NumberOfIterationsSetObj
+  END INTERFACE cmfe_ControlLoop_NumberOfIterationsSet
+
   !>Returns the number of sub loops for a control loop.
   INTERFACE cmfe_ControlLoop_NumberOfSubLoopsGet
     MODULE PROCEDURE cmfe_ControlLoop_NumberOfSubLoopsGetNumber0
@@ -1492,6 +1506,8 @@ MODULE OpenCMISS_Iron
 
   PUBLIC cmfe_ControlLoop_AbsoluteToleranceSet
 
+  PUBLIC cmfe_ControlLoop_NumberOfIterationsGet, cmfe_ControlLoop_NumberOfIterationsSet
+  
   PUBLIC cmfe_ControlLoop_NumberOfSubLoopsGet,cmfe_ControlLoop_NumberOfSubLoopsSet
 
   PUBLIC cmfe_ControlLoop_OutputTypeGet,cmfe_ControlLoop_OutputTypeSet
@@ -17000,6 +17016,214 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_ControlLoop_AbsoluteToleranceSetObj
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Gets the number of iterations for a time control loop identified by user number.
+  SUBROUTINE cmfe_ControlLoop_NumberOfIterationsGetNumber0(problemUserNumber,controlLoopIdentifier,numberOfIterations,err)
+    !DLLEXPORT(cmfe_ControlLoop_NumberOfIterationsGetNumber0)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the number of iterations for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier.
+    INTEGER(INTG), INTENT(OUT) :: numberOfIterations !<The number of iterations
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP
+    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("cmfe_ControlLoop_NumberOfItGetNumber0",err,error,*999)  ! name is abbreviated because of maximum line length
+
+    NULLIFY(CONTROL_LOOP)
+    NULLIFY(PROBLEM)
+    CALL PROBLEM_USER_NUMBER_FIND(problemUserNumber,PROBLEM,err,error,*999)
+    IF(ASSOCIATED(PROBLEM)) THEN
+      CALL PROBLEM_CONTROL_LOOP_GET(PROBLEM,controlLoopIdentifier,CONTROL_LOOP,err,error,*999)
+      CALL CONTROL_LOOP_NUMBER_OF_ITERATIONS_GET(CONTROL_LOOP,numberOfIterations,err,error,*999)
+    ELSE
+      localError="A problem with an user number of "//TRIM(NumberToVString(problemUserNumber,"*",err,error))//" does not exist."
+      CALL FlagError(localError,err,error,*999)
+    END IF
+    
+    EXITS("cmfe_ControlLoop_NumberOfItGetNumber0")  ! name is abbreviated because of maximum line length
+    RETURN
+999 ERRORSEXITS("cmfe_ControlLoop_NumberOfItGetNumber0",err,error)  ! name is abbreviated because of maximum line length
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_NumberOfIterationsGetNumber0
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Gets the number of iterations for a time control loop identified by user numbers.
+  SUBROUTINE cmfe_ControlLoop_NumberOfIterationsGetNumber1(problemUserNumber,controlLoopIdentifiers,numberOfIterations,err)
+    !DLLEXPORT(cmfe_ControlLoop_NumberOfIterationsGetNumber1)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the number of iterations for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<The control loop identifiers to get the number of iterations for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfIterations !<The number of iterations
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP
+    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("cmfe_ControlLoop_NumberOfItGetNumber1",err,error,*999)        ! name is abbreviated because of maximum line length
+
+    NULLIFY(CONTROL_LOOP)
+    NULLIFY(PROBLEM)
+    CALL PROBLEM_USER_NUMBER_FIND(problemUserNumber,PROBLEM,err,error,*999)
+    IF(ASSOCIATED(PROBLEM)) THEN
+      CALL PROBLEM_CONTROL_LOOP_GET(PROBLEM,controlLoopIdentifiers,CONTROL_LOOP,err,error,*999)
+      CALL CONTROL_LOOP_NUMBER_OF_ITERATIONS_GET(CONTROL_LOOP,numberOfIterations,err,error,*999)
+    ELSE
+      localError="A problem with an user number of "//TRIM(NumberToVString(problemUserNumber,"*",err,error))//" does not exist."
+      CALL FlagError(localError,err,error,*999)
+    END IF
+
+    EXITS("cmfe_ControlLoop_NumberOfItGetNumber1")        ! name is abbreviated because of maximum line length
+    RETURN
+999 ERRORSEXITS("cmfe_ControlLoop_NumberOfItGetNumber1",err,error)      ! name is abbreviated because of maximum line length
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_NumberOfIterationsGetNumber1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of iterations for a time control loop identified by an object.
+  SUBROUTINE cmfe_ControlLoop_NumberOfIterationsGetObj(controlLoop,numberOfIterations,err)
+    !DLLEXPORT(cmfe_ControlLoop_NumberOfIterationsGetObj)
+
+    !Argument variables
+    TYPE(cmfe_ControlLoopType), INTENT(IN) :: controlLoop !<The control loop to get the number of iterations for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfIterations !<The number of iterations
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_ControlLoop_NumberOfIterationsGetObj",err,error,*999)
+
+    CALL CONTROL_LOOP_NUMBER_OF_ITERATIONS_GET(controlLoop%controlLoop,numberOfIterations,err,error,*999)
+
+    EXITS("cmfe_ControlLoop_NumberOfIterationsGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_ControlLoop_NumberOfIterationsGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_NumberOfIterationsGetObj
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Sets the number of iterations for a time control loop identified by user number.
+  SUBROUTINE cmfe_ControlLoop_NumberOfIterationsSetNumber0(problemUserNumber,controlLoopIdentifier,numberOfIterations,err)
+    !DLLEXPORT(cmfe_ControlLoop_NumberOfIterationsSetNumber0)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the number of iterations for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier.
+    INTEGER(INTG), INTENT(IN) :: numberOfIterations !<The number of iterations to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP
+    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("cmfe_ControlLoop_NumberOfItSetNumber0",err,error,*999)        ! name is abbreviated because of maximum line length
+
+    NULLIFY(CONTROL_LOOP)
+    NULLIFY(PROBLEM)
+    CALL PROBLEM_USER_NUMBER_FIND(problemUserNumber,PROBLEM,err,error,*999)
+    IF(ASSOCIATED(PROBLEM)) THEN
+      CALL PROBLEM_CONTROL_LOOP_GET(PROBLEM,controlLoopIdentifier,CONTROL_LOOP,err,error,*999)
+      CALL CONTROL_LOOP_NUMBER_OF_ITERATIONS_SET(CONTROL_LOOP,numberOfIterations,err,error,*999)
+    ELSE
+      localError="A problem with an user number of "//TRIM(NumberToVString(problemUserNumber,"*",err,error))//" does not exist."
+      CALL FlagError(localError,err,error,*999)
+    END IF
+    
+    EXITS("cmfe_ControlLoop_NumberOfItSetNumber0")        ! name is abbreviated because of maximum line length
+    RETURN
+999 ERRORSEXITS("cmfe_ControlLoop_NumberOfItSetNumber0",err,error)    ! name is abbreviated because of maximum line length
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_NumberOfIterationsSetNumber0
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Sets the number of iterations for a time control loop identified by user numbers.
+  SUBROUTINE cmfe_ControlLoop_NumberOfIterationsSetNumber1(problemUserNumber,controlLoopIdentifiers,numberOfIterations,err)
+    !DLLEXPORT(cmfe_ControlLoop_NumberOfIterationsSetNumber1)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the number of iterations for.
+    INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<The control loop identifiers to set the number of iterations for.
+    INTEGER(INTG), INTENT(IN) :: numberOfIterations !<The number of iterations to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP
+    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("cmfe_ControlLoop_NumberOfItSetNumber1",err,error,*999)    ! name is abbreviated because of maximum line length
+
+    NULLIFY(CONTROL_LOOP)
+    NULLIFY(PROBLEM)
+    CALL PROBLEM_USER_NUMBER_FIND(problemUserNumber,PROBLEM,err,error,*999)
+    IF(ASSOCIATED(PROBLEM)) THEN
+      CALL PROBLEM_CONTROL_LOOP_GET(PROBLEM,controlLoopIdentifiers,CONTROL_LOOP,err,error,*999)
+      CALL CONTROL_LOOP_NUMBER_OF_ITERATIONS_SET(CONTROL_LOOP,numberOfIterations,err,error,*999)
+    ELSE
+      localError="A problem with an user number of "//TRIM(NumberToVString(problemUserNumber,"*",err,error))//" does not exist."
+      CALL FlagError(localError,err,error,*999)
+    END IF
+
+    EXITS("cmfe_ControlLoop_NumberOfItSetNumber1")    ! name is abbreviated because of maximum line length
+    RETURN
+999 ERRORSEXITS("cmfe_ControlLoop_NumberOfItSetNumber1",err,error)    ! name is abbreviated because of maximum line length
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_NumberOfIterationsSetNumber1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the number of iterations for a time control loop identified by an object.
+  SUBROUTINE cmfe_ControlLoop_NumberOfIterationsSetObj(controlLoop,numberOfIterations,err)
+    !DLLEXPORT(cmfe_ControlLoop_NumberOfIterationsSetObj)
+
+    !Argument variables
+    TYPE(cmfe_ControlLoopType), INTENT(IN) :: controlLoop !<The control loop to set the number of iterations for.
+    INTEGER(INTG), INTENT(IN) :: numberOfIterations !<The number of iterations to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_ControlLoop_NumberOfIterationsSetObj",err,error,*999)
+
+    CALL CONTROL_LOOP_NUMBER_OF_ITERATIONS_SET(controlLoop%controlLoop,numberOfIterations,err,error,*999)
+
+    EXITS("cmfe_ControlLoop_NumberOfIterationsSetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_ControlLoop_NumberOfIterationsSetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ControlLoop_NumberOfIterationsSetObj
 
   !
   !================================================================================================================================
