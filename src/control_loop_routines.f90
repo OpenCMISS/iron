@@ -970,6 +970,13 @@ CONTAINS
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
           TIME_LOOP%NUMBER_OF_ITERATIONS=NUMBER_OF_ITERATIONS
+          
+          !Update time increment if number of iterations differs from time stepping settings
+          IF (CEILING((TIME_LOOP%STOP_TIME-TIME_LOOP%START_TIME)/TIME_LOOP%TIME_INCREMENT) &
+            & /= TIME_LOOP%NUMBER_OF_ITERATIONS) THEN
+            TIME_LOOP%TIME_INCREMENT = (TIME_LOOP%STOP_TIME-TIME_LOOP%START_TIME)/TIME_LOOP%NUMBER_OF_ITERATIONS
+          ENDIF
+          
         ELSE
           CALL FlagError("Control loop time loop is not associated.",ERR,ERROR,*999)
         ENDIF
