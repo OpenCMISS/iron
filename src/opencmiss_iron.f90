@@ -17657,7 +17657,7 @@ CONTAINS
     CALL PROBLEM_USER_NUMBER_FIND(problemUserNumber,PROBLEM,err,error,*999)
     IF(ASSOCIATED(PROBLEM)) THEN
       CALL PROBLEM_CONTROL_LOOP_GET(PROBLEM,controlLoopIdentifier,CONTROL_LOOP,err,error,*999)
-      CALL CONTROL_LOOP_TIMES_GET(CONTROL_LOOP,startTime,stopTime,timeIncrement,currentTime, &
+      CALL CONTROL_LOOP_TIMES_GET(CONTROL_LOOP,startTime,stopTime,currentTime,timeIncrement, &
         & currentLoopIteration,outputIterationNumber,err,error,*999)
     ELSE
       localError="A problem with an user number of "//TRIM(NumberToVString(problemUserNumber,"*",err,error))//" does not exist."
@@ -17703,7 +17703,7 @@ CONTAINS
     CALL PROBLEM_USER_NUMBER_FIND(problemUserNumber,PROBLEM,err,error,*999)
     IF(ASSOCIATED(PROBLEM)) THEN
       CALL PROBLEM_CONTROL_LOOP_GET(PROBLEM,controlLoopIdentifiers,CONTROL_LOOP,err,error,*999)
-      CALL CONTROL_LOOP_TIMES_GET(CONTROL_LOOP,startTime,stopTime,timeIncrement,currentTime, &
+      CALL CONTROL_LOOP_TIMES_GET(CONTROL_LOOP,startTime,stopTime,currentTime,timeIncrement, &
         & currentLoopIteration,outputIterationNumber,err,error,*999)
    ELSE
       localError="A problem with an user number of "//TRIM(NumberToVString(problemUserNumber,"*",err,error))//" does not exist."
@@ -17740,7 +17740,7 @@ CONTAINS
 
     ENTERS("cmfe_ControlLoop_TimesGetObj",err,error,*999)
 
-    CALL CONTROL_LOOP_TIMES_GET(controlLoop%controlLoop,startTime,stopTime,timeIncrement,currentTime, &
+    CALL CONTROL_LOOP_TIMES_GET(controlLoop%controlLoop,startTime,stopTime,currentTime,timeIncrement, &
       & currentLoopIteration,outputIterationNumber,err,error,*999)
 
     EXITS("cmfe_ControlLoop_TimesGetObj")
