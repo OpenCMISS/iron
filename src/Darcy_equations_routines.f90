@@ -1,48 +1,3 @@
-!> \file
-!> \author Christian Michler
-!> \brief This module handles all Darcy equations routines.
-!>
-!> \section LICENSE
-!>
-!> Version: MPL 1.1/GPL 2.0/LGPL 2.1
-!>
-!> The contents of this file are subject to the Mozilla Public License
-!> Version 1.1 (the "License"); you may not use this file except in
-!> compliance with the License. You may obtain a copy of the License at
-!> http://www.mozilla.org/MPL/
-!>
-!> Software distributed under the License is distributed on an "AS IS"
-!> basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
-!> License for the specific language governing rights and limitations
-!> under the License.
-!>
-!> The Original Code is OpenCMISS
-!>
-!> The Initial Developer of the Original Code is University of Auckland,
-!> Auckland, New Zealand, the University of Oxford, Oxford, United
-!> Kingdom and King's College, London, United Kingdom. Portions created
-!> by the University of Auckland, the University of Oxford and King's
-!> College, London are Copyright (C) 2007-2010 by the University of
-!> Auckland, the University of Oxford and King's College, London.
-!> All Rights Reserved.
-!>
-!> Contributor(s): Chris Bradley
-!>
-!> Alternatively, the contents of this file may be used under the terms of
-!> either the GNU General Public License Version 2 or later (the "GPL"), or
-!> the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
-!> in which case the provisions of the GPL or the LGPL are applicable instead
-!> of those above. If you wish to allow use of your version of this file only
-!> under the terms of either the GPL or the LGPL, and not to allow others to
-!> use your version of this file under the terms of the MPL, indicate your
-!> decision by deleting the provisions above and replace them with the notice
-!> and other provisions required by the GPL or the LGPL. If you do not delete
-!> the provisions above, a recipient may use your version of this file under
-!> the terms of any one of the MPL, the GPL or the LGPL.
-!>
-
-!>This module handles all Darcy equations routines.
-
 MODULE DARCY_EQUATIONS_ROUTINES
 
   USE BaseRoutines
@@ -81,7 +36,6 @@ MODULE DARCY_EQUATIONS_ROUTINES
 
 #include "macros.h"
 
-
   IMPLICIT NONE
 
   PUBLIC DARCY_EQUATION_EQUATIONS_SET_SETUP
@@ -110,7 +64,6 @@ MODULE DARCY_EQUATIONS_ROUTINES
   REAL(DP) :: RESIDUAL_NORM_0
 
   LOGICAL :: idebug1, idebug2, idebug3
-
 
 CONTAINS
 
@@ -207,15 +160,15 @@ CONTAINS
     INTEGER:: INDEPENDENT_FIELD_NUMBER_OF_VARIABLES, INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS
     INTEGER:: NUMBER_OF_DIMENSIONS, GEOMETRIC_COMPONENT_NUMBER
     INTEGER:: MATERIAL_FIELD_NUMBER_OF_VARIABLES, MATERIAL_FIELD_NUMBER_OF_COMPONENTS
-    INTEGER:: MESH_COMPONENT,MATERIAL_FIELD_NUMBER_OF_U_VAR_COMPONENTS,MATERIAL_FIELD_NUMBER_OF_V_VAR_COMPONENTS, &
-            & MATERIAL_FIELD_NUMBER_OF_U1_VAR_COMPONENTS
+    INTEGER:: MESH_COMPONENT,MATERIAL_FIELD_NUMBER_OF_U_VAR_COMPONENTS,MATERIAL_FIELD_NUMBER_OF_V_VAR_COMPONENTS
+    INTEGER:: MATERIAL_FIELD_NUMBER_OF_U1_VAR_COMPONENTS
     INTEGER:: i,component_idx
 
     INTEGER(INTG) :: num_var,num_var_count
     INTEGER(INTG) :: equations_SET_FIELD_NUMBER_OF_VARIABLES,EQUATIONS_SET_FIELD_NUMBER_OF_COMPONENTS,NUMBER_OF_SOURCE_COMPONENTS
     INTEGER(INTG), POINTER :: equations_SET_FIELD_DATA(:)
-    INTEGER(INTG), ALLOCATABLE :: VARIABLE_TYPES(:),VARIABLE_U_TYPES(:),COUPLING_MATRIX_STORAGE_TYPE(:), &
-      & COUPLING_MATRIX_STRUCTURE_TYPE(:)
+    INTEGER(INTG), ALLOCATABLE :: VARIABLE_TYPES(:),VARIABLE_U_TYPES(:),COUPLING_MATRIX_STORAGE_TYPE(:)
+    INTEGER(INTG), ALLOCATABLE :: COUPLING_MATRIX_STRUCTURE_TYPE(:)
 
     ENTERS("DARCY_EQUATION_EQUATIONS_SET_SETUP",err,error,*999)
 
@@ -231,8 +184,7 @@ CONTAINS
       IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
         CALL FlagError("Equations set specification is not allocated.",err,error,*999)
       ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)/=3) THEN
-        CALL FlagError("Equations set specification must have three entries for a Darcy type equations set.", &
-          & err,error,*999)
+        CALL FlagError("Equations set specification must have three entries for a Darcy type equations set.",err,error,*999)
       END IF
       SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
       CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE, EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE, EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
@@ -1387,8 +1339,8 @@ CONTAINS
             SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
             CASE(EQUATIONS_SET_SETUP_START_ACTION)
               EQUATIONS_MATERIALS=>EQUATIONS_SET%MATERIALS
-              IF( ASSOCIATED(EQUATIONS_MATERIALS) ) THEN
-                IF( EQUATIONS_MATERIALS%MATERIALS_FINISHED ) THEN
+              IF(ASSOCIATED(EQUATIONS_MATERIALS)) THEN
+                IF(EQUATIONS_MATERIALS%MATERIALS_FINISHED) THEN
                   CALL Equations_CreateStart(EQUATIONS_SET,equations,err,error,*999)
                   CALL Equations_LinearityTypeSet(equations,EQUATIONS_LINEAR,err,error,*999)
                   CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_STATIC,err,error,*999)
@@ -1403,7 +1355,7 @@ CONTAINS
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                 SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
                 CASE(EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE)
-                    !!!!!THE FOLLOWING IF STATEMENT IS ILLUSTRATIVE ONLY - need to implement the equation set field thing, and make a generalised case statement
+                  !!!!!THE FOLLOWING IF STATEMENT IS ILLUSTRATIVE ONLY - need to implement the equation set field thing, and make a generalised case statement
                   CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
                   CALL Equations_CreateFinish(equations,err,error,*999)
                   NULLIFY(vectorEquations)
@@ -1446,6 +1398,8 @@ CONTAINS
                   !Finish the equations creation
                   CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
                   CALL Equations_CreateFinish(equations,err,error,*999)
+                  NULLIFY(vectorEquations)
+                  CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
                   !Create the equations mapping.
                   CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
                   CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
@@ -3391,7 +3345,7 @@ CONTAINS
 999 ERRORS("Darcy_EquationsSetSpecificationSet",err,error)
     EXITS("Darcy_EquationsSetSpecificationSet")
     RETURN 1
-    
+
   END SUBROUTINE Darcy_EquationsSetSpecificationSet
 
   !
@@ -3448,7 +3402,7 @@ CONTAINS
 998 ERRORS("Darcy_ProblemSpecificationSet",err,error)
     EXITS("Darcy_ProblemSpecificationSet")
     RETURN 1
-    
+
   END SUBROUTINE Darcy_ProblemSpecificationSet
 
   !
@@ -4450,7 +4404,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("Darcy_PreSolveStoreReferenceData",err,error)
     RETURN 1
-    
+
   END SUBROUTINE Darcy_PreSolveStoreReferenceData
 
   !
@@ -4569,7 +4523,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("Darcy_PreSolveStorePreviousData",err,error)
     RETURN 1
-    
+
   END SUBROUTINE Darcy_PreSolveStorePreviousData
 
   !
@@ -5009,7 +4963,7 @@ CONTAINS
 999 ERRORS("Darcy_PreSolveUpdateBoundaryConditions",err,error)
     EXITS("Darcy_PreSolveUpdateBoundaryConditions")
     RETURN 1
-    
+
   END SUBROUTINE Darcy_PreSolveUpdateBoundaryConditions
 
   !
@@ -5168,7 +5122,7 @@ CONTAINS
 999 ERRORS("Darcy_PreSolveUpdateMatrixProperties",err,error)
     EXITS("Darcy_PreSolveUpdateMatrixProperties")
     RETURN 1
-    
+
   END SUBROUTINE Darcy_PreSolveUpdateMatrixProperties
 
   !
@@ -5542,8 +5496,8 @@ CONTAINS
           IF(ASSOCIATED(geometricField)) THEN
             CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,err,error,*999)
             NULLIFY(GEOMETRIC_VARIABLE)
-            NULLIFY(GEOMETRIC_PARAMETERS)
             CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,GEOMETRIC_VARIABLE,err,error,*999)
+            NULLIFY(GEOMETRIC_PARAMETERS)
             CALL FIELD_PARAMETER_SET_DATA_GET(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,GEOMETRIC_PARAMETERS, &
               & err,error,*999)
             IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
@@ -5654,8 +5608,9 @@ CONTAINS
 
             NULLIFY(GEOMETRIC_VARIABLE)
             CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,GEOMETRIC_VARIABLE,err,error,*999)
-            CALL FIELD_PARAMETER_SET_DATA_GET(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,GEOMETRIC_PARAMETERS, &
-              & err,error,*999)
+            NULLIFY(GEOMETRIC_PARAMETERS)
+            CALL FIELD_PARAMETER_SET_DATA_GET(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+              & GEOMETRIC_PARAMETERS,err,error,*999)
             IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
               DO variable_idx=1,DEPENDENT_FIELD%NUMBER_OF_VARIABLES
                 variable_type=DEPENDENT_FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE
@@ -6749,7 +6704,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("Darcy_PreSolveGetSolidDisplacement",err,error)
     RETURN 1
-    
+
   END SUBROUTINE Darcy_PreSolveGetSolidDisplacement
 
   !
@@ -6895,7 +6850,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("Darcy_PreSolveStorePreviousIterate",err,error)
     RETURN 1
-    
+
   END SUBROUTINE Darcy_PreSolveStorePreviousIterate
 
   !
@@ -7214,12 +7169,12 @@ CONTAINS
     ELSE
       CALL FlagError("Control loop is not associated.",err,error,*999)
     ENDIF
-    
+
     EXITS("Darcy_PreSolveUpdateAnalyticValues")
     RETURN
 999 ERRORSEXITS("Darcy_PreSolveUpdateAnalyticValues",err,error)
     RETURN 1
-    
+
   END SUBROUTINE Darcy_PreSolveUpdateAnalyticValues
 
   !
@@ -8048,4 +8003,3 @@ CONTAINS
 
 
 END MODULE DARCY_EQUATIONS_ROUTINES
-
