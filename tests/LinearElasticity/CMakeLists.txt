@@ -1,9 +1,9 @@
 add_executable(CantileverBeam CantileverBeam.f90)
 set_target_properties(CantileverBeam PROPERTIES LINKER_LANGUAGE Fortran)
-target_link_libraries(CantileverBeam iron)
+target_link_libraries(CantileverBeam PRIVATE iron)
 oc_add_test(LinearElasticity_CantileverBeam CantileverBeam)
 
 add_executable(Extension Extension.f90)
 set_target_properties(Extension PROPERTIES LINKER_LANGUAGE Fortran)
-target_link_libraries(Extension iron)
+target_link_libraries(Extension PRIVATE iron)
 oc_add_test(LinearElasticity_Extension Extension)
