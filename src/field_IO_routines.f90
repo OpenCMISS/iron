@@ -2852,7 +2852,7 @@ CONTAINS
         IF(LIST_COMP_SCALE(comp_idx)==1) THEN
           scaleIndex=0
         ELSE
-          scaleIndex= SUM(GROUP_SCALE_FACTORS(1:LIST_COMP_SCALE(comp_idx)))-1
+          scaleIndex= SUM(GROUP_SCALE_FACTORS(1:(LIST_COMP_SCALE(comp_idx)-1)))
         ENDIF
 
         ! Fortran numbering instead of c numbering
