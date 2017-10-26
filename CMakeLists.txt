@@ -2,7 +2,6 @@ cmake_minimum_required (VERSION 3.3 FATAL_ERROR)
 project(Iron VERSION 0.7.0 LANGUAGES C CXX Fortran)# Need all languages as iron's deps cover all (link phase) 
 include(CMakeDependentOption)
 
-message(STATUS "IRON_USE_VIRTUALENV: ${IRON_USE_VIRTUALENV}")
 string(TOUPPER "${CMAKE_BUILD_TYPE}" _uppercase_CMAKE_BUILD_TYPE)
 if (_uppercase_CMAKE_BUILD_TYPE MATCHES "^(DEBUG|RELWITHDEBINFO)$")
   set(IS_DEBUG_BUILD TRUE)
@@ -47,18 +46,14 @@ if (DEFINED FE_VIRTUALENV_INSTALL_PREFIX)
 endif ()
 
 set(IRON_USE_VIRTUALENV TRUE CACHE BOOL "Install Iron into virtual environment.")
-message(STATUS "FE_USE_VIRTUALENV: ${FE_USE_VIRTUALENV}")
 if (DEFINED FE_USE_VIRTUALENV)
     set(IRON_USE_VIRTUALENV ${FE_USE_VIRTUALENV} CACHE BOOL "Install Iron into virtual environment." FORCE)
-message(STATUS "IRON_USE_VIRTUALENV: ${IRON_USE_VIRTUALENV}")
 endif ()
-message(STATUS "VIRTUALENV_EXEC: ${VIRTUALENV_EXEC}")
 if (NOT EXISTS "${VIRTUALENV_EXEC}")
     set(IRON_USE_VIRTUALENV FALSE CACHE BOOL "Install Iron into virtual environment." FORCE)
-message(STATUS "IRON_USE_VIRTUALENV: ${IRON_USE_VIRTUALENV}")
     message(STATUS "The program virtualenv was not found disabling it's use.")
 endif ()
-message(STATUS "IRON_USE_VIRTUALENV: ${IRON_USE_VIRTUALENV}")
+
 string(TOUPPER "${REAL_PRECISION}" _uppercase_REAL_PRECISION)
 if(_uppercase_REAL_PRECISION STREQUAL "SINGLE")
   set(WORKING_REAL_PRECISION_SINGLE)
@@ -126,7 +121,7 @@ endforeach()
 
 # Platform-checks
 include(CheckSymbolExists)
-CHECK_SYMBOL_EXISTS(SA_NODEFER "" HAVE_SA_NODEFER)
+CHECK_SYMBOL_EXISTS(SA_NODEFER "signal.h" HAVE_SA_NODEFER)
 CHECK_SYMBOL_EXISTS(sigaction "signal.h" HAVE_SIGACTION_STRUCT)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmiss.in.h ${CMAKE_CURRENT_BINARY_DIR}/cmiss.h)
@@ -194,18 +189,12 @@ foreach(irontarget ${IRON_TARGETS})
         target_compile_definitions(${irontarget} PUBLIC WITH_DIAGNOSTICS)
     endif()
     
-    # In case the compiler is not already the mpi wrapper,
-    # we need all the include paths etc.
-    # This is conveniently done by linking against the "mpi" interface target
-    # returned by our FindMPI module.
-    if (NOT CMAKE_Fortran_COMPILER STREQUAL MPI_Fortran_COMPILER)
-        target_link_libraries(${irontarget} PUBLIC $<BUILD_INTERFACE:mpi>)
-    endif()
+    target_link_libraries(${irontarget} PUBLIC mpi-fortran)
     target_link_libraries(${irontarget} PRIVATE ${LINK_LIBS})
     if(WITH_FIELDML)
         target_link_libraries(${irontarget} PUBLIC $<BUILD_INTERFACE:fieldml-api>)
     endif()
-    # Dont use "USEQ MPI" instructions if the percompiled mpi module files are incompatible.
+    # Dont use "USE MPI" instructions if the precompiled mpi module files are incompatible.
     # This happens when the fortran compiler used to build mpi differs from the currently used one.
     # This holds on windows (only pre-compiled mpi implementations available; MPICH2 and MSMPI)
     # and on e.g. clusters with inappropriately configured toolchain environments.
