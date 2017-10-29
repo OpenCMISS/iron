@@ -2585,7 +2585,8 @@ CONTAINS
                     CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                 ENDDO !source_dof_idx
-                CALL MPI_ALLREDUCE(MODELS_FIELD%ONLY_ONE_MODEL_INDEX,onlyOneModelIndex,1,MPI_DOUBLE_PRECISION,MPI_MAX, &
+                onlyOneModelIndex=0
+                CALL MPI_ALLREDUCE(MODELS_FIELD%ONLY_ONE_MODEL_INDEX,onlyOneModelIndex,1,MPI_INTEGER,MPI_MAX, &
                   & computationalEnvironment%mpiCommunicator,mpiIerror)
                 CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,ERR,ERROR,*999)
                 IF(onlyOneModelIndex==0) &
