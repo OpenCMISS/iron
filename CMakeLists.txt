@@ -300,6 +300,7 @@ file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/iron-config-dependencies.cmake
     "include(CMakeFindDependencyMacro)\r\n"
     "set(${PROJECT_NAME}_IMPORT_PREFIX \${_IMPORT_PREFIX})\r\n"
 )
+file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/iron-config-dependencies.cmake "if (${IRON_BUILD_STATIC_LIBRARY})")
 foreach(IRON_DEP ${IRON_UPSTREAM_DEPS})
     if (WITH_${IRON_DEP})
         file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/iron-config-dependencies.cmake "find_dependency(${IRON_DEP})\r\n")
@@ -312,6 +313,7 @@ endif()
 if (WITH_FIELDML)
     file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/iron-config-dependencies.cmake "find_dependency(FIELDML-API)\r\n")
 endif()
+file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/iron-config-dependencies.cmake "endif ()")
 file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/iron-config-dependencies.cmake "set(_IMPORT_PREFIX \${${PROJECT_NAME}_IMPORT_PREFIX})")
 install(FILES 
     ${CMAKE_CURRENT_BINARY_DIR}/iron-config-dependencies.cmake
