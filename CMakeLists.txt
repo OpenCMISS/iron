@@ -315,6 +315,7 @@ if (WITH_FIELDML)
 endif()
 file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/iron-config-dependencies.cmake "endif ()")
 file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/iron-config-dependencies.cmake "set(_IMPORT_PREFIX \${${PROJECT_NAME}_IMPORT_PREFIX})")
+
 install(FILES 
     ${CMAKE_CURRENT_BINARY_DIR}/iron-config-dependencies.cmake
     DESTINATION ${PACKAGE_CONFIG_DIR}
