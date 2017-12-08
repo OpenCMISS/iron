@@ -296,6 +296,7 @@ install(FILES
     DESTINATION ${PACKAGE_CONFIG_DIR}
     COMPONENT Development
 )
+
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/iron-config-dependencies.cmake
     "include(CMakeFindDependencyMacro)\r\n"
     "set(${PROJECT_NAME}_IMPORT_PREFIX \${_IMPORT_PREFIX})\r\n"
