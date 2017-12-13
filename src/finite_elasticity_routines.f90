@@ -127,7 +127,7 @@ MODULE FINITE_ELASTICITY_ROUTINES
     & FiniteElasticity_FiniteElementPreResidualEvaluate,FiniteElasticity_FiniteElementPostResidualEvaluate
 
   PUBLIC FiniteElasticityEquationsSet_DerivedVariableCalculate, &
-    & FiniteElasticity_StrainInterpolateXi
+    & FiniteElasticity_TensorInterpolateXi
 
 CONTAINS
 
@@ -2911,20 +2911,22 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Calculate the Green-Lagrange strain tensor at a given element xi location.
-  SUBROUTINE FiniteElasticity_StrainInterpolateXi(equationsSet,userElementNumber,xi,values,err,error,*)
+  !>Evaluates a tensor at a given element xi location.
+  SUBROUTINE FiniteElasticity_TensorInterpolateXi(equationsSet,tensorEvaluateType,userElementNumber,xi,values,err,error,*)
     ! Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to calculate strain for
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to calculate the tensor for
+    INTEGER(INTG), INTENT(IN) :: tensorEvaluateType !<The type of tensor to evaluate.
     INTEGER(INTG), INTENT(IN) :: userElementNumber
     REAL(DP), INTENT(IN) :: xi(:)
-    REAL(DP), INTENT(OUT) :: values(6) !<The interpolated strain tensor values.
+    REAL(DP), INTENT(OUT) :: values(3,3) !<The interpolated tensor values.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     ! Local variables
     TYPE(EQUATIONS_TYPE), POINTER :: equations
     TYPE(FIELD_TYPE), POINTER :: dependentField
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: geometricInterpolatedPoint, &
-      & fibreInterpolatedPoint,dependentInterpolatedPoint
+      & fibreInterpolatedPoint,dependentInterpolatedPoint,materialsInterpolatedPoint, &
+      & independentInterpolatedPoint,darcyInterpolatedPoint
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: geometricInterpolatedPointMetrics, &
       & dependentInterpolatedPointMetrics
     TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
@@ -2935,16 +2937,19 @@ CONTAINS
     LOGICAL :: userElementExists,ghostElement
     INTEGER(INTG) :: dependentVarType,meshComponentNumber
     INTEGER(INTG) :: numberOfDimensions,numberOfXi
-    INTEGER(INTG) :: localElementNumber,i
-    REAL(DP) :: dZdNu(3,3),dZdNuT(3,3),AZL(3,3),E(3,3)
+    INTEGER(INTG) :: localElementNumber,i,nh,mh
+    REAL(DP) :: dZdNu(3,3),dZdNuT(3,3),AZL(3,3),E(3,3),cauchyStressTensor(3,3),cauchyStressVoigt(6),Jznu
 
-    ENTERS("FiniteElasticity_StrainInterpolateXi",err,error,*999)
+    ENTERS("FiniteElasticity_TensorInterpolateXi",err,error,*999)
 
     NULLIFY(equations)
     NULLIFY(dependentField)
     NULLIFY(geometricInterpolatedPoint)
     NULLIFY(fibreInterpolatedPoint)
     NULLIFY(dependentInterpolatedPoint)
+    NULLIFY(materialsInterpolatedPoint)
+    NULLIFY(independentInterpolatedPoint)
+    NULLIFY(darcyInterpolatedPoint)
     NULLIFY(decomposition)
     NULLIFY(decompositionTopology)
     NULLIFY(domainTopology)
@@ -3011,7 +3016,6 @@ CONTAINS
     dependentInterpolatedPointMetrics=>equations%interpolation% &
       & dependent_interp_point_metrics(dependentVarType)%ptr
 
-
     !Interpolate fields at xi position
     CALL FIELD_INTERPOLATE_XI(FIRST_PART_DERIV,xi,dependentInterpolatedPoint,err,error,*999)
     CALL FIELD_INTERPOLATE_XI(FIRST_PART_DERIV,xi,geometricInterpolatedPoint,err,error,*999)
@@ -3019,7 +3023,7 @@ CONTAINS
       CALL FIELD_INTERPOLATE_XI(FIRST_PART_DERIV,xi,fibreInterpolatedPoint,err,error,*999)
     END IF
 
-    ! Calculate field metrics
+    !Calculate field metrics
     CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE( &
       & elementBasis%number_of_xi,geometricInterpolatedPointMetrics,err,error,*999)
     CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE( &
@@ -3031,28 +3035,90 @@ CONTAINS
     CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpolatedPointMetrics, &
       & geometricInterpolatedPointMetrics,fibreInterpolatedPoint,dZdNu,err,error,*999)
 
-    !Calculate E
-    CALL MATRIX_TRANSPOSE(dZdNu,dZdNuT,err,error,*999)
-    CALL MATRIX_PRODUCT(dZdNuT,dZdNu,AZL,err,error,*999)
-    E=0.5_DP*AZL
-    DO i=1,3
-      E(i,i)=E(i,i)-0.5_DP
-    END DO
+    IF(tensorEvaluateType==EQUATIONS_SET_EVALUATE_R_CAUCHY_GREEN_DEFORMATION_TENSOR .OR. &
+      & tensorEvaluateType==EQUATIONS_SET_EVALUATE_GREEN_LAGRANGE_STRAIN_TENSOR) THEN
+      CALL MATRIX_TRANSPOSE(dZdNu,dZdNuT,err,error,*999)
+      CALL MATRIX_PRODUCT(dZdNuT,dZdNu,AZL,err,error,*999)
+    END IF
 
-    !Set output E components
-    values(1)=E(1,1)
-    values(2)=E(1,2)
-    values(3)=E(1,3)
-    values(4)=E(2,2)
-    values(5)=E(2,3)
-    values(6)=E(3,3)
+    IF(tensorEvaluateType==EQUATIONS_SET_EVALUATE_GREEN_LAGRANGE_STRAIN_TENSOR) THEN
+      !Calculate E
+      E=0.5_DP*AZL
+      DO i=1,3
+        E(i,i)=E(i,i)-0.5_DP
+      END DO
+    END IF
 
-    EXITS("FiniteElasticity_StrainInterpolateXi")
+    IF(tensorEvaluateType==EQUATIONS_SET_EVALUATE_CAUCHY_STRESS_TENSOR) THEN
+      !Get the interpolation parameters for this element
+      CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,localElementNumber, &
+        & equations%interpolation%materials_interp_parameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+      IF(ASSOCIATED(equations%interpolation%independent_interp_parameters)) THEN
+        CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,localElementNumber, &
+          & equations%interpolation%independent_interp_parameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+      END IF
+
+      !Get interpolated points
+      materialsInterpolatedPoint=>equations%interpolation%materials_interp_point(FIELD_U_VARIABLE_TYPE)%ptr
+      IF(ASSOCIATED(equations%interpolation%independent_interp_point)) THEN
+        independentInterpolatedPoint=>equations%interpolation%independent_interp_point(dependentVarType)%ptr
+      END IF
+
+      !Interpolate fields at xi position
+      CALL FIELD_INTERPOLATE_XI(NO_PART_DERIV,xi,materialsInterpolatedPoint,err,error,*999)
+      IF(ASSOCIATED(independentInterpolatedPoint)) THEN
+        CALL FIELD_INTERPOLATE_XI(FIRST_PART_DERIV,xi,independentInterpolatedPoint,err,error,*999)
+      END IF
+
+      SELECT CASE(equationsSet%specification(3))
+      CASE(EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE)
+        !Calculate the Cauchy stress tensor (in Voigt form) at the gauss point.
+        Jznu=dependentInterpolatedPointMetrics%JACOBIAN/geometricInterpolatedPointMetrics%JACOBIAN
+        ! Note that some problems, e.g. active contraction, require additonal fields to be evaluated at Gauss points. This is 
+        ! currently achieved by providing the gausspoint number to the FINITE_ELASTICITY_GAUSS_STRESS_TENSOR routine. 
+        ! However, the current  routine, FiniteElasticity_TensorInterpolateXi, aims to evaluate tensors as any xi, so the Gauss
+        ! point number has been set to 0, which will generate an error for such problems.
+        ! To address such issues, the FINITE_ELASTICITY_GAUSS_STRESS_TENSOR routine needs to be generalized to allow calculation
+        ! of stress at any xi position and the GaussPoint number argument needs to be replace with a set of xi coordinates.
+        CALL FINITE_ELASTICITY_GAUSS_STRESS_TENSOR(equationsSet,dependentInterpolatedPoint, &
+          & materialsInterpolatedPoint,cauchyStressVoigt,dZdNu,Jznu,localElementNumber,0,ERR,ERROR,*999)
+
+        !Convert from Voigt form to tensor form.
+        DO nh=1,3
+          DO mh=1,3
+            cauchyStressTensor(mh,nh)=cauchyStressVoigt(TENSOR_TO_VOIGT3(mh,nh))
+          ENDDO
+        ENDDO
+      CASE(EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE, EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE)
+        CALL FINITE_ELASTICITY_GAUSS_CAUCHY_TENSOR(equationsSet,dependentInterpolatedPoint, &
+          & materialsInterpolatedPoint,darcyInterpolatedPoint, &
+          & independentInterpolatedPoint,cauchyStressTensor,Jznu,dZdNu,localElementNumber,0,ERR,ERROR,*999)
+      CASE DEFAULT
+        CALL FlagError("Not implemented ",err,error,*999)
+      END SELECT
+    END IF
+
+    SELECT CASE(tensorEvaluateType)
+    CASE(EQUATIONS_SET_EVALUATE_DEFORMATION_GRADIENT_TENSOR)
+      values=dZdNu
+    CASE(EQUATIONS_SET_EVALUATE_R_CAUCHY_GREEN_DEFORMATION_TENSOR)
+      values=AZL
+    CASE(EQUATIONS_SET_EVALUATE_GREEN_LAGRANGE_STRAIN_TENSOR)
+      values=E
+    CASE(EQUATIONS_SET_EVALUATE_CAUCHY_STRESS_TENSOR)
+      values=cauchyStressTensor
+    CASE(EQUATIONS_SET_EVALUATE_SECOND_PK_STRESS_TENSOR)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      CALL FlagError("The tensor evalaute type of "//TRIM(NUMBER_TO_VSTRING(tensorEvaluateType,"*",err,error))//" is invalid "// &
+        & "for finite elasticity equation sets",err,error,*999)
+    END SELECT
+
+    EXITS("FiniteElasticity_TensorInterpolateXi")
     RETURN
-
-999 ERRORSEXITS("FiniteElasticity_StrainInterpolateXi",err,error)
+999 ERRORSEXITS("FiniteElasticity_TensorInterpolateXi",err,error)
     RETURN 1
-  END SUBROUTINE FiniteElasticity_StrainInterpolateXi
+  END SUBROUTINE FiniteElasticity_TensorInterpolateXi
 
   !
   !================================================================================================================================

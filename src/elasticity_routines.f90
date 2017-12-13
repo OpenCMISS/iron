@@ -84,7 +84,7 @@ MODULE ELASTICITY_ROUTINES
 
   PUBLIC Elasticity_EquationsSetDerivedVariableCalculate
 
-  PUBLIC Elasticity_StrainInterpolateXi
+  PUBLIC Elasticity_TensorInterpolateXi
 
   PUBLIC Elasticity_BoundaryConditionsAnalyticCalculate
   
@@ -501,18 +501,19 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Calculate the strain tensor at a given element xi location.
-  SUBROUTINE Elasticity_StrainInterpolateXi(equationsSet,userElementNumber,xi,values,err,error,*)
+  !>Evaluate a tensor at a given element xi location.
+  SUBROUTINE Elasticity_TensorInterpolateXi(equationsSet,tensorEvaluateType,userElementNumber,xi,values,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to interpolate strain for.
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to interpolate the tensor for.
+    INTEGER(INTG), INTENT(IN) :: tensorEvaluateType !<The type of tensor to evaluate.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
     REAL(DP), INTENT(IN) :: xi(:) !<The element xi to interpolate the field at.
-    REAL(DP), INTENT(OUT) :: values(6) !<The interpolated strain tensor values.
+    REAL(DP), INTENT(OUT) :: values(3,3) !<The interpolated tensor values.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
-    ENTERS("Elasticity_StrainInterpolateXi",err,error,*999)
+    ENTERS("Elasticity_TensorInterpolateXi",err,error,*999)
 
     IF(.NOT.ASSOCIATED(equationsSet)) THEN
       CALL FlagError("Equations set is not associated.",err,error,*999)
@@ -522,18 +523,18 @@ CONTAINS
     CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
-      CALL FiniteElasticity_StrainInterpolateXi(equationsSet,userElementNumber,xi,values,err,error,*999)
+      CALL FiniteElasticity_TensorInterpolateXi(equationsSet,tensorEvaluateType,userElementNumber,xi,values,err,error,*999)
     CASE DEFAULT
       CALL FlagError("The second equations set specification of "// &
         & TRIM(NumberToVstring(equationsSet%specification(2),"*",err,error))// &
         & " is not valid for an elasticity equation set.",err,error,*999)
     END SELECT
 
-    EXITS("Elasticity_StrainInterpolateXi")
+    EXITS("Elasticity_TensorInterpolateXi")
     RETURN
-999 ERRORSEXITS("Elasticity_StrainInterpolateXi",err,error)
+999 ERRORSEXITS("Elasticity_TensorInterpolateXi",err,error)
     RETURN 1
-  END SUBROUTINE Elasticity_StrainInterpolateXi
+  END SUBROUTINE Elasticity_TensorInterpolateXi
 
   !
   !================================================================================================================================
