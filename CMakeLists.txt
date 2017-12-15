@@ -189,7 +189,7 @@ foreach(irontarget ${IRON_TARGETS})
         target_compile_definitions(${irontarget} PUBLIC WITH_DIAGNOSTICS)
     endif()
     
-    target_link_libraries(${irontarget} PUBLIC mpi-fortran)
+    target_link_libraries(${irontarget} PUBLIC MPI::MPI_Fortran)
     target_link_libraries(${irontarget} PRIVATE ${LINK_LIBS})
     if(WITH_FIELDML)
         target_link_libraries(${irontarget} PUBLIC $<BUILD_INTERFACE:fieldml-api>)
