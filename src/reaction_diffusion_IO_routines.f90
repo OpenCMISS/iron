@@ -1,7 +1,7 @@
 !> \file
 !> \author Vijay Rajagopal
 !> \brief This module handles some mesh/parameter input routines and cmgui output routines for reaction diffusion
-!> routines and should be eventually replaces by field_IO_routines.f90 
+!> routines and should be eventually replaces by field_IO_routines.f90
 !>
 !> \section LICENSE
 !>
@@ -51,8 +51,8 @@ MODULE REACTION_DIFFUSION_IO_ROUTINES
  USE EQUATIONS_SET_CONSTANTS
  USE FIELD_ROUTINES
  USE TYPES
- USE INPUT_OUTPUT 
- USE KINDS   
+ USE INPUT_OUTPUT
+ USE KINDS
  USE MESH_ROUTINES
 
 #ifndef NOMPIMOD
@@ -109,7 +109,7 @@ CONTAINS
 
     EQUATIONS_SET => REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr
     NULLIFY(SOURCE_FIELD)
-    COMPUTATIONAL_DOMAIN=>REGION%MESHES%MESHES(1) & 
+    COMPUTATIONAL_DOMAIN=>REGION%MESHES%MESHES(1) &
       & %ptr%DECOMPOSITIONS%DECOMPOSITIONS(1)%ptr%DOMAIN(1)%ptr
 
     myComputationalNodeNumber = COMPUTATIONAL_NODE_NUMBER_GET(ERR,ERROR)
@@ -122,7 +122,7 @@ CONTAINS
     NumberOfOutputFields=2
     !determine if there is a source field
     OUTPUT_SOURCE = .FALSE.
-    IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_CLASSICAL_FIELD_CLASS) & 
+    IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_CLASSICAL_FIELD_CLASS) &
       & .AND.(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE) &
         & .AND.(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) )THEN
           SOURCE_FIELD=>REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%source%source_field
@@ -144,48 +144,48 @@ CONTAINS
     OPEN(UNIT=myComputationalNodeNumber, FILE=CHAR(FILENAME),STATUS='unknown')
     ! WRITING HEADER INFORMATION
     WRITE(myComputationalNodeNumber,*) 'Group name: Cell'
-    WRITE(INTG_STRING,'(I0)'),NumberOfOutputFields 
+    WRITE(INTG_STRING,'(I0)') NumberOfOutputFields
     WRITE(myComputationalNodeNumber,*) '#Fields=',TRIM(INTG_STRING)
 
     ValueIndex=1
-    WRITE(INTG_STRING,'(I0)'),NumberOfDimensions 
+    WRITE(INTG_STRING,'(I0)') NumberOfDimensions
     WRITE(myComputationalNodeNumber,*) &
       & ' 1) coordinates,  coordinate, rectangular cartesian, #Components=',TRIM(INTG_STRING)
     DO I=1,NumberOfDimensions
       IF(I==1) THEN
-        WRITE(INTG_STRING,'(I0)'),ValueIndex 
+        WRITE(INTG_STRING,'(I0)') ValueIndex
         WRITE(myComputationalNodeNumber,*) '   x.  Value index= ',TRIM(INTG_STRING),', #Derivatives= 0'
       ELSE IF(I==2) THEN
-        WRITE(INTG_STRING,'(I0)'),ValueIndex 
+        WRITE(INTG_STRING,'(I0)') ValueIndex
         WRITE(myComputationalNodeNumber,*) '   y.  Value index= ',TRIM(INTG_STRING),', #Derivatives= 0'
       ELSE
-        WRITE(INTG_STRING,'(I0)'),ValueIndex 
+        WRITE(INTG_STRING,'(I0)') ValueIndex
         WRITE(myComputationalNodeNumber,*) '   z.  Value index= ',TRIM(INTG_STRING),', #Derivatives= 0'
       END IF
       ValueIndex=ValueIndex+1
     END DO
 
-    WRITE(INTG_STRING,'(I0)'),NumberOfVariableComponents 
-    WRITE(myComputationalNodeNumber,*) ' 2) dependent, field, rectangular cartesian, #Components=', & 
+    WRITE(INTG_STRING,'(I0)') NumberOfVariableComponents
+    WRITE(myComputationalNodeNumber,*) ' 2) dependent, field, rectangular cartesian, #Components=', &
       & TRIM(INTG_STRING)
 
     DO I=1,NumberOfVariableComponents
-      WRITE(INTG_STRING,'(I0)'),ValueIndex
-      WRITE(INTG_STRING2,'(I0)'),I 
-      WRITE(myComputationalNodeNumber,*)  '  ',TRIM(INTG_STRING2),'. Value index= ',TRIM(INTG_STRING), & 
-        & ', #Derivatives= 0' 
+      WRITE(INTG_STRING,'(I0)') ValueIndex
+      WRITE(INTG_STRING2,'(I0)') I
+      WRITE(myComputationalNodeNumber,*)  '  ',TRIM(INTG_STRING2),'. Value index= ',TRIM(INTG_STRING), &
+        & ', #Derivatives= 0'
       ValueIndex=ValueIndex+1
     END DO
 
     IF( OUTPUT_SOURCE ) THEN !Watch out that no numbering conflict occurs with Analytic: 4.)
-      WRITE(INTG_STRING,'(I0)'),NumberOfSourceComponents 
-      WRITE(myComputationalNodeNumber,*) ' 3) source, field, rectangular cartesian, #Components=', & 
+      WRITE(INTG_STRING,'(I0)') NumberOfSourceComponents
+      WRITE(myComputationalNodeNumber,*) ' 3) source, field, rectangular cartesian, #Components=', &
         & TRIM(INTG_STRING)
       DO I=1,NumberOfSourceComponents
-        WRITE(INTG_STRING,'(I0)'),ValueIndex
-        WRITE(INTG_STRING2,'(I0)'),I 
-        WRITE(myComputationalNodeNumber,*)  '   ',TRIM(INTG_STRING2),'.  Value index= ', & 
-          & TRIM(INTG_STRING),', #Derivatives= 0' 
+        WRITE(INTG_STRING,'(I0)') ValueIndex
+        WRITE(INTG_STRING2,'(I0)') I
+        WRITE(myComputationalNodeNumber,*)  '   ',TRIM(INTG_STRING2),'.  Value index= ', &
+          & TRIM(INTG_STRING),', #Derivatives= 0'
         ValueIndex=ValueIndex+1
       END DO
     END IF
@@ -218,7 +218,7 @@ CONTAINS
       END IF
       WRITE(myComputationalNodeNumber,'("    ", es25.16 )')NodeUValue
 
-      IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_CLASSICAL_FIELD_CLASS) & 
+      IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_CLASSICAL_FIELD_CLASS) &
         & .AND.(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE) &
           & .AND.(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE) )THEN
           !source field
@@ -248,38 +248,38 @@ CONTAINS
     OPEN(UNIT=myComputationalNodeNumber, FILE=CHAR(FILENAME),STATUS='unknown')
     WRITE(myComputationalNodeNumber,*) 'Group name: Cell'
     IF (BasisType==1) THEN !lagrange basis in 1 and 2D
-      WRITE(INTG_STRING,'(I0)'),NumberOfDimensions
+      WRITE(INTG_STRING,'(I0)') NumberOfDimensions
       WRITE(myComputationalNodeNumber,*) 'Shape.  Dimension= ',TRIM(INTG_STRING)
       WRITE(myComputationalNodeNumber,*) '#Scale factor sets= 1'
       IF(NumberOfDimensions==1) THEN
-        WRITE(INTG_STRING,'(I0)'),MaxNodesPerElement
+        WRITE(INTG_STRING,'(I0)') MaxNodesPerElement
         WRITE(myComputationalNodeNumber,*) 'q.Lagrange, #Scale factors=',TRIM(INTG_STRING)
       ELSE IF (NumberOfDimensions==2) THEN
         IF(MaxNodesPerElement==4) THEN
 
-          WRITE(INTG_STRING,'(I0)'),MaxNodesPerElement
+          WRITE(INTG_STRING,'(I0)') MaxNodesPerElement
           WRITE(myComputationalNodeNumber,*) &
             & 'l.Lagrange*l.Lagrange, #Scale factors=',TRIM(INTG_STRING) !linear lagrange
         ELSE IF(MaxNodesPerElement==9) THEN
-          WRITE(INTG_STRING,'(I0)'),MaxNodesPerElement
+          WRITE(INTG_STRING,'(I0)') MaxNodesPerElement
           WRITE(myComputationalNodeNumber,*) &
             & 'q.Lagrange*q.Lagrange, #Scale factors=',TRIM(INTG_STRING) !quadratic lagrange
         ELSE IF(MaxNodesPerElement==16) THEN
-          WRITE(INTG_STRING,'(I0)'),MaxNodesPerElement
+          WRITE(INTG_STRING,'(I0)') MaxNodesPerElement
           WRITE(myComputationalNodeNumber,*) &
             & 'c.Lagrange*c.Lagrange, #Scale factors=',TRIM(INTG_STRING) !cubic lagrange
         END IF
       ELSE !three dimensions
         IF(MaxNodesPerElement==8) THEN
-          WRITE(INTG_STRING,'(I0)'),MaxNodesPerElement
+          WRITE(INTG_STRING,'(I0)') MaxNodesPerElement
           WRITE(myComputationalNodeNumber,*) &
             & 'l.Lagrange*l.Lagrange*l.Lagrange, #Scale factors=',TRIM(INTG_STRING)
         ELSE IF(MaxNodesPerElement==27) THEN
-          WRITE(INTG_STRING,'(I0)'),MaxNodesPerElement
+          WRITE(INTG_STRING,'(I0)') MaxNodesPerElement
           WRITE(myComputationalNodeNumber,*) &
             & 'q.Lagrange*q.Lagrange*q.Lagrange, #Scale factors=',TRIM(INTG_STRING)
         ELSE IF(MaxNodesPerElement==64) THEN
-          WRITE(INTG_STRING,'(I0)'),MaxNodesPerElement
+          WRITE(INTG_STRING,'(I0)') MaxNodesPerElement
           WRITE(myComputationalNodeNumber,*) &
             & 'c.Lagrange*c.Lagrange*c.Lagrange, #Scale factors=',TRIM(INTG_STRING)
         END IF
@@ -290,64 +290,64 @@ CONTAINS
           & NumberOfDimensions,', simplex(2)*simplex'
         IF(MaxNodesPerElement==3) THEN
           WRITE(myComputationalNodeNumber,*) '#Scale factor sets= 1'
-          WRITE(INTG_STRING,'(I0)'),MaxNodesPerElement
-          WRITE(myComputationalNodeNumber,*)  & 
+          WRITE(INTG_STRING,'(I0)') MaxNodesPerElement
+          WRITE(myComputationalNodeNumber,*)  &
             & ' l.simplex(2)*l.simplex, #Scale factors= ', TRIM(INTG_STRING)
         ELSE IF(MaxNodesPerElement==6) THEN
           WRITE(myComputationalNodeNumber,*) '#Scale factor sets= 1'
-          WRITE(INTG_STRING,'(I0)'),MaxNodesPerElement
-          WRITE(myComputationalNodeNumber,*) & 
+          WRITE(INTG_STRING,'(I0)') MaxNodesPerElement
+          WRITE(myComputationalNodeNumber,*) &
             & ' l.simplex(2)*l.simplex, #Scale factors= ', TRIM(INTG_STRING)
         ELSE IF (MaxNodesPerElement== 10 ) THEN
           WRITE(myComputationalNodeNumber,*) '#Scale factor sets= 1'
-          WRITE(INTG_STRING,'(I0)'),MaxNodesPerElement
+          WRITE(INTG_STRING,'(I0)') MaxNodesPerElement
           WRITE(myComputationalNodeNumber,*) &
             & ' q.simplex(2)*q.simplex, #Scale factors= ', TRIM(INTG_STRING)
         ENDIF
       ELSE IF(NumberOfDimensions==3) THEN
-        WRITE(INTG_STRING2,'(I0)'),NumberOfDimensions
+        WRITE(INTG_STRING2,'(I0)') NumberOfDimensions
         WRITE(myComputationalNodeNumber,*) &
           & 'Shape.  Dimension=',TRIM(INTG_STRING2),', simplex(2;3)*simplex*simplex'
         IF(MaxNodesPerElement==4) THEN
           WRITE(myComputationalNodeNumber,*) &
             & '#Scale factor sets= 1'
-          WRITE(INTG_STRING,'(I0)'),MaxNodesPerElement
+          WRITE(INTG_STRING,'(I0)') MaxNodesPerElement
           WRITE(myComputationalNodeNumber,*) &
             & ' l.simplex(2;3)*l.simplex*l.simplex, #Scale factors= ', TRIM(INTG_STRING)
         ELSE IF (MaxNodesPerElement== 10 ) THEN
           WRITE(myComputationalNodeNumber,*) '#Scale factor sets= 1'
-          WRITE(INTG_STRING,'(I0)'),MaxNodesPerElement
+          WRITE(INTG_STRING,'(I0)') MaxNodesPerElement
           WRITE(myComputationalNodeNumber,*) &
             & ' q.simplex(2;3)*q.simplex*q.simplex, #Scale factors= ', TRIM(INTG_STRING)
         ELSE IF(MaxNodesPerElement==20) THEN
           WRITE(myComputationalNodeNumber,*) '#Scale factor sets= 1'
-          WRITE(INTG_STRING,'(I0)'),MaxNodesPerElement
+          WRITE(INTG_STRING,'(I0)') MaxNodesPerElement
           WRITE(myComputationalNodeNumber,*) &
             & ' q.simplex(2;3)*q.simplex*q.simplex, #Scale factors= ', TRIM(INTG_STRING)
-        ENDIF      
+        ENDIF
       ELSE
         WRITE(myComputationalNodeNumber,*) '#Scale factor sets= 0'
       END IF
 
     END IF
-    WRITE(INTG_STRING,'(I0)'),MaxNodesPerElement
+    WRITE(INTG_STRING,'(I0)') MaxNodesPerElement
     WRITE(myComputationalNodeNumber,*) '#Nodes= ',TRIM(INTG_STRING)
-    WRITE(INTG_STRING,'(I0)'),NumberOfOutputFields
+    WRITE(INTG_STRING,'(I0)') NumberOfOutputFields
     WRITE(myComputationalNodeNumber,*) '#Fields= ',TRIM(INTG_STRING)
     NumberOfFieldComponents(1) = NumberOfDimensions
     NumberOfFieldComponents(2) = NumberOfVariableComponents
     NumberOfFieldComponents(3) = NumberOfSourceComponents
     DO I=1,NumberOfOutputFields
       IF(I==1)THEN
-        WRITE(INTG_STRING,'(I0)'),NumberOfDimensions
-        WRITE(myComputationalNodeNumber,*) & 
+        WRITE(INTG_STRING,'(I0)') NumberOfDimensions
+        WRITE(myComputationalNodeNumber,*) &
           & ' 1) coordinates,  coordinate, rectangular cartesian, #Components= ',TRIM(INTG_STRING)
       ELSE IF(I==2) THEN
-        WRITE(INTG_STRING,'(I0)'),NumberOfVariableComponents
+        WRITE(INTG_STRING,'(I0)') NumberOfVariableComponents
         WRITE(myComputationalNodeNumber,*) &
         & ' 2) dependent,  field,  rectangular cartesian, #Components= ',TRIM(INTG_STRING)
       ELSE IF(I==3) THEN
-        WRITE(INTG_STRING,'(I0)'),NumberOfSourceComponents
+        WRITE(INTG_STRING,'(I0)') NumberOfSourceComponents
         WRITE(myComputationalNodeNumber,*) &
           & ' 3) source,  field,  rectangular cartesian, #Components= ',TRIM(INTG_STRING)
       END IF
@@ -386,47 +386,47 @@ CONTAINS
                 WRITE(myComputationalNodeNumber,*) &
                   & '   x.  q.simplex(2)*q.simplex, no modify, standard node based.'
               ELSE IF(MaxNodesPerElement==10)  THEN
-                WRITE(myComputationalNodeNumber,*) & 
+                WRITE(myComputationalNodeNumber,*) &
                   & '   x.  c.simplex(2)*c.simplex, no modify, standard node based.'
-              END IF 
+              END IF
             ELSE IF(J==2) THEN
               IF(MaxNodesPerElement==4) THEN
-                WRITE(myComputationalNodeNumber,*) & 
+                WRITE(myComputationalNodeNumber,*) &
                   & '   y.   l.Lagrange*l.Lagrange, no modify, standard node based.'
               ELSE IF(MaxNodesPerElement==9)  THEN
-                WRITE(myComputationalNodeNumber,*) & 
+                WRITE(myComputationalNodeNumber,*) &
                   & '   y.   q.Lagrange*q.Lagrange, no modify, standard node based.'
               ELSE IF(MaxNodesPerElement==16)  THEN
-                WRITE(myComputationalNodeNumber,*) & 
+                WRITE(myComputationalNodeNumber,*) &
                   & '   y.   c.Lagrange*c.Lagrange, no modify, standard node based.'
               ELSE IF(MaxNodesPerElement==3)  THEN
-                WRITE(myComputationalNodeNumber,*) & 
+                WRITE(myComputationalNodeNumber,*) &
                   & '   y.  l.simplex(2)*l.simplex, no modify, standard node based.'
               ELSE IF(MaxNodesPerElement==6)  THEN
-                WRITE(myComputationalNodeNumber,*) & 
+                WRITE(myComputationalNodeNumber,*) &
                   & '   y.  q.simplex(2)*q.simplex, no modify, standard node based.'
               ELSE IF(MaxNodesPerElement==10)  THEN
-                WRITE(myComputationalNodeNumber,*) & 
+                WRITE(myComputationalNodeNumber,*) &
                 & '   y.  c.simplex(2)*c.simplex, no modify, standard node based.'
               END IF
             ELSE IF(J==3) THEN
               IF(MaxNodesPerElement==4) THEN
-                WRITE(myComputationalNodeNumber,*) & 
+                WRITE(myComputationalNodeNumber,*) &
                   & '   z.   l.Lagrange*l.Lagrange, no modify, standard node based.'
               ELSE IF(MaxNodesPerElement==9)  THEN
-                WRITE(myComputationalNodeNumber,*) & 
+                WRITE(myComputationalNodeNumber,*) &
                   & '   z.   q.Lagrange*q.Lagrange, no modify, standard node based.'
               ELSE IF(MaxNodesPerElement==16)  THEN
-                WRITE(myComputationalNodeNumber,*) & 
+                WRITE(myComputationalNodeNumber,*) &
                   & '   z.   c.Lagrange*c.Lagrange, no modify, standard node based.'
               ELSE IF(MaxNodesPerElement==3)  THEN
-                WRITE(myComputationalNodeNumber,*) & 
+                WRITE(myComputationalNodeNumber,*) &
                   & '   z.  l.simplex(2)*l.simplex, no modify, standard node based.'
               ELSE IF(MaxNodesPerElement==6)  THEN
-                WRITE(myComputationalNodeNumber,*) & 
+                WRITE(myComputationalNodeNumber,*) &
                   & '   z.  q.simplex(2)*q.simplex, no modify, standard node based.'
               ELSE IF(MaxNodesPerElement==10)  THEN
-                WRITE(myComputationalNodeNumber,*) & 
+                WRITE(myComputationalNodeNumber,*) &
                   & '   z.  c.simplex(2)*c.simplex, no modify, standard node based.'
               END IF
             END IF
@@ -435,19 +435,19 @@ CONTAINS
                 WRITE(myComputationalNodeNumber,*) &
                   & '   ',J,'.   l.Lagrange*l.Lagrange, no modify, standard node based.'
               ELSE IF(MaxNodesPerElement==9)  THEN
-                WRITE(myComputationalNodeNumber,*) & 
+                WRITE(myComputationalNodeNumber,*) &
                   & '   ',J,'.   q.Lagrange*q.Lagrange, no modify, standard node based.'
               ELSE IF(MaxNodesPerElement==16)  THEN
-                WRITE(myComputationalNodeNumber,*) & 
+                WRITE(myComputationalNodeNumber,*) &
                   & '   ',J,'.   c.Lagrange*c.Lagrange, no modify, standard node based.'
               ELSE IF(MaxNodesPerElement==3)  THEN
-                WRITE(myComputationalNodeNumber,*) & 
+                WRITE(myComputationalNodeNumber,*) &
                   & '   ',J,'.  l.simplex(2)*l.simplex, no modify, standard node based.'
               ELSE IF(MaxNodesPerElement==6)  THEN
-                WRITE(myComputationalNodeNumber,*) & 
+                WRITE(myComputationalNodeNumber,*) &
                   & '   ',J,'.  q.simplex(2)*q.simplex, no modify, standard node based.'
               ELSE IF(MaxNodesPerElement==10)  THEN
-                WRITE(myComputationalNodeNumber,*) & 
+                WRITE(myComputationalNodeNumber,*) &
                   & '   ',J,'.  c.simplex(2)*c.simplex, no modify, standard node based.'
               END IF
           END IF
@@ -472,7 +472,7 @@ CONTAINS
               ELSE IF(MaxNodesPerElement==20)  THEN
                 WRITE(myComputationalNodeNumber,*) &
                   & '   x.  c.simplex(2;3)*c.simplex*c.simplex, no modify, standard node based.'
-              END IF 
+              END IF
             ELSE IF(J==2) THEN
               IF(MaxNodesPerElement==8) THEN
                 WRITE(myComputationalNodeNumber,*) &
@@ -538,9 +538,9 @@ CONTAINS
         END IF
         WRITE(INTG_STRING,'(I0)') MaxNodesPerElement
         WRITE(myComputationalNodeNumber,*) '   #Nodes= ',TRIM(INTG_STRING)
- 
+
         DO K = 1,MaxNodesPerElement
-          WRITE(INTG_STRING,'(I0)'),K
+          WRITE(INTG_STRING,'(I0)') K
           WRITE(myComputationalNodeNumber,*) '    ',TRIM(INTG_STRING),'.  #Values=1'
           WRITE(myComputationalNodeNumber,*) '     Value indices:     1'
           WRITE(myComputationalNodeNumber,*) '     Scale factor indices:   ',TRIM(INTG_STRING)
@@ -550,7 +550,7 @@ CONTAINS
     IF(.NOT.ALLOCATED(ElementNodes)) ALLOCATE(ElementNodes(NumberOfElements,MaxNodesPerElement))
     IF(.NOT.ALLOCATED(ElementNodesScales)) ALLOCATE(ElementNodesScales(NumberOfElements,MaxNodesPerElement))
     DO I=1,NumberOfElements
-      ELEMENT_GLOBAL_NUMBER=COMPUTATIONAL_DOMAIN%DECOMPOSITION%TOPOLOGY%ELEMENTS%ELEMENTS(K)%GLOBAL_NUMBER 
+      ELEMENT_GLOBAL_NUMBER=COMPUTATIONAL_DOMAIN%DECOMPOSITION%TOPOLOGY%ELEMENTS%ELEMENTS(K)%GLOBAL_NUMBER
       DO J=1,MaxNodesPerElement
         NODE_LOCAL_NUMBER=COMPUTATIONAL_DOMAIN%TOPOLOGY%ELEMENTS%ELEMENTS(I)%ELEMENT_NODES(J)
         NODE_GLOBAL_NUMBER=COMPUTATIONAL_DOMAIN%MAPPINGS%NODES%LOCAL_TO_GLOBAL_MAP(NODE_LOCAL_NUMBER)
@@ -559,11 +559,11 @@ CONTAINS
       END DO
     END DO
 
-    
+
     DO K=1,NumberOfElements
-      ELEMENT_GLOBAL_NUMBER=COMPUTATIONAL_DOMAIN%DECOMPOSITION%TOPOLOGY%ELEMENTS%ELEMENTS(K)%GLOBAL_NUMBER 
+      ELEMENT_GLOBAL_NUMBER=COMPUTATIONAL_DOMAIN%DECOMPOSITION%TOPOLOGY%ELEMENTS%ELEMENTS(K)%GLOBAL_NUMBER
       IF (BasisType==1) THEN
-        WRITE(INTG_STRING,'(I0)'),ELEMENT_GLOBAL_NUMBER
+        WRITE(INTG_STRING,'(I0)') ELEMENT_GLOBAL_NUMBER
         WRITE(myComputationalNodeNumber,*) 'Element:     ', TRIM(INTG_STRING),' 0  0'
         WRITE(myComputationalNodeNumber,*) '   Nodes:'
         WRITE(myComputationalNodeNumber,*) '   ', ElementNodes(K,1:MaxNodesPerElement)
@@ -593,8 +593,8 @@ CONTAINS
     CLOSE(myComputationalNodeNumber)
 
     EXITS("REACTION_DIFFUSION_IO_WRITE_CMGUI")
-    RETURN     
-999 ERRORSEXITS("REACTION_DIFFUSION_IO_WRITE_CMGUI",ERR,ERROR)    
+    RETURN
+999 ERRORSEXITS("REACTION_DIFFUSION_IO_WRITE_CMGUI",ERR,ERROR)
     RETURN 1
 
   END SUBROUTINE REACTION_DIFFUSION_IO_WRITE_CMGUI

@@ -4281,7 +4281,7 @@ CONTAINS
             & status='old', action='read')
           ComponentNumber=3
         ENDIF
-        READ(1,*), arraySize
+        READ(1,*) arraySize
         IF(arraySize==0) STOP "Number of boundary conditions for fluid domain is zero. Invalid."
         ALLOCATE(InletNodes(arraySize))
         ALLOCATE(BoundaryValues(arraySize))
