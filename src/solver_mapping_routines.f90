@@ -2474,7 +2474,7 @@ CONTAINS
                                         & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)% &
                                         & DYNAMIC_EQUATIONS_TO_SOLVER_MATRIX_MAPS(equations_matrix_idx)%PTR% &
                                         & EQUATIONS_COL_TO_SOLVER_COLS_MAP(equations_column)%COUPLING_COEFFICIENTS(1)= &
-                                        & DYNAMIC_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(MATRIX_NUMBER)%MATRIX_COEFFICIENT
+                                        & couplingCoefficient
                                     ENDDO !equations_matrix_idx
                                   CASE(SOLVER_MAPPING_EQUATIONS_LINEAR_MATRIX)
                                     DO equations_matrix_idx=1,NUMBER_OF_LINEAR_EQUATIONS_MATRICES
@@ -2511,7 +2511,7 @@ CONTAINS
                                         & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)% &
                                         & LINEAR_EQUATIONS_TO_SOLVER_MATRIX_MAPS(equations_matrix_idx)%PTR% &
                                         & EQUATIONS_COL_TO_SOLVER_COLS_MAP(equations_column)%COUPLING_COEFFICIENTS(1)= &
-                                        & LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(MATRIX_NUMBER)%MATRIX_COEFFICIENT
+                                        & couplingCoefficient
                                     ENDDO !equations_matrix_idx
                                   CASE(SOLVER_MAPPING_EQUATIONS_NONLINEAR_MATRIX)
                                     DO equations_matrix_idx=1,NONLINEAR_MAPPING%NUMBER_OF_RESIDUAL_VARIABLES
@@ -2548,8 +2548,7 @@ CONTAINS
                                     SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
                                       & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%JACOBIAN_TO_SOLVER_MATRIX_MAPS( &
                                       & equations_matrix_idx)%PTR%JACOBIAN_COL_TO_SOLVER_COLS_MAP(jacobian_column)% &
-                                      & COUPLING_COEFFICIENTS(1)=NONLINEAR_MAPPING%JACOBIAN_TO_VAR_MAP(equations_matrix_idx)% &
-                                      & JACOBIAN_COEFFICIENT
+                                      & COUPLING_COEFFICIENTS(1)=couplingCoefficient
                                   CASE DEFAULT
                                     LOCAL_ERROR="The equations matrix type of "// &
                                       & TRIM(NUMBER_TO_VSTRING(matrix_type,"*",ERR,ERROR))// &

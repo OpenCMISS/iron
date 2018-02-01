@@ -2970,12 +2970,13 @@ CONTAINS
   !
 
   !>Constrain multiple equations dependent field DOFs to be a single solver DOF in the solver equations
-  SUBROUTINE BoundaryConditions_ConstrainDofsEqual(boundaryConditions,fieldVariable,globalDofs,err,error,*)
+  SUBROUTINE BoundaryConditions_ConstrainDofsEqual(boundaryConditions,fieldVariable,globalDofs,coefficient,err,error,*)
 
     !Argument variables
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER, INTENT(IN) :: boundaryConditions !<The boundary conditions for the solver equations in which to constrain the DOF.
     TYPE(FIELD_VARIABLE_TYPE), POINTER, INTENT(IN) :: fieldVariable !<A pointer to the field variable containing the DOFs.
     INTEGER(INTG), INTENT(IN) :: globalDofs(:) !<The global DOFs to be constrained to be equal.
+    REAL(DP), INTENT(IN) :: coefficient !<The coefficient of constraint.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error message.
     !Local variables
@@ -2999,11 +3000,11 @@ CONTAINS
     END DO
 
     !Add new DOF constraints
-    !We set all DOFs except the first to be equal to 1.0 * the first DOF
+    !We set all DOFs except the first to be equal to coefficient * the first DOF
     !The first DOF is left unconstrained
     DO dofIdx=2,numberOfDofs
       CALL BoundaryConditions_DofConstraintSet( &
-        & boundaryConditions,fieldVariable,globalDofs(dofIdx),[globalDofs(1)],[1.0_DP],err,error,*999)
+        & boundaryConditions,fieldVariable,globalDofs(dofIdx),[globalDofs(1)],[coefficient],err,error,*999)
     END DO
 
     EXITS("BoundaryConditions_ConstrainDofsEqual")
@@ -3018,7 +3019,7 @@ CONTAINS
 
   !>Constrain multiple nodal equations dependent field DOFs to be a single solver DOF in the solver equations
   SUBROUTINE BoundaryConditions_ConstrainNodeDofsEqual( &
-      & boundaryConditions,field,fieldVariableType,versionNumber,derivativeNumber,component,nodes,err,error,*)
+      & boundaryConditions,field,fieldVariableType,versionNumber,derivativeNumber,component,nodes,coefficient,err,error,*)
 
     !Argument variables
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER, INTENT(IN) :: boundaryConditions !<The solver equations boundary conditions to constrain the DOFs for.
@@ -3028,6 +3029,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number.
     INTEGER(INTG), INTENT(IN) :: component !<The field component number of the DOFs to be constrained.
     INTEGER(INTG), INTENT(IN) :: nodes(:) !<The user numbers of the nodes to be constrained to be equal.
+    REAL(DP), INTENT(IN) :: coefficient !<The coefficient of constraint, applied to all but the first node.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error message.
     !Local variables
@@ -3055,7 +3057,7 @@ CONTAINS
     CALL FIELD_VARIABLE_GET(field,fieldVariableType,fieldVariable,err,error,*999)
 
     !Now set DOF constraint
-    CALL BoundaryConditions_ConstrainDofsEqual(boundaryConditions,fieldVariable,globalDofs,err,error,*999)
+    CALL BoundaryConditions_ConstrainDofsEqual(boundaryConditions,fieldVariable,globalDofs,coefficient,err,error,*999)
 
     DEALLOCATE(globalDofs)
 
