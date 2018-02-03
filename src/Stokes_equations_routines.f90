@@ -1,4 +1,4 @@
-!!> \file  
+!!> \file
 !> $Id: Stokes_equations_routines.f90 372 2009-04-20
 !> \author Sebastian Krittian
 !> \brief This module handles all Stokes fluid routines.
@@ -61,6 +61,7 @@ MODULE STOKES_EQUATIONS_ROUTINES
   USE EQUATIONS_SET_CONSTANTS
   USE EquationsSetAccessRoutines
   USE FIELD_ROUTINES
+  USE FIELD_IO_ROUTINES
   USE FieldAccessRoutines
   USE FLUID_MECHANICS_IO_ROUTINES
   USE INPUT_OUTPUT
@@ -328,7 +329,7 @@ CONTAINS
                         !start creation of a new field
                         CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
                         !label the field
-                        CALL FIELD_LABEL_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
+                        CALL FIELD_LABEL_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,"U",err,error,*999)
                         !define new created field to be dependent
                         CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
                           & FIELD_DEPENDENT_TYPE,err,error,*999)
@@ -2996,16 +2997,13 @@ CONTAINS
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
-    TYPE(VARYING_STRING) :: localError
+    TYPE(FIELDS_TYPE), POINTER :: Fields
+    TYPE(VARYING_STRING) :: localError,METHOD,FILENAME
 
     REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
     INTEGER(INTG) :: EQUATIONS_SET_IDX,CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER,NUMBER_OF_DIMENSIONS
-
     LOGICAL :: EXPORT_FIELD
-    TYPE(VARYING_STRING) :: METHOD!,FILE
-    CHARACTER(14) :: FILE
-    CHARACTER(14) :: OUTPUT_FILE
-
+    CHARACTER(14) :: FILE,OUTPUT_FILE
 
     ENTERS("STOKES_POST_SOLVE_OUTPUT_DATA",err,error,*999)
 
@@ -3067,30 +3065,25 @@ CONTAINS
                         ELSE IF(CURRENT_LOOP_ITERATION<10000) THEN
                           WRITE(OUTPUT_FILE,'("TIME_STEP_",I0)') CURRENT_LOOP_ITERATION
                         END IF
+
                         FILE=OUTPUT_FILE
-  !          FILE="TRANSIENT_OUTPUT"
+                        FILENAME="./output/"//"MainTime_"//TRIM(NumberToVString(CURRENT_LOOP_ITERATION,"*",err,error))
                         METHOD="FORTRAN"
-                        EXPORT_FIELD=.TRUE.
-                        IF(EXPORT_FIELD) THEN
-                          IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER)==0)  THEN
+                        IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER)==0)  THEN
+                          IF(CONTROL_LOOP%outputtype >= CONTROL_LOOP_PROGRESS_OUTPUT) THEN
                             CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
                             CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
-                            CALL FLUID_MECHANICS_IO_WRITE_CMGUI(EQUATIONS_SET%REGION,EQUATIONS_SET%GLOBAL_NUMBER,FILE, &
-                              & err,error,*999)
-                            CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                              & NUMBER_OF_DIMENSIONS,err,error,*999)
-!\todo: Introduce subroutine for the user to set the ENCAS output option
-                            EXPORT_FIELD=.FALSE.
-                            IF(NUMBER_OF_DIMENSIONS==3) THEN
-                              IF(EXPORT_FIELD) THEN
-                                CALL FLUID_MECHANICS_IO_WRITE_ENCAS(EQUATIONS_SET%REGION,EQUATIONS_SET%GLOBAL_NUMBER,FILE, &
-                                  & err,error,*999)
-                              ENDIF
-                              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,OUTPUT_FILE,err,error,*999)
-                              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
-                            ENDIF
                           ENDIF
-                        ENDIF
+                          Fields=>EQUATIONS_SET%REGION%FIELDS
+                          CALL FIELD_IO_NODES_EXPORT(Fields,FILENAME,METHOD,err,error,*999)
+                          CALL FIELD_IO_ELEMENTS_EXPORT(Fields,FILENAME,METHOD,err,error,*999)
+                          NULLIFY(Fields)
+                          IF(CONTROL_LOOP%outputtype >= CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,FILENAME,err,error,*999)
+                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                          ENDIF
+                        END IF
+
                         IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
                           IF(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_4.OR. &
                             & EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_5.OR. &
