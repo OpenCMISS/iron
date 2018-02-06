@@ -2077,6 +2077,13 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_FIRST_ORDER_DYNAMIC = EQUATIONS_FIRST_ORDER_DYNAMIC !<The equations are first order dynamic. \see OPENCMISS_EquationsTimeDependenceTypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SECOND_ORDER_DYNAMIC = EQUATIONS_SECOND_ORDER_DYNAMIC !<The equations are a second order dynamic. \see OPENCMISS_EquationsTimeDependenceTypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_TIME_STEPPING = EQUATIONS_TIME_STEPPING !<The equations are for time stepping. \see OPENCMISS_EquationsTimeDependenceTypes,OPENCMISS
+  !>@{
+  !> \addtogroup OPENCMISS_EquationsJacobianCalculated OPENCMISS::Equations::JacobianCalculated
+  !> \brief Equations Jacobian matrices calculation types
+  !> \see OPENCMISS::Equations,OPENCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED = EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED!<Evaluate Jacobian matrix using finite differences. \see OPENCMISS_EquationsJacobianCalculated,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED = EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED !<Evaluate Jacobian matrix using analytic expressions. \see OPENCMISS_EquationsJacobianCalculated,OPENCMISS
   !>@}
   !>@}
 
@@ -2146,6 +2153,8 @@ MODULE OpenCMISS_Iron
 
   PUBLIC CMFE_EQUATIONS_SPARSE_MATRICES,CMFE_EQUATIONS_FULL_MATRICES
 
+  PUBLIC CMFE_EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED, CMFE_EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED
+
   PUBLIC CMFE_EQUATIONS_UNLUMPED_MATRICES,CMFE_EQUATIONS_LUMPED_MATRICES
 
   PUBLIC CMFE_EQUATIONS_LINEAR,CMFE_EQUATIONS_NONLINEAR,CMFE_EQUATIONS_NONLINEAR_BCS
@@ -2165,6 +2174,8 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_Equations_SparsityTypeGet,cmfe_Equations_SparsityTypeSet
 
   PUBLIC cmfe_Equations_TimeDependenceTypeGet
+
+  PUBLIC cmfe_Equations_JacobianMatricesTypesSet
 
   PUBLIC cmfe_Equations_NumberOfLinearMatricesGet
 
@@ -6107,7 +6118,7 @@ MODULE OpenCMISS_Iron
   !> \see OPENCMISS::Solver::Constants,OPENCMISS
   !>@{
   INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_JACOBIAN_NOT_CALCULATED = SOLVER_NEWTON_JACOBIAN_NOT_CALCULATED !<The Jacobian values will not be calculated for the nonlinear equations set. \see OPENCMISS_JacobianCalculationTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_JACOBIAN_EQUATIONS_CALCULATED = SOLVER_NEWTON_JACOBIAN_EQUATIONS_CALCULATED !<The Jacobian values will be calculated analytically for the nonlinear equations set. \see OPENCMISS_JacobianCalculationTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_JACOBIAN_EQUATIONS_CALCULATED = SOLVER_NEWTON_JACOBIAN_EQUATIONS_CALCULATED !<The Jacobian values will be calculated  analytically for the nonlinear equations set. \see OPENCMISS_JacobianCalculationTypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_JACOBIAN_FD_CALCULATED = SOLVER_NEWTON_JACOBIAN_FD_CALCULATED !<The Jacobian values will be calcualted using finite differences for the nonlinear equations set. \see OPENCMISS_JacobianCalculationTypes,OPENCMISS
   !>@}
   !> \addtogroup OPENCMISS_NewtonConvergenceTypes OPENCMISS::Solver::NewtonConvergenceTypes
@@ -23491,7 +23502,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: numberOfMatrices !<On return, the number of Jacobian matrices
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
 
-    ENTERS("cmfe_Equations_NumberOfLinearMatricesGet",err,error,*999)
+    ENTERS("cmfe_Equations_NumberOfJacobianMatricesGet",err,error,*999)
 
     CALL Equations_NumberOfJacobianMatricesGet(equations%equations,numberOfMatrices,err,error,*999)
 
@@ -23553,6 +23564,35 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Equations_LinearMatrixGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Setting Jacobian matrix evaluation type
+  SUBROUTINE cmfe_Equations_JacobianMatricesTypesSet(equations,jacobianTypes,err)
+    !DLLEXPORT(cmfe_Equations_JacobianMatricesTypesSet)
+    
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to set the Jacobian evaluation type for. 
+    INTEGER(INTG), INTENT(IN) :: jacobianTypes !<The type of Jacobian evaluation. \see OPENCMISS_EquationsJacobianCalculated 
+    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+
+    ENTERS("cmfe_Equations_JacobianMatricesTypesSet",err,error,*999)
+
+    equationsMatrices=>equations%equations%EQUATIONS_MATRICES
+    CALL EquationsMatrices_JacobianTypesSet(equationsMatrices,[jacobianTypes],err,error,*999)
+
+    EXITS("cmfe_Equations_JacobianMatricesTypesSet")
+    RETURN
+999 ERRORS("cmfe_Equations_JacobianMatricesTypesSet",err,error)
+    EXITS("cmfe_Equations_JacobianMatricesTypesSet")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_JacobianMatricesTypesSet
+
 
   !
   !================================================================================================================================
