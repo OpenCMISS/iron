@@ -9348,7 +9348,6 @@ CONTAINS
     INTEGER(INTG) :: EQUATIONS_SET_IDX,CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER
     INTEGER(INTG) :: NUMBER_OF_DIMENSIONS,FileNameLength
     REAL(DP) :: CURRENT_TIME,TIME_INCREMENT,START_TIME,STOP_TIME
-    LOGICAL :: EXPORT_FIELD
     CHARACTER(20) :: FILE,OUTPUT_FILE
 
     NULLIFY(Fields)
@@ -9365,38 +9364,29 @@ CONTAINS
           ELSE IF(SIZE(CONTROL_LOOP%problem%specification,1)<3) THEN
             CALL FlagError("Problem specification must have three entries for a Navier-Stokes problem.",err,error,*999)
           END IF
+          CALL SYSTEM('mkdir -p ./output')
           SELECT CASE(CONTROL_LOOP%PROBLEM%specification(3))
-          CASE(PROBLEM_STATIC_NAVIER_STOKES_SUBTYPE, &
-             & PROBLEM_LAPLACE_NAVIER_STOKES_SUBTYPE)
+          CASE(PROBLEM_STATIC_NAVIER_STOKES_SUBTYPE,PROBLEM_LAPLACE_NAVIER_STOKES_SUBTYPE)
             SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
-              IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
-                IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                  !Make sure the equations sets are up to date
-                  DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                    EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
-                    METHOD="FORTRAN"
-                    EXPORT_FIELD=.TRUE.
-                    IF(EXPORT_FIELD) THEN
-                      OUTPUT_FILE = "StaticSolution"
-                      FileNameLength = LEN_TRIM(OUTPUT_FILE)
-                      VFileName = OUTPUT_FILE(1:FileNameLength)
-                      IF(CONTROL_LOOP%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) &
-                        & CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
-                      Fields=>EQUATIONS_SET%REGION%FIELDS
-                      CALL FIELD_IO_NODES_EXPORT(Fields,VFileName,METHOD,err,error,*999)
-                      IF(CONTROL_LOOP%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) &
-                        & CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export elements... ",err,error,*999)
-                      CALL FIELD_IO_ELEMENTS_EXPORT(Fields,VFileName,METHOD,err,error,*999)
-                      NULLIFY(Fields)
-                      IF(CONTROL_LOOP%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) THEN
-                        CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,OUTPUT_FILE,err,error,*999)
-                        CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
-                      ENDIF
-                    END IF
-                  END DO
-                END IF
+            IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
+              SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
+              IF(ASSOCIATED(SOLVER_MAPPING)) THEN
+                !Make sure the equations sets are up to date
+                DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+                  EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
+                  FILENAME="./output/"//"STATIC_SOLUTION"
+                  METHOD="FORTRAN"
+                  IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
+                    CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                    CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
+                  ENDIF
+                  Fields=>EQUATIONS_SET%REGION%FIELDS
+                  CALL FIELD_IO_NODES_EXPORT(Fields,FILENAME,METHOD,err,error,*999)
+                  CALL FIELD_IO_ELEMENTS_EXPORT(Fields,FILENAME,METHOD,err,error,*999)
+                  NULLIFY(Fields)
+                ENDDO
               END IF
+            END IF
 
           CASE(PROBLEM_TRANSIENT_NAVIER_STOKES_SUBTYPE, &
              & PROBLEM_ALE_NAVIER_STOKES_SUBTYPE, &
@@ -9421,7 +9411,6 @@ CONTAINS
                         WRITE(OUTPUT_FILE,'("TimeStep_",I0)') CURRENT_LOOP_ITERATION
                         FILE=OUTPUT_FILE
                         METHOD="FORTRAN"
-                        EXPORT_FIELD=.TRUE.
                         IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER)==0)  THEN
                           !Use standard field IO routines (also only export nodes after first step as not a moving mesh case)
                           FileNameLength = LEN_TRIM(OUTPUT_FILE)
@@ -9430,8 +9419,6 @@ CONTAINS
                             & CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
                           Fields=>EQUATIONS_SET%REGION%FIELDS
                           CALL FIELD_IO_NODES_EXPORT(Fields,VFileName,METHOD,err,error,*999)
-                          !                            CALL FLUID_MECHANICS_IO_WRITE_CMGUI(EQUATIONS_SET%REGION,EQUATIONS_SET%GLOBAL_NUMBER,FILE, &
-                          !                              & err,error,*999)
                           IF(CURRENT_LOOP_ITERATION==0) THEN
                             IF(CONTROL_LOOP%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) &
                               & CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export elements... ",err,error,*999)
@@ -9443,28 +9430,6 @@ CONTAINS
                             CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
                           ENDIF
                         END IF
-                        !                       ELSE IF(EXPORT_FIELD) THEN
-                        !                         IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER)==0)  THEN
-                        !                           CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
-                        !                           CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
-                        !                           CALL FLUID_MECHANICS_IO_WRITE_CMGUI(EQUATIONS_SET%REGION,EQUATIONS_SET%GLOBAL_NUMBER,FILE, &
-                        !                             & err,error,*999)
-                        !                           CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,OUTPUT_FILE,err,error,*999)
-                        !                           CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
-                        !                           CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                        !                             & NUMBER_OF_DIMENSIONS,err,error,*999)
-                        !                           IF(NUMBER_OF_DIMENSIONS==3) THEN
-                        ! !\todo: Allow user to choose whether or not ENCAS ouput is activated (default = NO)
-                        !                             EXPORT_FIELD=.FALSE.
-                        !                             IF(EXPORT_FIELD) THEN
-                        !                               CALL FLUID_MECHANICS_IO_WRITE_ENCAS(EQUATIONS_SET%REGION,EQUATIONS_SET%GLOBAL_NUMBER,FILE, &
-                        !                                 & err,error,*999)
-                        !                               CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,OUTPUT_FILE,err,error,*999)
-                        !                               CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
-                        !                             END IF
-                        !                           END IF
-                        !                         END IF
-                        !                       END IF
                         IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
                           IF(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_4.OR. &
                             & EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_5.OR. &
@@ -9482,8 +9447,7 @@ CONTAINS
               END IF
             ENDIF
 
-          CASE(PROBLEM_MULTISCALE_NAVIER_STOKES_SUBTYPE, &
-            &  PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE)
+          CASE(PROBLEM_MULTISCALE_NAVIER_STOKES_SUBTYPE,PROBLEM_COUPLED3D0D_NAVIER_STOKES_SUBTYPE)
             SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
             CALL CONTROL_LOOP_TIMES_GET(CONTROL_LOOP,START_TIME,STOP_TIME,CURRENT_TIME,TIME_INCREMENT, &
                & CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER,ERR,ERROR,*999)
@@ -9505,7 +9469,6 @@ CONTAINS
                         WRITE(OUTPUT_FILE,'("TimeStep3D_",I0)') CURRENT_LOOP_ITERATION
                         FILE=OUTPUT_FILE
                         METHOD="FORTRAN"
-                        EXPORT_FIELD=.TRUE.
                         IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER)==0)  THEN
                           !Use standard field IO routines (also only export nodes after first step as not a moving mesh case)
                           FileNameLength = LEN_TRIM(OUTPUT_FILE)
@@ -9534,21 +9497,18 @@ CONTAINS
                         FILE=OUTPUT_FILE
                         FILENAME="TimeStep1D_"//TRIM(NUMBER_TO_VSTRING(CURRENT_LOOP_ITERATION,"*",ERR,ERROR))
                         METHOD="FORTRAN"
-                        EXPORT_FIELD=.TRUE.
-                        IF(EXPORT_FIELD) THEN
-                          IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER)==0)  THEN
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",ERR,ERROR,*999)
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export fields... ",ERR,ERROR,*999)
-                            CALL FIELD_IO_NODES_EXPORT(DEPENDENT_REGION%FIELDS,FILENAME,METHOD,ERR,ERROR,*999)
-                            ! Only export elements on first iteration (non-moving mesh case)
-                            IF(CURRENT_LOOP_ITERATION==0) THEN
-                              CALL FIELD_IO_ELEMENTS_EXPORT(DEPENDENT_REGION%FIELDS,FILENAME,METHOD,ERR,ERROR,*999)
-                            END IF
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,FILENAME,ERR,ERROR,*999)
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",ERR,ERROR,*999)
-                            CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                              & NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
+                        IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER)==0)  THEN
+                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",ERR,ERROR,*999)
+                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export fields... ",ERR,ERROR,*999)
+                          CALL FIELD_IO_NODES_EXPORT(DEPENDENT_REGION%FIELDS,FILENAME,METHOD,ERR,ERROR,*999)
+                          ! Only export elements on first iteration (non-moving mesh case)
+                          IF(CURRENT_LOOP_ITERATION==0) THEN
+                            CALL FIELD_IO_ELEMENTS_EXPORT(DEPENDENT_REGION%FIELDS,FILENAME,METHOD,ERR,ERROR,*999)
                           END IF
+                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,FILENAME,ERR,ERROR,*999)
+                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",ERR,ERROR,*999)
+                          CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
+                            & NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
                         END IF
                       END IF
                     END IF
@@ -9592,33 +9552,19 @@ CONTAINS
                       FILE=OUTPUT_FILE
                       FILENAME="./output/"//"MainTime_"//TRIM(NumberToVString(CURRENT_LOOP_ITERATION,"*",err,error))
                       METHOD="FORTRAN"
-                      EXPORT_FIELD=.TRUE.
-                      IF(EXPORT_FIELD) THEN
-                        IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER)==0)  THEN
-                          IF(CONTROL_LOOP%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) THEN
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
-                          ENDIF
-                          CALL FIELD_IO_NODES_EXPORT(DEPENDENT_REGION%FIELDS,FILENAME,METHOD,err,error,*999)
-                          CALL FIELD_IO_ELEMENTS_EXPORT(DEPENDENT_REGION%FIELDS,FILENAME,METHOD,err,error,*999)
-                          IF(CONTROL_LOOP%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) THEN
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,FILENAME,err,error,*999)
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
-                          ENDIF
-                          CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                            & NUMBER_OF_DIMENSIONS,err,error,*999)
-                          IF(NUMBER_OF_DIMENSIONS==3) THEN
-                            EXPORT_FIELD=.FALSE.
-                            IF(EXPORT_FIELD) THEN
-                              CALL FLUID_MECHANICS_IO_WRITE_ENCAS(EQUATIONS_SET%REGION,EQUATIONS_SET%GLOBAL_NUMBER,FILE, &
-                                & err,error,*999)
-                              IF(CONTROL_LOOP%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) THEN
-                                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,OUTPUT_FILE,err,error,*999)
-                                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
-                              ENDIF
-                            END IF
-                          END IF
-                        END IF
+                      IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER)==0)  THEN
+                        IF(CONTROL_LOOP%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
+                        ENDIF
+                        CALL FIELD_IO_NODES_EXPORT(DEPENDENT_REGION%FIELDS,FILENAME,METHOD,err,error,*999)
+                        CALL FIELD_IO_ELEMENTS_EXPORT(DEPENDENT_REGION%FIELDS,FILENAME,METHOD,err,error,*999)
+                        IF(CONTROL_LOOP%outputType >= CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,FILENAME,err,error,*999)
+                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                        ENDIF
+                        CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
+                          & NUMBER_OF_DIMENSIONS,err,error,*999)
                       END IF
                       IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
                         IF(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_4.OR. &

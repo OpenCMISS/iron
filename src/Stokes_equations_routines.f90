@@ -3003,7 +3003,7 @@ CONTAINS
     REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
     INTEGER(INTG) :: EQUATIONS_SET_IDX,CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER,NUMBER_OF_DIMENSIONS
     LOGICAL :: EXPORT_FIELD
-    CHARACTER(14) :: FILE,OUTPUT_FILE
+    CHARACTER(14) :: OUTPUT_FILE
 
     ENTERS("STOKES_POST_SOLVE_OUTPUT_DATA",err,error,*999)
 
@@ -3012,8 +3012,6 @@ CONTAINS
     NULLIFY(EQUATIONS_SET)
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
-!       write(*,*)'CURRENT_TIME = ',CURRENT_TIME
-!       write(*,*)'TIME_INCREMENT = ',TIME_INCREMENT
       IF(ASSOCIATED(SOLVER)) THEN
         IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
           IF(.NOT.ALLOCATED(control_loop%problem%specification)) THEN
@@ -3021,6 +3019,7 @@ CONTAINS
           ELSE IF(SIZE(control_loop%problem%specification,1)<3) THEN
             CALL FlagError("Problem specification must have three entries for a Stokes problem.",err,error,*999)
           END IF
+          CALL SYSTEM('mkdir -p ./output')
           SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
           CASE(PROBLEM_STATIC_STOKES_SUBTYPE,PROBLEM_LAPLACE_STOKES_SUBTYPE)
             SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
@@ -3030,7 +3029,6 @@ CONTAINS
                 !Make sure the equations sets are up to date
                 DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                   EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
-                  FILE=OUTPUT_FILE
                   FILENAME="./output/"//"STATIC_SOLUTION"
                   METHOD="FORTRAN"
                   IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
@@ -3066,7 +3064,6 @@ CONTAINS
                       ELSE IF(CURRENT_LOOP_ITERATION<10000) THEN
                         WRITE(OUTPUT_FILE,'("TIME_STEP_",I0)') CURRENT_LOOP_ITERATION
                       END IF
-                      FILE=OUTPUT_FILE
                       FILENAME="./output/"//"MainTime_"//TRIM(NumberToVString(CURRENT_LOOP_ITERATION,"*",err,error))
                       METHOD="FORTRAN"
                       IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER)==0)  THEN
@@ -3089,7 +3086,7 @@ CONTAINS
                           & EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_4.OR. &
                           & EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_5.OR. &
                           & EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_1) THEN
-                          CALL AnalyticAnalysis_Output(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FILE,err,error,*999)
+                          CALL AnalyticAnalysis_Output(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,OUTPUT_FILE,err,error,*999)
                         ENDIF
                       ENDIF
                     ENDIF

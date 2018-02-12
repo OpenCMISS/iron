@@ -5213,8 +5213,9 @@ CONTAINS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_TIME_LOOP !<A pointer to the control time loop.
     TYPE(VARYING_STRING) :: localError,METHOD,FILENAME
-    CHARACTER(14) :: FILE,OUTPUT_FILE
+    CHARACTER(14) :: OUTPUT_FILE
     LOGICAL :: EXPORT_FIELD
+    REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
     INTEGER(INTG) :: CURRENT_LOOP_ITERATION,SUBITERATION_NUMBER
     INTEGER(INTG) :: OUTPUT_ITERATION_NUMBER
     INTEGER(INTG) :: equations_set_idx,loop_idx
@@ -5229,6 +5230,7 @@ CONTAINS
           ELSE IF(SIZE(CONTROL_LOOP%PROBLEM%SPECIFICATION,1)<3) THEN
             CALL FlagError("Problem specification must have three entries for a Darcy equation problem.",err,error,*999)
           END IF
+          CALL SYSTEM('mkdir -p ./output')
           SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
             CASE(PROBLEM_STANDARD_DARCY_SUBTYPE)
               SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
@@ -5238,7 +5240,6 @@ CONTAINS
                     !Make sure the equations sets are up to date
                     DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                       EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
-                      FILE=OUTPUT_FILE
                       FILENAME="./output/"//"STATIC_SOLUTION"
                       METHOD="FORTRAN"
                       IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
@@ -5256,6 +5257,7 @@ CONTAINS
               & PROBLEM_TRANSIENT_DARCY_SUBTYPE, PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
               & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
               & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
+              CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
               SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                 SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
@@ -5295,7 +5297,6 @@ CONTAINS
                            WRITE(OUTPUT_FILE,'("TIME_STEP_",I0)') CURRENT_LOOP_ITERATION
                          END IF
 
-                         FILE=OUTPUT_FILE
                          FILENAME="./output/"//"MainTime_"//TRIM(NumberToVString(CURRENT_LOOP_ITERATION,"*",err,error))
                          METHOD="FORTRAN"
                          IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER)==0)  THEN
@@ -5374,7 +5375,6 @@ CONTAINS
                             WRITE(OUTPUT_FILE,'("TIME_STEP_",I0)') CURRENT_LOOP_ITERATION
                           END IF
 
-                          FILE=OUTPUT_FILE
                           FILENAME="./output/"//"MainTime_"//TRIM(NumberToVString(CURRENT_LOOP_ITERATION,"*",err,error))
                           METHOD="FORTRAN"
                           IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER)==0)  THEN

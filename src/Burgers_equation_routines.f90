@@ -1776,6 +1776,7 @@ CONTAINS
             ELSE IF(SIZE(CONTROL_LOOP%PROBLEM%SPECIFICATION,1)<3) THEN
               CALL FlagError("Problem specification must have three entries for a Burgers equation problem.",err,error,*999)
             END IF
+            CALL SYSTEM('mkdir -p ./output')
             SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
             CASE(PROBLEM_STATIC_BURGERS_SUBTYPE,PROBLEM_DYNAMIC_BURGERS_SUBTYPE)
               CALL CONTROL_LOOP_TIMES_GET(CONTROL_LOOP,START_TIME,STOP_TIME,CURRENT_TIME,TIME_INCREMENT, &
