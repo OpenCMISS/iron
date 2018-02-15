@@ -1932,7 +1932,7 @@ CONTAINS
               DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
                 mhs=mhs+1
                 NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(mhs)=NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(mhs)+ &
-                  & JGW*DOT_PRODUCT(DPHIDZ(:,ms,mh),cauchyTensor(:,mh))
+                  & JGW*DOT_PRODUCT(DPHIDZ(1:NUMBER_OF_DIMENSIONS,ms,mh),cauchyTensor(1:NUMBER_OF_DIMENSIONS,mh))
               ENDDO !ms
             ENDDO !mh
 
