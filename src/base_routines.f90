@@ -358,7 +358,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Records the entry into the named procedure and initialises the error code \see BASE_ROUTINES::ENTERS
+  !>Records the entry into the named procedure and initialises the error code \see BASE_ROUTINES::EXITS
   SUBROUTINE ENTERS(NAME,ERR,ERROR,*)
 
     !Argument variables
@@ -883,7 +883,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets diagnositics off. \see BASE_ROUTINES::DIAGNOSTICS_SET_OFF,OPENCMISS::CMISSDiagnosticsSetOff
+  !>Sets diagnositics off. \see BASE_ROUTINES::DIAGNOSTICS_SET_ON,OPENCMISS::CMISSDiagnosticsSetOn
   SUBROUTINE DIAGNOSTICS_SET_OFF(ERR,ERROR,*)
 
     !Argument variables
@@ -937,7 +937,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets diagnositics on. \see BASE_ROUTINES::DIAGNOSTICS_SET_ON,OPENCMISS::CMISSDiagnosticsSetOn
+  !>Sets diagnositics on. \see BASE_ROUTINES::DIAGNOSTICS_SET_OFF,OPENCMISS::CMISSDiagnosticsSetOff
   SUBROUTINE DIAGNOSTICS_SET_ON(DIAG_TYPE,LEVEL_LIST,DIAG_FILENAME,ROUTINE_LIST,ERR,ERROR,*)
 
     !Argument variables
