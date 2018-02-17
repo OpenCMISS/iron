@@ -1507,13 +1507,11 @@ CONTAINS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
     REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
-    INTEGER(INTG) :: EQUATIONS_SET_IDX,CURRENT_LOOP_ITERATION,OUTPUT_FREQUENCY,MAX_DIGITS
+    INTEGER(INTG) :: EQUATIONS_SET_IDX,CURRENT_LOOP_ITERATION,OUTPUT_FREQUENCY
     INTEGER(INTG) :: myComputationalNodeNumber
 
-    CHARACTER(30) :: FILE
-    CHARACTER(30) :: OUTPUT_FILE
-		
-		CHARACTER(100) :: FMT, TEMP_FMT
+    CHARACTER(28) :: FILE
+    CHARACTER(28) :: OUTPUT_FILE
 
     ENTERS("REACTION_DIFFUSION_POST_SOLVE_OUTPUT_DATA",ERR,ERROR,*999)
 
@@ -1536,30 +1534,41 @@ CONTAINS
                   !Make sure the equations sets are up to date
                   DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                     EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
+
                     CURRENT_LOOP_ITERATION=CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER
                     OUTPUT_FREQUENCY=CONTROL_LOOP%TIME_LOOP%OUTPUT_NUMBER
                     myComputationalNodeNumber = COMPUTATIONAL_NODE_NUMBER_GET(err,error)
-                    MAX_DIGITS=FLOOR(LOG10((CONTROL_LOOP%TIME_LOOP%STOP_TIME-CONTROL_LOOP%TIME_LOOP%START_TIME)/ &
-                      & CONTROL_LOOP%TIME_LOOP%TIME_INCREMENT))+1
                     IF(OUTPUT_FREQUENCY>0) THEN
                       IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_FREQUENCY)==0) THEN
                         IF(CONTROL_LOOP%TIME_LOOP%CURRENT_TIME<=CONTROL_LOOP%TIME_LOOP%STOP_TIME) THEN
                           IF(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS.EQ.1) THEN
-                            WRITE(TEMP_FMT,'("I",I0,".",I0)') MAX_DIGITS,MAX_DIGITS
-                            !100 FORMAT 
-                            FMT = TRIM(TEMP_FMT)
-                            WRITE(TEMP_FMT,'(A2,A38,A20,A2)') "(", '"TIME_STEP_SPEC_1.part",I2.2,".",',FMT,")"
-                            FMT = TRIM(TEMP_FMT)
-                            WRITE(OUTPUT_FILE,FMT) &
+                            IF(CURRENT_LOOP_ITERATION<10) THEN
+                              WRITE(OUTPUT_FILE,'("TIME_STEP_SPEC_1.part",I2.2,".000",I0)') &
+                              & myComputationalNodeNumber, CURRENT_LOOP_ITERATION
+                            ELSE IF(CURRENT_LOOP_ITERATION<100) THEN
+                              WRITE(OUTPUT_FILE,'("TIME_STEP_SPEC_1.part",I2.2,".00",I0)') &
                               & myComputationalNodeNumber,CURRENT_LOOP_ITERATION
+                            ELSE IF(CURRENT_LOOP_ITERATION<1000) THEN
+                              WRITE(OUTPUT_FILE,'("TIME_STEP_SPEC_1.part",I2.2,".0",I0)') &
+                              & myComputationalNodeNumber,CURRENT_LOOP_ITERATION
+                            ELSE IF(CURRENT_LOOP_ITERATION<10000) THEN
+                              WRITE(OUTPUT_FILE,'("TIME_STEP_SPEC_1.part",I2.2,".",I0)') &
+                              & CURRENT_LOOP_ITERATION
+                            END IF
                           ELSE
-                            WRITE(TEMP_FMT,'("I",I0,".",I0)') MAX_DIGITS,MAX_DIGITS
-                            !200 FORMAT 
-                            FMT = TRIM(TEMP_FMT)
-                            WRITE(TEMP_FMT,'(A2,A38,A20,A2)') "(", '"TIME_STEP_SPEC_",I0,".part",I2.2,".",',FMT,")"
-                            FMT = TRIM(TEMP_FMT)
-                            WRITE(OUTPUT_FILE,FMT) &
-                              & equations_set_idx, myComputationalNodeNumber,CURRENT_LOOP_ITERATION
+                            IF(CURRENT_LOOP_ITERATION<10) THEN
+                              WRITE(OUTPUT_FILE, '("TIME_STEP_SPEC_",I0,".part",I2.2,".000",I0)') &
+                                & equations_set_idx,myComputationalNodeNumber,CURRENT_LOOP_ITERATION
+                            ELSE IF(CURRENT_LOOP_ITERATION<100) THEN
+                              WRITE(OUTPUT_FILE, '("TIME_STEP_SPEC_",I0,".part",I2.2,".00",I0)') &
+                                & equations_set_idx,myComputationalNodeNumber,CURRENT_LOOP_ITERATION
+                            ELSE IF(CURRENT_LOOP_ITERATION<1000) THEN
+                              WRITE(OUTPUT_FILE, '("TIME_STEP_SPEC_",I0,".part",I2.2,".0",I0)') &
+                                & equations_set_idx,myComputationalNodeNumber,CURRENT_LOOP_ITERATION
+                            ELSE IF(CURRENT_LOOP_ITERATION<10000) THEN
+                              WRITE(OUTPUT_FILE, '("TIME_STEP_SPEC_",I0,".part",I2.2,".",I0)') &
+                                & equations_set_idx,myComputationalNodeNumber,CURRENT_LOOP_ITERATION
+                            END IF
                           ENDIF
                           WRITE(*,*) OUTPUT_FILE
                           FILE=TRIM(OUTPUT_FILE)
@@ -1567,6 +1576,9 @@ CONTAINS
                           CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export fields... ",ERR,ERROR,*999)
                           CALL REACTION_DIFFUSION_IO_WRITE_CMGUI(EQUATIONS_SET%REGION,EQUATIONS_SET%GLOBAL_NUMBER,FILE, &
                             & ERR,ERROR,*999)
+
+                          !CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,OUTPUT_FILE,ERR,ERROR,*999)
+                          !CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",ERR,ERROR,*999)
                         ENDIF
                       ENDIF 
                     ENDIF

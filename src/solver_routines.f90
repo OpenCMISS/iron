@@ -12973,7 +12973,6 @@ CONTAINS
                                                                       & solver_row_number,VALUE,ERR,ERROR,*999)
                                                                   ENDDO !solver_row_idx
                                                                 ENDIF
-
                                                               CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
                                                                 CALL FlagError("Not implemented.",ERR,ERROR,*999)
                                                               CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
@@ -13066,7 +13065,7 @@ CONTAINS
                                               ENDDO !solver_row_idx
                                             CASE(BOUNDARY_CONDITION_DOF_MIXED)
                                               !Set Robin or is it Cauchy??? boundary conditions
-                                              CALL FlagError("Mixed Boundary Conditions Not implemented.",ERR,ERROR,*999)
+                                              CALL FlagError("Not implemented.",ERR,ERROR,*999)
                                             CASE DEFAULT
                                               LOCAL_ERROR="The RHS boundary condition of "// &
                                                 & TRIM(NumberToVString(rhs_boundary_condition,"*",ERR,ERROR))// &
@@ -13455,7 +13454,6 @@ CONTAINS
                                           CASE(INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC)
                                             MatrixCoefficients(2)=DAMPING_MATRIX_COEFFICIENT
                                           CASE DEFAULT
-
                                             CALL FlagError("Not implemented.",Err,Error,*999)
                                           END SELECT
                                         ELSE
