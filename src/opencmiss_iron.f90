@@ -2303,6 +2303,8 @@ MODULE OpenCMISS_Iron
     & EQUATIONS_SET_ACTIVE_STRAIN_SUBTYPE !< Isotropic active strain constitutive law based on multiplicative decomposition of the deformation gradient subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTISCALE_ACTIVE_STRAIN_SUBTYPE = &
     & EQUATIONS_SET_MULTISCALE_ACTIVE_STRAIN_SUBTYPE !< Isotropic active strain constitutive law based on multiplicative decomposition of the deformation gradient and the cellular model of Razumova et al. (2000) subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_REFERENCE_STATE_MOONEY_RIVLIN_SUBTYPE = &
+    & EQUATIONS_SET_REFERENCE_STATE_MOONEY_RIVLIN_SUBTYPE !< Determine the reference configuration using Mooney-Rivlin constitutive law for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE = &
     & EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE !< Transverse isotropic Guccione constitutive law with active contraction subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_INCOMPRESS_FINITE_ELASTICITY_DARCY_SUBTYPE= &
@@ -2557,12 +2559,28 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GFV_SOLUTION_METHOD = EQUATIONS_SET_GFV_SOLUTION_METHOD !<Grid-based Finite Volume solution method. \see OPENCMISS_EquationsSetSolutionMethods,OPENCMISS
   !>@}
 
-  !> \addtogroup OPENCMISS_EquationsSetDerivedTypes OPENCMISS::EquationsSet::OutputTypes
-  !> \brief Field values to output
+  !> \addtogroup OPENCMISS_EquationsSetDerivedTypes OPENCMISS::EquationsSet::DerivedTypes
+  !> \brief EquationsSet derived type parameters
   !> \see OPENCMISS::EquationsSet,OPENCMISS
   !>@{
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_STRAIN = EQUATIONS_SET_DERIVED_STRAIN !<Strain tensor field output. \see OPENCMISS_EquationsSetDerivedTypes,OPENCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_STRESS = EQUATIONS_SET_DERIVED_STRESS !<Stress tensor field output. \see OPENCMISS_EquationsSetDerivedTypes,OPENCMISS
+  !>@}
+
+  !> \addtogroup OPENCMISS_EquationsSetTensorEvaluateTypes OPENCMISS::EquationsSet::TensorEvaluateTypes
+  !> \brief Type of tensor to evaluate from an EquationsSet
+  !> \see OPENCMISS::EquationsSet,OPENCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EVALUATE_DEFORMATION_GRADIENT_TENSOR = &
+    & EQUATIONS_SET_EVALUATE_DEFORMATION_GRADIENT_TENSOR !<Deformation gradient tensor \see OPENCMISS_EquationsSetTensorEvaluateTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EVALUATE_R_CAUCHY_GREEN_DEFORMATION_TENSOR = &
+    & EQUATIONS_SET_EVALUATE_R_CAUCHY_GREEN_DEFORMATION_TENSOR !<Right Cauchy-Green deformation field \see OPENCMISS_EquationsSetTensorEvaluateTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EVALUATE_GREEN_LAGRANGE_STRAIN_TENSOR = & 
+    & EQUATIONS_SET_EVALUATE_GREEN_LAGRANGE_STRAIN_TENSOR !<Green-Lagrange strain tensor \see OPENCMISS_EquationsSetTensorEvaluateTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EVALUATE_CAUCHY_STRESS_TENSOR = & 
+    & EQUATIONS_SET_EVALUATE_CAUCHY_STRESS_TENSOR !<Cauchy-stress tensor \see OPENCMISS_EquationsSetTensorEvaluateTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EVALUATE_SECOND_PK_STRESS_TENSOR = & 
+    & EQUATIONS_SET_EVALUATE_SECOND_PK_STRESS_TENSOR !<Second Piola Kirchhoff-stress tensor \see OPENCMISS_EquationsSetTensorEvaluateTypes,OPENCMISS
   !>@}
 
   !> \addtogroup OPENCMISS_EquationsSetDynamicMatrixTypes OPENCMISS::EquationsSet::DynamicMatrixTypes
@@ -2791,7 +2809,8 @@ MODULE OpenCMISS_Iron
     & CMFE_EQUATIONS_SET_PLATE_SUBTYPE, &
     & CMFE_EQUATIONS_SET_SHELL_SUBTYPE, &
     & CMFE_EQUATIONS_SET_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE,CMFE_EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE, &
-    & CMFE_EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE,CMFE_EQUATIONS_SET_ISOTROPIC_EXPONENTIAL_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_REFERENCE_STATE_MOONEY_RIVLIN_SUBTYPE, CMFE_EQUATIONS_SET_ISOTROPIC_EXPONENTIAL_SUBTYPE, &
     & CMFE_EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE,CMFE_EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE, &
     & CMFE_EQUATIONS_SET_COMPRESSIBLE_ACTIVECONTRACTION_SUBTYPE,CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_ACTIVE_SUBTYPE, &
     & CMFE_EQUATIONS_SET_TRANS_ISOTROPIC_ACTIVE_TRANSITION_SUBTYPE, &
@@ -2896,6 +2915,13 @@ MODULE OpenCMISS_Iron
     & CMFE_EQUATIONS_SET_GFV_SOLUTION_METHOD
 
   PUBLIC CMFE_EQUATIONS_SET_DERIVED_STRAIN,CMFE_EQUATIONS_SET_DERIVED_STRESS
+
+  PUBLIC CMFE_EQUATIONS_SET_EVALUATE_DEFORMATION_GRADIENT_TENSOR, &
+    & CMFE_EQUATIONS_SET_EVALUATE_R_CAUCHY_GREEN_DEFORMATION_TENSOR, &
+    & CMFE_EQUATIONS_SET_EVALUATE_GREEN_LAGRANGE_STRAIN_TENSOR, &
+    & CMFE_EQUATIONS_SET_EVALUATE_CAUCHY_STRESS_TENSOR, &
+    & CMFE_EQUATIONS_SET_EVALUATE_SECOND_PK_STRESS_TENSOR
+
   PUBLIC CMFE_EQUATIONS_MATRIX_STIFFNESS,CMFE_EQUATIONS_MATRIX_DAMPING,CMFE_EQUATIONS_MATRIX_MASS
 
   PUBLIC CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1,CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2, &
@@ -3174,11 +3200,11 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_EquationsSet_DerivedVariableSetObj
   END INTERFACE cmfe_EquationsSet_DerivedVariableSet
   
-  !>Calculate the strain tensor at a given element xi location.
-  INTERFACE cmfe_EquationsSet_StrainInterpolateXi
-    MODULE PROCEDURE cmfe_EquationsSet_StrainInterpolateXiNumber
-    MODULE PROCEDURE cmfe_EquationsSet_StrainInterpolateXiObj
-  END INTERFACE cmfe_EquationsSet_StrainInterpolateXi
+  !>Evaluate a tensor at a given element xi location.
+  INTERFACE cmfe_EquationsSet_TensorInterpolateXi
+    MODULE PROCEDURE cmfe_EquationsSet_TensorInterpolateXiNumber
+    MODULE PROCEDURE cmfe_EquationsSet_TensorInterpolateXiObj
+  END INTERFACE cmfe_EquationsSet_TensorInterpolateXi
 
   !>Gets the equations set analytic user parameter
   INTERFACE cmfe_EquationsSet_AnalyticUserParamGet
@@ -3234,7 +3260,7 @@ MODULE OpenCMISS_Iron
 
   PUBLIC cmfe_EquationsSet_SpecificationGet,cmfe_EquationsSet_SpecificationSizeGet
 
-  PUBLIC cmfe_EquationsSet_StrainInterpolateXi
+  PUBLIC cmfe_EquationsSet_TensorInterpolateXi
 
   PUBLIC cmfe_EquationsSet_AnalyticUserParamSet,cmfe_EquationsSet_AnalyticUserParamGet
 
@@ -13021,7 +13047,7 @@ CONTAINS
 
   !>Constrain multiple nodal equations dependent field DOFs to be a single solver DOF in the solver equations
   SUBROUTINE cmfe_BoundaryConditions_ConstrainNodeDofsEqualNumber(regionUserNumber,problemUserNumber,controlLoopIdentifier, &
-    & solverIndex,fieldUserNumber,fieldVariableType,versionNumber,derivativeNumber,component,nodes,err)
+    & solverIndex,fieldUserNumber,fieldVariableType,versionNumber,derivativeNumber,component,nodes,coefficient,err)
     !DLLEXPORT(cmfe_BoundaryConditions_ConstrainNodeDofsEqualNumber)
 
     !Argument variables
@@ -13035,6 +13061,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number.
     INTEGER(INTG), INTENT(IN) :: component !<The field component number of the DOFs to be constrained.
     INTEGER(INTG), INTENT(IN) :: nodes(:) !<The user numbers of the nodes to be constrained to be equal.
+    REAL(DP), INTENT(IN) :: coefficient !<The coefficient of constraint, applied to all but the first node.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(REGION_TYPE), POINTER :: region
@@ -13062,7 +13089,7 @@ CONTAINS
             CALL Field_user_number_find(fieldUserNumber,region,field,err,error,*999)
             IF(ASSOCIATED(field)) THEN
               CALL BoundaryConditions_ConstrainNodeDofsEqual(boundaryConditions,field, &
-                & fieldVariableType,versionNumber,derivativeNumber,component,nodes,err,error,*999)
+                & fieldVariableType,versionNumber,derivativeNumber,component,nodes,coefficient,err,error,*999)
             ELSE
               localError="A field with a user number of "//TRIM(NumberToVString(fieldUserNumber,"*",err,error))// &
                 & " does not exist."
@@ -13099,7 +13126,7 @@ CONTAINS
 
   !>Constrain multiple nodal equations dependent field DOFs to be a single solver DOF in the solver equations
   SUBROUTINE cmfe_BoundaryConditions_ConstrainNodeDofsEqualObj( &
-      & boundaryConditions,field,fieldVariableType,versionNumber,derivativeNumber,component,nodes,err)
+      & boundaryConditions,field,fieldVariableType,versionNumber,derivativeNumber,component,nodes,coefficient,err)
     !DLLEXPORT(cmfe_BoundaryConditions_ConstrainNodeDofsEqualObj)
 
     !Argument variables
@@ -13110,12 +13137,13 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number.
     INTEGER(INTG), INTENT(IN) :: component !<The field component number of the DOFs to be constrained.
     INTEGER(INTG), INTENT(IN) :: nodes(:) !<The user numbers of the nodes to be constrained to be equal.
+    REAL(DP), INTENT(IN) :: coefficient !<The coefficient of constraint, applied to all but the first node.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
 
     ENTERS("cmfe_BoundaryConditions_ConstrainNodeDofsEqualObj",err,error,*999)
 
     CALL BoundaryConditions_ConstrainNodeDofsEqual(boundaryConditions%boundaryConditions,field%field, &
-      & fieldVariableType,versionNumber,derivativeNumber,component,nodes,err,error,*999)
+      & fieldVariableType,versionNumber,derivativeNumber,component,nodes,coefficient,err,error,*999)
 
     EXITS("cmfe_BoundaryConditions_ConstrainNodeDofsEqualObj")
     RETURN
@@ -26324,23 +26352,25 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Calculate the strain tensor at a given element xi location, for an equations set identified by a user number.
-  SUBROUTINE cmfe_EquationsSet_StrainInterpolateXiNumber(regionUserNumber,equationsSetUserNumber,userElementNumber,xi,values,err)
-    !DLLEXPORT(cmfe_EquationsSet_StrainInterpolateXiNumber)
+  !>Evaluate a tensor at a given element xi location, for an equations set identified by a user number.
+  SUBROUTINE cmfe_EquationsSet_TensorInterpolateXiNumber(regionUserNumber,equationsSetUserNumber,tensorEvaluateType, &
+    & userElementNumber,xi,values,err)
+    !DLLEXPORT(cmfe_EquationsSet_TensorInterpolateXiNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set.
-    INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to calculate the strain for.
+    INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to evalaute the tensor for.
+    INTEGER(INTG), INTENT(IN) :: tensorEvaluateType !<The type of tensor to evaluate.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
     REAL(DP), INTENT(IN) :: xi(:) !<The element xi to interpolate the field at.
-    REAL(DP), INTENT(OUT) :: values(6) !<The interpolated strain tensor values.
+    REAL(DP), INTENT(OUT) :: values(:,:) !<The interpolated tensor values.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(REGION_TYPE), POINTER :: region
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("cmfe_EquationsSet_StrainInterpolateXiNumber",err,error,*999)
+    ENTERS("cmfe_EquationsSet_TensorInterpolateXiNumber",err,error,*999)
 
     NULLIFY(equationsSet)
     NULLIFY(region)
@@ -26349,7 +26379,7 @@ CONTAINS
     IF(ASSOCIATED(region)) THEN
       CALL EQUATIONS_SET_USER_NUMBER_FIND(equationsSetUserNumber,region,equationsSet,err,error,*999)
       IF(ASSOCIATED(equationsSet)) THEN
-        CALL EquationsSet_StrainInterpolateXi(equationsSet,userElementNumber,xi, &
+        CALL EquationsSet_TensorInterpolateXi(equationsSet,tensorEvaluateType,userElementNumber,xi, &
           & values,err,error,*999)
       ELSE
         localError="An equations set with a user number of "//TRIM(NumberToVstring(equationsSetUserNumber,"*", &
@@ -26361,41 +26391,42 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     END IF
 
-    EXITS("cmfe_EquationsSet_StrainInterpolateXiNumber")
+    EXITS("cmfe_EquationsSet_TensorInterpolateXiNumber")
     RETURN
-999 ERRORSEXITS("cmfe_EquationsSet_StrainInterpolateXiNumber",err,error)
+999 ERRORSEXITS("cmfe_EquationsSet_TensorInterpolateXiNumber",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_EquationsSet_StrainInterpolateXiNumber
+  END SUBROUTINE cmfe_EquationsSet_TensorInterpolateXiNumber
 
   !
   !================================================================================================================================
   !
 
-  !>Calculate the strain tensor at a given element xi location, for an equations set identified by an object.
-  SUBROUTINE cmfe_EquationsSet_StrainInterpolateXiObj(equationsSet,userElementNumber,xi,values,err)
-    !DLLEXPORT(cmfe_EquationsSet_StrainInterpolateXiObj)
+  !>Evaluate a tensor at a given element xi location, for an equations set identified by an object.
+  SUBROUTINE cmfe_EquationsSet_TensorInterpolateXiObj(equationsSet,tensorEvaluateType,userElementNumber,xi,values,err)
+    !DLLEXPORT(cmfe_EquationsSet_TensorInterpolateXiObj)
 
     !Argument variables
-    TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<A pointer to the equations set to interpolate strain for.
+    TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<A pointer to the equations set to evaluate the tensor for.
+    INTEGER(INTG), INTENT(IN) :: tensorEvaluateType !<The type of tensor to evaluate.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
     REAL(DP), INTENT(IN) :: xi(:) !<The element xi to interpolate the field at.
-    REAL(DP), INTENT(OUT) :: values(6) !<The interpolated strain tensor values.
+    REAL(DP), INTENT(OUT) :: values(:,:) !<The interpolated strain tensor values.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
 
-    ENTERS("cmfe_EquationsSet_StrainInterpolateXiObj",err,error,*999)
+    ENTERS("cmfe_EquationsSet_TensorInterpolateXiObj",err,error,*999)
 
-    CALL EquationsSet_StrainInterpolateXi(equationsSet%equationsSet,userElementNumber,xi, &
+    CALL EquationsSet_TensorInterpolateXi(equationsSet%equationsSet,tensorEvaluateType,userElementNumber,xi, &
       & values,err,error,*999)
 
-    EXITS("cmfe_EquationsSet_StrainInterpolateXiObj")
+    EXITS("cmfe_EquationsSet_TensorInterpolateXiObj")
     RETURN
-999 ERRORSEXITS("cmfe_EquationsSet_StrainInterpolateXiObj",err,error)
+999 ERRORSEXITS("cmfe_EquationsSet_TensorInterpolateXiObj",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_EquationsSet_StrainInterpolateXiObj
+  END SUBROUTINE cmfe_EquationsSet_TensorInterpolateXiObj
 
 !!==================================================================================================================================
 !!
