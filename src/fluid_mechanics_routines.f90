@@ -68,7 +68,7 @@ MODULE FLUID_MECHANICS_ROUTINES
   USE STREE_EQUATION_ROUTINES
   USE TYPES
 
-#include "macros.h"  
+#include "macros.h"
 
 
   IMPLICIT NONE
@@ -88,7 +88,7 @@ MODULE FLUID_MECHANICS_ROUTINES
   PUBLIC FluidMechanics_BoundaryConditionsAnalyticCalculate
 
   PUBLIC FLUID_MECHANICS_CONTROL_LOOP_PRE_LOOP,FLUID_MECHANICS_CONTROL_LOOP_POST_LOOP
-  
+
   PUBLIC FluidMechanics_EquationsSetSolutionMethodSet
 
   PUBLIC FLUID_MECHANICS_EQUATIONS_SET_SETUP
@@ -98,17 +98,17 @@ MODULE FLUID_MECHANICS_ROUTINES
   PUBLIC FLUID_MECHANICS_FINITE_ELEMENT_CALCULATE
 
   PUBLIC FluidMechanics_FiniteElementJacobianEvaluate,FluidMechanics_FiniteElementResidualEvaluate
-  
+
   PUBLIC FluidMechanics_FiniteElementPreResidualEvaluate
 
   PUBLIC FluidMechanics_NodalJacobianEvaluate,FluidMechanics_NodalResidualEvaluate
-  
+
   PUBLIC FLUID_MECHANICS_PROBLEM_SETUP
-   
+
   PUBLIC FLUID_MECHANICS_POST_SOLVE,FLUID_MECHANICS_PRE_SOLVE
 
   PUBLIC FluidMechanics_ProblemSpecificationSet
- 
+
 CONTAINS
 
   !
@@ -166,12 +166,12 @@ CONTAINS
     ELSE
       CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
-       
+
     EXITS("FLUID_MECHANICS_ANALYTIC_FUNCTIONS_EVALUATE")
     RETURN
 999 ERRORSEXITS("FLUID_MECHANICS_ANALYTIC_FUNCTIONS_EVALUATE",ERR,ERROR)
     RETURN 1
-    
+
   END SUBROUTINE FLUID_MECHANICS_ANALYTIC_FUNCTIONS_EVALUATE
 
    !
@@ -227,7 +227,7 @@ CONTAINS
 999 ERRORS("FluidMechanics_EquationsSetSpecificationSet",err,error)
     EXITS("FluidMechanics_EquationsSetSpecificationSet")
     RETURN 1
-    
+
   END SUBROUTINE FluidMechanics_EquationsSetSpecificationSet
 
   !
@@ -244,7 +244,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
-    
+
     ENTERS("FLUID_MECHANICS_FINITE_ELEMENT_CALCULATE",ERR,ERROR,*999)
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
@@ -279,7 +279,7 @@ CONTAINS
     ELSE
       CALL FlagError("Equations set is not associated",ERR,ERROR,*999)
     ENDIF
-       
+
     EXITS("FLUID_MECHANICS_FINITE_ELEMENT_CALCULATE")
     RETURN
 999 ERRORSEXITS("FLUID_MECHANICS_FINITE_ELEMENT_CALCULATE",ERR,ERROR)
@@ -300,7 +300,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
-    
+
     ENTERS("FluidMechanics_FiniteElementJacobianEvaluate",ERR,ERROR,*999)
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
@@ -333,13 +333,13 @@ CONTAINS
     ELSE
       CALL FlagError("Equations set is not associated",ERR,ERROR,*999)
     ENDIF
-       
+
     EXITS("FluidMechanics_FiniteElementJacobianEvaluate")
     RETURN
 999 ERRORS("FluidMechanics_FiniteElementJacobianEvaluate",ERR,ERROR)
     EXITS("FluidMechanics_FiniteElementJacobianEvaluate")
     RETURN 1
-    
+
   END SUBROUTINE FluidMechanics_FiniteElementJacobianEvaluate
 
   !
@@ -356,7 +356,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
-    
+
     ENTERS("FluidMechanics_FiniteElementResidualEvaluate",ERR,ERROR,*999)
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
@@ -389,13 +389,13 @@ CONTAINS
     ELSE
       CALL FlagError("Equations set is not associated",ERR,ERROR,*999)
     ENDIF
-       
+
     EXITS("FluidMechanics_FiniteElementResidualEvaluate")
     RETURN
 999 ERRORS("FluidMechanics_FiniteElementResidualEvaluate",ERR,ERROR)
     EXITS("FluidMechanics_FiniteElementResidualEvaluate")
     RETURN 1
-    
+
   END SUBROUTINE FluidMechanics_FiniteElementResidualEvaluate
 
   !
@@ -412,7 +412,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: localError
-    
+
     ENTERS("FluidMechanics_NodalJacobianEvaluate",err,error,*999)
 
     IF(ASSOCIATED(equationsSet)) THEN
@@ -445,7 +445,7 @@ CONTAINS
     ELSE
       CALL FlagError("Equations set is not associated",err,error,*999)
     ENDIF
-       
+
     EXITS("FluidMechanics_NodalJacobianEvaluate")
     RETURN
 999 ERRORSEXITS("FluidMechanics_NodalJacobianEvaluate",err,error)
@@ -466,7 +466,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: localError
-    
+
     ENTERS("FluidMechanics_NodalResidualEvaluate",err,error,*999)
 
     IF(ASSOCIATED(equationsSet)) THEN
@@ -499,7 +499,7 @@ CONTAINS
     ELSE
       CALL FlagError("Equations set is not associated",err,error,*999)
     ENDIF
-       
+
     EXITS("FluidMechanics_NodalResidualEvaluate")
     RETURN
 999 ERRORSEXITS("FluidMechanics_NodalResidualEvaluate",err,error)
@@ -520,7 +520,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
-    
+
     ENTERS("FLUID_MECHANICS_EQUATIONS_SET_SETUP",ERR,ERROR,*999)
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
@@ -534,7 +534,7 @@ CONTAINS
       CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
         CALL STOKES_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*999)
       CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
-        CALL NAVIER_STOKES_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*999)
+        CALL NavierStokes_EquationsSetSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*999)
       CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
         CALL DARCY_EQUATION_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*999)
       CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
@@ -555,13 +555,13 @@ CONTAINS
     ELSE
       CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
-       
+
     EXITS("FLUID_MECHANICS_EQUATIONS_SET_SETUP")
     RETURN
 999 ERRORSEXITS("FLUID_MECHANICS_EQUATIONS_SET_SETUP",ERR,ERROR)
     RETURN 1
   END SUBROUTINE FLUID_MECHANICS_EQUATIONS_SET_SETUP
-  
+
 
   !
   !================================================================================================================================
@@ -577,7 +577,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
-    
+
     ENTERS("FLUID_MECHANICS_EQUATIONS_SOLUTION_METHOD_SET",ERR,ERROR,*999)
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
@@ -610,13 +610,13 @@ CONTAINS
     ELSE
       CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
     ENDIF
-       
+
     EXITS("FluidMechanics_EquationsSetSolutionMethodSet")
     RETURN
 999 ERRORS("FluidMechanics_EquationsSetSolutionMethodSet",ERR,ERROR)
     EXITS("FluidMechanics_EquationsSetSolutionMethodSet")
     RETURN 1
-    
+
   END SUBROUTINE FluidMechanics_EquationsSetSolutionMethodSet
 
   !
@@ -672,7 +672,7 @@ CONTAINS
 999 ERRORS("FluidMechanics_BoundaryConditionsAnalyticCalculate",ERR,ERROR)
     EXITS("FluidMechanics_BoundaryConditionsAnalyticCalculate")
     RETURN 1
-    
+
   END SUBROUTINE FluidMechanics_BoundaryConditionsAnalyticCalculate
 
   !
@@ -724,7 +724,7 @@ CONTAINS
 999 ERRORS("FluidMechanics_ProblemSpecificationSet",err,error)
     EXITS("FluidMechanics_ProblemSpecificationSet")
     RETURN 1
-    
+
   END SUBROUTINE FluidMechanics_ProblemSpecificationSet
 
   !
@@ -741,7 +741,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
-    
+
     ENTERS("FLUID_MECHANICS_PROBLEM_SETUP",ERR,ERROR,*999)
 
     IF(ASSOCIATED(PROBLEM)) THEN
@@ -754,7 +754,7 @@ CONTAINS
       CASE(PROBLEM_STOKES_EQUATION_TYPE)
         CALL STOKES_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*999)
       CASE(PROBLEM_NAVIER_STOKES_EQUATION_TYPE)
-        CALL NAVIER_STOKES_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*999)
+        CALL NavierStokes_ProblemSetup(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*999)
       CASE(PROBLEM_DARCY_EQUATION_TYPE)
         CALL DARCY_EQUATION_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*999)
       CASE(PROBLEM_POISEUILLE_EQUATION_TYPE)
@@ -769,7 +769,7 @@ CONTAINS
     ELSE
       CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
     ENDIF
-       
+
     EXITS("FLUID_MECHANICS_PROBLEM_SETUP")
     RETURN
 999 ERRORSEXITS("FLUID_MECHANICS_PROBLEM_SETUP",ERR,ERROR)
@@ -790,7 +790,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
-    
+
     ENTERS("FLUID_MECHANICS_POST_SOLVE",ERR,ERROR,*999)
 
     IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
@@ -803,7 +803,7 @@ CONTAINS
       CASE(PROBLEM_STOKES_EQUATION_TYPE)
         CALL STOKES_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
       CASE(PROBLEM_NAVIER_STOKES_EQUATION_TYPE)
-        CALL NAVIER_STOKES_POST_SOLVE(SOLVER,ERR,ERROR,*999)
+        CALL NavierStokes_PostSolve(SOLVER,ERR,ERROR,*999)
       CASE(PROBLEM_DARCY_EQUATION_TYPE)
         CALL DARCY_EQUATION_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
       CASE(PROBLEM_POISEUILLE_EQUATION_TYPE)
@@ -818,7 +818,7 @@ CONTAINS
     ELSE
       CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
     ENDIF
-       
+
     EXITS("FLUID_MECHANICS_POST_SOLVE")
     RETURN
 999 ERRORSEXITS("FLUID_MECHANICS_POST_SOLVE",ERR,ERROR)
@@ -839,7 +839,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
-    
+
     ENTERS("FLUID_MECHANICS_PRE_SOLVE",ERR,ERROR,*999)
 
     IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
@@ -852,7 +852,7 @@ CONTAINS
       CASE(PROBLEM_STOKES_EQUATION_TYPE)
         CALL STOKES_PRE_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
       CASE(PROBLEM_NAVIER_STOKES_EQUATION_TYPE)
-        CALL NAVIER_STOKES_PRE_SOLVE(SOLVER,ERR,ERROR,*999)
+        CALL NavierStokes_PreSolve(SOLVER,ERR,ERROR,*999)
       CASE(PROBLEM_DARCY_EQUATION_TYPE)
         CALL DARCY_EQUATION_PRE_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
       CASE(PROBLEM_POISEUILLE_EQUATION_TYPE)
@@ -867,7 +867,7 @@ CONTAINS
     ELSE
       CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
     ENDIF
-       
+
     EXITS("FLUID_MECHANICS_PRE_SOLVE")
     RETURN
 999 ERRORSEXITS("FLUID_MECHANICS_PRE_SOLVE",ERR,ERROR)
@@ -979,7 +979,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("FLUID_MECHANICS_CONTROL_LOOP_POST_LOOP",ERR,ERROR)
     RETURN 1
-    
+
   END SUBROUTINE FLUID_MECHANICS_CONTROL_LOOP_POST_LOOP
 
   !
@@ -997,7 +997,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FluidMechanics_FiniteElementPreResidualEvaluate",err,error,*999)
-    
+
     IF(ASSOCIATED(equationsSet)) THEN
       SELECT CASE(equationsSet%specification(2))
       CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
@@ -1023,13 +1023,13 @@ CONTAINS
     ELSE
       CALL FlagError("Equations set is not associated",err,error,*999)
     ENDIF
-       
+
     EXITS("FluidMechanics_FiniteElementPreResidualEvaluate")
     RETURN
 999 ERRORS("FluidMechanics_FiniteElementPreResidualEvaluate",err,error)
     EXITS("FluidMechanics_FiniteElementPreResidualEvaluate")
     RETURN 1
-    
+
   END SUBROUTINE FluidMechanics_FiniteElementPreResidualEvaluate
 
   !
@@ -1037,4 +1037,3 @@ CONTAINS
   !
 
 END MODULE FLUID_MECHANICS_ROUTINES
-
