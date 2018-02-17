@@ -2010,8 +2010,7 @@ CONTAINS
 
             CALL FiniteElasticity_GaussGrowthTensor(EQUATIONS_SET,NUMBER_OF_DIMENSIONS,gauss_idx,ELEMENT_NUMBER,DEPENDENT_FIELD, &
               & dZdNu,Fg,Fe,Jg,Je,err,error,*999)
-            CALL MatrixTranspose(Fe,FeT,err,error,*999)
-            
+             
             CALL FiniteElasticity_StrainTensor(Fe,C,f,Jznu,E,err,error,*999)
  
             !Get the stress field!!!
@@ -2058,7 +2057,7 @@ CONTAINS
 
             !Compute the Kirchoff stress tensor by pushing the 2nd Piola Kirchoff stress tensor forward \tau = F.S.F^T
             CALL MatrixProduct(Fe,piolaTensor,temp,ERR,ERROR,*999)
-            CALL MatrixProduct(temp,FeT,kirchoffTensor,ERR,ERROR,*999)
+            CALL MatrixProductTranspose(temp,Fe,kirchoffTensor,ERR,ERROR,*999)
 
             !Calculate the Cauchy stress tensor
             cauchyTensor=kirchoffTensor/Je
@@ -2078,8 +2077,8 @@ CONTAINS
             ENDIF
 
             !Calculate dPhi/dZ at the gauss point, Phi is the basis function
-            CALL FINITE_ELASTICITY_GAUSS_DFDZ(DEPENDENT_INTERPOLATED_POINT,ELEMENT_NUMBER,gauss_idx,NUMBER_OF_DIMENSIONS, &
-              & NUMBER_OF_XI,DFDZ,ERR,ERROR,*999)
+            !CALL FINITE_ELASTICITY_GAUSS_DFDZ(DEPENDENT_INTERPOLATED_POINT,ELEMENT_NUMBER,gauss_idx,NUMBER_OF_DIMENSIONS, &
+            !  & NUMBER_OF_XI,DFDZ,ERR,ERROR,*999)
 
             !For membrane theory in 3D space, the final equation is multiplied by thickness. Default to unit thickness if equation set subtype is not membrane
             !!TODO Maybe have the thickness as a component in the equations set field. Yes, as we don't need a materials field for CellML constituative laws.
@@ -2095,33 +2094,71 @@ CONTAINS
               ENDIF
             ENDIF
 
-            !Now add up the residual terms
-            element_dof_idx=0
-            DO component_idx=1,NUMBER_OF_DIMENSIONS
-              DEPENDENT_COMPONENT_INTERPOLATION_TYPE=DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS(component_idx)%INTERPOLATION_TYPE
-              IF(DEPENDENT_COMPONENT_INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN !node based
-                DEPENDENT_BASIS=>DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS(component_idx)%DOMAIN%TOPOLOGY% &
-                  & ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-                NUMBER_OF_FIELD_COMPONENT_INTERPOLATION_PARAMETERS=DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
-                DO parameter_idx=1,NUMBER_OF_FIELD_COMPONENT_INTERPOLATION_PARAMETERS
-                  element_dof_idx=element_dof_idx+1
-                  DO component_idx2=1,NUMBER_OF_DIMENSIONS
-                    NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(element_dof_idx)= &
-                      & NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(element_dof_idx)+ &
-                      & GAUSS_WEIGHT*Jzxi*THICKNESS*cauchyTensor(component_idx,component_idx2)* &
-                      & DFDZ(parameter_idx,component_idx2,component_idx)
-                  ENDDO ! component_idx2 (inner component index)
-                ENDDO ! parameter_idx (residual vector loop)
-              ELSEIF(DEPENDENT_COMPONENT_INTERPOLATION_TYPE==FIELD_ELEMENT_BASED_INTERPOLATION) THEN
-                !Will probably never be used
-                CALL FlagError("Finite elasticity with element based interpolation is not implemented.",ERR,ERROR,*999)
-              ENDIF
-            ENDDO ! component_idx
+            !!Now add up the residual terms
+            !element_dof_idx=0
+            !DO component_idx=1,NUMBER_OF_DIMENSIONS
+            !  DEPENDENT_COMPONENT_INTERPOLATION_TYPE=DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS(component_idx)%INTERPOLATION_TYPE
+            !  IF(DEPENDENT_COMPONENT_INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN !node based
+            !    DEPENDENT_BASIS=>DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS(component_idx)%DOMAIN%TOPOLOGY% &
+            !      & ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
+            !    NUMBER_OF_FIELD_COMPONENT_INTERPOLATION_PARAMETERS=DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+            !    DO parameter_idx=1,NUMBER_OF_FIELD_COMPONENT_INTERPOLATION_PARAMETERS
+            !      element_dof_idx=element_dof_idx+1
+            !      DO component_idx2=1,NUMBER_OF_DIMENSIONS
+            !        NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(element_dof_idx)= &
+            !          & NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(element_dof_idx)+ &
+            !          & GAUSS_WEIGHT*Jzxi*THICKNESS*cauchyTensor(component_idx,component_idx2)* &
+            !          & DFDZ(parameter_idx,component_idx2,component_idx)
+            !      ENDDO ! component_idx2 (inner component index)
+            !    ENDDO ! parameter_idx (residual vector loop)
+            !  ELSEIF(DEPENDENT_COMPONENT_INTERPOLATION_TYPE==FIELD_ELEMENT_BASED_INTERPOLATION) THEN
+            !    !Will probably never be used
+            !    CALL FlagError("Finite elasticity with element based interpolation is not implemented.",ERR,ERROR,*999)
+            !  ENDIF
+            !ENDDO ! component_idx
 
+            !Loop over geometric dependent basis functions.
+            DO nh=1,NUMBER_OF_DIMENSIONS
+              MESH_COMPONENT_NUMBER=FIELD_VARIABLE%COMPONENTS(nh)%MESH_COMPONENT_NUMBER
+              DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(MESH_COMPONENT_NUMBER)%PTR% &
+                & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
+              COMPONENT_QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
+              DO ns=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+                !Loop over derivative directions.
+                DO mh=1,NUMBER_OF_DIMENSIONS
+                  SUM1=0.0_DP
+                  DO mi=1,NUMBER_OF_XI
+                    SUM1=SUM1+DEPENDENT_INTERPOLATED_POINT_METRICS%DXI_DX(mi,mh)* &
+                      & COMPONENT_QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(mi),gauss_idx)
+                  ENDDO !mi
+                  DPHIDZ(mh,ns,nh)=SUM1
+                ENDDO !mh
+              ENDDO !ns
+            ENDDO !nh
+            JGW=Jzxi*DEPENDENT_QUADRATURE_SCHEME%GAUSS_WEIGHTS(gauss_idx)
+            !Now add up the residual terms
+            mhs=0
+            DO mh=1,NUMBER_OF_DIMENSIONS
+              MESH_COMPONENT_NUMBER=FIELD_VARIABLE%COMPONENTS(mh)%MESH_COMPONENT_NUMBER
+              DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(MESH_COMPONENT_NUMBER)%PTR% &
+                & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
+              DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+                mhs=mhs+1
+                NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(mhs)=NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(mhs)+ &
+                  & JGW*DOT_PRODUCT(DPHIDZ(:,ms,mh),cauchyTensor(:,mh))
+              ENDDO !ms
+            ENDDO !mh
+            
             !Hydrostatic pressure component (skip for membrane problems)
             IF (EQUATIONS_SET_SUBTYPE /= EQUATIONS_SET_MEMBRANE_SUBTYPE) THEN
               HYDROSTATIC_PRESSURE_COMPONENT=DEPENDENT_FIELD%VARIABLES(var1)%NUMBER_OF_COMPONENTS
-              DEPENDENT_COMPONENT_INTERPOLATION_TYPE=DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS(component_idx)%INTERPOLATION_TYPE
+              DEPENDENT_COMPONENT_INTERPOLATION_TYPE=DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS(HYDROSTATIC_PRESSURE_COMPONENT)% &
+                & INTERPOLATION_TYPE
+              IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
+                TEMPTERM1=GAUSS_WEIGHT*(Jzxi-(Jg-DARCY_VOL_INCREASE)*Jxxi)
+              ELSE
+                TEMPTERM1=GAUSS_WEIGHT*(Jzxi-Jg*Jxxi)
+              ENDIF            
               IF(DEPENDENT_COMPONENT_INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN !node based
                 COMPONENT_BASIS=>DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS(HYDROSTATIC_PRESSURE_COMPONENT)%DOMAIN% &
                   & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
@@ -2142,16 +2179,9 @@ CONTAINS
                   ENDIF
                 ENDDO
               ELSEIF(DEPENDENT_COMPONENT_INTERPOLATION_TYPE==FIELD_ELEMENT_BASED_INTERPOLATION) THEN !element based
-                element_dof_idx=element_dof_idx+1
-                IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
-                  NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(element_dof_idx)= &
-                    & NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(element_dof_idx)+GAUSS_WEIGHT*Jxxi* &
-                    & (Je-1.0_DP-DARCY_VOL_INCREASE)
-                ELSE
-                  NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(element_dof_idx)= &
-                    & NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(element_dof_idx)+GAUSS_WEIGHT*Jxxi* &
-                    & (Je-1.0_DP)
-                ENDIF
+                mhs=mhs+1
+                NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(mhs)= &
+                  & NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(mhs)+TEMPTERM1
               ENDIF
             ENDIF
           ENDDO !gauss_idx
@@ -5285,7 +5315,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP) :: growthTensorInverse(3,3),growthTensorInverseTranspose(3,3)
+    REAL(DP) :: growthTensorInverse(3,3)
     
     ENTERS("FiniteElasticity_GaussGrowthTensor",ERR,ERROR,*999)
 
@@ -5302,12 +5332,10 @@ CONTAINS
               & gaussPointNumber,elementNumber,3,growthTensor(3,3),err,error,*999)
           ENDIF
         ENDIF
-        !Calculate inverse growth deformation tensor, Fg^-1, Jg and (Fg^-1)^T
+        !Calculate inverse growth deformation tensor, Fg^-1, Jg 
         CALL Invert(growthTensor,growthTensorInverse,Jg,err,error,*999)
-        Jg=Jg**0.5_DP
-        CALL MatrixTranspose(growthTensorInverse,growthTensorInverseTranspose,err,error,*999)
-        !Calculate elastic deformation tensor, Fe=(Fg)^-1.F
-        CALL MatrixProduct(growthTensorInverse,deformationGradientTensor,elasticDeformationGradientTensor,err,error,*999)
+        !Calculate elastic deformation tensor, Fe=F.(Fg)^-1.       
+        CALL MatrixProduct(deformationGradientTensor,growthTensorInverse,elasticDeformationGradientTensor,err,error,*999)
       ELSE
         Jg=1.0_DP
         elasticDeformationGradientTensor=deformationGradientTensor
@@ -5361,12 +5389,11 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: i
-    REAL(DP) :: deformationGradientTensorTranspose(3,3),I3
+    REAL(DP) :: I3
     
     ENTERS("FiniteElasticity_StrainTensor",ERR,ERROR,*999)
 
-    CALL MatrixTranspose(deformationGradientTensor,deformationGradientTensorTranspose,err,error,*999)
-    CALL MatrixProduct(deformationGradientTensorTranspose,deformationGradientTensor,rightCauchyDeformationTensor,err,error,*999)
+    CALL MatrixTransposeProduct(deformationGradientTensor,deformationGradientTensor,rightCauchyDeformationTensor,err,error,*999)
     CALL Invert(rightCauchyDeformationTensor,fingerDeformationTensor,I3,err,error,*999)
     Jacobian=I3**0.5_DP
 
