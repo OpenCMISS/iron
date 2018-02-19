@@ -45,11 +45,12 @@
 
 MODULE FIELDML_INPUT_ROUTINES
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE BASIS_ROUTINES
+  USE BasisAccessRoutines
   USE CMISS
   USE CONSTANTS
-  USE COMP_ENVIRONMENT
+  USE ComputationEnvironment
   USE COORDINATE_ROUTINES
   USE FIELD_ROUTINES
   USE FIELDML_API
@@ -60,6 +61,7 @@ MODULE FIELDML_INPUT_ROUTINES
   USE MESH_ROUTINES
   USE NODE_ROUTINES
   USE REGION_ROUTINES
+  USE RegionAccessRoutines
   USE STRINGS
 
 #include "macros.h"  
@@ -1310,7 +1312,7 @@ CONTAINS
         !Default to version 1 of each node derivative (value hardcoded in loop)
         VERSION_NUMBER = 1
 
-        myComputationalNodeNumber = COMPUTATIONAL_NODE_NUMBER_GET(err,error)
+        myComputationalNodeNumber = ComputationalEnvironment_NodeNumberGet(err,error)
         CALL DECOMPOSITION_MESH_COMPONENT_NUMBER_GET(FIELD%DECOMPOSITION,meshComponentNumber,err,error,*999)
         CALL DECOMPOSITION_NODE_DOMAIN_GET(FIELD%DECOMPOSITION,NODE_NUMBER,meshComponentNumber,nodeDomain,err,error,*999)
         IF(nodeDomain==myComputationalNodeNumber) THEN

@@ -42,10 +42,10 @@
 !>
 
 !> This module contains all the low-level base routines e.g., all debug, control, and low-level communication routines.
-MODULE BASE_ROUTINES
+MODULE BaseRoutines
 
-  USE CONSTANTS
-  USE KINDS
+  USE Constants
+  USE Kinds
   USE ISO_C_BINDING
   USE ISO_VARYING_STRING
   USE MACHINE_CONSTANTS 
@@ -56,124 +56,124 @@ MODULE BASE_ROUTINES
 
   !Module parameters
 
-  INTEGER(INTG), PARAMETER :: MAX_OUTPUT_LINES=500 !<Maximum number of lines that can be output \see BASE_ROUTINES::WRITE_STR
-  INTEGER(INTG), PARAMETER :: MAX_OUTPUT_WIDTH=132 !<Maximum width of output line \see BASE_ROUTINES::WRITE_STR
+  INTEGER(INTG), PARAMETER :: MAX_OUTPUT_LINES=500 !<Maximum number of lines that can be output \see BaseRoutines::WriteStr
+  INTEGER(INTG), PARAMETER :: MAX_OUTPUT_WIDTH=132 !<Maximum width of output line \see BaseRoutines::WriteStr
 
-  !> \addtogroup BASE_ROUTINES_OutputType BASE_ROUTINES::OutputType
+  !> \addtogroup BaseRoutines_OutputType BaseRoutines::OutputType
   !> \brief Output type parameter
-  !> \see BASE_ROUTINES
+  !> \see BaseRoutines
   !>@{  
-  INTEGER(INTG), PARAMETER :: GENERAL_OUTPUT_TYPE=1 !<General output type \see BASE_ROUTINES_OutputType,BASE_ROUTINES
-  INTEGER(INTG), PARAMETER :: DIAGNOSTIC_OUTPUT_TYPE=2 !<Diagnostic output type \see BASE_ROUTINES_OutputType,BASE_ROUTINES
-  INTEGER(INTG), PARAMETER :: TIMING_OUTPUT_TYPE=3 !<Timing output type \see BASE_ROUTINES_OutputType,BASE_ROUTINES
-  INTEGER(INTG), PARAMETER :: ERROR_OUTPUT_TYPE=4 !<Error output type \see BASE_ROUTINES_OutputType,BASE_ROUTINES
-  INTEGER(INTG), PARAMETER :: WARNING_OUTPUT_TYPE=5 !<Warning output type \see BASE_ROUTINES_OutputType,BASE_ROUTINES
-  INTEGER(INTG), PARAMETER :: HELP_OUTPUT_TYPE=6 !<Help output type \see BASE_ROUTINES_OutputType,BASE_ROUTINES
+  INTEGER(INTG), PARAMETER :: GENERAL_OUTPUT_TYPE=1 !<General output type \see BaseRoutines_OutputType,BaseRoutines
+  INTEGER(INTG), PARAMETER :: DIAGNOSTIC_OUTPUT_TYPE=2 !<Diagnostic output type \see BaseRoutines_OutputType,BaseRoutines
+  INTEGER(INTG), PARAMETER :: TIMING_OUTPUT_TYPE=3 !<Timing output type \see BaseRoutines_OutputType,BaseRoutines
+  INTEGER(INTG), PARAMETER :: ERROR_OUTPUT_TYPE=4 !<Error output type \see BaseRoutines_OutputType,BaseRoutines
+  INTEGER(INTG), PARAMETER :: WARNING_OUTPUT_TYPE=5 !<Warning output type \see BaseRoutines_OutputType,BaseRoutines
+  INTEGER(INTG), PARAMETER :: HELP_OUTPUT_TYPE=6 !<Help output type \see BaseRoutines_OutputType,BaseRoutines
   !>@}
 
-  !> \addtogroup BASE_ROUTINES_FileUnits BASE_ROUTINES::FileUnits
+  !> \addtogroup BaseRoutines_FileUnits BaseRoutines::FileUnits
   !> \brief File unit parameters
-  !> \see BASE_ROUTINES
+  !> \see BaseRoutines
   !>@{  
-  INTEGER(INTG), PARAMETER :: ECHO_FILE_UNIT=10 !<File unit for echo files \see BASE_ROUTINES_FileUnits,BASE_ROUTINES
-  INTEGER(INTG), PARAMETER :: DIAGNOSTICS_FILE_UNIT=11 !<File unit for diagnostic files \see BASE_ROUTINES_FileUnits,BASE_ROUTINES
-  INTEGER(INTG), PARAMETER :: TIMING_FILE_UNIT=12 !<File unit for timing files \see BASE_ROUTINES_FileUnits,BASE_ROUTINES
-  INTEGER(INTG), PARAMETER :: LEARN_FILE_UNIT=13 !<File unit for learn files \see BASE_ROUTINES_FileUnits,BASE_ROUTINES
-  INTEGER(INTG), PARAMETER :: IO1_FILE_UNIT=21 !<File unit for general IO 1 files \see BASE_ROUTINES_FileUnits,BASE_ROUTINES
-  INTEGER(INTG), PARAMETER :: IO2_FILE_UNIT=22 !<File unit for general IO 2 files \see BASE_ROUTINES_FileUnits,BASE_ROUTINES
-  INTEGER(INTG), PARAMETER :: IO3_FILE_UNIT=23 !<File unit for general IO 3 files \see BASE_ROUTINES_FileUnits,BASE_ROUTINES
-  INTEGER(INTG), PARAMETER :: IO4_FILE_UNIT=24 !<File unit for general IO 4 files \see BASE_ROUTINES_FileUnits,BASE_ROUTINES
-  INTEGER(INTG), PARAMETER :: IO5_FILE_UNIT=25 !<File unit for general IO 5 files \see BASE_ROUTINES_FileUnits,BASE_ROUTINES
-  INTEGER(INTG), PARAMETER :: TEMPORARY_FILE_UNIT=80 !<File unit for temporary files \see BASE_ROUTINES_FileUnits,BASE_ROUTINES
-  INTEGER(INTG), PARAMETER :: OPEN_COMFILE_UNIT=90 !<File unit for open command files \see BASE_ROUTINES_FileUnits,BASE_ROUTINES
-  INTEGER(INTG), PARAMETER :: START_READ_COMFILE_UNIT=90 !<First file unit for read command files \see BASE_ROUTINES_FileUnits,BASE_ROUTINES
-  INTEGER(INTG), PARAMETER :: STOP_READ_COMFILE_UNIT=99 !<Last file unit for read command files \see BASE_ROUTINES_FileUnits,BASE_ROUTINES
+  INTEGER(INTG), PARAMETER :: ECHO_FILE_UNIT=10 !<File unit for echo files \see BaseRoutines_FileUnits,BaseRoutines
+  INTEGER(INTG), PARAMETER :: DIAGNOSTICS_FILE_UNIT=11 !<File unit for diagnostic files \see BaseRoutines_FileUnits,BaseRoutines
+  INTEGER(INTG), PARAMETER :: TIMING_FILE_UNIT=12 !<File unit for timing files \see BaseRoutines_FileUnits,BaseRoutines
+  INTEGER(INTG), PARAMETER :: LEARN_FILE_UNIT=13 !<File unit for learn files \see BaseRoutines_FileUnits,BaseRoutines
+  INTEGER(INTG), PARAMETER :: IO1_FILE_UNIT=21 !<File unit for general IO 1 files \see BaseRoutines_FileUnits,BaseRoutines
+  INTEGER(INTG), PARAMETER :: IO2_FILE_UNIT=22 !<File unit for general IO 2 files \see BaseRoutines_FileUnits,BaseRoutines
+  INTEGER(INTG), PARAMETER :: IO3_FILE_UNIT=23 !<File unit for general IO 3 files \see BaseRoutines_FileUnits,BaseRoutines
+  INTEGER(INTG), PARAMETER :: IO4_FILE_UNIT=24 !<File unit for general IO 4 files \see BaseRoutines_FileUnits,BaseRoutines
+  INTEGER(INTG), PARAMETER :: IO5_FILE_UNIT=25 !<File unit for general IO 5 files \see BaseRoutines_FileUnits,BaseRoutines
+  INTEGER(INTG), PARAMETER :: TEMPORARY_FILE_UNIT=80 !<File unit for temporary files \see BaseRoutines_FileUnits,BaseRoutines
+  INTEGER(INTG), PARAMETER :: OPEN_COMFILE_UNIT=90 !<File unit for open command files \see BaseRoutines_FileUnits,BaseRoutines
+  INTEGER(INTG), PARAMETER :: START_READ_COMFILE_UNIT=90 !<First file unit for read command files \see BaseRoutines_FileUnits,BaseRoutines
+  INTEGER(INTG), PARAMETER :: STOP_READ_COMFILE_UNIT=99 !<Last file unit for read command files \see BaseRoutines_FileUnits,BaseRoutines
   !>@}
 
-  !> \addtogroup BASE_ROUTINES_DiagnosticTypes BASE_ROUTINES::DiagnosticTypes
+  !> \addtogroup BaseRoutines_DiagnosticTypes BaseRoutines::DiagnosticTypes
   !> \brief Diganostic type parameters
-  !> \see BASE_ROUTINES,OPENCMISS_DiagnosticTypes
+  !> \see BaseRoutines,OpenCMISS_DiagnosticTypes
   !>@{  
-  INTEGER(INTG), PARAMETER :: ALL_DIAG_TYPE=1 !<Type for setting diagnostic output in all routines \see BASE_ROUTINES_DiagnosticTypes,BASE_ROUTINES
-  INTEGER(INTG), PARAMETER :: IN_DIAG_TYPE=2 !<Type for setting diagnostic output in one routine \see BASE_ROUTINES_DiagnosticTypes,BASE_ROUTINES
-  INTEGER(INTG), PARAMETER :: FROM_DIAG_TYPE=3 !<Type for setting diagnostic output from one routine downwards \see BASE_ROUTINES_DiagnosticTypes,BASE_ROUTINES
+  INTEGER(INTG), PARAMETER :: ALL_DIAG_TYPE=1 !<Type for setting diagnostic output in all routines \see BaseRoutines_DiagnosticTypes,BaseRoutines
+  INTEGER(INTG), PARAMETER :: IN_DIAG_TYPE=2 !<Type for setting diagnostic output in one routine \see BaseRoutines_DiagnosticTypes,BaseRoutines
+  INTEGER(INTG), PARAMETER :: FROM_DIAG_TYPE=3 !<Type for setting diagnostic output from one routine downwards \see BaseRoutines_DiagnosticTypes,BaseRoutines
   !>@}
 
-  !> \addtogroup BASE_ROUTINES_TimingTypes BASE_ROUTINES::TimingTypes
+  !> \addtogroup BaseRoutines_TimingTypes BaseRoutines::TimingTypes
   !> \brief Timing type parameters
-  !> \see BASE_ROUTINES,OPENCMISS_TimingTypes
+  !> \see BaseRoutines,OpenCMISS_TimingTypes
   !>@{  
-  INTEGER(INTG), PARAMETER :: ALL_TIMING_TYPE=1 !<Type for setting timing output in all routines \see BASE_ROUTINES_TimingTypes,BASE_ROUTINES
-  INTEGER(INTG), PARAMETER :: IN_TIMING_TYPE=2 !<Type for setting timing output in one routine \see BASE_ROUTINES_TimingTypes,BASE_ROUTINES
-  INTEGER(INTG), PARAMETER :: FROM_TIMING_TYPE=3 !<Type for setting timing output from one routine downwards \see BASE_ROUTINES_TimingTypes,BASE_ROUTINES
+  INTEGER(INTG), PARAMETER :: ALL_TIMING_TYPE=1 !<Type for setting timing output in all routines \see BaseRoutines_TimingTypes,BaseRoutines
+  INTEGER(INTG), PARAMETER :: IN_TIMING_TYPE=2 !<Type for setting timing output in one routine \see BaseRoutines_TimingTypes,BaseRoutines
+  INTEGER(INTG), PARAMETER :: FROM_TIMING_TYPE=3 !<Type for setting timing output from one routine downwards \see BaseRoutines_TimingTypes,BaseRoutines
   !>@}
 
   !Module types
 
   !>Contains information for an item in the routine list for diagnostics or timing
-  TYPE ROUTINE_LIST_ITEM_TYPE
-    CHARACTER(LEN=63) :: NAME !<Name of the routine
-    INTEGER(INTG) :: NUMBER_OF_INVOCATIONS !<Number of times the routine has been invocted
-    REAL(SP) :: TOTAL_INCLUSIVE_CPU_TIME !<Total User CPU time spent in the routine inclusive of calls
-    REAL(SP) :: TOTAL_INCLUSIVE_SYSTEM_TIME !<Total System CPU time spent in the routine inclusive of calls
-    REAL(SP) :: TOTAL_EXCLUSIVE_CPU_TIME !<Total User CPU time spent in the routine exclusive of calls
-    REAL(SP) :: TOTAL_EXCLUSIVE_SYSTEM_TIME !<Total System CPU time spent in the routine exclusive of calls
-    TYPE(ROUTINE_LIST_ITEM_TYPE), POINTER :: NEXT_ROUTINE !<Pointer to the next routine item in the routine list
-  END TYPE ROUTINE_LIST_ITEM_TYPE
+  TYPE RoutineListItemType
+    CHARACTER(LEN=63) :: name !<Name of the routine
+    INTEGER(INTG) :: numberOfInvocations !<Number of times the routine has been invocted
+    REAL(SP) :: totalInclusiveCPUTime !<Total User CPU time spent in the routine inclusive of calls
+    REAL(SP) :: totalInclusiveSystemTime !<Total System CPU time spent in the routine inclusive of calls
+    REAL(SP) :: totalExclusiveCPUTime !<Total User CPU time spent in the routine exclusive of calls
+    REAL(SP) :: totalExclusiveSystemTime !<Total System CPU time spent in the routine exclusive of calls
+    TYPE(RoutineListItemType), POINTER :: nextRoutine !<Pointer to the next routine item in the routine list
+  END TYPE RoutineListItemType
 
   !>Contains information for the routine list for diagnostics or timing
-  TYPE ROUTINE_LIST_TYPE
-    TYPE(ROUTINE_LIST_ITEM_TYPE), POINTER :: HEAD !<A pointer to the head of the routine list.
-  END TYPE ROUTINE_LIST_TYPE
+  TYPE RoutineListType
+    TYPE(RoutineListItemType), POINTER :: head !<A pointer to the head of the routine list.
+  END TYPE RoutineListType
 
   !>Contains information for an item in the routine invocation stack
-  TYPE ROUTINE_STACK_ITEM_TYPE
-    CHARACTER(LEN=63) :: NAME !<Name of the routine
-    REAL(SP) :: INCLUSIVE_CPU_TIME !<User CPU time spent in the routine inclusive of calls 
-    REAL(SP) :: INCLUSIVE_SYSTEM_TIME !<System CPU time spent in the routine inclusive of calls 
-    REAL(SP) :: EXCLUSIVE_CPU_TIME !<User CPU time spent in the routine exclusive of calls 
-    REAL(SP) :: EXCLUSIVE_SYSTEM_TIME !<System CPU time spent in the routine exclusive of calls 
-    LOGICAL :: DIAGNOSTICS !<.TRUE. if diagnostics are active in the routine
-    LOGICAL :: TIMING !<.TRUE. if timing is active in the routine
-    TYPE(ROUTINE_LIST_ITEM_TYPE), POINTER :: ROUTINE_LIST_ITEM !<Pointer to the routine list item for diagnostics or timing
-    TYPE(ROUTINE_STACK_ITEM_TYPE), POINTER :: PREVIOUS_ROUTINE !<Pointer to the previous routine in the routine stack
-  END TYPE ROUTINE_STACK_ITEM_TYPE
+  TYPE RoutineStackItemType
+    CHARACTER(LEN=63) :: name !<Name of the routine
+    REAL(SP) :: inclusiveCPUTime !<User CPU time spent in the routine inclusive of calls 
+    REAL(SP) :: inclusiveSystemTime !<System CPU time spent in the routine inclusive of calls 
+    REAL(SP) :: exclusiveCPUTime !<User CPU time spent in the routine exclusive of calls 
+    REAL(SP) :: exclusiveSystemTime !<System CPU time spent in the routine exclusive of calls 
+    LOGICAL :: diagnostics !<.TRUE. if diagnostics are active in the routine
+    LOGICAL :: timing !<.TRUE. if timing is active in the routine
+    TYPE(RoutineListItemType), POINTER :: routineListItem !<Pointer to the routine list item for diagnostics or timing
+    TYPE(RoutineStackItemType), POINTER :: previousRoutine !<Pointer to the previous routine in the routine stack
+  END TYPE RoutineStackItemType
 
   !>Contains information for the routine invocation stack
-  TYPE ROUTINE_STACK_TYPE
-    TYPE(ROUTINE_STACK_ITEM_TYPE), POINTER :: STACK_POINTER !<Pointer to the top of the stack
-  END TYPE ROUTINE_STACK_TYPE
+  TYPE RoutineStackType
+    TYPE(RoutineStackItemType), POINTER :: stackPointer !<Pointer to the top of the stack
+  END TYPE RoutineStackType
 
   !Module variables
 
-  INTEGER(INTG), SAVE :: MY_COMPUTATIONAL_NODE_NUMBER !<The computational rank for this node
-  INTEGER(INTG), SAVE :: NUMBER_OF_COMPUTATIONAL_NODES !<The number of computational nodes
-  INTEGER(INTG), ALLOCATABLE :: CMISS_RANDOM_SEEDS(:) !<The current error handling seeds for OpenCMISS
-  LOGICAL, SAVE :: DIAGNOSTICS !<.TRUE. if diagnostic output is required in any routines.
-  LOGICAL, SAVE :: DIAGNOSTICS1 !<.TRUE. if level 1 diagnostic output is active in the current routine
-  LOGICAL, SAVE :: DIAGNOSTICS2 !<.TRUE. if level 2 diagnostic output is active in the current routine
-  LOGICAL, SAVE :: DIAGNOSTICS3 !<.TRUE. if level 3 diagnostic output is active in the current routine
-  LOGICAL, SAVE :: DIAGNOSTICS4 !<.TRUE. if level 4 diagnostic output is active in the current routine
-  LOGICAL, SAVE :: DIAGNOSTICS5 !<.TRUE. if level 5 diagnostic output is active in the current routine
-  LOGICAL, SAVE :: DIAGNOSTICS_LEVEL1 !<.TRUE. if the user has requested level 1 diagnostic output to be active
-  LOGICAL, SAVE :: DIAGNOSTICS_LEVEL2 !<.TRUE. if the user has requested level 2 diagnostic output to be active
-  LOGICAL, SAVE :: DIAGNOSTICS_LEVEL3 !<.TRUE. if the user has requested level 3 diagnostic output to be active
-  LOGICAL, SAVE :: DIAGNOSTICS_LEVEL4 !<.TRUE. if the user has requested level 4 diagnostic output to be active
-  LOGICAL, SAVE :: DIAGNOSTICS_LEVEL5 !<.TRUE. if the user has requested level 5 diagnostic output to be active
-  LOGICAL, SAVE :: DIAG_ALL_SUBROUTINES !<.TRUE. if diagnostic output is required in all routines
-  LOGICAL, SAVE :: DIAG_FROM_SUBROUTINE !<.TRUE. if diagnostic output is required from a particular routine
-  LOGICAL, SAVE :: DIAG_FILE_OPEN !<.TRUE. if the diagnostic output file is open
-  LOGICAL, SAVE :: DIAG_OR_TIMING !<.TRUE. if diagnostics or time is .TRUE.
-  LOGICAL, SAVE :: ECHO_OUTPUT !<.TRUE. if all output is to be echoed to the echo file
-  LOGICAL, SAVE :: TIMING !<.TRUE. if timing output is required in any routines.
-  LOGICAL, SAVE :: TIMING_SUMMARY !<.TRUE. if timing output will be summary form via a TIMING_SUMMARY_OUTPUT call otherwise timing will be output for routines when the routine exits \see BASE_ROUTINES::TIMING_SUMMARY_OUTPUT
-  LOGICAL, SAVE :: TIMING_ALL_SUBROUTINES !<.TRUE. if timing output is required in all routines
-  LOGICAL, SAVE :: TIMING_FROM_SUBROUTINE !<.TRUE. if timing output is required from a particular routine
-  LOGICAL, SAVE :: TIMING_FILE_OPEN !<.TRUE. if the timing output file is open
-  CHARACTER(LEN=MAXSTRLEN), SAVE :: OP_STRING(MAX_OUTPUT_LINES) !<The array of lines to output
-  TYPE(ROUTINE_LIST_TYPE), SAVE :: DIAG_ROUTINE_LIST !<The list of routines for which diagnostic output is required
-  TYPE(ROUTINE_LIST_TYPE), SAVE :: TIMING_ROUTINE_LIST !<The list of routines for which timing output is required
-  TYPE(ROUTINE_STACK_TYPE), SAVE :: ROUTINE_STACK !<The routime invocation stack
+  INTEGER(INTG), SAVE :: myComputationalNodeNumber !<The computational rank for this node
+  INTEGER(INTG), SAVE :: numberOfComputationalNodes !<The number of computational nodes
+  INTEGER(INTG), ALLOCATABLE :: cmissRandomSeeds(:) !<The current error handling seeds for OpenCMISS
+  LOGICAL, SAVE :: diagnostics !<.TRUE. if diagnostic output is required in any routines.
+  LOGICAL, SAVE :: diagnostics1 !<.TRUE. if level 1 diagnostic output is active in the current routine
+  LOGICAL, SAVE :: diagnostics2 !<.TRUE. if level 2 diagnostic output is active in the current routine
+  LOGICAL, SAVE :: diagnostics3 !<.TRUE. if level 3 diagnostic output is active in the current routine
+  LOGICAL, SAVE :: diagnostics4 !<.TRUE. if level 4 diagnostic output is active in the current routine
+  LOGICAL, SAVE :: diagnostics5 !<.TRUE. if level 5 diagnostic output is active in the current routine
+  LOGICAL, SAVE :: diagnosticsLevel1 !<.TRUE. if the user has requested level 1 diagnostic output to be active
+  LOGICAL, SAVE :: diagnosticsLevel2 !<.TRUE. if the user has requested level 2 diagnostic output to be active
+  LOGICAL, SAVE :: diagnosticsLevel3 !<.TRUE. if the user has requested level 3 diagnostic output to be active
+  LOGICAL, SAVE :: diagnosticsLevel4 !<.TRUE. if the user has requested level 4 diagnostic output to be active
+  LOGICAL, SAVE :: diagnosticsLevel5 !<.TRUE. if the user has requested level 5 diagnostic output to be active
+  LOGICAL, SAVE :: diagAllSubroutines !<.TRUE. if diagnostic output is required in all routines
+  LOGICAL, SAVE :: diagFromSubroutine !<.TRUE. if diagnostic output is required from a particular routine
+  LOGICAL, SAVE :: diagFileOpen !<.TRUE. if the diagnostic output file is open
+  LOGICAL, SAVE :: diagOrTiming !<.TRUE. if diagnostics or time is .TRUE.
+  LOGICAL, SAVE :: echoOutput !<.TRUE. if all output is to be echoed to the echo file
+  LOGICAL, SAVE :: timing !<.TRUE. if timing output is required in any routines.
+  LOGICAL, SAVE :: timingSummary !<.TRUE. if timing output will be summary form via a TimingSummaryOutput call otherwise timing will be output for routines when the routine exits \see BaseRoutines::TimingSummaryOutput
+  LOGICAL, SAVE :: timingAllSubroutines !<.TRUE. if timing output is required in all routines
+  LOGICAL, SAVE :: timingFromSubroutine !<.TRUE. if timing output is required from a particular routine
+  LOGICAL, SAVE :: timingFileOpen !<.TRUE. if the timing output file is open
+  CHARACTER(LEN=MAXSTRLEN), SAVE :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
+  TYPE(RoutineListType), SAVE :: diagRoutineList !<The list of routines for which diagnostic output is required
+  TYPE(RoutineListType), SAVE :: timingRoutineList !<The list of routines for which timing output is required
+  TYPE(RoutineStackType), SAVE :: routineStack !<The routime invocation stack
 
   !Interfaces
 
@@ -182,117 +182,53 @@ MODULE BASE_ROUTINES
 !!!!NOTE: This module needs to call the c cputime function directly in order to avoid a circular module loop when timer uses
 !!!!      base_routines.
 
-    SUBROUTINE CPUTIMER(RETURN_TIME, TIME_TYPE, ERR, CERROR) BIND(C,NAME="CPUTimer")
+    SUBROUTINE CPUTimer(returnTime, timeType, err, cError) BIND(C,NAME="CPUTimer")
       USE ISO_C_BINDING
-      REAL(C_DOUBLE), INTENT(OUT) :: RETURN_TIME
-      INTEGER(C_INT), INTENT(IN) :: TIME_TYPE
-      INTEGER(C_INT), INTENT(OUT) :: ERR
-      CHARACTER(C_CHAR), INTENT(OUT) :: CERROR(*)
-    END SUBROUTINE CPUTIMER
+      REAL(C_DOUBLE), INTENT(OUT) :: returnTime
+      INTEGER(C_INT), INTENT(IN) :: timeType
+      INTEGER(C_INT), INTENT(OUT) :: err
+      CHARACTER(C_CHAR), INTENT(OUT) :: cError(*)
+    END SUBROUTINE CPUTimer
 
   END INTERFACE
 
-  INTERFACE BaseRoutinesFinalise
-    MODULE PROCEDURE BASE_ROUTINES_FINALISE
-  END INTERFACE BaseRoutinesFinalise
-
-  INTERFACE BaseRoutinesInitialise
-    MODULE PROCEDURE BASE_ROUTINES_INITIALISE
-  END INTERFACE BaseRoutinesInitialise
-
-  INTERFACE ComputationalNodeNumbersSet
-    MODULE PROCEDURE COMPUTATIONAL_NODE_NUMBERS_SET
-  END INTERFACE ComputationalNodeNumbersSet
-
-  INTERFACE DiagnosticsSetOn
-    MODULE PROCEDURE DIAGNOSTICS_SET_ON
-  END INTERFACE DiagnosticsSetOn
-
-  INTERFACE DiagnosticsSetOff
-    MODULE PROCEDURE DIAGNOSTICS_SET_OFF
-  END INTERFACE DiagnosticsSetOff
-
-  INTERFACE EXTRACT_ERROR_MESSAGE
-    MODULE PROCEDURE EXTRACT_ERROR_MESSAGE_C
-    MODULE PROCEDURE EXTRACT_ERROR_MESSAGE_VS
-  END INTERFACE EXTRACT_ERROR_MESSAGE
-
+  !>Extracts the error message part of an error string
   INTERFACE ExtractErrorMessage
-    MODULE PROCEDURE EXTRACT_ERROR_MESSAGE_C
-    MODULE PROCEDURE EXTRACT_ERROR_MESSAGE_VS
+    MODULE PROCEDURE ExtractErrorMessageC
+    MODULE PROCEDURE ExtractErrorMessageVS
   END INTERFACE ExtractErrorMessage
 
-  !>Flags an error condition \see BASE_ROUTINES
+  !>Extracts the error stack part of the error string
+  INTERFACE ExtractErrorStack
+    MODULE PROCEDURE ExtractErrorStackC
+    MODULE PROCEDURE ExtractErrorStackVS
+  END INTERFACE ExtractErrorStack
+
+  !>Flags an error condition 
   INTERFACE FLAG_ERROR
-    MODULE PROCEDURE FLAG_ERROR_C
-    MODULE PROCEDURE FLAG_ERROR_VS
+    MODULE PROCEDURE FlagErrorC
+    MODULE PROCEDURE FlagErrorVS
   END INTERFACE FLAG_ERROR
   
-  !>Flags a warning to the user \see BASE_ROUTINES
+  !>Flags an error condition 
+  INTERFACE FlagError
+    MODULE PROCEDURE FlagErrorC
+    MODULE PROCEDURE FlagErrorVS
+  END INTERFACE FlagError
+  
+  !>Flags a warning to the user
   INTERFACE FLAG_WARNING
-    MODULE PROCEDURE FLAG_WARNING_C
-    MODULE PROCEDURE FLAG_WARNING_VS
+    MODULE PROCEDURE FlagWarningC
+    MODULE PROCEDURE FlagWarningVS
   END INTERFACE FLAG_WARNING
 
-  ! Allow using FlagError and FlagWarning etc, as we shift to the new code style
-
-  !>Flags an error condition \see BASE_ROUTINES
-  INTERFACE FlagError
-    MODULE PROCEDURE FLAG_ERROR_C
-    MODULE PROCEDURE FLAG_ERROR_VS
-  END INTERFACE FlagError
-
-  !>Flags a warning to the user \see BASE_ROUTINES
+  !>Flags a warning to the user
   INTERFACE FlagWarning
-    MODULE PROCEDURE FLAG_WARNING_C
-    MODULE PROCEDURE FLAG_WARNING_VS
+    MODULE PROCEDURE FlagWarningC
+    MODULE PROCEDURE FlagWarningVS
   END INTERFACE FlagWarning
 
-  INTERFACE OutputSetOn
-    MODULE PROCEDURE OUTPUT_SET_ON
-  END INTERFACE OutputSetOn
-
-  INTERFACE OutputSetOff
-    MODULE PROCEDURE OUTPUT_SET_OFF
-  END INTERFACE OutputSetOff
-
-  INTERFACE RandomSeedsGet
-    MODULE PROCEDURE RANDOM_SEEDS_GET
-  END INTERFACE RandomSeedsGet
-
-  INTERFACE RandomSeedsSizeGet
-    MODULE PROCEDURE RANDOM_SEEDS_SIZE_GET
-  END INTERFACE RandomSeedsSizeGet
-
-  INTERFACE RandomSeedsSet
-    MODULE PROCEDURE RANDOM_SEEDS_SET
-  END INTERFACE RandomSeedsSet
-
-  INTERFACE TimingSetOn
-    MODULE PROCEDURE TIMING_SET_ON
-  END INTERFACE TimingSetOn
-
-  INTERFACE TimingSetOff
-    MODULE PROCEDURE TIMING_SET_OFF
-  END INTERFACE TimingSetOff
-
-  INTERFACE TimingSummaryOutput
-    MODULE PROCEDURE TIMING_SUMMARY_OUTPUT
-  END INTERFACE TimingSummaryOutput
-
-  !>Flags a warning to the user \see BASE_ROUTINES
-  INTERFACE WRITE_ERROR
-    MODULE PROCEDURE WriteError
-  END INTERFACE WRITE_ERROR
-
-  !>Flags a warning to the user \see BASE_ROUTINES
-  INTERFACE WriteStr
-    MODULE PROCEDURE WRITE_STR
-  END INTERFACE WriteStr
-
   PUBLIC GENERAL_OUTPUT_TYPE,DIAGNOSTIC_OUTPUT_TYPE,TIMING_OUTPUT_TYPE,ERROR_OUTPUT_TYPE,HELP_OUTPUT_TYPE
-
-  PUBLIC DIAGNOSTICS1,DIAGNOSTICS2,DIAGNOSTICS3,DIAGNOSTICS4,DIAGNOSTICS5
 
   PUBLIC ALL_DIAG_TYPE,IN_DIAG_TYPE,FROM_DIAG_TYPE
 
@@ -302,54 +238,38 @@ MODULE BASE_ROUTINES
 
   PUBLIC LEARN_FILE_UNIT,IO1_FILE_UNIT,IO2_FILE_UNIT,IO3_FILE_UNIT,IO4_FILE_UNIT,IO5_FILE_UNIT
 
-  PUBLIC CMISS_RANDOM_SEEDS
-  
-  PUBLIC OP_STRING
+  PUBLIC diagnostics1,diagnostics2,diagnostics3,diagnostics4,diagnostics5
 
-  PUBLIC BASE_ROUTINES_FINALISE,BASE_ROUTINES_INITIALISE
+  PUBLIC cmissRandomSeeds
+  
+  PUBLIC outputString
 
   PUBLIC BaseRoutinesFinalise,BaseRoutinesInitialise
-  
-  PUBLIC COMPUTATIONAL_NODE_NUMBERS_SET
 
   PUBLIC ComputationalNodeNumbersSet
 
-  PUBLIC DIAGNOSTICS_SET_ON,DIAGNOSTICS_SET_OFF
-
   PUBLIC DiagnosticsSetOn,DiagnosticsSetOff
 
-  PUBLIC ENTERS,ERRORS,EXITS
-
-  PUBLIC EXTRACT_ERROR_MESSAGE
+  PUBLIC Enters,Errors,Exits
 
   PUBLIC ExtractErrorMessage
+  
+  PUBLIC ExtractErrorStack
   
   PUBLIC FLAG_ERROR,FLAG_WARNING
 
   PUBLIC FlagError,FlagWarning
   
-  PUBLIC OUTPUT_SET_OFF,OUTPUT_SET_ON
-
-  PUBLIC OutputSetOn,OutputSetOff
-
-  PUBLIC RANDOM_SEEDS_GET,RANDOM_SEEDS_SIZE_GET,RANDOM_SEEDS_SET
+  PUBLIC OutputSetOff,OutputSetOn
 
   PUBLIC RandomSeedsGet,RandomSeedsSizeGet,RandomSeedsSet
-
-  PUBLIC TIMING_SET_ON,TIMING_SET_OFF
   
   PUBLIC TimingSetOn,TimingSetOff
   
-  PUBLIC TIMING_SUMMARY_OUTPUT
-
   PUBLIC TimingSummaryOutput
    
-  PUBLIC WRITE_ERROR
-
   PUBLIC WriteError
   
-  PUBLIC WRITE_STR
-
   PUBLIC WriteStr
 
 CONTAINS
@@ -358,109 +278,107 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Records the entry into the named procedure and initialises the error code \see BASE_ROUTINES::ENTERS
-  SUBROUTINE ENTERS(NAME,ERR,ERROR,*)
+  !>Records the entry into the named procedure and initialises the error code \see BaseRoutines::EXITS
+  SUBROUTINE Enters(name,err,error,*)
 
     !Argument variables
-    CHARACTER(LEN=*), INTENT(IN) :: NAME !<The name of the routine being entered
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    CHARACTER(LEN=*), INTENT(IN) :: name !<The name of the routine being entered
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    CHARACTER(C_CHAR) :: CERROR(MAXSTRLEN)
-    REAL(DP) :: ENTERS_CPU_TIME,ENTERS_SYSTEM_TIME
-    LOGICAL :: FINISHED
-    TYPE(ROUTINE_LIST_ITEM_TYPE), POINTER :: LIST_ROUTINE_PTR
-    TYPE(ROUTINE_STACK_ITEM_TYPE), POINTER :: NEW_ROUTINE_PTR,ROUTINE_PTR
+    CHARACTER(C_CHAR) :: cError(MAXSTRLEN)
+    REAL(DP) :: entersCPUTime,entersSystemTime
+    LOGICAL :: finished
+    TYPE(RoutineListItemType), POINTER :: listRoutinePtr
+    TYPE(RoutineStackItemType), POINTER :: newRoutinePtr,routinePtr
 
-    IF(DIAG_OR_TIMING) THEN
+    IF(diagOrTiming) THEN
       !$OMP CRITICAL(ENTERS_1)
-      ALLOCATE(NEW_ROUTINE_PTR,STAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not allocate new routine stack item.",ERR,ERROR,*999)
-      NEW_ROUTINE_PTR%DIAGNOSTICS=.FALSE.
-      NEW_ROUTINE_PTR%TIMING=.FALSE.
-      NEW_ROUTINE_PTR%NAME=NAME(1:LEN_TRIM(NAME))
-      IF(ASSOCIATED(ROUTINE_STACK%STACK_POINTER)) THEN
-        NEW_ROUTINE_PTR%PREVIOUS_ROUTINE=>ROUTINE_STACK%STACK_POINTER
-        ROUTINE_STACK%STACK_POINTER=>NEW_ROUTINE_PTR
+      ALLOCATE(newRoutinePtr,STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate new routine stack item.",err,error,*999)
+      newRoutinePtr%diagnostics=.FALSE.
+      newRoutinePtr%timing=.FALSE.
+      newRoutinePtr%name=name(1:LEN_TRIM(name))
+      IF(ASSOCIATED(routineStack%stackPointer)) THEN
+        newRoutinePtr%previousRoutine=>routineStack%stackPointer
+        routineStack%stackPointer=>newRoutinePtr
       ELSE
-        NULLIFY(NEW_ROUTINE_PTR%PREVIOUS_ROUTINE)
-        ROUTINE_STACK%STACK_POINTER=>NEW_ROUTINE_PTR
+        NULLIFY(newRoutinePtr%previousRoutine)
+        routineStack%stackPointer=>newRoutinePtr
       ENDIF
-      ROUTINE_PTR=>ROUTINE_STACK%STACK_POINTER
-      NULLIFY(ROUTINE_PTR%ROUTINE_LIST_ITEM)
-      IF(DIAGNOSTICS) THEN
-        IF(DIAG_ALL_SUBROUTINES) THEN !turn diagnostics on in all subroutines
-          ROUTINE_PTR%DIAGNOSTICS=.TRUE.
+      routinePtr=>routineStack%stackPointer
+      NULLIFY(routinePtr%routineListItem)
+      IF(diagnostics) THEN
+        IF(diagAllSubroutines) THEN !turn diagnostics on in all subroutines
+          routinePtr%diagnostics=.TRUE.
         ELSE !diagnostics on in selected subroutines
-          FINISHED=.FALSE.
-          LIST_ROUTINE_PTR=>DIAG_ROUTINE_LIST%HEAD
-          DO WHILE(ASSOCIATED(LIST_ROUTINE_PTR).AND..NOT.FINISHED)
-            IF(LIST_ROUTINE_PTR%NAME(1:LEN_TRIM(LIST_ROUTINE_PTR%NAME))== &
-                & ROUTINE_PTR%NAME(1:LEN_TRIM(ROUTINE_PTR%NAME))) THEN
-              ROUTINE_PTR%DIAGNOSTICS=.TRUE.
-              ROUTINE_PTR%ROUTINE_LIST_ITEM=>LIST_ROUTINE_PTR
-              FINISHED=.TRUE.
+          finished=.FALSE.
+          listRoutinePtr=>diagRoutineList%head
+          DO WHILE(ASSOCIATED(listRoutinePtr).AND..NOT.finished)
+            IF(listRoutinePtr%name(1:LEN_TRIM(listRoutinePtr%name))==routinePtr%name(1:LEN_TRIM(routinePtr%name))) THEN
+              routinePtr%diagnostics=.TRUE.
+              routinePtr%routineListItem=>listRoutinePtr
+              finished=.TRUE.
             ELSE
-              LIST_ROUTINE_PTR=>LIST_ROUTINE_PTR%NEXT_ROUTINE
+              listRoutinePtr=>listRoutinePtr%nextRoutine
             ENDIF
           ENDDO
-          IF(DIAG_FROM_SUBROUTINE) THEN
-            IF(ASSOCIATED(ROUTINE_PTR%PREVIOUS_ROUTINE)) THEN
-              IF(ROUTINE_PTR%PREVIOUS_ROUTINE%DIAGNOSTICS) ROUTINE_PTR%DIAGNOSTICS=.TRUE.
+          IF(diagFromSubroutine) THEN
+            IF(ASSOCIATED(routinePtr%previousRoutine)) THEN
+              IF(routinePtr%previousRoutine%diagnostics) routinePtr%diagnostics=.TRUE.
             ENDIF
           ENDIF
         ENDIF
-        IF(ROUTINE_PTR%DIAGNOSTICS) THEN
-          DIAGNOSTICS1=DIAGNOSTICS_LEVEL1
-          DIAGNOSTICS2=DIAGNOSTICS_LEVEL2
-          DIAGNOSTICS3=DIAGNOSTICS_LEVEL3
-          DIAGNOSTICS4=DIAGNOSTICS_LEVEL4
-          DIAGNOSTICS5=DIAGNOSTICS_LEVEL5
+        IF(routinePtr%diagnostics) THEN
+          diagnostics1=diagnosticsLevel1
+          diagnostics2=diagnosticsLevel2
+          diagnostics3=diagnosticsLevel3
+          diagnostics4=diagnosticsLevel4
+          diagnostics5=diagnosticsLevel5
         ELSE
-          DIAGNOSTICS1=.FALSE.
-          DIAGNOSTICS2=.FALSE.
-          DIAGNOSTICS3=.FALSE.
-          DIAGNOSTICS4=.FALSE.
-          DIAGNOSTICS5=.FALSE.
+          diagnostics1=.FALSE.
+          diagnostics2=.FALSE.
+          diagnostics3=.FALSE.
+          diagnostics4=.FALSE.
+          diagnostics5=.FALSE.
         ENDIF
-        IF(ROUTINE_PTR%DIAGNOSTICS) THEN
-          WRITE(OP_STRING,'("*** Enters: ",A)') NAME(1:LEN_TRIM(NAME))
-          CALL WRITE_STR(DIAGNOSTIC_OUTPUT_TYPE,ERR,ERROR,*999)
-        ELSE IF(ASSOCIATED(ROUTINE_PTR%PREVIOUS_ROUTINE)) THEN
+        IF(routinePtr%diagnostics) THEN
+          WRITE(outputString,'("*** Enters: ",A)') name(1:LEN_TRIM(name))
+          CALL WriteStr(DIAGNOSTIC_OUTPUT_TYPE,err,error,*999)
+        ELSE IF(ASSOCIATED(routinePtr%previousRoutine)) THEN
           !CPB 16/05/2007 Only show the calls if we have level 3 diagnostics or higher
-          IF(DIAGNOSTICS3) THEN
-            IF(ROUTINE_PTR%PREVIOUS_ROUTINE%DIAGNOSTICS) THEN
-              WRITE(OP_STRING,'("*** Calls : ",A)') NAME(1:LEN_TRIM(NAME))
-              CALL WRITE_STR(DIAGNOSTIC_OUTPUT_TYPE,ERR,ERROR,*999)
+          IF(diagnostics3) THEN
+            IF(routinePtr%previousRoutine%diagnostics) THEN
+              WRITE(outputString,'("*** Calls : ",A)') name(1:LEN_TRIM(name))
+              CALL WriteStr(DIAGNOSTIC_OUTPUT_TYPE,err,error,*999)
             ENDIF
           ENDIF
         ENDIF
       ENDIF
-      IF(TIMING) THEN
-        CALL CPUTIMER(ENTERS_CPU_TIME,1,ERR,CERROR)
-        CALL CPUTIMER(ENTERS_SYSTEM_TIME,2,ERR,CERROR)
-        ROUTINE_PTR%INCLUSIVE_CPU_TIME=REAL(ENTERS_CPU_TIME,SP)
-        ROUTINE_PTR%INCLUSIVE_SYSTEM_TIME=REAL(ENTERS_SYSTEM_TIME,SP)
-        ROUTINE_PTR%EXCLUSIVE_CPU_TIME=0.0_SP
-        ROUTINE_PTR%EXCLUSIVE_SYSTEM_TIME=0.0_SP
-        IF(TIMING_ALL_SUBROUTINES) THEN
-          ROUTINE_PTR%TIMING=.TRUE.
+      IF(timing) THEN
+        CALL CPUTimer(entersCPUTime,1,ERR,cError)
+        CALL CPUTimer(entersSystemTime,2,ERR,cError)
+        routinePtr%inclusiveCPUTime=REAL(entersCPUTime,SP)
+        routinePtr%inclusiveSystemTime=REAL(entersSystemTime,SP)
+        routinePtr%exclusiveCPUTime=0.0_SP
+        routinePtr%exclusiveSystemTime=0.0_SP
+        IF(timingAllSubroutines) THEN
+          routinePtr%timing=.TRUE.
         ELSE
-          FINISHED=.FALSE.
-          LIST_ROUTINE_PTR=>TIMING_ROUTINE_LIST%HEAD
-          DO WHILE(ASSOCIATED(LIST_ROUTINE_PTR).AND..NOT.FINISHED)
-            IF(LIST_ROUTINE_PTR%NAME(1:LEN_TRIM(LIST_ROUTINE_PTR%NAME))== &
-                & ROUTINE_PTR%NAME(1:LEN_TRIM(ROUTINE_PTR%NAME))) THEN
-              ROUTINE_PTR%TIMING=.TRUE.
-              ROUTINE_PTR%ROUTINE_LIST_ITEM=>LIST_ROUTINE_PTR
-              FINISHED=.TRUE.
+          finished=.FALSE.
+          listRoutinePtr=>timingRoutineList%head
+          DO WHILE(ASSOCIATED(listRoutinePtr).AND..NOT.finished)
+            IF(listRoutinePtr%name(1:LEN_TRIM(listRoutinePtr%name))==routinePtr%name(1:LEN_TRIM(routinePtr%name))) THEN
+              routinePtr%timing=.TRUE.
+              routinePtr%routineListItem=>listRoutinePtr
+              finished=.TRUE.
             ELSE
-              LIST_ROUTINE_PTR=>LIST_ROUTINE_PTR%NEXT_ROUTINE
+              listRoutinePtr=>listRoutinePtr%nextRoutine
             ENDIF
           ENDDO
-          IF(TIMING_FROM_SUBROUTINE) THEN
-            IF(ASSOCIATED(ROUTINE_PTR%PREVIOUS_ROUTINE)) THEN
-              IF(ROUTINE_PTR%PREVIOUS_ROUTINE%TIMING) ROUTINE_PTR%TIMING=.TRUE.
+          IF(timingFromSubroutine) THEN
+            IF(ASSOCIATED(routinePtr%previousRoutine)) THEN
+              IF(routinePtr%previousRoutine%timing) routinePtr%timing=.TRUE.
             ENDIF
           ENDIF
         ENDIF
@@ -470,139 +388,141 @@ CONTAINS
 
     RETURN
 999 RETURN 1
-  END SUBROUTINE ENTERS
+    
+  END SUBROUTINE Enters
 
   !
   !================================================================================================================================
   !
 
   !>Records the exiting error of the subroutine 
-  SUBROUTINE ERRORS(NAME,ERR,ERROR)
+  SUBROUTINE Errors(name,err,error)
 
     !Argument variables
-    CHARACTER(LEN=*), INTENT(IN) :: NAME !<The name of the routine with an error condition
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(INOUT) :: ERROR !<The error string
+    CHARACTER(LEN=*), INTENT(IN) :: name !<The name of the routine with an error condition
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(INOUT) :: error !<The error string
     !Local variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
  
-    IF(ERR==0) ERR=1
+    IF(err==0) err=1
     !CPB 20/02/07 aix compiler does not like varying strings so split the concatenate statement up into two statements
-    LOCAL_ERROR=ERROR//ERROR_SEPARATOR_CONSTANT
-    ERROR=LOCAL_ERROR//NAME(1:LEN_TRIM(NAME))
+    localError=error//ERROR_SEPARATOR_CONSTANT
+    error=localError//name(1:LEN_TRIM(name))
 
     RETURN
 
-  END SUBROUTINE ERRORS
+  END SUBROUTINE Errors
 
   !
   !================================================================================================================================
   !
 
-  !>Records the exit out of the named procedure \see BASE_ROUTINES::ENTERS
-  SUBROUTINE EXITS(NAME)
+  !>Records the exit out of the named procedure \see BaseRoutines::ENTERS
+  SUBROUTINE Exits(name)
 
     !Argument variables
-    CHARACTER(LEN=*), INTENT(IN) :: NAME !<The name of the routine exiting
+    CHARACTER(LEN=*), INTENT(IN) :: name !<The name of the routine exiting
     !Local variables
-    CHARACTER(C_CHAR) :: CERROR(MAXSTRLEN)
-    INTEGER(INTG) :: ERR
-    REAL(DP) :: EXITS_CPU_TIME,EXITS_SYSTEM_TIME
-    TYPE(VARYING_STRING) :: ERROR
-    TYPE(ROUTINE_STACK_ITEM_TYPE), POINTER :: PREVIOUS_ROUTINE_PTR,ROUTINE_PTR
+    CHARACTER(C_CHAR) :: cError(MAXSTRLEN)
+    INTEGER(INTG) :: err
+    REAL(DP) :: exitsCPUTime,exitsSystemTime
+    TYPE(VARYING_STRING) :: error
+    TYPE(RoutineStackItemType), POINTER :: previousRoutinePtr,routinePtr
 
-    IF(DIAG_OR_TIMING) THEN
+    IF(diagOrTiming) THEN
       !$OMP CRITICAL(EXITS_1)
-      ROUTINE_PTR=>ROUTINE_STACK%STACK_POINTER
-      IF(ASSOCIATED(ROUTINE_PTR)) THEN
-        PREVIOUS_ROUTINE_PTR=>ROUTINE_PTR%PREVIOUS_ROUTINE
-        IF(DIAGNOSTICS) THEN
-          IF(ROUTINE_PTR%DIAGNOSTICS) THEN
-            WRITE(OP_STRING,'("*** Exits : ",A)') NAME(1:LEN_TRIM(NAME))
-            CALL WRITE_STR(DIAGNOSTIC_OUTPUT_TYPE,ERR,ERROR,*999)
+      routinePtr=>routineStack%stackPointer
+      IF(ASSOCIATED(routinePtr)) THEN
+        previousRoutinePtr=>routinePtr%previousRoutine
+        IF(diagnostics) THEN
+          IF(routinePtr%diagnostics) THEN
+            WRITE(outputString,'("*** Exits : ",A)') name(1:LEN_TRIM(name))
+            CALL WriteStr(DIAGNOSTIC_OUTPUT_TYPE,err,error,*999)
           ENDIF
-          IF(ASSOCIATED(PREVIOUS_ROUTINE_PTR)) THEN
-            IF(PREVIOUS_ROUTINE_PTR%DIAGNOSTICS) THEN
-              DIAGNOSTICS1=DIAGNOSTICS_LEVEL1
-              DIAGNOSTICS2=DIAGNOSTICS_LEVEL2
-              DIAGNOSTICS3=DIAGNOSTICS_LEVEL3
-              DIAGNOSTICS4=DIAGNOSTICS_LEVEL4
-              DIAGNOSTICS5=DIAGNOSTICS_LEVEL5
+          IF(ASSOCIATED(previousRoutinePtr)) THEN
+            IF(previousRoutinePtr%diagnostics) THEN
+              diagnostics1=diagnosticsLevel1
+              diagnostics2=diagnosticsLevel2
+              diagnostics3=diagnosticsLevel3
+              diagnostics4=diagnosticsLevel4
+              diagnostics5=diagnosticsLevel5
             ELSE
-              DIAGNOSTICS1=.FALSE.
-              DIAGNOSTICS2=.FALSE.
-              DIAGNOSTICS3=.FALSE.
-              DIAGNOSTICS4=.FALSE.
-              DIAGNOSTICS5=.FALSE.
+              diagnostics1=.FALSE.
+              diagnostics2=.FALSE.
+              diagnostics3=.FALSE.
+              diagnostics4=.FALSE.
+              diagnostics5=.FALSE.
             ENDIF
           ENDIF
         ENDIF
 
-        IF(TIMING) THEN
-          CALL CPUTIMER(EXITS_CPU_TIME,1,ERR,CERROR)
-          CALL CPUTIMER(EXITS_SYSTEM_TIME,2,ERR,CERROR)
-          ROUTINE_PTR%INCLUSIVE_CPU_TIME=ABS(REAL(EXITS_CPU_TIME,SP)-ROUTINE_PTR%INCLUSIVE_CPU_TIME)
-          ROUTINE_PTR%INCLUSIVE_SYSTEM_TIME=ABS(REAL(EXITS_SYSTEM_TIME,SP)-ROUTINE_PTR%INCLUSIVE_SYSTEM_TIME)
-          IF(ASSOCIATED(PREVIOUS_ROUTINE_PTR)) THEN
-            PREVIOUS_ROUTINE_PTR%EXCLUSIVE_CPU_TIME=PREVIOUS_ROUTINE_PTR%EXCLUSIVE_CPU_TIME+ROUTINE_PTR%INCLUSIVE_CPU_TIME
-            PREVIOUS_ROUTINE_PTR%EXCLUSIVE_SYSTEM_TIME=PREVIOUS_ROUTINE_PTR%EXCLUSIVE_SYSTEM_TIME+ROUTINE_PTR%INCLUSIVE_SYSTEM_TIME
+        IF(timing) THEN
+          CALL CPUTimer(exitsCPUTime,1,ERR,cError)
+          CALL CPUTimer(exitsSystemTime,2,ERR,cError)
+          routinePtr%inclusiveCPUTime=ABS(REAL(exitsCPUTime,SP)-routinePtr%inclusiveCPUTime)
+          routinePtr%inclusiveSystemTime=ABS(REAL(exitsSystemTime,SP)-routinePtr%inclusiveSystemTime)
+          IF(ASSOCIATED(previousRoutinePtr)) THEN
+            previousRoutinePtr%exclusiveCPUTime=previousRoutinePtr%exclusiveCPUTime+routinePtr%inclusiveCPUTime
+            previousRoutinePtr%exclusiveSystemTime=previousRoutinePtr%exclusiveSystemTime+routinePtr%inclusiveSystemTime
           ENDIF
-          IF(ASSOCIATED(ROUTINE_PTR%ROUTINE_LIST_ITEM)) THEN
-            ROUTINE_PTR%ROUTINE_LIST_ITEM%NUMBER_OF_INVOCATIONS=ROUTINE_PTR%ROUTINE_LIST_ITEM%NUMBER_OF_INVOCATIONS+1
-            ROUTINE_PTR%ROUTINE_LIST_ITEM%TOTAL_INCLUSIVE_CPU_TIME=ROUTINE_PTR%ROUTINE_LIST_ITEM%TOTAL_INCLUSIVE_CPU_TIME+ &
-              & ROUTINE_PTR%INCLUSIVE_CPU_TIME
-            ROUTINE_PTR%ROUTINE_LIST_ITEM%TOTAL_INCLUSIVE_SYSTEM_TIME=ROUTINE_PTR%ROUTINE_LIST_ITEM%TOTAL_INCLUSIVE_SYSTEM_TIME+ &
-              & ROUTINE_PTR%INCLUSIVE_SYSTEM_TIME
-            IF(ASSOCIATED(PREVIOUS_ROUTINE_PTR)) THEN
-              IF(ASSOCIATED(PREVIOUS_ROUTINE_PTR%ROUTINE_LIST_ITEM)) THEN
-                PREVIOUS_ROUTINE_PTR%ROUTINE_LIST_ITEM%TOTAL_EXCLUSIVE_CPU_TIME=PREVIOUS_ROUTINE_PTR%ROUTINE_LIST_ITEM% &
-                  & TOTAL_EXCLUSIVE_CPU_TIME+PREVIOUS_ROUTINE_PTR%EXCLUSIVE_CPU_TIME
-                PREVIOUS_ROUTINE_PTR%ROUTINE_LIST_ITEM%TOTAL_EXCLUSIVE_SYSTEM_TIME=PREVIOUS_ROUTINE_PTR%ROUTINE_LIST_ITEM% &
-                  & TOTAL_EXCLUSIVE_SYSTEM_TIME+PREVIOUS_ROUTINE_PTR%EXCLUSIVE_SYSTEM_TIME
+          IF(ASSOCIATED(routinePtr%routineListItem)) THEN
+            routinePtr%routineListItem%numberOfInvocations=routinePtr%routineListItem%numberOfInvocations+1
+            routinePtr%routineListItem%totalInclusiveCPUTime=routinePtr%routineListItem%totalInclusiveCPUTime+ &
+              & routinePtr%inclusiveCPUTime
+            routinePtr%routineListItem%totalInclusiveSystemTime=routinePtr%routineListItem%totalInclusiveSystemTime+ &
+              & routinePtr%inclusiveSystemTime
+            IF(ASSOCIATED(previousRoutinePtr)) THEN
+              IF(ASSOCIATED(previousRoutinePtr%routineListItem)) THEN
+                previousRoutinePtr%routineListItem%totalExclusiveCPUTime=previousRoutinePtr%routineListItem% &
+                  & totalExclusiveCPUTime+previousRoutinePtr%exclusiveCPUTime
+                previousRoutinePtr%routineListItem%totalExclusiveSystemTime=previousRoutinePtr%routineListItem% &
+                  & totalExclusiveSystemTime+previousRoutinePtr%exclusiveSystemTime
               ENDIF
             ENDIF
           ENDIF
-          IF(ROUTINE_PTR%TIMING) THEN
-            IF(.NOT.TIMING_SUMMARY) THEN
-              WRITE(OP_STRING,'("*** Timing : ",A)') NAME(1:LEN_TRIM(NAME))
-              CALL WRITE_STR(TIMING_OUTPUT_TYPE,ERR,ERROR,*999)
-              IF(ASSOCIATED(ROUTINE_PTR%ROUTINE_LIST_ITEM)) THEN
-                WRITE(OP_STRING,'("***    Number of invocations: ",I10)') ROUTINE_PTR%ROUTINE_LIST_ITEM%NUMBER_OF_INVOCATIONS
-                CALL WRITE_STR(TIMING_OUTPUT_TYPE,ERR,ERROR,*999)
-                WRITE(OP_STRING,'("***    Routine times:  Call Inclusive   Call Exclusive   Total Inclusive   Average Inclusive")')
-                CALL WRITE_STR(TIMING_OUTPUT_TYPE,ERR,ERROR,*999)
-                WRITE(OP_STRING,'("***    CPU       (s):  ",E14.6,"   ",E14.6,"   ",E15.6,"   ",E17.6)')  &
-                  & ROUTINE_PTR%INCLUSIVE_CPU_TIME,ROUTINE_PTR%INCLUSIVE_CPU_TIME-ROUTINE_PTR%EXCLUSIVE_CPU_TIME, &
-                  & ROUTINE_PTR%ROUTINE_LIST_ITEM%TOTAL_INCLUSIVE_CPU_TIME,ROUTINE_PTR%ROUTINE_LIST_ITEM% &
-                  & TOTAL_INCLUSIVE_CPU_TIME/REAL(ROUTINE_PTR%ROUTINE_LIST_ITEM%NUMBER_OF_INVOCATIONS,SP)
-                CALL WRITE_STR(TIMING_OUTPUT_TYPE,ERR,ERROR,*999)
-                WRITE(OP_STRING,'("***    System    (s):  ",E14.6,"   ",E14.6,"   ",E15.6,"   ",E17.6)')  &
-                  & ROUTINE_PTR%INCLUSIVE_SYSTEM_TIME,ROUTINE_PTR%INCLUSIVE_SYSTEM_TIME-ROUTINE_PTR%EXCLUSIVE_SYSTEM_TIME, &
-                  & ROUTINE_PTR%ROUTINE_LIST_ITEM%TOTAL_INCLUSIVE_SYSTEM_TIME,ROUTINE_PTR%ROUTINE_LIST_ITEM% &
-                  & TOTAL_INCLUSIVE_SYSTEM_TIME/REAL(ROUTINE_PTR%ROUTINE_LIST_ITEM%NUMBER_OF_INVOCATIONS,SP)
-                CALL WRITE_STR(TIMING_OUTPUT_TYPE,ERR,ERROR,*999)
+          IF(routinePtr%timing) THEN
+            IF(.NOT.timingSummary) THEN
+              WRITE(outputString,'("*** Timing : ",A)') name(1:LEN_TRIM(name))
+              CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+              IF(ASSOCIATED(routinePtr%routineListItem)) THEN
+                WRITE(outputString,'("***    Number of invocations: ",I10)') routinePtr%routineListItem%numberOfInvocations
+                CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+                WRITE(outputString, &
+                  & '("***    Routine times:  Call Inclusive   Call Exclusive   Total Inclusive   Average Inclusive")')
+                CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+                WRITE(outputString,'("***    CPU       (s):  ",E14.6,"   ",E14.6,"   ",E15.6,"   ",E17.6)')  &
+                  & routinePtr%inclusiveCPUTime,routinePtr%inclusiveCPUTime-routinePtr%exclusiveCPUTime, &
+                  & routinePtr%routineListItem%totalInclusiveCPUTime,routinePtr%routineListItem% &
+                  & totalInclusiveCPUTime/REAL(routinePtr%routineListItem%numberOfInvocations,SP)
+                CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+                WRITE(outputString,'("***    System    (s):  ",E14.6,"   ",E14.6,"   ",E15.6,"   ",E17.6)')  &
+                  & routinePtr%inclusiveSystemTime,routinePtr%inclusiveSystemTime-routinePtr%exclusiveSystemTime, &
+                  & routinePtr%routineListItem%totalInclusiveSystemTime,routinePtr%routineListItem% &
+                  & totalInclusiveSystemTime/REAL(routinePtr%routineListItem%numberOfInvocations,SP)
+                CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
               ELSE
-                WRITE(OP_STRING,'("***    Routine times:  Call Inclusive   Call Exclusive")')
-                CALL WRITE_STR(TIMING_OUTPUT_TYPE,ERR,ERROR,*999)
-                WRITE(OP_STRING,'("***    CPU       (s):  ",E14.6,"   ",E14.6)')  &
-                  & ROUTINE_PTR%INCLUSIVE_CPU_TIME,ROUTINE_PTR%INCLUSIVE_CPU_TIME-ROUTINE_PTR%EXCLUSIVE_CPU_TIME
-                CALL WRITE_STR(TIMING_OUTPUT_TYPE,ERR,ERROR,*999)
-                WRITE(OP_STRING,'("***    System    (s):  ",E14.6,"   ",E14.6)')  &
-                  & ROUTINE_PTR%INCLUSIVE_SYSTEM_TIME,ROUTINE_PTR%INCLUSIVE_SYSTEM_TIME-ROUTINE_PTR%EXCLUSIVE_SYSTEM_TIME
-                CALL WRITE_STR(TIMING_OUTPUT_TYPE,ERR,ERROR,*999)
+                WRITE(outputString,'("***    Routine times:  Call Inclusive   Call Exclusive")')
+                CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+                WRITE(outputString,'("***    CPU       (s):  ",E14.6,"   ",E14.6)')  &
+                  & routinePtr%inclusiveCPUTime,routinePtr%inclusiveCPUTime-routinePtr%exclusiveCPUTime
+                CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+                WRITE(outputString,'("***    System    (s):  ",E14.6,"   ",E14.6)')  &
+                  & routinePtr%inclusiveSystemTime,routinePtr%inclusiveSystemTime-routinePtr%exclusiveSystemTime
+                CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
               ENDIF
             ENDIF
           ENDIF
         ENDIF
 
-        IF(ASSOCIATED(PREVIOUS_ROUTINE_PTR)) THEN
-          ROUTINE_STACK%STACK_POINTER=>PREVIOUS_ROUTINE_PTR
+        IF(ASSOCIATED(previousRoutinePtr)) THEN
+          routineStack%stackPointer=>previousRoutinePtr
         ELSE
-          NULLIFY(ROUTINE_STACK%STACK_POINTER)
+          NULLIFY(routineStack%stackPointer)
         ENDIF
 
         !Delete the routine pointer
-        DEALLOCATE(ROUTINE_PTR)
+        DEALLOCATE(routinePtr)
 
         !ELSE ERROR????
       ENDIF
@@ -610,7 +530,8 @@ CONTAINS
     ENDIF
 
 999 RETURN
-  END SUBROUTINE EXITS
+    
+  END SUBROUTINE Exits
 
   !
   !================================================================================================================================
@@ -618,782 +539,840 @@ CONTAINS
 
 #include "macros.h"
 
-  !>Set the computational node numbers. Note: this is done as a subroutine as COMPUTATIONAL_ENVIRONMENT depends on BASE_ROUTINES.
-  SUBROUTINE COMPUTATIONAL_NODE_NUMBERS_SET(MY_NODE_NUMBER,NUMBER_OF_NODES,ERR,ERROR,*)
+  !>Set the computational node numbers. Note: this is done as a subroutine as ComputationalEnvironment depends on BaseRoutines.
+  SUBROUTINE ComputationalNodeNumbersSet(myNodeNumber,numberOfNodes,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: MY_NODE_NUMBER !<The node number for this rank.
-    INTEGER(INTG), INTENT(IN) :: NUMBER_OF_NODES !<The number of computational nodes.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(IN) :: myNodeNumber !<The node number for this rank.
+    INTEGER(INTG), INTENT(IN) :: numberOfNodes !<The number of computational nodes.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
 
-    ENTERS("COMPUTATIONAL_NODE_NUMBERS_SET",ERR,ERROR,*999)
+    ENTERS("ComputationalNodeNumbersSet",err,error,*999)
 
-    IF(NUMBER_OF_NODES>0) THEN
-      IF(MY_NODE_NUMBER>=0.AND.MY_NODE_NUMBER<=NUMBER_OF_NODES-1) THEN        
-        MY_COMPUTATIONAL_NODE_NUMBER=MY_NODE_NUMBER
-        NUMBER_OF_COMPUTATIONAL_NODES=NUMBER_OF_NODES        
+    IF(numberOfNodes>0) THEN
+      IF(myNodeNumber>=0.AND.myNodeNumber<=numberOfNodes-1) THEN        
+        myComputationalNodeNumber=myNodeNumber
+        numberOfComputationalNodes=numberOfNodes        
       ELSE
-        CALL FlagError("Invalid node number.",ERR,ERROR,*999)
+        CALL FlagError("Invalid node number.",err,error,*999)
       ENDIF
     ELSE
-       CALL FlagError("Invalid number of nodes.",ERR,ERROR,*999)
+       CALL FlagError("Invalid number of nodes.",err,error,*999)
     ENDIF
     
-    EXITS("COMPUTATIONAL_NODE_NUMBERS_SET")
+    EXITS("ComputationalNodeNumbersSet")
     RETURN 
-999 ERRORSEXITS("COMPUTATIONAL_NODE_NUMBERS_SET",ERR,ERROR)
+999 ERRORSEXITS("ComputationalNodeNumbersSet",err,error)
     RETURN 1
-  END SUBROUTINE COMPUTATIONAL_NODE_NUMBERS_SET
+    
+  END SUBROUTINE ComputationalNodeNumbersSet
 
   !
   !================================================================================================================================
   !
 
   !>Extracts the error message from a CMISS error string and returns it as a varying string
-  SUBROUTINE EXTRACT_ERROR_MESSAGE_VS(ERROR_MESSAGE,ERR,ERROR,*)
+  SUBROUTINE ExtractErrorMessageVS(errorMessage,err,error,*)
 
     !Argument variables
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR_MESSAGE !<The extracted error message
-    INTEGER(INTG), INTENT(IN) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(IN) :: ERROR !<The error string
+    TYPE(VARYING_STRING), INTENT(OUT) :: errorMessage !<The extracted error message
+    INTEGER(INTG), INTENT(IN) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(IN) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: POSITION
+    INTEGER(INTG) :: position
 
-    POSITION=INDEX(ERROR,ERROR_SEPARATOR_CONSTANT)
-    ERROR_MESSAGE=EXTRACT(ERROR,1,POSITION-1)
+    position=INDEX(error,ERROR_SEPARATOR_CONSTANT)
+    errorMessage=EXTRACT(error,1,position-1)
 
     RETURN
-  END SUBROUTINE EXTRACT_ERROR_MESSAGE_VS
+    
+  END SUBROUTINE ExtractErrorMessageVS
 
   !
   !================================================================================================================================
   !
 
   !>Extracts the error message from a CMISS error string and returns it as a character array
-  SUBROUTINE EXTRACT_ERROR_MESSAGE_C(ERROR_MESSAGE,ERR,ERROR,*)
+  SUBROUTINE ExtractErrorMessageC(errorMessage,err,error,*)
 
     !Argument variables
-    CHARACTER(LEN=*), INTENT(OUT) :: ERROR_MESSAGE !<The extracted error message
-    INTEGER(INTG), INTENT(IN) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(IN) :: ERROR !<The error string
+    CHARACTER(LEN=*), INTENT(OUT) :: errorMessage !<The extracted error message
+    INTEGER(INTG), INTENT(IN) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(IN) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: POSITION
+    INTEGER(INTG) :: position
 
-    POSITION=INDEX(ERROR,ERROR_SEPARATOR_CONSTANT)
-    ERROR_MESSAGE=EXTRACT(ERROR,1,POSITION-1)
+    position=INDEX(error,ERROR_SEPARATOR_CONSTANT)
+    errorMessage=EXTRACT(error,1,position-1)
 
     RETURN
-  END SUBROUTINE EXTRACT_ERROR_MESSAGE_C
+    
+  END SUBROUTINE ExtractErrorMessageC
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Extracts the error stack from a CMISS error string and returns it as a varying string
+  SUBROUTINE ExtractErrorStackVS(errorStack,err,error,*)
+
+    !Argument variables
+    TYPE(VARYING_STRING), INTENT(OUT) :: errorStack !<The extracted error stack
+    INTEGER(INTG), INTENT(IN) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(IN) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: position
+
+    position=INDEX(error,ERROR_SEPARATOR_CONSTANT)
+    errorStack=EXTRACT(error,position+1,LEN_TRIM(error))
+
+    RETURN
+    
+  END SUBROUTINE ExtractErrorStackVS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Extracts the error stack from a CMISS error string and returns it as a character array
+  SUBROUTINE ExtractErrorStackC(errorStack,err,error,*)
+
+    !Argument variables
+    CHARACTER(LEN=*), INTENT(OUT) :: errorStack !<The extracted error stack
+    INTEGER(INTG), INTENT(IN) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(IN) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: position
+
+    position=INDEX(error,ERROR_SEPARATOR_CONSTANT)
+    errorStack=EXTRACT(error,position+1,LEN_TRIM(error))
+
+    RETURN
+    
+  END SUBROUTINE ExtractErrorStackC
 
   !
   !================================================================================================================================
   !
 
   !>Sets the error string specified by a character string and flags an error 
-  SUBROUTINE FLAG_ERROR_C(STRING,ERR,ERROR,*)
+  SUBROUTINE FlagErrorC(string,err,error,*)
 
     !Argument variables
-    CHARACTER(LEN=*), INTENT(IN) :: STRING !<The error condition string
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    CHARACTER(LEN=*), INTENT(IN) :: string !<The error condition string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: STRING_LENGTH
+    INTEGER(INTG) :: stringLength
 
-    IF(ERR==0) ERR=1
-    STRING_LENGTH=LEN_TRIM(STRING)
-    ERROR=STRING(1:STRING_LENGTH)
+    IF(err==0) err=1
+    stringLength=LEN_TRIM(string)
+    ERROR=string(1:stringLength)
 
     RETURN 1
-  END SUBROUTINE FLAG_ERROR_C
+    
+  END SUBROUTINE FlagErrorC
 
   !
   !================================================================================================================================
   !
 
   !>Sets the error string specified by a varying string and flags an error.
-  SUBROUTINE FLAG_ERROR_VS(STRING,ERR,ERROR,*)
+  SUBROUTINE FlagErrorVS(string,err,error,*)
 
     !Argument variables
-    TYPE(VARYING_STRING), INTENT(IN) :: STRING !<The error condition string
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VARYING_STRING), INTENT(IN) :: string !<The error condition string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
 
-    IF(ERR==0) ERR=1
-    ERROR=STRING
+    IF(err==0) err=1
+    error=string
 
     RETURN 1
-  END SUBROUTINE FLAG_ERROR_VS
+    
+  END SUBROUTINE FlagErrorVS
 
   !
   !================================================================================================================================
   !
 
   !>Writes a warning message specified by a character string to the user.
-  SUBROUTINE FLAG_WARNING_C(STRING,ERR,ERROR,*)
+  SUBROUTINE FlagWarningC(string,err,error,*)
 
     !Argument variables
-    CHARACTER(LEN=*), INTENT(IN) :: STRING !<The warning string
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    CHARACTER(LEN=*), INTENT(IN) :: string !<The warning string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
 
-    IF(NUMBER_OF_COMPUTATIONAL_NODES>1) THEN
-      WRITE(OP_STRING,'(">>WARNING (",I0,"): ",A)') MY_COMPUTATIONAL_NODE_NUMBER,STRING
+    IF(numberOfComputationalNodes>1) THEN
+      WRITE(outputString,'(">>WARNING (",I0,"): ",A)') myComputationalNodeNumber,string
     ELSE
-      WRITE(OP_STRING,'(">>WARNING: ",A)') STRING
+      WRITE(outputString,'(">>WARNING: ",A)') string
     ENDIF
-    CALL WRITE_STR(WARNING_OUTPUT_TYPE,ERR,ERROR,*999)
+    CALL WriteStr(WARNING_OUTPUT_TYPE,err,error,*999)
 
     RETURN 
-999 ERRORS("FLAG_WARNING_C",ERR,ERROR)
+999 ERRORS("FlagWarningC",err,error)
     RETURN 1
     
-  END SUBROUTINE FLAG_WARNING_C
+  END SUBROUTINE FlagWarningC
 
   !
   !================================================================================================================================
   !
 
   !>Writes a warning message specified by a varying string to the user.
-  SUBROUTINE FLAG_WARNING_VS(STRING,ERR,ERROR,*)
+  SUBROUTINE FlagWarningVS(string,err,error,*)
 
     !Argument variables
-    TYPE(VARYING_STRING), INTENT(IN) :: STRING !<The warning string
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VARYING_STRING), INTENT(IN) :: string !<The warning string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
 
-    IF(NUMBER_OF_COMPUTATIONAL_NODES>1) THEN
-      WRITE(OP_STRING,'(">>WARNING (",I0,"): ",A)') MY_COMPUTATIONAL_NODE_NUMBER,CHAR(STRING)
+    IF(numberOfComputationalNodes>1) THEN
+      WRITE(outputString,'(">>WARNING (",I0,"): ",A)') myComputationalNodeNumber,CHAR(string)
     ELSE
-      WRITE(OP_STRING,'(">>WARNING: ",A)') CHAR(STRING)
+      WRITE(outputString,'(">>WARNING: ",A)') CHAR(string)
     ENDIF
-    CALL WRITE_STR(WARNING_OUTPUT_TYPE,ERR,ERROR,*999)
+    CALL WriteStr(WARNING_OUTPUT_TYPE,err,error,*999)
 
     RETURN 
-999 ERRORS("FLAG_WARNING_VS",ERR,ERROR)
+999 ERRORS("FlagWarningVS",err,error)
     RETURN 1
     
-  END SUBROUTINE FLAG_WARNING_VS
+  END SUBROUTINE FlagWarningVS
 
   !
   !================================================================================================================================
   !
 
   !>Finalises the base_routines module and deallocates all memory. \todo Finish this routine and deallocate memory.
-  SUBROUTINE BASE_ROUTINES_FINALISE(ERR,ERROR,*)
+  SUBROUTINE BaseRoutinesFinalise(err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
 
-    ERR=0
-    ERROR=""
+    err=0
+    error=""
     !Deallocate the random seeds
-    IF(ALLOCATED(CMISS_RANDOM_SEEDS)) DEALLOCATE(CMISS_RANDOM_SEEDS)
+    IF(ALLOCATED(cmissRandomSeeds)) DEALLOCATE(cmissRandomSeeds)
     
     RETURN 
 999 RETURN 1
-  END SUBROUTINE BASE_ROUTINES_FINALISE
+  END SUBROUTINE BaseRoutinesFinalise
 
   !
   !================================================================================================================================
   !
 
   !>Initialises the variables required for the base_routines module.
-  SUBROUTINE BASE_ROUTINES_INITIALISE(ERR,ERROR,*)
+  SUBROUTINE BaseRoutinesInitialise(err,error,*)
     
     !Argument variables
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: i,j,RANDOM_SEEDS_SIZE,TIME(8)
+    INTEGER(INTG) :: i,j,randomSeedsSize,time(8)
 
-    ERR=0
-    ERROR=""
-    MY_COMPUTATIONAL_NODE_NUMBER=0
-    NUMBER_OF_COMPUTATIONAL_NODES=1
-    DIAGNOSTICS=.FALSE.
-    DIAGNOSTICS1=.FALSE.
-    DIAGNOSTICS2=.FALSE.
-    DIAGNOSTICS3=.FALSE.
-    DIAGNOSTICS4=.FALSE.
-    DIAGNOSTICS5=.FALSE.
-    DIAGNOSTICS_LEVEL1=.FALSE.
-    DIAGNOSTICS_LEVEL2=.FALSE.
-    DIAGNOSTICS_LEVEL3=.FALSE.
-    DIAGNOSTICS_LEVEL4=.FALSE.
-    DIAGNOSTICS_LEVEL5=.FALSE.
-    DIAG_ALL_SUBROUTINES=.TRUE.
-    DIAG_FROM_SUBROUTINE=.FALSE.
-    DIAG_FILE_OPEN=.FALSE.
-    DIAG_OR_TIMING=.FALSE.
-    ECHO_OUTPUT=.FALSE.
-    TIMING=.FALSE.
-    TIMING_SUMMARY=.FALSE.
-    TIMING_ALL_SUBROUTINES=.TRUE.
-    TIMING_FROM_SUBROUTINE=.FALSE.
-    TIMING_FILE_OPEN=.FALSE.
+    err=0
+    error=""
+    myComputationalNodeNumber=0
+    numberOfComputationalNodes=1
+    diagnostics=.FALSE.
+    diagnostics1=.FALSE.
+    diagnostics2=.FALSE.
+    diagnostics3=.FALSE.
+    diagnostics4=.FALSE.
+    diagnostics5=.FALSE.
+    diagnosticsLevel1=.FALSE.
+    diagnosticsLevel2=.FALSE.
+    diagnosticsLevel3=.FALSE.
+    diagnosticsLevel4=.FALSE.
+    diagnosticsLevel5=.FALSE.
+    diagAllSubroutines=.TRUE.
+    diagFromSubroutine=.FALSE.
+    diagFileOpen=.FALSE.
+    diagOrTiming=.FALSE.
+    echoOutput=.FALSE.
+    timing=.FALSE.
+    timingSummary=.FALSE.
+    timingAllSubroutines=.TRUE.
+    timingFromSubroutine=.FALSE.
+    timingFileOpen=.FALSE.
     !Initialise loose tolerance here rather than in constants.f90
     LOOSE_TOLERANCE=SQRT(EPSILON(1.0_DP))
     LOOSE_TOLERANCE_SP=SQRT(EPSILON(1.0_SP))
     !Setup the random seeds based on the time
-    CALL RANDOM_SEED(SIZE=RANDOM_SEEDS_SIZE)
-    ALLOCATE(CMISS_RANDOM_SEEDS(RANDOM_SEEDS_SIZE),STAT=ERR)
-    IF(ERR/=0) CALL FlagError("Could not allocate random seeds.",ERR,ERROR,*999)
-    CMISS_RANDOM_SEEDS(1:RANDOM_SEEDS_SIZE)=[(i,i=1,RANDOM_SEEDS_SIZE)]
-    CALL DATE_AND_TIME(VALUES=TIME)
-    CMISS_RANDOM_SEEDS(1)=3600000*TIME(5)+60000*TIME(6)+1000*TIME(7)+TIME(8)
-    CALL RANDOM_SEED(PUT=CMISS_RANDOM_SEEDS)
+    CALL RANDOM_SEED(SIZE=randomSeedsSize)
+    ALLOCATE(cmissRandomSeeds(randomSeedsSize),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate random seeds.",err,error,*999)
+    cmissRandomSeeds(1:randomSeedsSize)=[(i,i=1,randomSeedsSize)]
+    CALL DATE_AND_TIME(VALUES=time)
+    cmissRandomSeeds(1)=3600000*time(5)+60000*time(6)+1000*time(7)+time(8)
+    CALL RANDOM_SEED(PUT=cmissRandomSeeds)
 
-    !Initialise OP_STRING
+    !Initialise outputString
     SELECT CASE(MACHINE_OS)
     CASE(VMS_OS)
       DO i=1,MAX_OUTPUT_LINES
-        OP_STRING(i)(1:1)=CHAR(0)
+        outputString(i)(1:1)=CHAR(0)
       ENDDO !i
     CASE(IRIX_OS,LINUX_OS,AIX_OS)
       DO i=1,MAX_OUTPUT_LINES
         DO j=1,MAXSTRLEN
-          OP_STRING(i)(j:j)=' '
+          outputString(i)(j:j)=' '
         ENDDO !j
       ENDDO !i
     CASE(WINDOWS_OS)
       DO i=1,MAX_OUTPUT_LINES
-        OP_STRING(i)(1:1)=CHAR(0)
+        outputString(i)(1:1)=CHAR(0)
       ENDDO !i
     CASE DEFAULT
-      CALL FlagError("Operating system not implemented.",ERR,ERROR,*999)
+      CALL FlagError("Operating system not implemented.",err,error,*999)
     END SELECT
 
     !Initialise diagnostics and tracing
-    NULLIFY(ROUTINE_STACK%STACK_POINTER)
-    NULLIFY(DIAG_ROUTINE_LIST%HEAD)
-    NULLIFY(TIMING_ROUTINE_LIST%HEAD)
+    NULLIFY(routineStack%stackPointer)
+    NULLIFY(diagRoutineList%head)
+    NULLIFY(timingRoutineList%head)
 
     RETURN 
 999 RETURN 1
-  END SUBROUTINE BASE_ROUTINES_INITIALISE
+    
+  END SUBROUTINE BaseRoutinesInitialise
 
   !
   !================================================================================================================================
   !
 
-  !>Sets diagnositics off. \see BASE_ROUTINES::DIAGNOSTICS_SET_OFF,OPENCMISS::CMISSDiagnosticsSetOff
-  SUBROUTINE DIAGNOSTICS_SET_OFF(ERR,ERROR,*)
+  !>Sets diagnositics off. \see BaseRoutines::DiagnosticsSetOn,OpenCMISS::Iron::DiagnosticsSetOn
+  SUBROUTINE DiagnosticsSetOff(err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(ROUTINE_LIST_ITEM_TYPE), POINTER :: NEXT_ROUTINE,ROUTINE
+    TYPE(RoutineListItemType), POINTER :: nextRoutine,routine
 
-    ENTERS("DIAGNOSTICS_SET_OFF",ERR,ERROR,*999)
+    ENTERS("DiagnosticsSetOff",err,error,*999)
 
-    IF(DIAGNOSTICS) THEN
-      IF(DIAG_FILE_OPEN) THEN
-        DIAG_FILE_OPEN=.FALSE.
+    IF(diagnostics) THEN
+      IF(diagFileOpen) THEN
+        diagFileOpen=.FALSE.
         CLOSE(UNIT=DIAGNOSTICS_FILE_UNIT)
       ENDIF
-      IF(DIAG_ALL_SUBROUTINES) THEN
-        DIAG_ALL_SUBROUTINES=.FALSE.
+      IF(diagAllSubroutines) THEN
+        diagAllSubroutines=.FALSE.
       ELSE
-        ROUTINE=>DIAG_ROUTINE_LIST%HEAD
-        DO WHILE(ASSOCIATED(ROUTINE))
-          NEXT_ROUTINE=>ROUTINE%NEXT_ROUTINE
-          DEALLOCATE(ROUTINE)
-          ROUTINE=>NEXT_ROUTINE
+        routine=>diagRoutineList%head
+        DO WHILE(ASSOCIATED(routine))
+          nextRoutine=>routine%nextRoutine
+          DEALLOCATE(routine)
+          routine=>nextRoutine
         ENDDO
-        NULLIFY(DIAG_ROUTINE_LIST%HEAD)
-        DIAG_FROM_SUBROUTINE=.FALSE.
+        NULLIFY(diagRoutineList%head)
+        diagFromSubroutine=.FALSE.
       ENDIF
-      DIAGNOSTICS_LEVEL1=.FALSE.
-      DIAGNOSTICS_LEVEL2=.FALSE.
-      DIAGNOSTICS_LEVEL3=.FALSE.
-      DIAGNOSTICS_LEVEL4=.FALSE.
-      DIAGNOSTICS_LEVEL5=.FALSE.
-      DIAGNOSTICS1=.FALSE.
-      DIAGNOSTICS2=.FALSE.
-      DIAGNOSTICS3=.FALSE.
-      DIAGNOSTICS4=.FALSE.
-      DIAGNOSTICS5=.FALSE.
-      DIAGNOSTICS=.FALSE.
-      DIAG_OR_TIMING=TIMING
+      diagnosticsLevel1=.FALSE.
+      diagnosticsLevel2=.FALSE.
+      diagnosticsLevel3=.FALSE.
+      diagnosticsLevel4=.FALSE.
+      diagnosticsLevel5=.FALSE.
+      diagnostics1=.FALSE.
+      diagnostics2=.FALSE.
+      diagnostics3=.FALSE.
+      diagnostics4=.FALSE.
+      diagnostics5=.FALSE.
+      diagnostics=.FALSE.
+      diagOrTiming=timing
     ELSE
-      CALL FlagError("Diagnositics is not on.",ERR,ERROR,*999)
+      CALL FlagError("Diagnositics is not on.",err,error,*999)
     ENDIF
 
-    EXITS("DIAGNOSTICS_SET_OFF")
+    EXITS("DiagnosticsSetOff")
     RETURN
-999 ERRORSEXITS("DIAGNOSTICS_SET_OFF",ERR,ERROR)
+999 ERRORSEXITS("DiagnosticsSetOff",err,error)
     RETURN 1
-  END SUBROUTINE DIAGNOSTICS_SET_OFF
+    
+  END SUBROUTINE DiagnosticsSetOff
 
   !
   !================================================================================================================================
   !
 
-  !>Sets diagnositics on. \see BASE_ROUTINES::DIAGNOSTICS_SET_ON,OPENCMISS::CMISSDiagnosticsSetOn
-  SUBROUTINE DIAGNOSTICS_SET_ON(DIAG_TYPE,LEVEL_LIST,DIAG_FILENAME,ROUTINE_LIST,ERR,ERROR,*)
+  !>Sets diagnositics on. \see BaseRoutines::DiagnosticsSetOff,OpenCMISS::Iron::DiagnosticsSetOff
+  SUBROUTINE DiagnosticsSetOn(diagType,levelList,diagFilename,routineList,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: DIAG_TYPE !<The type of diagnostics to set on \see BASE_ROUTINES_DiagnosticTypes
-    INTEGER(INTG), INTENT(IN) :: LEVEL_LIST(:) !<The list of diagnostic levels to set on
-    CHARACTER(LEN=*), INTENT(IN) :: DIAG_FILENAME !<If present the name of the file to output diagnostic information to. If omitted the diagnostic output is sent to the screen
-    CHARACTER(LEN=*), INTENT(IN) :: ROUTINE_LIST(:) !<The list of routines to set diagnostics on in.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(IN) :: diagType !<The type of diagnostics to set on \see BaseRoutines_DiagnosticTypes
+    INTEGER(INTG), INTENT(IN) :: levelList(:) !<The list of diagnostic levels to set on
+    CHARACTER(LEN=*), INTENT(IN) :: diagFilename !<If present the name of the file to output diagnostic information to. If omitted the diagnostic output is sent to the screen
+    CHARACTER(LEN=*), INTENT(IN) :: routineList(:) !<The list of routines to set diagnostics on in.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: i,LEVEL
-    CHARACTER(LEN=MAXSTRLEN) :: FILENAME
-    TYPE(ROUTINE_LIST_ITEM_TYPE), POINTER :: NEXT_ROUTINE,PREVIOUS_ROUTINE,ROUTINE
+    INTEGER(INTG) :: i,level
+    CHARACTER(LEN=MAXSTRLEN) :: filename
+    TYPE(RoutineListItemType), POINTER :: nextRoutine,previousRoutine,routine
  
-    NULLIFY(ROUTINE)
+    NULLIFY(routine)
     
-    ENTERS("DIAGNOSTICS_SET_ON",ERR,ERROR,*999)
+    ENTERS("DiagnosticsSetOn",err,error,*999)
 
-    IF(LEN_TRIM(DIAG_FILENAME)>=1) THEN
-      IF(DIAG_FILE_OPEN) CLOSE(UNIT=DIAGNOSTICS_FILE_UNIT)
-      IF(NUMBER_OF_COMPUTATIONAL_NODES>1) THEN
-        WRITE(FILENAME,'(A,".diag.",I0)') DIAG_FILENAME(1:LEN_TRIM(DIAG_FILENAME)),MY_COMPUTATIONAL_NODE_NUMBER
+    IF(LEN_TRIM(diagFilename)>=1) THEN
+      IF(diagFileOpen) CLOSE(UNIT=DIAGNOSTICS_FILE_UNIT)
+      IF(numberOfComputationalNodes>1) THEN
+        WRITE(filename,'(A,".diag.",I0)') diagFilename(1:LEN_TRIM(diagFilename)),myComputationalNodeNumber
       ELSE
-        FILENAME=DIAG_FILENAME(1:LEN_TRIM(DIAG_FILENAME))//".diag"
+        filename=diagFilename(1:LEN_TRIM(diagFilename))//".diag"
       ENDIF
-      OPEN(UNIT=DIAGNOSTICS_FILE_UNIT,FILE=FILENAME(1:LEN_TRIM(FILENAME)),STATUS="UNKNOWN",IOSTAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not open diagnostics file.",ERR,ERROR,*999)
-      DIAG_FILE_OPEN=.TRUE.
+      OPEN(UNIT=DIAGNOSTICS_FILE_UNIT,FILE=filename(1:LEN_TRIM(filename)),STATUS="UNKNOWN",IOSTAT=err)
+      IF(err/=0) CALL FlagError("Could not open diagnostics file.",err,error,*999)
+      diagFileOpen=.TRUE.
     ENDIF
-    SELECT CASE(DIAG_TYPE)
+    SELECT CASE(diagType)
     CASE(ALL_DIAG_TYPE)
-      DIAG_ALL_SUBROUTINES=.TRUE.
+      diagAllSubroutines=.TRUE.
     CASE(IN_DIAG_TYPE,FROM_DIAG_TYPE)
-      DIAG_ALL_SUBROUTINES=.FALSE.
-      DIAG_FROM_SUBROUTINE=DIAG_TYPE==FROM_DIAG_TYPE
-      IF(ASSOCIATED(DIAG_ROUTINE_LIST%HEAD)) THEN
-        ROUTINE=>DIAG_ROUTINE_LIST%HEAD
-        DO WHILE(ASSOCIATED(ROUTINE))
-          NEXT_ROUTINE=>ROUTINE%NEXT_ROUTINE
-          DEALLOCATE(ROUTINE)
-          ROUTINE=>NEXT_ROUTINE
+      diagAllSubroutines=.FALSE.
+      diagFromSubroutine=diagType==FROM_DIAG_TYPE
+      IF(ASSOCIATED(diagRoutineList%head)) THEN
+        routine=>diagRoutineList%head
+        DO WHILE(ASSOCIATED(routine))
+          nextRoutine=>routine%nextRoutine
+          DEALLOCATE(routine)
+          routine=>nextRoutine
         ENDDO
-        NULLIFY(DIAG_ROUTINE_LIST%HEAD)
+        NULLIFY(diagRoutineList%head)
       ENDIF
-      ALLOCATE(ROUTINE,STAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not allocate routine list item.",ERR,ERROR,*999)
-      ROUTINE%NAME=ROUTINE_LIST(1)
-      PREVIOUS_ROUTINE=>ROUTINE
-      NULLIFY(ROUTINE%NEXT_ROUTINE)
-      DIAG_ROUTINE_LIST%HEAD=>ROUTINE
-      DO i=2,SIZE(ROUTINE_LIST,1)
-        ALLOCATE(ROUTINE,STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate routine list item.",ERR,ERROR,*999)
-        ROUTINE%NAME=ROUTINE_LIST(i)
-        NULLIFY(ROUTINE%NEXT_ROUTINE)
-        PREVIOUS_ROUTINE%NEXT_ROUTINE=>ROUTINE
-        PREVIOUS_ROUTINE=>ROUTINE
+      ALLOCATE(routine,STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate routine list item.",err,error,*999)
+      routine%name=routineList(1)
+      previousRoutine=>routine
+      NULLIFY(routine%nextRoutine)
+      diagRoutineList%head=>routine
+      DO i=2,SIZE(routineList,1)
+        ALLOCATE(routine,STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate routine list item.",err,error,*999)
+        routine%name=routineList(i)
+        NULLIFY(routine%nextRoutine)
+        previousRoutine%nextRoutine=>routine
+        previousRoutine=>routine
       ENDDO !i
     CASE DEFAULT
-      CALL FlagError("Invalid diagnostic type.",ERR,ERROR,*999)
+      CALL FlagError("Invalid diagnostic type.",err,error,*999)
     END SELECT
-    DO i=1,SIZE(LEVEL_LIST,1)
-      LEVEL=LEVEL_LIST(i)
-      SELECT CASE(LEVEL)
+    DO i=1,SIZE(levelList,1)
+      level=levelList(i)
+      SELECT CASE(level)
       CASE(1)
-        DIAGNOSTICS_LEVEL1=.TRUE.
+        diagnosticsLevel1=.TRUE.
       CASE(2)
-        DIAGNOSTICS_LEVEL2=.TRUE.
+        diagnosticsLevel2=.TRUE.
       CASE(3)
-        DIAGNOSTICS_LEVEL3=.TRUE.
+        diagnosticsLevel3=.TRUE.
       CASE(4)
-        DIAGNOSTICS_LEVEL4=.TRUE.
+        diagnosticsLevel4=.TRUE.
       CASE(5)
-        DIAGNOSTICS_LEVEL5=.TRUE.
+        diagnosticsLevel5=.TRUE.
       CASE DEFAULT
-        CALL FlagError("Invalid diagnostic level.",ERR,ERROR,*999)
+        CALL FlagError("Invalid diagnostic level.",err,error,*999)
       END SELECT
     ENDDO !i
-    DIAGNOSTICS=.TRUE.
-    DIAG_OR_TIMING=.TRUE.
+    diagnostics=.TRUE.
+    diagOrTiming=.TRUE.
 
-    EXITS("DIAGNOSTICS_SET_ON")
+    EXITS("DiagnosticsSetOn")
     RETURN
-999 IF(DIAG_FILE_OPEN) THEN
+999 IF(diagFileOpen) THEN
       CLOSE(UNIT=DIAGNOSTICS_FILE_UNIT)
-      DIAG_FILE_OPEN=.FALSE.
+      diagFileOpen=.FALSE.
     ENDIF
-    ROUTINE=>DIAG_ROUTINE_LIST%HEAD
-    DO WHILE(ASSOCIATED(ROUTINE))
-      NEXT_ROUTINE=>ROUTINE%NEXT_ROUTINE
-      DEALLOCATE(ROUTINE)
-      ROUTINE=>NEXT_ROUTINE
+    routine=>diagRoutineList%head
+    DO WHILE(ASSOCIATED(routine))
+      nextRoutine=>routine%nextRoutine
+      DEALLOCATE(routine)
+      routine=>nextRoutine
     ENDDO
-    NULLIFY(DIAG_ROUTINE_LIST%HEAD)
-    DIAG_ALL_SUBROUTINES=.FALSE.
-    DIAG_FROM_SUBROUTINE=.FALSE.
-    DIAGNOSTICS_LEVEL1=.FALSE.
-    DIAGNOSTICS_LEVEL2=.FALSE.
-    DIAGNOSTICS_LEVEL3=.FALSE.
-    DIAGNOSTICS_LEVEL4=.FALSE.
-    DIAGNOSTICS_LEVEL5=.FALSE.
-    DIAGNOSTICS=.FALSE.
-    DIAG_OR_TIMING=TIMING
-    ERRORSEXITS("DIAGNOSTICS_SET_ON",ERR,ERROR)
+    NULLIFY(diagRoutineList%head)
+    diagAllSubroutines=.FALSE.
+    diagFromSubroutine=.FALSE.
+    diagnosticsLevel1=.FALSE.
+    diagnosticsLevel2=.FALSE.
+    diagnosticsLevel3=.FALSE.
+    diagnosticsLevel4=.FALSE.
+    diagnosticsLevel5=.FALSE.
+    diagnostics=.FALSE.
+    diagOrTiming=timing
+    ERRORSEXITS("DiagnosticsSetOn",err,error)
     RETURN 1
-  END SUBROUTINE DIAGNOSTICS_SET_ON
+    
+  END SUBROUTINE DiagnosticsSetOn
 
   !
   !================================================================================================================================
   !
 
-  !>Sets writes file echo output off. \see BASE_ROUTINES::OUTPUT_SET_ON,OPENCMISS::CMISSOutputSetOff
-  SUBROUTINE OUTPUT_SET_OFF(ERR,ERROR,*)
+  !>Sets writes file echo output off. \see BaseRoutines::OutputSetOn,OpenCMISS::Iron::OutputSetOff
+  SUBROUTINE OutputSetOff(err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
 
-    ENTERS("OUTPUT_SET_OFF",ERR,ERROR,*999)
+    ENTERS("OutputSetOff",err,error,*999)
 
-    IF(ECHO_OUTPUT) THEN
-      ECHO_OUTPUT=.FALSE.
+    IF(echoOutput) THEN
+      echoOutput=.FALSE.
       CLOSE(UNIT=ECHO_FILE_UNIT)
     ELSE
-      CALL FlagError("Write output is not on.",ERR,ERROR,*999)
+      CALL FlagError("Write output is not on.",err,error,*999)
     ENDIF
 
-    EXITS("OUTPUT_SET_OFF")
+    EXITS("OutputSetOff")
     RETURN
-999 ERRORSEXITS("OUTPUT_SET_OFF",ERR,ERROR)
+999 ERRORSEXITS("OutputSetOff",err,error)
     RETURN 1
-  END SUBROUTINE OUTPUT_SET_OFF
+    
+  END SUBROUTINE OutputSetOff
 
   !
   !================================================================================================================================
   !
 
-  !>Sets writes file echo output on. \see BASE_ROUTINES::OUTPUT_SET_OFF,OPENCMISS::CMISSOutputSetOn
-  SUBROUTINE OUTPUT_SET_ON(ECHO_FILENAME,ERR,ERROR,*)
+  !>Sets writes file echo output on. \see BaseRoutines::OutputSetOff,OpenCMISS::Iron::OutputSetOn
+  SUBROUTINE OutputSetOn(echoFilename,err,error,*)
 
     !Argument variables
-    CHARACTER(LEN=*), INTENT(IN) :: ECHO_FILENAME !<The filename of the file to echo output to
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    CHARACTER(LEN=*), INTENT(IN) :: echoFilename !<The filename of the file to echo output to
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    CHARACTER(LEN=MAXSTRLEN) :: FILENAME
+    CHARACTER(LEN=MAXSTRLEN) :: filename
 
-    ENTERS("OUTPUT_SET_ON",ERR,ERROR,*999)
+    ENTERS("OutputSetOn",err,error,*999)
 
-    IF(ECHO_OUTPUT) THEN
-      CALL FlagError("Write output is already on.",ERR,ERROR,*999)
+    IF(echoOutput) THEN
+      CALL FlagError("Write output is already on.",err,error,*999)
     ELSE
-      IF(NUMBER_OF_COMPUTATIONAL_NODES>1) THEN
-        WRITE(FILENAME,'(A,".out.",I0)') ECHO_FILENAME(1:LEN_TRIM(ECHO_FILENAME)),MY_COMPUTATIONAL_NODE_NUMBER        
+      IF(numberOfComputationalNodes>1) THEN
+        WRITE(filename,'(A,".out.",I0)') echoFilename(1:LEN_TRIM(echoFilename)),myComputationalNodeNumber        
       ELSE
-        FILENAME=ECHO_FILENAME(1:LEN_TRIM(ECHO_FILENAME))//".out"
+        filename=echoFilename(1:LEN_TRIM(echoFilename))//".out"
       ENDIF
-      OPEN(UNIT=ECHO_FILE_UNIT,FILE=FILENAME(1:LEN_TRIM(FILENAME)),STATUS="UNKNOWN",IOSTAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not open write output file.",ERR,ERROR,*999)
-      ECHO_OUTPUT=.TRUE.
+      OPEN(UNIT=ECHO_FILE_UNIT,FILE=filename(1:LEN_TRIM(filename)),STATUS="UNKNOWN",IOSTAT=err)
+      IF(err/=0) CALL FlagError("Could not open write output file.",err,error,*999)
+      echoOutput=.TRUE.
     ENDIF
 
-    EXITS("OUTPUT_SET_ON")
+    EXITS("OutputSetOn")
     RETURN
-999 ERRORSEXITS("OUTPUT_SET_ON",ERR,ERROR)
+999 ERRORSEXITS("OutputSetOn",err,error)
     RETURN 1
-  END SUBROUTINE OUTPUT_SET_ON
+    
+  END SUBROUTINE OutputSetOn
 
   !
   !================================================================================================================================
   !
 
-  !>Returns the random seeds for CMISS \see OPENCMISS::CMISSRandomSeedsGet
-  SUBROUTINE RANDOM_SEEDS_GET(RANDOM_SEEDS,ERR,ERROR,*)
+  !>Returns the random seeds for CMISS \see OpenCMISS::Iron::RandomSeedsGet
+  SUBROUTINE RandomSeedsGet(randomSeeds,err,error,*)
   
     !Argument variables
-    INTEGER(INTG), INTENT(OUT) :: RANDOM_SEEDS(:) !<On return, the random seeds.
-    INTEGER(INTG), INTENT(INOUT) :: ERR !<The error string
-    TYPE(VARYING_STRING), INTENT(INOUT) :: ERROR !<The error code
+    INTEGER(INTG), INTENT(OUT) :: randomSeeds(:) !<On return, the random seeds.
+    INTEGER(INTG), INTENT(INOUT) :: err !<The error string
+    TYPE(VARYING_STRING), INTENT(INOUT) :: error !<The error code
     !Local Variables
-    CHARACTER(LEN=MAXSTRLEN) :: LOCAL_ERROR
+    CHARACTER(LEN=MAXSTRLEN) :: localError
     
-    ENTERS("RANDOM_SEEDS_GET",ERR,ERROR,*999)
+    ENTERS("RandomSeedsGet",err,error,*999)
 
-    IF(SIZE(RANDOM_SEEDS,1)>=SIZE(CMISS_RANDOM_SEEDS,1)) THEN
-      RANDOM_SEEDS(1:SIZE(CMISS_RANDOM_SEEDS,1))=CMISS_RANDOM_SEEDS(1:SIZE(CMISS_RANDOM_SEEDS,1))
+    IF(SIZE(randomSeeds,1)>=SIZE(cmissRandomSeeds,1)) THEN
+      randomSeeds(1:SIZE(cmissRandomSeeds,1))=cmissRandomSeeds(1:SIZE(cmissRandomSeeds,1))
     ELSE
-      WRITE(LOCAL_ERROR,'("The size of the supplied random seeds array of ",I2," is too small. The size must be >= ",I2,".")') &
-        & SIZE(RANDOM_SEEDS,1),SIZE(CMISS_RANDOM_SEEDS,1)
-      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+      WRITE(localError,'("The size of the supplied random seeds array of ",I2," is too small. The size must be >= ",I2,".")') &
+        & SIZE(randomSeeds,1),SIZE(cmissRandomSeeds,1)
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    EXITS("RANDOM_SEED_GET")
+    EXITS("RandomSeedsGet")
     RETURN
-999 ERRORSEXITS("RANDOM_SEEDS_GET",ERR,ERROR)
+999 ERRORSEXITS("RandomSeedsGet",err,error)
     RETURN 1
-  END SUBROUTINE RANDOM_SEEDS_GET
+    
+  END SUBROUTINE RandomSeedsGet
 
   !
   !================================================================================================================================
   !
 
-  !>Returns the size of the random seeds array for CMISS \see OPENCMISS::CMISSRandomSeedsSizeGet
-  SUBROUTINE RANDOM_SEEDS_SIZE_GET(RANDOM_SEEDS_SIZE,ERR,ERROR,*)
+  !>Returns the size of the random seeds array for CMISS \see OpenCMISS::Iron::RandomSeedsSizeGet
+  SUBROUTINE RandomSeedsSizeGet(randomSeedsSize,err,error,*)
   
     !Argument variables
-    INTEGER(INTG), INTENT(OUT) :: RANDOM_SEEDS_SIZE !<On return, the size of the random seeds array.
-    INTEGER(INTG), INTENT(INOUT) :: ERR !<The error string
-    TYPE(VARYING_STRING), INTENT(INOUT) :: ERROR !<The error code
+    INTEGER(INTG), INTENT(OUT) :: randomSeedsSize !<On return, the size of the random seeds array.
+    INTEGER(INTG), INTENT(INOUT) :: err !<The error string
+    TYPE(VARYING_STRING), INTENT(INOUT) :: error !<The error code
     !Local Variables
 
-    ENTERS("RANDOM_SEEDS_SIZE_GET",ERR,ERROR,*999)
+    ENTERS("RandomSeedsSizeGet",err,error,*999)
 
-    RANDOM_SEEDS_SIZE=SIZE(CMISS_RANDOM_SEEDS,1)
+    randomSeedsSize=SIZE(cmissRandomSeeds,1)
     
-    EXITS("RANDOM_SEED_SIZE_GET")
+    EXITS("RandomSeedsSizeGet")
     RETURN
-999 ERRORSEXITS("RANDOM_SEEDS_SIZE_GET",ERR,ERROR)
+999 ERRORSEXITS("RandomSeedsSizeGet",err,error)
     RETURN 1
-  END SUBROUTINE RANDOM_SEEDS_SIZE_GET
+    
+  END SUBROUTINE RandomSeedsSizeGet
 
   !
   !================================================================================================================================
   !
 
-  !>Sets the random seeds for cmiss \see OPENCMISS::CMISSRandomSeedsSet
-  SUBROUTINE RANDOM_SEEDS_SET(RANDOM_SEEDS,ERR,ERROR,*)
+  !>Sets the random seeds for cmiss \see OpenCMISS::Iron::RandomSeedsSet
+  SUBROUTINE RandomSeedsSet(randomSeeds,err,error,*)
   
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: RANDOM_SEEDS(:) !<The random seeds to set. 
-    INTEGER(INTG), INTENT(INOUT) :: ERR !<The error string
-    TYPE(VARYING_STRING), INTENT(INOUT) :: ERROR !<The error code
+    !Argument variables 
+    INTEGER(INTG), INTENT(IN) :: randomSeeds(:) !<The random seeds to set. 
+    INTEGER(INTG), INTENT(INOUT) :: err !<The error string
+    TYPE(VARYING_STRING), INTENT(INOUT) :: error !<The error code
     !Local Variables
     
-    ENTERS("RANDOM_SEEDS_SET",ERR,ERROR,*999)
+    ENTERS("RandomSeedsSet",err,error,*999)
 
-    IF(SIZE(RANDOM_SEEDS,1)>SIZE(CMISS_RANDOM_SEEDS,1)) THEN
-      CMISS_RANDOM_SEEDS(1:SIZE(CMISS_RANDOM_SEEDS,1))=RANDOM_SEEDS(1:SIZE(CMISS_RANDOM_SEEDS,1))
+    IF(SIZE(randomSeeds,1)>SIZE(cmissRandomSeeds,1)) THEN
+      cmissRandomSeeds(1:SIZE(cmissRandomSeeds,1))=randomSeeds(1:SIZE(cmissRandomSeeds,1))
     ELSE
-      CMISS_RANDOM_SEEDS(1:SIZE(RANDOM_SEEDS,1))=RANDOM_SEEDS(1:SIZE(RANDOM_SEEDS,1))
+      cmissRandomSeeds(1:SIZE(randomSeeds,1))=randomSeeds(1:SIZE(randomSeeds,1))
     ENDIF
 
-    EXITS("RANDOM_SEEDS_SET")
+    EXITS("RandomSeedsSet")
     RETURN
-999 ERRORSEXITS("RANDOM_SEEDS_SET",ERR,ERROR)
+999 ERRORSEXITS("RandomSeedsSet",err,error)
     RETURN 1
-  END SUBROUTINE RANDOM_SEEDS_SET
+    
+  END SUBROUTINE RandomSeedsSet
 
   !
   !================================================================================================================================
   !
 
-  !>Sets timing off. \see BASE_ROUTINES:TIMING_SET_ON,OPENCMISS::CMISSTimingSetOff
-  SUBROUTINE TIMING_SET_OFF(ERR,ERROR,*)
+  !>Sets timing off. \see BaseRoutines:TimingSetOn,OpenCMISS::Iron::TimingSetOff
+  SUBROUTINE TimingSetOff(err,error,*)
 
    !Argument variables
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(ROUTINE_LIST_ITEM_TYPE), POINTER :: NEXT_ROUTINE,ROUTINE
+    TYPE(RoutineListItemType), POINTER :: nextRoutine,routine
 
-    ENTERS("TIMING_SET_OFF",ERR,ERROR,*999)
+    ENTERS("TimingSetOff",err,error,*999)
 
-    IF(TIMING) THEN
-      IF(TIMING_FILE_OPEN) THEN
-        TIMING_FILE_OPEN=.FALSE.
+    IF(timing) THEN
+      IF(timingFileOpen) THEN
+        timingFileOpen=.FALSE.
         CLOSE(UNIT=TIMING_FILE_UNIT)
       ENDIF
-      IF(TIMING_ALL_SUBROUTINES) THEN
-        TIMING_ALL_SUBROUTINES=.FALSE.
+      IF(timingAllSubroutines) THEN
+        timingAllSubroutines=.FALSE.
       ELSE
-        ROUTINE=>TIMING_ROUTINE_LIST%HEAD
-        DO WHILE(ASSOCIATED(ROUTINE))
-          NEXT_ROUTINE=>ROUTINE%NEXT_ROUTINE
-          DEALLOCATE(ROUTINE)
-          ROUTINE=>NEXT_ROUTINE
+        routine=>timingRoutineList%head
+        DO WHILE(ASSOCIATED(routine))
+          nextRoutine=>routine%nextRoutine
+          DEALLOCATE(routine)
+          routine=>nextRoutine
         ENDDO
-        NULLIFY(TIMING_ROUTINE_LIST%HEAD)
-        TIMING_FROM_SUBROUTINE=.FALSE.
+        NULLIFY(timingRoutineList%head)
+        timingFromSubroutine=.FALSE.
       ENDIF
-      TIMING_SUMMARY=.FALSE.
-      TIMING=.FALSE.
-      DIAG_OR_TIMING=DIAGNOSTICS
+      timingSummary=.FALSE.
+      timing=.FALSE.
+      diagOrTiming=diagnostics
     ELSE
-      CALL FlagError("Timing is not on.",ERR,ERROR,*999)
+      CALL FlagError("Timing is not on.",err,error,*999)
     ENDIF
 
-    EXITS("TIMING_SET_OFF")
+    EXITS("TimingSetOff")
     RETURN
-999 ERRORSEXITS("TIMING_SET_OFF",ERR,ERROR)
+999 ERRORSEXITS("TimingSetOff",err,error)
     RETURN 1
-  END SUBROUTINE TIMING_SET_OFF
+    
+  END SUBROUTINE TimingSetOff
 
   !
   !================================================================================================================================
   !
 
-  !>Sets timing on. \see BASE_ROUTINES:TIMING_SET_OFF,OPENCMISS::CMISSTimingSetOn
-  SUBROUTINE TIMING_SET_ON(TIMING_TYPE,TIMING_SUMMARY_FLAG,TIMING_FILENAME,ROUTINE_LIST,ERR,ERROR,*)
+  !>Sets timing on. \see BaseRoutines:TimingSetOff,OpenCMISS::Iron::TimingSetOn
+  SUBROUTINE TimingSetOn(timingType,timingSummaryFlag,timingFilename,routineList,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: TIMING_TYPE !<The type of timing to set on \see BASE_ROUTINES_TimingTypes
-    LOGICAL, INTENT(IN) :: TIMING_SUMMARY_FLAG !<.TRUE. if the timing information will be output with subsequent TIMING_SUMMARY_OUTPUT calls, .FALSE. if the timing information will be output every time the routine exits 
-    CHARACTER(LEN=*), INTENT(IN) :: TIMING_FILENAME !<If present the name of the file to output timing information to. If omitted the timing output is sent to the screen
-    CHARACTER(LEN=*), INTENT(IN) :: ROUTINE_LIST(:) !<The list of routines to set timing on in.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(IN) :: timingType !<The type of timing to set on \see BaseRoutines_TimingTypes
+    LOGICAL, INTENT(IN) :: timingSummaryFlag !<.TRUE. if the timing information will be output with subsequent TimingSummaryOutput calls, .FALSE. if the timing information will be output every time the routine exits 
+    CHARACTER(LEN=*), INTENT(IN) :: timingFilename !<If present the name of the file to output timing information to. If omitted the timing output is sent to the screen
+    CHARACTER(LEN=*), INTENT(IN) :: routineList(:) !<The list of routines to set timing on in.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) :: i
-    CHARACTER(LEN=MAXSTRLEN) :: FILENAME
-    TYPE(ROUTINE_LIST_ITEM_TYPE), POINTER :: NEXT_ROUTINE,PREVIOUS_ROUTINE,ROUTINE
+    CHARACTER(LEN=MAXSTRLEN) :: filename
+    TYPE(RoutineListItemType), POINTER :: nextRoutine,previousRoutine,routine
  
-    ENTERS("TIMING_SET_ON",ERR,ERROR,*999)
+    ENTERS("TimingSetOn",err,error,*999)
 
-    NULLIFY(ROUTINE)
-    IF(LEN_TRIM(TIMING_FILENAME)>=1) THEN
-      IF(TIMING_FILE_OPEN) CLOSE(UNIT=TIMING_FILE_UNIT)
-      IF(NUMBER_OF_COMPUTATIONAL_NODES>1) THEN
-        WRITE(FILENAME,'(A,".timing.",I0)') TIMING_FILENAME(1:LEN_TRIM(TIMING_FILENAME)),MY_COMPUTATIONAL_NODE_NUMBER
+    NULLIFY(routine)
+    IF(LEN_TRIM(timingFilename)>=1) THEN
+      IF(timingFileOpen) CLOSE(UNIT=TIMING_FILE_UNIT)
+      IF(numberOfComputationalNodes>1) THEN
+        WRITE(filename,'(A,".timing.",I0)') timingFilename(1:LEN_TRIM(timingFilename)),myComputationalNodeNumber
       ELSE
-        FILENAME=TIMING_FILENAME(1:LEN_TRIM(TIMING_FILENAME))//".timing"
+        filename=timingFilename(1:LEN_TRIM(timingFilename))//".timing"
       ENDIF
-      OPEN(UNIT=TIMING_FILE_UNIT,FILE=FILENAME(1:LEN_TRIM(FILENAME)),STATUS="UNKNOWN",IOSTAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not open timing file.",ERR,ERROR,*999)
-      TIMING_FILE_OPEN=.TRUE.
+      OPEN(UNIT=TIMING_FILE_UNIT,FILE=filename(1:LEN_TRIM(filename)),STATUS="UNKNOWN",IOSTAT=err)
+      IF(err/=0) CALL FlagError("Could not open timing file.",err,error,*999)
+      timingFileOpen=.TRUE.
     ENDIF
-    SELECT CASE(TIMING_TYPE)
+    SELECT CASE(timingType)
     CASE(ALL_TIMING_TYPE)
-      TIMING_ALL_SUBROUTINES=.TRUE.
+      timingAllSubroutines=.TRUE.
     CASE(IN_TIMING_TYPE,FROM_TIMING_TYPE)
-      TIMING_ALL_SUBROUTINES=.FALSE.
-      TIMING_FROM_SUBROUTINE=TIMING_TYPE==FROM_TIMING_TYPE
-      IF(ASSOCIATED(TIMING_ROUTINE_LIST%HEAD)) THEN
-        ROUTINE=>TIMING_ROUTINE_LIST%HEAD
-        DO WHILE(ASSOCIATED(ROUTINE))
-          NEXT_ROUTINE=>ROUTINE%NEXT_ROUTINE
-          DEALLOCATE(ROUTINE)
-          ROUTINE=>NEXT_ROUTINE
+      timingAllSubroutines=.FALSE.
+      timingFromSubroutine=timingType==FROM_TIMING_TYPE
+      IF(ASSOCIATED(timingRoutineList%head)) THEN
+        routine=>timingRoutineList%head
+        DO WHILE(ASSOCIATED(routine))
+          nextRoutine=>routine%nextRoutine
+          DEALLOCATE(routine)
+          routine=>nextRoutine
         ENDDO
-        NULLIFY(TIMING_ROUTINE_LIST%HEAD)
+        NULLIFY(timingRoutineList%head)
       ENDIF
-      ALLOCATE(ROUTINE,STAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not allocate routine list item.",ERR,ERROR,*999)
-      ROUTINE%NAME=ROUTINE_LIST(1)
-      PREVIOUS_ROUTINE=>ROUTINE
-      NULLIFY(ROUTINE%NEXT_ROUTINE)
-      TIMING_ROUTINE_LIST%HEAD=>ROUTINE
-      ROUTINE%NUMBER_OF_INVOCATIONS=0
-      ROUTINE%TOTAL_INCLUSIVE_CPU_TIME=0.0_SP
-      ROUTINE%TOTAL_INCLUSIVE_SYSTEM_TIME=0.0_SP
-      ROUTINE%TOTAL_EXCLUSIVE_CPU_TIME=0.0_SP
-      ROUTINE%TOTAL_EXCLUSIVE_SYSTEM_TIME=0.0_SP
-      DO i=2,SIZE(ROUTINE_LIST,1)
-        ALLOCATE(ROUTINE,STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate routine list item.",ERR,ERROR,*999)
-        ROUTINE%NAME=ROUTINE_LIST(i)
-        NULLIFY(ROUTINE%NEXT_ROUTINE)
-        PREVIOUS_ROUTINE%NEXT_ROUTINE=>ROUTINE
-        PREVIOUS_ROUTINE=>ROUTINE
-        ROUTINE%NUMBER_OF_INVOCATIONS=0
-        ROUTINE%TOTAL_INCLUSIVE_CPU_TIME=0.0_SP
-        ROUTINE%TOTAL_INCLUSIVE_CPU_TIME=0.0_SP
-        ROUTINE%TOTAL_EXCLUSIVE_CPU_TIME=0.0_SP
-        ROUTINE%TOTAL_EXCLUSIVE_CPU_TIME=0.0_SP
+      ALLOCATE(routine,STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate routine list item.",err,error,*999)
+      routine%name=routineList(1)
+      previousRoutine=>routine
+      NULLIFY(routine%nextRoutine)
+      timingRoutineList%head=>routine
+      routine%numberOfInvocations=0
+      routine%totalInclusiveCPUTime=0.0_SP
+      routine%totalInclusiveSystemTime=0.0_SP
+      routine%totalExclusiveCPUTime=0.0_SP
+      routine%totalExclusiveSystemTime=0.0_SP
+      DO i=2,SIZE(routineList,1)
+        ALLOCATE(routine,STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate routine list item.",err,error,*999)
+        routine%name=routineList(i)
+        NULLIFY(routine%nextRoutine)
+        previousRoutine%nextRoutine=>routine
+        previousRoutine=>routine
+        routine%numberOfInvocations=0
+        routine%totalInclusiveCPUTime=0.0_SP
+        routine%totalInclusiveCPUTime=0.0_SP
+        routine%totalExclusiveCPUTime=0.0_SP
+        routine%totalExclusiveCPUTime=0.0_SP
       ENDDO !i
     CASE DEFAULT
-      CALL FlagError("Invalid timing type.",ERR,ERROR,*999)
+      CALL FlagError("Invalid timing type.",err,error,*999)
     END SELECT
-    TIMING_SUMMARY=TIMING_SUMMARY_FLAG
-    TIMING=.TRUE.
-    DIAG_OR_TIMING=.TRUE.
+    timingSummary=timingSummaryFlag
+    timing=.TRUE.
+    diagOrTiming=.TRUE.
 
-    EXITS("TIMING_SET_ON")
+    EXITS("TimingSetOn")
     RETURN
-999 IF(TIMING_FILE_OPEN) THEN
+999 IF(timingFileOpen) THEN
       CLOSE(UNIT=TIMING_FILE_UNIT)
-      TIMING_FILE_OPEN=.FALSE.
+      timingFileOpen=.FALSE.
     ENDIF
-    ROUTINE=>TIMING_ROUTINE_LIST%HEAD
-    DO WHILE(ASSOCIATED(ROUTINE))
-      NEXT_ROUTINE=>ROUTINE%NEXT_ROUTINE
-      DEALLOCATE(ROUTINE)
-      ROUTINE=>NEXT_ROUTINE
+    routine=>timingRoutineList%head
+    DO WHILE(ASSOCIATED(routine))
+      nextRoutine=>routine%nextRoutine
+      DEALLOCATE(routine)
+      routine=>nextRoutine
     ENDDO
-    NULLIFY(TIMING_ROUTINE_LIST%HEAD)
-    TIMING_ALL_SUBROUTINES=.FALSE.
-    TIMING_FROM_SUBROUTINE=.FALSE.
-    TIMING=.FALSE.
-    DIAG_OR_TIMING=DIAGNOSTICS
-    ERRORSEXITS("TIMING_SET_ON",ERR,ERROR)
+    NULLIFY(timingRoutineList%head)
+    timingAllSubroutines=.FALSE.
+    timingFromSubroutine=.FALSE.
+    timing=.FALSE.
+    diagOrTiming=diagnostics
+    ERRORSEXITS("TimingSetOn",err,error)
     RETURN 1
-  END SUBROUTINE TIMING_SET_ON
+    
+  END SUBROUTINE TimingSetOn
 
   !
   !================================================================================================================================
   !
 
-  !>Outputs the timing summary. \see OPENCMISS::CMISSTimingSummaryOutput
-  SUBROUTINE TIMING_SUMMARY_OUTPUT(ERR,ERROR,*)    
+  !>Outputs the timing summary. \see OpenCMISS::Iron::TimingSummaryOutput
+  SUBROUTINE TimingSummaryOutput(err,error,*)    
 
     !Argument variables
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(ROUTINE_LIST_ITEM_TYPE), POINTER :: ROUTINE_PTR
+    TYPE(RoutineListItemType), POINTER :: routinePtr
 
-    NULLIFY(ROUTINE_PTR)
+    NULLIFY(routinePtr)
     
-    ENTERS("TIMING_SUMMARY_OUTPUT",ERR,ERROR,*999)
+    ENTERS("TimingSummaryOutput",err,error,*999)
 
-    IF(TIMING) THEN
-      WRITE(OP_STRING,'("*** Timing Summary: ")') 
-      CALL WRITE_STR(TIMING_OUTPUT_TYPE,ERR,ERROR,*999)
-      ROUTINE_PTR=>TIMING_ROUTINE_LIST%HEAD
-      DO WHILE(ASSOCIATED(ROUTINE_PTR))
-        WRITE(OP_STRING,'("*** Routine : ",A)') TRIM(ROUTINE_PTR%NAME)
-        CALL WRITE_STR(TIMING_OUTPUT_TYPE,ERR,ERROR,*999)
-        WRITE(OP_STRING,'("***    Number of invocations: ",I10)') ROUTINE_PTR%NUMBER_OF_INVOCATIONS
-        CALL WRITE_STR(TIMING_OUTPUT_TYPE,ERR,ERROR,*999)
-        WRITE(OP_STRING,'("***    Routine times: Total Exclusive  Total Inclusive  Average Exclusive  Average Inclusive")')
-        CALL WRITE_STR(TIMING_OUTPUT_TYPE,ERR,ERROR,*999)
-        IF(ROUTINE_PTR%NUMBER_OF_INVOCATIONS==0) THEN
-          WRITE(OP_STRING,'("***    CPU       (s):  ",E14.6,"   ",E14.6,"     ",E14.6,"     ",E14.6)')  &
-            & ROUTINE_PTR%TOTAL_EXCLUSIVE_CPU_TIME,ROUTINE_PTR%TOTAL_INCLUSIVE_CPU_TIME, &
-            & REAL(ROUTINE_PTR%NUMBER_OF_INVOCATIONS,SP),REAL(ROUTINE_PTR%NUMBER_OF_INVOCATIONS,SP)
-          CALL WRITE_STR(TIMING_OUTPUT_TYPE,ERR,ERROR,*999)
-          WRITE(OP_STRING,'("***    System    (s):  ",E14.6,"   ",E14.6,"     ",E14.6,"     ",E14.6)')  &
-            & ROUTINE_PTR%TOTAL_EXCLUSIVE_SYSTEM_TIME,ROUTINE_PTR%TOTAL_INCLUSIVE_SYSTEM_TIME, &
-            & REAL(ROUTINE_PTR%NUMBER_OF_INVOCATIONS,SP),REAL(ROUTINE_PTR%NUMBER_OF_INVOCATIONS,SP)
-          CALL WRITE_STR(TIMING_OUTPUT_TYPE,ERR,ERROR,*999)
+    IF(timing) THEN
+      WRITE(outputString,'("*** Timing Summary: ")') 
+      CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+      routinePtr=>timingRoutineList%head
+      DO WHILE(ASSOCIATED(routinePtr))
+        WRITE(outputString,'("*** Routine : ",A)') TRIM(routinePtr%name)
+        CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+        WRITE(outputString,'("***    Number of invocations: ",I10)') routinePtr%numberOfInvocations
+        CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+        WRITE(outputString,'("***    Routine times: Total Exclusive  Total Inclusive  Average Exclusive  Average Inclusive")')
+        CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+        IF(routinePtr%numberOfInvocations==0) THEN
+          WRITE(outputString,'("***    CPU       (s):  ",E14.6,"   ",E14.6,"     ",E14.6,"     ",E14.6)')  &
+            & routinePtr%totalExclusiveCPUTime,routinePtr%totalInclusiveCPUTime, &
+            & REAL(routinePtr%numberOfInvocations,SP),REAL(routinePtr%numberOfInvocations,SP)
+          CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+          WRITE(outputString,'("***    System    (s):  ",E14.6,"   ",E14.6,"     ",E14.6,"     ",E14.6)')  &
+            & routinePtr%totalExclusiveSystemTime,routinePtr%totalInclusiveSystemTime, &
+            & REAL(routinePtr%numberOfInvocations,SP),REAL(routinePtr%numberOfInvocations,SP)
+          CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
         ELSE
-          WRITE(OP_STRING,'("***    CPU       (s):  ",E14.6,"   ",E14.6,"     ",E14.6,"     ",E14.6)')  &
-            & ROUTINE_PTR%TOTAL_EXCLUSIVE_CPU_TIME,ROUTINE_PTR%TOTAL_INCLUSIVE_CPU_TIME, &
-            & ROUTINE_PTR%TOTAL_EXCLUSIVE_CPU_TIME/REAL(ROUTINE_PTR%NUMBER_OF_INVOCATIONS,SP), &
-            & ROUTINE_PTR%TOTAL_INCLUSIVE_CPU_TIME/REAL(ROUTINE_PTR%NUMBER_OF_INVOCATIONS,SP)
-          CALL WRITE_STR(TIMING_OUTPUT_TYPE,ERR,ERROR,*999)
-          WRITE(OP_STRING,'("***    System    (s):  ",E14.6,"   ",E14.6,"     ",E14.6,"     ",E14.6)')  &
-            & ROUTINE_PTR%TOTAL_EXCLUSIVE_SYSTEM_TIME,ROUTINE_PTR%TOTAL_INCLUSIVE_SYSTEM_TIME, &
-            & ROUTINE_PTR%TOTAL_EXCLUSIVE_SYSTEM_TIME/REAL(ROUTINE_PTR%NUMBER_OF_INVOCATIONS,SP), &
-            & ROUTINE_PTR%TOTAL_INCLUSIVE_SYSTEM_TIME/REAL(ROUTINE_PTR%NUMBER_OF_INVOCATIONS,SP)
-          CALL WRITE_STR(TIMING_OUTPUT_TYPE,ERR,ERROR,*999)
+          WRITE(outputString,'("***    CPU       (s):  ",E14.6,"   ",E14.6,"     ",E14.6,"     ",E14.6)')  &
+            & routinePtr%totalExclusiveCPUTime,routinePtr%totalInclusiveCPUTime, &
+            & routinePtr%totalExclusiveCPUTime/REAL(routinePtr%numberOfInvocations,SP), &
+            & routinePtr%totalInclusiveCPUTime/REAL(routinePtr%numberOfInvocations,SP)
+          CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+          WRITE(outputString,'("***    System    (s):  ",E14.6,"   ",E14.6,"     ",E14.6,"     ",E14.6)')  &
+            & routinePtr%totalExclusiveSystemTime,routinePtr%totalInclusiveSystemTime, &
+            & routinePtr%totalExclusiveSystemTime/REAL(routinePtr%numberOfInvocations,SP), &
+            & routinePtr%totalInclusiveSystemTime/REAL(routinePtr%numberOfInvocations,SP)
+          CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
         ENDIF
-        ROUTINE_PTR=>ROUTINE_PTR%NEXT_ROUTINE
+        routinePtr=>routinePtr%nextRoutine
       ENDDO
     ELSE
-      CALL FlagError("Timing is not on.",ERR,ERROR,*999)
+      CALL FlagError("Timing is not on.",err,error,*999)
     ENDIF
 
-    EXITS("TIMING_SUMMARY_OUTPUT")
+    EXITS("TimingSummaryOutput")
     RETURN
-999 ERRORSEXITS("TIMING_SUMMARY_OUTPUT",ERR,ERROR)
+999 ERRORSEXITS("TimingSummaryOutput",err,error)
     RETURN 1
-  END SUBROUTINE TIMING_SUMMARY_OUTPUT
+    
+  END SUBROUTINE TimingSummaryOutput
 
- !
+  !
   !================================================================================================================================
   !
 
@@ -1410,8 +1389,8 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError,localError2
 
     indent=2
-    IF(NUMBER_OF_COMPUTATIONAL_NODES>1) THEN
-      WRITE(startString,'(A,A,I0,A,X,I0,A)') indentString(1:indent),"ERROR (",MY_COMPUTATIONAL_NODE_NUMBER,"):", &
+    IF(numberOfComputationalNodes>1) THEN
+      WRITE(startString,'(A,A,I0,A,X,I0,A)') indentString(1:indent),"ERROR (",myComputationalNodeNumber,"):", &
         & ERR,":"
       startStringLength=LEN_TRIM(startString)
     ELSE
@@ -1425,30 +1404,30 @@ CONTAINS
       endPosition=MAX_OUTPUT_WIDTH-startStringLength-1
       lastSpacePosition=INDEX(EXTRACT(localError,1,endPosition)," ",BACK=.TRUE.)
       IF(lastSpacePosition/=0) endPosition=lastSpacePosition-1
-      WRITE(OP_STRING,'(A,X,A)') startString(1:startStringLength),CHAR(EXTRACT(localError,1,endPosition))
-      CALL WRITE_STR(ERROR_OUTPUT_TYPE,localErr,localError2,*999)
+      WRITE(outputString,'(A,X,A)') startString(1:startStringLength),CHAR(EXTRACT(localError,1,endPosition))
+      CALL WriteStr(ERROR_OUTPUT_TYPE,localErr,localError2,*999)
       localError=ADJUSTL(EXTRACT(localError,endPosition+1,LEN_TRIM(localError)))
       errorStringLength=LEN_TRIM(localError)
       startString=" "
     ENDDO !not finished
-    WRITE(OP_STRING,'(A,X,A)') startString(1:startStringLength),CHAR(localError)
-    CALL WRITE_STR(ERROR_OUTPUT_TYPE,localErr,localError2,*999)
+    WRITE(outputString,'(A,X,A)') startString(1:startStringLength),CHAR(localError)
+    CALL WriteStr(ERROR_OUTPUT_TYPE,localErr,localError2,*999)
     !CPB 20/02/07 aix compiler does not like varying strings so split the remove statement up into two statements
     localError=REMOVE(error,1,position)
     error=localError
     position=INDEX(error,ERROR_SEPARATOR_CONSTANT)
     indent=indent+2
     DO WHILE(position/=0)
-      WRITE(OP_STRING,'(A)') indentString(1:indent)//CHAR(EXTRACT(error,1,position-1))
-      CALL WRITE_STR(ERROR_OUTPUT_TYPE,localErr,localError2,*999)
+      WRITE(outputString,'(A)') indentString(1:indent)//CHAR(EXTRACT(error,1,position-1))
+      CALL WriteStr(ERROR_OUTPUT_TYPE,localErr,localError2,*999)
       !CPB 20/02/07 aix compiler does not like varying strings so split the remove statement up into two statements
       localError=REMOVE(error,1,position)
       error=localError
       position=INDEX(error,ERROR_SEPARATOR_CONSTANT)
       indent=indent+2
     ENDDO
-    WRITE(OP_STRING,'(A)') indentString(1:indent)//CHAR(error)
-    CALL WRITE_STR(ERROR_OUTPUT_TYPE,localErr,localError2,*999)
+    WRITE(outputString,'(A)') indentString(1:indent)//CHAR(error)
+    CALL WriteStr(ERROR_OUTPUT_TYPE,localErr,localError2,*999)
 
     RETURN
     !Don't return an error code here otherwise we will get into a circular loop
@@ -1460,7 +1439,7 @@ CONTAINS
   !
 
   !>Writes the output string to a specified output stream.
-  SUBROUTINE WRITE_STR(ID,ERR,ERROR,*)
+  SUBROUTINE WriteStr(outputStreamID,err,error,*)
 
 
 !!!!NOTE: No enters or exits is used here to avoid an infinite loop
@@ -1468,133 +1447,135 @@ CONTAINS
 !!!!      module routines need to use this module.
 
     !Argument Variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream. An ID of > 9 specifies file output \see BASE_ROUTINES_OutputType,BASE_ROUTINES_FileUnits
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(IN) :: outputStreamID !<The outputStreamID of the output stream. An outputStreamID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: END_LINE(MAX_OUTPUT_LINES),i,j,LENGTH,NUMBER_BLANKS,NUMBER_RECORDS
+    INTEGER(INTG) :: endLine(MAX_OUTPUT_LINES),i,j,length,numberBlanks,numberRecords
 
-    !Calculate number of records in OP_STRING
+    !Calculate number of records in outputString
     SELECT CASE(MACHINE_OS)
     CASE(VMS_OS)
       i=1 
-      DO WHILE(OP_STRING(i)(1:1)/=CHAR(0).AND.i<MAX_OUTPUT_LINES)
+      DO WHILE(outputString(i)(1:1)/=CHAR(0).AND.i<MAX_OUTPUT_LINES)
         i=i+1
       ENDDO
-      NUMBER_RECORDS=i-1
+      numberRecords=i-1
     CASE(IRIX_OS,LINUX_OS,AIX_OS)
       i=1
-      NUMBER_BLANKS=0
-      DO WHILE(i<MAX_OUTPUT_LINES.AND.NUMBER_BLANKS<2)
+      numberBlanks=0
+      DO WHILE(i<MAX_OUTPUT_LINES.AND.numberBlanks<2)
         i=i+1
-        LENGTH=LEN_TRIM(OP_STRING(i))
-        IF(LENGTH==0) THEN
-          NUMBER_BLANKS=NUMBER_BLANKS+1
+        length=LEN_TRIM(outputString(i))
+        IF(length==0) THEN
+          numberBlanks=numberBlanks+1
         ELSE
-          NUMBER_BLANKS=0
+          numberBlanks=0
         ENDIF
       ENDDO
-      NUMBER_RECORDS=i-NUMBER_BLANKS
+      numberRecords=i-numberBlanks
     CASE(WINDOWS_OS)
       i=1 
-      DO WHILE(OP_STRING(i)(1:1)/=CHAR(0).AND.i<MAX_OUTPUT_LINES)
+      DO WHILE(outputString(i)(1:1)/=CHAR(0).AND.i<MAX_OUTPUT_LINES)
         i=i+1
       ENDDO
-      NUMBER_RECORDS=i-1
+      numberRecords=i-1
     CASE DEFAULT
-      CALL FlagError("Operating system not implemented.",ERR,ERROR,*999)
+      CALL FlagError("Operating system not implemented.",err,error,*999)
     END SELECT
 
-    DO i=1,NUMBER_RECORDS
-      END_LINE(i)=LEN_TRIM(OP_STRING(i))
+    DO i=1,numberRecords
+      endLine(i)=LEN_TRIM(outputString(i))
     ENDDO !i
 
-    IF(DIAG_FILE_OPEN.AND.ID==DIAGNOSTIC_OUTPUT_TYPE) THEN
-      DO i=1,NUMBER_RECORDS
-        IF(END_LINE(i)<=MAX_OUTPUT_WIDTH) THEN
-          WRITE(DIAGNOSTICS_FILE_UNIT,'(A)') OP_STRING(i)(1:END_LINE(i))
-        ELSE IF(END_LINE(i)>MAX_OUTPUT_WIDTH.AND.END_LINE(i)<=MAXSTRLEN) THEN
-          WRITE(DIAGNOSTICS_FILE_UNIT,'(A)') OP_STRING(i)(1:MAX_OUTPUT_WIDTH)
-          WRITE(DIAGNOSTICS_FILE_UNIT,'(A)') OP_STRING(i)(MAX_OUTPUT_WIDTH+1:END_LINE(i))
+    IF(diagFileOpen.AND.outputStreamID==DIAGNOSTIC_OUTPUT_TYPE) THEN
+      DO i=1,numberRecords
+        IF(endLine(i)<=MAX_OUTPUT_WIDTH) THEN
+          WRITE(DIAGNOSTICS_FILE_UNIT,'(A)') outputString(i)(1:endLine(i))
+        ELSE IF(endLine(i)>MAX_OUTPUT_WIDTH.AND.endLine(i)<=MAXSTRLEN) THEN
+          WRITE(DIAGNOSTICS_FILE_UNIT,'(A)') outputString(i)(1:MAX_OUTPUT_WIDTH)
+          WRITE(DIAGNOSTICS_FILE_UNIT,'(A)') outputString(i)(MAX_OUTPUT_WIDTH+1:endLine(i))
         ELSE
-          WRITE(DIAGNOSTICS_FILE_UNIT,'(A)') OP_STRING(i)(1:MAX_OUTPUT_WIDTH)
-          WRITE(DIAGNOSTICS_FILE_UNIT,'(A)') OP_STRING(i)(MAX_OUTPUT_WIDTH+1:MAXSTRLEN)
+          WRITE(DIAGNOSTICS_FILE_UNIT,'(A)') outputString(i)(1:MAX_OUTPUT_WIDTH)
+          WRITE(DIAGNOSTICS_FILE_UNIT,'(A)') outputString(i)(MAX_OUTPUT_WIDTH+1:MAXSTRLEN)
         ENDIF
       ENDDO !i
-    ELSE IF(TIMING_FILE_OPEN.AND.ID==TIMING_OUTPUT_TYPE) THEN
-      DO i=1,NUMBER_RECORDS
-        IF(END_LINE(i)<=MAX_OUTPUT_WIDTH) THEN
-          WRITE(TIMING_FILE_UNIT,'(A)') OP_STRING(i)(1:END_LINE(i))
-        ELSE IF(END_LINE(i)>MAX_OUTPUT_WIDTH.AND.END_LINE(i)<=MAXSTRLEN) THEN
-          WRITE(TIMING_FILE_UNIT,'(A)') OP_STRING(i)(1:MAX_OUTPUT_WIDTH)
-          WRITE(TIMING_FILE_UNIT,'(A)') OP_STRING(i)(MAX_OUTPUT_WIDTH+1:END_LINE(i))
+    ELSE IF(timingFileOpen.AND.outputStreamID==TIMING_OUTPUT_TYPE) THEN
+      DO i=1,numberRecords
+        IF(endLine(i)<=MAX_OUTPUT_WIDTH) THEN
+          WRITE(TIMING_FILE_UNIT,'(A)') outputString(i)(1:endLine(i))
+        ELSE IF(endLine(i)>MAX_OUTPUT_WIDTH.AND.endLine(i)<=MAXSTRLEN) THEN
+          WRITE(TIMING_FILE_UNIT,'(A)') outputString(i)(1:MAX_OUTPUT_WIDTH)
+          WRITE(TIMING_FILE_UNIT,'(A)') outputString(i)(MAX_OUTPUT_WIDTH+1:endLine(i))
         ELSE
-          WRITE(TIMING_FILE_UNIT,'(A)') OP_STRING(i)(1:MAX_OUTPUT_WIDTH)
-          WRITE(TIMING_FILE_UNIT,'(A)') OP_STRING(i)(MAX_OUTPUT_WIDTH+1:MAXSTRLEN)
+          WRITE(TIMING_FILE_UNIT,'(A)') outputString(i)(1:MAX_OUTPUT_WIDTH)
+          WRITE(TIMING_FILE_UNIT,'(A)') outputString(i)(MAX_OUTPUT_WIDTH+1:MAXSTRLEN)
         ENDIF
       ENDDO !i
     ELSE
-      IF(ID<=9) THEN !not file output
-        DO i=1,NUMBER_RECORDS
-          IF(END_LINE(i)<=MAX_OUTPUT_WIDTH) THEN
-            WRITE(*,'(A)') OP_STRING(i)(1:END_LINE(i))
-          ELSE IF(END_LINE(i)>MAX_OUTPUT_WIDTH.AND.END_LINE(i)<=MAXSTRLEN) THEN
-            WRITE(*,'(A)') OP_STRING(i)(1:MAX_OUTPUT_WIDTH)
-            WRITE(*,'(A)') OP_STRING(i)(MAX_OUTPUT_WIDTH+1:END_LINE(i))
+      IF(outputStreamID<=9) THEN !not file output
+        DO i=1,numberRecords
+          IF(endLine(i)<=MAX_OUTPUT_WIDTH) THEN
+            WRITE(*,'(A)') outputString(i)(1:endLine(i))
+          ELSE IF(endLine(i)>MAX_OUTPUT_WIDTH.AND.endLine(i)<=MAXSTRLEN) THEN
+            WRITE(*,'(A)') outputString(i)(1:MAX_OUTPUT_WIDTH)
+            WRITE(*,'(A)') outputString(i)(MAX_OUTPUT_WIDTH+1:endLine(i))
           ELSE
-            WRITE(*,'(A)') OP_STRING(i)(1:MAX_OUTPUT_WIDTH)
-            WRITE(*,'(A)') OP_STRING(i)(MAX_OUTPUT_WIDTH+1:MAXSTRLEN)
+            WRITE(*,'(A)') outputString(i)(1:MAX_OUTPUT_WIDTH)
+            WRITE(*,'(A)') outputString(i)(MAX_OUTPUT_WIDTH+1:MAXSTRLEN)
           ENDIF
         ENDDO !i
       ELSE !file output
-        DO i=1,NUMBER_RECORDS
-          WRITE(ID,'(A)') OP_STRING(i)(1:END_LINE(i))
+        DO i=1,numberRecords
+          WRITE(outputStreamID,'(A)') outputString(i)(1:endLine(i))
         ENDDO !i
       ENDIF
 
       !Echo strings to output file if required
 
-      IF(ECHO_OUTPUT) THEN
-        DO i=1,NUMBER_RECORDS
-          IF(END_LINE(i)<=MAX_OUTPUT_WIDTH) THEN
-            WRITE(ECHO_FILE_UNIT,'(A)') OP_STRING(i)(1:END_LINE(i))
-          ELSE IF(END_LINE(i)>MAX_OUTPUT_WIDTH.AND.END_LINE(i)<=MAXSTRLEN) THEN
-            WRITE(ECHO_FILE_UNIT,'(A)') OP_STRING(i)(1:MAX_OUTPUT_WIDTH)
-            WRITE(ECHO_FILE_UNIT,'(A)') OP_STRING(i)(MAX_OUTPUT_WIDTH+1:END_LINE(i))
+      IF(echoOutput) THEN
+        DO i=1,numberRecords
+          IF(endLine(i)<=MAX_OUTPUT_WIDTH) THEN
+            WRITE(ECHO_FILE_UNIT,'(A)') outputString(i)(1:endLine(i))
+          ELSE IF(endLine(i)>MAX_OUTPUT_WIDTH.AND.endLine(i)<=MAXSTRLEN) THEN
+            WRITE(ECHO_FILE_UNIT,'(A)') outputString(i)(1:MAX_OUTPUT_WIDTH)
+            WRITE(ECHO_FILE_UNIT,'(A)') outputString(i)(MAX_OUTPUT_WIDTH+1:endLine(i))
           ELSE
-            WRITE(ECHO_FILE_UNIT,'(A)') OP_STRING(i)(1:MAX_OUTPUT_WIDTH)
-            WRITE(ECHO_FILE_UNIT,'(A)') OP_STRING(i)(MAX_OUTPUT_WIDTH+1:MAXSTRLEN)
+            WRITE(ECHO_FILE_UNIT,'(A)') outputString(i)(1:MAX_OUTPUT_WIDTH)
+            WRITE(ECHO_FILE_UNIT,'(A)') outputString(i)(MAX_OUTPUT_WIDTH+1:MAXSTRLEN)
           ENDIF
         ENDDO !i
       ENDIF
     ENDIF
 
-    !Reset OP_STRING
+    !Reset outputString
     SELECT CASE(MACHINE_OS)
     CASE(VMS_OS)
-      DO i=1,NUMBER_RECORDS
-        OP_STRING(i)(1:1)=CHAR(0)
+      DO i=1,numberRecords
+        outputString(i)(1:1)=CHAR(0)
       ENDDO !i
     CASE(IRIX_OS,LINUX_OS,AIX_OS)
-      DO i=1,NUMBER_RECORDS
+      DO i=1,numberRecords
         DO j=1,MAXSTRLEN
-          OP_STRING(i)(j:j)=' '
+          outputString(i)(j:j)=' '
         ENDDO !j
       ENDDO !i
     CASE(WINDOWS_OS)
-      DO i=1,NUMBER_RECORDS
-        OP_STRING(i)(1:1)=CHAR(0)
+      DO i=1,numberRecords
+        outputString(i)(1:1)=CHAR(0)
       ENDDO !i
     CASE DEFAULT
-      CALL FlagError("Operating system not implemented.",ERR,ERROR,*999)
+      CALL FlagError("Operating system not implemented.",err,error,*999)
     END SELECT
 
     RETURN
-999 ERRORSEXITS("WRITE_STR",ERR,ERROR)
-  END SUBROUTINE WRITE_STR
+999 ERRORS("WriteStr",err,error)
+    RETURN 1
+    
+  END SUBROUTINE WriteStr
 
   !
   !================================================================================================================================
   !
 
-END MODULE BASE_ROUTINES
+END MODULE BaseRoutines

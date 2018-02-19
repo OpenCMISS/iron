@@ -44,12 +44,14 @@
 !> This module handles all generated mesh routines.
 MODULE GENERATED_MESH_ROUTINES
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE BASIS_ROUTINES
-  USE COMP_ENVIRONMENT
+  USE ComputationEnvironment
   USE CONSTANTS
   USE COORDINATE_ROUTINES
   USE FIELD_ROUTINES
+  USE FieldAccessRoutines
+  USE GeneratedMeshAccessRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE KINDS
@@ -122,11 +124,9 @@ MODULE GENERATED_MESH_ROUTINES
     MODULE PROCEDURE GENERATED_MESHES_INITIALISE_REGION
   END INTERFACE !GENERATED_MESHES_INITIALISE
 
-  !>Finds a generated mesh in a list of generated meshes in a region or interface.
-  INTERFACE GENERATED_MESH_USER_NUMBER_FIND
-    MODULE PROCEDURE GENERATED_MESH_USER_NUMBER_FIND_INTERFACE
-    MODULE PROCEDURE GENERATED_MESH_USER_NUMBER_FIND_REGION
-  END INTERFACE GENERATED_MESH_USER_NUMBER_FIND
+  INTERFACE GeneratedMesh_BasisGet
+    MODULE PROCEDURE GENERATED_MESH_BASIS_GET
+  END INTERFACE GeneratedMesh_BasisGet
 
   PUBLIC GENERATED_MESH_REGULAR_MESH_TYPE,GENERATED_MESH_POLAR_MESH_TYPE
   PUBLIC GENERATED_MESH_FRACTAL_TREE_MESH_TYPE,GENERATED_MESH_CYLINDER_MESH_TYPE
@@ -154,9 +154,10 @@ MODULE GENERATED_MESH_ROUTINES
   PUBLIC GENERATED_MESH_BASIS_GET,GENERATED_MESH_EXTENT_GET,GENERATED_MESH_NUMBER_OF_ELEMENTS_GET,GENERATED_MESH_ORIGIN_GET,&
     & GENERATED_MESH_TYPE_GET
 
+  PUBLIC GeneratedMesh_BasisGet
+
   PUBLIC GENERATED_MESH_REGION_GET
 
-  PUBLIC GENERATED_MESH_USER_NUMBER_FIND
   PUBLIC GENERATED_MESH_SURFACE_GET
 
 CONTAINS
@@ -579,10 +580,10 @@ CONTAINS
   !
 
   !>Starts the creation of a generic generated mesh.
-  SUBROUTINE GENERATED_MESH_CREATE_START_GENERIC(GENERATED_MESHES,USER_NUMBER,GENERATED_MESH,ERR,ERROR,*)
+  SUBROUTINE GENERATED_MESH_CREATE_START_GENERIC(generatedMeshes,USER_NUMBER,GENERATED_MESH,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(GENERATED_MESHES_TYPE), POINTER :: GENERATED_MESHES !<A pointer to the generated meshes
+    TYPE(GeneratedMeshesType), POINTER :: generatedMeshes !<A pointer to the generated meshes
     INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the generated mesh to create
     TYPE(GENERATED_MESH_TYPE), POINTER :: GENERATED_MESH !<On exit, a pointer to the created generated mesh. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
@@ -598,7 +599,7 @@ CONTAINS
 
     ENTERS("GENERATED_MESH_CREATE_START_GENERIC",ERR,ERROR,*997)
 
-    IF(ASSOCIATED(GENERATED_MESHES)) THEN
+    IF(ASSOCIATED(generatedMeshes)) THEN
       IF(ASSOCIATED(GENERATED_MESH)) THEN
         CALL FlagError("Generated mesh is already associated.",ERR,ERROR,*997)
       ELSE
@@ -606,18 +607,18 @@ CONTAINS
         CALL GENERATED_MESH_INITIALISE(NEW_GENERATED_MESH,ERR,ERROR,*999)
         !Set default generated mesh values
         NEW_GENERATED_MESH%USER_NUMBER=USER_NUMBER
-        NEW_GENERATED_MESH%GLOBAL_NUMBER=GENERATED_MESHES%NUMBER_OF_GENERATED_MESHES+1
-        NEW_GENERATED_MESH%GENERATED_MESHES=>GENERATED_MESHES
+        NEW_GENERATED_MESH%GLOBAL_NUMBER=generatedMeshes%numberOfGeneratedMeshes+1
+        NEW_GENERATED_MESH%generatedMeshes=>generatedMeshes
         !Add new generated mesh into list of generated meshes
-        ALLOCATE(NEW_GENERATED_MESHES(GENERATED_MESHES%NUMBER_OF_GENERATED_MESHES+1),STAT=ERR)
+        ALLOCATE(NEW_GENERATED_MESHES(generatedMeshes%numberOfGeneratedMeshes+1),STAT=ERR)
         IF(ERR/=0) CALL FlagError("Could not allocate new generated meshes.",ERR,ERROR,*999)
-        DO generated_mesh_idx=1,GENERATED_MESHES%NUMBER_OF_GENERATED_MESHES
-          NEW_GENERATED_MESHES(generated_mesh_idx)%PTR=>GENERATED_MESHES%GENERATED_MESHES(generated_mesh_idx)%PTR
+        DO generated_mesh_idx=1,generatedMeshes%numberOfGeneratedMeshes
+          NEW_GENERATED_MESHES(generated_mesh_idx)%PTR=>generatedMeshes%generatedMeshes(generated_mesh_idx)%PTR
         ENDDO !generated_mesh_idx
-        NEW_GENERATED_MESHES(GENERATED_MESHES%NUMBER_OF_GENERATED_MESHES+1)%PTR=>NEW_GENERATED_MESH
-        IF(ASSOCIATED(GENERATED_MESHES%GENERATED_MESHES)) DEALLOCATE(GENERATED_MESHES%GENERATED_MESHES)
-        GENERATED_MESHES%GENERATED_MESHES=>NEW_GENERATED_MESHES
-        GENERATED_MESHES%NUMBER_OF_GENERATED_MESHES=GENERATED_MESHES%NUMBER_OF_GENERATED_MESHES+1
+        NEW_GENERATED_MESHES(generatedMeshes%numberOfGeneratedMeshes+1)%PTR=>NEW_GENERATED_MESH
+        IF(ASSOCIATED(generatedMeshes%generatedMeshes)) DEALLOCATE(generatedMeshes%generatedMeshes)
+        generatedMeshes%generatedMeshes=>NEW_GENERATED_MESHES
+        generatedMeshes%numberOfGeneratedMeshes=generatedMeshes%numberOfGeneratedMeshes+1
         !Return the pointer
         GENERATED_MESH=>NEW_GENERATED_MESH
       ENDIF
@@ -664,8 +665,8 @@ CONTAINS
             & " has already been used for a generated mesh."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ELSE
-          IF(ASSOCIATED(INTERFACE%GENERATED_MESHES)) THEN
-            CALL GENERATED_MESH_CREATE_START_GENERIC(INTERFACE%GENERATED_MESHES,USER_NUMBER,GENERATED_MESH,ERR,ERROR,*999)
+          IF(ASSOCIATED(INTERFACE%generatedMeshes)) THEN
+            CALL GENERATED_MESH_CREATE_START_GENERIC(INTERFACE%generatedMeshes,USER_NUMBER,GENERATED_MESH,ERR,ERROR,*999)
             GENERATED_MESH%INTERFACE=>INTERFACE
           ELSE
             CALL FlagError("Interface generated meshes is not associated.",ERR,ERROR,*999)
@@ -711,8 +712,8 @@ CONTAINS
             & " has already been used for a generated mesh."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ELSE
-          IF(ASSOCIATED(REGION%GENERATED_MESHES)) THEN
-            CALL GENERATED_MESH_CREATE_START_GENERIC(REGION%GENERATED_MESHES,USER_NUMBER,GENERATED_MESH,ERR,ERROR,*999)
+          IF(ASSOCIATED(REGION%generatedMeshes)) THEN
+            CALL GENERATED_MESH_CREATE_START_GENERIC(REGION%generatedMeshes,USER_NUMBER,GENERATED_MESH,ERR,ERROR,*999)
             GENERATED_MESH%REGION=>REGION
           ELSE
             CALL FlagError("Region generated meshes is not associated.",ERR,ERROR,*999)
@@ -743,35 +744,35 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: generated_mesh_idx,generated_mesh_position
     TYPE(GENERATED_MESH_PTR_TYPE), POINTER :: NEW_GENERATED_MESHES(:)
-    TYPE(GENERATED_MESHES_TYPE), POINTER :: GENERATED_MESHES
+    TYPE(GeneratedMeshesType), POINTER :: generatedMeshes
 
     ENTERS("GENERATED_MESH_DESTROY",ERR,ERROR,*998)
 
     IF(ASSOCIATED(GENERATED_MESH)) THEN
-      GENERATED_MESHES=>GENERATED_MESH%GENERATED_MESHES
-      IF(ASSOCIATED(GENERATED_MESHES)) THEN
-        IF(ASSOCIATED(GENERATED_MESHES%GENERATED_MESHES)) THEN
+      generatedMeshes=>GENERATED_MESH%generatedMeshes
+      IF(ASSOCIATED(generatedMeshes)) THEN
+        IF(ASSOCIATED(generatedMeshes%generatedMeshes)) THEN
           generated_mesh_position=GENERATED_MESH%GLOBAL_NUMBER
           CALL GENERATED_MESH_FINALISE(GENERATED_MESH,ERR,ERROR,*999)
           !Remove the generated mesh from the list of generated meshes
-          IF(GENERATED_MESHES%NUMBER_OF_GENERATED_MESHES>1) THEN
-            ALLOCATE(NEW_GENERATED_MESHES(GENERATED_MESHES%NUMBER_OF_GENERATED_MESHES-1),STAT=ERR)
+          IF(generatedMeshes%numberOfGeneratedMeshes>1) THEN
+            ALLOCATE(NEW_GENERATED_MESHES(generatedMeshes%numberOfGeneratedMeshes-1),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate new generated meshes.",ERR,ERROR,*999)
-            DO generated_mesh_idx=1,GENERATED_MESHES%NUMBER_OF_GENERATED_MESHES
+            DO generated_mesh_idx=1,generatedMeshes%numberOfGeneratedMeshes
               IF(generated_mesh_idx<generated_mesh_position) THEN
-                NEW_GENERATED_MESHES(generated_mesh_idx)%PTR=>GENERATED_MESHES%GENERATED_MESHES(generated_mesh_idx)%PTR
+                NEW_GENERATED_MESHES(generated_mesh_idx)%PTR=>generatedMeshes%generatedMeshes(generated_mesh_idx)%PTR
               ELSE IF(generated_mesh_idx>generated_mesh_position) THEN
-                GENERATED_MESHES%GENERATED_MESHES(generated_mesh_idx)%PTR%GLOBAL_NUMBER=GENERATED_MESHES% &
-                  & GENERATED_MESHES(generated_mesh_idx)%PTR%GLOBAL_NUMBER-1
-                NEW_GENERATED_MESHES(generated_mesh_idx-1)%PTR=>GENERATED_MESHES%GENERATED_MESHES(generated_mesh_idx)%PTR
+                generatedMeshes%generatedMeshes(generated_mesh_idx)%PTR%GLOBAL_NUMBER=generatedMeshes% &
+                  & generatedMeshes(generated_mesh_idx)%PTR%GLOBAL_NUMBER-1
+                NEW_GENERATED_MESHES(generated_mesh_idx-1)%PTR=>generatedMeshes%generatedMeshes(generated_mesh_idx)%PTR
               ENDIF
             ENDDO !generated_mesh_idx
-            DEALLOCATE(GENERATED_MESHES%GENERATED_MESHES)
-            GENERATED_MESHES%GENERATED_MESHES=>NEW_GENERATED_MESHES
-            GENERATED_MESHES%NUMBER_OF_GENERATED_MESHES=GENERATED_MESHES%NUMBER_OF_GENERATED_MESHES-1
+            DEALLOCATE(generatedMeshes%generatedMeshes)
+            generatedMeshes%generatedMeshes=>NEW_GENERATED_MESHES
+            generatedMeshes%numberOfGeneratedMeshes=generatedMeshes%numberOfGeneratedMeshes-1
           ELSE
-            DEALLOCATE(GENERATED_MESHES%GENERATED_MESHES)
-            GENERATED_MESHES%NUMBER_OF_GENERATED_MESHES=0
+            DEALLOCATE(generatedMeshes%generatedMeshes)
+            generatedMeshes%numberOfGeneratedMeshes=0
           ENDIF
         ELSE
           CALL FlagError("Generated meshes are not associated",ERR,ERROR,*998)
@@ -860,6 +861,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     INTEGER(INTG) :: COORDINATE_DIMENSION
+    REAL(DP) :: norm
     TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
@@ -876,7 +878,8 @@ CONTAINS
         CASE(GENERATED_MESH_REGULAR_MESH_TYPE)
           IF(SIZE(EXTENT,1)==COORDINATE_DIMENSION) THEN
             IF(ASSOCIATED(GENERATED_MESH%REGULAR_MESH)) THEN
-              IF(L2NORM(EXTENT)>ZERO_TOLERANCE) THEN
+              CALL L2Norm(extent,norm,err,error,*999)
+              IF(norm>ZERO_TOLERANCE) THEN
                 IF(ALLOCATED(GENERATED_MESH%REGULAR_MESH%MAXIMUM_EXTENT)) &
                     & DEALLOCATE(GENERATED_MESH%REGULAR_MESH%MAXIMUM_EXTENT)
                 ALLOCATE(GENERATED_MESH%REGULAR_MESH%MAXIMUM_EXTENT(COORDINATE_DIMENSION),STAT=ERR)
@@ -2965,116 +2968,11 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finds and returns in generated mesh a pointer to that identified by USER_NUMBER in the given list of GENERATED_MESHES.
-  !>If no generated mesh with that number exists GENERATED_MESH is left nullified.
-  SUBROUTINE GENERATED_MESH_USER_NUMBER_FIND_GENERIC(USER_NUMBER,GENERATED_MESHES,GENERATED_MESH,ERR,ERROR,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the mesh to find
-    TYPE(GENERATED_MESHES_TYPE), POINTER :: GENERATED_MESHES !<A pointer to the generated meshes to find the user number in
-    TYPE(GENERATED_MESH_TYPE), POINTER :: GENERATED_MESH !<On return, a pointer to the generated mesh of the specified user number. In no generated mesh with the specified user number exists the pointer is returned NULL.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    INTEGER(INTG) :: generated_mesh_idx
-
-    ENTERS("GENERATED_MESH_USER_NUMBER_FIND_GENERIC",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(GENERATED_MESHES)) THEN
-      IF(ASSOCIATED(GENERATED_MESH)) THEN
-        CALL FlagError("Generated mesh is already associated.",ERR,ERROR,*999)
-      ELSE
-        NULLIFY(GENERATED_MESH)
-        generated_mesh_idx=1
-        DO WHILE(generated_mesh_idx<=GENERATED_MESHES%NUMBER_OF_GENERATED_MESHES.AND..NOT.ASSOCIATED(GENERATED_MESH))
-          IF(GENERATED_MESHES%GENERATED_MESHES(generated_mesh_idx)%PTR%USER_NUMBER==USER_NUMBER) THEN
-            GENERATED_MESH=>GENERATED_MESHES%GENERATED_MESHES(generated_mesh_idx)%PTR
-            EXIT
-          ELSE
-            generated_mesh_idx=generated_mesh_idx+1
-          ENDIF
-        ENDDO
-      ENDIF
-    ELSE
-      CALL FlagError("Generated meshes is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("GENERATED_MESH_USER_NUMBER_FIND_GENERIC")
-    RETURN
-999 ERRORSEXITS("GENERATED_MESH_USER_NUMBER_FIND_GENERIC",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE GENERATED_MESH_USER_NUMBER_FIND_GENERIC
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Finds and returns in generated mesh a pointer to that identified by USER_NUMBER in the given INTERFACE.
-  !>If no generated mesh with that number exists GENERATED MESH is left nullified.
-  SUBROUTINE GENERATED_MESH_USER_NUMBER_FIND_INTERFACE(USER_NUMBER,INTERFACE,GENERATED_MESH,ERR,ERROR,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the mesh to find
-    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE !<A pointer to the interface containing the generated mesh
-    TYPE(GENERATED_MESH_TYPE), POINTER :: GENERATED_MESH !<On return, a pointer to the generated mesh of the specified user number. In no generated mesh with the specified user number exists the pointer is returned NULL.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-
-    ENTERS("GENERATED_MESH_USER_NUMBER_FIND_INTERFACE",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(INTERFACE)) THEN
-      CALL GENERATED_MESH_USER_NUMBER_FIND_GENERIC(USER_NUMBER,INTERFACE%GENERATED_MESHES,GENERATED_MESH,ERR,ERROR,*999)
-    ELSE
-      CALL FlagError("Interface is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("GENERATED_MESH_USER_NUMBER_FIND_INTERFACE")
-    RETURN
-999 ERRORSEXITS("GENERATED_MESH_USER_NUMBER_FIND_INTERFACE",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE GENERATED_MESH_USER_NUMBER_FIND_INTERFACE
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Finds and returns in generated mesh a pointer to that identified by USER_NUMBER in the given REGION.
-  !>If no generated mesh with that number exists GENERATED MESH is left nullified.
-  SUBROUTINE GENERATED_MESH_USER_NUMBER_FIND_REGION(USER_NUMBER,REGION,GENERATED_MESH,ERR,ERROR,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the mesh to find
-    TYPE(REGION_TYPE), POINTER :: REGION !<A pointer to the region containing the generated mesh
-    TYPE(GENERATED_MESH_TYPE), POINTER :: GENERATED_MESH !<On return, a pointer to the generated mesh of the specified user number. In no generated mesh with the specified user number exists the pointer is returned NULL.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-
-    ENTERS("GENERATED_MESH_USER_NUMBER_FIND_REGION",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(REGION)) THEN
-      CALL GENERATED_MESH_USER_NUMBER_FIND_GENERIC(USER_NUMBER,REGION%GENERATED_MESHES,GENERATED_MESH,ERR,ERROR,*999)
-    ELSE
-      CALL FlagError("Region is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("GENERATED_MESH_USER_NUMBER_FIND_REGION")
-    RETURN
-999 ERRORSEXITS("GENERATED_MESH_USER_NUMBER_FIND_REGION",ERR,ERROR)
-    RETURN 1
-
-  END SUBROUTINE GENERATED_MESH_USER_NUMBER_FIND_REGION
-
-  !
-  !================================================================================================================================
-  !
-
   !>Finalises all generated meshes and deallocates all memory.
-  SUBROUTINE GENERATED_MESHES_FINALISE(GENERATED_MESHES,ERR,ERROR,*)
+  SUBROUTINE GENERATED_MESHES_FINALISE(generatedMeshes,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(GENERATED_MESHES_TYPE), POINTER :: GENERATED_MESHES !<A pointer to the generated meshes to finalise
+    TYPE(GeneratedMeshesType), POINTER :: generatedMeshes !<A pointer to the generated meshes to finalise
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -3082,12 +2980,12 @@ CONTAINS
 
     ENTERS("GENERATED_MESHES_FINALISE",ERR,ERROR,*999)
 
-    IF(ASSOCIATED(GENERATED_MESHES)) THEN
-      DO WHILE(GENERATED_MESHES%NUMBER_OF_GENERATED_MESHES>0)
-        GENERATED_MESH=>GENERATED_MESHES%GENERATED_MESHES(1)%PTR
+    IF(ASSOCIATED(generatedMeshes)) THEN
+      DO WHILE(generatedMeshes%numberOfGeneratedMeshes>0)
+        GENERATED_MESH=>generatedMeshes%generatedMeshes(1)%PTR
         CALL GENERATED_MESH_DESTROY(GENERATED_MESH,ERR,ERROR,*999)
       ENDDO !generated_mesh_idx
-      DEALLOCATE(GENERATED_MESHES)
+      DEALLOCATE(generatedMeshes)
     ENDIF
 
     EXITS("GENERATED_MESHES_FINALISE")
@@ -3102,10 +3000,10 @@ CONTAINS
   !
 
   !>Intialises all generated meshes.
-  SUBROUTINE GENERATED_MESHES_INITIALISE_GENERIC(GENERATED_MESHES,ERR,ERROR,*)
+  SUBROUTINE GENERATED_MESHES_INITIALISE_GENERIC(generatedMeshes,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(GENERATED_MESHES_TYPE), POINTER :: GENERATED_MESHES !<A pointer to the generated meshes to initialise
+    TYPE(GeneratedMeshesType), POINTER :: generatedMeshes !<A pointer to the generated meshes to initialise
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -3114,20 +3012,20 @@ CONTAINS
 
     ENTERS("GENERATED_MESHES_INITIALISE_GENERIC",ERR,ERROR,*998)
 
-    IF(ASSOCIATED(GENERATED_MESHES)) THEN
+    IF(ASSOCIATED(generatedMeshes)) THEN
       CALL FlagError("Generated meshes is already associated.",ERR,ERROR,*998)
     ELSE
-      ALLOCATE(GENERATED_MESHES,STAT=ERR)
+      ALLOCATE(generatedMeshes,STAT=ERR)
       IF(ERR/=0) CALL FlagError("Generated meshes is not associated.",ERR,ERROR,*999)
-      GENERATED_MESHES%NUMBER_OF_GENERATED_MESHES=0
-      NULLIFY(GENERATED_MESHES%GENERATED_MESHES)
-      NULLIFY(GENERATED_MESHES%REGION)
-      NULLIFY(GENERATED_MESHES%INTERFACE)
+      generatedMeshes%numberOfGeneratedMeshes=0
+      NULLIFY(generatedMeshes%generatedMeshes)
+      NULLIFY(generatedMeshes%REGION)
+      NULLIFY(generatedMeshes%INTERFACE)
     ENDIF
 
     EXITS("GENERATED_MESHES_INITIALISE_GENERIC")
     RETURN
-999 CALL GENERATED_MESHES_FINALISE(GENERATED_MESHES,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL GENERATED_MESHES_FINALISE(generatedMeshes,DUMMY_ERR,DUMMY_ERROR,*998)
 998 ERRORSEXITS("GENERATED_MESHES_INITIALISE_GENERIC",ERR,ERROR)
     RETURN 1
   END SUBROUTINE GENERATED_MESHES_INITIALISE_GENERIC
@@ -3148,11 +3046,11 @@ CONTAINS
     ENTERS("GENERATED_MESHES_INITIALISE_INTERFACE",ERR,ERROR,*999)
 
     IF(ASSOCIATED(INTERFACE)) THEN
-      IF(ASSOCIATED(INTERFACE%GENERATED_MESHES)) THEN
+      IF(ASSOCIATED(INTERFACE%generatedMeshes)) THEN
         CALL FlagError("Interface generated meshes is already associated.",ERR,ERROR,*999)
       ELSE
-        CALL GENERATED_MESHES_INITIALISE_GENERIC(INTERFACE%GENERATED_MESHES,ERR,ERROR,*999)
-        INTERFACE%GENERATED_MESHES%INTERFACE=>INTERFACE
+        CALL GENERATED_MESHES_INITIALISE_GENERIC(INTERFACE%generatedMeshes,ERR,ERROR,*999)
+        INTERFACE%generatedMeshes%INTERFACE=>INTERFACE
       ENDIF
     ELSE
       CALL FlagError("Interface is not associated.",ERR,ERROR,*999)
@@ -3180,11 +3078,11 @@ CONTAINS
     ENTERS("GENERATED_MESHES_INITIALISE_REGION",ERR,ERROR,*999)
 
     IF(ASSOCIATED(REGION)) THEN
-      IF(ASSOCIATED(REGION%GENERATED_MESHES)) THEN
+      IF(ASSOCIATED(REGION%generatedMeshes)) THEN
         CALL FlagError("Region generated meshes is already associated.",ERR,ERROR,*999)
       ELSE
-        CALL GENERATED_MESHES_INITIALISE_GENERIC(REGION%GENERATED_MESHES,ERR,ERROR,*999)
-        REGION%GENERATED_MESHES%REGION=>REGION
+        CALL GENERATED_MESHES_INITIALISE_GENERIC(REGION%generatedMeshes,ERR,ERROR,*999)
+        REGION%generatedMeshes%REGION=>REGION
       ENDIF
     ELSE
       CALL FlagError("Region is not associated.",ERR,ERROR,*999)
@@ -3329,7 +3227,7 @@ CONTAINS
       & component_node,MESH_COMPONENT, &
       & node_idx,node_position_idx(3), &
       & TOTAL_NUMBER_OF_NODES_XI(3),xi_idx,NODE_USER_NUMBER
-    REAL(DP) :: DELTA_COORD(3,3),MY_ORIGIN(3),VALUE
+    REAL(DP) :: DELTA_COORD(3,3),MY_ORIGIN(3),VALUE,norm
     REAL(DP) :: DERIVATIVE_VALUES(MAXIMUM_GLOBAL_DERIV_NUMBER)
     TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM
     TYPE(DOMAIN_TYPE), POINTER :: DOMAIN
@@ -3391,19 +3289,19 @@ CONTAINS
                     !Arc length or arithmetic mean scaling
                     DERIVATIVE_VALUES=0.0_DP
                     IF(REGULAR_MESH%NUMBER_OF_ELEMENTS_XI(1)>0) THEN
-                      DERIVATIVE_VALUES(GLOBAL_DERIV_S1)=REGULAR_MESH%BASE_VECTORS(component_idx,1)/ &
-                        & L2NORM(REGULAR_MESH%BASE_VECTORS(:,1))
+                      CALL L2Norm(REGULAR_MESH%BASE_VECTORS(:,1),norm,err,error,*999)
+                      DERIVATIVE_VALUES(GLOBAL_DERIV_S1)=REGULAR_MESH%BASE_VECTORS(component_idx,1)/norm
                     END IF
                     IF(REGULAR_MESH%MESH_DIMENSION>1) THEN
                       IF(REGULAR_MESH%NUMBER_OF_ELEMENTS_XI(2)>0) THEN
-                        DERIVATIVE_VALUES(GLOBAL_DERIV_S2)=REGULAR_MESH%BASE_VECTORS(component_idx,2)/ &
-                          & L2NORM(REGULAR_MESH%BASE_VECTORS(:,2))
+                        CALL L2Norm(REGULAR_MESH%BASE_VECTORS(:,2),norm,err,error,*999)
+                        DERIVATIVE_VALUES(GLOBAL_DERIV_S2)=REGULAR_MESH%BASE_VECTORS(component_idx,2)/norm
                       END IF
                     ENDIF
                     IF(REGULAR_MESH%MESH_DIMENSION>2) THEN
                       IF(REGULAR_MESH%NUMBER_OF_ELEMENTS_XI(3)>0) THEN
-                        DERIVATIVE_VALUES(GLOBAL_DERIV_S3)=REGULAR_MESH%BASE_VECTORS(component_idx,3)/ &
-                          & L2NORM(REGULAR_MESH%BASE_VECTORS(:,3))
+                        CALL L2Norm(REGULAR_MESH%BASE_VECTORS(:,3),norm,err,error,*999)
+                        DERIVATIVE_VALUES(GLOBAL_DERIV_S3)=REGULAR_MESH%BASE_VECTORS(component_idx,3)/norm
                       END IF
                     ENDIF
                   END SELECT
@@ -3688,7 +3586,7 @@ CONTAINS
 
     ENTERS("GeneratedMesh_EllipsoidGeometricParametersCalculate",ERR,ERROR,*999)
 
-    MY_COMPUTATIONAL_NODE=COMPUTATIONAL_NODE_NUMBER_GET(ERR,ERROR)
+    MY_COMPUTATIONAL_NODE=ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
 
     ! assign to the field
     np=0

@@ -44,14 +44,15 @@
 !> This module handles all distributed matrix vector routines.
 MODULE DISTRIBUTED_MATRIX_VECTOR
 
-  USE BASE_ROUTINES
-  USE CMISS_MPI
+  USE BaseRoutines
+  USE CmissMPI
   USE CmissPetsc
-  USE COMP_ENVIRONMENT
+  USE ComputationEnvironment
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE ISO_C_BINDING
   USE KINDS
+  USE Maths
   USE MATRIX_VECTOR
 #ifndef NOMPIMOD
   USE MPI
@@ -89,6 +90,8 @@ MODULE DISTRIBUTED_MATRIX_VECTOR
   INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_VECTOR_SP_TYPE=MATRIX_VECTOR_SP_TYPE !<Single precision real distributed matrix-vector data type \see DISTRIBUTED_MATRIX_VECTOR_DataTypes,DISTRIBUTED_MATRIX_VECTOR
   INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_VECTOR_DP_TYPE=MATRIX_VECTOR_DP_TYPE !<Double precision real distributed matrix-vector data type \see DISTRIBUTED_MATRIX_VECTOR_DataTypes,DISTRIBUTED_MATRIX_VECTOR
   INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_VECTOR_L_TYPE=MATRIX_VECTOR_L_TYPE !<Logical distributed matrix-vector data type \see DISTRIBUTED_MATRIX_VECTOR_DataTypes,DISTRIBUTED_MATRIX_VECTOR
+  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_VECTOR_SPC_TYPE=MATRIX_VECTOR_SPC_TYPE !<Single precision complex distributed matrix-vector data type \see DISTRIBUTED_MATRIX_VECTOR_DataTypes,DISTRIBUTED_MATRIX_VECTOR
+  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_VECTOR_DPC_TYPE=MATRIX_VECTOR_DPC_TYPE !<Double precision complex distributed matrix-vector data type \see DISTRIBUTED_MATRIX_VECTOR_DataTypes,DISTRIBUTED_MATRIX_VECTOR
   !>@}
 
   !> \addtogroup DISTRIBUTED_MATRIX_VECTOR_StorageTypes DISTRIBUTED_MATRIX_VECTOR::StorageTypes
@@ -103,6 +106,16 @@ MODULE DISTRIBUTED_MATRIX_VECTOR
   INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE=MATRIX_ROW_COLUMN_STORAGE_TYPE !<Distributed matrix row-column storage type \see DISTRIBUTED_MATRIX_VECTOR_StorageTypes,MATRIX_VECTOR
   !>@}
   
+  !> \addtogroup DISTRIBUTED_MATRIX_VECTOR_SymmetryTypes DISTRIBUTED_MATRIX_VECTOR::SymmetryTypes
+  !> \brief Distributed matrix symmetry type parameters
+  !> \see DISTRIBUTED_MATRIX_VECTOR_Symmetry,DISTRIBUTED_MATRIX_VECTOR
+  !>@{
+  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_SYMMETRIC_TYPE=MATRIX_SYMMETRIC_TYPE !<Distributed matrix is symmetric \see DISTRIBUTED_MATRIX_VECTOR_SymmetryTypes,DISTRIBUTED_MATRIX_VECTOR
+  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_HERMITIAN_TYPE=MATRIX_HERMITIAN_TYPE !<Distributed matrix is Hermitian (complex symmetric) \see DISTRIBUTED_MATRIX_VECTOR_SymmetryTypes,DISTRIBUTED_MATRIX_VECTOR
+  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_SKEW_SYMMETRIC_TYPE=MATRIX_SKEW_SYMMETRIC_TYPE !<Distributed matrix is skew-symmetric \see DISTRIBUTED_MATRIX_VECTOR_SymmetryTypes,DISTRIBUTED_MATRIX_VECTOR
+  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE=MATRIX_UNSYMMETRIC_TYPE !<Distributed matrix is unsymmetric \see DISTRIBUTED_MATRIX_VECTOR_SymmetryTypes,DISTRIBUTED_MATRIX_VECTOR
+  !>@}
+
   !> \addtogroup DISTRIBUTED_MATRIX_VECTOR_GhostingTypes DISTRIBUTED_MATRIX_VECTOR::GhostingTypes
   !> \brief Distributed matrix-vector ghosting types
   !> \see DISTRIBUTED_MATRIX_VECTOR
@@ -407,6 +420,10 @@ MODULE DISTRIBUTED_MATRIX_VECTOR
     MODULE PROCEDURE DISTRIBUTED_VECTOR_DATA_RESTORE_L
   END INTERFACE DistributedVector_DataRestore
 
+  INTERFACE DistributedVector_DataTypeSet
+    MODULE PROCEDURE DISTRIBUTED_VECTOR_DATA_TYPE_SET
+  END INTERFACE DistributedVector_DataTypeSet
+
   INTERFACE DistributedVector_Destroy
     MODULE PROCEDURE DISTRIBUTED_VECTOR_DESTROY
   END INTERFACE DistributedVector_Destroy
@@ -523,15 +540,26 @@ MODULE DISTRIBUTED_MATRIX_VECTOR
     MODULE PROCEDURE DistributedVector_VecDotDp
   END INTERFACE DistributedVector_VecDot
 
+  INTERFACE DistributedMatrix_LinkListSet
+    MODULE PROCEDURE DISTRIBUTED_MATRIX_LINKLIST_SET
+  END INTERFACE DistributedMatrix_LinkListSet
+
+  INTERFACE DistributedMatrix_LinkListGet
+    MODULE PROCEDURE DISTRIBUTED_MATRIX_LINKLIST_GET
+  END INTERFACE DistributedMatrix_LinkListGet
+
   PUBLIC DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE,DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
 
   PUBLIC DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE,DISTRIBUTED_MATRIX_VECTOR_SP_TYPE,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE, &
-    & DISTRIBUTED_MATRIX_VECTOR_L_TYPE
+    & DISTRIBUTED_MATRIX_VECTOR_L_TYPE,DISTRIBUTED_MATRIX_VECTOR_SPC_TYPE,DISTRIBUTED_MATRIX_VECTOR_DPC_TYPE
 
   PUBLIC DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE, &
     & DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE,DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE, &
     & DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE, &
     & DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE
+
+  PUBLIC DISTRIBUTED_MATRIX_SYMMETRIC_TYPE,DISTRIBUTED_MATRIX_HERMITIAN_TYPE,DISTRIBUTED_MATRIX_SKEW_SYMMETRIC_TYPE, &
+    & DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE
 
   PUBLIC DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE
   
@@ -575,6 +603,8 @@ MODULE DISTRIBUTED_MATRIX_VECTOR
 
   PUBLIC DISTRIBUTED_MATRIX_LINKLIST_SET,DISTRIBUTED_MATRIX_LINKLIST_GET
 
+  PUBLIC DistributedMatrix_LinkListSet,DistributedMatrix_LinkListGet
+
   PUBLIC DISTRIBUTED_MATRIX_MAX_COLUMNS_PER_ROW_GET
 
   PUBLIC DistributedMatrix_MaxColumnsPerRowGet
@@ -598,6 +628,8 @@ MODULE DISTRIBUTED_MATRIX_VECTOR
   PUBLIC DISTRIBUTED_MATRIX_STORAGE_TYPE_GET,DISTRIBUTED_MATRIX_STORAGE_TYPE_SET
 
   PUBLIC DistributedMatrix_StorageTypeGet,DistributedMatrix_StorageTypeSet
+
+  PUBLIC DistributedMatrix_SymmetryTypeGet,DistributedMatrix_SymmetryTypeSet
 
   PUBLIC DISTRIBUTED_MATRIX_UPDATE_START,DISTRIBUTED_MATRIX_UPDATE_FINISH
 
@@ -637,7 +669,7 @@ MODULE DISTRIBUTED_MATRIX_VECTOR
 
   PUBLIC DISTRIBUTED_VECTOR_DATA_TYPE_SET
 
-  PUBLIC DistributedVector_DataTypeGet
+  PUBLIC DistributedVector_DataTypeGet,DistributedVector_DataTypeSet
 
   PUBLIC DISTRIBUTED_VECTOR_DESTROY
 
@@ -944,7 +976,7 @@ CONTAINS
       DEALLOCATE(CMISS_MATRIX)
     ENDIF
     
-    EXITS("DISTRIBUTED_MATRIX_CMISS_FINALSE")
+    EXITS("DISTRIBUTED_MATRIX_CMISS_FINALISE")
     RETURN
 999 ERRORSEXITS("DISTRIBUTED_MATRIX_CMISS_FINALISE",ERR,ERROR)
     RETURN 1
@@ -1008,7 +1040,7 @@ CONTAINS
       CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*998)
     ENDIF
     
-    EXITS("DISTRIBUTED_MATRIX_CMISS_INITIALSE")
+    EXITS("DISTRIBUTED_MATRIX_CMISS_INITIALISE")
     RETURN
 999 IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) &
       & CALL DISTRIBUTED_MATRIX_CMISS_FINALISE(DISTRIBUTED_MATRIX%CMISS,DUMMY_ERR,DUMMY_ERROR,*999)
@@ -1717,6 +1749,10 @@ CONTAINS
             DISTRIBUTED_MATRIX%DATA_TYPE=DISTRIBUTED_MATRIX_VECTOR_DP_TYPE
           CASE(DISTRIBUTED_MATRIX_VECTOR_L_TYPE)
             CALL FlagError("A logical distributed PETSc matrix is not implemented.",ERR,ERROR,*999)
+          CASE(DISTRIBUTED_MATRIX_VECTOR_SPC_TYPE)
+            CALL FlagError("A single precision complex distributed PETSc matrix is not implemented.",ERR,ERROR,*999)
+          CASE(DISTRIBUTED_MATRIX_VECTOR_DPC_TYPE)
+            CALL FlagError("A double precision complex distributed PETSc matrix is not implemented.",ERR,ERROR,*999)
           CASE DEFAULT
             LOCAL_ERROR="The specified data type of "//TRIM(NumberToVString(DATA_TYPE,"*",ERR,ERROR))//" is invalid."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
@@ -2185,7 +2221,7 @@ CONTAINS
       CALL FlagError("Row domain mapping is not associated.",ERR,ERROR,*998)
     ENDIF
     
-    EXITS("DISTRIBUTED_MATRIX_INITIALSE")
+    EXITS("DISTRIBUTED_MATRIX_INITIALISE")
     RETURN
 999 CALL DISTRIBUTED_MATRIX_FINALISE(DISTRIBUTED_MATRIX,DUMMY_ERR,DUMMY_ERROR,*998)
 998 ERRORSEXITS("DISTRIBUTED_MATRIX_INITIALISE",ERR,ERROR)
@@ -2351,8 +2387,6 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  !================================================================================================================================
-  !
 
   !>Sets/changes the LIST STRUCTURE for a distributed matrix.
   SUBROUTINE DISTRIBUTED_MATRIX_LINKLIST_SET(DISTRIBUTED_MATRIX,LIST,ERR,ERROR,*)
@@ -2403,7 +2437,7 @@ CONTAINS
       CALL FlagError("Distributed mtrix is not associated.",ERR,ERROR,*999)
     ENDIF
 
-    EXITS("DISTRIBUTED_MATRIX_LIKLIST_SET")
+    EXITS("DISTRIBUTED_MATRIX_LINKLIST_SET")
     RETURN
 999 ERRORSEXITS("DISTRIBUTED_MATRIX_LINKLIST_SET",ERR,ERROR)
     RETURN 1
@@ -2425,7 +2459,7 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
-    ENTERS("DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_GET",ERR,ERROR,*999)
+    ENTERS("DISTRIBUTED_MATRIX_LINKLIST_GET",ERR,ERROR,*999)
 
     IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
       IF(DISTRIBUTED_MATRIX%MATRIX_FINISHED) THEN
@@ -2473,11 +2507,11 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-!    INTEGER(INTG) :: i,NUMBER_OF_COLUMNS
-!    INTEGER(INTG), ALLOCATABLE :: COLUMNS(:)
-!    REAL(DP), ALLOCATABLE :: VALUES(:)
-!    CHARACTER(LEN=9) :: ROW_STRING
-!    CHARACTER(LEN=39) :: INITIAL_STRING
+    INTEGER(INTG) :: i,NUMBER_OF_COLUMNS
+    INTEGER(INTG), ALLOCATABLE :: COLUMNS(:)
+    REAL(DP), ALLOCATABLE :: VALUES(:)
+    CHARACTER(LEN=9) :: ROW_STRING
+    CHARACTER(LEN=39) :: INITIAL_STRING
     TYPE(VARYING_STRING) :: LOCAL_ERROR
      
     ENTERS("DISTRIBUTED_MATRIX_OUTPUT",ERR,ERROR,*999)
@@ -2493,35 +2527,35 @@ CONTAINS
           ENDIF
         CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
-            IF(DISTRIBUTED_MATRIX%PETSC%USE_OVERRIDE_MATRIX) THEN 
-              CALL Petsc_MatView(DISTRIBUTED_MATRIX%PETSC%OVERRIDE_MATRIX,PETSC_VIEWER_STDOUT_WORLD,ERR,ERROR,*999) 
-            ELSE 
-              CALL Petsc_MatView(DISTRIBUTED_MATRIX%PETSC%MATRIX,PETSC_VIEWER_STDOUT_WORLD,ERR,ERROR,*999) 
-            ENDIF
-            !ALLOCATE(COLUMNS(DISTRIBUTED_MATRIX%PETSC%MAXIMUM_COLUMN_INDICES_PER_ROW),STAT=ERR)
-            !IF(ERR/=0) CALL FlagError("Could not allocate columns.",ERR,ERROR,*999)
-            !ALLOCATE(VALUES(DISTRIBUTED_MATRIX%PETSC%MAXIMUM_COLUMN_INDICES_PER_ROW),STAT=ERR)
-            !IF(ERR/=0) CALL FlagError("Could not allocate values.",ERR,ERROR,*999)
-            !DO i=1,DISTRIBUTED_MATRIX%PETSC%M
-            !  IF(DISTRIBUTED_MATRIX%PETSC%USE_OVERRIDE_MATRIX) THEN
-            !    CALL Petsc_MatGetRow(DISTRIBUTED_MATRIX%PETSC%OVERRIDE_MATRIX,i-1,NUMBER_OF_COLUMNS,COLUMNS,VALUES, &
-            !      & ERR,ERROR,*999)
-            !  ELSE
-            !    CALL Petsc_MatGetRow(DISTRIBUTED_MATRIX%PETSC%MATRIX,i-1,NUMBER_OF_COLUMNS,COLUMNS,VALUES,ERR,ERROR,*999)
-            !  ENDIF
-            !  ROW_STRING=NUMBER_TO_CHARACTER(i,"I9",ERR,ERROR)
-            !  INITIAL_STRING='("Matrix('//ROW_STRING//',:):",8(X,E13.6))'
-            !  CALL WRITE_STRING_VECTOR(ID,1,1,NUMBER_OF_COLUMNS,8,8,VALUES,INITIAL_STRING,'(20X,8(X,E13.6))', &
-            !    & ERR,ERROR,*999)
-            !  IF(DISTRIBUTED_MATRIX%PETSC%USE_OVERRIDE_MATRIX) THEN
-            !    CALL Petsc_MatRestoreRow(DISTRIBUTED_MATRIX%PETSC%OVERRIDE_MATRIX,i-1,NUMBER_OF_COLUMNS,COLUMNS,VALUES, &
-            !      & ERR,ERROR,*999)
-            !  ELSE
-            !    CALL Petsc_MatRestoreRow(DISTRIBUTED_MATRIX%PETSC%MATRIX,i-1,NUMBER_OF_COLUMNS,COLUMNS,VALUES,ERR,ERROR,*999)
-            !  ENDIF
-            !ENDDO !i
-            !IF(ALLOCATED(VALUES)) DEALLOCATE(VALUES)
-            !IF(ALLOCATED(COLUMNS)) DEALLOCATE(COLUMNS)
+            !IF(DISTRIBUTED_MATRIX%PETSC%USE_OVERRIDE_MATRIX) THEN 
+            !  CALL Petsc_MatView(DISTRIBUTED_MATRIX%PETSC%OVERRIDE_MATRIX,PETSC_VIEWER_STDOUT_WORLD,ERR,ERROR,*999) 
+            !ELSE 
+            !  CALL Petsc_MatView(DISTRIBUTED_MATRIX%PETSC%MATRIX,PETSC_VIEWER_STDOUT_WORLD,ERR,ERROR,*999) 
+            !ENDIF
+            ALLOCATE(COLUMNS(DISTRIBUTED_MATRIX%PETSC%MAXIMUM_COLUMN_INDICES_PER_ROW),STAT=ERR)
+            IF(ERR/=0) CALL FlagError("Could not allocate columns.",ERR,ERROR,*999)
+            ALLOCATE(VALUES(DISTRIBUTED_MATRIX%PETSC%MAXIMUM_COLUMN_INDICES_PER_ROW),STAT=ERR)
+            IF(ERR/=0) CALL FlagError("Could not allocate values.",ERR,ERROR,*999)
+            DO i=1,DISTRIBUTED_MATRIX%PETSC%M
+              IF(DISTRIBUTED_MATRIX%PETSC%USE_OVERRIDE_MATRIX) THEN
+                CALL Petsc_MatGetRow(DISTRIBUTED_MATRIX%PETSC%OVERRIDE_MATRIX,i-1,NUMBER_OF_COLUMNS,COLUMNS,VALUES, &
+                  & ERR,ERROR,*999)
+              ELSE
+                CALL Petsc_MatGetRow(DISTRIBUTED_MATRIX%PETSC%MATRIX,i-1,NUMBER_OF_COLUMNS,COLUMNS,VALUES,ERR,ERROR,*999)
+              ENDIF
+              ROW_STRING=NUMBER_TO_CHARACTER(i,"I9",ERR,ERROR)
+              INITIAL_STRING='("Matrix('//ROW_STRING//',:):",8(X,E13.6))'
+              CALL WRITE_STRING_VECTOR(ID,1,1,NUMBER_OF_COLUMNS,8,8,VALUES,INITIAL_STRING,'(20X,8(X,E13.6))', &
+                & ERR,ERROR,*999)
+              IF(DISTRIBUTED_MATRIX%PETSC%USE_OVERRIDE_MATRIX) THEN
+                CALL Petsc_MatRestoreRow(DISTRIBUTED_MATRIX%PETSC%OVERRIDE_MATRIX,i-1,NUMBER_OF_COLUMNS,COLUMNS,VALUES, &
+                  & ERR,ERROR,*999)
+              ELSE
+                CALL Petsc_MatRestoreRow(DISTRIBUTED_MATRIX%PETSC%MATRIX,i-1,NUMBER_OF_COLUMNS,COLUMNS,VALUES,ERR,ERROR,*999)
+              ENDIF
+            ENDDO !i
+            IF(ALLOCATED(VALUES)) DEALLOCATE(VALUES)
+            IF(ALLOCATED(COLUMNS)) DEALLOCATE(COLUMNS)
           ELSE
             CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
           ENDIF
@@ -2679,7 +2713,7 @@ CONTAINS
               !Set up the matrix
               ALLOCATE(PETSC_MATRIX%DATA_DP(PETSC_MATRIX%DATA_SIZE),STAT=ERR)
               IF(ERR/=0) CALL FlagError("Could not allocate PETSc matrix data.",ERR,ERROR,*999)
-              CALL Petsc_MatCreateDense(COMPUTATIONAL_ENVIRONMENT%MPI_COMM,PETSC_MATRIX%M,PETSC_MATRIX%N, &
+              CALL Petsc_MatCreateDense(computationalEnvironment%mpiCommunicator,PETSC_MATRIX%M,PETSC_MATRIX%N, &
                 & PETSC_MATRIX%GLOBAL_M,PETSC_MATRIX%GLOBAL_N,PETSC_MATRIX%DATA_DP,PETSC_MATRIX%MATRIX,ERR,ERROR,*999)
             CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
               PETSC_MATRIX%NUMBER_NON_ZEROS=PETSC_MATRIX%M
@@ -2699,7 +2733,7 @@ CONTAINS
               PETSC_MATRIX%DIAGONAL_NUMBER_NON_ZEROS=1
               PETSC_MATRIX%OFFDIAGONAL_NUMBER_NON_ZEROS=0
               !Create the PETsc AIJ matrix
-              CALL Petsc_MatCreateAIJ(COMPUTATIONAL_ENVIRONMENT%MPI_COMM,PETSC_MATRIX%M,PETSC_MATRIX%N, &
+              CALL Petsc_MatCreateAIJ(computationalEnvironment%mpiCommunicator,PETSC_MATRIX%M,PETSC_MATRIX%N, &
                 & PETSC_MATRIX%GLOBAL_M,PETSC_MATRIX%GLOBAL_N,PETSC_NULL_INTEGER,PETSC_MATRIX%DIAGONAL_NUMBER_NON_ZEROS, &
                 & PETSC_NULL_INTEGER,PETSC_MATRIX%OFFDIAGONAL_NUMBER_NON_ZEROS,PETSC_MATRIX%MATRIX,ERR,ERROR,*999)
             CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
@@ -2710,7 +2744,7 @@ CONTAINS
               IF(ALLOCATED(PETSC_MATRIX%DIAGONAL_NUMBER_NON_ZEROS)) THEN
                 IF(ALLOCATED(PETSC_MATRIX%OFFDIAGONAL_NUMBER_NON_ZEROS)) THEN
                   !Create the PETSc AIJ matrix
-                  CALL Petsc_MatCreateAIJ(COMPUTATIONAL_ENVIRONMENT%MPI_COMM,PETSC_MATRIX%M,PETSC_MATRIX%N, &
+                  CALL Petsc_MatCreateAIJ(computationalEnvironment%mpiCommunicator,PETSC_MATRIX%M,PETSC_MATRIX%N, &
                     & PETSC_MATRIX%GLOBAL_M,PETSC_MATRIX%GLOBAL_N,PETSC_NULL_INTEGER,PETSC_MATRIX%DIAGONAL_NUMBER_NON_ZEROS, &
                     & PETSC_NULL_INTEGER,PETSC_MATRIX%OFFDIAGONAL_NUMBER_NON_ZEROS,PETSC_MATRIX%MATRIX,ERR,ERROR,*999)
                   !Set matrix options
@@ -2738,6 +2772,20 @@ CONTAINS
               CALL FlagError("Row column storage is not implemented for PETSc matrices.",ERR,ERROR,*999)
             CASE DEFAULT
               LOCAL_ERROR="The PETSc matrix storage type of "//TRIM(NumberToVString(PETSC_MATRIX%STORAGE_TYPE,"*",ERR,ERROR))// &
+                & " is invalid."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            END SELECT
+            SELECT CASE(PETSC_MATRIX%symmetryType)
+            CASE(DISTRIBUTED_MATRIX_SYMMETRIC_TYPE)
+              CALL Petsc_MatSetOption(PETSC_MATRIX%MATRIX,PETSC_MAT_SYMMETRIC,.TRUE.,ERR,ERROR,*999)
+            CASE(DISTRIBUTED_MATRIX_HERMITIAN_TYPE)
+              CALL Petsc_MatSetOption(PETSC_MATRIX%MATRIX,PETSC_MAT_HERMITIAN,.TRUE.,ERR,ERROR,*999)
+            CASE(DISTRIBUTED_MATRIX_SKEW_SYMMETRIC_TYPE)
+              CALL FlagError("Skew symmetric matrices are not implemented for PETSc matrices.",err,error,*999)
+            CASE(DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE)
+              CALL Petsc_MatSetOption(PETSC_MATRIX%MATRIX,PETSC_MAT_SYMMETRIC,.FALSE.,ERR,ERROR,*999)
+            CASE DEFAULT
+              LOCAL_ERROR="The PETSc matrix symmetry type of "//TRIM(NumberToVString(PETSC_MATRIX%symmetryType,"*",ERR,ERROR))// &
                 & " is invalid."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
@@ -2786,7 +2834,7 @@ CONTAINS
       DEALLOCATE(PETSC_MATRIX)
     ENDIF
     
-    EXITS("DISTRIBUTED_MATRIX_PETSC_FINALSE")
+    EXITS("DISTRIBUTED_MATRIX_PETSC_FINALISE")
     RETURN
 999 ERRORSEXITS("DISTRIBUTED_MATRIX_PETSC_FINALISE",ERR,ERROR)
     RETURN 1
@@ -2837,6 +2885,7 @@ CONTAINS
             DISTRIBUTED_MATRIX%PETSC%GLOBAL_M=ROW_DOMAIN_MAPPING%NUMBER_OF_GLOBAL
             DISTRIBUTED_MATRIX%PETSC%GLOBAL_N=COLUMN_DOMAIN_MAPPING%NUMBER_OF_GLOBAL
             DISTRIBUTED_MATRIX%PETSC%STORAGE_TYPE=DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE
+            DISTRIBUTED_MATRIX%PETSC%symmetryType=DISTRIBUTED_MATRIX_SYMMETRIC_TYPE  !Should this be unsymmetric???
             DISTRIBUTED_MATRIX%PETSC%DATA_SIZE=0
             DISTRIBUTED_MATRIX%PETSC%MAXIMUM_COLUMN_INDICES_PER_ROW=0
             DISTRIBUTED_MATRIX%PETSC%USE_OVERRIDE_MATRIX=.FALSE.
@@ -2853,7 +2902,7 @@ CONTAINS
       CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*998)
     ENDIF
     
-    EXITS("DISTRIBUTED_MATRIX_PETSC_INITIALSE")
+    EXITS("DISTRIBUTED_MATRIX_PETSC_INITIALISE")
     RETURN
 999 IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) &
       & CALL DISTRIBUTED_MATRIX_PETSC_FINALISE(DISTRIBUTED_MATRIX%PETSC,DUMMY_ERR,DUMMY_ERROR,*998)
@@ -3193,7 +3242,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: DISTRIBUTED_MATRIX !<A pointer to the distributed matrix
-    INTEGER(INTG), INTENT(IN) :: STORAGE_TYPE !<The storage (sparsity) type to set. \see MATRIX_VECTOR_StorageTypes,MATRIX_VECTOR
+    INTEGER(INTG), INTENT(IN) :: STORAGE_TYPE !<The storage (sparsity) type to set. \see DISTRIBUTED_MATRIX_VECTOR_StorageTypes,DISTRIBUTED_MATRIX_VECTOR
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -3252,6 +3301,106 @@ CONTAINS
 999 ERRORSEXITS("DISTRIBUTED_MATRIX_STORAGE_TYPE_SET",ERR,ERROR)
     RETURN 1
   END SUBROUTINE DISTRIBUTED_MATRIX_STORAGE_TYPE_SET
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the symetry type of a distributed matrix.
+  SUBROUTINE DistributedMatrix_SymmetryTypeGet(distributedMatrix,symmetryType,err,error,*)
+
+    !Argument variables
+    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: distributedMatrix !<A pointer to the distributed matrix to get the symmetry type for
+    INTEGER(INTG), INTENT(OUT) :: symmetryType !<On return, the symmetry type of the distributed matrix. \see DISTRIBUTED_MATRIX_VECTOR_SymmetryTypes,DISTRIBUTED_MATRIX_VECTOR
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DistributedMatrix_SymmetryTypeGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
+    IF(.NOT.distributedMatrix%MATRIX_FINISHED) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    
+    SELECT CASE(distributedMatrix%LIBRARY_TYPE)
+    CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
+      IF(.NOT.ASSOCIATED(distributedMatrix%cmiss)) CALL FlagError("Distributed matrix CMISS is not associated.",err,error,*999)
+      CALL Matrix_SymmetryTypeGet(distributedMatrix%cmiss%matrix,symmetryType,err,error,*999)
+    CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
+      IF(.NOT.ASSOCIATED(distributedMatrix%petsc)) CALL FlagError("Distributed matrix PETSc is not associated.",err,error,*999)
+      symmetryType=distributedMatrix%petsc%symmetryType
+    CASE DEFAULT
+      localError="The distributed matrix library type of "// &
+        & TRIM(NumberToVString(distributedMatrix%LIBRARY_TYPE,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("DistributedMatrix_SymmetryTypeGet")
+    RETURN
+999 ERRORSEXITS("DistributedMatrix_SymmetryTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DistributedMatrix_SymmetryTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the symmetry type of a distributed matrix.
+  SUBROUTINE DistributedMatrix_SymmetryTypeSet(distributedMatrix,symmetryType,err,error,*)
+
+    !Argument variables
+    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: distributedMatrix !<A pointer to the distributed matrix to set the symmetry type for
+    INTEGER(INTG), INTENT(IN) :: symmetryType !<The symmetry type to set. \see DISTRIBUTED_MATRIX_VECTOR_SymmetryTypes,DISTRIBUTED_MATRIX_VECTOR
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DistributedMatrix_SymmetryTypeSet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
+    IF(distributedMatrix%MATRIX_FINISHED) CALL FlagError("The distributed matrix has been finished.",err,error,*999)
+    SELECT CASE(distributedMatrix%LIBRARY_TYPE)      
+    CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
+      IF(.NOT.ASSOCIATED(distributedMatrix%cmiss)) CALL FlagError("Distributed matrix CMISS is not associated.",err,error,*999)
+      CALL Matrix_SymmetryTypeSet(distributedMatrix%cmiss%matrix,symmetryType,err,error,*999)
+    CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
+      IF(.NOT.ASSOCIATED(distributedMatrix%petsc)) CALL FlagError("Distributed matrix PETSc is not implemented.",err,error,*999)
+      SELECT CASE(symmetryType)
+      CASE(DISTRIBUTED_MATRIX_SYMMETRIC_TYPE)
+        distributedMatrix%petsc%symmetryType=DISTRIBUTED_MATRIX_SYMMETRIC_TYPE
+      CASE(DISTRIBUTED_MATRIX_HERMITIAN_TYPE)
+        IF(distributedMatrix%DATA_TYPE==DISTRIBUTED_MATRIX_VECTOR_SPC_TYPE.OR. &
+          & distributedMatrix%DATA_TYPE==DISTRIBUTED_MATRIX_VECTOR_DPC_TYPE) THEN
+          distributedMatrix%petsc%symmetryType=DISTRIBUTED_MATRIX_HERMITIAN_TYPE
+        ELSE
+          CALL FlagError( &
+            & "Cannot set the distributed matrix symmetry type to Hermitian as the matrix does not have a complex data type.", &
+            & err,error,*999)
+        ENDIF
+      CASE(DISTRIBUTED_MATRIX_SKEW_SYMMETRIC_TYPE)
+        CALL FlagError("Skew symmetric matrices are not implemented for PETSc matrices.",err,error,*999)
+        distributedMatrix%petsc%symmetryType=DISTRIBUTED_MATRIX_SKEW_SYMMETRIC_TYPE
+      CASE(DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE)
+        distributedMatrix%petsc%symmetryType=DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE        
+      CASE DEFAULT
+        localError="The specified matrix symmetry type of "//TRIM(NumberToVString(symmetryType,"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The distributed matrix library type of "// &
+        & TRIM(NumberToVString(distributedMatrix%LIBRARY_TYPE,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("DistributedMatrix_SymmetryTypeSet")
+    RETURN
+999 ERRORSEXITS("DistributedMatrix_SymmetryTypeSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DistributedMatrix_SymmetryTypeSet
 
   !
   !================================================================================================================================
@@ -5126,10 +5275,10 @@ CONTAINS
           IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
             IF(DISTRIBUTED_MATRIX%PETSC%USE_OVERRIDE_MATRIX) THEN
               CALL Petsc_MatSetValues(DISTRIBUTED_MATRIX%PETSC%OVERRIDE_MATRIX,1,DISTRIBUTED_MATRIX%PETSC%GLOBAL_ROW_NUMBERS( &
-                & ROW_INDEX),1,(/COLUMN_INDEX-1/),(/VALUE/),PETSC_INSERT_VALUES,ERR,ERROR,*999) !PETSc uses 0 based indices
+                & ROW_INDEX),1,[COLUMN_INDEX-1],[VALUE],PETSC_INSERT_VALUES,ERR,ERROR,*999) !PETSc uses 0 based indices
             ELSE
               CALL Petsc_MatSetValues(DISTRIBUTED_MATRIX%PETSC%MATRIX,1,DISTRIBUTED_MATRIX%PETSC%GLOBAL_ROW_NUMBERS(ROW_INDEX), &
-                & 1,(/COLUMN_INDEX-1/),(/VALUE/),PETSC_INSERT_VALUES,ERR,ERROR,*999) !PETSc uses 0 based indices
+                & 1,[COLUMN_INDEX-1],[VALUE],PETSC_INSERT_VALUES,ERR,ERROR,*999) !PETSc uses 0 based indices
             ENDIF
           ELSE
             CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
@@ -5515,6 +5664,10 @@ CONTAINS
                                                 CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                                               END SELECT
                                             CASE(DISTRIBUTED_MATRIX_VECTOR_L_TYPE)
+                                              CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                                            CASE(DISTRIBUTED_MATRIX_VECTOR_SPC_TYPE)
+                                              CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                                            CASE(DISTRIBUTED_MATRIX_VECTOR_DPC_TYPE)
                                               CALL FlagError("Not implemented.",ERR,ERROR,*999)
                                             CASE DEFAULT
                                               LOCAL_ERROR="The distributed matrix vector data type of "// &
@@ -6213,7 +6366,7 @@ CONTAINS
       DEALLOCATE(CMISS_VECTOR)
     ENDIF
      
-    EXITS("DISTRIBUTED_VECTOR_CMISS_FINALSE")
+    EXITS("DISTRIBUTED_VECTOR_CMISS_FINALISE")
     RETURN
 999 ERRORSEXITS("DISTRIBUTED_VECTOR_CMISS_FINALISE",ERR,ERROR)
     RETURN 1
@@ -6266,7 +6419,7 @@ CONTAINS
       CALL FlagError("Distributed vector is not associated.",ERR,ERROR,*998)
     ENDIF
     
-    EXITS("DISTRIBUTED_VECTOR_CMISS_INITIALSE")
+    EXITS("DISTRIBUTED_VECTOR_CMISS_INITIALISE")
     RETURN
 999 IF(ASSOCIATED(DISTRIBUTED_VECTOR%CMISS)) &
       & CALL DISTRIBUTED_VECTOR_CMISS_FINALISE(DISTRIBUTED_VECTOR%CMISS,DUMMY_ERR,DUMMY_ERROR,*998)
@@ -6313,6 +6466,10 @@ CONTAINS
           CASE(MATRIX_VECTOR_L_TYPE)
             ALLOCATE(CMISS_VECTOR%DATA_L(CMISS_VECTOR%DATA_SIZE),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate CMISS distributed vector logical data.",ERR,ERROR,*999)
+          CASE(DISTRIBUTED_MATRIX_VECTOR_SPC_TYPE)
+            CALL FlagError("Not implemented.",ERR,ERROR,*999)
+          CASE(DISTRIBUTED_MATRIX_VECTOR_DPC_TYPE)
+            CALL FlagError("Not implemented.",ERR,ERROR,*999)
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector data type of "// &
               & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
@@ -6326,7 +6483,7 @@ CONTAINS
               & DOMAIN_MAPPING%ADJACENT_DOMAINS_PTR(DOMAIN_MAPPING%NUMBER_OF_DOMAINS)
           END IF
           IF(DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS>0) THEN
-            my_computational_node_number=COMPUTATIONAL_NODE_NUMBER_GET(ERR,ERROR)
+            my_computational_node_number=ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
             IF(ERR/=0) GOTO 999
             IF(DISTRIBUTED_VECTOR%GHOSTING_TYPE==DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE) THEN
               ALLOCATE(CMISS_VECTOR%TRANSFERS(DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS),STAT=ERR)
@@ -6390,6 +6547,10 @@ CONTAINS
                     & RECEIVE_BUFFER_SIZE),STAT=ERR)
                   IF(ERR/=0) CALL FlagError("Could not allocate distributed vector receive logical transfer buffer.", &
                     & ERR,ERROR,*999)
+                CASE(DISTRIBUTED_MATRIX_VECTOR_SPC_TYPE)
+                  CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CASE(DISTRIBUTED_MATRIX_VECTOR_DPC_TYPE)
+                  CALL FlagError("Not implemented.",ERR,ERROR,*999)
                 CASE DEFAULT
                   LOCAL_ERROR="The distributed vector data type of "// &
                     & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
@@ -6565,6 +6726,10 @@ CONTAINS
             DISTRIBUTED_VECTOR%DATA_TYPE=MATRIX_VECTOR_DP_TYPE
           CASE(MATRIX_VECTOR_L_TYPE)
             DISTRIBUTED_VECTOR%DATA_TYPE=MATRIX_VECTOR_L_TYPE
+          CASE(DISTRIBUTED_MATRIX_VECTOR_SPC_TYPE)
+            CALL FlagError("Not implemented.",ERR,ERROR,*999)
+          CASE(DISTRIBUTED_MATRIX_VECTOR_DPC_TYPE)
+            CALL FlagError("Not implemented.",ERR,ERROR,*999)
           CASE DEFAULT
             LOCAL_ERROR="The distributed data type of "//TRIM(NumberToVString(DATA_TYPE,"*",ERR,ERROR))//" is invalid."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
@@ -6579,6 +6744,10 @@ CONTAINS
             DISTRIBUTED_VECTOR%DATA_TYPE=MATRIX_VECTOR_DP_TYPE
           CASE(MATRIX_VECTOR_L_TYPE)
             CALL FlagError("A logical distributed PETSc vector is not implemented.",ERR,ERROR,*999)
+          CASE(DISTRIBUTED_MATRIX_VECTOR_SPC_TYPE)
+            CALL FlagError("A single precision complex distributed PETSc vector is not implemented.",ERR,ERROR,*999)
+          CASE(DISTRIBUTED_MATRIX_VECTOR_DPC_TYPE)
+            CALL FlagError("A double precision complex distributed PETSc vector is not implemented.",ERR,ERROR,*999)
           CASE DEFAULT
             LOCAL_ERROR="The distributed data type of "//TRIM(NumberToVString(DATA_TYPE,"*",ERR,ERROR))//" is invalid."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
@@ -7326,18 +7495,22 @@ CONTAINS
         CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_VECTOR%CMISS)) THEN
             SELECT CASE(DISTRIBUTED_VECTOR%DATA_TYPE)
-            CASE(MATRIX_VECTOR_INTG_TYPE)
+            CASE(DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE)
               CALL WRITE_STRING_VECTOR(ID,1,1,DISTRIBUTED_VECTOR%CMISS%N,8,8,DISTRIBUTED_VECTOR%CMISS%DATA_INTG, &
                 & '("Vector(:)          :",8(X,I13))','(20X,8(X,I13))',ERR,ERROR,*999)
-            CASE(MATRIX_VECTOR_SP_TYPE)
+            CASE(DISTRIBUTED_MATRIX_VECTOR_SP_TYPE)
               CALL WRITE_STRING_VECTOR(ID,1,1,DISTRIBUTED_VECTOR%CMISS%N,8,8,DISTRIBUTED_VECTOR%CMISS%DATA_SP, &
                 & '("Vector(:)          :",8(X,E13.6))','(20X,8(X,E13.6))',ERR,ERROR,*999)
-            CASE(MATRIX_VECTOR_DP_TYPE)
+            CASE(DISTRIBUTED_MATRIX_VECTOR_DP_TYPE)
               CALL WRITE_STRING_VECTOR(ID,1,1,DISTRIBUTED_VECTOR%CMISS%N,8,8,DISTRIBUTED_VECTOR%CMISS%DATA_DP, &
                 & '("Vector(:)          :",8(X,E13.6))','(20X,8(X,E13.6))',ERR,ERROR,*999)
-            CASE(MATRIX_VECTOR_L_TYPE)            
+            CASE(DISTRIBUTED_MATRIX_VECTOR_L_TYPE)            
               CALL WRITE_STRING_VECTOR(ID,1,1,DISTRIBUTED_VECTOR%CMISS%N,8,8,DISTRIBUTED_VECTOR%CMISS%DATA_INTG, &
                 & '("Vector(:)          :",8(X,L13))','(20X,8(X,L13))',ERR,ERROR,*999)
+            CASE(DISTRIBUTED_MATRIX_VECTOR_SPC_TYPE)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(DISTRIBUTED_MATRIX_VECTOR_DPC_TYPE)
+              CALL FlagError("Not implemented.",err,error,*999)
             CASE DEFAULT
               LOCAL_ERROR="The distributed vector data type of "// &
                 & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
@@ -7502,8 +7675,8 @@ CONTAINS
         IF(ASSOCIATED(DOMAIN_MAPPING)) THEN
           !Create the PETSc vector
           PETSC_VECTOR%DATA_SIZE=PETSC_VECTOR%N
-          CALL Petsc_VecCreateMPI(COMPUTATIONAL_ENVIRONMENT%MPI_COMM,PETSC_VECTOR%N,PETSC_VECTOR%GLOBAL_N,PETSC_VECTOR%VECTOR, &
-            & ERR,ERROR,*999)
+          CALL Petsc_VecCreateMPI(computationalEnvironment%mpiCommunicator,PETSC_VECTOR%N,PETSC_VECTOR%GLOBAL_N, &
+            & PETSC_VECTOR%VECTOR,ERR,ERROR,*999)
           !Set up the Local to Global Mappings
           DO i=1,PETSC_VECTOR%N
             PETSC_VECTOR%GLOBAL_NUMBERS(i)=DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(i)-1
@@ -7546,7 +7719,7 @@ CONTAINS
       DEALLOCATE(PETSC_VECTOR)
     ENDIF
     
-    EXITS("DISTRIBUTED_VECTOR_PETSC_FINALSE")
+    EXITS("DISTRIBUTED_VECTOR_PETSC_FINALISE")
     RETURN
 999 ERRORSEXITS("DISTRIBUTED_VECTOR_PETSC_FINALISE",ERR,ERROR)
     RETURN 1
@@ -7603,7 +7776,7 @@ CONTAINS
       CALL FlagError("Distributed vector is not associated",ERR,ERROR,*998)
     ENDIF
     
-    EXITS("DISTRIBUTED_VECTOR_PETSC_INITIALSE")
+    EXITS("DISTRIBUTED_VECTOR_PETSC_INITIALISE")
     RETURN
 999 IF(ASSOCIATED(DISTRIBUTED_VECTOR%PETSC)) &
       & CALL DISTRIBUTED_VECTOR_PETSC_FINALISE(DISTRIBUTED_VECTOR%PETSC,DUMMY_ERR,DUMMY_ERROR,*998)
@@ -7739,33 +7912,37 @@ CONTAINS
         CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_VECTOR%CMISS)) THEN
             IF(ASSOCIATED(DISTRIBUTED_VECTOR%DOMAIN_MAPPING)) THEN
-              NUMBER_OF_COMPUTATIONAL_NODES=COMPUTATIONAL_NODES_NUMBER_GET(ERR,ERROR)
+              NUMBER_OF_COMPUTATIONAL_NODES=ComputationalEnvironment_NumberOfNodesGet(ERR,ERROR)
               IF(ERR/=0) GOTO 999
               IF(NUMBER_OF_COMPUTATIONAL_NODES>1) THEN
                 CALL DISTRIBUTED_VECTOR_UPDATE_WAITFINISHED(DISTRIBUTED_VECTOR,ERR,ERROR,*999)
                 !Copy the receive buffers back to the ghost positions in the data vector
                 DO domain_idx=1,DISTRIBUTED_VECTOR%DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS
                   SELECT CASE(DISTRIBUTED_VECTOR%DATA_TYPE)
-                  CASE(MATRIX_VECTOR_INTG_TYPE)
+                  CASE(DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE)
                     DO i=1,DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%NUMBER_OF_RECEIVE_GHOSTS
                       DISTRIBUTED_VECTOR%CMISS%DATA_INTG(DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)% &
                         & LOCAL_GHOST_RECEIVE_INDICES(i))=DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_BUFFER_INTG(i)
                     ENDDO !i
-                  CASE(MATRIX_VECTOR_SP_TYPE)
+                  CASE(DISTRIBUTED_MATRIX_VECTOR_SP_TYPE)
                     DO i=1,DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%NUMBER_OF_RECEIVE_GHOSTS
                       DISTRIBUTED_VECTOR%CMISS%DATA_SP(DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)% &
                         & LOCAL_GHOST_RECEIVE_INDICES(i))=DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_BUFFER_SP(i)
                     ENDDO !i
-                  CASE(MATRIX_VECTOR_DP_TYPE)
+                  CASE(DISTRIBUTED_MATRIX_VECTOR_DP_TYPE)
                     DO i=1,DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%NUMBER_OF_RECEIVE_GHOSTS
                       DISTRIBUTED_VECTOR%CMISS%DATA_DP(DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)% &
                         & LOCAL_GHOST_RECEIVE_INDICES(i))=DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_BUFFER_DP(i)
                     ENDDO !i
-                  CASE(MATRIX_VECTOR_L_TYPE)
+                  CASE(DISTRIBUTED_MATRIX_VECTOR_L_TYPE)
                     DO i=1,DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%NUMBER_OF_RECEIVE_GHOSTS
                       DISTRIBUTED_VECTOR%CMISS%DATA_L(DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)% &
                         & LOCAL_GHOST_RECEIVE_INDICES(i))=DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_BUFFER_L(i)
                     ENDDO !i
+                  CASE(DISTRIBUTED_MATRIX_VECTOR_SPC_TYPE)
+                    CALL FlagError("Not implemented.",err,error,*999)
+                  CASE(DISTRIBUTED_MATRIX_VECTOR_DPC_TYPE)
+                    CALL FlagError("Not implemented.",err,error,*999)
                   CASE DEFAULT
                     LOCAL_ERROR="The distributed vector data type of "// &
                       & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
@@ -7826,18 +8003,22 @@ CONTAINS
           ENDDO !domain_idx
           CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Data size = ",DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,ERR,ERROR,*999)
           SELECT CASE(DISTRIBUTED_VECTOR%DATA_TYPE)
-          CASE(MATRIX_VECTOR_INTG_TYPE)
+          CASE(DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE)
             CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,5,5,DISTRIBUTED_VECTOR%CMISS% &
               & DATA_INTG,'("  Data :",5(X,I13))','(8X,5(X,I13))',ERR,ERROR,*999)      
-          CASE(MATRIX_VECTOR_SP_TYPE)
+          CASE(DISTRIBUTED_MATRIX_VECTOR_SP_TYPE)
             CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,5,5,DISTRIBUTED_VECTOR%CMISS% &
               & DATA_SP,'("  Data :",5(X,E13.6))','(8X,5(X,E13.6))',ERR,ERROR,*999)      
-          CASE(MATRIX_VECTOR_DP_TYPE)
+          CASE(DISTRIBUTED_MATRIX_VECTOR_DP_TYPE)
             CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,5,5,DISTRIBUTED_VECTOR%CMISS% &
               & DATA_DP,'("  Data :",5(X,E13.6))','(8X,5(X,E13.6))',ERR,ERROR,*999)      
-          CASE(MATRIX_VECTOR_L_TYPE)
+          CASE(DISTRIBUTED_MATRIX_VECTOR_L_TYPE)
             CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,8,8,DISTRIBUTED_VECTOR%CMISS% &
-              & DATA_L,'("  Data :",8(X,L))','(8X,8(X,L))',ERR,ERROR,*999)      
+              & DATA_L,'("  Data :",8(X,L))','(8X,8(X,L))',ERR,ERROR,*999)
+          CASE(DISTRIBUTED_MATRIX_VECTOR_SPC_TYPE)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(DISTRIBUTED_MATRIX_VECTOR_DPC_TYPE)
+            CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector data type of "// &
               & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
@@ -8000,37 +8181,41 @@ CONTAINS
         CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
           IF(ASSOCIATED(DISTRIBUTED_VECTOR%CMISS)) THEN
             IF(ASSOCIATED(DISTRIBUTED_VECTOR%DOMAIN_MAPPING)) THEN
-              NUMBER_OF_COMPUTATIONAL_NODES=COMPUTATIONAL_NODES_NUMBER_GET(ERR,ERROR)
+              NUMBER_OF_COMPUTATIONAL_NODES=ComputationalEnvironment_NumberOfNodesGet(ERR,ERROR)
               IF(ERR/=0) GOTO 999
               IF(NUMBER_OF_COMPUTATIONAL_NODES>1) THEN
                 IF(DISTRIBUTED_VECTOR%DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS>0) THEN
                   !Fill in the send buffers with the send ghost values
                   DO domain_idx=1,DISTRIBUTED_VECTOR%DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS
                     SELECT CASE(DISTRIBUTED_VECTOR%DATA_TYPE)
-                    CASE(MATRIX_VECTOR_INTG_TYPE)
+                    CASE(DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE)
                       DO i=1,DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%NUMBER_OF_SEND_GHOSTS
                         DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_BUFFER_INTG(i)= &
                           & DISTRIBUTED_VECTOR%CMISS%DATA_INTG(DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)% &
                           & LOCAL_GHOST_SEND_INDICES(i))
                       ENDDO !i
-                    CASE(MATRIX_VECTOR_SP_TYPE)
+                    CASE(DISTRIBUTED_MATRIX_VECTOR_SP_TYPE)
                       DO i=1,DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%NUMBER_OF_SEND_GHOSTS
                         DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_BUFFER_SP(i)= &
                           & DISTRIBUTED_VECTOR%CMISS%DATA_SP(DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)% &
                           & LOCAL_GHOST_SEND_INDICES(i))
                       ENDDO !i
-                    CASE(MATRIX_VECTOR_DP_TYPE)
+                    CASE(DISTRIBUTED_MATRIX_VECTOR_DP_TYPE)
                       DO i=1,DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%NUMBER_OF_SEND_GHOSTS
                         DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_BUFFER_DP(i)= &
                           & DISTRIBUTED_VECTOR%CMISS%DATA_DP(DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)% &
                           & LOCAL_GHOST_SEND_INDICES(i))
                       ENDDO !i
-                    CASE(MATRIX_VECTOR_L_TYPE)
+                    CASE(DISTRIBUTED_MATRIX_VECTOR_L_TYPE)
                       DO i=1,DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%NUMBER_OF_SEND_GHOSTS
                         DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_BUFFER_L(i)= &
                           & DISTRIBUTED_VECTOR%CMISS%DATA_L(DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)% &
                           & LOCAL_GHOST_SEND_INDICES(i))
                       ENDDO !i
+                    CASE(DISTRIBUTED_MATRIX_VECTOR_SPC_TYPE)
+                      CALL FlagError("Not implemented.",err,error,*999)
+                    CASE(DISTRIBUTED_MATRIX_VECTOR_DPC_TYPE)
+                      CALL FlagError("Not implemented.",err,error,*999)
                     CASE DEFAULT
                       LOCAL_ERROR="The distributed vector data type of "// &
                         & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
@@ -8040,11 +8225,12 @@ CONTAINS
                   !Post all the receive calls first and then the send calls.
                   DO domain_idx=1,DISTRIBUTED_VECTOR%DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS
                     SELECT CASE(DISTRIBUTED_VECTOR%DATA_TYPE)
-                    CASE(MATRIX_VECTOR_INTG_TYPE)
+                    CASE(DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE)
                       CALL MPI_IRECV(DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_BUFFER_INTG, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_BUFFER_SIZE,MPI_INTEGER, &
                         & DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER, &
-                        & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_TAG_NUMBER,COMPUTATIONAL_ENVIRONMENT%MPI_COMM, &
+                        & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_TAG_NUMBER, &
+                        & computationalEnvironment%mpiCommunicator, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%MPI_RECEIVE_REQUEST,MPI_IERROR)
                       CALL MPI_ERROR_CHECK("MPI_IRECV",MPI_IERROR,ERR,ERROR,*999)
                       IF(DIAGNOSTICS5) THEN
@@ -8056,16 +8242,17 @@ CONTAINS
                           & ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive tag = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%RECEIVE_TAG_NUMBER,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ",COMPUTATIONAL_ENVIRONMENT%MPI_COMM, &
-                          & ERR,ERROR,*999)
+                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ", &
+                          & computationalEnvironment%mpiCommunicator,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive request = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%MPI_RECEIVE_REQUEST,ERR,ERROR,*999)                
                       ENDIF
-                    CASE(MATRIX_VECTOR_SP_TYPE)
+                    CASE(DISTRIBUTED_MATRIX_VECTOR_SP_TYPE)
                       CALL MPI_IRECV(DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_BUFFER_SP, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_BUFFER_SIZE,MPI_REAL, &
                         & DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER, &
-                        & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_TAG_NUMBER,COMPUTATIONAL_ENVIRONMENT%MPI_COMM, &
+                        & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_TAG_NUMBER, &
+                        & computationalEnvironment%mpiCommunicator, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%MPI_RECEIVE_REQUEST,MPI_IERROR)
                       CALL MPI_ERROR_CHECK("MPI_IRECV",MPI_IERROR,ERR,ERROR,*999)
                       IF(DIAGNOSTICS5) THEN
@@ -8077,16 +8264,17 @@ CONTAINS
                           & ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive tag = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%RECEIVE_TAG_NUMBER,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ",COMPUTATIONAL_ENVIRONMENT%MPI_COMM, &
-                          & ERR,ERROR,*999)
+                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ", &
+                          & computationalEnvironment%mpiCommunicator,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive request = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%MPI_RECEIVE_REQUEST,ERR,ERROR,*999)                
                       ENDIF
-                    CASE(MATRIX_VECTOR_DP_TYPE)
+                    CASE(DISTRIBUTED_MATRIX_VECTOR_DP_TYPE)
                       CALL MPI_IRECV(DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_BUFFER_DP, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_BUFFER_SIZE,MPI_DOUBLE_PRECISION, &
                         & DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER, &
-                        & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_TAG_NUMBER,COMPUTATIONAL_ENVIRONMENT%MPI_COMM, &
+                        & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_TAG_NUMBER, &
+                        & computationalEnvironment%mpiCommunicator, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%MPI_RECEIVE_REQUEST,MPI_IERROR)
                       CALL MPI_ERROR_CHECK("MPI_IRECV",MPI_IERROR,ERR,ERROR,*999)
                       IF(DIAGNOSTICS5) THEN
@@ -8098,16 +8286,17 @@ CONTAINS
                           & ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive tag = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%RECEIVE_TAG_NUMBER,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ",COMPUTATIONAL_ENVIRONMENT%MPI_COMM, &
-                          & ERR,ERROR,*999)
+                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ", &
+                          & computationalEnvironment%mpiCommunicator,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive request = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%MPI_RECEIVE_REQUEST,ERR,ERROR,*999)                
                       ENDIF
-                    CASE(MATRIX_VECTOR_L_TYPE)
+                    CASE(DISTRIBUTED_MATRIX_VECTOR_L_TYPE)
                       CALL MPI_IRECV(DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_BUFFER_L, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_BUFFER_SIZE,MPI_LOGICAL, &
                         & DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER, &
-                        & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_TAG_NUMBER,COMPUTATIONAL_ENVIRONMENT%MPI_COMM, &
+                        & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%RECEIVE_TAG_NUMBER, &
+                        & computationalEnvironment%mpiCommunicator, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%MPI_RECEIVE_REQUEST,MPI_IERROR)
                       CALL MPI_ERROR_CHECK("MPI_IRECV",MPI_IERROR,ERR,ERROR,*999)
                       IF(DIAGNOSTICS5) THEN
@@ -8119,11 +8308,15 @@ CONTAINS
                           & ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive tag = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%RECEIVE_TAG_NUMBER,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ",COMPUTATIONAL_ENVIRONMENT%MPI_COMM, &
-                          & ERR,ERROR,*999)
+                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ", &
+                          & computationalEnvironment%mpiCommunicator,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Receive request = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%MPI_RECEIVE_REQUEST,ERR,ERROR,*999)                
                       ENDIF
+                    CASE(DISTRIBUTED_MATRIX_VECTOR_SPC_TYPE)
+                      CALL FlagError("Not implemented.",err,error,*999)
+                    CASE(DISTRIBUTED_MATRIX_VECTOR_DPC_TYPE)
+                      CALL FlagError("Not implemented.",err,error,*999)
                     CASE DEFAULT
                       LOCAL_ERROR="The distributed vector data type of "// &
                         & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
@@ -8133,11 +8326,12 @@ CONTAINS
                   !Post all the send calls.
                   DO domain_idx=1,DISTRIBUTED_VECTOR%DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS
                     SELECT CASE(DISTRIBUTED_VECTOR%DATA_TYPE)
-                    CASE(MATRIX_VECTOR_INTG_TYPE)
+                    CASE(DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE)
                       CALL MPI_ISEND(DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_BUFFER_INTG, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_BUFFER_SIZE,MPI_INTEGER, &
                         & DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER, &
-                        & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_TAG_NUMBER,COMPUTATIONAL_ENVIRONMENT%MPI_COMM, &
+                        & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_TAG_NUMBER, &
+                        & computationalEnvironment%mpiCommunicator, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%MPI_SEND_REQUEST,MPI_IERROR)
                       CALL MPI_ERROR_CHECK("MPI_ISEND",MPI_IERROR,ERR,ERROR,*999)
                       IF(DIAGNOSTICS5) THEN
@@ -8149,16 +8343,17 @@ CONTAINS
                           & ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send tag = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%SEND_TAG_NUMBER,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ",COMPUTATIONAL_ENVIRONMENT%MPI_COMM, &
-                          & ERR,ERROR,*999)
+                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ", &
+                          & computationalEnvironment%mpiCommunicator,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send request = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%MPI_SEND_REQUEST,ERR,ERROR,*999)                
                       ENDIF
-                    CASE(MATRIX_VECTOR_SP_TYPE)
+                    CASE(DISTRIBUTED_MATRIX_VECTOR_SP_TYPE)
                       CALL MPI_ISEND(DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_BUFFER_SP, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_BUFFER_SIZE,MPI_REAL, &
                         & DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER, &
-                        & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_TAG_NUMBER,COMPUTATIONAL_ENVIRONMENT%MPI_COMM, &
+                        & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_TAG_NUMBER, &
+                        & computationalEnvironment%mpiCommunicator, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%MPI_SEND_REQUEST,MPI_IERROR)
                       CALL MPI_ERROR_CHECK("MPI_ISEND",MPI_IERROR,ERR,ERROR,*999)
                       IF(DIAGNOSTICS5) THEN
@@ -8170,16 +8365,17 @@ CONTAINS
                           & ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send tag = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%SEND_TAG_NUMBER,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ",COMPUTATIONAL_ENVIRONMENT%MPI_COMM, &
-                          & ERR,ERROR,*999)
+                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ", &
+                          & computationalEnvironment%mpiCommunicator,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send request = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%MPI_SEND_REQUEST,ERR,ERROR,*999)                
                       ENDIF
-                    CASE(MATRIX_VECTOR_DP_TYPE)
+                    CASE(DISTRIBUTED_MATRIX_VECTOR_DP_TYPE)
                       CALL MPI_ISEND(DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_BUFFER_DP, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_BUFFER_SIZE,MPI_DOUBLE_PRECISION, &
                         & DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER, &
-                        & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_TAG_NUMBER,COMPUTATIONAL_ENVIRONMENT%MPI_COMM, &
+                        & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_TAG_NUMBER, &
+                        & computationalEnvironment%mpiCommunicator, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%MPI_SEND_REQUEST,MPI_IERROR)
                       CALL MPI_ERROR_CHECK("MPI_ISEND",MPI_IERROR,ERR,ERROR,*999)
                       IF(DIAGNOSTICS5) THEN
@@ -8191,16 +8387,17 @@ CONTAINS
                           & ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send tag = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%SEND_TAG_NUMBER,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ",COMPUTATIONAL_ENVIRONMENT%MPI_COMM, &
+                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ",computationalEnvironment%mpiCommunicator, &
                           & ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send request = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%MPI_SEND_REQUEST,ERR,ERROR,*999)                
                       ENDIF
-                    CASE(MATRIX_VECTOR_L_TYPE)
+                    CASE(DISTRIBUTED_MATRIX_VECTOR_L_TYPE)
                       CALL MPI_ISEND(DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_BUFFER_L, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_BUFFER_SIZE,MPI_LOGICAL, &
                         & DISTRIBUTED_VECTOR%DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER, &
-                        & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_TAG_NUMBER,COMPUTATIONAL_ENVIRONMENT%MPI_COMM, &
+                        & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%SEND_TAG_NUMBER, &
+                        & computationalEnvironment%mpiCommunicator, &
                         & DISTRIBUTED_VECTOR%CMISS%TRANSFERS(domain_idx)%MPI_SEND_REQUEST,MPI_IERROR)
                       CALL MPI_ERROR_CHECK("MPI_ISEND",MPI_IERROR,ERR,ERROR,*999)
                       IF(DIAGNOSTICS5) THEN
@@ -8212,11 +8409,15 @@ CONTAINS
                           & ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send tag = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%SEND_TAG_NUMBER,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ",COMPUTATIONAL_ENVIRONMENT%MPI_COMM, &
-                          & ERR,ERROR,*999)
+                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ", &
+                          & computationalEnvironment%mpiCommunicator,ERR,ERROR,*999)
                         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Send request = ",DISTRIBUTED_VECTOR% &
                           & CMISS%TRANSFERS(domain_idx)%MPI_SEND_REQUEST,ERR,ERROR,*999)                
                       ENDIF
+                    CASE(DISTRIBUTED_MATRIX_VECTOR_SPC_TYPE)
+                      CALL FlagError("Not implemented.",err,error,*999)
+                    CASE(DISTRIBUTED_MATRIX_VECTOR_DPC_TYPE)
+                      CALL FlagError("Not implemented.",err,error,*999)
                     CASE DEFAULT
                       LOCAL_ERROR="The distributed vector data type of "// &
                         & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
@@ -8278,18 +8479,22 @@ CONTAINS
           ENDDO !domain_idx
           CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Data size = ",DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,ERR,ERROR,*999)
           SELECT CASE(DISTRIBUTED_VECTOR%DATA_TYPE)
-          CASE(MATRIX_VECTOR_INTG_TYPE)
+          CASE(DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE)
             CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,5,5,DISTRIBUTED_VECTOR%CMISS% &
               & DATA_INTG,'("  Data :",5(X,I13))','(8X,5(X,I13))',ERR,ERROR,*999)      
-          CASE(MATRIX_VECTOR_SP_TYPE)
+          CASE(DISTRIBUTED_MATRIX_VECTOR_SP_TYPE)
             CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,5,5,DISTRIBUTED_VECTOR%CMISS% &
               & DATA_SP,'("  Data :",5(X,E13.6))','(8X,5(X,E13.6))',ERR,ERROR,*999)      
-          CASE(MATRIX_VECTOR_DP_TYPE)
+          CASE(DISTRIBUTED_MATRIX_VECTOR_DP_TYPE)
             CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,5,5,DISTRIBUTED_VECTOR%CMISS% &
               & DATA_DP,'("  Data :",5(X,E13.6))','(8X,5(X,E13.6))',ERR,ERROR,*999)      
-          CASE(MATRIX_VECTOR_L_TYPE)
+          CASE(DISTRIBUTED_MATRIX_VECTOR_L_TYPE)
             CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,DISTRIBUTED_VECTOR%CMISS%DATA_SIZE,8,8,DISTRIBUTED_VECTOR%CMISS% &
               & DATA_L,'("  Data :",8(X,L))','(8X,8(X,L))',ERR,ERROR,*999)      
+          CASE(DISTRIBUTED_MATRIX_VECTOR_SPC_TYPE)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(DISTRIBUTED_MATRIX_VECTOR_DPC_TYPE)
+            CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
             LOCAL_ERROR="The distributed vector data type of "// &
               & TRIM(NumberToVString(DISTRIBUTED_VECTOR%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
@@ -8326,7 +8531,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: i
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("DistributedVector_L2Norm",err,error,*999)
@@ -8336,21 +8540,21 @@ CONTAINS
         SELECT CASE(distributedVector%LIBRARY_TYPE)
         CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
           SELECT CASE(distributedVector%DATA_TYPE)
-          CASE(MATRIX_VECTOR_DP_TYPE)
+          CASE(DISTRIBUTED_MATRIX_VECTOR_DP_TYPE)
               IF(ASSOCIATED(distributedVector%CMISS)) THEN
-                norm=0.0_DP
-                DO i=1,distributedVector%CMISS%DATA_SIZE
-                  norm=norm+(distributedVector%CMISS%DATA_DP(i)**2)
-                ENDDO !i
-                norm=SQRT(norm)
-              ELSE
+                CALL L2Norm(distributedVector%CMISS%DATA_DP(1:distributedVector%CMISS%DATA_SIZE),norm,err,error,*999)
+             ELSE
                 CALL FlagError("Distributed vector CMISS is not associated.",err,error,*999)
               ENDIF
-          CASE(MATRIX_VECTOR_SP_TYPE)
+          CASE(DISTRIBUTED_MATRIX_VECTOR_SP_TYPE)
             CALL FlagError("Not implemented.",err,error,*999)
-          CASE(MATRIX_VECTOR_INTG_TYPE)
+          CASE(DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE)
             CALL FlagError("Not implemented.",err,error,*999)
-          CASE(MATRIX_VECTOR_L_TYPE)
+          CASE(DISTRIBUTED_MATRIX_VECTOR_L_TYPE)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(DISTRIBUTED_MATRIX_VECTOR_SPC_TYPE)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(DISTRIBUTED_MATRIX_VECTOR_DPC_TYPE)
             CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
             localError="The distributed data type of "// &
@@ -8476,7 +8680,7 @@ CONTAINS
             CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
               IF(ASSOCIATED(distributedVectorA%CMISS)) THEN
                 IF(distributedVectorA%CMISS%DATA_SIZE==distributedVectorB%CMISS%DATA_SIZE) THEN
-                  IF(distributedVectorA%DATA_TYPE==MATRIX_VECTOR_SP_TYPE) THEN
+                  IF(distributedVectorA%DATA_TYPE==DISTRIBUTED_MATRIX_VECTOR_SP_TYPE) THEN
                     dotProduct=0.0_SP
                     DO i=1,distributedVectorA%CMISS%DATA_SIZE
                       dotProduct=dotProduct+(distributedVectorA%CMISS%DATA_SP(i)*distributedVectorB%CMISS%DATA_SP(i))
@@ -8745,7 +8949,7 @@ CONTAINS
     IF(ASSOCIATED(DISTRIBUTED_VECTOR)) THEN
       IF(DISTRIBUTED_VECTOR%VECTOR_FINISHED) THEN
         IF(SIZE(INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(DISTRIBUTED_VECTOR%DATA_TYPE==MATRIX_VECTOR_SP_TYPE) THEN
+          IF(DISTRIBUTED_VECTOR%DATA_TYPE==DISTRIBUTED_MATRIX_VECTOR_SP_TYPE) THEN
             SELECT CASE(DISTRIBUTED_VECTOR%LIBRARY_TYPE)
             CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
               IF(ASSOCIATED(DISTRIBUTED_VECTOR%CMISS)) THEN
@@ -8814,7 +9018,7 @@ CONTAINS
 
     IF(ASSOCIATED(DISTRIBUTED_VECTOR)) THEN
       IF(DISTRIBUTED_VECTOR%VECTOR_FINISHED) THEN
-        IF(DISTRIBUTED_VECTOR%DATA_TYPE==MATRIX_VECTOR_SP_TYPE) THEN
+        IF(DISTRIBUTED_VECTOR%DATA_TYPE==DISTRIBUTED_MATRIX_VECTOR_SP_TYPE) THEN
           SELECT CASE(DISTRIBUTED_VECTOR%LIBRARY_TYPE)
           CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
             IF(ASSOCIATED(DISTRIBUTED_VECTOR%CMISS)) THEN
@@ -9028,7 +9232,7 @@ CONTAINS
     INTEGER(INTG) :: i
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("DISTRIBUTED_VECTOR_VALUES_ADDED_L",ERR,ERROR,*999)
+    ENTERS("DISTRIBUTED_VECTOR_VALUES_ADD_L",ERR,ERROR,*999)
 
     IF(ASSOCIATED(DISTRIBUTED_VECTOR)) THEN
       IF(DISTRIBUTED_VECTOR%VECTOR_FINISHED) THEN
@@ -9298,7 +9502,7 @@ CONTAINS
     IF(ASSOCIATED(DISTRIBUTED_VECTOR)) THEN
       IF(DISTRIBUTED_VECTOR%VECTOR_FINISHED) THEN
         IF(SIZE(INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(DISTRIBUTED_VECTOR%DATA_TYPE==MATRIX_VECTOR_SP_TYPE) THEN
+          IF(DISTRIBUTED_VECTOR%DATA_TYPE==DISTRIBUTED_MATRIX_VECTOR_SP_TYPE) THEN
             SELECT CASE(DISTRIBUTED_VECTOR%LIBRARY_TYPE)
             CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
               IF(ASSOCIATED(DISTRIBUTED_VECTOR%CMISS)) THEN

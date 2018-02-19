@@ -20,11 +20,18 @@ This Python module wraps the underlying OpenCMISS-Iron Fortran library.
 http://www.opencmiss.org
 """)
 
+#INITIALISE = """WorldCoordinateSystem = CoordinateSystem()
+#WorldRegion = Region()
+#Initialise(WorldCoordinateSystem, WorldRegion)
+## Don't output errors, we'll include trace in exception
+#ErrorHandlingModeSet(ErrorHandlingModes.RETURN_ERROR_CODE)
+#"""
+
 INITIALISE = """WorldCoordinateSystem = CoordinateSystem()
 WorldRegion = Region()
 Initialise(WorldCoordinateSystem, WorldRegion)
 # Don't output errors, we'll include trace in exception
-ErrorHandlingModeSet(ErrorHandlingModes.RETURN_ERROR_CODE)
+ErrorHandlingModeSet(ErrorHandlingModes.OUTPUT_ERROR)
 """
 
 PREFIX = 'cmfe_'

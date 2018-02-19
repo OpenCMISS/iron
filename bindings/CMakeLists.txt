@@ -197,6 +197,7 @@ if (WITH_Python_BINDINGS)
     
     set(IRON_PY ${CMAKE_CURRENT_BINARY_DIR}/iron.py) # see python.py script in generate_bindings for iron.py name
     add_custom_command(OUTPUT ${IRON_PY}
+        DEPENDS ${Iron_SOURCE_DIR}/src/opencmiss_iron.f90 # Need to re-build if that file changes!
         COMMAND "${PYTHON_EXECUTABLE}" generate_bindings 
             "${Iron_SOURCE_DIR}" Python ${IRON_PYTHON_MODULE} "${CMAKE_CURRENT_BINARY_DIR}"
         COMMENT "Generating Python binding script"

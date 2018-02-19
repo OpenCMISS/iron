@@ -42,18 +42,22 @@
 !>
 
 !> This module handles all equations matrix and rhs routines.
-MODULE EQUATIONS_MATRICES_ROUTINES
+MODULE EquationsMatricesRoutines
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE DISTRIBUTED_MATRIX_VECTOR
+  USE EquationsAccessRoutines
+  USE EquationsMappingAccessRoutines
+  USE EquationsMatricesAccessRoutines
+  USE EquationsSetAccessRoutines
   USE EQUATIONS_SET_CONSTANTS
   USE FIELD_ROUTINES
   USE ISO_VARYING_STRING
-  USE KINDS
-  USE LISTS
+  USE Kinds
+  USE Lists
   USE MATRIX_VECTOR
-  USE STRINGS
-  USE TYPES
+  USE Strings
+  USE Types
   USE LINKEDLIST_ROUTINES
 
 #include "macros.h"  
@@ -64,56 +68,68 @@ MODULE EQUATIONS_MATRICES_ROUTINES
 
   !Module parameters
 
-  !> \addtogroup EQUATIONS_MATRICES_ROUTINES_EquationsMatrixStructureTypes EQUATIONS_MATRICES_ROUTINES::EquationsMatrixStructureTypes
+  !> \addtogroup EquationsMatricesRoutines_EquationsMatrixStructureTypes EquationsMatricesRoutines::EquationsMatrixStructureTypes
   !> \brief Equations matrices structure (sparsity) types
-  !> \see EQUATIONS_MATRICES_ROUTINES
+  !> \see EquationsMatricesRoutines
   !>@{
-  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRIX_NO_STRUCTURE=1 !<No matrix structure - all elements can contain a value. \see EQUATIONS_MATRICES_ROUTINES_EquationsMatrixStructureTypes,EQUATIONS_MATRICES_ROUTINES
-  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRIX_FEM_STRUCTURE=2 !<Finite element matrix structure. \see EQUATIONS_MATRICES_ROUTINES_EquationsMatrixStructureTypes,EQUATIONS_MATRICES_ROUTINES
-  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRIX_DIAGONAL_STRUCTURE=3 !<Diagonal matrix structure. \see EQUATIONS_MATRICES_ROUTINES_EquationsMatrixStructureTypes,EQUATIONS_MATRICES_ROUTINES
-  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRIX_NODAL_STRUCTURE=4 !<Nodal matrix structure. \see EQUATIONS_MATRICES_ROUTINES_EquationsMatrixStructureTypes,EQUATIONS_MATRICES_ROUTINES
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRIX_NO_STRUCTURE=1 !<No matrix structure - all elements can contain a value. \see EquationsMatricesRoutines_EquationsMatrixStructureTypes,EquationsMatricesRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRIX_FEM_STRUCTURE=2 !<Finite element matrix structure. \see EquationsMatricesRoutines_EquationsMatrixStructureTypes,EquationsMatricesRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRIX_DIAGONAL_STRUCTURE=3 !<Diagonal matrix structure. \see EquationsMatricesRoutines_EquationsMatrixStructureTypes,EquationsMatricesRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRIX_NODAL_STRUCTURE=4 !<Nodal matrix structure. \see EquationsMatricesRoutines_EquationsMatrixStructureTypes,EquationsMatricesRoutines
   !>@}
 
 
-  !> \addtogroup EQUATIONS_MATRICES_ROUTINES_LumpingTypes EQUATIONS_MATRICES_ROUTINES::LumpingTypes
+  !> \addtogroup EquationsMatricesRoutines_LumpingTypes EquationsMatricesRoutines::LumpingTypes
   !> \brief Equations matrix lumping types
-  !> \see EQUATIONS_MATRICES_ROUTINES
+  !> \see EquationsMatricesRoutines
   !>@{
-  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRIX_UNLUMPED=1 !<The matrix is not lumped \see EQUATIONS_MATRICES_ROUTINES_LumpingTypes,EQUATIONS_MATRICES_ROUTINES
-  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRIX_LUMPED=2 !<The matrix is "mass" lumped \see EQUATIONS_MATRICES_ROUTINES_LumpingTypes,EQUATIONS_MATRICES_ROUTINES
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRIX_UNLUMPED=1 !<The matrix is not lumped \see EquationsMatricesRoutines_LumpingTypes,EquationsMatricesRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRIX_LUMPED=2 !<The matrix is "mass" lumped \see EquationsMatricesRoutines_LumpingTypes,EquationsMatricesRoutines
  !>@}
  
-  !> \addtogroup EQUATIONS_MATRICES_ROUTINES_EquationsMatricesSparsityTypes EQUATIONS_MATRICES_ROUTINES::EquationsMatricesSparsityTypes
+  !> \addtogroup EquationsMatricesRoutines_EquationsMatricesSparsityTypes EquationsMatricesRoutines::EquationsMatricesSparsityTypes
   !> \brief Equations matrices sparsity types
-  !> \see EQUATIONS_MATRICES_ROUTINES
+  !> \see EquationsMatricesRoutines
   !>@{
-  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_SPARSE_MATRICES=1 !<Use sparse equations matrices \see EQUATIONS_MATRICES_ROUTINES_EquationsMatricesSparsityTypes,EQUATIONS_MATRICES_ROUTINES
-  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_FULL_MATRICES=2 !<Use fully populated equation matrices \see EQUATIONS_MATRICES_ROUTINES_EquationsMatricesSparsityTypes,EQUATIONS_MATRICES_ROUTINES
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_SPARSE_MATRICES=1 !<Use sparse equations matrices \see EquationsMatricesRoutines_EquationsMatricesSparsityTypes,EquationsMatricesRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_FULL_MATRICES=2 !<Use fully populated equation matrices \see EquationsMatricesRoutines_EquationsMatricesSparsityTypes,EquationsMatricesRoutines
   !>@}
 
-  !> \addtogroup EQUATIONS_MATRICES_ROUTINES_SelectMatricesTypes EQUATIONS_MATRICES_ROUTINES::SelectMatricesTypes
+  !> \addtogroup EquationsMatricesRoutines_SelectMatricesTypes EquationsMatricesRoutines::SelectMatricesTypes
   !> \brief The types of selection available for the equations matrices
   !> \see SOLVER_ROUTINES
   !>@{
-  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_ALL=1 !<Select all the equations matrices and vectors \see EQUATIONS_MATRICES_ROUTINES::SelectMatricesTypes,EQUATION_MATRICES_ROUTINES
-  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_DYNAMIC_ONLY=2 !<Select only the dynamic equations matrices and vectors \see EQUATIONS_MATRICES_ROUTINES::SelectMatricesTypes,EQUATION_MATRICES_ROUTINES
-  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_LINEAR_ONLY=3 !<Select only the linear equations matrices and vectors \see EQUATIONS_MATRICES_ROUTINES::SelectMatricesTypes,EQUATION_MATRICES_ROUTINES
-  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_NONLINEAR_ONLY=4 !<Select only the nonlinear equations matrices and vectors \see EQUATIONS_MATRICES_ROUTINES::SelectMatricesTypes,EQUATION_MATRICES_ROUTINES
-  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_JACOBIAN_ONLY=5 !<Select only the Jacobian equations matrix \see EQUATIONS_MATRICES_ROUTINES::SelectMatricesTypes,EQUATION_MATRICES_ROUTINES
-  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_RESIDUAL_ONLY=6 !<Select only the residual equations vector \see EQUATIONS_MATRICES_ROUTINES::SelectMatricesTypes,EQUATION_MATRICES_ROUTINES
-  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_RHS_ONLY=7 !<Select only the RHS equations vector \see EQUATIONS_MATRICES_ROUTINES::SelectMatricesTypes,EQUATION_MATRICES_ROUTINES
-  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_SOURCE_ONLY=8 !<Select only the RHS equations vector \see EQUATIONS_MATRICES_ROUTINES::SelectMatricesTypes,EQUATION_MATRICES_ROUTINES
-  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_RHS_RESIDUAL_ONLY=9 !<Select only the RHS and residual equations vectors \see EQUATIONS_MATRICES_ROUTINES::SelectMatricesTypes,EQUATION_MATRICES_ROUTINES
-  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_RHS_SOURCE_ONLY=10 !<Assemble only the RHS and source equations vectors \see EQUATIONS_MATRICES_ROUTINES::SelectMatricesTypes,EQUATION_MATRICES_ROUTINES
-  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_RESIDUAL_SOURCE_ONLY=11 !<Assemble only the residual and source equations vectors\see EQUATIONS_MATRICES_ROUTINES::SelectMatricesTypes,EQUATION_MATRICES_ROUTINES 
-  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_VECTORS_ONLY=12 !<Assemble only the equations vectors \see EQUATIONS_MATRICES_ROUTINES::SelectMatricesTypes,EQUATION_MATRICES_ROUTINES
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_ALL=1 !<Select all the equations matrices and vectors \see EquationsMatricesRoutines::SelectMatricesTypes,EquationsMatricesRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_DYNAMIC_ONLY=2 !<Select only the dynamic equations matrices and vectors \see EquationsMatricesRoutines::SelectMatricesTypes,EquationsMatricesRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_LINEAR_ONLY=3 !<Select only the linear equations matrices and vectors \see EquationsMatricesRoutines::SelectMatricesTypes,EquationsMatricesRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_NONLINEAR_ONLY=4 !<Select only the nonlinear equations matrices and vectors \see EquationsMatricesRoutines::SelectMatricesTypes,EquationsMatricesRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_JACOBIAN_ONLY=5 !<Select only the Jacobian equations matrix \see EquationsMatricesRoutines::SelectMatricesTypes,EquationsMatricesRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_RESIDUAL_ONLY=6 !<Select only the residual equations vector \see EquationsMatricesRoutines::SelectMatricesTypes,EquationsMatricesRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_RHS_ONLY=7 !<Select only the RHS equations vector \see EquationsMatricesRoutines::SelectMatricesTypes,EquationsMatricesRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_SOURCE_ONLY=8 !<Select only the RHS equations vector \see EquationsMatricesRoutines::SelectMatricesTypes,EquationsMatricesRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_RHS_RESIDUAL_ONLY=9 !<Select only the RHS and residual equations vectors \see EquationsMatricesRoutines::SelectMatricesTypes,EquationsMatricesRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_RHS_SOURCE_ONLY=10 !<Assemble only the RHS and source equations vectors \see EquationsMatricesRoutines::SelectMatricesTypes,EquationsMatricesRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_RESIDUAL_SOURCE_ONLY=11 !<Assemble only the residual and source equations vectors\see EquationsMatricesRoutines::SelectMatricesTypes,EquationsMatricesRoutines 
+  INTEGER(INTG), PARAMETER :: EQUATIONS_MATRICES_VECTORS_ONLY=12 !<Assemble only the equations vectors \see EquationsMatricesRoutines::SelectMatricesTypes,EquationsMatricesRoutines
   !>@}
 
-  !> \addtogroup EQUATIONS_MATRICES_ROUTINES_JacobianCalculationTypes EQUATIONS_MATRICES_ROUTINES:JacobianCalculationTypes
+  !> \addtogroup EquationsMatricesRoutines_GradientCalculationTypes EquationsMatricesRoutines::GradientCalculationTypes
+  !> \brief Gradient calculation types
+  !>@{
+  INTEGER(INTG), PARAMETER :: EQUATIONS_GRADIENT_FINITE_DIFFERENCE_CALCULATED=1 !<Use finite differencing to calculate the gradient
+  INTEGER(INTG), PARAMETER :: EQUATIONS_GRADIENT_ANALYTIC_CALCULATED=2 !<Use an analytic gradient evaluation
+  !>@}
+  !> \addtogroup EquationsMatricesRoutines_JacobianCalculationTypes EquationsMatricesRoutines::JacobianCalculationTypes
   !> \brief Jacobian calculation types
   !>@{
   INTEGER(INTG), PARAMETER :: EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED=1 !<Use finite differencing to calculate the Jacobian
   INTEGER(INTG), PARAMETER :: EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED=2 !<Use an analytic Jacobian evaluation
+  !>@}
+  !> \addtogroup EquationsMatricesRoutines_HessianCalculationTypes EquationsMatricesRoutines::HessianCalculationTypes
+  !> \brief Hessian calculation types
+  !>@{
+  INTEGER(INTG), PARAMETER :: EQUATIONS_HESSIAN_FINITE_DIFFERENCE_CALCULATED=1 !<Use finite differencing to calculate the Hessian
+  INTEGER(INTG), PARAMETER :: EQUATIONS_HESSIAN_ANALYTIC_CALCULATED=2 !<Use an analytic Hessian evaluation
   !>@}
   !>@}
 
@@ -122,78 +138,6 @@ MODULE EQUATIONS_MATRICES_ROUTINES
   !Module variables
 
   !Interfaces
-
-  INTERFACE EquationsMatrices_CreateFinish
-    MODULE PROCEDURE EQUATIONS_MATRICES_CREATE_FINISH
-  END INTERFACE EquationsMatrices_CreateFinish
-
-  INTERFACE EquationsMatrices_CreateStart
-    MODULE PROCEDURE EQUATIONS_MATRICES_CREATE_START
-  END INTERFACE EquationsMatrices_CreateStart
-
-  INTERFACE EquationsMatrices_Destroy
-    MODULE PROCEDURE EQUATIONS_MATRICES_DESTROY
-  END INTERFACE EquationsMatrices_Destroy
-
-  INTERFACE EquationsMatrices_DynamicLumpingTypeSet
-    MODULE PROCEDURE EQUATIONS_MATRICES_DYNAMIC_LUMPING_TYPE_SET
-  END INTERFACE EquationsMatrices_DynamicLumpingTypeSet
-
-  INTERFACE EquationsMatrices_DynamicStorageTypeSet
-    MODULE PROCEDURE EQUATIONS_MATRICES_DYNAMIC_STORAGE_TYPE_SET
-  END INTERFACE EquationsMatrices_DynamicStorageTypeSet
-
-  INTERFACE EquationsMatrices_ElementInitialise
-    MODULE PROCEDURE EQUATIONS_MATRICES_ELEMENT_INITIALISE
-  END INTERFACE EquationsMatrices_ElementInitialise
-
-  INTERFACE EquationsMatrices_ElementFinalise
-    MODULE PROCEDURE EQUATIONS_MATRICES_ELEMENT_FINALISE
-  END INTERFACE EquationsMatrices_ElementFinalise
-
-  INTERFACE EquationsMatrices_ElementAdd
-    MODULE PROCEDURE EQUATIONS_MATRICES_ELEMENT_ADD
-  END INTERFACE EquationsMatrices_ElementAdd
-  
-  INTERFACE EquationsMatrices_JacobianElementAdd
-    MODULE PROCEDURE EQUATIONS_MATRICES_JACOBIAN_ELEMENT_ADD
-  END INTERFACE EquationsMatrices_JacobianElementAdd
-  
-  INTERFACE EquationsMatrices_ElementCalculate
-    MODULE PROCEDURE EQUATIONS_MATRICES_ELEMENT_CALCULATE
-  END INTERFACE EquationsMatrices_ElementCalculate
-
-  INTERFACE EquationsMatrices_ValuesInitialise
-    MODULE PROCEDURE EQUATIONS_MATRICES_VALUES_INITIALISE
-  END INTERFACE EquationsMatrices_ValuesInitialise
-
-  INTERFACE EquationsMatrices_ElementMatrixFinalise
-    MODULE PROCEDURE EQUATIONS_MATRICES_ELEMENT_MATRIX_FINALISE
-  END INTERFACE EquationsMatrices_ElementMatrixFinalise
-
-  INTERFACE EquationsMatrices_ElementMatrixCalculate
-    MODULE PROCEDURE EQUATIONS_MATRICES_ELEMENT_MATRIX_CALCULATE
-  END INTERFACE EquationsMatrices_ElementMatrixCalculate
-
-  INTERFACE EquationsMatrices_ElementMatrixSetup
-    MODULE PROCEDURE EQUATIONS_MATRICES_ELEMENT_MATRIX_SETUP
-  END INTERFACE EquationsMatrices_ElementMatrixSetup
-
-  INTERFACE EquationsMatrices_ElementVectorFinalise
-    MODULE PROCEDURE EQUATIONS_MATRICES_ELEMENT_VECTOR_FINALISE
-  END INTERFACE EquationsMatrices_ElementVectorFinalise
-
-  INTERFACE EquationsMatrices_ElementVectorCalculate
-    MODULE PROCEDURE EQUATIONS_MATRICES_ELEMENT_VECTOR_CALCULATE
-  END INTERFACE EquationsMatrices_ElementVectorCalculate
-
-  INTERFACE EquationsMatrices_ElementVectorSetup
-    MODULE PROCEDURE EQUATIONS_MATRICES_ELEMENT_VECTOR_SETUP
-  END INTERFACE EquationsMatrices_ElementVectorSetup
-
-  INTERFACE EquationsMatrices_LinearStorageTypeSet
-    MODULE PROCEDURE EQUATIONS_MATRICES_LINEAR_STORAGE_TYPE_SET
-  END INTERFACE EquationsMatrices_LinearStorageTypeSet
 
   !>Sets the storage type (sparsity) of the nonlinear (Jacobian) equations matrices
   INTERFACE EquationsMatrices_NonlinearStorageTypeSet
@@ -207,14 +151,6 @@ MODULE EQUATIONS_MATRICES_ROUTINES
     MODULE PROCEDURE EquationsMatrices_NonlinearStructureTypeSet1
   END INTERFACE EquationsMatrices_NonlinearStructureTypeSet
 
-  INTERFACE EquationsMatrices_Output
-    MODULE PROCEDURE EQUATIONS_MATRICES_OUTPUT
-  END INTERFACE EquationsMatrices_Output
-
-  INTERFACE EquationsMatrices_JacobianOutput
-    MODULE PROCEDURE EQUATIONS_MATRICES_JACOBIAN_OUTPUT
-  END INTERFACE EquationsMatrices_JacobianOutput
-
   PUBLIC EQUATIONS_MATRIX_NO_STRUCTURE,EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_DIAGONAL_STRUCTURE, &
     & EQUATIONS_MATRIX_NODAL_STRUCTURE
 
@@ -227,70 +163,83 @@ MODULE EQUATIONS_MATRICES_ROUTINES
     & EQUATIONS_MATRICES_RHS_RESIDUAL_ONLY,EQUATIONS_MATRICES_RHS_SOURCE_ONLY,EQUATIONS_MATRICES_RESIDUAL_SOURCE_ONLY, &
     & EQUATIONS_MATRICES_VECTORS_ONLY
   
+  PUBLIC EQUATIONS_GRADIENT_FINITE_DIFFERENCE_CALCULATED,EQUATIONS_GRADIENT_ANALYTIC_CALCULATED
+
   PUBLIC EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED,EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED
 
-  PUBLIC EQUATIONS_MATRICES_CREATE_FINISH,EQUATIONS_MATRICES_CREATE_START
+  PUBLIC EQUATIONS_HESSIAN_FINITE_DIFFERENCE_CALCULATED,EQUATIONS_HESSIAN_ANALYTIC_CALCULATED
 
-  PUBLIC EquationsMatrices_CreateFinish,EquationsMatrices_CreateStart
+  PUBLIC EquationsMatrices_DynamicLumpingTypeSet
 
-  PUBLIC EQUATIONS_MATRICES_DESTROY
+  PUBLIC EquationsMatrices_DynamicStorageTypeSet
 
-  PUBLIC EquationsMatrices_Destroy
-
-  PUBLIC EQUATIONS_MATRICES_DYNAMIC_LUMPING_TYPE_SET,EQUATIONS_MATRICES_DYNAMIC_STORAGE_TYPE_SET
-
-  PUBLIC EquationsMatrices_DynamicLumpingTypeSet,EquationsMatrices_DynamicStorageTypeSet,EquationsMatrices_DynamicStructureTypeSet
+  PUBLIC EquationsMatrices_DynamicStructureTypeSet
 
   !!TODO check if the elements should be create/destroy rather than initialise/finalise
-  PUBLIC EQUATIONS_MATRICES_ELEMENT_INITIALISE,EQUATIONS_MATRICES_ELEMENT_FINALISE
-
   PUBLIC EquationsMatrices_ElementInitialise,EquationsMatrices_ElementFinalise
-  
-  PUBLIC EQUATIONS_MATRICES_ELEMENT_ADD,EQUATIONS_MATRICES_JACOBIAN_ELEMENT_ADD,EQUATIONS_MATRICES_ELEMENT_CALCULATE, &
-    & EQUATIONS_MATRICES_VALUES_INITIALISE
 
-  PUBLIC EquationsMatrices_ElementAdd,EquationsMatrices_JacobianElementAdd,EquationsMatrices_ElementCalculate, &
-    & EquationsMatrices_ValuesInitialise
+  PUBLIC EquationsMatrices_ElementAdd
 
-  PUBLIC EQUATIONS_MATRICES_ELEMENT_MATRIX_FINALISE
+  PUBLIC EquationsMatrices_JacobianElementAdd
+
+  PUBLIC EquationsMatrices_ElementCalculate
 
   PUBLIC EquationsMatrices_ElementMatrixFinalise,EquationsMatrices_ElementMatrixInitialise
   
-  PUBLIC EQUATIONS_MATRICES_ELEMENT_MATRIX_CALCULATE,EQUATIONS_MATRICES_ELEMENT_MATRIX_SETUP
+  PUBLIC EquationsMatrices_ElementMatrixCalculate
 
-  PUBLIC EquationsMatrices_ElementMatrixCalculate,EquationsMatrices_ElementMatrixSetup
-
-  PUBLIC EQUATIONS_MATRICES_ELEMENT_VECTOR_FINALISE
+  PUBLIC EquationsMatrices_ElementMatrixSetup
 
   PUBLIC EquationsMatrices_ElementVectorFinalise,EquationsMatrices_ElementVectorInitialise
 
-  PUBLIC EQUATIONS_MATRICES_ELEMENT_VECTOR_CALCULATE,EQUATIONS_MATRICES_ELEMENT_VECTOR_SETUP
+  PUBLIC EquationsMatrices_ElementVectorCalculate
 
-  PUBLIC EquationsMatrices_ElementVectorCalculate,EquationsMatrices_ElementVectorSetup
+  PUBLIC EquationsMatrices_ElementVectorSetup
+
+  PUBLIC EquationsMatrices_HessianOutput
+
+  PUBLIC EquationsMatrices_JacobianNodeAdd
+
+  PUBLIC EquationsMatrices_JacobianOutput
 
   PUBLIC EquationsMatrices_JacobianTypesSet
 
-  PUBLIC EQUATIONS_MATRICES_LINEAR_STORAGE_TYPE_SET
+  PUBLIC EquationsMatrices_LinearStorageTypeSet
 
-  PUBLIC EquationsMatrices_LinearStorageTypeSet,EquationsMatrices_LinearStructureTypeSet
+  PUBLIC EquationsMatrices_LinearStructureTypeSet
 
   PUBLIC EquationsMatrices_NodalInitialise,EquationsMatrices_NodalFinalise
 
-  PUBLIC EquationsMatrices_NodeAdd,EquationsMatrices_JacobianNodeAdd,EquationsMatrices_NodalCalculate
+  PUBLIC EquationsMatrices_NodeAdd
+
+  PUBLIC EquationsMatrices_NodalCalculate
 
   PUBLIC EquationsMatrices_NodalMatrixFinalise,EquationsMatrices_NodalMatrixInitialise
 
-  PUBLIC EquationsMatrices_NodalMatrixCalculate,EquationsMatrices_NodalMatrixSetup
+  PUBLIC EquationsMatrices_NodalMatrixCalculate
+
+  PUBLIC EquationsMatrices_NodalMatrixSetup
 
   PUBLIC EquationsMatrices_NodalVectorFinalise,EquationsMatrices_NodalVectorInitialise
 
-  PUBLIC EquationsMatrices_NodalVectorCalculate,EquationsMatrices_NodalVectorSetup
+  PUBLIC EquationsMatrices_NodalVectorCalculate
 
-  PUBLIC EquationsMatrices_NonlinearStorageTypeSet,EquationsMatrices_NonlinearStructureTypeSet
+  PUBLIC EquationsMatrices_NodalVectorSetup
 
-  PUBLIC EQUATIONS_MATRICES_OUTPUT,EQUATIONS_MATRICES_JACOBIAN_OUTPUT
+  PUBLIC EquationsMatrices_NonlinearStorageTypeSet
 
-  PUBLIC EquationsMatrices_Output,EquationsMatrices_JacobianOutput
+  PUBLIC EquationsMatrices_NonlinearStructureTypeSet
+
+  PUBLIC EquationsMatrices_ScalarDestroy
+
+  PUBLIC EquationsMatrices_VectorCreateFinish,EquationsMatrices_VectorCreateStart
+
+  PUBLIC EquationsMatrices_VectorDestroy
+
+  PUBLIC EquationsMatrices_VectorOutput
+
+  PUBLIC EquationsMatrices_VectorValuesInitialise
+
 
 CONTAINS
 
@@ -298,694 +247,651 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finalise the equations Jacobian and deallocate all memory
-  SUBROUTINE EQUATIONS_JACOBIAN_FINALISE(EQUATIONS_JACOBIAN,ERR,ERROR,*)
+  !>Finalise the equations Hessian and deallocate all memory
+  SUBROUTINE EquationsMatrices_HessianFinalise(hessian,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_JACOBIAN_TYPE), POINTER :: EQUATIONS_JACOBIAN !<A pointer to the equations Jacobian to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsHessianType), POINTER :: hessian !<A pointer to the equations Hessian to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     
-    ENTERS("EQUATIONS_JACOBIAN_FINALISE",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_HessianFinalise",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_JACOBIAN)) THEN
-      IF(ASSOCIATED(EQUATIONS_JACOBIAN%JACOBIAN)) CALL DISTRIBUTED_MATRIX_DESTROY(EQUATIONS_JACOBIAN%JACOBIAN,ERR,ERROR,*999)
-      CALL EQUATIONS_MATRICES_ELEMENT_MATRIX_FINALISE(EQUATIONS_JACOBIAN%ELEMENT_JACOBIAN,ERR,ERROR,*999)
-      CALL EquationsMatrices_NodalMatrixFinalise(EQUATIONS_JACOBIAN%NodalJacobian,ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(hessian)) THEN
+      IF(ASSOCIATED(hessian%hessian)) CALL DistributedMatrix_Destroy(hessian%hessian,err,error,*999)
+      CALL EquationsMatrices_ElementMatrixFinalise(hessian%elementHessian,err,error,*999)
+      DEALLOCATE(hessian)
     ENDIF
     
-    EXITS("EQUATIONS_JACOBIAN_FINALISE")
+    EXITS("EquationsMatrices_HessianFinalise")
     RETURN
-999 ERRORSEXITS("EQUATIONS_JACOBIAN_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_HessianFinalise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_JACOBIAN_FINALISE
+    
+  END SUBROUTINE EquationsMatrices_HessianFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalise the equations Jacobian and deallocate all memory
+  SUBROUTINE EquationsMatrices_JacobianFinalise(equationsJacobian,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsJacobianType), POINTER :: equationsJacobian !<A pointer to the equations Jacobian to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("EquationsMatrices_JacobianFinalise",err,error,*999)
+
+    IF(ASSOCIATED(equationsJacobian)) THEN
+      IF(ASSOCIATED(equationsJacobian%jacobian)) CALL DistributedMatrix_Destroy(equationsJacobian%jacobian,err,error,*999)
+      CALL EquationsMatrices_ElementMatrixFinalise(equationsJacobian%elementJacobian,err,error,*999)
+      CALL EquationsMatrices_NodalMatrixFinalise(equationsJacobian%nodalJacobian,err,error,*999)
+      DEALLOCATE(equationsJacobian)
+    ENDIF
+    
+    EXITS("EquationsMatrices_JacobianFinalise")
+    RETURN
+999 ERRORSEXITS("EquationsMatrices_JacobianFinalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrices_JacobianFinalise
 
   !
   !================================================================================================================================
   !
 
   !>Initialise the equations Jacobian.
-  SUBROUTINE EQUATIONS_JACOBIAN_INITIALISE(NONLINEAR_MATRICES,MATRIX_NUMBER,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_JacobianInitialise(nonlinearMatrices,matrixNumber,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: NONLINEAR_MATRICES !<A pointer to the equations matrices nonlinear matrices to initialise the Jacobian for
-    INTEGER(INTG), INTENT(IN) :: MATRIX_NUMBER !<The index of the Jacobian matrix to initialise for the nonlinear matrices
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices !<A pointer to the equations matrices nonlinear matrices to initialise the Jacobian for
+    INTEGER(INTG), INTENT(IN) :: matrixNumber !<The index of the Jacobian matrix to initialise for the nonlinear matrices
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES
-    TYPE(EQUATIONS_MAPPING_NONLINEAR_TYPE), POINTER :: NONLINEAR_MAPPING
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(VARYING_STRING) :: dummyError,localError
 
-    ENTERS("EQUATIONS_JACOBIAN_INITIALISE",ERR,ERROR,*998)
+    ENTERS("EquationsMatrices_JacobianInitialise",err,error,*998)
  
-    IF(ASSOCIATED(NONLINEAR_MATRICES)) THEN
-      EQUATIONS_MATRICES=>NONLINEAR_MATRICES%EQUATIONS_MATRICES
-      IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-        EQUATIONS_MAPPING=>EQUATIONS_MATRICES%EQUATIONS_MAPPING
-        IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-          NONLINEAR_MAPPING=>EQUATIONS_MAPPING%NONLINEAR_MAPPING
-          IF(ASSOCIATED(NONLINEAR_MAPPING)) THEN
-            IF(ALLOCATED(NONLINEAR_MATRICES%JACOBIANS)) THEN
-              IF(ASSOCIATED(NONLINEAR_MATRICES%JACOBIANS(MATRIX_NUMBER)%PTR)) THEN
-                CALL FlagError("Nonlinear matrices Jacobian is already associated.",ERR,ERROR,*998)
-              ELSE
-                ALLOCATE(NONLINEAR_MATRICES%JACOBIANS(MATRIX_NUMBER)%PTR,STAT=ERR)
-                IF(ERR/=0) CALL FlagError("Could not allocate equations Jacobian.",ERR,ERROR,*999)
-                NONLINEAR_MATRICES%JACOBIANS(MATRIX_NUMBER)%PTR%JACOBIAN_NUMBER=MATRIX_NUMBER
-                NONLINEAR_MATRICES%JACOBIANS(MATRIX_NUMBER)%PTR%NONLINEAR_MATRICES=>NONLINEAR_MATRICES
-                NONLINEAR_MATRICES%JACOBIANS(MATRIX_NUMBER)%PTR%STORAGE_TYPE=MATRIX_BLOCK_STORAGE_TYPE
-                NONLINEAR_MATRICES%JACOBIANS(MATRIX_NUMBER)%PTR%STRUCTURE_TYPE=EQUATIONS_MATRIX_NO_STRUCTURE
-                NONLINEAR_MATRICES%JACOBIANS(MATRIX_NUMBER)%PTR%NUMBER_OF_COLUMNS= &
-                    & NONLINEAR_MAPPING%JACOBIAN_TO_VAR_MAP(MATRIX_NUMBER)%NUMBER_OF_COLUMNS
-                NONLINEAR_MATRICES%JACOBIANS(MATRIX_NUMBER)%PTR%UPDATE_JACOBIAN=.TRUE.
-                NONLINEAR_MATRICES%JACOBIANS(MATRIX_NUMBER)%PTR%FIRST_ASSEMBLY=.TRUE.
-                NONLINEAR_MAPPING%JACOBIAN_TO_VAR_MAP(MATRIX_NUMBER)%JACOBIAN=>NONLINEAR_MATRICES%JACOBIANS(MATRIX_NUMBER)%PTR
-                NULLIFY(NONLINEAR_MATRICES%JACOBIANS(MATRIX_NUMBER)%PTR%JACOBIAN)
-                CALL EquationsMatrices_ElementMatrixInitialise(NONLINEAR_MATRICES%JACOBIANS(MATRIX_NUMBER)%PTR% &
-                    & ELEMENT_JACOBIAN,ERR,ERROR,*999)
-                CALL EquationsMatrices_NodalMatrixInitialise(NONLINEAR_MATRICES%JACOBIANS(MATRIX_NUMBER)%PTR% &
-                    & NodalJacobian,ERR,ERROR,*999)
-                NONLINEAR_MATRICES%JACOBIANS(MATRIX_NUMBER)%PTR%JACOBIAN_CALCULATION_TYPE= &
-                  & EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED
-              ENDIF
-            ELSE
-              CALL FlagError("Equations matrices nonlinear matrieces Jacobian is not allocated.",ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Equations mapping nonlinear mapping is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Equations mapping is not associated.",ERR,ERROR,*998)
-        ENDIF
-      ELSE
-        CALL FlagError("Nonlinear matrices equations matrices is not associated.",ERR,ERROR,*998)
-      ENDIF
-    ELSE
-      CALL FlagError("Nonlinear matrices is not associated.",ERR,ERROR,*998)
+    IF(.NOT.ASSOCIATED(nonlinearMatrices)) CALL FlagError("Nonlinear matrices is not associated.",err,error,*998)
+    IF(.NOT.ALLOCATED(nonlinearMatrices%jacobians)) CALL FlagError("Nonlinear matrices Jacobians is not allocated.",err,error,*999)
+    NULLIFY(nonlinearMapping)
+    CALL EquationsMatricesNonlinear_NonlinearMappingGet(nonlinearMatrices,nonlinearMapping,err,error,*999)
+    IF(matrixNumber<1.OR.matrixNumber>nonlinearMatrices%numberOfJacobians) THEN
+      localError="The matrix number of "//TRIM(NumberToVString(matrixNumber,"*",err,error))// &
+        & " is invalid. The number must be >= 1 and <= "// &
+        & TRIM(NumberToVString(nonlinearMatrices%numberOfJacobians,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    EXITS("EQUATIONS_JACOBIAN_INITIALISE")
-    RETURN
-999 CALL EQUATIONS_JACOBIAN_FINALISE(NONLINEAR_MATRICES%JACOBIANS(MATRIX_NUMBER)%PTR,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("EQUATIONS_JACOBIAN_INITIALISE",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE EQUATIONS_JACOBIAN_INITIALISE
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Finishes the creation of the equations matrices and RHS for the the equations
-  SUBROUTINE EQUATIONS_MATRICES_CREATE_FINISH(EQUATIONS_MATRICES,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<The pointer to the equations matrices
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string  
-    !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR,matrix_idx,NUMBER_OF_NON_ZEROS
-    INTEGER(INTG), POINTER :: ROW_INDICES(:),COLUMN_INDICES(:)
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: ROW_DOMAIN_MAP,COLUMN_DOMAIN_MAP
-    TYPE(EQUATIONS_JACOBIAN_TYPE), POINTER :: JACOBIAN_MATRIX
-    TYPE(EQUATIONS_MAPPING_DYNAMIC_TYPE), POINTER :: DYNAMIC_MAPPING
-    TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: LINEAR_MAPPING
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
-    TYPE(EQUATIONS_MATRICES_DYNAMIC_TYPE), POINTER :: DYNAMIC_MATRICES
-    TYPE(EQUATIONS_MATRICES_LINEAR_TYPE), POINTER :: LINEAR_MATRICES
-    TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: NONLINEAR_MATRICES
-    TYPE(EQUATIONS_MATRICES_RHS_TYPE), POINTER :: RHS_VECTOR
-    TYPE(EQUATIONS_MATRICES_SOURCE_TYPE), POINTER :: SOURCE_VECTOR
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: EQUATIONS_MATRIX
-    TYPE(EQUATIONS_MAPPING_NONLINEAR_TYPE), POINTER :: NONLINEAR_MAPPING
-    TYPE(VARYING_STRING) :: DUMMY_ERROR,LOCAL_ERROR
-    type(LinkedList),pointer :: list(:) 
-    NULLIFY(ROW_INDICES)
-    NULLIFY(COLUMN_INDICES)
-
-    ENTERS("EQUATIONS_MATRICES_CREATE_FINISH",ERR,ERROR,*998)
-
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      IF(EQUATIONS_MATRICES%EQUATIONS_MATRICES_FINISHED) THEN
-        CALL FlagError("Equations matrices have already been finished.",ERR,ERROR,*998)
-      ELSE
-        EQUATIONS_MAPPING=>EQUATIONS_MATRICES%EQUATIONS_MAPPING
-        IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-          ROW_DOMAIN_MAP=>EQUATIONS_MAPPING%ROW_DOFS_MAPPING
-          IF(ASSOCIATED(ROW_DOMAIN_MAP)) THEN
-            DYNAMIC_MATRICES=>EQUATIONS_MATRICES%DYNAMIC_MATRICES
-            IF(ASSOCIATED(DYNAMIC_MATRICES)) THEN
-              !Dynamic matrices
-              DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING
-              IF(ASSOCIATED(DYNAMIC_MAPPING)) THEN
-                !Now create the individual dynamic equations matrices
-                DO matrix_idx=1,DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES
-                  EQUATIONS_MATRIX=>DYNAMIC_MATRICES%MATRICES(matrix_idx)%PTR
-                  IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
-                    COLUMN_DOMAIN_MAP=>DYNAMIC_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%COLUMN_DOFS_MAPPING
-                    IF(ASSOCIATED(COLUMN_DOMAIN_MAP)) THEN
-                      !Create the distributed equations matrix
-                      CALL DISTRIBUTED_MATRIX_CREATE_START(ROW_DOMAIN_MAP,COLUMN_DOMAIN_MAP,EQUATIONS_MATRICES% &
-                           & DYNAMIC_MATRICES%MATRICES(matrix_idx)%PTR%MATRIX,ERR,ERROR,*999)
-                      CALL DISTRIBUTED_MATRIX_DATA_TYPE_SET(EQUATIONS_MATRIX%MATRIX,MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
-                      CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_SET(EQUATIONS_MATRIX%MATRIX,EQUATIONS_MATRIX%STORAGE_TYPE,ERR,ERROR,*999)
-                      !Calculate and set the matrix structure/sparsity pattern
-                      IF(EQUATIONS_MATRIX%STORAGE_TYPE/=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE.AND. &
-                        & EQUATIONS_MATRIX%STORAGE_TYPE/=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE) THEN
-                        CALL EquationsMatrix_StructureCalculate(EQUATIONS_MATRIX,NUMBER_OF_NON_ZEROS,ROW_INDICES,COLUMN_INDICES, &
-                          & list,ERR,ERROR,*999)
-                        CALL DISTRIBUTED_MATRIX_LINKLIST_SET(EQUATIONS_MATRIX%MATRIX,LIST,ERR,ERROR,*999)
-                        CALL DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_SET(EQUATIONS_MATRIX%MATRIX,NUMBER_OF_NON_ZEROS,ERR,ERROR,*999)
-                        CALL DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_SET(EQUATIONS_MATRIX%MATRIX,ROW_INDICES,COLUMN_INDICES, &
-                          & ERR,ERROR,*999)
-                        IF(ASSOCIATED(ROW_INDICES)) DEALLOCATE(ROW_INDICES)
-                        IF(ASSOCIATED(COLUMN_INDICES)) DEALLOCATE(COLUMN_INDICES)
-                      ENDIF
-                      CALL DISTRIBUTED_MATRIX_CREATE_FINISH(EQUATIONS_MATRIX%MATRIX,ERR,ERROR,*999)
-                    ELSE
-                      LOCAL_ERROR="Column domain map for dynamic matrix number "// &
-                        & TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))//" is not associated."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ENDIF
-                  ELSE
-                    LOCAL_ERROR="Equations matrix for dynamic matrix number "//TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))// &
-                      & " is not associated."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  ENDIF
-                ENDDO !matrix_idx                
-              ELSE
-                CALL FlagError("Equations mapping dynamic mapping is not associated.",ERR,ERROR,*999)                
-              ENDIF
-            ENDIF
-            LINEAR_MATRICES=>EQUATIONS_MATRICES%LINEAR_MATRICES
-            IF(ASSOCIATED(LINEAR_MATRICES)) THEN
-              !Linear matrices
-              LINEAR_MAPPING=>EQUATIONS_MAPPING%LINEAR_MAPPING
-              IF(ASSOCIATED(LINEAR_MAPPING)) THEN
-                !Now create the individual linear equations matrices
-                DO matrix_idx=1,LINEAR_MATRICES%NUMBER_OF_LINEAR_MATRICES
-                  EQUATIONS_MATRIX=>LINEAR_MATRICES%MATRICES(matrix_idx)%PTR
-                  IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
-                    COLUMN_DOMAIN_MAP=>LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%COLUMN_DOFS_MAPPING
-                    IF(ASSOCIATED(COLUMN_DOMAIN_MAP)) THEN
-                      !Create the distributed equations matrix
-                      CALL DISTRIBUTED_MATRIX_CREATE_START(ROW_DOMAIN_MAP,COLUMN_DOMAIN_MAP,EQUATIONS_MATRICES% &
-                           & LINEAR_MATRICES%MATRICES(matrix_idx)%PTR%MATRIX,ERR,ERROR,*999)
-                      CALL DISTRIBUTED_MATRIX_DATA_TYPE_SET(EQUATIONS_MATRIX%MATRIX,MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
-                      CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_SET(EQUATIONS_MATRIX%MATRIX,EQUATIONS_MATRIX%STORAGE_TYPE,ERR,ERROR,*999)
-                      !Calculate and set the matrix structure/sparsity pattern
-                      IF(EQUATIONS_MATRIX%STORAGE_TYPE/=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE.AND. &
-                        & EQUATIONS_MATRIX%STORAGE_TYPE/=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE) THEN
-                        CALL EquationsMatrix_StructureCalculate(EQUATIONS_MATRIX,NUMBER_OF_NON_ZEROS,ROW_INDICES,COLUMN_INDICES, &
-                          & list,ERR,ERROR,*999)
-                        CALL DISTRIBUTED_MATRIX_LINKLIST_SET(EQUATIONS_MATRIX%MATRIX,LIST,ERR,ERROR,*999)
-                        CALL DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_SET(EQUATIONS_MATRIX%MATRIX,NUMBER_OF_NON_ZEROS,ERR,ERROR,*999)
-                        CALL DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_SET(EQUATIONS_MATRIX%MATRIX,ROW_INDICES,COLUMN_INDICES, &
-                          & ERR,ERROR,*999)
-                        IF(ASSOCIATED(ROW_INDICES)) DEALLOCATE(ROW_INDICES)
-                        IF(ASSOCIATED(COLUMN_INDICES)) DEALLOCATE(COLUMN_INDICES)
-                      ENDIF
-                      CALL DISTRIBUTED_MATRIX_CREATE_FINISH(EQUATIONS_MATRIX%MATRIX,ERR,ERROR,*999)
-                    ELSE
-                      LOCAL_ERROR="Column domain map for linear matrix number "// &
-                        & TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))//" is not associated."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ENDIF
-                  ELSE
-                    LOCAL_ERROR="Equations matrix for linear matrix number "//TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))// &
-                      & " is not associated."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  ENDIF
-                ENDDO !matrix_idx
-              ELSE
-                CALL FlagError("Equations mapping linear mapping is not associated.",ERR,ERROR,*999)                
-              ENDIF
-            ENDIF
-            NONLINEAR_MATRICES=>EQUATIONS_MATRICES%NONLINEAR_MATRICES
-            IF(ASSOCIATED(NONLINEAR_MATRICES)) THEN
-              !Nonlinear matrices
-              NONLINEAR_MAPPING=>EQUATIONS_MAPPING%NONLINEAR_MAPPING
-              IF(ASSOCIATED(NONLINEAR_MAPPING)) THEN
-                !Set up the Jacobian matrices
-                DO matrix_idx=1,NONLINEAR_MATRICES%NUMBER_OF_JACOBIANS
-                  JACOBIAN_MATRIX=>NONLINEAR_MATRICES%JACOBIANS(matrix_idx)%PTR
-                  IF(ASSOCIATED(JACOBIAN_MATRIX)) THEN
-                    COLUMN_DOMAIN_MAP=>NONLINEAR_MAPPING%JACOBIAN_TO_VAR_MAP(matrix_idx)%COLUMN_DOFS_MAPPING
-                    IF(ASSOCIATED(COLUMN_DOMAIN_MAP)) THEN
-  !!TODO: Set the distributed matrix not to allocate the data if the Jacobian is not calculated.
-                      !Create the distributed Jacobian matrix
-                      CALL DISTRIBUTED_MATRIX_CREATE_START(ROW_DOMAIN_MAP,COLUMN_DOMAIN_MAP,JACOBIAN_MATRIX%JACOBIAN,ERR,ERROR,*999)
-                      CALL DISTRIBUTED_MATRIX_DATA_TYPE_SET(JACOBIAN_MATRIX%JACOBIAN,MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
-                      CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_SET(JACOBIAN_MATRIX%JACOBIAN,JACOBIAN_MATRIX%STORAGE_TYPE,ERR,ERROR,*999)
-                      !Calculate and set the matrix structure/sparsity pattern
-                      IF(JACOBIAN_MATRIX%STORAGE_TYPE/=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE.AND. &
-                        & JACOBIAN_MATRIX%STORAGE_TYPE/=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE) THEN
-                        CALL JacobianMatrix_StructureCalculate(JACOBIAN_MATRIX,NUMBER_OF_NON_ZEROS,ROW_INDICES,COLUMN_INDICES, &
-                          & ERR,ERROR,*999)
-                        CALL DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_SET(JACOBIAN_MATRIX%JACOBIAN,NUMBER_OF_NON_ZEROS,ERR,ERROR,*999)
-                        CALL DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_SET(JACOBIAN_MATRIX%JACOBIAN,ROW_INDICES,COLUMN_INDICES, &
-                          & ERR,ERROR,*999)
-                        IF(ASSOCIATED(ROW_INDICES)) DEALLOCATE(ROW_INDICES)
-                        IF(ASSOCIATED(COLUMN_INDICES)) DEALLOCATE(COLUMN_INDICES)
-                      ENDIF
-                      CALL DISTRIBUTED_MATRIX_CREATE_FINISH(JACOBIAN_MATRIX%JACOBIAN,ERR,ERROR,*999)
-                    ELSE
-                      CALL FlagError("Column domain map is not associated.",ERR,ERROR,*999)
-                    ENDIF
-                  ELSE
-                    LOCAL_ERROR="Jacobian matrix number "//TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))//" is not associated."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  ENDIF
-                ENDDO
-                !Set up the residual vector                
-                CALL DISTRIBUTED_VECTOR_CREATE_START(ROW_DOMAIN_MAP,EQUATIONS_MATRICES%NONLINEAR_MATRICES%RESIDUAL,ERR,ERROR,*999)
-                CALL DISTRIBUTED_VECTOR_DATA_TYPE_SET(NONLINEAR_MATRICES%RESIDUAL,MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
-                CALL DISTRIBUTED_VECTOR_CREATE_FINISH(NONLINEAR_MATRICES%RESIDUAL,ERR,ERROR,*999)
-                !Initialise the residual vector to zero for time dependent problems so that the previous residual is set to zero
-                CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(NONLINEAR_MATRICES%RESIDUAL,0.0_DP,ERR,ERROR,*999)
-              ELSE
-                CALL FlagError("Equations mapping nonlinear mapping is not associated.",ERR,ERROR,*999)
-              ENDIF
-            ENDIF
-            RHS_VECTOR=>EQUATIONS_MATRICES%RHS_VECTOR
-            IF(ASSOCIATED(RHS_VECTOR)) THEN
-              !Set up the equations RHS vector          
-              CALL DISTRIBUTED_VECTOR_CREATE_START(ROW_DOMAIN_MAP,EQUATIONS_MATRICES%RHS_VECTOR%VECTOR,ERR,ERROR,*999)
-              CALL DISTRIBUTED_VECTOR_DATA_TYPE_SET(RHS_VECTOR%VECTOR,MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
-              CALL DISTRIBUTED_VECTOR_CREATE_FINISH(RHS_VECTOR%VECTOR,ERR,ERROR,*999)
-            ENDIF
-            SOURCE_VECTOR=>EQUATIONS_MATRICES%SOURCE_VECTOR
-            IF(ASSOCIATED(SOURCE_VECTOR)) THEN
-              !Set up the equations source vector          
-              CALL DISTRIBUTED_VECTOR_CREATE_START(ROW_DOMAIN_MAP,EQUATIONS_MATRICES%SOURCE_VECTOR%VECTOR,ERR,ERROR,*999)
-              CALL DISTRIBUTED_VECTOR_DATA_TYPE_SET(SOURCE_VECTOR%VECTOR,MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
-              CALL DISTRIBUTED_VECTOR_CREATE_FINISH(SOURCE_VECTOR%VECTOR,ERR,ERROR,*999)
-            ENDIF
-            !Finish up
-            EQUATIONS_MATRICES%EQUATIONS_MATRICES_FINISHED=.TRUE.
-          ELSE
-            CALL FlagError("Row domain map is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Equations mapping is not associated.",ERR,ERROR,*998)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*998)
+    IF(ASSOCIATED(nonlinearMatrices%jacobians(matrixNumber)%ptr)) THEN
+      localError="Nonlinear matrices Jacobian is already associated for matrix number "// &
+        & TRIM(NumberToVString(matrixNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*998)
     ENDIF
-       
-    EXITS("EQUATIONS_MATRICES_CREATE_FINISH")
-    RETURN
-999 IF(ASSOCIATED(ROW_INDICES)) DEALLOCATE(ROW_INDICES)
-    IF(ASSOCIATED(COLUMN_INDICES)) DEALLOCATE(COLUMN_INDICES)
-    CALL EQUATIONS_MATRICES_FINALISE(EQUATIONS_MATRICES,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("EQUATIONS_MATRICES_CREATE_FINISH",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_CREATE_FINISH
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Starts the creation of the equations matrices and rhs for the the equations
-  SUBROUTINE EQUATIONS_MATRICES_CREATE_START(EQUATIONS,EQUATIONS_MATRICES,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS !<The pointer to the equations to create the equations matrices for
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<On return, a pointer to the equations matrices being created.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string  
-    !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR    
-
-    ENTERS("EQUATIONS_MATRICES_CREATE_START",ERR,ERROR,*998)
-
-    IF(ASSOCIATED(EQUATIONS)) THEN      
-      IF(EQUATIONS%EQUATIONS_FINISHED) THEN
-        IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-          CALL FlagError("Equations matrices is already associated.",ERR,ERROR,*998)
-        ELSE
-          NULLIFY(EQUATIONS_MATRICES)
-          !Initialise the equations matrices
-          CALL EQUATIONS_MATRICES_INITIALISE(EQUATIONS,ERR,ERROR,*999)
-          EQUATIONS_MATRICES=>EQUATIONS%EQUATIONS_MATRICES
-        ENDIF
-      ELSE
-        CALL FlagError("Equations has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Equations is not associated.",ERR,ERROR,*998)
-    ENDIF
+     
+    ALLOCATE(nonlinearMatrices%jacobians(matrixNumber)%ptr,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate equations Jacobian.",err,error,*999)
+    nonlinearMatrices%jacobians(matrixNumber)%ptr%jacobianNumber=matrixNumber
+    nonlinearMatrices%jacobians(matrixNumber)%ptr%nonlinearMatrices=>nonlinearMatrices
+    nonlinearMatrices%jacobians(matrixNumber)%ptr%storageType=MATRIX_BLOCK_STORAGE_TYPE
+    nonlinearMatrices%jacobians(matrixNumber)%ptr%structureType=EQUATIONS_MATRIX_NO_STRUCTURE
+    nonlinearMatrices%jacobians(matrixNumber)%ptr%numberOfColumns= &
+      & nonlinearMapping%jacobianToVarMap(matrixNumber)%numberOfColumns
+    nonlinearMatrices%jacobians(matrixNumber)%ptr%updateJacobian=.TRUE.
+    nonlinearMatrices%jacobians(matrixNumber)%ptr%firstAssembly=.TRUE.
+    nonlinearMapping%jacobianToVarMap(matrixNumber)%jacobian=>nonlinearMatrices%jacobians(matrixNumber)%ptr
+    NULLIFY(nonlinearMatrices%jacobians(matrixNumber)%ptr%jacobian)
+    CALL EquationsMatrices_ElementMatrixInitialise(nonlinearMatrices%jacobians(matrixNumber)%ptr%elementJacobian,err,error,*999)
+    CALL EquationsMatrices_NodalMatrixInitialise(nonlinearMatrices%jacobians(matrixNumber)%ptr%nodalJacobian,err,error,*999)
+    nonlinearMatrices%jacobians(matrixNumber)%ptr%jacobianCalculationType=EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED
     
-    EXITS("EQUATIONS_MATRICES_CREATE_START")
+    EXITS("EquationsMatrices_JacobianInitialise")
     RETURN
-999 CALL EQUATIONS_MATRICES_FINALISE(EQUATIONS%EQUATIONS_MATRICES,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("EQUATIONS_MATRICES_CREATE_START",ERR,ERROR)
+999 CALL EquationsMatrices_JacobianFinalise(nonlinearMatrices%jacobians(matrixNumber)%ptr,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMatrices_JacobianInitialise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_CREATE_START
+    
+  END SUBROUTINE EquationsMatrices_JacobianInitialise
 
   !
   !================================================================================================================================
   !
 
-  !>Destroy the equations matrices
-  SUBROUTINE EQUATIONS_MATRICES_DESTROY(EQUATIONS_MATRICES,ERR,ERROR,*)
+  !>Finishes the creation of the vector equations matrices and RHS for the vector equations
+  SUBROUTINE EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer the equations matrices to destroy
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<The pointer to the vector equations matrices
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string  
     !Local Variables
+    INTEGER(INTG) :: dummyErr,matrixIdx,numberOfNonZeros
+    INTEGER(INTG), POINTER :: rowIndices(:),columnIndices(:)
+    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: rowDomainMap,columnDomainMap
+    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
+    TYPE(EquationsMappingLinearType), POINTER :: linearMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(VARYING_STRING) :: dummyError,localError
+    TYPE(LinkedList), POINTER :: list(:)
+    
+    NULLIFY(rowIndices)
+    NULLIFY(columnIndices)
 
-    ENTERS("EQUATIONS_MATRICES_DESTROY",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_VectorCreateFinish",err,error,*998)
 
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      CALL EQUATIONS_MATRICES_FINALISE(EQUATIONS_MATRICES,ERR,ERROR,*999)
-    ELSE
-      CALL FlagError("Equations matrices is not associated",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*998)
+    IF(vectorMatrices%vectorMatricesFinished) CALL FlagError("Vector equations matrices have already been finished.",err,error,*998)
+    NULLIFY(vectorMapping)
+    CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*999)    
+    rowDomainMap=>vectorMapping%rowDOFSMapping
+    IF(.NOT.ASSOCIATED(rowDomainMap)) CALL FlagError("Row domain map is not associated.",err,error,*999)
+    
+    dynamicMatrices=>vectorMatrices%dynamicMatrices
+    IF(ASSOCIATED(dynamicMatrices)) THEN
+      !Dynamic matrices
+      NULLIFY(dynamicMapping)
+      CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
+      !Now create the individual dynamic equations matrices
+      DO matrixIdx=1,dynamicMatrices%numberOfDynamicMatrices
+        NULLIFY(equationsMatrix)
+        CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,matrixIdx,equationsMatrix,err,error,*999)
+        columnDomainMap=>dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%columnDOFSMapping
+        IF(.NOT.ASSOCIATED(columnDomainMap)) THEN
+          localError="Column domain map for dynamic matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
+            & " is not associated."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        !Create the distributed equations matrix
+        CALL DistributedMatrix_CreateStart(rowDomainMap,columnDomainMap,vectorMatrices%dynamicMatrices%matrices(matrixIdx)% &
+          & ptr%matrix,err,error,*999)
+        CALL DistributedMatrix_DataTypeSet(equationsMatrix%matrix,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+        CALL DistributedMatrix_StorageTypeSet(equationsMatrix%matrix,equationsMatrix%storageType,err,error,*999)
+        !Calculate and set the matrix structure/sparsity pattern
+        IF(equationsMatrix%storageType/=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE.AND. &
+          & equationsMatrix%storageType/=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE) THEN
+          NULLIFY(list)
+          CALL EquationsMatrix_StructureCalculate(equationsMatrix,numberOfNonZeros,rowIndices,columnIndices,list,err,error,*999)
+          CALL DistributedMatrix_LinkListSet(equationsMatrix%matrix,list,err,error,*999)
+          CALL DistributedMatrix_NumberNonZerosSet(equationsMatrix%matrix,numberOfNonZeros,err,error,*999)
+          CALL DistributedMatrix_StorageLocationsSet(equationsMatrix%matrix,rowIndices,columnIndices,err,error,*999)
+          IF(ASSOCIATED(rowIndices)) DEALLOCATE(rowIndices)
+          IF(ASSOCIATED(columnIndices)) DEALLOCATE(columnIndices)
+        ENDIF
+        CALL DistributedMatrix_CreateFinish(equationsMatrix%matrix,err,error,*999)
+      ENDDO !matrixIdx                
     ENDIF
+    linearMatrices=>vectorMatrices%linearMatrices
+    IF(ASSOCIATED(linearMatrices)) THEN
+      !Linear matrices
+      NULLIFY(linearMapping)
+      CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
+      !Now create the individual linear equations matrices
+      DO matrixIdx=1,linearMatrices%numberOfLinearMatrices
+        NULLIFY(equationsMatrix)
+        CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIdx,equationsMatrix,err,error,*999)
+        columnDomainMap=>linearMapping%equationsMatrixToVarMaps(matrixIdx)%columnDOFSMapping
+        IF(.NOT.ASSOCIATED(columnDomainMap)) THEN
+          localError="Column domain map for linear matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
+            & " is not associated."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        !Create the distributed equations matrix
+        CALL DistributedMatrix_CreateStart(rowDomainMap,columnDomainMap,vectorMatrices%linearMatrices%matrices(matrixIdx)% &
+          & ptr%matrix,err,error,*999)
+        CALL DistributedMatrix_DataTypeSet(equationsMatrix%matrix,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+        CALL DistributedMatrix_StorageTypeSet(equationsMatrix%matrix,equationsMatrix%storageType,err,error,*999)
+        !Calculate and set the matrix structure/sparsity pattern
+        IF(equationsMatrix%storageType/=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE.AND. &
+          & equationsMatrix%storageType/=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE) THEN
+          NULLIFY(list)
+          CALL EquationsMatrix_StructureCalculate(equationsMatrix,numberOfNonZeros,rowIndices,columnIndices,list,err,error,*999)
+          CALL DistributedMatrix_LinkListSet(equationsMatrix%matrix,LIST,err,error,*999)
+          CALL DistributedMatrix_NumberNonZerosSet(equationsMatrix%matrix,numberOfNonZeros,err,error,*999)
+          CALL DistributedMatrix_StorageLocationsSet(equationsMatrix%matrix,rowIndices,columnIndices,err,error,*999)
+          IF(ASSOCIATED(rowIndices)) DEALLOCATE(rowIndices)
+          IF(ASSOCIATED(columnIndices)) DEALLOCATE(columnIndices)
+        ENDIF
+        CALL DistributedMatrix_CreateFinish(equationsMatrix%matrix,err,error,*999)
+      ENDDO !matrixIdx
+    ENDIF
+    nonlinearMatrices=>vectorMatrices%nonlinearMatrices
+    IF(ASSOCIATED(nonlinearMatrices)) THEN
+      !Nonlinear matrices
+      NULLIFY(nonlinearMapping)
+      CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+      !Set up the Jacobian matrices
+      DO matrixIdx=1,nonlinearMatrices%numberOfJacobians
+        NULLIFY(jacobianMatrix)
+        CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,matrixIdx,jacobianMatrix,err,error,*999)
+        columnDomainMap=>nonlinearMapping%jacobianToVarMap(matrixIdx)%columnDOFSMapping
+        IF(.NOT.ASSOCIATED(columnDomainMap)) THEN
+          localError="Column domain map for Jacobian matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
+            & " is not associated."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+!!TODO: Set the distributed matrix not to allocate the data if the Jacobian is not calculated.
+        !Create the distributed Jacobian matrix
+        CALL DistributedMatrix_CreateStart(rowDomainMap,columnDomainMap,jacobianMatrix%jacobian,err,error,*999)
+        CALL DistributedMatrix_DataTypeSet(jacobianMatrix%jacobian,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+        CALL DistributedMatrix_StorageTypeSet(jacobianMatrix%jacobian,jacobianMatrix%storageType,err,error,*999)
+        !Calculate and set the matrix structure/sparsity pattern
+        IF(jacobianMatrix%storageType/=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE.AND. &
+          & jacobianMatrix%storageType/=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE) THEN
+          CALL JacobianMatrix_StructureCalculate(jacobianMatrix,numberOfNonZeros,rowIndices,columnIndices,err,error,*999)
+          CALL DistributedMatrix_NumberNonZerosSet(jacobianMatrix%jacobian,numberOfNonZeros,err,error,*999)
+          CALL DistributedMatrix_StorageLocationsSet(jacobianMatrix%jacobian,rowIndices,columnIndices,err,error,*999)
+          IF(ASSOCIATED(rowIndices)) DEALLOCATE(rowIndices)
+          IF(ASSOCIATED(columnIndices)) DEALLOCATE(columnIndices)
+        ENDIF
+        CALL DistributedMatrix_CreateFinish(jacobianMatrix%jacobian,err,error,*999)
+      ENDDO !matrixIdx
+      !Set up the residual vector                
+      CALL DistributedVector_CreateStart(rowDomainMap,vectorMatrices%nonlinearMatrices%residual,err,error,*999)
+      CALL DistributedVector_DataTypeSet(nonlinearMatrices%residual,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+      CALL DistributedVector_CreateFinish(nonlinearMatrices%residual,err,error,*999)
+      !Initialise the residual vector to zero for time dependent problems so that the previous residual is set to zero
+      CALL DistributedVector_AllValuesSet(nonlinearMatrices%residual,0.0_DP,err,error,*999)
+    ENDIF
+    rhsVector=>vectorMatrices%rhsVector
+    IF(ASSOCIATED(rhsVector)) THEN
+      !Set up the equations RHS vector          
+      CALL DistributedVector_CreateStart(rowDomainMap,vectorMatrices%rhsVector%vector,err,error,*999)
+      CALL DistributedVector_DataTypeSet(rhsVector%vector,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+      CALL DistributedVector_CreateFinish(rhsVector%vector,err,error,*999)
+    ENDIF
+    sourceVector=>vectorMatrices%sourceVector
+    IF(ASSOCIATED(sourceVector)) THEN
+      !Set up the equations source vector          
+      CALL DistributedVector_CreateStart(rowDomainMap,vectorMatrices%sourceVector%vector,err,error,*999)
+      CALL DistributedVector_DataTypeSet(sourceVector%vector,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+      CALL DistributedVector_CreateFinish(sourceVector%vector,err,error,*999)
+    ENDIF
+    !Finish up
+    vectorMatrices%vectorMatricesFinished=.TRUE.
         
-    EXITS("EQUATIONS_MATRICES_DESTROY")
+    EXITS("EquationsMatrices_VectorCreateFinish")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MATRICES_DESTROY",ERR,ERROR)    
+999 IF(ASSOCIATED(rowIndices)) DEALLOCATE(rowIndices)
+    IF(ASSOCIATED(columnIndices)) DEALLOCATE(columnIndices)
+    CALL EquationsMatrices_VectorFinalise(vectorMatrices,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMatrices_VectorCreateFinish",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrices_VectorCreateFinish
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Starts the creation of the vector equations matrices and rhs for the vector equations
+  SUBROUTINE EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsVectorType), POINTER :: vectorEquations !<The pointer to the vector equations to create the vector equations matrices for
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<On return, a pointer to the vector equations matrices being created.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string  
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(VARYING_STRING) :: dummyError    
+
+    ENTERS("EquationsMatrices_VectorCreateStart",err,error,*998)
+
+    IF(ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(vectorEquations)) CALL FlagError("Vector equations is not associated.",err,error,*998)   
+    NULLIFY(equations)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
+    IF(.NOT.equations%equationsFinished) CALL FlagError("Vector equations equations has not been finished.",err,error,*999)
+
+    NULLIFY(vectorMatrices)
+    !Initialise the equations matrices
+    CALL EquationsMatrices_VectorInitialise(vectorEquations,err,error,*999)
+    vectorMatrices=>vectorEquations%vectorMatrices
+    
+    EXITS("EquationsMatrices_VectorCreateStart")
+    RETURN
+999 CALL EquationsMatrices_VectorFinalise(vectorEquations%vectorMatrices,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMatrices_VectorCreateStart",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrices_VectorCreateStart
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Destroy the vector equations matrices
+  SUBROUTINE EquationsMatrices_VectorDestroy(vectorMatrices,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer the vector equations matrices to destroy
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsMatrices_VectorDestroy",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated",err,error,*999)
+    
+    CALL EquationsMatrices_VectorFinalise(vectorMatrices,err,error,*999)
+        
+    EXITS("EquationsMatrices_VectorDestroy")
+    RETURN
+999 ERRORSEXITS("EquationsMatrices_VectorDestroy",err,error)    
     RETURN 1
    
-  END SUBROUTINE EQUATIONS_MATRICES_DESTROY
+  END SUBROUTINE EquationsMatrices_VectorDestroy
 
   !
   !================================================================================================================================
   !
 
   !>Calculate the positions in the equations matrices of the element matrix. Old CMISS name MELGE.
-  SUBROUTINE EQUATIONS_MATRICES_ELEMENT_MATRIX_CALCULATE(ELEMENT_MATRIX,UPDATE_MATRIX,ROW_ELEMENT_NUMBERS,COLUMN_ELEMENT_NUMBERS, &
-    & ROWS_FIELD_VARIABLE,COLS_FIELD_VARIABLE,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_ElementMatrixCalculate(elementMatrix,updateMatrix,rowElementNumbers,columnElementNumbers, &
+    & rowsFieldVariable,colsFieldVariable,err,error,*)
 
     !Argument variables
-    TYPE(ELEMENT_MATRIX_TYPE) :: ELEMENT_MATRIX !<The element matrix to calculate
-    LOGICAL :: UPDATE_MATRIX !<Is .TRUE. if the element matrix is to be updated, .FALSE. if not.
-    INTEGER(INTG), INTENT(IN) :: ROW_ELEMENT_NUMBERS(:) !<The row element number to calculate
-    INTEGER(INTG), INTENT(IN) :: COLUMN_ELEMENT_NUMBERS(:) !<The column element number to calculate
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: ROWS_FIELD_VARIABLE !<A pointer to the field variable associated with the rows
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: COLS_FIELD_VARIABLE !<A pointer to the field variable associated with the columns
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(ElementMatrixType) :: elementMatrix !<The element matrix to calculate
+    LOGICAL :: updateMatrix !<Is .TRUE. if the element matrix is to be updated, .FALSE. if not.
+    INTEGER(INTG), INTENT(IN) :: rowElementNumbers(:) !<The row element number to calculate
+    INTEGER(INTG), INTENT(IN) :: columnElementNumbers(:) !<The column element number to calculate
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: rowsFieldVariable !<A pointer to the field variable associated with the rows
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: colsFieldVariable !<A pointer to the field variable associated with the columns
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: component_idx,derivative,derivative_idx,global_ny,local_ny,node,node_idx,version,dataPointIdx, &
-      & localDataPointNumber,elementIdx,rowElementNumber,colElementNumber
-    TYPE(BASIS_TYPE), POINTER :: BASIS
-    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: ELEMENTS_TOPOLOGY
+    INTEGER(INTG) :: componentIdx,dataPointIdx,derivative,derivativeIdx,globalDOFIdx,localDOFIdx,localNodeIdx,node,nodeIdx, &
+      & version,localDataPointNumber,elementIdx,rowElementNumber,colElementNumber
+    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: elementsTopology
     TYPE(DecompositionDataPointsType), POINTER :: decompositionData
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("EQUATIONS_MATRICES_ELEMENT_MATRIX_CALCULATE",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_ElementMatrixCalculate",err,error,*999)
 
-    IF(ASSOCIATED(ROWS_FIELD_VARIABLE)) THEN
-      IF(ASSOCIATED(COLS_FIELD_VARIABLE)) THEN
-        ELEMENT_MATRIX%NUMBER_OF_ROWS=0
-        ELEMENT_MATRIX%NUMBER_OF_COLUMNS=0
-        IF(UPDATE_MATRIX) THEN
-          IF(ASSOCIATED(ROWS_FIELD_VARIABLE,COLS_FIELD_VARIABLE)) THEN
-            !Row and columns variable is the same.
-            DO component_idx=1,ROWS_FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-              ELEMENTS_TOPOLOGY=>ROWS_FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN%TOPOLOGY%ELEMENTS
-              DO elementIdx=1,SIZE(ROW_ELEMENT_NUMBERS)
-                rowElementNumber=ROW_ELEMENT_NUMBERS(elementIdx)
-                IF(rowElementNumber>=1.AND.rowElementNumber<=ELEMENTS_TOPOLOGY%TOTAL_NUMBER_OF_ELEMENTS) THEN
-                  SELECT CASE(ROWS_FIELD_VARIABLE%COMPONENTS(component_idx)%INTERPOLATION_TYPE)
-                  CASE(FIELD_CONSTANT_INTERPOLATION)
-                    local_ny=ROWS_FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
-                    global_ny=ROWS_FIELD_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(local_ny)
-                    ELEMENT_MATRIX%NUMBER_OF_ROWS=ELEMENT_MATRIX%NUMBER_OF_ROWS+1
-                    ELEMENT_MATRIX%NUMBER_OF_COLUMNS=ELEMENT_MATRIX%NUMBER_OF_COLUMNS+1
-                    ELEMENT_MATRIX%ROW_DOFS(ELEMENT_MATRIX%NUMBER_OF_ROWS)=local_ny
-                    ELEMENT_MATRIX%COLUMN_DOFS(ELEMENT_MATRIX%NUMBER_OF_COLUMNS)=global_ny
-                  CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                    local_ny=ROWS_FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP% &
-                      & ELEMENTS(rowElementNumber)
-                    global_ny=ROWS_FIELD_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(local_ny)
-                    ELEMENT_MATRIX%NUMBER_OF_ROWS=ELEMENT_MATRIX%NUMBER_OF_ROWS+1
-                    ELEMENT_MATRIX%NUMBER_OF_COLUMNS=ELEMENT_MATRIX%NUMBER_OF_COLUMNS+1
-                    ELEMENT_MATRIX%ROW_DOFS(ELEMENT_MATRIX%NUMBER_OF_ROWS)=local_ny
-                    ELEMENT_MATRIX%COLUMN_DOFS(ELEMENT_MATRIX%NUMBER_OF_COLUMNS)=global_ny
-                  CASE(FIELD_NODE_BASED_INTERPOLATION)
-                    BASIS=>ELEMENTS_TOPOLOGY%ELEMENTS(rowElementNumber)%BASIS
-                    DO node_idx=1,BASIS%NUMBER_OF_NODES
-                      node=ELEMENTS_TOPOLOGY%ELEMENTS(rowElementNumber)%ELEMENT_NODES(node_idx)
-                      DO derivative_idx=1,BASIS%NUMBER_OF_DERIVATIVES(node_idx)
-                        derivative=ELEMENTS_TOPOLOGY%ELEMENTS(rowElementNumber)%ELEMENT_DERIVATIVES(derivative_idx,node_idx)
-                        version=ELEMENTS_TOPOLOGY%ELEMENTS(rowElementNumber)%elementVersions(derivative_idx,node_idx)
-                        local_ny=ROWS_FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node)% &
-                          & DERIVATIVES(derivative)%VERSIONS(version)
-                        global_ny=ROWS_FIELD_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(local_ny)
-                        ELEMENT_MATRIX%NUMBER_OF_ROWS=ELEMENT_MATRIX%NUMBER_OF_ROWS+1
-                        ELEMENT_MATRIX%NUMBER_OF_COLUMNS=ELEMENT_MATRIX%NUMBER_OF_COLUMNS+1
-                        ELEMENT_MATRIX%ROW_DOFS(ELEMENT_MATRIX%NUMBER_OF_ROWS)=local_ny
-                        ELEMENT_MATRIX%COLUMN_DOFS(ELEMENT_MATRIX%NUMBER_OF_COLUMNS)=global_ny
-                      ENDDO !derivative_idx
-                    ENDDO !node_idx
-                  CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                    CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                  CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                    CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                  CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
-                    decompositionData=>ROWS_FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN%DECOMPOSITION%TOPOLOGY%dataPoints
-                    DO dataPointIdx=1,decompositionData%elementDataPoint(rowElementNumber)%numberOfProjectedData
-                      localDataPointNumber=decompositionData%elementDataPoint(rowElementNumber)% &
-                        & dataIndices(dataPointIdx)%localNumber
-                      local_ny=ROWS_FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP% &
-                        & DATA_POINTS(localDataPointNumber)
-                      global_ny=ROWS_FIELD_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(local_ny)
-                      ELEMENT_MATRIX%NUMBER_OF_ROWS=ELEMENT_MATRIX%NUMBER_OF_ROWS+1
-                      ELEMENT_MATRIX%NUMBER_OF_COLUMNS=ELEMENT_MATRIX%NUMBER_OF_COLUMNS+1
-                      ELEMENT_MATRIX%ROW_DOFS(ELEMENT_MATRIX%NUMBER_OF_ROWS)=local_ny
-                      ELEMENT_MATRIX%COLUMN_DOFS(ELEMENT_MATRIX%NUMBER_OF_COLUMNS)=global_ny
-                    ENDDO
-                  CASE DEFAULT
-                    LOCAL_ERROR="The interpolation type of "// &
-                      & TRIM(NumberToVString(ROWS_FIELD_VARIABLE%COMPONENTS(component_idx)%INTERPOLATION_TYPE,"*",ERR,ERROR))// &
-                      & " is invalid for component number "// &
-                      & TRIM(NumberToVString(component_idx,"*",ERR,ERROR))// &
-                      & " of rows field variable type "// &
-                      & TRIM(NumberToVString(ROWS_FIELD_VARIABLE%VARIABLE_TYPE,"*",ERR,ERROR))//"."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)          
-                  END SELECT
-                ELSE
-                  LOCAL_ERROR="Element number "//TRIM(NumberToVString(rowElementNumber,"*",ERR,ERROR))// &
-                    & " is invalid for component number "//TRIM(NumberToVString(component_idx,"*",ERR,ERROR))// &
-                    & " of rows field variable type "// &
-                    & TRIM(NumberToVString(ROWS_FIELD_VARIABLE%VARIABLE_TYPE,"*",ERR,ERROR))// &
-                    & ". The element number must be between 1 and "// &
-                    & TRIM(NumberToVString(ELEMENTS_TOPOLOGY%TOTAL_NUMBER_OF_ELEMENTS,"*",ERR,ERROR))//"."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ENDIF
-              ENDDO !elementIdx
-            ENDDO !component_idx
-          ELSE
-            !Row and column variables are different
-            !Row mapping
-            DO component_idx=1,ROWS_FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-              ELEMENTS_TOPOLOGY=>ROWS_FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN%TOPOLOGY%ELEMENTS
-              DO elementIdx=1,SIZE(ROW_ELEMENT_NUMBERS)
-                rowElementNumber=ROW_ELEMENT_NUMBERS(elementIdx)
-                IF(rowElementNumber>=1.AND.rowElementNumber<=ELEMENTS_TOPOLOGY%TOTAL_NUMBER_OF_ELEMENTS) THEN
-                  SELECT CASE(ROWS_FIELD_VARIABLE%COMPONENTS(component_idx)%INTERPOLATION_TYPE)
-                  CASE(FIELD_CONSTANT_INTERPOLATION)
-                    local_ny=ROWS_FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
-                    ELEMENT_MATRIX%NUMBER_OF_ROWS=ELEMENT_MATRIX%NUMBER_OF_ROWS+1
-                    ELEMENT_MATRIX%ROW_DOFS(ELEMENT_MATRIX%NUMBER_OF_ROWS)=local_ny
-                  CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                    local_ny=ROWS_FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP% &
-                      & ELEMENTS(rowElementNumber)
-                    ELEMENT_MATRIX%NUMBER_OF_ROWS=ELEMENT_MATRIX%NUMBER_OF_ROWS+1
-                    ELEMENT_MATRIX%ROW_DOFS(ELEMENT_MATRIX%NUMBER_OF_ROWS)=local_ny
-                  CASE(FIELD_NODE_BASED_INTERPOLATION)
-                    BASIS=>ELEMENTS_TOPOLOGY%ELEMENTS(rowElementNumber)%BASIS
-                    DO node_idx=1,BASIS%NUMBER_OF_NODES
-                      node=ELEMENTS_TOPOLOGY%ELEMENTS(rowElementNumber)%ELEMENT_NODES(node_idx)
-                      DO derivative_idx=1,BASIS%NUMBER_OF_DERIVATIVES(node_idx)
-                        derivative=ELEMENTS_TOPOLOGY%ELEMENTS(rowElementNumber)%ELEMENT_DERIVATIVES(derivative_idx,node_idx)
-                        version=ELEMENTS_TOPOLOGY%ELEMENTS(rowElementNumber)%elementVersions(derivative_idx,node_idx)
-                        local_ny=ROWS_FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node)% &
-                          & DERIVATIVES(derivative)%VERSIONS(version)
-                        ELEMENT_MATRIX%NUMBER_OF_ROWS=ELEMENT_MATRIX%NUMBER_OF_ROWS+1
-                        ELEMENT_MATRIX%ROW_DOFS(ELEMENT_MATRIX%NUMBER_OF_ROWS)=local_ny
-                      ENDDO !derivative_idx
-                    ENDDO !node_idx
-                  CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                    CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                  CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                    CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                  CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
-                    decompositionData=>ROWS_FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN%DECOMPOSITION%TOPOLOGY%dataPoints
-                    DO dataPointIdx=1,decompositionData%elementDataPoint(colElementNumber)%numberOfProjectedData
-                      localDataPointNumber=decompositionData%elementDataPoint(colElementNumber)% &
-                        & dataIndices(dataPointIdx)%localNumber
-                      local_ny=ROWS_FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP% &
-                        & DATA_POINTS(localDataPointNumber)
-                      global_ny=ROWS_FIELD_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(local_ny)
-                      ELEMENT_MATRIX%NUMBER_OF_COLUMNS=ELEMENT_MATRIX%NUMBER_OF_COLUMNS+1
-                      ELEMENT_MATRIX%COLUMN_DOFS(ELEMENT_MATRIX%NUMBER_OF_COLUMNS)=global_ny
-                    ENDDO
-                  CASE DEFAULT
-                    LOCAL_ERROR="The interpolation type of "// &
-                      & TRIM(NumberToVString(ROWS_FIELD_VARIABLE%COMPONENTS(component_idx)%INTERPOLATION_TYPE,"*",ERR,ERROR))// &
-                      & " is invalid for component number "// &
-                      & TRIM(NumberToVString(component_idx,"*",ERR,ERROR))// &
-                      & " of rows field variable type "// &
-                      & TRIM(NumberToVString(ROWS_FIELD_VARIABLE%VARIABLE_TYPE,"*",ERR,ERROR))//"."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)          
-                  END SELECT
-                ELSE
-                  LOCAL_ERROR="Row element number "//TRIM(NumberToVString(rowElementNumber,"*",ERR,ERROR))// &
-                    & " is invalid for component number "//TRIM(NumberToVString(component_idx,"*",ERR,ERROR))// &
-                    & " of rows field variable type "// &
-                    & TRIM(NumberToVString(ROWS_FIELD_VARIABLE%VARIABLE_TYPE,"*",ERR,ERROR))// &
-                    & ". The element number must be between 1 and "// &
-                    & TRIM(NumberToVString(ELEMENTS_TOPOLOGY%TOTAL_NUMBER_OF_ELEMENTS,"*",ERR,ERROR))//"."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ENDIF
-              ENDDO !elementIdx
-            ENDDO !component_idx
-            !Column mapping
-            DO component_idx=1,COLS_FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-              ELEMENTS_TOPOLOGY=>COLS_FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN%TOPOLOGY%ELEMENTS
-              DO elementIdx=1,SIZE(COLUMN_ELEMENT_NUMBERS)
-                colElementNumber=COLUMN_ELEMENT_NUMBERS(elementIdx)
-                IF(colElementNumber>=1.AND.colElementNumber<=ELEMENTS_TOPOLOGY%TOTAL_NUMBER_OF_ELEMENTS) THEN
-                  SELECT CASE(COLS_FIELD_VARIABLE%COMPONENTS(component_idx)%INTERPOLATION_TYPE)
-                  CASE(FIELD_CONSTANT_INTERPOLATION)
-                    local_ny=COLS_FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
-                    global_ny=COLS_FIELD_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(local_ny)
-                    ELEMENT_MATRIX%NUMBER_OF_COLUMNS=ELEMENT_MATRIX%NUMBER_OF_COLUMNS+1
-                    ELEMENT_MATRIX%COLUMN_DOFS(ELEMENT_MATRIX%NUMBER_OF_COLUMNS)=global_ny
-                  CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                    local_ny=COLS_FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP% &
-                      & ELEMENTS(colElementNumber)
-                    global_ny=COLS_FIELD_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(local_ny)
-                    ELEMENT_MATRIX%NUMBER_OF_COLUMNS=ELEMENT_MATRIX%NUMBER_OF_COLUMNS+1
-                    ELEMENT_MATRIX%COLUMN_DOFS(ELEMENT_MATRIX%NUMBER_OF_COLUMNS)=global_ny
-                  CASE(FIELD_NODE_BASED_INTERPOLATION)
-                    BASIS=>ELEMENTS_TOPOLOGY%ELEMENTS(colElementNumber)%BASIS
-                    DO node_idx=1,BASIS%NUMBER_OF_NODES
-                      node=ELEMENTS_TOPOLOGY%ELEMENTS(colElementNumber)%ELEMENT_NODES(node_idx)
-                      DO derivative_idx=1,BASIS%NUMBER_OF_DERIVATIVES(node_idx)
-                        derivative=ELEMENTS_TOPOLOGY%ELEMENTS(colElementNumber)%ELEMENT_DERIVATIVES(derivative_idx,node_idx)
-                        version=ELEMENTS_TOPOLOGY%ELEMENTS(colElementNumber)%elementVersions(derivative_idx,node_idx)
-                        local_ny=COLS_FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node)% &
-                          & DERIVATIVES(derivative)%VERSIONS(version)
-                        global_ny=COLS_FIELD_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(local_ny)
-                        ELEMENT_MATRIX%NUMBER_OF_COLUMNS=ELEMENT_MATRIX%NUMBER_OF_COLUMNS+1
-                        ELEMENT_MATRIX%COLUMN_DOFS(ELEMENT_MATRIX%NUMBER_OF_COLUMNS)=global_ny
-                      ENDDO !derivative_idx
-                    ENDDO !node_idx
-                  CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                    CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                  CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                    CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                  CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
-                    decompositionData=>COLS_FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN%DECOMPOSITION%TOPOLOGY%dataPoints
-                    DO dataPointIdx=1,decompositionData%elementDataPoint(colElementNumber)%numberOfProjectedData
-                      localDataPointNumber=decompositionData%elementDataPoint(colElementNumber)% &
-                        & dataIndices(dataPointIdx)%localNumber
-                      local_ny=COLS_FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP% &
-                        & DATA_POINTS(localDataPointNumber)
-                      global_ny=COLS_FIELD_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(local_ny)
-                      ELEMENT_MATRIX%NUMBER_OF_COLUMNS=ELEMENT_MATRIX%NUMBER_OF_COLUMNS+1
-                      ELEMENT_MATRIX%COLUMN_DOFS(ELEMENT_MATRIX%NUMBER_OF_COLUMNS)=global_ny
-                    ENDDO
-                  CASE DEFAULT
-                    LOCAL_ERROR="The interpolation type of "// &
-                      & TRIM(NumberToVString(COLS_FIELD_VARIABLE%COMPONENTS(component_idx)%INTERPOLATION_TYPE,"*",ERR,ERROR))// &
-                      & " is invalid for component number "// &
-                      & TRIM(NumberToVString(component_idx,"*",ERR,ERROR))// &
-                      & " of column field variable type "// &
-                      & TRIM(NumberToVString(COLS_FIELD_VARIABLE%VARIABLE_TYPE,"*",ERR,ERROR))//"."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)          
-                  END SELECT
-                ELSE
-                  LOCAL_ERROR="Column element number "//TRIM(NumberToVString(colElementNumber,"*",ERR,ERROR))// &
-                    & " is invalid for component number "//TRIM(NumberToVString(component_idx,"*",ERR,ERROR))// &
-                    & " of column field variable type "// &
-                    & TRIM(NumberToVString(COLS_FIELD_VARIABLE%VARIABLE_TYPE,"*",ERR,ERROR))// &
-                    & ". The element number must be between 1 and "// &
-                    & TRIM(NumberToVString(ELEMENTS_TOPOLOGY%TOTAL_NUMBER_OF_ELEMENTS,"*",ERR,ERROR))//"."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ENDIF
-              ENDDO !elementIdx
-            ENDDO !component_idx
-          ENDIF
-          ELEMENT_MATRIX%MATRIX=0.0_DP
-        ENDIF
+    IF(.NOT.ASSOCIATED(rowsFieldVariable)) CALL FlagError("Rows field variable is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(colsFieldVariable)) CALL FlagError("Columns field variable is not associated.",err,error,*999)
+    
+    elementMatrix%numberOfRows=0
+    elementMatrix%numberOfColumns=0
+    IF(updateMatrix) THEN
+      IF(ASSOCIATED(rowsFieldVariable,colsFieldVariable)) THEN
+        !Row and columns variable is the same.
+        DO componentIdx=1,rowsFieldVariable%NUMBER_OF_COMPONENTS
+          elementsTopology=>rowsFieldVariable%components(componentIdx)%domain%topology%elements
+          DO elementIdx=1,SIZE(rowElementNumbers)
+            rowElementNumber=rowElementNumbers(elementIdx)
+            IF(rowElementNumber<1.OR.rowElementNumber>elementsTopology%TOTAL_NUMBER_OF_ELEMENTS) THEN
+              localError="Element number "//TRIM(NumberToVString(rowElementNumber,"*",err,error))// &
+                & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+                & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))// &
+                & ". The element number must be between 1 and "// &
+                & TRIM(NumberToVString(elementsTopology%TOTAL_NUMBER_OF_ELEMENTS,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+            SELECT CASE(rowsFieldVariable%components(componentIdx)%INTERPOLATION_TYPE)
+            CASE(FIELD_CONSTANT_INTERPOLATION)
+              localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
+              globalDOFIdx=rowsFieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localDOFIdx)
+              elementMatrix%numberOfRows=elementMatrix%numberOfRows+1
+              elementMatrix%numberOfColumns=elementMatrix%numberOfColumns+1
+              elementMatrix%rowDOFS(elementMatrix%numberOfRows)=localDOFIdx
+              elementMatrix%columnDOFS(elementMatrix%numberOfColumns)=globalDOFIdx
+            CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+              localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP% &
+                & elements(rowElementNumber)
+              globalDOFIdx=rowsFieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localDOFIdx)
+              elementMatrix%numberOfRows=elementMatrix%numberOfRows+1
+              elementMatrix%numberOfColumns=elementMatrix%numberOfColumns+1
+              elementMatrix%rowDOFS(elementMatrix%numberOfRows)=localDOFIdx
+              elementMatrix%columnDOFS(elementMatrix%numberOfColumns)=globalDOFIdx
+            CASE(FIELD_NODE_BASED_INTERPOLATION)
+              basis=>elementsTopology%elements(rowElementNumber)%basis
+              DO localNodeIdx=1,basis%NUMBER_OF_NODES
+                node=elementsTopology%elements(rowElementNumber)%ELEMENT_NODES(localNodeIdx)
+                DO derivativeIdx=1,basis%NUMBER_OF_DERIVATIVES(localNodeIdx)
+                  derivative=elementsTopology%elements(rowElementNumber)%ELEMENT_DERIVATIVES(derivativeIdx,localNodeIdx)
+                  version=elementsTopology%elements(rowElementNumber)%elementVersions(derivativeIdx,localNodeIdx)
+                  localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node)% &
+                    & derivatives(derivative)%versions(version)
+                  globalDOFIdx=rowsFieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localDOFIdx)
+                  elementMatrix%numberOfRows=elementMatrix%numberOfRows+1
+                  elementMatrix%numberOfColumns=elementMatrix%numberOfColumns+1
+                  elementMatrix%rowDOFS(elementMatrix%numberOfRows)=localDOFIdx
+                  elementMatrix%columnDOFS(elementMatrix%numberOfColumns)=globalDOFIdx
+                ENDDO !derivativeIdx
+              ENDDO !localNodeIdx
+            CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
+              decompositionData=>rowsFieldVariable%components(componentIdx)%domain%decomposition%topology%dataPoints
+              DO dataPointIdx=1,decompositionData%elementDataPoint(rowElementNumber)%numberOfProjectedData
+                localDataPointNumber=decompositionData%elementDataPoint(rowElementNumber)%dataIndices(dataPointIdx)%localNumber
+                localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP% &
+                  & DATA_POINTS(localDataPointNumber)
+                globalDOFIdx=rowsFieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localDOFIdx)
+                elementMatrix%numberOfRows=elementMatrix%numberOfRows+1
+                elementMatrix%numberOfColumns=elementMatrix%numberOfColumns+1
+                elementMatrix%rowDOFS(elementMatrix%numberOfRows)=localDOFIdx
+                elementMatrix%columnDOFS(elementMatrix%numberOfColumns)=globalDOFIdx
+              ENDDO !dataPointIdx
+            CASE DEFAULT
+              localError="The interpolation type of "// &
+                & TRIM(NumberToVString(rowsFieldVariable%components(componentIdx)%INTERPOLATION_TYPE,"*",err,error))// &
+                & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+                & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)          
+            END SELECT
+          ENDDO !elementIdx
+        ENDDO !componentIdx
       ELSE
-        CALL FlagError("Columns field variable is not associated.",ERR,ERROR,*999)
+        !Row and column variables are different
+        !Row mapping
+        DO componentIdx=1,rowsFieldVariable%NUMBER_OF_COMPONENTS
+          elementsTopology=>rowsFieldVariable%components(componentIdx)%domain%topology%elements
+          DO elementIdx=1,SIZE(rowElementNumbers)
+            rowElementNumber=rowElementNumbers(elementIdx)
+            IF(rowElementNumber<1.OR.rowElementNumber>elementsTopology%TOTAL_NUMBER_OF_ELEMENTS) THEN
+              localError="Row element number "//TRIM(NumberToVString(rowElementNumber,"*",err,error))// &
+                & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+                & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))// &
+                & ". The element number must be between 1 and "// &
+                & TRIM(NumberToVString(elementsTopology%TOTAL_NUMBER_OF_ELEMENTS,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+            SELECT CASE(rowsFieldVariable%components(componentIdx)%INTERPOLATION_TYPE)
+            CASE(FIELD_CONSTANT_INTERPOLATION)
+              localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
+              elementMatrix%numberOfRows=elementMatrix%numberOfRows+1
+              elementMatrix%rowDOFS(elementMatrix%numberOfRows)=localDOFIdx
+            CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+              localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP% &
+                & elements(rowElementNumber)
+              elementMatrix%numberOfRows=elementMatrix%numberOfRows+1
+              elementMatrix%rowDOFS(elementMatrix%numberOfRows)=localDOFIdx
+            CASE(FIELD_NODE_BASED_INTERPOLATION)
+              basis=>elementsTopology%elements(rowElementNumber)%basis
+              DO localNodeIdx=1,basis%NUMBER_OF_NODES
+                node=elementsTopology%elements(rowElementNumber)%ELEMENT_NODES(localNodeIdx)
+                DO derivativeIdx=1,basis%NUMBER_OF_DERIVATIVES(localNodeIdx)
+                  derivative=elementsTopology%elements(rowElementNumber)%ELEMENT_DERIVATIVES(derivativeIdx,localNodeIdx)
+                  version=elementsTopology%elements(rowElementNumber)%elementVersions(derivativeIdx,localNodeIdx)
+                  localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%nodes(node)% &
+                    & derivatives(derivative)%versions(version)
+                  elementMatrix%numberOfRows=elementMatrix%numberOfRows+1
+                  elementMatrix%rowDOFS(elementMatrix%numberOfRows)=localDOFIdx
+                ENDDO !derivativeIdx
+              ENDDO !localNodeIdx
+            CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
+              decompositionData=>rowsFieldVariable%components(componentIdx)%domain%decomposition%topology%dataPoints
+              DO dataPointIdx=1,decompositionData%elementDataPoint(colElementNumber)%numberOfProjectedData
+                localDataPointNumber=decompositionData%elementDataPoint(colElementNumber)%dataIndices(dataPointIdx)%localNumber
+                localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP% &
+                  & DATA_POINTS(localDataPointNumber)
+                globalDOFIdx=rowsFieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localDOFIdx)
+                elementMatrix%numberOfColumns=elementMatrix%numberOfColumns+1
+                elementMatrix%columnDOFS(elementMatrix%numberOfColumns)=globalDOFIdx
+              ENDDO !dataPointIdx
+            CASE DEFAULT
+              localError="The interpolation type of "// &
+                & TRIM(NumberToVString(rowsFieldVariable%components(componentIdx)%INTERPOLATION_TYPE,"*",err,error))// &
+                & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+                & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)          
+            END SELECT
+          ENDDO !elementIdx
+        ENDDO !componentIdx
+        !Column mapping
+        DO componentIdx=1,colsFieldVariable%NUMBER_OF_COMPONENTS
+          elementsTopology=>colsFieldVariable%components(componentIdx)%domain%topology%elements
+          DO elementIdx=1,SIZE(columnElementNumbers)
+            colElementNumber=columnElementNumbers(elementIdx)
+            IF(colElementNumber<1.AND.colElementNumber>elementsTopology%TOTAL_NUMBER_OF_ELEMENTS) THEN
+              localError="Column element number "//TRIM(NumberToVString(colElementNumber,"*",err,error))// &
+                & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+                & " of column field variable type "//TRIM(NumberToVString(colsFieldVariable%VARIABLE_TYPE,"*",err,error))// &
+                & ". The element number must be between 1 and "// &
+                & TRIM(NumberToVString(elementsTopology%TOTAL_NUMBER_OF_ELEMENTS,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+            SELECT CASE(colsFieldVariable%components(componentIdx)%INTERPOLATION_TYPE)
+            CASE(FIELD_CONSTANT_INTERPOLATION)
+              localDOFIdx=colsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
+              globalDOFIdx=colsFieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localDOFIdx)
+              elementMatrix%numberOfColumns=elementMatrix%numberOfColumns+1
+              elementMatrix%columnDOFS(elementMatrix%numberOfColumns)=globalDOFIdx
+            CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+              localDOFIdx=colsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP% &
+                & elements(colElementNumber)
+              globalDOFIdx=colsFieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localDOFIdx)
+              elementMatrix%numberOfColumns=elementMatrix%numberOfColumns+1
+              elementMatrix%columnDOFS(elementMatrix%numberOfColumns)=globalDOFIdx
+            CASE(FIELD_NODE_BASED_INTERPOLATION)
+              basis=>elementsTopology%elements(colElementNumber)%basis
+              DO localNodeIdx=1,basis%NUMBER_OF_NODES
+                node=elementsTopology%elements(colElementNumber)%ELEMENT_NODES(localNodeIdx)
+                DO derivativeIdx=1,basis%NUMBER_OF_DERIVATIVES(localNodeIdx)
+                  derivative=elementsTopology%elements(colElementNumber)%ELEMENT_DERIVATIVES(derivativeIdx,localNodeIdx)
+                  version=elementsTopology%elements(colElementNumber)%elementVersions(derivativeIdx,localNodeIdx)
+                  localDOFIdx=colsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node)% &
+                    & derivatives(derivative)%versions(version)
+                  globalDOFIdx=colsFieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localDOFIdx)
+                  elementMatrix%numberOfColumns=elementMatrix%numberOfColumns+1
+                  elementMatrix%columnDOFS(elementMatrix%numberOfColumns)=globalDOFIdx
+                ENDDO !derivativeIdx
+              ENDDO !localNodeIdx
+            CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
+              decompositionData=>colsFieldVariable%components(componentIdx)%domain%decomposition%topology%dataPoints
+              DO dataPointIdx=1,decompositionData%elementDataPoint(colElementNumber)%numberOfProjectedData
+                localDataPointNumber=decompositionData%elementDataPoint(colElementNumber)%dataIndices(dataPointIdx)%localNumber
+                localDOFIdx=colsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP% &
+                  & DATA_POINTS(localDataPointNumber)
+                globalDOFIdx=colsFieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localDOFIdx)
+                elementMatrix%numberOfColumns=elementMatrix%numberOfColumns+1
+                elementMatrix%columnDOFS(elementMatrix%numberOfColumns)=globalDOFIdx
+              ENDDO !dataPointIdx
+            CASE DEFAULT
+              localError="The interpolation type of "// &
+                & TRIM(NumberToVString(colsFieldVariable%components(componentIdx)%INTERPOLATION_TYPE,"*",err,error))// &
+                & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+                & " of column field variable type "//TRIM(NumberToVString(colsFieldVariable%VARIABLE_TYPE,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)          
+            END SELECT
+          ENDDO !elementIdx
+        ENDDO !componentIdx
       ENDIF
-    ELSE
-      CALL FlagError("Rows field variable is not associated.",ERR,ERROR,*999)
+      elementMatrix%matrix=0.0_DP
     ENDIF
     
-    EXITS("EQUATIONS_MATRICES_ELEMENT_MATRIX_CALCULATE")
+    EXITS("EquationsMatrices_ElementMatrixCalculate")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MATRICES_ELEMENT_MATRIX_CALCULATE",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_ElementMatrixCalculate",err,error)
     RETURN 1
     
-  END SUBROUTINE EQUATIONS_MATRICES_ELEMENT_MATRIX_CALCULATE
+  END SUBROUTINE EquationsMatrices_ElementMatrixCalculate
 
   !
   !================================================================================================================================
   !
 
   !>Finalise an element matrix and deallocate all memory
-  SUBROUTINE EQUATIONS_MATRICES_ELEMENT_MATRIX_FINALISE(ELEMENT_MATRIX,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_ElementMatrixFinalise(elementMatrix,err,error,*)
 
     !Argument variables
-    TYPE(ELEMENT_MATRIX_TYPE):: ELEMENT_MATRIX !<The element matrix to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(ElementMatrixType):: elementMatrix!<The element matrix to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     
-    ENTERS("EQUATIONS_MATRICES_ELEMENT_MATRIX_FINALISE",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_ElementMatrixFinalise",err,error,*999)
 
-    ELEMENT_MATRIX%MAX_NUMBER_OF_ROWS=0
-    ELEMENT_MATRIX%MAX_NUMBER_OF_COLUMNS=0
-    IF(ALLOCATED(ELEMENT_MATRIX%ROW_DOFS)) DEALLOCATE(ELEMENT_MATRIX%ROW_DOFS)
-    IF(ALLOCATED(ELEMENT_MATRIX%COLUMN_DOFS)) DEALLOCATE(ELEMENT_MATRIX%COLUMN_DOFS)
-    IF(ALLOCATED(ELEMENT_MATRIX%MATRIX)) DEALLOCATE(ELEMENT_MATRIX%MATRIX)
+    elementMatrix%maxNumberOfRows=0
+    elementMatrix%maxNumberOfColumns=0
+    IF(ALLOCATED(elementMatrix%rowDOFS)) DEALLOCATE(elementMatrix%rowDOFS)
+    IF(ALLOCATED(elementMatrix%columnDOFS)) DEALLOCATE(elementMatrix%columnDOFS)
+    IF(ALLOCATED(elementMatrix%matrix)) DEALLOCATE(elementMatrix%matrix)
     
-    EXITS("EQUATIONS_MATRICES_ELEMENT_MATRIX_FINALISE")
+    EXITS("EquationsMatrices_ElementMatrixFinalise")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MATRICES_ELEMENT_MATRIX_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_ElementMatrixFinalise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_ELEMENT_MATRIX_FINALISE
+    
+  END SUBROUTINE EquationsMatrices_ElementMatrixFinalise
 
   !
   !================================================================================================================================
   !
 
   !>Initialise the element matrix.
-  SUBROUTINE EquationsMatrices_ElementMatrixInitialise(ELEMENT_MATRIX,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_ElementMatrixInitialise(elementMatrix,err,error,*)
 
     !Argument variables
-    TYPE(ELEMENT_MATRIX_TYPE) :: ELEMENT_MATRIX !The element matrix to initialise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(ElementMatrixType) :: elementMatrix !The element matrix to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("EquationsMatrices_ElementMatrixInitialise",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_ElementMatrixInitialise",err,error,*999)
 
-    ELEMENT_MATRIX%EQUATIONS_MATRIX_NUMBER=0
-    ELEMENT_MATRIX%NUMBER_OF_ROWS=0
-    ELEMENT_MATRIX%NUMBER_OF_COLUMNS=0
-    ELEMENT_MATRIX%MAX_NUMBER_OF_ROWS=0
-    ELEMENT_MATRIX%MAX_NUMBER_OF_COLUMNS=0
+    elementMatrix%equationsMatrixNumber=0
+    elementMatrix%numberOfRows=0
+    elementMatrix%numberOfColumns=0
+    elementMatrix%maxNumberOfRows=0
+    elementMatrix%maxNumberOfColumns=0
        
     EXITS("EquationsMatrices_ElementMatrixInitialise")
     RETURN
-999 ERRORSEXITS("EquationsMatrices_ElementMatrixInitialise",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_ElementMatrixInitialise",err,error)
     RETURN 1
+    
   END SUBROUTINE EquationsMatrices_ElementMatrixInitialise
 
   !
@@ -993,11 +899,11 @@ CONTAINS
   !
 
   !>Sets up the element matrix for the row and column field variables.
-  SUBROUTINE EQUATIONS_MATRICES_ELEMENT_MATRIX_SETUP(elementMatrix,rowsFieldVariable,columnsFieldVariable, &
-    & rowsNumberOfElements,colsNumberOfElements,err,error,*)
+  SUBROUTINE EquationsMatrices_ElementMatrixSetup(elementMatrix,rowsFieldVariable,columnsFieldVariable,rowsNumberOfElements, &
+    & colsNumberOfElements,err,error,*)
 
     !Argument variables
-    TYPE(ELEMENT_MATRIX_TYPE) :: elementMatrix !<The element matrix to setup
+    TYPE(ElementMatrixType) :: elementMatrix !<The element matrix to setup
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: rowsFieldVariable !<A pointer to the field variable associated with the rows
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: columnsFieldVariable !<A pointer to the field variable associated with the columns
     INTEGER(INTG), INTENT(IN)  :: rowsNumberOfElements !<Number of elements in the row variables whose dofs are present in this element matrix
@@ -1008,200 +914,181 @@ CONTAINS
     INTEGER(INTG) :: dummyErr, componentIdx
     TYPE(VARYING_STRING) :: dummyError
 
-    ENTERS("EQUATIONS_MATRICES_ELEMENT_MATRIX_SETUP",err,error,*998)
+    ENTERS("EquationsMatrices_ElementMatrixSetup",err,error,*998)
 
-    IF(ASSOCIATED(rowsFieldVariable)) THEN
-      IF(ASSOCIATED(columnsFieldVariable)) THEN
-        elementMatrix%MAX_NUMBER_OF_ROWS = 0
-        DO componentIdx=1,rowsFieldVariable%NUMBER_OF_COMPONENTS
-          elementMatrix%MAX_NUMBER_OF_ROWS=elementMatrix%MAX_NUMBER_OF_ROWS+ &
-            & rowsFieldVariable%COMPONENTS(componentIdx)%maxNumberElementInterpolationParameters
-        ENDDO
-        elementMatrix%MAX_NUMBER_OF_ROWS=elementMatrix%MAX_NUMBER_OF_ROWS*rowsNumberOfElements
-        elementMatrix%MAX_NUMBER_OF_COLUMNS = 0
-        DO componentIdx=1,columnsFieldVariable%NUMBER_OF_COMPONENTS
-          elementMatrix%MAX_NUMBER_OF_COLUMNS=elementMatrix%MAX_NUMBER_OF_COLUMNS+ &
-            & columnsFieldVariable%COMPONENTS(componentIdx)%maxNumberElementInterpolationParameters
-        ENDDO
-        elementMatrix%MAX_NUMBER_OF_COLUMNS=elementMatrix%MAX_NUMBER_OF_COLUMNS*colsNumberOfElements
-        IF(ALLOCATED(elementMatrix%ROW_DOFS)) THEN
-          CALL FlagError("Element matrix row dofs already allocated.",err,error,*999)
-        ELSE
-          ALLOCATE(elementMatrix%ROW_DOFS(elementMatrix%MAX_NUMBER_OF_ROWS),STAT=err)
-          IF(ERR/=0) CALL FlagError("Could not allocate element matrix row dofs.",err,error,*999)
-        ENDIF
-        IF(ALLOCATED(elementMatrix%COLUMN_DOFS)) THEN
-          CALL FlagError("Element matrix column dofs already allocated.",err,error,*999)
-        ELSE
-          ALLOCATE(elementMatrix%COLUMN_DOFS(elementMatrix%MAX_NUMBER_OF_COLUMNS),STAT=err)
-          IF(ERR/=0) CALL FlagError("Could not allocate element matrix column dofs.",err,error,*999)
-        ENDIF
-        IF(ALLOCATED(elementMatrix%MATRIX)) THEN
-          CALL FlagError("Element matrix already allocated.",err,error,*999)
-        ELSE
-          ALLOCATE(elementMatrix%MATRIX(elementMatrix%MAX_NUMBER_OF_ROWS,elementMatrix%MAX_NUMBER_OF_COLUMNS),STAT=err)
-          IF(ERR/=0) CALL FlagError("Could not allocate element matrix.",err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Columns field variable is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Rows field variable is not associated.",err,error,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(rowsFieldVariable)) CALL FlagError("Rows field variable is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(columnsFieldVariable)) CALL FlagError("Columns field variable is not associated.",err,error,*999)
+    IF(ALLOCATED(elementMatrix%rowDOFS)) CALL FlagError("Element matrix row dofs already allocated.",err,error,*999)
+    IF(ALLOCATED(elementMatrix%columnDOFS)) CALL FlagError("Element matrix column dofs already allocated.",err,error,*999)
+    IF(ALLOCATED(elementMatrix%matrix)) CALL FlagError("Element matrix already allocated.",err,error,*999)
+     
+    elementMatrix%maxNumberOfRows=0
+    DO componentIdx=1,rowsFieldVariable%NUMBER_OF_COMPONENTS
+      elementMatrix%maxNumberOfRows=elementMatrix%maxNumberOfRows+ &
+        & rowsFieldVariable%components(componentIdx)%maxNumberElementInterpolationParameters
+    ENDDO !componentIdx
+    elementMatrix%maxNumberOfRows=elementMatrix%maxNumberOfRows*rowsNumberOfElements
+    elementMatrix%maxNumberOfColumns=0
+    DO componentIdx=1,columnsFieldVariable%NUMBER_OF_COMPONENTS
+      elementMatrix%maxNumberOfColumns=elementMatrix%maxNumberOfColumns+ &
+        & columnsFieldVariable%components(componentIdx)%maxNumberElementInterpolationParameters
+    ENDDO !componentIdx
+    elementMatrix%maxNumberOfColumns=elementMatrix%maxNumberOfColumns*colsNumberOfElements
+    ALLOCATE(elementMatrix%rowDOFS(elementMatrix%maxNumberOfRows),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate element matrix row dofs.",err,error,*999)
+    ALLOCATE(elementMatrix%columnDOFS(elementMatrix%maxNumberOfColumns),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate element matrix column dofs.",err,error,*999)
+    ALLOCATE(elementMatrix%matrix(elementMatrix%maxNumberOfRows,elementMatrix%maxNumberOfColumns),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate element matrix.",err,error,*999)
     
-    EXITS("EQUATIONS_MATRICES_ELEMENT_MATRIX_SETUP")
+    EXITS("EquationsMatrices_ElementMatrixSetup")
     RETURN
-999 CALL EQUATIONS_MATRICES_ELEMENT_MATRIX_FINALISE(elementMatrix,dummyErr,dummyError,*998)
-998 ERRORSEXITS("EQUATIONS_MATRICES_ELEMENT_MATRIX_SETUP",err,error)
+999 CALL EquationsMatrices_ElementMatrixFinalise(elementMatrix,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMatrices_ElementMatrixSetup",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_ELEMENT_MATRIX_SETUP
+    
+  END SUBROUTINE EquationsMatrices_ElementMatrixSetup
 
   !
   !================================================================================================================================
   !
 
   !>Calculate the positions in the equations rhs of the element rhs vector. Old CMISS name MELGE.
-  SUBROUTINE EQUATIONS_MATRICES_ELEMENT_VECTOR_CALCULATE(ELEMENT_VECTOR,UPDATE_VECTOR,ELEMENT_NUMBER,ROWS_FIELD_VARIABLE, &
-    & ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_ElementVectorCalculate(elementVector,updateVector,elementNumber,rowsFieldVariable,err,error,*)
 
     !Argument variables
-    TYPE(ELEMENT_VECTOR_TYPE) :: ELEMENT_VECTOR !<The element vector to calculate.
-    LOGICAL :: UPDATE_VECTOR !<Is .TRUE. if the element vector is to be updated, .FALSE. if not.
-    INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to calculate
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: ROWS_FIELD_VARIABLE !<A pointer to the field variable associated with the rows
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(ElementVectorType) :: elementVector !<The element vector to calculate.
+    LOGICAL :: updateVector !<Is .TRUE. if the element vector is to be updated, .FALSE. if not.
+    INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to calculate
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: rowsFieldVariable !<A pointer to the field variable associated with the rows
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: component_idx,derivative,derivative_idx,local_ny,node,node_idx,version,dataPointIdx,localDataPointNumber
-    TYPE(BASIS_TYPE), POINTER :: BASIS
-    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: ELEMENTS_TOPOLOGY
+    INTEGER(INTG) :: componentIdx,derivative,derivativeIdx,localDOFIdx,node,localNodeIdx,version,dataPointIdx,localDataPointNumber
+    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: elementsTopology
     TYPE(DecompositionDataPointsType), POINTER :: decompositionData
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("EQUATIONS_MATRICES_ELEMENT_VECTOR_CALCULATE",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_ElementVectorCalculate",err,error,*999)
 
-    IF(ASSOCIATED(ROWS_FIELD_VARIABLE)) THEN
-      !Calculate the rows for the element vector
-      ELEMENT_VECTOR%NUMBER_OF_ROWS=0
-      IF(UPDATE_VECTOR) THEN
-        DO component_idx=1,ROWS_FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-          ELEMENTS_TOPOLOGY=>ROWS_FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN%TOPOLOGY%ELEMENTS
-          IF(ELEMENT_NUMBER>=1.AND.ELEMENT_NUMBER<=ELEMENTS_TOPOLOGY%TOTAL_NUMBER_OF_ELEMENTS) THEN
-            SELECT CASE(ROWS_FIELD_VARIABLE%COMPONENTS(component_idx)%INTERPOLATION_TYPE)
-            CASE(FIELD_CONSTANT_INTERPOLATION)
-              local_ny=ROWS_FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
-              ELEMENT_VECTOR%NUMBER_OF_ROWS=ELEMENT_VECTOR%NUMBER_OF_ROWS+1
-              ELEMENT_VECTOR%ROW_DOFS(ELEMENT_VECTOR%NUMBER_OF_ROWS)=local_ny
-            CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-              local_ny=ROWS_FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP% &
-                & ELEMENTS(ELEMENT_NUMBER)
-              ELEMENT_VECTOR%NUMBER_OF_ROWS=ELEMENT_VECTOR%NUMBER_OF_ROWS+1
-              ELEMENT_VECTOR%ROW_DOFS(ELEMENT_VECTOR%NUMBER_OF_ROWS)=local_ny
-            CASE(FIELD_NODE_BASED_INTERPOLATION)
-              BASIS=>ELEMENTS_TOPOLOGY%ELEMENTS(ELEMENT_NUMBER)%BASIS
-              DO node_idx=1,BASIS%NUMBER_OF_NODES
-                node=ELEMENTS_TOPOLOGY%ELEMENTS(ELEMENT_NUMBER)%ELEMENT_NODES(node_idx)
-                DO derivative_idx=1,BASIS%NUMBER_OF_DERIVATIVES(node_idx)
-                  derivative=ELEMENTS_TOPOLOGY%ELEMENTS(ELEMENT_NUMBER)%ELEMENT_DERIVATIVES(derivative_idx,node_idx)
-                  version=ELEMENTS_TOPOLOGY%ELEMENTS(ELEMENT_NUMBER)%elementVersions(derivative_idx,node_idx)
-                  local_ny=ROWS_FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node)% &
-                    & DERIVATIVES(derivative)%VERSIONS(version)
-                  ELEMENT_VECTOR%NUMBER_OF_ROWS=ELEMENT_VECTOR%NUMBER_OF_ROWS+1
-                  ELEMENT_VECTOR%ROW_DOFS(ELEMENT_VECTOR%NUMBER_OF_ROWS)=local_ny
-                ENDDO !derivative_idx
-              ENDDO !node_idx
-            CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
-            CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
-            CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
-              decompositionData=>ROWS_FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN%DECOMPOSITION%TOPOLOGY%dataPoints
-              DO dataPointIdx=1,decompositionData%elementDataPoint(ELEMENT_NUMBER)%numberOfProjectedData
-                localDataPointNumber=decompositionData%elementDataPoint(ELEMENT_NUMBER)% &
-                  & dataIndices(dataPointIdx)%localNumber
-                local_ny=ROWS_FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP% &
-                  & DATA_POINTS(localDataPointNumber)
-                ELEMENT_VECTOR%NUMBER_OF_ROWS=ELEMENT_VECTOR%NUMBER_OF_ROWS+1
-                ELEMENT_VECTOR%ROW_DOFS(ELEMENT_VECTOR%NUMBER_OF_ROWS)=local_ny
-              ENDDO
-            CASE DEFAULT
-              LOCAL_ERROR="The interpolation type of "// &
-                & TRIM(NumberToVString(ROWS_FIELD_VARIABLE%COMPONENTS(component_idx)%INTERPOLATION_TYPE,"*",ERR,ERROR))// &
-                & " is invalid for component number "// &
-                & TRIM(NumberToVString(component_idx,"*",ERR,ERROR))// &
-                & " of rows field variable type "// &
-                & TRIM(NumberToVString(ROWS_FIELD_VARIABLE%VARIABLE_TYPE,"*",ERR,ERROR))//"."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)          
-            END SELECT
-          ELSE
-            LOCAL_ERROR="Element number "//TRIM(NumberToVString(ELEMENT_NUMBER,"*",ERR,ERROR))// &
-              & " is invalid for component number "//TRIM(NumberToVString(component_idx,"*",ERR,ERROR))// &
-              & " of rows field variable type "//TRIM(NumberToVString(ROWS_FIELD_VARIABLE%VARIABLE_TYPE,"*",ERR,ERROR))// &
-              & ". The element number must be between 1 and "// &
-              & TRIM(NumberToVString(ELEMENTS_TOPOLOGY%TOTAL_NUMBER_OF_ELEMENTS,"*",ERR,ERROR))//"."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ENDDO !component_idx
-        ELEMENT_VECTOR%VECTOR=0.0_DP
-      ENDIF
-    ELSE
-      CALL FlagError("Rows field variable is not associated.",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(rowsFieldVariable)) CALL FlagError("Rows field variable is not associated.",err,error,*999)
+    
+    !Calculate the rows for the element vector
+    elementVector%numberOfRows=0
+    IF(updateVector) THEN
+      DO componentIdx=1,rowsFieldVariable%NUMBER_OF_COMPONENTS
+        elementsTopology=>rowsFieldVariable%components(componentIdx)%domain%topology%elements
+        IF(elementNumber<1.OR.elementNumber>elementsTopology%TOTAL_NUMBER_OF_ELEMENTS) THEN
+          localError="Element number "//TRIM(NumberToVString(elementNumber,"*",err,error))// &
+            & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+            & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))// &
+            & ". The element number must be between 1 and "// &
+            & TRIM(NumberToVString(elementsTopology%TOTAL_NUMBER_OF_ELEMENTS,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        SELECT CASE(rowsFieldVariable%components(componentIdx)%INTERPOLATION_TYPE)
+        CASE(FIELD_CONSTANT_INTERPOLATION)
+          localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
+          elementVector%numberOfRows=elementVector%numberOfRows+1
+          elementVector%rowDOFS(elementVector%numberOfRows)=localDOFIdx
+        CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+          localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%elements(elementNumber)
+          elementVector%numberOfRows=elementVector%numberOfRows+1
+          elementVector%rowDOFS(elementVector%numberOfRows)=localDOFIdx
+        CASE(FIELD_NODE_BASED_INTERPOLATION)
+          basis=>elementsTopology%elements(elementNumber)%basis
+          DO localNodeIdx=1,basis%NUMBER_OF_NODES
+            node=elementsTopology%elements(elementNumber)%ELEMENT_NODES(localNodeIdx)
+            DO derivativeIdx=1,basis%NUMBER_OF_DERIVATIVES(localNodeIdx)
+              derivative=elementsTopology%elements(elementNumber)%ELEMENT_DERIVATIVES(derivativeIdx,localNodeIdx)
+              version=elementsTopology%elements(elementNumber)%elementVersions(derivativeIdx,localNodeIdx)
+              localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%nodes(node)% &
+                & derivatives(derivative)%versions(version)
+              elementVector%numberOfRows=elementVector%numberOfRows+1
+              elementVector%rowDOFS(elementVector%numberOfRows)=localDOFIdx
+            ENDDO !derivativeIdx
+          ENDDO !localNodeIdx
+        CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
+          decompositionData=>rowsFieldVariable%components(componentIdx)%domain%decomposition%topology%dataPoints
+          DO dataPointIdx=1,decompositionData%elementDataPoint(elementNumber)%numberOfProjectedData
+            localDataPointNumber=decompositionData%elementDataPoint(elementNumber)% &
+              & dataIndices(dataPointIdx)%localNumber
+            localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP% &
+              & DATA_POINTS(localDataPointNumber)
+            elementVector%numberOfRows=elementVector%numberOfRows+1
+            elementVector%rowDOFS(elementVector%numberOfRows)=localDOFIdx
+          ENDDO !dataPointIdx
+        CASE DEFAULT
+          localError="The interpolation type of "// &
+            & TRIM(NumberToVString(rowsFieldVariable%components(componentIdx)%INTERPOLATION_TYPE,"*",err,error))// &
+            & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+            & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)          
+        END SELECT
+      ENDDO !componentIdx
+      elementVector%vector=0.0_DP
     ENDIF
     
-    EXITS("EQUATIONS_MATRICES_ELEMENT_VECTOR_CALCULATE")
+    EXITS("EquationsMatrices_ElementVectorCalculate")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MATRICES_ELEMENT_VECTOR_CALCULATE",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_ElementVectorCalculate",err,error)
     RETURN 1
     
-  END SUBROUTINE EQUATIONS_MATRICES_ELEMENT_VECTOR_CALCULATE
+  END SUBROUTINE EquationsMatrices_ElementVectorCalculate
 
   !
   !================================================================================================================================
   !
 
   !>Finalise an element vector and deallocate all memory
-  SUBROUTINE EQUATIONS_MATRICES_ELEMENT_VECTOR_FINALISE(ELEMENT_VECTOR,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_ElementVectorFinalise(elementVector,err,error,*)
 
     !Argument variables
-    TYPE(ELEMENT_VECTOR_TYPE):: ELEMENT_VECTOR !<The element vector to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(ElementVectorType) :: elementVector !<The element vector to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     
-    ENTERS("EQUATIONS_MATRICES_ELEMENT_VECTOR_FINALISE",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_ElementVectorFinalise",err,error,*999)
 
-    IF(ALLOCATED(ELEMENT_VECTOR%ROW_DOFS)) DEALLOCATE(ELEMENT_VECTOR%ROW_DOFS)
-    IF(ALLOCATED(ELEMENT_VECTOR%VECTOR)) DEALLOCATE(ELEMENT_VECTOR%VECTOR)
+    IF(ALLOCATED(elementVector%rowDOFS)) DEALLOCATE(elementVector%rowDOFS)
+    IF(ALLOCATED(elementVector%vector)) DEALLOCATE(elementVector%vector)
     
-    EXITS("EQUATIONS_MATRICES_ELEMENT_VECTOR_FINALISE")
+    EXITS("EquationsMatrices_ElementVectorFinalise")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MATRICES_ELEMENT_VECTOR_FINALISE",ERR,ERROR)
-
+999 ERRORSEXITS("EquationsMatrices_ElementVectorFinalise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_ELEMENT_VECTOR_FINALISE
+    
+  END SUBROUTINE EquationsMatrices_ElementVectorFinalise
 
   !
   !================================================================================================================================
   !
 
   !>Initialise the element vector
-  SUBROUTINE EquationsMatrices_ElementVectorInitialise(ELEMENT_VECTOR,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_ElementVectorInitialise(elementVector,err,error,*)
 
     !Argument variables
-    TYPE(ELEMENT_VECTOR_TYPE) :: ELEMENT_VECTOR !The element vector to initialise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(ElementVectorType) :: elementVector !The element vector to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("EquationsMatrices_ElementVectorInitialise",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_ElementVectorInitialise",err,error,*999)
 
-    ELEMENT_VECTOR%NUMBER_OF_ROWS=0
-    ELEMENT_VECTOR%MAX_NUMBER_OF_ROWS=0
+    elementVector%numberOfRows=0
+    elementVector%maxNumberOfRows=0
        
     EXITS("EquationsMatrices_ElementVectorInitialise")
     RETURN
-999 ERRORSEXITS("EquationsMatrices_ElementVectorInitialise",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_ElementVectorInitialise",err,error)
     RETURN 1
+    
   END SUBROUTINE EquationsMatrices_ElementVectorInitialise
 
   !
@@ -1209,370 +1096,320 @@ CONTAINS
   !
 
   !>Sets up the element vector for the row field variables.
-  SUBROUTINE EQUATIONS_MATRICES_ELEMENT_VECTOR_SETUP(elementVector,rowsFieldVariable,err,error,*)
+  SUBROUTINE EquationsMatrices_ElementVectorSetup(elementVector,rowsFieldVariable,err,error,*)
 
     !Argument variables
-    TYPE(ELEMENT_VECTOR_TYPE) :: elementVector !<The element vector to setup
+    TYPE(ElementVectorType) :: elementVector !<The element vector to setup
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: rowsFieldVariable !<A pointer to the field variable associated with the rows
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR,componentIdx
+    INTEGER(INTG) :: dummyErr,componentIdx
     TYPE(VARYING_STRING) :: dummyError
 
-    ENTERS("EQUATIONS_MATRICES_ELEMENT_VECTOR_SETUP",err,error,*998)
+    ENTERS("EquationsMatrices_ElementVectorSetup",err,error,*998)
 
-    IF(ASSOCIATED(rowsFieldVariable)) THEN
-      elementVector%MAX_NUMBER_OF_ROWS = 0
-      DO componentIdx=1,rowsFieldVariable%NUMBER_OF_COMPONENTS
-        elementVector%MAX_NUMBER_OF_ROWS=elementVector%MAX_NUMBER_OF_ROWS+ &
-          & rowsFieldVariable%COMPONENTS(componentIdx)%maxNumberElementInterpolationParameters
-      ENDDO
-      IF(ALLOCATED(elementVector%ROW_DOFS)) THEN
-        CALL FlagError("Element vector row dofs is already allocated.",err,error,*999)
-      ELSE
-        ALLOCATE(elementVector%ROW_DOFS(elementVector%MAX_NUMBER_OF_ROWS),STAT=err)
-        IF(ERR/=0) CALL FlagError("Could not allocate element vector row dofs.",err,error,*999)
-      ENDIF
-      IF(ALLOCATED(elementVector%VECTOR)) THEN
-        CALL FlagError("Element vector vector already allocated.",err,error,*999)
-      ELSE
-        ALLOCATE(elementVector%VECTOR(elementVector%MAX_NUMBER_OF_ROWS),STAT=err)
-        IF(ERR/=0) CALL FlagError("Could not allocate element vector vector.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Rows field variable is not associated.",err,error,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(rowsFieldVariable)) CALL FlagError("Rows field variable is not associated.",err,error,*999)
+    IF(ALLOCATED(elementVector%rowDOFS)) CALL FlagError("Element vector row dofs is already allocated.",err,error,*999)
+    IF(ALLOCATED(elementVector%vector)) CALL FlagError("Element vector vector already allocated.",err,error,*999)
+   
+    elementVector%maxNumberOfRows = 0
+    DO componentIdx=1,rowsFieldVariable%NUMBER_OF_COMPONENTS
+      elementVector%maxNumberOfRows=elementVector%maxNumberOfRows+ &
+        & rowsFieldVariable%components(componentIdx)%maxNumberElementInterpolationParameters
+    ENDDO !componentIdx
+    ALLOCATE(elementVector%rowDOFS(elementVector%maxNumberOfRows),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate element vector row dofs.",err,error,*999)
+    ALLOCATE(elementVector%vector(elementVector%maxNumberOfRows),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate element vector vector.",err,error,*999)
     
-    EXITS("EQUATIONS_MATRICES_ELEMENT_VECTOR_SETUP")
+    EXITS("EquationsMatrices_ElementVectorSetup")
     RETURN
-999 CALL EQUATIONS_MATRICES_ELEMENT_VECTOR_FINALISE(elementVector,DUMMY_ERR,dummyError,*998)
-998 ERRORSEXITS("EQUATIONS_MATRICES_ELEMENT_VECTOR_SETUP",err,error)
+999 CALL EquationsMatrices_ElementVectorFinalise(elementVector,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMatrices_ElementVectorSetup",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_ELEMENT_VECTOR_SETUP
+    
+  END SUBROUTINE EquationsMatrices_ElementVectorSetup
 
   !
   !================================================================================================================================
   !
 
-  !>Adds the element matrices and rhs vector into the equations matrices and rhs vector.
-  SUBROUTINE EQUATIONS_MATRICES_ELEMENT_ADD(EQUATIONS_MATRICES,ERR,ERROR,*)
+  !>Adds the element matrices and rhs vector into the vector equations matrices and rhs vector.
+  SUBROUTINE EquationsMatrices_ElementAdd(vectorMatrices,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer to the equations matrices
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector equations matrices
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: column_idx,matrix_idx,row_idx
-    REAL(DP) :: SUM
-    TYPE(EQUATIONS_MATRICES_DYNAMIC_TYPE), POINTER :: DYNAMIC_MATRICES
-    TYPE(EQUATIONS_MATRICES_LINEAR_TYPE), POINTER :: LINEAR_MATRICES
-    TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: NONLINEAR_MATRICES
-    TYPE(EQUATIONS_MATRICES_RHS_TYPE), POINTER :: RHS_VECTOR
-    TYPE(EQUATIONS_MATRICES_SOURCE_TYPE), POINTER :: SOURCE_VECTOR
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: EQUATIONS_MATRIX
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: columnIdx,matrixIdx,rowIdx
+    REAL(DP) :: sum
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
+    TYPE(VARYING_STRING) :: localError
     
 #ifdef TAUPROF
-    CALL TAU_STATIC_PHASE_START("EQUATIONS_MATRICES_ELEMENT_ADD()")
+    CALL TAU_STATIC_PHASE_START("EquationsMatrices_ElementAdd()")
 #endif
 
-    ENTERS("EQUATIONS_MATRICES_ELEMENT_ADD",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_ElementAdd",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      DYNAMIC_MATRICES=>EQUATIONS_MATRICES%DYNAMIC_MATRICES
-      IF(ASSOCIATED(DYNAMIC_MATRICES)) THEN
-        !Add the element matrices
-        DO matrix_idx=1,DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES
-          EQUATIONS_MATRIX=>DYNAMIC_MATRICES%MATRICES(matrix_idx)%PTR
-          IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
-            IF(EQUATIONS_MATRIX%UPDATE_MATRIX) THEN
-              !Handle lumped matrices
-              IF(EQUATIONS_MATRIX%LUMPED) THEN
-                DO row_idx=1,EQUATIONS_MATRIX%ELEMENT_MATRIX%NUMBER_OF_ROWS
-                  SUM=0.0_DP
-                  DO column_idx=1,EQUATIONS_MATRIX%ELEMENT_MATRIX%NUMBER_OF_COLUMNS
-                    SUM=SUM+EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(row_idx,column_idx)
-                    EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(row_idx,column_idx)=0.0_DP
-                  ENDDO !column_idx
-                  EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(row_idx,row_idx)=SUM
-                  !Add the element matrice into the distributed equations matrix
-                  CALL DISTRIBUTED_MATRIX_VALUES_ADD(EQUATIONS_MATRIX%MATRIX,EQUATIONS_MATRIX%ELEMENT_MATRIX%ROW_DOFS(row_idx), &
-                    & EQUATIONS_MATRIX%ELEMENT_MATRIX%COLUMN_DOFS(row_idx),EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(row_idx, &
-                    & row_idx),ERR,ERROR,*999)
-                ENDDO !row_idx
-              ELSE
-                !Add the element matrice into the distributed equations matrix
-                CALL DISTRIBUTED_MATRIX_VALUES_ADD(EQUATIONS_MATRIX%MATRIX,EQUATIONS_MATRIX%ELEMENT_MATRIX%ROW_DOFS(1: &
-                  & EQUATIONS_MATRIX%ELEMENT_MATRIX%NUMBER_OF_ROWS),EQUATIONS_MATRIX%ELEMENT_MATRIX%COLUMN_DOFS(1: &
-                  & EQUATIONS_MATRIX%ELEMENT_MATRIX%NUMBER_OF_COLUMNS),EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(1: &
-                  & EQUATIONS_MATRIX%ELEMENT_MATRIX%NUMBER_OF_ROWS,1:EQUATIONS_MATRIX%ELEMENT_MATRIX%NUMBER_OF_COLUMNS), &
-                  & ERR,ERROR,*999)
-              ENDIF
-            ENDIF
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not allocated.",err,error,*999)
+    
+    dynamicMatrices=>vectorMatrices%dynamicMatrices
+    IF(ASSOCIATED(dynamicMatrices)) THEN
+      !Add the element matrices
+      DO matrixIdx=1,dynamicMatrices%numberOfDynamicMatrices
+        NULLIFY(equationsMatrix)
+        CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,matrixIdx,equationsMatrix,err,error,*999)
+        IF(equationsMatrix%updateMatrix) THEN
+          !Handle lumped matrices
+          IF(equationsMatrix%lumped) THEN
+            DO rowIdx=1,equationsMatrix%elementMatrix%numberOfRows
+              sum=0.0_DP
+              DO columnIdx=1,equationsMatrix%elementMatrix%numberOfColumns
+                sum=sum+equationsMatrix%elementMatrix%matrix(rowIdx,columnIdx)
+                equationsMatrix%elementMatrix%matrix(rowIdx,columnIdx)=0.0_DP
+              ENDDO !columnIdx
+              equationsMatrix%elementMatrix%matrix(rowIdx,rowIdx)=sum
+              !Add the element matrices into the distributed equations matrix
+              CALL DistributedMatrix_ValuesAdd(equationsMatrix%matrix,equationsMatrix%elementMatrix%rowDOFS(rowIdx), &
+                & equationsMatrix%elementMatrix%columnDOFS(rowIdx),equationsMatrix%elementMatrix%matrix(rowIdx,rowIdx), &
+                & err,error,*999)
+            ENDDO !rowIdx
           ELSE
-            LOCAL_ERROR="Equations matrix for dynamic matrix number "//TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))// &
-              & " is not associated."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            !Add the element matrice into the distributed equations matrix
+            CALL DistributedMatrix_ValuesAdd(equationsMatrix%matrix,equationsMatrix%elementMatrix%rowDOFS(1: &
+              & equationsMatrix%elementMatrix%numberOfRows),equationsMatrix%elementMatrix%columnDOFS(1: &
+              & equationsMatrix%elementMatrix%numberOfColumns),equationsMatrix%elementMatrix%matrix(1: &
+              & equationsMatrix%elementMatrix%numberOfRows,1:equationsMatrix%elementMatrix%numberOfColumns), &
+              & err,error,*999)
           ENDIF
-        ENDDO !matrix_idx
-      ENDIF
-      LINEAR_MATRICES=>EQUATIONS_MATRICES%LINEAR_MATRICES
-      IF(ASSOCIATED(LINEAR_MATRICES)) THEN
-        !Add the element matrices
-        DO matrix_idx=1,LINEAR_MATRICES%NUMBER_OF_LINEAR_MATRICES
-          EQUATIONS_MATRIX=>LINEAR_MATRICES%MATRICES(matrix_idx)%PTR
-          IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
-            IF(EQUATIONS_MATRIX%UPDATE_MATRIX) THEN
-              !Handle lumped matrices
-              IF(EQUATIONS_MATRIX%LUMPED) THEN
-                DO row_idx=1,EQUATIONS_MATRIX%ELEMENT_MATRIX%NUMBER_OF_ROWS
-                  SUM=0.0_DP
-                  DO column_idx=1,EQUATIONS_MATRIX%ELEMENT_MATRIX%NUMBER_OF_COLUMNS
-                    SUM=SUM+EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(row_idx,column_idx)
-                    EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(row_idx,column_idx)=0.0_DP
-                  ENDDO !column_idx
-                  EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(row_idx,row_idx)=SUM
-                  !Add the element matrice into the distributed equations matrix
-                  CALL DISTRIBUTED_MATRIX_VALUES_ADD(EQUATIONS_MATRIX%MATRIX,EQUATIONS_MATRIX%ELEMENT_MATRIX%ROW_DOFS(row_idx), &
-                    & EQUATIONS_MATRIX%ELEMENT_MATRIX%COLUMN_DOFS(row_idx),EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(row_idx, &
-                    & row_idx),ERR,ERROR,*999)
-                ENDDO !row_idx
-              ELSE
-                !Add the element matrice into the distributed equations matrix
-                CALL DISTRIBUTED_MATRIX_VALUES_ADD(EQUATIONS_MATRIX%MATRIX,EQUATIONS_MATRIX%ELEMENT_MATRIX%ROW_DOFS(1: &
-                  & EQUATIONS_MATRIX%ELEMENT_MATRIX%NUMBER_OF_ROWS),EQUATIONS_MATRIX%ELEMENT_MATRIX%COLUMN_DOFS(1: &
-                  & EQUATIONS_MATRIX%ELEMENT_MATRIX%NUMBER_OF_COLUMNS),EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(1: &
-                  & EQUATIONS_MATRIX%ELEMENT_MATRIX%NUMBER_OF_ROWS,1:EQUATIONS_MATRIX%ELEMENT_MATRIX%NUMBER_OF_COLUMNS), &
-                  & ERR,ERROR,*999)
-              ENDIF
-            ENDIF
-          ELSE
-            LOCAL_ERROR="Equations matrix for linear matrix number "//TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))// &
-              & " is not associated."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ENDDO !matrix_idx
-      ENDIF
-      NONLINEAR_MATRICES=>EQUATIONS_MATRICES%NONLINEAR_MATRICES
-      IF(ASSOCIATED(NONLINEAR_MATRICES)) THEN
-        IF(NONLINEAR_MATRICES%UPDATE_RESIDUAL) THEN
-          !Add the residual element vector
-          CALL DISTRIBUTED_VECTOR_VALUES_ADD(NONLINEAR_MATRICES%RESIDUAL,NONLINEAR_MATRICES%ELEMENT_RESIDUAL%ROW_DOFS(1: &
-            & NONLINEAR_MATRICES%ELEMENT_RESIDUAL%NUMBER_OF_ROWS),NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR(1:NONLINEAR_MATRICES% &
-            & ELEMENT_RESIDUAL%NUMBER_OF_ROWS),ERR,ERROR,*999)
         ENDIF
-      ENDIF
-      RHS_VECTOR=>EQUATIONS_MATRICES%RHS_VECTOR
-      IF(ASSOCIATED(RHS_VECTOR)) THEN
-        IF(RHS_VECTOR%UPDATE_VECTOR) THEN
-          !Add the rhs element vector
-          CALL DISTRIBUTED_VECTOR_VALUES_ADD(RHS_VECTOR%VECTOR,RHS_VECTOR%ELEMENT_VECTOR%ROW_DOFS(1: &
-            & RHS_VECTOR%ELEMENT_VECTOR%NUMBER_OF_ROWS),RHS_VECTOR%ELEMENT_VECTOR%VECTOR(1:RHS_VECTOR% &
-            & ELEMENT_VECTOR%NUMBER_OF_ROWS),ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-      SOURCE_VECTOR=>EQUATIONS_MATRICES%SOURCE_VECTOR
-      IF(ASSOCIATED(SOURCE_VECTOR)) THEN
-        IF(SOURCE_VECTOR%UPDATE_VECTOR) THEN
-          !Add the rhs element vector
-          CALL DISTRIBUTED_VECTOR_VALUES_ADD(SOURCE_VECTOR%VECTOR,SOURCE_VECTOR%ELEMENT_VECTOR%ROW_DOFS(1: &
-            & SOURCE_VECTOR%ELEMENT_VECTOR%NUMBER_OF_ROWS),SOURCE_VECTOR%ELEMENT_VECTOR%VECTOR(1:SOURCE_VECTOR% &
-            & ELEMENT_VECTOR%NUMBER_OF_ROWS),ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not allocated.",ERR,ERROR,*999)
+      ENDDO !matrixIdx
     ENDIF
+    linearMatrices=>vectorMatrices%linearMatrices
+    IF(ASSOCIATED(linearMatrices)) THEN
+      !Add the element matrices
+      DO matrixIdx=1,linearMatrices%numberOfLinearMatrices
+        NULLIFY(equationsMatrix)
+        CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIdx,equationsMatrix,err,error,*999)
+        IF(equationsMatrix%updateMatrix) THEN
+          !Handle lumped matrices
+          IF(equationsMatrix%lumped) THEN
+            DO rowIdx=1,equationsMatrix%elementMatrix%numberOfRows
+              sum=0.0_DP
+              DO columnIdx=1,equationsMatrix%elementMatrix%numberOfColumns
+                sum=sum+equationsMatrix%elementMatrix%matrix(rowIdx,columnIdx)
+                equationsMatrix%elementMatrix%matrix(rowIdx,columnIdx)=0.0_DP
+              ENDDO !columnIdx
+              equationsMatrix%elementMatrix%matrix(rowIdx,rowIdx)=sum
+              !Add the element matrice into the distributed equations matrix
+              CALL DistributedMatrix_ValuesAdd(equationsMatrix%matrix,equationsMatrix%elementMatrix%rowDOFS(rowIdx), &
+                & equationsMatrix%elementMatrix%columnDOFS(rowIdx),equationsMatrix%elementMatrix%matrix(rowIdx, &
+                & rowIdx),err,error,*999)
+            ENDDO !rowIdx
+          ELSE
+            !Add the element matrice into the distributed equations matrix
+            CALL DistributedMatrix_ValuesAdd(equationsMatrix%matrix,equationsMatrix%elementMatrix%rowDOFS(1: &
+              & equationsMatrix%elementMatrix%numberOfRows),equationsMatrix%elementMatrix%columnDOFS(1: &
+              & equationsMatrix%elementMatrix%numberOfColumns),equationsMatrix%elementMatrix%matrix(1: &
+              & equationsMatrix%elementMatrix%numberOfRows,1:equationsMatrix%elementMatrix%numberOfColumns), &
+              & err,error,*999)
+          ENDIF
+        ENDIF
+      ENDDO !matrixIdx
+    ENDIF
+    nonlinearMatrices=>vectorMatrices%nonlinearMatrices
+    IF(ASSOCIATED(nonlinearMatrices)) THEN
+      IF(nonlinearMatrices%updateResidual) THEN
+        !Add the residual element vector
+        CALL DistributedVector_ValuesAdd(nonlinearMatrices%residual,nonlinearMatrices%elementResidual%rowDOFS(1: &
+          & nonlinearMatrices%elementResidual%numberOfRows),nonlinearMatrices%elementResidual%vector(1:nonlinearMatrices% &
+          & elementResidual%numberOfRows),err,error,*999)
+      ENDIF
+    ENDIF
+    rhsVector=>vectorMatrices%rhsVector
+    IF(ASSOCIATED(rhsVector)) THEN
+      IF(rhsVector%updateVector) THEN
+        !Add the rhs element vector
+        CALL DistributedVector_ValuesAdd(rhsVector%vector,rhsVector%elementVector%rowDOFS(1: &
+          & rhsVector%elementVector%numberOfRows),rhsVector%elementVector%vector(1:rhsVector% &
+          & elementVector%numberOfRows),err,error,*999)
+      ENDIF
+    ENDIF
+    sourceVector=>vectorMatrices%sourceVector
+    IF(ASSOCIATED(sourceVector)) THEN
+      IF(sourceVector%updateVector) THEN
+        !Add the rhs element vector
+        CALL DistributedVector_ValuesAdd(sourceVector%vector,sourceVector%elementVector%rowDOFS(1: &
+          & sourceVector%elementVector%numberOfRows),sourceVector%elementVector%vector(1:sourceVector% &
+          & elementVector%numberOfRows),err,error,*999)
+      ENDIF
+    ENDIF
+
 #ifdef TAUPROF
-    CALL TAU_STATIC_PHASE_STOP("EQUATIONS_MATRICES_ELEMENT_ADD()")
+    CALL TAU_STATIC_PHASE_STOP("EquationsMatrices_ElementAdd()")
 #endif
     
-    EXITS("EQUATIONS_MATRICES_ELEMENT_ADD")
+    EXITS("EquationsMatrices_ElementAdd")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MATRICES_ELEMENT_ADD",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_ElementAdd",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_ELEMENT_ADD
+    
+  END SUBROUTINE EquationsMatrices_ElementAdd
 
   !
   !================================================================================================================================
   !
 
-  !>Calculate the positions in the equations matrices and rhs of the element matrices and rhs vector. Old CMISS name MELGE.
-  SUBROUTINE EQUATIONS_MATRICES_ELEMENT_CALCULATE(EQUATIONS_MATRICES,ELEMENT_NUMBER,ERR,ERROR,*)
+  !>Calculate the positions in the vector equations matrices and rhs of the element matrices and rhs vector. Old CMISS name MELGE.
+  SUBROUTINE EquationsMatrices_ElementCalculate(vectorMatrices,elementNumber,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer to the equations matrices
-    INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to calculate the mappings for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector equations matrices
+    INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to calculate the mappings for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
-    TYPE(EQUATIONS_JACOBIAN_TYPE), POINTER :: JACOBIAN_MATRIX
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
-    TYPE(EQUATIONS_MAPPING_DYNAMIC_TYPE), POINTER :: DYNAMIC_MAPPING
-    TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: LINEAR_MAPPING
-    TYPE(EQUATIONS_MAPPING_NONLINEAR_TYPE), POINTER :: NONLINEAR_MAPPING
-    TYPE(EQUATIONS_MAPPING_RHS_TYPE), POINTER :: RHS_MAPPING
-    TYPE(EQUATIONS_MATRICES_DYNAMIC_TYPE), POINTER :: DYNAMIC_MATRICES
-    TYPE(EQUATIONS_MATRICES_LINEAR_TYPE), POINTER :: LINEAR_MATRICES
-    TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: NONLINEAR_MATRICES
-    TYPE(EQUATIONS_MATRICES_RHS_TYPE), POINTER :: RHS_VECTOR
-    TYPE(EQUATIONS_MATRICES_SOURCE_TYPE), POINTER :: SOURCE_VECTOR
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: EQUATIONS_MATRIX
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE,COL_FIELD_VARIABLE
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: matrixIdx
+    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
+    TYPE(EquationsMappingLinearType), POINTER :: linearMapping
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,colFieldVariable
+    TYPE(VARYING_STRING) :: localError
 
 #ifdef TAUPROF
-    CALL TAU_STATIC_PHASE_START("EQUATIONS_MATRICES_ELEMENT_CALCULATE()")
+    CALL TAU_STATIC_PHASE_START("EquationsMatrices_ElementCalculate()")
 #endif
 
-    ENTERS("EQUATIONS_MATRICES_ELEMENT_CALCULATE",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_ElementCalculate",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      EQUATIONS_MAPPING=>EQUATIONS_MATRICES%EQUATIONS_MAPPING
-      IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-        DYNAMIC_MATRICES=>EQUATIONS_MATRICES%DYNAMIC_MATRICES
-        IF(ASSOCIATED(DYNAMIC_MATRICES)) THEN
-          !Calculate the row and columns for the dynamic equations matrices
-          DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING
-          IF(ASSOCIATED(DYNAMIC_MAPPING)) THEN
-            DO matrix_idx=1,DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES
-              EQUATIONS_MATRIX=>DYNAMIC_MATRICES%MATRICES(matrix_idx)%PTR
-              IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
-                FIELD_VARIABLE=>DYNAMIC_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%VARIABLE
-                CALL EQUATIONS_MATRICES_ELEMENT_MATRIX_CALCULATE(EQUATIONS_MATRIX%ELEMENT_MATRIX,EQUATIONS_MATRIX%UPDATE_MATRIX, &
-                  & [ELEMENT_NUMBER],[ELEMENT_NUMBER],FIELD_VARIABLE,FIELD_VARIABLE,ERR,ERROR,*999)
-              ELSE
-                LOCAL_ERROR="Equations matrix for dynamic matrix number "//TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))// &
-                  & " is not associated."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              ENDIF
-            ENDDO !matrix_idx
-          ELSE
-            CALL FlagError("Equations mapping dynamic mapping is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ENDIF
-        LINEAR_MATRICES=>EQUATIONS_MATRICES%LINEAR_MATRICES
-        IF(ASSOCIATED(LINEAR_MATRICES)) THEN
-          !Calculate the row and columns for the linear equations matrices
-          LINEAR_MAPPING=>EQUATIONS_MAPPING%LINEAR_MAPPING
-          IF(ASSOCIATED(LINEAR_MAPPING)) THEN
-            DO matrix_idx=1,LINEAR_MATRICES%NUMBER_OF_LINEAR_MATRICES
-              EQUATIONS_MATRIX=>LINEAR_MATRICES%MATRICES(matrix_idx)%PTR
-              IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
-                FIELD_VARIABLE=>LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%VARIABLE
-                CALL EQUATIONS_MATRICES_ELEMENT_MATRIX_CALCULATE(EQUATIONS_MATRIX%ELEMENT_MATRIX,EQUATIONS_MATRIX%UPDATE_MATRIX, &
-                  & [ELEMENT_NUMBER],[ELEMENT_NUMBER],FIELD_VARIABLE,FIELD_VARIABLE,ERR,ERROR,*999)
-              ELSE
-                LOCAL_ERROR="Equations matrix for linear matrix number "//TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))// &
-                  & " is not associated."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              ENDIF
-            ENDDO !matrix_idx
-          ELSE
-            CALL FlagError("Equations mapping linear mapping is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ENDIF
-        NONLINEAR_MATRICES=>EQUATIONS_MATRICES%NONLINEAR_MATRICES
-        IF(ASSOCIATED(NONLINEAR_MATRICES)) THEN
-          !Calculate the rows and columns of the Jacobian
-          NONLINEAR_MAPPING=>EQUATIONS_MAPPING%NONLINEAR_MAPPING
-          IF(ASSOCIATED(NONLINEAR_MAPPING)) THEN
-            FIELD_VARIABLE=>NONLINEAR_MAPPING%JACOBIAN_TO_VAR_MAP(1)%VARIABLE !Row field variable
-            DO matrix_idx=1,NONLINEAR_MATRICES%NUMBER_OF_JACOBIANS
-              JACOBIAN_MATRIX=>NONLINEAR_MATRICES%JACOBIANS(matrix_idx)%PTR
-              IF(ASSOCIATED(JACOBIAN_MATRIX)) THEN
-                COL_FIELD_VARIABLE=>NONLINEAR_MAPPING%JACOBIAN_TO_VAR_MAP(matrix_idx)%VARIABLE
-                CALL EQUATIONS_MATRICES_ELEMENT_MATRIX_CALCULATE(JACOBIAN_MATRIX%ELEMENT_JACOBIAN,JACOBIAN_MATRIX%UPDATE_JACOBIAN, &
-                  & [ELEMENT_NUMBER],[ELEMENT_NUMBER],FIELD_VARIABLE,COL_FIELD_VARIABLE,ERR,ERROR,*999)
-              ELSE
-                CALL FlagError("Jacobian matrix is not associated.",ERR,ERROR,*999)
-              ENDIF
-            ENDDO
-            !Calculate the rows of the equations residual
-            RHS_MAPPING=>EQUATIONS_MAPPING%RHS_MAPPING
-            IF(ASSOCIATED(RHS_MAPPING)) THEN
-              FIELD_VARIABLE=>RHS_MAPPING%RHS_VARIABLE
-            ELSE
-              FIELD_VARIABLE=>NONLINEAR_MAPPING%JACOBIAN_TO_VAR_MAP(1)%VARIABLE
-            ENDIF
-            CALL EQUATIONS_MATRICES_ELEMENT_VECTOR_CALCULATE(NONLINEAR_MATRICES%ELEMENT_RESIDUAL,NONLINEAR_MATRICES% &
-              & UPDATE_RESIDUAL,ELEMENT_NUMBER,FIELD_VARIABLE,ERR,ERROR,*999)
-            NONLINEAR_MATRICES%ELEMENT_RESIDUAL_CALCULATED=0
-          ELSE
-            CALL FlagError("Equations mapping nonlinear mapping is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ENDIF
-        RHS_VECTOR=>EQUATIONS_MATRICES%RHS_VECTOR
-        IF(ASSOCIATED(RHS_VECTOR)) THEN
-          RHS_MAPPING=>EQUATIONS_MAPPING%RHS_MAPPING
-          IF(ASSOCIATED(RHS_MAPPING)) THEN
-            !Calculate the rows  for the equations RHS
-            FIELD_VARIABLE=>RHS_MAPPING%RHS_VARIABLE
-            CALL EQUATIONS_MATRICES_ELEMENT_VECTOR_CALCULATE(RHS_VECTOR%ELEMENT_VECTOR,RHS_VECTOR%UPDATE_VECTOR,ELEMENT_NUMBER, &
-              & FIELD_VARIABLE,ERR,ERROR,*999)
-          ELSE
-            CALL FlagError("Equations mapping rhs mapping is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ENDIF
-        SOURCE_VECTOR=>EQUATIONS_MATRICES%SOURCE_VECTOR
-        IF(ASSOCIATED(SOURCE_VECTOR)) THEN
-          !Calculate the rows the equations source. The number of rows is not set by the source field so take the number of rows
-          !from the RHS vector in the first instance.
-          RHS_MAPPING=>EQUATIONS_MAPPING%RHS_MAPPING
-          IF(ASSOCIATED(RHS_MAPPING)) THEN
-            FIELD_VARIABLE=>RHS_MAPPING%RHS_VARIABLE
-            CALL EQUATIONS_MATRICES_ELEMENT_VECTOR_CALCULATE(SOURCE_VECTOR%ELEMENT_VECTOR,SOURCE_VECTOR%UPDATE_VECTOR, &
-              & ELEMENT_NUMBER,FIELD_VARIABLE,ERR,ERROR,*999)
-          ELSE
-            CALL FlagError("Equations mapping rhs mapping is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ENDIF
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated",err,error,*999)
+    NULLIFY(vectorMapping)
+    CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*999)
+
+    dynamicMatrices=>vectorMatrices%dynamicMatrices
+    IF(ASSOCIATED(dynamicMatrices)) THEN
+      !Calculate the row and columns for the dynamic equations matrices
+      NULLIFY(dynamicMapping)
+      CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
+      DO matrixIdx=1,dynamicMatrices%numberOfDynamicMatrices
+        NULLIFY(equationsMatrix)
+        CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,matrixIdx,equationsMatrix,err,error,*999)
+        fieldVariable=>dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%variable
+        CALL EquationsMatrices_ElementMatrixCalculate(equationsMatrix%elementMatrix,equationsMatrix%updateMatrix, &
+          & [elementNumber],[elementNumber],fieldVariable,fieldVariable,err,error,*999)
+      ENDDO !matrixIdx
+    ENDIF
+    linearMatrices=>vectorMatrices%linearMatrices
+    IF(ASSOCIATED(linearMatrices)) THEN
+      !Calculate the row and columns for the linear equations matrices
+      NULLIFY(linearMapping)
+      CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
+      DO matrixIdx=1,linearMatrices%numberOfLinearMatrices
+        NULLIFY(equationsMatrix)
+        CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIdx,equationsMatrix,err,error,*999)
+        fieldVariable=>linearMapping%equationsMatrixToVarMaps(matrixIdx)%VARIABLE
+        CALL EquationsMatrices_ElementMatrixCalculate(equationsMatrix%elementMatrix,equationsMatrix%updateMatrix, &
+          & [elementNumber],[elementNumber],fieldVariable,fieldVariable,err,error,*999)
+      ENDDO !matrixIdx
+    ENDIF
+    nonlinearMatrices=>vectorMatrices%nonlinearMatrices
+    IF(ASSOCIATED(nonlinearMatrices)) THEN
+      !Calculate the rows and columns of the Jacobian
+      NULLIFY(nonlinearMapping)
+      CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+      fieldVariable=>nonlinearMapping%jacobianToVarMap(1)%VARIABLE !Row field variable
+      DO matrixIdx=1,nonlinearMatrices%numberOfJacobians
+        NULLIFY(jacobianMatrix)
+        CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,matrixIdx,jacobianMatrix,err,error,*999)
+        colFieldVariable=>nonlinearMapping%jacobianToVarMap(matrixIdx)%variable
+        CALL EquationsMatrices_ElementMatrixCalculate(jacobianMatrix%elementJacobian,jacobianMatrix%updateJacobian, &
+          & [elementNumber],[elementNumber],fieldVariable,colFieldVariable,err,error,*999)
+      ENDDO !matrixIdx
+      !Calculate the rows of the equations residual
+      rhsMapping=>vectorMapping%rhsMapping
+      IF(ASSOCIATED(rhsMapping)) THEN
+        fieldVariable=>rhsMapping%rhsVariable
       ELSE
-        CALL FlagError("Equations mapping is not associated.",ERR,ERROR,*999)
+        fieldVariable=>nonlinearMapping%jacobianToVarMap(1)%variable
       ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not allocated",ERR,ERROR,*999)
+      CALL EquationsMatrices_ElementVectorCalculate(nonlinearMatrices%elementResidual,nonlinearMatrices%updateResidual, &
+        & elementNumber,fieldVariable,err,error,*999)
+      nonlinearMatrices%elementResidualCalculated=0
+    ENDIF
+    rhsVector=>vectorMatrices%rhsVector
+    IF(ASSOCIATED(rhsVector)) THEN
+      NULLIFY(rhsMapping)
+      CALL EquationsMappingVector_RHSMappingGet(vectorMapping,rhsMapping,err,error,*999)
+      !Calculate the rows for the vector equations RHS
+      fieldVariable=>rhsMapping%rhsVariable
+      CALL EquationsMatrices_ElementVectorCalculate(rhsVector%elementVector,rhsVector%updateVector,elementNumber,fieldVariable, &
+        & err,error,*999)
+    ENDIF
+    sourceVector=>vectorMatrices%sourceVector
+    IF(ASSOCIATED(sourceVector)) THEN
+      !Calculate the rows the equations source. The number of rows is not set by the source field so take the number of rows
+      !from the RHS vector in the first instance.
+      NULLIFY(rhsMapping)
+      CALL EquationsMappingVector_RHSMappingGet(vectorMapping,rhsMapping,err,error,*999)
+      fieldVariable=>rhsMapping%rhsVariable
+      CALL EquationsMatrices_ElementVectorCalculate(sourceVector%elementVector,sourceVector%updateVector,elementNumber, &
+        & fieldVariable,err,error,*999)
     ENDIF
     
 #ifdef TAUPROF
-    CALL TAU_STATIC_PHASE_STOP("EQUATIONS_MATRICES_ELEMENT_CALCULATE()")
+    CALL TAU_STATIC_PHASE_STOP("EquationsMatrices_ElementCalculate()")
 #endif
     
-    EXITS("EQUATIONS_MATRICES_ELEMENT_CALCULATE")
+    EXITS("EquationsMatrices_ElementCalculate")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MATRICES_ELEMENT_CALCULATE",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_ElementCalculate",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_ELEMENT_CALCULATE
+  END SUBROUTINE EquationsMatrices_ElementCalculate
 
   !
   !================================================================================================================================
   !
 
-  !>Calculate the positions in the equations matrices and rhs of the nodal matrices and rhs vector. Old CMISS name MELGE.
-  SUBROUTINE EquationsMatrices_NodalCalculate(equationsMatrices,nodeNumber,err,error,*)
+  !>Calculate the positions in the vector equations matrices and rhs of the nodal matrices and rhs vector. Old CMISS name MELGE.
+  SUBROUTINE EquationsMatrices_NodalCalculate(vectorMatrices,nodeNumber,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices !<A pointer to the equations matrices
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector equations matrices
     INTEGER(INTG), INTENT(IN) :: nodeNumber !<The nodal number to calculate the mappings for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: matrixIdx
-    TYPE(EQUATIONS_JACOBIAN_TYPE), POINTER :: jacobianMatrix
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: equationsMapping
-    TYPE(EQUATIONS_MAPPING_DYNAMIC_TYPE), POINTER :: dynamicMapping
-    TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: linearMapping
-    TYPE(EQUATIONS_MAPPING_NONLINEAR_TYPE), POINTER :: nonlinearMapping
-    TYPE(EQUATIONS_MAPPING_RHS_TYPE), POINTER :: rhsMapping
-    TYPE(EQUATIONS_MATRICES_DYNAMIC_TYPE), POINTER :: dynamicMatrices
-    TYPE(EQUATIONS_MATRICES_LINEAR_TYPE), POINTER :: linearMatrices
-    TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: nonlinearMatrices
-    TYPE(EQUATIONS_MATRICES_RHS_TYPE), POINTER :: rhsVector
-    TYPE(EQUATIONS_MATRICES_SOURCE_TYPE), POINTER :: sourceVector
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: equationsMatrix
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,columnFieldVariable
+    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
+    TYPE(EquationsMappingLinearType), POINTER :: linearMapping
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,colFieldVariable
     TYPE(VARYING_STRING) :: localError
 
 #ifdef TAUPROF
@@ -1581,111 +1418,78 @@ CONTAINS
 
     ENTERS("EquationsMatrices_NodalCalculate",err,error,*999)
 
-    IF(ASSOCIATED(equationsMatrices)) THEN
-      equationsMapping=>equationsMatrices%EQUATIONS_MAPPING
-      IF(ASSOCIATED(equationsMapping)) THEN
-        dynamicMatrices=>equationsMatrices%DYNAMIC_MATRICES
-        IF(ASSOCIATED(dynamicMatrices)) THEN
-          !Calculate the row and columns for the dynamic equations matrices
-          dynamicMapping=>equationsMapping%DYNAMIC_MAPPING
-          IF(ASSOCIATED(dynamicMapping)) THEN
-            DO matrixIdx=1,dynamicMatrices%NUMBER_OF_DYNAMIC_MATRICES
-              equationsMatrix=>dynamicMatrices%MATRICES(matrixIdx)%PTR
-              IF(ASSOCIATED(equationsMatrix)) THEN
-                fieldVariable=>dynamicMapping%EQUATIONS_MATRIX_TO_VAR_MAPS(matrixIdx)%VARIABLE
-                CALL EquationsMatrices_NodalMatrixCalculate(equationsMatrix%NodalMatrix,equationsMatrix%UPDATE_MATRIX, &
-                  & nodeNumber,nodeNumber,fieldVariable,fieldVariable,err,error,*999)
-              ELSE
-                localError="Equations matrix for dynamic matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
-                  & " is not associated."
-                CALL FlagError(localError,err,error,*999)
-              ENDIF
-            ENDDO !matrixIdx
-          ELSE
-            CALL FlagError("Equations mapping dynamic mapping is not associated.",err,error,*999)
-          ENDIF
-        ENDIF
-        linearMatrices=>equationsMatrices%LINEAR_MATRICES
-        IF(ASSOCIATED(linearMatrices)) THEN
-          !Calculate the row and columns for the linear equations matrices
-          linearMapping=>equationsMapping%LINEAR_MAPPING
-          IF(ASSOCIATED(linearMapping)) THEN
-            DO matrixIdx=1,linearMatrices%NUMBER_OF_LINEAR_MATRICES
-              equationsMatrix=>linearMatrices%MATRICES(matrixIdx)%PTR
-              IF(ASSOCIATED(equationsMatrix)) THEN
-                fieldVariable=>linearMapping%EQUATIONS_MATRIX_TO_VAR_MAPS(matrixIdx)%VARIABLE
-                CALL EquationsMatrices_NodalMatrixCalculate(equationsMatrix%NodalMatrix,equationsMatrix%UPDATE_MATRIX, &
-                  & nodeNumber,nodeNumber,fieldVariable,fieldVariable,err,error,*999)
-              ELSE
-                localError="Equations matrix for linear matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
-                  & " is not associated."
-                CALL FlagError(localError,err,error,*999)
-              ENDIF
-            ENDDO !matrixIdx
-          ELSE
-            CALL FlagError("Equations mapping linear mapping is not associated.",err,error,*999)
-          ENDIF
-        ENDIF
-        nonlinearMatrices=>equationsMatrices%NONLINEAR_MATRICES
-        IF(ASSOCIATED(nonlinearMatrices)) THEN
-          !Calculate the rows and columns of the Jacobian
-          nonlinearMapping=>equationsMapping%NONLINEAR_MAPPING
-          IF(ASSOCIATED(nonlinearMapping)) THEN
-            fieldVariable=>nonlinearMapping%JACOBIAN_TO_VAR_MAP(1)%VARIABLE !Row field variable
-            DO matrixIdx=1,nonlinearMatrices%NUMBER_OF_JACOBIANS
-              jacobianMatrix=>nonlinearMatrices%JACOBIANS(matrixIdx)%PTR
-              IF(ASSOCIATED(jacobianMatrix)) THEN
-                columnFieldVariable=>nonlinearMapping%JACOBIAN_TO_VAR_MAP(matrixIdx)%VARIABLE
-                CALL EquationsMatrices_NodalMatrixCalculate(jacobianMatrix%NodalJacobian,jacobianMatrix%UPDATE_JACOBIAN, &
-                  & nodeNumber,nodeNumber,fieldVariable,columnFieldVariable,err,error,*999)
-              ELSE
-                CALL FlagError("Jacobian matrix is not associated.",err,error,*999)
-              ENDIF
-            ENDDO
-            !Calculate the rows of the equations residual
-            rhsMapping=>equationsMapping%RHS_MAPPING
-            IF(ASSOCIATED(rhsMapping)) THEN
-              fieldVariable=>rhsMapping%RHS_VARIABLE
-            ELSE
-              fieldVariable=>nonlinearMapping%JACOBIAN_TO_VAR_MAP(1)%VARIABLE
-            ENDIF
-            CALL EquationsMatrices_NodalVectorCalculate(nonlinearMatrices%NodalResidual,nonlinearMatrices% &
-              & UPDATE_RESIDUAL,nodeNumber,fieldVariable,err,error,*999)
-            nonlinearMatrices%NodalResidualCalculated=0
-          ELSE
-            CALL FlagError("Equations mapping nonlinear mapping is not associated.",err,error,*999)
-          ENDIF
-        ENDIF
-        rhsVector=>equationsMatrices%RHS_VECTOR
-        IF(ASSOCIATED(rhsVector)) THEN
-          rhsMapping=>equationsMapping%RHS_MAPPING
-          IF(ASSOCIATED(rhsMapping)) THEN
-            !Calculate the rows  for the equations RHS
-            fieldVariable=>rhsMapping%RHS_VARIABLE
-            CALL EquationsMatrices_NodalVectorCalculate(rhsVector%NodalVector,rhsVector%UPDATE_VECTOR,nodeNumber, &
-              & fieldVariable,err,error,*999)
-          ELSE
-            CALL FlagError("Equations mapping rhs mapping is not associated.",err,error,*999)
-          ENDIF
-        ENDIF
-        sourceVector=>equationsMatrices%SOURCE_VECTOR
-        IF(ASSOCIATED(sourceVector)) THEN
-          !Calculate the rows the equations source. The number of rows is not set by the source field so take the number of rows
-          !from the RHS vector in the first instance.
-          rhsMapping=>equationsMapping%RHS_MAPPING
-          IF(ASSOCIATED(rhsMapping)) THEN
-            fieldVariable=>rhsMapping%RHS_VARIABLE
-            CALL EquationsMatrices_NodalVectorCalculate(sourceVector%NodalVector,sourceVector%UPDATE_VECTOR, &
-              & nodeNumber,fieldVariable,err,error,*999)
-          ELSE
-            CALL FlagError("Equations mapping rhs mapping is not associated.",err,error,*999)
-          ENDIF
-        ENDIF
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not allocated",err,error,*999)
+    NULLIFY(vectorMapping)
+    CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*999)
+
+    dynamicMatrices=>vectorMatrices%dynamicMatrices
+    IF(ASSOCIATED(dynamicMatrices)) THEN
+      !Calculate the row and columns for the dynamic equations matrices
+      NULLIFY(dynamicMapping)
+      CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
+      DO matrixIdx=1,dynamicMatrices%numberOfDynamicMatrices
+        NULLIFY(equationsMatrix)
+        CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,matrixIdx,equationsMatrix,err,error,*999)
+        fieldVariable=>dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%VARIABLE
+        CALL EquationsMatrices_NodalMatrixCalculate(equationsMatrix%nodalMatrix,equationsMatrix%updateMatrix, &
+          & nodeNumber,nodeNumber,fieldVariable,fieldVariable,err,error,*999)
+      ENDDO !matrixIdx
+    ENDIF
+    linearMatrices=>vectorMatrices%linearMatrices
+    IF(ASSOCIATED(linearMatrices)) THEN
+      !Calculate the row and columns for the linear equations matrices
+      NULLIFY(linearMapping)
+      CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
+      DO matrixIdx=1,linearMatrices%numberOfLinearMatrices
+        NULLIFY(equationsMatrix)
+        CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIdx,equationsMatrix,err,error,*999)
+        fieldVariable=>linearMapping%equationsMatrixToVarMaps(matrixIdx)%VARIABLE
+        CALL EquationsMatrices_NodalMatrixCalculate(equationsMatrix%nodalMatrix,equationsMatrix%updateMatrix, &
+          & nodeNumber,nodeNumber,fieldVariable,fieldVariable,err,error,*999)
+      ENDDO !matrixIdx
+    ENDIF
+    nonlinearMatrices=>vectorMatrices%nonlinearMatrices
+    IF(ASSOCIATED(nonlinearMatrices)) THEN
+      !Calculate the rows and columns of the Jacobian
+      NULLIFY(nonlinearMapping)
+      CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+      nonlinearMapping=>vectorMapping%nonlinearMapping
+      DO matrixIdx=1,nonlinearMatrices%numberOfJacobians
+        NULLIFY(jacobianMatrix)
+        CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,matrixIdx,jacobianMatrix,err,error,*999)
+        colFieldVariable=>nonlinearMapping%jacobianToVarMap(matrixIdx)%VARIABLE
+        CALL EquationsMatrices_NodalMatrixCalculate(jacobianMatrix%nodalJacobian,jacobianMatrix%updateJacobian, &
+          & nodeNumber,nodeNumber,fieldVariable,colFieldVariable,err,error,*999)
+      ENDDO !matrixIdx
+      !Calculate the rows of the equations residual
+      rhsMapping=>vectorMapping%rhsMapping
+      IF(ASSOCIATED(rhsMapping)) THEN
+        fieldVariable=>rhsMapping%rhsVariable
       ELSE
-        CALL FlagError("Equations mapping is not associated.",err,error,*999)
+        fieldVariable=>nonlinearMapping%jacobianToVarMap(1)%variable
       ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not allocated",err,error,*999)
+      CALL EquationsMatrices_NodalVectorCalculate(nonlinearMatrices%nodalResidual,nonlinearMatrices%updateResidual, &
+        & nodeNumber,fieldVariable,err,error,*999)
+      nonlinearMatrices%nodalResidualCalculated=0
+    ENDIF
+    rhsVector=>vectorMatrices%rhsVector
+    IF(ASSOCIATED(rhsVector)) THEN
+      !Calculate the rows for the equations RHS
+      NULLIFY(rhsMapping)
+      CALL EquationsMappingVector_RHSMappingGet(vectorMapping,rhsMapping,err,error,*999)
+      fieldVariable=>rhsMapping%rhsVariable
+      CALL EquationsMatrices_NodalVectorCalculate(rhsVector%nodalVector,rhsVector%updateVector,nodeNumber, &
+        & fieldVariable,err,error,*999)
+    ENDIF
+    sourceVector=>vectorMatrices%sourceVector
+    IF(ASSOCIATED(sourceVector)) THEN
+      !Calculate the rows the equations source. The number of rows is not set by the source field so take the number of rows
+      !from the RHS vector in the first instance.
+      NULLIFY(rhsMapping)
+      CALL EquationsMappingVector_RHSMappingGet(vectorMapping,rhsMapping,err,error,*999)
+      fieldVariable=>rhsMapping%rhsVariable
+      CALL EquationsMatrices_NodalVectorCalculate(sourceVector%nodalVector,sourceVector%updateVector,nodeNumber, &
+        & fieldVariable,err,error,*999)
     ENDIF
     
 #ifdef TAUPROF
@@ -1724,183 +1528,163 @@ CONTAINS
 
     ENTERS("EquationsMatrices_NodalMatrixCalculate",err,error,*999)
 
-    IF(ASSOCIATED(rowsFieldVariable)) THEN
-      IF(ASSOCIATED(colsFieldVariable)) THEN
-        nodalMatrix%numberOfRows=0
-        nodalMatrix%numberOfColumns=0
-        IF(updateMatrix) THEN
-          IF(ASSOCIATED(rowsFieldVariable,colsFieldVariable)) THEN
-            !Row and columns variable is the same.
-            DO componentIdx=1,rowsFieldVariable%NUMBER_OF_COMPONENTS
-              nodesTopology=>rowsFieldVariable%COMPONENTS(componentIdx)%DOMAIN%TOPOLOGY%NODES
-              IF(rowNodeNumber>=1.AND.rowNodeNumber<=nodesTopology%TOTAL_NUMBER_OF_NODES) THEN
-                SELECT CASE(rowsFieldVariable%COMPONENTS(componentIdx)%INTERPOLATION_TYPE)
-                CASE(FIELD_CONSTANT_INTERPOLATION)
-                  localRow=rowsFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
-                  globalRow=rowsFieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localRow)
-                  nodalMatrix%numberOfRows=nodalMatrix%numberOfRows+1
-                  nodalMatrix%numberOfColumns=nodalMatrix%numberOfColumns+1
-                  nodalMatrix%rowDofs(nodalMatrix%numberOfRows)=localRow
-                  nodalMatrix%columnDofs(nodalMatrix%numberOfColumns)=globalRow
-                CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                  localRow=rowsFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP% &
-                    & ELEMENTS(rowNodeNumber)
-                  globalRow=rowsFieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localRow)
-                  nodalMatrix%numberOfRows=nodalMatrix%numberOfRows+1
-                  nodalMatrix%numberOfColumns=nodalMatrix%numberOfColumns+1
-                  nodalMatrix%rowDofs(nodalMatrix%numberOfRows)=localRow
-                  nodalMatrix%columnDofs(nodalMatrix%numberOfColumns)=globalRow
-                CASE(FIELD_NODE_BASED_INTERPOLATION)
-                  numberOfDerivatives=rowsFieldVariable%components(componentIdx)%domain%topology%nodes%nodes(rowNodeNumber)% &
-                    & NUMBER_OF_DERIVATIVES
-                  DO derivativeIdx=1,numberOfDerivatives
-                    numberOfVersions=rowsFieldVariable%COMPONENTS(componentIdx)%DOMAIN%TOPOLOGY%NODES%NODES(rowNodeNumber)% &
-                      & DERIVATIVES(derivativeIdx)%numberOfVersions
-                    DO versionIdx=1,numberOfVersions
-                      localRow=rowsFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% & 
-                        & NODES(rowNodeNumber)%DERIVATIVES(derivativeIdx)%VERSIONS(versionIdx)
-                      globalRow=rowsFieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localRow)
-                      nodalMatrix%numberOfRows=nodalMatrix%numberOfRows+1
-                      nodalMatrix%numberOfColumns=nodalMatrix%numberOfColumns+1
-                      nodalMatrix%rowDofs(nodalMatrix%numberOfRows)=localRow
-                      nodalMatrix%columnDofs(nodalMatrix%numberOfColumns)=globalRow
-                    ENDDO !versionIdx
-                  ENDDO !derivativeIdx
-                CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE DEFAULT
-                  localError="The interpolation type of "// &
-                    & TRIM(NumberToVString(rowsFieldVariable%COMPONENTS(componentIdx)%INTERPOLATION_TYPE,"*",err,error))// &
-                    & " is invalid for component number "// &
-                    & TRIM(NumberToVString(componentIdx,"*",err,error))// &
-                    & " of rows field variable type "// &
-                    & TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))//"."
-                  CALL FlagError(localError,err,error,*999)          
-                END SELECT
-              ELSE
-                localError="Nodal number "//TRIM(NumberToVString(rowNodeNumber,"*",err,error))// &
-                  & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
-                  & " of rows field variable type "// &
-                  & TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))// &
-                  & ". The nodal number must be between 1 and "// &
-                  & TRIM(NumberToVString(nodesTopology%TOTAL_NUMBER_OF_NODES,"*",err,error))//"."
-                CALL FlagError(localError,err,error,*999)
-              ENDIF
-            ENDDO !componentIdx
-          ELSE
-            !Row and column variables are different
-            !Row mapping
-            DO componentIdx=1,rowsFieldVariable%NUMBER_OF_COMPONENTS
-              nodesTopology=>rowsFieldVariable%COMPONENTS(componentIdx)%DOMAIN%TOPOLOGY%NODES
-              IF(rowNodeNumber>=1.AND.rowNodeNumber<=nodesTopology%TOTAL_NUMBER_OF_NODES) THEN
-                SELECT CASE(rowsFieldVariable%COMPONENTS(componentIdx)%INTERPOLATION_TYPE)
-                CASE(FIELD_CONSTANT_INTERPOLATION)
-                  localRow=rowsFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
-                  nodalMatrix%numberOfRows=nodalMatrix%numberOfRows+1
-                  nodalMatrix%rowDofs(nodalMatrix%numberOfRows)=localRow
-                CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                  localRow=rowsFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP% &
-                    & ELEMENTS(rowNodeNumber)
-                  nodalMatrix%numberOfRows=nodalMatrix%numberOfRows+1
-                  nodalMatrix%rowDofs(nodalMatrix%numberOfRows)=localRow
-                CASE(FIELD_NODE_BASED_INTERPOLATION)
-                  numberOfDerivatives=rowsFieldVariable%components(componentIdx)%domain%topology%nodes%nodes(rowNodeNumber)% &
-                    & NUMBER_OF_DERIVATIVES
-                  DO derivativeIdx=1,numberOfDerivatives
-                    numberOfVersions=colsFieldVariable%COMPONENTS(componentIdx)%DOMAIN%TOPOLOGY%NODES%NODES(rowNodeNumber)% &
-                      & DERIVATIVES(derivativeIdx)%numberOfVersions
-                    DO versionIdx=1,numberOfVersions
-                      localRow=rowsFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% & 
-                        & NODES(rowNodeNumber)%DERIVATIVES(derivativeIdx)%VERSIONS(versionIdx)
-                      nodalMatrix%numberOfRows=nodalMatrix%numberOfRows+1
-                      nodalMatrix%rowDofs(nodalMatrix%numberOfRows)=localRow
-                    ENDDO !versionIdx
-                  ENDDO !derivativeIdx
-                CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE DEFAULT
-                  localError="The interpolation type of "// &
-                    & TRIM(NumberToVString(rowsFieldVariable%COMPONENTS(componentIdx)%INTERPOLATION_TYPE,"*",err,error))// &
-                    & " is invalid for component number "// &
-                    & TRIM(NumberToVString(componentIdx,"*",err,error))// &
-                    & " of rows field variable type "// &
-                    & TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))//"."
-                  CALL FlagError(localError,err,error,*999)          
-                END SELECT
-              ELSE
-                localError="Row nodal number "//TRIM(NumberToVString(rowNodeNumber,"*",err,error))// &
-                  & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
-                  & " of rows field variable type "// &
-                  & TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))// &
-                  & ". The nodal number must be between 1 and "// &
-                  & TRIM(NumberToVString(nodesTopology%TOTAL_NUMBER_OF_NODES,"*",err,error))//"."
-                CALL FlagError(localError,err,error,*999)
-              ENDIF
-            ENDDO !componentIdx
-            !Column mapping
-            DO componentIdx=1,colsFieldVariable%NUMBER_OF_COMPONENTS
-              nodesTopology=>colsFieldVariable%COMPONENTS(componentIdx)%DOMAIN%TOPOLOGY%NODES
-              IF(columnNodeNumber>=1.AND.columnNodeNumber<=nodesTopology%TOTAL_NUMBER_OF_NODES) THEN
-                SELECT CASE(colsFieldVariable%COMPONENTS(componentIdx)%INTERPOLATION_TYPE)
-                CASE(FIELD_CONSTANT_INTERPOLATION)
-                  localColumn=colsFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
-                  globalColumn=colsFieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localColumn)
-                  nodalMatrix%numberOfColumns=nodalMatrix%numberOfColumns+1
-                  nodalMatrix%columnDofs(nodalMatrix%numberOfColumns)=globalColumn
-                CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                  localColumn=colsFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP% &
-                    & ELEMENTS(columnNodeNumber)
-                  globalColumn=colsFieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localColumn)
-                  nodalMatrix%numberOfColumns=nodalMatrix%numberOfColumns+1
-                  nodalMatrix%columnDofs(nodalMatrix%numberOfColumns)=globalColumn
-                CASE(FIELD_NODE_BASED_INTERPOLATION)
-                  numberOfDerivatives=colsFieldVariable%components(componentIdx)%domain%topology%nodes%nodes(rowNodeNumber)% &
-                    & NUMBER_OF_DERIVATIVES
-                  DO derivativeIdx=1,numberOfDerivatives
-                    numberOfVersions=colsFieldVariable%COMPONENTS(componentIdx)%DOMAIN%TOPOLOGY%NODES%NODES(rowNodeNumber)% &
-                      & DERIVATIVES(derivativeIdx)%numberOfVersions
-                    DO versionIdx=1,numberOfVersions
-                      localRow=colsFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% & 
-                        & NODES(rowNodeNumber)%DERIVATIVES(derivativeIdx)%VERSIONS(versionIdx)
-                      nodalMatrix%numberOfColumns=nodalMatrix%numberOfColumns+1
-                      nodalMatrix%columnDofs(nodalMatrix%numberOfColumns)=localRow
-                    ENDDO !versionIdx
-                  ENDDO !derivativeIdx
-                CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE DEFAULT
-                  localError="The interpolation type of "// &
-                    & TRIM(NumberToVString(colsFieldVariable%COMPONENTS(componentIdx)%INTERPOLATION_TYPE,"*",err,error))// &
-                    & " is invalid for component number "// &
-                    & TRIM(NumberToVString(componentIdx,"*",err,error))// &
-                    & " of column field variable type "// &
-                    & TRIM(NumberToVString(colsFieldVariable%VARIABLE_TYPE,"*",err,error))//"."
-                  CALL FlagError(localError,err,error,*999)          
-                END SELECT
-              ELSE
-                localError="Column nodal number "//TRIM(NumberToVString(columnNodeNumber,"*",err,error))// &
-                  & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
-                  & " of column field variable type "// &
-                  & TRIM(NumberToVString(colsFieldVariable%VARIABLE_TYPE,"*",err,error))// &
-                  & ". The nodal number must be between 1 and "// &
-                  & TRIM(NumberToVString(nodesTopology%TOTAL_NUMBER_OF_NODES,"*",err,error))//"."
-                CALL FlagError(localError,err,error,*999)
-              ENDIF
-            ENDDO !componentIdx
+    IF(.NOT.ASSOCIATED(rowsFieldVariable)) CALL FlagError("Rows field variable is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(colsFieldVariable)) CALL FlagError("Columns field variable is not associated.",err,error,*999)
+    
+    nodalMatrix%numberOfRows=0
+    nodalMatrix%numberOfColumns=0
+    IF(updateMatrix) THEN
+      IF(ASSOCIATED(rowsFieldVariable,colsFieldVariable)) THEN
+        !Row and columns variable is the same.
+        DO componentIdx=1,rowsFieldVariable%NUMBER_OF_COMPONENTS
+          nodesTopology=>rowsFieldVariable%components(componentIdx)%domain%topology%nodes
+          IF(rowNodeNumber<1.OR.rowNodeNumber>nodesTopology%TOTAL_NUMBER_OF_NODES) THEN
+            localError="Nodal number "//TRIM(NumberToVString(rowNodeNumber,"*",err,error))// &
+              & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+              & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))// &
+              & ". The nodal number must be between 1 and "// &
+              & TRIM(NumberToVString(nodesTopology%TOTAL_NUMBER_OF_NODES,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)
           ENDIF
-          nodalMatrix%matrix=0.0_DP
-        ENDIF
+          SELECT CASE(rowsFieldVariable%components(componentIdx)%INTERPOLATION_TYPE)
+          CASE(FIELD_CONSTANT_INTERPOLATION)
+            localRow=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
+            globalRow=rowsFieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localRow)
+            nodalMatrix%numberOfRows=nodalMatrix%numberOfRows+1
+            nodalMatrix%numberOfColumns=nodalMatrix%numberOfColumns+1
+            nodalMatrix%rowDofs(nodalMatrix%numberOfRows)=localRow
+            nodalMatrix%columnDofs(nodalMatrix%numberOfColumns)=globalRow
+          CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+            localRow=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%elements(rowNodeNumber)
+            globalRow=rowsFieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localRow)
+            nodalMatrix%numberOfRows=nodalMatrix%numberOfRows+1
+            nodalMatrix%numberOfColumns=nodalMatrix%numberOfColumns+1
+            nodalMatrix%rowDofs(nodalMatrix%numberOfRows)=localRow
+            nodalMatrix%columnDofs(nodalMatrix%numberOfColumns)=globalRow
+          CASE(FIELD_NODE_BASED_INTERPOLATION)
+            numberOfDerivatives=rowsFieldVariable%components(componentIdx)%domain%topology%nodes%nodes(rowNodeNumber)% &
+              & NUMBER_OF_DERIVATIVES
+            DO derivativeIdx=1,numberOfDerivatives
+              numberOfVersions=rowsFieldVariable%components(componentIdx)%domain%topology%NODES%NODES(rowNodeNumber)% &
+                & derivatives(derivativeIdx)%numberOfVersions
+              DO versionIdx=1,numberOfVersions
+                localRow=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% & 
+                  & nodes(rowNodeNumber)%derivatives(derivativeIdx)%versions(versionIdx)
+                globalRow=rowsFieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localRow)
+                nodalMatrix%numberOfRows=nodalMatrix%numberOfRows+1
+                nodalMatrix%numberOfColumns=nodalMatrix%numberOfColumns+1
+                nodalMatrix%rowDofs(nodalMatrix%numberOfRows)=localRow
+                nodalMatrix%columnDofs(nodalMatrix%numberOfColumns)=globalRow
+              ENDDO !versionIdx
+            ENDDO !derivativeIdx
+          CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE DEFAULT
+            localError="The interpolation type of "// &
+              & TRIM(NumberToVString(rowsFieldVariable%components(componentIdx)%INTERPOLATION_TYPE,"*",err,error))// &
+              & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+              & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)          
+          END SELECT
+        ENDDO !componentIdx
       ELSE
-        CALL FlagError("Columns field variable is not associated.",err,error,*999)
+        !Row and column variables are different
+        !Row mapping
+        DO componentIdx=1,rowsFieldVariable%NUMBER_OF_COMPONENTS
+          nodesTopology=>rowsFieldVariable%components(componentIdx)%domain%topology%nodes
+          IF(rowNodeNumber<1.OR.rowNodeNumber>nodesTopology%TOTAL_NUMBER_OF_NODES) THEN
+            localError="Row nodal number "//TRIM(NumberToVString(rowNodeNumber,"*",err,error))// &
+              & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+              & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))// &
+              & ". The nodal number must be between 1 and "// &
+              & TRIM(NumberToVString(nodesTopology%TOTAL_NUMBER_OF_NODES,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+          SELECT CASE(rowsFieldVariable%components(componentIdx)%INTERPOLATION_TYPE)
+          CASE(FIELD_CONSTANT_INTERPOLATION)
+            localRow=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
+            nodalMatrix%numberOfRows=nodalMatrix%numberOfRows+1
+            nodalMatrix%rowDofs(nodalMatrix%numberOfRows)=localRow
+          CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+            localRow=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%elements(rowNodeNumber)
+            nodalMatrix%numberOfRows=nodalMatrix%numberOfRows+1
+            nodalMatrix%rowDofs(nodalMatrix%numberOfRows)=localRow
+          CASE(FIELD_NODE_BASED_INTERPOLATION)
+            numberOfDerivatives=rowsFieldVariable%components(componentIdx)%domain%topology%nodes%nodes(rowNodeNumber)% &
+              & NUMBER_OF_DERIVATIVES
+            DO derivativeIdx=1,numberOfDerivatives
+              numberOfVersions=colsFieldVariable%components(componentIdx)%domain%topology%nodes%nodes(rowNodeNumber)% &
+                & derivatives(derivativeIdx)%numberOfVersions
+              DO versionIdx=1,numberOfVersions
+                localRow=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% & 
+                  & nodes(rowNodeNumber)%derivatives(derivativeIdx)%versions(versionIdx)
+                nodalMatrix%numberOfRows=nodalMatrix%numberOfRows+1
+                nodalMatrix%rowDofs(nodalMatrix%numberOfRows)=localRow
+              ENDDO !versionIdx
+            ENDDO !derivativeIdx
+          CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE DEFAULT
+            localError="The interpolation type of "// &
+              & TRIM(NumberToVString(rowsFieldVariable%components(componentIdx)%INTERPOLATION_TYPE,"*",err,error))// &
+              & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+              & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)          
+          END SELECT
+        ENDDO !componentIdx
+        !Column mapping
+        DO componentIdx=1,colsFieldVariable%NUMBER_OF_COMPONENTS
+          nodesTopology=>colsFieldVariable%components(componentIdx)%domain%topology%nodes
+          IF(columnNodeNumber<1.OR.columnNodeNumber>nodesTopology%TOTAL_NUMBER_OF_NODES) THEN
+            localError="Column nodal number "//TRIM(NumberToVString(columnNodeNumber,"*",err,error))// &
+              & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+              & " of column field variable type "//TRIM(NumberToVString(colsFieldVariable%VARIABLE_TYPE,"*",err,error))// &
+              & ". The nodal number must be between 1 and "// &
+              & TRIM(NumberToVString(nodesTopology%TOTAL_NUMBER_OF_NODES,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+          SELECT CASE(colsFieldVariable%components(componentIdx)%INTERPOLATION_TYPE)
+          CASE(FIELD_CONSTANT_INTERPOLATION)
+            localColumn=colsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
+            globalColumn=colsFieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localColumn)
+            nodalMatrix%numberOfColumns=nodalMatrix%numberOfColumns+1
+            nodalMatrix%columnDofs(nodalMatrix%numberOfColumns)=globalColumn
+          CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+            localColumn=colsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%elements(columnNodeNumber)
+            globalColumn=colsFieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localColumn)
+            nodalMatrix%numberOfColumns=nodalMatrix%numberOfColumns+1
+            nodalMatrix%columnDofs(nodalMatrix%numberOfColumns)=globalColumn
+          CASE(FIELD_NODE_BASED_INTERPOLATION)
+            numberOfDerivatives=colsFieldVariable%components(componentIdx)%domain%topology%nodes%nodes(rowNodeNumber)% &
+              & NUMBER_OF_DERIVATIVES
+            DO derivativeIdx=1,numberOfDerivatives
+              numberOfVersions=colsFieldVariable%components(componentIdx)%domain%topology%nodes%nodes(rowNodeNumber)% &
+                & derivatives(derivativeIdx)%numberOfVersions
+              DO versionIdx=1,numberOfVersions
+                localRow=colsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% & 
+                  & nodes(rowNodeNumber)%derivatives(derivativeIdx)%versions(versionIdx)
+                nodalMatrix%numberOfColumns=nodalMatrix%numberOfColumns+1
+                nodalMatrix%columnDofs(nodalMatrix%numberOfColumns)=localRow
+              ENDDO !versionIdx
+            ENDDO !derivativeIdx
+          CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE DEFAULT
+            localError="The interpolation type of "// &
+              & TRIM(NumberToVString(colsFieldVariable%components(componentIdx)%INTERPOLATION_TYPE,"*",err,error))// &
+              & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+              & " of column field variable type "//TRIM(NumberToVString(colsFieldVariable%VARIABLE_TYPE,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)          
+          END SELECT
+        ENDDO !componentIdx
       ENDIF
-    ELSE
-      CALL FlagError("Rows field variable is not associated.",err,error,*999)
+      nodalMatrix%matrix=0.0_DP
     ENDIF
     
     EXITS("EquationsMatrices_NodalMatrixCalculate")
@@ -1909,14 +1693,13 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMatrices_NodalMatrixCalculate
-
+  
   !
   !================================================================================================================================
   !
 
-  !>Calculate the positions in the equations rhs of the nodal rhs vector.
-  SUBROUTINE EquationsMatrices_NodalVectorCalculate(nodalVector,updateVector,rowNodeNumber,rowsFieldVariable, &
-    & err,error,*)
+  !>Calculate the positions in the vector equations rhs of the nodal rhs vector.
+  SUBROUTINE EquationsMatrices_NodalVectorCalculate(nodalVector,updateVector,rowNodeNumber,rowsFieldVariable,err,error,*)
 
     !Argument variables
     TYPE(NodalVectorType) :: nodalVector !<The nodal vector to calculate.
@@ -1932,63 +1715,57 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("EquationsMatrices_NodalVectorCalculate",err,error,*999)
-
-    IF(ASSOCIATED(rowsFieldVariable)) THEN
-      !Calculate the rows for the nodal vector
-      nodalVector%numberOfRows=0
-      IF(updateVector) THEN
-        DO componentIdx=1,rowsFieldVariable%NUMBER_OF_COMPONENTS
-          nodesTopology=>rowsFieldVariable%components(componentIdx)%domain%topology%nodes
-          IF(rowNodeNumber>=1.AND.rowNodeNumber<=nodesTopology%TOTAL_NUMBER_OF_NODES) THEN
-            SELECT CASE(rowsFieldVariable%COMPONENTS(componentIdx)%INTERPOLATION_TYPE)
-            CASE(FIELD_CONSTANT_INTERPOLATION)
-              localRow=rowsFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
+    
+    IF(.NOT.ASSOCIATED(rowsFieldVariable)) CALL FlagError("Rows field variable is not associated.",err,error,*999)
+    
+    !Calculate the rows for the nodal vector
+    nodalVector%numberOfRows=0
+    IF(updateVector) THEN
+      DO componentIdx=1,rowsFieldVariable%NUMBER_OF_COMPONENTS
+        nodesTopology=>rowsFieldVariable%components(componentIdx)%domain%topology%nodes
+        IF(rowNodeNumber<1.OR.rowNodeNumber>nodesTopology%TOTAL_NUMBER_OF_NODES) THEN
+          localError="Node number "//TRIM(NumberToVString(rowNodeNumber,"*",err,error))// &
+            & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+            & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))// &
+            & ". The nodal number must be between 1 and "// &
+            & TRIM(NumberToVString(nodesTopology%TOTAL_NUMBER_OF_NODES,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        SELECT CASE(rowsFieldVariable%components(componentIdx)%INTERPOLATION_TYPE)
+        CASE(FIELD_CONSTANT_INTERPOLATION)
+          localRow=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
+          nodalVector%numberOfRows=nodalVector%numberOfRows+1
+          nodalVector%rowDofs(nodalVector%numberOfRows)=localRow
+        CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+          localRow=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%elements(rowNodeNumber)
+          nodalVector%numberOfRows=nodalVector%numberOfRows+1
+          nodalVector%rowDofs(nodalVector%numberOfRows)=localRow
+        CASE(FIELD_NODE_BASED_INTERPOLATION)
+          numberOfDerivatives=rowsFieldVariable%components(componentIdx)%domain%topology%nodes%nodes(rowNodeNumber)% &
+            & NUMBER_OF_DERIVATIVES
+          DO derivativeIdx=1,numberOfDerivatives
+            numberOfVersions=rowsFieldVariable%components(componentIdx)%domain%topology%nodes%nodes(rowNodeNumber)% &
+              & derivatives(derivativeIdx)%numberOfVersions
+            DO versionIdx=1,numberOfVersions
+              localRow=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% & 
+                & nodes(rowNodeNumber)%derivatives(derivativeIdx)%versions(versionIdx)
               nodalVector%numberOfRows=nodalVector%numberOfRows+1
               nodalVector%rowDofs(nodalVector%numberOfRows)=localRow
-            CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-              localRow=rowsFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP% &
-                & ELEMENTS(rowNodeNumber)
-              nodalVector%numberOfRows=nodalVector%numberOfRows+1
-              nodalVector%rowDofs(nodalVector%numberOfRows)=localRow
-            CASE(FIELD_NODE_BASED_INTERPOLATION)
-              numberOfDerivatives=rowsFieldVariable%components(componentIdx)%domain%topology%nodes%nodes(rowNodeNumber)% &
-                & NUMBER_OF_DERIVATIVES
-              DO derivativeIdx=1,numberOfDerivatives
-                numberOfVersions=rowsFieldVariable%COMPONENTS(componentIdx)%DOMAIN%TOPOLOGY%NODES%NODES(rowNodeNumber)% &
-                  & DERIVATIVES(derivativeIdx)%numberOfVersions
-                DO versionIdx=1,numberOfVersions
-                  localRow=rowsFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% & 
-                    & nodes(rowNodeNumber)%derivatives(derivativeIdx)%versions(versionIdx)
-                  nodalVector%numberOfRows=nodalVector%numberOfRows+1
-                  nodalVector%rowDofs(nodalVector%numberOfRows)=localRow
-                ENDDO !versionIdx
-              ENDDO !derivativeIdx
-            CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE DEFAULT
-              localError="The interpolation type of "// &
-                & TRIM(NumberToVString(rowsFieldVariable%COMPONENTS(componentIdx)%INTERPOLATION_TYPE,"*",err,error))// &
-                & " is invalid for component number "// &
-                & TRIM(NumberToVString(componentIdx,"*",err,error))// &
-                & " of rows field variable type "// &
-                & TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))//"."
-              CALL FlagError(localError,err,error,*999)          
-            END SELECT
-          ELSE
-            localError="Node number "//TRIM(NumberToVString(rowNodeNumber,"*",err,error))// &
-              & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
-              & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))// &
-              & ". The nodal number must be between 1 and "// &
-              & TRIM(NumberToVString(nodesTopology%TOTAL_NUMBER_OF_NODES,"*",err,error))//"."
-            CALL FlagError(localError,err,error,*999)
-          ENDIF
-        ENDDO !componentIdx
-        nodalVector%vector=0.0_DP
-      ENDIF
-    ELSE
-      CALL FlagError("Rows field variable is not associated.",err,error,*999)
+            ENDDO !versionIdx
+          ENDDO !derivativeIdx
+        CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE DEFAULT
+          localError="The interpolation type of "// &
+            & TRIM(NumberToVString(rowsFieldVariable%components(componentIdx)%INTERPOLATION_TYPE,"*",err,error))// &
+            & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+            & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)          
+        END SELECT
+      ENDDO !componentIdx
+      nodalVector%vector=0.0_DP
     ENDIF
     
     EXITS("EquationsMatrices_NodalVectorCalculate")
@@ -2003,21 +1780,21 @@ CONTAINS
   !
 
   !>Adds the nodal matrices and rhs vector into the equations matrices and rhs vector.
-  SUBROUTINE EquationsMatrices_NodeAdd(equationsMatrices,err,error,*)
+  SUBROUTINE EquationsMatrices_NodeAdd(vectorMatrices,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices !<A pointer to the equations matrices
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the equations matrices
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: columnIdx,matrixIdx,rowIdx
     REAL(DP) :: sum
-    TYPE(EQUATIONS_MATRICES_DYNAMIC_TYPE), POINTER :: dynamicMatrices
-    TYPE(EQUATIONS_MATRICES_LINEAR_TYPE), POINTER :: linearMatrices
-    TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: nonlinearMatrices
-    TYPE(EQUATIONS_MATRICES_RHS_TYPE), POINTER :: rhsVector
-    TYPE(EQUATIONS_MATRICES_SOURCE_TYPE), POINTER :: sourceVector
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: equationsMatrix
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(VARYING_STRING) :: localError
     
 #ifdef TAUPROF
@@ -2026,111 +1803,100 @@ CONTAINS
 
     ENTERS("EquationsMatrices_NodeAdd",err,error,*999)
 
-    IF(ASSOCIATED(equationsMatrices)) THEN
-      dynamicMatrices=>equationsMatrices%DYNAMIC_MATRICES
-      IF(ASSOCIATED(dynamicMatrices)) THEN
-        !Add the nodal matrices
-        DO matrixIdx=1,dynamicMatrices%NUMBER_OF_DYNAMIC_MATRICES
-          equationsMatrix=>dynamicMatrices%MATRICES(matrixIdx)%PTR
-          IF(ASSOCIATED(equationsMatrix)) THEN
-            IF(equationsMatrix%UPDATE_MATRIX) THEN
-              !Handle lumped matrices
-              IF(equationsMatrix%LUMPED) THEN
-                DO rowIdx=1,equationsMatrix%NodalMatrix%numberOfRows
-                  sum=0.0_DP
-                  DO columnIdx=1,equationsMatrix%NodalMatrix%numberOfColumns
-                    sum=sum+equationsMatrix%NodalMatrix%matrix(rowIdx,columnIdx)
-                    equationsMatrix%NodalMatrix%matrix(rowIdx,columnIdx)=0.0_DP
-                  ENDDO !columnIdx
-                  equationsMatrix%NodalMatrix%matrix(rowIdx,rowIdx)=sum
-                  !Add the nodal matrice into the distributed equations matrix
-                  CALL DISTRIBUTED_MATRIX_VALUES_ADD(equationsMatrix%matrix,equationsMatrix%NodalMatrix%rowDofs(rowIdx), &
-                    & equationsMatrix%NodalMatrix%columnDofs(rowIdx),equationsMatrix%NodalMatrix%matrix(rowIdx, &
-                    & rowIdx),err,error,*999)
-                ENDDO !rowIdx
-              ELSE
-                !Add the nodal matrice into the distributed equations matrix
-                CALL DISTRIBUTED_MATRIX_VALUES_ADD(equationsMatrix%matrix,equationsMatrix%NodalMatrix%rowDofs(1: &
-                  & equationsMatrix%NodalMatrix%numberOfRows),equationsMatrix%NodalMatrix%columnDofs(1: &
-                  & equationsMatrix%NodalMatrix%numberOfColumns),equationsMatrix%NodalMatrix%matrix(1: &
-                  & equationsMatrix%NodalMatrix%numberOfRows,1:equationsMatrix%NodalMatrix%numberOfColumns), &
-                  & err,error,*999)
-              ENDIF
-            ENDIF
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*999)
+    
+    dynamicMatrices=>vectorMatrices%dynamicMatrices
+    IF(ASSOCIATED(dynamicMatrices)) THEN
+      !Add the nodal matrices
+      DO matrixIdx=1,dynamicMatrices%numberOfDynamicMatrices
+        NULLIFY(equationsMatrix)
+        CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,matrixIdx,equationsMatrix,err,error,*999)
+        IF(equationsMatrix%updateMatrix) THEN
+          !Handle lumped matrices
+          IF(equationsMatrix%lumped) THEN
+            DO rowIdx=1,equationsMatrix%nodalMatrix%numberOfRows
+              sum=0.0_DP
+              DO columnIdx=1,equationsMatrix%nodalMatrix%numberOfColumns
+                sum=sum+equationsMatrix%nodalMatrix%matrix(rowIdx,columnIdx)
+                equationsMatrix%nodalMatrix%matrix(rowIdx,columnIdx)=0.0_DP
+              ENDDO !columnIdx
+              equationsMatrix%nodalMatrix%matrix(rowIdx,rowIdx)=sum
+              !Add the nodal matrice into the distributed equations matrix
+              CALL DistributedMatrix_ValuesAdd(equationsMatrix%matrix,equationsMatrix%nodalMatrix%rowDofs(rowIdx), &
+                & equationsMatrix%nodalMatrix%columnDofs(rowIdx),equationsMatrix%nodalMatrix%matrix(rowIdx,rowIdx), &
+                & err,error,*999)
+            ENDDO !rowIdx
           ELSE
-            localError="Equations matrix for dynamic matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
-              & " is not associated."
-            CALL FlagError(localError,err,error,*999)
+            !Add the nodal matrice into the distributed equations matrix
+            CALL DistributedMatrix_ValuesAdd(equationsMatrix%matrix,equationsMatrix%nodalMatrix%rowDofs(1: &
+              & equationsMatrix%nodalMatrix%numberOfRows),equationsMatrix%nodalMatrix%columnDofs(1: &
+              & equationsMatrix%nodalMatrix%numberOfColumns),equationsMatrix%nodalMatrix%matrix(1: &
+              & equationsMatrix%nodalMatrix%numberOfRows,1:equationsMatrix%nodalMatrix%numberOfColumns), &
+              & err,error,*999)
           ENDIF
-        ENDDO !matrixIdx
-      ENDIF
-      linearMatrices=>equationsMatrices%LINEAR_MATRICES
-      IF(ASSOCIATED(linearMatrices)) THEN
-        !Add the nodal matrices
-        DO matrixIdx=1,linearMatrices%NUMBER_OF_LINEAR_MATRICES
-          equationsMatrix=>linearMatrices%MATRICES(matrixIdx)%PTR
-          IF(ASSOCIATED(equationsMatrix)) THEN
-            IF(equationsMatrix%UPDATE_MATRIX) THEN
-              !Handle lumped matrices
-              IF(equationsMatrix%LUMPED) THEN
-                DO rowIdx=1,equationsMatrix%NodalMatrix%numberOfRows
-                  sum=0.0_DP
-                  DO columnIdx=1,equationsMatrix%NodalMatrix%numberOfColumns
-                    sum=sum+equationsMatrix%NodalMatrix%matrix(rowIdx,columnIdx)
-                    equationsMatrix%NodalMatrix%matrix(rowIdx,columnIdx)=0.0_DP
-                  ENDDO !columnIdx
-                  equationsMatrix%NodalMatrix%matrix(rowIdx,rowIdx)=sum
-                  !Add the nodal matrice into the distributed equations matrix
-                  CALL DISTRIBUTED_MATRIX_VALUES_ADD(equationsMatrix%matrix,equationsMatrix%NodalMatrix%rowDofs(rowIdx), &
-                    & equationsMatrix%NodalMatrix%columnDofs(rowIdx),equationsMatrix%NodalMatrix%matrix(rowIdx, &
-                    & rowIdx),err,error,*999)
-                ENDDO !rowIdx
-              ELSE
-                !Add the nodal matrice into the distributed equations matrix
-                CALL DISTRIBUTED_MATRIX_VALUES_ADD(equationsMatrix%matrix,equationsMatrix%NodalMatrix%rowDofs(1: &
-                  & equationsMatrix%NodalMatrix%numberOfRows),equationsMatrix%NodalMatrix%columnDofs(1: &
-                  & equationsMatrix%NodalMatrix%numberOfColumns),equationsMatrix%NodalMatrix%matrix(1: &
-                  & equationsMatrix%NodalMatrix%numberOfRows,1:equationsMatrix%NodalMatrix%numberOfColumns), &
-                  & err,error,*999)
-              ENDIF
-            ENDIF
-          ELSE
-            localError="Equations matrix for linear matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
-              & " is not associated."
-            CALL FlagError(localError,err,error,*999)
-          ENDIF
-        ENDDO !matrixIdx
-      ENDIF
-      nonlinearMatrices=>equationsMatrices%NONLINEAR_MATRICES
-      IF(ASSOCIATED(nonlinearMatrices)) THEN
-        IF(nonlinearMatrices%UPDATE_RESIDUAL) THEN
-          !Add the residual nodal vector
-          CALL DISTRIBUTED_VECTOR_VALUES_ADD(nonlinearMatrices%RESIDUAL,nonlinearMatrices%NodalResidual%rowDofs(1: &
-            & nonlinearMatrices%NodalResidual%numberOfRows),nonlinearMatrices%NodalResidual%vector(1:nonlinearMatrices% &
-            & NodalResidual%numberOfRows),err,error,*999)
         ENDIF
-      ENDIF
-      rhsVector=>equationsMatrices%RHS_VECTOR
-      IF(ASSOCIATED(rhsVector)) THEN
-        IF(rhsVector%UPDATE_VECTOR) THEN
-          !Add the rhs nodal vector
-          CALL DISTRIBUTED_VECTOR_VALUES_ADD(rhsVector%vector,rhsVector%NodalVector%rowDofs(1: &
-            & rhsVector%NodalVector%numberOfRows),rhsVector%NodalVector%vector(1:rhsVector% &
-            & NodalVector%numberOfRows),err,error,*999)
-        ENDIF
-      ENDIF
-      sourceVector=>equationsMatrices%SOURCE_VECTOR
-      IF(ASSOCIATED(sourceVector)) THEN
-        IF(sourceVector%UPDATE_VECTOR) THEN
-          !Add the rhs nodal vector
-          CALL DISTRIBUTED_VECTOR_VALUES_ADD(sourceVector%vector,sourceVector%NodalVector%rowDofs(1: &
-            & sourceVector%NodalVector%numberOfRows),sourceVector%NodalVector%vector(1:sourceVector% &
-            & NodalVector%numberOfRows),err,error,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not allocated.",err,error,*999)
+      ENDDO !matrixIdx
     ENDIF
+    linearMatrices=>vectorMatrices%linearMatrices
+    IF(ASSOCIATED(linearMatrices)) THEN
+      !Add the nodal matrices
+      DO matrixIdx=1,linearMatrices%numberOfLinearMatrices
+        NULLIFY(equationsMatrix)
+        CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIdx,equationsMatrix,err,error,*999)
+        IF(equationsMatrix%updateMatrix) THEN
+          !Handle lumped matrices
+          IF(equationsMatrix%lumped) THEN
+            DO rowIdx=1,equationsMatrix%nodalMatrix%numberOfRows
+              sum=0.0_DP
+              DO columnIdx=1,equationsMatrix%nodalMatrix%numberOfColumns
+                sum=sum+equationsMatrix%nodalMatrix%matrix(rowIdx,columnIdx)
+                equationsMatrix%nodalMatrix%matrix(rowIdx,columnIdx)=0.0_DP
+              ENDDO !columnIdx
+              equationsMatrix%nodalMatrix%matrix(rowIdx,rowIdx)=sum
+              !Add the nodal matrice into the distributed equations matrix
+              CALL DistributedMatrix_ValuesAdd(equationsMatrix%matrix,equationsMatrix%nodalMatrix%rowDofs(rowIdx), &
+                & equationsMatrix%nodalMatrix%columnDofs(rowIdx),equationsMatrix%nodalMatrix%matrix(rowIdx,rowIdx), &
+                & err,error,*999)
+            ENDDO !rowIdx
+          ELSE
+            !Add the nodal matrice into the distributed equations matrix
+            CALL DistributedMatrix_ValuesAdd(equationsMatrix%matrix,equationsMatrix%nodalMatrix%rowDofs(1: &
+              & equationsMatrix%nodalMatrix%numberOfRows),equationsMatrix%nodalMatrix%columnDofs(1: &
+              & equationsMatrix%nodalMatrix%numberOfColumns),equationsMatrix%nodalMatrix%matrix(1: &
+              & equationsMatrix%nodalMatrix%numberOfRows,1:equationsMatrix%nodalMatrix%numberOfColumns), &
+              & err,error,*999)
+          ENDIF
+        ENDIF
+      ENDDO !matrixIdx
+    ENDIF
+    nonlinearMatrices=>vectorMatrices%nonlinearMatrices
+    IF(ASSOCIATED(nonlinearMatrices)) THEN
+      IF(nonlinearMatrices%updateResidual) THEN
+        !Add the residual nodal vector
+        CALL DistributedVector_ValuesAdd(nonlinearMatrices%residual,nonlinearMatrices%nodalResidual%rowDofs(1: &
+          & nonlinearMatrices%nodalResidual%numberOfRows),nonlinearMatrices%nodalResidual%vector(1:nonlinearMatrices% &
+          & NodalResidual%numberOfRows),err,error,*999)
+      ENDIF
+    ENDIF
+    rhsVector=>vectorMatrices%rhsVector
+    IF(ASSOCIATED(rhsVector)) THEN
+      IF(rhsVector%updateVector) THEN
+        !Add the rhs nodal vector
+        CALL DistributedVector_ValuesAdd(rhsVector%vector,rhsVector%nodalVector%rowDofs(1: &
+          & rhsVector%nodalVector%numberOfRows),rhsVector%nodalVector%vector(1:rhsVector% &
+          & NodalVector%numberOfRows),err,error,*999)
+      ENDIF
+    ENDIF
+    sourceVector=>vectorMatrices%sourceVector
+    IF(ASSOCIATED(sourceVector)) THEN
+      IF(sourceVector%updateVector) THEN
+        !Add the rhs nodal vector
+        CALL DistributedVector_ValuesAdd(sourceVector%vector,sourceVector%nodalVector%rowDofs(1: &
+          & sourceVector%nodalVector%numberOfRows),sourceVector%nodalVector%vector(1:sourceVector% &
+          & NodalVector%numberOfRows),err,error,*999)
+      ENDIF
+    ENDIF
+
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP("EquationsMatrices_NodeAdd()")
 #endif
@@ -2139,6 +1905,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("EquationsMatrices_NodeAdd",err,error)
     RETURN 1
+    
   END SUBROUTINE EquationsMatrices_NodeAdd
 
   !
@@ -2146,144 +1913,111 @@ CONTAINS
   !
 
   !>Initialise the nodal calculation information for the equations matrices
-  SUBROUTINE EquationsMatrices_NodalInitialise(equationsMatrices,err,error,*)
+  SUBROUTINE EquationsMatrices_NodalInitialise(vectorMatrices,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices !The equations matrices to initialise the nodal information for
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !The equations matrices to initialise the nodal information for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: matrixIdx
-    TYPE(EQUATIONS_JACOBIAN_TYPE), POINTER :: jacobianMatrix
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: equationsMapping
-    TYPE(EQUATIONS_MAPPING_DYNAMIC_TYPE), POINTER :: dynamicMapping
-    TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: linearMapping
-    TYPE(EQUATIONS_MAPPING_NONLINEAR_TYPE), POINTER :: nonlinearMapping
-    TYPE(EQUATIONS_MAPPING_RHS_TYPE), POINTER :: rhsMapping
-    TYPE(EQUATIONS_MATRICES_DYNAMIC_TYPE), POINTER :: dynamicMatrices
-    TYPE(EQUATIONS_MATRICES_LINEAR_TYPE), POINTER :: linearMatrices
-    TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: nonlinearMatrices
-    TYPE(EQUATIONS_MATRICES_RHS_TYPE), POINTER :: rhsVector
-    TYPE(EQUATIONS_MATRICES_SOURCE_TYPE), POINTER :: sourceVector
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: equationsMatrix
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,columnFieldVariable
+    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
+    TYPE(EquationsMappingLinearType), POINTER :: linearMapping
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,colFieldVariable
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("EquationsMatrices_NodalInitialise",err,error,*999)
 
-    IF(ASSOCIATED(equationsMatrices)) THEN
-      equationsMapping=>equationsMatrices%EQUATIONS_MAPPING
-      IF(ASSOCIATED(equationsMapping)) THEN
-        dynamicMatrices=>equationsMatrices%DYNAMIC_MATRICES
-        IF(ASSOCIATED(dynamicMatrices)) THEN
-          !Initialise the dynamic nodal matrices
-          dynamicMapping=>equationsMapping%DYNAMIC_MAPPING
-          IF(ASSOCIATED(dynamicMapping)) THEN
-            DO matrixIdx=1,dynamicMatrices%NUMBER_OF_DYNAMIC_MATRICES
-              equationsMatrix=>dynamicMatrices%MATRICES(matrixIdx)%PTR
-              IF(ASSOCIATED(equationsMatrix)) THEN
-                fieldVariable=>dynamicMapping%EQUATIONS_MATRIX_TO_VAR_MAPS(matrixIdx)%VARIABLE
-                CALL EquationsMatrices_NodalMatrixSetup(equationsMatrix%NodalMatrix,fieldVariable,fieldVariable, &
-                  & err,error,*999)
-              ELSE
-                localError="Equations dynamic matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
-                  & " is not associated."
-                CALL FlagError(localError,err,error,*999)
-              ENDIF
-            ENDDO !matrixIdx
-          ELSE
-            CALL FlagError("Equations mapping dynamic mapping is not associated.",err,error,*999)
-          ENDIF
-        ENDIF
-        linearMatrices=>equationsMatrices%LINEAR_MATRICES
-        IF(ASSOCIATED(linearMatrices)) THEN
-          !Initialise the linear nodal matrices
-          linearMapping=>equationsMapping%LINEAR_MAPPING
-          IF(ASSOCIATED(linearMapping)) THEN
-            DO matrixIdx=1,linearMatrices%NUMBER_OF_LINEAR_MATRICES
-              equationsMatrix=>linearMatrices%MATRICES(matrixIdx)%PTR
-              IF(ASSOCIATED(equationsMatrix)) THEN
-                fieldVariable=>linearMapping%EQUATIONS_MATRIX_TO_VAR_MAPS(matrixIdx)%VARIABLE
-                CALL EquationsMatrices_NodalMatrixSetup(equationsMatrix%NodalMatrix,fieldVariable,fieldVariable, &
-                  & err,error,*999)
-              ELSE
-                localError="Equations linear matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
-                  & " is not associated."
-                CALL FlagError(localError,err,error,*999)
-              ENDIF
-            ENDDO !matrixIdx
-          ELSE
-            CALL FlagError("Equations mapping linear mapping is not associated.",err,error,*999)
-          ENDIF
-        ENDIF
-        nonlinearMatrices=>equationsMatrices%NONLINEAR_MATRICES
-        IF(ASSOCIATED(nonlinearMatrices)) THEN
-          !Initialise the Jacobian nodal matrices
-          nonlinearMapping=>equationsMapping%NONLINEAR_MAPPING
-          IF(ASSOCIATED(nonlinearMapping)) THEN
-            fieldVariable=>nonlinearMapping%JACOBIAN_TO_VAR_MAP(1)%VARIABLE
-            DO matrixIdx=1,nonlinearMatrices%NUMBER_OF_JACOBIANS
-              jacobianMatrix=>nonlinearMatrices%JACOBIANS(matrixIdx)%PTR
-              IF(ASSOCIATED(jacobianMatrix)) THEN
-                columnFieldVariable=>nonlinearMapping%JACOBIAN_TO_VAR_MAP(matrixIdx)%VARIABLE
-                CALL EquationsMatrices_NodalMatrixSetup(jacobianMatrix%NodalJacobian,fieldVariable,columnFieldVariable, &
-                  & err,error,*999)
-              ELSE
-                CALL FlagError("Jacobian matrix is not associated.",err,error,*999)
-              ENDIF
-            ENDDO
-            !Use RHS variable for residual vector, otherwise first nonlinear variable if no RHS
-            rhsMapping=>equationsMapping%RHS_MAPPING
-            IF(ASSOCIATED(rhsMapping)) THEN
-              fieldVariable=>rhsMapping%RHS_VARIABLE
-            ELSE
-              fieldVariable=>nonlinearMapping%JACOBIAN_TO_VAR_MAP(1)%VARIABLE
-            ENDIF
-            CALL EquationsMatrices_NodalVectorSetup(nonlinearMatrices%NodalResidual,fieldVariable,err,error,*999)
-            nonlinearMatrices%NodalResidualCalculated=0
-          ELSE
-            CALL FlagError("Equations mapping nonlinear mapping is not associated.",err,error,*999)
-          ENDIF
-        ENDIF
-        rhsVector=>equationsMatrices%RHS_VECTOR
-        IF(ASSOCIATED(rhsVector)) THEN
-          !Initialise the RHS nodal vector
-          rhsMapping=>equationsMapping%RHS_MAPPING
-          IF(ASSOCIATED(rhsMapping)) THEN
-            fieldVariable=>rhsMapping%RHS_VARIABLE
-            CALL EquationsMatrices_NodalVectorSetup(rhsVector%NodalVector,fieldVariable,err,error,*999)
-          ELSE
-            CALL FlagError("RHS mapping is not associated.",err,error,*999)
-          ENDIF
-        ENDIF
-        sourceVector=>equationsMatrices%SOURCE_VECTOR
-        IF(ASSOCIATED(sourceVector)) THEN
-          !Initialise the source nodal vector. Note that the number of rows in the source vector is taken, for now, from the RHS
-          !vector
-          IF(ASSOCIATED(rhsVector)) THEN
-            !Initialise the RHS nodal vector
-            rhsMapping=>equationsMapping%RHS_MAPPING
-            IF(ASSOCIATED(rhsMapping)) THEN
-              fieldVariable=>rhsMapping%RHS_VARIABLE
-              CALL EquationsMatrices_NodalVectorSetup(sourceVector%NodalVector,fieldVariable,err,error,*999)
-            ELSE
-              CALL FlagError("RHS mapping is not associated.",err,error,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Not implemented.",err,error,*999)
-          ENDIF
-        ENDIF
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*999)
+
+    NULLIFY(vectorMapping)
+    CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*999)
+    
+    dynamicMatrices=>vectorMatrices%dynamicMatrices
+    IF(ASSOCIATED(dynamicMatrices)) THEN
+      !Initialise the dynamic nodal matrices
+      NULLIFY(dynamicMapping)
+      CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
+      DO matrixIdx=1,dynamicMatrices%numberOfDynamicMatrices
+        NULLIFY(equationsMatrix)
+        CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,matrixIdx,equationsMatrix,err,error,*999)
+        fieldVariable=>dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%variable
+        CALL EquationsMatrices_NodalMatrixSetup(equationsMatrix%nodalMatrix,fieldVariable,fieldVariable,err,error,*999)
+      ENDDO !matrixIdx
+    ENDIF
+    linearMatrices=>vectorMatrices%linearMatrices
+    IF(ASSOCIATED(linearMatrices)) THEN
+      !Initialise the linear nodal matrices
+      NULLIFY(linearMapping)
+      CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
+      DO matrixIdx=1,linearMatrices%numberOfLinearMatrices
+        NULLIFY(equationsMatrix)
+        CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIdx,equationsMatrix,err,error,*999)
+        fieldVariable=>linearMapping%equationsMatrixToVarMaps(matrixIdx)%variable
+        CALL EquationsMatrices_NodalMatrixSetup(equationsMatrix%nodalMatrix,fieldVariable,fieldVariable,err,error,*999)
+      ENDDO !matrixIdx
+    ENDIF
+    nonlinearMatrices=>vectorMatrices%nonlinearMatrices
+    IF(ASSOCIATED(nonlinearMatrices)) THEN
+      !Initialise the Jacobian nodal matrices
+      NULLIFY(nonlinearMapping)
+      CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+      fieldVariable=>nonlinearMapping%jacobianToVarMap(1)%variable
+      DO matrixIdx=1,nonlinearMatrices%numberOfJacobians
+        NULLIFY(jacobianMatrix)
+        CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,matrixIdx,jacobianMatrix,err,error,*999)
+        colFieldVariable=>nonlinearMapping%jacobianToVarMap(matrixIdx)%variable
+        CALL EquationsMatrices_NodalMatrixSetup(jacobianMatrix%nodalJacobian,fieldVariable,colFieldVariable,err,error,*999)
+      ENDDO !matrixIdx
+      !Use RHS variable for residual vector, otherwise first nonlinear variable if no RHS
+      rhsMapping=>vectorMapping%rhsMapping
+      IF(ASSOCIATED(rhsMapping)) THEN
+        fieldVariable=>rhsMapping%rhsVariable
       ELSE
-        CALL FlagError("Equations matrices mapping is not associated.",err,error,*999)
+        fieldVariable=>nonlinearMapping%jacobianToVarMap(1)%variable
       ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not associated.",err,error,*999)
+      CALL EquationsMatrices_NodalVectorSetup(nonlinearMatrices%nodalResidual,fieldVariable,err,error,*999)
+      nonlinearMatrices%nodalResidualCalculated=0
+    ENDIF
+    rhsVector=>vectorMatrices%rhsVector
+    IF(ASSOCIATED(rhsVector)) THEN
+      !Initialise the RHS nodal vector
+      NULLIFY(rhsMapping)
+      CALL EquationsMappingVector_RHSMappingGet(vectorMapping,rhsMapping,err,error,*999)
+      fieldVariable=>rhsMapping%rhsVariable
+      CALL EquationsMatrices_NodalVectorSetup(rhsVector%nodalVector,fieldVariable,err,error,*999)
+    ENDIF
+    sourceVector=>vectorMatrices%sourceVector
+    IF(ASSOCIATED(sourceVector)) THEN
+      !Initialise the source nodal vector. Note that the number of rows in the source vector is taken, for now, from the RHS
+      !vector
+      IF(ASSOCIATED(rhsVector)) THEN
+        !Initialise the RHS nodal vector
+        rhsMapping=>vectorMapping%rhsMapping
+        NULLIFY(rhsMapping)
+        CALL EquationsMappingVector_RHSMappingGet(vectorMapping,rhsMapping,err,error,*999)
+        fieldVariable=>rhsMapping%rhsVariable
+        CALL EquationsMatrices_NodalVectorSetup(sourceVector%nodalVector,fieldVariable,err,error,*999)
+      ELSE
+        CALL FlagError("Not implemented.",err,error,*999)
+      ENDIF
     ENDIF
     
     EXITS("EquationsMatrices_NodalInitialise")
     RETURN
 999 ERRORSEXITS("EquationsMatrices_NodalInitialise",err,error)
     RETURN 1
+    
   END SUBROUTINE EquationsMatrices_NodalInitialise
 
   !
@@ -2305,42 +2039,27 @@ CONTAINS
 
     ENTERS("EquationsMatrices_NodalMatrixSetup",err,error,*998)
 
-    IF(ASSOCIATED(rowsFieldVariable)) THEN
-      IF(ASSOCIATED(colsFieldVariable)) THEN
-        nodalMatrix%maxNumberOfRows=rowsFieldVariable%maxNumberNodeInterpolationParameters* &
-          & rowsFieldVariable%NUMBER_OF_COMPONENTS
-        nodalMatrix%maxNumberOfColumns=colsFieldVariable%maxNumberNodeInterpolationParameters* &
-          & colsFieldVariable%NUMBER_OF_COMPONENTS
-        IF(ALLOCATED(nodalMatrix%rowDofs)) THEN
-          CALL FlagError("Nodal matrix row dofs already allocated.",err,error,*999)
-        ELSE
-          ALLOCATE(nodalMatrix%rowDofs(nodalMatrix%maxNumberOfRows),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate nodal matrix row dofs.",err,error,*999)
-        ENDIF
-        IF(ALLOCATED(nodalMatrix%columnDofs)) THEN
-          CALL FlagError("Nodal matrix column dofs already allocated.",err,error,*999)
-        ELSE
-          ALLOCATE(nodalMatrix%columnDofs(nodalMatrix%maxNumberOfColumns),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate nodal matrix column dofs.",err,error,*999)
-        ENDIF
-        IF(ALLOCATED(nodalMatrix%matrix)) THEN
-          CALL FlagError("Nodal matrix already allocated.",err,error,*999)
-        ELSE
-          ALLOCATE(nodalMatrix%matrix(nodalMatrix%maxNumberOfRows,nodalMatrix%maxNumberOfColumns),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate nodal matrix.",err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Columns field variable is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Rows field variable is not associated.",err,error,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(rowsFieldVariable)) CALL FlagError("Rows field variable is not associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(colsFieldVariable)) CALL FlagError("Columns field variable is not associated.",err,error,*998)
+    IF(ALLOCATED(nodalMatrix%rowDofs)) CALL FlagError("Nodal matrix row dofs already allocated.",err,error,*998)
+    IF(ALLOCATED(nodalMatrix%columnDofs)) CALL FlagError("Nodal matrix column dofs already allocated.",err,error,*998)
+    IF(ALLOCATED(nodalMatrix%matrix)) CALL FlagError("Nodal matrix already allocated.",err,error,*998)
+    
+    nodalMatrix%maxNumberOfRows=rowsFieldVariable%maxNumberNodeInterpolationParameters*rowsFieldVariable%NUMBER_OF_COMPONENTS
+    nodalMatrix%maxNumberOfColumns=colsFieldVariable%maxNumberNodeInterpolationParameters*colsFieldVariable%NUMBER_OF_COMPONENTS
+    ALLOCATE(nodalMatrix%rowDofs(nodalMatrix%maxNumberOfRows),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate nodal matrix row dofs.",err,error,*999)
+    ALLOCATE(nodalMatrix%columnDofs(nodalMatrix%maxNumberOfColumns),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate nodal matrix column dofs.",err,error,*999)
+    ALLOCATE(nodalMatrix%matrix(nodalMatrix%maxNumberOfRows,nodalMatrix%maxNumberOfColumns),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate nodal matrix.",err,error,*999)
     
     EXITS("EquationsMatrices_NodalMatrixSetup")
     RETURN
 999 CALL EquationsMatrices_NodalMatrixFinalise(nodalMatrix,dummyErr,dummyError,*998)
 998 ERRORSEXITS("EquationsMatrices_NodalMatrixSetup",err,error)
     RETURN 1
+    
   END SUBROUTINE EquationsMatrices_NodalMatrixSetup
 
   !
@@ -2361,30 +2080,22 @@ CONTAINS
 
     ENTERS("EquationsMatrices_NodalVectorSetup",err,error,*998)
 
-    IF(ASSOCIATED(rowsFieldVariable)) THEN
-      nodalVector%maxNumberOfRows=rowsFieldVariable%maxNumberNodeInterpolationParameters* &
-        & rowsFieldVariable%NUMBER_OF_COMPONENTS
-      IF(ALLOCATED(nodalVector%rowDofs)) THEN
-        CALL FlagError("Nodal vector row dofs is already allocated.",err,error,*999)        
-      ELSE
-        ALLOCATE(nodalVector%rowDofs(nodalVector%maxNumberOfRows),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate nodal vector row dofs.",err,error,*999)
-      ENDIF
-      IF(ALLOCATED(nodalVector%vector)) THEN
-        CALL FlagError("Nodal vector vector already allocated.",err,error,*999)        
-      ELSE
-        ALLOCATE(nodalVector%vector(nodalVector%maxNumberOfRows),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate nodal vector vector.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Rows field variable is not associated.",err,error,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(rowsFieldVariable)) CALL FlagError("Rows field variable is not associated.",err,error,*998)
+    IF(ALLOCATED(nodalVector%rowDofs)) CALL FlagError("Nodal vector row dofs is already allocated.",err,error,*998)
+    IF(ALLOCATED(nodalVector%vector)) CALL FlagError("Nodal vector vector already allocated.",err,error,*998)
+        
+    nodalVector%maxNumberOfRows=rowsFieldVariable%maxNumberNodeInterpolationParameters*rowsFieldVariable%NUMBER_OF_COMPONENTS
+    ALLOCATE(nodalVector%rowDofs(nodalVector%maxNumberOfRows),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate nodal vector row dofs.",err,error,*999)
+    ALLOCATE(nodalVector%vector(nodalVector%maxNumberOfRows),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate nodal vector vector.",err,error,*999)
     
     EXITS("EquationsMatrices_NodalVectorSetup")
     RETURN
 999 CALL EquationsMatrices_NodalVectorFinalise(nodalVector,dummyErr,dummyError,*998)
 998 ERRORSEXITS("EquationsMatrices_NodalVectorSetup",err,error)
     RETURN 1
+    
   END SUBROUTINE EquationsMatrices_NodalVectorSetup
 
   !
@@ -2392,103 +2103,88 @@ CONTAINS
   !
 
   !>Finalise the nodal calculation information and deallocate all memory
-  SUBROUTINE EquationsMatrices_NodalFinalise(equationsMatrices,err,error,*)
+  SUBROUTINE EquationsMatrices_NodalFinalise(vectorMatrices,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices !<The equations matrices for which to finalise the nodals
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<The equations matrices for which to finalise the nodals
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: matrixIdx
-    TYPE(EQUATIONS_JACOBIAN_TYPE), POINTER :: jacobianMatrix
-    TYPE(EQUATIONS_MATRICES_DYNAMIC_TYPE), POINTER :: dynamicMatrices
-    TYPE(EQUATIONS_MATRICES_LINEAR_TYPE), POINTER :: linearMatrices
-    TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: nonlinearMatrices
-    TYPE(EQUATIONS_MATRICES_RHS_TYPE), POINTER :: rhsVector
-    TYPE(EQUATIONS_MATRICES_SOURCE_TYPE), POINTER :: sourceVector
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: equationsMatrix
+    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("EquationsMatrices_NodalFinalise",err,error,*999)
 
-    IF(ASSOCIATED(equationsMatrices)) THEN
-      dynamicMatrices=>equationsMatrices%DYNAMIC_MATRICES
-      IF(ASSOCIATED(dynamicMatrices)) THEN
-        !Finalise the dynamic nodal matrices
-        DO matrixIdx=1,dynamicMatrices%NUMBER_OF_DYNAMIC_MATRICES
-          equationsMatrix=>dynamicMatrices%MATRICES(matrixIdx)%PTR
-          IF(ASSOCIATED(equationsMatrix)) THEN
-            equationsMatrix%NodalMatrix%maxNumberOfRows=0
-            equationsMatrix%NodalMatrix%maxNumberOfColumns=0
-            IF(ALLOCATED(equationsMatrix%NodalMatrix%rowDofs)) DEALLOCATE(equationsMatrix%NodalMatrix%rowDofs)
-            IF(ALLOCATED(equationsMatrix%NodalMatrix%columnDofs)) DEALLOCATE(equationsMatrix%NodalMatrix%columnDofs)
-            IF(ALLOCATED(equationsMatrix%NodalMatrix%matrix)) DEALLOCATE(equationsMatrix%NodalMatrix%matrix)
-          ELSE
-            localError="Equations matrix for dynamic matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
-              & " is not associated."
-            CALL FlagError(localError,err,error,*999)
-          ENDIF
-        ENDDO !matrixIdx
-      ENDIF
-      linearMatrices=>equationsMatrices%LINEAR_MATRICES
-      IF(ASSOCIATED(linearMatrices)) THEN
-        !Finalise the linear nodal matrices
-        DO matrixIdx=1,linearMatrices%NUMBER_OF_LINEAR_MATRICES
-          equationsMatrix=>linearMatrices%MATRICES(matrixIdx)%PTR
-          IF(ASSOCIATED(equationsMatrix)) THEN
-            equationsMatrix%NodalMatrix%maxNumberOfRows=0
-            equationsMatrix%NodalMatrix%maxNumberOfColumns=0
-            IF(ALLOCATED(equationsMatrix%NodalMatrix%rowDofs)) DEALLOCATE(equationsMatrix%NodalMatrix%rowDofs)
-            IF(ALLOCATED(equationsMatrix%NodalMatrix%columnDofs)) DEALLOCATE(equationsMatrix%NodalMatrix%columnDofs)
-            IF(ALLOCATED(equationsMatrix%NodalMatrix%matrix)) DEALLOCATE(equationsMatrix%NodalMatrix%matrix)
-          ELSE
-            localError="Equations matrix for linear matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
-              & " is not associated."
-            CALL FlagError(localError,err,error,*999)
-          ENDIF
-        ENDDO !matrixIdx
-      ENDIF
-      nonlinearMatrices=>equationsMatrices%NONLINEAR_MATRICES
-      IF(ASSOCIATED(nonlinearMatrices)) THEN
-        DO matrixIdx=1,nonlinearMatrices%NUMBER_OF_JACOBIANS
-          jacobianMatrix=>nonlinearMatrices%JACOBIANS(matrixIdx)%PTR
-          IF(ASSOCIATED(jacobianMatrix)) THEN
-            jacobianMatrix%NodalJacobian%maxNumberOfRows=0
-            jacobianMatrix%NodalJacobian%maxNumberOfColumns=0
-            IF(ALLOCATED(jacobianMatrix%NodalJacobian%rowDofs)) DEALLOCATE(jacobianMatrix%NodalJacobian%rowDofs)
-            IF(ALLOCATED(jacobianMatrix%NodalJacobian%columnDofs)) DEALLOCATE(jacobianMatrix%NodalJacobian%columnDofs)
-            IF(ALLOCATED(jacobianMatrix%NodalJacobian%matrix)) DEALLOCATE(jacobianMatrix%NodalJacobian%matrix)
-          ELSE
-            CALL FlagError("Nonlinear matrices Jacobian number "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
-                & " is not associated.",err,error,*999)
-          ENDIF
-        ENDDO
-        nonlinearMatrices%NodalResidual%maxNumberOfRows=0
-        IF(ALLOCATED(nonlinearMatrices%NodalResidual%rowDofs)) DEALLOCATE(nonlinearMatrices%NodalResidual%rowDofs)
-        IF(ALLOCATED(nonlinearMatrices%NodalResidual%vector)) DEALLOCATE(nonlinearMatrices%NodalResidual%vector)
-      ENDIF
-      rhsVector=>equationsMatrices%RHS_VECTOR
-      IF(ASSOCIATED(rhsVector)) THEN
-        !Finalise the nodal vector
-        rhsVector%NodalVector%maxNumberOfRows=0
-        IF(ALLOCATED(rhsVector%NodalVector%rowDofs)) DEALLOCATE(rhsVector%NodalVector%rowDofs)
-        IF(ALLOCATED(rhsVector%NodalVector%vector)) DEALLOCATE(rhsVector%NodalVector%vector)
-      ENDIF
-      sourceVector=>equationsMatrices%SOURCE_VECTOR
-      IF(ASSOCIATED(sourceVector)) THEN
-        !Finalise the nodal source vector
-        sourceVector%NodalVector%maxNumberOfRows=0
-        IF(ALLOCATED(sourceVector%NodalVector%rowDofs)) DEALLOCATE(sourceVector%NodalVector%rowDofs)
-        IF(ALLOCATED(sourceVector%NodalVector%vector)) DEALLOCATE(sourceVector%NodalVector%vector)
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not associated.",err,error,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*999)
     
+    dynamicMatrices=>vectorMatrices%dynamicMatrices
+    IF(ASSOCIATED(dynamicMatrices)) THEN
+      !Finalise the dynamic nodal matrices
+      DO matrixIdx=1,dynamicMatrices%numberOfDynamicMatrices
+        NULLIFY(equationsMatrix)
+        CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,matrixIdx,equationsMatrix,err,error,*999)
+        equationsMatrix%nodalMatrix%maxNumberOfRows=0
+        equationsMatrix%nodalMatrix%maxNumberOfColumns=0
+        IF(ALLOCATED(equationsMatrix%nodalMatrix%rowDofs)) DEALLOCATE(equationsMatrix%nodalMatrix%rowDofs)
+        IF(ALLOCATED(equationsMatrix%nodalMatrix%columnDofs)) DEALLOCATE(equationsMatrix%nodalMatrix%columnDofs)
+        IF(ALLOCATED(equationsMatrix%nodalMatrix%matrix)) DEALLOCATE(equationsMatrix%nodalMatrix%matrix)
+      ENDDO !matrixIdx
+    ENDIF
+    linearMatrices=>vectorMatrices%linearMatrices
+    IF(ASSOCIATED(linearMatrices)) THEN
+      !Finalise the linear nodal matrices
+      DO matrixIdx=1,linearMatrices%numberOfLinearMatrices
+        NULLIFY(equationsMatrix)
+        CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIdx,equationsMatrix,err,error,*999)
+        equationsMatrix%nodalMatrix%maxNumberOfRows=0
+        equationsMatrix%nodalMatrix%maxNumberOfColumns=0
+        IF(ALLOCATED(equationsMatrix%nodalMatrix%rowDofs)) DEALLOCATE(equationsMatrix%nodalMatrix%rowDofs)
+        IF(ALLOCATED(equationsMatrix%nodalMatrix%columnDofs)) DEALLOCATE(equationsMatrix%nodalMatrix%columnDofs)
+        IF(ALLOCATED(equationsMatrix%nodalMatrix%matrix)) DEALLOCATE(equationsMatrix%nodalMatrix%matrix)
+      ENDDO !matrixIdx
+    ENDIF
+    nonlinearMatrices=>vectorMatrices%nonlinearMatrices
+    IF(ASSOCIATED(nonlinearMatrices)) THEN
+      DO matrixIdx=1,nonlinearMatrices%numberOfJacobians
+        NULLIFY(jacobianMatrix)
+        CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,matrixIdx,jacobianMatrix,err,error,*999)
+        jacobianMatrix%nodalJacobian%maxNumberOfRows=0
+        jacobianMatrix%nodalJacobian%maxNumberOfColumns=0
+        IF(ALLOCATED(jacobianMatrix%nodalJacobian%rowDofs)) DEALLOCATE(jacobianMatrix%nodalJacobian%rowDofs)
+        IF(ALLOCATED(jacobianMatrix%nodalJacobian%columnDofs)) DEALLOCATE(jacobianMatrix%nodalJacobian%columnDofs)
+        IF(ALLOCATED(jacobianMatrix%nodalJacobian%matrix)) DEALLOCATE(jacobianMatrix%nodalJacobian%matrix)
+      ENDDO !matrixIdx
+      nonlinearMatrices%nodalResidual%maxNumberOfRows=0
+      IF(ALLOCATED(nonlinearMatrices%nodalResidual%rowDofs)) DEALLOCATE(nonlinearMatrices%nodalResidual%rowDofs)
+      IF(ALLOCATED(nonlinearMatrices%nodalResidual%vector)) DEALLOCATE(nonlinearMatrices%nodalResidual%vector)
+    ENDIF
+    rhsVector=>vectorMatrices%rhsVector
+    IF(ASSOCIATED(rhsVector)) THEN
+      !Finalise the nodal vector
+      rhsVector%nodalVector%maxNumberOfRows=0
+      IF(ALLOCATED(rhsVector%nodalVector%rowDofs)) DEALLOCATE(rhsVector%nodalVector%rowDofs)
+      IF(ALLOCATED(rhsVector%nodalVector%vector)) DEALLOCATE(rhsVector%nodalVector%vector)
+    ENDIF
+    sourceVector=>vectorMatrices%sourceVector
+    IF(ASSOCIATED(sourceVector)) THEN
+      !Finalise the nodal source vector
+      sourceVector%nodalVector%maxNumberOfRows=0
+      IF(ALLOCATED(sourceVector%nodalVector%rowDofs)) DEALLOCATE(sourceVector%nodalVector%rowDofs)
+      IF(ALLOCATED(sourceVector%nodalVector%vector)) DEALLOCATE(sourceVector%nodalVector%vector)
+    ENDIF
+   
     EXITS("EquationsMatrices_NodalFinalise")
     RETURN
 999 ERRORSEXITS("EquationsMatrices_NodalFinalise",err,error)
     RETURN 1
+    
   END SUBROUTINE EquationsMatrices_NodalFinalise
 
   !
@@ -2516,6 +2212,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("EquationsMatrices_NodalMatrixInitialise",err,error)
     RETURN 1
+    
   END SUBROUTINE EquationsMatrices_NodalMatrixInitialise
 
   !
@@ -2541,6 +2238,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("EquationsMatrices_NodalMatrixFinalise",err,error)
     RETURN 1
+    
   END SUBROUTINE EquationsMatrices_NodalMatrixFinalise
 
   !
@@ -2565,8 +2263,9 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("EquationsMatrices_NodalVectorInitialise",err,error)
     RETURN 1
+    
   END SUBROUTINE EquationsMatrices_NodalVectorInitialise
-
+  
   !
   !================================================================================================================================
   !
@@ -2588,8 +2287,8 @@ CONTAINS
     EXITS("EquationsMatrices_NodalVectorFinalise")
     RETURN
 999 ERRORSEXITS("EquationsMatrices_NodalVectorFinalise",err,error)
-
     RETURN 1
+    
   END SUBROUTINE EquationsMatrices_NodalVectorFinalise
 
   !
@@ -2597,16 +2296,16 @@ CONTAINS
   !
 
   !>Adds the Jacobian matrices into the equations Jacobian.
-  SUBROUTINE EquationsMatrices_JacobianNodeAdd(equationsMatrices,err,error,*)
+  SUBROUTINE EquationsMatrices_JacobianNodeAdd(vectorMatrices,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices !<A pointer to the equations matrices
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the equations matrices
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: jacobianMatrixIdx
-    TYPE(EQUATIONS_JACOBIAN_TYPE), POINTER :: jacobianMatrix
-    TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: nonlinearMatrices
+    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
     TYPE(VARYING_STRING) :: localError
     
 #ifdef TAUPROF
@@ -2615,30 +2314,24 @@ CONTAINS
 
     ENTERS("EquationsMatrices_JacobianNodeAdd",err,error,*999)
 
-    IF(ASSOCIATED(equationsMatrices)) THEN
-      nonlinearMatrices=>equationsMatrices%NONLINEAR_MATRICES
-      IF(ASSOCIATED(nonlinearMatrices)) THEN
-        DO jacobianMatrixIdx=1,nonlinearMatrices%NUMBER_OF_JACOBIANS
-          jacobianMatrix=>nonlinearMatrices%JACOBIANS(jacobianMatrixIdx)%PTR
-          IF(ASSOCIATED(jacobianMatrix)) THEN
-            IF(jacobianMatrix%UPDATE_JACOBIAN) THEN
-              !Add in Jacobian element matrices
-              CALL DISTRIBUTED_MATRIX_VALUES_ADD(jacobianMatrix%jacobian,jacobianMatrix%NodalJacobian%rowDofs(1: &
-                & jacobianMatrix%NodalJacobian%numberOfRows),jacobianMatrix%NodalJacobian%columnDofs(1: &
-                & jacobianMatrix%NodalJacobian%numberOfColumns),jacobianMatrix%NodalJacobian%matrix(1: &
-                & jacobianMatrix%NodalJacobian%numberOfRows,1:jacobianMatrix%NodalJacobian%numberOfColumns), &
-                & err,error,*999)
-            ENDIF
-          ELSE
-            localError="Jacobian matrix for Jacobian matrix index "// &
-              & TRIM(NumberToVString(jacobianMatrixIdx,"*",err,error))//" is not associated."
-            CALL FlagError(localError,err,error,*999)
-          ENDIF
-        ENDDO !jacobianMatrixIdx
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not allocated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not allocated.",err,error,*999)
+    
+    nonlinearMatrices=>vectorMatrices%nonlinearMatrices
+    IF(ASSOCIATED(nonlinearMatrices)) THEN
+      DO jacobianMatrixIdx=1,nonlinearMatrices%numberOfJacobians
+        NULLIFY(jacobianMatrix)
+        CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,jacobianMatrixIdx,jacobianMatrix,err,error,*999)
+        IF(jacobianMatrix%updateJacobian) THEN
+          !Add in Jacobian element matrices
+          CALL DistributedMatrix_ValuesAdd(jacobianMatrix%jacobian,jacobianMatrix%nodalJacobian%rowDofs(1: &
+            & jacobianMatrix%nodalJacobian%numberOfRows),jacobianMatrix%nodalJacobian%columnDofs(1: &
+            & jacobianMatrix%nodalJacobian%numberOfColumns),jacobianMatrix%nodalJacobian%matrix(1: &
+            & jacobianMatrix%nodalJacobian%numberOfRows,1:jacobianMatrix%nodalJacobian%numberOfColumns), &
+            & err,error,*999)
+        ENDIF
+      ENDDO !jacobianMatrixIdx
     ENDIF
+    
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP("EquationsMatrices_JacobianNodeAdd()")
 #endif
@@ -2647,6 +2340,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("EquationsMatrices_JacobianNodeAdd",err,error)
     RETURN 1
+    
   END SUBROUTINE EquationsMatrices_JacobianNodeAdd
 
   !
@@ -2654,1391 +2348,1380 @@ CONTAINS
   !
 
   !>Finalise the element calculation information and deallocate all memory
-  SUBROUTINE EQUATIONS_MATRICES_ELEMENT_FINALISE(EQUATIONS_MATRICES,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_ElementFinalise(vectorMatrices,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<The equations matrices for which to finalise the elements
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<The equations matrices for which to finalise the elements
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
-    TYPE(EQUATIONS_JACOBIAN_TYPE), POINTER :: JACOBIAN_MATRIX
-    TYPE(EQUATIONS_MATRICES_DYNAMIC_TYPE), POINTER :: DYNAMIC_MATRICES
-    TYPE(EQUATIONS_MATRICES_LINEAR_TYPE), POINTER :: LINEAR_MATRICES
-    TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: NONLINEAR_MATRICES
-    TYPE(EQUATIONS_MATRICES_RHS_TYPE), POINTER :: RHS_VECTOR
-    TYPE(EQUATIONS_MATRICES_SOURCE_TYPE), POINTER :: SOURCE_VECTOR
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: EQUATIONS_MATRIX
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: matrixIdx
+    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("EQUATIONS_MATRICES_ELEMENT_FINALISE",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_ElementFinalise",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      DYNAMIC_MATRICES=>EQUATIONS_MATRICES%DYNAMIC_MATRICES
-      IF(ASSOCIATED(DYNAMIC_MATRICES)) THEN
-        !Finalise the dynamic element matrices
-        DO matrix_idx=1,DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES
-          EQUATIONS_MATRIX=>DYNAMIC_MATRICES%MATRICES(matrix_idx)%PTR
-          IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
-            CALL EQUATIONS_MATRICES_ELEMENT_MATRIX_FINALISE(EQUATIONS_MATRIX%ELEMENT_MATRIX,ERR,ERROR,*999)
-          ELSE
-            LOCAL_ERROR="Equations matrix for dynamic matrix number "//TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))// &
-              & " is not associated."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ENDDO !matrix_idx
-      ENDIF
-      LINEAR_MATRICES=>EQUATIONS_MATRICES%LINEAR_MATRICES
-      IF(ASSOCIATED(LINEAR_MATRICES)) THEN
-        !Finalise the linear element matrices
-        DO matrix_idx=1,LINEAR_MATRICES%NUMBER_OF_LINEAR_MATRICES
-          EQUATIONS_MATRIX=>LINEAR_MATRICES%MATRICES(matrix_idx)%PTR
-          IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
-            CALL EQUATIONS_MATRICES_ELEMENT_MATRIX_FINALISE(EQUATIONS_MATRIX%ELEMENT_MATRIX,ERR,ERROR,*999)
-          ELSE
-            LOCAL_ERROR="Equations matrix for linear matrix number "//TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))// &
-              & " is not associated."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ENDDO !matrix_idx
-      ENDIF
-      NONLINEAR_MATRICES=>EQUATIONS_MATRICES%NONLINEAR_MATRICES
-      IF(ASSOCIATED(NONLINEAR_MATRICES)) THEN
-        DO matrix_idx=1,NONLINEAR_MATRICES%NUMBER_OF_JACOBIANS
-          JACOBIAN_MATRIX=>NONLINEAR_MATRICES%JACOBIANS(matrix_idx)%PTR
-          IF(ASSOCIATED(JACOBIAN_MATRIX)) THEN
-            JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MAX_NUMBER_OF_ROWS=0
-            JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MAX_NUMBER_OF_COLUMNS=0
-            IF(ALLOCATED(JACOBIAN_MATRIX%ELEMENT_JACOBIAN%ROW_DOFS)) DEALLOCATE(JACOBIAN_MATRIX%ELEMENT_JACOBIAN%ROW_DOFS)
-            IF(ALLOCATED(JACOBIAN_MATRIX%ELEMENT_JACOBIAN%COLUMN_DOFS)) DEALLOCATE(JACOBIAN_MATRIX%ELEMENT_JACOBIAN%COLUMN_DOFS)
-            IF(ALLOCATED(JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX)) DEALLOCATE(JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX)
-          ELSE
-            CALL FlagError("Nonlinear matrices Jacobian number "//TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))// &
-                & " is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ENDDO
-        NONLINEAR_MATRICES%ELEMENT_RESIDUAL%MAX_NUMBER_OF_ROWS=0
-        IF(ALLOCATED(NONLINEAR_MATRICES%ELEMENT_RESIDUAL%ROW_DOFS)) DEALLOCATE(NONLINEAR_MATRICES%ELEMENT_RESIDUAL%ROW_DOFS)
-        IF(ALLOCATED(NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR)) DEALLOCATE(NONLINEAR_MATRICES%ELEMENT_RESIDUAL%VECTOR)
-      ENDIF
-      RHS_VECTOR=>EQUATIONS_MATRICES%RHS_VECTOR
-      IF(ASSOCIATED(RHS_VECTOR)) THEN
-        !Finalise the element vector
-        RHS_VECTOR%ELEMENT_VECTOR%MAX_NUMBER_OF_ROWS=0
-        IF(ALLOCATED(RHS_VECTOR%ELEMENT_VECTOR%ROW_DOFS)) DEALLOCATE(RHS_VECTOR%ELEMENT_VECTOR%ROW_DOFS)
-        IF(ALLOCATED(RHS_VECTOR%ELEMENT_VECTOR%VECTOR)) DEALLOCATE(RHS_VECTOR%ELEMENT_VECTOR%VECTOR)
-      ENDIF
-      SOURCE_VECTOR=>EQUATIONS_MATRICES%SOURCE_VECTOR
-      IF(ASSOCIATED(SOURCE_VECTOR)) THEN
-        !Finalise the element source vector
-        SOURCE_VECTOR%ELEMENT_VECTOR%MAX_NUMBER_OF_ROWS=0
-        IF(ALLOCATED(SOURCE_VECTOR%ELEMENT_VECTOR%ROW_DOFS)) DEALLOCATE(SOURCE_VECTOR%ELEMENT_VECTOR%ROW_DOFS)
-        IF(ALLOCATED(SOURCE_VECTOR%ELEMENT_VECTOR%VECTOR)) DEALLOCATE(SOURCE_VECTOR%ELEMENT_VECTOR%VECTOR)
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*999)
+    
+    dynamicMatrices=>vectorMatrices%dynamicMatrices
+    IF(ASSOCIATED(dynamicMatrices)) THEN
+      !Finalise the dynamic element matrices
+      DO matrixIdx=1,dynamicMatrices%numberOfDynamicMatrices
+        NULLIFY(equationsMatrix)
+        CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,matrixIdx,equationsMatrix,err,error,*999)
+        CALL EquationsMatrices_ElementMatrixFinalise(equationsMatrix%elementMatrix,err,error,*999)
+      ENDDO !matrixIdx
+    ENDIF
+    linearMatrices=>vectorMatrices%linearMatrices
+    IF(ASSOCIATED(linearMatrices)) THEN
+      !Finalise the linear element matrices
+      DO matrixIdx=1,linearMatrices%numberOfLinearMatrices
+        NULLIFY(equationsMatrix)
+        CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIdx,equationsMatrix,err,error,*999)
+        CALL EquationsMatrices_ElementMatrixFinalise(equationsMatrix%elementMatrix,err,error,*999)
+      ENDDO !matrixIdx
+    ENDIF
+    nonlinearMatrices=>vectorMatrices%nonlinearMatrices
+    IF(ASSOCIATED(nonlinearMatrices)) THEN
+      DO matrixIdx=1,nonlinearMatrices%numberOfJacobians
+        NULLIFY(jacobianMatrix)
+        CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,matrixIdx,jacobianMatrix,err,error,*999)
+        CALL EquationsMatrices_ElementMatrixFinalise(jacobianMatrix%elementJacobian,err,error,*999)
+      ENDDO !matrixIdx
+      CALL EquationsMatrices_ElementVectorFinalise(nonlinearMatrices%elementResidual,err,error,*999)
+    ENDIF
+    rhsVector=>vectorMatrices%rhsVector
+    IF(ASSOCIATED(rhsVector)) THEN
+      !Finalise the element vector
+      CALL EquationsMatrices_ElementVectorFinalise(rhsVector%elementVector,err,error,*999)
+    ENDIF
+    sourceVector=>vectorMatrices%sourceVector
+    IF(ASSOCIATED(sourceVector)) THEN
+      !Finalise the element source vector
+      CALL EquationsMatrices_ElementVectorFinalise(sourceVector%elementVector,err,error,*999)
     ENDIF
     
-    EXITS("EQUATIONS_MATRICES_ELEMENT_FINALISE")
+    EXITS("EquationsMatrices_ElementFinalise")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MATRICES_ELEMENT_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_ElementFinalise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_ELEMENT_FINALISE
+    
+  END SUBROUTINE EquationsMatrices_ElementFinalise
 
   !
   !================================================================================================================================
   !
 
   !>Initialise the element calculation information for the equations matrices
-  SUBROUTINE EQUATIONS_MATRICES_ELEMENT_INITIALISE(EQUATIONS_MATRICES,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_ElementInitialise(vectorMatrices,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !The equations matrices to initialise the element information for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !The equations matrices to initialise the element information for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
+    INTEGER(INTG) :: matrixIdx
     INTEGER(INTG) :: rowsNumberOfElements,colsNumberOfElements !Number of elements in the row and col variables whose dofs are present in the element matrix
-    TYPE(EQUATIONS_JACOBIAN_TYPE), POINTER :: JACOBIAN_MATRIX
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
-    TYPE(EQUATIONS_MAPPING_DYNAMIC_TYPE), POINTER :: DYNAMIC_MAPPING
-    TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: LINEAR_MAPPING
-    TYPE(EQUATIONS_MAPPING_NONLINEAR_TYPE), POINTER :: NONLINEAR_MAPPING
-    TYPE(EQUATIONS_MAPPING_RHS_TYPE), POINTER :: RHS_MAPPING
-    TYPE(EQUATIONS_MATRICES_DYNAMIC_TYPE), POINTER :: DYNAMIC_MATRICES
-    TYPE(EQUATIONS_MATRICES_LINEAR_TYPE), POINTER :: LINEAR_MATRICES
-    TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: NONLINEAR_MATRICES
-    TYPE(EQUATIONS_MATRICES_RHS_TYPE), POINTER :: RHS_VECTOR
-    TYPE(EQUATIONS_MATRICES_SOURCE_TYPE), POINTER :: SOURCE_VECTOR
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: EQUATIONS_MATRIX
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE,COL_FIELD_VARIABLE
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
+    TYPE(EquationsMappingLinearType), POINTER :: linearMapping
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,colFieldVariable
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("EQUATIONS_MATRICES_ELEMENT_INITIALISE",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_ElementInitialise",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      rowsNumberOfElements=1
-      colsNumberOfElements=1
-      EQUATIONS_MAPPING=>EQUATIONS_MATRICES%EQUATIONS_MAPPING
-      IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-        DYNAMIC_MATRICES=>EQUATIONS_MATRICES%DYNAMIC_MATRICES
-        IF(ASSOCIATED(DYNAMIC_MATRICES)) THEN
-          !Initialise the dynamic element matrices
-          DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING
-          IF(ASSOCIATED(DYNAMIC_MAPPING)) THEN
-            DO matrix_idx=1,DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES
-              EQUATIONS_MATRIX=>DYNAMIC_MATRICES%MATRICES(matrix_idx)%PTR
-              IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
-                FIELD_VARIABLE=>DYNAMIC_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%VARIABLE
-                CALL EQUATIONS_MATRICES_ELEMENT_MATRIX_SETUP(EQUATIONS_MATRIX%ELEMENT_MATRIX,FIELD_VARIABLE,FIELD_VARIABLE, &
-                  & rowsNumberOfElements,colsNumberOfElements,ERR,ERROR,*999)
-              ELSE
-                LOCAL_ERROR="Equations dynamic matrix number "//TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))// &
-                  & " is not associated."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              ENDIF
-            ENDDO !matrix_idx
-          ELSE
-            CALL FlagError("Equations mapping dynamic mapping is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ENDIF
-        LINEAR_MATRICES=>EQUATIONS_MATRICES%LINEAR_MATRICES
-        IF(ASSOCIATED(LINEAR_MATRICES)) THEN
-          !Initialise the linear element matrices
-          LINEAR_MAPPING=>EQUATIONS_MAPPING%LINEAR_MAPPING
-          IF(ASSOCIATED(LINEAR_MAPPING)) THEN
-            DO matrix_idx=1,LINEAR_MATRICES%NUMBER_OF_LINEAR_MATRICES
-              EQUATIONS_MATRIX=>LINEAR_MATRICES%MATRICES(matrix_idx)%PTR
-              IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
-                FIELD_VARIABLE=>LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%VARIABLE
-                CALL EQUATIONS_MATRICES_ELEMENT_MATRIX_SETUP(EQUATIONS_MATRIX%ELEMENT_MATRIX,FIELD_VARIABLE,FIELD_VARIABLE, &
-                  & rowsNumberOfElements,colsNumberOfElements,ERR,ERROR,*999)
-              ELSE
-                LOCAL_ERROR="Equations linear matrix number "//TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))// &
-                  & " is not associated."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              ENDIF
-            ENDDO !matrix_idx
-          ELSE
-            CALL FlagError("Equations mapping linear mapping is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ENDIF
-        NONLINEAR_MATRICES=>EQUATIONS_MATRICES%NONLINEAR_MATRICES
-        IF(ASSOCIATED(NONLINEAR_MATRICES)) THEN
-          !Initialise the Jacobian element matrices
-          NONLINEAR_MAPPING=>EQUATIONS_MAPPING%NONLINEAR_MAPPING
-          IF(ASSOCIATED(NONLINEAR_MAPPING)) THEN
-            FIELD_VARIABLE=>NONLINEAR_MAPPING%JACOBIAN_TO_VAR_MAP(1)%VARIABLE
-            DO matrix_idx=1,NONLINEAR_MATRICES%NUMBER_OF_JACOBIANS
-              JACOBIAN_MATRIX=>NONLINEAR_MATRICES%JACOBIANS(matrix_idx)%PTR
-              IF(ASSOCIATED(JACOBIAN_MATRIX)) THEN
-                COL_FIELD_VARIABLE=>NONLINEAR_MAPPING%JACOBIAN_TO_VAR_MAP(matrix_idx)%VARIABLE
-                CALL EQUATIONS_MATRICES_ELEMENT_MATRIX_SETUP(JACOBIAN_MATRIX%ELEMENT_JACOBIAN,FIELD_VARIABLE,COL_FIELD_VARIABLE, &
-                  & rowsNumberOfElements,colsNumberOfElements,ERR,ERROR,*999)
-              ELSE
-                CALL FlagError("Jacobian matrix is not associated.",ERR,ERROR,*999)
-              ENDIF
-            ENDDO
-            !Use RHS variable for residual vector, otherwise first nonlinear variable if no RHS
-            RHS_MAPPING=>EQUATIONS_MAPPING%RHS_MAPPING
-            IF(ASSOCIATED(RHS_MAPPING)) THEN
-              FIELD_VARIABLE=>RHS_MAPPING%RHS_VARIABLE
-            ELSE
-              FIELD_VARIABLE=>NONLINEAR_MAPPING%JACOBIAN_TO_VAR_MAP(1)%VARIABLE
-            ENDIF
-            CALL EQUATIONS_MATRICES_ELEMENT_VECTOR_SETUP(NONLINEAR_MATRICES%ELEMENT_RESIDUAL,FIELD_VARIABLE,ERR,ERROR,*999)
-            NONLINEAR_MATRICES%ELEMENT_RESIDUAL_CALCULATED=0
-          ELSE
-            CALL FlagError("Equations mapping nonlinear mapping is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ENDIF
-        RHS_VECTOR=>EQUATIONS_MATRICES%RHS_VECTOR
-        IF(ASSOCIATED(RHS_VECTOR)) THEN
-          !Initialise the RHS element vector
-          RHS_MAPPING=>EQUATIONS_MAPPING%RHS_MAPPING
-          IF(ASSOCIATED(RHS_MAPPING)) THEN
-            FIELD_VARIABLE=>RHS_MAPPING%RHS_VARIABLE
-            CALL EQUATIONS_MATRICES_ELEMENT_VECTOR_SETUP(RHS_VECTOR%ELEMENT_VECTOR,FIELD_VARIABLE,ERR,ERROR,*999)
-          ELSE
-            CALL FlagError("RHS mapping is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ENDIF
-        SOURCE_VECTOR=>EQUATIONS_MATRICES%SOURCE_VECTOR
-        IF(ASSOCIATED(SOURCE_VECTOR)) THEN
-          !Initialise the source element vector. Note that the number of rows in the source vector is taken, for now, from the RHS
-          !vector
-          IF(ASSOCIATED(RHS_VECTOR)) THEN
-            !Initialise the RHS element vector
-            RHS_MAPPING=>EQUATIONS_MAPPING%RHS_MAPPING
-            IF(ASSOCIATED(RHS_MAPPING)) THEN
-              FIELD_VARIABLE=>RHS_MAPPING%RHS_VARIABLE
-              CALL EQUATIONS_MATRICES_ELEMENT_VECTOR_SETUP(SOURCE_VECTOR%ELEMENT_VECTOR,FIELD_VARIABLE,ERR,ERROR,*999)
-            ELSE
-              CALL FlagError("RHS mapping is not associated.",ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          ENDIF
-        ENDIF
-      ELSE
-        CALL FlagError("Equations matrices mapping is not associated.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*999)
     
-    EXITS("EQUATIONS_MATRICES_ELEMENT_INITIALISE")
+    NULLIFY(vectorMapping)
+    CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*999)
+
+    rowsNumberOfElements=1
+    colsNumberOfElements=1
+    dynamicMatrices=>vectorMatrices%dynamicMatrices
+    IF(ASSOCIATED(dynamicMatrices)) THEN
+      !Initialise the dynamic element matrices
+      NULLIFY(dynamicMapping)
+      CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
+      DO matrixIdx=1,dynamicMatrices%numberOfDynamicMatrices
+        NULLIFY(equationsMatrix)
+        CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,matrixIdx,equationsMatrix,err,error,*999)        
+        fieldVariable=>dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%VARIABLE
+        CALL EquationsMatrices_ElementMatrixSetup(equationsMatrix%elementMatrix,fieldVariable,fieldVariable, &
+          & rowsNumberOfElements,colsNumberOfElements,err,error,*999)
+      ENDDO !matrixIdx
+    ENDIF
+    linearMatrices=>vectorMatrices%linearMatrices
+    IF(ASSOCIATED(linearMatrices)) THEN
+      !Initialise the linear element matrices
+      NULLIFY(linearMapping)
+      CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
+      DO matrixIdx=1,linearMatrices%numberOfLinearMatrices
+        NULLIFY(equationsMatrix)
+        CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIdx,equationsMatrix,err,error,*999)        
+        fieldVariable=>linearMapping%equationsMatrixToVarMaps(matrixIdx)%VARIABLE
+        CALL EquationsMatrices_ElementMatrixSetup(equationsMatrix%elementMatrix,fieldVariable,fieldVariable, &
+          & rowsNumberOfElements,colsNumberOfElements,err,error,*999)
+      ENDDO !matrixIdx
+    ENDIF
+    nonlinearMatrices=>vectorMatrices%nonlinearMatrices
+    IF(ASSOCIATED(nonlinearMatrices)) THEN
+      !Initialise the Jacobian element matrices
+      NULLIFY(nonlinearMapping)
+      CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+      fieldVariable=>nonlinearMapping%jacobianToVarMap(1)%VARIABLE
+      DO matrixIdx=1,nonlinearMatrices%numberOfJacobians
+        NULLIFY(jacobianMatrix)
+        CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,matrixIdx,jacobianMatrix,err,error,*999)        
+        colFieldVariable=>nonlinearMapping%jacobianToVarMap(matrixIdx)%VARIABLE
+        CALL EquationsMatrices_ElementMatrixSetup(jacobianMatrix%elementJacobian,fieldVariable,colFieldVariable, &
+          & rowsNumberOfElements,colsNumberOfElements,err,error,*999)
+      ENDDO !matrixIdx
+      !Use RHS variable for residual vector, otherwise first nonlinear variable if no RHS
+      rhsMapping=>vectorMapping%rhsMapping
+      IF(ASSOCIATED(rhsMapping)) THEN
+        fieldVariable=>rhsMapping%rhsVariable
+      ELSE
+        fieldVariable=>nonlinearMapping%jacobianToVarMap(1)%variable
+      ENDIF
+      CALL EquationsMatrices_ElementVectorSetup(nonlinearMatrices%elementResidual,fieldVariable,err,error,*999)
+      nonlinearMatrices%elementResidualCalculated=0
+    ENDIF
+    rhsVector=>vectorMatrices%rhsVector
+    IF(ASSOCIATED(rhsVector)) THEN
+      !Initialise the RHS element vector
+      NULLIFY(rhsMapping)
+      CALL EquationsMappingVector_RHSMappingGet(vectorMapping,rhsMapping,err,error,*999)
+      fieldVariable=>rhsMapping%rhsVariable
+      CALL EquationsMatrices_ElementVectorSetup(rhsVector%elementVector,fieldVariable,err,error,*999)
+    ENDIF
+    sourceVector=>vectorMatrices%sourceVector
+    IF(ASSOCIATED(sourceVector)) THEN
+      !Initialise the source element vector. Note that the number of rows in the source vector is taken, for now, from the RHS
+      !vector
+      IF(ASSOCIATED(rhsVector)) THEN
+        !Initialise the RHS element vector
+        NULLIFY(rhsMapping)
+        CALL EquationsMappingVector_RHSMappingGet(vectorMapping,rhsMapping,err,error,*999)
+        fieldVariable=>rhsMapping%rhsVariable
+        CALL EquationsMatrices_ElementVectorSetup(sourceVector%elementVector,fieldVariable,err,error,*999)
+      ELSE
+        CALL FlagError("Not implemented.",err,error,*999)
+      ENDIF
+    ENDIF
+   
+    EXITS("EquationsMatrices_ElementInitialise")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MATRICES_ELEMENT_INITIALISE",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_ElementInitialise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_ELEMENT_INITIALISE
+    
+  END SUBROUTINE EquationsMatrices_ElementInitialise
 
   !
   !================================================================================================================================
   !
 
   !>Finalise a equations matrix and deallocate all memory
-  SUBROUTINE EQUATIONS_MATRIX_FINALISE(EQUATIONS_MATRIX,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_EquationsMatrixFinalise(equationsMatrix,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: EQUATIONS_MATRIX !<A pointer to the equations matrix to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix !<A pointer to the equations matrix to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     
-    ENTERS("EQUATIONS_MATRIX_FINALISE",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_EquationsMatrixFinalise",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
-      IF(ASSOCIATED(EQUATIONS_MATRIX%MATRIX)) CALL DISTRIBUTED_MATRIX_DESTROY(EQUATIONS_MATRIX%MATRIX,ERR,ERROR,*999)
-      CALL EQUATIONS_MATRICES_ELEMENT_MATRIX_FINALISE(EQUATIONS_MATRIX%ELEMENT_MATRIX,ERR,ERROR,*999)
-      CALL EquationsMatrices_NodalMatrixFinalise(EQUATIONS_MATRIX%NodalMatrix,ERR,ERROR,*999)
-      IF(ASSOCIATED(EQUATIONS_MATRIX%TEMP_VECTOR)) CALL DISTRIBUTED_VECTOR_DESTROY(EQUATIONS_MATRIX%TEMP_VECTOR,ERR,ERROR,*999)
+    IF(ASSOCIATED(equationsMatrix)) THEN
+      IF(ASSOCIATED(equationsMatrix%matrix)) CALL DistributedMatrix_Destroy(equationsMatrix%matrix,err,error,*999)
+      CALL EquationsMatrices_ElementMatrixFinalise(equationsMatrix%elementMatrix,err,error,*999)
+      CALL EquationsMatrices_NodalMatrixFinalise(equationsMatrix%nodalMatrix,err,error,*999)
+      IF(ASSOCIATED(equationsMatrix%tempVector)) CALL DistributedVector_Destroy(equationsMatrix%tempVector,err,error,*999)
     ENDIF
     
-    EXITS("EQUATIONS_MATRIX_FINALISE")
+    EXITS("EquationsMatrices_EquationsMatrixFinalise")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MATRIX_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_EquationsMatrixFinalise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRIX_FINALISE
+    
+  END SUBROUTINE EquationsMatrices_EquationsMatrixFinalise
 
   !
   !================================================================================================================================
   !
 
   !>Initialise the dynamic equations matrix.
-  SUBROUTINE EQUATIONS_MATRIX_DYNAMIC_INITIALISE(DYNAMIC_MATRICES,MATRIX_NUMBER,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_EquationsMatrixDynamicInitialise(dynamicMatrices,matrixNumber,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_DYNAMIC_TYPE), POINTER :: DYNAMIC_MATRICES !<A pointer to the dynamic matrices to initialise the dynamic equations matrix for
-    INTEGER(INTG) :: MATRIX_NUMBER !<The dynamic matrix number in the dynamic equations matrices to initialise.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices !<A pointer to the dynamic matrices to initialise the dynamic equations matrix for
+    INTEGER(INTG) :: matrixNumber !<The dynamic matrix number in the dynamic equations matrices to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
-    TYPE(EQUATIONS_MAPPING_DYNAMIC_TYPE), POINTER :: DYNAMIC_MAPPING
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: EQUATIONS_MATRIX
-    TYPE(VARYING_STRING) :: DUMMY_ERROR,LOCAL_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
+    TYPE(VARYING_STRING) :: dummyError,localError
 
-    ENTERS("EQUATIONS_MATRIX_DYNAMIC_INITIALISE",ERR,ERROR,*998)
+    ENTERS("EquationsMatrices_EquationsMatrixDynamicInitialise",err,error,*998)
 
-    IF(ASSOCIATED(DYNAMIC_MATRICES)) THEN
-      IF(MATRIX_NUMBER>0.AND.MATRIX_NUMBER<=DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES) THEN
-        EQUATIONS_MATRICES=>DYNAMIC_MATRICES%EQUATIONS_MATRICES
-        IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-          EQUATIONS_MAPPING=>EQUATIONS_MATRICES%EQUATIONS_MAPPING
-          IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-            DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING
-            IF(ASSOCIATED(DYNAMIC_MAPPING)) THEN
-              IF(ASSOCIATED(DYNAMIC_MATRICES%MATRICES(MATRIX_NUMBER)%PTR)) THEN
-                LOCAL_ERROR="Equations matrix for dynamic matrix number "//TRIM(NumberToVString(MATRIX_NUMBER,"*",ERR,ERROR))// &
-                & " is already associated."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*998)
-              ELSE
-                ALLOCATE(DYNAMIC_MATRICES%MATRICES(MATRIX_NUMBER)%PTR,STAT=ERR)
-                IF(ERR/=0) CALL FlagError("Could not allocate equations matrix.",ERR,ERROR,*999)
-                EQUATIONS_MATRIX=>DYNAMIC_MATRICES%MATRICES(MATRIX_NUMBER)%PTR
-                EQUATIONS_MATRIX%MATRIX_NUMBER=MATRIX_NUMBER
-                EQUATIONS_MATRIX%DYNAMIC_MATRICES=>DYNAMIC_MATRICES
-                NULLIFY(EQUATIONS_MATRIX%LINEAR_MATRICES)
-                EQUATIONS_MATRIX%STORAGE_TYPE=MATRIX_BLOCK_STORAGE_TYPE
-                EQUATIONS_MATRIX%STRUCTURE_TYPE=EQUATIONS_MATRIX_NO_STRUCTURE
-                EQUATIONS_MATRIX%LUMPED=.FALSE.
-                EQUATIONS_MATRIX%UPDATE_MATRIX=.TRUE.
-                EQUATIONS_MATRIX%FIRST_ASSEMBLY=.TRUE.
-                EQUATIONS_MATRIX%NUMBER_OF_COLUMNS=DYNAMIC_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(MATRIX_NUMBER)%NUMBER_OF_COLUMNS
-                DYNAMIC_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(MATRIX_NUMBER)%EQUATIONS_MATRIX=>EQUATIONS_MATRIX
-                NULLIFY(EQUATIONS_MATRIX%MATRIX)
-                CALL EquationsMatrices_ElementMatrixInitialise(EQUATIONS_MATRIX%ELEMENT_MATRIX,ERR,ERROR,*999)
-                CALL EquationsMatrices_NodalMatrixInitialise(EQUATIONS_MATRIX%NodalMatrix,ERR,ERROR,*999)
-                NULLIFY(EQUATIONS_MATRIX%TEMP_VECTOR)
-              ENDIF
-            ELSE
-              CALL FlagError("Equations mapping dynamic mapping is not associated.",ERR,ERROR,*998)
-            ENDIF
-          ELSE
-            CALL FlagError("Equations mapping is not associated.",ERR,ERROR,*998)
-          ENDIF
-        ELSE
-          CALL FlagError("Dynamic matrices equations matrices is not associated.",ERR,ERROR,*998)
-        ENDIF
-      ELSE
-        LOCAL_ERROR="The specified dynamic matrix number of "//TRIM(NumberToVString(MATRIX_NUMBER,"*",ERR,ERROR))// &
-          & " is invalid. The matrix number must be > 0 and <= "// &
-          & TRIM(NumberToVString(DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES,"*",ERR,ERROR))//"."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*998)
-      ENDIF
-    ELSE
-      CALL FlagError("Dynamic matrices is not associated.",ERR,ERROR,*998)
+    IF(.NOT.ASSOCIATED(dynamicMatrices)) CALL FlagError("Dynamic matrices is not associated.",err,error,*998)
+    IF(matrixNumber<1.OR.matrixNumber>dynamicMatrices%numberOfDynamicMatrices) THEN
+      localError="The specified dynamic matrix number of "//TRIM(NumberToVString(matrixNumber,"*",err,error))// &
+        & " is invalid. The matrix number must be >= 1 and <= "// &
+        & TRIM(NumberToVString(dynamicMatrices%numberOfDynamicMatrices,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*998)
     ENDIF
+    IF(.NOT.ALLOCATED(dynamicMatrices%matrices)) CALL FlagError("Dynamic matrices matrices is not allocated.",err,error,*998)
+    IF(ASSOCIATED(dynamicMatrices%matrices(matrixNumber)%ptr)) THEN
+      localError="Equations matrix for dynamic matrix number "//TRIM(NumberToVString(matrixNumber,"*",err,error))// &
+        & " is already associated."
+      CALL FlagError(localError,err,error,*998)
+    ENDIF
+    NULLIFY(dynamicMapping)
+    CALL EquationsMatricesDynamic_DynamicMappingGet(dynamicMatrices,dynamicMapping,err,error,*999)
     
-    EXITS("EQUATIONS_MATRIX_DYNAMIC_INITIALISE")
+    ALLOCATE(dynamicMatrices%matrices(matrixNumber)%ptr,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate equations matrix.",err,error,*999)
+    equationsMatrix=>dynamicMatrices%matrices(matrixNumber)%ptr
+    equationsMatrix%matrixNumber=matrixNumber
+    equationsMatrix%dynamicMatrices=>dynamicMatrices
+    NULLIFY(equationsMatrix%linearMatrices)
+    equationsMatrix%storageType=MATRIX_BLOCK_STORAGE_TYPE
+    equationsMatrix%structureType=EQUATIONS_MATRIX_NO_STRUCTURE
+    equationsMatrix%lumped=.FALSE.
+    equationsMatrix%updateMatrix=.TRUE.
+    equationsMatrix%firstAssembly=.TRUE.
+    equationsMatrix%numberOfColumns=dynamicMapping%equationsMatrixToVarMaps(matrixNumber)%numberOfColumns
+    dynamicMapping%equationsMatrixToVarMaps(matrixNumber)%equationsMatrix=>equationsMatrix
+    NULLIFY(equationsMatrix%matrix)
+    CALL EquationsMatrices_ElementMatrixInitialise(equationsMatrix%elementMatrix,err,error,*999)
+    CALL EquationsMatrices_NodalMatrixInitialise(equationsMatrix%nodalMatrix,err,error,*999)
+    NULLIFY(equationsMatrix%tempVector)
+    
+    EXITS("EquationsMatrices_EquationsMatrixDynamicInitialise")
     RETURN
-999 CALL EQUATIONS_MATRIX_FINALISE(DYNAMIC_MATRICES%MATRICES(MATRIX_NUMBER)%PTR,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("EQUATIONS_MATRIX_DYNAMIC_INITIALISE",ERR,ERROR)
+999 CALL EquationsMatrices_EquationsMatrixFinalise(dynamicMatrices%matrices(matrixNumber)%ptr,dummyErr,dummyError,*998)
+998 ERRORS("EquationsMatrices_EquationsMatrixDynamicInitialise",err,error)
+    EXITS("EquationsMatrices_EquationsMatrixDynamicInitialise")
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRIX_DYNAMIC_INITIALISE
+    
+  END SUBROUTINE EquationsMatrices_EquationsMatrixDynamicInitialise
 
   !
   !================================================================================================================================
   !
 
   !>Initialise the linear equations matrix.
-  SUBROUTINE EQUATIONS_MATRIX_LINEAR_INITIALISE(LINEAR_MATRICES,MATRIX_NUMBER,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_EquationsMatrixLinearInitialise(linearMatrices,matrixNumber,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_LINEAR_TYPE), POINTER :: LINEAR_MATRICES !<A pointer to the linear matrices to initialise the linear equations matrix for
-    INTEGER(INTG) :: MATRIX_NUMBER !<The linear matrix number in the linear equations matrices to initialise.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices !<A pointer to the linear matrices to initialise the linear equations matrix for
+    INTEGER(INTG) :: matrixNumber !<The linear matrix number in the linear equations matrices to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
-    TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: LINEAR_MAPPING
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: EQUATIONS_MATRIX
-    TYPE(VARYING_STRING) :: DUMMY_ERROR,LOCAL_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingLinearType), POINTER :: linearMapping
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
+    TYPE(VARYING_STRING) :: dummyError,localError
 
-    ENTERS("EQUATIONS_MATRIX_LINEAR_INITIALISE",ERR,ERROR,*998)
+    ENTERS("EquationsMatrices_EquationsMatrixLinearInitialise",err,error,*998)
 
-    IF(ASSOCIATED(LINEAR_MATRICES)) THEN
-      IF(MATRIX_NUMBER>0.AND.MATRIX_NUMBER<=LINEAR_MATRICES%NUMBER_OF_LINEAR_MATRICES) THEN
-        EQUATIONS_MATRICES=>LINEAR_MATRICES%EQUATIONS_MATRICES
-        IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-          EQUATIONS_MAPPING=>EQUATIONS_MATRICES%EQUATIONS_MAPPING
-          IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-            LINEAR_MAPPING=>EQUATIONS_MAPPING%LINEAR_MAPPING
-            IF(ASSOCIATED(LINEAR_MAPPING)) THEN
-              IF(ASSOCIATED(LINEAR_MATRICES%MATRICES(MATRIX_NUMBER)%PTR)) THEN
-                LOCAL_ERROR="Equations matrix for linear matrix number "//TRIM(NumberToVString(MATRIX_NUMBER,"*",ERR,ERROR))// &
-                & " is already associated."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*998)
-              ELSE
-                ALLOCATE(LINEAR_MATRICES%MATRICES(MATRIX_NUMBER)%PTR,STAT=ERR)
-                IF(ERR/=0) CALL FlagError("Could not allocate equations matrix.",ERR,ERROR,*999)
-                EQUATIONS_MATRIX=>LINEAR_MATRICES%MATRICES(MATRIX_NUMBER)%PTR
-                EQUATIONS_MATRIX%MATRIX_NUMBER=MATRIX_NUMBER
-                NULLIFY(EQUATIONS_MATRIX%DYNAMIC_MATRICES)
-                EQUATIONS_MATRIX%LINEAR_MATRICES=>LINEAR_MATRICES
-                EQUATIONS_MATRIX%STORAGE_TYPE=MATRIX_BLOCK_STORAGE_TYPE
-                EQUATIONS_MATRIX%STRUCTURE_TYPE=EQUATIONS_MATRIX_NO_STRUCTURE
-                EQUATIONS_MATRIX%LUMPED=.FALSE.
-                EQUATIONS_MATRIX%UPDATE_MATRIX=.TRUE.
-                EQUATIONS_MATRIX%FIRST_ASSEMBLY=.TRUE.
-                EQUATIONS_MATRIX%NUMBER_OF_COLUMNS=LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(MATRIX_NUMBER)%NUMBER_OF_COLUMNS
-                LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(MATRIX_NUMBER)%EQUATIONS_MATRIX=>EQUATIONS_MATRIX
-                NULLIFY(EQUATIONS_MATRIX%MATRIX)
-                CALL EquationsMatrices_ElementMatrixInitialise(EQUATIONS_MATRIX%ELEMENT_MATRIX,ERR,ERROR,*999)
-                CALL EquationsMatrices_NodalMatrixInitialise(EQUATIONS_MATRIX%NodalMatrix,ERR,ERROR,*999)
-                NULLIFY(EQUATIONS_MATRIX%TEMP_VECTOR)
-              ENDIF
-            ELSE
-              CALL FlagError("Equations mapping linear mapping is not associated.",ERR,ERROR,*998)
-            ENDIF
-          ELSE
-            CALL FlagError("Equations mapping is not associated.",ERR,ERROR,*998)
-          ENDIF
-        ELSE
-          CALL FlagError("Linear matrices equations matrices is not associated.",ERR,ERROR,*998)
-        ENDIF
-      ELSE
-        LOCAL_ERROR="The specified linear matrix number of "//TRIM(NumberToVString(MATRIX_NUMBER,"*",ERR,ERROR))// &
-          & " is invalid. The matrix number must be > 0 and <= "// &
-          & TRIM(NumberToVString(LINEAR_MATRICES%NUMBER_OF_LINEAR_MATRICES,"*",ERR,ERROR))//"."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*998)
-      ENDIF
-    ELSE
-      CALL FlagError("Linear matrices is not associated.",ERR,ERROR,*998)
+    IF(.NOT.ASSOCIATED(linearMatrices)) CALL FlagError("Linear matrices is not associated.",err,error,*998)    
+    IF(matrixNumber<1.OR.matrixNumber>linearMatrices%numberOfLinearMatrices) THEN
+      localError="The specified linear matrix number of "//TRIM(NumberToVString(matrixNumber,"*",err,error))// &
+        & " is invalid. The matrix number must be >= 1 and <= "// &
+        & TRIM(NumberToVString(linearMatrices%numberOfLinearMatrices,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*998)
     ENDIF
+    IF(.NOT.ALLOCATED(linearMatrices%matrices)) CALL FlagError("Linear matrices matrices is not allocated.",err,error,*998)
+    IF(ASSOCIATED(linearMatrices%matrices(matrixNumber)%ptr)) THEN
+      localError="Equations matrix for linear matrix number "//TRIM(NumberToVString(matrixNumber,"*",err,error))// &
+        & " is already associated."
+      CALL FlagError(localError,err,error,*998)
+    ENDIF
+    NULLIFY(linearMapping)
+    CALL EquationsMatricesLinear_LinearMappingGet(linearMatrices,linearMapping,err,error,*999)
     
-    EXITS("EQUATIONS_MATRIX_LINEAR_INITIALISE")
+    ALLOCATE(linearMatrices%matrices(matrixNumber)%ptr,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate equations matrix.",err,error,*999)
+    equationsMatrix=>linearMatrices%matrices(matrixNumber)%ptr
+    equationsMatrix%matrixNumber=matrixNumber
+    NULLIFY(equationsMatrix%dynamicMatrices)
+    equationsMatrix%linearMatrices=>linearMatrices
+    equationsMatrix%storageType=MATRIX_BLOCK_STORAGE_TYPE
+    equationsMatrix%structureType=EQUATIONS_MATRIX_NO_STRUCTURE
+    equationsMatrix%lumped=.FALSE.
+    equationsMatrix%updateMatrix=.TRUE.
+    equationsMatrix%firstAssembly=.TRUE.
+    equationsMatrix%numberOfColumns=linearMapping%equationsMatrixToVarMaps(matrixNumber)%numberOfColumns
+    linearMapping%equationsMatrixToVarMaps(matrixNumber)%equationsMatrix=>equationsMatrix
+    NULLIFY(equationsMatrix%matrix)
+    CALL EquationsMatrices_ElementMatrixInitialise(equationsMatrix%elementMatrix,err,error,*999)
+    CALL EquationsMatrices_NodalMatrixInitialise(equationsMatrix%nodalMatrix,err,error,*999)
+    NULLIFY(equationsMatrix%tempVector)
+   
+    EXITS("EquationsMatrices_EquationsMatrixLinearInitialise")
     RETURN
-999 CALL EQUATIONS_MATRIX_FINALISE(LINEAR_MATRICES%MATRICES(MATRIX_NUMBER)%PTR,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("EQUATIONS_MATRIX_LINEAR_INITIALISE",ERR,ERROR)
+999 CALL EquationsMatrices_EquationsMatrixFinalise(linearMatrices%matrices(matrixNumber)%ptr,dummyErr,dummyError,*998)
+998 ERRORS("EquationsMatrices_EquationsMatrixLinearInitialise",err,error)
+    EXITS("EquationsMatrices_EquationsMatrixLinearInitialise")
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRIX_LINEAR_INITIALISE
+    
+  END SUBROUTINE EquationsMatrices_EquationsMatrixLinearInitialise
 
   !
   !================================================================================================================================
   !
 
-  !>Finalises the equations matrices dynamic matrices and deallocates all memory
-  SUBROUTINE EQUATIONS_MATRICES_DYNAMIC_FINALISE(DYNAMIC_MATRICES,ERR,ERROR,*)
+  !>Finalises the vector equations matrices dynamic matrices and deallocates all memory
+  SUBROUTINE EquationsMatrices_DynamicFinalise(dynamicMatrices,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_DYNAMIC_TYPE), POINTER :: DYNAMIC_MATRICES !<A pointer to the equation matrices dynamic matrices to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices !<A pointer to the vector equation matrices dynamic matrices to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
+    INTEGER(INTG) :: matrixIdx
      
-    ENTERS("EQUATIONS_MATRICES_DYNAMIC_FINALISE",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_DynamicFinalise",err,error,*999)
 
-    IF(ASSOCIATED(DYNAMIC_MATRICES)) THEN
-      IF(ALLOCATED(DYNAMIC_MATRICES%MATRICES)) THEN
-        DO matrix_idx=1,SIZE(DYNAMIC_MATRICES%MATRICES,1)
-          CALL EQUATIONS_MATRIX_FINALISE(DYNAMIC_MATRICES%MATRICES(matrix_idx)%PTR,ERR,ERROR,*999)
-        ENDDO !matrix_idx
-        DEALLOCATE(DYNAMIC_MATRICES%MATRICES)
+    IF(ASSOCIATED(dynamicMatrices)) THEN
+      IF(ALLOCATED(dynamicMatrices%matrices)) THEN
+        DO matrixIdx=1,SIZE(dynamicMatrices%matrices,1)
+          CALL EquationsMatrices_EquationsMatrixFinalise(dynamicMatrices%matrices(matrixIdx)%ptr,err,error,*999)
+        ENDDO !matrixIdx
+        DEALLOCATE(dynamicMatrices%matrices)
       ENDIF
-      IF(ASSOCIATED(DYNAMIC_MATRICES%TEMP_VECTOR)) CALL DISTRIBUTED_VECTOR_DESTROY(DYNAMIC_MATRICES%TEMP_VECTOR,ERR,ERROR,*999)
-      DEALLOCATE(DYNAMIC_MATRICES)
+      IF(ASSOCIATED(dynamicMatrices%tempVector)) CALL DistributedVector_Destroy(dynamicMatrices%tempVector,err,error,*999)
+      DEALLOCATE(dynamicMatrices)
     ENDIF
     
-    EXITS("EQUATIONS_MATRICES_DYNAMIC_FINALISE")
+    EXITS("EquationsMatrices_DynamicFinalise")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MATRICES_DYNAMIC_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_DynamicFinalise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_DYNAMIC_FINALISE
+    
+  END SUBROUTINE EquationsMatrices_DynamicFinalise
   
   !
   !================================================================================================================================
   !
 
-  !>Initialises the equations matrices dynamic matrices
-  SUBROUTINE EQUATIONS_MATRICES_DYNAMIC_INITIALISE(EQUATIONS_MATRICES,ERR,ERROR,*)
+  !>Initialises the vector equations matrices dynamic matrices
+  SUBROUTINE EquationsMatrices_DynamicInitialise(vectorMatrices,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer to the equation matrices to initialise the dynamic matrices for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector equation matrices to initialise the dynamic matrices for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR,matrix_idx
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
-    TYPE(EQUATIONS_MAPPING_DYNAMIC_TYPE), POINTER :: DYNAMIC_MAPPING
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr,matrixIdx
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
+    TYPE(VARYING_STRING) :: dummyError
      
-    ENTERS("EQUATIONS_MATRICES_DYNAMIC_INITIALISE",ERR,ERROR,*998)
+    ENTERS("EquationsMatrices_DynamicInitialise",err,error,*998)
     
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      EQUATIONS_MAPPING=>EQUATIONS_MATRICES%EQUATIONS_MAPPING
-      IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-        DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING
-        IF(ASSOCIATED(DYNAMIC_MAPPING)) THEN
-          IF(ASSOCIATED(EQUATIONS_MATRICES%DYNAMIC_MATRICES)) THEN
-            CALL FlagError("Equations matrices dynamic matrices is already associated.",ERR,ERROR,*998)
-          ELSE
-            ALLOCATE(EQUATIONS_MATRICES%DYNAMIC_MATRICES,STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate equations matrices dynamic matrices.",ERR,ERROR,*999)
-            EQUATIONS_MATRICES%DYNAMIC_MATRICES%EQUATIONS_MATRICES=>EQUATIONS_MATRICES
-            EQUATIONS_MATRICES%DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES=DYNAMIC_MAPPING%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES
-            ALLOCATE(EQUATIONS_MATRICES%DYNAMIC_MATRICES%MATRICES(DYNAMIC_MAPPING%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate equations matrices dynamic matrices matrices.",ERR,ERROR,*999)
-            DO matrix_idx=1,DYNAMIC_MAPPING%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES
-              NULLIFY(EQUATIONS_MATRICES%DYNAMIC_MATRICES%MATRICES(matrix_idx)%PTR)
-              CALL EQUATIONS_MATRIX_DYNAMIC_INITIALISE(EQUATIONS_MATRICES%DYNAMIC_MATRICES,matrix_idx,ERR,ERROR,*999)
-            ENDDO !matrix_idx
-            NULLIFY(EQUATIONS_MATRICES%DYNAMIC_MATRICES%TEMP_VECTOR)
-          ENDIF
-        ENDIF
-      ELSE
-        CALL FlagError("Equations matrices equations mapping is not associated.",ERR,ERROR,*998)        
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*998)
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*998)
+    IF(ASSOCIATED(vectorMatrices%dynamicMatrices)) &
+      & CALL FlagError("Equations matrices dynamic matrices is already associated.",err,error,*998)
+    NULLIFY(vectorMapping)
+    CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*998)
+    dynamicMapping=>vectorMapping%dynamicMapping
+
+    IF(ASSOCIATED(dynamicMapping)) THEN
+      ALLOCATE(vectorMatrices%dynamicMatrices,STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate equations matrices dynamic matrices.",err,error,*999)
+      vectorMatrices%dynamicMatrices%vectorMatrices=>vectorMatrices
+      vectorMatrices%dynamicMatrices%numberOfDynamicMatrices=dynamicMapping%numberOfDynamicMatrices
+      ALLOCATE(vectorMatrices%dynamicMatrices%matrices(dynamicMapping%numberOfDynamicMatrices),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate equations matrices dynamic matrices matrices.",err,error,*999)
+      DO matrixIdx=1,dynamicMapping%numberOfDynamicMatrices
+        NULLIFY(vectorMatrices%dynamicMatrices%matrices(matrixIdx)%ptr)
+        CALL EquationsMatrices_EquationsMatrixDynamicInitialise(vectorMatrices%dynamicMatrices,matrixIdx,err,error,*999)
+      ENDDO !matrixIdx
+      NULLIFY(vectorMatrices%dynamicMatrices%tempVector)
     ENDIF
     
-    EXITS("EQUATIONS_MATRICES_DYNAMIC_INITIALISE")
+    EXITS("EquationsMatrices_DynamicInitialise")
     RETURN
-999 CALL EQUATIONS_MATRICES_DYNAMIC_FINALISE(EQUATIONS_MATRICES%DYNAMIC_MATRICES,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("EQUATIONS_MATRICES_DYNAMIC_INITIALISE",ERR,ERROR)
+999 CALL EquationsMatrices_DynamicFinalise(vectorMatrices%dynamicMatrices,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMatrices_DynamicInitialise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_DYNAMIC_INITIALISE
+    
+  END SUBROUTINE EquationsMatrices_DynamicInitialise
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds the Hessian elmental matrices into the equations Hessian.
+  SUBROUTINE EquationsMatrices_HessianElementAdd(vectorMatrices,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the equations matrices
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: hessianMatrixIdx
+    TYPE(EquationsHessianType), POINTER :: hessianMatrix
+    TYPE(EquationsMatricesOptimisationType), POINTER :: optimisationMatrices
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("EquationsMatrices_HessianElementAdd",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Equations matrices is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(vectorMatrices%optimisationMatrices)) &
+      & CALL FlagError("Equations matrices optimisation matrices is not associated.",err,error,*999)
+
+    optimisationMatrices=>vectorMatrices%optimisationMatrices
+    DO hessianMatrixIdx=1,optimisationMatrices%numberOfHessians
+      hessianMatrix=>optimisationMatrices%hessians(hessianMatrixIdx)%ptr
+      IF(ASSOCIATED(hessianMatrix)) THEN
+        IF(hessianMatrix%updateHessian) THEN
+          !Add in Hessian element matrices
+          CALL DistributedMatrix_ValuesAdd(hessianMatrix%hessian,hessianMatrix%elementHessian%rowDOFS( &
+            & 1:hessianMatrix%elementHessian%numberOfRows),hessianMatrix%elementHessian%columnDOFS( &
+            & 1:hessianMatrix%elementHessian%numberOfColumns),hessianMatrix%elementHessian%matrix(1: &
+            & hessianMatrix%elementHessian%numberOfRows,1:hessianMatrix%elementHessian%numberOfColumns), &
+            & err,error,*999)
+        ENDIF
+      ELSE
+        localError="The Hessian matrix for Hessian matrix index "//TRIM(NumberToVString(hessianMatrixIdx,"*",err,error))// &
+          & " is not associated."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ENDDO !hessianMatrixIdx
+    
+    EXITS("EquationsMatrices_HessianElementAdd")
+    RETURN
+999 ERRORSEXITS("EquationsMatrices_HessianElementAdd",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrices_HessianElementAdd
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Outputs the equations Hessian matrices
+  SUBROUTINE EquationsMatrices_HessianOutput(id,vectorMatrices,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the ouptut stream
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the equations Hessian matrices
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: hessianMatrixIdx
+    TYPE(EquationsHessianType), POINTER :: hessianMatrix
+    TYPE(EquationsMatricesOptimisationType), POINTER :: optimisationMatrices
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("EquationsMatrices_HessianOutput",err,error,*999)
+    
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Equations matrices is not associated.",err,error,*999)
+    IF(.NOT.vectorMatrices%vectorMatricesFinished) &
+      & CALL FlagError("Equations matrices have not been finished.",err,error,*999)
+    IF(.NOT.ASSOCIATED(vectorMatrices%optimisationMatrices)) &
+      & CALL FlagError("Equations matrices optimisation matrices is not associated.",err,error,*999)
+
+    optimisationMatrices=>vectorMatrices%optimisationMatrices
+    
+    CALL WriteString(id,"",err,error,*999)
+    CALL WriteString(id,"Hessian matrices:",err,error,*999)
+    DO hessianMatrixIdx=1,optimisationMatrices%numberOfHessians
+      hessianMatrix=>optimisationMatrices%hessians(hessianMatrixIdx)%ptr
+      IF(ASSOCIATED(hessianMatrix)) THEN        
+        CALL WriteStringValue(id,"Hessian matrix: ",hessianMatrixIdx,err,error,*999)
+        CALL DistributedMatrix_Output(id,hessianMatrix%hessian,err,error,*999)
+      ELSE
+        localError="The Hessian matrix for Hessian matrix index "//TRIM(NumberToVString(hessianMatrixIdx,"*",err,error))// &
+          & " is not associated."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ENDDO !hessianMatrixIdx
+    
+    EXITS("EquationsMatrices_HessianOutput")
+    RETURN
+999 ERRORSEXITS("EquationsMatrices_HessianOutput",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrices_HessianOutput
   
   !
   !================================================================================================================================
   !
 
   !>Adds the Jacobain matrices into the equations Jacobian.
-  SUBROUTINE EQUATIONS_MATRICES_JACOBIAN_ELEMENT_ADD(EQUATIONS_MATRICES,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_JacobianElementAdd(vectorMatrices,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer to the equations matrices
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the equations matrices
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: jacobian_matrix_idx
-    TYPE(EQUATIONS_JACOBIAN_TYPE), POINTER :: JACOBIAN_MATRIX
-    TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: NONLINEAR_MATRICES
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: jacobianMatrixIdx
+    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(VARYING_STRING) :: localError
     
 #ifdef TAUPROF
-    CALL TAU_STATIC_PHASE_START("EQUATIONS_MATRICES_JACOBIAN_ELEMENT_ADD()")
+    CALL TAU_STATIC_PHASE_START("EquationsMatrices_JacobianElementAdd()")
 #endif
 
-    ENTERS("EQUATIONS_MATRICES_JACOBIAN_ELEMENT_ADD",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_JacobianElementAdd",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      NONLINEAR_MATRICES=>EQUATIONS_MATRICES%NONLINEAR_MATRICES
-      IF(ASSOCIATED(NONLINEAR_MATRICES)) THEN
-        DO jacobian_matrix_idx=1,NONLINEAR_MATRICES%NUMBER_OF_JACOBIANS
-          JACOBIAN_MATRIX=>NONLINEAR_MATRICES%JACOBIANS(jacobian_matrix_idx)%PTR
-          IF(ASSOCIATED(JACOBIAN_MATRIX)) THEN
-            IF(JACOBIAN_MATRIX%UPDATE_JACOBIAN) THEN
-              !Add in Jacobian element matrices
-              CALL DISTRIBUTED_MATRIX_VALUES_ADD(JACOBIAN_MATRIX%JACOBIAN,JACOBIAN_MATRIX%ELEMENT_JACOBIAN%ROW_DOFS(1: &
-                & JACOBIAN_MATRIX%ELEMENT_JACOBIAN%NUMBER_OF_ROWS),JACOBIAN_MATRIX%ELEMENT_JACOBIAN%COLUMN_DOFS(1: &
-                & JACOBIAN_MATRIX%ELEMENT_JACOBIAN%NUMBER_OF_COLUMNS),JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(1: &
-                & JACOBIAN_MATRIX%ELEMENT_JACOBIAN%NUMBER_OF_ROWS,1:JACOBIAN_MATRIX%ELEMENT_JACOBIAN%NUMBER_OF_COLUMNS), &
-                & ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="Jacobian matrix for Jacobian matrix index "// &
-              & TRIM(NumberToVString(jacobian_matrix_idx,"*",ERR,ERROR))//" is not associated."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ENDDO !jacobian_matrix_idx
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*999)
+    NULLIFY(nonlinearMatrices)
+    CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
+
+    DO jacobianMatrixIdx=1,nonlinearMatrices%numberOfJacobians
+      NULLIFY(jacobianMatrix)
+      CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,jacobianMatrixIdx,jacobianMatrix,err,error,*999)
+      IF(jacobianMatrix%updateJacobian) THEN
+        !Add in Jacobian element matrices
+        CALL DistributedMatrix_ValuesAdd(jacobianMatrix%jacobian,jacobianMatrix%elementJacobian%rowDOFS(1: &
+          & jacobianMatrix%elementJacobian%numberOfRows),jacobianMatrix%elementJacobian%columnDOFS(1: &
+          & jacobianMatrix%elementJacobian%numberOfColumns),jacobianMatrix%elementJacobian%matrix(1: &
+          & jacobianMatrix%elementJacobian%numberOfRows,1:jacobianMatrix%elementJacobian%numberOfColumns), &
+          & err,error,*999)
       ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not allocated.",ERR,ERROR,*999)
-    ENDIF
+    ENDDO !jacobianMatrixIdx
+      
 #ifdef TAUPROF
-    CALL TAU_STATIC_PHASE_STOP("EQUATIONS_MATRICES_JACOBIAN_ELEMENT_ADD()")
+    CALL TAU_STATIC_PHASE_STOP("EquationsMatrices_JacobianElementAdd()")
 #endif
     
-    EXITS("EQUATIONS_MATRICES_JACOBIAN_ELEMENT_ADD")
+    EXITS("EquationsMatrices_JacobianElementAdd")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MATRICES_JACOBIAN_ELEMENT_ADD",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_JacobianElementAdd",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_JACOBIAN_ELEMENT_ADD
+    
+  END SUBROUTINE EquationsMatrices_JacobianElementAdd
 
   !
   !================================================================================================================================
   !
 
   !>Outputs the equations Jacobian matrices
-  SUBROUTINE EQUATIONS_MATRICES_JACOBIAN_OUTPUT(ID,EQUATIONS_MATRICES,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_JacobianOutput(id,vectorMatrices,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the ouptut stream
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer to the equations Jacobian matrices
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the ouptut stream
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the equations Jacobian matrices
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: jacobian_matrix_idx
-    TYPE(EQUATIONS_JACOBIAN_TYPE), POINTER :: JACOBIAN_MATRIX
-    TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: NONLINEAR_MATRICES
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: jacobianMatrixIdx
+    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("EQUATIONS_MATRICES_JACOBIAN_OUTPUT",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_JacobianOutput",err,error,*999)
     
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      IF(EQUATIONS_MATRICES%EQUATIONS_MATRICES_FINISHED) THEN
-        NONLINEAR_MATRICES=>EQUATIONS_MATRICES%NONLINEAR_MATRICES
-        IF(ASSOCIATED(NONLINEAR_MATRICES)) THEN
-          CALL WRITE_STRING(ID,"",ERR,ERROR,*999)
-          CALL WRITE_STRING(ID,"Jacobian matrices:",ERR,ERROR,*999)
-          DO jacobian_matrix_idx=1,NONLINEAR_MATRICES%NUMBER_OF_JACOBIANS
-            JACOBIAN_MATRIX=>NONLINEAR_MATRICES%JACOBIANS(jacobian_matrix_idx)%PTR
-            IF(ASSOCIATED(JACOBIAN_MATRIX)) THEN        
-              CALL WRITE_STRING(ID,"Jacobian matrix:",ERR,ERROR,*999)
-              CALL DISTRIBUTED_MATRIX_OUTPUT(ID,JACOBIAN_MATRIX%JACOBIAN,ERR,ERROR,*999)
-            ELSE
-              LOCAL_ERROR="Jacobian matrix for Jacobian matrix index "// &
-                & TRIM(NumberToVString(jacobian_matrix_idx,"*",ERR,ERROR))//" is not associated."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ENDDO !jacobian_matrix_idx
-        ENDIF
-      ELSE
-        CALL FlagError("Equations matrices have not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*999)    
+    IF(.NOT.vectorMatrices%vectorMatricesFinished) &
+      & CALL FlagError("Vector equations matrices have not been finished.",err,error,*999)
+    
+    nonlinearMatrices=>vectorMatrices%nonlinearMatrices
+    IF(ASSOCIATED(nonlinearMatrices)) THEN
+      CALL WriteString(id,"",err,error,*999)
+      CALL WriteString(id,"Jacobian matrices:",err,error,*999)
+      CALL WriteStringValue(id,"Number of Jacobian matrices = ",nonlinearMatrices%numberOfJacobians,err,error,*999)
+      DO jacobianMatrixIdx=1,nonlinearMatrices%numberOfJacobians
+        NULLIFY(jacobianMatrix)
+        CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,jacobianMatrixIdx,jacobianMatrix,err,error,*999)
+        CALL WriteStringValue(id,"Jacobian matrix: ",jacobianMatrixIdx,err,error,*999)
+        CALL DistributedMatrix_Output(id,jacobianMatrix%jacobian,err,error,*999)
+      ENDDO !jacobianMatrixIdx
     ENDIF
     
-    EXITS("EQUATIONS_MATRICES_JACOBIAN_OUTPUT")
+    EXITS("EquationsMatrices_JacobianOutput")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MATRICES_JACOBIAN_OUTPUT",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_JacobianOutput",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_JACOBIAN_OUTPUT
+    
+  END SUBROUTINE EquationsMatrices_JacobianOutput
   
   !
   !================================================================================================================================
   !
 
   !>Sets the Jacobian calculation types of the residual variables
-  SUBROUTINE EquationsMatrices_JacobianTypesSet(equationsMatrices,jacobianTypes,err,error,*)
+  SUBROUTINE EquationsMatrices_JacobianTypesSet(vectorMatrices,jacobianTypes,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices !<A pointer to the equations matrices to set the Jacobian type for.
-    INTEGER(INTG), INTENT(IN) :: jacobianTypes(:) !<jacobianTypes(matrix_idx). The Jacobian calculation type for the matrix_idx'th Jacobian matrix.
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector equations matrices to set the Jacobian type for.
+    INTEGER(INTG), INTENT(IN) :: jacobianTypes(:) !<jacobianTypes(matrixIdx). The Jacobian calculation type for the matrixIdx'th Jacobian matrix.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: nonlinearMatrices
+    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
     INTEGER(INTG) :: matrixIdx,numberOfjacobians,jacobianType
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("EquationsMatrices_JacobianTypesSet",err,error,*999)
 
-    IF(ASSOCIATED(equationsMatrices)) THEN
-      IF(equationsMatrices%EQUATIONS_MATRICES_FINISHED) THEN
-        CALL FlagError("Equations matrices have been finished.",err,error,*999)
-      ELSE
-        nonlinearMatrices=>equationsMatrices%NONLINEAR_MATRICES
-        IF(ASSOCIATED(nonlinearMatrices)) THEN
-          numberOfJacobians=SIZE(jacobianTypes,1)
-          IF(numberOfJacobians==nonlinearMatrices%NUMBER_OF_JACOBIANS) THEN
-            DO matrixIdx=1,numberOfJacobians
-              jacobianType=jacobianTypes(matrixIdx)
-              SELECT CASE(jacobianType)
-              CASE(EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED, &
-                  & EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED)
-                nonlinearMatrices%JACOBIANS(matrixIdx)%PTR%JACOBIAN_CALCULATION_TYPE=jacobianType
-              CASE DEFAULT
-                localError="Invalid Jacobian calculation type of " &
-                  & //TRIM(NumberToVString(jacobianType,"*",err,error))//"."
-                CALL FlagError(localError,err,error,*999)
-              END SELECT
-            END DO
-          ELSE
-            localError="Invalid number of Jacobian calculation types. The number of types " &
-              & //TRIM(NumberToVString(numberOfJacobians,"*",err,error)) &
-              & //" should be "//TRIM(NumberToVString(nonlinearMatrices%NUMBER_OF_JACOBIANS,"*",err,error))
-            CALL FlagError(localError,err,error,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Equations matrices nonlinear matrices are not associated",err,error,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices are not associated",err,error,*999)
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*999)
+    IF(vectorMatrices%vectorMatricesFinished) CALL FlagError("Vector equations matrices have been finished.",err,error,*999)
+
+    NULLIFY(nonlinearMatrices)
+    CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
+    numberOfJacobians=SIZE(jacobianTypes,1)
+    IF(numberOfJacobians/=nonlinearMatrices%numberOfJacobians) THEN
+      localError="Invalid number of Jacobian calculation types. The number of types "// &
+        & TRIM(NumberToVString(numberOfJacobians,"*",err,error))//" should be "// &
+        & TRIM(NumberToVString(nonlinearMatrices%numberOfJacobians,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+     
+    DO matrixIdx=1,numberOfJacobians
+      jacobianType=jacobianTypes(matrixIdx)
+      NULLIFY(jacobianMatrix)
+      CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,matrixIdx,jacobianMatrix,err,error,*999)
+      SELECT CASE(jacobianType)
+      CASE(EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED,EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED)
+        jacobianMatrix%jacobianCalculationType=jacobianType
+      CASE DEFAULT
+        localError="The Jacobian calculation type of "//TRIM(NumberToVString(jacobianType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    ENDDO !matrixIdx
 
     EXITS("EquationsMatrices_JacobianTypesSet")
     RETURN
 999 ERRORSEXITS("EquationsMatrices_JacobianTypesSet",err,error)
     RETURN 1
+    
   END SUBROUTINE EquationsMatrices_JacobianTypesSet
 
   !
   !================================================================================================================================
   !
 
-  !>Finalises the equations matrices linear matrices and deallocates all memory
-  SUBROUTINE EQUATIONS_MATRICES_LINEAR_FINALISE(LINEAR_MATRICES,ERR,ERROR,*)
+  !>Finalises the vector equations matrices linear matrices and deallocates all memory
+  SUBROUTINE EquationsMatrices_LinearFinalise(linearMatrices,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_LINEAR_TYPE), POINTER :: LINEAR_MATRICES !<A pointer to the equation matrices linear matrices to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices !<A pointer to the vector equation matrices linear matrices to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
+    INTEGER(INTG) :: matrixIdx
      
-    ENTERS("EQUATIONS_MATRICES_LINEAR_FINALISE",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_LinearFinalise",err,error,*999)
 
-    IF(ASSOCIATED(LINEAR_MATRICES)) THEN
-      IF(ALLOCATED(LINEAR_MATRICES%MATRICES)) THEN
-        DO matrix_idx=1,SIZE(LINEAR_MATRICES%MATRICES,1)
-          CALL EQUATIONS_MATRIX_FINALISE(LINEAR_MATRICES%MATRICES(matrix_idx)%PTR,ERR,ERROR,*999)
-        ENDDO !matrix_idx
-        DEALLOCATE(LINEAR_MATRICES%MATRICES)
+    IF(ASSOCIATED(linearMatrices)) THEN
+      IF(ALLOCATED(linearMatrices%matrices)) THEN
+        DO matrixIdx=1,SIZE(linearMatrices%matrices,1)
+          CALL EquationsMatrices_EquationsMatrixFinalise(linearMatrices%matrices(matrixIdx)%ptr,err,error,*999)
+        ENDDO !matrixIdx
+        DEALLOCATE(linearMatrices%matrices)
       ENDIF
-      DEALLOCATE(LINEAR_MATRICES)
+      DEALLOCATE(linearMatrices)
     ENDIF
     
-    EXITS("EQUATIONS_MATRICES_LINEAR_FINALISE")
+    EXITS("EquationsMatrices_LinearFinalise")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MATRICES_LINEAR_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_LinearFinalise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_LINEAR_FINALISE
+    
+  END SUBROUTINE EquationsMatrices_LinearFinalise
   
   !
   !================================================================================================================================
   !
 
   !>Initialises the equations matrices linear matrices
-  SUBROUTINE EQUATIONS_MATRICES_LINEAR_INITIALISE(EQUATIONS_MATRICES,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_LinearInitialise(vectorMatrices,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer to the equation matrices to initialise the linear matrices for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the equation matrices to initialise the linear matrices for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR,matrix_idx
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
-    TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: LINEAR_MAPPING
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr,matrixIdx
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingLinearType), POINTER :: linearMapping
+    TYPE(VARYING_STRING) :: dummyError
      
-    ENTERS("EQUATIONS_MATRICES_LINEAR_INITIALISE",ERR,ERROR,*998)
+    ENTERS("EquationsMatrices_LinearInitialise",err,error,*998)
     
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      EQUATIONS_MAPPING=>EQUATIONS_MATRICES%EQUATIONS_MAPPING
-      IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-        LINEAR_MAPPING=>EQUATIONS_MAPPING%LINEAR_MAPPING
-        IF(ASSOCIATED(LINEAR_MAPPING)) THEN
-          IF(ASSOCIATED(EQUATIONS_MATRICES%LINEAR_MATRICES)) THEN
-            CALL FlagError("Equations matrices linear matrices is already associated.",ERR,ERROR,*998)
-          ELSE
-            ALLOCATE(EQUATIONS_MATRICES%LINEAR_MATRICES,STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate equations matrices linear matrices.",ERR,ERROR,*999)
-            EQUATIONS_MATRICES%LINEAR_MATRICES%EQUATIONS_MATRICES=>EQUATIONS_MATRICES
-            EQUATIONS_MATRICES%LINEAR_MATRICES%NUMBER_OF_LINEAR_MATRICES=LINEAR_MAPPING%NUMBER_OF_LINEAR_EQUATIONS_MATRICES
-            ALLOCATE(EQUATIONS_MATRICES%LINEAR_MATRICES%MATRICES(LINEAR_MAPPING%NUMBER_OF_LINEAR_EQUATIONS_MATRICES),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate equations matrices linear matrices matrices.",ERR,ERROR,*999)
-            DO matrix_idx=1,LINEAR_MAPPING%NUMBER_OF_LINEAR_EQUATIONS_MATRICES
-              NULLIFY(EQUATIONS_MATRICES%LINEAR_MATRICES%MATRICES(matrix_idx)%PTR)
-              CALL EQUATIONS_MATRIX_LINEAR_INITIALISE(EQUATIONS_MATRICES%LINEAR_MATRICES,matrix_idx,ERR,ERROR,*999)
-            ENDDO !matrix_idx
-          ENDIF
-        ENDIF
-      ELSE
-        CALL FlagError("Equations matrices equations mapping is not associated.",ERR,ERROR,*998)        
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*998)
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*998)
+    IF(ASSOCIATED(vectorMatrices%linearMatrices)) &
+      & CALL FlagError("Vector equations matrices linear matrices is already associated.",err,error,*998)
+    NULLIFY(vectorMapping)
+    CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*999)
+    linearMapping=>vectorMapping%linearMapping
+
+    IF(ASSOCIATED(linearMapping)) THEN
+      ALLOCATE(vectorMatrices%linearMatrices,STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate equations matrices linear matrices.",err,error,*999)
+      vectorMatrices%linearMatrices%vectorMatrices=>vectorMatrices
+      vectorMatrices%linearMatrices%numberOfLinearMatrices=linearMapping%numberOfLinearMatrices
+      ALLOCATE(vectorMatrices%linearMatrices%matrices(linearMapping%numberOfLinearMatrices),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate equations matrices linear matrices matrices.",err,error,*999)
+      DO matrixIdx=1,linearMapping%numberOfLinearMatrices
+        NULLIFY(vectorMatrices%linearMatrices%matrices(matrixIdx)%ptr)
+        CALL EquationsMatrices_EquationsMatrixLinearInitialise(vectorMatrices%linearMatrices,matrixIdx,err,error,*999)
+      ENDDO !matrixIdx
     ENDIF
     
-    EXITS("EQUATIONS_MATRICES_LINEAR_INITIALISE")
+    EXITS("EquationsMatrices_LinearInitialise")
     RETURN
-999 CALL EQUATIONS_MATRICES_LINEAR_FINALISE(EQUATIONS_MATRICES%LINEAR_MATRICES,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("EQUATIONS_MATRICES_LINEAR_INITIALISE",ERR,ERROR)
+999 CALL EquationsMatrices_LinearFinalise(vectorMatrices%linearMatrices,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMatrices_LinearInitialise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_LINEAR_INITIALISE
+    
+  END SUBROUTINE EquationsMatrices_LinearInitialise
   
   !
   !================================================================================================================================
   !
 
   !>Finalises the equations matrices nonlinear matrices and deallocates all memory
-  SUBROUTINE EQUATIONS_MATRICES_NONLINEAR_FINALISE(NONLINEAR_MATRICES,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_NonlinearFinalise(nonlinearMatrices,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: NONLINEAR_MATRICES !<A pointer to the equation matrices nonlinear matrices to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices !<A pointer to the equation matrices nonlinear matrices to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
+    INTEGER(INTG) :: matrixIdx
      
-    ENTERS("EQUATIONS_MATRICES_NONLINEAR_FINALISE",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_NonlinearFinalise",err,error,*999)
 
-    IF(ASSOCIATED(NONLINEAR_MATRICES)) THEN
-      IF(ALLOCATED(NONLINEAR_MATRICES%JACOBIANS)) THEN
-        DO matrix_idx=1,NONLINEAR_MATRICES%NUMBER_OF_JACOBIANS
-          CALL EQUATIONS_JACOBIAN_FINALISE(NONLINEAR_MATRICES%JACOBIANS(matrix_idx)%PTR,ERR,ERROR,*999)
-        ENDDO
-        DEALLOCATE(NONLINEAR_MATRICES%JACOBIANS)
+    IF(ASSOCIATED(nonlinearMatrices)) THEN
+      IF(ALLOCATED(nonlinearMatrices%jacobians)) THEN
+        DO matrixIdx=1,nonlinearMatrices%numberOfJacobians
+          CALL EquationsMatrices_JacobianFinalise(nonlinearMatrices%jacobians(matrixIdx)%ptr,err,error,*999)
+        ENDDO !matrixidx
+        DEALLOCATE(nonlinearMatrices%jacobians)
       ENDIF
-      IF(ASSOCIATED(NONLINEAR_MATRICES%RESIDUAL)) CALL DISTRIBUTED_VECTOR_DESTROY(NONLINEAR_MATRICES%RESIDUAL,ERR,ERROR,*999)
-      CALL EQUATIONS_MATRICES_ELEMENT_VECTOR_FINALISE(NONLINEAR_MATRICES%ELEMENT_RESIDUAL,ERR,ERROR,*999)
-      CALL EquationsMatrices_NodalVectorFinalise(NONLINEAR_MATRICES%NodalResidual,ERR,ERROR,*999)
-      DEALLOCATE(NONLINEAR_MATRICES)
+      IF(ASSOCIATED(nonlinearMatrices%residual)) CALL DistributedVector_Destroy(nonlinearMatrices%residual,err,error,*999)
+      CALL EquationsMatrices_ElementVectorFinalise(nonlinearMatrices%elementResidual,err,error,*999)
+      CALL EquationsMatrices_NodalVectorFinalise(nonlinearMatrices%nodalResidual,err,error,*999)
+      DEALLOCATE(nonlinearMatrices)
     ENDIF
     
-    EXITS("EQUATIONS_MATRICES_NONLINEAR_FINALISE")
+    EXITS("EquationsMatrices_NonlinearFinalise")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MATRICES_NONLINEAR_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_NonlinearFinalise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_NONLINEAR_FINALISE
+    
+  END SUBROUTINE EquationsMatrices_NonlinearFinalise
   
   !
   !================================================================================================================================
   !
 
   !>Initialises the equations matrices nonlinear matrices
-  SUBROUTINE EQUATIONS_MATRICES_NONLINEAR_INITIALISE(EQUATIONS_MATRICES,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_NonlinearInitialise(vectorMatrices,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer to the equation matrices to initialise the nonlinear matrices for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the equation matrices to initialise the nonlinear matrices for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx,DUMMY_ERR
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
-    TYPE(EQUATIONS_MAPPING_NONLINEAR_TYPE), POINTER :: NONLINEAR_MAPPING
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: matrixIdx,dummyErr
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(VARYING_STRING) :: dummyError
     
-    ENTERS("EQUATIONS_MATRICES_NONLINEAR_INITIALISE",ERR,ERROR,*998)
+    ENTERS("EquationsMatrices_NonlinearInitialise",err,error,*998)
 
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      EQUATIONS_MAPPING=>EQUATIONS_MATRICES%EQUATIONS_MAPPING
-      IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-        NONLINEAR_MAPPING=>EQUATIONS_MAPPING%NONLINEAR_MAPPING
-        IF(ASSOCIATED(NONLINEAR_MAPPING)) THEN
-          IF(ASSOCIATED(EQUATIONS_MATRICES%NONLINEAR_MATRICES)) THEN
-            CALL FlagError("Equations matrices nonlinear matrices is already associated.",ERR,ERROR,*998)
-          ELSE
-            ALLOCATE(EQUATIONS_MATRICES%NONLINEAR_MATRICES,STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate equations matrices nonlinear matrices.",ERR,ERROR,*999)
-            EQUATIONS_MATRICES%NONLINEAR_MATRICES%EQUATIONS_MATRICES=>EQUATIONS_MATRICES
-            EQUATIONS_MATRICES%NONLINEAR_MATRICES%UPDATE_RESIDUAL=.TRUE.
-            EQUATIONS_MATRICES%NONLINEAR_MATRICES%FIRST_ASSEMBLY=.TRUE.
-            NULLIFY(EQUATIONS_MATRICES%NONLINEAR_MATRICES%RESIDUAL)
-            CALL EquationsMatrices_ElementVectorInitialise(EQUATIONS_MATRICES%NONLINEAR_MATRICES%ELEMENT_RESIDUAL,ERR,ERROR,*999)
-            CALL EquationsMatrices_NodalVectorInitialise(EQUATIONS_MATRICES%NONLINEAR_MATRICES%NodalResidual,ERR,ERROR,*999)
-            EQUATIONS_MATRICES%NONLINEAR_MATRICES%NUMBER_OF_JACOBIANS=NONLINEAR_MAPPING%NUMBER_OF_RESIDUAL_VARIABLES
-            ALLOCATE(EQUATIONS_MATRICES%NONLINEAR_MATRICES%JACOBIANS(NONLINEAR_MAPPING%NUMBER_OF_RESIDUAL_VARIABLES),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate equations matrices Jacobian matrices.",ERR,ERROR,*999)
-            DO matrix_idx=1,NONLINEAR_MAPPING%NUMBER_OF_RESIDUAL_VARIABLES
-              NULLIFY(EQUATIONS_MATRICES%NONLINEAR_MATRICES%JACOBIANS(matrix_idx)%PTR)
-              CALL EQUATIONS_JACOBIAN_INITIALISE(EQUATIONS_MATRICES%NONLINEAR_MATRICES,matrix_idx,ERR,ERROR,*999)
-            ENDDO !matrix_idx
-          ENDIF
-        ENDIF
-      ELSE
-        CALL FlagError("Equations matrices equations mapping is not associated.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*998)
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*998)
+    IF(ASSOCIATED(vectorMatrices%nonlinearMatrices)) &
+      & CALL FlagError("Vector equations matrices nonlinear matrices is already associated.",err,error,*998)
+
+    NULLIFY(vectorMapping)
+    CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*999)
+   
+    nonlinearMapping=>vectorMapping%nonlinearMapping
+    IF(ASSOCIATED(nonlinearMapping)) THEN
+      ALLOCATE(vectorMatrices%nonlinearMatrices,STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate equations matrices nonlinear matrices.",err,error,*999)
+      vectorMatrices%nonlinearMatrices%vectorMatrices=>vectorMatrices
+      vectorMatrices%nonlinearMatrices%updateResidual=.TRUE.
+      vectorMatrices%nonlinearMatrices%firstAssembly=.TRUE.
+      NULLIFY(vectorMatrices%nonlinearMatrices%residual)
+      CALL EquationsMatrices_ElementVectorInitialise(vectorMatrices%nonlinearMatrices%elementResidual,err,error,*999)
+      CALL EquationsMatrices_NodalVectorInitialise(vectorMatrices%nonlinearMatrices%nodalResidual,err,error,*999)
+      vectorMatrices%nonlinearMatrices%numberOfJacobians=nonlinearMapping%numberOfResidualVariables
+      ALLOCATE(vectorMatrices%nonlinearMatrices%jacobians(nonlinearMapping%numberOfResidualVariables),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate equations matrices Jacobian matrices.",err,error,*999)
+      DO matrixIdx=1,nonlinearMapping%numberOfResidualVariables
+        NULLIFY(vectorMatrices%nonlinearMatrices%jacobians(matrixIdx)%ptr)
+        CALL EquationsMatrices_JacobianInitialise(vectorMatrices%nonlinearMatrices,matrixIdx,err,error,*999)
+      ENDDO !matrixIdx
     ENDIF
     
-    EXITS("EQUATIONS_MATRICES_NONLINEAR_INITIALISE")
+    EXITS("EquationsMatrices_NonlinearInitialise")
     RETURN
-999 CALL EQUATIONS_MATRICES_NONLINEAR_FINALISE(EQUATIONS_MATRICES%NONLINEAR_MATRICES,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("EQUATIONS_MATRICES_NONLINEAR_INITIALISE",ERR,ERROR)
+999 CALL EquationsMatrices_NonlinearFinalise(vectorMatrices%nonlinearMatrices,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMatrices_NonlinearInitialise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_NONLINEAR_INITIALISE
+    
+  END SUBROUTINE EquationsMatrices_NonlinearInitialise
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises the equations matrices optimisation matrices and deallocates all memory
+  SUBROUTINE EquationsMatrices_OptimisationFinalise(optimisationMatrices,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesOptimisationType), POINTER :: optimisationMatrices !<A pointer to the equation matrices optimisation matrices to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: matrixIdx
+     
+    ENTERS("EquationsMatrices_OptimisationFinalise",err,error,*999)
+
+    IF(ASSOCIATED(optimisationMatrices)) THEN
+      IF(ALLOCATED(optimisationMatrices%hessians)) THEN
+        DO matrixIdx=1,SIZE(optimisationMatrices%hessians,1)
+          CALL EquationsMatrices_HessianFinalise(optimisationMatrices%hessians(matrixIdx)%ptr,err,error,*999)
+        ENDDO !matrixIdx
+        DEALLOCATE(optimisationMatrices%hessians)
+      ENDIF
+      IF(ASSOCIATED(optimisationMatrices%gradient)) CALL DistributedVector_Destroy(optimisationMatrices%gradient,err,error,*999)
+      CALL EquationsMatrices_ElementVectorFinalise(optimisationMatrices%elementGradient,err,error,*999)
+      IF(ASSOCIATED(optimisationMatrices%constraints)) CALL DistributedVector_Destroy(optimisationMatrices%constraints, &
+        & err,error,*999)
+      CALL EquationsMatrices_ElementVectorFinalise(optimisationMatrices%elementConstraints,err,error,*999)
+      IF(ASSOCIATED(optimisationMatrices%lowerBounds)) CALL DistributedVector_Destroy(optimisationMatrices%lowerBounds, &
+        & err,error,*999)
+      CALL EquationsMatrices_ElementVectorFinalise(optimisationMatrices%elementLowerBounds,err,error,*999)
+      IF(ASSOCIATED(optimisationMatrices%upperBounds)) CALL DistributedVector_Destroy(optimisationMatrices%upperBounds, &
+        & err,error,*999)
+      CALL EquationsMatrices_ElementVectorFinalise(optimisationMatrices%elementUpperBounds,err,error,*999)
+      IF(ASSOCIATED(optimisationMatrices%residual)) CALL DistributedVector_Destroy(optimisationMatrices%residual,err,error,*999)
+      CALL EquationsMatrices_ElementVectorFinalise(optimisationMatrices%elementResidual,err,error,*999)
+      DEALLOCATE(optimisationMatrices)
+    ENDIF
+    
+    EXITS("EquationsMatrices_OptimisationFinalise")
+    RETURN
+999 ERRORSEXITS("EquationsMatrices_OptimisationFinalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrices_OptimisationFinalise
   
   !
   !================================================================================================================================
   !
 
   !>Outputs the equations matrices
-  SUBROUTINE EQUATIONS_MATRICES_OUTPUT(ID,EQUATIONS_MATRICES,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_VectorOutput(id,vectorMatrices,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the ouptut stream
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer to the equations matrices
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the ouptut stream
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the equations matrices
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
-    TYPE(EQUATIONS_MATRICES_DYNAMIC_TYPE), POINTER :: DYNAMIC_MATRICES
-    TYPE(EQUATIONS_MATRICES_LINEAR_TYPE), POINTER :: LINEAR_MATRICES
-    TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: NONLINEAR_MATRICES
-    TYPE(EQUATIONS_MATRICES_RHS_TYPE), POINTER :: RHS_VECTOR
-    TYPE(EQUATIONS_MATRICES_SOURCE_TYPE), POINTER :: SOURCE_VECTOR
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: EQUATIONS_MATRIX
+    INTEGER(INTG) :: matrixIdx
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     
-    ENTERS("EQUATIONS_MATRICES_OUTPUT",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_VectorOutput",err,error,*999)
     
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      IF(EQUATIONS_MATRICES%EQUATIONS_MATRICES_FINISHED) THEN
-        CALL WRITE_STRING(ID,"",ERR,ERROR,*999)
-        CALL WRITE_STRING(ID,"Equations matrices:",ERR,ERROR,*999)
-        DYNAMIC_MATRICES=>EQUATIONS_MATRICES%DYNAMIC_MATRICES
-        IF(ASSOCIATED(DYNAMIC_MATRICES)) THEN
-          CALL WRITE_STRING(ID,"Dynamic matrices:",ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(ID,"Number of dynamic matrices = ",DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES,ERR,ERROR,*999)
-          DO matrix_idx=1,DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES
-            EQUATIONS_MATRIX=>DYNAMIC_MATRICES%MATRICES(matrix_idx)%PTR
-            IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
-              CALL WRITE_STRING_VALUE(ID,"Equations matrix : ",matrix_idx,ERR,ERROR,*999)
-              CALL DISTRIBUTED_MATRIX_OUTPUT(ID,EQUATIONS_MATRIX%MATRIX,ERR,ERROR,*999)
-            ELSE
-              CALL FlagError("Equations matrix is not associated.",ERR,ERROR,*999)
-            ENDIF
-          ENDDO !matrix_idx
-        ENDIF
-        LINEAR_MATRICES=>EQUATIONS_MATRICES%LINEAR_MATRICES
-        IF(ASSOCIATED(LINEAR_MATRICES)) THEN
-          CALL WRITE_STRING(ID,"Linear matrices:",ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(ID,"Number of linear matrices = ",LINEAR_MATRICES%NUMBER_OF_LINEAR_MATRICES,ERR,ERROR,*999)
-          DO matrix_idx=1,LINEAR_MATRICES%NUMBER_OF_LINEAR_MATRICES
-            EQUATIONS_MATRIX=>LINEAR_MATRICES%MATRICES(matrix_idx)%PTR
-            IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
-              CALL WRITE_STRING_VALUE(ID,"Equations matrix : ",matrix_idx,ERR,ERROR,*999)
-              CALL DISTRIBUTED_MATRIX_OUTPUT(ID,EQUATIONS_MATRIX%MATRIX,ERR,ERROR,*999)
-            ELSE
-              CALL FlagError("Equations matrix is not associated.",ERR,ERROR,*999)
-            ENDIF
-          ENDDO !matrix_idx
-        ENDIF
-        NONLINEAR_MATRICES=>EQUATIONS_MATRICES%NONLINEAR_MATRICES
-        IF(ASSOCIATED(NONLINEAR_MATRICES)) THEN
-          CALL WRITE_STRING(ID,"Nonlinear vectors:",ERR,ERROR,*999)
-          IF(ASSOCIATED(NONLINEAR_MATRICES%RESIDUAL)) THEN
-            CALL WRITE_STRING(ID,"Residual vector:",ERR,ERROR,*999)
-            CALL DISTRIBUTED_VECTOR_OUTPUT(ID,NONLINEAR_MATRICES%RESIDUAL,ERR,ERROR,*999)
-          ELSE
-            CALL FlagError("Nonlinear matrices residual is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ENDIF
-        RHS_VECTOR=>EQUATIONS_MATRICES%RHS_VECTOR
-        IF(ASSOCIATED(RHS_VECTOR)) THEN
-          CALL WRITE_STRING(ID,"RHS vector:",ERR,ERROR,*999)
-          CALL DISTRIBUTED_VECTOR_OUTPUT(ID,RHS_VECTOR%VECTOR,ERR,ERROR,*999)
-        ENDIF
-        SOURCE_VECTOR=>EQUATIONS_MATRICES%SOURCE_VECTOR
-        IF(ASSOCIATED(SOURCE_VECTOR)) THEN
-          CALL WRITE_STRING(ID,"Source vector:",ERR,ERROR,*999)
-          CALL DISTRIBUTED_VECTOR_OUTPUT(ID,SOURCE_VECTOR%VECTOR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Equations matrices have not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*999)
+    IF(.NOT.vectorMatrices%vectorMatricesFinished) &
+      & CALL FlagError("Vector equations matrices have not been finished.",err,error,*999)
+    
+    CALL WriteString(id,"",err,error,*999)
+    CALL WriteString(id,"Equations matrices:",err,error,*999)
+    dynamicMatrices=>vectorMatrices%dynamicMatrices
+    IF(ASSOCIATED(dynamicMatrices)) THEN
+      CALL WriteString(id,"Dynamic matrices:",err,error,*999)
+      CALL WriteStringValue(id,"Number of dynamic matrices = ",dynamicMatrices%numberOfDynamicMatrices,err,error,*999)
+      DO matrixIdx=1,dynamicMatrices%numberOfDynamicMatrices
+        NULLIFY(equationsMatrix)
+        CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,matrixIdx,equationsMatrix,err,error,*999)
+        CALL WriteStringValue(id,"Dynamic matrix: ",matrixIdx,err,error,*999)
+        CALL DistributedMatrix_Output(id,equationsMatrix%matrix,err,error,*999)
+      ENDDO !matrixIdx
+    ENDIF
+    linearMatrices=>vectorMatrices%linearMatrices
+    IF(ASSOCIATED(linearMatrices)) THEN
+      CALL WriteString(id,"Linear matrices:",err,error,*999)
+      CALL WriteStringValue(id,"Number of linear matrices = ",linearMatrices%numberOfLinearMatrices,err,error,*999)
+      DO matrixIdx=1,linearMatrices%numberOfLinearMatrices
+        NULLIFY(equationsMatrix)
+        CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIdx,equationsMatrix,err,error,*999)
+        CALL WriteStringValue(id,"Linear matrix: ",matrixIdx,err,error,*999)
+        CALL DistributedMatrix_Output(id,equationsMatrix%matrix,err,error,*999)
+      ENDDO !matrixIdx
+    ENDIF
+    nonlinearMatrices=>vectorMatrices%nonlinearMatrices
+    IF(ASSOCIATED(nonlinearMatrices)) THEN
+      CALL WriteString(id,"Nonlinear vectors:",err,error,*999)
+      IF(.NOT.ASSOCIATED(nonlinearMatrices%residual)) &
+        & CALL FlagError("Nonlinear matrices residual is not associated.",err,error,*999)
+      CALL WriteString(id,"Residual vector:",err,error,*999)
+      CALL DistributedVector_Output(id,nonlinearMatrices%residual,err,error,*999)
+    ENDIF
+    rhsVector=>vectorMatrices%rhsVector
+    IF(ASSOCIATED(rhsVector)) THEN
+      CALL WriteString(id,"RHS vector:",err,error,*999)
+      CALL DistributedVector_Output(id,rhsVector%vector,err,error,*999)
+    ENDIF
+    sourceVector=>vectorMatrices%sourceVector
+    IF(ASSOCIATED(sourceVector)) THEN
+      CALL WriteString(id,"Source vector:",err,error,*999)
+      CALL DistributedVector_Output(id,sourceVector%vector,err,error,*999)
     ENDIF
     
-    EXITS("EQUATIONS_MATRICES_OUTPUT")
+    EXITS("EquationsMatrices_Output")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MATRICES_OUTPUT",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_Output",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_OUTPUT
+    
+  END SUBROUTINE EquationsMatrices_VectorOutput
   
   !
   !================================================================================================================================
   !
 
-  !>Finalises the equations matrices RHS vector and deallocates all memory
-  SUBROUTINE EQUATIONS_MATRICES_RHS_FINALISE(RHS_VECTOR,ERR,ERROR,*)
+  !>Finalises the vector equations matrices RHS vector and deallocates all memory
+  SUBROUTINE EquationsMatrices_RHSFinalise(rhsVector,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_RHS_TYPE), POINTER :: RHS_VECTOR !<A pointer to the equation matrices RHS vector to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector !<A pointer to the vector equation matrices RHS vector to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
      
-    ENTERS("EQUATIONS_MATRICES_RHS_FINALISE",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_RHSFinalise",err,error,*999)
 
-    IF(ASSOCIATED(RHS_VECTOR)) THEN
-      IF(ASSOCIATED(RHS_VECTOR%VECTOR)) CALL DISTRIBUTED_VECTOR_DESTROY(RHS_VECTOR%VECTOR,ERR,ERROR,*999)
-      CALL EQUATIONS_MATRICES_ELEMENT_VECTOR_FINALISE(RHS_VECTOR%ELEMENT_VECTOR,ERR,ERROR,*999)
-      CALL EquationsMatrices_NodalVectorFinalise(RHS_VECTOR%NodalVector,ERR,ERROR,*999)
-      DEALLOCATE(RHS_VECTOR)
+    IF(ASSOCIATED(rhsVector)) THEN
+      IF(ASSOCIATED(rhsVector%vector)) CALL DistributedVector_Destroy(rhsVector%vector,err,error,*999)
+      CALL EquationsMatrices_ElementVectorFinalise(rhsVector%elementVector,err,error,*999)
+      CALL EquationsMatrices_NodalVectorFinalise(rhsVector%nodalVector,err,error,*999)
+      DEALLOCATE(rhsVector)
     ENDIF      
      
-    EXITS("EQUATIONS_MATRICES_RHS_FINALISE")
+    EXITS("EquationsMatrices_RHSFinalise")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MATRICES_RHS_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_RHSFinalise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_RHS_FINALISE
+    
+  END SUBROUTINE EquationsMatrices_RHSFinalise
   
   !
   !================================================================================================================================
   !
 
-  !>Initialises the equations matrices RHS vector
-  SUBROUTINE EQUATIONS_MATRICES_RHS_INITIALISE(EQUATIONS_MATRICES,ERR,ERROR,*)
+  !>Initialises the vector equations matrices RHS vector
+  SUBROUTINE EquationsMatrices_RHSInitialise(vectorMatrices,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer to the equation matrices to initialise the rhs vector for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector equation matrices to initialise the rhs vector for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
-    TYPE(EQUATIONS_MAPPING_RHS_TYPE), POINTER :: RHS_MAPPING
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
+    TYPE(VARYING_STRING) :: dummyError
     
-    ENTERS("EQUATIONS_MATRICES_RHS_INITIALISE",ERR,ERROR,*998)
+    ENTERS("EquationsMatrices_RHSInitialise",err,error,*998)
 
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      EQUATIONS_MAPPING=>EQUATIONS_MATRICES%EQUATIONS_MAPPING
-      IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-        RHS_MAPPING=>EQUATIONS_MAPPING%RHS_MAPPING
-        IF(ASSOCIATED(RHS_MAPPING)) THEN
-          IF(ASSOCIATED(EQUATIONS_MATRICES%RHS_VECTOR)) THEN
-            CALL FlagError("Equations matrices RHS vector is already associated.",ERR,ERROR,*998)
-          ELSE
-            ALLOCATE(EQUATIONS_MATRICES%RHS_VECTOR,STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate equations matrices RHS vector.",ERR,ERROR,*999)
-            EQUATIONS_MATRICES%RHS_VECTOR%UPDATE_VECTOR=.TRUE.
-            EQUATIONS_MATRICES%RHS_VECTOR%FIRST_ASSEMBLY=.TRUE.
-            NULLIFY(EQUATIONS_MATRICES%RHS_VECTOR%VECTOR)
-            CALL EquationsMatrices_ElementVectorInitialise(EQUATIONS_MATRICES%RHS_VECTOR%ELEMENT_VECTOR,ERR,ERROR,*999)
-            CALL EquationsMatrices_NodalVectorInitialise(EQUATIONS_MATRICES%RHS_VECTOR%NodalVector,ERR,ERROR,*999)
-          ENDIF
-        ENDIF
-      ELSE
-        CALL FlagError("Equations matrices equation mapping is not associated.",ERR,ERROR,*998)
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*998)
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*998)
+    IF(ASSOCIATED(vectorMatrices%rhsVector)) &
+      & CALL FlagError("Vector equations matrices RHS vector is already associated.",err,error,*998)
+    NULLIFY(vectorMapping)
+    CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*998)
+    
+    rhsMapping=>vectorMapping%rhsMapping
+    IF(ASSOCIATED(rhsMapping)) THEN
+      ALLOCATE(vectorMatrices%rhsVector,STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate equations matrices RHS vector.",err,error,*999)
+      vectorMatrices%rhsVector%updateVector=.TRUE.
+      vectorMatrices%rhsVector%firstAssembly=.TRUE.
+      NULLIFY(vectorMatrices%rhsVector%vector)
+      CALL EquationsMatrices_ElementVectorInitialise(vectorMatrices%rhsVector%elementVector,err,error,*999)
+      CALL EquationsMatrices_NodalVectorInitialise(vectorMatrices%rhsVector%nodalVector,err,error,*999)
     ENDIF
     
-    EXITS("EQUATIONS_MATRICES_RHS_INITIALISE")
+    EXITS("EquationsMatrices_RHSInitialise")
     RETURN
-999 CALL EQUATIONS_MATRICES_RHS_FINALISE(EQUATIONS_MATRICES%RHS_VECTOR,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("EQUATIONS_MATRICES_RHS_INITIALISE",ERR,ERROR)
+999 CALL EquationsMatrices_RHSFinalise(vectorMatrices%rhsVector,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMatrices_RHSInitialise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_RHS_INITIALISE
+    
+  END SUBROUTINE EquationsMatrices_RHSInitialise
   
+   !
+  !================================================================================================================================
+  !
+
+  !>Destroy the scalar equations matrices
+  SUBROUTINE EquationsMatrices_ScalarDestroy(scalarMatrices,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesScalarType), POINTER :: scalarMatrices !<A pointer the scalar equations matrices to destroy
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsMatrices_ScalarDestroy",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(scalarMatrices)) CALL FlagError("Scalar equations matrices is not associated",err,error,*999)
+    
+    CALL EquationsMatrices_ScalarFinalise(scalarMatrices,err,error,*999)
+        
+    EXITS("EquationsMatrices_ScalarDestroy")
+    RETURN
+999 ERRORSEXITS("EquationsMatrices_ScalarDestroy",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE EquationsMatrices_ScalarDestroy
+
   !
   !================================================================================================================================
   !
 
-  !>Finalises the equations matrices source vector and deallocates all memory
-  SUBROUTINE EQUATIONS_MATRICES_SOURCE_FINALISE(SOURCE_VECTOR,ERR,ERROR,*)
+  !>Finalises the vector equations matrices source vector and deallocates all memory
+  SUBROUTINE EquationsMatrices_SourceFinalise(sourceVector,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_SOURCE_TYPE), POINTER :: SOURCE_VECTOR !<A pointer to the equation matrices source vector to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector !<A pointer to the vector equation matrices source vector to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
      
-    ENTERS("EQUATIONS_MATRICES_SOURCE_FINALISE",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_SourceFinalise",err,error,*999)
 
-    IF(ASSOCIATED(SOURCE_VECTOR)) THEN
-      IF(ASSOCIATED(SOURCE_VECTOR%VECTOR)) CALL DISTRIBUTED_VECTOR_DESTROY(SOURCE_VECTOR%VECTOR,ERR,ERROR,*999)
-      CALL EQUATIONS_MATRICES_ELEMENT_VECTOR_FINALISE(SOURCE_VECTOR%ELEMENT_VECTOR,ERR,ERROR,*999)
-      CALL EquationsMatrices_NodalVectorFinalise(SOURCE_VECTOR%NodalVector,ERR,ERROR,*999)
-      DEALLOCATE(SOURCE_VECTOR)
+    IF(ASSOCIATED(sourceVector)) THEN
+      IF(ASSOCIATED(sourceVector%vector)) CALL DistributedVector_Destroy(sourceVector%vector,err,error,*999)
+      CALL EquationsMatrices_ElementVectorFinalise(sourceVector%elementVector,err,error,*999)
+      CALL EquationsMatrices_NodalVectorFinalise(sourceVector%nodalVector,err,error,*999)
+      DEALLOCATE(sourceVector)
     ENDIF      
      
-    EXITS("EQUATIONS_MATRICES_SOURCE_FINALISE")
+    EXITS("EquationsMatrices_SourceFinalise")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MATRICES_SOURCE_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_SourceFinalise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_SOURCE_FINALISE
+    
+  END SUBROUTINE EquationsMatrices_SourceFinalise
   
   !
   !================================================================================================================================
   !
 
   !>Initialises the equations matrices source vector
-  SUBROUTINE EQUATIONS_MATRICES_SOURCE_INITIALISE(EQUATIONS_MATRICES,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_SourceInitialise(vectorMatrices,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer to the equation matrices to initialise the source vector for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the equation matrices to initialise the source vector for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
-    TYPE(EQUATIONS_MAPPING_SOURCE_TYPE), POINTER :: SOURCE_MAPPING
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingSourceType), POINTER :: sourceMapping
+    TYPE(VARYING_STRING) :: dummyError
     
-    ENTERS("EQUATIONS_MATRICES_SOURCE_INITIALISE",ERR,ERROR,*998)
+    ENTERS("EquationsMatrices_SourceInitialise",err,error,*998)
 
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      EQUATIONS_MAPPING=>EQUATIONS_MATRICES%EQUATIONS_MAPPING
-      IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-        SOURCE_MAPPING=>EQUATIONS_MAPPING%SOURCE_MAPPING
-        IF(ASSOCIATED(SOURCE_MAPPING)) THEN
-          IF(ASSOCIATED(EQUATIONS_MATRICES%SOURCE_VECTOR)) THEN
-            CALL FlagError("Equations matrices source vector is already associated.",ERR,ERROR,*998)
-          ELSE
-            ALLOCATE(EQUATIONS_MATRICES%SOURCE_VECTOR,STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate equations matrices source vector.",ERR,ERROR,*999)
-            EQUATIONS_MATRICES%SOURCE_VECTOR%UPDATE_VECTOR=.TRUE.
-            EQUATIONS_MATRICES%SOURCE_VECTOR%FIRST_ASSEMBLY=.TRUE.
-            NULLIFY(EQUATIONS_MATRICES%SOURCE_VECTOR%VECTOR)
-            CALL EquationsMatrices_ElementVectorInitialise(EQUATIONS_MATRICES%SOURCE_VECTOR%ELEMENT_VECTOR,ERR,ERROR,*999)
-            CALL EquationsMatrices_NodalVectorInitialise(EQUATIONS_MATRICES%SOURCE_VECTOR%NodalVector,ERR,ERROR,*999)
-          ENDIF
-        ENDIF
-      ELSE
-        CALL FlagError("Equations matrices equation mapping is not associated.",ERR,ERROR,*998)
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*998)
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*998)
+    IF(ASSOCIATED(vectorMatrices%sourceVector)) &
+      & CALL FlagError("Vector equations matrices source vector is already associated.",err,error,*998)
+    NULLIFY(vectorMapping)
+    CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*998)
+    
+    sourceMapping=>vectorMapping%sourceMapping
+    IF(ASSOCIATED(sourceMapping)) THEN
+      ALLOCATE(vectorMatrices%sourceVector,STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate equations matrices source vector.",err,error,*999)
+      vectorMatrices%sourceVector%updateVector=.TRUE.
+      vectorMatrices%sourceVector%firstAssembly=.TRUE.
+      NULLIFY(vectorMatrices%sourceVector%vector)
+      CALL EquationsMatrices_ElementVectorInitialise(vectorMatrices%sourceVector%elementVector,err,error,*999)
+      CALL EquationsMatrices_NodalVectorInitialise(vectorMatrices%sourceVector%nodalVector,err,error,*999)
     ENDIF
     
-    EXITS("EQUATIONS_MATRICES_SOURCE_INITIALISE")
+    EXITS("EquationsMatrices_SourceInitialise")
     RETURN
-999 CALL EQUATIONS_MATRICES_SOURCE_FINALISE(EQUATIONS_MATRICES%SOURCE_VECTOR,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("EQUATIONS_MATRICES_SOURCE_INITIALISE",ERR,ERROR)
+999 CALL EquationsMatrices_SourceFinalise(vectorMatrices%sourceVector,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMatrices_SourceInitialise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_SOURCE_INITIALISE
+    
+  END SUBROUTINE EquationsMatrices_SourceInitialise
   
   !
   !================================================================================================================================
   !
 
-  !>Sets the lumping of the linear equations matrices
-  SUBROUTINE EQUATIONS_MATRICES_DYNAMIC_LUMPING_TYPE_SET(EQUATIONS_MATRICES,LUMPING_TYPE,ERR,ERROR,*)
+  !>Sets the lumping of the dynamic equations matrices
+  SUBROUTINE EquationsMatrices_DynamicLumpingTypeSet(vectorMatrices,lumpingType,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer to the eqautions matrices
-    INTEGER(INTG), INTENT(IN) :: LUMPING_TYPE(:) !<LUMPING_TYPE(matrix_idx). The lumping type for the matrix_idx'th dynamic equations matrix
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector eqautions matrices
+    INTEGER(INTG), INTENT(IN) :: lumpingType(:) !<lumpingType(matrixIdx). The lumping type for the matrixIdx'th dynamic equations matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
-    TYPE(EQUATIONS_MATRICES_DYNAMIC_TYPE), POINTER :: DYNAMIC_MATRICES
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: EQUATIONS_MATRIX
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: matrixIdx
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("EQUATIONS_MATRICES_DYNAMIC_LUMPING_TYPE_SET",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_DynamicLumpingTypeSet",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      IF(EQUATIONS_MATRICES%EQUATIONS_MATRICES_FINISHED) THEN
-        CALL FlagError("Equations matrices have already been finished.",ERR,ERROR,*999)
-      ELSE
-        DYNAMIC_MATRICES=>EQUATIONS_MATRICES%DYNAMIC_MATRICES
-        IF(ASSOCIATED(DYNAMIC_MATRICES)) THEN
-          IF(SIZE(LUMPING_TYPE,1)==DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES) THEN
-            DO matrix_idx=1,DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES
-              EQUATIONS_MATRIX=>DYNAMIC_MATRICES%MATRICES(matrix_idx)%PTR
-              IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
-                SELECT CASE(LUMPING_TYPE(matrix_idx))
-                CASE(EQUATIONS_MATRIX_UNLUMPED)
-                  EQUATIONS_MATRIX%LUMPED=.FALSE.
-                CASE(EQUATIONS_MATRIX_LUMPED)
-                  EQUATIONS_MATRIX%LUMPED=.TRUE.        
-                CASE DEFAULT
-                  LOCAL_ERROR="The specified lumping type of "//TRIM(NumberToVString(LUMPING_TYPE(matrix_idx),"*",ERR,ERROR))// &
-                    & " for the dynamic matrix number "//TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))//" is invalid."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                END SELECT
-              ELSE
-                CALL FlagError("Equations matrix is not associated.",ERR,ERROR,*999)
-              ENDIF
-            ENDDO !matrix_idx
-          ELSE
-            LOCAL_ERROR="The size of the lumping type array ("//TRIM(NumberToVString(SIZE(LUMPING_TYPE,1),"*",ERR,ERROR))// &
-              & ") is not equal to the number of dynamic matrices ("// &
-              & TRIM(NumberToVString(DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES,"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Equations matrices dynamic matrices is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*999)
+    IF(vectorMatrices%vectorMatricesFinished) CALL FlagError("Vector equations matrices have already been finished.",err,error,*999)
+    NULLIFY(dynamicMatrices)
+    CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
+    IF(SIZE(lumpingType,1)/=dynamicMatrices%numberOfDynamicMatrices) THEN
+      localError="The size of the lumping type array ("//TRIM(NumberToVString(SIZE(lumpingType,1),"*",err,error))// &
+        & ") is not equal to the number of dynamic matrices ("// &
+        & TRIM(NumberToVString(dynamicMatrices%numberOfDynamicMatrices,"*",err,error))//")."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+      
+    DO matrixIdx=1,dynamicMatrices%numberOfDynamicMatrices
+      NULLIFY(equationsMatrix)
+      CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,matrixIdx,equationsMatrix,err,error,*999)
+      SELECT CASE(lumpingType(matrixIdx))
+      CASE(EQUATIONS_MATRIX_UNLUMPED)
+        equationsMatrix%lumped=.FALSE.
+      CASE(EQUATIONS_MATRIX_LUMPED)
+        equationsMatrix%lumped=.TRUE.        
+      CASE DEFAULT
+        localError="The specified lumping type of "//TRIM(NumberToVString(lumpingType(matrixIdx),"*",err,error))// &
+          & " for dynamic matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    ENDDO !matrixIdx
     
-    EXITS("EQUATIONS_MATRICES_DYNAMIC_LUMPING_TYPE_SET")
+    EXITS("EquationsMatrices_DynamicLumpingTypeSet")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MATRICES_DYNAMIC_LUMPING_TYPE_SET",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_DynamicLumpingTypeSet",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_DYNAMIC_LUMPING_TYPE_SET
+    
+  END SUBROUTINE EquationsMatrices_DynamicLumpingTypeSet
 
   !
   !================================================================================================================================
   !
 
   !>Sets the storage type (sparsity) of the dynamic equations matrices
-  SUBROUTINE EQUATIONS_MATRICES_DYNAMIC_STORAGE_TYPE_SET(EQUATIONS_MATRICES,STORAGE_TYPE,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_DynamicStorageTypeSet(vectorMatrices,storageType,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer to the eqautions matrices
-    INTEGER(INTG), INTENT(IN) :: STORAGE_TYPE(:) !<STORAGE_TYPE(matrix_idx). The storage type for the matrix_idx'th dynamic equations matrix
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector equations matrices
+    INTEGER(INTG), INTENT(IN) :: storageType(:) !<storageType(matrixIdx). The storage type for the matrixIdx'th dynamic equations matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
-    TYPE(EQUATIONS_MATRICES_DYNAMIC_TYPE), POINTER :: DYNAMIC_MATRICES
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: EQUATIONS_MATRIX
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: matrixIdx
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("EQUATIONS_MATRICES_DYNAMIC_STORAGE_TYPE_SET",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_DynamicStorageTypeSet",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      IF(EQUATIONS_MATRICES%EQUATIONS_MATRICES_FINISHED) THEN
-        CALL FlagError("Equations matrices have already been finished.",ERR,ERROR,*999)
-      ELSE
-        DYNAMIC_MATRICES=>EQUATIONS_MATRICES%DYNAMIC_MATRICES
-        IF(ASSOCIATED(DYNAMIC_MATRICES)) THEN
-          IF(SIZE(STORAGE_TYPE,1)==DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES) THEN
-            DO matrix_idx=1,DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES
-              EQUATIONS_MATRIX=>DYNAMIC_MATRICES%MATRICES(matrix_idx)%PTR
-              IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
-                SELECT CASE(STORAGE_TYPE(matrix_idx))
-                CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
-                  EQUATIONS_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE
-                CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
-                  EQUATIONS_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE        
-                CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-                  EQUATIONS_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE
-                CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
-                  EQUATIONS_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE
-                CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-                  EQUATIONS_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE
-                CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-                  EQUATIONS_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE
-                CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
-                  EQUATIONS_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE
-                CASE DEFAULT
-                  LOCAL_ERROR="The specified storage type of "//TRIM(NumberToVString(STORAGE_TYPE(matrix_idx),"*",ERR,ERROR))// &
-                    & " for the dynamic matrix number "//TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))//" is invalid."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                END SELECT
-              ELSE
-                CALL FlagError("Equations matrix is not associated.",ERR,ERROR,*999)
-              ENDIF
-            ENDDO !matrix_idx
-          ELSE
-            LOCAL_ERROR="The size of the storage type array ("//TRIM(NumberToVString(SIZE(STORAGE_TYPE,1),"*",ERR,ERROR))// &
-              & ") is not equal to the number of dynamic matrices ("// &
-              & TRIM(NumberToVString(DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES,"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Equations matrices dynamic matrices is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*999)
+    IF(vectorMatrices%vectorMatricesFinished) CALL FlagError("Vector equations matrices have already been finished.",err,error,*999)
+    NULLIFY(dynamicMatrices)
+    CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
+    IF(SIZE(storageType,1)/=dynamicMatrices%numberOfDynamicMatrices) THEN
+      localError="The size of the storage type array ("//TRIM(NumberToVString(SIZE(storageType,1),"*",err,error))// &
+        & ") is not equal to the number of dynamic matrices ("// &
+        & TRIM(NumberToVString(dynamicMatrices%numberOfDynamicMatrices,"*",err,error))//")."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    EXITS("EQUATIONS_MATRICES_DYNAMIC_STORAGE_TYPE_SET")
+    DO matrixIdx=1,dynamicMatrices%numberOfDynamicMatrices
+      NULLIFY(equationsMatrix)
+      CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,matrixIdx,equationsMatrix,err,error,*999)
+      SELECT CASE(storageType(matrixIdx))
+      CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
+        equationsMatrix%storageType=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE
+      CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
+        equationsMatrix%storageType=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE        
+      CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+        equationsMatrix%storageType=DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE
+      CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
+        equationsMatrix%storageType=DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE
+      CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+        equationsMatrix%storageType=DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE
+      CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+        equationsMatrix%storageType=DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE
+      CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
+        equationsMatrix%storageType=DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE
+      CASE DEFAULT
+        localError="The specified storage type of "//TRIM(NumberToVString(storageType(matrixIdx),"*",err,error))// &
+          & " for the dynamic matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    ENDDO !matrixIdx
+    
+    EXITS("EquationsMatrices_DynamicStorageTypeSet")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MATRICES_DYNAMIC_STORAGE_TYPE_SET",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_DynamicStorageTypeSet",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_DYNAMIC_STORAGE_TYPE_SET
+    
+  END SUBROUTINE EquationsMatrices_DynamicStorageTypeSet
 
   !
   !================================================================================================================================
   !
 
   !>Sets the storage type (sparsity) of the linear equations matrices
-  SUBROUTINE EQUATIONS_MATRICES_LINEAR_STORAGE_TYPE_SET(EQUATIONS_MATRICES,STORAGE_TYPE,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_LinearStorageTypeSet(vectorMatrices,storageType,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer to the equations matrices
-    INTEGER(INTG), INTENT(IN) :: STORAGE_TYPE(:) !<STORAGE_TYPE(matrix_idx). The storage type for the matrix_idx'th linear equations matrix
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector equations matrices
+    INTEGER(INTG), INTENT(IN) :: storageType(:) !<storageType(matrixIdx). The storage type for the matrixIdx'th linear equations matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
-    TYPE(EQUATIONS_MATRICES_LINEAR_TYPE), POINTER :: LINEAR_MATRICES
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: EQUATIONS_MATRIX
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: matrixIdx
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("EQUATIONS_MATRICES_LINEAR_STORAGE_TYPE_SET",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_LinearStorageTypeSet",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      IF(EQUATIONS_MATRICES%EQUATIONS_MATRICES_FINISHED) THEN
-        CALL FlagError("Equations matrices have been finished.",ERR,ERROR,*999)
-      ELSE
-        LINEAR_MATRICES=>EQUATIONS_MATRICES%LINEAR_MATRICES
-        IF(ASSOCIATED(LINEAR_MATRICES)) THEN
-          IF(SIZE(STORAGE_TYPE,1)==LINEAR_MATRICES%NUMBER_OF_LINEAR_MATRICES) THEN
-            DO matrix_idx=1,LINEAR_MATRICES%NUMBER_OF_LINEAR_MATRICES
-              EQUATIONS_MATRIX=>LINEAR_MATRICES%MATRICES(matrix_idx)%PTR
-              IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
-                SELECT CASE(STORAGE_TYPE(matrix_idx))
-                CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
-                  EQUATIONS_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE
-                CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
-                  EQUATIONS_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE        
-                CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-                  EQUATIONS_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE
-                CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
-                  EQUATIONS_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE
-                CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-                  EQUATIONS_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE
-                CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-                  EQUATIONS_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE
-                CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
-                  EQUATIONS_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE
-                CASE DEFAULT
-                  LOCAL_ERROR="The specified storage type of "//TRIM(NumberToVString(STORAGE_TYPE(matrix_idx),"*",ERR,ERROR))// &
-                    & " for the linear matrix number "//TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))//" is invalid."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                END SELECT
-              ELSE
-                CALL FlagError("Equations matrix is not associated.",ERR,ERROR,*999)
-              ENDIF
-            ENDDO !matrix_idx
-          ELSE
-            LOCAL_ERROR="The size of the storage type array ("//TRIM(NumberToVString(SIZE(STORAGE_TYPE,1),"*",ERR,ERROR))// &
-              & ") is not equal to the number of linear matrices ("// &
-              & TRIM(NumberToVString(LINEAR_MATRICES%NUMBER_OF_LINEAR_MATRICES,"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Equations matrices linear matrices is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*999)
+    IF(vectorMatrices%vectorMatricesFinished) CALL FlagError("Vector equations matrices have been finished.",err,error,*999)
+    NULLIFY(linearMatrices)
+    CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
+    IF(SIZE(storageType,1)/=linearMatrices%numberOfLinearMatrices) THEN
+      localError="The size of the storage type array ("//TRIM(NumberToVString(SIZE(storageType,1),"*",err,error))// &
+        & ") is not equal to the number of linear matrices ("// &
+        & TRIM(NumberToVString(linearMatrices%numberOfLinearMatrices,"*",err,error))//")."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+
+    DO matrixIdx=1,linearMatrices%numberOfLinearMatrices
+      NULLIFY(equationsMatrix)
+      CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIdx,equationsMatrix,err,error,*999)
+      SELECT CASE(storageType(matrixIdx))
+      CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
+        equationsMatrix%storageType=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE
+      CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
+        equationsMatrix%storageType=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE        
+      CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+        equationsMatrix%storageType=DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE
+      CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
+        equationsMatrix%storageType=DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE
+      CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+        equationsMatrix%storageType=DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE
+      CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+        equationsMatrix%storageType=DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE
+      CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
+        equationsMatrix%storageType=DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE
+      CASE DEFAULT
+        localError="The specified storage type of "//TRIM(NumberToVString(storageType(matrixIdx),"*",err,error))// &
+          & " for the linear matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    ENDDO !matrixIdx
     
-    EXITS("EQUATIONS_MATRICES_LINEAR_STORAGE_TYPE_SET")
+    EXITS("EquationsMatrices_LinearStorageTypeSet")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MATRICES_LINEAR_STORAGE_TYPE_SET",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_LinearStorageTypeSet",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_LINEAR_STORAGE_TYPE_SET
+    
+  END SUBROUTINE EquationsMatrices_LinearStorageTypeSet
 
   !
   !================================================================================================================================
   !
 
   !>Sets the storage type (sparsity) of the nonlinear (Jacobian) equations matrices
-  SUBROUTINE EquationsMatrices_NonlinearStorageTypeSet0(EQUATIONS_MATRICES,STORAGE_TYPE,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_NonlinearStorageTypeSet0(vectorMatrices,storageType,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer to the eqautions matrices
-    INTEGER(INTG), INTENT(IN) :: STORAGE_TYPE(:) !<STORAGE_TYPE(matrix_idx). The storage type for the matrix_idx'th Jacobian equations matrix
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector eqautions matrices
+    INTEGER(INTG), INTENT(IN) :: storageType(:) !<storageType(matrixIdx). The storage type for the matrixIdx'th Jacobian equations matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
-    TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: NONLINEAR_MATRICES
-    TYPE(EQUATIONS_JACOBIAN_TYPE), POINTER :: JACOBIAN_MATRIX
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: matrixIdx
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("EquationsMatrices_NonlinearStorageTypeSet0",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_NonlinearStorageTypeSet0",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      IF(EQUATIONS_MATRICES%EQUATIONS_MATRICES_FINISHED) THEN
-        CALL FlagError("Equations matrices have been finished.",ERR,ERROR,*999)
-      ELSE
-        NONLINEAR_MATRICES=>EQUATIONS_MATRICES%NONLINEAR_MATRICES
-        IF(ASSOCIATED(NONLINEAR_MATRICES)) THEN
-          IF(SIZE(STORAGE_TYPE,1)==NONLINEAR_MATRICES%NUMBER_OF_JACOBIANS) THEN
-            DO matrix_idx=1,NONLINEAR_MATRICES%NUMBER_OF_JACOBIANS
-              JACOBIAN_MATRIX=>NONLINEAR_MATRICES%JACOBIANS(matrix_idx)%PTR
-              IF(ASSOCIATED(JACOBIAN_MATRIX)) THEN
-                SELECT CASE(STORAGE_TYPE(matrix_idx))
-                CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
-                  JACOBIAN_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE
-                CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
-                  JACOBIAN_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE        
-                CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-                  JACOBIAN_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE
-                CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
-                  JACOBIAN_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE
-                CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-                  JACOBIAN_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE
-                CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-                  JACOBIAN_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE
-                CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
-                  JACOBIAN_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE
-                CASE DEFAULT
-                  LOCAL_ERROR="The specified storage type of "//TRIM(NumberToVString(STORAGE_TYPE(matrix_idx),"*",ERR,ERROR))// &
-                    & " for the Jacobian matrix is invalid."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                END SELECT
-              ELSE
-                CALL FlagError("Jacobian matrix is not associated.",ERR,ERROR,*999)
-              ENDIF
-            ENDDO
-          ELSE
-            LOCAL_ERROR="The size of the storage type array ("//TRIM(NumberToVString(SIZE(STORAGE_TYPE,1),"*",ERR,ERROR))// &
-              & ") is not equal to the number of Jacobian matrices ("// &
-              & TRIM(NumberToVString(NONLINEAR_MATRICES%NUMBER_OF_JACOBIANS,"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Equations matrices nonlinear matrices is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*999)
+    IF(vectorMatrices%vectorMatricesFinished) CALL FlagError("Vector equations matrices have been finished.",err,error,*999)
+    NULLIFY(nonlinearMatrices)
+    CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
+    IF(SIZE(storageType,1)/=nonlinearMatrices%numberOfJacobians) THEN
+      localError="The size of the storage type array ("//TRIM(NumberToVString(SIZE(storageType,1),"*",err,error))// &
+        & ") is not equal to the number of Jacobian matrices ("// &
+        & TRIM(NumberToVString(nonlinearMatrices%numberOfJacobians,"*",err,error))//")."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+    
+    DO matrixIdx=1,nonlinearMatrices%numberOfJacobians
+      NULLIFY(jacobianMatrix)
+      CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,matrixIdx,jacobianMatrix,err,error,*999)
+      SELECT CASE(storageType(matrixIdx))
+      CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
+        jacobianMatrix%storageType=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE
+      CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
+        jacobianMatrix%storageType=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE        
+      CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+        jacobianMatrix%storageType=DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE
+      CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
+        jacobianMatrix%storageType=DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE
+      CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+        jacobianMatrix%storageType=DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE
+      CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+        jacobianMatrix%storageType=DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE
+      CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
+        jacobianMatrix%storageType=DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE
+      CASE DEFAULT
+        localError="The specified storage type of "//TRIM(NumberToVString(storageType(matrixIdx),"*",err,error))// &
+          & " for the Jacobian matrix is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    ENDDO !matrixIdx
     
     EXITS("EquationsMatrices_NonlinearStorageTypeSet0")
     RETURN
-999 ERRORSEXITS("EquationsMatrices_NonlinearStorageTypeSet0",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_NonlinearStorageTypeSet0",err,error)
     RETURN 1
+    
   END SUBROUTINE EquationsMatrices_NonlinearStorageTypeSet0
 
   !
@@ -4046,41 +3729,34 @@ CONTAINS
   !
 
   !>Sets the storage type (sparsity) of all nonlinear (Jacobian) equations matrices
-  SUBROUTINE EquationsMatrices_NonlinearStorageTypeSet1(EQUATIONS_MATRICES,STORAGE_TYPE,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_NonlinearStorageTypeSet1(vectorMatrices,storageType,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer to the eqautions matrices
-    INTEGER(INTG), INTENT(IN) :: STORAGE_TYPE !<STORAGE_TYPE. The storage type for all Jacobian equations matrices
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector equations matrices
+    INTEGER(INTG), INTENT(IN) :: storageType !<storageType. The storage type for all Jacobian equations matrices
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG), ALLOCATABLE :: STORAGE_TYPES(:)
-    TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: NONLINEAR_MATRICES
+    INTEGER(INTG), ALLOCATABLE :: storageTypes(:)
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
 
-    ENTERS("EquationsMatrices_NonlinearStorageTypeSet1",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_NonlinearStorageTypeSet1",err,error,*998)
 
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      IF(EQUATIONS_MATRICES%EQUATIONS_MATRICES_FINISHED) THEN
-        CALL FlagError("Equations matrices have been finished.",ERR,ERROR,*999)
-      ELSE
-        NONLINEAR_MATRICES=>EQUATIONS_MATRICES%NONLINEAR_MATRICES
-        IF(ASSOCIATED(NONLINEAR_MATRICES)) THEN
-          ALLOCATE(STORAGE_TYPES(NONLINEAR_MATRICES%NUMBER_OF_JACOBIANS),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate storage types.",ERR,ERROR,*999)
-          STORAGE_TYPES=STORAGE_TYPE
-          CALL EquationsMatrices_NonlinearStorageTypeSet0(EQUATIONS_MATRICES,STORAGE_TYPES,ERR,ERROR,*999)
-          DEALLOCATE(STORAGE_TYPES)
-        ELSE
-          CALL FlagError("Equations matrices nonlinear matrices is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*998)
+    IF(vectorMatrices%vectorMatricesFinished) CALL FlagError("Vector equations matrices have been finished.",err,error,*998)
+    NULLIFY(nonlinearMatrices)
+    CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*998)
+
+    ALLOCATE(storageTypes(nonlinearMatrices%numberOfJacobians),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate storage types.",err,error,*999)
+    storageTypes=storageType
+    CALL EquationsMatrices_NonlinearStorageTypeSet0(vectorMatrices,storageTypes,err,error,*999)
+    DEALLOCATE(storageTypes)
 
     EXITS("EquationsMatrices_NonlinearStorageTypeSet1")
     RETURN
-999 ERRORSEXITS("EquationsMatrices_NonlinearStorageTypeSet1",ERR,ERROR)
+999 IF(ALLOCATED(storageTypes)) DEALLOCATE(storageTypes)
+998 ERRORSEXITS("EquationsMatrices_NonlinearStorageTypeSet1",err,error)
     RETURN 1
     
   END SUBROUTINE EquationsMatrices_NonlinearStorageTypeSet1
@@ -4090,67 +3766,54 @@ CONTAINS
   !
 
   !>Sets the structure (sparsity) of the dynamic equations matrices
-  SUBROUTINE EquationsMatrices_DynamicStructureTypeSet(EQUATIONS_MATRICES,STRUCTURE_TYPE,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_DynamicStructureTypeSet(vectorMatrices,structureType,err,error,*)
     
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer to the equations matrices
-    INTEGER(INTG), INTENT(IN) :: STRUCTURE_TYPE(:) !<STRUCTURE_TYPE(matrix_idx). The storage type for the matrix_idx'th dynamic equations matrix
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector equations matrices
+    INTEGER(INTG), INTENT(IN) :: structureType(:) !<structureType(matrixIdx). The storage type for the matrixIdx'th dynamic equations matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
-    TYPE(EQUATIONS_MATRICES_DYNAMIC_TYPE), POINTER :: DYNAMIC_MATRICES
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: EQUATIONS_MATRIX
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: matrixIdx
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("EquationsMatrices_DynamicStructureTypeSet",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_DynamicStructureTypeSet",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      IF(EQUATIONS_MATRICES%EQUATIONS_MATRICES_FINISHED) THEN
-        CALL FlagError("Equations matrices have been finished.",ERR,ERROR,*999)
-      ELSE
-        DYNAMIC_MATRICES=>EQUATIONS_MATRICES%DYNAMIC_MATRICES
-        IF(ASSOCIATED(DYNAMIC_MATRICES)) THEN
-          IF(SIZE(STRUCTURE_TYPE,1)==DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES) THEN
-           DO matrix_idx=1,DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES
-              EQUATIONS_MATRIX=>DYNAMIC_MATRICES%MATRICES(matrix_idx)%PTR
-              IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
-                SELECT CASE(STRUCTURE_TYPE(matrix_idx))
-                CASE(EQUATIONS_MATRIX_NO_STRUCTURE)
-                  EQUATIONS_MATRIX%STRUCTURE_TYPE=EQUATIONS_MATRIX_NO_STRUCTURE
-                CASE(EQUATIONS_MATRIX_FEM_STRUCTURE)
-                  EQUATIONS_MATRIX%STRUCTURE_TYPE=EQUATIONS_MATRIX_FEM_STRUCTURE
-                CASE(EQUATIONS_MATRIX_DIAGONAL_STRUCTURE)
-                  EQUATIONS_MATRIX%STRUCTURE_TYPE=EQUATIONS_MATRIX_DIAGONAL_STRUCTURE
-                CASE(EQUATIONS_MATRIX_NODAL_STRUCTURE)
-                  EQUATIONS_MATRIX%STRUCTURE_TYPE=EQUATIONS_MATRIX_NODAL_STRUCTURE
-                CASE DEFAULT
-                  LOCAL_ERROR="The specified strucutre type of "// &
-                    & TRIM(NumberToVString(STRUCTURE_TYPE(matrix_idx),"*",ERR,ERROR))//" for dynamic matrix number "// &
-                    & TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))//" is invalid."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                END SELECT
-              ELSE
-                CALL FlagError("Equations matrix is not associated.",ERR,ERROR,*999)
-              ENDIF
-            ENDDO !matrix_idx
-          ELSE
-            LOCAL_ERROR="The size of the structure type array ("//TRIM(NumberToVString(SIZE(STRUCTURE_TYPE,1),"*",ERR,ERROR))// &
-              & ") is not equal to the number of dynamic matrices ("// &
-              & TRIM(NumberToVString(DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES,"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Equations matrices dynamic matrices is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*999)
+    IF(vectorMatrices%vectorMatricesFinished) CALL FlagError("Vector equations matrices have already been finished.",err,error,*999)
+    NULLIFY(dynamicMatrices)
+    CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
+    IF(SIZE(structureType,1)/=dynamicMatrices%numberOfDynamicMatrices) THEN
+      localError="The size of the structure type array ("//TRIM(NumberToVString(SIZE(structureType,1),"*",err,error))// &
+        & ") is not equal to the number of dynamic matrices ("// &
+        & TRIM(NumberToVString(dynamicMatrices%numberOfDynamicMatrices,"*",err,error))//")."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
-    
+
+    DO matrixIdx=1,dynamicMatrices%numberOfDynamicMatrices
+      NULLIFY(equationsMatrix)
+      CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,matrixIdx,equationsMatrix,err,error,*999)
+      SELECT CASE(structureType(matrixIdx))
+      CASE(EQUATIONS_MATRIX_NO_STRUCTURE)
+        equationsMatrix%structureType=EQUATIONS_MATRIX_NO_STRUCTURE
+      CASE(EQUATIONS_MATRIX_FEM_STRUCTURE)
+        equationsMatrix%structureType=EQUATIONS_MATRIX_FEM_STRUCTURE
+      CASE(EQUATIONS_MATRIX_DIAGONAL_STRUCTURE)
+        equationsMatrix%structureType=EQUATIONS_MATRIX_DIAGONAL_STRUCTURE
+      CASE(EQUATIONS_MATRIX_NODAL_STRUCTURE)
+        equationsMatrix%structureType=EQUATIONS_MATRIX_NODAL_STRUCTURE
+      CASE DEFAULT
+        localError="The specified strucutre type of "//TRIM(NumberToVString(structureType(matrixIdx),"*",err,error))// &
+          & " for dynamic matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    ENDDO !matrixIdx
+     
     EXITS("EquationsMatrices_DynamicStructureTypeSet")
     RETURN
-999 ERRORSEXITS("EquationsMatrices_DynamicStructureTypeSet",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_DynamicStructureTypeSet",err,error)
     RETURN 1
     
   END SUBROUTINE EquationsMatrices_DynamicStructureTypeSet
@@ -4160,67 +3823,54 @@ CONTAINS
   !
 
   !>Sets the structure (sparsity) of the linear equations matrices
-  SUBROUTINE EquationsMatrices_LinearStructureTypeSet(EQUATIONS_MATRICES,STRUCTURE_TYPE,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_LinearStructureTypeSet(vectorMatrices,structureType,err,error,*)
     
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer to the equations matrices
-    INTEGER(INTG), INTENT(IN) :: STRUCTURE_TYPE(:) !<STRUCTURE_TYPE(matrix_idx). The storage type for the matrix_idx'th linear equations matrix
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector equations matrices
+    INTEGER(INTG), INTENT(IN) :: structureType(:) !<structureType(matrixIdx). The storage type for the matrixIdx'th linear equations matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
-    TYPE(EQUATIONS_MATRICES_LINEAR_TYPE), POINTER :: LINEAR_MATRICES
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: EQUATIONS_MATRIX
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: matrixIdx
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("EquationsMatrices_LinearStructureTypeSet",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_LinearStructureTypeSet",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      IF(EQUATIONS_MATRICES%EQUATIONS_MATRICES_FINISHED) THEN
-        CALL FlagError("Equations matrices have been finished.",ERR,ERROR,*999)
-      ELSE
-        LINEAR_MATRICES=>EQUATIONS_MATRICES%LINEAR_MATRICES
-        IF(ASSOCIATED(LINEAR_MATRICES)) THEN
-          IF(SIZE(STRUCTURE_TYPE,1)==LINEAR_MATRICES%NUMBER_OF_LINEAR_MATRICES) THEN
-            DO matrix_idx=1,LINEAR_MATRICES%NUMBER_OF_LINEAR_MATRICES
-              EQUATIONS_MATRIX=>LINEAR_MATRICES%MATRICES(matrix_idx)%PTR
-              IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
-                SELECT CASE(STRUCTURE_TYPE(matrix_idx))
-                CASE(EQUATIONS_MATRIX_NO_STRUCTURE)
-                  EQUATIONS_MATRIX%STRUCTURE_TYPE=EQUATIONS_MATRIX_NO_STRUCTURE
-                CASE(EQUATIONS_MATRIX_FEM_STRUCTURE)
-                  EQUATIONS_MATRIX%STRUCTURE_TYPE=EQUATIONS_MATRIX_FEM_STRUCTURE
-                CASE(EQUATIONS_MATRIX_DIAGONAL_STRUCTURE)
-                  EQUATIONS_MATRIX%STRUCTURE_TYPE=EQUATIONS_MATRIX_DIAGONAL_STRUCTURE
-                CASE(EQUATIONS_MATRIX_NODAL_STRUCTURE)
-                  EQUATIONS_MATRIX%STRUCTURE_TYPE=EQUATIONS_MATRIX_NODAL_STRUCTURE
-                CASE DEFAULT
-                  LOCAL_ERROR="The specified strucutre type of "// &
-                    & TRIM(NumberToVString(STRUCTURE_TYPE(matrix_idx),"*",ERR,ERROR))//" for linear matrix number "// &
-                    & TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))//" is invalid."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                END SELECT
-              ELSE
-                CALL FlagError("Equations matrix is not associated.",ERR,ERROR,*999)
-              ENDIF
-            ENDDO !matrix_idx
-          ELSE
-            LOCAL_ERROR="The size of the structure type array ("//TRIM(NumberToVString(SIZE(STRUCTURE_TYPE,1),"*",ERR,ERROR))// &
-              & ") is not equal to the number of linear matrices ("// &
-              & TRIM(NumberToVString(LINEAR_MATRICES%NUMBER_OF_LINEAR_MATRICES,"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Equations matrices linear matrices is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*999)
+    IF(vectorMatrices%vectorMatricesFinished) CALL FlagError("Vector equations matrices have been finished.",err,error,*999)
+    NULLIFY(linearMatrices)
+    CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
+    IF(SIZE(structureType,1)/=linearMatrices%numberOfLinearMatrices) THEN
+      localError="The size of the structure type array ("//TRIM(NumberToVString(SIZE(structureType,1),"*",err,error))// &
+        & ") is not equal to the number of linear matrices ("// &
+        & TRIM(NumberToVString(linearMatrices%numberOfLinearMatrices,"*",err,error))//")."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+    
+    DO matrixIdx=1,linearMatrices%numberOfLinearMatrices
+      NULLIFY(equationsMatrix)
+      CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIdx,equationsMatrix,err,error,*999)
+      SELECT CASE(structureType(matrixIdx))
+      CASE(EQUATIONS_MATRIX_NO_STRUCTURE)
+        equationsMatrix%structureType=EQUATIONS_MATRIX_NO_STRUCTURE
+      CASE(EQUATIONS_MATRIX_FEM_STRUCTURE)
+        equationsMatrix%structureType=EQUATIONS_MATRIX_FEM_STRUCTURE
+      CASE(EQUATIONS_MATRIX_DIAGONAL_STRUCTURE)
+        equationsMatrix%structureType=EQUATIONS_MATRIX_DIAGONAL_STRUCTURE
+      CASE(EQUATIONS_MATRIX_NODAL_STRUCTURE)
+        equationsMatrix%structureType=EQUATIONS_MATRIX_NODAL_STRUCTURE
+      CASE DEFAULT
+        localError="The specified strucutre type of "//TRIM(NumberToVString(structureType(matrixIdx),"*",err,error))// &
+          & " for linear matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    ENDDO !matrixIdx
     
     EXITS("EquationsMatrices_LinearStructureTypeSet")
     RETURN
-999 ERRORSEXITS("EquationsMatrices_LinearStructureTypeSet",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_LinearStructureTypeSet",err,error)
     RETURN 1
     
   END SUBROUTINE EquationsMatrices_LinearStructureTypeSet
@@ -4230,66 +3880,53 @@ CONTAINS
   !
 
   !>Sets the structure (sparsity) of the nonlinear (Jacobian) equations matrices
-  SUBROUTINE EquationsMatrices_NonlinearStructureTypeSet0(EQUATIONS_MATRICES,STRUCTURE_TYPE,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_NonlinearStructureTypeSet0(vectorMatrices,structureType,err,error,*)
     
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer to the equations matrices
-    INTEGER(INTG), INTENT(IN) :: STRUCTURE_TYPE(:) !<STRUCTURE_TYPE(matrix_idx). The structure type for the matrix_idx'th Jacobian equations matrix
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector equations matrices
+    INTEGER(INTG), INTENT(IN) :: structureType(:) !<structureType(matrixIdx). The structure type for the matrixIdx'th Jacobian equations matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
-    TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: NONLINEAR_MATRICES
-    TYPE(EQUATIONS_JACOBIAN_TYPE), POINTER :: JACOBIAN_MATRIX
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: matrixIdx
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("EquationsMatrices_NonlinearStructureTypeSet0",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_NonlinearStructureTypeSet0",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      IF(EQUATIONS_MATRICES%EQUATIONS_MATRICES_FINISHED) THEN
-        CALL FlagError("Equations matrices have been finished.",ERR,ERROR,*999)
-      ELSE
-        NONLINEAR_MATRICES=>EQUATIONS_MATRICES%NONLINEAR_MATRICES
-        IF(ASSOCIATED(NONLINEAR_MATRICES)) THEN
-          IF(SIZE(STRUCTURE_TYPE,1)==NONLINEAR_MATRICES%NUMBER_OF_JACOBIANS) THEN
-            DO matrix_idx=1,NONLINEAR_MATRICES%NUMBER_OF_JACOBIANS
-              JACOBIAN_MATRIX=>NONLINEAR_MATRICES%JACOBIANS(matrix_idx)%PTR
-              IF(ASSOCIATED(JACOBIAN_MATRIX)) THEN
-                SELECT CASE(STRUCTURE_TYPE(matrix_idx))
-                CASE(EQUATIONS_MATRIX_NO_STRUCTURE)
-                  JACOBIAN_MATRIX%STRUCTURE_TYPE=EQUATIONS_MATRIX_NO_STRUCTURE
-                CASE(EQUATIONS_MATRIX_FEM_STRUCTURE)
-                  JACOBIAN_MATRIX%STRUCTURE_TYPE=EQUATIONS_MATRIX_FEM_STRUCTURE
-                CASE(EQUATIONS_MATRIX_DIAGONAL_STRUCTURE)
-                  JACOBIAN_MATRIX%STRUCTURE_TYPE=EQUATIONS_MATRIX_DIAGONAL_STRUCTURE
-                CASE(EQUATIONS_MATRIX_NODAL_STRUCTURE)
-                  JACOBIAN_MATRIX%STRUCTURE_TYPE=EQUATIONS_MATRIX_NODAL_STRUCTURE
-                CASE DEFAULT
-                  LOCAL_ERROR="The specified strucutre type of "// &
-                    & TRIM(NumberToVString(STRUCTURE_TYPE(matrix_idx),"*",ERR,ERROR))//" for the Jacobian matrix is invalid."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                END SELECT
-              ELSE
-                CALL FlagError("Equations matrix is not associated.",ERR,ERROR,*999)
-              ENDIF
-            ENDDO
-          ELSE
-            LOCAL_ERROR="The size of the structure type array ("//TRIM(NumberToVString(SIZE(STRUCTURE_TYPE,1),"*",ERR,ERROR))// &
-              & ") is not equal to the number of Jacobian matrices ("// &
-              & TRIM(NumberToVString(NONLINEAR_MATRICES%NUMBER_OF_JACOBIANS,"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Equations matrices nonlinear matrices is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*999)
+   IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*999)
+    IF(vectorMatrices%vectorMatricesFinished) CALL FlagError("Vector equations matrices have been finished.",err,error,*999)
+    NULLIFY(nonlinearMatrices)
+    CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
+    IF(SIZE(structureType,1)/=nonlinearMatrices%numberOfJacobians) THEN
+      localError="The size of the structure type array ("//TRIM(NumberToVString(SIZE(structureType,1),"*",err,error))// &
+        & ") is not equal to the number of Jacobian matrices ("// &
+        & TRIM(NumberToVString(nonlinearMatrices%numberOfJacobians,"*",err,error))//")."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+    DO matrixIdx=1,nonlinearMatrices%numberOfJacobians
+      NULLIFY(jacobianMatrix)
+      CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,matrixIdx,jacobianMatrix,err,error,*999)
+      SELECT CASE(structureType(matrixIdx))
+      CASE(EQUATIONS_MATRIX_NO_STRUCTURE)
+        jacobianMatrix%structureType=EQUATIONS_MATRIX_NO_STRUCTURE
+      CASE(EQUATIONS_MATRIX_FEM_STRUCTURE)
+        jacobianMatrix%structureType=EQUATIONS_MATRIX_FEM_STRUCTURE
+      CASE(EQUATIONS_MATRIX_DIAGONAL_STRUCTURE)
+        jacobianMatrix%structureType=EQUATIONS_MATRIX_DIAGONAL_STRUCTURE
+      CASE(EQUATIONS_MATRIX_NODAL_STRUCTURE)
+        jacobianMatrix%structureType=EQUATIONS_MATRIX_NODAL_STRUCTURE
+      CASE DEFAULT
+        localError="The specified strucutre type of "//TRIM(NumberToVString(structureType(matrixIdx),"*",err,error))// &
+          & " for the Jacobian matrix is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    ENDDO !matrixIdx
     
     EXITS("EquationsMatrices_NonlinearStructureTypeSet0")
     RETURN
-999 ERRORS("EquationsMatrices_NonlinearStructureTypeSet0",ERR,ERROR)
+999 ERRORS("EquationsMatrices_NonlinearStructureTypeSet0",err,error)
     EXITS("EquationsMatrices_NonlinearStructureTypeSet0")
     RETURN 1
     
@@ -4300,41 +3937,34 @@ CONTAINS
   !
 
   !>Sets the structure (sparsity) of all nonlinear (Jacobian) equations matrices
-  SUBROUTINE EquationsMatrices_NonlinearStructureTypeSet1(EQUATIONS_MATRICES,STRUCTURE_TYPE,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_NonlinearStructureTypeSet1(vectorMatrices,structureType,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer to the equations matrices
-    INTEGER(INTG), INTENT(IN) :: STRUCTURE_TYPE !<The structure type for all Jacobian equations matrices
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector equations matrices
+    INTEGER(INTG), INTENT(IN) :: structureType !<The structure type for all Jacobian equations matrices
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG), ALLOCATABLE :: STRUCTURE_TYPES(:)
-    TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: NONLINEAR_MATRICES
+    INTEGER(INTG), ALLOCATABLE :: structureTypeS(:)
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
 
-    ENTERS("EquationsMatrices_NonlinearStructureTypeSet1",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_NonlinearStructureTypeSet1",err,error,*998)
 
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      IF(EQUATIONS_MATRICES%EQUATIONS_MATRICES_FINISHED) THEN
-        CALL FlagError("Equations matrices have been finished.",ERR,ERROR,*999)
-      ELSE
-        NONLINEAR_MATRICES=>EQUATIONS_MATRICES%NONLINEAR_MATRICES
-        IF(ASSOCIATED(NONLINEAR_MATRICES)) THEN
-          ALLOCATE(STRUCTURE_TYPES(NONLINEAR_MATRICES%NUMBER_OF_JACOBIANS),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate storage types.",ERR,ERROR,*999)
-          STRUCTURE_TYPES=STRUCTURE_TYPE
-          CALL EquationsMatrices_NonlinearStructureTypeSet0(EQUATIONS_MATRICES,STRUCTURE_TYPES,ERR,ERROR,*999)
-          DEALLOCATE(STRUCTURE_TYPES)
-        ELSE
-          CALL FlagError("Equations matrices nonlinear matrices is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*998)
+    IF(vectorMatrices%vectorMatricesFinished) CALL FlagError("Vector equations matrices have been finished.",err,error,*998)
+    NULLIFY(nonlinearMatrices)
+    CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*998)
+
+    ALLOCATE(structureTypes(nonlinearMatrices%numberOfJacobians),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate storage types.",err,error,*999)
+    structureTypes=structureType
+    CALL EquationsMatrices_NonlinearStructureTypeSet0(vectorMatrices,structureTypes,err,error,*999)
+    DEALLOCATE(structureTypes)
 
     EXITS("EquationsMatrices_NonlinearStructureTypeSet1")
     RETURN
-999 ERRORS("EquationsMatrices_NonlinearStructureTypeSet1",ERR,ERROR)
+999 IF(ALLOCATED(structureTypes)) DEALLOCATE(structureTypes)
+998 ERRORS("EquationsMatrices_NonlinearStructureTypeSet1",err,error)
     EXITS("EquationsMatrices_NonlinearStructureTypeSet1")
     RETURN 1
     
@@ -4344,684 +3974,540 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finalise the equations matrices and deallocate all memory.
-  SUBROUTINE EQUATIONS_MATRICES_FINALISE(EQUATIONS_MATRICES,ERR,ERROR,*)
+  !>Finalise the scalar equations matrices and deallocate all memory.
+  SUBROUTINE EquationsMatrices_ScalarFinalise(scalarMatrices,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer to the equations matrices
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesScalarType), POINTER :: scalarMatrices !<A pointer to the scalar equations matrices
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
    
-    ENTERS("EQUATIONS_MATRICES_FINALISE",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_ScalarFinalise",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      CALL EQUATIONS_MATRICES_DYNAMIC_FINALISE(EQUATIONS_MATRICES%DYNAMIC_MATRICES,ERR,ERROR,*999)
-      CALL EQUATIONS_MATRICES_LINEAR_FINALISE(EQUATIONS_MATRICES%LINEAR_MATRICES,ERR,ERROR,*999)
-      CALL EQUATIONS_MATRICES_NONLINEAR_FINALISE(EQUATIONS_MATRICES%NONLINEAR_MATRICES,ERR,ERROR,*999)
-      CALL EQUATIONS_MATRICES_RHS_FINALISE(EQUATIONS_MATRICES%RHS_VECTOR,ERR,ERROR,*999)      
-      CALL EQUATIONS_MATRICES_SOURCE_FINALISE(EQUATIONS_MATRICES%SOURCE_VECTOR,ERR,ERROR,*999)      
-      DEALLOCATE(EQUATIONS_MATRICES)
+    IF(ASSOCIATED(scalarMatrices)) THEN
+      DEALLOCATE(scalarMatrices)
     ENDIF
        
-    EXITS("EQUATIONS_MATRICES_FINALISE")
+    EXITS("EquationsMatrices_ScalarFinalise")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MATRICES_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_ScalarFinalise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_FINALISE
+    
+  END SUBROUTINE EquationsMatrices_ScalarFinalise
 
   !
   !================================================================================================================================
   !
 
-  !>Initialise the equations matrices for the equations.
-  SUBROUTINE EQUATIONS_MATRICES_INITIALISE(EQUATIONS,ERR,ERROR,*)
+  !>Initialise the scalar equations matrices for the scalar equations.
+  SUBROUTINE EquationsMatrices_ScalarInitialise(scalarEquations,err,error,*)
     
-     !Argument variables
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS !<A pointer to the equations to initialise the equations matrices for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    !Argument variables
+    TYPE(EquationsScalarType), POINTER :: scalarEquations !<A pointer to the scalar equations to initialise the scalar equations matrices for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(EquationsMappingScalarType), POINTER :: scalarMapping
+    TYPE(VARYING_STRING) :: dummyError
     
-    ENTERS("EQUATIONS_MATRICES_INITIALISE",ERR,ERROR,*998)
+    ENTERS("EquationsMatrices_ScalarInitialise",err,error,*998)
 
-    IF(ASSOCIATED(EQUATIONS)) THEN
-      IF(ASSOCIATED(EQUATIONS%EQUATIONS_MATRICES)) THEN
-        CALL FlagError("Equations matrices is already associated for this equations.",ERR,ERROR,*998)
-      ELSE
-        EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
-        IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-          IF(EQUATIONS_MAPPING%EQUATIONS_MAPPING_FINISHED) THEN
-            ALLOCATE(EQUATIONS%EQUATIONS_MATRICES,STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate equations equations matrices.",ERR,ERROR,*999)
-            EQUATIONS%EQUATIONS_MATRICES%EQUATIONS=>EQUATIONS
-            EQUATIONS%EQUATIONS_MATRICES%EQUATIONS_MATRICES_FINISHED=.FALSE.
-            EQUATIONS%EQUATIONS_MATRICES%EQUATIONS_MAPPING=>EQUATIONS_MAPPING
-            NULLIFY(EQUATIONS%EQUATIONS_MATRICES%SOLVER_MAPPING)
-            EQUATIONS%EQUATIONS_MATRICES%NUMBER_OF_ROWS=EQUATIONS_MAPPING%NUMBER_OF_ROWS
-            EQUATIONS%EQUATIONS_MATRICES%TOTAL_NUMBER_OF_ROWS=EQUATIONS_MAPPING%TOTAL_NUMBER_OF_ROWS
-            EQUATIONS%EQUATIONS_MATRICES%NUMBER_OF_GLOBAL_ROWS=EQUATIONS_MAPPING%NUMBER_OF_GLOBAL_ROWS
-            NULLIFY(EQUATIONS%EQUATIONS_MATRICES%DYNAMIC_MATRICES)
-            NULLIFY(EQUATIONS%EQUATIONS_MATRICES%LINEAR_MATRICES)
-            NULLIFY(EQUATIONS%EQUATIONS_MATRICES%NONLINEAR_MATRICES)
-            NULLIFY(EQUATIONS%EQUATIONS_MATRICES%RHS_VECTOR)
-            NULLIFY(EQUATIONS%EQUATIONS_MATRICES%SOURCE_VECTOR)            
-            CALL EQUATIONS_MATRICES_DYNAMIC_INITIALISE(EQUATIONS%EQUATIONS_MATRICES,ERR,ERROR,*999)            
-            CALL EQUATIONS_MATRICES_LINEAR_INITIALISE(EQUATIONS%EQUATIONS_MATRICES,ERR,ERROR,*999)            
-            CALL EQUATIONS_MATRICES_NONLINEAR_INITIALISE(EQUATIONS%EQUATIONS_MATRICES,ERR,ERROR,*999)            
-            CALL EQUATIONS_MATRICES_RHS_INITIALISE(EQUATIONS%EQUATIONS_MATRICES,ERR,ERROR,*999)            
-            CALL EQUATIONS_MATRICES_SOURCE_INITIALISE(EQUATIONS%EQUATIONS_MATRICES,ERR,ERROR,*999)            
-          ELSE
-            CALL FlagError("Equations mapping has not been finished.",ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Equations equations mapping is not associated.",ERR,ERROR,*998)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Equations is not associated.",ERR,ERROR,*998)
+    IF(.NOT.ASSOCIATED(scalarEquations)) CALL FlagError("Scalar equations is not associated.",err,error,*998)
+    IF(ASSOCIATED(scalarEquations%scalarMatrices)) &
+      & CALL FlagError("Scalar equations matrices is already associated for this equations.",err,error,*998)
+    NULLIFY(scalarMapping)
+    CALL EquationsScalar_ScalarMappingGet(scalarEquations,scalarMapping,err,error,*998)
+    IF(.NOT.scalarMapping%scalarMappingFinished) CALL FlagError("Scalar equations mapping has not been finished.",err,error,*998)
+    
+    ALLOCATE(scalarEquations%scalarMatrices,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate scalar equations scalar equations matrices.",err,error,*999)
+    scalarEquations%scalarMatrices%scalarEquations=>scalarEquations
+    scalarEquations%scalarMatrices%scalarMatricesFinished=.FALSE.
+    scalarEquations%scalarMatrices%scalarMapping=>scalarMapping
+    NULLIFY(scalarEquations%scalarMatrices%solverMapping)
+    NULLIFY(scalarEquations%scalarMatrices%functions)
+    NULLIFY(scalarEquations%scalarMatrices%normMatrices)
+    NULLIFY(scalarEquations%scalarMatrices%dotProductMatrices)
+    NULLIFY(scalarEquations%scalarMatrices%quadraticMatrices)
+       
+    EXITS("EquationsMatrices_ScalarInitialise")
+    RETURN
+999 CALL EquationsMatrices_ScalarFinalise(scalarEquations%scalarMatrices,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMatrices_ScalarInitialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrices_ScalarInitialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalise the vector equations matrices and deallocate all memory.
+  SUBROUTINE EquationsMatrices_VectorFinalise(vectorMatrices,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector equations matrices
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+   
+    ENTERS("EquationsMatrices_VectorFinalise",err,error,*999)
+
+    IF(ASSOCIATED(vectorMatrices)) THEN
+      CALL EquationsMatrices_DynamicFinalise(vectorMatrices%dynamicMatrices,err,error,*999)
+      CALL EquationsMatrices_LinearFinalise(vectorMatrices%linearMatrices,err,error,*999)
+      CALL EquationsMatrices_NonlinearFinalise(vectorMatrices%nonlinearMatrices,err,error,*999)
+      CALL EquationsMatrices_RHSFinalise(vectorMatrices%rhsVector,err,error,*999)      
+      CALL EquationsMatrices_SourceFinalise(vectorMatrices%sourceVector,err,error,*999)      
+      DEALLOCATE(vectorMatrices)
     ENDIF
        
-    EXITS("EQUATIONS_MATRICES_INITIALISE")
+    EXITS("EquationsMatrices_VectorFinalise")
     RETURN
-999 CALL EQUATIONS_MATRICES_FINALISE(EQUATIONS%EQUATIONS_MATRICES,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("EQUATIONS_MATRICES_INITIALISE",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_VectorFinalise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_INITIALISE
+  END SUBROUTINE EquationsMatrices_VectorFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialise the vector equations matrices for the vector equations.
+  SUBROUTINE EquationsMatrices_VectorInitialise(vectorEquations,err,error,*)
+    
+     !Argument variables
+    TYPE(EquationsVectorType), POINTER :: vectorEquations !<A pointer to the vector equations to initialise the vector equations matrices for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(VARYING_STRING) :: dummyError
+    
+    ENTERS("EquationsMatrices_VectorInitialise",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(vectorEquations)) CALL FlagError("Vector equations is not associated.",err,error,*998)
+    IF(ASSOCIATED(vectorEquations%vectorMatrices)) &
+      & CALL FlagError("Vector equations matrices is already associated for this equations.",err,error,*998)
+    NULLIFY(vectorMapping)
+    CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*998)
+    IF(.NOT.vectorMapping%vectorMappingFinished) CALL FlagError("Vector equations mapping has not been finished.",err,error,*998)
+    
+    ALLOCATE(vectorEquations%vectorMatrices,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate vector equations vector equations matrices.",err,error,*999)
+    vectorEquations%vectorMatrices%vectorEquations=>vectorEquations
+    vectorEquations%vectorMatrices%vectorMatricesFinished=.FALSE.
+    vectorEquations%vectorMatrices%vectorMapping=>vectorMapping
+    NULLIFY(vectorEquations%vectorMatrices%solverMapping)
+    vectorEquations%vectorMatrices%numberOfRows=vectorMapping%numberOfRows
+    vectorEquations%vectorMatrices%totalNumberOfRows=vectorMapping%totalNumberOfRows
+    vectorEquations%vectorMatrices%numberOfGlobalRows=vectorMapping%numberOfGlobalRows
+    NULLIFY(vectorEquations%vectorMatrices%dynamicMatrices)
+    NULLIFY(vectorEquations%vectorMatrices%linearMatrices)
+    NULLIFY(vectorEquations%vectorMatrices%nonlinearMatrices)
+    NULLIFY(vectorEquations%vectorMatrices%rhsVector)
+    NULLIFY(vectorEquations%vectorMatrices%sourceVector)            
+    CALL EquationsMatrices_DynamicInitialise(vectorEquations%vectorMatrices,err,error,*999)            
+    CALL EquationsMatrices_LinearInitialise(vectorEquations%vectorMatrices,err,error,*999)            
+    CALL EquationsMatrices_NonlinearInitialise(vectorEquations%vectorMatrices,err,error,*999)            
+    CALL EquationsMatrices_RHSInitialise(vectorEquations%vectorMatrices,err,error,*999)            
+    CALL EquationsMatrices_SourceInitialise(vectorEquations%vectorMatrices,err,error,*999)            
+       
+    EXITS("EquationsMatrices_VectorInitialise")
+    RETURN
+999 CALL EquationsMatrices_VectorFinalise(vectorEquations%vectorMatrices,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMatrices_VectorInitialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMatrices_VectorInitialise
 
   !
   !================================================================================================================================
   !
 
   !>Initialise the values of the equations matrices and vectors to the given value e.g., 0.0_DP
-  SUBROUTINE EQUATIONS_MATRICES_VALUES_INITIALISE(EQUATIONS_MATRICES,SELECTION_TYPE,VALUE,ERR,ERROR,*)
+  SUBROUTINE EquationsMatrices_VectorValuesInitialise(vectorMatrices,selectionType,value,err,error,*)
     
     !Argument variables
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES !<A pointer to the equations matrices to initialise the values for
-    INTEGER(INTG), INTENT(IN) :: SELECTION_TYPE !<The selection of equations matrices to be initialised \see EQUATIONS_MATRICES_ROUTINES::SelectMatricesTypes,EQUATION_MATRICES_ROUTINES
-    REAL(DP), INTENT(IN) :: VALUE !<The value to initialise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the equations matrices to initialise the values for
+    INTEGER(INTG), INTENT(IN) :: selectionType !<The selection of equations matrices to be initialised \see EquationsMatricesRoutines::SelectMatricesTypes,EquationsMatricesRoutines
+    REAL(DP), INTENT(IN) :: value !<The value to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
-    TYPE(EQUATIONS_JACOBIAN_TYPE), POINTER :: JACOBIAN_MATRIX
-    TYPE(EQUATIONS_MATRICES_DYNAMIC_TYPE), POINTER :: DYNAMIC_MATRICES
-    TYPE(EQUATIONS_MATRICES_LINEAR_TYPE), POINTER :: LINEAR_MATRICES
-    TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: NONLINEAR_MATRICES
-    TYPE(EQUATIONS_MATRICES_RHS_TYPE), POINTER :: RHS_VECTOR
-    TYPE(EQUATIONS_MATRICES_SOURCE_TYPE), POINTER :: SOURCE_VECTOR
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: EQUATIONS_MATRIX
+    INTEGER(INTG) :: matrixIdx
+    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
+    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     
-    ENTERS("EQUATIONS_MATRICES_VALUES_INITIALISE",ERR,ERROR,*999)
+    ENTERS("EquationsMatrices_VectorValuesInitialise",err,error,*999)
     
-    IF(ASSOCIATED(EQUATIONS_MATRICES)) THEN
-      IF(SELECTION_TYPE==EQUATIONS_MATRICES_ALL.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_DYNAMIC_ONLY.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_LINEAR_ONLY.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_NONLINEAR_ONLY) THEN
-        DYNAMIC_MATRICES=>EQUATIONS_MATRICES%DYNAMIC_MATRICES
-        IF(ASSOCIATED(DYNAMIC_MATRICES)) THEN
-          DO matrix_idx=1,DYNAMIC_MATRICES%NUMBER_OF_DYNAMIC_MATRICES
-            EQUATIONS_MATRIX=>DYNAMIC_MATRICES%MATRICES(matrix_idx)%PTR
-            IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
-              IF(EQUATIONS_MATRIX%UPDATE_MATRIX) THEN
-                CALL DISTRIBUTED_MATRIX_ALL_VALUES_SET(EQUATIONS_MATRIX%MATRIX,VALUE,ERR,ERROR,*999)
-              ENDIF
-            ELSE
-              CALL FlagError("Equations matrix is not associated.",ERR,ERROR,*999)
-            ENDIF
-          ENDDO !matrix_idx
-        ENDIF
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*999)
+    
+    IF(selectionType==EQUATIONS_MATRICES_ALL.OR. &
+      & selectionType==EQUATIONS_MATRICES_DYNAMIC_ONLY.OR. &
+      & selectionType==EQUATIONS_MATRICES_LINEAR_ONLY.OR. &
+      & selectionType==EQUATIONS_MATRICES_NONLINEAR_ONLY) THEN
+      dynamicMatrices=>vectorMatrices%dynamicMatrices
+      IF(ASSOCIATED(dynamicMatrices)) THEN
+        DO matrixIdx=1,dynamicMatrices%numberOfDynamicMatrices
+          NULLIFY(equationsMatrix)
+          CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,matrixIdx,equationsMatrix,err,error,*999)
+          IF(equationsMatrix%updateMatrix) CALL DistributedMatrix_AllValuesSet(equationsMatrix%matrix,value,err,error,*999)
+        ENDDO !matrixIdx
       ENDIF
-      IF(SELECTION_TYPE==EQUATIONS_MATRICES_ALL.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_DYNAMIC_ONLY.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_LINEAR_ONLY.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_NONLINEAR_ONLY) THEN
-        LINEAR_MATRICES=>EQUATIONS_MATRICES%LINEAR_MATRICES
-        IF(ASSOCIATED(LINEAR_MATRICES)) THEN
-          DO matrix_idx=1,LINEAR_MATRICES%NUMBER_OF_LINEAR_MATRICES
-            EQUATIONS_MATRIX=>LINEAR_MATRICES%MATRICES(matrix_idx)%PTR
-            IF(ASSOCIATED(EQUATIONS_MATRIX)) THEN
-              IF(EQUATIONS_MATRIX%UPDATE_MATRIX) THEN
-                CALL DISTRIBUTED_MATRIX_ALL_VALUES_SET(EQUATIONS_MATRIX%MATRIX,VALUE,ERR,ERROR,*999)
-              ENDIF
-            ELSE
-              CALL FlagError("Equations matrix is not associated.",ERR,ERROR,*999)
-            ENDIF
-          ENDDO !matrix_idx
-        ENDIF
-      ENDIF
-      IF(SELECTION_TYPE==EQUATIONS_MATRICES_ALL.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_NONLINEAR_ONLY.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_JACOBIAN_ONLY) THEN
-        NONLINEAR_MATRICES=>EQUATIONS_MATRICES%NONLINEAR_MATRICES
-        IF(ASSOCIATED(NONLINEAR_MATRICES)) THEN
-          DO matrix_idx=1,NONLINEAR_MATRICES%NUMBER_OF_JACOBIANS
-            JACOBIAN_MATRIX=>NONLINEAR_MATRICES%JACOBIANS(matrix_idx)%PTR
-            IF(ASSOCIATED(JACOBIAN_MATRIX)) THEN
-              IF(JACOBIAN_MATRIX%UPDATE_JACOBIAN) THEN
-                CALL DISTRIBUTED_MATRIX_ALL_VALUES_SET(JACOBIAN_MATRIX%JACOBIAN,VALUE,ERR,ERROR,*999)
-              ENDIF
-            ELSE
-              CALL FlagError("Jacobian matrix is not associated.",ERR,ERROR,*999)
-            ENDIF
-          ENDDO
-        ENDIF
-      ENDIF
-      IF(SELECTION_TYPE==EQUATIONS_MATRICES_ALL.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_NONLINEAR_ONLY.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_RESIDUAL_ONLY.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_RHS_RESIDUAL_ONLY.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_RESIDUAL_SOURCE_ONLY.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_VECTORS_ONLY) THEN
-        NONLINEAR_MATRICES=>EQUATIONS_MATRICES%NONLINEAR_MATRICES
-        IF(ASSOCIATED(NONLINEAR_MATRICES)) THEN
-          IF(NONLINEAR_MATRICES%UPDATE_RESIDUAL) THEN
-            CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(NONLINEAR_MATRICES%RESIDUAL,VALUE,ERR,ERROR,*999)
-          ENDIF
-        ENDIF
-      ENDIF
-      IF(SELECTION_TYPE==EQUATIONS_MATRICES_ALL.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_DYNAMIC_ONLY.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_LINEAR_ONLY.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_NONLINEAR_ONLY.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_RHS_ONLY.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_RHS_RESIDUAL_ONLY.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_RHS_SOURCE_ONLY.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_VECTORS_ONLY) THEN    
-        RHS_VECTOR=>EQUATIONS_MATRICES%RHS_VECTOR
-        IF(ASSOCIATED(RHS_VECTOR)) THEN
-          IF(RHS_VECTOR%UPDATE_VECTOR) THEN
-            CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(RHS_VECTOR%VECTOR,VALUE,ERR,ERROR,*999)
-          ENDIF
-        ENDIF
-      ENDIF
-      IF(SELECTION_TYPE==EQUATIONS_MATRICES_ALL.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_DYNAMIC_ONLY.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_LINEAR_ONLY.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_NONLINEAR_ONLY.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_SOURCE_ONLY.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_RHS_SOURCE_ONLY.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_RESIDUAL_SOURCE_ONLY.OR. &
-        & SELECTION_TYPE==EQUATIONS_MATRICES_VECTORS_ONLY) THEN    
-        SOURCE_VECTOR=>EQUATIONS_MATRICES%SOURCE_VECTOR
-        IF(ASSOCIATED(SOURCE_VECTOR)) THEN
-          IF(SOURCE_VECTOR%UPDATE_VECTOR) THEN
-            CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(SOURCE_VECTOR%VECTOR,VALUE,ERR,ERROR,*999)
-          ENDIF
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*999)
     ENDIF
-
-    EXITS("EQUATIONS_MATRICES_VALUES_INITIALISE")
+    IF(selectionType==EQUATIONS_MATRICES_ALL.OR. &
+      & selectionType==EQUATIONS_MATRICES_DYNAMIC_ONLY.OR. &
+      & selectionType==EQUATIONS_MATRICES_LINEAR_ONLY.OR. &
+      & selectionType==EQUATIONS_MATRICES_NONLINEAR_ONLY) THEN
+      linearMatrices=>vectorMatrices%linearMatrices
+      IF(ASSOCIATED(linearMatrices)) THEN
+        DO matrixIdx=1,linearMatrices%numberOfLinearMatrices
+          NULLIFY(equationsMatrix)
+          CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIdx,equationsMatrix,err,error,*999)
+          IF(equationsMatrix%updateMatrix) CALL DistributedMatrix_AllValuesSet(equationsMatrix%matrix,value,err,error,*999)
+       ENDDO !matrixIdx
+      ENDIF
+    ENDIF
+    IF(selectionType==EQUATIONS_MATRICES_ALL.OR. &
+      & selectionType==EQUATIONS_MATRICES_NONLINEAR_ONLY.OR. &
+      & selectionType==EQUATIONS_MATRICES_JACOBIAN_ONLY) THEN
+      nonlinearMatrices=>vectorMatrices%nonlinearMatrices
+      IF(ASSOCIATED(nonlinearMatrices)) THEN
+        DO matrixIdx=1,nonlinearMatrices%numberOfJacobians
+          NULLIFY(jacobianMatrix)
+          CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,matrixIdx,jacobianMatrix,err,error,*999)
+          IF(jacobianMatrix%updateJacobian) CALL DistributedMatrix_AllValuesSet(jacobianMatrix%jacobian,VALUE,err,error,*999)
+        ENDDO !matrixIdx
+      ENDIF
+    ENDIF
+    IF(selectionType==EQUATIONS_MATRICES_ALL.OR. &
+      & selectionType==EQUATIONS_MATRICES_NONLINEAR_ONLY.OR. &
+      & selectionType==EQUATIONS_MATRICES_RESIDUAL_ONLY.OR. &
+      & selectionType==EQUATIONS_MATRICES_RHS_RESIDUAL_ONLY.OR. &
+      & selectionType==EQUATIONS_MATRICES_RESIDUAL_SOURCE_ONLY.OR. &
+      & selectionType==EQUATIONS_MATRICES_VECTORS_ONLY) THEN
+      nonlinearMatrices=>vectorMatrices%nonlinearMatrices
+      IF(ASSOCIATED(nonlinearMatrices)) THEN
+        IF(nonlinearMatrices%updateResidual) CALL DistributedVector_AllValuesSet(nonlinearMatrices%residual,value,err,error,*999)
+      ENDIF
+    ENDIF
+    IF(selectionType==EQUATIONS_MATRICES_ALL.OR. &
+      & selectionType==EQUATIONS_MATRICES_DYNAMIC_ONLY.OR. &
+      & selectionType==EQUATIONS_MATRICES_LINEAR_ONLY.OR. &
+      & selectionType==EQUATIONS_MATRICES_NONLINEAR_ONLY.OR. &
+      & selectionType==EQUATIONS_MATRICES_RHS_ONLY.OR. &
+      & selectionType==EQUATIONS_MATRICES_RHS_RESIDUAL_ONLY.OR. &
+      & selectionType==EQUATIONS_MATRICES_RHS_SOURCE_ONLY.OR. &
+      & selectionType==EQUATIONS_MATRICES_VECTORS_ONLY) THEN    
+      rhsVector=>vectorMatrices%rhsVector
+      IF(ASSOCIATED(rhsVector)) THEN
+        IF(rhsVector%updateVector) CALL DistributedVector_AllValuesSet(rhsVector%vector,value,err,error,*999)
+      ENDIF
+    ENDIF
+    IF(selectionType==EQUATIONS_MATRICES_ALL.OR. &
+      & selectionType==EQUATIONS_MATRICES_DYNAMIC_ONLY.OR. &
+      & selectionType==EQUATIONS_MATRICES_LINEAR_ONLY.OR. &
+      & selectionType==EQUATIONS_MATRICES_NONLINEAR_ONLY.OR. &
+      & selectionType==EQUATIONS_MATRICES_SOURCE_ONLY.OR. &
+      & selectionType==EQUATIONS_MATRICES_RHS_SOURCE_ONLY.OR. &
+      & selectionType==EQUATIONS_MATRICES_RESIDUAL_SOURCE_ONLY.OR. &
+      & selectionType==EQUATIONS_MATRICES_VECTORS_ONLY) THEN    
+      sourceVector=>vectorMatrices%sourceVector
+      IF(ASSOCIATED(sourceVector)) THEN
+        IF(sourceVector%updateVector) CALL DistributedVector_AllValuesSet(sourceVector%vector,value,err,error,*999)
+      ENDIF
+    ENDIF
+ 
+    EXITS("EquationsMatrices_VectorValuesInitialise")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MATRICES_VALUES_INITIALISE",ERR,ERROR)
+999 ERRORSEXITS("EquationsMatrices_VectorValuesInitialise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MATRICES_VALUES_INITIALISE
+    
+  END SUBROUTINE EquationsMatrices_VectorValuesInitialise
 
   !
   !================================================================================================================================
   !
 
-  !>Caclulates the matrix structure (sparsity) for a equations matrix.
+  !>Caclulates the matrix structure (sparsity) for an equations matrix.
   SUBROUTINE EquationsMatrix_StructureCalculate(equationsMatrix,numberOfNonZeros,rowIndices,columnIndices,list,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: equationsMatrix !<A pointer to the equations matrix to calculate the structure for
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix !<A pointer to the equations matrix to calculate the structure for
     INTEGER(INTG), INTENT(OUT) :: numberOfNonZeros !<On return the number of non-zeros in the matrix
     INTEGER(INTG), POINTER :: rowIndices(:) !<On return a pointer to row location indices in compressed row format. The pointer must be NULL on entry and the calling routine is responsible for deallocation.
     INTEGER(INTG), POINTER :: columnIndices(:) !<On return a pointer to the column location indices in compressed row format. The pointer must be NULL on entry and the calling routine is responsible for deallocation.
-    type(LinkedList),pointer :: list(:) 
+    TYPE(LinkedList), POINTER :: list(:) 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) ::  columnIdx,dummyErr,elementIdx,globalColumn,localColumn,local_ny,matrixNumber,mk,mp,ne,nh,nh2,nn,nnk,np
-    INTEGER(INTG) ::  numberOfColumns,nyy,nyyg,npg,nhg,local_cols,local_dof,mv
-    INTEGER(INTG) :: dofIdx,nodeIdx,componentIdx,localDofIdx
-    INTEGER(INTG) :: versionIdx,derivativeIdx,numberOfDerivatives,numberOfVersions
+    INTEGER(INTG) :: columnIdx,component,componentIdx,derivative,derivativeIdx,dofIdx,dummyErr,element,elementIdx, &
+      & globalColumn,localColumn,localDOF,localDOFIdx,localNodeIdx,matrixNumber,node,node2,numberOfColumns, &
+      & numberOfDerivatives,numberOfVersions,version,versionIdx
     INTEGER(INTG), ALLOCATABLE :: columns(:)
     REAL(DP) :: sparsity
     TYPE(BASIS_TYPE), POINTER :: basis
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: dependentDofsDomainMapping
     TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: domainElements
     TYPE(DOMAIN_NODES_TYPE), POINTER :: domainNodes
-    TYPE(EQUATIONS_TYPE), POINTER :: equations
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: equationsMapping
-    TYPE(EQUATIONS_MAPPING_DYNAMIC_TYPE), POINTER :: dynamicMapping
-    TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: linearMapping
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices
-    TYPE(EQUATIONS_MATRICES_DYNAMIC_TYPE), POINTER :: dynamicMatrices
-    TYPE(EQUATIONS_MATRICES_LINEAR_TYPE), POINTER :: linearMatrices
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
+    TYPE(EquationsMappingLinearType), POINTER :: linearMapping
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
+    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(FIELD_TYPE), POINTER :: dependentField
     TYPE(FIELD_DOF_TO_PARAM_MAP_TYPE), POINTER :: dependentDofsParamMapping
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
     TYPE(LIST_PTR_TYPE), ALLOCATABLE :: columnIndicesLists(:)
     TYPE(VARYING_STRING) :: dummyError,localError
+    
     ENTERS("EquationsMatrix_StructureCalculate",err,error,*998)
 
     numberOfNonZeros=0
-    IF(ASSOCIATED(equationsMatrix)) THEN
-      IF(.NOT.ASSOCIATED(rowIndices)) THEN
-        IF(.NOT.ASSOCIATED(columnIndices)) THEN
-          matrixNumber=equationsMatrix%MATRIX_NUMBER
-          SELECT CASE(equationsMatrix%STRUCTURE_TYPE)
-          CASE(EQUATIONS_MATRIX_NO_STRUCTURE)
-            CALL FlagError("There is no structure to calculate for a matrix with no structure.",err,error,*998)
-          CASE(EQUATIONS_MATRIX_FEM_STRUCTURE)
-            SELECT CASE(equationsMatrix%STORAGE_TYPE)
-            CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-              linearMatrices=>equationsMatrix%LINEAR_MATRICES
-              dynamicMatrices=>equationsMatrix%DYNAMIC_MATRICES
-              IF(ASSOCIATED(dynamicMatrices).OR.ASSOCIATED(linearMatrices)) THEN
-                IF(ASSOCIATED(dynamicMatrices)) THEN
-                  equationsMatrices=>dynamicMatrices%EQUATIONS_MATRICES
-                ELSE
-                  equationsMatrices=>linearMatrices%EQUATIONS_MATRICES
-                ENDIF
-                IF(ASSOCIATED(equationsMatrices)) THEN
-                  equations=>equationsMatrices%EQUATIONS
-                  IF(ASSOCIATED(equations)) THEN
-                    equationsMapping=>equationsMatrices%EQUATIONS_MAPPING
-                    IF(ASSOCIATED(equationsMapping)) THEN
-                      dynamicMapping=>equationsMapping%DYNAMIC_MAPPING
-                      linearMapping=>equationsMapping%LINEAR_MAPPING
-                      IF(ASSOCIATED(dynamicMapping).OR.ASSOCIATED(linearMapping)) THEN
-                        equationsSet=>equations%EQUATIONS_SET
-                        IF(ASSOCIATED(equationsSet)) THEN
-                          dependentField=>equationsSet%DEPENDENT%DEPENDENT_FIELD
-                          IF(ASSOCIATED(dependentField)) THEN
-                            IF(ASSOCIATED(dynamicMatrices)) THEN
-                              fieldVariable=>dynamicMapping%EQUATIONS_MATRIX_TO_VAR_MAPS(matrixNumber)%VARIABLE
-                            ELSE
-                              fieldVariable=>linearMapping%EQUATIONS_MATRIX_TO_VAR_MAPS(matrixNumber)%VARIABLE
-                            ENDIF
-                            IF(ASSOCIATED(fieldVariable)) THEN
-                              dependentDofsDomainMapping=>fieldVariable%DOMAIN_MAPPING
-                              IF(ASSOCIATED(dependentDofsDomainMapping)) THEN
-                                dependentDofsParamMapping=>fieldVariable%DOF_TO_PARAM_MAP
-                                IF(ASSOCIATED(dependentDofsParamMapping)) THEN
-                                  !Allocate lists
-                                  ALLOCATE(columnIndicesLists(dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL),STAT=ERR)
-                                  IF(ERR/=0) CALL FlagError("Could not allocate column indices lists.",err,error,*999)
-                                  !Allocate row indices
-                                  ALLOCATE(rowIndices(dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL+1),STAT=ERR)
-                                  IF(ERR/=0) CALL FlagError("Could not allocate row indices.",err,error,*999)
-                                  rowIndices(1)=1
-                                  
-                                  !First, loop over the rows and calculate the number of non-zeros
-                                  numberOfNonZeros=0
-                                  DO local_ny=1,dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL
-                                    IF(dependentDofsParamMapping%DOF_TYPE(1,local_ny)==FIELD_NODE_DOF_TYPE) THEN
-                                      nyy=dependentDofsParamMapping%DOF_TYPE(2,local_ny)!value for a particular field dof (local_ny)
-                                      np=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(3,nyy)!node number (np) of the field parameter
-                                      nh=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(4,nyy)!component number (nh) of the field parameter
-                                      domainNodes=>fieldVariable%COMPONENTS(nh)%DOMAIN%TOPOLOGY%NODES
-                                      
-                                      !Set up list
-                                      NULLIFY(columnIndicesLists(local_ny)%PTR)
-                                      CALL LIST_CREATE_START(columnIndicesLists(local_ny)%PTR,err,error,*999)
-                                      CALL LIST_DATA_TYPE_SET(columnIndicesLists(local_ny)%PTR,LIST_INTG_TYPE,err,error,*999)
-                                      CALL LIST_INITIAL_SIZE_SET(columnIndicesLists(local_ny)%PTR,domainNodes%NODES(np)% &
-                                        & NUMBER_OF_SURROUNDING_ELEMENTS*fieldVariable%COMPONENTS(nh)% &
-                                        & maxNumberElementInterpolationParameters,err,error,*999)
-                                      CALL LIST_CREATE_FINISH(columnIndicesLists(local_ny)%PTR,err,error,*999)
-                                      !Loop over all elements containing the dof
-                                      DO elementIdx=1,domainNodes%NODES(np)%NUMBER_OF_SURROUNDING_ELEMENTS
-                                        ne=domainNodes%NODES(np)%SURROUNDING_ELEMENTS(elementIdx)
-                                        DO nh2=1,fieldVariable%NUMBER_OF_COMPONENTS
-                                          domainElements=>fieldVariable%COMPONENTS(nh2)%DOMAIN%TOPOLOGY%ELEMENTS
-                                          basis=>domainElements%ELEMENTS(ne)%BASIS
-                                          DO nn=1,basis%NUMBER_OF_NODES
-                                            mp=domainElements%ELEMENTS(ne)%ELEMENT_NODES(nn)
-                                            DO nnk=1,basis%NUMBER_OF_DERIVATIVES(nn)
-                                              mk=domainElements%ELEMENTS(ne)%ELEMENT_DERIVATIVES(nnk,nn)
-                                              mv=domainElements%ELEMENTS(ne)%elementVersions(nnk,nn)
-                                              !Find the local and global column and add the global column to the indices list
-                                              localColumn=fieldVariable%COMPONENTS(nh2)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% &
-                                                & NODES(mp)%DERIVATIVES(mk)%VERSIONS(mv)
-                                              globalColumn=fieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localColumn)
-                                          
-                                              CALL LIST_ITEM_ADD(columnIndicesLists(local_ny)%PTR,globalColumn,err,error,*999)
-                                                
-                                            ENDDO !mk
-                                          ENDDO !nn
-                                        ENDDO !nh2
-                                      ENDDO !elementIdx
-                                      CALL LIST_REMOVE_DUPLICATES(columnIndicesLists(local_ny)%PTR,err,error,*999)
-                                      CALL LIST_NUMBER_OF_ITEMS_GET(columnIndicesLists(local_ny)%PTR,numberOfColumns, &
-                                        & err,error,*999)
-                                      numberOfNonZeros=numberOfNonZeros+numberOfColumns
-                                      rowIndices(local_ny+1)=numberOfNonZeros+1
-                                    ELSE
-                                      localError="Local dof number "//TRIM(NumberToVString(local_ny,"*",err,error))// &
-                                        & " is not a node based dof."
-                                      CALL FlagError(localError,err,error,*999)
-                                    ENDIF
-                                  ENDDO !local_ny
-                                  
-                                  
-                                  !Allocate and setup the column locations
-                                  ALLOCATE(columnIndices(numberOfNonZeros),STAT=ERR)
-
-                                  ALLOCATE(list(dependentDofsDomainMapping%NUMBER_OF_GLOBAL))
-
-                                  IF(ERR/=0) CALL FlagError("Could not allocate column indices.",err,error,*999)
-                                  DO local_ny=1,dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL
-                                   
-                                    CALL LIST_DETACH_AND_DESTROY(columnIndicesLists(local_ny)%PTR,numberOfColumns,columns, &
-                                      & err,error,*999)        
-                                    DO columnIdx=1,numberOfColumns
-                                      !COLUMNS store the list of nonzero column indices for each local row (local_ny)
-                                      columnIndices(rowIndices(local_ny)+columnIdx-1)=columns(columnIdx) 
-
-                                      ! global to local columns
-                                       IF(ASSOCIATED(linearMapping).OR.ASSOCIATED(dynamicMapping)) THEN
-                                         IF(ASSOCIATED(dynamicMatrices)) THEN
-                                           local_cols=equationsMatrices%equations_mapping%dynamic_mapping &
-                                             & %equations_matrix_to_var_maps(1)%column_dofs_mapping%global_to_local_map &
-                                             & (columns(columnIdx))%LOCAL_NUMBER(1)
-                                           local_dof = local_cols
-                                           ! Column to dof mapping?
-                                           !local_dof=equationsMatrices%equations_mapping%dynamic_mapping% &
-                                            ! & equations_matrix_to_var_maps(1)%column_to_dof_map(local_cols)
-                                         ELSE
-                                           local_cols=equationsMatrices%equations_mapping%linear_mapping &
-                                             & %equations_matrix_to_var_maps(1)%column_dofs_mapping%global_to_local_map &
-                                             & (columns(columnIdx))%LOCAL_NUMBER(1)
-                                           local_dof = local_cols
-                                         ENDIF
-                                       ENDIF
-                                       nyyg=dependentDofsParamMapping%DOF_TYPE(2,local_dof)
-                                       npg=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(3,nyyg)
-                                       nhg=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(4,nyyg)
-                                       domainNodes=>fieldVariable%COMPONENTS(nhg)%DOMAIN%TOPOLOGY%NODES
-                            
-                                      ! Check whether boundary node    
-                                      IF(domainNodes%NODES(npg)%BOUNDARY_NODE)THEN
-                                        CALL LinkedList_Add(list(columns(columnIdx)),local_ny,ERR,ERROR,*999)
-                                      ENDIF
-                                    
-                                    ENDDO !columnIdx
-                                    DEALLOCATE(columns)                                    
-                                  ENDDO !local_ny
-
-                                 
-                                  IF(DIAGNOSTICS1) THEN
-                                    CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Equations matrix structure:",err,error,*999)
-                                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"Equations matrix number : ",matrixNumber, &
-                                      & err,error,*999)
-                                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of rows = ", &
-                                      & dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL,err,error,*999)
-                                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of columns = ", &
-                                      & dependentDofsDomainMapping%NUMBER_OF_GLOBAL,err,error,*999)
-                                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of non zeros = ", &
-                                      & numberOfNonZeros,err,error,*999)
-                                    IF(dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL* &
-                                      & dependentDofsDomainMapping%NUMBER_OF_GLOBAL/=0) THEN
-                                      sparsity=(1.0_DP-REAL(numberOfNonZeros,DP)/REAL(dependentDofsDomainMapping% &
-                                        & TOTAL_NUMBER_OF_LOCAL*dependentDofsDomainMapping%NUMBER_OF_GLOBAL,DP))*100.0_DP
-                                      CALL WRITE_STRING_FMT_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Sparsity (% of zeros) = ", &
-                                        & sparsity,"F6.2",err,error,*999)
-                                    ENDIF
-                                    CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,dependentDofsDomainMapping% &
-                                      & TOTAL_NUMBER_OF_LOCAL+1,8,8,rowIndices,'("  Row indices    :",8(X,I13))', &
-                                      & '(18X,8(X,I13))',err,error,*999)
-                                    CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfNonZeros,8,8,columnIndices, &
-                                      & '("  Column indices :",8(X,I13))','(18X,8(X,I13))', err,error,*999)
-                                  ENDIF
-                                ELSE
-                                  CALL FlagError("Dependent dofs parameter mapping is not associated.",err,error,*999)
-                                ENDIF
-                              ELSE
-                                CALL FlagError("Dependent dofs domain mapping is not associated.",err,error,*999)
-                              ENDIF
-                            ELSE
-                              CALL FlagError("Dependent field variable is not associated.",err,error,*999)
-                            ENDIF
-                          ELSE
-                            CALL FlagError("Equations set dependent field is not associated.",err,error,*999)
-                          ENDIF
-                        ELSE
-                          CALL FlagError("Equations set is not associated.",err,error,*999)
-                        ENDIF
-                      ELSE
-                        CALL FlagError("Either equations mapping dynamic mapping or linear mapping is not associated.", &
-                          & err,error,*999)
-                      ENDIF
-                    ELSE
-                      CALL FlagError("Equations mapping is not associated.",err,error,*999)
-                    ENDIF
-                  ELSE
-                    CALL FlagError("Equations is not associated.",err,error,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Dynamic or linear matrices equations matrices is not associated.",err,error,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Either equations matrix dynamic or linear matrices is not associated.",err,error,*999)
-              ENDIF
-            CASE DEFAULT
-              localError="The matrix storage type of "// &
-                & TRIM(NumberToVString(equationsMatrix%STORAGE_TYPE,"*",err,error))//" is invalid."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-
-          CASE(EQUATIONS_MATRIX_NODAL_STRUCTURE)
-            SELECT CASE(equationsMatrix%STORAGE_TYPE)
-            CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-              linearMatrices=>equationsMatrix%LINEAR_MATRICES
-              dynamicMatrices=>equationsMatrix%DYNAMIC_MATRICES
-              IF(ASSOCIATED(dynamicMatrices).OR.ASSOCIATED(linearMatrices)) THEN
-                IF(ASSOCIATED(dynamicMatrices)) THEN
-                  equationsMatrices=>dynamicMatrices%EQUATIONS_MATRICES
-                ELSE
-                  equationsMatrices=>linearMatrices%EQUATIONS_MATRICES
-                ENDIF
-                IF(ASSOCIATED(equationsMatrices)) THEN
-                  equations=>equationsMatrices%EQUATIONS
-                  IF(ASSOCIATED(equations)) THEN
-                    equationsMapping=>equationsMatrices%EQUATIONS_MAPPING
-                    IF(ASSOCIATED(equationsMapping)) THEN
-                      dynamicMapping=>equationsMapping%DYNAMIC_MAPPING
-                      linearMapping=>equationsMapping%LINEAR_MAPPING
-                      IF(ASSOCIATED(dynamicMapping).OR.ASSOCIATED(linearMapping)) THEN
-                        equationsSet=>equations%EQUATIONS_SET
-                        IF(ASSOCIATED(equationsSet)) THEN
-                          dependentField=>equationsSet%DEPENDENT%DEPENDENT_FIELD
-                          IF(ASSOCIATED(dependentField)) THEN
-                            IF(ASSOCIATED(dynamicMatrices)) THEN
-                              fieldVariable=>dynamicMapping%EQUATIONS_MATRIX_TO_VAR_MAPS(matrixNumber)%VARIABLE
-                            ELSE
-                              fieldVariable=>linearMapping%EQUATIONS_MATRIX_TO_VAR_MAPS(matrixNumber)%VARIABLE
-                            ENDIF
-                            IF(ASSOCIATED(fieldVariable)) THEN
-                              dependentDofsDomainMapping=>fieldVariable%DOMAIN_MAPPING
-                              IF(ASSOCIATED(dependentDofsDomainMapping)) THEN
-                                dependentDofsParamMapping=>fieldVariable%DOF_TO_PARAM_MAP
-                                IF(ASSOCIATED(dependentDofsParamMapping)) THEN
-                                  !Allocate lists
-                                  ALLOCATE(columnIndicesLists(dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL),STAT=ERR)
-                                  IF(ERR/=0) CALL FlagError("Could not allocate column indices lists.",err,error,*999)
-                                  !Allocate row indices
-                                  ALLOCATE(rowIndices(dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL+1),STAT=ERR)
-                                  IF(ERR/=0) CALL FlagError("Could not allocate row indices.",err,error,*999)
-                                  rowIndices(1)=1
-                                  
-                                  !First, loop over the rows and calculate the number of non-zeros
-                                  numberOfNonZeros=0
-                                  DO localDofIdx=1,dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL
-                                    IF(dependentDofsParamMapping%DOF_TYPE(1,localDofIdx)==FIELD_NODE_DOF_TYPE) THEN
-                                      dofIdx=dependentDofsParamMapping%DOF_TYPE(2,localDofIdx)!value for a particular field dof (localDofIdx)
-                                      nodeIdx=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(3,dofIdx)!node number (np) of the field parameter
-                                      componentIdx=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(4,dofIdx)!component number (nh) of the field parameter
-                                      domainNodes=>fieldVariable%COMPONENTS(componentIdx)%DOMAIN%TOPOLOGY%NODES
-                                      
-                                      !Set up list
-                                      NULLIFY(columnIndicesLists(localDofIdx)%PTR)
-                                      CALL LIST_CREATE_START(columnIndicesLists(localDofIdx)%PTR,err,error,*999)
-                                      CALL LIST_DATA_TYPE_SET(columnIndicesLists(localDofIdx)%PTR,LIST_INTG_TYPE,err,error,*999)
-
-                                      CALL LIST_INITIAL_SIZE_SET(columnIndicesLists(localDofIdx)%PTR, &
-                                        & fieldVariable%NUMBER_OF_COMPONENTS* &
-                                        & fieldVariable%maxNumberElementInterpolationParameters,err,error,*999)
-
-                                      CALL LIST_CREATE_FINISH(columnIndicesLists(localDofIdx)%PTR,err,error,*999)
-                                      !Loop over all components,nodes,derivatives, and versions
-                                      DO componentIdx=1,fieldVariable%NUMBER_OF_COMPONENTS
-                                        numberOfDerivatives=fieldVariable%components(componentIdx)%domain%topology% &
-                                         & nodes%nodes(nodeIdx)%NUMBER_OF_DERIVATIVES
-                                        DO derivativeIdx=1,numberOfDerivatives
-                                          numberOfVersions=fieldVariable%components(componentIdx)%domain%topology% &
-                                           & nodes%nodes(nodeIdx)%derivatives(derivativeIdx)%numberOfVersions
-                                          DO versionIdx=1,numberOfVersions
-                                            localColumn=fieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP% &
-                                             & NODE_PARAM2DOF_MAP%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%VERSIONS(versionIdx)
-                                            globalColumn=fieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localColumn)
-
-                                            CALL LIST_ITEM_ADD(columnIndicesLists(localDofIdx)%PTR,globalColumn,err,error,*999)
-                                            
-                                          ENDDO !versionIdx
-                                        ENDDO !derivativeIdx
-                                      ENDDO !componentIdx
-
-                                      CALL LIST_REMOVE_DUPLICATES(columnIndicesLists(localDofIdx)%PTR,err,error,*999)
-                                      CALL LIST_NUMBER_OF_ITEMS_GET(columnIndicesLists(localDofIdx)%PTR,numberOfColumns, &
-                                        & err,error,*999)
-                                      numberOfNonZeros=numberOfNonZeros+numberOfColumns
-                                      rowIndices(localDofIdx+1)=numberOfNonZeros+1
-                                    ELSE
-                                      localError="Local dof number "//TRIM(NumberToVString(localDofIdx,"*",err,error))// &
-                                        & " is not a node based dof."
-                                      CALL FlagError(localError,err,error,*999)
-                                    ENDIF
-                                  ENDDO !localDofIdx
-                                  
-                                  !Allocate and setup the column locations
-                                  ALLOCATE(columnIndices(numberOfNonZeros),STAT=ERR)
-                                  ALLOCATE(list(dependentDofsDomainMapping%NUMBER_OF_GLOBAL))
-
-                                  IF(ERR/=0) CALL FlagError("Could not allocate column indices.",err,error,*999)
-                                  DO localDofIdx=1,dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL
-                                   
-                                    CALL LIST_DETACH_AND_DESTROY(columnIndicesLists(localDofIdx)%PTR,numberOfColumns,columns, &
-                                      & err,error,*999)        
-                                    DO columnIdx=1,numberOfColumns
-                                      !columns store the list of nonzero column indices for each local row (localDofIdx)
-                                      columnIndices(rowIndices(localDofIdx)+columnIdx-1)=columns(columnIdx) 
-
-                                      ! global to local columns
-                                       IF(ASSOCIATED(linearMapping).OR.ASSOCIATED(dynamicMapping)) THEN
-                                         IF(ASSOCIATED(dynamicMatrices)) THEN
-                                           local_cols=equationsMatrices%equations_mapping%dynamic_mapping &
-                                             & %equations_matrix_to_var_maps(1)%column_dofs_mapping%global_to_local_map &
-                                             & (columns(columnIdx))%LOCAL_NUMBER(1)
-                                           local_dof = local_cols
-                                           ! Column to dof mapping?
-                                           !local_dof=equationsMatrices%equations_mapping%dynamic_mapping% &
-                                            ! & equations_matrix_to_var_maps(1)%column_to_dof_map(local_cols)
-                                         ELSE
-                                           local_cols=equationsMatrices%equations_mapping%linear_mapping &
-                                             & %equations_matrix_to_var_maps(1)%column_dofs_mapping%global_to_local_map &
-                                             & (columns(columnIdx))%LOCAL_NUMBER(1)
-                                           local_dof = local_cols
-                                         ENDIF
-                                       ENDIF
-                                       nyyg=dependentDofsParamMapping%DOF_TYPE(2,local_dof)
-                                       npg=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(3,nyyg)
-                                       nhg=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(4,nyyg)
-                                       domainNodes=>fieldVariable%COMPONENTS(nhg)%DOMAIN%TOPOLOGY%NODES
-                            
-                                      ! Check whether boundary node    
-                                      IF(domainNodes%NODES(npg)%BOUNDARY_NODE)THEN
-                                        CALL LinkedList_Add(list(columns(columnIdx)),localDofIdx,err,error,*999)
-                                      ENDIF
-                                    
-                                    ENDDO !columnIdx
-                                    DEALLOCATE(columns)                                    
-                                  ENDDO !localDofIdx
-                                 
-                                  IF(DIAGNOSTICS1) THEN
-                                    CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Equations matrix structure:",err,error,*999)
-                                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"Equations matrix number : ",matrixNumber, &
-                                      & err,error,*999)
-                                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of rows = ", &
-                                      & dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL,err,error,*999)
-                                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of columns = ", &
-                                      & dependentDofsDomainMapping%NUMBER_OF_GLOBAL,err,error,*999)
-                                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of non zeros = ", &
-                                      & numberOfNonZeros,err,error,*999)
-                                    IF(dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL* &
-                                      & dependentDofsDomainMapping%NUMBER_OF_GLOBAL/=0) THEN
-                                      sparsity=(1.0_DP-REAL(numberOfNonZeros,DP)/REAL(dependentDofsDomainMapping% &
-                                        & TOTAL_NUMBER_OF_LOCAL*dependentDofsDomainMapping%NUMBER_OF_GLOBAL,DP))*100.0_DP
-                                      CALL WRITE_STRING_FMT_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Sparsity (% of zeros) = ", &
-                                        & sparsity,"F6.2",err,error,*999)
-                                    ENDIF
-                                    CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,dependentDofsDomainMapping% &
-                                      & TOTAL_NUMBER_OF_LOCAL+1,8,8,rowIndices,'("  Row indices    :",8(X,I13))', &
-                                      & '(18X,8(X,I13))',err,error,*999)
-                                    CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfNonZeros,8,8,columnIndices, &
-                                      & '("  Column indices :",8(X,I13))','(18X,8(X,I13))', err,error,*999)
-                                  ENDIF
-                                ELSE
-                                  CALL FlagError("Dependent dofs parameter mapping is not associated.",err,error,*999)
-                                ENDIF
-                              ELSE
-                                CALL FlagError("Dependent dofs domain mapping is not associated.",err,error,*999)
-                              ENDIF
-                            ELSE
-                              CALL FlagError("Dependent field variable is not associated.",err,error,*999)
-                            ENDIF
-                          ELSE
-                            CALL FlagError("Equations set dependent field is not associated.",err,error,*999)
-                          ENDIF
-                        ELSE
-                          CALL FlagError("Equations set is not associated.",err,error,*999)
-                        ENDIF
-                      ELSE
-                        CALL FlagError("Either equations mapping dynamic mapping or linear mapping is not associated.", &
-                          & err,error,*999)
-                      ENDIF
-                    ELSE
-                      CALL FlagError("Equations mapping is not associated.",err,error,*999)
-                    ENDIF
-                  ELSE
-                    CALL FlagError("Equations is not associated.",err,error,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Dynamic or linear matrices equations matrices is not associated.",err,error,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Either equations matrix dynamic or linear matrices is not associated.",err,error,*999)
-              ENDIF
-
-            CASE DEFAULT
-              localError="The matrix storage type of "// &
-                & TRIM(NumberToVString(equationsMatrix%STORAGE_TYPE,"*",err,error))//" is invalid."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-
-          CASE(EQUATIONS_MATRIX_DIAGONAL_STRUCTURE)
-            CALL FlagError("There is not structure to calculate for a diagonal matrix.",err,error,*998)
-          CASE DEFAULT
-            localError="The matrix structure type of "// &
-              & TRIM(NumberToVString(equationsMatrix%STRUCTURE_TYPE,"*",err,error))//" is invalid."
-            CALL FlagError(localError,err,error,*998)
-          END SELECT
-        ELSE
-          CALL FlagError("Column indices is already associated.",err,error,*998)
-        ENDIF
-      ELSE
-        CALL FlagError("Row indieces is already associated.",err,error,*998)
-      ENDIF
+    
+    IF(.NOT.ASSOCIATED(equationsMatrix)) CALL FlagError("Equations matrix is not associated.",err,error,*998)
+    IF(ASSOCIATED(rowIndices)) CALL FlagError("Row indices is already associated.",err,error,*998)
+    IF(ASSOCIATED(columnIndices)) CALL FlagError("Column indices is already associated.",err,error,*998)
+    linearMatrices=>equationsMatrix%linearMatrices
+    dynamicMatrices=>equationsMatrix%dynamicMatrices
+    IF(.NOT.ASSOCIATED(dynamicMatrices).AND..NOT.ASSOCIATED(linearMatrices)) &
+      & CALL FlagError("Either equations matrix dynamic or linear matrices is not associated.",err,error,*998)
+    NULLIFY(vectorMatrices)
+    IF(ASSOCIATED(dynamicMatrices)) THEN
+      CALL EquationsMatricesDynamic_VectorMatricesGet(dynamicMatrices,vectorMatrices,err,error,*999)
     ELSE
-      CALL FlagError("Equations matrix is not associated.",err,error,*999)
+      CALL EquationsMatricesLinear_VectorMatricesGet(linearMatrices,vectorMatrices,err,error,*999)
+    ENDIF
+    NULLIFY(vectorMapping)
+    CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*998)
+    NULLIFY(vectorEquations)
+    CALL EquationsMatricesVector_VectorEquationsGet(vectorMatrices,vectorEquations,err,error,*998)
+    NULLIFY(equations)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*998)
+    NULLIFY(equationsSet)
+    CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*998)
+    NULLIFY(dependentField)
+    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*998)
+    matrixNumber=equationsMatrix%matrixNumber
+    NULLIFY(dynamicMapping)
+    NULLIFY(linearMapping)
+    IF(ASSOCIATED(dynamicMatrices)) THEN
+      CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
+      fieldVariable=>dynamicMapping%equationsMatrixToVarMaps(matrixNumber)%variable
+    ELSE
+      CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
+      fieldVariable=>linearMapping%equationsMatrixToVarMaps(matrixNumber)%variable
+    ENDIF
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Dependent field variable is not associated.",err,error,*998)          
+    dependentDofsDomainMapping=>fieldVariable%DOMAIN_MAPPING
+    IF(.NOT.ASSOCIATED(dependentDofsDomainMapping)) &
+      & CALL FlagError("Dependent dofs domain mapping is not associated.",err,error,*998)
+    dependentDofsParamMapping=>fieldVariable%DOF_TO_PARAM_MAP
+    IF(.NOT.ASSOCIATED(dependentDofsParamMapping)) &
+      & CALL FlagError("Dependent dofs parameter mapping is not associated.",err,error,*998)
+    
+    SELECT CASE(equationsMatrix%structureType)
+    CASE(EQUATIONS_MATRIX_NO_STRUCTURE)
+      CALL FlagError("There is no structure to calculate for a matrix with no structure.",err,error,*998)
+    CASE(EQUATIONS_MATRIX_FEM_STRUCTURE)
+      SELECT CASE(equationsMatrix%storageType)
+      CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+        
+        !Allocate lists
+        ALLOCATE(columnIndicesLists(dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate column indices lists.",err,error,*999)
+        !Allocate row indices
+        ALLOCATE(rowIndices(dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL+1),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate row indices.",err,error,*999)
+        rowIndices(1)=1
+        
+        !First, loop over the rows and calculate the number of non-zeros
+        numberOfNonZeros=0
+        DO localDOFIdx=1,dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL
+          IF(dependentDofsParamMapping%DOF_TYPE(1,localDOFIdx)/=FIELD_NODE_DOF_TYPE) THEN
+            localError="Local DOF number "//TRIM(NumberToVString(localDOFIdx,"*",err,error))//" is not a node based DOF."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+          dofIdx=dependentDofsParamMapping%DOF_TYPE(2,localDOFIdx) !value for a particular field dof (localDOFIdx)
+          node=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(3,dofIdx) !node number of the field parameter
+          component=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(4,dofIdx) !component number of the field parameter
+          domainNodes=>fieldVariable%components(component)%domain%topology%nodes          
+          !Set up list
+          NULLIFY(columnIndicesLists(localDOFIdx)%ptr)
+          CALL List_CreateStart(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
+          CALL List_DataTypeSet(columnIndicesLists(localDOFIdx)%ptr,LIST_INTG_TYPE,err,error,*999)
+          CALL List_InitialSizeSet(columnIndicesLists(localDOFIdx)%ptr,domainNodes%nodes(node)% &
+            & NUMBER_OF_SURROUNDING_ELEMENTS*fieldVariable%components(component)% &
+            & maxNumberElementInterpolationParameters,err,error,*999)
+          CALL List_CreateFinish(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
+          !Loop over all elements containing the dof
+          DO elementIdx=1,domainNodes%nodes(node)%NUMBER_OF_SURROUNDING_ELEMENTS
+            element=domainNodes%nodes(node)%SURROUNDING_ELEMENTS(elementIdx)
+            DO componentIdx=1,fieldVariable%NUMBER_OF_COMPONENTS
+              domainElements=>fieldVariable%components(componentIdx)%domain%topology%elements
+              basis=>domainElements%elements(element)%basis
+              DO localNodeIdx=1,basis%NUMBER_OF_NODES
+                node2=domainElements%elements(element)%ELEMENT_NODES(localNodeIdx)
+                DO derivativeIdx=1,basis%NUMBER_OF_DERIVATIVES(localNodeIdx)
+                  derivative=domainElements%elements(element)%ELEMENT_DERIVATIVES(derivativeIdx,localNodeIdx)
+                  version=domainElements%elements(element)%elementVersions(derivativeIdx,localNodeIdx)
+                  !Find the local and global column and add the global column to the indices list
+                  localColumn=fieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% &
+                    & nodes(node2)%derivatives(derivative)%versions(version)
+                  globalColumn=fieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localColumn)
+                  
+                  CALL List_ItemAdd(columnIndicesLists(localDOFIdx)%ptr,globalColumn,err,error,*999)
+                  
+                ENDDO !derivative
+              ENDDO !localNodeIdx
+            ENDDO !componentIdx
+          ENDDO !elementIdx
+          CALL List_RemoveDuplicates(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
+          CALL List_NumberOfItemsGet(columnIndicesLists(localDOFIdx)%ptr,numberOfColumns,err,error,*999)
+          numberOfNonZeros=numberOfNonZeros+numberOfColumns
+          rowIndices(localDOFIdx+1)=numberOfNonZeros+1
+        ENDDO !localDOFIdx
+        
+      CASE DEFAULT
+        localError="The matrix storage type of "//TRIM(NumberToVString(equationsMatrix%storageType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+      
+    CASE(EQUATIONS_MATRIX_NODAL_STRUCTURE)
+      SELECT CASE(equationsMatrix%storageType)
+      CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+        !Allocate lists
+        ALLOCATE(columnIndicesLists(dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate column indices lists.",err,error,*999)
+        !Allocate row indices
+        ALLOCATE(rowIndices(dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL+1),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate row indices.",err,error,*999)
+        rowIndices(1)=1
+        
+        !First, loop over the rows and calculate the number of non-zeros
+        numberOfNonZeros=0
+        DO localDofIdx=1,dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL
+          IF(dependentDofsParamMapping%DOF_TYPE(1,localDOFIdx)/=FIELD_NODE_DOF_TYPE) THEN
+            localError="Local DOF number "//TRIM(NumberToVString(localDOFIdx,"*",err,error))//" is not a node based DOF."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+          dofIdx=dependentDofsParamMapping%DOF_TYPE(2,localDofIdx)!value for a particular field dof (localDofIdx)
+          node=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(3,dofIdx)!node number (node) of the field parameter
+          component=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(4,dofIdx)!component number (component) of the field parameter
+          domainNodes=>fieldVariable%components(component)%domain%topology%NODES
+          
+          !Set up list
+          NULLIFY(columnIndicesLists(localDofIdx)%ptr)
+          CALL List_CreateStart(columnIndicesLists(localDofIdx)%ptr,err,error,*999)
+          CALL List_DataTypeSet(columnIndicesLists(localDofIdx)%ptr,LIST_INTG_TYPE,err,error,*999)          
+          CALL List_InitialSizeSet(columnIndicesLists(localDofIdx)%ptr,fieldVariable%NUMBER_OF_COMPONENTS* &
+            & fieldVariable%maxNumberElementInterpolationParameters,err,error,*999)          
+          CALL List_CreateFinish(columnIndicesLists(localDofIdx)%ptr,err,error,*999)
+          !Loop over all components, nodes, derivatives and versions
+          DO componentIdx=1,fieldVariable%NUMBER_OF_COMPONENTS
+            numberOfDerivatives=fieldVariable%components(componentIdx)%domain%topology%nodes%nodes(node)%NUMBER_OF_DERIVATIVES
+            DO derivativeIdx=1,numberOfDerivatives
+              numberOfVersions=fieldVariable%components(componentIdx)%domain%topology%nodes%nodes(node)% &
+                & derivatives(derivativeIdx)%numberOfVersions
+              DO versionIdx=1,numberOfVersions
+                localColumn=fieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% &
+                  & nodes(node)%derivatives(derivativeIdx)%versions(versionIdx)
+                globalColumn=fieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localColumn)
+                
+                CALL List_ItemAdd(columnIndicesLists(localDofIdx)%ptr,globalColumn,err,error,*999)
+                
+              ENDDO !versionIdx
+            ENDDO !derivativeIdx
+          ENDDO !componentIdx            
+          CALL List_RemoveDuplicates(columnIndicesLists(localDofIdx)%ptr,err,error,*999)
+          CALL List_NumberOfItemsGet(columnIndicesLists(localDofIdx)%ptr,numberOfColumns,err,error,*999)
+          numberOfNonZeros=numberOfNonZeros+numberOfColumns
+          rowIndices(localDofIdx+1)=numberOfNonZeros+1
+        ENDDO !localDofIdx
+        
+      CASE DEFAULT
+        localError="The matrix storage type of "//TRIM(NumberToVString(equationsMatrix%storageType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+      
+    CASE(EQUATIONS_MATRIX_DIAGONAL_STRUCTURE)
+      CALL FlagError("There is not structure to calculate for a diagonal matrix.",err,error,*998)
+    CASE DEFAULT
+      localError="The matrix structure type of "//TRIM(NumberToVString(equationsMatrix%structureType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*998)
+    END SELECT
+
+    IF(numberOfNonZeros>0) THEN
+      !Allocate and setup the column locations
+      ALLOCATE(columnIndices(numberOfNonZeros),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate column indices.",err,error,*999)        
+      ALLOCATE(list(dependentDofsDomainMapping%NUMBER_OF_GLOBAL),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate list.",err,error,*999)
+      
+      DO localDOFIdx=1,dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL          
+        CALL List_DetachAndDestroy(columnIndicesLists(localDOFIdx)%ptr,numberOfColumns,columns,err,error,*999)        
+        DO columnIdx=1,numberOfColumns
+          !columns stores the list of nonzero column indices for each local row (localDOFIdx)
+          columnIndices(rowIndices(localDOFIdx)+columnIdx-1)=columns(columnIdx)             
+          !global to local columns
+          IF(ASSOCIATED(linearMapping).OR.ASSOCIATED(dynamicMapping)) THEN
+            IF(ASSOCIATED(dynamicMatrices)) THEN
+              localColumn=vectorMatrices%vectorMapping%dynamicMapping &
+                & %equationsMatrixToVarMaps(1)%columnDOFSMapping%global_to_local_map &
+                & (columns(columnIdx))%LOCAL_NUMBER(1)
+              localDOF = localColumn
+              !Column to dof mapping?
+              !localDOF=vectorMatrices%vectorMapping%dynamicMapping%equationsMatrixToVarMaps(1)%columnToDOFMap(localColumn)
+            ELSE
+              localColumn=vectorMatrices%vectorMapping%linearMapping%equationsMatrixToVarMaps(1)%columnDOFSMapping% &
+                & global_To_Local_Map(columns(columnIdx))%LOCAL_NUMBER(1)
+              localDOF = localColumn
+            ENDIF
+          ENDIF
+          dofIdx=dependentDofsParamMapping%DOF_TYPE(2,localDOF)
+          node=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(3,dofIdx)
+          component=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(4,dofIdx)
+          domainNodes=>fieldVariable%components(component)%domain%topology%NODES
+          
+          !Check whether boundary node    
+          IF(domainNodes%nodes(node)%BOUNDARY_NODE) CALL LinkedList_Add(list(columns(columnIdx)),localDOFIdx,err,error,*999)
+          
+        ENDDO !columnIdx
+        DEALLOCATE(columns)                                    
+      ENDDO !localDOFIdx
+    ENDIF
+      
+    IF(diagnostics1) THEN
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Equations matrix structure:",err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Equations matrix number : ",matrixNumber,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of rows = ",dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL, &
+        & err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of columns = ",dependentDofsDomainMapping%NUMBER_OF_GLOBAL, &
+        & err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of non zeros = ",numberOfNonZeros,err,error,*999)
+      IF(dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL*dependentDofsDomainMapping%NUMBER_OF_GLOBAL/=0) THEN
+        sparsity=(1.0_DP-REAL(numberOfNonZeros,DP)/REAL(dependentDofsDomainMapping% &
+          & TOTAL_NUMBER_OF_LOCAL*dependentDofsDomainMapping%NUMBER_OF_GLOBAL,DP))*100.0_DP
+        CALL WriteStringFmtValue(DIAGNOSTIC_OUTPUT_TYPE,"  Sparsity (% of zeros) = ",sparsity,"F6.2",err,error,*999)
+      ENDIF
+      IF(numberOfNonZeros>0) THEN
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL+1,8,8, &
+          & rowIndices,'("  Row indices    :",8(X,I13))','(18X,8(X,I13))',err,error,*999)
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfNonZeros,8,8,columnIndices, &
+          & '("  Column indices :",8(X,I13))','(18X,8(X,I13))', err,error,*999)
+      ENDIF
     ENDIF
       
     EXITS("EquationsMatrix_StructureCalculate")
@@ -5030,9 +4516,9 @@ CONTAINS
     IF(ASSOCIATED(columnIndices)) DEALLOCATE(columnIndices)
     IF(ALLOCATED(columns)) DEALLOCATE(columns)
     IF(ALLOCATED(columnIndicesLists)) THEN
-      DO localDofIdx=1,dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL
-        IF(ASSOCIATED(columnIndicesLists(localDofIdx)%PTR)) &
-          & CALL LIST_DESTROY(columnIndicesLists(localDofIdx)%PTR,dummyErr,dummyError,*998)
+      DO localDofIdx=1,SIZE(columnIndicesLists,1)
+        IF(ASSOCIATED(columnIndicesLists(localDofIdx)%ptr)) &
+          & CALL List_Destroy(columnIndicesLists(localDofIdx)%ptr,dummyErr,dummyError,*998)
       ENDDO !localDofIdx
       DEALLOCATE(columnIndicesLists)
     ENDIF
@@ -5048,28 +4534,28 @@ CONTAINS
   SUBROUTINE JacobianMatrix_StructureCalculate(jacobianMatrix,numberOfNonZeros,rowIndices,columnIndices,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_JACOBIAN_TYPE), POINTER :: jacobianMatrix !<A pointer to the Jacobian matrix to calculate the strucute for
+    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix !<A pointer to the Jacobian matrix to calculate the strucute for
     INTEGER(INTG), INTENT(OUT) :: numberOfNonZeros !<On return the number of non-zeros in the matrix
     INTEGER(INTG), POINTER :: rowIndices(:) !<On return a pointer to row location indices in compressed row format. The pointer must be NULL on entry and the calling routine is responsible for deallocation.
     INTEGER(INTG), POINTER :: columnIndices(:) !<On return a pointer to the column location indices in compressed row format. The pointer must be NULL on entry and the calling routine is responsible for deallocation.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) ::  columnIdx,dummyErr,elementIdx,globalColumn,localColumn,local_ny,mk,mp,ne,nh,nh2,nn,nnk,np,mv, &
-      & numberOfColumns,nyy,matrixNumber
-    INTEGER(INTG) :: dofIdx,nodeIdx,componentIdx,versionIdx,derivativeIdx,numberOfVersions,numberOfDerivatives
-    INTEGER(INTG) :: localDofIdx
+    INTEGER(INTG) :: columnIdx,component,componentIdx,derivative,derivativeIdx,dofIdx,dummyErr,element,elementIdx,globalColumn, &
+      & localColumn,localDOF,localDOFIdx,localNodeIdx,matrixNumber,numberOfColumns,node,node2,numberOfDerivatives, &
+      & numberOfVersions,version,versionIdx
     INTEGER(INTG), ALLOCATABLE :: columns(:)
     REAL(DP) :: sparsity
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BASIS_TYPE), POINTER :: basis,basis2
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: dependentDofsDomainMapping,rowDofsDomainMapping
-    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: domainElements
+    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: domainElements,domainElements2
     TYPE(DOMAIN_NODES_TYPE), POINTER :: domainNodes
-    TYPE(EQUATIONS_TYPE), POINTER :: equations
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: equationsMapping
-    TYPE(EQUATIONS_MAPPING_NONLINEAR_TYPE), POINTER :: nonlinearMapping
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: equationsMatrices
-    TYPE(EQUATIONS_MATRICES_NONLINEAR_TYPE), POINTER :: NONlinearMatrices
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMatricesNonlinearType), POINTER :: NONlinearMatrices
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(FIELD_TYPE), POINTER :: dependentField
     TYPE(FIELD_DOF_TO_PARAM_MAP_TYPE), POINTER :: dependentDofsParamMapping,rowDofsParamMapping
@@ -5080,461 +4566,294 @@ CONTAINS
     ENTERS("JacobianMatrix_StructureCalculate",err,error,*998)
 
     numberOfNonZeros=0
-    IF(ASSOCIATED(jacobianMatrix)) THEN
-      matrixNumber=jacobianMatrix%JACOBIAN_NUMBER
-      IF(.NOT.ASSOCIATED(rowIndices)) THEN
-        IF(.NOT.ASSOCIATED(columnIndices)) THEN
-          SELECT CASE(jacobianMatrix%STRUCTURE_TYPE)
-          CASE(EQUATIONS_MATRIX_NO_STRUCTURE)
-            CALL FlagError("Not implemented.",err,error,*998)
-          CASE(EQUATIONS_MATRIX_FEM_STRUCTURE)
-            SELECT CASE(jacobianMatrix%STORAGE_TYPE)
-            CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-              nonlinearMatrices=>jacobianMatrix%NONLINEAR_MATRICES
-              IF(ASSOCIATED(nonlinearMatrices)) THEN
-                equationsMatrices=>nonlinearMatrices%EQUATIONS_MATRICES
-                IF(ASSOCIATED(equationsMatrices)) THEN
-                  equations=>equationsMatrices%EQUATIONS
-                  IF(ASSOCIATED(equations)) THEN
-                    equationsMapping=>equationsMatrices%EQUATIONS_MAPPING
-                    IF(ASSOCIATED(equationsMapping)) THEN
-                      nonlinearMapping=>equationsMapping%NONLINEAR_MAPPING
-                      IF(ASSOCIATED(nonlinearMapping)) THEN
-                        equationsSet=>equations%EQUATIONS_SET
-                        IF(ASSOCIATED(equationsSet)) THEN
-                          dependentField=>equationsSet%DEPENDENT%DEPENDENT_FIELD
-                          IF(ASSOCIATED(dependentField)) THEN
-                            fieldVariable=>nonlinearMapping%JACOBIAN_TO_VAR_MAP(matrixNumber)%VARIABLE
-                            IF(ASSOCIATED(fieldVariable)) THEN
-                              dependentDofsDomainMapping=>fieldVariable%DOMAIN_MAPPING
-                              IF(ASSOCIATED(dependentDofsDomainMapping)) THEN
-                                dependentDofsParamMapping=>fieldVariable%DOF_TO_PARAM_MAP
-                                IF(ASSOCIATED(dependentDofsParamMapping)) THEN
-                                  !If RHS variable exists, use this for row DOFs, else use the first nonlinear variable
-                                  IF(ASSOCIATED(equationsMapping%RHS_MAPPING)) THEN
-                                    rowVariable=>equationsMapping%RHS_MAPPING%RHS_VARIABLE
-                                  ELSE
-                                    rowVariable=>nonlinearMapping%JACOBIAN_TO_VAR_MAP(1)%VARIABLE
-                                  ENDIF
-                                  IF(ASSOCIATED(rowVariable)) THEN
-                                    rowDofsDomainMapping=>rowVariable%DOMAIN_MAPPING
-                                    rowDofsParamMapping=>rowVariable%DOF_TO_PARAM_MAP
-                                  ELSE
-                                    CALL FlagError("RHS or first nonlinear variable is not associated",err,error,*999)
-                                  ENDIF
-                                  IF(ASSOCIATED(rowDofsDomainMapping)) THEN
-                                    IF(ASSOCIATED(rowDofsParamMapping)) THEN
-                                      !Allocate lists
-                                      ALLOCATE(columnIndicesLists(rowDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL),STAT=ERR)
-                                      IF(ERR/=0) CALL FlagError("Could not allocate column indices lists.",err,error,*999)
-                                      !Allocate row indices
-                                      ALLOCATE(rowIndices(rowDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL+1),STAT=ERR)
-                                      IF(ERR/=0) CALL FlagError("Could not allocate row indices.",err,error,*999)
-                                      rowIndices(1)=1
-                                      !First, loop over the rows and calculate the number of non-zeros
-                                      numberOfNonZeros=0
-                                      DO local_ny=1,rowDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL
-                                        SELECT CASE(rowDofsParamMapping%DOF_TYPE(1,local_ny))
-                                        CASE(FIELD_CONSTANT_INTERPOLATION)
-                                          CALL FlagError("Constant interpolation is not implemented yet.",err,error,*999)
-                                        CASE(FIELD_NODE_DOF_TYPE)
-                                          nyy=rowDofsParamMapping%DOF_TYPE(2,local_ny)
-                                          np=rowDofsParamMapping%NODE_DOF2PARAM_MAP(3,nyy) !node number
-                                          nh=rowDofsParamMapping%NODE_DOF2PARAM_MAP(4,nyy) !component number
-                                          domainNodes=>rowVariable%COMPONENTS(nh)%DOMAIN%TOPOLOGY%NODES
-                                          !Set up list
-                                          NULLIFY(columnIndicesLists(local_ny)%PTR)
-                                          CALL LIST_CREATE_START(columnIndicesLists(local_ny)%PTR,err,error,*999)
-                                          CALL LIST_DATA_TYPE_SET(columnIndicesLists(local_ny)%PTR,LIST_INTG_TYPE,err,error,*999)
-                                          CALL LIST_INITIAL_SIZE_SET(columnIndicesLists(local_ny)%PTR,domainNodes%NODES(np)% &
-                                            & NUMBER_OF_SURROUNDING_ELEMENTS*rowVariable%COMPONENTS(nh)% &
-                                            & maxNumberElementInterpolationParameters,err,error,*999)
-                                          CALL LIST_CREATE_FINISH(columnIndicesLists(local_ny)%PTR,err,error,*999)
-                                          !Loop over all elements containing the dof
-                                          DO elementIdx=1,domainNodes%NODES(np)%NUMBER_OF_SURROUNDING_ELEMENTS
-                                            ne=domainNodes%NODES(np)%SURROUNDING_ELEMENTS(elementIdx)
-                                            DO nh2=1,fieldVariable%NUMBER_OF_COMPONENTS
-                                              SELECT CASE(fieldVariable%COMPONENTS(nh2)%INTERPOLATION_TYPE)
-                                              CASE(FIELD_CONSTANT_INTERPOLATION)
-                                                ! do nothing? this will probably never be encountered...?
-                                              CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                                                localColumn=fieldVariable%COMPONENTS(nh2)%PARAM_TO_DOF_MAP% &
-                                                  & ELEMENT_PARAM2DOF_MAP%ELEMENTS(ne)
-                                                globalColumn=fieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localColumn)
-                                                CALL LIST_ITEM_ADD(columnIndicesLists(local_ny)%PTR,globalColumn,err,error,*999)
-                                              CASE(FIELD_NODE_BASED_INTERPOLATION)
-                                                domainElements=>fieldVariable%COMPONENTS(nh2)%DOMAIN%TOPOLOGY%ELEMENTS
-                                                basis=>domainElements%ELEMENTS(ne)%BASIS
-                                                DO nn=1,basis%NUMBER_OF_NODES
-                                                  mp=domainElements%ELEMENTS(ne)%ELEMENT_NODES(nn)
-                                                  DO nnk=1,basis%NUMBER_OF_DERIVATIVES(nn)
-                                                    mk=domainElements%ELEMENTS(ne)%ELEMENT_DERIVATIVES(nnk,nn)
-                                                    mv=domainElements%ELEMENTS(ne)%elementVersions(nnk,nn)
-                                                    !Find the local and global column and add the global column to the indices list
-                                                    localColumn=fieldVariable%COMPONENTS(nh2)%PARAM_TO_DOF_MAP% &
-                                                      & NODE_PARAM2DOF_MAP%NODES(mp)%DERIVATIVES(mk)%VERSIONS(mv)
-                                                    globalColumn=fieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localColumn)
-                                                    CALL LIST_ITEM_ADD(columnIndicesLists(local_ny)%PTR,globalColumn, &
-                                                      & err,error,*999)
-                                                  ENDDO !mk
-                                                ENDDO !nn
-                                              CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                                                CALL FlagError("Grid point based interpolation is not implemented yet.",& 
-                                                  & err,error,*999)
-                                              CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                                                CALL FlagError("Gauss point based interpolation is not implemented yet.",&
-                                                  & err,error,*999)
-                                              CASE DEFAULT
-                                                localError="Local dof number "//TRIM(NumberToVString(local_ny,"*",err,error))// &
-                                                  & " has invalid interpolation type."
-                                                CALL FlagError(localError,err,error,*999)
-                                              END SELECT
-                                            ENDDO !nh2
-                                          ENDDO !elementIdx
-                                          CALL LIST_REMOVE_DUPLICATES(columnIndicesLists(local_ny)%PTR,err,error,*999)
-                                          CALL LIST_NUMBER_OF_ITEMS_GET(columnIndicesLists(local_ny)%PTR,numberOfColumns, &
-                                            & err,error,*999)
-                                          numberOfNonZeros=numberOfNonZeros+numberOfColumns
-                                          rowIndices(local_ny+1)=numberOfNonZeros+1
-                                        CASE(FIELD_ELEMENT_DOF_TYPE)
-                                          ! row corresponds to a variable that's element-wisely interpolated
-                                          nyy=rowDofsParamMapping%DOF_TYPE(2,local_ny)          ! nyy = index in ELEMENT_DOF2PARAM_MAP
-                                          ne=rowDofsParamMapping%ELEMENT_DOF2PARAM_MAP(1,nyy)   ! current element (i.e. corresponds to current dof)
-                                          nh=rowDofsParamMapping%ELEMENT_DOF2PARAM_MAP(2,nyy)   ! current variable component
-                                          domainElements=>rowVariable%COMPONENTS(nh)%DOMAIN%TOPOLOGY%ELEMENTS
-                                          basis=>domainElements%ELEMENTS(ne)%BASIS
-                                          !Set up list
-                                          NULLIFY(columnIndicesLists(local_ny)%PTR)
-                                          CALL LIST_CREATE_START(columnIndicesLists(local_ny)%PTR,err,error,*999)
-                                          CALL LIST_DATA_TYPE_SET(columnIndicesLists(local_ny)%PTR,LIST_INTG_TYPE,err,error,*999)
-                                          CALL LIST_INITIAL_SIZE_SET(columnIndicesLists(local_ny)%PTR, &
-                                            & rowVariable%COMPONENTS(nh)%maxNumberElementInterpolationParameters+1, &
-                                            & err,error,*999) ! size = all nodal dofs + itself
-                                          CALL LIST_CREATE_FINISH(columnIndicesLists(local_ny)%PTR,err,error,*999)
-                                          DO nh2=1,fieldVariable%NUMBER_OF_COMPONENTS
-                                            SELECT CASE(fieldVariable%COMPONENTS(nh2)%INTERPOLATION_TYPE)
-                                            CASE(FIELD_CONSTANT_INTERPOLATION)
-                                              CALL FlagError("Constant interpolation is not implemented yet.",err,error,*999)
-                                            CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                                              ! it's assumed that element-based variables arne't directly coupled
-                                              ! put a diagonal entry
-                                              localColumn=fieldVariable%COMPONENTS(nh2)%PARAM_TO_DOF_MAP% &
-                                                & ELEMENT_PARAM2DOF_MAP%ELEMENTS(ne)
-                                              globalColumn=fieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localColumn)
-                                              CALL LIST_ITEM_ADD(columnIndicesLists(local_ny)%PTR,globalColumn,err,error,*999)
-                                            CASE(FIELD_NODE_BASED_INTERPOLATION)
-                                              ! loop over all nodes in the element (and dofs belonging to them)
-                                              DO nn=1,basis%NUMBER_OF_NODES
-                                                mp=domainElements%ELEMENTS(ne)%ELEMENT_NODES(nn)
-                                                DO nnk=1,basis%NUMBER_OF_DERIVATIVES(nn)
-                                                  mk=domainElements%ELEMENTS(ne)%ELEMENT_DERIVATIVES(nnk,nn)
-                                                  mv=domainElements%ELEMENTS(ne)%elementVersions(nnk,nn)
-                                                  !Find the local and global column and add the global column to the indices list
-                                                  localColumn=fieldVariable%COMPONENTS(nh2)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% &
-                                                    & NODES(mp)%DERIVATIVES(mk)%VERSIONS(mv)
-                                                  globalColumn=fieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localColumn)
-                                                  CALL LIST_ITEM_ADD(columnIndicesLists(local_ny)%PTR,globalColumn, &
-                                                    & err,error,*999)
-                                                ENDDO !mk
-                                              ENDDO !nn
-                                            CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                                              CALL FlagError("Grid point based interpolation is not implemented yet.", &
-                                                & err,error,*999)
-                                            CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                                              CALL FlagError("Gauss point based interpolation is not implemented yet.", &
-                                                & err,error,*999)
-                                            CASE DEFAULT
-                                              localError="Local dof number "//TRIM(NumberToVString(local_ny,"*",err,error))// &
-                                                & " has invalid interpolation type."
-                                              CALL FlagError(localError,err,error,*999)
-                                            END SELECT
-                                          ENDDO !nh2
-                                          ! clean up the list
-                                          CALL LIST_REMOVE_DUPLICATES(columnIndicesLists(local_ny)%PTR,err,error,*999)
-                                          CALL LIST_NUMBER_OF_ITEMS_GET(columnIndicesLists(local_ny)%PTR,numberOfColumns, &
-                                            & err,error,*999)
-                                          numberOfNonZeros=numberOfNonZeros+numberOfColumns
-                                          rowIndices(local_ny+1)=numberOfNonZeros+1
-                                        CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                                          CALL FlagError("Grid point based interpolation is not implemented yet.",err,error,*999)
-                                        CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                                          CALL FlagError("Gauss point based interpolation is not implemented yet.",err,error,*999)
-                                        CASE DEFAULT
-                                          localError="Local dof number "//TRIM(NumberToVString(local_ny,"*",err,error))// &
-                                            & " has an invalid type."
-                                          CALL FlagError(localError,err,error,*999)
-                                        END SELECT
-                                      ENDDO !local_ny
-                                      !Allocate and setup the column locations
-                                      ALLOCATE(columnIndices(numberOfNonZeros),STAT=ERR)
-                                      IF(ERR/=0) CALL FlagError("Could not allocate column indices.",err,error,*999)
-                                      DO local_ny=1,rowDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL
-                                        CALL LIST_DETACH_AND_DESTROY(columnIndicesLists(local_ny)%PTR,numberOfColumns,columns, &
-                                          & err,error,*999)
-                                        DO columnIdx=1,numberOfColumns
-                                          columnIndices(rowIndices(local_ny)+columnIdx-1)=columns(columnIdx)
-                                        ENDDO !columnIdx
-                                        DEALLOCATE(columns)
-                                      ENDDO !local_ny
-                                      IF(DIAGNOSTICS1) THEN
-                                        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Jacobian matrix structure:",err,error,*999)
-                                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of rows = ", &
-                                          & dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL,err,error,*999)
-                                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of columns = ", &
-                                          & dependentDofsDomainMapping%NUMBER_OF_GLOBAL,err,error,*999)
-                                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of non zeros = ", &
-                                          & numberOfNonZeros,err,error,*999)
-                                        IF(dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL* &
-                                          & dependentDofsDomainMapping%NUMBER_OF_GLOBAL/=0) THEN
-                                          sparsity=(1.0_DP-REAL(numberOfNonZeros,DP)/REAL(dependentDofsDomainMapping% &
-                                            & TOTAL_NUMBER_OF_LOCAL*dependentDofsDomainMapping%NUMBER_OF_GLOBAL,DP))*100.0_DP
-                                          CALL WRITE_STRING_FMT_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Sparsity (% of zeros) = ", &
-                                            & sparsity,"F6.2",err,error,*999)
-                                        ENDIF
-                                        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,rowDofsDomainMapping% &
-                                          & TOTAL_NUMBER_OF_LOCAL+1,8,8,rowIndices,'("  Row indices    :",8(X,I13))', &
-                                          & '(18X,8(X,I13))',err,error,*999)
-                                        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfNonZeros,8,8,columnIndices,&
-                                          & '("  Column indices :",8(X,I13))','(18X,8(X,I13))', err,error,*999)
-                                      ENDIF
-                                    ELSE
-                                      CALL FlagError("Row dofs parameter mapping is not associated.",err,error,*999)
-                                    ENDIF
-                                  ELSE
-                                    CALL FlagError("Row dofs domain mapping is not associated.",err,error,*999)
-                                  ENDIF
-                                ELSE
-                                  CALL FlagError("Dependent dofs parameter mapping is not associated.",err,error,*999)
-                                ENDIF
-                              ELSE
-                                CALL FlagError("Dependent dofs domain mapping is not associated.",err,error,*999)
-                              ENDIF
-                            ELSE
-                              CALL FlagError("Dependent field variable is not associated.",err,error,*999)
-                            ENDIF
-                          ELSE
-                            CALL FlagError("Equations set dependent field is not associated.",err,error,*999)
-                          ENDIF
-                        ELSE
-                          CALL FlagError("Equations set is not associated.",err,error,*999)
-                        ENDIF
-                      ELSE
-                        CALL FlagError("Equations mapping nonlinear mapping is not associated.",err,error,*999)
-                      ENDIF
-                    ELSE
-                      CALL FlagError("Equations mapping is not associated.",err,error,*999)
-                    ENDIF
-                  ELSE
-                    CALL FlagError("Equations is not associated.",err,error,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Nonlinear matrices equations matrices is not associated.",err,error,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Equations matrix nonlinear matrices is not associated.",err,error,*999)
-              ENDIF
-            CASE DEFAULT
-              localError="The matrix storage type of "// &
-                & TRIM(NumberToVString(jacobianMatrix%STORAGE_TYPE,"*",err,error))//" is invalid."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-
-          CASE(EQUATIONS_MATRIX_NODAL_STRUCTURE)
-            SELECT CASE(jacobianMatrix%STORAGE_TYPE)
-            CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-              nonlinearMatrices=>jacobianMatrix%NONLINEAR_MATRICES
-              IF(ASSOCIATED(nonlinearMatrices)) THEN
-                equationsMatrices=>nonlinearMatrices%EQUATIONS_MATRICES
-                IF(ASSOCIATED(equationsMatrices)) THEN
-                  equations=>equationsMatrices%EQUATIONS
-                  IF(ASSOCIATED(equations)) THEN
-                    equationsMapping=>equationsMatrices%EQUATIONS_MAPPING
-                    IF(ASSOCIATED(equationsMapping)) THEN
-                      nonlinearMapping=>equationsMapping%NONLINEAR_MAPPING
-                      IF(ASSOCIATED(nonlinearMapping)) THEN
-                        equationsSet=>equations%EQUATIONS_SET
-                        IF(ASSOCIATED(equationsSet)) THEN
-                          dependentField=>equationsSet%DEPENDENT%DEPENDENT_FIELD
-                          IF(ASSOCIATED(dependentField)) THEN
-                            fieldVariable=>nonlinearMapping%JACOBIAN_TO_VAR_MAP(matrixNumber)%VARIABLE
-                            IF(ASSOCIATED(fieldVariable)) THEN
-                              dependentDofsDomainMapping=>fieldVariable%DOMAIN_MAPPING
-                              IF(ASSOCIATED(dependentDofsDomainMapping)) THEN
-                                dependentDofsParamMapping=>fieldVariable%DOF_TO_PARAM_MAP
-                                IF(ASSOCIATED(dependentDofsParamMapping)) THEN
-                                  !If RHS variable exists, use this for row DOFs, else use the first nonlinear variable
-                                  IF(ASSOCIATED(equationsMapping%RHS_MAPPING)) THEN
-                                    rowVariable=>equationsMapping%RHS_MAPPING%RHS_VARIABLE
-                                  ELSE
-                                    rowVariable=>nonlinearMapping%JACOBIAN_TO_VAR_MAP(1)%VARIABLE
-                                  ENDIF
-                                  IF(ASSOCIATED(rowVariable)) THEN
-                                    rowDofsDomainMapping=>rowVariable%DOMAIN_MAPPING
-                                    rowDofsParamMapping=>rowVariable%DOF_TO_PARAM_MAP
-                                  ELSE
-                                    CALL FlagError("RHS or first nonlinear variable is not associated",err,error,*999)
-                                  ENDIF
-                                  IF(ASSOCIATED(rowDofsDomainMapping)) THEN
-                                    IF(ASSOCIATED(rowDofsParamMapping)) THEN
-                                      !Allocate lists
-                                      ALLOCATE(columnIndicesLists(rowDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL),STAT=ERR)
-                                      IF(ERR/=0) CALL FlagError("Could not allocate column indices lists.",err,error,*999)
-                                      !Allocate row indices
-                                      ALLOCATE(rowIndices(rowDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL+1),STAT=ERR)
-                                      IF(ERR/=0) CALL FlagError("Could not allocate row indices.",err,error,*999)
-                                      rowIndices(1)=1
-                                      !First, loop over the rows and calculate the number of non-zeros
-                                      numberOfNonZeros=0
-                                      DO localDofIdx=1,rowDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL
-                                        SELECT CASE(rowDofsParamMapping%DOF_TYPE(1,localDofIdx))
-                                        CASE(FIELD_CONSTANT_INTERPOLATION)
-                                          CALL FlagError("Constant interpolation is not implemented yet.",err,error,*999)
-                                        CASE(FIELD_NODE_DOF_TYPE)
-                                          dofIdx=dependentDofsParamMapping%DOF_TYPE(2,localDofIdx)!value for a particular field dof (localDofIdx)
-                                          nodeIdx=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(3,dofIdx)!node number (np) of the field parameter
-                                          componentIdx=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(4,dofIdx)!component number (nh) of the field parameter
-                                          domainNodes=>fieldVariable%COMPONENTS(componentIdx)%DOMAIN%TOPOLOGY%NODES
-
-                                          !Set up list
-                                          NULLIFY(columnIndicesLists(localDofIdx)%PTR)
-                                          CALL LIST_CREATE_START(columnIndicesLists(localDofIdx)%PTR,err,error,*999)
-                                          CALL LIST_DATA_TYPE_SET(columnIndicesLists(localDofIdx)%PTR,LIST_INTG_TYPE,err,error,*999)
-
-                                          CALL LIST_INITIAL_SIZE_SET(columnIndicesLists(localDofIdx)%PTR, &
-                                            & fieldVariable%NUMBER_OF_COMPONENTS* &
-                                            & fieldVariable%maxNumberElementInterpolationParameters,err,error,*999)
-
-                                          CALL LIST_CREATE_FINISH(columnIndicesLists(localDofIdx)%PTR,err,error,*999)
-                                          !Loop over all components,nodes,derivatives, and versions
-                                          DO componentIdx=1,fieldVariable%NUMBER_OF_COMPONENTS
-                                            SELECT CASE(fieldVariable%COMPONENTS(componentIdx)%INTERPOLATION_TYPE)
-                                            CASE(FIELD_NODE_BASED_INTERPOLATION)
-                                              numberOfDerivatives=fieldVariable%components(componentIdx)%domain%topology% &
-                                               & nodes%nodes(nodeIdx)%NUMBER_OF_DERIVATIVES
-                                              DO derivativeIdx=1,numberOfDerivatives
-                                                numberOfVersions=fieldVariable%components(componentIdx)%domain%topology% &
-                                                 & nodes%nodes(nodeIdx)%derivatives(derivativeIdx)%numberOfVersions
-                                                DO versionIdx=1,numberOfVersions
-                                                  localColumn=fieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP% &
-                                                   & NODE_PARAM2DOF_MAP%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)% &
-                                                   & VERSIONS(versionIdx)
-                                                  globalColumn=fieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localColumn)
-
-                                                  CALL LIST_ITEM_ADD(columnIndicesLists(localDofIdx)%PTR,globalColumn, &
-                                                    & err,error,*999)
-
-                                                ENDDO !versionIdx
-                                              ENDDO !derivativeIdx
-                                            CASE DEFAULT
-                                              localError="Local dof number "//TRIM(NumberToVString(localDofIdx,"*",err,error))// &
-                                                & " has invalid interpolation type."
-                                              CALL FlagError(localError,err,error,*999)
-                                            END SELECT
-                                          ENDDO !componentIdx
-
-                                          CALL LIST_REMOVE_DUPLICATES(columnIndicesLists(localDofIdx)%PTR,err,error,*999)
-                                          CALL LIST_NUMBER_OF_ITEMS_GET(columnIndicesLists(localDofIdx)%PTR,numberOfColumns, &
-                                            & err,error,*999)
-                                          numberOfNonZeros=numberOfNonZeros+numberOfColumns
-                                          rowIndices(localDofIdx+1)=numberOfNonZeros+1
-                                        CASE(FIELD_ELEMENT_DOF_TYPE)
-                                          CALL FlagError("Element based interpolation is not implemented yet.",err,error,*999)
-                                        CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                                          CALL FlagError("Grid point based interpolation is not implemented yet.",err,error,*999)
-                                        CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                                          CALL FlagError("Gauss point based interpolation is not implemented yet.",err,error,*999)
-                                        CASE DEFAULT
-                                          localError="Local dof number "//TRIM(NumberToVString(localDofIdx,"*",err,error))// &
-                                            & " has an invalid type."
-                                          CALL FlagError(localError,err,error,*999)
-                                        END SELECT
-                                      ENDDO !localDofIdx
-                                      !Allocate and setup the column locations
-                                      ALLOCATE(columnIndices(numberOfNonZeros),STAT=ERR)
-                                      IF(ERR/=0) CALL FlagError("Could not allocate column indices.",err,error,*999)
-                                      DO localDofIdx=1,rowDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL
-                                        CALL LIST_DETACH_AND_DESTROY(columnIndicesLists(localDofIdx)%PTR,numberOfColumns,columns, &
-                                          & err,error,*999)
-                                        DO columnIdx=1,numberOfColumns
-                                          columnIndices(rowIndices(localDofIdx)+columnIdx-1)=columns(columnIdx)
-                                        ENDDO !columnIdx
-                                        DEALLOCATE(columns)
-                                      ENDDO !localDofIdx
-                                      IF(DIAGNOSTICS1) THEN
-                                        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Jacobian matrix structure :",err,error,*999)
-                                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of rows = ", &
-                                          & dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL,err,error,*999)
-                                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of columns = ", &
-                                          & dependentDofsDomainMapping%NUMBER_OF_GLOBAL,err,error,*999)
-                                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of non zeros = ", &
-                                          & numberOfNonZeros,err,error,*999)
-                                        IF(dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL* &
-                                          & dependentDofsDomainMapping%NUMBER_OF_GLOBAL/=0) THEN
-                                          sparsity=(1.0_DP-REAL(numberOfNonZeros,DP)/REAL(dependentDofsDomainMapping% &
-                                            & TOTAL_NUMBER_OF_LOCAL*dependentDofsDomainMapping%NUMBER_OF_GLOBAL,DP))*100.0_DP
-                                          CALL WRITE_STRING_FMT_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Sparsity (% of zeros) = ", &
-                                            & sparsity,"F6.2",err,error,*999)
-                                        ENDIF
-                                        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,rowDofsDomainMapping% &
-                                          & TOTAL_NUMBER_OF_LOCAL+1,8,8,rowIndices,'("  Row indices    :",8(X,I13))', &
-                                          & '(18X,8(X,I13))',err,error,*999)
-                                        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfNonZeros,8,8,columnIndices,&
-                                          & '("  Column indices :",8(X,I13))','(18X,8(X,I13))', err,error,*999)
-                                      ENDIF
-                                    ELSE
-                                      CALL FlagError("Row dofs parameter mapping is not associated.",err,error,*999)
-                                    ENDIF
-                                  ELSE
-                                    CALL FlagError("Row dofs domain mapping is not associated.",err,error,*999)
-                                  ENDIF
-                                ELSE
-                                  CALL FlagError("Dependent dofs parameter mapping is not associated.",err,error,*999)
-                                ENDIF
-                              ELSE
-                                CALL FlagError("Dependent dofs domain mapping is not associated.",err,error,*999)
-                              ENDIF
-                            ELSE
-                              CALL FlagError("Dependent field variable is not associated.",err,error,*999)
-                            ENDIF
-                          ELSE
-                            CALL FlagError("Equations set dependent field is not associated.",err,error,*999)
-                          ENDIF
-                        ELSE
-                          CALL FlagError("Equations set is not associated.",err,error,*999)
-                        ENDIF
-                      ELSE
-                        CALL FlagError("Equations mapping nonlinear mapping is not associated.",err,error,*999)
-                      ENDIF
-                    ELSE
-                      CALL FlagError("Equations mapping is not associated.",err,error,*999)
-                    ENDIF
-                  ELSE
-                    CALL FlagError("Equations is not associated.",err,error,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Nonlinear matrices equations matrices is not associated.",err,error,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Equations matrix nonlinear matrices is not associated.",err,error,*999)
-              ENDIF
-            CASE DEFAULT
-              localError="The matrix storage type of "// &
-                & TRIM(NumberToVString(jacobianMatrix%STORAGE_TYPE,"*",err,error))//" is invalid."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-          CASE DEFAULT
-            localError="The matrix structure type of "// &
-              & TRIM(NumberToVString(jacobianMatrix%STRUCTURE_TYPE,"*",err,error))//" is invalid."
-            CALL FlagError(localError,err,error,*998)
-          END SELECT
-        ELSE
-          CALL FlagError("Column indices is already associated.",err,error,*998)
-        ENDIF
-      ELSE
-        CALL FlagError("Row indices is already associated.",err,error,*998)
-      ENDIF
+    IF(.NOT.ASSOCIATED(jacobianMatrix)) CALL FlagError("Jacobian matrix is not associated.",err,error,*998)
+    IF(ASSOCIATED(rowIndices)) CALL FlagError("Row indices is already associated.",err,error,*998)
+    IF(ASSOCIATED(columnIndices)) CALL FlagError("Column indices is already associated.",err,error,*998)
+    matrixNumber=jacobianMatrix%jacobianNumber
+    nonlinearMatrices=>jacobianMatrix%nonlinearMatrices
+    IF(.NOT.ASSOCIATED(nonlinearMatrices)) CALL FlagError("Jacobian matrix nonlinear matrices is not associated.",err,error,*998)
+    NULLIFY(vectorMatrices)
+    CALL EquationsMatricesNonlinear_VectorMatricesGet(nonlinearMatrices,vectorMatrices,err,error,*998)
+    NULLIFY(vectorMapping)
+    CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*998)
+    NULLIFY(vectorEquations)
+    CALL EquationsMatricesVector_VectorEquationsGet(vectorMatrices,vectorEquations,err,error,*998)
+    NULLIFY(equations)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*998)
+    NULLIFY(equationsSet)
+    CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*998)
+    NULLIFY(dependentField)
+    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*998)
+    NULLIFY(nonlinearMapping)
+    CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*998)
+    fieldVariable=>nonlinearMapping%jacobianToVarMap(matrixNumber)%VARIABLE
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Dependent field variable is not associated.",err,error,*998)          
+    dependentDofsDomainMapping=>fieldVariable%DOMAIN_MAPPING
+    IF(.NOT.ASSOCIATED(dependentDofsDomainMapping)) &
+      & CALL FlagError("Dependent dofs domain mapping is not associated.",err,error,*998)
+    dependentDofsParamMapping=>fieldVariable%DOF_TO_PARAM_MAP
+    IF(.NOT.ASSOCIATED(dependentDofsParamMapping)) &
+      & CALL FlagError("Dependent dofs parameter mapping is not associated.",err,error,*998)
+    !If RHS variable exists, use this for row DOFs, else use the first nonlinear variable
+    IF(ASSOCIATED(vectorMapping%rhsMapping)) THEN
+      rowVariable=>vectorMapping%rhsMapping%rhsVariable
     ELSE
-      CALL FlagError("Jacobian matrix is not associated.",err,error,*999)
+      rowVariable=>nonlinearMapping%jacobianToVarMap(1)%VARIABLE
+    ENDIF
+    IF(.NOT.ASSOCIATED(rowVariable)) CALL FlagError("RHS or first nonlinear variable is not associated",err,error,*999)
+    rowDofsDomainMapping=>rowVariable%DOMAIN_MAPPING
+    rowDofsParamMapping=>rowVariable%DOF_TO_PARAM_MAP      
+    IF(.NOT.ASSOCIATED(rowDofsDomainMapping)) CALL FlagError("Row dofs domain mapping is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(rowDofsParamMapping)) CALL FlagError("Row dofs parameter mapping is not associated.",err,error,*999)
+    
+    SELECT CASE(jacobianMatrix%structureType)
+    CASE(EQUATIONS_MATRIX_NO_STRUCTURE)
+      CALL FlagError("Not implemented.",err,error,*998)
+    CASE(EQUATIONS_MATRIX_FEM_STRUCTURE)
+      SELECT CASE(jacobianMatrix%storageType)
+      CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+        !Allocate lists
+        ALLOCATE(columnIndicesLists(rowDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate column indices lists.",err,error,*999)
+        !Allocate row indices
+        ALLOCATE(rowIndices(rowDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL+1),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate row indices.",err,error,*999)
+        rowIndices(1)=1
+        !First, loop over the rows and calculate the number of non-zeros
+        numberOfNonZeros=0
+        DO localDOFIdx=1,rowDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL
+          SELECT CASE(rowDofsParamMapping%DOF_TYPE(1,localDOFIdx))
+          CASE(FIELD_CONSTANT_INTERPOLATION)
+            CALL FlagError("Constant interpolation is not implemented yet.",err,error,*999)
+          CASE(FIELD_NODE_DOF_TYPE)
+            dofIdx=rowDofsParamMapping%DOF_TYPE(2,localDOFIdx)
+            node=rowDofsParamMapping%NODE_DOF2PARAM_MAP(3,dofIdx) !node number
+            component=rowDofsParamMapping%NODE_DOF2PARAM_MAP(4,dofIdx) !component number
+            domainNodes=>rowVariable%components(component)%domain%topology%nodes
+            !Set up list
+            NULLIFY(columnIndicesLists(localDOFIdx)%ptr)
+            CALL List_CreateStart(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
+            CALL List_DataTypeSet(columnIndicesLists(localDOFIdx)%ptr,LIST_INTG_TYPE,err,error,*999)
+            CALL List_InitialSizeSet(columnIndicesLists(localDOFIdx)%ptr,domainNodes%nodes(node)% &
+              & NUMBER_OF_SURROUNDING_ELEMENTS*rowVariable%components(component)% &
+              & maxNumberElementInterpolationParameters,err,error,*999)
+            CALL List_CreateFinish(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
+            !Loop over all elements containing the dof
+            DO elementIdx=1,domainNodes%nodes(node)%NUMBER_OF_SURROUNDING_ELEMENTS
+              element=domainNodes%nodes(node)%SURROUNDING_ELEMENTS(elementIdx)
+              DO componentIdx=1,fieldVariable%NUMBER_OF_COMPONENTS
+                SELECT CASE(fieldVariable%components(componentIdx)%INTERPOLATION_TYPE)
+                CASE(FIELD_CONSTANT_INTERPOLATION)
+                  ! do nothing? this will probably never be encountered...?
+                  CALL FlagError("Not implemented?",err,error,*999)
+                CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+                  localColumn=fieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%elements(element)
+                  globalColumn=fieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localColumn)
+                  CALL List_ItemAdd(columnIndicesLists(localDOFIdx)%ptr,globalColumn,err,error,*999)
+                CASE(FIELD_NODE_BASED_INTERPOLATION)
+                  domainElements=>fieldVariable%components(componentIdx)%domain%topology%elements
+                  basis=>domainElements%elements(element)%basis
+                  DO localNodeIdx=1,basis%NUMBER_OF_NODES
+                    node2=domainElements%elements(element)%ELEMENT_NODES(localNodeIdx)
+                    DO derivativeIdx=1,basis%NUMBER_OF_DERIVATIVES(localNodeIdx)
+                      derivative=domainElements%elements(element)%ELEMENT_DERIVATIVES(derivativeIdx,localNodeIdx)
+                      version=domainElements%elements(element)%elementVersions(derivativeIdx,localNodeIdx)
+                      !Find the local and global column and add the global column to the indices list
+                      localColumn=fieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP% &
+                        & NODE_PARAM2DOF_MAP%NODES(node2)%derivatives(derivative)%versions(version)
+                      globalColumn=fieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localColumn)
+                      CALL List_ItemAdd(columnIndicesLists(localDOFIdx)%ptr,globalColumn,err,error,*999)
+                    ENDDO !derivative
+                  ENDDO !localNodeIdx
+                CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+                  CALL FlagError("Grid point based interpolation is not implemented yet.",err,error,*999)
+                CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+                  CALL FlagError("Gauss point based interpolation is not implemented yet.",err,error,*999)
+                CASE DEFAULT
+                  localError="The interpolation type of "// &
+                    & TRIM(NumberToVString(fieldVariable%components(componentIdx)%INTERPOLATION_TYPE,"*",err,error))// &
+                    & " for local DOF number "//TRIM(NumberToVString(localDOFIdx,"*",err,error))// &
+                    & " is invalid."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
+              ENDDO !componentIdx
+            ENDDO !elementIdx
+            CALL List_RemoveDuplicates(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
+            CALL List_NumberOfItemsGet(columnIndicesLists(localDOFIdx)%ptr,numberOfColumns, &
+              & err,error,*999)
+            numberOfNonZeros=numberOfNonZeros+numberOfColumns
+            rowIndices(localDOFIdx+1)=numberOfNonZeros+1
+          CASE(FIELD_ELEMENT_DOF_TYPE)
+            ! row corresponds to a variable that's element-wisely interpolated
+            dofIdx=rowDofsParamMapping%DOF_TYPE(2,localDOFIdx)          ! dofIdx = index in ELEMENT_DOF2PARAM_MAP
+            element=rowDofsParamMapping%ELEMENT_DOF2PARAM_MAP(1,dofIdx)   ! current element (i.e. corresponds to current dof)
+            component=rowDofsParamMapping%ELEMENT_DOF2PARAM_MAP(2,dofIdx)   ! current variable component
+            domainElements=>rowVariable%components(component)%domain%topology%ELEMENTS
+            basis=>domainElements%elements(element)%BASIS
+            !Set up list
+            NULLIFY(columnIndicesLists(localDOFIdx)%ptr)
+            CALL List_CreateStart(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
+            CALL List_DataTypeSet(columnIndicesLists(localDOFIdx)%ptr,LIST_INTG_TYPE,err,error,*999)
+            CALL List_InitialSizeSet(columnIndicesLists(localDOFIdx)%ptr, &
+              & rowVariable%components(component)%maxNumberElementInterpolationParameters+1,err,error,*999) ! size = all nodal dofs + itself
+            CALL List_CreateFinish(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
+            DO componentIdx=1,fieldVariable%NUMBER_OF_COMPONENTS
+              domainElements2=>fieldVariable%components(componentIdx)%domain%topology%elements
+              basis2=>domainElements2%elements(element)%basis
+              SELECT CASE(fieldVariable%components(componentIdx)%INTERPOLATION_TYPE)
+              CASE(FIELD_CONSTANT_INTERPOLATION)
+                CALL FlagError("Constant interpolation is not implemented yet.",err,error,*999)
+              CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+                ! it's assumed that element-based variables arne't directly coupled
+                ! put a diagonal entry
+                localColumn=fieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%elements(element)
+                globalColumn=fieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localColumn)
+                CALL List_ItemAdd(columnIndicesLists(localDOFIdx)%ptr,globalColumn,err,error,*999)
+              CASE(FIELD_NODE_BASED_INTERPOLATION)
+                ! loop over all nodes in the element (and dofs belonging to them)
+                DO localNodeIdx=1,basis2%NUMBER_OF_NODES
+                  node2=domainElements2%elements(element)%ELEMENT_NODES(localNodeIdx)
+                  DO derivativeIdx=1,basis2%NUMBER_OF_DERIVATIVES(localNodeIdx)
+                    derivative=domainElements2%elements(element)%ELEMENT_DERIVATIVES(derivativeIdx,localNodeIdx)
+                    version=domainElements2%elements(element)%elementVersions(derivativeIdx,localNodeIdx)
+                    !Find the local and global column and add the global column to the indices list
+                    localColumn=fieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% &
+                      & nodes(node2)%derivatives(derivative)%versions(version)
+                    globalColumn=fieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localColumn)
+                    CALL List_ItemAdd(columnIndicesLists(localDOFIdx)%ptr,globalColumn,err,error,*999)
+                  ENDDO !derivativeIdx
+                ENDDO !localNodeIdx
+              CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+                CALL FlagError("Grid point based interpolation is not implemented yet.",err,error,*999)
+              CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+                CALL FlagError("Gauss point based interpolation is not implemented yet.",err,error,*999)
+              CASE DEFAULT
+                localError="Local dof number "//TRIM(NumberToVString(localDOFIdx,"*",err,error))// &
+                  & " has invalid interpolation type."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT
+            ENDDO !componentIdx
+            !Clean up the list
+            CALL List_RemoveDuplicates(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
+            CALL List_NumberOfItemsGet(columnIndicesLists(localDOFIdx)%ptr,numberOfColumns,err,error,*999)
+            numberOfNonZeros=numberOfNonZeros+numberOfColumns
+            rowIndices(localDOFIdx+1)=numberOfNonZeros+1
+          CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+            CALL FlagError("Grid point based interpolation is not implemented yet.",err,error,*999)
+          CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+            CALL FlagError("Gauss point based interpolation is not implemented yet.",err,error,*999)
+          CASE DEFAULT
+            localError="Local dof number "//TRIM(NumberToVString(localDOFIdx,"*",err,error))//" has an invalid type."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        ENDDO !localDOFIdx
+       CASE DEFAULT
+        localError="The matrix storage type of "//TRIM(NumberToVString(jacobianMatrix%storageType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT      
+    CASE(EQUATIONS_MATRIX_NODAL_STRUCTURE)
+      SELECT CASE(jacobianMatrix%storageType)
+      CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+        !Allocate lists
+        ALLOCATE(columnIndicesLists(rowDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate column indices lists.",err,error,*999)
+        !Allocate row indices
+        ALLOCATE(rowIndices(rowDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL+1),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate row indices.",err,error,*999)
+        rowIndices(1)=1
+        !First, loop over the rows and calculate the number of non-zeros
+        numberOfNonZeros=0
+        DO localDofIdx=1,rowDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL
+          SELECT CASE(rowDofsParamMapping%DOF_TYPE(1,localDofIdx))
+          CASE(FIELD_CONSTANT_INTERPOLATION)
+            CALL FlagError("Constant interpolation is not implemented yet.",err,error,*999)
+          CASE(FIELD_NODE_DOF_TYPE)
+            dofIdx=dependentDofsParamMapping%DOF_TYPE(2,localDofIdx)!value for a particular field dof (localDofIdx)
+            node=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(3,dofIdx)!node number (node) of the field parameter
+            component=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(4,dofIdx)!component number (component) of the field parameter
+            domainNodes=>fieldVariable%components(component)%domain%topology%NODES            
+            !Set up list
+            NULLIFY(columnIndicesLists(localDofIdx)%ptr)
+            CALL List_CreateStart(columnIndicesLists(localDofIdx)%ptr,err,error,*999)
+            CALL List_DataTypeSet(columnIndicesLists(localDofIdx)%ptr,LIST_INTG_TYPE,err,error,*999)            
+            CALL List_InitialSizeSet(columnIndicesLists(localDofIdx)%ptr,fieldVariable%NUMBER_OF_COMPONENTS* &
+              & fieldVariable%maxNumberElementInterpolationParameters,err,error,*999)            
+            CALL List_CreateFinish(columnIndicesLists(localDofIdx)%ptr,err,error,*999)
+            !Loop over all components,nodes,derivatives, and versions
+            DO componentIdx=1,fieldVariable%NUMBER_OF_COMPONENTS
+              SELECT CASE(fieldVariable%components(componentIdx)%INTERPOLATION_TYPE)
+              CASE(FIELD_NODE_BASED_INTERPOLATION)
+                numberOfDerivatives=fieldVariable%components(componentIdx)%domain%topology%nodes%nodes(node)%NUMBER_OF_DERIVATIVES
+                DO derivativeIdx=1,numberOfDerivatives
+                  numberOfVersions=fieldVariable%components(componentIdx)%domain%topology%nodes%nodes(node)% &
+                    & derivatives(derivativeIdx)%numberOfVersions
+                  DO versionIdx=1,numberOfVersions
+                    localColumn=fieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%nodes(node)% &
+                      & derivatives(derivativeIdx)%versions(versionIdx)
+                    globalColumn=fieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localColumn)                    
+                    CALL List_ItemAdd(columnIndicesLists(localDofIdx)%ptr,globalColumn,err,error,*999)                    
+                  ENDDO !versionIdx
+                ENDDO !derivativeIdx
+              CASE DEFAULT
+                localError="Local dof number "//TRIM(NumberToVString(localDofIdx,"*",err,error))//" has invalid interpolation type."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT
+            ENDDO !componentIdx            
+            CALL List_RemoveDuplicates(columnIndicesLists(localDofIdx)%ptr,err,error,*999)
+            CALL List_NumberOfItemsGet(columnIndicesLists(localDofIdx)%ptr,numberOfColumns,err,error,*999)
+            numberOfNonZeros=numberOfNonZeros+numberOfColumns
+            rowIndices(localDofIdx+1)=numberOfNonZeros+1
+          CASE(FIELD_ELEMENT_DOF_TYPE)
+            CALL FlagError("Element based interpolation is not implemented yet.",err,error,*999)
+          CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+            CALL FlagError("Grid point based interpolation is not implemented yet.",err,error,*999)
+          CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+            CALL FlagError("Gauss point based interpolation is not implemented yet.",err,error,*999)
+          CASE DEFAULT
+            localError="Local dof number "//TRIM(NumberToVString(localDofIdx,"*",err,error))//" has an invalid type."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        ENDDO !localDofIdx
+      CASE DEFAULT
+        localError="The matrix storage type of "//TRIM(NumberToVString(jacobianMatrix%storageType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The matrix structure type of "//TRIM(NumberToVString(jacobianMatrix%structureType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*998)
+    END SELECT
+
+    IF(numberOfNonZeros>0) THEN
+      !Allocate and setup the column locations
+      ALLOCATE(columnIndices(numberOfNonZeros),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate column indices.",err,error,*999)
+      DO localDOFIdx=1,rowDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL
+        CALL LIST_DETACH_AND_DESTROY(columnIndicesLists(localDOFIdx)%ptr,numberOfColumns,columns,err,error,*999)
+        DO columnIdx=1,numberOfColumns
+          columnIndices(rowIndices(localDOFIdx)+columnIdx-1)=columns(columnIdx)
+        ENDDO !columnIdx
+        DEALLOCATE(columns)
+      ENDDO !localDOFIdx
+    ENDIF
+    
+    IF(diagnostics1) THEN
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Jacobian matrix structure:",err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of rows = ",dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL, &
+        & err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of columns = ",dependentDofsDomainMapping%NUMBER_OF_GLOBAL, &
+        & err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of non zeros = ",numberOfNonZeros,err,error,*999)
+      IF(dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL*dependentDofsDomainMapping%NUMBER_OF_GLOBAL/=0) THEN
+        sparsity=(1.0_DP-REAL(numberOfNonZeros,DP)/REAL(dependentDofsDomainMapping% &
+          & TOTAL_NUMBER_OF_LOCAL*dependentDofsDomainMapping%NUMBER_OF_GLOBAL,DP))*100.0_DP
+        CALL WriteStringFmtValue(DIAGNOSTIC_OUTPUT_TYPE,"  Sparsity (% of zeros) = ",sparsity,"F6.2",err,error,*999)
+      ENDIF
+      IF(numberOfNonZeros>0) THEN
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,rowDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL+1,8,8, &
+          & rowIndices,'("  Row indices    :",8(X,I13))','(18X,8(X,I13))',err,error,*999)
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfNonZeros,8,8,columnIndices,&
+          & '("  Column indices :",8(X,I13))','(18X,8(X,I13))', err,error,*999)
+      ENDIF
     ENDIF
       
     EXITS("JacobianMatrix_StructureCalculate")
@@ -5544,8 +4863,8 @@ CONTAINS
     IF(ALLOCATED(columns)) DEALLOCATE(columns)
     IF(ALLOCATED(columnIndicesLists)) THEN
       DO localDofIdx=1,dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL
-        IF(ASSOCIATED(columnIndicesLists(localDofIdx)%PTR)) &
-          & CALL LIST_DESTROY(columnIndicesLists(localDofIdx)%PTR,dummyErr,dummyError,*998)
+        IF(ASSOCIATED(columnIndicesLists(localDofIdx)%ptr)) &
+          & CALL List_Destroy(columnIndicesLists(localDofIdx)%ptr,dummyErr,dummyError,*998)
       ENDDO !localDofIdx
       DEALLOCATE(columnIndicesLists)
     ENDIF
@@ -5557,4 +4876,4 @@ CONTAINS
   !================================================================================================================================
   !
  
-END MODULE EQUATIONS_MATRICES_ROUTINES
+END MODULE EquationsMatricesRoutines

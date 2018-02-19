@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -45,28 +45,33 @@
 MODULE ADVECTION_EQUATION_ROUTINES
 
   USE ANALYTIC_ANALYSIS_ROUTINES
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE BASIS_ROUTINES
   USE BOUNDARY_CONDITIONS_ROUTINES
-  USE CONSTANTS
+  USE Constants
   USE CONTROL_LOOP_ROUTINES
+  USE ControlLoopAccessRoutines
   USE DISTRIBUTED_MATRIX_VECTOR
   USE DOMAIN_MAPPINGS
-  USE EQUATIONS_ROUTINES
-  USE EQUATIONS_MAPPING_ROUTINES
-  USE EQUATIONS_MATRICES_ROUTINES
+  USE EquationsRoutines
+  USE EquationsAccessRoutines
+  USE EquationsMappingRoutines
+  USE EquationsMatricesRoutines
   USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetAccessRoutines
   USE FIELD_ROUTINES
+  USE FieldAccessRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
-  USE KINDS
-  USE MATHS
+  USE Kinds
+  USE Maths
   USE MATRIX_VECTOR
   USE PROBLEM_CONSTANTS
-  USE STRINGS
+  USE Strings
   USE SOLVER_ROUTINES
-  USE TIMER
-  USE TYPES
+  USE SolverAccessRoutines
+  USE Timer
+  USE Types
 
 #include "macros.h"
 
@@ -90,7 +95,7 @@ CONTAINS
   !
 
   !>Sets up the diffusion equation type of a classical field equations set class.
-  SUBROUTINE Advection_EquationsSetSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*)
+  SUBROUTINE Advection_EquationsSetSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
@@ -100,7 +105,7 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("Advection_EquationsSetSetup",ERR,ERROR,*999)
+    ENTERS("Advection_EquationsSetSetup",err,error,*999)
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
@@ -111,20 +116,20 @@ CONTAINS
       END IF
       SELECT CASE(EQUATIONS_SET%specification(3))
       CASE(EQUATIONS_SET_ADVECTION_SUBTYPE)
-        CALL Advection_EquationsSetLinearSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*999)
+        CALL Advection_EquationsSetLinearSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP,err,error,*999)
       CASE DEFAULT
         LOCAL_ERROR="The third equations set specification of "// &
-          & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%specification(3),"*",ERR,ERROR))// &
+          & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%specification(3),"*",err,error))// &
           & " is not valid for an advection type of a classical field equation set."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+        CALL FlagError(LOCAL_ERROR,err,error,*999)
       END SELECT
     ELSE
-      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",err,error,*999)
     ENDIF
        
     EXITS("Advection_EquationsSetSetup")
     RETURN
-999 ERRORSEXITS("Advection_EquationsSetSetup",ERR,ERROR)
+999 ERRORSEXITS("Advection_EquationsSetSetup",err,error)
     RETURN 1
     
   END SUBROUTINE Advection_EquationsSetSetup
@@ -134,7 +139,7 @@ CONTAINS
   !
 
   !>Sets/changes the solution method for an advection equation type of an classical field equations set class.
-  SUBROUTINE Advection_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*)
+  SUBROUTINE Advection_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
@@ -144,7 +149,7 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("Advection_EquationsSetSolutionMethodSet",ERR,ERROR,*999)
+    ENTERS("Advection_EquationsSetSolutionMethodSet",err,error,*999)
     
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
@@ -159,22 +164,22 @@ CONTAINS
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           EQUATIONS_SET%SOLUTION_METHOD=EQUATIONS_SET_FEM_SOLUTION_METHOD
         CASE DEFAULT
-          LOCAL_ERROR="The specified solution method of "//TRIM(NUMBER_TO_VSTRING(SOLUTION_METHOD,"*",ERR,ERROR))//" is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          LOCAL_ERROR="The specified solution method of "//TRIM(NUMBER_TO_VSTRING(SOLUTION_METHOD,"*",err,error))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
       CASE DEFAULT
         LOCAL_ERROR="The third equations set specification of "// &
-          & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%specification(3),"*",ERR,ERROR))// &
+          & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%specification(3),"*",err,error))// &
           & " is not valid for an advection type of an classical field equations set."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+        CALL FlagError(LOCAL_ERROR,err,error,*999)
       END SELECT
     ELSE
-      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",err,error,*999)
     ENDIF
        
     EXITS("Advection_EquationsSetSolutionMethodSet")
     RETURN
-999 ERRORS("Advection_EquationsSetSolutionMethodSet",ERR,ERROR)
+999 ERRORS("Advection_EquationsSetSolutionMethodSet",err,error)
     EXITS("Advection_EquationsSetSolutionMethodSet")
     RETURN 1
     
@@ -196,7 +201,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: subtype
     
-    ENTERS("Advection_EquationsSetSpecificationSet",ERR,ERROR,*999)
+    ENTERS("Advection_EquationsSetSpecificationSet",err,error,*999)
     
     IF(ASSOCIATED(equationsSet)) THEN
       IF(SIZE(specification,1)/=3) THEN
@@ -226,7 +231,7 @@ CONTAINS
      
     EXITS("Advection_EquationsSetSpecificationSet")
     RETURN
-999 ERRORSEXITS("Advection_EquationsSetSpecificationSet",ERR,ERROR)
+999 ERRORSEXITS("Advection_EquationsSetSpecificationSet",err,error)
     RETURN 1
     
   END SUBROUTINE Advection_EquationsSetSpecificationSet
@@ -236,7 +241,7 @@ CONTAINS
   !
   
   !>Sets up the advection equation.
-  SUBROUTINE Advection_EquationsSetLinearSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*)
+  SUBROUTINE Advection_EquationsSetLinearSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
@@ -248,17 +253,18 @@ CONTAINS
     INTEGER(INTG) :: DEPENDENT_FIELD_NUMBER_OF_VARIABLES,DEPENDENT_FIELD_NUMBER_OF_COMPONENTS,component_idx
     INTEGER(INTG) :: INDEPENDENT_FIELD_NUMBER_OF_VARIABLES,INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS
     TYPE(DECOMPOSITION_TYPE), POINTER :: GEOMETRIC_DECOMPOSITION
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: EQUATIONS_MATERIALS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
-    ENTERS("Advection_EquationsSetLinearSetup",ERR,ERROR,*999)
+    ENTERS("Advection_EquationsSetLinearSetup",err,error,*999)
 
     NULLIFY(EQUATIONS)
-    NULLIFY(EQUATIONS_MAPPING)
-    NULLIFY(EQUATIONS_MATRICES)
+    NULLIFY(vectorMapping)
+    NULLIFY(vectorMatrices)
     NULLIFY(GEOMETRIC_DECOMPOSITION)
     
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
@@ -275,14 +281,14 @@ CONTAINS
           SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             CALL Advection_EquationsSetSolutionMethodSet(EQUATIONS_SET, &
-              & EQUATIONS_SET_FEM_SOLUTION_METHOD,ERR,ERROR,*999)
+              & EQUATIONS_SET_FEM_SOLUTION_METHOD,err,error,*999)
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             !Do nothing
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for an advection equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
 
         CASE(EQUATIONS_SET_SETUP_GEOMETRY_TYPE)
@@ -301,118 +307,118 @@ CONTAINS
               !Create the auto created dependent field
               !start field creation with name 'Concentration'
               CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION, &
-                & EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,ERR,ERROR,*999)
+                & EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,err,error,*999)
               !start creation of a new field
-              CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
+              CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
               !label the field
-              CALL FIELD_LABEL_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,"Concentration",ERR,ERROR,*999)
+              CALL FIELD_LABEL_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,"Concentration",err,error,*999)
               !define new created field to be dependent
               CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
-                & FIELD_DEPENDENT_TYPE,ERR,ERROR,*999)
+                & FIELD_DEPENDENT_TYPE,err,error,*999)
               !look for decomposition rule already defined
               CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION, &
-                & ERR,ERROR,*999)
+                & err,error,*999)
               !apply decomposition rule found on new created field
               CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
-                & GEOMETRIC_DECOMPOSITION,ERR,ERROR,*999)
+                & GEOMETRIC_DECOMPOSITION,err,error,*999)
               !point new field to geometric field
               CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,EQUATIONS_SET%GEOMETRY% &
-                & GEOMETRIC_FIELD,ERR,ERROR,*999)
+                & GEOMETRIC_FIELD,err,error,*999)
               !set number of variables to 2 (U,delU/delN)
               CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
-                & DEPENDENT_FIELD_NUMBER_OF_VARIABLES,ERR,ERROR,*999)
+                & DEPENDENT_FIELD_NUMBER_OF_VARIABLES,err,error,*999)
               CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,[FIELD_U_VARIABLE_TYPE, &
-                & FIELD_DELUDELN_VARIABLE_TYPE],ERR,ERROR,*999)
+                & FIELD_DELUDELN_VARIABLE_TYPE],err,error,*999)
               !set dimension
               CALL FIELD_DIMENSION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
+                & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
               CALL FIELD_DIMENSION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
+                & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
               !set data type
               CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_DP_TYPE,ERR,ERROR,*999)
+                & FIELD_DP_TYPE,err,error,*999)
               CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                & FIELD_DP_TYPE,ERR,ERROR,*999)
+                & FIELD_DP_TYPE,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
+                & NUMBER_OF_DIMENSIONS,err,error,*999)
               !number of components for U,delU/delN (C)
               DEPENDENT_FIELD_NUMBER_OF_COMPONENTS=1
               CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
-                & FIELD_U_VARIABLE_TYPE,DEPENDENT_FIELD_NUMBER_OF_COMPONENTS,ERR,ERROR,*999)
+                & FIELD_U_VARIABLE_TYPE,DEPENDENT_FIELD_NUMBER_OF_COMPONENTS,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
-                & FIELD_DELUDELN_VARIABLE_TYPE,DEPENDENT_FIELD_NUMBER_OF_COMPONENTS,ERR,ERROR,*999)
+                & FIELD_DELUDELN_VARIABLE_TYPE,DEPENDENT_FIELD_NUMBER_OF_COMPONENTS,err,error,*999)
               CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, & 
-                & DEPENDENT_FIELD_NUMBER_OF_COMPONENTS,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
+                & DEPENDENT_FIELD_NUMBER_OF_COMPONENTS,GEOMETRIC_MESH_COMPONENT,err,error,*999)
               !Default to the geometric interpolation setup
               DO component_idx=1,DEPENDENT_FIELD_NUMBER_OF_COMPONENTS
                 CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, & 
-                  & FIELD_U_VARIABLE_TYPE,component_idx,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
+                  & FIELD_U_VARIABLE_TYPE,component_idx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
                 CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
-                  & FIELD_DELUDELN_VARIABLE_TYPE,component_idx,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
+                  & FIELD_DELUDELN_VARIABLE_TYPE,component_idx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
               END DO
               SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
               !Specify fem solution method
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                 DO component_idx=1,DEPENDENT_FIELD_NUMBER_OF_COMPONENTS
                   CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
-                    & FIELD_U_VARIABLE_TYPE,component_idx,FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
+                    & FIELD_U_VARIABLE_TYPE,component_idx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                   CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
-                    & FIELD_DELUDELN_VARIABLE_TYPE,component_idx,FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
+                    & FIELD_DELUDELN_VARIABLE_TYPE,component_idx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                 END DO
                 CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE, &
-                  & ERR,ERROR,*999)
+                  & err,error,*999)
                 CALL FIELD_SCALING_TYPE_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_SCALING_TYPE, &
-                  & ERR,ERROR,*999)
+                  & err,error,*999)
               CASE DEFAULT
                 LOCAL_ERROR="The solution method of " &
-                  & //TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// " is invalid."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                  & //TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// " is invalid."
+                CALL FlagError(LOCAL_ERROR,err,error,*999)
               END SELECT
             ELSE 
               !Check the user specified field advection equations
-              CALL FIELD_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
-              CALL FIELD_DEPENDENT_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DEPENDENT_TYPE,ERR,ERROR,*999)
-              CALL FIELD_NUMBER_OF_VARIABLES_CHECK(EQUATIONS_SET_SETUP%FIELD,DEPENDENT_FIELD_NUMBER_OF_VARIABLES,ERR,ERROR,*999)
+              CALL FIELD_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_GENERAL_TYPE,err,error,*999)
+              CALL FIELD_DEPENDENT_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
+              CALL FIELD_NUMBER_OF_VARIABLES_CHECK(EQUATIONS_SET_SETUP%FIELD,DEPENDENT_FIELD_NUMBER_OF_VARIABLES,err,error,*999)
               CALL FIELD_VARIABLE_TYPES_CHECK(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE], &
-                & ERR,ERROR,*999)
+                & err,error,*999)
               CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE, & 
-                & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
+                & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
               CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
-              CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
+                & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+              CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
               CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE, &
-                  & ERR,ERROR,*999)
+                  & err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
+                & NUMBER_OF_DIMENSIONS,err,error,*999)
               DEPENDENT_FIELD_NUMBER_OF_COMPONENTS=1
               CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE, &
-                & DEPENDENT_FIELD_NUMBER_OF_COMPONENTS,ERR,ERROR,*999)
+                & DEPENDENT_FIELD_NUMBER_OF_COMPONENTS,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                & DEPENDENT_FIELD_NUMBER_OF_COMPONENTS,ERR,ERROR,*999)
+                & DEPENDENT_FIELD_NUMBER_OF_COMPONENTS,err,error,*999)
               SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                 CALL FIELD_COMPONENT_INTERPOLATION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1, &
-                  & FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
+                  & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                 CALL FIELD_COMPONENT_INTERPOLATION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1, & 
-                  & FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
+                  & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               CASE DEFAULT
                 LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD, &
-                  & "*",ERR,ERROR))//" is invalid."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                  & "*",err,error))//" is invalid."
+                CALL FlagError(LOCAL_ERROR,err,error,*999)
               END SELECT
             ENDIF
           !Specify finish action       
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
-              CALL FIELD_CREATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,ERR,ERROR,*999)
+              CALL FIELD_CREATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,err,error,*999)
               CALL FIELD_PARAMETER_SET_CREATE(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                 & FIELD_BOUNDARY_CONDITIONS_SET_TYPE,ERR,ERROR,*999)
+                 & FIELD_BOUNDARY_CONDITIONS_SET_TYPE,err,error,*999)
             ENDIF
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for an advection equation"
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         !-----------------------------------------------------------------
         ! M a t e r i a l s   f i e l d 
@@ -427,55 +433,55 @@ CONTAINS
                 !Create the auto created materials field
                 !start field creation with name 'MATERIAL_FIELD'
                 CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION, & 
-                  & EQUATIONS_SET%MATERIALS%MATERIALS_FIELD,ERR,ERROR,*999)
-                CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,ERR,ERROR,*999)
+                  & EQUATIONS_SET%MATERIALS%MATERIALS_FIELD,err,error,*999)
+                CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
                 !label the field
-                CALL FIELD_LABEL_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,"Materials Field",ERR,ERROR,*999)
+                CALL FIELD_LABEL_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,"Materials Field",err,error,*999)
                 CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE, &
-                  & ERR,ERROR,*999)
+                  & err,error,*999)
                 CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION, & 
-                  & ERR,ERROR,*999)
+                  & err,error,*999)
                 !apply decomposition rule found on new created field
                 CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(EQUATIONS_SET%MATERIALS%MATERIALS_FIELD, & 
-                  & GEOMETRIC_DECOMPOSITION,ERR,ERROR,*999)
+                  & GEOMETRIC_DECOMPOSITION,err,error,*999)
                 !point new field to geometric field
                 CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,EQUATIONS_SET%GEOMETRY% &
-                  & GEOMETRIC_FIELD,ERR,ERROR,*999)
-                CALL FIELD_NUMBER_OF_VARIABLES_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,1,ERR,ERROR,*999)
-                CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,[FIELD_U_VARIABLE_TYPE],ERR,ERROR,*999)
-                CALL FIELD_VARIABLE_LABEL_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE,"Materials",ERR,ERROR,*999)
+                  & GEOMETRIC_FIELD,err,error,*999)
+                CALL FIELD_NUMBER_OF_VARIABLES_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,1,err,error,*999)
+                CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+                CALL FIELD_VARIABLE_LABEL_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE,"Materials",err,error,*999)
                 CALL FIELD_DIMENSION_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
+                  & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                 CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_DP_TYPE,ERR,ERROR,*999)
+                  & FIELD_DP_TYPE,err,error,*999)
                 CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & 1,ERR,ERROR,*999)
+                  & 1,err,error,*999)
                 CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD, & 
-                  & FIELD_U_VARIABLE_TYPE,1,GEOMETRIC_COMPONENT_NUMBER,ERR,ERROR,*999)
+                  & FIELD_U_VARIABLE_TYPE,1,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
                 CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & 1,GEOMETRIC_COMPONENT_NUMBER,ERR,ERROR,*999)
+                  & 1,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
                 CALL FIELD_COMPONENT_INTERPOLATION_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & 1,FIELD_CONSTANT_INTERPOLATION,ERR,ERROR,*999)
+                  & 1,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
                 !Default the field scaling to that of the geometric field
                 CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE, & 
-                  & ERR,ERROR,*999)
-                CALL FIELD_SCALING_TYPE_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
+                  & err,error,*999)
+                CALL FIELD_SCALING_TYPE_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
               ELSE
                 !Check the user specified field
-                CALL FIELD_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_MATERIAL_TYPE,ERR,ERROR,*999)
-                CALL FIELD_DEPENDENT_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_INDEPENDENT_TYPE,ERR,ERROR,*999)
-                CALL FIELD_NUMBER_OF_VARIABLES_CHECK(EQUATIONS_SET_SETUP%FIELD,1,ERR,ERROR,*999)
-                CALL FIELD_VARIABLE_TYPES_CHECK(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE],ERR,ERROR,*999)
+                CALL FIELD_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
+                CALL FIELD_DEPENDENT_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
+                CALL FIELD_NUMBER_OF_VARIABLES_CHECK(EQUATIONS_SET_SETUP%FIELD,1,err,error,*999)
+                CALL FIELD_VARIABLE_TYPES_CHECK(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE],err,error,*999)
                 CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE, & 
-                  & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
+                  & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                 CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE, & 
-                  & ERR,ERROR,*999)
+                  & err,error,*999)
                 CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
-                CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1,ERR,ERROR,*999)
+                  & NUMBER_OF_DIMENSIONS,err,error,*999)
+                CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
               ENDIF
             ELSE
-              CALL FlagError("Equations set materials is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Equations set materials is not associated.",err,error,*999)
             END IF
           !Specify start action
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
@@ -483,19 +489,19 @@ CONTAINS
             IF(ASSOCIATED(EQUATIONS_MATERIALS)) THEN
               IF(EQUATIONS_MATERIALS%MATERIALS_FIELD_AUTO_CREATED) THEN
                 !Finish creating the materials field
-                CALL FIELD_CREATE_FINISH(EQUATIONS_MATERIALS%MATERIALS_FIELD,ERR,ERROR,*999)
+                CALL FIELD_CREATE_FINISH(EQUATIONS_MATERIALS%MATERIALS_FIELD,err,error,*999)
                 !Set the default values for the materials field (Diffusivity)
                 CALL FIELD_COMPONENT_VALUES_INITIALISE(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,1,1.0_DP,ERR,ERROR,*999)
+                  & FIELD_VALUES_SET_TYPE,1,1.0_DP,err,error,*999)
               ENDIF
             ELSE
-              CALL FlagError("Equations set materials is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Equations set materials is not associated.",err,error,*999)
             ENDIF
           CASE DEFAULT
             LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*", & 
-              & ERR,ERROR))//" for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*", & 
-              & ERR,ERROR))//" is invalid for Navier-Stokes equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              & err,error))//" for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*", & 
+              & err,error))//" is invalid for Navier-Stokes equation."
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         !-----------------------------------------------------------------
         ! I n d e p e n d e n t   f i e l d
@@ -510,75 +516,75 @@ CONTAINS
             IF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD_AUTO_CREATED) THEN
               !start field creation with name 'INDEPENDENT_FIELD'
               CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION, &
-                & EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,ERR,ERROR,*999)
+                & EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,err,error,*999)
                 !start creation of a new field
-                CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
+                CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
                 !label the field
-                CALL FIELD_LABEL_SET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,"Independent Field",ERR,ERROR,*999)
+                CALL FIELD_LABEL_SET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,"Independent Field",err,error,*999)
                 !define new created field to be independent
                 CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD, &
-                  & FIELD_INDEPENDENT_TYPE,ERR,ERROR,*999)
+                  & FIELD_INDEPENDENT_TYPE,err,error,*999)
                 !look for decomposition rule already defined
-                CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,ERR,ERROR,*999)
+                CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,err,error,*999)
                 !apply decomposition rule found on new created field
                 CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD, &
-                  & GEOMETRIC_DECOMPOSITION,ERR,ERROR,*999)
+                  & GEOMETRIC_DECOMPOSITION,err,error,*999)
                 !point new field to geometric field
                 CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,EQUATIONS_SET% & 
-                  & GEOMETRY%GEOMETRIC_FIELD,ERR,ERROR,*999)
+                  & GEOMETRY%GEOMETRIC_FIELD,err,error,*999)
                 !set number of variables to 1 (1 for U)
                 CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD, &
-                  & INDEPENDENT_FIELD_NUMBER_OF_VARIABLES,ERR,ERROR,*999)
+                  & INDEPENDENT_FIELD_NUMBER_OF_VARIABLES,err,error,*999)
                 CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,[FIELD_U_VARIABLE_TYPE], &
-                  & ERR,ERROR,*999)
+                  & err,error,*999)
                 CALL FIELD_DIMENSION_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
+                  & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                 !calculate number of components with one component for each dimension
                 CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD, & 
-                  & FIELD_U_VARIABLE_TYPE,INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS,ERR,ERROR,*999)
+                  & FIELD_U_VARIABLE_TYPE,INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS,err,error,*999)
                 CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, & 
-                  & 1,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
+                  & 1,GEOMETRIC_MESH_COMPONENT,err,error,*999)
                 !Default to the geometric interpolation setup
                 CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD, & 
-                  & FIELD_U_VARIABLE_TYPE,INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
+                  & FIELD_U_VARIABLE_TYPE,INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS,GEOMETRIC_MESH_COMPONENT,err,error,*999)
                 SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
                 !Specify fem solution method
                 CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                   CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD, &
-                    & FIELD_U_VARIABLE_TYPE,INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS,FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
+                    & FIELD_U_VARIABLE_TYPE,INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                   CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE, &
-                    & ERR,ERROR,*999)
+                    & err,error,*999)
                   CALL FIELD_SCALING_TYPE_SET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,GEOMETRIC_SCALING_TYPE, &
-                    & ERR,ERROR,*999)
+                    & err,error,*999)
                 CASE(EQUATIONS_SET_NODAL_SOLUTION_METHOD)
                   CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD, &
-                    & FIELD_U_VARIABLE_TYPE,INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS,FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
+                    & FIELD_U_VARIABLE_TYPE,INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                   CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE, &
-                    & ERR,ERROR,*999)
+                    & err,error,*999)
                   CALL FIELD_SCALING_TYPE_SET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,GEOMETRIC_SCALING_TYPE, &
-                    & ERR,ERROR,*999)
+                    & err,error,*999)
                 CASE DEFAULT
                   LOCAL_ERROR="The solution method of " &
-                    & //TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// " is invalid."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                    & //TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// " is invalid."
+                  CALL FlagError(LOCAL_ERROR,err,error,*999)
                 END SELECT 
               ELSE
                 !Check the user specified field- Characteristic equation
-                CALL FIELD_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
+                CALL FIELD_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_GENERAL_TYPE,err,error,*999)
                 CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                  & ERR,ERROR,*999)
-                CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
+                  & err,error,*999)
+                CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
               ENDIF    
             !Specify finish action
             CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
               IF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD_AUTO_CREATED) THEN
-                CALL FIELD_CREATE_FINISH(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,ERR,ERROR,*999)
+                CALL FIELD_CREATE_FINISH(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,err,error,*999)
               ENDIF
             CASE DEFAULT
-              LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-                & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+              LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+                & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
                 & " is invalid for a standard Navier-Stokes fluid"
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             END SELECT
         !-----------------------------------------------------------------
         ! E q u a t i o n s    t y p e
@@ -588,78 +594,79 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FINISHED) THEN
               IF(EQUATIONS_SET%specification(3)==EQUATIONS_SET_ADVECTION_SUBTYPE) THEN 
-                CALL EQUATIONS_CREATE_START(EQUATIONS_SET,EQUATIONS,ERR,ERROR,*999)
-                CALL EQUATIONS_LINEARITY_TYPE_SET(EQUATIONS,EQUATIONS_LINEAR,ERR,ERROR,*999)
-                CALL EQUATIONS_TIME_DEPENDENCE_TYPE_SET(EQUATIONS,EQUATIONS_FIRST_ORDER_DYNAMIC,ERR,ERROR,*999)
+                CALL Equations_CreateStart(EQUATIONS_SET,EQUATIONS,err,error,*999)
+                CALL Equations_LinearityTypeSet(EQUATIONS,EQUATIONS_LINEAR,err,error,*999)
+                CALL Equations_TimeDependenceTypeSet(EQUATIONS,EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
               ELSE
-                CALL FlagError("Equations set subtype not valid.",ERR,ERROR,*999)
+                CALL FlagError("Equations set subtype not valid.",err,error,*999)
               ENDIF
             ELSE
-              CALL FlagError("Equations set dependent field has not been finished.",ERR,ERROR,*999)
+              CALL FlagError("Equations set dependent field has not been finished.",err,error,*999)
             ENDIF
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
             CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
               IF(EQUATIONS_SET%specification(3)==EQUATIONS_SET_ADVECTION_SUBTYPE) THEN 
                 !Finish the equations
-                CALL EQUATIONS_SET_EQUATIONS_GET(EQUATIONS_SET,EQUATIONS,ERR,ERROR,*999)
-                CALL EQUATIONS_CREATE_FINISH(EQUATIONS,ERR,ERROR,*999)
+                CALL EquationsSet_EquationsGet(EQUATIONS_SET,EQUATIONS,err,error,*999)
+                CALL Equations_CreateFinish(EQUATIONS,err,error,*999)
+                NULLIFY(vectorEquations)
+                CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
                 !Create the equations mapping.
-                CALL EQUATIONS_MAPPING_CREATE_START(EQUATIONS,EQUATIONS_MAPPING,ERR,ERROR,*999)
-                CALL EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET(EQUATIONS_MAPPING,.TRUE.,.TRUE.,ERR,ERROR,*999)
-                CALL EQUATIONS_MAPPING_DYNAMIC_VARIABLE_TYPE_SET(EQUATIONS_MAPPING,FIELD_U_VARIABLE_TYPE,ERR,ERROR,*999)
-                CALL EQUATIONS_MAPPING_RHS_VARIABLE_TYPE_SET(EQUATIONS_MAPPING,FIELD_DELUDELN_VARIABLE_TYPE,ERR, & 
-                  & ERROR,*999)
-                CALL EQUATIONS_MAPPING_CREATE_FINISH(EQUATIONS_MAPPING,ERR,ERROR,*999)
+                CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
+                CALL EquationsMapping_DynamicMatricesSet(vectorMapping,.TRUE.,.TRUE.,err,error,*999)
+                CALL EquationsMapping_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+                CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+                CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
                 !Create the equations matrices
-                CALL EQUATIONS_MATRICES_CREATE_START(EQUATIONS,EQUATIONS_MATRICES,ERR,ERROR,*999)
+                CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
                 !Set up matrix storage and structure
-                SELECT CASE(EQUATIONS%SPARSITY_TYPE)
+                SELECT CASE(EQUATIONS%sparsityType)
                 CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                  CALL EQUATIONS_MATRICES_LINEAR_STORAGE_TYPE_SET(EQUATIONS_MATRICES, &
-                    & [DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],ERR,ERROR,*999)
+                  CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices, &
+                    & [DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
                 CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                  CALL EQUATIONS_MATRICES_DYNAMIC_STORAGE_TYPE_SET(EQUATIONS_MATRICES, &
+                  CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
                     & [DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE, & 
-                    & DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE],ERR,ERROR,*999)
-                  CALL EquationsMatrices_DynamicStructureTypeSet(EQUATIONS_MATRICES, &
-                    & [EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_FEM_STRUCTURE],ERR,ERROR,*999)
+                    & DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+                  CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, &
+                    & [EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
                 CASE DEFAULT
                   LOCAL_ERROR="The equations matrices sparsity type of "// &
-                    & TRIM(NUMBER_TO_VSTRING(EQUATIONS%SPARSITY_TYPE,"*",ERR,ERROR))//" is invalid."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                    & TRIM(NUMBER_TO_VSTRING(EQUATIONS%sparsityType,"*",err,error))//" is invalid."
+                  CALL FlagError(LOCAL_ERROR,err,error,*999)
                 END SELECT
-                CALL EQUATIONS_MATRICES_CREATE_FINISH(EQUATIONS_MATRICES,ERR,ERROR,*999)
+                CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
               ENDIF
             CASE DEFAULT
-                LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
+                LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                 & " is invalid."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             END SELECT
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for an advection equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         CASE DEFAULT
-          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
             & " is invalid for an advection equation."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
       CASE DEFAULT
         LOCAL_ERROR="The thrid equations set specification of "// &
-          & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%specification(3),"*",ERR,ERROR))// &
+          & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%specification(3),"*",err,error))// &
           & " does not equal a advection equation set."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+        CALL FlagError(LOCAL_ERROR,err,error,*999)
       END SELECT
     ELSE
-      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",err,error,*999)
     ENDIF
        
     EXITS("Advection_EquationsSetLinearSetup")
     RETURN
-999 ERRORSEXITS("Advection_EquationsSetLinearSetup",ERR,ERROR)
+999 ERRORSEXITS("Advection_EquationsSetLinearSetup",err,error)
     RETURN 1
     
   END SUBROUTINE Advection_EquationsSetLinearSetup
@@ -680,7 +687,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: problemSubtype
     
-    ENTERS("Advection_ProblemSpecificationSet",ERR,ERROR,*999)
+    ENTERS("Advection_ProblemSpecificationSet",err,error,*999)
     
     IF(ASSOCIATED(PROBLEM)) THEN
       IF(SIZE(problemSpecification,1)==3) THEN
@@ -709,7 +716,7 @@ CONTAINS
         
     EXITS("Advection_ProblemSpecificationSet")
     RETURN
-999 ERRORSEXITS("Advection_ProblemSpecificationSet",ERR,ERROR)
+999 ERRORSEXITS("Advection_ProblemSpecificationSet",err,error)
     RETURN 1
     
   END SUBROUTINE Advection_ProblemSpecificationSet
@@ -719,7 +726,7 @@ CONTAINS
   !
  
   !>Sets up the diffusion problem.
-  SUBROUTINE ADVECTION_EQUATION_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*)
+  SUBROUTINE ADVECTION_EQUATION_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*)
 
     !Argument variables
     TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
@@ -729,7 +736,7 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("ADVECTION_EQUATION_PROBLEM_SETUP",ERR,ERROR,*999)
+    ENTERS("ADVECTION_EQUATION_PROBLEM_SETUP",err,error,*999)
 
     IF(ASSOCIATED(PROBLEM)) THEN
       IF(.NOT.ALLOCATED(PROBLEM%SPECIFICATION)) THEN
@@ -739,20 +746,20 @@ CONTAINS
       END IF
       SELECT CASE(PROBLEM%SPECIFICATION(3))
       CASE(PROBLEM_ADVECTION_SUBTYPE)
-        CALL ADVECTION_EQUATION_PROBLEM_LINEAR_SETUP(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*999)
+        CALL ADVECTION_EQUATION_PROBLEM_LINEAR_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*999)
       CASE DEFAULT
         LOCAL_ERROR="The third problem specification of "// &
-          & TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
+          & TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",err,error))// &
           & " is not valid for an advection type of a classical field problem."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+        CALL FlagError(LOCAL_ERROR,err,error,*999)
       END SELECT
     ELSE
-      CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Problem is not associated.",err,error,*999)
     ENDIF
        
     EXITS("ADVECTION_EQUATION_PROBLEM_SETUP")
     RETURN
-999 ERRORSEXITS("ADVECTION_EQUATION_PROBLEM_SETUP",ERR,ERROR)
+999 ERRORSEXITS("ADVECTION_EQUATION_PROBLEM_SETUP",err,error)
     RETURN 1
     
   END SUBROUTINE ADVECTION_EQUATION_PROBLEM_SETUP
@@ -762,7 +769,7 @@ CONTAINS
   !
 
   !>Sets up the advection equations.
-  SUBROUTINE ADVECTION_EQUATION_PROBLEM_LINEAR_SETUP(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*)
+  SUBROUTINE ADVECTION_EQUATION_PROBLEM_LINEAR_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*)
 
     !Argument variables
     TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
@@ -776,7 +783,7 @@ CONTAINS
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("ADVECTION_EQUATION_PROBLEM_LINEAR_SETUP",ERR,ERROR,*999)
+    ENTERS("ADVECTION_EQUATION_PROBLEM_LINEAR_SETUP",err,error,*999)
 
     NULLIFY(CONTROL_LOOP)
     NULLIFY(SOLVER)
@@ -797,103 +804,103 @@ CONTAINS
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Do nothing
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for an advection equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         CASE(PROBLEM_SETUP_CONTROL_TYPE)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Set up a time control loop
-            CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,PROBLEM_CONTROL_TIME_LOOP_TYPE,ERR,ERROR,*999)
+            CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
+            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,PROBLEM_CONTROL_TIME_LOOP_TYPE,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Finish the control loops
             CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,ERR,ERROR,*999)            
+            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
+            CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)            
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for an advection equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
           !Get the control loop
           CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
-          CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
+          CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Start the solvers creation
-            CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
-            CALL SOLVERS_NUMBER_SET(SOLVERS,1,ERR,ERROR,*999)
+            CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,err,error,*999)
+            CALL SOLVERS_NUMBER_SET(SOLVERS,1,err,error,*999)
             !Set the solver to be a first order dynamic solver 
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
-            CALL SOLVER_TYPE_SET(SOLVER,SOLVER_DYNAMIC_TYPE,ERR,ERROR,*999)
-            CALL SOLVER_DYNAMIC_ORDER_SET(SOLVER,SOLVER_DYNAMIC_FIRST_ORDER,ERR,ERROR,*999)
+            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
+            CALL SOLVER_TYPE_SET(SOLVER,SOLVER_DYNAMIC_TYPE,err,error,*999)
+            CALL SOLVER_DYNAMIC_ORDER_SET(SOLVER,SOLVER_DYNAMIC_FIRST_ORDER,err,error,*999)
             !Set solver defaults
-            CALL SOLVER_DYNAMIC_DEGREE_SET(SOLVER,SOLVER_DYNAMIC_FIRST_DEGREE,ERR,ERROR,*999)
-            CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,ERR,ERROR,*999)
+            CALL SOLVER_DYNAMIC_DEGREE_SET(SOLVER,SOLVER_DYNAMIC_FIRST_DEGREE,err,error,*999)
+            CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the solvers
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
+            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
             !Finish the solvers creation
-            CALL SOLVERS_CREATE_FINISH(SOLVERS,ERR,ERROR,*999)
+            CALL SOLVERS_CREATE_FINISH(SOLVERS,err,error,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for an advection equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop
             CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
+            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
+            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
+            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
             !Create the solver equations
-            CALL SOLVER_EQUATIONS_CREATE_START(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
-            CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_LINEAR,ERR,ERROR,*999)
-            CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,ERR,ERROR,*999)
-            CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,ERR,ERROR,*999)
+            CALL SOLVER_EQUATIONS_CREATE_START(SOLVER,SOLVER_EQUATIONS,err,error,*999)
+            CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_LINEAR,err,error,*999)
+            CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
+            CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
             CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
+            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver equations
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
-            CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
+            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
+            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
+            CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,err,error,*999)
             !Finish the solver equations creation
-            CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,ERR,ERROR,*999)             
+            CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,err,error,*999)             
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for an advection equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         CASE DEFAULT
-          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
             & " is invalid for an advection equation."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
       ELSE
         LOCAL_ERROR="The third problem specification of "// &
-          & TRIM(NUMBER_TO_VSTRING(PROBLEM%specification(3),"*",ERR,ERROR))// &
+          & TRIM(NUMBER_TO_VSTRING(PROBLEM%specification(3),"*",err,error))// &
           & " does not equal an advection equation subtype."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+        CALL FlagError(LOCAL_ERROR,err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Problem is not associated.",err,error,*999)
     ENDIF
        
     EXITS("ADVECTION_EQUATION_PROBLEM_LINEAR_SETUP")
     RETURN
-999 ERRORSEXITS("ADVECTION_EQUATION_PROBLEM_LINEAR_SETUP",ERR,ERROR)
+999 ERRORSEXITS("ADVECTION_EQUATION_PROBLEM_LINEAR_SETUP",err,error)
     RETURN 1
     
   END SUBROUTINE ADVECTION_EQUATION_PROBLEM_LINEAR_SETUP
@@ -903,7 +910,7 @@ CONTAINS
   !
 
   !>Calculates the element stiffness matrices for an advection equation finite element equations set.
-  SUBROUTINE ADVECTION_EQUATION_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*)
+  SUBROUTINE ADVECTION_EQUATION_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
@@ -913,24 +920,25 @@ CONTAINS
     !Local Variables
     TYPE(BASIS_TYPE), POINTER :: DEPENDENT_BASIS,GEOMETRIC_BASIS
     TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: ELEMENTS_TOPOLOGY
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
-    TYPE(EQUATIONS_MAPPING_DYNAMIC_TYPE), POINTER :: DYNAMIC_MAPPING
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES
-    TYPE(EQUATIONS_MATRICES_DYNAMIC_TYPE), POINTER :: DYNAMIC_MATRICES
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: DAMPING_MATRIX,STIFFNESS_MATRIX
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
+    TYPE(EquationsMatrixType), POINTER :: dampingMatrix,stiffnessMatrix
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD,INDEPENDENT_FIELD,GEOMETRIC_FIELD,MATERIALS_FIELD
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: QUADRATURE_SCHEME
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     INTEGER(INTG) :: mhs,ms,ng,nhs,ns,xiIdx,coordIdx,MESH_COMPONENT
     REAL(DP) :: JGW,SUM,DXI_DX,DPHIMS_DXI,DPHINS_DXI,PHIMS,PHINS,flow,area,D,Conc,dConc
-    LOGICAL :: UPDATE_DAMPING_MATRIX,UPDATE_STIFFNESS_MATRIX
+    LOGICAL :: updateDampingMatrix,updateStiffnessMatrix
 
-    UPDATE_DAMPING_MATRIX = .FALSE.
-    UPDATE_STIFFNESS_MATRIX = .FALSE.
+    updateDampingMatrix = .FALSE.
+    updateStiffnessMatrix = .FALSE.
 
-    ENTERS("ADVECTION_EQUATION_FINITE_ELEMENT_CALCULATE",ERR,ERROR,*999)
+    ENTERS("ADVECTION_EQUATION_FINITE_ELEMENT_CALCULATE",err,error,*999)
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       EQUATIONS=>EQUATIONS_SET%EQUATIONS
@@ -940,74 +948,76 @@ CONTAINS
         ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)<3) THEN
           CALL FlagError("Equations set specification must have three entries for an advection problem.",err,error,*999)
         END IF
+        NULLIFY(vectorEquations)
+        CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
         SELECT CASE(EQUATIONS_SET%specification(3))
         CASE(EQUATIONS_SET_ADVECTION_SUBTYPE)
           !Store all these in equations matrices
-          DEPENDENT_FIELD=>EQUATIONS%INTERPOLATION%DEPENDENT_FIELD
-          INDEPENDENT_FIELD=>EQUATIONS%INTERPOLATION%INDEPENDENT_FIELD
-          MATERIALS_FIELD=>EQUATIONS%INTERPOLATION%MATERIALS_FIELD
-          GEOMETRIC_FIELD=>EQUATIONS%INTERPOLATION%GEOMETRIC_FIELD
-          GEOMETRIC_BASIS=>GEOMETRIC_FIELD%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR% &
+          DEPENDENT_FIELD=>equations%interpolation%dependentField
+          INDEPENDENT_FIELD=>equations%interpolation%independentField
+          MATERIALS_FIELD=>equations%interpolation%materialsField
+          GEOMETRIC_FIELD=>equations%interpolation%geometricField
+          GEOMETRIC_BASIS=>GEOMETRIC_FIELD%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD%DECOMPOSITION%MESH_COMPONENT_NUMBER)%ptr% &
             & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-          DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR% &
+          DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD%DECOMPOSITION%MESH_COMPONENT_NUMBER)%ptr% &
             & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-          QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
-          EQUATIONS_MATRICES=>EQUATIONS%EQUATIONS_MATRICES
-          DYNAMIC_MATRICES=>EQUATIONS_MATRICES%DYNAMIC_MATRICES
-          STIFFNESS_MATRIX=>DYNAMIC_MATRICES%MATRICES(1)%PTR
-          DAMPING_MATRIX=>DYNAMIC_MATRICES%MATRICES(2)%PTR
-          EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
-          DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING
-          FIELD_VARIABLE=>DYNAMIC_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(1)%VARIABLE
-          STIFFNESS_MATRIX%ELEMENT_MATRIX%MATRIX=0.0_DP
-          DAMPING_MATRIX%ELEMENT_MATRIX%MATRIX=0.0_DP
-          IF(ASSOCIATED(DAMPING_MATRIX)) UPDATE_DAMPING_MATRIX=DAMPING_MATRIX%UPDATE_MATRIX
-          IF(ASSOCIATED(STIFFNESS_MATRIX)) UPDATE_STIFFNESS_MATRIX=STIFFNESS_MATRIX%UPDATE_MATRIX
+          QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
+          vectorMatrices=>vectorEquations%vectorMatrices
+          dynamicMatrices=>vectorMatrices%dynamicMatrices
+          stiffnessMatrix=>dynamicMatrices%matrices(1)%ptr
+          dampingMatrix=>dynamicMatrices%matrices(2)%ptr
+          vectorMapping=>vectorEquations%vectorMapping
+          dynamicMapping=>vectorMapping%dynamicMapping
+          FIELD_VARIABLE=>dynamicMapping%equationsMatrixToVarMaps(1)%variable
+          stiffnessMatrix%elementMatrix%matrix=0.0_DP
+          dampingMatrix%elementMatrix%matrix=0.0_DP
+          IF(ASSOCIATED(dampingMatrix)) updateDampingMatrix=dampingMatrix%updateMatrix
+          IF(ASSOCIATED(stiffnessMatrix)) updateStiffnessMatrix=stiffnessMatrix%updateMatrix
 
           SELECT CASE(EQUATIONS_SET%specification(3))
           CASE(EQUATIONS_SET_ADVECTION_SUBTYPE)
-            CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,EQUATIONS%INTERPOLATION% &
-              & DEPENDENT_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-            CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,EQUATIONS%INTERPOLATION% &
-              & INDEPENDENT_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-            CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,EQUATIONS%INTERPOLATION% &
-              & MATERIALS_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-            CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,EQUATIONS%INTERPOLATION% &
-              & GEOMETRIC_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
+            CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
+              & dependentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+            CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
+              & independentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+            CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
+              & materialsInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+            CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
+              & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
             !Loop over gauss points
             DO ng=1,QUADRATURE_SCHEME%NUMBER_OF_GAUSS
-              CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,EQUATIONS%INTERPOLATION% &
-                & DEPENDENT_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-              CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,EQUATIONS%INTERPOLATION% &
-                & INDEPENDENT_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-              CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,EQUATIONS%INTERPOLATION% &
-                & MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-              CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,EQUATIONS%INTERPOLATION% &
-                & GEOMETRIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-              CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%NUMBER_OF_XI,EQUATIONS%INTERPOLATION% &
-                & GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)    
+              CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
+                & dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+              CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
+                & independentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+              CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
+                & materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+              CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
+                & geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+              CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%NUMBER_OF_XI,equations%interpolation% &
+                & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)    
    
-              Conc=EQUATIONS%INTERPOLATION%DEPENDENT_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(1,NO_PART_DERIV)
-              dConc=EQUATIONS%INTERPOLATION%DEPENDENT_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(1,FIRST_PART_DERIV)
-              flow=EQUATIONS%INTERPOLATION%INDEPENDENT_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(1,NO_PART_DERIV)
-              area=EQUATIONS%INTERPOLATION%INDEPENDENT_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(2,NO_PART_DERIV)
-              D=EQUATIONS%INTERPOLATION%MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(1,NO_PART_DERIV)
+              Conc=equations%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(1,NO_PART_DERIV)
+              dConc=equations%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(1,FIRST_PART_DERIV)
+              flow=equations%interpolation%independentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(1,NO_PART_DERIV)
+              area=equations%interpolation%independentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(2,NO_PART_DERIV)
+              D=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(1,NO_PART_DERIV)
 
               mhs=0         
               MESH_COMPONENT=FIELD_VARIABLE%COMPONENTS(1)%MESH_COMPONENT_NUMBER
-              DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(MESH_COMPONENT)%PTR% &
+              DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(MESH_COMPONENT)%ptr% &
                 & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-              QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
-              JGW=EQUATIONS%INTERPOLATION%GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR%JACOBIAN* &
+              QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
+              JGW=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%JACOBIAN* &
                 & QUADRATURE_SCHEME%GAUSS_WEIGHTS(ng)
               ELEMENTS_TOPOLOGY=>FIELD_VARIABLE%COMPONENTS(1)%DOMAIN%TOPOLOGY%ELEMENTS
 
               DXI_DX=0.0_DP
               !Calculate dxi_dx in 3D
               DO xiIdx=1,DEPENDENT_BASIS%NUMBER_OF_XI
-                DO coordIdx=1,EQUATIONS%INTERPOLATION%GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE) &
-                  & %PTR%NUMBER_OF_X_DIMENSIONS
-                  DXI_DX=DXI_DX+(EQUATIONS%INTERPOLATION%GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)% &
+                DO coordIdx=1,equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE) &
+                  & %ptr%NUMBER_OF_X_DIMENSIONS
+                  DXI_DX=DXI_DX+(equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)% &
                     & PTR%DXI_DX(xiIdx,coordIdx))**2.0_DP
                 END DO !coordIdx
               END DO !xiIdx
@@ -1019,7 +1029,7 @@ CONTAINS
                 DPHIMS_DXI=QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ms,FIRST_PART_DERIV,ng)
                 mhs=mhs+1
                 nhs=0
-                IF(UPDATE_STIFFNESS_MATRIX .OR. UPDATE_DAMPING_MATRIX) THEN
+                IF(updateStiffnessMatrix .OR. updateDampingMatrix) THEN
                   !Loop over element columns
                   DO ns=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
                     PHINS=QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ns,NO_PART_DERIV,ng)
@@ -1027,15 +1037,15 @@ CONTAINS
                     nhs=nhs+1
                         
                     !!!-- D A M P I N G  M A T R I X --!!!
-                    IF(UPDATE_DAMPING_MATRIX) THEN
+                    IF(updateDampingMatrix) THEN
                       SUM=PHIMS*PHINS
-                      DAMPING_MATRIX%ELEMENT_MATRIX%MATRIX(mhs,nhs)=DAMPING_MATRIX%ELEMENT_MATRIX%MATRIX(mhs,nhs)+SUM*JGW
+                      dampingMatrix%elementMatrix%matrix(mhs,nhs)=dampingMatrix%elementMatrix%matrix(mhs,nhs)+SUM*JGW
                     ENDIF
                         
                     !!!-- S T I F F N E S S  M A T R I X --!!!
-                    IF(UPDATE_STIFFNESS_MATRIX) THEN
+                    IF(updateStiffnessMatrix) THEN
                       SUM=(D*(DPHIMS_DXI*DXI_DX)+(flow/area)*PHIMS)*DPHINS_DXI*DXI_DX
-                      STIFFNESS_MATRIX%ELEMENT_MATRIX%MATRIX(mhs,nhs)=STIFFNESS_MATRIX%ELEMENT_MATRIX%MATRIX(mhs,nhs)+SUM*JGW
+                      stiffnessMatrix%elementMatrix%matrix(mhs,nhs)=stiffnessMatrix%elementMatrix%matrix(mhs,nhs)+SUM*JGW
                     ENDIF
 
                   ENDDO !ns
@@ -1046,26 +1056,26 @@ CONTAINS
             
           CASE DEFAULT
             LOCAL_ERROR="The third equations set specification of "// &
-              & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%specification(3),"*",ERR,ERROR))// &
+              & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%specification(3),"*",err,error))// &
               & " is not valid for an advection type of a classical field equations set."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         CASE DEFAULT
           LOCAL_ERROR="The third equations set specification of "// &
-            & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%specification(3),"*",ERR,ERROR))// &
+            & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%specification(3),"*",err,error))// &
             & " is not valid for an advection equation type of a classical field equations set class."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
       ELSE
-        CALL FlagError("Equations set equations is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Equations set equations is not associated.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",err,error,*999)
     ENDIF
     
     EXITS("ADVECTION_EQUATION_FINITE_ELEMENT_CALCULATE")
     RETURN
-999 ERRORSEXITS("ADVECTION_EQUATION_FINITE_ELEMENT_CALCULATE",ERR,ERROR)
+999 ERRORSEXITS("ADVECTION_EQUATION_FINITE_ELEMENT_CALCULATE",err,error)
     RETURN 1
     
   END SUBROUTINE ADVECTION_EQUATION_FINITE_ELEMENT_CALCULATE
@@ -1075,7 +1085,7 @@ CONTAINS
   !
 
   !>Sets up the Poisson problem pre solve.
-  SUBROUTINE ADVECTION_PRE_SOLVE(SOLVER,ERR,ERROR,*)
+  SUBROUTINE ADVECTION_PRE_SOLVE(SOLVER,err,error,*)
 
     !Argument variables
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
@@ -1086,7 +1096,7 @@ CONTAINS
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
-    ENTERS("ADVECTION_PRE_SOLVE",ERR,ERROR,*999)
+    ENTERS("ADVECTION_PRE_SOLVE",err,error,*999)
  
     IF(ASSOCIATED(SOLVER)) THEN
       SOLVERS=>SOLVER%SOLVERS
@@ -1102,24 +1112,24 @@ CONTAINS
           CASE(PROBLEM_ADVECTION_SUBTYPE, &
              & PROBLEM_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE, &
              & PROBLEM_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE)
-            CALL ADVECTION_PRE_SOLVE_UPDATE_BC(SOLVER,ERR,ERROR,*999)
-!            CALL Advection_Couple1D0D(SOLVER,ERR,ERROR,*999)
+            CALL ADVECTION_PRE_SOLVE_UPDATE_BC(SOLVER,err,error,*999)
+!            CALL Advection_Couple1D0D(SOLVER,err,error,*999)
           CASE DEFAULT
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         ELSE
-          CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Problem is not associated.",err,error,*999)
         ENDIF
       ELSE
-        CALL FlagError("Solvers is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Solvers is not associated.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Solver is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Solver is not associated.",err,error,*999)
     ENDIF
 
     EXITS("ADVECTION_PRE_SOLVE")
     RETURN
-999 ERRORSEXITS("ADVECTION_PRE_SOLVE",ERR,ERROR)
+999 ERRORSEXITS("ADVECTION_PRE_SOLVE",err,error)
     RETURN 1
     
   END SUBROUTINE ADVECTION_PRE_SOLVE
@@ -1129,7 +1139,7 @@ CONTAINS
   !
   
   !Update the boundary conditions
-  SUBROUTINE ADVECTION_PRE_SOLVE_UPDATE_BC(SOLVER,ERR,ERROR,*)
+  SUBROUTINE ADVECTION_PRE_SOLVE_UPDATE_BC(SOLVER,err,error,*)
     !Argument variables
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     INTEGER(INTG), INTENT(OUT) :: ERR
@@ -1138,7 +1148,7 @@ CONTAINS
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
+    TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
@@ -1147,14 +1157,14 @@ CONTAINS
     REAL(DP) :: CONC,START_TIME,STOP_TIME,CURRENT_TIME,TIME_INCREMENT,period,delta(300),t(300),c(300),s
     INTEGER(INTG) :: CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER,i,j,n,m
 
-    ENTERS("ADVECTION_PRE_SOLVE_UPDATE_BC",ERR,ERROR,*999)
+    ENTERS("ADVECTION_PRE_SOLVE_UPDATE_BC",err,error,*999)
 
     IF(ASSOCIATED(SOLVER)) THEN
       SOLVERS=>SOLVER%SOLVERS
       IF(ASSOCIATED(SOLVERS)) THEN
         CONTROL_LOOP=>SOLVERS%CONTROL_LOOP
         CALL CONTROL_LOOP_TIMES_GET(CONTROL_LOOP,START_TIME,STOP_TIME,CURRENT_TIME,TIME_INCREMENT,CURRENT_LOOP_ITERATION, &
-          & OUTPUT_ITERATION_NUMBER,ERR,ERROR,*999)
+          & OUTPUT_ITERATION_NUMBER,err,error,*999)
         IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
           IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
             CALL FlagError("Problem specification is not allocated.",err,error,*999)
@@ -1170,7 +1180,7 @@ CONTAINS
               IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                 EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
                 IF(ASSOCIATED(EQUATIONS)) THEN
-                  EQUATIONS_SET=>EQUATIONS%EQUATIONS_SET
+                  EQUATIONS_SET=>equations%equationsSet
                   DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
                   BOUNDARY_CONDITIONS=>SOLVER_EQUATIONS%BOUNDARY_CONDITIONS
                   IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
@@ -1224,39 +1234,39 @@ CONTAINS
                     ENDIF
 
                     CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                      & 1,CONC,ERR,ERROR,*999)
+                      & 1,CONC,err,error,*999)
                     CALL FIELD_PARAMETER_SET_UPDATE_START(DEPENDENT_FIELD, &
-                      & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
+                      & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,err,error,*999)
                     CALL FIELD_PARAMETER_SET_UPDATE_FINISH(DEPENDENT_FIELD, &
-                      & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
+                      & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,err,error,*999)
                   ELSE
-                    CALL FlagError("Dependent field and/or geometric field is/are not associated.",ERR,ERROR,*999)
+                    CALL FlagError("Dependent field and/or geometric field is/are not associated.",err,error,*999)
                   END IF
                 ELSE
-                  CALL FlagError("Equations are not associated.",ERR,ERROR,*999)
+                  CALL FlagError("Equations are not associated.",err,error,*999)
                 END IF
               ELSE
-                CALL FlagError("Solver mapping is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Solver mapping is not associated.",err,error,*999)
               ENDIF
             ELSE
-              CALL FlagError("Solver equations are not associated.",ERR,ERROR,*999)
+              CALL FlagError("Solver equations are not associated.",err,error,*999)
             END IF
           CASE DEFAULT
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         ELSE
-          CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Problem is not associated.",err,error,*999)
         ENDIF
       ELSE
-        CALL FlagError("Solvers is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Solvers is not associated.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Solver is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Solver is not associated.",err,error,*999)
     ENDIF
 
     EXITS("ADVECTION_PRE_SOLVE_UPDATE_BC")
     RETURN
-999 ERRORSEXITS("ADVECTION_PRE_SOLVE_UPDATE_BC",ERR,ERROR)
+999 ERRORSEXITS("ADVECTION_PRE_SOLVE_UPDATE_BC",err,error)
     RETURN 1
 
   END SUBROUTINE ADVECTION_PRE_SOLVE_UPDATE_BC
@@ -1265,7 +1275,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  SUBROUTINE ADVECTION_POST_SOLVE(SOLVER,ERR,ERROR,*)
+  SUBROUTINE ADVECTION_POST_SOLVE(SOLVER,err,error,*)
 
     !Argument variables
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
@@ -1276,7 +1286,7 @@ CONTAINS
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
-    ENTERS("ADVECTION_POST_SOLVE",ERR,ERROR,*999)
+    ENTERS("ADVECTION_POST_SOLVE",err,error,*999)
 
     IF(ASSOCIATED(SOLVER)) THEN
       SOLVERS=>SOLVER%SOLVERS
@@ -1293,23 +1303,23 @@ CONTAINS
             !Do nothing
           CASE DEFAULT
             LOCAL_ERROR="The third problem specification of "// &
-              & TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%specification(3),"*",ERR,ERROR))// &
+              & TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%specification(3),"*",err,error))// &
               & " is not valid for an advection type of a classical field problem."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         ELSE
-          CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Problem is not associated.",err,error,*999)
         ENDIF
       ELSE
-        CALL FlagError("Solvers is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Solvers is not associated.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Solver is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Solver is not associated.",err,error,*999)
     ENDIF
 
     EXITS("ADVECTION_POST_SOLVE")
     RETURN
-999 ERRORSEXITS("ADVECTION_POST_SOLVE",ERR,ERROR)
+999 ERRORSEXITS("ADVECTION_POST_SOLVE",err,error)
     RETURN 1
     
   END SUBROUTINE ADVECTION_POST_SOLVE
@@ -1319,7 +1329,7 @@ CONTAINS
   !
 
   !>Update area for boundary nodes.
-  SUBROUTINE Advection_Couple1D0D(SOLVER,ERR,ERROR,*)
+  SUBROUTINE Advection_Couple1D0D(SOLVER,err,error,*)
 
     !Argument variables
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
@@ -1331,14 +1341,14 @@ CONTAINS
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations  
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping 
 
-    ENTERS("Advection_Couple1D0D",ERR,ERROR,*999)
+    ENTERS("Advection_Couple1D0D",err,error,*999)
 
     IF(ASSOCIATED(solver)) THEN
       solverEquations=>solver%SOLVER_EQUATIONS
       IF(ASSOCIATED(solverEquations)) THEN
         solverMapping=>solverEquations%SOLVER_MAPPING
         IF(ASSOCIATED(solverMapping)) THEN
-          equationsSet=>solverMapping%EQUATIONS_SETS(1)%PTR
+          equationsSet=>solverMapping%EQUATIONS_SETS(1)%ptr
           IF(ASSOCIATED(equationsSet)) THEN
             dependentField=>equationsSet%DEPENDENT%DEPENDENT_FIELD
           ELSE

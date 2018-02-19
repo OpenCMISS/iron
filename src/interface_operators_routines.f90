@@ -44,10 +44,11 @@
 !>This module contains all interface conditions routines. 
 MODULE INTERFACE_OPERATORS_ROUTINES
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE BASIS_ROUTINES
   USE CONSTANTS
   USE FIELD_ROUTINES
+  USE FieldAccessRoutines
   USE INPUT_OUTPUT
   USE INTERFACE_CONDITIONS_CONSTANTS
   USE INTERFACE_EQUATIONS_ROUTINES
@@ -103,7 +104,7 @@ CONTAINS
     TYPE(FIELD_TYPE), POINTER :: coupledMeshDependentField,interfaceDependentField,interfaceGeometricField, &
       & interfacePenaltyField
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: interfaceMatrixVariable,lagrangeVariable
-    TYPE(ELEMENT_MATRIX_TYPE), POINTER :: interfaceElementMatrix
+    TYPE(ElementMatrixType), POINTER :: interfaceElementMatrix
     TYPE(INTERFACE_EQUATIONS_DOMAIN_INTERPOLATION_TYPE), POINTER :: interfaceInterpolation
     TYPE(INTERFACE_ELEMENT_CONNECTIVITY_TYPE), POINTER :: elementConnectivity
     TYPE(DOMAIN_LINE_TYPE), POINTER :: coupledMeshDomainLine
@@ -207,7 +208,7 @@ CONTAINS
                   DO rowParameterIdx=1,interfaceDependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
                     PGNSI=interfaceQuadratureScheme%GAUSS_BASIS_FNS(rowParameterIdx,NO_PART_DERIV,GaussPoint)
                     rowIdx=rowIdx+1
-                    interfaceElementMatrix%MATRIX(rowIdx,colIdx)=interfaceElementMatrix%MATRIX(rowIdx,rowIdx)- &
+                    interfaceElementMatrix%matrix(rowIdx,colIdx)=interfaceElementMatrix%matrix(rowIdx,rowIdx)- &
                       & (1.0_DP/interfaceInterpolation%PENALTY_INTERPOLATION(1)% &
                       & INTERPOLATED_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(1,1))*PGNSI**2.0_DP*rwg
                   ENDDO !rowParameterIdx
@@ -216,7 +217,7 @@ CONTAINS
                 !\todo defaults to first mesh component, generalise
                 !XI=InterfaceOperators_InterfToCoupledMeshGaussTransform( &
                 !  & elementConnectivity,interfaceConnectivityBasis,GaussPoint,err,error)
-                XI(1:interfaceDependentBasis%NUMBER_OF_XI)=InterfaceOperators_InterfToCoupledMeshGaussTransform( &
+                xi(1:SIZE(elementConnectivity%xi,1))=InterfaceOperators_InterfToCoupledMeshGaussTransform( &
                   & elementConnectivity,interfaceConnectivityBasis,GaussPoint,err,error)
                 !XI=interfaceCondition%interface%pointsConnectivity%pointsConnectivity(GaussPoint,coupledMeshIdx)%xi
                 ! Loop over number of Lagrange variable components as not all components in the dependent field variable may be coupled
@@ -249,7 +250,7 @@ CONTAINS
                             PGNSI=interfaceQuadratureScheme%GAUSS_BASIS_FNS(colParameterIdx,NO_PART_DERIV,GaussPoint)
                             colIdx=colParameterIdx+interfaceDependentBasis%NUMBER_OF_ELEMENT_PARAMETERS*(rowComponentIdx-1)
                             !\todo Use matrix coefficients in solver routines when assembling solver matrices instead of multiplying them here
-                            interfaceElementMatrix%MATRIX(rowIdx,colIdx)=interfaceElementMatrix%MATRIX(rowIdx,colIdx)+ &
+                            interfaceElementMatrix%matrix(rowIdx,colIdx)=interfaceElementMatrix%matrix(rowIdx,colIdx)+ &
                               & PGNSI*PGMSI*rwg*matrixCoefficient
                           ENDDO !interfaceDerivative
                         ENDDO !interfaceNode
@@ -274,7 +275,7 @@ CONTAINS
                               PGNSI=interfaceQuadratureScheme%GAUSS_BASIS_FNS(colParameterIdx,NO_PART_DERIV,GaussPoint)
                               colIdx=colParameterIdx+interfaceDependentBasis%NUMBER_OF_ELEMENT_PARAMETERS*(rowComponentIdx-1)
                               !\todo Use matrix coefficients in solver routines when assembling solver matrices instead of multiplying them here
-                              interfaceElementMatrix%MATRIX(rowIdx,colIdx)=interfaceElementMatrix%MATRIX(rowIdx,colIdx)+ &
+                              interfaceElementMatrix%matrix(rowIdx,colIdx)=interfaceElementMatrix%matrix(rowIdx,colIdx)+ &
                                 & PGNSI*PGMSI*rwg*matrixCoefficient
                             ENDDO !interfaceDerivative
                           ENDDO !interfaceNode
@@ -303,7 +304,7 @@ CONTAINS
                               PGNSI=interfaceQuadratureScheme%GAUSS_BASIS_FNS(colParameterIdx,NO_PART_DERIV,GaussPoint)
                               colIdx=colParameterIdx+interfaceDependentBasis%NUMBER_OF_ELEMENT_PARAMETERS*(rowComponentIdx-1)
                               !\todo Use matrix coefficients in solver routines when assembling solver matrices instead of multiplying them here
-                              interfaceElementMatrix%MATRIX(rowIdx,colIdx)=interfaceElementMatrix%MATRIX(rowIdx,colIdx)+ &
+                              interfaceElementMatrix%matrix(rowIdx,colIdx)=interfaceElementMatrix%matrix(rowIdx,colIdx)+ &
                                 & PGNSI*PGMSI*rwg*matrixCoefficient
                             ENDDO !interfaceDerivative
                           ENDDO !interfaceNode
@@ -335,7 +336,7 @@ CONTAINS
                   !Loop over element Lagrange variable rows
                   DO rowParameterIdx=1,interfaceDependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
                     rowIdx=rowIdx+1
-                    interfaceElementMatrix%MATRIX(rowIdx,rowIdx)=interfaceElementMatrix%MATRIX(rowIdx,rowIdx) * &
+                    interfaceElementMatrix%matrix(rowIdx,rowIdx)=interfaceElementMatrix%matrix(rowIdx,rowIdx) * &
                       & interfaceInterpolation%DEPENDENT_INTERPOLATION(1)% &
                       & INTERPOLATION_PARAMETERS(lagrangeVariableType)%PTR%SCALE_FACTORS(rowParameterIdx,rowComponentIdx)**2
                   ENDDO !rowParameterIdx
@@ -362,7 +363,7 @@ CONTAINS
                     DO colComponentIdx=1,lagrangeVariable%NUMBER_OF_COMPONENTS
                       DO colParameterIdx=1,interfaceDependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
                         colIdx=colIdx+1
-                        interfaceElementMatrix%MATRIX(rowIdx,colIdx)=interfaceElementMatrix%MATRIX(rowIdx,colIdx) * &
+                        interfaceElementMatrix%matrix(rowIdx,colIdx)=interfaceElementMatrix%matrix(rowIdx,colIdx) * &
                         & interfaceInterpolation%DEPENDENT_INTERPOLATION(1)% &
                         & INTERPOLATION_PARAMETERS(lagrangeVariableType)%PTR%SCALE_FACTORS(colParameterIdx,colComponentIdx)
                       ENDDO !colParameterIdx
@@ -385,7 +386,7 @@ CONTAINS
                     DO colComponentIdx=1,lagrangeVariable%NUMBER_OF_COMPONENTS
                       DO colParameterIdx=1,interfaceDependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
                         colIdx=colIdx+1
-                        interfaceElementMatrix%MATRIX(rowIdx,colIdx)=interfaceElementMatrix%MATRIX(rowIdx,colIdx)* &
+                        interfaceElementMatrix%matrix(rowIdx,colIdx)=interfaceElementMatrix%matrix(rowIdx,colIdx)* &
                         & interfaceEquations%INTERPOLATION%VARIABLE_INTERPOLATION(coupledMeshIdx)% &
                         & DEPENDENT_INTERPOLATION(1)%INTERPOLATION_PARAMETERS(coupledMeshVariableType)%PTR% &
                         & SCALE_FACTORS(rowParameterIdx,rowComponentIdx)
@@ -448,7 +449,7 @@ CONTAINS
                       & xi(1:numberOfCoupledMeshXi),ERR,ERROR)*matrixCoefficients(coupledMeshIdx)
                     rowIdx=rowParameterIdx+coupledMeshDependentBasis%NUMBER_OF_ELEMENT_PARAMETERS*(rowComponentIdx-1)
                     colIdx=dataPointIdx+decompositionElementData%numberOfProjectedData*(rowComponentIdx-1)
-                    interfaceElementMatrix%MATRIX(rowIdx,colIdx)=PGMSI !Update interface element matrix with contact point contribution
+                    interfaceElementMatrix%matrix(rowIdx,colIdx)=PGMSI !Update interface element matrix with contact point contribution
                   ENDDO !rowParameterIdx
                 ENDDO !rowComponentIdx
               ENDDO !dataPointIdx
@@ -474,7 +475,7 @@ CONTAINS
                     DO rowParameterIdx=1,coupledMeshDependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
                       rowIdx=rowParameterIdx+coupledMeshDependentBasis%NUMBER_OF_ELEMENT_PARAMETERS*(rowComponentIdx-1)
                       colIdx=dataPointIdx+decompositionElementData%numberOfProjectedData*(rowComponentIdx-1)
-                      interfaceElementMatrix%MATRIX(rowIdx,colIdx)=interfaceElementMatrix%MATRIX(rowIdx,colIdx)* &
+                      interfaceElementMatrix%matrix(rowIdx,colIdx)=interfaceElementMatrix%matrix(rowIdx,colIdx)* &
                         & interfaceEquations%INTERPOLATION%VARIABLE_INTERPOLATION(coupledMeshIdx)% &
                         & DEPENDENT_INTERPOLATION(1)%INTERPOLATION_PARAMETERS(FIELD_U_VARIABLE_TYPE)% &
                         & PTR%SCALE_FACTORS(rowParameterIdx,rowComponentIdx)
@@ -534,7 +535,7 @@ CONTAINS
     TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: interpolationParameters(:)
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE), POINTER :: interpolatedPointsMetrics(:)
     TYPE(BASIS_TYPE), POINTER :: coupledMeshDependentBasis
-    TYPE(ELEMENT_MATRIX_TYPE), POINTER :: interfaceElementMatrix
+    TYPE(ElementMatrixType), POINTER :: interfaceElementMatrix
     TYPE(INTERFACE_MATRIX_TYPE), POINTER :: penaltyMatrix
     INTEGER(INTG) :: meshComponentNumber,numberOfCoupledMeshGeoComp,numberOfInterfaceMeshXi,numberOfCoupledMeshXi, &
       & numberOfMatrixCoupledElements,localDof
@@ -730,7 +731,7 @@ CONTAINS
                             colIdx=dataPointIdx
                             !Update interface element matrix with contact point contribution
                             !\todo: Seperate multiplication of scale factors if required.  
-                            interfaceElementMatrix%MATRIX(rowIdx,colIdx)=PGMSI*interfaceEquations%INTERPOLATION% &
+                            interfaceElementMatrix%matrix(rowIdx,colIdx)=PGMSI*interfaceEquations%INTERPOLATION% &
                               & VARIABLE_INTERPOLATION(coupledMeshIdx)%DEPENDENT_INTERPOLATION(1)% &
                               & INTERPOLATION_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR%SCALE_FACTORS(rowParameterIdx,rowComponentIdx)
                           ENDDO !rowParameterIdx
@@ -769,7 +770,7 @@ CONTAINS
                               CALL FIELD_PARAMETER_SET_GET_CONSTANT(penaltyField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                                 & componentIdx,contactStiffness,err,error,*999)
                               DO dataPointIdx=1,decompositionElementData%numberOfProjectedData
-                                penaltyMatrix%ELEMENT_MATRIX%MATRIX(dataPointIdx,dataPointIdx)=-(1.0_DP/contactStiffness)
+                                penaltyMatrix%ELEMENT_MATRIX%matrix(dataPointIdx,dataPointIdx)=-(1.0_DP/contactStiffness)
                               ENDDO !dataPointIdx
                             CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
                               localDof=penaltyField%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%PTR%COMPONENTS(componentIdx)% &
@@ -777,7 +778,7 @@ CONTAINS
                               CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(penaltyField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                                 & localDof,contactStiffness,err,error,*999)
                               DO dataPointIdx=1,decompositionElementData%numberOfProjectedData
-                                penaltyMatrix%ELEMENT_MATRIX%MATRIX(dataPointIdx,dataPointIdx)=-(1.0_DP/contactStiffness)
+                                penaltyMatrix%ELEMENT_MATRIX%matrix(dataPointIdx,dataPointIdx)=-(1.0_DP/contactStiffness)
                               ENDDO !dataPointIdx
                             CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
                               DO dataPointIdx=1,decompositionElementData%numberOfProjectedData
@@ -785,7 +786,7 @@ CONTAINS
                                   & PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP%DATA_POINTS(dataPointIdx)
                                 CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(penaltyField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                                   & localDof,contactStiffness,err,error,*999)
-                                penaltyMatrix%ELEMENT_MATRIX%MATRIX(dataPointIdx,dataPointIdx)=-(1.0_DP/contactStiffness)
+                                penaltyMatrix%ELEMENT_MATRIX%matrix(dataPointIdx,dataPointIdx)=-(1.0_DP/contactStiffness)
                               ENDDO !dataPointIdx
                             CASE DEFAULT
                               localError="The interpolation type for component number "// &
@@ -873,7 +874,7 @@ CONTAINS
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: interfaceQuadratureScheme
     TYPE(FIELD_TYPE), POINTER :: coupledMeshDependentField,interfaceDependentField,interfaceGeometricField
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: interfaceMatrixVariable,lagrangeVariable
-    TYPE(ELEMENT_MATRIX_TYPE), POINTER :: interfaceElementMatrix
+    TYPE(ElementMatrixType), POINTER :: interfaceElementMatrix
     TYPE(INTERFACE_EQUATIONS_DOMAIN_INTERPOLATION_TYPE), POINTER :: interfaceInterpolation
     TYPE(INTERFACE_ELEMENT_CONNECTIVITY_TYPE), POINTER :: elementConnectivity
     TYPE(DOMAIN_LINE_TYPE), POINTER :: coupledMeshDomainLine
@@ -1002,7 +1003,7 @@ CONTAINS
                             PGNSI=interfaceQuadratureScheme%GAUSS_BASIS_FNS(colParameterIdx,NO_PART_DERIV,GaussPoint)
                             colIdx=colParameterIdx+interfaceDependentBasis%NUMBER_OF_ELEMENT_PARAMETERS*(rowComponentIdx-1)
                             !\todo Use matrix coefficients in solver routines when assembling solver matrices instead of multiplying them here
-                            interfaceElementMatrix%MATRIX(rowIdx,colIdx)=interfaceElementMatrix%MATRIX(rowIdx,colIdx)+ &
+                            interfaceElementMatrix%matrix(rowIdx,colIdx)=interfaceElementMatrix%matrix(rowIdx,colIdx)+ &
                               & PGNSI*PGMSI*rwg*matrixCoefficient
                           ENDDO !interfaceDerivative
                         ENDDO !interfaceNode
@@ -1031,7 +1032,7 @@ CONTAINS
                               PGNSI=interfaceQuadratureScheme%GAUSS_BASIS_FNS(colParameterIdx,NO_PART_DERIV,GaussPoint)
                               colIdx=colParameterIdx+interfaceDependentBasis%NUMBER_OF_ELEMENT_PARAMETERS*(rowComponentIdx-1)
                               !\todo Use matrix coefficients in solver routines when assembling solver matrices instead of multiplying them here
-                              interfaceElementMatrix%MATRIX(rowIdx,colIdx)=interfaceElementMatrix%MATRIX(rowIdx,colIdx)+ &
+                              interfaceElementMatrix%matrix(rowIdx,colIdx)=interfaceElementMatrix%matrix(rowIdx,colIdx)+ &
                                 & PGNSI*PGMSI*rwg*matrixCoefficient
                             ENDDO !interfaceDerivative
                           ENDDO !interfaceNode
@@ -1064,7 +1065,7 @@ CONTAINS
                               PGNSI=interfaceQuadratureScheme%GAUSS_BASIS_FNS(colParameterIdx,NO_PART_DERIV,GaussPoint)
                               colIdx=colParameterIdx+interfaceDependentBasis%NUMBER_OF_ELEMENT_PARAMETERS*(rowComponentIdx-1)
                               !\todo Use matrix coefficients in solver routines when assembling solver matrices instead of multiplying them here
-                              interfaceElementMatrix%MATRIX(rowIdx,colIdx)=interfaceElementMatrix%MATRIX(rowIdx,colIdx)+ &
+                              interfaceElementMatrix%matrix(rowIdx,colIdx)=interfaceElementMatrix%matrix(rowIdx,colIdx)+ &
                                 & PGNSI*PGMSI*rwg*matrixCoefficient
                             ENDDO !interfaceDerivative
                           ENDDO !interfaceNode
@@ -1106,7 +1107,7 @@ CONTAINS
                     DO colComponentIdx=1,lagrangeVariable%NUMBER_OF_COMPONENTS
                       DO colParameterIdx=1,interfaceDependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
                         colIdx=colIdx+1
-                        interfaceElementMatrix%MATRIX(rowIdx,colIdx)=interfaceElementMatrix%MATRIX(rowIdx,colIdx) * &
+                        interfaceElementMatrix%matrix(rowIdx,colIdx)=interfaceElementMatrix%matrix(rowIdx,colIdx) * &
                         & interfaceInterpolation%DEPENDENT_INTERPOLATION(1)% &
                         & INTERPOLATION_PARAMETERS(lagrangeVariableType)%PTR%SCALE_FACTORS(colParameterIdx,colComponentIdx)
                       ENDDO !colParameterIdx
@@ -1129,7 +1130,7 @@ CONTAINS
                     DO colComponentIdx=1,lagrangeVariable%NUMBER_OF_COMPONENTS
                       DO colParameterIdx=1,interfaceDependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
                         colIdx=colIdx+1
-                        interfaceElementMatrix%MATRIX(rowIdx,colIdx)=interfaceElementMatrix%MATRIX(rowIdx,colIdx)* &
+                        interfaceElementMatrix%matrix(rowIdx,colIdx)=interfaceElementMatrix%matrix(rowIdx,colIdx)* &
                         & interfaceEquations%INTERPOLATION%VARIABLE_INTERPOLATION(coupledMeshIdx)% &
                         & DEPENDENT_INTERPOLATION(1)%INTERPOLATION_PARAMETERS(coupledMeshVariableType)%PTR% &
                         & SCALE_FACTORS(rowParameterIdx,rowComponentIdx)

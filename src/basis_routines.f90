@@ -44,7 +44,8 @@
 !> This module contains all basis function routines.
 MODULE BASIS_ROUTINES
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
+  USE BasisAccessRoutines
   USE CONSTANTS
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
@@ -149,6 +150,15 @@ MODULE BASIS_ROUTINES
   INTEGER(INTG), PARAMETER :: BASIS_NOT_COLLAPSED=4 !<The Xi direction is not collapsed \see BASIS_ROUTINES_XiCollapse,BASIS_ROUTINES
   !>@}
   
+  !> \addtogroup BASIS_ROUTINES_BoundaryXiType BASIS_ROUTINES::BoundaryXiType
+  !> \brief The boundary xi types
+  !> \see BASIS_ROUTINES
+  !>@{
+  INTEGER(INTG), PARAMETER :: BASIS_NO_BOUNDARY_XI=0 !<The xi is not on a boundary \see BASIS_ROUTINES_XiBoundaryType,BASIS_ROUTINES
+  INTEGER(INTG), PARAMETER :: BASIS_LINE_BOUNDARY_XI=1 !<The xi is on a boundary line \see BASIS_ROUTINES_XiBoundaryType,BASIS_ROUTINES
+  INTEGER(INTG), PARAMETER :: BASIS_FACE_BOUNDARY_XI=2 !<The xi is on a boundary face \see BASIS_ROUTINES_XiBoundaryType,BASIS_ROUTINES
+  !>@}
+  
   !!Module types
   ! 
   !!>Contains information on the defined basis functions
@@ -160,87 +170,214 @@ MODULE BASIS_ROUTINES
   
   !Module variables
 
-  TYPE(BASIS_FUNCTIONS_TYPE) :: BASIS_FUNCTIONS !<The tree of defined basis functions
-  
   !Interfaces
 
-  !>Evaluates the appropriate partial derivative index for the specificied basis function at a Xi location \see BASIS_ROUTINES
-  INTERFACE BASIS_EVALUATE_XI
-    MODULE PROCEDURE BASIS_EVALUATE_XI_DP
-  END INTERFACE !BASIS_EVALUATE_XI
-
-  !>Evaluates the list of gauss points and weights for a given basis type and order.
-  INTERFACE BASIS_GAUSS_POINTS_CALCULATE
-    MODULE PROCEDURE  BASIS_GAUSS_POINTS_CALCULATE_DP
-  END INTERFACE !BASIS_GAUSS_POINTS_CALCULATE
-
-  !>Interpolates the appropriate partial derivative index of the elements parameters for basis function at a Gauss point \see BASIS_ROUTINES
-  INTERFACE BASIS_INTERPOLATE_GAUSS
-    MODULE PROCEDURE BASIS_INTERPOLATE_GAUSS_DP
-  END INTERFACE !BASIS_INTERPOLATE_GAUSS
+  INTERFACE Basis_CollapsedXiGet
+    MODULE PROCEDURE BASIS_COLLAPSED_XI_GET
+  END INTERFACE Basis_CollapsedXiGet
   
-  !>Interpolates the appropriate partial derivative index of the elements parameters for basis function at Xi location \see BASIS_ROUTINES
-  INTERFACE BASIS_INTERPOLATE_XI
-    MODULE PROCEDURE BASIS_INTERPOLATE_XI_DP
-  END INTERFACE !BASIS_INTERPOLATE_XI
-
-  !>Interpolates the requested partial derivative index(ices) of the element parameters for basis function at a face Gauss point \see BASIS_ROUTINES
-  INTERFACE BASIS_INTERPOLATE_LOCAL_FACE_GAUSS
-    MODULE PROCEDURE BASIS_INTERPOLATE_LOCAL_FACE_GAUSS_DP
-  END INTERFACE !BASIS_INTERPOLATE_LOCAL_FACE_GAUSS
-
-  !>Sets/changes the interpolation type in each Xi direction for a basis
-  INTERFACE BASIS_INTERPOLATION_XI_SET
-    MODULE PROCEDURE BASIS_INTERPOLATION_XI_SET_NUMBER
-    MODULE PROCEDURE BASIS_INTERPOLATION_XI_SET_PTR
-  END INTERFACE !BASIS_INTERPOLATION_XI_SET
-
-  !>Sets/changes the number of Xi directions for a basis
-  INTERFACE BASIS_NUMBER_OF_XI_SET
-    MODULE PROCEDURE BASIS_NUMBER_OF_XI_SET_NUMBER
-    MODULE PROCEDURE BASIS_NUMBER_OF_XI_SET_PTR
-  END INTERFACE !BASIS_NUMBER_OF_XI_SET
-
-  !>Sets/changes the type for a basis.
-  INTERFACE BASIS_TYPE_SET
-    MODULE PROCEDURE BASIS_TYPE_SET_NUMBER
-    MODULE PROCEDURE BASIS_TYPE_SET_PTR
-  END INTERFACE !BASIS_TYPE_SET
-
   !>Sets/changes the collapsed Xi flags for a basis.
   INTERFACE BASIS_COLLAPSED_XI_SET
     MODULE PROCEDURE BASIS_COLLAPSED_XI_SET_NUMBER
     MODULE PROCEDURE BASIS_COLLAPSED_XI_SET_PTR
-  END INTERFACE !BASIS_COLLAPSED_XI_SET
+  END INTERFACE BASIS_COLLAPSED_XI_SET
 
+  !>Sets/changes the collapsed Xi flags for a basis.
+  INTERFACE Basis_CollapsedXiSet
+    MODULE PROCEDURE BASIS_COLLAPSED_XI_SET_NUMBER
+    MODULE PROCEDURE BASIS_COLLAPSED_XI_SET_PTR
+  END INTERFACE Basis_CollapsedXiSet
+
+  INTERFACE Basis_CreateStart
+    MODULE PROCEDURE BASIS_CREATE_START
+  END INTERFACE Basis_CreateStart
+
+  INTERFACE Basis_CreateFinish
+    MODULE PROCEDURE BASIS_CREATE_FINISH
+  END INTERFACE Basis_CreateFinish
+
+  !>Evaluates the appropriate partial derivative index for the specificied basis function at a Xi location \see BASIS_ROUTINES
+  INTERFACE BASIS_EVALUATE_XI
+    MODULE PROCEDURE BASIS_EVALUATE_XI_DP
+  END INTERFACE BASIS_EVALUATE_XI
+
+  !>Evaluates the appropriate partial derivative index for the specificied basis function at a Xi location \see BASIS_ROUTINES
+  INTERFACE Basis_EvaluateXi
+    MODULE PROCEDURE BASIS_EVALUATE_XI_DP
+  END INTERFACE Basis_EvaluateXi
+
+  !>Evaluates the list of gauss points and weights for a given basis type and order.
+  INTERFACE BASIS_GAUSS_POINTS_CALCULATE
+    MODULE PROCEDURE  BASIS_GAUSS_POINTS_CALCULATE_DP
+  END INTERFACE BASIS_GAUSS_POINTS_CALCULATE
+
+  !>Evaluates the list of gauss points and weights for a given basis type and order.
+  INTERFACE Basis_GaussPointsCalculate
+    MODULE PROCEDURE  BASIS_GAUSS_POINTS_CALCULATE_DP
+  END INTERFACE Basis_GaussPointsCalculate
+
+  !>Interpolates the appropriate partial derivative index of the elements parameters for basis function at a Gauss point \see BASIS_ROUTINES
+  INTERFACE BASIS_INTERPOLATE_GAUSS
+    MODULE PROCEDURE BASIS_INTERPOLATE_GAUSS_DP
+  END INTERFACE BASIS_INTERPOLATE_GAUSS
+  
+  !>Interpolates the appropriate partial derivative index of the elements parameters for basis function at a Gauss point \see BASIS_ROUTINES
+  INTERFACE Basis_InterpolateGauss
+    MODULE PROCEDURE BASIS_INTERPOLATE_GAUSS_DP
+  END INTERFACE Basis_InterpolateGauss
+  
+  !>Interpolates the appropriate partial derivative index of the elements parameters for basis function at Xi location \see BASIS_ROUTINES
+  INTERFACE BASIS_INTERPOLATE_XI
+    MODULE PROCEDURE BASIS_INTERPOLATE_XI_DP
+  END INTERFACE BASIS_INTERPOLATE_XI
+
+   !>Interpolates the appropriate partial derivative index of the elements parameters for basis function at Xi location \see BASIS_ROUTINES
+  INTERFACE Basis_InterpolateXi
+    MODULE PROCEDURE BASIS_INTERPOLATE_XI_DP
+  END INTERFACE Basis_InterpolateXi
+
+  !>Interpolates the requested partial derivative index(ices) of the element parameters for basis function at a face Gauss point \see BASIS_ROUTINES
+  INTERFACE BASIS_INTERPOLATE_LOCAL_FACE_GAUSS
+    MODULE PROCEDURE BASIS_INTERPOLATE_LOCAL_FACE_GAUSS_DP
+  END INTERFACE BASIS_INTERPOLATE_LOCAL_FACE_GAUSS
+
+   !>Interpolates the requested partial derivative index(ices) of the element parameters for basis function at a face Gauss point \see BASIS_ROUTINES
+  INTERFACE Basis_InterpolateLocalFaceGauss
+    MODULE PROCEDURE BASIS_INTERPOLATE_LOCAL_FACE_GAUSS_DP
+  END INTERFACE Basis_InterpolateLocalFaceGauss
+
+  INTERFACE Basis_LocalNodeXiCalculate
+    MODULE PROCEDURE BASIS_LOCAL_NODE_XI_CALCULATE
+  END INTERFACE Basis_LocalNodeXiCalculate
+
+  INTERFACE Basis_InterpolationXiGet
+    MODULE PROCEDURE BASIS_INTERPOLATION_XI_GET
+  END INTERFACE Basis_InterpolationXiGet
+  
+  !>Sets/changes the interpolation type in each Xi direction for a basis
+  INTERFACE BASIS_INTERPOLATION_XI_SET
+    MODULE PROCEDURE BASIS_INTERPOLATION_XI_SET_NUMBER
+    MODULE PROCEDURE BASIS_INTERPOLATION_XI_SET_PTR
+  END INTERFACE BASIS_INTERPOLATION_XI_SET
+
+   !>Sets/changes the interpolation type in each Xi direction for a basis
+  INTERFACE Basis_InterpolationXiSet
+    MODULE PROCEDURE BASIS_INTERPOLATION_XI_SET_NUMBER
+    MODULE PROCEDURE BASIS_INTERPOLATION_XI_SET_PTR
+  END INTERFACE Basis_InterpolationXiSet
+
+  INTERFACE Basis_NumberOfLocalNodesGet
+    MODULE PROCEDURE BASIS_NUMBER_OF_LOCAL_NODES_GET
+  END INTERFACE Basis_NumberOfLocalNodesGet
+
+  INTERFACE Basis_NumberOfXiGet
+    MODULE PROCEDURE BASIS_NUMBER_OF_XI_GET
+  END INTERFACE Basis_NumberOfXiGet
+  
+  !>Sets/changes the number of Xi directions for a basis
+  INTERFACE BASIS_NUMBER_OF_XI_SET
+    MODULE PROCEDURE BASIS_NUMBER_OF_XI_SET_NUMBER
+    MODULE PROCEDURE BASIS_NUMBER_OF_XI_SET_PTR
+  END INTERFACE BASIS_NUMBER_OF_XI_SET
+
+  !>Sets/changes the number of Xi directions for a basis
+  INTERFACE Basis_NumberOfXiSet
+    MODULE PROCEDURE BASIS_NUMBER_OF_XI_SET_NUMBER
+    MODULE PROCEDURE BASIS_NUMBER_OF_XI_SET_PTR
+  END INTERFACE Basis_NumberOfXiSet
+
+  INTERFACE Basis_QuadratureDestroy
+    MODULE PROCEDURE BASIS_QUADRATURE_DESTROY
+  END INTERFACE Basis_QuadratureDestroy
+
+  INTERFACE Basis_QuadratureMultipleGaussXiGet
+    MODULE PROCEDURE BASIS_QUADRATURE_MULTIPLE_GAUSS_XI_GET
+  END INTERFACE Basis_QuadratureMultipleGaussXiGet
+  
+  INTERFACE Basis_QuadratureNumberOfGaussXiGet
+    MODULE PROCEDURE BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_GET
+  END INTERFACE Basis_QuadratureNUmberOfGaussXiGet
+
+  INTERFACE Basis_QuadratureNumberOfGaussXiSet
+    MODULE PROCEDURE BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_SET
+  END INTERFACE Basis_QuadratureNUmberOfGaussXiSet
+
+  INTERFACE Basis_QuadratureOrderGet
+    MODULE PROCEDURE BASIS_QUADRATURE_ORDER_GET
+  END INTERFACE Basis_QuadratureOrderGet
+  
   !>Sets/changes the order of a quadrature for a basis quadrature.
   INTERFACE BASIS_QUADRATURE_ORDER_SET
     MODULE PROCEDURE BASIS_QUADRATURE_ORDER_SET_NUMBER
     MODULE PROCEDURE BASIS_QUADRATURE_ORDER_SET_PTR
-  END INTERFACE !BASIS_QUADRATURE_ORDER_SET
+  END INTERFACE BASIS_QUADRATURE_ORDER_SET
 
+  !>Sets/changes the order of a quadrature for a basis quadrature.
+  INTERFACE Basis_QuadratureOrderSet
+    MODULE PROCEDURE BASIS_QUADRATURE_ORDER_SET_NUMBER
+    MODULE PROCEDURE BASIS_QUADRATURE_ORDER_SET_PTR
+  END INTERFACE Basis_QuadratureOrderSet
+
+  INTERFACE Basis_QuadratureSingleGaussXiGet
+    MODULE PROCEDURE BASIS_QUADRATURE_SINGLE_GAUSS_XI_GET
+  END INTERFACE Basis_QuadratureSingleGaussXiGet
+
+  INTERFACE Basis_QuadratureTypeGet
+    MODULE PROCEDURE BASIS_QUADRATURE_TYPE_GET
+  END INTERFACE Basis_QuadratureTypeGet
+  
   !>Sets/changes the quadrature type for a basis
   INTERFACE BASIS_QUADRATURE_TYPE_SET
     MODULE PROCEDURE BASIS_QUADRATURE_TYPE_SET_NUMBER
     MODULE PROCEDURE BASIS_QUADRATURE_TYPE_SET_PTR
-  END INTERFACE !BASIS_QUADRATURE_TYPE_SET
+  END INTERFACE BASIS_QUADRATURE_TYPE_SET
   
+  !>Sets/changes the quadrature type for a basis
+  INTERFACE Basis_QuadratureTypeSet
+    MODULE PROCEDURE BASIS_QUADRATURE_TYPE_SET_NUMBER
+    MODULE PROCEDURE BASIS_QUADRATURE_TYPE_SET_PTR
+  END INTERFACE Basis_QuadratureTypeSet
+
+  INTERFACE Basis_TypeGet
+    MODULE PROCEDURE BASIS_TYPE_GET
+  END INTERFACE Basis_TypeGet
+  
+  !>Sets/changes the type for a basis.
+  INTERFACE BASIS_TYPE_SET
+    MODULE PROCEDURE BASIS_TYPE_SET_NUMBER
+    MODULE PROCEDURE BASIS_TYPE_SET_PTR
+  END INTERFACE BASIS_TYPE_SET
+
+  !>Sets/changes the type for a basis.
+  INTERFACE Basis_TypeSet
+    MODULE PROCEDURE BASIS_TYPE_SET_NUMBER
+    MODULE PROCEDURE BASIS_TYPE_SET_PTR
+  END INTERFACE Basis_TypeSet
+
+  !>Evaluates a linear Simplex basis function
   INTERFACE SIMPLEX_LINEAR_EVALUATE
     MODULE PROCEDURE SIMPLEX_LINEAR_EVALUATE_DP
-  END INTERFACE !SIMPLEX_LINEAR_EVALUATE
+  END INTERFACE SIMPLEX_LINEAR_EVALUATE
 
+  !>Evaluates a quadratic Simplex basis function
   INTERFACE SIMPLEX_QUADRATIC_EVALUATE
     MODULE PROCEDURE SIMPLEX_QUADRATIC_EVALUATE_DP
-  END INTERFACE !SIMPLEX_QUADRATIC_EVALUATE
+  END INTERFACE SIMPLEX_QUADRATIC_EVALUATE
 
+  !>Evaluates a cubic Simplex basis function
   INTERFACE SIMPLEX_CUBIC_EVALUATE
     MODULE PROCEDURE SIMPLEX_CUBIC_EVALUATE_DP
-  END INTERFACE !SIMPLEX_CUBIC_EVALUATE
+  END INTERFACE SIMPLEX_CUBIC_EVALUATE
 
   !>Evaluates the Lagrange/Hermite/Fourier tensor product basis function for the given basis
   INTERFACE BASIS_LHTP_BASIS_EVALUATE
     MODULE PROCEDURE BASIS_LHTP_BASIS_EVALUATE_DP
-  END INTERFACE !BASIS_LHTP_BASIS_EVALUATE
+  END INTERFACE BASIS_LHTP_BASIS_EVALUATE
+
+  !>Evaluates the Lagrange/Hermite/Fourier tensor product basis function for the given basis
+  INTERFACE Basis_LHTPBasisEvaluate
+    MODULE PROCEDURE BASIS_LHTP_BASIS_EVALUATE_DP
+  END INTERFACE Basis_LHTPBasisEvaluate
 
   PUBLIC BASIS_LAGRANGE_HERMITE_TP_TYPE,BASIS_SIMPLEX_TYPE,BASIS_SERENDIPITY_TYPE,BASIS_AUXILLIARY_TYPE,BASIS_B_SPLINE_TP_TYPE, &
     & BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE,BASIS_EXTENDED_LAGRANGE_TP_TYPE, BASIS_RADIAL_TYPE
@@ -258,54 +395,98 @@ MODULE BASIS_ROUTINES
   PUBLIC BASIS_GAUSS_LEGENDRE_QUADRATURE,BASIS_GAUSS_LAGUERRE_QUADRATURE,BASIS_GUASS_HERMITE_QUADRATURE,&
     & BASIS_ADAPTIVE_GAUSS_LEGENDRE_QUADRATURE,BASIS_GAUSS_SIMPLEX_QUADRATURE
 
-  PUBLIC BASIS_XI_COLLAPSED,BASIS_COLLAPSED_AT_XI0,BASIS_COLLAPSED_AT_XI1,BASIS_NOT_COLLAPSED, BASIS_FUNCTIONS
+  PUBLIC BASIS_XI_COLLAPSED,BASIS_COLLAPSED_AT_XI0,BASIS_COLLAPSED_AT_XI1,BASIS_NOT_COLLAPSED
 
-  PUBLIC BASIS_COLLAPSED_XI_SET
+  PUBLIC BASIS_NO_BOUNDARY_XI,BASIS_LINE_BOUNDARY_XI,BASIS_FACE_BOUNDARY_XI
+
+  PUBLIC Basis_BoundaryXiToXi,Basis_XiToBoundaryXi
   
+  PUBLIC BASIS_COLLAPSED_XI_SET
+
+  PUBLIC Basis_CollapsedXiSet
+
   PUBLIC BASIS_EVALUATE_XI
 
+  PUBLIC Basis_EvaluateXi
+
   PUBLIC BASIS_GAUSS_POINTS_CALCULATE
+
+  PUBLIC Basis_GaussPointsCalculate
   
   PUBLIC BASIS_INTERPOLATE_GAUSS,BASIS_INTERPOLATE_XI,BASIS_INTERPOLATE_LOCAL_FACE_GAUSS
 
+  PUBLIC Basis_InterpolateGauss,Basis_InterpolateXi,Basis_InterpolateLocalFaceGauss
+
   PUBLIC BASIS_LOCAL_NODE_XI_CALCULATE
+
+  PUBLIC Basis_LocalNodeXiCalculate
 
   PUBLIC BASIS_NUMBER_OF_LOCAL_NODES_GET
 
+  PUBLIC Basis_NumberOfLocalNodesGet
+
   PUBLIC BASIS_INTERPOLATION_XI_SET
+
+  PUBLIC Basis_InterpolationXiSet
 
   PUBLIC BASIS_NUMBER_OF_XI_SET
 
+  PUBLIC Basis_NumberOfXiSet
+
   PUBLIC BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_SET
+
+  PUBLIC Basis_QuadratureNumberOfGaussXiSet
 
   PUBLIC BASIS_QUADRATURE_DESTROY,BASIS_QUADRATURE_ORDER_SET,BASIS_QUADRATURE_TYPE_SET
 
-  PUBLIC BASIS_TYPE_SET,Basis_QuadratureLocalFaceGaussEvaluateSet
+  PUBLIC Basis_QuadratureDestroy,Basis_QuadratureOrderSet,Basis_QuadratureTypeSet
+
+  PUBLIC BASIS_TYPE_SET
+
+  PUBLIC Basis_TypeSet
+
+  PUBLIC Basis_QuadratureLocalFaceGaussEvaluateSet
   
   PUBLIC BASIS_CREATE_START,BASIS_CREATE_FINISH
 
-  PUBLIC BASIS_DESTROY
+  PUBLIC Basis_CreateStart,Basis_CreateFinish
 
-  PUBLIC BASES_FINALISE,BASES_INITIALISE
+  PUBLIC Basis_Destroy
 
-  PUBLIC BASIS_USER_NUMBER_FIND
+  PUBLIC Bases_Finalise,Bases_Initialise
 
   PUBLIC BASIS_COLLAPSED_XI_GET
 
+  PUBLIC Basis_CollapsedXiGet
+
   PUBLIC BASIS_INTERPOLATION_XI_GET
+
+  PUBLIC Basis_InterpolationXiGet
 
   PUBLIC BASIS_NUMBER_OF_XI_GET
 
+  PUBLIC Basis_NumberOfXiGet
+
   PUBLIC BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_GET
 
+  PUBLIC Basis_QuadratureNumberOfGaussXiGet
+
+!!TODO: These should be changed to operate on an array rather than have separate single/multiple routines
   PUBLIC BASIS_QUADRATURE_SINGLE_GAUSS_XI_GET, BASIS_QUADRATURE_MULTIPLE_GAUSS_XI_GET
 
-  PUBLIC BASIS_QUADRATURE_ORDER_GET 
+  PUBLIC Basis_QuadratureSingleGaussXiGet,Basis_QuadratureMultipleGaussXiGet
+
+  PUBLIC BASIS_QUADRATURE_ORDER_GET
+
+  PUBLIC Basis_QuadratureOrderGet
 
   PUBLIC BASIS_QUADRATURE_TYPE_GET
 
+  PUBLIC Basis_QuadratureTypeGet
+
   PUBLIC BASIS_TYPE_GET
 
+  PUBLIC Basis_TypeGet
 
 CONTAINS
 
@@ -324,12 +505,12 @@ CONTAINS
     ENTERS("BASES_FINALISE",ERR,ERROR,*999)
 
     !Destroy any created basis functions
-    DO WHILE(BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS>0)
-      CALL BASIS_DESTROY(BASIS_FUNCTIONS%BASES(1)%PTR,ERR,ERROR,*999)
+    DO WHILE(basisFunctions%NUMBER_BASIS_FUNCTIONS>0)
+      CALL BASIS_DESTROY(basisFunctions%BASES(1)%PTR,ERR,ERROR,*999)
     ENDDO !nb
     !Destroy basis functions and deallocated any memory allocated
-    BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS=0
-    IF(ASSOCIATED(BASIS_FUNCTIONS%BASES)) DEALLOCATE(BASIS_FUNCTIONS%BASES)
+    basisFunctions%NUMBER_BASIS_FUNCTIONS=0
+    IF(ASSOCIATED(basisFunctions%BASES)) DEALLOCATE(basisFunctions%BASES)
     
     EXITS("BASES_FINALISE")
     RETURN
@@ -352,8 +533,8 @@ CONTAINS
 
     ENTERS("BASES_INITIALISE",ERR,ERROR,*999)
 
-    BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS=0    
-    NULLIFY(BASIS_FUNCTIONS%BASES)
+    basisFunctions%NUMBER_BASIS_FUNCTIONS=0    
+    NULLIFY(basisFunctions%BASES)
    
     EXITS("BASES_INITIALISE")
     RETURN
@@ -374,7 +555,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: ni,nic,nn,nn1,nn2,nn3,nn4,ns,local_line_idx,local_face_idx
+    INTEGER(INTG) :: ni,nic,nn,nn1,nn2,nn3,nn4,ns,local_line_idx,local_face_idx,columnStart,columnStop
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
     ENTERS("BASIS_CREATE_FINISH",ERR,ERROR,*999)
@@ -510,8 +691,6 @@ CONTAINS
         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of local faces = ",BASIS%NUMBER_OF_LOCAL_FACES,ERR,ERROR,*999)
         DO local_face_idx=1,BASIS%NUMBER_OF_LOCAL_FACES
           CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Local face = ",local_face_idx,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Local face xi direction = ", &
-            & BASIS%LOCAL_FACE_XI_DIRECTION(local_face_idx),ERR,ERROR,*999)
           CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of nodes in local face = ", &
             & BASIS%NUMBER_OF_NODES_IN_LOCAL_FACE(local_face_idx),ERR,ERROR,*999)
           CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_NODES_IN_LOCAL_FACE(local_face_idx),4,4, &
@@ -522,15 +701,21 @@ CONTAINS
             CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_FACE(0,nn,local_face_idx),4,4, &
               & BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_FACE(1:,nn,local_face_idx),'("      Derivatives in local face :",4(X,I2))', &
               & '(33X,4(X,I2))',ERR,ERROR,*999)
-          ENDDO
-        ENDDO !ni
+          ENDDO !NN
+          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_XI_COORDINATES-1,3,3, &
+            & basis%localFaceXiDirections(:,local_face_idx),'("      Local face xi directions  :",3(X,I2))','(33X,3(X,I2))', &
+            & err,error,*999)
+          CALL WriteStringFmtValue(DIAGNOSTIC_OUTPUT_TYPE,"      Local face xi normal      : ", &
+            & BASIS%localFaceXiNormal(local_face_idx),"I2",ERR,ERROR,*999)
+        ENDDO !local_face_idx
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,-BASIS%NUMBER_OF_XI_COORDINATES,1,BASIS%NUMBER_OF_XI_COORDINATES,9,9, &
+          & basis%xiNormalLocalFace(-BASIS%NUMBER_OF_XI_COORDINATES:BASIS%NUMBER_OF_XI_COORDINATES), &
+          & '("    Xi normal local face :",9(X,I2))','(26X,9(X,I2))',err,error,*999)
       ENDIF
       CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Local lines:",ERR,ERROR,*999)
       CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of local lines = ",BASIS%NUMBER_OF_LOCAL_LINES,ERR,ERROR,*999)
       DO local_line_idx=1,BASIS%NUMBER_OF_LOCAL_LINES
         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Local line = ",local_line_idx,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Local line xi direction = ", &
-          & BASIS%LOCAL_LINE_XI_DIRECTION(local_line_idx),ERR,ERROR,*999)
         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of nodes in local line = ", &
           & BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(local_line_idx),ERR,ERROR,*999)
         CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(local_line_idx),4,4, &
@@ -539,11 +724,26 @@ CONTAINS
         CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(local_line_idx),4,4, &
           & BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_LINE(:,local_line_idx),'("      Derivatives in local line :",4(X,I2))', &
           & '(33X,4(X,I2))',ERR,ERROR,*999)
-        IF(BASIS%NUMBER_OF_XI==2) THEN
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Local line xi normal = ", &
-            & BASIS%LOCAL_XI_NORMAL(local_line_idx),ERR,ERROR,*999)
+        CALL WriteStringFmtValue(DIAGNOSTIC_OUTPUT_TYPE,"      Local line xi direction   : ", &
+          & BASIS%localLineXiDirection(local_line_idx),"I2",ERR,ERROR,*999)
+        IF(BASIS%NUMBER_OF_XI>1) THEN
+          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_XI-1,2,2,basis%localLineXiNormals(:,local_line_idx), &
+            &  '("      Local line xi normals     :",2(X,I2))','(31X,2(X,I2))',err,error,*999)
         ENDIF
-      ENDDO !ni
+      ENDDO !local_line_idx
+      IF(basis%NUMBER_OF_XI>=2) THEN
+        IF(BASIS%NUMBER_OF_XI==3) THEN
+          columnStart=-BASIS%NUMBER_OF_XI_COORDINATES
+          columnStop=BASIS%NUMBER_OF_XI_COORDINATES
+        ELSE
+          columnStart=1
+          columnStop=1
+        ENDIF
+        CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,-BASIS%NUMBER_OF_XI_COORDINATES,1,BASIS%NUMBER_OF_XI_COORDINATES, &
+          & columnStart,1,columnStop,9,9,basis%xiNormalsLocalLine(-BASIS%NUMBER_OF_XI_COORDINATES:BASIS%NUMBER_OF_XI_COORDINATES, &
+          & columnStart:columnStop),WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+          & '("    Xi normal local line','(",I2,",:)',':",9(X,I2))','(31X,9(X,I2))',ERR,ERROR,*999)
+      ENDIF
       CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of sub-bases = ",BASIS%NUMBER_OF_SUB_BASES,ERR,ERROR,*999)
     ENDIF
     
@@ -597,18 +797,18 @@ CONTAINS
         CALL FlagError("Basis number is already defined",ERR,ERROR,*999)
       ELSE
         !Allocate new basis function and add it to the basis functions
-        ALLOCATE(NEW_BASES(BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS+1),STAT=ERR)
+        ALLOCATE(NEW_BASES(basisFunctions%NUMBER_BASIS_FUNCTIONS+1),STAT=ERR)
         IF(ERR/=0) CALL FlagError("Could not allocate NEW_BASES",ERR,ERROR,*999)
         ALLOCATE(NEW_BASIS,STAT=ERR)
         IF(ERR/=0) CALL FlagError("Could not allocate NEW_BASIS",ERR,ERROR,*999)
         CALL BASIS_INITIALISE(NEW_BASIS,ERR,ERROR,*999)
-        DO nb=1,BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS
-          NEW_BASES(nb)%PTR=>BASIS_FUNCTIONS%BASES(nb)%PTR
+        DO nb=1,basisFunctions%NUMBER_BASIS_FUNCTIONS
+          NEW_BASES(nb)%PTR=>basisFunctions%BASES(nb)%PTR
         ENDDO !nb
-        BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS=BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS+1
-        NEW_BASES(BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS)%PTR=>NEW_BASIS
-        IF(ASSOCIATED(BASIS_FUNCTIONS%BASES)) DEALLOCATE(BASIS_FUNCTIONS%BASES)
-        BASIS_FUNCTIONS%BASES=>NEW_BASES
+        basisFunctions%NUMBER_BASIS_FUNCTIONS=basisFunctions%NUMBER_BASIS_FUNCTIONS+1
+        NEW_BASES(basisFunctions%NUMBER_BASIS_FUNCTIONS)%PTR=>NEW_BASIS
+        IF(ASSOCIATED(basisFunctions%BASES)) DEALLOCATE(basisFunctions%BASES)
+        basisFunctions%BASES=>NEW_BASES
         !Initialise the new basis function pointers
         NEW_BASIS%NUMBER_OF_SUB_BASES=0
         NULLIFY(NEW_BASIS%SUB_BASES)
@@ -617,7 +817,7 @@ CONTAINS
         NEW_BASIS%BASIS_FINISHED=.FALSE.
         NEW_BASIS%USER_NUMBER=USER_NUMBER
         NEW_BASIS%FAMILY_NUMBER=0
-        NEW_BASIS%GLOBAL_NUMBER=BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS
+        NEW_BASIS%GLOBAL_NUMBER=basisFunctions%NUMBER_BASIS_FUNCTIONS
         !Set the default basis parameters
         NEW_BASIS%TYPE=BASIS_LAGRANGE_HERMITE_TP_TYPE
         NEW_BASIS%NUMBER_OF_XI=3
@@ -650,7 +850,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys a basis identified by its basis user number \see BASIS_ROUTINES::BASIS_DESTROY_FAMILY,OPENCMISS::CMISSBasisDestroy
+  !>Destroys a basis identified by its basis user number \see BASIS_ROUTINES::BASIS_DESTROY_FAMILY,OpenCMISS::Iron::cmfe_BasisDestroy
   RECURSIVE SUBROUTINE BASIS_DESTROY_NUMBER(USER_NUMBER,ERR,ERROR,*)
 
     !Argument variables
@@ -674,7 +874,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys a basis. \see BASIS_ROUTINES::BASIS_DESTROY_FAMILY,OPENCMISS::CMISSBasisDestroy
+  !>Destroys a basis. \see BASIS_ROUTINES::BASIS_DESTROY_FAMILY,OpenCMISS::Iron::cmfe_BasisDestroy
   RECURSIVE SUBROUTINE BASIS_DESTROY(BASIS,ERR,ERROR,*)
 
     !Argument variables
@@ -767,6 +967,761 @@ CONTAINS
     
   END FUNCTION BASIS_EVALUATE_XI_DP
   
+  !
+  !================================================================================================================================
+  !
+
+  !>Converts a xi location on a boundary face or line to a full xi location.
+  SUBROUTINE Basis_BoundaryXiToXi(basis,localLineFaceNumber,boundaryXi,fullXi,err,error,*)
+
+    !Argument variables
+    TYPE(BASIS_TYPE), POINTER :: basis !<A pointer to the basis to convert the boundary xi for
+    INTEGER(INTG), INTENT(IN) :: localLineFaceNumber !<The local line/face number containing the boundary xi
+    REAL(DP), INTENT(IN) :: boundaryXi(:) !<The boundary xi location to convert to the full xi location. Note the size of the boundary xi array will determine if we are dealing with a line xi or a face xi.
+    REAL(DP), INTENT(OUT) :: fullXi(:) !<On exit, the equivalent full xi location of the boundary xi location
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: normalXi1,normalXi2,numberOfBoundaryXi,numberOfXi
+    TYPE(VARYING_STRING) :: localError
+        
+    ENTERS("Basis_BoundaryXiToXi",err,error,*999)
+
+    IF(ASSOCIATED(basis)) THEN
+      IF(basis%BASIS_FINISHED) THEN
+        numberOfBoundaryXi=SIZE(boundaryXi,1)
+        numberOfXi=basis%NUMBER_OF_XI
+        IF(numberOfBoundaryXi<=numberOfXi) THEN
+          IF(SIZE(fullXi,1)>=numberOfXi) THEN
+            IF(numberOfBoundaryXi==numberOfXi) THEN
+              !Basis is of the same dimension as the boundary so just copy over
+              fullXi(1:numberOfXi)=boundaryXi(1:numberOfXi)
+            ELSE
+              SELECT CASE(numberOfBoundaryXi)
+              CASE(1)
+                !On a line
+                IF(localLineFaceNumber>=1.AND.localLineFaceNumber<=basis%NUMBER_OF_LOCAL_LINES) THEN
+                  SELECT CASE(basis%type)
+                  CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
+                    SELECT CASE(numberOfXi)
+                    CASE(2)
+                      !2D element
+                      normalXi1=basis%localLineXiNormals(1,localLineFaceNumber)
+                      SELECT CASE(normalXi1)
+                      CASE(-2)
+                        fullXi(1)=boundaryXi(1)
+                        fullXi(2)=0.0_DP
+                      CASE(-1)
+                        fullXi(1)=0.0_DP
+                        fullXi(2)=boundaryXi(1)
+                      CASE(1)
+                        fullXi(1)=1.0_DP
+                        fullXi(2)=boundaryXi(1)
+                      CASE(2)
+                        fullXi(1)=boundaryXi(1)
+                        fullXi(2)=1.0_DP
+                      CASE DEFAULT
+                        localError="The normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                          & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                          & " on a Lagrange-Hermite basis with two xi directions."
+                        CALL FlagError(localError,err,error,*999)
+                      END SELECT
+                    CASE(3)
+                      !3D element
+                      normalXi1=basis%localLineXiNormals(1,localLineFaceNumber)
+                      normalXi2=basis%localLineXiNormals(2,localLineFaceNumber)
+                      SELECT CASE(normalXi1)
+                      CASE(-3)
+                        SELECT CASE(normalXi2)
+                        CASE(-2)
+                          fullXi(1)=boundaryXi(1)
+                          fullXi(2)=0.0_DP
+                          fullXi(3)=0.0_DP
+                        CASE(-1)
+                          fullXi(1)=0.0_DP
+                          fullXi(2)=boundaryXi(1)
+                          fullXi(3)=0.0_DP
+                        CASE(1)
+                          fullXi(1)=1.0_DP
+                          fullXi(2)=boundaryXi(1)
+                          fullXi(3)=0.0_DP
+                        CASE(2)
+                          fullXi(1)=boundaryXi(1)
+                          fullXi(2)=1.0_DP
+                          fullXi(3)=0.0_DP
+                        CASE DEFAULT
+                          localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
+                            & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                            & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                            & " on a Lagrange-Hermite basis with three xi directions."
+                          CALL FlagError(localError,err,error,*999)
+                        END SELECT
+                      CASE(-2)
+                        SELECT CASE(normalXi2)
+                        CASE(-3)
+                          fullXi(1)=boundaryXi(1)
+                          fullXi(2)=0.0_DP
+                          fullXi(3)=0.0_DP
+                        CASE(-1)
+                          fullXi(1)=0.0_DP
+                          fullXi(2)=0.0_DP
+                          fullXi(3)=boundaryXi(1)
+                        CASE(1)
+                          fullXi(1)=1.0_DP
+                          fullXi(2)=0.0_DP
+                          fullXi(3)=boundaryXi(1)
+                        CASE(3)
+                          fullXi(1)=boundaryXi(1)
+                          fullXi(2)=0.0_DP
+                          fullXi(3)=1.0_DP
+                        CASE DEFAULT
+                          localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
+                            & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                            & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                            & " on a Lagrange-Hermite basis with three xi directions."
+                          CALL FlagError(localError,err,error,*999)
+                        END SELECT
+                      CASE(-1)
+                       SELECT CASE(normalXi2)
+                        CASE(-3)
+                          fullXi(1)=0.0_DP
+                          fullXi(2)=boundaryXi(1)
+                          fullXi(3)=0.0_DP
+                        CASE(-2)
+                          fullXi(1)=0.0_DP
+                          fullXi(2)=0.0_DP
+                          fullXi(3)=boundaryXi(1)
+                        CASE(2)
+                          fullXi(1)=0.0_DP
+                          fullXi(2)=1.0_DP
+                          fullXi(3)=boundaryXi(1)
+                        CASE(3)
+                          fullXi(1)=0.0_DP
+                          fullXi(2)=boundaryXi(1)
+                          fullXi(3)=1.0_DP
+                        CASE DEFAULT
+                          localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
+                            & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                            & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                            & " on a Lagrange-Hermite basis with three xi directions."
+                          CALL FlagError(localError,err,error,*999)
+                        END SELECT
+                      CASE(1)
+                        SELECT CASE(normalXi2)
+                        CASE(-3)
+                          fullXi(1)=1.0_DP
+                          fullXi(2)=boundaryXi(1)
+                          fullXi(3)=0.0_DP
+                        CASE(-2)
+                          fullXi(1)=1.0_DP
+                          fullXi(2)=0.0_DP
+                          fullXi(3)=boundaryXi(1)
+                        CASE(2)
+                          fullXi(1)=1.0_DP
+                          fullXi(2)=1.0_DP
+                          fullXi(3)=boundaryXi(1)
+                        CASE(3)
+                          fullXi(1)=1.0_DP
+                          fullXi(2)=boundaryXi(1)
+                          fullXi(3)=1.0_DP
+                        CASE DEFAULT
+                          localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
+                            & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                            & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                            & " on a Lagrange-Hermite basis with three xi directions."
+                          CALL FlagError(localError,err,error,*999)
+                        END SELECT
+                      CASE(2)
+                        SELECT CASE(normalXi2)
+                        CASE(-3)
+                          fullXi(1)=boundaryXi(1)
+                          fullXi(2)=1.0_DP
+                          fullXi(3)=0.0_DP
+                        CASE(-1)
+                          fullXi(1)=0.0_DP
+                          fullXi(2)=1.0_DP
+                          fullXi(3)=boundaryXi(1)
+                        CASE(1)
+                          fullXi(1)=1.0_DP
+                          fullXi(2)=1.0_DP
+                          fullXi(3)=boundaryXi(1)
+                        CASE(3)
+                          fullXi(1)=boundaryXi(1)
+                          fullXi(2)=1.0_DP
+                          fullXi(3)=1.0_DP
+                        CASE DEFAULT
+                          localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
+                            & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                            & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                            & " on a Lagrange-Hermite basis with three xi directions."
+                          CALL FlagError(localError,err,error,*999)
+                        END SELECT
+                      CASE(3)
+                        SELECT CASE(normalXi2)
+                        CASE(-2)
+                          fullXi(1)=boundaryXi(1)
+                          fullXi(2)=0.0_DP
+                          fullXi(3)=1.0_DP
+                        CASE(-1)
+                          fullXi(1)=0.0_DP
+                          fullXi(2)=boundaryXi(1)
+                          fullXi(3)=1.0_DP
+                        CASE(1)
+                          fullXi(1)=1.0_DP
+                          fullXi(2)=boundaryXi(1)
+                          fullXi(3)=1.0_DP
+                        CASE(2)
+                          fullXi(1)=boundaryXi(1)
+                          fullXi(2)=1.0_DP
+                          fullXi(3)=1.0_DP
+                        CASE DEFAULT
+                          localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
+                            & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                            & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                            & " on a Lagrange-Hermite basis with three xi directions."
+                          CALL FlagError(localError,err,error,*999)
+                        END SELECT
+                      CASE DEFAULT
+                        localError="The normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                          & " is invalid for a local line "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                          & " on a basis with two xi directions."
+                        CALL FlagError(localError,err,error,*999)
+                      END SELECT
+                    CASE DEFAULT
+                      localError="The number of xi directions of "//TRIM(NumberToVString(numberOfXi,"*",err,error))// &
+                        & " is invalid."
+                      CALL FlagError(localError,err,error,*999)
+                    END SELECT
+                  CASE(BASIS_SIMPLEX_TYPE)
+                    SELECT CASE(numberOfXi)
+                    CASE(2)
+                      !2D element
+                      normalXi1=basis%localLineXiNormals(1,localLineFaceNumber)
+                      SELECT CASE(normalXi1)
+                      CASE(1)
+                        fullXi(1)=0.0_DP
+                        fullXi(2)=boundaryXi(1)
+                      CASE(2)
+                        fullXi(1)=boundaryXi(1)
+                        fullXi(2)=0.0_DP
+                      CASE(3)
+                        fullXi(1)=boundaryXi(1)
+                        fullXi(2)=1.0_DP-boundaryXi(1)
+                      CASE DEFAULT
+                        localError="The normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                          & " is invalid for a local line "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                          & " on a simplex basis with two xi directions."
+                        CALL FlagError(localError,err,error,*999)
+                      END SELECT
+                    CASE(3)
+                      !3D element
+                      normalXi1=basis%localLineXiNormals(1,localLineFaceNumber)
+                      normalXi2=basis%localLineXiNormals(2,localLineFaceNumber)
+                      SELECT CASE(normalXi1)
+                      CASE(1)
+                        SELECT CASE(normalXi2)
+                        CASE(2)
+                          fullXi(1)=0.0_DP
+                          fullXi(2)=0.0_DP
+                          fullXi(3)=boundaryXi(1)
+                        CASE(3)
+                          fullXi(1)=0.0_DP
+                          fullXi(2)=boundaryXi(1)
+                          fullXi(3)=0.0_DP
+                        CASE(4)
+                          fullXi(1)=0.0_DP
+                          fullXi(2)=boundaryXi(1)
+                          fullXi(3)=1.0_DP-boundaryXi(1)
+                        CASE DEFAULT
+                          localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
+                            & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                            & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                            & " on a simplex basis with three xi directions."
+                          CALL FlagError(localError,err,error,*999)
+                        END SELECT
+                      CASE(2)
+                        SELECT CASE(normalXi2)
+                        CASE(1)
+                          fullXi(1)=0.0_DP
+                          fullXi(2)=0.0_DP
+                          fullXi(3)=boundaryXi(1)
+                        CASE(3)
+                          fullXi(1)=boundaryXi(1)
+                          fullXi(2)=0.0_DP
+                          fullXi(3)=0.0_DP
+                        CASE(4)
+                          fullXi(1)=boundaryXi(1)
+                          fullXi(2)=0.0_DP
+                          fullXi(3)=1.0_DP-boundaryXi(1)
+                        CASE DEFAULT
+                          localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
+                            & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                            & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                            & " on a simplex basis with three xi directions."
+                          CALL FlagError(localError,err,error,*999)
+                        END SELECT
+                      CASE(3)
+                        SELECT CASE(normalXi2)
+                        CASE(1)
+                          fullXi(1)=0.0_DP
+                          fullXi(2)=boundaryXi(1)
+                          fullXi(3)=0.0_DP
+                        CASE(2)
+                          fullXi(1)=boundaryXi(1)
+                          fullXi(2)=0.0_DP
+                          fullXi(3)=0.0_DP
+                        CASE(4)
+                          fullXi(1)=boundaryXi(1)
+                          fullXi(2)=1.0_DP-boundaryXi(1)
+                          fullXi(3)=0.0_DP
+                        CASE DEFAULT
+                          localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
+                            & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                            & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                            & " on a simplex basis with three xi directions."
+                          CALL FlagError(localError,err,error,*999)
+                        END SELECT
+                      CASE(4)
+                        SELECT CASE(normalXi2)
+                        CASE(1)
+                          fullXi(1)=0.0_DP
+                          fullXi(2)=boundaryXi(1)
+                          fullXi(3)=1.0_DP-boundaryXi(1)
+                        CASE(2)
+                          fullXi(1)=boundaryXi(1)
+                          fullXi(2)=0.0_DP
+                          fullXi(3)=1.0_DP-boundaryXi(1)
+                        CASE(3)
+                          fullXi(1)=boundaryXi(1)
+                          fullXi(2)=1.0_DP-boundaryXi(1)
+                          fullXi(3)=0.0_DP
+                        CASE DEFAULT
+                          localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
+                            & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                            & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                            & " on a simplex basis with three xi directions."
+                          CALL FlagError(localError,err,error,*999)
+                        END SELECT
+                      CASE DEFAULT
+                        localError="The normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                          & " is invalid for a local line "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                          & " on a simplex basis with three xi directions."
+                        CALL FlagError(localError,err,error,*999)
+                      END SELECT
+                    CASE DEFAULT
+                      localError="The number of xi directions of "//TRIM(NumberToVString(numberOfXi,"*",err,error))// &
+                        & " is invalid."
+                      CALL FlagError(localError,err,error,*999)
+                    END SELECT
+                  CASE(BASIS_SERENDIPITY_TYPE,BASIS_AUXILLIARY_TYPE,BASIS_B_SPLINE_TP_TYPE, &
+                    & BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE,BASIS_EXTENDED_LAGRANGE_TP_TYPE)
+                    CALL FlagError("Not implemented.",err,error,*999)
+                  CASE DEFAULT
+                    localError="The basis type of "//TRIM(NumberToVString(basis%TYPE,"*",err,error))// &
+                      & " for basis number "//TRIM(NumberToVString(basis%USER_NUMBER,"*",err,error))//" is invalid."
+                    CALL FlagError(localError,err,error,*999)
+                  END SELECT
+                ELSE
+                  localError="The specified local line/face number of "// &
+                    & TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                    & " is invalid. The local line number must be >=1 and <= "// &
+                    & TRIM(NumberToVString(basis%NUMBER_OF_LOCAL_LINES,"*",err,error))//"."
+                  CALL FlagError(localError,err,error,*999)
+                ENDIF
+              CASE(2)
+                !On a face
+                IF(localLineFaceNumber>=1.AND.localLineFaceNumber<=basis%NUMBER_OF_LOCAL_FACES) THEN
+                  normalXi1=basis%localFaceXiNormal(localLineFaceNumber)
+                  SELECT CASE(basis%type)
+                  CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)                    
+                    SELECT CASE(normalXi1)
+                    CASE(-3)
+                      fullXi(1)=boundaryXi(1)
+                      fullXi(2)=boundaryXi(2)
+                      fullXi(3)=0.0_DP
+                    CASE(-2)
+                      fullXi(1)=boundaryXi(1)
+                      fullXi(2)=0.0_DP
+                      fullXi(3)=boundaryXi(2)
+                    CASE(-1)
+                      fullXi(1)=0.0_DP
+                      fullXi(2)=boundaryXi(1)
+                      fullXi(3)=boundaryXi(2)
+                    CASE(1)
+                      fullXi(1)=1.0_DP
+                      fullXi(2)=boundaryXi(1)
+                      fullXi(3)=boundaryXi(2)
+                    CASE(2)
+                      fullXi(1)=boundaryXi(1)
+                      fullXi(2)=1.0_DP
+                      fullXi(3)=boundaryXi(2)
+                    CASE(3)
+                      fullXi(1)=boundaryXi(1)
+                      fullXi(2)=boundaryXi(2)
+                      fullXi(3)=1.0_DP
+                    CASE DEFAULT
+                      localError="The normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                        & " is invalid for a local line "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                        & " on a Lagrange-Hermite basis with three xi directions."
+                      CALL FlagError(localError,err,error,*999)
+                    END SELECT
+                  CASE(BASIS_SIMPLEX_TYPE)
+                    SELECT CASE(normalXi1)
+                    CASE(1)
+                      fullXi(1)=0.0_DP
+                      fullXi(2)=boundaryXi(1)
+                      fullXi(3)=boundaryXi(2)
+                    CASE(2)
+                      fullXi(1)=boundaryXi(1)
+                      fullXi(2)=0.0_DP
+                      fullXi(3)=1-boundaryXi(1)-boundaryXi(2)
+                    CASE(3)
+                      fullXi(1)=boundaryXi(1)
+                      fullXi(2)=boundaryXi(2)
+                      fullXi(3)=0.0_DP
+                    CASE(4)
+                      fullXi(1)=boundaryXi(1)
+                      fullXi(2)=1.0_DP-boundaryXi(1)-boundaryXi(2)
+                      fullXi(3)=boundaryXi(2)
+                    CASE DEFAULT
+                      localError="The normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                        & " is invalid for a local line "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                        & " on a simplex basis with three xi directions."
+                      CALL FlagError(localError,err,error,*999)
+                    END SELECT
+                  CASE(BASIS_SERENDIPITY_TYPE,BASIS_AUXILLIARY_TYPE,BASIS_B_SPLINE_TP_TYPE, &
+                    & BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE,BASIS_EXTENDED_LAGRANGE_TP_TYPE)
+                    CALL FlagError("Not implemented.",err,error,*999)
+                  CASE DEFAULT
+                    localError="The basis type of "//TRIM(NumberToVString(basis%TYPE,"*",err,error))// &
+                      & " for basis number "//TRIM(NumberToVString(basis%USER_NUMBER,"*",err,error))//" is invalid."
+                    CALL FlagError(localError,err,error,*999)
+                  END SELECT
+                ELSE
+                  localError="The specified local line/face number of "// &
+                    & TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                    & " is invalid. The local face number must be >=1 and <= "// &
+                    & TRIM(NumberToVString(basis%NUMBER_OF_LOCAL_FACES,"*",err,error))//"."
+                  CALL FlagError(localError,err,error,*999)
+                ENDIF
+              CASE DEFAULT
+                localError="Invalid number of boundary xi directions. The number of boundary xi directions of "// &
+                  & TRIM(NumberToVString(numberOfBoundaryXi,"*",err,error))//" must be <= the number of basis xi directions of "// &
+                  & TRIM(NumberToVString(numberOfXi,"*",err,error))//"."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT
+            ENDIF
+          ELSE
+            localError="The size of the full xi array of "//TRIM(NumberToVString(SIZE(fullXi,1),"*",err,error))// &
+              & " must be >= the number of basis xi directions of "//TRIM(NumberToVString(numberOfXi,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+        ELSE
+          localError="The size of the boundary xi array of "//TRIM(NumberToVString(numberOfBoundaryXi,"*",err,error))// &
+            & " is invalid. The size must be >= 1 and <= 2."
+          CALL FlagError(localError,err,error,*999)          
+        ENDIF
+      ELSE
+        CALL FlagError("Basis has not been finished.",err,error,*999)
+      ENDIF
+    ELSE
+      CALL FlagError("Basis is not associated.",err,error,*999)
+    ENDIF
+    
+    EXITS("Basis_BoundaryXiToXi")
+    RETURN
+999 ERRORSEXITS("Basis_BoundaryXiToXi",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_BoundaryXiToXi
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Converts a full xi location on a boundary face or line if the xi location is on a face or line.
+  SUBROUTINE Basis_XiToBoundaryXi(basis,fullXi,boundaryXiType,localLineFaceNumber,boundaryXi,err,error,*)
+
+    !Argument variables
+    TYPE(BASIS_TYPE), POINTER :: basis !<A pointer to the basis to convert the full xi for
+    REAL(DP), INTENT(IN) :: fullXi(:) !<The equivalent full xi location to find the boundary xi location
+    INTEGER(INTG), INTENT(OUT) :: boundaryXiType !<On exit, the type of boundary xi location. If the fullXi location is not on the boundary the the xi type will be BASIS_NO_BOUNDARY_XI. If the fullXi location is on a line then the type will be BASIS_LINE_BOUNDARY_XI. If the fullXi location is on a face then the type will be BASIS_FACE_BOUNDARY_XI.
+    INTEGER(INTG), INTENT(OUT) :: localLineFaceNumber !<On exit, the local line/face number containing the boundary xi. The the full xi location is not on a face or line the the localLineFaceNumber will be zero.
+    REAL(DP), INTENT(OUT) :: boundaryXi(:) !<On exit, the equivalent boundary xi location for the full xi location. Note the size of the boundary xi array will determine if we are dealing with a line xi or a face xi.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: normalDirection1,normalDirection2,numberOfBoundaries,numberOfXi,numberOfXiCoordinates,onBoundary(4),xiIdx
+    TYPE(VARYING_STRING) :: localError
+        
+    ENTERS("Basis_XiToBoundaryXi",err,error,*999)
+
+    boundaryXiType=BASIS_NO_BOUNDARY_XI
+    localLineFaceNumber=0
+    boundaryXi=0.0_DP
+    
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(.NOT.basis%BASIS_FINISHED) CALL FlagError("Basis has not been finished.",err,error,*999)
+    numberOfXi=basis%NUMBER_OF_XI
+    numberOfXiCoordinates=basis%NUMBER_OF_XI_COORDINATES
+    IF(SIZE(fullXi,1)<numberOfXi) THEN
+      localError="The size of the full xi array of "//TRIM(NumberToVString(SIZE(fullXi,1),"*",err,error))// &
+        & " must be >= the number of basis xi directions of "//TRIM(NumberToVString(numberOfXi,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    !Determine if we are near the boundary
+    onBoundary=0
+    numberOfBoundaries=0
+    DO xiIdx=1,numberOfXi
+      IF(ABS(fullXi(xiIdx))<ZERO_TOLERANCE) THEN
+        onBoundary(xiIdx)=-1
+        numberOfBoundaries=numberOfBoundaries+1
+      ELSE IF(ABS(fullXi(xiIdx)-1.0_DP)<ZERO_TOLERANCE) THEN
+        onBoundary(xiIdx)=+1
+        numberOfBoundaries=numberOfBoundaries+1
+      ENDIF
+    ENDDO !xiIdx
+    SELECT CASE(numberOfBoundaries)
+    CASE(0) 
+      !The xi location is not near the boundary. Return zero
+      localLineFaceNumber=0
+      boundaryXiType=BASIS_NO_BOUNDARY_XI
+      boundaryXi=0.0_DP
+    CASE(1)
+      !The xi location is on a face in 3D or a line in 2D.
+      IF(SIZE(boundaryXi,1)<(numberOfXi-1)) THEN
+        localError="The size of the boundary xi array of "//TRIM(NumberToVString(SIZE(boundaryXi,1),"*",err,error))// &
+          & " must be >= 2."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      !Find the normal
+      normalDirection1=0
+      DO xiIdx=1,numberOfXi
+        IF(onBoundary(xiIdx)/=0) THEN
+          normalDirection1=onBoundary(xiIdx)
+          EXIT
+        ENDIF
+      ENDDO !xiIdx
+      IF(normalDirection1==0) CALL FlagError("Could not find normal direction.",err,error,*999)
+      SELECT CASE(basis%TYPE)
+      CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
+        SELECT CASE(numberOfXi)
+        CASE(2)
+          localLineFaceNumber=basis%xiNormalsLocalLine(normalDirection1,1)
+          boundaryXiType=BASIS_LINE_BOUNDARY_XI
+          SELECT CASE(normalDirection1)
+          CASE(-2)
+            boundaryXi(1)=fullXi(1)
+          CASE(-1)
+            boundaryXi(1)=fullXi(2)
+          CASE(1)
+            boundaryXi(1)=fullXi(2)
+          CASE(2)
+            boundaryXi(1)=fullXi(1)
+          CASE DEFAULT
+            localError="The normal xi direction of "//TRIM(NumberToVString(normalDirection1,"*",err,error))// &
+              & " is invalid on a Lagrange-Hermite basis with two xi directions."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE(3)
+          localLineFaceNumber=basis%xiNormalLocalFace(normalDirection1)
+          boundaryXiType=BASIS_FACE_BOUNDARY_XI
+          SELECT CASE(normalDirection1)
+          CASE(-3)
+            boundaryXi(1)=fullXi(2)
+            boundaryXi(2)=fullXi(1)
+          CASE(-2)
+            boundaryXi(1)=fullXi(1)
+            boundaryXi(2)=fullXi(3)
+          CASE(-1)
+            boundaryXi(1)=fullXi(3)
+            boundaryXi(2)=fullXi(2)
+          CASE(1)
+            boundaryXi(1)=fullXi(2)
+            boundaryXi(2)=fullXi(3)
+          CASE(2)
+            boundaryXi(1)=fullXi(3)
+            boundaryXi(2)=fullXi(1)
+          CASE(3)
+            boundaryXi(1)=fullXi(1)
+            boundaryXi(2)=fullXi(2)
+          CASE DEFAULT
+            localError="The normal xi direction of "//TRIM(NumberToVString(normalDirection1,"*",err,error))// &
+              & " is invalid on a Lagrange-Hermite basis with three xi directions."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE DEFAULT
+          localError="The number of xi directions of "//TRIM(NumberToVString(numberOfXi,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(BASIS_SIMPLEX_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(BASIS_SERENDIPITY_TYPE,BASIS_AUXILLIARY_TYPE,BASIS_B_SPLINE_TP_TYPE, &
+        & BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE,BASIS_EXTENDED_LAGRANGE_TP_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE DEFAULT
+        localError="The basis type of "//TRIM(NumberToVString(basis%TYPE,"*",err,error))// &
+          & " for basis number "//TRIM(NumberToVString(basis%USER_NUMBER,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(2)
+      !The xi location is on a line in 3D
+      IF(SIZE(boundaryXi,1)<(numberOfXi-1)) THEN
+        localError="The size of the boundary xi array of "//TRIM(NumberToVString(SIZE(boundaryXi,1),"*",err,error))// &
+          & " must be >= 2."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      !Find the normal
+      normalDirection1=0
+      normalDirection2=0
+      DO xiIdx=1,numberOfXi
+        IF(onBoundary(xiIdx)/=0) THEN
+          IF(normalDirection1==0) THEN
+            normalDirection1=onBoundary(xiIdx)
+          ELSE
+            normalDirection2=onBoundary(xiIdx)
+            EXIT
+          ENDIF
+        ENDIF
+      ENDDO !xiIdx
+      IF(normalDirection1==0) CALL FlagError("Could not find normal direction 1.",err,error,*999)
+      IF(normalDirection2==0) CALL FlagError("Could not find normal direction 2.",err,error,*999)
+      SELECT CASE(basis%TYPE)
+      CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
+        SELECT CASE(numberOfXi)
+        CASE(3)
+          localLineFaceNumber=basis%xiNormalsLocalLine(normalDirection1,normalDirection2)
+          boundaryXiType=BASIS_LINE_BOUNDARY_XI
+          SELECT CASE(normalDirection1)
+          CASE(-3)
+            SELECT CASE(normalDirection2)
+            CASE(-2)
+              boundaryXi(1)=fullXi(1)
+            CASE(-1)
+              boundaryXi(1)=fullXi(2)
+            CASE(1)
+              boundaryXi(1)=fullXi(2)
+            CASE(2)
+              boundaryXi(1)=fullXi(1)
+            CASE DEFAULT
+              localError="The second normal xi direction of "//TRIM(NumberToVString(normalDirection2,"*",err,error))// &
+                & " is invalid on a Lagrange-Hermite basis with a first normal direction of "// &
+                & TRIM(NumberToVString(normalDirection1,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT            
+          CASE(-2)
+            SELECT CASE(normalDirection2)
+            CASE(-3)
+              boundaryXi(1)=fullXi(1)
+            CASE(-1)
+              boundaryXi(1)=fullXi(3)
+            CASE(1)
+              boundaryXi(1)=fullXi(3)
+            CASE(3)
+              boundaryXi(1)=fullXi(1)
+            CASE DEFAULT
+              localError="The second normal xi direction of "//TRIM(NumberToVString(normalDirection2,"*",err,error))// &
+                & " is invalid on a Lagrange-Hermite basis with a first normal direction of "// &
+                & TRIM(NumberToVString(normalDirection1,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT            
+          CASE(-1)
+            SELECT CASE(normalDirection2)
+            CASE(-3)
+              boundaryXi(1)=fullXi(2)
+            CASE(-2)
+              boundaryXi(1)=fullXi(3)
+            CASE(2)
+              boundaryXi(1)=fullXi(3)
+            CASE(3)
+              boundaryXi(1)=fullXi(2)
+            CASE DEFAULT
+              localError="The second normal xi direction of "//TRIM(NumberToVString(normalDirection2,"*",err,error))// &
+                & " is invalid on a Lagrange-Hermite basis with a first normal direction of "// &
+                & TRIM(NumberToVString(normalDirection1,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT            
+          CASE(1)
+            SELECT CASE(normalDirection2)
+            CASE(-3)
+              boundaryXi(1)=fullXi(2)
+            CASE(-2)
+              boundaryXi(1)=fullXi(3)
+            CASE(2)
+              boundaryXi(1)=fullXi(3)
+            CASE(3)
+              boundaryXi(1)=fullXi(2)
+            CASE DEFAULT
+              localError="The second normal xi direction of "//TRIM(NumberToVString(normalDirection2,"*",err,error))// &
+                & " is invalid on a Lagrange-Hermite basis with a first normal direction of "// &
+                & TRIM(NumberToVString(normalDirection1,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT            
+            boundaryXi(1)=fullXi(2)
+          CASE(2)
+            SELECT CASE(normalDirection2)
+            CASE(-3)
+              boundaryXi(1)=fullXi(1)
+            CASE(-1)
+              boundaryXi(1)=fullXi(3)
+            CASE(1)
+              boundaryXi(1)=fullXi(3)
+            CASE(3)
+              boundaryXi(1)=fullXi(1)
+            CASE DEFAULT
+              localError="The second normal xi direction of "//TRIM(NumberToVString(normalDirection2,"*",err,error))// &
+                & " is invalid on a Lagrange-Hermite basis with a first normal direction of "// &
+                & TRIM(NumberToVString(normalDirection1,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT            
+            boundaryXi(1)=fullXi(1)
+          CASE(3)
+            SELECT CASE(normalDirection2)
+            CASE(-2)
+              boundaryXi(1)=fullXi(1)
+            CASE(-1)
+              boundaryXi(1)=fullXi(2)
+            CASE(1)
+              boundaryXi(1)=fullXi(2)
+            CASE(2)
+              boundaryXi(1)=fullXi(1)
+            CASE DEFAULT
+              localError="The second normal xi direction of "//TRIM(NumberToVString(normalDirection2,"*",err,error))// &
+                & " is invalid on a Lagrange-Hermite basis with three xi directions."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT            
+          CASE DEFAULT
+            localError="The first normal xi direction of "//TRIM(NumberToVString(normalDirection1,"*",err,error))// &
+              & " is invalid on a Lagrange-Hermite basis with three xi directions."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE DEFAULT
+          localError="The number of xi directions of "//TRIM(NumberToVString(numberOfXi,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(BASIS_SIMPLEX_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(BASIS_SERENDIPITY_TYPE,BASIS_AUXILLIARY_TYPE,BASIS_B_SPLINE_TP_TYPE, &
+        & BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE,BASIS_EXTENDED_LAGRANGE_TP_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE DEFAULT
+        localError="The basis type of "//TRIM(NumberToVString(basis%TYPE,"*",err,error))// &
+          & " for basis number "//TRIM(NumberToVString(basis%USER_NUMBER,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The number of boundary xi locations of "//TRIM(NumberToVString(numberOfBoundaries,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+          
+    EXITS("Basis_XiToBoundaryXi")
+    RETURN
+999 ERRORSEXITS("Basis_XiToBoundaryXi",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_XiToBoundaryXi
+
   !
   !================================================================================================================================
   !
@@ -931,24 +1886,24 @@ CONTAINS
           IF(ASSOCIATED(BASIS%PARENT_BASIS%SUB_BASES)) DEALLOCATE(BASIS%PARENT_BASIS%SUB_BASES)
           BASIS%PARENT_BASIS%SUB_BASES=>NEW_SUB_BASES
         ELSE
-          !Master basis function - delete this instance from BASIS_FUNCTIONS
+          !Master basis function - delete this instance from basisFunctions
           NULLIFY(NEW_SUB_BASES)
-          IF(BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS>1) THEN
+          IF(basisFunctions%NUMBER_BASIS_FUNCTIONS>1) THEN
             !If there is more than one basis defined then remove this instance from the basis functions
-            ALLOCATE(NEW_SUB_BASES(BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS-1),STAT=ERR)
+            ALLOCATE(NEW_SUB_BASES(basisFunctions%NUMBER_BASIS_FUNCTIONS-1),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate new sub-bases",ERR,ERROR,*999)
             count=0
-            DO nb=1,BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS
-              IF(BASIS_FUNCTIONS%BASES(nb)%PTR%USER_NUMBER/=BASIS%USER_NUMBER.AND. &
-                & BASIS_FUNCTIONS%BASES(nb)%PTR%FAMILY_NUMBER==0) THEN
+            DO nb=1,basisFunctions%NUMBER_BASIS_FUNCTIONS
+              IF(basisFunctions%BASES(nb)%PTR%USER_NUMBER/=BASIS%USER_NUMBER.AND. &
+                & basisFunctions%BASES(nb)%PTR%FAMILY_NUMBER==0) THEN
                 count=count+1
-                NEW_SUB_BASES(count)%PTR=>BASIS_FUNCTIONS%BASES(nb)%PTR
+                NEW_SUB_BASES(count)%PTR=>basisFunctions%BASES(nb)%PTR
               ENDIF
             ENDDO
           ENDIF
-          IF(ASSOCIATED(BASIS_FUNCTIONS%BASES)) DEALLOCATE(BASIS_FUNCTIONS%BASES)
-          BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS=BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS-1
-          BASIS_FUNCTIONS%BASES=>NEW_SUB_BASES
+          IF(ASSOCIATED(basisFunctions%BASES)) DEALLOCATE(basisFunctions%BASES)
+          basisFunctions%NUMBER_BASIS_FUNCTIONS=basisFunctions%NUMBER_BASIS_FUNCTIONS-1
+          basisFunctions%BASES=>NEW_SUB_BASES
         ENDIF
 
         CALL BASIS_FINALISE(BASIS,ERR,ERROR,*999)
@@ -971,55 +1926,6 @@ CONTAINS
 999 ERRORSEXITS("BASIS_FAMILY_DESTROY",ERR,ERROR)
     RETURN 1
   END SUBROUTINE BASIS_FAMILY_DESTROY
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Finds and returns in BASIS a pointer to the basis with the given USER_NUMBER and FAMILY_NUMBER. If no basis with that
-  !>number and family number exists then BASIS is returned nullified \see BASIS_ROUTINES::BASIS_USER_NUMBER_FIND
-  RECURSIVE SUBROUTINE BASIS_FAMILY_NUMBER_FIND(USER_NUMBER,FAMILY_NUMBER,BASIS,ERR,ERROR,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the basis to find
-    INTEGER(INTG), INTENT(IN) :: FAMILY_NUMBER !<The family number of the basis to find
-    TYPE(BASIS_TYPE), POINTER :: BASIS !<On exit, A pointer to the basis. If no basis with the specified user and family numbers can be found the pointer is not associated.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    INTEGER(INTG) :: nb,nsb
-    TYPE(BASIS_TYPE), POINTER :: SUB_BASIS
-
-    ENTERS("BASIS_FAMILY_NUMBER_FIND",ERR,ERROR,*999)
-    
-    NULLIFY(BASIS)      
-    nb=1
-    DO WHILE(nb<=BASIS_FUNCTIONS%NUMBER_BASIS_FUNCTIONS.AND..NOT.ASSOCIATED(BASIS))
-      IF(BASIS_FUNCTIONS%BASES(nb)%PTR%USER_NUMBER==USER_NUMBER) THEN
-        IF(FAMILY_NUMBER==0) THEN
-          BASIS=>BASIS_FUNCTIONS%BASES(nb)%PTR
-        ELSE
-!!TODO: \todo This only works for one level of sub-bases at the moment
-          nsb=1
-          DO WHILE(nsb<=BASIS_FUNCTIONS%BASES(nb)%PTR%NUMBER_OF_SUB_BASES.AND..NOT.ASSOCIATED(BASIS))
-            SUB_BASIS=>BASIS_FUNCTIONS%BASES(nb)%PTR%SUB_BASES(nsb)%PTR
-            IF(SUB_BASIS%FAMILY_NUMBER==FAMILY_NUMBER) THEN
-              BASIS=>SUB_BASIS
-            ELSE
-              nsb=nsb+1
-            ENDIF
-          ENDDO
-        ENDIF
-      ELSE
-        nb=nb+1
-      ENDIF
-    END DO
-  
-    EXITS("BASIS_FAMILY_NUMBER_FIND")
-    RETURN
-999 ERRORSEXITS("BASIS_FAMILY_NUMBER_FIND",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE BASIS_FAMILY_NUMBER_FIND
 
   !
   !================================================================================================================================
@@ -1052,17 +1958,20 @@ CONTAINS
       IF(ALLOCATED(BASIS%PARTIAL_DERIVATIVE_INDEX)) DEALLOCATE(BASIS%PARTIAL_DERIVATIVE_INDEX)
       IF(ALLOCATED(BASIS%ELEMENT_PARAMETER_INDEX)) DEALLOCATE(BASIS%ELEMENT_PARAMETER_INDEX)
       IF(ALLOCATED(BASIS%ELEMENT_PARAMETER_INDEX_INV)) DEALLOCATE(BASIS%ELEMENT_PARAMETER_INDEX_INV)
-      IF(ALLOCATED(BASIS%LOCAL_LINE_XI_DIRECTION)) DEALLOCATE(BASIS%LOCAL_LINE_XI_DIRECTION)
+      IF(ALLOCATED(BASIS%localLineXiDirection)) DEALLOCATE(BASIS%localLineXiDirection)
+      IF(ALLOCATED(BASIS%localLineXiNormals)) DEALLOCATE(BASIS%localLineXiNormals)
+      IF(ALLOCATED(BASIS%xiNormalsLocalLine)) DEALLOCATE(BASIS%xiNormalsLocalLine)
       IF(ALLOCATED(BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE)) DEALLOCATE(BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE)
       IF(ALLOCATED(BASIS%NODE_NUMBERS_IN_LOCAL_LINE)) DEALLOCATE(BASIS%NODE_NUMBERS_IN_LOCAL_LINE)
       IF(ALLOCATED(BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_LINE)) DEALLOCATE(BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_LINE)
       IF(ALLOCATED(BASIS%ELEMENT_PARAMETERS_IN_LOCAL_LINE)) DEALLOCATE(BASIS%ELEMENT_PARAMETERS_IN_LOCAL_LINE)
-      IF(ALLOCATED(BASIS%LOCAL_FACE_XI_DIRECTION)) DEALLOCATE(BASIS%LOCAL_FACE_XI_DIRECTION)
+      IF(ALLOCATED(BASIS%localFaceXiDirections)) DEALLOCATE(BASIS%localFaceXiDirections)
+      IF(ALLOCATED(BASIS%localFaceXiNormal)) DEALLOCATE(BASIS%localFaceXiNormal)
+      IF(ALLOCATED(BASIS%xiNormalLocalFace)) DEALLOCATE(BASIS%xiNormalLocalFace)
       IF(ALLOCATED(BASIS%NUMBER_OF_NODES_IN_LOCAL_FACE)) DEALLOCATE(BASIS%NUMBER_OF_NODES_IN_LOCAL_FACE)
       IF(ALLOCATED(BASIS%NODE_NUMBERS_IN_LOCAL_FACE)) DEALLOCATE(BASIS%NODE_NUMBERS_IN_LOCAL_FACE)
       IF(ALLOCATED(BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_FACE)) DEALLOCATE(BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_FACE)
       IF(ALLOCATED(BASIS%ELEMENT_PARAMETERS_IN_LOCAL_FACE)) DEALLOCATE(BASIS%ELEMENT_PARAMETERS_IN_LOCAL_FACE)
-      IF(ALLOCATED(BASIS%LOCAL_XI_NORMAL)) DEALLOCATE(BASIS%LOCAL_XI_NORMAL)
       IF(ASSOCIATED(BASIS%LINE_BASES)) DEALLOCATE(BASIS%LINE_BASES)
       IF(ASSOCIATED(BASIS%FACE_BASES)) DEALLOCATE(BASIS%FACE_BASES)
       IF(ASSOCIATED(BASIS%SUB_BASES)) DEALLOCATE(BASIS%SUB_BASES)      
@@ -1185,6 +2094,7 @@ CONTAINS
     EXITS("BASIS_INTERPOLATE_GAUSS_DP")
     RETURN
 999 ERRORSEXITS("BASIS_INTERPOLATE_GAUSS_DP",ERR,ERROR)
+    RETURN
   END FUNCTION BASIS_INTERPOLATE_GAUSS_DP
 
   !
@@ -1258,6 +2168,7 @@ CONTAINS
     EXITS("BASIS_INTERPOLATE_LOCAL_FACE_GAUSS_DP")
     RETURN
 999 ERRORSEXITS("BASIS_INTERPOLATE_LOCAL_FACE_GAUSS_DP",ERR,ERROR)
+    RETURN
   END FUNCTION BASIS_INTERPOLATE_LOCAL_FACE_GAUSS_DP
 
   !
@@ -1326,6 +2237,7 @@ CONTAINS
     EXITS("BASIS_INTERPOLATE_XI_DP")
     RETURN
 999 ERRORSEXITS("BASIS_INTERPOLATE_XI_DP",ERR,ERROR)
+    RETURN
   END FUNCTION BASIS_INTERPOLATE_XI_DP
   
   !
@@ -1373,7 +2285,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the interpolation type in each xi directions where the basis is identified by user number. \see OPENCMISS::CMISSBasisInterpolationXiSet
+  !>Sets/changes the interpolation type in each xi directions where the basis is identified by user number. \see OpenCMISS::Iron::cmfe_BasisInterpolationXiSet
   SUBROUTINE BASIS_INTERPOLATION_XI_SET_NUMBER(USER_NUMBER,INTERPOLATION_XI,ERR,ERROR,*)
 
     !Argument variables
@@ -1399,7 +2311,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the interpolation type in each xi directions for a basis identified by a pointer. \see OPENCMISS::CMISSBasisInterpolationXiSet
+  !>Sets/changes the interpolation type in each xi directions for a basis identified by a pointer. \see OpenCMISS::Iron::cmfe_BasisInterpolationXiSet
   SUBROUTINE BASIS_INTERPOLATION_XI_SET_PTR(BASIS,INTERPOLATION_XI,ERR,ERROR,*)
 
     !Argument variables
@@ -1824,9 +2736,9 @@ CONTAINS
           ALLOCATE(basis%NUMBER_OF_NODES_IN_LOCAL_LINE(numberOfLocalLines),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate number of nodes in local line.",err,error,*999)
           basis%NUMBER_OF_NODES_IN_LOCAL_LINE(1)=basis%NUMBER_OF_NODES_XIC(1)
-          ALLOCATE(basis%LOCAL_LINE_XI_DIRECTION(numberOfLocalLines),STAT=err)
+          ALLOCATE(basis%localLineXiDirection(numberOfLocalLines),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate local line xi direction.",err,error,*999)
-          basis%LOCAL_LINE_XI_DIRECTION(1)=1
+          basis%localLineXiDirection(1)=1
           ALLOCATE(basis%NODE_NUMBERS_IN_LOCAL_LINE(basis%NUMBER_OF_NODES_XIC(1),numberOfLocalLines),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate node numbers in local line.",err,error,*999)
           ALLOCATE(basis%DERIVATIVE_NUMBERS_IN_LOCAL_LINE(basis%NUMBER_OF_NODES_XIC(1),numberOfLocalLines),STAT=err)
@@ -1862,8 +2774,13 @@ CONTAINS
           ALLOCATE(basis%NUMBER_OF_NODES_IN_LOCAL_LINE(numberOfLocalLines),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate number of nodes in local line.",err,error,*999)
           basis%NUMBER_OF_NODES_IN_LOCAL_LINE=0
-          ALLOCATE(basis%LOCAL_LINE_XI_DIRECTION(numberOfLocalLines),STAT=err)
+          ALLOCATE(basis%localLineXiDirection(numberOfLocalLines),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate local line xi direction.",err,error,*999)
+          ALLOCATE(BASIS%localLineXiNormals(1,numberOfLocalLines),STAT=ERR)
+          IF(ERR/=0) CALL FlagError("Could not allocate local line xi normals.",ERR,ERROR,*999)
+          ALLOCATE(basis%xiNormalsLocalLine(-2:2,1),STAT=ERR)
+          basis%xiNormalsLocalLine=0
+          IF(ERR/=0) CALL FlagError("Could not allocate xi normals local line.",ERR,ERROR,*999)
           ALLOCATE(basis%NODE_NUMBERS_IN_LOCAL_LINE(MAXVAL(basis%NUMBER_OF_NODES_XIC),numberOfLocalLines),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate node numbers in local line",err,error,*999)
           basis%NODE_NUMBERS_IN_LOCAL_LINE=0
@@ -1873,8 +2790,6 @@ CONTAINS
           ALLOCATE(basis%ELEMENT_PARAMETERS_IN_LOCAL_LINE(MAXVAL(basis%NUMBER_OF_NODES_XIC)**2,numberOfLocalLines),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate element parameters in local line.",err,error,*999)
           basis%ELEMENT_PARAMETERS_IN_LOCAL_LINE=1
-          ALLOCATE(basis%LOCAL_XI_NORMAL(numberOfLocalLines),STAT=err)
-          IF(err/=0) CALL FlagError("Could not allocate local xi normal.",err,error,*999)
           !Find the lines
           basis%NUMBER_OF_LOCAL_LINES=0
           DO xiIdx1=1,2
@@ -1947,11 +2862,13 @@ CONTAINS
                     ENDIF
                   ENDDO !derivativeIdx
                 ENDDO !localLineNodeIdx
-                basis%LOCAL_LINE_XI_DIRECTION(basis%NUMBER_OF_LOCAL_LINES)=xiIdx1
+                basis%localLineXiDirection(basis%NUMBER_OF_LOCAL_LINES)=xiIdx1
                 IF(localNodeIdx2==1) THEN
-                  basis%LOCAL_XI_NORMAL(basis%NUMBER_OF_LOCAL_LINES)=-xiIdx2
+                  basis%localLineXiNormals(1,basis%NUMBER_OF_LOCAL_LINES)=-xiIdx2
+                  basis%xiNormalsLocalLine(-xiIdx2,1)=basis%NUMBER_OF_LOCAL_LINES
                 ELSE
-                  basis%LOCAL_XI_NORMAL(basis%NUMBER_OF_LOCAL_LINES)=xiIdx2
+                  basis%locallineXiNormals(1,basis%NUMBER_OF_LOCAL_LINES)=xiIdx2
+                  basis%xiNormalsLocalLine(xiIdx2,1)=basis%NUMBER_OF_LOCAL_LINES
                 ENDIF
               ENDIF
             ENDDO !localNodeIdx2
@@ -1974,6 +2891,14 @@ CONTAINS
           ENDIF
           basis%NUMBER_OF_LOCAL_FACES=numberOfLocalFaces
 
+          ALLOCATE(basis%localLineXiDirection(numberOfLocalLines),STAT=err)
+          IF(err/=0) CALL FlagError("Could not allocate local line xi direction.",err,error,*999)
+          ALLOCATE(basis%localLineXiNormals(2,numberOfLocalLines),STAT=err)
+          IF(err/=0) CALL FlagError("Could not allocate local line xi normals.",err,error,*999)
+          ALLOCATE(basis%xiNormalsLocalLine(-3:3,-3:3),STAT=ERR)
+          IF(ERR/=0) CALL FlagError("Could not allocate xi normals local line.",ERR,ERROR,*999)
+          basis%xiNormalsLocalLine=0
+          
           ALLOCATE(basis%NUMBER_OF_NODES_IN_LOCAL_LINE(numberOfLocalLines),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate number of nodes in local line.",err,error,*999)
           basis%NUMBER_OF_NODES_IN_LOCAL_LINE=0
@@ -1981,9 +2906,6 @@ CONTAINS
           ALLOCATE(basis%NUMBER_OF_NODES_IN_LOCAL_FACE(numberOfLocalFaces),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate number of nodes in local face.",err,error,*999)
           basis%NUMBER_OF_NODES_IN_LOCAL_FACE=0
-
-          ALLOCATE(basis%LOCAL_LINE_XI_DIRECTION(numberOfLocalLines),STAT=err)
-          IF(err/=0) CALL FlagError("Could not allocate local line xi direction.",err,error,*999)
 
           ALLOCATE(basis%NODE_NUMBERS_IN_LOCAL_LINE(MAXVAL(basis%NUMBER_OF_NODES_XIC),numberOfLocalLines),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate node numbers in local line.",err,error,*999)
@@ -1997,6 +2919,14 @@ CONTAINS
           IF(err/=0) CALL FlagError("Could not allocate element parameters in local line.",err,error,*999)
           basis%ELEMENT_PARAMETERS_IN_LOCAL_LINE=1
 
+          ALLOCATE(BASIS%localFaceXiDirections(2,numberOfLocalFaces),STAT=ERR)
+          IF(ERR/=0) CALL FlagError("Could not allocate local face xi directions.",ERR,ERROR,*999)
+          ALLOCATE(basis%localFaceXiNormal(numberOfLocalFaces),STAT=err)
+          IF(err/=0) CALL FlagError("Could not allocate local face xi direction.",err,error,*999)
+          ALLOCATE(basis%xiNormalLocalFace(-3:3),STAT=ERR)
+          IF(ERR/=0) CALL FlagError("Could not allocate xi normal local face.",ERR,ERROR,*999)
+          basis%xiNormalLocalFace=0
+          
           ALLOCATE(basis%DERIVATIVE_NUMBERS_IN_LOCAL_FACE(0:basis%MAXIMUM_NUMBER_OF_DERIVATIVES, &
             & MAXVAL(basis%NUMBER_OF_NODES_XIC)**2,numberOfLocalFaces),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate derivative numbers in local face.",err,error,*999)
@@ -2014,11 +2944,6 @@ CONTAINS
           IF(err/=0) CALL FlagError("Could not allocate node numbers in local face.",err,error,*999)
           basis%NODE_NUMBERS_IN_LOCAL_FACE=0
           
-          ALLOCATE(basis%LOCAL_XI_NORMAL(numberOfLocalFaces),STAT=err)
-          IF(err/=0) CALL FlagError("Could not allocate local xi normal.",err,error,*999)
-
-          ALLOCATE(basis%LOCAL_FACE_XI_DIRECTION(numberOfLocalFaces),STAT=err)
-          IF(err/=0) CALL FlagError("Could not allocate local face xi direction.",err,error,*999)
 
           !Find the lines and faces
           basis%NUMBER_OF_LOCAL_LINES=0
@@ -2167,7 +3092,26 @@ CONTAINS
                       ENDIF
                     ENDDO !derivativeIdx
                   ENDDO !localLineNodeIdx
-                  basis%LOCAL_LINE_XI_DIRECTION(basis%NUMBER_OF_LOCAL_LINES)=xiIdx1
+                  basis%localLineXiDirection(basis%NUMBER_OF_LOCAL_LINES)=xiIdx1
+                  IF(localNodeIdx2==1) THEN
+                    basis%localLineXiNormals(1,basis%NUMBER_OF_LOCAL_LINES)=-xiIdx2
+                    IF(localNodeIdx3==1) THEN
+                      basis%localLineXiNormals(2,basis%NUMBER_OF_LOCAL_LINES)=-xiIdx3
+                      basis%xiNormalsLocalLine(-xiIdx2,-xiIdx3)=basis%NUMBER_OF_LOCAL_LINES
+                    ELSE
+                      basis%localLineXiNormals(2,basis%NUMBER_OF_LOCAL_LINES)=xiIdx3
+                      basis%xiNormalsLocalLine(-xiIdx2,xiIdx3)=basis%NUMBER_OF_LOCAL_LINES
+                    ENDIF
+                  ELSE
+                    basis%localLineXiNormals(1,basis%NUMBER_OF_LOCAL_LINES)=xiIdx2
+                    IF(localNodeIdx3==1) THEN
+                      basis%localLineXiNormals(2,basis%NUMBER_OF_LOCAL_LINES)=-xiIdx3
+                      basis%xiNormalsLocalLine(xiIdx2,-xiIdx3)=basis%NUMBER_OF_LOCAL_LINES
+                    ELSE
+                      basis%localLineXiNormals(2,basis%NUMBER_OF_LOCAL_LINES)=xiIdx3
+                      basis%xiNormalsLocalLine(xiIdx2,xiIdx3)=basis%NUMBER_OF_LOCAL_LINES
+                    ENDIF
+                  ENDIF
                 ENDIF
               ENDDO !localNodeIdx2
             ENDDO !localNodeIdx3
@@ -2216,7 +3160,10 @@ CONTAINS
                   ENDDO !localNodeIdx3
                 ENDDO !localNodexIdx2
                 basis%NUMBER_OF_NODES_IN_LOCAL_FACE(localFaceIdx)=localNodeCount
-                basis%LOCAL_FACE_XI_DIRECTION(localFaceIdx)=directionIdx*xiIdx1
+                basis%localFaceXiDirections(1,localFaceIdx)=xiIdx2
+                basis%localFaceXiDirections(2,localFaceIdx)=xiIdx3
+                basis%localFaceXiNormal(localFaceIdx)=directionIdx*xiIdx1
+                basis%xiNormalLocalFace(directionIdx*xiIdx1)=localFaceIdx
                 !Compute derivatives and element parameters in the face
                 localFaceParameter=0
                 DO localNodeIdx=1,basis%NUMBER_OF_NODES_IN_LOCAL_FACE(localFaceIdx)
@@ -2605,7 +3552,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the number of local nodes in the specified basis \see OPENCMISS::CMISSBasisNumberOfLocalNodesGet
+  !>Returns the number of local nodes in the specified basis \see OpenCMISS::Iron::cmfe_BasisNumberOfLocalNodesGet
   SUBROUTINE BASIS_NUMBER_OF_LOCAL_NODES_GET(BASIS,NUMBER_OF_LOCAL_NODES,ERR,ERROR,*)
 
     !Argument variables
@@ -2633,7 +3580,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Gets the number of xi directions for a basis. \see OPENCMISS::CMISSBasisNumberOfXiGet
+  !>Gets the number of xi directions for a basis. \see OpenCMISS::Iron::cmfe_BasisNumberOfXiGet
   SUBROUTINE BASIS_NUMBER_OF_XI_GET(BASIS,NUMBER_OF_XI,ERR,ERROR,*)
 
     !Argument variables
@@ -2691,7 +3638,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the number of xi directions for a basis identified by a pointer. \see OPENCMISS::CMISSBasisNumberOfXiSet
+  !>Sets/changes the number of xi directions for a basis identified by a pointer. \see OpenCMISS::Iron::cmfe_BasisNumberOfXiSet
   SUBROUTINE BASIS_NUMBER_OF_XI_SET_PTR(BASIS,NUMBER_OF_XI,ERR,ERROR,*)
 
     !Argument variables
@@ -2956,7 +3903,7 @@ CONTAINS
               !Populate face_gauss_positions, weights, basis_fn
               DO face_idx=1,BASIS%NUMBER_OF_LOCAL_FACES
                 !What's the normal?
-                NORMAL=BASIS%LOCAL_FACE_XI_DIRECTION(face_idx)
+                NORMAL=BASIS%localFaceXiNormal(face_idx)
                 IF(NORMAL<0_INTG) THEN
                   XI(ABS(NORMAL))=0.0_DP
                 ELSE
@@ -3382,7 +4329,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Get the number of Gauss points in each xi direction on a basis quadrature identified by a pointer. \see OPENCMISS::CMISSBasisQuadratureNumberOfGaussXiGet
+  !>Get the number of Gauss points in each xi direction on a basis quadrature identified by a pointer. \see OpenCMISS::Iron::cmfe_BasisQuadratureNumberOfGaussXiGet
   SUBROUTINE BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_GET(BASIS,QUADRATURE_NUMBER_OF_GAUSS_XI,ERR,ERROR,*)
 
     !Argument variables
@@ -3428,7 +4375,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the number of Gauss points in each xi direction on a basis quadrature identified by a pointer. \see OPENCMISS::CMISSBasisQuadratureNumberOfGaussSet
+  !>Sets/changes the number of Gauss points in each xi direction on a basis quadrature identified by a pointer. \see OpenCMISS::Iron::cmfe_BasisQuadratureNumberOfGaussSet
   SUBROUTINE BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_SET(BASIS,NUMBER_OF_GAUSS_XI,ERR,ERROR,*)
 
     !Argument variables
@@ -3520,7 +4467,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Returns the xi positions of a Gauss point on a basis quadrature identified by a pointer. \see OPENCMISS::CMISSBasisQuadratureGaussXiGet
+  !>Returns the xi positions of a Gauss point on a basis quadrature identified by a pointer. \see OpenCMISS::Iron::cmfe_BasisQuadratureGaussXiGet
   SUBROUTINE BASIS_QUADRATURE_SINGLE_GAUSS_XI_GET(BASIS,SCHEME,GAUSS_POINT,GAUSS_XI,ERR,ERROR,*)
 
     !Argument variables
@@ -3579,7 +4526,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Returns the xi positions of Gauss points on a basis quadrature identified by a pointer. If no Gauss points are specified then xi positions of all Gauss points are returned. \see OPENCMISS::CMISSBasisQuadratureGaussXiGet
+  !>Returns the xi positions of Gauss points on a basis quadrature identified by a pointer. If no Gauss points are specified then xi positions of all Gauss points are returned. \see OpenCMISS::Iron::cmfe_BasisQuadratureGaussXiGet
   SUBROUTINE BASIS_QUADRATURE_MULTIPLE_GAUSS_XI_GET(BASIS,SCHEME,GAUSS_POINTS,GAUSS_XI,ERR,ERROR,*)
 
     !Argument variables
@@ -3651,7 +4598,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Get the order of a quadrature for a basis quadrature identified by a pointer. \see OPENCMISS::CMISSBasisQuadratureOrderGet
+  !>Get the order of a quadrature for a basis quadrature identified by a pointer. \see OpenCMISS::Iron::cmfe_BasisQuadratureOrderGet
   SUBROUTINE BASIS_QUADRATURE_ORDER_GET(BASIS,QUADRATURE_ORDER,ERR,ERROR,*)
 
     !Argument variables
@@ -3713,7 +4660,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the order of a quadrature for a basis quadrature identified by a pointer. \see OPENCMISS::CMISSBasisQuadratureOrderSet
+  !>Sets/changes the order of a quadrature for a basis quadrature identified by a pointer. \see OpenCMISS::Iron::cmfe_BasisQuadratureOrderSet
   SUBROUTINE BASIS_QUADRATURE_ORDER_SET_PTR(BASIS,ORDER,ERR,ERROR,*)
 
     !Argument variables
@@ -3760,7 +4707,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>get the quadrature type on a basis identified by a pointer. \see OPENCMISS::CMISSBasisQuadratureTypeGet
+  !>get the quadrature type on a basis identified by a pointer. \see OpenCMISS::Iron::cmfe_BasisQuadratureTypeGet
   SUBROUTINE BASIS_QUADRATURE_TYPE_GET(BASIS,QUADRATURE_TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -4499,9 +5446,9 @@ CONTAINS
           BASIS%NUMBER_OF_LOCAL_LINES=1
           ALLOCATE(BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate number of nodes in local line.",ERR,ERROR,*999)
-          ALLOCATE(BASIS%LOCAL_LINE_XI_DIRECTION(BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
+          ALLOCATE(BASIS%localLineXiDirection(BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate local line xi direction.",ERR,ERROR,*999)
-          BASIS%LOCAL_LINE_XI_DIRECTION(1)=1
+          BASIS%localLineXiDirection(1)=1
           ALLOCATE(BASIS%NODE_NUMBERS_IN_LOCAL_LINE(BASIS%NUMBER_OF_NODES_XIC(1),BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate node numbers in local line.",ERR,ERROR,*999)
           ALLOCATE(BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_LINE(BASIS%NUMBER_OF_NODES_XIC(1),BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
@@ -4540,10 +5487,15 @@ CONTAINS
           !Allocate and calculate the lines
           !Simplex hence three local lines
           BASIS%NUMBER_OF_LOCAL_LINES=3
+          ALLOCATE(BASIS%localLineXiDirection(BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
+          IF(ERR/=0) CALL FlagError("Could not allocate local line xi direction",ERR,ERROR,*999)
+          ALLOCATE(BASIS%localLineXiNormals(1,BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
+          IF(ERR/=0) CALL FlagError("Could not allocate local line xi normals.",ERR,ERROR,*999)
+          ALLOCATE(BASIS%xiNormalsLocalLine(-3:3,1),STAT=ERR)
+          IF(ERR/=0) CALL FlagError("Could not allocate xi normals local line.",ERR,ERROR,*999)
+          basis%xiNormalsLocalLine=0
           ALLOCATE(BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate number of nodes in local line.",ERR,ERROR,*999)
-          ALLOCATE(BASIS%LOCAL_LINE_XI_DIRECTION(BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate local line xi direction",ERR,ERROR,*999)
           ALLOCATE(BASIS%NODE_NUMBERS_IN_LOCAL_LINE(MAXVAL(BASIS%NUMBER_OF_NODES_XIC),BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate node numbers in local line.",ERR,ERROR,*999)
           ALLOCATE(BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_LINE(MAXVAL(BASIS%NUMBER_OF_NODES_XIC),BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
@@ -4553,8 +5505,6 @@ CONTAINS
             & ,STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate element parameters in local line.",ERR,ERROR,*999)
           BASIS%ELEMENT_PARAMETERS_IN_LOCAL_LINE=1
-          ALLOCATE(BASIS%LOCAL_XI_NORMAL(BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate local line normal.",ERR,ERROR,*999)
           !Set the line values
           SELECT CASE(BASIS%INTERPOLATION_ORDER(1))
           CASE(BASIS_LINEAR_INTERPOLATION_ORDER)
@@ -4562,42 +5512,30 @@ CONTAINS
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(1)=2
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,1)=1
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,1)=2
-            BASIS%LOCAL_LINE_XI_DIRECTION(1)=1
-            BASIS%LOCAL_XI_NORMAL(1)=3
             !Line 2
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(2)=2
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,2)=1
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,2)=3
-            BASIS%LOCAL_LINE_XI_DIRECTION(2)=2
-            BASIS%LOCAL_XI_NORMAL(2)=2
             !Line 3
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(3)=2
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,3)=2
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,3)=3
-            BASIS%LOCAL_LINE_XI_DIRECTION(3)=3
-            BASIS%LOCAL_XI_NORMAL(3)=1
           CASE(BASIS_QUADRATIC_INTERPOLATION_ORDER)
             !Line 1
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(1)=3
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,1)=1
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,1)=4
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,1)=2
-            BASIS%LOCAL_LINE_XI_DIRECTION(1)=1
-            BASIS%LOCAL_XI_NORMAL(1)=3
             !Line 2
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(2)=3
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,2)=1
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,2)=6
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,2)=3
-            BASIS%LOCAL_LINE_XI_DIRECTION(2)=2
-            BASIS%LOCAL_XI_NORMAL(2)=2
             !Line 3
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(3)=3
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,3)=2
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,3)=5
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,3)=3
-            BASIS%LOCAL_LINE_XI_DIRECTION(3)=3
-            BASIS%LOCAL_XI_NORMAL(3)=1
           CASE(BASIS_CUBIC_INTERPOLATION_ORDER)
             !Line 1
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(1)=4
@@ -4605,42 +5543,52 @@ CONTAINS
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,1)=4
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,1)=5
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(4,1)=2
-            BASIS%LOCAL_LINE_XI_DIRECTION(1)=1
-            BASIS%LOCAL_XI_NORMAL(1)=3
             !Line 2
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(2)=4
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,2)=1
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,2)=9
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,2)=8
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(4,2)=3
-            BASIS%LOCAL_LINE_XI_DIRECTION(2)=2
-            BASIS%LOCAL_XI_NORMAL(2)=2
             !Line 3
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(3)=4
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,3)=2
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,3)=6
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,3)=7
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(4,3)=3
-            BASIS%LOCAL_LINE_XI_DIRECTION(3)=3
-            BASIS%LOCAL_XI_NORMAL(3)=1
           CASE DEFAULT 
             LOCAL_ERROR="Interpolation order "//TRIM(NUMBER_TO_VSTRING(BASIS%INTERPOLATION_ORDER(1),"*",ERR,ERROR))// &
               & " is invalid for a simplex basis type."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
+          !Set line directions and normals
+          !Line 1
+          basis%localLineXiDirection(1)=1
+          basis%localLineXiNormals(1,1)=3
+          basis%xiNormalsLocalLine(3,1)=1
+          !Line 2
+          basis%localLineXiDirection(2)=2
+          basis%localLineXiNormals(1,2)=2
+          basis%xiNormalsLocalLine(2,1)=2
+          !Line 3
+          basis%localLineXiDirection(3)=3
+          basis%localLineXiNormals(1,3)=1
+          basis%xiNormalsLocalLine(1,1)=3
         CASE(3)
           BASIS%NUMBER_OF_LOCAL_LINES=6
           BASIS%NUMBER_OF_LOCAL_FACES=4
+
+          ALLOCATE(BASIS%localLineXiDirection(BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
+          IF(ERR/=0) CALL FlagError("Could not allocate local line xi direction.",ERR,ERROR,*999)
+          ALLOCATE(BASIS%localLineXiNormals(2,BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
+          IF(ERR/=0) CALL FlagError("Could not allocate local line xi normals.",ERR,ERROR,*999)
+          ALLOCATE(BASIS%xiNormalsLocalLine(-4:4,-4:4),STAT=ERR)
+          IF(ERR/=0) CALL FlagError("Could not allocate xi normals local line.",ERR,ERROR,*999)
+          basis%xiNormalsLocalLine=0
 
           ALLOCATE(BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate number of nodes in local line.",ERR,ERROR,*999)
           ALLOCATE(BASIS%NUMBER_OF_NODES_IN_LOCAL_FACE(BASIS%NUMBER_OF_LOCAL_FACES),STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate number of nodes in local face.",ERR,ERROR,*999)
-
-          ALLOCATE(BASIS%LOCAL_LINE_XI_DIRECTION(BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate local line xi direction.",ERR,ERROR,*999)
-          ALLOCATE(BASIS%LOCAL_FACE_XI_DIRECTION(BASIS%NUMBER_OF_LOCAL_FACES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate local face xi direction.",ERR,ERROR,*999)
 
           ALLOCATE(BASIS%NODE_NUMBERS_IN_LOCAL_LINE(MAXVAL(BASIS%NUMBER_OF_NODES_XIC),BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate node numbers in local line.",ERR,ERROR,*999)
@@ -4652,6 +5600,14 @@ CONTAINS
           IF(ERR/=0) CALL FlagError("Could not allocate element parameters in local line.",ERR,ERROR,*999)
           BASIS%ELEMENT_PARAMETERS_IN_LOCAL_LINE=1
 
+          ALLOCATE(BASIS%localFaceXiDirections(3,BASIS%NUMBER_OF_LOCAL_FACES),STAT=ERR)
+          IF(ERR/=0) CALL FlagError("Could not allocate local face xi directions.",ERR,ERROR,*999)
+          ALLOCATE(BASIS%localFaceXiNormal(BASIS%NUMBER_OF_LOCAL_FACES),STAT=ERR)
+          IF(ERR/=0) CALL FlagError("Could not allocate local face xi normal.",ERR,ERROR,*999)
+          ALLOCATE(BASIS%xiNormalLocalFace(-4:4),STAT=ERR)
+          IF(ERR/=0) CALL FlagError("Could not allocate xi normal local face.",ERR,ERROR,*999)
+          basis%xiNormalLocalFace=0
+          
           SELECT CASE(BASIS%INTERPOLATION_ORDER(1))
           CASE(BASIS_LINEAR_INTERPOLATION_ORDER)
             ALLOCATE(BASIS%NODE_NUMBERS_IN_LOCAL_FACE(3,BASIS%NUMBER_OF_LOCAL_FACES),STAT=ERR)
@@ -4679,107 +5635,84 @@ CONTAINS
           BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_FACE(1,:,:)=NO_PART_DERIV
           BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_FACE(0,:,:)=1
           
-          ALLOCATE(BASIS%LOCAL_XI_NORMAL(BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate local line normal.",ERR,ERROR,*999)
-
-          !Set the line values
+          !Set the line and face values
           SELECT CASE(BASIS%INTERPOLATION_ORDER(1))
           CASE(BASIS_LINEAR_INTERPOLATION_ORDER)
             !Line 1
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(1)=2
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,1)=1
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,1)=2
-            BASIS%LOCAL_LINE_XI_DIRECTION(1)=1
             !Line 2
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(2)=2
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,2)=1
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,2)=3
-            BASIS%LOCAL_LINE_XI_DIRECTION(2)=1
             !Line 3
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(3)=2
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,3)=1
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,3)=4
-            BASIS%LOCAL_LINE_XI_DIRECTION(3)=1
             !Line 4
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(4)=2
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,4)=2
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,4)=3
-            BASIS%LOCAL_LINE_XI_DIRECTION(4)=2
             !Line 5
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(5)=2
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,5)=2
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,5)=4
-            BASIS%LOCAL_LINE_XI_DIRECTION(5)=2
             !Line 6
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(6)=2
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,6)=3
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,6)=4
-            BASIS%LOCAL_LINE_XI_DIRECTION(6)=3
             !Face 1
             BASIS%NUMBER_OF_NODES_IN_LOCAL_FACE(1)=3
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(1,1)=2
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(2,1)=3
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(3,1)=4
-            BASIS%LOCAL_FACE_XI_DIRECTION(1)=1
-            BASIS%LOCAL_XI_NORMAL(1)=1
             !Face 2
             BASIS%NUMBER_OF_NODES_IN_LOCAL_FACE(2)=3
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(1,2)=1
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(2,2)=4
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(3,2)=3
-            BASIS%LOCAL_FACE_XI_DIRECTION(2)=2
-            BASIS%LOCAL_XI_NORMAL(2)=2
             !Face 3
             BASIS%NUMBER_OF_NODES_IN_LOCAL_FACE(3)=3
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(1,3)=1
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(2,3)=2
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(3,3)=4
-            BASIS%LOCAL_FACE_XI_DIRECTION(3)=3 
-            BASIS%LOCAL_XI_NORMAL(3)=3
             !Face 4
             BASIS%NUMBER_OF_NODES_IN_LOCAL_FACE(4)=3
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(1,4)=1
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(2,4)=3
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(3,4)=2
-            BASIS%LOCAL_FACE_XI_DIRECTION(4)=4
-            BASIS%LOCAL_XI_NORMAL(4)=4
           CASE(BASIS_QUADRATIC_INTERPOLATION_ORDER)
             !Line 1
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(1)=3
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,1)=1
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,1)=5
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,1)=2
-            BASIS%LOCAL_LINE_XI_DIRECTION(1)=1
             !Line 2
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(2)=3
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,2)=1
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,2)=6
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,2)=3
-            BASIS%LOCAL_LINE_XI_DIRECTION(2)=1
             !Line 3
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(3)=3
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,3)=1
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,3)=7
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,3)=4
-            BASIS%LOCAL_LINE_XI_DIRECTION(3)=1
             !Line 4
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(4)=3
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,4)=2
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,4)=8
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,4)=3
-            BASIS%LOCAL_LINE_XI_DIRECTION(4)=2
             !Line 5
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(5)=3
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,5)=2
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,5)=10
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,5)=4
-            BASIS%LOCAL_LINE_XI_DIRECTION(5)=2
             !Line 6
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(6)=3
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,6)=3
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,6)=9
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,6)=4
-            BASIS%LOCAL_LINE_XI_DIRECTION(6)=3
             !Face 1
             BASIS%NUMBER_OF_NODES_IN_LOCAL_FACE(1)=6
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(1,1)=2
@@ -4788,8 +5721,6 @@ CONTAINS
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(4,1)=8
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(5,1)=9
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(6,1)=10
-            BASIS%LOCAL_FACE_XI_DIRECTION(1)=1
-            BASIS%LOCAL_XI_NORMAL(1)=1
             !Face 2
             BASIS%NUMBER_OF_NODES_IN_LOCAL_FACE(2)=6
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(1,2)=1
@@ -4798,8 +5729,6 @@ CONTAINS
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(4,2)=7
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(5,2)=9
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(6,2)=6
-            BASIS%LOCAL_FACE_XI_DIRECTION(2)=2
-            BASIS%LOCAL_XI_NORMAL(2)=2
             !Face 3
             BASIS%NUMBER_OF_NODES_IN_LOCAL_FACE(3)=6
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(1,3)=1
@@ -4808,8 +5737,6 @@ CONTAINS
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(4,3)=5
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(5,3)=10
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(6,3)=7
-            BASIS%LOCAL_FACE_XI_DIRECTION(3)=3
-            BASIS%LOCAL_XI_NORMAL(3)=3
             !Face 4
             BASIS%NUMBER_OF_NODES_IN_LOCAL_FACE(4)=6
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(1,4)=1
@@ -4818,8 +5745,6 @@ CONTAINS
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(4,4)=6
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(5,4)=8
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(6,4)=5
-            BASIS%LOCAL_FACE_XI_DIRECTION(4)=4
-            BASIS%LOCAL_XI_NORMAL(4)=4
            CASE(BASIS_CUBIC_INTERPOLATION_ORDER)
             !Line 1
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(1)=4
@@ -4827,42 +5752,36 @@ CONTAINS
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,1)=5
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,1)=6
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(4,1)=2
-            BASIS%LOCAL_LINE_XI_DIRECTION(1)=1
             !Line 2
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(2)=4
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,2)=1
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,2)=7
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,2)=8
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(4,2)=3
-            BASIS%LOCAL_LINE_XI_DIRECTION(2)=1
             !Line 3
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(3)=4
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,3)=1
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,3)=9
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,3)=10
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(4,3)=4
-            BASIS%LOCAL_LINE_XI_DIRECTION(3)=1
             !Line 4
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(4)=4
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,4)=2
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,4)=11
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,4)=12
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(4,4)=3
-            BASIS%LOCAL_LINE_XI_DIRECTION(4)=2
             !Line 5
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(5)=4
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,5)=2
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,5)=15
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,5)=16
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(4,5)=4
-            BASIS%LOCAL_LINE_XI_DIRECTION(5)=2
             !Line 6
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(6)=4
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,6)=3
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,6)=13
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,6)=14
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(4,6)=4
-            BASIS%LOCAL_LINE_XI_DIRECTION(6)=3
             !Face 1
             BASIS%NUMBER_OF_NODES_IN_LOCAL_FACE(1)=10
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(1,1)=2
@@ -4875,8 +5794,6 @@ CONTAINS
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(8,1)=16
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(9,1)=15
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(10,1)=20
-            BASIS%LOCAL_FACE_XI_DIRECTION(1)=1
-            BASIS%LOCAL_XI_NORMAL(1)=1
             !Face 2
             BASIS%NUMBER_OF_NODES_IN_LOCAL_FACE(2)=10
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(1,2)=1
@@ -4889,8 +5806,6 @@ CONTAINS
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(8,2)=8
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(9,2)=7
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(10,2)=19
-            BASIS%LOCAL_FACE_XI_DIRECTION(2)=2
-            BASIS%LOCAL_XI_NORMAL(2)=2
             !Face 3
             BASIS%NUMBER_OF_NODES_IN_LOCAL_FACE(3)=10
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(1,3)=1
@@ -4903,8 +5818,6 @@ CONTAINS
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(8,3)=10
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(9,3)=9
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(10,3)=18
-            BASIS%LOCAL_FACE_XI_DIRECTION(3)=3
-            BASIS%LOCAL_XI_NORMAL(3)=3
             !Face 4
             BASIS%NUMBER_OF_NODES_IN_LOCAL_FACE(4)=10
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(1,4)=1
@@ -4917,13 +5830,72 @@ CONTAINS
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(8,4)=6
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(9,4)=5
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(10,4)=17
-            BASIS%LOCAL_FACE_XI_DIRECTION(4)=4
-            BASIS%LOCAL_XI_NORMAL(4)=4
           CASE DEFAULT
             LOCAL_ERROR="Interpolation order "//TRIM(NUMBER_TO_VSTRING(BASIS%INTERPOLATION_ORDER(1),"*",ERR,ERROR))// &
               & " is invalid for a simplex basis type."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
+          !Set line and face directions and normals
+          !Line 1
+          basis%localLineXiDirection(1)=1
+          basis%localLineXiNormals(1,1)=3
+          basis%localLineXiNormals(2,1)=4
+          basis%xiNormalsLocalLine(3,4)=1
+          basis%xiNormalsLocalLine(4,3)=1
+           !Line 2
+          basis%localLineXiDirection(2)=1
+          basis%localLineXiNormals(1,2)=2
+          basis%localLineXiNormals(2,2)=4
+          basis%xiNormalsLocalLine(2,4)=2
+          basis%xiNormalsLocalLine(4,2)=2
+          !Line 3
+          basis%localLineXiDirection(3)=1
+          basis%localLineXiNormals(1,3)=2
+          basis%localLineXiNormals(2,3)=3
+          basis%xiNormalsLocalLine(2,3)=3
+          basis%xiNormalsLocalLine(3,2)=3
+          !Line 4
+          basis%localLineXiDirection(4)=2
+          basis%localLineXiNormals(1,4)=1
+          basis%localLineXiNormals(2,4)=4
+          basis%xiNormalsLocalLine(1,4)=4
+          basis%xiNormalsLocalLine(4,1)=4
+          !Line 5
+          basis%localLineXiDirection(5)=2
+          basis%localLineXiNormals(1,5)=1
+          basis%localLineXiNormals(2,5)=3
+          basis%xiNormalsLocalLine(1,3)=5
+          basis%xiNormalsLocalLine(3,1)=5
+          !Line 6
+          basis%localLineXiDirection(6)=3
+          basis%localLineXiNormals(1,6)=1
+          basis%localLineXiNormals(2,6)=2
+          basis%xiNormalsLocalLine(1,2)=6
+          basis%xiNormalsLocalLine(2,1)=6
+          !Face 1
+          basis%localFaceXiDirections(1,1)=2
+          basis%localFaceXiDirections(2,1)=3
+          basis%localFaceXiDirections(3,1)=4          
+          basis%localFaceXiNormal(1)=1
+          basis%xiNormalLocalFace(1)=1
+          !Face 2
+          basis%localFaceXiDirections(1,2)=1
+          basis%localFaceXiDirections(2,2)=3
+          basis%localFaceXiDirections(3,2)=4          
+          basis%localFaceXiNormal(2)=2
+          basis%xiNormalLocalFace(2)=2
+          !Face 3
+          basis%localFaceXiDirections(1,3)=1
+          basis%localFaceXiDirections(2,3)=2
+          basis%localFaceXiDirections(3,3)=4          
+          basis%localFaceXiNormal(3)=3 
+          basis%xiNormalLocalFace(3)=3
+          !Face 4
+          basis%localFaceXiDirections(1,4)=1
+          basis%localFaceXiDirections(2,4)=2
+          basis%localFaceXiDirections(3,4)=3          
+          basis%localFaceXiNormal(4)=4
+          basis%xiNormalLocalFace(4)=4          
         CASE DEFAULT
           CALL FlagError("Invalid number of xi directions.",ERR,ERROR,*999)
         END SELECT
@@ -5334,9 +6306,9 @@ CONTAINS
       CALL FlagError("Basis is not associated.",ERR,ERROR,*999)
     ENDIF
     
-    EXITS("BASIS_SIMPLEX_BASIS_EVALUATE.")
+    EXITS("BASIS_SIMPLEX_BASIS_EVALUATE")
     RETURN
-999 ERRORSEXITS("BASIS_SIMPLEX_BASIS_EVALUATE.",ERR,ERROR)
+999 ERRORSEXITS("BASIS_SIMPLEX_BASIS_EVALUATE",ERR,ERROR)
     RETURN 
   END FUNCTION BASIS_SIMPLEX_BASIS_EVALUATE
 
@@ -5510,7 +6482,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>get the type for a basis is identified by a a pointer. \see OPENCMISS::CMISSBasisTypeGet
+  !>get the type for a basis is identified by a a pointer. \see OpenCMISS::Iron::cmfe_BasisTypeGet
   SUBROUTINE BASIS_TYPE_GET(BASIS,TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -5568,7 +6540,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the type for a basis is identified by a a pointer. \see OPENCMISS::CMISSBasisTypeGet
+  !>Sets/changes the type for a basis is identified by a a pointer. \see OpenCMISS::Iron::cmfe_BasisTypeGet
   SUBROUTINE BASIS_TYPE_SET_PTR(BASIS,TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -5615,7 +6587,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Gets the collapsed xi flags for a basis is identified by a a pointer. \see OPENCMISS::CMISSBasisCollapsedXiGet
+  !>Gets the collapsed xi flags for a basis is identified by a a pointer. \see OpenCMISS::Iron::cmfe_BasisCollapsedXiGet
   SUBROUTINE BASIS_COLLAPSED_XI_GET(BASIS,COLLAPSED_XI,ERR,ERROR,*)
 
     !Argument variables
@@ -5681,7 +6653,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the collapsed xi flags for a basis is identified by a a pointer. \see OPENCMISS::CMISSBasisCollapsedXiSet
+  !>Sets/changes the collapsed xi flags for a basis is identified by a a pointer. \see OpenCMISS::Iron::cmfe_BasisCollapsedXiSet
   SUBROUTINE BASIS_COLLAPSED_XI_SET_PTR(BASIS,COLLAPSED_XI,ERR,ERROR,*)
 
     !Argument variables
@@ -5836,31 +6808,6 @@ CONTAINS
 999 ERRORSEXITS("BASIS_COLLAPSED_XI_SET_PTR",ERR,ERROR)
     RETURN 1
   END SUBROUTINE BASIS_COLLAPSED_XI_SET_PTR
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Finds and returns in BASIS a pointer to the basis with the number given in USER_NUMBER. If no basis with that number
-  !>exits BASIS is left nullified.
-  SUBROUTINE BASIS_USER_NUMBER_FIND(USER_NUMBER,BASIS,ERR,ERROR,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the basis to find.
-    TYPE(BASIS_TYPE), POINTER :: BASIS !<On exit, a pointer to the found basis. If no basis with the given user number exists the pointer is NULL.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-
-    ENTERS("BASIS_USER_NUMBER_FIND",ERR,ERROR,*999)
-    
-    CALL BASIS_FAMILY_NUMBER_FIND(USER_NUMBER,0,BASIS,ERR,ERROR,*999)
-  
-    EXITS("BASIS_USER_NUMBER_FIND")
-    RETURN
-999 ERRORSEXITS("BASIS_USER_NUMBER_FIND",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE BASIS_USER_NUMBER_FIND
 
   !
   !================================================================================================================================

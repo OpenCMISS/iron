@@ -44,9 +44,9 @@
 !> This module handles all electromechanics class routines.
 MODULE ELECTROMECHANICS_ROUTINES
 
-  USE BASE_ROUTINES
-  USE KINDS
-  USE TYPES
+  USE BaseRoutines
+  USE Kinds
+  USE Types
 
 #include "macros.h"  
 
