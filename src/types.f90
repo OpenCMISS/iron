@@ -2675,7 +2675,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping for these solver matrices
     INTEGER(INTG) :: NUMBER_OF_ROWS !<The number of (local) rows in the distributed solution matrix for this computational node
     INTEGER(INTG) :: NUMBER_OF_GLOBAL_ROWS !<The number of global rows in the distributed solution matrix
-    INTEGER(INTG) :: LIBRARY_TYPE !<The library type for the solver matrices
+    INTEGER(INTG) :: solverLibraryType !<The library type of the solver for the solver matrices \see SOLVER_ROUTINES_SolverLibraries
+    INTEGER(INTG) :: matrixLibraryType !<The library type for the solver matrices \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes
     !Linear matrices
     INTEGER(INTG) :: NUMBER_OF_MATRICES !<The number of solver matrices defined for the problem
     TYPE(SOLVER_MATRIX_PTR_TYPE), ALLOCATABLE :: MATRICES(:) !<MATRICES(matrix_idx)%PTR contains the information on the matrix_idx'th solver matrix

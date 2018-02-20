@@ -109,14 +109,6 @@ MODULE SOLVER_MATRICES_ROUTINES
     MODULE PROCEDURE SOLVER_MATRICES_DESTROY
   END INTERFACE SolverMatrices_Destroy
   
-  INTERFACE SolverMatrices_LibraryTypeGet
-    MODULE PROCEDURE SOLVER_MATRICES_LIBRARY_TYPE_GET
-  END INTERFACE SolverMatrices_LibraryTypeGet
-  
-  INTERFACE SolverMatrices_LibraryTypeSet
-    MODULE PROCEDURE SOLVER_MATRICES_LIBRARY_TYPE_SET
-  END INTERFACE SolverMatrices_LibraryTypeSet
-  
   INTERFACE SolverMatrices_Output
     MODULE PROCEDURE SOLVER_MATRICES_OUTPUT
   END INTERFACE SolverMatrices_Output
@@ -152,8 +144,6 @@ MODULE SOLVER_MATRICES_ROUTINES
   PUBLIC SOLVER_MATRICES_DESTROY
 
   PUBLIC SolverMatrices_Destroy
-
-  PUBLIC SOLVER_MATRICES_LIBRARY_TYPE_GET,SOLVER_MATRICES_LIBRARY_TYPE_SET
 
   PUBLIC SolverMatrices_LibraryTypeGet,SolverMatrices_LibraryTypeSet
 
@@ -213,7 +203,7 @@ CONTAINS
                     !!Create the distributed solver matrix
                     CALL DISTRIBUTED_MATRIX_CREATE_START(ROW_DOMAIN_MAP,COLUMN_DOMAIN_MAP,SOLVER_MATRICES%MATRICES(matrix_idx)% &
                          & PTR%MATRIX,ERR,ERROR,*999)
-                    CALL DISTRIBUTED_MATRIX_LIBRARY_TYPE_SET(SOLVER_MATRIX%MATRIX,SOLVER_MATRICES%LIBRARY_TYPE,ERR,ERROR,*999)
+                    CALL DISTRIBUTED_MATRIX_LIBRARY_TYPE_SET(SOLVER_MATRIX%MATRIX,SOLVER_MATRICES%matrixLibraryType,ERR,ERROR,*999)
                     CALL DISTRIBUTED_MATRIX_DATA_TYPE_SET(SOLVER_MATRIX%MATRIX,MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
                     CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_SET(SOLVER_MATRIX%MATRIX,SOLVER_MATRIX%STORAGE_TYPE,ERR,ERROR,*999)
                     !Calculate and set the matrix structure/sparsity pattern
@@ -233,7 +223,7 @@ CONTAINS
                     !Allocate the distributed solver vector
                     CALL DISTRIBUTED_VECTOR_CREATE_START(COLUMN_DOMAIN_MAP,SOLVER_MATRICES%MATRICES(matrix_idx)% &
                          & PTR%SOLVER_VECTOR,ERR,ERROR,*999)
-                    CALL DISTRIBUTED_VECTOR_LIBRARY_TYPE_SET(SOLVER_MATRIX%SOLVER_VECTOR,SOLVER_MATRICES%LIBRARY_TYPE, &
+                    CALL DISTRIBUTED_VECTOR_LIBRARY_TYPE_SET(SOLVER_MATRIX%SOLVER_VECTOR,SOLVER_MATRICES%matrixLibraryType, &
                       & ERR,ERROR,*999)
                     CALL DISTRIBUTED_VECTOR_DATA_TYPE_SET(SOLVER_MATRIX%SOLVER_VECTOR,MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
                     CALL DISTRIBUTED_VECTOR_CREATE_FINISH(SOLVER_MATRIX%SOLVER_VECTOR,ERR,ERROR,*999)
@@ -248,14 +238,14 @@ CONTAINS
                 !Allocate the nonlinear matrices and vectors                  
                 !Allocate the distributed residual vector
                 CALL DISTRIBUTED_VECTOR_CREATE_START(ROW_DOMAIN_MAP,SOLVER_MATRICES%RESIDUAL,ERR,ERROR,*999)
-                CALL DISTRIBUTED_VECTOR_LIBRARY_TYPE_SET(SOLVER_MATRICES%RESIDUAL,SOLVER_MATRICES%LIBRARY_TYPE,ERR,ERROR,*999)
+                CALL DISTRIBUTED_VECTOR_LIBRARY_TYPE_SET(SOLVER_MATRICES%RESIDUAL,SOLVER_MATRICES%matrixLibraryType,ERR,ERROR,*999)
                 CALL DISTRIBUTED_VECTOR_DATA_TYPE_SET(SOLVER_MATRICES%RESIDUAL,MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
                 CALL DISTRIBUTED_VECTOR_CREATE_FINISH(SOLVER_MATRICES%RESIDUAL,ERR,ERROR,*999)                  
               ENDIF
 !!TODO: what to do if there is no RHS
               !Allocate the distributed rhs vector
               CALL DISTRIBUTED_VECTOR_CREATE_START(ROW_DOMAIN_MAP,SOLVER_MATRICES%RHS_VECTOR,ERR,ERROR,*999)
-              CALL DISTRIBUTED_VECTOR_LIBRARY_TYPE_SET(SOLVER_MATRICES%RHS_VECTOR,SOLVER_MATRICES%LIBRARY_TYPE,ERR,ERROR,*999)
+              CALL DISTRIBUTED_VECTOR_LIBRARY_TYPE_SET(SOLVER_MATRICES%RHS_VECTOR,SOLVER_MATRICES%matrixLibraryType,ERR,ERROR,*999)
               CALL DISTRIBUTED_VECTOR_DATA_TYPE_SET(SOLVER_MATRICES%RHS_VECTOR,MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
               CALL DISTRIBUTED_VECTOR_CREATE_FINISH(SOLVER_MATRICES%RHS_VECTOR,ERR,ERROR,*999)
               !Finish up
@@ -420,7 +410,8 @@ CONTAINS
           SOLVER_EQUATIONS%SOLVER_MATRICES%SOLVER_MAPPING=>SOLVER_MAPPING
           SOLVER_EQUATIONS%SOLVER_MATRICES%NUMBER_OF_ROWS=SOLVER_MAPPING%NUMBER_OF_ROWS
           SOLVER_EQUATIONS%SOLVER_MATRICES%NUMBER_OF_GLOBAL_ROWS=SOLVER_MAPPING%NUMBER_OF_GLOBAL_ROWS
-          SOLVER_EQUATIONS%SOLVER_MATRICES%LIBRARY_TYPE=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
+          SOLVER_EQUATIONS%SOLVER_MATRICES%solverLibraryType=0
+          SOLVER_EQUATIONS%SOLVER_MATRICES%matrixLibraryType=0
           SOLVER_EQUATIONS%SOLVER_MATRICES%NUMBER_OF_MATRICES=SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES
           ALLOCATE(SOLVER_EQUATIONS%SOLVER_MATRICES%MATRICES(SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES),STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate solver matrices matrices.",ERR,ERROR,*999)
@@ -485,76 +476,57 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
-  !>Gets the library type for the solver matrices (and vectors)
-  SUBROUTINE SOLVER_MATRICES_LIBRARY_TYPE_GET(SOLVER_MATRICES,LIBRARY_TYPE,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES !<A pointer to the solver matrices.
-    INTEGER(INTG), INTENT(OUT) :: LIBRARY_TYPE !<On return, the library type of the specified solver matrices \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-
-    ENTERS("SOLVER_MATRICES_LIBRARY_TYPE_GET",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(SOLVER_MATRICES)) THEN
-      IF(SOLVER_MATRICES%SOLVER_MATRICES_FINISHED) THEN
-        LIBRARY_TYPE=SOLVER_MATRICES%LIBRARY_TYPE
-      ELSE
-        CALL FlagError("Solver matrices has not finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Solver matrices is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("SOLVER_MATRICES_LIBRARY_TYPE_GET")
-    RETURN
-999 ERRORSEXITS("SOLVER_MATRICES_LIBRARY_TYPE_GET",ERR,ERROR)
-    RETURN
-  END SUBROUTINE SOLVER_MATRICES_LIBRARY_TYPE_GET
-  
-        
-  !
-  !================================================================================================================================
-  !
 
   !>Sets the library type for the solver matrices (and vectors)
-  SUBROUTINE SOLVER_MATRICES_LIBRARY_TYPE_SET(SOLVER_MATRICES,LIBRARY_TYPE,ERR,ERROR,*)
+  SUBROUTINE SolverMatrices_LibraryTypeSet(solverMatrices,libraryType,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES !<A pointer to the solver matrices.
-    INTEGER(INTG), INTENT(IN) :: LIBRARY_TYPE !<The library type to set \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(SOLVER_MATRICES_TYPE), POINTER :: solverMatrices !<A pointer to the solver matrices.
+    INTEGER(INTG), INTENT(IN) :: libraryType !<The library type to set \see SOLVER_ROUTINES_SolverLibraries
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("SOLVER_MATRICES_LIBRARY_TYPE_SET",ERR,ERROR,*999)
+    ENTERS("SolverMatrices_LibraryTypeSet",err,error,*999)
 
-    IF(ASSOCIATED(SOLVER_MATRICES)) THEN
-      IF(SOLVER_MATRICES%SOLVER_MATRICES_FINISHED) THEN
-        CALL FlagError("Solver matrices has been finished.",ERR,ERROR,*999)
-      ELSE
-        SELECT CASE(LIBRARY_TYPE)
-        CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
-          SOLVER_MATRICES%LIBRARY_TYPE=DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE
-        CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          SOLVER_MATRICES%LIBRARY_TYPE=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
-        CASE DEFAULT
-          LOCAL_ERROR="The library type of "// TRIM(NUMBER_TO_VSTRING(LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ENDIF
-    ELSE
-      CALL FlagError("Solver matrices is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(solverMatrices)) CALL FlagError("Solver matrices is not associated.",ERR,ERROR,*999)
+    IF(solverMatrices%SOLVER_MATRICES_FINISHED) CALL FlagError("Solver matrices has been finished.",ERR,ERROR,*999)
     
-    EXITS("SOLVER_MATRICES_LIBRARY_TYPE_SET")
+    SELECT CASE(libraryType)
+    CASE(LIBRARY_CMISS_TYPE)
+      solverMatrices%matrixLibraryType=DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE
+    CASE(LIBRARY_PETSC_TYPE)
+      solverMatrices%matrixLibraryType=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
+    CASE(LIBRARY_MUMPS_TYPE)
+      solverMatrices%matrixLibraryType=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
+    CASE(LIBRARY_SUPERLU_TYPE)
+      solverMatrices%matrixLibraryType=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
+    CASE(LIBRARY_SPOOLES_TYPE)
+    CASE(LIBRARY_UMFPACK_TYPE)
+      solverMatrices%matrixLibraryType=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
+    CASE(LIBRARY_LUSOL_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(LIBRARY_ESSL_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(LIBRARY_LAPACK_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(LIBRARY_HYPRE_TYPE)
+      solverMatrices%matrixLibraryType=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
+    CASE(LIBRARY_PASTIX_TYPE)
+      solverMatrices%matrixLibraryType=DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
+    CASE DEFAULT
+      localError="The solver library type of "// TRIM(NumberToVString(libraryType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    solverMatrices%solverLibraryType=libraryType
+    
+    EXITS("SolverMatrices_LibraryTypeSet")
     RETURN
-999 ERRORSEXITS("SOLVER_MATRICES_LIBRARY_TYPE_SET",ERR,ERROR)
+999 ERRORSEXITS("SolverMatrices_LibraryTypeSet",err,error)
     RETURN 1
-  END SUBROUTINE SOLVER_MATRICES_LIBRARY_TYPE_SET
+     
+  END SUBROUTINE SolverMatrices_LibraryTypeSet
 
   !
   !================================================================================================================================
