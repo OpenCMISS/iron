@@ -1913,7 +1913,8 @@ CONTAINS
                   element_dof_idx=element_dof_idx+1
                   nonlinearMatrices%elementResidual%vector(element_dof_idx)= &
                     & nonlinearMatrices%elementResidual%vector(element_dof_idx)+ &
-                    & JGW*DOT_PRODUCT(DPhiDZ(1:numberOfDimensions,parameter_idx,mh),cauchyTensor(1:numberOfDimensions,mh))
+                    & JGW*DOT_PRODUCT(DPhiDZ(1:numberOfDimensions,parameter_idx,component_idx), &
+                    & cauchyTensor(1:numberOfDimensions,component_idx))
                 ENDDO ! parameter_idx (residual vector loop)
               ELSEIF(DEPENDENT_COMPONENT_INTERPOLATION_TYPE==FIELD_ELEMENT_BASED_INTERPOLATION) THEN
                 !Will probably never be used
