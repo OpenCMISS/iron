@@ -53,7 +53,7 @@ MODULE Cmiss
   USE ISO_C_BINDING
   
   USE BaseRoutines
-  USE BASIS_ROUTINES
+  USE BasisRoutines
   USE ComputationEnvironment
   USE Constants
   USE COORDINATE_ROUTINES
@@ -214,7 +214,7 @@ CONTAINS
     !Finalise the coordinate systems
     CALL COORDINATE_SYSTEMS_FINALISE(err,error,*999)
     !Finalise bases
-    CALL BASES_FINALISE(err,error,*999)
+    CALL Bases_Finalise(err,error,*999)
     !Reset the signal handler
     CALL cmfe_ResetFatalHandler()
     !Finalise computational enviroment
@@ -256,7 +256,7 @@ CONTAINS
       CALL FlagError("World region is already associated.",err,error,*999)
     ELSE
       !Intialise the bases
-      CALL BASES_INITIALISE(err,error,*999)
+      CALL Bases_Initialise(err,error,*999)
       !Initialise the coordinate systems
       CALL COORDINATE_SYSTEMS_INITIALISE(err,error,*999)
       !Initialise the regions 

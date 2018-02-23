@@ -109,16 +109,15 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: basisIdx,subBasisIdx
-    TYPE(BASIS_TYPE), POINTER :: subBasis
-    TYPE(VARYING_STRING) :: localError
+   TYPE(VARYING_STRING) :: localError
 
     ENTERS("Basis_FamilyNumberFind",err,error,*999)
     
     IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*999)
     
     NULLIFY(basis)
-    IF(ASSOCIATED(basisFunctions%bases)) THEN
-      BasisLoop: DO basisIdx=1,basisFunctions%NUMBER_BASIS_FUNCTIONS
+    IF(ALLOCATED(basisFunctions%bases)) THEN
+      BasisLoop: DO basisIdx=1,basisFunctions%numberOfBasisFunctions
         IF(ASSOCIATED(basisFunctions%bases(basisIdx)%ptr)) THEN
           IF(basisFunctions%bases(basisIdx)%ptr%USER_NUMBER==userNumber) THEN
             IF(familyNumber==0) THEN
@@ -126,11 +125,11 @@ CONTAINS
               EXIT BasisLoop
             ELSE
 !!TODO: \todo This only works for one level of sub-bases at the moment
-              IF(ASSOCIATED(basisFunctions%bases(basisIdx)%ptr%SUB_BASES)) THEN
-                SubBasisLoop: DO subBasisIdx=1,basisFunctions%bases(basisIdx)%ptr%NUMBER_OF_SUB_BASES
-                  IF(ASSOCIATED(basisFunctions%bases(basisIdx)%ptr%SUB_BASES(subBasisIdx)%ptr)) THEN
-                    IF(basisFunctions%bases(basisIdx)%ptr%SUB_BASES(subBasisIdx)%ptr%FAMILY_NUMBER==familyNumber) THEN
-                      basis=>basisFunctions%bases(basisIdx)%ptr%SUB_BASES(subBasisIdx)%ptr
+              IF(ALLOCATED(basisFunctions%bases(basisIdx)%ptr%subBases)) THEN
+                SubBasisLoop: DO subBasisIdx=1,basisFunctions%bases(basisIdx)%ptr%numberOfSubBases
+                  IF(ASSOCIATED(basisFunctions%bases(basisIdx)%ptr%subBases(subBasisIdx)%ptr)) THEN
+                    IF(basisFunctions%bases(basisIdx)%ptr%subBases(subBasisIdx)%ptr%FAMILY_NUMBER==familyNumber) THEN
+                      basis=>basisFunctions%bases(basisIdx)%ptr%subBases(subBasisIdx)%ptr
                       EXIT BasisLoop
                     ENDIF
                   ELSE
@@ -155,6 +154,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("Basis_FamilyNumberFind",err,error)
     RETURN 1
+    
   END SUBROUTINE Basis_FamilyNumberFind
 
   !

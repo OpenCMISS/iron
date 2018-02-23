@@ -45,7 +45,7 @@
 MODULE BOUNDARY_CONDITIONS_ROUTINES
 
   USE BaseRoutines
-  USE BASIS_ROUTINES
+  USE BasisRoutines
   USE CmissMPI
   USE ComputationEnvironment
   USE CONSTANTS

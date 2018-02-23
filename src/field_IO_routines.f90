@@ -46,7 +46,7 @@
 MODULE FIELD_IO_ROUTINES
   USE BaseRoutines
   USE LISTS
-  USE BASIS_ROUTINES
+  USE BasisRoutines
   USE BasisAccessRoutines
   USE MESH_ROUTINES
   USE NODE_ROUTINES
@@ -1672,7 +1672,7 @@ CONTAINS
     !   CALL FlagError("bases are associated, pls release the memory first",ERR,ERROR,*999)
     !   GOTO 999
     !ENDIF
-    !BASES%NUMBER_BASIS_FUNCTIONS=0
+    !BASES%numberOfBasisFunctions=0
     NUMBER_OF_DIMENSIONS=REGION%COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS
     FILE_STATUS="OLD"
     CMISS_KEYWORD_SHAPE="Shape.  Dimension="//TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",ERR,ERROR))
@@ -2035,7 +2035,7 @@ CONTAINS
     CALL REALLOCATE( ELEMENTS_PTR, NUMBER_OF_MESH_COMPONENTS, &
       & "can not allocate list of mesh element pointers", ERR, ERROR, *999 )
 
-    IF(basisFunctions%NUMBER_BASIS_FUNCTIONS<=0)  THEN
+    IF(basisFunctions%numberOfBasisFunctions<=0)  THEN
       CALL BASIS_CREATE_START(1,BASIS,ERR,ERROR,*999)
       CALL BASIS_NUMBER_OF_XI_SET(BASIS,NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
       CALL BASIS_CREATE_FINISH(BASIS,ERR,ERROR,*999)
@@ -2331,7 +2331,7 @@ CONTAINS
         IF(MESH_COMPONENTS_OF_FIELD_COMPONENTS(idx_comp)==current_mesh_comp) THEN
           !find out whether the basis has been created
           pos=0
-          DO idx_basis=1, basisFunctions%NUMBER_BASIS_FUNCTIONS
+          DO idx_basis=1, basisFunctions%numberOfBasisFunctions
             IF(SUM(basisFunctions%BASES(idx_basis)%PTR%INTERPOLATION_XI(:)-INTERPOLATION_XI(idx_comp,:))==0) THEN
               pos=idx_basis
               EXIT
@@ -2340,7 +2340,7 @@ CONTAINS
 
           IF(pos==0) THEN
             IF(ASSOCIATED(BASIS)) NULLIFY(BASIS)
-            CALL BASIS_CREATE_START(basisFunctions%NUMBER_BASIS_FUNCTIONS+1,BASIS,ERR,ERROR,*999)
+            CALL BASIS_CREATE_START(basisFunctions%numberOfBasisFunctions+1,BASIS,ERR,ERROR,*999)
             CALL BASIS_NUMBER_OF_XI_SET(BASIS,NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
             CALL BASIS_INTERPOLATION_XI_SET(BASIS,INTERPOLATION_XI(idx_comp,:),ERR,ERROR,*999)
             CALL BASIS_CREATE_FINISH(BASIS,ERR,ERROR,*999)

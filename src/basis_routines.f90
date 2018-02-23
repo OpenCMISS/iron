@@ -42,7 +42,7 @@
 !>
 
 !> This module contains all basis function routines.
-MODULE BASIS_ROUTINES
+MODULE BasisRoutines
 
   USE BaseRoutines
   USE BasisAccessRoutines
@@ -164,7 +164,7 @@ MODULE BASIS_ROUTINES
   !!>Contains information on the defined basis functions
   !TYPE BASIS_FUNCTIONS_TYPE
   !  PRIVATE
-  !  INTEGER(INTG) :: NUMBER_BASIS_FUNCTIONS !<The number of basis functions definegd
+  !  INTEGER(INTG) :: numberOfBasisFunctions !<The number of basis functions definegd
   !  TYPE(BASIS_PTR_TYPE), POINTER :: BASES(:) !<The array of pointers to the defined basis functions
   !END TYPE BASIS_FUNCTIONS_TYPE
   
@@ -188,13 +188,13 @@ MODULE BASIS_ROUTINES
     MODULE PROCEDURE BASIS_COLLAPSED_XI_SET_PTR
   END INTERFACE Basis_CollapsedXiSet
 
-  INTERFACE Basis_CreateStart
-    MODULE PROCEDURE BASIS_CREATE_START
-  END INTERFACE Basis_CreateStart
+  INTERFACE BASIS_CREATE_START
+    MODULE PROCEDURE Basis_CreateStart
+  END INTERFACE BASIS_CREATE_START
 
-  INTERFACE Basis_CreateFinish
-    MODULE PROCEDURE BASIS_CREATE_FINISH
-  END INTERFACE Basis_CreateFinish
+  INTERFACE BASIS_CREATE_FINISH
+    MODULE PROCEDURE Basis_CreateFinish
+  END INTERFACE BASIS_CREATE_FINISH
 
   !>Evaluates the appropriate partial derivative index for the specificied basis function at a Xi location \see BASIS_ROUTINES
   INTERFACE BASIS_EVALUATE_XI
@@ -495,264 +495,273 @@ CONTAINS
   !
 
   !>Finalises the bases and deallocates all memory
-  SUBROUTINE BASES_FINALISE(ERR,ERROR,*)
+  SUBROUTINE Bases_Finalise(err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("BASES_FINALISE",ERR,ERROR,*999)
+    ENTERS("Bases_Finalise",err,error,*999)
 
     !Destroy any created basis functions
-    DO WHILE(basisFunctions%NUMBER_BASIS_FUNCTIONS>0)
-      CALL BASIS_DESTROY(basisFunctions%BASES(1)%PTR,ERR,ERROR,*999)
+    DO WHILE(basisFunctions%numberOfBasisFunctions>0)
+      CALL BASIS_DESTROY(basisFunctions%bases(1)%ptr,err,error,*999)
     ENDDO !nb
     !Destroy basis functions and deallocated any memory allocated
-    basisFunctions%NUMBER_BASIS_FUNCTIONS=0
-    IF(ASSOCIATED(basisFunctions%BASES)) DEALLOCATE(basisFunctions%BASES)
+    basisFunctions%numberOfBasisFunctions=0
+    IF(ALLOCATED(basisFunctions%bases)) DEALLOCATE(basisFunctions%bases)
     
-    EXITS("BASES_FINALISE")
+    EXITS("Bases_Finalise")
     RETURN
-999 ERRORSEXITS("BASES_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("Bases_Finalise",err,error)
     RETURN 1
     
-  END SUBROUTINE BASES_FINALISE
+  END SUBROUTINE Bases_Finalise
 
   !
   !================================================================================================================================
   !
 
   !>Initialises the bases.
-  SUBROUTINE BASES_INITIALISE(ERR,ERROR,*)
+  SUBROUTINE Bases_Initialise(err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("BASES_INITIALISE",ERR,ERROR,*999)
+    ENTERS("Bases_Initialise",err,error,*999)
 
-    basisFunctions%NUMBER_BASIS_FUNCTIONS=0    
-    NULLIFY(basisFunctions%BASES)
-   
-    EXITS("BASES_INITIALISE")
+    basisFunctions%numberOfBasisFunctions=0    
+    
+    EXITS("Bases_Initialise")
     RETURN
-999 ERRORSEXITS("BASES_INITIALISE",ERR,ERROR)
+999 ERRORSEXITS("Bases_Initialise",err,error)
     RETURN 1
     
-  END SUBROUTINE BASES_INITIALISE
+  END SUBROUTINE Bases_Initialise
 
   !
   !================================================================================================================================
   !
 
-  !>Finishes the creation of a new basis \see BASIS_ROUTINES::BASIS_CREATE_START,OPENCMISS::BasisCreateFinish
-  SUBROUTINE BASIS_CREATE_FINISH(BASIS,ERR,ERROR,*)
+  !>Finishes the creation of a new basis \see BASIS_ROUTINES::Basis_CreateStart,OpenCMISS::BasisCreateFinish
+  SUBROUTINE Basis_CreateFinish(basis,err,error,*)
 
     !Argument variables
-    TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis to finish the creation of
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(BASIS_TYPE), POINTER :: basis !<A pointer to the basis to finish the creation of
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: ni,nic,nn,nn1,nn2,nn3,nn4,ns,local_line_idx,local_face_idx,columnStart,columnStop
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: xiIdx,xiCoordIdx,localNodeIdx,localNodeIdx1,localNodeIdx2,localNodeIdx3,localNodeIdx4,elemParamIdx, &
+      & localLineIdx,localFaceIdx,columnStart,columnStop
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("BASIS_CREATE_FINISH",ERR,ERROR,*999)
+    ENTERS("Basis_CreateFinish",err,error,*999)
 
-    IF(ASSOCIATED(BASIS)) THEN
-      SELECT CASE(BASIS%TYPE)
-      CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
-        CALL BASIS_LHTP_FAMILY_CREATE(BASIS,ERR,ERROR,*999)
-      CASE(BASIS_SIMPLEX_TYPE)
-        CALL BASIS_SIMPLEX_FAMILY_CREATE(BASIS,ERR,ERROR,*999)
-      CASE(BASIS_RADIAL_TYPE)
-        CALL BASIS_RADIAL_FAMILY_CREATE(BASIS,ERR,ERROR,*999)
-      CASE DEFAULT
-        LOCAL_ERROR="Basis type "//TRIM(NUMBER_TO_VSTRING(BASIS%TYPE,"*",ERR,ERROR))//" is invalid or not implemented"
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-      BASIS%BASIS_FINISHED=.TRUE.
-    ELSE
-      CALL FlagError("Basis is not associated",ERR,ERROR,*999)
-    ENDIF
-
-    IF(DIAGNOSTICS1) THEN
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"Basis user number = ",BASIS%USER_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Basis family number = ",BASIS%FAMILY_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Basis global number = ",BASIS%GLOBAL_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Basis type = ",BASIS%TYPE,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Basis degenerate = ",BASIS%DEGENERATE,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi directions = ",BASIS%NUMBER_OF_XI,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi coordinates = ",BASIS%NUMBER_OF_XI_COORDINATES,ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(basis%BASIS_FINISHED) CALL FlagError("Basis has already been finished.",err,error,*999)
+    
+    SELECT CASE(basis%type)
+    CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
+      CALL Basis_LHTPFamilyCreate(basis,err,error,*999)
+    CASE(BASIS_SIMPLEX_TYPE)
+      CALL Basis_SimplexFamilyCreate(basis,err,error,*999)
+    CASE(BASIS_RADIAL_TYPE)
+      CALL BASIS_RADIAL_FAMILY_CREATE(basis,err,error,*999)
+    CASE DEFAULT
+      localError="Basis type "//TRIM(NumberToVString(BASIS%TYPE,"*",err,error))//" is invalid or not implemented"
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    basis%BASIS_FINISHED=.TRUE.
+     
+    IF(diagnostics1) THEN
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Basis user number = ",basis%USER_NUMBER,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Basis family number = ",basis%FAMILY_NUMBER,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Basis global number = ",basis%GLOBAL_NUMBER,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Basis type = ",basis%type,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Basis degenerate = ",basis%degenerate,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi directions = ",basis%NUMBER_OF_XI,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi coordinates = ",basis%NUMBER_OF_XI_COORDINATES,err,error,*999)
       
-      CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_XI_COORDINATES,4,4,BASIS%INTERPOLATION_TYPE, &
-        & '("  Interpolation type(nic):",4(X,I2))','(25X,4(X,I2))',ERR,ERROR,*999)      
-      CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_XI_COORDINATES,4,4,BASIS%INTERPOLATION_ORDER, &
-        & '("  Interpolation order(nic):",4(X,I2))','(26X,4(X,I2))',ERR,ERROR,*999)      
-      CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_XI,3,3,BASIS%COLLAPSED_XI, &
-        & '("  Collapsed xi(ni):",3(X,I2))','(26X,3(X,I2))',ERR,ERROR,*999)      
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of partial derivatives = ",BASIS%NUMBER_OF_PARTIAL_DERIVATIVES, &
-        & ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Total number of nodes = ",BASIS%NUMBER_OF_NODES,ERR,ERROR,*999)
-      CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_XI_COORDINATES,4,4,BASIS%NUMBER_OF_NODES_XIC, &
-        & '("  Number of nodes(nic):",4(X,I2))','(22X,4(X,I2))',ERR,ERROR,*999)      
-      CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_NODES,8,8,BASIS%NUMBER_OF_DERIVATIVES, &
-        & '("  Number of derivatives(nn):",8(X,I2))','(28X,8(X,I2))',ERR,ERROR,*999)      
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of element parameters = ",BASIS%NUMBER_OF_ELEMENT_PARAMETERS, &
-        & ERR,ERROR,*999)
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,basis%NUMBER_OF_XI_COORDINATES,4,4,basis%INTERPOLATION_TYPE, &
+        & '("  Interpolation type(:)  :",4(X,I2))','(25X,4(X,I2))',err,error,*999)      
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,basis%NUMBER_OF_XI_COORDINATES,4,4,basis%INTERPOLATION_ORDER, &
+        & '("  Interpolation order(:) :",4(X,I2))','(26X,4(X,I2))',err,error,*999)      
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,basis%NUMBER_OF_XI,3,3,basis%COLLAPSED_XI, &
+        & '("  Collapsed xi(:) :",3(X,I2))','(26X,3(X,I2))',err,error,*999)      
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of partial derivatives = ",basis%NUMBER_OF_PARTIAL_DERIVATIVES, &
+        & err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Total number of nodes = ",basis%NUMBER_OF_NODES,err,error,*999)
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,basis%NUMBER_OF_XI_COORDINATES,4,4,basis%NUMBER_OF_NODES_XIC, &
+        & '("  Number of nodes(:)  :",4(X,I2))','(22X,4(X,I2))',err,error,*999)      
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,basis%NUMBER_OF_NODES,8,8,basis%NUMBER_OF_DERIVATIVES, &
+        & '("  Number of derivatives(:) :",8(X,I2))','(28X,8(X,I2))',err,error,*999)      
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of element parameters = ",basis%NUMBER_OF_ELEMENT_PARAMETERS, &
+        & err,error,*999)
 ! CPB 23/07/07 Doxygen may or may not like this line for some reason????      
-      CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_NODES,8,8,BASIS%NODE_AT_COLLAPSE, &
-        & '("  Node at collapse(nn):",8(X,L1))','(23X,8(X,L1))',ERR,ERROR,*999)      
-      CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Node position index:",ERR,ERROR,*999)
-      DO nic=1,BASIS%NUMBER_OF_XI_COORDINATES
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Xic = ",nic,ERR,ERROR,*999)
-        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_NODES,16,16,BASIS%NODE_POSITION_INDEX(:,nic), &
-          & '("      INDEX(nn)  :",16(X,I2))','(18X,16(X,I2))',ERR,ERROR,*999)        
-      ENDDO !ni
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,basis%NUMBER_OF_NODES,8,8,basis%NODE_AT_COLLAPSE, &
+        & '("  Node at collapse(:) :",8(X,L1))','(23X,8(X,L1))',err,error,*999)      
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Node position index:",err,error,*999)
+      DO xiCoordIdx=1,basis%NUMBER_OF_XI_COORDINATES
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Xi coordinate = ",xiCoordIdx,err,error,*999)
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,basis%NUMBER_OF_NODES,16,16,basis%NODE_POSITION_INDEX(:,xiCoordIdx), &
+          & '("      Index(:)   :",16(X,I2))','(18X,16(X,I2))',err,error,*999)        
+      ENDDO !xiCoordIdx
       
-      CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Inverse node position index:",ERR,ERROR,*999)
-      SELECT CASE(BASIS%NUMBER_OF_XI_COORDINATES)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Inverse node position index:",err,error,*999)
+      SELECT CASE(basis%NUMBER_OF_XI_COORDINATES)
       CASE(1)
-        DO nn1=1,BASIS%NUMBER_OF_NODES_XIC(1)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Xic = 1, Node position index = ",nn1,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      INDEX = ",BASIS%NODE_POSITION_INDEX_INV(nn1,1,1,1), &
-            & ERR,ERROR,*999)          
-        ENDDO !nn1
+        DO localNodeIdx1=1,basis%NUMBER_OF_NODES_XIC(1)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Xi coordinate = 1, Node position index = ",localNodeIdx1, &
+            & err,error,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Index = ",basis%NODE_POSITION_INDEX_INV(localNodeIdx1,1,1,1), &
+            & err,error,*999)          
+        ENDDO !localNodeIdx1
       CASE(2)
-        DO nn2=1,BASIS%NUMBER_OF_NODES_XIC(2)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Xic = 2, Node position index = ",nn2,ERR,ERROR,*999)
-          DO nn1=1,BASIS%NUMBER_OF_NODES_XIC(1)
-            CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Xic = 1, Node position index = ",nn1,ERR,ERROR,*999)
-            CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        INDEX = ",BASIS%NODE_POSITION_INDEX_INV(nn1,nn2,1,1), &
-              & ERR,ERROR,*999)
-          ENDDO !nn1
-        ENDDO !nn2
+        DO localNodeIdx2=1,basis%NUMBER_OF_NODES_XIC(2)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Xi coordinate = 2, Node position index = ",localNodeIdx2, &
+            & err,error,*999)
+          DO localNodeIdx1=1,basis%NUMBER_OF_NODES_XIC(1)
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Xi coordinate = 1, Node position index = ",localNodeIdx1, &
+              & err,error,*999)
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Index = ",basis%NODE_POSITION_INDEX_INV(localNodeIdx1, &
+              & localNodeIdx2,1,1),err,error,*999)
+          ENDDO !localNodeIdx1
+        ENDDO !localNodeIdx2
       CASE(3)
-        DO nn3=1,BASIS%NUMBER_OF_NODES_XIC(3)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Xic = 3, Node position index = ",nn3,ERR,ERROR,*999)
-          DO nn2=1,BASIS%NUMBER_OF_NODES_XIC(2)
-            CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Xic = 2, Node position index = ",nn2,ERR,ERROR,*999)
-            DO nn1=1,BASIS%NUMBER_OF_NODES_XIC(1)
-              CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Xic = 1, Node position index = ",nn1,ERR,ERROR,*999)
-              CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"          INDEX = ",BASIS%NODE_POSITION_INDEX_INV(nn1,nn2,nn3,1), &
-                & ERR,ERROR,*999)
-            ENDDO !nn1
-          ENDDO !nn2
-        ENDDO !nn3
+        DO localNodeIdx3=1,basis%NUMBER_OF_NODES_XIC(3)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Xi coordinate = 3, Node position index = ",localNodeIdx3, &
+            & err,error,*999)
+          DO localNodeIdx2=1,basis%NUMBER_OF_NODES_XIC(2)
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Xi coordinate = 2, Node position index = ",localNodeIdx2, &
+              & err,error,*999)
+            DO localNodeIdx1=1,basis%NUMBER_OF_NODES_XIC(1)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Xi coordinate = 1, Node position index = ",localNodeIdx1, &
+                & err,error,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Index = ",basis%NODE_POSITION_INDEX_INV(localNodeIdx1, &
+                & localNodeIdx2,localNodeIdx3,1),err,error,*999)
+            ENDDO !localNodeIdx1
+          ENDDO !localNodeIdx2
+        ENDDO !localNodeIdx3
       CASE(4)
-        DO nn4=1,BASIS%NUMBER_OF_NODES_XIC(4)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Xic = 4, Node position index = ",nn4,ERR,ERROR,*999)
-          DO nn3=1,BASIS%NUMBER_OF_NODES_XIC(3)
-            CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Xic = 3, Node position index = ",nn3,ERR,ERROR,*999)
-            DO nn2=1,BASIS%NUMBER_OF_NODES_XIC(2)
-              CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Xic = 2, Node position index = ",nn2,ERR,ERROR,*999)
-              DO nn1=1,BASIS%NUMBER_OF_NODES_XIC(1) 
-                CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"          Xic = 1, Node position index = ",nn1,ERR,ERROR,*999)
-                CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"            INDEX = " &
-                  & ,BASIS%NODE_POSITION_INDEX_INV(nn1,nn2,nn3,nn4),ERR,ERROR,*999)
-              ENDDO !nn1
-            ENDDO !nn2
-          ENDDO !nn3
-        ENDDO !nn4
+        DO localNodeIdx4=1,basis%NUMBER_OF_NODES_XIC(4)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Xi coordinate = 4, Node position index = ",localNodeIdx4, &
+            & err,error,*999)
+          DO localNodeIdx3=1,basis%NUMBER_OF_NODES_XIC(3)
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Xi coordinate = 3, Node position index = ",localNodeIdx3, &
+              & err,error,*999)
+            DO localNodeIdx2=1,basis%NUMBER_OF_NODES_XIC(2)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Xi coordinate = 2, Node position index = ",localNodeIdx2, &
+                & err,error,*999)
+              DO localNodeIdx1=1,basis%NUMBER_OF_NODES_XIC(1) 
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Xi coordinate = 1, Node position index = ",localNodeIdx1, &
+                  & err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"            Index = " &
+                  & ,basis%NODE_POSITION_INDEX_INV(localNodeIdx1,localNodeIdx2,localNodeIdx3,localNodeIdx4),err,error,*999)
+              ENDDO !localNodeIdx1
+            ENDDO !localNodeIdx2
+          ENDDO !localNodeIdx3
+        ENDDO !localNodeIdx4
       CASE DEFAULT
-        CALL FlagError("Invalid number of xi coordinates",ERR,ERROR,*999)
+        CALL FlagError("Invalid number of xi coordinates",err,error,*999)
       END SELECT
-      CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative order index:",ERR,ERROR,*999)
-      DO ni=1,BASIS%NUMBER_OF_XI
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Xi = ",ni,ERR,ERROR,*999)
-        DO nn=1,BASIS%NUMBER_OF_NODES
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Node = ",nn,ERR,ERROR,*999)
-          CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_DERIVATIVES(nn),8,8, &
-            & BASIS%DERIVATIVE_ORDER_INDEX(:,nn,ni),'("        INDEX(nk):",8(X,I2))','(18X,8(X,I2))',ERR,ERROR,*999)
-        ENDDO !nn
-      ENDDO !ni
-      CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Inverse derivative order index:",ERR,ERROR,*999)
-      CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Element parameter index:",ERR,ERROR,*999)
-      DO nn=1,BASIS%NUMBER_OF_NODES
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Node = ",nn,ERR,ERROR,*999)
-        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_DERIVATIVES(nn),8,8, &
-          & BASIS%ELEMENT_PARAMETER_INDEX(:,nn),'("      INDEX(nk)  :",8(X,I2))','(18X,8(X,I2))',ERR,ERROR,*999)
-      ENDDO !nn
-      CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Inverse element parameter index:",ERR,ERROR,*999)
-      DO ns=1,BASIS%NUMBER_OF_ELEMENT_PARAMETERS
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Element parameter = ",ns,ERR,ERROR,*999)
-        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,2,2, &
-          & BASIS%ELEMENT_PARAMETER_INDEX_INV(:,ns),'("      INDEX(:)  :",2(X,I2))','(18X,2(X,I2))',ERR,ERROR,*999)
-      ENDDO !ns
-      CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Partial derivative index:",ERR,ERROR,*999)
-      DO nn=1,BASIS%NUMBER_OF_NODES
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Node = ",nn,ERR,ERROR,*999)
-        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_DERIVATIVES(nn),8,8, &
-          & BASIS%PARTIAL_DERIVATIVE_INDEX(:,nn),'("      INDEX(nk)  :",8(X,I2))','(18X,8(X,I2))',ERR,ERROR,*999)
-      ENDDO !nn
-      IF(BASIS%NUMBER_OF_XI==3) THEN
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Local faces:",ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of local faces = ",BASIS%NUMBER_OF_LOCAL_FACES,ERR,ERROR,*999)
-        DO local_face_idx=1,BASIS%NUMBER_OF_LOCAL_FACES
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Local face = ",local_face_idx,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of nodes in local face = ", &
-            & BASIS%NUMBER_OF_NODES_IN_LOCAL_FACE(local_face_idx),ERR,ERROR,*999)
-          CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_NODES_IN_LOCAL_FACE(local_face_idx),4,4, &
-            & BASIS%NODE_NUMBERS_IN_LOCAL_FACE(:,local_face_idx),'("      Nodes in local face       :",4(X,I2))','(33X,4(X,I2))', &
-            & ERR,ERROR,*999)
-          DO nn=1,BASIS%NUMBER_OF_NODES_IN_LOCAL_FACE(local_face_idx)
-            CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Local face node: ",nn,ERR,ERROR,*999)
-            CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_FACE(0,nn,local_face_idx),4,4, &
-              & BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_FACE(1:,nn,local_face_idx),'("      Derivatives in local face :",4(X,I2))', &
-              & '(33X,4(X,I2))',ERR,ERROR,*999)
-          ENDDO !NN
-          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_XI_COORDINATES-1,3,3, &
-            & basis%localFaceXiDirections(:,local_face_idx),'("      Local face xi directions  :",3(X,I2))','(33X,3(X,I2))', &
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative order index:",err,error,*999)
+      DO xiIdx=1,basis%NUMBER_OF_XI
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Xi = ",xiIdx,err,error,*999)
+        DO localNodeIdx=1,basis%NUMBER_OF_NODES
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Node = ",localNodeIdx,err,error,*999)
+          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,basis%NUMBER_OF_DERIVATIVES(localNodeIdx),8,8, &
+            & basis%DERIVATIVE_ORDER_INDEX(:,localNodeIdx,xiIdx),'("        Index(:) :",8(X,I2))','(18X,8(X,I2))',err,error,*999)
+        ENDDO !localNodeIdx
+      ENDDO !xiIdx
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Inverse derivative order index:",err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Element parameter index:",err,error,*999)
+      DO localNodeIdx=1,basis%NUMBER_OF_NODES
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Node = ",localNodeIdx,err,error,*999)
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,basis%NUMBER_OF_DERIVATIVES(localNodeIdx),8,8, &
+          & basis%ELEMENT_PARAMETER_INDEX(:,localNodeIdx),'("      Index(:)   :",8(X,I2))','(18X,8(X,I2))',err,error,*999)
+      ENDDO !localNodeIdx
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Inverse element parameter index:",err,error,*999)
+      DO elemParamIdx=1,basis%NUMBER_OF_ELEMENT_PARAMETERS
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Element parameter = ",elemParamIdx,err,error,*999)
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,2,2, &
+          & basis%ELEMENT_PARAMETER_INDEX_INV(:,elemParamIdx),'("      Index(:)  :",2(X,I2))','(18X,2(X,I2))',err,error,*999)
+      ENDDO !elemParamIdx
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Partial derivative index:",err,error,*999)
+      DO localNodeIdx=1,basis%NUMBER_OF_NODES
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Node = ",localNodeIdx,err,error,*999)
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,basis%NUMBER_OF_DERIVATIVES(localNodeIdx),8,8, &
+          & basis%PARTIAL_DERIVATIVE_INDEX(:,localNodeIdx),'("      Index(:)   :",8(X,I2))','(18X,8(X,I2))',err,error,*999)
+      ENDDO !localNodeIdx
+      IF(basis%NUMBER_OF_XI==3) THEN
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Local faces:",err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of local faces = ",basis%NUMBER_OF_LOCAL_FACES,err,error,*999)
+        DO localFaceIdx=1,basis%NUMBER_OF_LOCAL_FACES
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Local face = ",localFaceIdx,err,error,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of nodes in local face = ", &
+            & basis%NUMBER_OF_NODES_IN_LOCAL_FACE(localFaceIdx),err,error,*999)
+          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,basis%NUMBER_OF_NODES_IN_LOCAL_FACE(localFaceIdx),4,4, &
+            & basis%NODE_NUMBERS_IN_LOCAL_FACE(:,localFaceIdx),'("      Nodes in local face       :",4(X,I2))','(33X,4(X,I2))', &
+            & err,error,*999)
+          DO localNodeIdx=1,basis%NUMBER_OF_NODES_IN_LOCAL_FACE(localFaceIdx)
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Local face node: ",localNodeIdx,err,error,*999)
+            CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,basis%DERIVATIVE_NUMBERS_IN_LOCAL_FACE(0,localNodeIdx, &
+              & localFaceIdx),4,4,basis%DERIVATIVE_NUMBERS_IN_LOCAL_FACE(1:,localNodeIdx,localFaceIdx), &
+              & '("      Derivatives in local face :",4(X,I2))','(33X,4(X,I2))',err,error,*999)
+          ENDDO !localNodeIdx
+          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,basis%NUMBER_OF_XI_COORDINATES-1,3,3, &
+            & basis%localFaceXiDirections(:,localFaceIdx),'("      Local face xi directions  :",3(X,I2))','(33X,3(X,I2))', &
             & err,error,*999)
           CALL WriteStringFmtValue(DIAGNOSTIC_OUTPUT_TYPE,"      Local face xi normal      : ", &
-            & BASIS%localFaceXiNormal(local_face_idx),"I2",ERR,ERROR,*999)
-        ENDDO !local_face_idx
-        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,-BASIS%NUMBER_OF_XI_COORDINATES,1,BASIS%NUMBER_OF_XI_COORDINATES,9,9, &
-          & basis%xiNormalLocalFace(-BASIS%NUMBER_OF_XI_COORDINATES:BASIS%NUMBER_OF_XI_COORDINATES), &
+            & basis%localFaceXiNormal(localFaceIdx),"I2",err,error,*999)
+        ENDDO !localFaceIdx
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,-basis%NUMBER_OF_XI_COORDINATES,1,basis%NUMBER_OF_XI_COORDINATES,9,9, &
+          & basis%xiNormalLocalFace(-basis%NUMBER_OF_XI_COORDINATES:basis%NUMBER_OF_XI_COORDINATES), &
           & '("    Xi normal local face :",9(X,I2))','(26X,9(X,I2))',err,error,*999)
       ENDIF
-      CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Local lines:",ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of local lines = ",BASIS%NUMBER_OF_LOCAL_LINES,ERR,ERROR,*999)
-      DO local_line_idx=1,BASIS%NUMBER_OF_LOCAL_LINES
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Local line = ",local_line_idx,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of nodes in local line = ", &
-          & BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(local_line_idx),ERR,ERROR,*999)
-        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(local_line_idx),4,4, &
-          & BASIS%NODE_NUMBERS_IN_LOCAL_LINE(:,local_line_idx),'("      Nodes in local line       :",4(X,I2))','(33X,4(X,I2))', &
-          & ERR,ERROR,*999)
-        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(local_line_idx),4,4, &
-          & BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_LINE(:,local_line_idx),'("      Derivatives in local line :",4(X,I2))', &
-          & '(33X,4(X,I2))',ERR,ERROR,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Local lines:",err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of local lines = ",basis%NUMBER_OF_LOCAL_LINES,err,error,*999)
+      DO localLineIdx=1,basis%NUMBER_OF_LOCAL_LINES
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Local line = ",localLineIdx,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of nodes in local line = ", &
+          & basis%NUMBER_OF_NODES_IN_LOCAL_LINE(localLineIdx),err,error,*999)
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,basis%NUMBER_OF_NODES_IN_LOCAL_LINE(localLineIdx),4,4, &
+          & basis%NODE_NUMBERS_IN_LOCAL_LINE(:,localLineIdx),'("      Nodes in local line       :",4(X,I2))','(33X,4(X,I2))', &
+          & err,error,*999)
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,basis%NUMBER_OF_NODES_IN_LOCAL_LINE(localLineIdx),4,4, &
+          & basis%DERIVATIVE_NUMBERS_IN_LOCAL_LINE(:,localLineIdx),'("      Derivatives in local line :",4(X,I2))', &
+          & '(33X,4(X,I2))',err,error,*999)
         CALL WriteStringFmtValue(DIAGNOSTIC_OUTPUT_TYPE,"      Local line xi direction   : ", &
-          & BASIS%localLineXiDirection(local_line_idx),"I2",ERR,ERROR,*999)
-        IF(BASIS%NUMBER_OF_XI>1) THEN
-          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_XI-1,2,2,basis%localLineXiNormals(:,local_line_idx), &
+          & basis%localLineXiDirection(localLineIdx),"I2",err,error,*999)
+        IF(basis%NUMBER_OF_XI>1) THEN
+          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,basis%NUMBER_OF_XI-1,2,2,basis%localLineXiNormals(:,localLineIdx), &
             &  '("      Local line xi normals     :",2(X,I2))','(31X,2(X,I2))',err,error,*999)
         ENDIF
-      ENDDO !local_line_idx
+      ENDDO !localLineIdx
       IF(basis%NUMBER_OF_XI>=2) THEN
-        IF(BASIS%NUMBER_OF_XI==3) THEN
-          columnStart=-BASIS%NUMBER_OF_XI_COORDINATES
-          columnStop=BASIS%NUMBER_OF_XI_COORDINATES
+        IF(basis%NUMBER_OF_XI==3) THEN
+          columnStart=-basis%NUMBER_OF_XI_COORDINATES
+          columnStop=basis%NUMBER_OF_XI_COORDINATES
         ELSE
           columnStart=1
           columnStop=1
         ENDIF
-        CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,-BASIS%NUMBER_OF_XI_COORDINATES,1,BASIS%NUMBER_OF_XI_COORDINATES, &
-          & columnStart,1,columnStop,9,9,basis%xiNormalsLocalLine(-BASIS%NUMBER_OF_XI_COORDINATES:BASIS%NUMBER_OF_XI_COORDINATES, &
+        CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,-basis%NUMBER_OF_XI_COORDINATES,1,basis%NUMBER_OF_XI_COORDINATES, &
+          & columnStart,1,columnStop,9,9,basis%xiNormalsLocalLine(-basis%NUMBER_OF_XI_COORDINATES:basis%NUMBER_OF_XI_COORDINATES, &
           & columnStart:columnStop),WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-          & '("    Xi normal local line','(",I2,",:)',':",9(X,I2))','(31X,9(X,I2))',ERR,ERROR,*999)
+          & '("    Xi normal local line','(",I2,",:)',':",9(X,I2))','(31X,9(X,I2))',err,error,*999)
       ENDIF
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of sub-bases = ",BASIS%NUMBER_OF_SUB_BASES,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of sub-bases = ",basis%numberOfSubBases,err,error,*999)
     ENDIF
     
-    EXITS("BASIS_CREATE_FINISH")
+    EXITS("Basis_CreateFinish")
     RETURN
-999 ERRORSEXITS("BASIS_CREATE_FINISH",ERR,ERROR)
+999 ERRORSEXITS("Basis_CreateFinish",err,error)
     RETURN 1
     
-  END SUBROUTINE BASIS_CREATE_FINISH
+  END SUBROUTINE Basis_CreateFinish
 
   !
   !================================================================================================================================
@@ -771,87 +780,76 @@ CONTAINS
   !>  - TYPE: 1 (BASIS_LAGRANGE_HERMITE_TP_TYPE)
   !>  - NUMBER_OF_GAUSS_XI: (2,2,2)
   !>  - GAUSS_ORDER: 0 
-  SUBROUTINE BASIS_CREATE_START(USER_NUMBER,BASIS,ERR,ERROR,*)
+  SUBROUTINE Basis_CreateStart(userNumber,basis,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the basis to start the creation of
-    TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the created basis. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to start the creation of
+    TYPE(BASIS_TYPE), POINTER :: basis !<On return, A pointer to the created basis. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: nb
-    TYPE(BASIS_TYPE), POINTER :: NEW_BASIS
-    TYPE(BASIS_PTR_TYPE), POINTER :: NEW_BASES(:)
+    INTEGER(INTG) :: basisIdx
+    TYPE(BASIS_TYPE), POINTER :: newBasis
+    TYPE(BASIS_PTR_TYPE), ALLOCATABLE :: newBases(:)
+    TYPE(VARYING_STRING) :: localError
 
-    NULLIFY(NEW_BASIS)
-    NULLIFY(NEW_BASES)
+    ENTERS("Basis_CreateStart",err,error,*999)
 
-    ENTERS("BASIS_CREATE_START",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(BASIS)) THEN
-      CALL FlagError("Basis is already associated",ERR,ERROR,*999)
-    ELSE
-      !See if basis number has already been created
-      CALL BASIS_USER_NUMBER_FIND(USER_NUMBER,BASIS,ERR,ERROR,*999)
-      IF(ASSOCIATED(BASIS)) THEN
-        CALL FlagError("Basis number is already defined",ERR,ERROR,*999)
-      ELSE
-        !Allocate new basis function and add it to the basis functions
-        ALLOCATE(NEW_BASES(basisFunctions%NUMBER_BASIS_FUNCTIONS+1),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate NEW_BASES",ERR,ERROR,*999)
-        ALLOCATE(NEW_BASIS,STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate NEW_BASIS",ERR,ERROR,*999)
-        CALL BASIS_INITIALISE(NEW_BASIS,ERR,ERROR,*999)
-        DO nb=1,basisFunctions%NUMBER_BASIS_FUNCTIONS
-          NEW_BASES(nb)%PTR=>basisFunctions%BASES(nb)%PTR
-        ENDDO !nb
-        basisFunctions%NUMBER_BASIS_FUNCTIONS=basisFunctions%NUMBER_BASIS_FUNCTIONS+1
-        NEW_BASES(basisFunctions%NUMBER_BASIS_FUNCTIONS)%PTR=>NEW_BASIS
-        IF(ASSOCIATED(basisFunctions%BASES)) DEALLOCATE(basisFunctions%BASES)
-        basisFunctions%BASES=>NEW_BASES
-        !Initialise the new basis function pointers
-        NEW_BASIS%NUMBER_OF_SUB_BASES=0
-        NULLIFY(NEW_BASIS%SUB_BASES)
-        NULLIFY(NEW_BASIS%PARENT_BASIS)
-        !Set the basis parameters
-        NEW_BASIS%BASIS_FINISHED=.FALSE.
-        NEW_BASIS%USER_NUMBER=USER_NUMBER
-        NEW_BASIS%FAMILY_NUMBER=0
-        NEW_BASIS%GLOBAL_NUMBER=basisFunctions%NUMBER_BASIS_FUNCTIONS
-        !Set the default basis parameters
-        NEW_BASIS%TYPE=BASIS_LAGRANGE_HERMITE_TP_TYPE
-        NEW_BASIS%NUMBER_OF_XI=3
-        ALLOCATE(NEW_BASIS%INTERPOLATION_XI(3),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate basis interpolation xi",ERR,ERROR,*999)
-        NEW_BASIS%INTERPOLATION_XI(1:3)=[BASIS_LINEAR_LAGRANGE_INTERPOLATION,BASIS_LINEAR_LAGRANGE_INTERPOLATION, &
-          & BASIS_LINEAR_LAGRANGE_INTERPOLATION]
-        ALLOCATE(NEW_BASIS%COLLAPSED_XI(3),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate basis collapsed xi",ERR,ERROR,*999)
-        NEW_BASIS%COLLAPSED_XI(1:3)=BASIS_NOT_COLLAPSED
-        !Initialise the basis quadrature
-        NULLIFY(NEW_BASIS%QUADRATURE%BASIS)
-        CALL BASIS_QUADRATURE_INITIALISE(NEW_BASIS,ERR,ERROR,*999)
-        
-        BASIS=>NEW_BASIS
-      ENDIF
+    IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated",err,error,*999)
+    
+    !See if basis number has already been created
+    CALL Basis_UserNumberFind(userNumber,basis,err,error,*999)
+    IF(ASSOCIATED(basis)) THEN
+      localError="A basis with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
+        & " already exists."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    EXITS("BASIS_CREATE_START")
+    !Allocate new basis function and add it to the basis functions
+    ALLOCATE(newBases(basisFunctions%numberOfBasisFunctions+1),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate new bases.",err,error,*999)
+    NULLIFY(newBasis)
+    CALL Basis_Initialise(newBasis,err,error,*999)
+    DO basisIdx=1,basisFunctions%numberOfBasisFunctions
+      newBases(basisIdx)%ptr=>basisFunctions%bases(basisIdx)%ptr
+    ENDDO !basisIdx
+    basisFunctions%numberOfBasisFunctions=basisFunctions%numberOfBasisFunctions+1
+    newBases(basisFunctions%numberOfBasisFunctions)%ptr=>newBasis
+    CALL MOVE_ALLOC(newBases,basisFunctions%bases)
+    !Set the basis parameters
+    newBasis%USER_NUMBER=userNumber
+    newBasis%FAMILY_NUMBER=0
+    newBasis%GLOBAL_NUMBER=basisFunctions%numberOfBasisFunctions
+    !Set the default basis parameters
+    newBasis%type=BASIS_LAGRANGE_HERMITE_TP_TYPE
+    newBasis%NUMBER_OF_XI=3
+    ALLOCATE(newBasis%INTERPOLATION_XI(3),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate basis interpolation xi.",err,error,*999)
+    newBasis%INTERPOLATION_XI(1:3)=[BASIS_LINEAR_LAGRANGE_INTERPOLATION,BASIS_LINEAR_LAGRANGE_INTERPOLATION, &
+      & BASIS_LINEAR_LAGRANGE_INTERPOLATION]
+    ALLOCATE(newBasis%COLLAPSED_XI(3),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate basis collapsed xi.",err,error,*999)
+    newBasis%COLLAPSED_XI(1:3)=BASIS_NOT_COLLAPSED
+    !Initialise the basis quadrature
+    NULLIFY(newBasis%QUADRATURE%basis)
+    CALL BASIS_QUADRATURE_INITIALISE(newBasis,err,error,*999)        
+    basis=>newBasis
+    
+    EXITS("Basis_CreateStart")
     RETURN
-999 IF(ASSOCIATED(NEW_BASIS)) CALL BASIS_DESTROY(NEW_BASIS,ERR,ERROR,*998)
-998 IF(ASSOCIATED(NEW_BASES)) DEALLOCATE(NEW_BASES)
-    NULLIFY(BASIS)
-    ERRORSEXITS("BASIS_CREATE_START",ERR,ERROR)
+999 IF(ASSOCIATED(newBasis)) CALL BASIS_DESTROY(newBasis,err,error,*998)
+998 IF(ALLOCATED(newBases)) DEALLOCATE(newBases)
+    ERRORSEXITS("Basis_CreateStart",err,error)
     RETURN 1
     
-  END SUBROUTINE BASIS_CREATE_START
+  END SUBROUTINE Basis_CreateStart
 
   !
   !================================================================================================================================
   !
 
   !>Destroys a basis identified by its basis user number \see BASIS_ROUTINES::BASIS_DESTROY_FAMILY,OpenCMISS::Iron::cmfe_BasisDestroy
-  RECURSIVE SUBROUTINE BASIS_DESTROY_NUMBER(USER_NUMBER,ERR,ERROR,*)
+  RECURSIVE SUBROUTINE BASIS_DESTROY_NUMBER(USER_NUMBER,err,error,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the basis to destroy
@@ -859,13 +857,13 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
 
-    ENTERS("BASIS_DESTROY_NUMBER",ERR,ERROR,*999)
+    ENTERS("BASIS_DESTROY_NUMBER",err,error,*999)
 
-    CALL BASIS_FAMILY_DESTROY(USER_NUMBER,0,ERR,ERROR,*999)
+    CALL Basis_FamilyDestroy(USER_NUMBER,0,err,error,*999)
     
     EXITS("BASIS_DESTROY_NUMBER")
     RETURN
-999 ERRORSEXITS("BASIS_DESTROY_NUMBER",ERR,ERROR)
+999 ERRORSEXITS("BASIS_DESTROY_NUMBER",err,error)
     RETURN 1
     
   END SUBROUTINE BASIS_DESTROY_NUMBER
@@ -875,7 +873,7 @@ CONTAINS
   !
 
   !>Destroys a basis. \see BASIS_ROUTINES::BASIS_DESTROY_FAMILY,OpenCMISS::Iron::cmfe_BasisDestroy
-  RECURSIVE SUBROUTINE BASIS_DESTROY(BASIS,ERR,ERROR,*)
+  RECURSIVE SUBROUTINE BASIS_DESTROY(BASIS,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis to destroy
@@ -884,19 +882,19 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: USER_NUMBER
         
-    ENTERS("BASIS_DESTROY",ERR,ERROR,*999)
+    ENTERS("BASIS_DESTROY",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       USER_NUMBER=BASIS%USER_NUMBER
-      CALL BASIS_FAMILY_DESTROY(USER_NUMBER,0,ERR,ERROR,*999)
+      CALL Basis_FamilyDestroy(USER_NUMBER,0,err,error,*999)
       !NULLIFY(BASIS)
     ELSE
-      CALL FlagError("Basis is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated.",err,error,*999)
     ENDIF
     
     EXITS("BASIS_DESTROY")
     RETURN
-999 ERRORSEXITS("BASIS_DESTROY",ERR,ERROR)
+999 ERRORSEXITS("BASIS_DESTROY",err,error)
     RETURN 1
     
   END SUBROUTINE BASIS_DESTROY
@@ -907,7 +905,7 @@ CONTAINS
 
   !>Evaluates the appropriate partial derivative index at position XI for the basis for double precision arguments.
   !>Note for simplex basis functions the XI coordinates should exclude the last area coordinate.
-  FUNCTION BASIS_EVALUATE_XI_DP(BASIS,ELEMENT_PARAMETER_INDEX,PARTIAL_DERIV_INDEX,XI,ERR,ERROR)
+  FUNCTION BASIS_EVALUATE_XI_DP(BASIS,ELEMENT_PARAMETER_INDEX,PARTIAL_DERIV_INDEX,XI,err,error)
   
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
@@ -923,7 +921,7 @@ CONTAINS
     REAL(DP) :: XIL(SIZE(XI,1)+1)
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
-    ENTERS("BASIS_EVALUATE_XI_DP",ERR,ERROR,*999)
+    ENTERS("BASIS_EVALUATE_XI_DP",err,error,*999)
     
     BASIS_EVALUATE_XI_DP=0.0_DP
     IF(ASSOCIATED(BASIS)) THEN
@@ -932,37 +930,37 @@ CONTAINS
         CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
           nn=BASIS%ELEMENT_PARAMETER_INDEX_INV(1,ELEMENT_PARAMETER_INDEX)
           nk=BASIS%ELEMENT_PARAMETER_INDEX_INV(2,ELEMENT_PARAMETER_INDEX)
-          BASIS_EVALUATE_XI_DP=BASIS_LHTP_BASIS_EVALUATE(BASIS,nn,nk,PARTIAL_DERIV_INDEX,XI,ERR,ERROR)
+          BASIS_EVALUATE_XI_DP=BASIS_LHTP_BASIS_EVALUATE(BASIS,nn,nk,PARTIAL_DERIV_INDEX,XI,err,error)
           IF(ERR/=0) GOTO 999
         CASE(BASIS_SIMPLEX_TYPE)
           !Create the area coordinates from the xi coordinates
           XIL(1:SIZE(XI,1))=1.0_DP-XI
           XIL(SIZE(XI,1)+1)=SUM(XI)-(SIZE(XI,1)-1.0_DP)
           nn=BASIS%ELEMENT_PARAMETER_INDEX_INV(1,ELEMENT_PARAMETER_INDEX)
-          BASIS_EVALUATE_XI_DP=BASIS_SIMPLEX_BASIS_EVALUATE(BASIS,nn,PARTIAL_DERIV_INDEX,XIL,ERR,ERROR)
+          BASIS_EVALUATE_XI_DP=BASIS_SIMPLEX_BASIS_EVALUATE(BASIS,nn,PARTIAL_DERIV_INDEX,XIL,err,error)
           IF(ERR/=0) GOTO 999
         CASE(BASIS_RADIAL_TYPE)
 
 
           IF(ERR/=0) GOTO 999
         CASE DEFAULT
-          LOCAL_ERROR="Basis type "//TRIM(NUMBER_TO_VSTRING(BASIS%TYPE,"*",ERR,ERROR))//" is invalid or not implemented."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          LOCAL_ERROR="Basis type "//TRIM(NumberToVString(BASIS%TYPE,"*",err,error))//" is invalid or not implemented."
+          CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
       ELSE
         LOCAL_ERROR="The specified element parameter index of "// &
-          & TRIM(NUMBER_TO_VSTRING(ELEMENT_PARAMETER_INDEX,"*",ERR,ERROR))// &
+          & TRIM(NumberToVString(ELEMENT_PARAMETER_INDEX,"*",err,error))// &
           & " is invalid. The index must be > 0 and <= "// &
-          & TRIM(NUMBER_TO_VSTRING(BASIS%NUMBER_OF_ELEMENT_PARAMETERS,"*",ERR,ERROR))//"."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          & TRIM(NumberToVString(BASIS%NUMBER_OF_ELEMENT_PARAMETERS,"*",err,error))//"."
+        CALL FlagError(LOCAL_ERROR,err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated.",err,error,*999)
     ENDIF
     
     EXITS("BASIS_EVALUATE_XI_DP")
     RETURN
-999 ERRORSEXITS("BASIS_EVALUATE_XI_DP",ERR,ERROR)
+999 ERRORSEXITS("BASIS_EVALUATE_XI_DP",err,error)
     RETURN
     
   END FUNCTION BASIS_EVALUATE_XI_DP
@@ -1765,25 +1763,25 @@ CONTAINS
         MAX_GAUSS=order*order*order
       CASE DEFAULT
         LOCAL_ERROR="Number of coordinates " &
-        & //TRIM(NUMBER_TO_VSTRING(numCoords,"*",err,error))//" is invalid or not implemented"
+        & //TRIM(NumberToVString(numCoords,"*",err,error))//" is invalid or not implemented"
         CALL FlagError(LOCAL_ERROR,err,ERROR,*999)
       END SELECT
       !Allocate arrays
       ALLOCATE(W(MAX_GAUSS,numCoords),STAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not allocate weights",ERR,ERROR,*999)
+      IF(ERR/=0) CALL FlagError("Could not allocate weights",err,error,*999)
       ALLOCATE(XI(numCoords),STAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not allocate gauss point coordinates",ERR,ERROR,*999)
+      IF(ERR/=0) CALL FlagError("Could not allocate gauss point coordinates",err,error,*999)
       ALLOCATE(XICOORDS(MAX_GAUSS,numCoords),STAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not allocate gauss point coordinates",ERR,ERROR,*999)
+      IF(ERR/=0) CALL FlagError("Could not allocate gauss point coordinates",err,error,*999)
       ALLOCATE(XI_MATRIX(MAX_GAUSS,MAX_GAUSS,MAX_GAUSS,numCoords),STAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not allocate XI matrix",ERR,ERROR,*999)
+      IF(ERR/=0) CALL FlagError("Could not allocate XI matrix",err,error,*999)
 
       SELECT CASE(basis%TYPE)
       CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
         ALLOCATE(gaussPoints(numCoords,MAX_GAUSS),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate weights",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate weights",err,error,*999)
         ALLOCATE(gaussWeights(MAX_GAUSS),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate weights",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate weights",err,error,*999)
         DO nj=1,numCoords
           CALL GAUSS_LEGENDRE(order,0.0_DP,1.0_DP,XICOORDS(1:order,nj),W(1:order,nj),err,error,*999)
           IF(err/=0) GOTO 999
@@ -1813,14 +1811,14 @@ CONTAINS
           number_of_vertices=4
         ENDIF
         ALLOCATE(gaussPoints(number_of_vertices,MAX_GAUSS),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate weights",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate weights",err,error,*999)
         ALLOCATE(gaussWeights(MAX_GAUSS),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate weights",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate weights",err,error,*999)
 
         CALL GAUSS_SIMPLEX(order,number_of_vertices,numberGaussPoints,gaussPoints,gaussWeights,err,error,*999)
       CASE DEFAULT
         LOCAL_ERROR="Basis type "// &
-        & TRIM(NUMBER_TO_VSTRING(BASIS%TYPE,"*",err,error))// &
+        & TRIM(NumberToVString(BASIS%TYPE,"*",err,error))// &
         & " is invalid or not implemented"
         CALL FlagError(LOCAL_ERROR,err,ERROR,*999)
       END SELECT
@@ -1841,197 +1839,198 @@ CONTAINS
   
   !>Destroys a basis identified by its basis user number and family number. Called from the library visible routine BASIS_DESTROY
   !> \see BASIS_ROUTINES::BASIS_DESTROY
-  RECURSIVE SUBROUTINE BASIS_FAMILY_DESTROY(USER_NUMBER,FAMILY_NUMBER,ERR,ERROR,*)
+  RECURSIVE SUBROUTINE Basis_FamilyDestroy(userNumber,familyNumber,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the basis to destroy
-    INTEGER(INTG), INTENT(IN) :: FAMILY_NUMBER !<The family number of the basis to destroy
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to destroy
+    INTEGER(INTG), INTENT(IN) :: familyNumber !<The family number of the basis to destroy
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: count,nb
-    TYPE(BASIS_TYPE), POINTER :: BASIS
-    TYPE(BASIS_PTR_TYPE), POINTER :: NEW_SUB_BASES(:)
+    INTEGER(INTG) :: count,basisIdx
+    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BASIS_PTR_TYPE), ALLOCATABLE :: newSubBases(:)
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("BASIS_FAMILY_DESTROY",ERR,ERROR,*999)
+    ENTERS("Basis_FamilyDestroy",err,error,*999)
 
-    NULLIFY(BASIS)
-    CALL BASIS_FAMILY_NUMBER_FIND(USER_NUMBER,FAMILY_NUMBER,BASIS,ERR,ERROR,*999)
-    IF(ASSOCIATED(BASIS)) THEN
+    NULLIFY(basis)
+    CALL Basis_FamilyNumberFind(userNumber,familyNumber,basis,err,error,*999)
+    IF(.NOT.ASSOCIATED(basis)) THEN
+      localError="The basis with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
+        & " and a family number of "//TRIM(NumberToVString(familyNumber,"*",err,error))//" does not exist."      
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
 
 !!NOTE: We have to find a pointer to the basis to destroy within this routine rather than passing in a pointer to a
-!!DESTROY_BASIS_PTR type routine because we need to change BASIS%SUB_BASES of the PARENT basis and this would violate section
-!!12.4.1.6 of the Fortran standard if the dummy BASIS pointer argument was associated with the SUB_BASES(x)%PTR actual
+!!DESTROY_BASIS_PTR type routine because we need to change basis%subBases of the parent basis and this would violate section
+!!12.4.1.6 of the Fortran standard if the dummy basis pointer argument was associated with the subBases(x)%ptr actual
 !!argument.
       
-      IF(BASIS%NUMBER_OF_SUB_BASES==0) THEN
-        !No more sub-bases so delete this instance
-        IF(ASSOCIATED(BASIS%PARENT_BASIS)) THEN
-          !Sub-basis function - delete this instance from the PARENT_BASIS
-          NULLIFY(NEW_SUB_BASES)
-          IF(BASIS%PARENT_BASIS%NUMBER_OF_SUB_BASES>1) THEN
-            !If the parent basis has more than one sub basis then remove this instance from its sub-bases list
-            ALLOCATE(NEW_SUB_BASES(BASIS%PARENT_BASIS%NUMBER_OF_SUB_BASES-1),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate new sub-bases",ERR,ERROR,*999)
-            count=0
-            DO nb=1,BASIS%PARENT_BASIS%NUMBER_OF_SUB_BASES
-              IF(BASIS%PARENT_BASIS%SUB_BASES(nb)%PTR%USER_NUMBER==BASIS%USER_NUMBER.AND. &
-                & BASIS%PARENT_BASIS%SUB_BASES(nb)%PTR%FAMILY_NUMBER/=BASIS%FAMILY_NUMBER) THEN
-                count=count+1
-                NEW_SUB_BASES(count)%PTR=>BASIS%PARENT_BASIS%SUB_BASES(nb)%PTR
-              ENDIF
-            ENDDO
-          ENDIF
-          BASIS%PARENT_BASIS%NUMBER_OF_SUB_BASES=BASIS%PARENT_BASIS%NUMBER_OF_SUB_BASES-1
-          IF(ASSOCIATED(BASIS%PARENT_BASIS%SUB_BASES)) DEALLOCATE(BASIS%PARENT_BASIS%SUB_BASES)
-          BASIS%PARENT_BASIS%SUB_BASES=>NEW_SUB_BASES
-        ELSE
-          !Master basis function - delete this instance from basisFunctions
-          NULLIFY(NEW_SUB_BASES)
-          IF(basisFunctions%NUMBER_BASIS_FUNCTIONS>1) THEN
-            !If there is more than one basis defined then remove this instance from the basis functions
-            ALLOCATE(NEW_SUB_BASES(basisFunctions%NUMBER_BASIS_FUNCTIONS-1),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate new sub-bases",ERR,ERROR,*999)
-            count=0
-            DO nb=1,basisFunctions%NUMBER_BASIS_FUNCTIONS
-              IF(basisFunctions%BASES(nb)%PTR%USER_NUMBER/=BASIS%USER_NUMBER.AND. &
-                & basisFunctions%BASES(nb)%PTR%FAMILY_NUMBER==0) THEN
-                count=count+1
-                NEW_SUB_BASES(count)%PTR=>basisFunctions%BASES(nb)%PTR
-              ENDIF
-            ENDDO
-          ENDIF
-          IF(ASSOCIATED(basisFunctions%BASES)) DEALLOCATE(basisFunctions%BASES)
-          basisFunctions%NUMBER_BASIS_FUNCTIONS=basisFunctions%NUMBER_BASIS_FUNCTIONS-1
-          basisFunctions%BASES=>NEW_SUB_BASES
+    IF(basis%numberOfSubBases==0) THEN
+      !No more sub-bases so delete this instance
+      IF(ASSOCIATED(basis%parentBasis)) THEN
+        !Sub-basis function - delete this instance from the parentBasis
+        IF(basis%parentBasis%numberOfSubBases>1) THEN
+          !If the parent basis has more than one sub basis then remove this instance from its sub-bases list
+          ALLOCATE(newSubBases(basis%parentBasis%numberOfSubBases-1),STAT=err)
+          IF(err/=0) CALL FlagError("Could not allocate new sub-bases.",err,error,*999)
+          count=0
+          DO basisIdx=1,basis%parentBasis%numberOfSubBases
+            IF(basis%parentBasis%subBases(basisIdx)%ptr%USER_NUMBER==basis%USER_NUMBER.AND. &
+              & basis%parentBasis%subBases(basisIdx)%ptr%FAMILY_NUMBER/=basis%FAMILY_NUMBER) THEN
+              count=count+1
+              newSubBases(count)%ptr=>basis%parentBasis%subBases(basisIdx)%ptr
+            ENDIF
+          ENDDO !basisIdx
         ENDIF
-
-        CALL BASIS_FINALISE(BASIS,ERR,ERROR,*999)
-         
+        basis%parentBasis%numberOfSubBases=basis%parentBasis%numberOfSubBases-1
+        CALL MOVE_ALLOC(newSubBases,basis%parentBasis%subBases)
       ELSE
-        !Recursively delete sub-bases first
-        DO WHILE(BASIS%NUMBER_OF_SUB_BASES>0)
-          CALL BASIS_FAMILY_DESTROY(BASIS%SUB_BASES(1)%PTR%USER_NUMBER,BASIS%SUB_BASES(1)%PTR%FAMILY_NUMBER,ERR,ERROR,*999)
-        ENDDO
-        !Now delete this instance
-        CALL BASIS_FAMILY_DESTROY(USER_NUMBER,FAMILY_NUMBER,ERR,ERROR,*999)
+        !Master basis function - delete this instance from basisFunctions
+        IF(basisFunctions%numberOfBasisFunctions>1) THEN
+          !If there is more than one basis defined then remove this instance from the basis functions
+          ALLOCATE(newSubBases(basisFunctions%numberOfBasisFunctions-1),STAT=err)
+          IF(err/=0) CALL FlagError("Could not allocate new sub-bases.",err,error,*999)
+          count=0
+          DO basisIdx=1,basisFunctions%numberOfBasisFunctions
+            IF(basisFunctions%bases(basisIdx)%ptr%USER_NUMBER/=basis%USER_NUMBER.AND. &
+              & basisFunctions%bases(basisIdx)%ptr%FAMILY_NUMBER==0) THEN
+              count=count+1
+              newSubBases(count)%ptr=>basisFunctions%bases(basisIdx)%ptr
+            ENDIF
+          ENDDO !basisIdx
+        ENDIF
+        CALL MOVE_ALLOC(newSubBases,basisFunctions%bases)
+        basisFunctions%numberOfBasisFunctions=basisFunctions%numberOfBasisFunctions-1
       ENDIF
 
+      CALL Basis_Finalise(basis,err,error,*999)
+         
     ELSE
-      CALL FlagError("Basis user number does not exist",ERR,ERROR,*999)
+      !Recursively delete sub-bases first
+      DO WHILE(basis%numberOfSubBases>0)
+        CALL Basis_FamilyDestroy(basis%subBases(1)%ptr%USER_NUMBER,basis%subBases(1)%ptr%FAMILY_NUMBER,err,error,*999)
+      ENDDO
+      !Now delete this instance
+      CALL Basis_FamilyDestroy(userNumber,familyNumber,err,error,*999)
     ENDIF
     
-    EXITS("BASIS_FAMILY_DESTROY")
+    EXITS("Basis_FamilyDestroy")
     RETURN
-999 ERRORSEXITS("BASIS_FAMILY_DESTROY",ERR,ERROR)
+999 ERRORSEXITS("Basis_FamilyDestroy",err,error)
     RETURN 1
-  END SUBROUTINE BASIS_FAMILY_DESTROY
+    
+  END SUBROUTINE Basis_FamilyDestroy
 
   !
   !================================================================================================================================
   !
 
   !>Finalises a basis and deallocates all memory.
-  SUBROUTINE BASIS_FINALISE(BASIS,ERR,ERROR,*)
+  SUBROUTINE Basis_Finalise(basis,err,error,*)
 
     !Argument variables
-    TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(BASIS_TYPE), POINTER :: basis !<A pointer to the basis to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("BASIS_FINALISE",ERR,ERROR,*999)
+    ENTERS("Basis_Finalise",err,error,*999)
 
-    IF(ASSOCIATED(BASIS)) THEN
-      IF(ALLOCATED(BASIS%INTERPOLATION_XI)) DEALLOCATE(BASIS%INTERPOLATION_XI)
-      IF(ALLOCATED(BASIS%INTERPOLATION_TYPE)) DEALLOCATE(BASIS%INTERPOLATION_TYPE)
-      IF(ALLOCATED(BASIS%INTERPOLATION_ORDER)) DEALLOCATE(BASIS%INTERPOLATION_ORDER)
-      IF(ALLOCATED(BASIS%COLLAPSED_XI)) DEALLOCATE(BASIS%COLLAPSED_XI)
-      IF(ALLOCATED(BASIS%NODE_AT_COLLAPSE)) DEALLOCATE(BASIS%NODE_AT_COLLAPSE)
-      CALL BASIS_QUADRATURE_FINALISE(BASIS,ERR,ERROR,*999)
-      IF(ALLOCATED(BASIS%NUMBER_OF_NODES_XIC)) DEALLOCATE(BASIS%NUMBER_OF_NODES_XIC)
-      IF(ALLOCATED(BASIS%NUMBER_OF_DERIVATIVES)) DEALLOCATE(BASIS%NUMBER_OF_DERIVATIVES)
-      IF(ALLOCATED(BASIS%NODE_POSITION_INDEX)) DEALLOCATE(BASIS%NODE_POSITION_INDEX)
-      IF(ALLOCATED(BASIS%NODE_POSITION_INDEX_INV)) DEALLOCATE(BASIS%NODE_POSITION_INDEX_INV)
-      IF(ALLOCATED(BASIS%DERIVATIVE_ORDER_INDEX)) DEALLOCATE(BASIS%DERIVATIVE_ORDER_INDEX)
-      IF(ALLOCATED(BASIS%DERIVATIVE_ORDER_INDEX_INV)) DEALLOCATE(BASIS%DERIVATIVE_ORDER_INDEX_INV)
-      IF(ALLOCATED(BASIS%PARTIAL_DERIVATIVE_INDEX)) DEALLOCATE(BASIS%PARTIAL_DERIVATIVE_INDEX)
-      IF(ALLOCATED(BASIS%ELEMENT_PARAMETER_INDEX)) DEALLOCATE(BASIS%ELEMENT_PARAMETER_INDEX)
-      IF(ALLOCATED(BASIS%ELEMENT_PARAMETER_INDEX_INV)) DEALLOCATE(BASIS%ELEMENT_PARAMETER_INDEX_INV)
-      IF(ALLOCATED(BASIS%localLineXiDirection)) DEALLOCATE(BASIS%localLineXiDirection)
-      IF(ALLOCATED(BASIS%localLineXiNormals)) DEALLOCATE(BASIS%localLineXiNormals)
-      IF(ALLOCATED(BASIS%xiNormalsLocalLine)) DEALLOCATE(BASIS%xiNormalsLocalLine)
-      IF(ALLOCATED(BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE)) DEALLOCATE(BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE)
-      IF(ALLOCATED(BASIS%NODE_NUMBERS_IN_LOCAL_LINE)) DEALLOCATE(BASIS%NODE_NUMBERS_IN_LOCAL_LINE)
-      IF(ALLOCATED(BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_LINE)) DEALLOCATE(BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_LINE)
-      IF(ALLOCATED(BASIS%ELEMENT_PARAMETERS_IN_LOCAL_LINE)) DEALLOCATE(BASIS%ELEMENT_PARAMETERS_IN_LOCAL_LINE)
-      IF(ALLOCATED(BASIS%localFaceXiDirections)) DEALLOCATE(BASIS%localFaceXiDirections)
-      IF(ALLOCATED(BASIS%localFaceXiNormal)) DEALLOCATE(BASIS%localFaceXiNormal)
-      IF(ALLOCATED(BASIS%xiNormalLocalFace)) DEALLOCATE(BASIS%xiNormalLocalFace)
-      IF(ALLOCATED(BASIS%NUMBER_OF_NODES_IN_LOCAL_FACE)) DEALLOCATE(BASIS%NUMBER_OF_NODES_IN_LOCAL_FACE)
-      IF(ALLOCATED(BASIS%NODE_NUMBERS_IN_LOCAL_FACE)) DEALLOCATE(BASIS%NODE_NUMBERS_IN_LOCAL_FACE)
-      IF(ALLOCATED(BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_FACE)) DEALLOCATE(BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_FACE)
-      IF(ALLOCATED(BASIS%ELEMENT_PARAMETERS_IN_LOCAL_FACE)) DEALLOCATE(BASIS%ELEMENT_PARAMETERS_IN_LOCAL_FACE)
-      IF(ASSOCIATED(BASIS%LINE_BASES)) DEALLOCATE(BASIS%LINE_BASES)
-      IF(ASSOCIATED(BASIS%FACE_BASES)) DEALLOCATE(BASIS%FACE_BASES)
-      IF(ASSOCIATED(BASIS%SUB_BASES)) DEALLOCATE(BASIS%SUB_BASES)      
-      DEALLOCATE(BASIS)
+    IF(ASSOCIATED(basis)) THEN
+      IF(ALLOCATED(basis%INTERPOLATION_XI)) DEALLOCATE(basis%INTERPOLATION_XI)
+      IF(ALLOCATED(basis%INTERPOLATION_TYPE)) DEALLOCATE(basis%INTERPOLATION_TYPE)
+      IF(ALLOCATED(basis%INTERPOLATION_ORDER)) DEALLOCATE(basis%INTERPOLATION_ORDER)
+      IF(ALLOCATED(basis%COLLAPSED_XI)) DEALLOCATE(basis%COLLAPSED_XI)
+      IF(ALLOCATED(basis%NODE_AT_COLLAPSE)) DEALLOCATE(basis%NODE_AT_COLLAPSE)
+      CALL BASIS_QUADRATURE_FINALISE(basis,err,error,*999)
+      IF(ALLOCATED(basis%NUMBER_OF_NODES_XIC)) DEALLOCATE(basis%NUMBER_OF_NODES_XIC)
+      IF(ALLOCATED(basis%NUMBER_OF_DERIVATIVES)) DEALLOCATE(basis%NUMBER_OF_DERIVATIVES)
+      IF(ALLOCATED(basis%NODE_POSITION_INDEX)) DEALLOCATE(basis%NODE_POSITION_INDEX)
+      IF(ALLOCATED(basis%NODE_POSITION_INDEX_INV)) DEALLOCATE(basis%NODE_POSITION_INDEX_INV)
+      IF(ALLOCATED(basis%DERIVATIVE_ORDER_INDEX)) DEALLOCATE(basis%DERIVATIVE_ORDER_INDEX)
+      IF(ALLOCATED(basis%DERIVATIVE_ORDER_INDEX_INV)) DEALLOCATE(basis%DERIVATIVE_ORDER_INDEX_INV)
+      IF(ALLOCATED(basis%PARTIAL_DERIVATIVE_INDEX)) DEALLOCATE(basis%PARTIAL_DERIVATIVE_INDEX)
+      IF(ALLOCATED(basis%ELEMENT_PARAMETER_INDEX)) DEALLOCATE(basis%ELEMENT_PARAMETER_INDEX)
+      IF(ALLOCATED(basis%ELEMENT_PARAMETER_INDEX_INV)) DEALLOCATE(basis%ELEMENT_PARAMETER_INDEX_INV)
+      IF(ALLOCATED(basis%localLineBasis)) DEALLOCATE(basis%localLineBasis)
+      IF(ALLOCATED(basis%localLineXiDirection)) DEALLOCATE(basis%localLineXiDirection)
+      IF(ALLOCATED(basis%localLineXiNormals)) DEALLOCATE(basis%localLineXiNormals)
+      IF(ALLOCATED(basis%xiNormalsLocalLine)) DEALLOCATE(basis%xiNormalsLocalLine)
+      IF(ALLOCATED(basis%NUMBER_OF_NODES_IN_LOCAL_LINE)) DEALLOCATE(basis%NUMBER_OF_NODES_IN_LOCAL_LINE)
+      IF(ALLOCATED(basis%NODE_NUMBERS_IN_LOCAL_LINE)) DEALLOCATE(basis%NODE_NUMBERS_IN_LOCAL_LINE)
+      IF(ALLOCATED(basis%DERIVATIVE_NUMBERS_IN_LOCAL_LINE)) DEALLOCATE(basis%DERIVATIVE_NUMBERS_IN_LOCAL_LINE)
+      IF(ALLOCATED(basis%ELEMENT_PARAMETERS_IN_LOCAL_LINE)) DEALLOCATE(basis%ELEMENT_PARAMETERS_IN_LOCAL_LINE)
+      IF(ALLOCATED(basis%localFaceBasis)) DEALLOCATE(basis%localFaceBasis)
+      IF(ALLOCATED(basis%localFaceXiDirections)) DEALLOCATE(basis%localFaceXiDirections)
+      IF(ALLOCATED(basis%localFaceXiNormal)) DEALLOCATE(basis%localFaceXiNormal)
+      IF(ALLOCATED(basis%xiNormalLocalFace)) DEALLOCATE(basis%xiNormalLocalFace)
+      IF(ALLOCATED(basis%NUMBER_OF_NODES_IN_LOCAL_FACE)) DEALLOCATE(basis%NUMBER_OF_NODES_IN_LOCAL_FACE)
+      IF(ALLOCATED(basis%NODE_NUMBERS_IN_LOCAL_FACE)) DEALLOCATE(basis%NODE_NUMBERS_IN_LOCAL_FACE)
+      IF(ALLOCATED(basis%DERIVATIVE_NUMBERS_IN_LOCAL_FACE)) DEALLOCATE(basis%DERIVATIVE_NUMBERS_IN_LOCAL_FACE)
+      IF(ALLOCATED(basis%ELEMENT_PARAMETERS_IN_LOCAL_FACE)) DEALLOCATE(basis%ELEMENT_PARAMETERS_IN_LOCAL_FACE)
+      IF(ALLOCATED(basis%lineBases)) DEALLOCATE(basis%lineBases)
+      IF(ALLOCATED(basis%faceBases)) DEALLOCATE(basis%faceBases)
+      IF(ALLOCATED(basis%subBases)) DEALLOCATE(basis%subBases)      
+      DEALLOCATE(basis)
     ENDIF
    
-    EXITS("BASIS_FINALISE")
+    EXITS("Basis_Finalise")
     RETURN
-999 ERRORSEXITS("BASIS_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("Basis_Finalise",err,error)
     RETURN 1
     
-  END SUBROUTINE BASIS_FINALISE
+  END SUBROUTINE Basis_Finalise
 
   !
   !================================================================================================================================
   !
 
-  !>Initialises a basis.
-  SUBROUTINE BASIS_INITIALISE(BASIS,ERR,ERROR,*)
+  !>Allocates and initialises a basis.
+  SUBROUTINE Basis_Initialise(basis,err,error,*)
 
     !Argument variables
-    TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis to initialise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(BASIS_TYPE), POINTER :: basis !<A pointer to the basis to allocate and initialise. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
 
-    ENTERS("BASIS_INITIALISE",ERR,ERROR,*999)
+    ENTERS("Basis_Initialise",err,error,*998)
 
-    IF(ASSOCIATED(BASIS)) THEN
-      BASIS%USER_NUMBER=0
-      BASIS%GLOBAL_NUMBER=0
-      BASIS%FAMILY_NUMBER=0
-      BASIS%BASIS_FINISHED=.FALSE.
-      BASIS%HERMITE=.FALSE.
-      BASIS%TYPE=0
-      BASIS%NUMBER_OF_XI=0
-      BASIS%NUMBER_OF_XI_COORDINATES=0
-      BASIS%DEGENERATE=.FALSE.
-      BASIS%NUMBER_OF_COLLAPSED_XI=0
-      BASIS%NUMBER_OF_PARTIAL_DERIVATIVES=0
-      BASIS%NUMBER_OF_NODES=0
-      BASIS%NUMBER_OF_ELEMENT_PARAMETERS=0
-      BASIS%MAXIMUM_NUMBER_OF_DERIVATIVES=0
-      BASIS%NUMBER_OF_LOCAL_LINES=0
-      BASIS%NUMBER_OF_LOCAL_FACES=0
-      NULLIFY(BASIS%LINE_BASES)
-      NULLIFY(BASIS%FACE_BASES)
-      BASIS%NUMBER_OF_SUB_BASES=0
-      NULLIFY(BASIS%SUB_BASES)
-      NULLIFY(BASIS%PARENT_BASIS)
-    ELSE
-      CALL FlagError("Basis is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*998)
+
+    ALLOCATE(basis,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate basis.",err,error,*999)
+    
+    basis%USER_NUMBER=0
+    basis%GLOBAL_NUMBER=0
+    basis%FAMILY_NUMBER=0
+    basis%BASIS_FINISHED=.FALSE.
+    basis%hermite=.FALSE.
+    basis%type=0
+    basis%NUMBER_OF_XI=0
+    basis%NUMBER_OF_XI_COORDINATES=0
+    basis%degenerate=.FALSE.
+    basis%NUMBER_OF_COLLAPSED_XI=0
+    basis%NUMBER_OF_PARTIAL_DERIVATIVES=0
+    basis%NUMBER_OF_NODES=0
+    basis%NUMBER_OF_ELEMENT_PARAMETERS=0
+    basis%MAXIMUM_NUMBER_OF_DERIVATIVES=0
+    basis%NUMBER_OF_LOCAL_LINES=0
+    basis%NUMBER_OF_LOCAL_FACES=0
+    basis%numberOfSubBases=0
+    NULLIFY(basis%parentBasis)
    
-    EXITS("BASIS_INITIALISE")
+    EXITS("Basis_Initialise")
     RETURN
-999 ERRORSEXITS("BASIS_INITIALISE",ERR,ERROR)
+999 CALL Basis_Finalise(basis,dummyErr,dummyError,*998)
+998 ERRORSEXITS("Basis_Initialise",err,error)
     RETURN 1
     
-  END SUBROUTINE BASIS_INITIALISE
+  END SUBROUTINE Basis_Initialise
 
   !
   !================================================================================================================================
@@ -2040,7 +2039,7 @@ CONTAINS
   !>Interpolates the appropriate partial derivative index of the element parameters at a gauss point for the basis
   !>for double precision arguments. Note the interpolated value returned needs to be adjusted for the particular
   !!>coordinate system with COORDINATE_INTERPOLATE_ADJUST. 
-  FUNCTION BASIS_INTERPOLATE_GAUSS_DP(BASIS,PARTIAL_DERIV_INDEX,QUADRATURE_SCHEME,GAUSS_POINT_NUMBER,ELEMENT_PARAMETERS,ERR,ERROR)
+  FUNCTION BASIS_INTERPOLATE_GAUSS_DP(BASIS,PARTIAL_DERIV_INDEX,QUADRATURE_SCHEME,GAUSS_POINT_NUMBER,ELEMENT_PARAMETERS,err,error)
   
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
@@ -2057,7 +2056,7 @@ CONTAINS
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: BASIS_QUADRATURE_SCHEME
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
-    ENTERS("BASIS_INTERPOLATE_GAUSS_DP",ERR,ERROR,*999)
+    ENTERS("BASIS_INTERPOLATE_GAUSS_DP",err,error,*999)
     
     BASIS_INTERPOLATE_GAUSS_DP=0.0_DP
     IF(ASSOCIATED(BASIS)) THEN
@@ -2072,28 +2071,28 @@ CONTAINS
                   & ELEMENT_PARAMETERS(ns)
               ENDDO !ns
             ELSE
-              LOCAL_ERROR="The partial derivative index of "//TRIM(NUMBER_TO_VSTRING(PARTIAL_DERIV_INDEX,"*",ERR,ERROR))// &
+              LOCAL_ERROR="The partial derivative index of "//TRIM(NumberToVString(PARTIAL_DERIV_INDEX,"*",err,error))// &
                 & " is invalid. It must be between 1 and "// &
-                & TRIM(NUMBER_TO_VSTRING(BASIS%NUMBER_OF_PARTIAL_DERIVATIVES,"*",ERR,ERROR))
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(BASIS%NUMBER_OF_PARTIAL_DERIVATIVES,"*",err,error))
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             ENDIF
           ENDIF
         ELSE
-          CALL FlagError("The quadrature scheme has not been created",ERR,ERROR,*999)
+          CALL FlagError("The quadrature scheme has not been created",err,error,*999)
         ENDIF
       ELSE
-        LOCAL_ERROR="The quadrature scheme type number of "//TRIM(NUMBER_TO_VSTRING(QUADRATURE_SCHEME,"*",ERR,ERROR))// &
+        LOCAL_ERROR="The quadrature scheme type number of "//TRIM(NumberToVString(QUADRATURE_SCHEME,"*",err,error))// &
           & " is invalid. It must be between 1 and "// &
-          & TRIM(NUMBER_TO_VSTRING(BASIS_NUMBER_OF_QUADRATURE_SCHEME_TYPES,"*",ERR,ERROR))
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          & TRIM(NumberToVString(BASIS_NUMBER_OF_QUADRATURE_SCHEME_TYPES,"*",err,error))
+        CALL FlagError(LOCAL_ERROR,err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated",err,error,*999)
     ENDIF
     
     EXITS("BASIS_INTERPOLATE_GAUSS_DP")
     RETURN
-999 ERRORSEXITS("BASIS_INTERPOLATE_GAUSS_DP",ERR,ERROR)
+999 ERRORSEXITS("BASIS_INTERPOLATE_GAUSS_DP",err,error)
     RETURN
   END FUNCTION BASIS_INTERPOLATE_GAUSS_DP
 
@@ -2105,7 +2104,7 @@ CONTAINS
   !>for double precision arguments. Note the interpolated value returned needs to be adjusted for the particular
   !!>coordinate system with COORDINATE_INTERPOLATE_ADJUST. 
   FUNCTION BASIS_INTERPOLATE_LOCAL_FACE_GAUSS_DP(BASIS,PARTIAL_DERIV_INDEX,QUADRATURE_SCHEME, &
-    & LOCAL_FACE_NUMBER,GAUSS_POINT_NUMBER,FACE_PARAMETERS,ERR,ERROR)
+    & LOCAL_FACE_NUMBER,GAUSS_POINT_NUMBER,FACE_PARAMETERS,err,error)
   
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
@@ -2123,7 +2122,7 @@ CONTAINS
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: BASIS_QUADRATURE_SCHEME
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
-    ENTERS("BASIS_INTERPOLATE_LOCAL_FACE_GAUSS_DP",ERR,ERROR,*999)
+    ENTERS("BASIS_INTERPOLATE_LOCAL_FACE_GAUSS_DP",err,error,*999)
     
     BASIS_INTERPOLATE_LOCAL_FACE_GAUSS_DP=0.0_DP
     IF(ASSOCIATED(BASIS)) THEN
@@ -2140,34 +2139,34 @@ CONTAINS
                       & FACE_PARAMETERS(ns)
                   ENDDO !ns
                 ELSE
-                  LOCAL_ERROR="The partial derivative index of "//TRIM(NUMBER_TO_VSTRING(PARTIAL_DERIV_INDEX,"*",ERR,ERROR))// &
+                  LOCAL_ERROR="The partial derivative index of "//TRIM(NumberToVString(PARTIAL_DERIV_INDEX,"*",err,error))// &
                     & " is invalid. It must be between 1 and "// &
-                    & TRIM(NUMBER_TO_VSTRING(BASIS%NUMBER_OF_PARTIAL_DERIVATIVES,"*",ERR,ERROR))
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                    & TRIM(NumberToVString(BASIS%NUMBER_OF_PARTIAL_DERIVATIVES,"*",err,error))
+                  CALL FlagError(LOCAL_ERROR,err,error,*999)
                 ENDIF
               ENDIF
             ELSE
-              CALL FlagError("The local face number index is invalid.",ERR,ERROR,*999)
+              CALL FlagError("The local face number index is invalid.",err,error,*999)
             ENDIF
           ELSE
-            CALL FlagError("The face gauss interpolation scheme has not been created",ERR,ERROR,*999)
+            CALL FlagError("The face gauss interpolation scheme has not been created",err,error,*999)
           ENDIF
         ELSE
-          CALL FlagError("The quadrature scheme has not been created",ERR,ERROR,*999)
+          CALL FlagError("The quadrature scheme has not been created",err,error,*999)
         ENDIF
       ELSE
-        LOCAL_ERROR="The quadrature scheme type number of "//TRIM(NUMBER_TO_VSTRING(QUADRATURE_SCHEME,"*",ERR,ERROR))// &
+        LOCAL_ERROR="The quadrature scheme type number of "//TRIM(NumberToVString(QUADRATURE_SCHEME,"*",err,error))// &
           & " is invalid. It must be between 1 and "// &
-          & TRIM(NUMBER_TO_VSTRING(BASIS_NUMBER_OF_QUADRATURE_SCHEME_TYPES,"*",ERR,ERROR))
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          & TRIM(NumberToVString(BASIS_NUMBER_OF_QUADRATURE_SCHEME_TYPES,"*",err,error))
+        CALL FlagError(LOCAL_ERROR,err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated",err,error,*999)
     ENDIF
     
     EXITS("BASIS_INTERPOLATE_LOCAL_FACE_GAUSS_DP")
     RETURN
-999 ERRORSEXITS("BASIS_INTERPOLATE_LOCAL_FACE_GAUSS_DP",ERR,ERROR)
+999 ERRORSEXITS("BASIS_INTERPOLATE_LOCAL_FACE_GAUSS_DP",err,error)
     RETURN
   END FUNCTION BASIS_INTERPOLATE_LOCAL_FACE_GAUSS_DP
 
@@ -2179,7 +2178,7 @@ CONTAINS
   !>for double precision arguments. Note the interpolated value returned needs to be adjusted for the particular
   !>coordinate system with COORDINATE_INTERPOLATE_ADJUST. Note for simplex basis functions the XI coordinates should
   !>exclude the last area coordinate.
-  FUNCTION BASIS_INTERPOLATE_XI_DP(BASIS,PARTIAL_DERIV_INDEX,XI,ELEMENT_PARAMETERS,ERR,ERROR)
+  FUNCTION BASIS_INTERPOLATE_XI_DP(BASIS,PARTIAL_DERIV_INDEX,XI,ELEMENT_PARAMETERS,err,error)
   
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
@@ -2195,7 +2194,7 @@ CONTAINS
     REAL(DP) :: XIL(SIZE(XI,1)+1)
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
-    ENTERS("BASIS_INTERPOLATE_XI_DP",ERR,ERROR,*999)
+    ENTERS("BASIS_INTERPOLATE_XI_DP",err,error,*999)
     
     BASIS_INTERPOLATE_XI_DP=0.0_DP
     IF(ASSOCIATED(BASIS)) THEN
@@ -2206,7 +2205,7 @@ CONTAINS
           DO nk=1,BASIS%NUMBER_OF_DERIVATIVES(nn)
             ns=ns+1
             BASIS_INTERPOLATE_XI_DP=BASIS_INTERPOLATE_XI_DP+ &
-              & BASIS_LHTP_BASIS_EVALUATE(BASIS,nn,nk,PARTIAL_DERIV_INDEX,XI,ERR,ERROR)* &
+              & BASIS_LHTP_BASIS_EVALUATE(BASIS,nn,nk,PARTIAL_DERIV_INDEX,XI,err,error)* &
               & ELEMENT_PARAMETERS(ns)
           ENDDO !nk
         ENDDO !nn
@@ -2219,7 +2218,7 @@ CONTAINS
         DO nn=1,BASIS%NUMBER_OF_NODES
           ns=ns+1
           BASIS_INTERPOLATE_XI_DP=BASIS_INTERPOLATE_XI_DP+ &
-            & BASIS_SIMPLEX_BASIS_EVALUATE(BASIS,nn,PARTIAL_DERIV_INDEX,XIL,ERR,ERROR)* &
+            & BASIS_SIMPLEX_BASIS_EVALUATE(BASIS,nn,PARTIAL_DERIV_INDEX,XIL,err,error)* &
             & ELEMENT_PARAMETERS(ns)
         ENDDO !nn
         IF(ERR/=0) GOTO 999
@@ -2227,16 +2226,16 @@ CONTAINS
 
         IF(ERR/=0) GOTO 999
       CASE DEFAULT
-        LOCAL_ERROR="Basis type "//TRIM(NUMBER_TO_VSTRING(BASIS%TYPE,"*",ERR,ERROR))//" is invalid or not implemented"
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+        LOCAL_ERROR="Basis type "//TRIM(NumberToVString(BASIS%TYPE,"*",err,error))//" is invalid or not implemented"
+        CALL FlagError(LOCAL_ERROR,err,error,*999)
       END SELECT
     ELSE
-      CALL FlagError("Basis is not associated",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated",err,error,*999)
     ENDIF
     
     EXITS("BASIS_INTERPOLATE_XI_DP")
     RETURN
-999 ERRORSEXITS("BASIS_INTERPOLATE_XI_DP",ERR,ERROR)
+999 ERRORSEXITS("BASIS_INTERPOLATE_XI_DP",err,error)
     RETURN
   END FUNCTION BASIS_INTERPOLATE_XI_DP
   
@@ -2245,7 +2244,7 @@ CONTAINS
   !
   
   !>Gets/changes the interpolation type in each xi directions for a basis identified by a pointer.
-  SUBROUTINE BASIS_INTERPOLATION_XI_GET(BASIS,INTERPOLATION_XI,ERR,ERROR,*)
+  SUBROUTINE BASIS_INTERPOLATION_XI_GET(BASIS,INTERPOLATION_XI,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis to get the interpolation xi
@@ -2255,7 +2254,7 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("BASIS_INTERPOLATION_XI_GET",ERR,ERROR,*999)
+    ENTERS("BASIS_INTERPOLATION_XI_GET",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(BASIS%BASIS_FINISHED) THEN
@@ -2263,20 +2262,20 @@ CONTAINS
           INTERPOLATION_XI=BASIS%INTERPOLATION_XI
         ELSE
           LOCAL_ERROR="The size of INTERPOLATION_XI is too small. The supplied size is "// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(INTERPOLATION_XI,1),"*",ERR,ERROR))//" and it needs to be >= "// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(BASIS%INTERPOLATION_XI,1),"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(SIZE(INTERPOLATION_XI,1),"*",err,error))//" and it needs to be >= "// &
+            & TRIM(NumberToVString(SIZE(BASIS%INTERPOLATION_XI,1),"*",err,error))//"."
+          CALL FlagError(LOCAL_ERROR,err,error,*999)
         ENDIF
       ELSE
-        CALL FlagError("Basis has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("Basis has not been finished.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated.",err,error,*999)
     ENDIF
     
     EXITS("BASIS_INTERPOLATION_XI_GET")
     RETURN
-999 ERRORSEXITS("BASIS_INTERPOLATION_XI_GET",ERR,ERROR)
+999 ERRORSEXITS("BASIS_INTERPOLATION_XI_GET",err,error)
     RETURN
   END SUBROUTINE BASIS_INTERPOLATION_XI_GET
   
@@ -2286,7 +2285,7 @@ CONTAINS
   !
 
   !>Sets/changes the interpolation type in each xi directions where the basis is identified by user number. \see OpenCMISS::Iron::cmfe_BasisInterpolationXiSet
-  SUBROUTINE BASIS_INTERPOLATION_XI_SET_NUMBER(USER_NUMBER,INTERPOLATION_XI,ERR,ERROR,*)
+  SUBROUTINE BASIS_INTERPOLATION_XI_SET_NUMBER(USER_NUMBER,INTERPOLATION_XI,err,error,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the basis to set the interpolation xi
@@ -2296,14 +2295,14 @@ CONTAINS
     !Local Variables
     TYPE(BASIS_TYPE), POINTER :: BASIS
     
-    ENTERS("BASIS_INTERPOLATION_XI_SET_NUMBER",ERR,ERROR,*999)
+    ENTERS("BASIS_INTERPOLATION_XI_SET_NUMBER",err,error,*999)
 
-    CALL BASIS_USER_NUMBER_FIND(USER_NUMBER,BASIS,ERR,ERROR,*999)
-    CALL BASIS_INTERPOLATION_XI_SET(BASIS,INTERPOLATION_XI,ERR,ERROR,*999)
+    CALL Basis_UserNumberFind(USER_NUMBER,BASIS,err,error,*999)
+    CALL BASIS_INTERPOLATION_XI_SET(BASIS,INTERPOLATION_XI,err,error,*999)
     
     EXITS("BASIS_INTERPOLATION_XI_SET_NUMBER")
     RETURN
-999 ERRORSEXITS("BASIS_INTERPOLATION_XI_SET_NUMBER",ERR,ERROR)
+999 ERRORSEXITS("BASIS_INTERPOLATION_XI_SET_NUMBER",err,error)
     RETURN 1
   END SUBROUTINE BASIS_INTERPOLATION_XI_SET_NUMBER
 
@@ -2312,7 +2311,7 @@ CONTAINS
   !
 
   !>Sets/changes the interpolation type in each xi directions for a basis identified by a pointer. \see OpenCMISS::Iron::cmfe_BasisInterpolationXiSet
-  SUBROUTINE BASIS_INTERPOLATION_XI_SET_PTR(BASIS,INTERPOLATION_XI,ERR,ERROR,*)
+  SUBROUTINE BASIS_INTERPOLATION_XI_SET_PTR(BASIS,INTERPOLATION_XI,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis to set the interpolation xi
@@ -2323,11 +2322,11 @@ CONTAINS
     INTEGER(INTG) :: ni,LAST_INTERP
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("BASIS_INTERPOLATION_XI_SET_PTR",ERR,ERROR,*999)
+    ENTERS("BASIS_INTERPOLATION_XI_SET_PTR",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(BASIS%BASIS_FINISHED) THEN
-        CALL FlagError("Basis has been finished",ERR,ERROR,*999)
+        CALL FlagError("Basis has been finished",err,error,*999)
       ELSE
         IF(SIZE(INTERPOLATION_XI,1)==BASIS%NUMBER_OF_XI) THEN
           !Check the input values
@@ -2339,9 +2338,9 @@ CONTAINS
                 & BASIS_CUBIC_HERMITE_INTERPOLATION,BASIS_QUADRATIC1_HERMITE_INTERPOLATION,BASIS_QUADRATIC2_HERMITE_INTERPOLATION)
                 !Do nothing
               CASE DEFAULT
-                LOCAL_ERROR="Interpolation xi value "//TRIM(NUMBER_TO_VSTRING(INTERPOLATION_XI(ni),"*",ERR,ERROR))// &
-                  & " for xi direction "//TRIM(NUMBER_TO_VSTRING(ni,"*",ERR,ERROR))//" is invalid for a Lagrange-Hermite TP basis."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                LOCAL_ERROR="Interpolation xi value "//TRIM(NumberToVString(INTERPOLATION_XI(ni),"*",err,error))// &
+                  & " for xi direction "//TRIM(NumberToVString(ni,"*",err,error))//" is invalid for a Lagrange-Hermite TP basis."
+                CALL FlagError(LOCAL_ERROR,err,error,*999)
               END SELECT
             ENDDO !ni
           CASE(BASIS_SIMPLEX_TYPE)
@@ -2351,34 +2350,34 @@ CONTAINS
               CASE(BASIS_LINEAR_SIMPLEX_INTERPOLATION,BASIS_QUADRATIC_SIMPLEX_INTERPOLATION,BASIS_CUBIC_SIMPLEX_INTERPOLATION)
                 IF(INTERPOLATION_XI(ni)/=LAST_INTERP) THEN
                   CALL FlagError("The interpolation xi value must be the same for all xi directions for a simplex basis.", &
-                    & ERR,ERROR,*999)
+                    & err,error,*999)
                 ENDIF
               CASE DEFAULT
-                LOCAL_ERROR="Interpolation xi value "//TRIM(NUMBER_TO_VSTRING(INTERPOLATION_XI(ni),"*",ERR,ERROR))// &
-                  & " for xi direction "//TRIM(NUMBER_TO_VSTRING(ni,"*",ERR,ERROR))//" is invalid for a simplex basis."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                LOCAL_ERROR="Interpolation xi value "//TRIM(NumberToVString(INTERPOLATION_XI(ni),"*",err,error))// &
+                  & " for xi direction "//TRIM(NumberToVString(ni,"*",err,error))//" is invalid for a simplex basis."
+                CALL FlagError(LOCAL_ERROR,err,error,*999)
               END SELECT
             ENDDO !ni
           CASE DEFAULT
-            CALL FlagError("Invalid basis type or not implemented",ERR,ERROR,*999)
+            CALL FlagError("Invalid basis type or not implemented",err,error,*999)
           END SELECT
           !Set the interpolation xi
           BASIS%INTERPOLATION_XI(1:BASIS%NUMBER_OF_XI)=INTERPOLATION_XI(1:BASIS%NUMBER_OF_XI)
         ELSE
           LOCAL_ERROR="The size of the interpolation xi array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(INTERPOLATION_XI,1),"*",ERR,ERROR))//") does not match the number of xi directions ("// &
-            & TRIM(NUMBER_TO_VSTRING(BASIS%NUMBER_OF_XI,"*",ERR,ERROR))//") for basis number "// &
-            & TRIM(NUMBER_TO_VSTRING(BASIS%USER_NUMBER,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(SIZE(INTERPOLATION_XI,1),"*",err,error))//") does not match the number of xi directions ("// &
+            & TRIM(NumberToVString(BASIS%NUMBER_OF_XI,"*",err,error))//") for basis number "// &
+            & TRIM(NumberToVString(BASIS%USER_NUMBER,"*",err,error))//"."
+          CALL FlagError(LOCAL_ERROR,err,error,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated.",err,error,*999)
     ENDIF
     
     EXITS("BASIS_INTERPOLATION_XI_SET_PTR")
     RETURN
-999 ERRORSEXITS("BASIS_INTERPOLATION_XI_SET_PTR",ERR,ERROR)
+999 ERRORSEXITS("BASIS_INTERPOLATION_XI_SET_PTR",err,error)
     RETURN 1
   END SUBROUTINE BASIS_INTERPOLATION_XI_SET_PTR
 
@@ -2777,10 +2776,10 @@ CONTAINS
           ALLOCATE(basis%localLineXiDirection(numberOfLocalLines),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate local line xi direction.",err,error,*999)
           ALLOCATE(BASIS%localLineXiNormals(1,numberOfLocalLines),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate local line xi normals.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate local line xi normals.",err,error,*999)
           ALLOCATE(basis%xiNormalsLocalLine(-2:2,1),STAT=ERR)
           basis%xiNormalsLocalLine=0
-          IF(ERR/=0) CALL FlagError("Could not allocate xi normals local line.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate xi normals local line.",err,error,*999)
           ALLOCATE(basis%NODE_NUMBERS_IN_LOCAL_LINE(MAXVAL(basis%NUMBER_OF_NODES_XIC),numberOfLocalLines),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate node numbers in local line",err,error,*999)
           basis%NODE_NUMBERS_IN_LOCAL_LINE=0
@@ -2896,7 +2895,7 @@ CONTAINS
           ALLOCATE(basis%localLineXiNormals(2,numberOfLocalLines),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate local line xi normals.",err,error,*999)
           ALLOCATE(basis%xiNormalsLocalLine(-3:3,-3:3),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate xi normals local line.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate xi normals local line.",err,error,*999)
           basis%xiNormalsLocalLine=0
           
           ALLOCATE(basis%NUMBER_OF_NODES_IN_LOCAL_LINE(numberOfLocalLines),STAT=err)
@@ -2920,11 +2919,11 @@ CONTAINS
           basis%ELEMENT_PARAMETERS_IN_LOCAL_LINE=1
 
           ALLOCATE(BASIS%localFaceXiDirections(2,numberOfLocalFaces),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate local face xi directions.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate local face xi directions.",err,error,*999)
           ALLOCATE(basis%localFaceXiNormal(numberOfLocalFaces),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate local face xi direction.",err,error,*999)
           ALLOCATE(basis%xiNormalLocalFace(-3:3),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate xi normal local face.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate xi normal local face.",err,error,*999)
           basis%xiNormalLocalFace=0
           
           ALLOCATE(basis%DERIVATIVE_NUMBERS_IN_LOCAL_FACE(0:basis%MAXIMUM_NUMBER_OF_DERIVATIVES, &
@@ -3135,7 +3134,7 @@ CONTAINS
               ELSE
                 !The -'ve xi direction
                 localNodeIdx1=1
-                !Compute if the face in the +xiIdx1 direction is collapsed.
+                !Compute if the face in the -xiIdx1 direction is collapsed.
                 collapsedFace=basis%COLLAPSED_XI(xiIdx1)==BASIS_COLLAPSED_AT_XI0
               ENDIF
               localNodeCount=0
@@ -3209,7 +3208,7 @@ CONTAINS
   !
   
   !>Evaluates the double precision Lagrange/Hermite/Fourier tensor product basis function for the given BASIS.
-  FUNCTION BASIS_LHTP_BASIS_EVALUATE_DP(BASIS,NODE_NUMBER,DERIVATIVE_NUMBER,PARTIAL_DERIV_INDEX,XI,ERR,ERROR)
+  FUNCTION BASIS_LHTP_BASIS_EVALUATE_DP(BASIS,NODE_NUMBER,DERIVATIVE_NUMBER,PARTIAL_DERIV_INDEX,XI,err,error)
       
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis to evaluate 
@@ -3226,7 +3225,7 @@ CONTAINS
     REAL(DP) :: SUM
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("BASIS_LHTP_BASIS_EVALUATE_DP",ERR,ERROR,*999)
+    ENTERS("BASIS_LHTP_BASIS_EVALUATE_DP",err,error,*999)
     
     BASIS_LHTP_BASIS_EVALUATE_DP=1.0_DP
     IF(ASSOCIATED(BASIS)) THEN
@@ -3239,38 +3238,38 @@ CONTAINS
             SELECT CASE(BASIS%INTERPOLATION_ORDER(ni))
             CASE(BASIS_LINEAR_INTERPOLATION_ORDER)
               DO nn=1,2
-                SUM=SUM+LAGRANGE_LINEAR_EVALUATE(nn,PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),ERR,ERROR)
+                SUM=SUM+LAGRANGE_LINEAR_EVALUATE(nn,PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),err,error)
               ENDDO !nn
             CASE(BASIS_QUADRATIC_INTERPOLATION_ORDER)
               DO nn=1,3
-                SUM=SUM+LAGRANGE_QUADRATIC_EVALUATE(nn,PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),ERR,ERROR)
+                SUM=SUM+LAGRANGE_QUADRATIC_EVALUATE(nn,PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),err,error)
               ENDDO !nn
             CASE(BASIS_CUBIC_INTERPOLATION_ORDER)
               DO nn=1,4
-                SUM=SUM+LAGRANGE_CUBIC_EVALUATE(nn,PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),ERR,ERROR)
+                SUM=SUM+LAGRANGE_CUBIC_EVALUATE(nn,PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),err,error)
               ENDDO !nn
             CASE DEFAULT
-              LOCAL_ERROR="Interpolation order value "//TRIM(NUMBER_TO_VSTRING(BASIS%INTERPOLATION_ORDER(ni),"*",ERR,ERROR))// &
-                & " for xi direction "//TRIM(NUMBER_TO_VSTRING(ni,"*",ERR,ERROR))//" is invalid"
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              LOCAL_ERROR="Interpolation order value "//TRIM(NumberToVString(BASIS%INTERPOLATION_ORDER(ni),"*",err,error))// &
+                & " for xi direction "//TRIM(NumberToVString(ni,"*",err,error))//" is invalid"
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             END SELECT
           CASE(BASIS_HERMITE_INTERPOLATION)
             SELECT CASE(BASIS%INTERPOLATION_ORDER(ni))
             CASE(BASIS_CUBIC_INTERPOLATION_ORDER)
               DO nn=1,2
                 SUM=SUM+HERMITE_CUBIC_EVALUATE(nn,BASIS%DERIVATIVE_ORDER_INDEX(DERIVATIVE_NUMBER,NODE_NUMBER,ni), &
-                  & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),ERR,ERROR)
+                  & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),err,error)
               ENDDO !nn
             CASE DEFAULT
-              LOCAL_ERROR="Interpolation order value "//TRIM(NUMBER_TO_VSTRING(BASIS%INTERPOLATION_ORDER(ni),"*",ERR,ERROR))// &
-                & " for xi direction "//TRIM(NUMBER_TO_VSTRING(ni,"*",ERR,ERROR))//" is invalid"
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              LOCAL_ERROR="Interpolation order value "//TRIM(NumberToVString(BASIS%INTERPOLATION_ORDER(ni),"*",err,error))// &
+                & " for xi direction "//TRIM(NumberToVString(ni,"*",err,error))//" is invalid"
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             END SELECT
             IF(ERR/=0) GOTO 999
           CASE DEFAULT
-            LOCAL_ERROR="Interpolation type value "//TRIM(NUMBER_TO_VSTRING(BASIS%INTERPOLATION_TYPE(ni),"*",ERR,ERROR))// &
-              & " for xi direction "//TRIM(NUMBER_TO_VSTRING(ni,"*",ERR,ERROR))//" is invalid"
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            LOCAL_ERROR="Interpolation type value "//TRIM(NumberToVString(BASIS%INTERPOLATION_TYPE(ni),"*",err,error))// &
+              & " for xi direction "//TRIM(NumberToVString(ni,"*",err,error))//" is invalid"
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
           BASIS_LHTP_BASIS_EVALUATE_DP=BASIS_LHTP_BASIS_EVALUATE_DP*SUM
         ELSE
@@ -3280,19 +3279,19 @@ CONTAINS
             CASE(BASIS_LINEAR_INTERPOLATION_ORDER)
               BASIS_LHTP_BASIS_EVALUATE_DP=BASIS_LHTP_BASIS_EVALUATE_DP* &
                 & LAGRANGE_LINEAR_EVALUATE(BASIS%NODE_POSITION_INDEX(NODE_NUMBER,ni), &
-                & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),ERR,ERROR)
+                & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),err,error)
             CASE(BASIS_QUADRATIC_INTERPOLATION_ORDER)
               BASIS_LHTP_BASIS_EVALUATE_DP=BASIS_LHTP_BASIS_EVALUATE_DP* &
                 & LAGRANGE_QUADRATIC_EVALUATE(BASIS%NODE_POSITION_INDEX(NODE_NUMBER,ni), &
-                & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),ERR,ERROR)
+                & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),err,error)
             CASE(BASIS_CUBIC_INTERPOLATION_ORDER)
               BASIS_LHTP_BASIS_EVALUATE_DP=BASIS_LHTP_BASIS_EVALUATE_DP* &
                 & LAGRANGE_CUBIC_EVALUATE(BASIS%NODE_POSITION_INDEX(NODE_NUMBER,ni), &
-                & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),ERR,ERROR)
+                & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),err,error)
             CASE DEFAULT
-              LOCAL_ERROR="Interpolation order value "//TRIM(NUMBER_TO_VSTRING(BASIS%INTERPOLATION_ORDER(ni),"*",ERR,ERROR))// &
-                & " for xi direction "//TRIM(NUMBER_TO_VSTRING(ni,"*",ERR,ERROR))//" is invalid"
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              LOCAL_ERROR="Interpolation order value "//TRIM(NumberToVString(BASIS%INTERPOLATION_ORDER(ni),"*",err,error))// &
+                & " for xi direction "//TRIM(NumberToVString(ni,"*",err,error))//" is invalid"
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             END SELECT
           CASE(BASIS_HERMITE_INTERPOLATION)
             SELECT CASE(BASIS%INTERPOLATION_ORDER(ni))
@@ -3300,37 +3299,37 @@ CONTAINS
               BASIS_LHTP_BASIS_EVALUATE_DP=BASIS_LHTP_BASIS_EVALUATE_DP* &
                 & HERMITE_QUADRATIC_EVALUATE(BASIS%NODE_POSITION_INDEX(NODE_NUMBER,ni), &
                 & BASIS%DERIVATIVE_ORDER_INDEX(DERIVATIVE_NUMBER,NODE_NUMBER,ni), &
-                & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),1,XI(ni),ERR,ERROR)
+                & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),1,XI(ni),err,error)
             CASE(BASIS_QUADRATIC2_INTERPOLATION_ORDER)
               BASIS_LHTP_BASIS_EVALUATE_DP=BASIS_LHTP_BASIS_EVALUATE_DP* &
                 & HERMITE_QUADRATIC_EVALUATE(BASIS%NODE_POSITION_INDEX(NODE_NUMBER,ni), &
                 & BASIS%DERIVATIVE_ORDER_INDEX(DERIVATIVE_NUMBER,NODE_NUMBER,ni), &
-                & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),2,XI(ni),ERR,ERROR)
+                & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),2,XI(ni),err,error)
             CASE(BASIS_CUBIC_INTERPOLATION_ORDER)
               BASIS_LHTP_BASIS_EVALUATE_DP=BASIS_LHTP_BASIS_EVALUATE_DP* &
                 & HERMITE_CUBIC_EVALUATE(BASIS%NODE_POSITION_INDEX(NODE_NUMBER,ni), &
                 & BASIS%DERIVATIVE_ORDER_INDEX(DERIVATIVE_NUMBER,NODE_NUMBER,ni), &
-                & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),ERR,ERROR)
+                & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),err,error)
             CASE DEFAULT
-              LOCAL_ERROR="Interpolation order value "//TRIM(NUMBER_TO_VSTRING(BASIS%INTERPOLATION_ORDER(ni),"*",ERR,ERROR))// &
-                & " for xi direction "//TRIM(NUMBER_TO_VSTRING(ni,"*",ERR,ERROR))//" is invalid"
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              LOCAL_ERROR="Interpolation order value "//TRIM(NumberToVString(BASIS%INTERPOLATION_ORDER(ni),"*",err,error))// &
+                & " for xi direction "//TRIM(NumberToVString(ni,"*",err,error))//" is invalid"
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             END SELECT
             IF(ERR/=0) GOTO 999
           CASE DEFAULT
-            LOCAL_ERROR="Interpolation type value "//TRIM(NUMBER_TO_VSTRING(BASIS%INTERPOLATION_TYPE(ni),"*",ERR,ERROR))// &
-              & " for xi direction "//TRIM(NUMBER_TO_VSTRING(ni,"*",ERR,ERROR))//" is invalid"
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            LOCAL_ERROR="Interpolation type value "//TRIM(NumberToVString(BASIS%INTERPOLATION_TYPE(ni),"*",err,error))// &
+              & " for xi direction "//TRIM(NumberToVString(ni,"*",err,error))//" is invalid"
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         ENDIF
       ENDDO !ni
     ELSE
-      CALL FlagError("Basis is not associated",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated",err,error,*999)
     ENDIF
 
     EXITS("BASIS_LHTP_BASIS_EVALUATE_DP")
     RETURN
-999 ERRORSEXITS("BASIS_LHTP_BASIS_EVALUATE_DP",ERR,ERROR)
+999 ERRORSEXITS("BASIS_LHTP_BASIS_EVALUATE_DP",err,error)
     RETURN 
   END FUNCTION BASIS_LHTP_BASIS_EVALUATE_DP
 
@@ -3340,108 +3339,117 @@ CONTAINS
 
   !>Creates and initialises a Lagrange-Hermite tensor product basis family that has already been allocated by BASIS_CREATE_START.
   !>\see BASIS_ROUTINES::BASIS_LHTP_CREATE
-  SUBROUTINE BASIS_LHTP_FAMILY_CREATE(BASIS,ERR,ERROR,*)
+  SUBROUTINE Basis_LHTPFamilyCreate(basis,err,error,*)
 
     !Argument variables
-    TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis to create
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(BASIS_TYPE), POINTER :: basis !<A pointer to the basis to create
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR,ni,ni2,FACE_XI(2)
-    LOGICAL :: LINE_BASIS_DONE,FACE_BASIS_DONE    
-    TYPE(BASIS_TYPE), POINTER :: NEW_SUB_BASIS
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr,faceXi(2),faceXi2(2),localFaceIdx,localLineIdx,xiIdx,xiIdx2
+    LOGICAL :: lineBasisDone,faceBasisDone
+    TYPE(BASIS_TYPE), POINTER :: newSubBasis
+    TYPE(VARYING_STRING) :: dummyError
 
-    NULLIFY(NEW_SUB_BASIS)
+    NULLIFY(newSubBasis)
 
-    ENTERS("BASIS_LHTP_FAMILY_CREATE",ERR,ERROR,*999)
+    ENTERS("Basis_LHTPFamilyCreate",err,error,*999)
 
-    IF(ASSOCIATED(BASIS)) THEN
-      !Create the main (parent) basis
-      CALL Basis_LHTPBasisCreate(basis,err,error,*999)
-      IF(BASIS%NUMBER_OF_XI>1) THEN
-        !Create the line bases as sub-basis types
-        ALLOCATE(BASIS%LINE_BASES(BASIS%NUMBER_OF_XI),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate basis line bases",ERR,ERROR,*999)
-        DO ni=1,BASIS%NUMBER_OF_XI
-          LINE_BASIS_DONE=.FALSE.
-          NULLIFY(NEW_SUB_BASIS)
-          DO ni2=1,ni-1
-            IF(BASIS%INTERPOLATION_XI(ni2)==BASIS%INTERPOLATION_XI(ni).AND. &
-              BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni2)==BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni)) THEN
-              LINE_BASIS_DONE=.TRUE.
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    
+    !Create the main (parent) basis
+    CALL Basis_LHTPBasisCreate(basis,err,error,*999)
+    
+    IF(basis%NUMBER_OF_XI>1) THEN
+      !Create the line bases as sub-basis types
+      ALLOCATE(basis%lineBases(basis%NUMBER_OF_XI),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate basis line bases.",err,error,*999)
+      ALLOCATE(basis%localLineBasis(basis%NUMBER_OF_LOCAL_LINES),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate local line basis.",err,error,*999)
+      DO xiIdx=1,basis%NUMBER_OF_XI
+        lineBasisDone=.FALSE.
+        NULLIFY(newSubBasis)
+        DO xiIdx2=1,xiIdx-1
+          IF(basis%INTERPOLATION_XI(xiIdx2)==basis%INTERPOLATION_XI(xiIdx).AND. &
+            basis%QUADRATURE%NUMBER_OF_GAUSS_XI(xiIdx2)==basis%QUADRATURE%NUMBER_OF_GAUSS_XI(xiIdx)) THEN
+            lineBasisDone=.TRUE.
+            EXIT
+          ENDIF
+        ENDDO !xiIdx2
+        IF(lineBasisDone) THEN
+          basis%lineBases(xiIdx)%ptr=>basis%lineBases(xiIdx2)%ptr
+        ELSE
+          !Create the new sub-basis
+          CALL Basis_SubBasisCreate(basis,1,[xiIdx],newSubBasis,err,error,*999)
+          !Fill in the basis information
+          CALL Basis_LHTPBasisCreate(newSubBasis,err,error,*999)
+          basis%lineBases(xiIdx)%ptr=>newSubBasis
+        ENDIF
+      ENDDO !xiIdx
+      DO localLineIdx=1,basis%NUMBER_OF_LOCAL_LINES
+        xiIdx=basis%localLineXiDirection(localLineIdx)
+        basis%localLineBasis(localLineIdx)%ptr=>basis%lineBases(xiIdx)%ptr
+      ENDDO !localLineIdx
+      IF(basis%NUMBER_OF_XI>2) THEN
+        !Create the face bases as sub-basis types
+        ALLOCATE(basis%faceBases(basis%NUMBER_OF_XI),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate basis face bases.",err,error,*999)
+        ALLOCATE(basis%localFaceBasis(basis%NUMBER_OF_LOCAL_FACES),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate local face basis.",err,error,*999)
+        DO xiIdx=1,basis%NUMBER_OF_XI
+          !Determine the face xi directions that lie in this xi direction
+          faceXi(1)=OTHER_XI_DIRECTIONS3(xiIdx,2,1)
+          faceXi(2)=OTHER_XI_DIRECTIONS3(xiIdx,3,1)
+          faceBasisDone=.FALSE.
+          NULLIFY(newSubBasis)
+          DO xiIdx2=1,xiIdx-1
+            !Determine the face xi directions that lie in this xi direction
+            faceXi2(1)=OTHER_XI_DIRECTIONS3(xiIdx2,2,1)
+            faceXi2(2)=OTHER_XI_DIRECTIONS3(xiIdx2,3,1)
+            IF(basis%INTERPOLATION_XI(faceXi2(1))==basis%INTERPOLATION_XI(faceXi(1)).AND. &
+              & basis%INTERPOLATION_XI(faceXi2(2))==basis%INTERPOLATION_XI(faceXi(2)).AND. &
+              & basis%QUADRATURE%NUMBER_OF_GAUSS_XI(faceXi2(1))==basis%QUADRATURE%NUMBER_OF_GAUSS_XI(faceXi(1)).AND. &
+              & basis%QUADRATURE%NUMBER_OF_GAUSS_XI(faceXi2(2))==basis%QUADRATURE%NUMBER_OF_GAUSS_XI(faceXi(2))) THEN
+              faceBasisDone=.TRUE.
               EXIT
             ENDIF
-          ENDDO !ni2
-          IF(LINE_BASIS_DONE) THEN
-            BASIS%LINE_BASES(ni)%PTR=>BASIS%LINE_BASES(ni2)%PTR
+          ENDDO !xiIdx2
+          IF(faceBasisDone) THEN
+            basis%faceBases(xiIdx)%ptr=>basis%faceBases(xiIdx2)%ptr
           ELSE
             !Create the new sub-basis
-            CALL BASIS_SUB_BASIS_CREATE(BASIS,1,[ni],NEW_SUB_BASIS,ERR,ERROR,*999)
+            CALL Basis_SubBasisCreate(basis,2,[faceXi(1),faceXi(2)],newSubBasis,err,error,*999)
             !Fill in the basis information
-            CALL Basis_LHTPBasisCreate(NEW_SUB_BASIS,err,error,*999)
-            BASIS%LINE_BASES(ni)%PTR=>NEW_SUB_BASIS
+            CALL Basis_LHTPBasisCreate(newSubBasis,err,error,*999)
+            newSubBasis%lineBases(1)%ptr=>basis%lineBases(faceXi(1))%ptr
+            newSubBasis%lineBases(2)%ptr=>basis%lineBases(faceXi(2))%ptr
+            basis%faceBases(xiIdx)%ptr=>newSubBasis
+            ALLOCATE(newSubBasis%localLineBasis(newSubBasis%NUMBER_OF_LOCAL_LINES),STAT=err)
+            IF(err/=0) CALL FlagError("Could not allocate new sub basis local line basis.",err,error,*999)
+            DO localLineIdx=1,newSubBasis%NUMBER_OF_LOCAL_LINES
+              IF(newSubBasis%localLineXiDirection(localLineIdx)==1) THEN
+                newSubBasis%localLineBasis(localLineIdx)%ptr=>newSubBasis%lineBases(1)%ptr
+              ELSE IF(newSubBasis%localLineXiDirection(localLineIdx)==2) THEN
+                newSubBasis%localLineBasis(localLineIdx)%ptr=>newSubBasis%lineBases(2)%ptr
+              ENDIF
+            ENDDO !localFaceIdx
           ENDIF
-        ENDDO !ni
-        IF(BASIS%NUMBER_OF_XI>2) THEN
-          !Set up face basis functions
-          ALLOCATE(BASIS%FACE_BASES(BASIS%NUMBER_OF_XI),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate basis face bases",ERR,ERROR,*999)
-          DO ni=1,BASIS%NUMBER_OF_XI
-            !Determine the face xi directions that lie in this xi direction
-            FACE_XI(1)=OTHER_XI_DIRECTIONS3(ni,2,1)
-            FACE_XI(2)=OTHER_XI_DIRECTIONS3(ni,3,1)
-            FACE_BASIS_DONE=.FALSE.
-            NULLIFY(NEW_SUB_BASIS)
-            DO ni2=1,ni-1
-!              FACE_XI2(1)=OTHER_XI_DIRECTIONS3(ni2,2,1)
-!              FACE_XI2(2)=OTHER_XI_DIRECTIONS3(ni2,3,1)
-
-!!TODO FIX THIS
-              !Going to disable the test below, as it results in error in collapsed elements and doesn't save much time
-!               IF(BASIS%INTERPOLATION_XI(FACE_XI2(1))==BASIS%INTERPOLATION_XI(FACE_XI(1)).AND. &
-!                 & BASIS%INTERPOLATION_XI(FACE_XI2(2))==BASIS%INTERPOLATION_XI(FACE_XI(2)).AND. &
-!                 & BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(FACE_XI2(1))==BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(FACE_XI(1)).AND. &
-!                 & BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(FACE_XI2(2))==BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(FACE_XI(1))) THEN
-!                 FACE_BASIS_DONE=.TRUE.
-!                 EXIT
-              !               ENDIF
-              
-            ENDDO !ni2
-            IF(FACE_BASIS_DONE) THEN
-              BASIS%FACE_BASES(ni)%PTR=>BASIS%FACE_BASES(ni2)%PTR
-            ELSE
-              !Create the new sub-basis
-              CALL BASIS_SUB_BASIS_CREATE(BASIS,2,[FACE_XI(1),FACE_XI(2)],NEW_SUB_BASIS,ERR,ERROR,*999)
-              !Fill in the basis information
-              CALL Basis_LHTPBasisCreate(NEW_SUB_BASIS,err,error,*999)
-              NEW_SUB_BASIS%LINE_BASES(1)%PTR=>BASIS%LINE_BASES(FACE_XI(1))%PTR
-              NEW_SUB_BASIS%LINE_BASES(2)%PTR=>BASIS%LINE_BASES(FACE_XI(2))%PTR
-              BASIS%FACE_BASES(ni)%PTR=>NEW_SUB_BASIS
-            ENDIF            
-          ENDDO !ni
-        ELSE
-          ALLOCATE(BASIS%FACE_BASES(1),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate basis face bases",ERR,ERROR,*999)
-          BASIS%FACE_BASES(1)%PTR=>BASIS
-        ENDIF
-      ELSE
-        ALLOCATE(BASIS%LINE_BASES(1),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate basis line bases",ERR,ERROR,*999)
-        BASIS%LINE_BASES(1)%PTR=>BASIS
-        NULLIFY(BASIS%FACE_BASES)
+        ENDDO !xiIdx
+        DO localFaceIdx=1,basis%NUMBER_OF_LOCAL_FACES
+          xiIdx=basis%localFaceXiNormal(localFaceIdx)
+          basis%localFaceBasis(localFaceIdx)%ptr=>basis%faceBases(ABS(xiIdx))%ptr
+        ENDDO !localFaceIdx
       ENDIF
-    ELSE
-      CALL FlagError("Basis is not associated",ERR,ERROR,*999)
     ENDIF
     
-    EXITS("BASIS_LHTP_FAMILY_CREATE")
+    EXITS("Basis_LHTPFamilyCreate")
     RETURN
-999 IF(ASSOCIATED(NEW_SUB_BASIS)) CALL BASIS_FAMILY_DESTROY(NEW_SUB_BASIS%USER_NUMBER,NEW_SUB_BASIS%FAMILY_NUMBER, &
-      & DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("BASIS_LHTP_FAMILY_CREATE",ERR,ERROR)
+999 IF(ASSOCIATED(newSubBasis)) CALL Basis_FamilyDestroy(newSubBasis%USER_NUMBER,newSubBasis%FAMILY_NUMBER, &
+      & dummyErr,dummyError,*998)
+998 ERRORSEXITS("Basis_LHTPFamilyCreate",err,error)
     RETURN 1
-  END SUBROUTINE BASIS_LHTP_FAMILY_CREATE
+    
+  END SUBROUTINE Basis_LHTPFamilyCreate
 
   !
   !================================================================================================================================
@@ -3449,7 +3457,7 @@ CONTAINS
 
   !>Creates and initialises a Radial basis family that has already been allocated by BASIS_CREATE_START.
   !>\see BASIS_ROUTINES::BASIS_RADIAL_CREATE
-  SUBROUTINE BASIS_RADIAL_FAMILY_CREATE(BASIS,ERR,ERROR,*)
+  SUBROUTINE BASIS_RADIAL_FAMILY_CREATE(BASIS,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis to create
@@ -3458,18 +3466,18 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: DUMMY_ERROR
 
-    ENTERS("BASIS_RADIAL_FAMILY_CREATE",ERR,ERROR,*999)
+    ENTERS("BASIS_RADIAL_FAMILY_CREATE",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       !Create the main (parent) basis
       CALL FlagError("Not implemented.",err,error,*999)
     ELSE
-      CALL FlagError("Basis is not associated",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated",err,error,*999)
     ENDIF
 
     EXITS("BASIS_RADIAL_FAMILY_CREATE")
     RETURN
-999 ERRORSEXITS("BASIS_RADIAL_FAMILY_CREATE",ERR,ERROR)
+999 ERRORSEXITS("BASIS_RADIAL_FAMILY_CREATE",err,error)
     RETURN 1
     
   END SUBROUTINE BASIS_RADIAL_FAMILY_CREATE
@@ -3479,7 +3487,7 @@ CONTAINS
   !
 
   !>Calculates the xi location of a local node in a basis.
-  SUBROUTINE BASIS_LOCAL_NODE_XI_CALCULATE(BASIS,LOCAL_NODE_NUMBER,XI,ERR,ERROR,*)
+  SUBROUTINE BASIS_LOCAL_NODE_XI_CALCULATE(BASIS,LOCAL_NODE_NUMBER,XI,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis to calculate the xi for
@@ -3491,7 +3499,7 @@ CONTAINS
     INTEGER(INTG) :: xi_idx
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("BASIS_LOCAL_NODE_XI_CALCULATE",ERR,ERROR,*999)
+    ENTERS("BASIS_LOCAL_NODE_XI_CALCULATE",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(BASIS%BASIS_FINISHED) THEN
@@ -3509,42 +3517,42 @@ CONTAINS
                   & REAL(BASIS%NUMBER_OF_NODES_XIC(xi_idx)-1,DP)
               ENDDO !xi_idx
             CASE(BASIS_SERENDIPITY_TYPE)
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",err,error,*999)
             CASE(BASIS_AUXILLIARY_TYPE)
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",err,error,*999)
             CASE(BASIS_B_SPLINE_TP_TYPE)
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",err,error,*999)
             CASE(BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE)
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",err,error,*999)
             CASE(BASIS_EXTENDED_LAGRANGE_TP_TYPE)
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",err,error,*999)
             CASE DEFAULT
-              LOCAL_ERROR="The basis type of "//TRIM(NUMBER_TO_VSTRING(BASIS%TYPE,"*",ERR,ERROR))// &
+              LOCAL_ERROR="The basis type of "//TRIM(NumberToVString(BASIS%TYPE,"*",err,error))// &
                 & " is invalid."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             END SELECT
           ELSE
-            LOCAL_ERROR="The size of the specified xic array of "//TRIM(NUMBER_TO_VSTRING(SIZE(XI,1),"*",ERR,ERROR))// &
+            LOCAL_ERROR="The size of the specified xic array of "//TRIM(NumberToVString(SIZE(XI,1),"*",err,error))// &
               & " is invalid. The size of the xi array must be >= "// &
-              & TRIM(NUMBER_TO_VSTRING(BASIS%NUMBER_OF_XI,"*",ERR,ERROR))//"."            
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(BASIS%NUMBER_OF_XI,"*",err,error))//"."            
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The specified local node number of "//TRIM(NUMBER_TO_VSTRING(LOCAL_NODE_NUMBER,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The specified local node number of "//TRIM(NumberToVString(LOCAL_NODE_NUMBER,"*",err,error))// &
             & " is invalid. The local node number must be > 0 and <= "// &
-            & TRIM(NUMBER_TO_VSTRING(BASIS%NUMBER_OF_NODES,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(BASIS%NUMBER_OF_NODES,"*",err,error))//"."
+          CALL FlagError(LOCAL_ERROR,err,error,*999)
         ENDIF
       ELSE
-        CALL FlagError("Basis has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("Basis has not been finished.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated",err,error,*999)
     ENDIF
     
     EXITS("BASIS_LOCAL_NODE_XI_CALCULATE")
     RETURN
-999 ERRORSEXITS("BASIS_LOCAL_NODE_XI_CALCULATE",ERR,ERROR)
+999 ERRORSEXITS("BASIS_LOCAL_NODE_XI_CALCULATE",err,error)
     RETURN 1
   END SUBROUTINE BASIS_LOCAL_NODE_XI_CALCULATE
 
@@ -3553,7 +3561,7 @@ CONTAINS
   !
 
   !>Returns the number of local nodes in the specified basis \see OpenCMISS::Iron::cmfe_BasisNumberOfLocalNodesGet
-  SUBROUTINE BASIS_NUMBER_OF_LOCAL_NODES_GET(BASIS,NUMBER_OF_LOCAL_NODES,ERR,ERROR,*)
+  SUBROUTINE BASIS_NUMBER_OF_LOCAL_NODES_GET(BASIS,NUMBER_OF_LOCAL_NODES,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis to get the number of nodes
@@ -3562,17 +3570,17 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     
-    ENTERS("BASIS_NUMBER_OF_LOCAL_NODES_GET",ERR,ERROR,*999)
+    ENTERS("BASIS_NUMBER_OF_LOCAL_NODES_GET",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       NUMBER_OF_LOCAL_NODES=BASIS%NUMBER_OF_NODES
     ELSE
-      CALL FlagError("Basis is not associated",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated",err,error,*999)
     ENDIF
     
     EXITS("BASIS_NUMBER_OF_LOCAL_NODES_GET")
     RETURN
-999 ERRORSEXITS("BASIS_NUMBER_OF_LOCAL_NODES_GET",ERR,ERROR)
+999 ERRORSEXITS("BASIS_NUMBER_OF_LOCAL_NODES_GET",err,error)
     RETURN 1
   END SUBROUTINE BASIS_NUMBER_OF_LOCAL_NODES_GET
 
@@ -3581,7 +3589,7 @@ CONTAINS
   !
   
   !>Gets the number of xi directions for a basis. \see OpenCMISS::Iron::cmfe_BasisNumberOfXiGet
-  SUBROUTINE BASIS_NUMBER_OF_XI_GET(BASIS,NUMBER_OF_XI,ERR,ERROR,*)
+  SUBROUTINE BASIS_NUMBER_OF_XI_GET(BASIS,NUMBER_OF_XI,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis function to change
@@ -3590,21 +3598,21 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     
-    ENTERS("BASIS_NUMBER_OF_XI_GET",ERR,ERROR,*999)
+    ENTERS("BASIS_NUMBER_OF_XI_GET",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(BASIS%BASIS_FINISHED) THEN
         NUMBER_OF_XI=BASIS%NUMBER_OF_XI
       ELSE
-        CALL FlagError("Basis has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("Basis has not been finished.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated.",err,error,*999)
     ENDIF
     
     EXITS("BASIS_NUMBER_OF_XI_GET")
     RETURN
-999 ERRORSEXITS("BASIS_NUMBER_OF_XI_GET",ERR,ERROR)
+999 ERRORSEXITS("BASIS_NUMBER_OF_XI_GET",err,error)
     RETURN
   END SUBROUTINE BASIS_NUMBER_OF_XI_GET 
 
@@ -3613,7 +3621,7 @@ CONTAINS
   !
 
   !>Sets/changes the number of xi directions where the basis is identified by user number.
-  SUBROUTINE BASIS_NUMBER_OF_XI_SET_NUMBER(USER_NUMBER,NUMBER_OF_XI,ERR,ERROR,*)
+  SUBROUTINE BASIS_NUMBER_OF_XI_SET_NUMBER(USER_NUMBER,NUMBER_OF_XI,err,error,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the basis
@@ -3623,14 +3631,14 @@ CONTAINS
     !Local Variables
     TYPE(BASIS_TYPE), POINTER :: BASIS
     
-    ENTERS("BASIS_NUMBER_OF_XI_SET_NUMBER",ERR,ERROR,*999)
+    ENTERS("BASIS_NUMBER_OF_XI_SET_NUMBER",err,error,*999)
 
-    CALL BASIS_USER_NUMBER_FIND(USER_NUMBER,BASIS,ERR,ERROR,*999)
-    CALL BASIS_NUMBER_OF_XI_SET(BASIS,NUMBER_OF_XI,ERR,ERROR,*999)
+    CALL Basis_UserNumberFind(USER_NUMBER,BASIS,err,error,*999)
+    CALL BASIS_NUMBER_OF_XI_SET(BASIS,NUMBER_OF_XI,err,error,*999)
 
     EXITS("BASIS_NUMBER_OF_XI_SET_NUMBER")
     RETURN
-999 ERRORSEXITS("BASIS_NUMBER_OF_XI_SET_NUMBER",ERR,ERROR)
+999 ERRORSEXITS("BASIS_NUMBER_OF_XI_SET_NUMBER",err,error)
     RETURN 1
   END SUBROUTINE BASIS_NUMBER_OF_XI_SET_NUMBER
 
@@ -3639,7 +3647,7 @@ CONTAINS
   !
 
   !>Sets/changes the number of xi directions for a basis identified by a pointer. \see OpenCMISS::Iron::cmfe_BasisNumberOfXiSet
-  SUBROUTINE BASIS_NUMBER_OF_XI_SET_PTR(BASIS,NUMBER_OF_XI,ERR,ERROR,*)
+  SUBROUTINE BASIS_NUMBER_OF_XI_SET_PTR(BASIS,NUMBER_OF_XI,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis function to change
@@ -3650,11 +3658,11 @@ CONTAINS
     INTEGER(INTG) :: OLD_INTERPOLATION_XI(3),OLD_NUMBER_OF_GAUSS_XI(3),OLD_COLLAPSED_XI(3)
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("BASIS_NUMBER_OF_XI_SET_PTR",ERR,ERROR,*999)
+    ENTERS("BASIS_NUMBER_OF_XI_SET_PTR",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(BASIS%BASIS_FINISHED) THEN
-        CALL FlagError("Basis has been finished",ERR,ERROR,*999)
+        CALL FlagError("Basis has been finished",err,error,*999)
       ELSE
         SELECT CASE(BASIS%TYPE)
         CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
@@ -3666,9 +3674,9 @@ CONTAINS
               DEALLOCATE(BASIS%INTERPOLATION_XI)
               DEALLOCATE(BASIS%COLLAPSED_XI)
               ALLOCATE(BASIS%INTERPOLATION_XI(NUMBER_OF_XI),STAT=ERR)
-              IF(ERR/=0) CALL FlagError("Could not allocate interpolation type",ERR,ERROR,*999)
+              IF(ERR/=0) CALL FlagError("Could not allocate interpolation type",err,error,*999)
               ALLOCATE(BASIS%COLLAPSED_XI(NUMBER_OF_XI),STAT=ERR)
-              IF(ERR/=0) CALL FlagError("Could not allocate collapsed xi",ERR,ERROR,*999)
+              IF(ERR/=0) CALL FlagError("Could not allocate collapsed xi",err,error,*999)
               IF(NUMBER_OF_XI>BASIS%NUMBER_OF_XI) THEN
                 BASIS%INTERPOLATION_XI(1:BASIS%NUMBER_OF_XI)=OLD_INTERPOLATION_XI(1:BASIS%NUMBER_OF_XI)
                 BASIS%INTERPOLATION_XI(BASIS%NUMBER_OF_XI+1:NUMBER_OF_XI)=OLD_INTERPOLATION_XI(1)
@@ -3683,7 +3691,7 @@ CONTAINS
                 OLD_NUMBER_OF_GAUSS_XI=BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI
                 DEALLOCATE(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI)
                 ALLOCATE(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(NUMBER_OF_XI),STAT=ERR)
-                IF(ERR/=0) CALL FlagError("Could not allocate number of Gauss xi",ERR,ERROR,*999)
+                IF(ERR/=0) CALL FlagError("Could not allocate number of Gauss xi",err,error,*999)
                 IF(NUMBER_OF_XI>BASIS%NUMBER_OF_XI) THEN
                   BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(1:BASIS%NUMBER_OF_XI)=OLD_NUMBER_OF_GAUSS_XI(1:BASIS%NUMBER_OF_XI)
                   BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(BASIS%NUMBER_OF_XI+1:NUMBER_OF_XI)=OLD_NUMBER_OF_GAUSS_XI(1)
@@ -3695,9 +3703,9 @@ CONTAINS
             ENDIF
           ELSE
             LOCAL_ERROR="Invalid number of xi directions specified ("// &
-              & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_XI,"*",ERR,ERROR))// &
+              & TRIM(NumberToVString(NUMBER_OF_XI,"*",err,error))// &
               & ") for a Lagrange-Hermite basis. You must specify between 1 and 3 xi directions"
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           ENDIF
         CASE(BASIS_SIMPLEX_TYPE)
           IF(NUMBER_OF_XI>1.AND.NUMBER_OF_XI<4) THEN
@@ -3708,9 +3716,9 @@ CONTAINS
               DEALLOCATE(BASIS%INTERPOLATION_XI)
               DEALLOCATE(BASIS%COLLAPSED_XI)
               ALLOCATE(BASIS%INTERPOLATION_XI(NUMBER_OF_XI),STAT=ERR)
-              IF(ERR/=0) CALL FlagError("Could not allocate interpolation type",ERR,ERROR,*999)
+              IF(ERR/=0) CALL FlagError("Could not allocate interpolation type",err,error,*999)
               ALLOCATE(BASIS%COLLAPSED_XI(NUMBER_OF_XI),STAT=ERR)
-              IF(ERR/=0) CALL FlagError("Could not allocate collapsed xi.",ERR,ERROR,*999)
+              IF(ERR/=0) CALL FlagError("Could not allocate collapsed xi.",err,error,*999)
               IF(NUMBER_OF_XI>BASIS%NUMBER_OF_XI) THEN
                 BASIS%INTERPOLATION_XI(1:BASIS%NUMBER_OF_XI)=OLD_INTERPOLATION_XI(1:BASIS%NUMBER_OF_XI)
                 BASIS%INTERPOLATION_XI(BASIS%NUMBER_OF_XI+1:NUMBER_OF_XI)=OLD_INTERPOLATION_XI(1)
@@ -3724,7 +3732,7 @@ CONTAINS
                 OLD_NUMBER_OF_GAUSS_XI=BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI
                 DEALLOCATE(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI)
                 ALLOCATE(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(NUMBER_OF_XI),STAT=ERR)
-                IF(ERR/=0) CALL FlagError("Could not allocate number of Gauss xi",ERR,ERROR,*999)
+                IF(ERR/=0) CALL FlagError("Could not allocate number of Gauss xi",err,error,*999)
                 IF(NUMBER_OF_XI>BASIS%NUMBER_OF_XI) THEN
                   BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(1:BASIS%NUMBER_OF_XI)=OLD_NUMBER_OF_GAUSS_XI(1:BASIS%NUMBER_OF_XI)
                   BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(BASIS%NUMBER_OF_XI+1:NUMBER_OF_XI)=OLD_NUMBER_OF_GAUSS_XI(1)
@@ -3736,21 +3744,21 @@ CONTAINS
             ENDIF
           ELSE
             LOCAL_ERROR="Invalid number of xi directions specified ("// &
-              & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_XI,"*",ERR,ERROR))// &
+              & TRIM(NumberToVString(NUMBER_OF_XI,"*",err,error))// &
               & ") for a simplex basis. You must specify between 2 and 3 xi directions"
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           ENDIF
         CASE DEFAULT
-          CALL FlagError("Basis type invalid or not implemented",ERR,ERROR,*999)
+          CALL FlagError("Basis type invalid or not implemented",err,error,*999)
         END SELECT
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated",err,error,*999)
     ENDIF
     
     EXITS("BASIS_NUMBER_OF_XI_SET_PTR")
     RETURN
-999 ERRORSEXITS("BASIS_NUMBER_OF_XI_SET_PTR",ERR,ERROR)
+999 ERRORSEXITS("BASIS_NUMBER_OF_XI_SET_PTR",err,error)
     RETURN 1
   END SUBROUTINE BASIS_NUMBER_OF_XI_SET_PTR 
   
@@ -3759,7 +3767,7 @@ CONTAINS
   !
 
   !>Creates the quadrature and quadrature schemes on a basis.
-  SUBROUTINE BASIS_QUADRATURE_CREATE(BASIS,ERR,ERROR,*)
+  SUBROUTINE BASIS_QUADRATURE_CREATE(BASIS,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
@@ -3777,33 +3785,33 @@ CONTAINS
     NULLIFY(NEW_SCHEME)
     NULLIFY(NEW_SCHEMES)
 
-    ENTERS("BASIS_QUADRATURE_CREATE",ERR,ERROR,*999)
+    ENTERS("BASIS_QUADRATURE_CREATE",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(ASSOCIATED(BASIS%QUADRATURE%SCHEMES)) THEN
-        LOCAL_ERROR="The quadrature schemes on basis number "//TRIM(NUMBER_TO_VSTRING(BASIS%USER_NUMBER,"*",ERR,ERROR))// &
+        LOCAL_ERROR="The quadrature schemes on basis number "//TRIM(NumberToVString(BASIS%USER_NUMBER,"*",err,error))// &
           & " are already associated"
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*998)
+        CALL FlagError(LOCAL_ERROR,err,error,*998)
       ELSE
 !!TODO: \todo Sort this properly by having a create values cache.
         !Reset the basis quadrature - 
-        !CALL BASIS_QUADRATURE_FINALISE(BASIS,ERR,ERROR,*999)      ! Kumar - I think this is not correct as it 
+        !CALL BASIS_QUADRATURE_FINALISE(BASIS,err,error,*999)      ! Kumar - I think this is not correct as it 
         !Initialise the basis quadrature                           !         resets the quadrature scheme already set.
-        !CALL BASIS_QUADRATURE_INITIALISE(BASIS,ERR,ERROR,*999)    ! 
+        !CALL BASIS_QUADRATURE_INITIALISE(BASIS,err,error,*999)    ! 
         SELECT CASE(BASIS%QUADRATURE%TYPE)
         CASE(BASIS_GAUSS_LEGENDRE_QUADRATURE)            
           !Allocate one scheme and add it to the list of schemes
           ALLOCATE(NEW_SCHEME,STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate new quadrature scheme",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate new quadrature scheme",err,error,*999)
           NEW_SCHEME%QUADRATURE=>BASIS%QUADRATURE
           BASIS%QUADRATURE%NUMBER_OF_SCHEMES=1
           ALLOCATE(NEW_SCHEMES(BASIS%QUADRATURE%NUMBER_OF_SCHEMES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate new quadratures scheme",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate new quadratures scheme",err,error,*999)
           NEW_SCHEMES(1)%PTR=>NEW_SCHEME
           BASIS%QUADRATURE%SCHEMES=>NEW_SCHEMES
           !Set up the quadrature scheme map
           ALLOCATE(BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_NUMBER_OF_QUADRATURE_SCHEME_TYPES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate quadrature scheme map",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate quadrature scheme map",err,error,*999)
           DO scheme_idx=1,BASIS_NUMBER_OF_QUADRATURE_SCHEME_TYPES
             NULLIFY(BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(scheme_idx)%PTR)
           ENDDO !scheme_idx
@@ -3816,25 +3824,25 @@ CONTAINS
             IF(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni)>MAX_NUM_GAUSS) MAX_NUM_GAUSS=BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni)
           ENDDO !ni
           ALLOCATE(NEW_SCHEME%GAUSS_POSITIONS(BASIS%NUMBER_OF_XI_COORDINATES,NEW_SCHEME%NUMBER_OF_GAUSS),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate Gauss positions",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate Gauss positions",err,error,*999)
           ALLOCATE(NEW_SCHEME%GAUSS_WEIGHTS(NEW_SCHEME%NUMBER_OF_GAUSS),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate Gauss weights",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate Gauss weights",err,error,*999)
           ALLOCATE(NEW_SCHEME%GAUSS_BASIS_FNS(BASIS%NUMBER_OF_ELEMENT_PARAMETERS,BASIS%NUMBER_OF_PARTIAL_DERIVATIVES, &
             & NEW_SCHEME%NUMBER_OF_GAUSS),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate Gauss basis functions",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate Gauss basis functions",err,error,*999)
           ALLOCATE(WEIGHTS(MAX_NUM_GAUSS,3),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate weights",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate weights",err,error,*999)
           ALLOCATE(POSITIONS(MAX_NUM_GAUSS,3),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate positions",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate positions",err,error,*999)
           ALLOCATE(POSITIONS_MATRIX(MAX_NUM_GAUSS,MAX_NUM_GAUSS,MAX_NUM_GAUSS,3),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate positions matrix",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate positions matrix",err,error,*999)
           WEIGHTS=1.0_DP
           POSITIONS=0.0_DP
           POSITIONS_MATRIX=0.0_DP
           DO ni=1,BASIS%NUMBER_OF_XI
             CALL GAUSS_LEGENDRE(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),0.0_DP,1.0_DP, &
               & POSITIONS(1:BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),ni), &
-              & WEIGHTS(1:BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),ni),ERR,ERROR,*999)
+              & WEIGHTS(1:BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),ni),err,error,*999)
           ENDDO !ni
           SELECT CASE(BASIS%NUMBER_OF_XI)
           CASE(1)
@@ -3850,7 +3858,7 @@ CONTAINS
             NUM_GAUSS_2=BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(2)
             NUM_GAUSS_3=BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(3)
           CASE DEFAULT
-            CALL FlagError("Invalid number of xi directions",ERR,ERROR,*999)
+            CALL FlagError("Invalid number of xi directions",err,error,*999)
           END SELECT
           DO k=1,NUM_GAUSS_3
             DO j=1,NUM_GAUSS_2
@@ -3869,10 +3877,10 @@ CONTAINS
                     DO nu=1,BASIS%NUMBER_OF_PARTIAL_DERIVATIVES
                       SELECT CASE(BASIS%TYPE)
                       CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
-                        NEW_SCHEME%GAUSS_BASIS_FNS(ns,nu,ng)=BASIS_LHTP_BASIS_EVALUATE(BASIS,nn,nk,nu,XI,ERR,ERROR)
+                        NEW_SCHEME%GAUSS_BASIS_FNS(ns,nu,ng)=BASIS_LHTP_BASIS_EVALUATE(BASIS,nn,nk,nu,XI,err,error)
                         IF(ERR/=0) GOTO 999                        
                       CASE DEFAULT
-                        CALL FlagError("Not implemented",ERR,ERROR,*999)
+                        CALL FlagError("Not implemented",err,error,*999)
                       END SELECT
                     ENDDO !nu
                   ENDDO !nk
@@ -3887,15 +3895,15 @@ CONTAINS
               MAX_NUM_FACE_GAUSS=PRODUCT(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(1:BASIS%NUMBER_OF_XI))
               MAX_NUM_FACE_GAUSS=MAX_NUM_FACE_GAUSS/MINVAL(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(1:BASIS%NUMBER_OF_XI))
               ALLOCATE(NEW_SCHEME%NUMBER_OF_FACE_GAUSS(BASIS%NUMBER_OF_LOCAL_FACES),STAT=ERR)
-              IF(ERR/=0) CALL FlagError("Could not allocate number of face gauss",ERR,ERROR,*999)
+              IF(ERR/=0) CALL FlagError("Could not allocate number of face gauss",err,error,*999)
               ALLOCATE(NEW_SCHEME%FACE_GAUSS_POSITIONS(BASIS%NUMBER_OF_XI_COORDINATES,MAX_NUM_FACE_GAUSS, &
                 & BASIS%NUMBER_OF_LOCAL_FACES),STAT=ERR)
-              IF(ERR/=0) CALL FlagError("Could not allocate face Gauss positions",ERR,ERROR,*999)
+              IF(ERR/=0) CALL FlagError("Could not allocate face Gauss positions",err,error,*999)
               ALLOCATE(NEW_SCHEME%FACE_GAUSS_WEIGHTS(MAX_NUM_FACE_GAUSS,BASIS%NUMBER_OF_LOCAL_FACES),STAT=ERR)
-              IF(ERR/=0) CALL FlagError("Could not allocate face Gauss weights",ERR,ERROR,*999)
+              IF(ERR/=0) CALL FlagError("Could not allocate face Gauss weights",err,error,*999)
               ALLOCATE(NEW_SCHEME%FACE_GAUSS_BASIS_FNS(BASIS%NUMBER_OF_ELEMENT_PARAMETERS,BASIS%NUMBER_OF_PARTIAL_DERIVATIVES, &
                 & MAX_NUM_FACE_GAUSS,BASIS%NUMBER_OF_LOCAL_FACES),STAT=ERR)
-              IF(ERR/=0) CALL FlagError("Could not allocate face Gauss basis function values array",ERR,ERROR,*999)
+              IF(ERR/=0) CALL FlagError("Could not allocate face Gauss basis function values array",err,error,*999)
               !Zero them out just to be safe
               NEW_SCHEME%FACE_GAUSS_POSITIONS=0.0_DP
               NEW_SCHEME%FACE_GAUSS_WEIGHTS=0.0_DP
@@ -3931,10 +3939,10 @@ CONTAINS
                           SELECT CASE(BASIS%TYPE)
                           CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
                             NEW_SCHEME%FACE_GAUSS_BASIS_FNS(ns,nu,ng,face_idx)= &
-                              & BASIS_LHTP_BASIS_EVALUATE(BASIS,nn,nk,nu,XI,ERR,ERROR)
+                              & BASIS_LHTP_BASIS_EVALUATE(BASIS,nn,nk,nu,XI,err,error)
                             IF(ERR/=0) GOTO 999                        
                           CASE DEFAULT
-                            CALL FlagError("Not implemented",ERR,ERROR,*999)
+                            CALL FlagError("Not implemented",err,error,*999)
                           END SELECT
                         ENDDO !nu
                       ENDDO !nk
@@ -3944,7 +3952,7 @@ CONTAINS
                 ENDDO !j
               ENDDO !face_idx
             ELSE
-              CALL FlagError("Cannot evaluate face quadrature schemes for a non three dimensional element.",ERR,ERROR,*999)
+              CALL FlagError("Cannot evaluate face quadrature schemes for a non three dimensional element.",err,error,*999)
             ENDIF
           ENDIF
           !Clean up
@@ -3952,36 +3960,36 @@ CONTAINS
           DEALLOCATE(POSITIONS)
           DEALLOCATE(POSITIONS_MATRIX)
         CASE(BASIS_GAUSS_LAGUERRE_QUADRATURE)
-          CALL FlagError("Gauss Laguerre quadrature type not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Gauss Laguerre quadrature type not implemented.",err,error,*999)
         CASE(BASIS_GUASS_HERMITE_QUADRATURE)
-          CALL FlagError("Gauss Hermite quadrature type not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Gauss Hermite quadrature type not implemented.",err,error,*999)
         CASE(BASIS_GAUSS_SIMPLEX_QUADRATURE)
           !Allocate one scheme and add it to the list of schemes
           ALLOCATE(NEW_SCHEME,STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate new quadrature scheme.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate new quadrature scheme.",err,error,*999)
           NEW_SCHEME%QUADRATURE=>BASIS%QUADRATURE
           BASIS%QUADRATURE%NUMBER_OF_SCHEMES=1
           ALLOCATE(NEW_SCHEMES(BASIS%QUADRATURE%NUMBER_OF_SCHEMES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate new quadratures scheme.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate new quadratures scheme.",err,error,*999)
           NEW_SCHEMES(1)%PTR=>NEW_SCHEME
           BASIS%QUADRATURE%SCHEMES=>NEW_SCHEMES
           !Set up the quadrature scheme map
           ALLOCATE(BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_NUMBER_OF_QUADRATURE_SCHEME_TYPES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate quadrature scheme map.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate quadrature scheme map.",err,error,*999)
           DO scheme_idx=1,BASIS_NUMBER_OF_QUADRATURE_SCHEME_TYPES
             NULLIFY(BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(scheme_idx)%PTR)
           ENDDO !scheme_idx
           BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR=>NEW_SCHEME
           !Set up the gauss point arrays
           CALL GAUSS_SIMPLEX(BASIS%QUADRATURE%GAUSS_ORDER,BASIS%NUMBER_OF_XI_COORDINATES,NEW_SCHEME%NUMBER_OF_GAUSS,GSX,GSW, &
-            & ERR,ERROR,*999)
+            & err,error,*999)
           ALLOCATE(NEW_SCHEME%GAUSS_POSITIONS(BASIS%NUMBER_OF_XI_COORDINATES,NEW_SCHEME%NUMBER_OF_GAUSS),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate Gauss positions.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate Gauss positions.",err,error,*999)
           ALLOCATE(NEW_SCHEME%GAUSS_WEIGHTS(NEW_SCHEME%NUMBER_OF_GAUSS),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate Gauss weights.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate Gauss weights.",err,error,*999)
           ALLOCATE(NEW_SCHEME%GAUSS_BASIS_FNS(BASIS%NUMBER_OF_ELEMENT_PARAMETERS,BASIS%NUMBER_OF_PARTIAL_DERIVATIVES, &
             & NEW_SCHEME%NUMBER_OF_GAUSS),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate Gauss basis functions.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate Gauss basis functions.",err,error,*999)
           NEW_SCHEME%GAUSS_POSITIONS(1:BASIS%NUMBER_OF_XI_COORDINATES,1:NEW_SCHEME%NUMBER_OF_GAUSS)= &
             & GSX(1:BASIS%NUMBER_OF_XI_COORDINATES,1:NEW_SCHEME%NUMBER_OF_GAUSS)
           NEW_SCHEME%GAUSS_WEIGHTS(1:NEW_SCHEME%NUMBER_OF_GAUSS)=GSW(1:NEW_SCHEME%NUMBER_OF_GAUSS)
@@ -3996,10 +4004,10 @@ CONTAINS
                     !Gauss positions are in area coordinates so call the simplex basis evaluate directly
                     NEW_SCHEME%GAUSS_BASIS_FNS(ns,nu,ng)= &
                       & BASIS_SIMPLEX_BASIS_EVALUATE(BASIS,nn,nu,NEW_SCHEME%GAUSS_POSITIONS(1:BASIS%NUMBER_OF_XI_COORDINATES,ng), &
-                      & ERR,ERROR)
+                      & err,error)
                     IF(ERR/=0) GOTO 999                        
                   CASE DEFAULT
-                    CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                    CALL FlagError("Not implemented.",err,error,*999)
                   END SELECT
                 ENDDO !nu
               ENDDO !nk
@@ -4012,15 +4020,15 @@ CONTAINS
               MAX_NUM_FACE_GAUSS=PRODUCT(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(1:BASIS%NUMBER_OF_XI))
               MAX_NUM_FACE_GAUSS=MAX_NUM_FACE_GAUSS/MINVAL(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(1:BASIS%NUMBER_OF_XI))
               ALLOCATE(NEW_SCHEME%NUMBER_OF_FACE_GAUSS(BASIS%NUMBER_OF_LOCAL_FACES),STAT=ERR)
-              IF(ERR/=0) CALL FlagError("Could not allocate number of face gauss",ERR,ERROR,*999)
+              IF(ERR/=0) CALL FlagError("Could not allocate number of face gauss",err,error,*999)
               ALLOCATE(NEW_SCHEME%FACE_GAUSS_POSITIONS(BASIS%NUMBER_OF_XI_COORDINATES,MAX_NUM_FACE_GAUSS, &
                 & BASIS%NUMBER_OF_LOCAL_FACES),STAT=ERR)
-              IF(ERR/=0) CALL FlagError("Could not allocate face Gauss positions",ERR,ERROR,*999)
+              IF(ERR/=0) CALL FlagError("Could not allocate face Gauss positions",err,error,*999)
               ALLOCATE(NEW_SCHEME%FACE_GAUSS_WEIGHTS(MAX_NUM_FACE_GAUSS,BASIS%NUMBER_OF_LOCAL_FACES),STAT=ERR)
-              IF(ERR/=0) CALL FlagError("Could not allocate face Gauss weights",ERR,ERROR,*999)
+              IF(ERR/=0) CALL FlagError("Could not allocate face Gauss weights",err,error,*999)
               ALLOCATE(NEW_SCHEME%FACE_GAUSS_BASIS_FNS(BASIS%NUMBER_OF_ELEMENT_PARAMETERS,BASIS%NUMBER_OF_PARTIAL_DERIVATIVES, &
                 & MAX_NUM_FACE_GAUSS,BASIS%NUMBER_OF_LOCAL_FACES),STAT=ERR)
-              IF(ERR/=0) CALL FlagError("Could not allocate face Gauss basis function values array",ERR,ERROR,*999)
+              IF(ERR/=0) CALL FlagError("Could not allocate face Gauss basis function values array",err,error,*999)
               !Zero them out just to be safe
               NEW_SCHEME%FACE_GAUSS_POSITIONS=0.0_DP
               NEW_SCHEME%FACE_GAUSS_WEIGHTS=0.0_DP
@@ -4031,8 +4039,8 @@ CONTAINS
                 numberOfFaceXiCoordinates = BASIS%NUMBER_OF_XI
                 !Set up the gauss point arrays for the face
                 CALL GAUSS_SIMPLEX(BASIS%QUADRATURE%GAUSS_ORDER,numberOfFaceXiCoordinates, &
-                  & NEW_SCHEME%NUMBER_OF_FACE_GAUSS(face_idx),GSX,GSW,ERR,ERROR,*999)
-                IF(ERR/=0) CALL FlagError("Could not allocate Gauss basis functions",ERR,ERROR,*999)
+                  & NEW_SCHEME%NUMBER_OF_FACE_GAUSS(face_idx),GSX,GSW,err,error,*999)
+                IF(ERR/=0) CALL FlagError("Could not allocate Gauss basis functions",err,error,*999)
                 NEW_SCHEME%FACE_GAUSS_POSITIONS(1:numberOfFaceXiCoordinates,1:NEW_SCHEME%NUMBER_OF_FACE_GAUSS(face_idx), &
                   & face_idx)=GSX(1:numberOfFaceXiCoordinates,1:NEW_SCHEME%NUMBER_OF_FACE_GAUSS(face_idx))
                 NEW_SCHEME%FACE_GAUSS_WEIGHTS(1:NEW_SCHEME%NUMBER_OF_FACE_GAUSS(face_idx),face_idx)= &
@@ -4048,10 +4056,10 @@ CONTAINS
                         CASE(BASIS_SIMPLEX_TYPE)
                           NEW_SCHEME%FACE_GAUSS_BASIS_FNS(ns,nu,ng,face_idx)= &
                             & BASIS_SIMPLEX_BASIS_EVALUATE(BASIS,nn,nu, &
-                            & NEW_SCHEME%FACE_GAUSS_POSITIONS(1:numberOfFaceXiCoordinates,ng,face_idx),ERR,ERROR)
+                            & NEW_SCHEME%FACE_GAUSS_POSITIONS(1:numberOfFaceXiCoordinates,ng,face_idx),err,error)
                           IF(ERR/=0) GOTO 999                        
                         CASE DEFAULT
-                          CALL FlagError("Not implemented",ERR,ERROR,*999)
+                          CALL FlagError("Not implemented",err,error,*999)
                         END SELECT
                       ENDDO !nu
                     ENDDO !nk
@@ -4060,47 +4068,47 @@ CONTAINS
 
               ENDDO !face_idx
             ELSE
-              CALL FlagError("Cannot evaluate face quadrature schemes for a non three dimensional element.",ERR,ERROR,*999)
+              CALL FlagError("Cannot evaluate face quadrature schemes for a non three dimensional element.",err,error,*999)
             ENDIF
           ENDIF
         CASE DEFAULT
-          LOCAL_ERROR="Quadrature type "//TRIM(NUMBER_TO_VSTRING(BASIS%QUADRATURE%TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          LOCAL_ERROR="Quadrature type "//TRIM(NumberToVString(BASIS%QUADRATURE%TYPE,"*",err,error))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated.",ERR,ERROR,*998)
+      CALL FlagError("Basis is not associated.",err,error,*998)
     ENDIF
     
     IF(DIAGNOSTICS1) THEN
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"Quadrature type = ",BASIS%QUADRATURE%TYPE,ERR,ERROR,*999)
-      CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_XI,3,3,BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI, &
-        & '("  Number of gauss points(ni):",3(X,I2))','(22X,3(X,I2))',ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of quadrature schemes = ",BASIS%QUADRATURE%NUMBER_OF_SCHEMES, &
-        & ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Quadrature type = ",BASIS%QUADRATURE%TYPE,err,error,*999)
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_XI,3,3,BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI, &
+        & '("  Number of gauss points(ni):",3(X,I2))','(22X,3(X,I2))',err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of quadrature schemes = ",BASIS%QUADRATURE%NUMBER_OF_SCHEMES, &
+        & err,error,*999)
       DO scheme_idx=1,BASIS%QUADRATURE%NUMBER_OF_SCHEMES
         SCHEME=>BASIS%QUADRATURE%SCHEMES(scheme_idx)%PTR
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Scheme = ",scheme_idx,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Total number of gauss points = ",SCHEME%NUMBER_OF_GAUSS, &
-          & ERR,ERROR,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Scheme = ",scheme_idx,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Total number of gauss points = ",SCHEME%NUMBER_OF_GAUSS, &
+          & err,error,*999)
         IF(DIAGNOSTICS2) THEN
-          CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"      Gauss point positions and weights:",ERR,ERROR,*999)
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"      Gauss point positions and weights:",err,error,*999)
           DO ng=1,SCHEME%NUMBER_OF_GAUSS
-            CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Gauss point = ",ng,ERR,ERROR,*999)
-            CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_XI_COORDINATES,3,3,SCHEME%GAUSS_POSITIONS(:,ng), &
-              & '("          position(ni)   :",3(X,F12.4))','(26X,3(X,F12.4))',ERR,ERROR,*999)
-            CALL WRITE_STRING_FMT_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"          WEIGHT         : ",SCHEME%GAUSS_WEIGHTS(ng), &
-              & "(F12.4)",ERR,ERROR,*999)
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Gauss point = ",ng,err,error,*999)
+            CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_XI_COORDINATES,3,3,SCHEME%GAUSS_POSITIONS(:,ng), &
+              & '("          position(ni)   :",3(X,F12.4))','(26X,3(X,F12.4))',err,error,*999)
+            CALL WriteStringFmtValue(DIAGNOSTIC_OUTPUT_TYPE,"          WEIGHT         : ",SCHEME%GAUSS_WEIGHTS(ng), &
+              & "(F12.4)",err,error,*999)
           ENDDO !ng          
         ENDIF
         IF(DIAGNOSTICS3) THEN
-          CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"      Basis functions evaluated at Gauss points:",ERR,ERROR,*999)
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"      Basis functions evaluated at Gauss points:",err,error,*999)
           DO ng=1,SCHEME%NUMBER_OF_GAUSS
-            CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Gauss point = ",ng,ERR,ERROR,*999)
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Gauss point = ",ng,err,error,*999)
             DO nu=1,BASIS%NUMBER_OF_PARTIAL_DERIVATIVES
-              CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"          Partial derivative number = ",nu,ERR,ERROR,*999)
-              CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_ELEMENT_PARAMETERS,4,4, &
-                & SCHEME%GAUSS_BASIS_FNS(:,nu,ng),'("          BASIS FNS(ns)  :",4(X,F12.4))','(26X,4(X,F12.4))',ERR,ERROR,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Partial derivative number = ",nu,err,error,*999)
+              CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,BASIS%NUMBER_OF_ELEMENT_PARAMETERS,4,4, &
+                & SCHEME%GAUSS_BASIS_FNS(:,nu,ng),'("          BASIS FNS(ns)  :",4(X,F12.4))','(26X,4(X,F12.4))',err,error,*999)
             ENDDO !nu
           ENDDO !ng
         ENDIF
@@ -4120,7 +4128,7 @@ CONTAINS
     IF(ALLOCATED(POSITIONS_MATRIX)) DEALLOCATE(POSITIONS_MATRIX)
     IF(ASSOCIATED(NEW_SCHEMES)) DEALLOCATE(NEW_SCHEMES)
     NULLIFY(BASIS%QUADRATURE%SCHEMES)
-998 ERRORSEXITS("BASIS_QUADRATURE_CREATE",ERR,ERROR)    
+998 ERRORSEXITS("BASIS_QUADRATURE_CREATE",err,error)    
     RETURN 1
    
   END SUBROUTINE BASIS_QUADRATURE_CREATE
@@ -4130,7 +4138,7 @@ CONTAINS
   !
   
   !>Destroys a quadrature on a given basis and deallocates all memory. \todo fix all this basis/quadrature into standard form.
-  SUBROUTINE BASIS_QUADRATURE_DESTROY(QUADRATURE,ERR,ERROR,*)
+  SUBROUTINE BASIS_QUADRATURE_DESTROY(QUADRATURE,err,error,*)
 
     !Argument variables
     TYPE(QUADRATURE_TYPE), POINTER :: QUADRATURE !<A pointer to the quadrature
@@ -4138,17 +4146,17 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
 
-    ENTERS("BASIS_QUADRATURE_DESTROY",ERR,ERROR,*999)
+    ENTERS("BASIS_QUADRATURE_DESTROY",err,error,*999)
 
     IF(ASSOCIATED(QUADRATURE)) THEN
-      CALL FlagError("Not implemented.",ERR,ERROR,*999)     
+      CALL FlagError("Not implemented.",err,error,*999)     
     ELSE
-      CALL FlagError("Basis is not associated",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated",err,error,*999)
     ENDIF
     
     EXITS("BASIS_QUADRATURE_DESTROY")
     RETURN
-999 ERRORSEXITS("BASIS_QUADRATURE_DESTROY",ERR,ERROR)
+999 ERRORSEXITS("BASIS_QUADRATURE_DESTROY",err,error)
     RETURN 1
   END SUBROUTINE BASIS_QUADRATURE_DESTROY
 
@@ -4157,7 +4165,7 @@ CONTAINS
   !
     
   !>Finalises a quadrature on a given basis and deallocates all memory
-  SUBROUTINE BASIS_QUADRATURE_FINALISE(BASIS,ERR,ERROR,*)
+  SUBROUTINE BASIS_QUADRATURE_FINALISE(BASIS,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
@@ -4167,7 +4175,7 @@ CONTAINS
     INTEGER(INTG) :: scheme_idx
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: SCHEME
 
-    ENTERS("BASIS_QUADRATURE_FINALISE",ERR,ERROR,*999)
+    ENTERS("BASIS_QUADRATURE_FINALISE",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(ASSOCIATED(BASIS%QUADRATURE%BASIS)) THEN
@@ -4188,15 +4196,15 @@ CONTAINS
         BASIS%QUADRATURE%TYPE=-1
         IF(ALLOCATED(BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP)) DEALLOCATE(BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP)
       ELSE
-        CALL FlagError("Basis quadrature basis is not associated",ERR,ERROR,*999)
+        CALL FlagError("Basis quadrature basis is not associated",err,error,*999)
       ENDIF      
     ELSE
-      CALL FlagError("Basis is not associated",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated",err,error,*999)
     ENDIF
     
     EXITS("BASIS_QUADRATURE_FINALISE")
     RETURN
-999 ERRORSEXITS("BASIS_QUADRATURE_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("BASIS_QUADRATURE_FINALISE",err,error)
     RETURN 1
   END SUBROUTINE BASIS_QUADRATURE_FINALISE
 
@@ -4205,7 +4213,7 @@ CONTAINS
   !
 
   !>Initialises a quadrature on the given basis.
-  SUBROUTINE BASIS_QUADRATURE_INITIALISE(BASIS,ERR,ERROR,*)
+  SUBROUTINE BASIS_QUADRATURE_INITIALISE(BASIS,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
@@ -4215,13 +4223,13 @@ CONTAINS
     INTEGER(INTG) :: ni
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
-    ENTERS("BASIS_QUADRATURE_INITIALISE",ERR,ERROR,*999)
+    ENTERS("BASIS_QUADRATURE_INITIALISE",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(ASSOCIATED(BASIS%QUADRATURE%BASIS)) THEN
-        LOCAL_ERROR="Basis number "//TRIM(NUMBER_TO_VSTRING(BASIS%USER_NUMBER,"*",ERR,ERROR))// &
+        LOCAL_ERROR="Basis number "//TRIM(NumberToVString(BASIS%USER_NUMBER,"*",err,error))// &
           & " already has a quadrature associated"
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*998)
+        CALL FlagError(LOCAL_ERROR,err,error,*998)
       ELSE
         SELECT CASE(BASIS%TYPE)
         CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
@@ -4232,7 +4240,7 @@ CONTAINS
           BASIS%QUADRATURE%TYPE=BASIS_GAUSS_LEGENDRE_QUADRATURE
           !Set up a default number of Gauss points appropriate for the given interpolation order in each direction.
           ALLOCATE(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(BASIS%NUMBER_OF_XI),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate number of Gauss in each xi direction",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate number of Gauss in each xi direction",err,error,*999)
           DO ni=1,BASIS%NUMBER_OF_XI
             SELECT CASE(BASIS%INTERPOLATION_XI(ni))
             CASE(BASIS_LINEAR_LAGRANGE_INTERPOLATION)
@@ -4246,9 +4254,9 @@ CONTAINS
             CASE(BASIS_CUBIC_HERMITE_INTERPOLATION)
               BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni)=4
             CASE DEFAULT
-              LOCAL_ERROR="Interpolation xi value "//TRIM(NUMBER_TO_VSTRING(BASIS%INTERPOLATION_XI(ni),"*",ERR,ERROR))// &
-                & " in xi direction "//TRIM(NUMBER_TO_VSTRING(ni,"*",ERR,ERROR))//" is invalid"
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              LOCAL_ERROR="Interpolation xi value "//TRIM(NumberToVString(BASIS%INTERPOLATION_XI(ni),"*",err,error))// &
+                & " in xi direction "//TRIM(NumberToVString(ni,"*",err,error))//" is invalid"
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             END SELECT
           ENDDO !ni
         CASE(BASIS_SIMPLEX_TYPE)
@@ -4259,7 +4267,7 @@ CONTAINS
           BASIS%QUADRATURE%TYPE=BASIS_GAUSS_SIMPLEX_QUADRATURE
           !Set up a default order appropriate for the given interpolation.
           ALLOCATE(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(BASIS%NUMBER_OF_XI),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate number of Gauss in each xi direction",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate number of Gauss in each xi direction",err,error,*999)
 !!TODO: \todo Set these to something more meaningfull!
           SELECT CASE(BASIS%INTERPOLATION_XI(1))
           CASE(BASIS_LINEAR_SIMPLEX_INTERPOLATION)
@@ -4271,9 +4279,9 @@ CONTAINS
             CASE(3)
               BASIS%QUADRATURE%GAUSS_ORDER=3
             CASE DEFAULT
-              LOCAL_ERROR="The number of xi directions ("//TRIM(NUMBER_TO_VSTRING(BASIS%NUMBER_OF_XI,"*",ERR,ERROR))// &
+              LOCAL_ERROR="The number of xi directions ("//TRIM(NumberToVString(BASIS%NUMBER_OF_XI,"*",err,error))// &
                 & ") is invalid"
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             END SELECT
           CASE(BASIS_QUADRATIC_SIMPLEX_INTERPOLATION)
             SELECT CASE(BASIS%NUMBER_OF_XI)
@@ -4284,9 +4292,9 @@ CONTAINS
             CASE(3)
               BASIS%QUADRATURE%GAUSS_ORDER=5
             CASE DEFAULT
-              LOCAL_ERROR="The number of xi directions ("//TRIM(NUMBER_TO_VSTRING(BASIS%NUMBER_OF_XI,"*",ERR,ERROR))// &
+              LOCAL_ERROR="The number of xi directions ("//TRIM(NumberToVString(BASIS%NUMBER_OF_XI,"*",err,error))// &
                 & ") is invalid"
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             END SELECT
           CASE(BASIS_CUBIC_SIMPLEX_INTERPOLATION)
             SELECT CASE(BASIS%NUMBER_OF_XI)
@@ -4297,30 +4305,30 @@ CONTAINS
             CASE(3)
               BASIS%QUADRATURE%GAUSS_ORDER=5
             CASE DEFAULT
-              LOCAL_ERROR="The number of xi directions ("//TRIM(NUMBER_TO_VSTRING(BASIS%NUMBER_OF_XI,"*",ERR,ERROR))// &
+              LOCAL_ERROR="The number of xi directions ("//TRIM(NumberToVString(BASIS%NUMBER_OF_XI,"*",err,error))// &
                 & ") is invalid"
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             END SELECT
           CASE DEFAULT
-            LOCAL_ERROR="Interpolation xi value "//TRIM(NUMBER_TO_VSTRING(BASIS%INTERPOLATION_XI(1),"*",ERR,ERROR))// &
+            LOCAL_ERROR="Interpolation xi value "//TRIM(NumberToVString(BASIS%INTERPOLATION_XI(1),"*",err,error))// &
               & " in xi direction 1 is invalid"
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
           BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI=BASIS%QUADRATURE%GAUSS_ORDER
         CASE DEFAULT
-          LOCAL_ERROR="Basis type value "//TRIM(NUMBER_TO_VSTRING(BASIS%INTERPOLATION_XI(ni),"*",ERR,ERROR))// &
+          LOCAL_ERROR="Basis type value "//TRIM(NumberToVString(BASIS%INTERPOLATION_XI(ni),"*",err,error))// &
             & " is invalid or not implemented"
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated",ERR,ERROR,*998)
+      CALL FlagError("Basis is not associated",err,error,*998)
     ENDIF
     
     EXITS("BASIS_QUADRATURE_INITIALISE")
     RETURN
 999 IF(ALLOCATED(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI)) DEALLOCATE(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI)
-998 ERRORSEXITS("BASIS_QUADRATURE_INITIALISE",ERR,ERROR)    
+998 ERRORSEXITS("BASIS_QUADRATURE_INITIALISE",err,error)    
     RETURN 1
     
   END SUBROUTINE BASIS_QUADRATURE_INITIALISE
@@ -4330,7 +4338,7 @@ CONTAINS
   !
   
   !>Get the number of Gauss points in each xi direction on a basis quadrature identified by a pointer. \see OpenCMISS::Iron::cmfe_BasisQuadratureNumberOfGaussXiGet
-  SUBROUTINE BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_GET(BASIS,QUADRATURE_NUMBER_OF_GAUSS_XI,ERR,ERROR,*)
+  SUBROUTINE BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_GET(BASIS,QUADRATURE_NUMBER_OF_GAUSS_XI,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
@@ -4340,7 +4348,7 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_GET",ERR,ERROR,*999)
+    ENTERS("BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_GET",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(BASIS%BASIS_FINISHED) THEN
@@ -4349,23 +4357,23 @@ CONTAINS
             QUADRATURE_NUMBER_OF_GAUSS_XI=BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI
           ELSE
             LOCAL_ERROR="The size of QUADRATURE_NUMBER_OF_GAUSS_XI is too small. The supplied size is "// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(QUADRATURE_NUMBER_OF_GAUSS_XI,1),"*",ERR,ERROR))//" and it needs to be >= "// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI,1),"*",ERR,ERROR))//"."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(SIZE(QUADRATURE_NUMBER_OF_GAUSS_XI,1),"*",err,error))//" and it needs to be >= "// &
+              & TRIM(NumberToVString(SIZE(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI,1),"*",err,error))//"."
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           ENDIF
         ELSE
-          CALL FlagError("Quadrature basis is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Quadrature basis is not associated.",err,error,*999)
         ENDIF
       ELSE
-        CALL FlagError("Basis has not finished.",ERR,ERROR,*999)
+        CALL FlagError("Basis has not finished.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated.",err,error,*999)
     ENDIF
       
     EXITS("BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_GET")
     RETURN
-999 ERRORSEXITS("BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_GET",ERR,ERROR)
+999 ERRORSEXITS("BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_GET",err,error)
     RETURN
   END SUBROUTINE BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_GET
     
@@ -4376,7 +4384,7 @@ CONTAINS
   !
 
   !>Sets/changes the number of Gauss points in each xi direction on a basis quadrature identified by a pointer. \see OpenCMISS::Iron::cmfe_BasisQuadratureNumberOfGaussSet
-  SUBROUTINE BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_SET(BASIS,NUMBER_OF_GAUSS_XI,ERR,ERROR,*)
+  SUBROUTINE BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_SET(BASIS,NUMBER_OF_GAUSS_XI,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
@@ -4387,80 +4395,80 @@ CONTAINS
     INTEGER(INTG) :: ni
     TYPE(VARYING_STRING) :: LOCAL_ERROR,LOCAL_WARNING
     
-    ENTERS("BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_SET",ERR,ERROR,*999)
+    ENTERS("BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_SET",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(BASIS%BASIS_FINISHED) THEN
-        CALL FlagError("Basis has been finished.",ERR,ERROR,*999)
+        CALL FlagError("Basis has been finished.",err,error,*999)
       ELSE
         IF(ASSOCIATED(BASIS%QUADRATURE%BASIS)) THEN          
           IF(SIZE(NUMBER_OF_GAUSS_XI,1)==BASIS%NUMBER_OF_XI) THEN
-            IF(ANY(NUMBER_OF_GAUSS_XI<1)) CALL FlagError("Invalid number of gauss values.",ERR,ERROR,*999)
+            IF(ANY(NUMBER_OF_GAUSS_XI<1)) CALL FlagError("Invalid number of gauss values.",err,error,*999)
             BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(1:BASIS%NUMBER_OF_XI)=NUMBER_OF_GAUSS_XI(1:BASIS%NUMBER_OF_XI)
             !Check the number of gauss points is sufficient for the interpolation order and flag a warning if not
             DO ni=1,BASIS%NUMBER_OF_XI
               SELECT CASE(BASIS%INTERPOLATION_XI(ni))
               CASE(BASIS_LINEAR_LAGRANGE_INTERPOLATION)
                 IF(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni)<2) THEN
-                  LOCAL_WARNING=TRIM(NUMBER_TO_VSTRING(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),"*",ERR,ERROR))// &
+                  LOCAL_WARNING=TRIM(NumberToVString(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),"*",err,error))// &
                     & " Gauss points are insufficient for linear Lagrange interpolation."
-                  CALL FLAG_WARNING(LOCAL_WARNING,ERR,ERROR,*999)
+                  CALL FLAG_WARNING(LOCAL_WARNING,err,error,*999)
                 ENDIF
               CASE(BASIS_QUADRATIC_LAGRANGE_INTERPOLATION)
                 IF(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni)<2) THEN
-                  LOCAL_WARNING=TRIM(NUMBER_TO_VSTRING(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),"*",ERR,ERROR))//&
+                  LOCAL_WARNING=TRIM(NumberToVString(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),"*",err,error))//&
                     & " Gauss points are insufficient for quadratic Lagrange interpolation."
-                  CALL FLAG_WARNING(LOCAL_WARNING,ERR,ERROR,*999)
+                  CALL FLAG_WARNING(LOCAL_WARNING,err,error,*999)
                 ENDIF
               CASE(BASIS_CUBIC_LAGRANGE_INTERPOLATION)
                 IF(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni)<3) THEN
-                  LOCAL_WARNING=TRIM(NUMBER_TO_VSTRING(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),"*",ERR,ERROR))//&
+                  LOCAL_WARNING=TRIM(NumberToVString(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),"*",err,error))//&
                     & " Gauss points are insufficient for cubic Lagrange interpolation."
-                  CALL FLAG_WARNING(LOCAL_WARNING,ERR,ERROR,*999)
+                  CALL FLAG_WARNING(LOCAL_WARNING,err,error,*999)
                 ENDIF
                CASE(BASIS_QUADRATIC1_HERMITE_INTERPOLATION,BASIS_QUADRATIC2_HERMITE_INTERPOLATION)
                 IF(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni)<2) THEN
-                  LOCAL_WARNING=TRIM(NUMBER_TO_VSTRING(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),"*",ERR,ERROR))//&
+                  LOCAL_WARNING=TRIM(NumberToVString(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),"*",err,error))//&
                     & " Gauss points are insufficient for quadratic Hermite interpolation."
-                  CALL FLAG_WARNING(LOCAL_WARNING,ERR,ERROR,*999)
+                  CALL FLAG_WARNING(LOCAL_WARNING,err,error,*999)
                 ENDIF
               CASE(BASIS_CUBIC_HERMITE_INTERPOLATION)
                 IF(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni)<3) THEN
-                  LOCAL_WARNING=TRIM(NUMBER_TO_VSTRING(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),"*",ERR,ERROR))//&
+                  LOCAL_WARNING=TRIM(NumberToVString(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),"*",err,error))//&
                     & " Gauss points are insufficient for cubic Hermite interpolation."
-                  CALL FLAG_WARNING(LOCAL_WARNING,ERR,ERROR,*999)
+                  CALL FLAG_WARNING(LOCAL_WARNING,err,error,*999)
                 ENDIF
               CASE(BASIS_LINEAR_SIMPLEX_INTERPOLATION)
                 LOCAL_WARNING="For simplex elements please set quadrature order rather than number of gauss points."
-                CALL FLAG_WARNING(LOCAL_WARNING,ERR,ERROR,*999)
+                CALL FLAG_WARNING(LOCAL_WARNING,err,error,*999)
               CASE(BASIS_QUADRATIC_SIMPLEX_INTERPOLATION)
                 LOCAL_WARNING="For simplex elements please set quadrature order rather than number of gauss points."
-                CALL FLAG_WARNING(LOCAL_WARNING,ERR,ERROR,*999)
+                CALL FLAG_WARNING(LOCAL_WARNING,err,error,*999)
               CASE DEFAULT
-                LOCAL_ERROR="Interpolation xi value "//TRIM(NUMBER_TO_VSTRING(BASIS%INTERPOLATION_XI(ni),"*",ERR,ERROR))// &
-                  & " is invalid for xi direction "//TRIM(NUMBER_TO_VSTRING(ni,"*",ERR,ERROR))//"."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                LOCAL_ERROR="Interpolation xi value "//TRIM(NumberToVString(BASIS%INTERPOLATION_XI(ni),"*",err,error))// &
+                  & " is invalid for xi direction "//TRIM(NumberToVString(ni,"*",err,error))//"."
+                CALL FlagError(LOCAL_ERROR,err,error,*999)
               END SELECT
             ENDDO !xi
           ELSE
             LOCAL_ERROR="The size of the number of Gauss array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(NUMBER_OF_GAUSS_XI,1),"*",ERR,ERROR))// &
+              & TRIM(NumberToVString(SIZE(NUMBER_OF_GAUSS_XI,1),"*",err,error))// &
               & ") does not match the number of xi directions ("// &
-              & TRIM(NUMBER_TO_VSTRING(BASIS%NUMBER_OF_XI,"*",ERR,ERROR))//") for basis number "// &
-              & TRIM(NUMBER_TO_VSTRING(BASIS%USER_NUMBER,"*",ERR,ERROR))//"."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              & TRIM(NumberToVString(BASIS%NUMBER_OF_XI,"*",err,error))//") for basis number "// &
+              & TRIM(NumberToVString(BASIS%USER_NUMBER,"*",err,error))//"."
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           ENDIF
         ELSE
-          CALL FlagError("Quadrature basis is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Quadrature basis is not associated.",err,error,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated.",err,error,*999)
     ENDIF
       
     EXITS("BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_SET")
     RETURN
-999 ERRORSEXITS("BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_SET",ERR,ERROR)
+999 ERRORSEXITS("BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_SET",err,error)
     RETURN 1
   END SUBROUTINE BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_SET
   !
@@ -4468,7 +4476,7 @@ CONTAINS
   !
   
   !>Returns the xi positions of a Gauss point on a basis quadrature identified by a pointer. \see OpenCMISS::Iron::cmfe_BasisQuadratureGaussXiGet
-  SUBROUTINE BASIS_QUADRATURE_SINGLE_GAUSS_XI_GET(BASIS,SCHEME,GAUSS_POINT,GAUSS_XI,ERR,ERROR,*)
+  SUBROUTINE BASIS_QUADRATURE_SINGLE_GAUSS_XI_GET(BASIS,SCHEME,GAUSS_POINT,GAUSS_XI,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
@@ -4481,7 +4489,7 @@ CONTAINS
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: QUADRATURE_SCHEME
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("BASIS_QUADRATURE_SINGLE_GAUSS_XI_GET",ERR,ERROR,*999)
+    ENTERS("BASIS_QUADRATURE_SINGLE_GAUSS_XI_GET",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(BASIS%BASIS_FINISHED) THEN
@@ -4493,32 +4501,32 @@ CONTAINS
                 GAUSS_XI(:)=QUADRATURE_SCHEME%GAUSS_POSITIONS(:,GAUSS_POINT)
               ELSE
                 LOCAL_ERROR="The specified Gauss point number of "// & 
-                  & TRIM(NUMBER_TO_VSTRING(GAUSS_POINT,"*",ERR,ERROR))//" is invalid for the specified "// &
+                  & TRIM(NumberToVString(GAUSS_POINT,"*",err,error))//" is invalid for the specified "// &
                   & "quadrature scheme of the specified element for this field which has "// &
-                  & TRIM(NUMBER_TO_VSTRING(QUADRATURE_SCHEME%NUMBER_OF_GAUSS,"*",ERR,ERROR))//" Gauss points."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                  & TRIM(NumberToVString(QUADRATURE_SCHEME%NUMBER_OF_GAUSS,"*",err,error))//" Gauss points."
+                CALL FlagError(LOCAL_ERROR,err,error,*999)
               ENDIF
             ELSE
               LOCAL_ERROR="The number of xi values to return is invalid and needs to be "// &
-                & TRIM(NUMBER_TO_VSTRING(BASIS%NUMBER_OF_XI,"*",ERR,ERROR))//" for the specified basis."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(BASIS%NUMBER_OF_XI,"*",err,error))//" for the specified basis."
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             ENDIF
           ELSE
-            CALL FlagError("The specified quadrature scheme is not associated for this basis.",ERR,ERROR,*999)
+            CALL FlagError("The specified quadrature scheme is not associated for this basis.",err,error,*999)
           ENDIF
         ELSE
-          CALL FlagError("Quadrature basis is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Quadrature basis is not associated.",err,error,*999)
         ENDIF
       ELSE
-        CALL FlagError("Basis has not finished.",ERR,ERROR,*999)
+        CALL FlagError("Basis has not finished.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated.",err,error,*999)
     ENDIF
       
     EXITS("BASIS_QUADRATURE_SINGLE_GAUSS_XI_GET")
     RETURN
-999 ERRORSEXITS("BASIS_QUADRATURE_SINGLE_GAUSS_XI_GET",ERR,ERROR)
+999 ERRORSEXITS("BASIS_QUADRATURE_SINGLE_GAUSS_XI_GET",err,error)
     RETURN
   END SUBROUTINE BASIS_QUADRATURE_SINGLE_GAUSS_XI_GET
 
@@ -4527,7 +4535,7 @@ CONTAINS
   !
   
   !>Returns the xi positions of Gauss points on a basis quadrature identified by a pointer. If no Gauss points are specified then xi positions of all Gauss points are returned. \see OpenCMISS::Iron::cmfe_BasisQuadratureGaussXiGet
-  SUBROUTINE BASIS_QUADRATURE_MULTIPLE_GAUSS_XI_GET(BASIS,SCHEME,GAUSS_POINTS,GAUSS_XI,ERR,ERROR,*)
+  SUBROUTINE BASIS_QUADRATURE_MULTIPLE_GAUSS_XI_GET(BASIS,SCHEME,GAUSS_POINTS,GAUSS_XI,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
@@ -4541,7 +4549,7 @@ CONTAINS
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: QUADRATURE_SCHEME
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("BASIS_QUADRATURE_MULTIPLE_GAUSS_XI_GET",ERR,ERROR,*999)
+    ENTERS("BASIS_QUADRATURE_MULTIPLE_GAUSS_XI_GET",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(BASIS%BASIS_FINISHED) THEN
@@ -4554,8 +4562,8 @@ CONTAINS
                   GAUSS_XI=QUADRATURE_SCHEME%GAUSS_POSITIONS
                 ELSE
                   LOCAL_ERROR="The number of Gauss Points to return the xi values for is invalid and needs to be "// &
-                    & TRIM(NUMBER_TO_VSTRING(QUADRATURE_SCHEME%NUMBER_OF_GAUSS,"*",ERR,ERROR))//"."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                    & TRIM(NumberToVString(QUADRATURE_SCHEME%NUMBER_OF_GAUSS,"*",err,error))//"."
+                  CALL FlagError(LOCAL_ERROR,err,error,*999)
                 ENDIF
               ELSE !Return only specified Gauss point xi locations.
                 DO Gauss_point=1,SIZE(GAUSS_POINTS)
@@ -4563,34 +4571,34 @@ CONTAINS
                     GAUSS_XI(:,Gauss_point)=QUADRATURE_SCHEME%GAUSS_POSITIONS(:,GAUSS_POINTS(Gauss_point))
                   ELSE
                     LOCAL_ERROR="The specified Gauss point number of "// & 
-                      & TRIM(NUMBER_TO_VSTRING(GAUSS_POINTS(Gauss_point),"*",ERR,ERROR))//" is invalid for the specified "// &
+                      & TRIM(NumberToVString(GAUSS_POINTS(Gauss_point),"*",err,error))//" is invalid for the specified "// &
                       & "quadrature scheme of the specified element for this field which has "// &
-                      & TRIM(NUMBER_TO_VSTRING(QUADRATURE_SCHEME%NUMBER_OF_GAUSS,"*",ERR,ERROR))//" Gauss points."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                      & TRIM(NumberToVString(QUADRATURE_SCHEME%NUMBER_OF_GAUSS,"*",err,error))//" Gauss points."
+                    CALL FlagError(LOCAL_ERROR,err,error,*999)
                   ENDIF
                 ENDDO
               ENDIF
             ELSE
               LOCAL_ERROR="The number of xi values to return is invalid and needs to be "// &
-                & TRIM(NUMBER_TO_VSTRING(BASIS%NUMBER_OF_XI,"*",ERR,ERROR))//" for the specified basis."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(BASIS%NUMBER_OF_XI,"*",err,error))//" for the specified basis."
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             ENDIF
           ELSE
-            CALL FlagError("The specified quadrature scheme is not associated for this basis.",ERR,ERROR,*999)
+            CALL FlagError("The specified quadrature scheme is not associated for this basis.",err,error,*999)
           ENDIF
         ELSE
-          CALL FlagError("Quadrature basis is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Quadrature basis is not associated.",err,error,*999)
         ENDIF
       ELSE
-        CALL FlagError("Basis has not finished.",ERR,ERROR,*999)
+        CALL FlagError("Basis has not finished.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated.",err,error,*999)
     ENDIF
       
     EXITS("BASIS_QUADRATURE_MULTIPLE_GAUSS_XI_GET")
     RETURN
-999 ERRORSEXITS("BASIS_QUADRATURE_MULTIPLE_GAUSS_XI_GET",ERR,ERROR)
+999 ERRORSEXITS("BASIS_QUADRATURE_MULTIPLE_GAUSS_XI_GET",err,error)
     RETURN
   END SUBROUTINE BASIS_QUADRATURE_MULTIPLE_GAUSS_XI_GET
 
@@ -4599,7 +4607,7 @@ CONTAINS
   !
 
   !>Get the order of a quadrature for a basis quadrature identified by a pointer. \see OpenCMISS::Iron::cmfe_BasisQuadratureOrderGet
-  SUBROUTINE BASIS_QUADRATURE_ORDER_GET(BASIS,QUADRATURE_ORDER,ERR,ERROR,*)
+  SUBROUTINE BASIS_QUADRATURE_ORDER_GET(BASIS,QUADRATURE_ORDER,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
@@ -4608,25 +4616,25 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     
-    ENTERS("BASIS_QUADRATURE_ORDER_GET",ERR,ERROR,*999)
+    ENTERS("BASIS_QUADRATURE_ORDER_GET",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(BASIS%BASIS_FINISHED) THEN
         IF(ASSOCIATED(BASIS%QUADRATURE%BASIS)) THEN
           QUADRATURE_ORDER=BASIS%QUADRATURE%GAUSS_ORDER
         ELSE
-          CALL FlagError("Quadrature basis is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Quadrature basis is not associated.",err,error,*999)
         ENDIF
       ELSE
-        CALL FlagError("Basis has not finished.",ERR,ERROR,*999)
+        CALL FlagError("Basis has not finished.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated.",err,error,*999)
     ENDIF
       
     EXITS("BASIS_QUADRATURE_ORDER_GET")
     RETURN
-999 ERRORSEXITS("BASIS_QUADRATURE_ORDER_GET",ERR,ERROR)
+999 ERRORSEXITS("BASIS_QUADRATURE_ORDER_GET",err,error)
     RETURN
   END SUBROUTINE BASIS_QUADRATURE_ORDER_GET
 
@@ -4635,7 +4643,7 @@ CONTAINS
   !
   
   !>Sets/changes the order of a quadrature for a basis quadrature identified by a user number.
-  SUBROUTINE BASIS_QUADRATURE_ORDER_SET_NUMBER(USER_NUMBER,ORDER,ERR,ERROR,*)
+  SUBROUTINE BASIS_QUADRATURE_ORDER_SET_NUMBER(USER_NUMBER,ORDER,err,error,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the basis
@@ -4645,14 +4653,14 @@ CONTAINS
     !Local Variables
     TYPE(BASIS_TYPE), POINTER :: BASIS
     
-    ENTERS("BASIS_QUADRATURE_ORDER_SET_NUMBER",ERR,ERROR,*999)
+    ENTERS("BASIS_QUADRATURE_ORDER_SET_NUMBER",err,error,*999)
 
-    CALL BASIS_USER_NUMBER_FIND(USER_NUMBER,BASIS,ERR,ERROR,*999)
-    CALL BASIS_QUADRATURE_ORDER_SET(BASIS,ORDER,ERR,ERROR,*999)
+    CALL Basis_UserNumberFind(USER_NUMBER,BASIS,err,error,*999)
+    CALL BASIS_QUADRATURE_ORDER_SET(BASIS,ORDER,err,error,*999)
     
     EXITS("BASIS_QUADRATURE_ORDER_SET_NUMBER")
     RETURN
-999 ERRORSEXITS("BASIS_QUADRATURE_ORDER_SET_NUMBER",ERR,ERROR)
+999 ERRORSEXITS("BASIS_QUADRATURE_ORDER_SET_NUMBER",err,error)
     RETURN 1
   END SUBROUTINE BASIS_QUADRATURE_ORDER_SET_NUMBER
 
@@ -4661,7 +4669,7 @@ CONTAINS
   !
 
   !>Sets/changes the order of a quadrature for a basis quadrature identified by a pointer. \see OpenCMISS::Iron::cmfe_BasisQuadratureOrderSet
-  SUBROUTINE BASIS_QUADRATURE_ORDER_SET_PTR(BASIS,ORDER,ERR,ERROR,*)
+  SUBROUTINE BASIS_QUADRATURE_ORDER_SET_PTR(BASIS,ORDER,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
@@ -4671,35 +4679,35 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("BASIS_QUADRATURE_ORDER_SET_PTR",ERR,ERROR,*999)
+    ENTERS("BASIS_QUADRATURE_ORDER_SET_PTR",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(BASIS%BASIS_FINISHED) THEN
-        CALL FlagError("Basis has been finished",ERR,ERROR,*999)
+        CALL FlagError("Basis has been finished",err,error,*999)
       ELSE
         IF(ASSOCIATED(BASIS%QUADRATURE%BASIS)) THEN
           IF(BASIS%TYPE==BASIS_SIMPLEX_TYPE) THEN !Relax this i.e., use this to set gauss points in each direction for LHTP's???
             IF(ORDER>1.AND.ORDER<=5) THEN
               BASIS%QUADRATURE%GAUSS_ORDER=ORDER
             ELSE
-              LOCAL_ERROR="An order value of "//TRIM(NUMBER_TO_VSTRING(ORDER,"*",ERR,ERROR))// &
+              LOCAL_ERROR="An order value of "//TRIM(NumberToVString(ORDER,"*",err,error))// &
                 & " is invalid. You must specify and order between 1 and 5."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             ENDIF
           ELSE
-            CALL FlagError("Can only set the quadrature order for simplex basis types.",ERR,ERROR,*999)
+            CALL FlagError("Can only set the quadrature order for simplex basis types.",err,error,*999)
           ENDIF
         ELSE
-          CALL FlagError("Quadrature basis is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Quadrature basis is not associated.",err,error,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated.",err,error,*999)
     ENDIF
       
     EXITS("BASIS_QUADRATURE_ORDER_SET_PTR")
     RETURN
-999 ERRORSEXITS("BASIS_QUADRATURE_ORDER_SET_PTR",ERR,ERROR)
+999 ERRORSEXITS("BASIS_QUADRATURE_ORDER_SET_PTR",err,error)
     RETURN 1
   END SUBROUTINE BASIS_QUADRATURE_ORDER_SET_PTR
 
@@ -4708,7 +4716,7 @@ CONTAINS
   !
   
   !>get the quadrature type on a basis identified by a pointer. \see OpenCMISS::Iron::cmfe_BasisQuadratureTypeGet
-  SUBROUTINE BASIS_QUADRATURE_TYPE_GET(BASIS,QUADRATURE_TYPE,ERR,ERROR,*)
+  SUBROUTINE BASIS_QUADRATURE_TYPE_GET(BASIS,QUADRATURE_TYPE,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
@@ -4717,25 +4725,25 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     
-    ENTERS("BASIS_QUADRATURE_TYPE_GET",ERR,ERROR,*999)
+    ENTERS("BASIS_QUADRATURE_TYPE_GET",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(BASIS%BASIS_FINISHED) THEN
         IF(ASSOCIATED(BASIS%QUADRATURE%BASIS)) THEN
           QUADRATURE_TYPE=BASIS%QUADRATURE%TYPE
         ELSE
-          CALL FlagError("Basis quadrature basis is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Basis quadrature basis is not associated.",err,error,*999)
         ENDIF
       ELSE
-        CALL FlagError("Basis has not finished.",ERR,ERROR,*999)
+        CALL FlagError("Basis has not finished.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated.",err,error,*999)
     ENDIF
     
     EXITS("BASIS_QUADRATURE_TYPE_GET")
     RETURN
-999 ERRORSEXITS("BASIS_QUADRATURE_TYPE_GET",ERR,ERROR)
+999 ERRORSEXITS("BASIS_QUADRATURE_TYPE_GET",err,error)
     RETURN
   END SUBROUTINE BASIS_QUADRATURE_TYPE_GET
 
@@ -4744,7 +4752,7 @@ CONTAINS
   !
 
   !>Sets/changes the quadrature type for a basis quadrature identified by a user number.
-  SUBROUTINE BASIS_QUADRATURE_TYPE_SET_NUMBER(USER_NUMBER,TYPE,ERR,ERROR,*)
+  SUBROUTINE BASIS_QUADRATURE_TYPE_SET_NUMBER(USER_NUMBER,TYPE,err,error,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the basis
@@ -4754,14 +4762,14 @@ CONTAINS
     !Local Variables
     TYPE(BASIS_TYPE), POINTER :: BASIS
     
-    ENTERS("BASIS_QUADRATURE_TYPE_SET_NUMBER",ERR,ERROR,*999)
+    ENTERS("BASIS_QUADRATURE_TYPE_SET_NUMBER",err,error,*999)
 
-    CALL BASIS_USER_NUMBER_FIND(USER_NUMBER,BASIS,ERR,ERROR,*999)
-    CALL BASIS_QUADRATURE_TYPE_SET_PTR(BASIS,TYPE,ERR,ERROR,*999)
+    CALL Basis_UserNumberFind(USER_NUMBER,BASIS,err,error,*999)
+    CALL BASIS_QUADRATURE_TYPE_SET_PTR(BASIS,TYPE,err,error,*999)
     
     EXITS("BASIS_QUADRATURE_TYPE_SET_NUMBER")
     RETURN
-999 ERRORSEXITS("BASIS_QUADRATURE_TYPE_SET_NUMBER",ERR,ERROR)
+999 ERRORSEXITS("BASIS_QUADRATURE_TYPE_SET_NUMBER",err,error)
     RETURN 1
   END SUBROUTINE BASIS_QUADRATURE_TYPE_SET_NUMBER
 
@@ -4770,7 +4778,7 @@ CONTAINS
   !
   
   !>Sets/changes the quadrature type on a basis identified by a pointer.
-  SUBROUTINE BASIS_QUADRATURE_TYPE_SET_PTR(BASIS,TYPE,ERR,ERROR,*)
+  SUBROUTINE BASIS_QUADRATURE_TYPE_SET_PTR(BASIS,TYPE,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
@@ -4780,11 +4788,11 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("BASIS_QUADRATURE_TYPE_SET_PTR",ERR,ERROR,*999)
+    ENTERS("BASIS_QUADRATURE_TYPE_SET_PTR",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(BASIS%BASIS_FINISHED) THEN
-        CALL FlagError("Basis has been finished.",ERR,ERROR,*999)
+        CALL FlagError("Basis has been finished.",err,error,*999)
       ELSE
         IF(ASSOCIATED(BASIS%QUADRATURE%BASIS)) THEN
           SELECT CASE(TYPE)
@@ -4792,25 +4800,25 @@ CONTAINS
             BASIS%QUADRATURE%TYPE=BASIS_GAUSS_LEGENDRE_QUADRATURE
           CASE(BASIS_GAUSS_LAGUERRE_QUADRATURE)
             BASIS%QUADRATURE%TYPE=BASIS_GAUSS_LAGUERRE_QUADRATURE
-            CALL FlagError("Gauss Laguerre quadrature is not implemented.",ERR,ERROR,*999)
+            CALL FlagError("Gauss Laguerre quadrature is not implemented.",err,error,*999)
           CASE(BASIS_GUASS_HERMITE_QUADRATURE)
             BASIS%QUADRATURE%TYPE=BASIS_GUASS_HERMITE_QUADRATURE
-            CALL FlagError("Gauss Hermite quadrature is not implemented.",ERR,ERROR,*999)
+            CALL FlagError("Gauss Hermite quadrature is not implemented.",err,error,*999)
           CASE DEFAULT
-            LOCAL_ERROR="Quadrature type "//TRIM(NUMBER_TO_VSTRING(TYPE,"*",ERR,ERROR))//" is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            LOCAL_ERROR="Quadrature type "//TRIM(NumberToVString(TYPE,"*",err,error))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         ELSE
-          CALL FlagError("Basis quadrature basis is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Basis quadrature basis is not associated.",err,error,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated.",err,error,*999)
     ENDIF
     
     EXITS("BASIS_QUADRATURE_TYPE_SET_PTR")
     RETURN
-999 ERRORSEXITS("BASIS_QUADRATURE_TYPE_SET_PTR",ERR,ERROR)
+999 ERRORSEXITS("BASIS_QUADRATURE_TYPE_SET_PTR",err,error)
     RETURN 1
   END SUBROUTINE BASIS_QUADRATURE_TYPE_SET_PTR
 
@@ -4819,7 +4827,7 @@ CONTAINS
   !
 
   !>Sets/changes the local face Gauss evaluation flag on a basis
-  SUBROUTINE Basis_QuadratureLocalFaceGaussEvaluateSet(BASIS,FACE_GAUSS_EVALUATE,ERR,ERROR,*)
+  SUBROUTINE Basis_QuadratureLocalFaceGaussEvaluateSet(BASIS,FACE_GAUSS_EVALUATE,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
@@ -4827,21 +4835,21 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
-    ENTERS("Basis_QuadratureLocalFaceGaussEvaluateSet",ERR,ERROR,*999)
+    ENTERS("Basis_QuadratureLocalFaceGaussEvaluateSet",err,error,*999)
     
     IF(ASSOCIATED(BASIS)) THEN
       IF(BASIS%BASIS_FINISHED) THEN
-        CALL FlagError("Basis has been finished.",ERR,ERROR,*999)
+        CALL FlagError("Basis has been finished.",err,error,*999)
       ELSE
         BASIS%QUADRATURE%EVALUATE_FACE_GAUSS=FACE_GAUSS_EVALUATE
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated.",err,error,*999)
     ENDIF
     
     EXITS("Basis_QuadratureLocalFaceGaussEvaluateSet")
     RETURN
-999 ERRORSEXITS("Basis_QuadratureLocalFaceGaussEvaluateSet",ERR,ERROR)
+999 ERRORSEXITS("Basis_QuadratureLocalFaceGaussEvaluateSet",err,error)
     RETURN 1
 
   END SUBROUTINE Basis_QuadratureLocalFaceGaussEvaluateSet
@@ -4852,7 +4860,7 @@ CONTAINS
   
   !>Creates and initialises a simplex basis that has already been allocated BASIS_CREATE_START
   !>\see BASIS_ROUTINES::BASIS_CREATE_START
-  SUBROUTINE BASIS_SIMPLEX_BASIS_CREATE(BASIS,ERR,ERROR,*)
+  SUBROUTINE Basis_SimplexBasisCreate(BASIS,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
@@ -4863,17 +4871,17 @@ CONTAINS
     INTEGER(INTG), ALLOCATABLE :: NODES_IN_FACE(:)
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("BASIS_SIMPLEX_BASIS_CREATE",ERR,ERROR,*999)
+    ENTERS("Basis_SimplexBasisCreate",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(BASIS%TYPE==BASIS_SIMPLEX_TYPE) THEN
         BASIS%NUMBER_OF_XI_COORDINATES=BASIS%NUMBER_OF_XI+1 !Simplex bases have an additional area coordinate
         ALLOCATE(BASIS%INTERPOLATION_TYPE(BASIS%NUMBER_OF_XI_COORDINATES),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate INTERPOLATION_TYPE array.",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate INTERPOLATION_TYPE array.",err,error,*999)
         ALLOCATE(BASIS%INTERPOLATION_ORDER(BASIS%NUMBER_OF_XI_COORDINATES),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate INTERPOLATION_ORDER array.",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate INTERPOLATION_ORDER array.",err,error,*999)
         ALLOCATE(BASIS%NUMBER_OF_NODES_XIC(BASIS%NUMBER_OF_XI_COORDINATES),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate NUMBER_OF_NODES_XIC array.",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate NUMBER_OF_NODES_XIC array.",err,error,*999)
         BASIS%DEGENERATE=.FALSE.
         BASIS%NUMBER_OF_COLLAPSED_XI=0
         SELECT CASE(BASIS%NUMBER_OF_XI)
@@ -4908,7 +4916,7 @@ CONTAINS
             MAX_NUM_NODES=4
             BASIS%NUMBER_OF_NODES=4
           CASE DEFAULT 
-            CALL FlagError("Invalid interpolation type.",ERR,ERROR,*999)
+            CALL FlagError("Invalid interpolation type.",err,error,*999)
           END SELECT
         CASE(2)
           BASIS%NUMBER_OF_PARTIAL_DERIVATIVES=6
@@ -4950,7 +4958,7 @@ CONTAINS
             MAX_NUM_NODES=4
             BASIS%NUMBER_OF_NODES=10
           CASE DEFAULT 
-            CALL FlagError("Invalid interpolation type.",ERR,ERROR,*999)
+            CALL FlagError("Invalid interpolation type.",err,error,*999)
           END SELECT
         CASE(3)
           BASIS%NUMBER_OF_PARTIAL_DERIVATIVES=11
@@ -5001,18 +5009,18 @@ CONTAINS
             MAX_NUM_NODES=4
             BASIS%NUMBER_OF_NODES=20
           CASE DEFAULT 
-            CALL FlagError("Invalid interpolation type.",ERR,ERROR,*999)
+            CALL FlagError("Invalid interpolation type.",err,error,*999)
           END SELECT
         CASE DEFAULT
-          CALL FlagError("Invalid number of xi directions.",ERR,ERROR,*999)
+          CALL FlagError("Invalid number of xi directions.",err,error,*999)
         END SELECT
         
         ALLOCATE(BASIS%NODE_AT_COLLAPSE(BASIS%NUMBER_OF_NODES),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate node at collapse.",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate node at collapse.",err,error,*999)
         BASIS%NODE_AT_COLLAPSE=.FALSE.
         
         ALLOCATE(BASIS%NODE_POSITION_INDEX(BASIS%NUMBER_OF_NODES,BASIS%NUMBER_OF_XI_COORDINATES),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate NODE_POSITION_INDEX.",ERR,ERROR,*999) 
+        IF(ERR/=0) CALL FlagError("Could not allocate NODE_POSITION_INDEX.",err,error,*999) 
         SELECT CASE(BASIS%NUMBER_OF_XI_COORDINATES)
         CASE(2)
           ALLOCATE(BASIS%NODE_POSITION_INDEX_INV(MAX_NUM_NODES,MAX_NUM_NODES,1,1),STAT=ERR)
@@ -5021,9 +5029,9 @@ CONTAINS
         CASE(4)
           ALLOCATE(BASIS%NODE_POSITION_INDEX_INV(MAX_NUM_NODES,MAX_NUM_NODES,MAX_NUM_NODES,MAX_NUM_NODES),STAT=ERR)
         CASE DEFAULT
-          CALL FlagError("Invalid number of coordinates.",ERR,ERROR,*999)
+          CALL FlagError("Invalid number of coordinates.",err,error,*999)
         END SELECT
-        IF(ERR/=0) CALL FlagError("Could not allocate NODE_POSITION_INDEX_INV.",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate NODE_POSITION_INDEX_INV.",err,error,*999)
         BASIS%NODE_POSITION_INDEX_INV=0
         
         !Determine the node position index and it's inverse
@@ -5070,7 +5078,7 @@ CONTAINS
             BASIS%NODE_POSITION_INDEX(4,2)=4
             BASIS%NODE_POSITION_INDEX_INV(1,4,1,1)=4
           CASE DEFAULT
-            CALL FlagError("Invalid interpolation order.",ERR,ERROR,*999)
+            CALL FlagError("Invalid interpolation order.",err,error,*999)
           END SELECT
         CASE(2)
           SELECT CASE(BASIS%INTERPOLATION_ORDER(1))
@@ -5173,7 +5181,7 @@ CONTAINS
             BASIS%NODE_POSITION_INDEX(10,3)=2
             BASIS%NODE_POSITION_INDEX_INV(2,2,2,1)=10
           CASE DEFAULT
-            CALL FlagError("Invalid interpolation order",ERR,ERROR,*999)
+            CALL FlagError("Invalid interpolation order",err,error,*999)
           END SELECT
         CASE(3)
           SELECT CASE(BASIS%INTERPOLATION_ORDER(1))
@@ -5204,7 +5212,7 @@ CONTAINS
             BASIS%NODE_POSITION_INDEX_INV(1,1,1,2)=4
 
             ALLOCATE(NODES_IN_FACE(12),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate NODES_IN_FACE.",ERR,ERROR,*999) 
+            IF(ERR/=0) CALL FlagError("Could not allocate NODES_IN_FACE.",err,error,*999) 
             NODES_IN_FACE(:)=[2,3,4,1,3,4,1,2,4,1,2,3] !12 Nodes
 
           CASE(BASIS_QUADRATIC_INTERPOLATION_ORDER)
@@ -5270,7 +5278,7 @@ CONTAINS
             BASIS%NODE_POSITION_INDEX_INV(1,2,1,2)=10
 
             ALLOCATE(NODES_IN_FACE(24),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate NODES_IN_FACE.",ERR,ERROR,*999) 
+            IF(ERR/=0) CALL FlagError("Could not allocate NODES_IN_FACE.",err,error,*999) 
             NODES_IN_FACE(:)=[2,3,4,8,9,10,1,3,4,6,9,7,1,2,4,5,10,7,1,2,3,5,8,6] !24 Nodes
 
           CASE(BASIS_CUBIC_INTERPOLATION_ORDER)
@@ -5396,34 +5404,34 @@ CONTAINS
             BASIS%NODE_POSITION_INDEX_INV(1,2,2,2)=20
 
             ALLOCATE(NODES_IN_FACE(40),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate NODES_IN_FACE.",ERR,ERROR,*999) 
+            IF(ERR/=0) CALL FlagError("Could not allocate NODES_IN_FACE.",err,error,*999) 
             NODES_IN_FACE(:)=[2,3,4,11,12,13,14,16,15,20,1,3,4,7,8,13,14,10,9,&
                                &19,1,2,4,5,6,15,16,10,9,18,1,2,3,5,6,14,12,8,7,17] !40 nodes
 
           CASE DEFAULT
-            CALL FlagError("Invalid interpolation order.",ERR,ERROR,*999)
+            CALL FlagError("Invalid interpolation order.",err,error,*999)
           END SELECT
         CASE DEFAULT
-          CALL FlagError("Invalid number of xi directions.",ERR,ERROR,*999)
+          CALL FlagError("Invalid number of xi directions.",err,error,*999)
         END SELECT
         !Calculate the maximum number of derivatives (1 for simplex bases) and the number of element parameters
         BASIS%MAXIMUM_NUMBER_OF_DERIVATIVES=1
         BASIS%NUMBER_OF_ELEMENT_PARAMETERS=BASIS%NUMBER_OF_NODES
         !Now set up the number of derivatives and derivative order index
         ALLOCATE(BASIS%NUMBER_OF_DERIVATIVES(BASIS%NUMBER_OF_NODES),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate NUMBER_OF_DERIVATIVES.",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate NUMBER_OF_DERIVATIVES.",err,error,*999)
         ALLOCATE(BASIS%DERIVATIVE_ORDER_INDEX(BASIS%MAXIMUM_NUMBER_OF_DERIVATIVES,BASIS%NUMBER_OF_NODES,BASIS%NUMBER_OF_XI), &
           & STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate DERIVATIVE_ORDER_INDEX.",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate DERIVATIVE_ORDER_INDEX.",err,error,*999)
         ALLOCATE(BASIS%DERIVATIVE_ORDER_INDEX_INV(FIRST_PART_DERIV,FIRST_PART_DERIV,FIRST_PART_DERIV,BASIS%NUMBER_OF_NODES), &
           & STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate DERIVATIVE_ORDER_INDEX_INV.",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate DERIVATIVE_ORDER_INDEX_INV.",err,error,*999)
         ALLOCATE(BASIS%PARTIAL_DERIVATIVE_INDEX(BASIS%MAXIMUM_NUMBER_OF_DERIVATIVES,BASIS%NUMBER_OF_NODES),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate PARTIAL_DERIVATIVE_INDEX.",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate PARTIAL_DERIVATIVE_INDEX.",err,error,*999)
         ALLOCATE(BASIS%ELEMENT_PARAMETER_INDEX(BASIS%MAXIMUM_NUMBER_OF_DERIVATIVES,BASIS%NUMBER_OF_NODES),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate ELEMENT_PARAMETER_INDEX.",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate ELEMENT_PARAMETER_INDEX.",err,error,*999)
         ALLOCATE(BASIS%ELEMENT_PARAMETER_INDEX_INV(2,BASIS%NUMBER_OF_ELEMENT_PARAMETERS),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate ELEMENT_PARAMETER_INDEX_INV.",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate ELEMENT_PARAMETER_INDEX_INV.",err,error,*999)
         !Set the derivative order index and its inverse, the element parameter index and the partial derivative index.
         ns=0
         BASIS%DERIVATIVE_ORDER_INDEX_INV=0
@@ -5445,14 +5453,14 @@ CONTAINS
         CASE(1)
           BASIS%NUMBER_OF_LOCAL_LINES=1
           ALLOCATE(BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate number of nodes in local line.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate number of nodes in local line.",err,error,*999)
           ALLOCATE(BASIS%localLineXiDirection(BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate local line xi direction.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate local line xi direction.",err,error,*999)
           BASIS%localLineXiDirection(1)=1
           ALLOCATE(BASIS%NODE_NUMBERS_IN_LOCAL_LINE(BASIS%NUMBER_OF_NODES_XIC(1),BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate node numbers in local line.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate node numbers in local line.",err,error,*999)
           ALLOCATE(BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_LINE(BASIS%NUMBER_OF_NODES_XIC(1),BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate derivative numbers in local line.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate derivative numbers in local line.",err,error,*999)
           BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_LINE=NO_PART_DERIV
           ALLOCATE(basis%ELEMENT_PARAMETERS_IN_LOCAL_LINE(basis%NUMBER_OF_NODES_XIC(1)**2,BASIS%NUMBER_OF_LOCAL_LINES) &
             & ,STAT=err)
@@ -5479,31 +5487,31 @@ CONTAINS
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,1)=3
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(4,1)=4
           CASE DEFAULT 
-            LOCAL_ERROR="Interpolation order "//TRIM(NUMBER_TO_VSTRING(BASIS%INTERPOLATION_ORDER(1),"*", &
-              & ERR,ERROR))//" is invalid for a simplex basis type."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            LOCAL_ERROR="Interpolation order "//TRIM(NumberToVString(BASIS%INTERPOLATION_ORDER(1),"*", &
+              & err,error))//" is invalid for a simplex basis type."
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         CASE(2)
           !Allocate and calculate the lines
           !Simplex hence three local lines
           BASIS%NUMBER_OF_LOCAL_LINES=3
           ALLOCATE(BASIS%localLineXiDirection(BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate local line xi direction",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate local line xi direction",err,error,*999)
           ALLOCATE(BASIS%localLineXiNormals(1,BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate local line xi normals.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate local line xi normals.",err,error,*999)
           ALLOCATE(BASIS%xiNormalsLocalLine(-3:3,1),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate xi normals local line.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate xi normals local line.",err,error,*999)
           basis%xiNormalsLocalLine=0
           ALLOCATE(BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate number of nodes in local line.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate number of nodes in local line.",err,error,*999)
           ALLOCATE(BASIS%NODE_NUMBERS_IN_LOCAL_LINE(MAXVAL(BASIS%NUMBER_OF_NODES_XIC),BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate node numbers in local line.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate node numbers in local line.",err,error,*999)
           ALLOCATE(BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_LINE(MAXVAL(BASIS%NUMBER_OF_NODES_XIC),BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate derivative numbers in local line.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate derivative numbers in local line.",err,error,*999)
           BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_LINE=NO_PART_DERIV
           ALLOCATE(BASIS%ELEMENT_PARAMETERS_IN_LOCAL_LINE(MAXVAL(BASIS%NUMBER_OF_NODES_XIC)**2,BASIS%NUMBER_OF_LOCAL_LINES) &
             & ,STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate element parameters in local line.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate element parameters in local line.",err,error,*999)
           BASIS%ELEMENT_PARAMETERS_IN_LOCAL_LINE=1
           !Set the line values
           SELECT CASE(BASIS%INTERPOLATION_ORDER(1))
@@ -5556,9 +5564,9 @@ CONTAINS
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,3)=7
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(4,3)=3
           CASE DEFAULT 
-            LOCAL_ERROR="Interpolation order "//TRIM(NUMBER_TO_VSTRING(BASIS%INTERPOLATION_ORDER(1),"*",ERR,ERROR))// &
+            LOCAL_ERROR="Interpolation order "//TRIM(NumberToVString(BASIS%INTERPOLATION_ORDER(1),"*",err,error))// &
               & " is invalid for a simplex basis type."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
           !Set line directions and normals
           !Line 1
@@ -5578,59 +5586,59 @@ CONTAINS
           BASIS%NUMBER_OF_LOCAL_FACES=4
 
           ALLOCATE(BASIS%localLineXiDirection(BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate local line xi direction.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate local line xi direction.",err,error,*999)
           ALLOCATE(BASIS%localLineXiNormals(2,BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate local line xi normals.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate local line xi normals.",err,error,*999)
           ALLOCATE(BASIS%xiNormalsLocalLine(-4:4,-4:4),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate xi normals local line.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate xi normals local line.",err,error,*999)
           basis%xiNormalsLocalLine=0
 
           ALLOCATE(BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate number of nodes in local line.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate number of nodes in local line.",err,error,*999)
           ALLOCATE(BASIS%NUMBER_OF_NODES_IN_LOCAL_FACE(BASIS%NUMBER_OF_LOCAL_FACES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate number of nodes in local face.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate number of nodes in local face.",err,error,*999)
 
           ALLOCATE(BASIS%NODE_NUMBERS_IN_LOCAL_LINE(MAXVAL(BASIS%NUMBER_OF_NODES_XIC),BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate node numbers in local line.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate node numbers in local line.",err,error,*999)
           ALLOCATE(BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_LINE(MAXVAL(BASIS%NUMBER_OF_NODES_XIC),BASIS%NUMBER_OF_LOCAL_LINES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate derivative numbers in local line.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate derivative numbers in local line.",err,error,*999)
           BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_LINE=NO_PART_DERIV
           ALLOCATE(BASIS%ELEMENT_PARAMETERS_IN_LOCAL_LINE(MAXVAL(BASIS%NUMBER_OF_NODES_XIC)**2,BASIS%NUMBER_OF_LOCAL_LINES), &
             & STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate element parameters in local line.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate element parameters in local line.",err,error,*999)
           BASIS%ELEMENT_PARAMETERS_IN_LOCAL_LINE=1
 
           ALLOCATE(BASIS%localFaceXiDirections(3,BASIS%NUMBER_OF_LOCAL_FACES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate local face xi directions.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate local face xi directions.",err,error,*999)
           ALLOCATE(BASIS%localFaceXiNormal(BASIS%NUMBER_OF_LOCAL_FACES),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate local face xi normal.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate local face xi normal.",err,error,*999)
           ALLOCATE(BASIS%xiNormalLocalFace(-4:4),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate xi normal local face.",ERR,ERROR,*999)
+          IF(ERR/=0) CALL FlagError("Could not allocate xi normal local face.",err,error,*999)
           basis%xiNormalLocalFace=0
           
           SELECT CASE(BASIS%INTERPOLATION_ORDER(1))
           CASE(BASIS_LINEAR_INTERPOLATION_ORDER)
             ALLOCATE(BASIS%NODE_NUMBERS_IN_LOCAL_FACE(3,BASIS%NUMBER_OF_LOCAL_FACES),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate node numbers in local face.",ERR,ERROR,*999)
+            IF(ERR/=0) CALL FlagError("Could not allocate node numbers in local face.",err,error,*999)
             !\todo Number of local face node derivatives currenlty set to 1 (calculation of BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_FACE for simplex elements has not been implemented yet)
             ALLOCATE(BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_FACE(0:1,3,BASIS%NUMBER_OF_LOCAL_FACES),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate derivative numbers in local face.",ERR,ERROR,*999)
+            IF(ERR/=0) CALL FlagError("Could not allocate derivative numbers in local face.",err,error,*999)
           CASE(BASIS_QUADRATIC_INTERPOLATION_ORDER)
             ALLOCATE(BASIS%NODE_NUMBERS_IN_LOCAL_FACE(6,BASIS%NUMBER_OF_LOCAL_FACES),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate node numbers in local face.",ERR,ERROR,*999)
+            IF(ERR/=0) CALL FlagError("Could not allocate node numbers in local face.",err,error,*999)
             !\todo Number of local face node derivatives currenlty set to 1 (calculation of BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_FACE for simplex elements has not been implemented yet)
             ALLOCATE(BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_FACE(0:1,6,BASIS%NUMBER_OF_LOCAL_FACES),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate derivative numbers in local face.",ERR,ERROR,*999)
+            IF(ERR/=0) CALL FlagError("Could not allocate derivative numbers in local face.",err,error,*999)
           CASE(BASIS_CUBIC_INTERPOLATION_ORDER)
             ALLOCATE(BASIS%NODE_NUMBERS_IN_LOCAL_FACE(10,BASIS%NUMBER_OF_LOCAL_FACES),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate node numbers in local face.",ERR,ERROR,*999)
+            IF(ERR/=0) CALL FlagError("Could not allocate node numbers in local face.",err,error,*999)
             !\todo Number of local face node derivatives currenlty set to 1 (calculation of BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_FACE for simplex elements has not been implemented yet)
             ALLOCATE(BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_FACE(0:1,10,BASIS%NUMBER_OF_LOCAL_FACES),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate derivative numbers in local face.",ERR,ERROR,*999)
+            IF(ERR/=0) CALL FlagError("Could not allocate derivative numbers in local face.",err,error,*999)
           CASE DEFAULT
-            LOCAL_ERROR="Interpolation order "//TRIM(NUMBER_TO_VSTRING(BASIS%INTERPOLATION_ORDER(1),"*",ERR,ERROR))// &
+            LOCAL_ERROR="Interpolation order "//TRIM(NumberToVString(BASIS%INTERPOLATION_ORDER(1),"*",err,error))// &
               & " is invalid for a simplex basis type."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
           BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_FACE(1,:,:)=NO_PART_DERIV
           BASIS%DERIVATIVE_NUMBERS_IN_LOCAL_FACE(0,:,:)=1
@@ -5831,9 +5839,9 @@ CONTAINS
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(9,4)=5
             BASIS%NODE_NUMBERS_IN_LOCAL_FACE(10,4)=17
           CASE DEFAULT
-            LOCAL_ERROR="Interpolation order "//TRIM(NUMBER_TO_VSTRING(BASIS%INTERPOLATION_ORDER(1),"*",ERR,ERROR))// &
+            LOCAL_ERROR="Interpolation order "//TRIM(NumberToVString(BASIS%INTERPOLATION_ORDER(1),"*",err,error))// &
               & " is invalid for a simplex basis type."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
           !Set line and face directions and normals
           !Line 1
@@ -5897,23 +5905,24 @@ CONTAINS
           basis%localFaceXiNormal(4)=4
           basis%xiNormalLocalFace(4)=4          
         CASE DEFAULT
-          CALL FlagError("Invalid number of xi directions.",ERR,ERROR,*999)
+          CALL FlagError("Invalid number of xi directions.",err,error,*999)
         END SELECT
         
-        CALL BASIS_QUADRATURE_CREATE(BASIS,ERR,ERROR,*999)
+        CALL BASIS_QUADRATURE_CREATE(BASIS,err,error,*999)
         
       ELSE
-        CALL FlagError("Basis is not a simplex basis.",ERR,ERROR,*999)
+        CALL FlagError("Basis is not a simplex basis.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated.",err,error,*999)
     ENDIF
        
-    EXITS("BASIS_SIMPLEX_BASIS_CREATE")
+    EXITS("Basis_SimplexBasisCreate")
     RETURN
-999 ERRORSEXITS("BASIS_SIMPLEX_BASIS_CREATE",ERR,ERROR)
+999 ERRORSEXITS("Basis_SimplexBasisCreate",err,error)
     RETURN 1
-  END SUBROUTINE BASIS_SIMPLEX_BASIS_CREATE
+    
+  END SUBROUTINE Basis_SimplexBasisCreate
 
   !
   !================================================================================================================================
@@ -5921,115 +5930,113 @@ CONTAINS
 
   !>Creates and initialises a simplex basis family that has already been allocated by BASIS_CREATE_START.
   !> \see BASIS_ROUTINES::BASIS_SIMPLEX_BASIS_CREATE
-  SUBROUTINE BASIS_SIMPLEX_FAMILY_CREATE(BASIS,ERR,ERROR,*)
+  SUBROUTINE Basis_SimplexFamilyCreate(basis,err,error,*)
 
     !Argument variables
-    TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(BASIS_TYPE), POINTER :: basis !<A pointer to the basis
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR,ni,ni2,FACE_XI(2),FACE_XI2(2)
-    LOGICAL :: LINE_BASIS_DONE,FACE_BASIS_DONE
-    TYPE(BASIS_TYPE), POINTER :: NEW_SUB_BASIS
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr,faceXi(2),faceXi2(2),localFaceIdx,localLineIdx,xiIdx,xiIdx2
+    LOGICAL :: lineBasisDone,faceBasisDone
+    TYPE(BASIS_TYPE), POINTER :: newSubBasis
+    TYPE(VARYING_STRING) :: dummyError
 
-    NULLIFY(NEW_SUB_BASIS)
+    NULLIFY(newSubBasis)
 
-    ENTERS("BASIS_SIMPLEX_FAMILY_CREATE",ERR,ERROR,*999)
+    ENTERS("Basis_SimplexFamilyCreate",err,error,*999)
 
-    IF(ASSOCIATED(BASIS)) THEN
-      !Create the main (parent) basis
-      CALL BASIS_SIMPLEX_BASIS_CREATE(BASIS,ERR,ERROR,*999)
-      IF(BASIS%NUMBER_OF_XI>1) THEN
-        !Create the line bases as sub-basis types
-!        ALLOCATE(BASIS%LINE_BASES(BASIS%NUMBER_OF_XI),STAT=ERR)
-        IF (BASIS%NUMBER_OF_XI .EQ. 2) THEN
-          ALLOCATE(BASIS%LINE_BASES(BASIS%NUMBER_OF_XI+1),STAT=ERR)
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    
+    !Create the main (parent) basis
+    CALL Basis_SimplexBasisCreate(basis,err,error,*999)
+    
+    IF(basis%NUMBER_OF_XI>1) THEN
+      !Create the line bases as sub-basis types
+      ALLOCATE(basis%lineBases(basis%NUMBER_OF_XI),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate basis line bases.",err,error,*999)
+      ALLOCATE(basis%localLineBasis(basis%NUMBER_OF_LOCAL_LINES),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate local line basis.",err,error,*999)
+      DO xiIdx=1,basis%NUMBER_OF_XI
+        lineBasisDone=.FALSE.
+        NULLIFY(newSubBasis)
+        DO xiIdx2=1,xiIdx-1
+          IF(basis%INTERPOLATION_XI(xiIdx2)==basis%INTERPOLATION_XI(xiIdx).AND. &
+            basis%QUADRATURE%NUMBER_OF_GAUSS_XI(xiIdx2)==basis%QUADRATURE%NUMBER_OF_GAUSS_XI(xiIdx)) THEN
+            lineBasisDone=.TRUE.
+            EXIT
+          ENDIF
+        ENDDO !xiIdx2
+        IF(lineBasisDone) THEN
+          basis%lineBases(xiIdx)%ptr=>basis%lineBases(xiIdx2)%ptr
         ELSE
-          ALLOCATE(BASIS%LINE_BASES(BASIS%NUMBER_OF_XI),STAT=ERR)
+          !Create the new sub-basis
+          CALL Basis_SubBasisCreate(basis,1,[xiIdx],newSubBasis,err,error,*999)
+          !Fill in the basis information
+          CALL Basis_SimplexBasisCreate(newSubBasis,err,error,*999)
+          basis%lineBases(xiIdx)%ptr=>newSubBasis
         ENDIF
- 
-        IF(ERR/=0) CALL FlagError("Could not allocate basis line bases.",ERR,ERROR,*999)
-        DO ni=1,BASIS%NUMBER_OF_XI
-          LINE_BASIS_DONE=.FALSE.
-          NULLIFY(NEW_SUB_BASIS)
-          DO ni2=1,ni-1
-            IF(BASIS%INTERPOLATION_XI(ni2)==BASIS%INTERPOLATION_XI(ni).AND. &
-              BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni2)==BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni)) THEN
-              LINE_BASIS_DONE=.TRUE.
+      ENDDO !localLineIdx
+      DO localLineIdx=1,basis%NUMBER_OF_LOCAL_LINES
+!!\TODO Until we allow for tensor products of simplex bases each line basis will be the same and equal to the first one.
+        basis%localLineBasis(localLineIdx)%ptr=>basis%lineBases(1)%ptr       
+      ENDDO !localLineIdx
+      IF(basis%NUMBER_OF_XI>2) THEN
+        !Create the face bases as sub-basis types
+        ALLOCATE(basis%faceBases(basis%NUMBER_OF_XI),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate basis face bases.",err,error,*999)
+        ALLOCATE(basis%localFaceBasis(basis%NUMBER_OF_LOCAL_FACES),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate local face basis.",err,error,*999)
+        DO xiIdx=1,basis%NUMBER_OF_XI
+          !Determine the face xi directions that lie in this xi direction
+          faceXi(1)=OTHER_XI_DIRECTIONS3(xiIdx,2,1)
+          faceXi(2)=OTHER_XI_DIRECTIONS3(xiIdx,3,1)
+          faceBasisDone=.FALSE.
+          NULLIFY(newSubBasis)
+          DO xiIdx2=1,xiIdx-1
+            !Determine the face xi directions that lie in this xi direction
+            faceXi2(1)=OTHER_XI_DIRECTIONS3(xiIdx2,2,1)
+            faceXi2(2)=OTHER_XI_DIRECTIONS3(xiIdx2,3,1)
+            IF(basis%INTERPOLATION_XI(faceXi2(1))==basis%INTERPOLATION_XI(faceXi(1)).AND. &
+              & basis%INTERPOLATION_XI(faceXi2(2))==basis%INTERPOLATION_XI(faceXi(2)).AND. &
+              & basis%QUADRATURE%NUMBER_OF_GAUSS_XI(faceXi2(1))==basis%QUADRATURE%NUMBER_OF_GAUSS_XI(faceXi(1)).AND. &
+              & basis%QUADRATURE%NUMBER_OF_GAUSS_XI(faceXi2(2))==basis%QUADRATURE%NUMBER_OF_GAUSS_XI(faceXi(2))) THEN
+              faceBasisDone=.TRUE.
               EXIT
             ENDIF
-          ENDDO !ni2
-          IF(LINE_BASIS_DONE) THEN
-            BASIS%LINE_BASES(ni)%PTR=>BASIS%LINE_BASES(ni2)%PTR
+          ENDDO !xiIdx2
+          IF(faceBasisDone) THEN
+            basis%faceBases(xiIdx)%ptr=>basis%faceBases(xiIdx2)%ptr
           ELSE
             !Create the new sub-basis
-            CALL BASIS_SUB_BASIS_CREATE(BASIS,1,[ni],NEW_SUB_BASIS,ERR,ERROR,*999)
+            CALL Basis_SubBasisCreate(basis,2,[faceXi(1),faceXi(2)],newSubBasis,err,error,*999)
             !Fill in the basis information
-            CALL BASIS_SIMPLEX_BASIS_CREATE(NEW_SUB_BASIS,ERR,ERROR,*999)
-            BASIS%LINE_BASES(ni)%PTR=>NEW_SUB_BASIS
+            CALL Basis_SimplexBasisCreate(newSubBasis,err,error,*999)
+            newSubBasis%lineBases(1)%ptr=>basis%lineBases(faceXi(1))%ptr
+            newSubBasis%lineBases(2)%ptr=>basis%lineBases(faceXi(2))%ptr
+            basis%faceBases(xiIdx)%ptr=>newSubBasis
+            ALLOCATE(newSubBasis%localLineBasis(newSubBasis%NUMBER_OF_LOCAL_LINES),STAT=err)
+            IF(err/=0) CALL FlagError("Could not allocate new sub basis local line basis.",err,error,*999)
+             DO localLineIdx=1,newSubBasis%NUMBER_OF_LOCAL_LINES
+              newSubBasis%localLineBasis(localLineIdx)%ptr=>newSubBasis%lineBases(1)%ptr
+            ENDDO !localFaceIdx
           ENDIF
-        ENDDO !ni
-
-        IF (BASIS%NUMBER_OF_XI .EQ. 2) THEN
-          BASIS%LINE_BASES(BASIS%NUMBER_OF_XI+1)%PTR=>BASIS%LINE_BASES(BASIS%NUMBER_OF_XI)%PTR
-        ENDIF
-        
-        IF(BASIS%NUMBER_OF_XI>2) THEN
-          !Set up face basis functions
-          ALLOCATE(BASIS%FACE_BASES(BASIS%NUMBER_OF_XI),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate basis face bases.",ERR,ERROR,*999)
-          DO ni=1,BASIS%NUMBER_OF_XI
-            !Determine the face xi directions that lie in this xi direction
-            FACE_XI(1)=OTHER_XI_DIRECTIONS3(ni,2,1)
-            FACE_XI(2)=OTHER_XI_DIRECTIONS3(ni,3,1)
-            FACE_BASIS_DONE=.FALSE.
-            NULLIFY(NEW_SUB_BASIS)
-            DO ni2=1,ni-1
-              FACE_XI2(1)=OTHER_XI_DIRECTIONS3(ni2,2,1)
-              FACE_XI2(2)=OTHER_XI_DIRECTIONS3(ni2,3,1)
-              IF(BASIS%INTERPOLATION_XI(FACE_XI2(1))==BASIS%INTERPOLATION_XI(FACE_XI(1)).AND. &
-                & BASIS%INTERPOLATION_XI(FACE_XI2(2))==BASIS%INTERPOLATION_XI(FACE_XI(2)).AND. &
-                & BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(FACE_XI2(1))==BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(FACE_XI(1)).AND. &
-                & BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(FACE_XI2(2))==BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(FACE_XI(1))) THEN
-                FACE_BASIS_DONE=.TRUE.
-                EXIT
-              ENDIF
-            ENDDO !ni2
-            IF(FACE_BASIS_DONE) THEN
-              BASIS%FACE_BASES(ni)%PTR=>BASIS%FACE_BASES(ni2)%PTR
-            ELSE
-              !Create the new sub-basis
-              CALL BASIS_SUB_BASIS_CREATE(BASIS,2,[FACE_XI(1),FACE_XI(2)],NEW_SUB_BASIS,ERR,ERROR,*999)
-              !Fill in the basis information
-              CALL BASIS_SIMPLEX_BASIS_CREATE(NEW_SUB_BASIS,ERR,ERROR,*999)
-              NEW_SUB_BASIS%LINE_BASES(1)%PTR=>BASIS%LINE_BASES(FACE_XI(1))%PTR
-              NEW_SUB_BASIS%LINE_BASES(2)%PTR=>BASIS%LINE_BASES(FACE_XI(2))%PTR
-              BASIS%FACE_BASES(ni)%PTR=>NEW_SUB_BASIS
-            ENDIF            
-          ENDDO !ni
-        ELSE
-          ALLOCATE(BASIS%FACE_BASES(1),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate basis face bases.",ERR,ERROR,*999)
-          BASIS%FACE_BASES(1)%PTR=>BASIS
-        ENDIF
-      ELSE
-        ALLOCATE(BASIS%LINE_BASES(1),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate basis line bases.",ERR,ERROR,*999)
-        BASIS%LINE_BASES(1)%PTR=>BASIS
-        NULLIFY(BASIS%FACE_BASES)
+        ENDDO !xiIdx
+        DO localFaceIdx=1,basis%NUMBER_OF_LOCAL_FACES
+!!\TODO Until we allow for tensor products of simplex bases each face basis will be the same and equal to the first one.
+          basis%localFaceBasis(localFaceIdx)%ptr=>basis%faceBases(1)%ptr
+        ENDDO !localFaceIdx
       ENDIF
-    ELSE
-      CALL FlagError("Basis is not associated.",ERR,ERROR,*999)
     ENDIF
     
-    EXITS("BASIS_SIMPLEX_FAMILY_CREATE")
+    EXITS("Basis_SimplexFamilyCreate")
     RETURN
-999 IF(ASSOCIATED(NEW_SUB_BASIS)) CALL BASIS_FAMILY_DESTROY(NEW_SUB_BASIS%USER_NUMBER,NEW_SUB_BASIS%FAMILY_NUMBER, &
-      & DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("BASIS_SIMPLEX_FAMILY_CREATE",ERR,ERROR)
+999 IF(ASSOCIATED(newSubBasis)) CALL Basis_FamilyDestroy(newSubBasis%USER_NUMBER,newSubBasis%FAMILY_NUMBER, &
+      & dummyErr,dummyError,*998)
+998 ERRORSEXITS("Basis_SimplexFamilyCreate",err,error)
     RETURN 1
-  END SUBROUTINE BASIS_SIMPLEX_FAMILY_CREATE
+    
+  END SUBROUTINE Basis_SimplexFamilyCreate
 
   !
   !================================================================================================================================
@@ -6081,7 +6088,7 @@ CONTAINS
   !>\frac{\partial^3\mathbf{N}}{\partial L_3 \partial L_4^2}+\frac{\partial^3\mathbf{N}}{\partial L_1 \partial 2 \partial L_4}+
   !>\frac{\partial^3\mathbf{N}}{\partial L_1 \partial L_3 \partial L_4}+\frac{\partial^3\mathbf{N}}{\partial L_2 \partial L_3
   !>\partial L_4}-\frac{\partial^3\mathbf{N}}{\partial L_1 \partial L_2 \partial L_3}\f$.
-  FUNCTION BASIS_SIMPLEX_BASIS_EVALUATE(BASIS,NODE_NUMBER,PARTIAL_DERIV_INDEX,XL,ERR,ERROR)
+  FUNCTION BASIS_SIMPLEX_BASIS_EVALUATE(BASIS,NODE_NUMBER,PARTIAL_DERIV_INDEX,XL,err,error)
     
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis function to evaluate.
@@ -6095,7 +6102,7 @@ CONTAINS
     !Local variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("BASIS_SIMPLEX_BASIS_EVALUATE",ERR,ERROR,*999)
+    ENTERS("BASIS_SIMPLEX_BASIS_EVALUATE",err,error,*999)
     
     BASIS_SIMPLEX_BASIS_EVALUATE=0.0_DP
     IF(ASSOCIATED(BASIS)) THEN
@@ -6105,210 +6112,210 @@ CONTAINS
           SELECT CASE(PARTIAL_DERIV_INDEX)
           CASE(NO_PART_DERIV)
             BASIS_SIMPLEX_BASIS_EVALUATE= &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,NO_PART_DERIV,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,NO_PART_DERIV,XL,err,error)
           CASE(PART_DERIV_S1)
             BASIS_SIMPLEX_BASIS_EVALUATE= &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE- &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1,XL,err,error)
           CASE(PART_DERIV_S1_S1)
             BASIS_SIMPLEX_BASIS_EVALUATE= &
-              BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S1,XL,ERR,ERROR)
+              BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S1,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE- &
-              & 2.0_DP*BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S2,XL,ERR,ERROR)
+              & 2.0_DP*BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S2,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE+ &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2_S2,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2_S2,XL,err,error)
           CASE DEFAULT
-            LOCAL_ERROR="The specified partial derivative index of "//TRIM(NUMBER_TO_VSTRING(PARTIAL_DERIV_INDEX,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The specified partial derivative index of "//TRIM(NumberToVString(PARTIAL_DERIV_INDEX,"*",err,error))// &
               & " is invalid for a Simplex line basis."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         CASE(2)
           SELECT CASE(PARTIAL_DERIV_INDEX)
           CASE(NO_PART_DERIV)
             BASIS_SIMPLEX_BASIS_EVALUATE= &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,NO_PART_DERIV,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,NO_PART_DERIV,XL,err,error)
           CASE(PART_DERIV_S1)
             BASIS_SIMPLEX_BASIS_EVALUATE= &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S3,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S3,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE- &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1,XL,err,error)
           CASE(PART_DERIV_S1_S1)
             BASIS_SIMPLEX_BASIS_EVALUATE= &
-              BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S1,XL,ERR,ERROR)
+              BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S1,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE- &
-              & 2.0_DP*BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S3,XL,ERR,ERROR)
+              & 2.0_DP*BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S3,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE+ &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S3_S3,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S3_S3,XL,err,error)
           CASE(PART_DERIV_S2)
             BASIS_SIMPLEX_BASIS_EVALUATE= &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S3,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S3,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE- &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2,XL,err,error)
           CASE(PART_DERIV_S2_S2)
             BASIS_SIMPLEX_BASIS_EVALUATE= &
-              BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2_S2,XL,ERR,ERROR)
+              BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2_S2,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE- &
-              & 2.0_DP*BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2_S3,XL,ERR,ERROR)
+              & 2.0_DP*BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2_S3,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE+ &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S3_S3,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S3_S3,XL,err,error)
           CASE(PART_DERIV_S1_S2)
             BASIS_SIMPLEX_BASIS_EVALUATE= &
-              BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S3_S3,XL,ERR,ERROR)
+              BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S3_S3,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE- &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S3,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S3,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE- &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2_S3,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2_S3,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE+ &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S2,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S2,XL,err,error)
           CASE DEFAULT
-            LOCAL_ERROR="The specified partial derivative index of "//TRIM(NUMBER_TO_VSTRING(PARTIAL_DERIV_INDEX,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The specified partial derivative index of "//TRIM(NumberToVString(PARTIAL_DERIV_INDEX,"*",err,error))// &
               & " is invalid for a Simplex triangle basis."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         CASE(3)
           SELECT CASE(PARTIAL_DERIV_INDEX)
           CASE(NO_PART_DERIV)
             BASIS_SIMPLEX_BASIS_EVALUATE= &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,NO_PART_DERIV,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,NO_PART_DERIV,XL,err,error)
           CASE(PART_DERIV_S1)
             BASIS_SIMPLEX_BASIS_EVALUATE= &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S4,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S4,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE- &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1,XL,err,error)
           CASE(PART_DERIV_S1_S1)
              BASIS_SIMPLEX_BASIS_EVALUATE= &
-              BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S1,XL,ERR,ERROR)
+              BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S1,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE- &
-              & 2.0_DP*BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S4,XL,ERR,ERROR)
+              & 2.0_DP*BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S4,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE+ &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S4_S4,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S4_S4,XL,err,error)
           CASE(PART_DERIV_S2)
             BASIS_SIMPLEX_BASIS_EVALUATE= &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S4,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S4,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE- &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2,XL,err,error)
           CASE(PART_DERIV_S2_S2)
              BASIS_SIMPLEX_BASIS_EVALUATE= &
-              BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2_S2,XL,ERR,ERROR)
+              BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2_S2,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE- &
-              & 2.0_DP*BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2_S4,XL,ERR,ERROR)
+              & 2.0_DP*BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2_S4,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE+ &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S4_S4,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S4_S4,XL,err,error)
           CASE(PART_DERIV_S1_S2)
             BASIS_SIMPLEX_BASIS_EVALUATE= &
-              BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S4_S4,XL,ERR,ERROR)
+              BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S4_S4,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE- &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S4,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S4,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE- &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2_S4,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2_S4,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE+ &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S2,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S2,XL,err,error)
           CASE(PART_DERIV_S3)
             BASIS_SIMPLEX_BASIS_EVALUATE= &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S4,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S4,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE- &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S3,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S3,XL,err,error)
           CASE(PART_DERIV_S3_S3)
              BASIS_SIMPLEX_BASIS_EVALUATE= &
-               BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S3_S3,XL,ERR,ERROR)
+               BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S3_S3,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE- &
-              & 2.0_DP*BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S3_S4,XL,ERR,ERROR)
+              & 2.0_DP*BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S3_S4,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE+ &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S4_S4,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S4_S4,XL,err,error)
           CASE(PART_DERIV_S1_S3)
             BASIS_SIMPLEX_BASIS_EVALUATE= &
-              BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S4_S4,XL,ERR,ERROR)
+              BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S4_S4,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE- &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S4,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S4,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE- &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S3_S4,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S3_S4,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE+ &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S3,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S3,XL,err,error)
           CASE(PART_DERIV_S2_S3)
             BASIS_SIMPLEX_BASIS_EVALUATE= &
-              BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S4_S4,XL,ERR,ERROR)
+              BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S4_S4,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE- &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2_S4,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2_S4,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE- &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S3_S4,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S3_S4,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE+ &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2_S3,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2_S3,XL,err,error)
           CASE(PART_DERIV_S1_S2_S3)
             BASIS_SIMPLEX_BASIS_EVALUATE= &
-              BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S4_S4_S4,XL,ERR,ERROR)
+              BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S4_S4_S4,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE- &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S4_S4,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S4_S4,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE- &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2_S4_S4,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2_S4_S4,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE- &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S3_S4_S4,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S3_S4_S4,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE+ &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S2_S4,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S2_S4,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE+ &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S3_S4,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S3_S4,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE+ &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2_S3_S4,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S2_S3_S4,XL,err,error)
             IF(ERR/=0) GOTO 999
             BASIS_SIMPLEX_BASIS_EVALUATE=BASIS_SIMPLEX_BASIS_EVALUATE- &
-              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S2_S3,XL,ERR,ERROR)
+              & BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PART_DERIV_S1_S2_S3,XL,err,error)
           CASE DEFAULT
-            LOCAL_ERROR="The specified partial derivative index of "//TRIM(NUMBER_TO_VSTRING(PARTIAL_DERIV_INDEX,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The specified partial derivative index of "//TRIM(NumberToVString(PARTIAL_DERIV_INDEX,"*",err,error))// &
               & " is invalid for a Simplex tetrahedra basis."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
         CASE DEFAULT
           LOCAL_ERROR="Invalid number of Xi coordinates. The number of xi coordinates for this basis is "// &
-            & TRIM(NUMBER_TO_VSTRING(BASIS%NUMBER_OF_XI,"*",ERR,ERROR))//" which should be between 1 and 3."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(BASIS%NUMBER_OF_XI,"*",err,error))//" which should be between 1 and 3."
+          CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
         IF(ERR/=0) GOTO 999
       ELSE
-        CALL FlagError("Basis is not a simplex basis.",ERR,ERROR,*999)
+        CALL FlagError("Basis is not a simplex basis.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated.",err,error,*999)
     ENDIF
     
     EXITS("BASIS_SIMPLEX_BASIS_EVALUATE")
     RETURN
-999 ERRORSEXITS("BASIS_SIMPLEX_BASIS_EVALUATE",ERR,ERROR)
+999 ERRORSEXITS("BASIS_SIMPLEX_BASIS_EVALUATE",err,error)
     RETURN 
   END FUNCTION BASIS_SIMPLEX_BASIS_EVALUATE
 
@@ -6317,7 +6324,7 @@ CONTAINS
   !
 
   !>Evaluates partial derivatives of a simplex basis function with respect to area coordinates.
-  FUNCTION BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PARTIAL_DERIV_INDEX,XL,ERR,ERROR)
+  FUNCTION BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE(BASIS,NODE_NUMBER,PARTIAL_DERIV_INDEX,XL,err,error)
     
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis function to evaluate.
@@ -6332,7 +6339,7 @@ CONTAINS
     INTEGER(INTG) :: nic
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE",ERR,ERROR,*999)
+    ENTERS("BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE",err,error,*999)
     
     BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE=1.0_DP
     IF(ASSOCIATED(BASIS)) THEN      
@@ -6341,29 +6348,29 @@ CONTAINS
         CASE(BASIS_LINEAR_INTERPOLATION_ORDER)
           BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE=BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE* &
             & SIMPLEX_LINEAR_EVALUATE(BASIS%NODE_POSITION_INDEX(NODE_NUMBER,nic), &
-            & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,nic),XL(nic),ERR,ERROR)
+            & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,nic),XL(nic),err,error)
         CASE(BASIS_QUADRATIC_INTERPOLATION_ORDER)
           BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE=BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE* &
             & SIMPLEX_QUADRATIC_EVALUATE(BASIS%NODE_POSITION_INDEX(NODE_NUMBER,nic), &
-            & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,nic),XL(nic),ERR,ERROR)
+            & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,nic),XL(nic),err,error)
         CASE(BASIS_CUBIC_INTERPOLATION_ORDER)
           BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE=BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE* &
             & SIMPLEX_CUBIC_EVALUATE(BASIS%NODE_POSITION_INDEX(NODE_NUMBER,nic), &
-            & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,nic),XL(nic),ERR,ERROR)
+            & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,nic),XL(nic),err,error)
         CASE DEFAULT
-          LOCAL_ERROR="Interpolation order value "//TRIM(NUMBER_TO_VSTRING(BASIS%INTERPOLATION_ORDER(nic),"*",ERR,ERROR))// &
-            & " for xi coordinate direction "//TRIM(NUMBER_TO_VSTRING(nic,"*",ERR,ERROR))//" is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          LOCAL_ERROR="Interpolation order value "//TRIM(NumberToVString(BASIS%INTERPOLATION_ORDER(nic),"*",err,error))// &
+            & " for xi coordinate direction "//TRIM(NumberToVString(nic,"*",err,error))//" is invalid."
+          CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
         IF(ERR/=0) GOTO 999
       ENDDO !nic
     ELSE
-      CALL FlagError("Basis is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated.",err,error,*999)
     ENDIF
     
     EXITS("BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE")
     RETURN
-999 ERRORSEXITS("BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE",ERR,ERROR)
+999 ERRORSEXITS("BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE",err,error)
     RETURN 
   END FUNCTION BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE
 
@@ -6372,118 +6379,95 @@ CONTAINS
   !
 
   !>Creates a sub-basis on a parent basis.
-  SUBROUTINE BASIS_SUB_BASIS_CREATE(PARENT_BASIS,NUMBER_OF_XI,XI_DIRECTIONS,SUB_BASIS,ERR,ERROR,*)
+  SUBROUTINE Basis_SubBasisCreate(parentBasis,numberOfXi,xiDirections,subBasis,err,error,*)
 
     !Argument variables
-    TYPE(BASIS_TYPE), POINTER :: PARENT_BASIS !<A pointer to the parent basis
-    INTEGER(INTG), INTENT(IN) :: NUMBER_OF_XI !<The number of Xi directions to create
-    INTEGER(INTG), INTENT(IN) :: XI_DIRECTIONS(:) !<XI_DIRECTIONS(ni). Gives the Xi direction indices of the parent basis which are used to create the sub-basis
-    TYPE(BASIS_TYPE), POINTER :: SUB_BASIS !<On return, a pointer to the created sub-basis. The pointer must be NULL on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(BASIS_TYPE), POINTER :: parentBasis !<A pointer to the parent basis
+    INTEGER(INTG), INTENT(IN) :: numberOfXi !<The number of Xi directions to create
+    INTEGER(INTG), INTENT(IN) :: xiDirections(:) !<xiDirections(xiIdx). Gives the ii direction indices of the parent basis which are used to create the sub-basis
+    TYPE(BASIS_TYPE), POINTER :: subBasis !<On return, a pointer to the created sub-basis. The pointer must be NULL on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: basis_idx,ni,NUMBER_COLLAPSED,NUMBER_END_COLLAPSED
-    TYPE(BASIS_TYPE), POINTER :: NEW_SUB_BASIS    
-    TYPE(BASIS_PTR_TYPE), POINTER :: NEW_SUB_BASES(:)
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: basisIdx,xiIdx,numberCollapsed,numberEndCollapsed
+    TYPE(BASIS_TYPE), POINTER :: newSubBasis  
+    TYPE(BASIS_PTR_TYPE), ALLOCATABLE :: newSubBases(:)
+    TYPE(VARYING_STRING) :: localError
     
-    NULLIFY(NEW_SUB_BASIS)
-    NULLIFY(NEW_SUB_BASES)
+    NULLIFY(newSubBasis)
     
-    ENTERS("BASIS_SUB_BASIS_CREATE",ERR,ERROR,*999)
+    ENTERS("Basis_SubBasisCreate",err,error,*999)
 
-    IF(ASSOCIATED(PARENT_BASIS)) THEN
-      IF(ASSOCIATED(SUB_BASIS)) THEN
-        CALL FlagError("The sub-basis is already associated",ERR,ERROR,*999)
-      ELSE
-        IF(NUMBER_OF_XI>0.AND.NUMBER_OF_XI<4) THEN
-          IF(ANY(XI_DIRECTIONS<1).OR.ANY(XI_DIRECTIONS>3)) CALL FlagError("Invalid xi directions specified",ERR,ERROR,*999)
-          IF(SIZE(XI_DIRECTIONS,1)/=NUMBER_OF_XI) &
-            & CALL FlagError("The size of the xi directions array must be the same as the number of xi directions",ERR,ERROR,*999)
-          ALLOCATE(NEW_SUB_BASIS,STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate sub-basis",ERR,ERROR,*999)
-          NEW_SUB_BASIS%USER_NUMBER=PARENT_BASIS%USER_NUMBER
-          NEW_SUB_BASIS%GLOBAL_NUMBER=PARENT_BASIS%GLOBAL_NUMBER
-          NEW_SUB_BASIS%FAMILY_NUMBER=PARENT_BASIS%NUMBER_OF_SUB_BASES+1
-          NEW_SUB_BASIS%NUMBER_OF_SUB_BASES=0
-          NULLIFY(NEW_SUB_BASIS%SUB_BASES)
-          NEW_SUB_BASIS%PARENT_BASIS=>PARENT_BASIS
-          NEW_SUB_BASIS%NUMBER_OF_XI=NUMBER_OF_XI
-          NEW_SUB_BASIS%TYPE=PARENT_BASIS%TYPE
-          ALLOCATE(NEW_SUB_BASIS%INTERPOLATION_XI(NUMBER_OF_XI),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate sub-basis interpolation xi",ERR,ERROR,*999)
-          ALLOCATE(NEW_SUB_BASIS%COLLAPSED_XI(NUMBER_OF_XI),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate sub-basis collapsed xi",ERR,ERROR,*999)        
-          NUMBER_COLLAPSED=0
-          NUMBER_END_COLLAPSED=0
-          DO ni=1,NUMBER_OF_XI
-            NEW_SUB_BASIS%INTERPOLATION_XI(ni)=PARENT_BASIS%INTERPOLATION_XI(XI_DIRECTIONS(ni))
-            NEW_SUB_BASIS%COLLAPSED_XI(ni)=PARENT_BASIS%COLLAPSED_XI(XI_DIRECTIONS(ni))
-            IF(NEW_SUB_BASIS%COLLAPSED_XI(ni)==BASIS_XI_COLLAPSED) THEN
-              NUMBER_COLLAPSED=NUMBER_COLLAPSED+1
-            ELSE IF(NEW_SUB_BASIS%COLLAPSED_XI(ni)==BASIS_COLLAPSED_AT_XI0.OR.NEW_SUB_BASIS%COLLAPSED_XI(ni)== &
-              & BASIS_COLLAPSED_AT_XI1) THEN
-              NUMBER_END_COLLAPSED=NUMBER_END_COLLAPSED+1
-            ENDIF
-          ENDDO !ni
-          IF(NUMBER_COLLAPSED==0.OR.NUMBER_END_COLLAPSED==0) NEW_SUB_BASIS%COLLAPSED_XI(1:NUMBER_OF_XI)=BASIS_NOT_COLLAPSED
-          NULLIFY(NEW_SUB_BASIS%QUADRATURE%BASIS)
-          CALL BASIS_QUADRATURE_INITIALISE(NEW_SUB_BASIS,ERR,ERROR,*999)
-          NEW_SUB_BASIS%QUADRATURE%TYPE=PARENT_BASIS%QUADRATURE%TYPE
-          DO ni=1,NUMBER_OF_XI
-            NEW_SUB_BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni)=PARENT_BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(XI_DIRECTIONS(ni))
-          ENDDO !ni
-          NEW_SUB_BASIS%BASIS_FINISHED=.TRUE.
-          IF(NUMBER_OF_XI>1) THEN
-            ALLOCATE(NEW_SUB_BASIS%LINE_BASES(NUMBER_OF_XI),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate sub-basis line bases",ERR,ERROR,*999)
-            IF(NUMBER_OF_XI>2) THEN
-              ALLOCATE(NEW_SUB_BASIS%FACE_BASES(NUMBER_OF_XI),STAT=ERR)
-              IF(ERR/=0) CALL FlagError("Could not allocate sub-basis face bases",ERR,ERROR,*999)
-            ELSE
-              ALLOCATE(NEW_SUB_BASIS%FACE_BASES(1),STAT=ERR)
-              IF(ERR/=0) CALL FlagError("Could not allocate sub-basis face bases",ERR,ERROR,*999)
-              NEW_SUB_BASIS%FACE_BASES(1)%PTR=>NEW_SUB_BASIS
-            ENDIF
-          ELSE
-            ALLOCATE(NEW_SUB_BASIS%LINE_BASES(1),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate basis line bases",ERR,ERROR,*999)
-            NEW_SUB_BASIS%LINE_BASES(1)%PTR=>NEW_SUB_BASIS
-            NULLIFY(NEW_SUB_BASIS%FACE_BASES)          
-          ENDIF
-          !Add the new sub-basis to the list of sub-bases in the parent basis
-          ALLOCATE(NEW_SUB_BASES(PARENT_BASIS%NUMBER_OF_SUB_BASES+1),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate new sub-bases",ERR,ERROR,*999)
-          DO basis_idx=1,PARENT_BASIS%NUMBER_OF_SUB_BASES
-            NEW_SUB_BASES(basis_idx)%PTR=>PARENT_BASIS%SUB_BASES(basis_idx)%PTR
-          ENDDO !basis_idx
-          NEW_SUB_BASES(PARENT_BASIS%NUMBER_OF_SUB_BASES+1)%PTR=>NEW_SUB_BASIS
-          PARENT_BASIS%NUMBER_OF_SUB_BASES=PARENT_BASIS%NUMBER_OF_SUB_BASES+1
-          IF(ASSOCIATED(PARENT_BASIS%SUB_BASES)) DEALLOCATE(PARENT_BASIS%SUB_BASES)
-          PARENT_BASIS%SUB_BASES=>NEW_SUB_BASES
-          SUB_BASIS=>NEW_SUB_BASIS
-        ELSE
-          LOCAL_ERROR="Invalid number of xi directions specified ("// &
-            & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_XI,"*",ERR,ERROR))//"). You must specify between 1 and 3 xi directions"
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
+    IF(.NOT.ASSOCIATED(parentBasis)) CALL FlagError("Parent basis is not associated.",err,error,*999)
+    IF(ASSOCIATED(subBasis)) CALL FlagError("The sub-basis is already associated.",err,error,*999)    
+    IF(numberOfXi<=0.OR.numberOfXi>3) THEN
+      localError="The number of xi directions specified of "//TRIM(NumberToVString(numberOfXi,"*",err,error))// &
+        & " is invalid. The number of xi directions must be between 1 and 3."      
+      CALL FlagError(localError,err,error,*999)
+    ENDIF                
+    IF(SIZE(xiDirections,1)/=numberOfXi) &
+      & CALL FlagError("The size of the xi directions array must be the same as the number of xi directions",err,error,*999)
+    IF(ANY(xiDirections<1).OR.ANY(xiDirections>3)) CALL FlagError("Invalid xi directions specified.",err,error,*999)
+
+    CALL Basis_Initialise(newSubBasis,err,error,*999)
+    newSubBasis%USER_NUMBER=parentBasis%USER_NUMBER
+    newSubBasis%GLOBAL_NUMBER=parentBasis%GLOBAL_NUMBER
+    newSubBasis%FAMILY_NUMBER=parentBasis%numberOfSubBases+1
+    newSubBasis%parentBasis=>parentBasis
+    newSubBasis%NUMBER_OF_XI=numberOfXi
+    newSubBasis%TYPE=parentBasis%TYPE
+    ALLOCATE(newSubBasis%INTERPOLATION_XI(numberOfXi),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate sub-basis interpolation xi.",err,error,*999)
+    ALLOCATE(newSubBasis%COLLAPSED_XI(numberOfXi),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate sub-basis collapsed xi.",err,error,*999)        
+    numberCollapsed=0
+    numberEndCollapsed=0
+    DO xiIdx=1,numberOfXi
+      newSubBasis%INTERPOLATION_XI(xiIdx)=parentBasis%INTERPOLATION_XI(xiDirections(xiIdx))
+      newSubBasis%COLLAPSED_XI(xiIdx)=parentBasis%COLLAPSED_XI(xiDirections(xiIdx))
+      IF(newSubBasis%COLLAPSED_XI(xiIdx)==BASIS_XI_COLLAPSED) THEN
+        numberCollapsed=numberCollapsed+1
+      ELSE IF(newSubBasis%COLLAPSED_XI(xiIdx)==BASIS_COLLAPSED_AT_XI0.OR.&
+        & newSubBasis%COLLAPSED_XI(xiIdx)==BASIS_COLLAPSED_AT_XI1) THEN
+        numberEndCollapsed=numberEndCollapsed+1
       ENDIF
-    ELSE
-      CALL FlagError("Parent basis is not associated",ERR,ERROR,*999)
+    ENDDO !xiIdx
+    IF(numberCollapsed==0.OR.numberEndCollapsed==0) newSubBasis%COLLAPSED_XI(1:numberOfXi)=BASIS_NOT_COLLAPSED
+    NULLIFY(newSubBasis%quadrature%basis)
+    CALL BASIS_QUADRATURE_INITIALISE(newSubBasis,err,error,*999)
+    newSubBasis%quadrature%type=parentBasis%quadrature%type
+    DO xiIdx=1,numberOfXi
+      newSubBasis%quadrature%NUMBER_OF_GAUSS_XI(xiIdx)=parentBasis%QUADRATURE%NUMBER_OF_GAUSS_XI(xiDirections(xiIdx))
+    ENDDO !xiIdx
+    newSubBasis%BASIS_FINISHED=.TRUE.
+    IF(numberOfXi>1) THEN
+      ALLOCATE(newSubBasis%lineBases(numberOfXi),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate sub-basis line bases",err,error,*999)
     ENDIF
+    !Add the new sub-basis to the list of sub-bases in the parent basis
+    ALLOCATE(newSubBases(parentBasis%numberOfSubBases+1),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate new sub-bases.",err,error,*999)
+    DO basisIdx=1,parentBasis%numberOfSubBases
+      newSubBases(basisIdx)%ptr=>parentBasis%subBases(basisIdx)%ptr
+    ENDDO !basisIdx
+    newSubBases(parentBasis%numberOfSubBases+1)%ptr=>newSubBasis
+    parentBasis%numberOfSubBases=parentBasis%numberOfSubBases+1
+    CALL MOVE_ALLOC(newSubBases,parentBasis%subBases)
+    subBasis=>newSubBasis
     
-    EXITS("BASIS_SUB_BASIS_CREATE")
+    EXITS("Basis_SubBasisCreate")
     RETURN
-999 ERRORSEXITS("BASIS_SUB_BASIS_CREATE",ERR,ERROR)
+999 ERRORSEXITS("Basis_SubBasisCreate",err,error)
     RETURN 1
-  END SUBROUTINE BASIS_SUB_BASIS_CREATE
+    
+  END SUBROUTINE Basis_SubBasisCreate
   
   !
   !================================================================================================================================
   !
   
   !>get the type for a basis is identified by a a pointer. \see OpenCMISS::Iron::cmfe_BasisTypeGet
-  SUBROUTINE BASIS_TYPE_GET(BASIS,TYPE,ERR,ERROR,*)
+  SUBROUTINE BASIS_TYPE_GET(BASIS,TYPE,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis to get
@@ -6492,21 +6476,21 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     
-    ENTERS("BASIS_TYPE_GET",ERR,ERROR,*999)
+    ENTERS("BASIS_TYPE_GET",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(BASIS%BASIS_FINISHED) THEN
         TYPE=BASIS%TYPE
       ELSE
-        CALL FlagError("Basis has not been finished yet",ERR,ERROR,*999)
+        CALL FlagError("Basis has not been finished yet",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated",err,error,*999)
     ENDIF
     
     EXITS("BASIS_TYPE_GET")
     RETURN
-999 ERRORSEXITS("BASIS_TYPE_GET",ERR,ERROR)
+999 ERRORSEXITS("BASIS_TYPE_GET",err,error)
     RETURN
   END SUBROUTINE BASIS_TYPE_GET
 
@@ -6515,7 +6499,7 @@ CONTAINS
   !
 
   !>Sets/changes the type for a basis is identified by a user number.
-  SUBROUTINE BASIS_TYPE_SET_NUMBER(USER_NUMBER,TYPE,ERR,ERROR,*)
+  SUBROUTINE BASIS_TYPE_SET_NUMBER(USER_NUMBER,TYPE,err,error,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the basis to set.
@@ -6525,14 +6509,14 @@ CONTAINS
     !Local Variables
     TYPE(BASIS_TYPE), POINTER :: BASIS
     
-    ENTERS("BASIS_TYPE_SET_NUMBER",ERR,ERROR,*999)
+    ENTERS("BASIS_TYPE_SET_NUMBER",err,error,*999)
 
-    CALL BASIS_USER_NUMBER_FIND(USER_NUMBER,BASIS,ERR,ERROR,*999)
-    CALL BASIS_TYPE_SET_PTR(BASIS,TYPE,ERR,ERROR,*999)
+    CALL Basis_UserNumberFind(USER_NUMBER,BASIS,err,error,*999)
+    CALL BASIS_TYPE_SET_PTR(BASIS,TYPE,err,error,*999)
     
     EXITS("BASIS_TYPE_SET_NUMBER")
     RETURN
-999 ERRORSEXITS("BASIS_TYPE_SET_NUMBER",ERR,ERROR)
+999 ERRORSEXITS("BASIS_TYPE_SET_NUMBER",err,error)
     RETURN 1
   END SUBROUTINE BASIS_TYPE_SET_NUMBER
 
@@ -6541,7 +6525,7 @@ CONTAINS
   !
 
   !>Sets/changes the type for a basis is identified by a a pointer. \see OpenCMISS::Iron::cmfe_BasisTypeGet
-  SUBROUTINE BASIS_TYPE_SET_PTR(BASIS,TYPE,ERR,ERROR,*)
+  SUBROUTINE BASIS_TYPE_SET_PTR(BASIS,TYPE,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis to set
@@ -6551,35 +6535,35 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("BASIS_TYPE_SET_PTR",ERR,ERROR,*999)
+    ENTERS("BASIS_TYPE_SET_PTR",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(BASIS%BASIS_FINISHED) THEN
-        CALL FlagError("Basis has been finished",ERR,ERROR,*999)
+        CALL FlagError("Basis has been finished",err,error,*999)
       ELSE
         SELECT CASE(TYPE)
         CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
           BASIS%TYPE=BASIS_LAGRANGE_HERMITE_TP_TYPE
         CASE(BASIS_SIMPLEX_TYPE)
           !Reset the quadrature
-          CALL BASIS_QUADRATURE_FINALISE(BASIS,ERR,ERROR,*999)
+          CALL BASIS_QUADRATURE_FINALISE(BASIS,err,error,*999)
           !Change the default parameters for the old basis
           BASIS%TYPE=BASIS_SIMPLEX_TYPE
           BASIS%INTERPOLATION_XI(1:BASIS%NUMBER_OF_XI)=BASIS_LINEAR_SIMPLEX_INTERPOLATION
           NULLIFY(BASIS%QUADRATURE%BASIS)
-          CALL BASIS_QUADRATURE_INITIALISE(BASIS,ERR,ERROR,*999)
+          CALL BASIS_QUADRATURE_INITIALISE(BASIS,err,error,*999)
         CASE DEFAULT
-          LOCAL_ERROR="Basis type "//TRIM(NUMBER_TO_VSTRING(TYPE,"*",ERR,ERROR))//" is invalid or not implemented"
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          LOCAL_ERROR="Basis type "//TRIM(NumberToVString(TYPE,"*",err,error))//" is invalid or not implemented"
+          CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated",err,error,*999)
     ENDIF
     
     EXITS("BASIS_TYPE_SET_PTR")
     RETURN
-999 ERRORSEXITS("BASIS_TYPE_SET_PTR",ERR,ERROR)
+999 ERRORSEXITS("BASIS_TYPE_SET_PTR",err,error)
     RETURN 1
   END SUBROUTINE BASIS_TYPE_SET_PTR
 
@@ -6588,7 +6572,7 @@ CONTAINS
   !
   
   !>Gets the collapsed xi flags for a basis is identified by a a pointer. \see OpenCMISS::Iron::cmfe_BasisCollapsedXiGet
-  SUBROUTINE BASIS_COLLAPSED_XI_GET(BASIS,COLLAPSED_XI,ERR,ERROR,*)
+  SUBROUTINE BASIS_COLLAPSED_XI_GET(BASIS,COLLAPSED_XI,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
@@ -6598,7 +6582,7 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("BASIS_COLLAPSED_XI_GET",ERR,ERROR,*999)
+    ENTERS("BASIS_COLLAPSED_XI_GET",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(BASIS%BASIS_FINISHED) THEN
@@ -6606,20 +6590,20 @@ CONTAINS
           COLLAPSED_XI=BASIS%COLLAPSED_XI
         ELSE
           LOCAL_ERROR="The size of COLLAPSED_XI is too small. The supplied size is "// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(COLLAPSED_XI,1),"*",ERR,ERROR))//" and it needs to be >= "// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(BASIS%COLLAPSED_XI,1),"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            & TRIM(NumberToVString(SIZE(COLLAPSED_XI,1),"*",err,error))//" and it needs to be >= "// &
+            & TRIM(NumberToVString(SIZE(BASIS%COLLAPSED_XI,1),"*",err,error))//"."
+          CALL FlagError(LOCAL_ERROR,err,error,*999)
         ENDIF
       ELSE
-        CALL FlagError("Basis has not been finished.",ERR,ERROR,*999)
+        CALL FlagError("Basis has not been finished.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated.",err,error,*999)
     ENDIF
     
     EXITS("BASIS_COLLAPSED_XI_GET")
     RETURN
-999 ERRORSEXITS("BASIS_COLLAPSED_XI_GET",ERR,ERROR)
+999 ERRORSEXITS("BASIS_COLLAPSED_XI_GET",err,error)
     RETURN
   END SUBROUTINE BASIS_COLLAPSED_XI_GET
 
@@ -6628,7 +6612,7 @@ CONTAINS
   !
 
   !>Sets/changes the collapsed xi flags for a basis is identified by a user number.
-  SUBROUTINE BASIS_COLLAPSED_XI_SET_NUMBER(USER_NUMBER,COLLAPSED_XI,ERR,ERROR,*)
+  SUBROUTINE BASIS_COLLAPSED_XI_SET_NUMBER(USER_NUMBER,COLLAPSED_XI,err,error,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the basis to be set
@@ -6638,14 +6622,14 @@ CONTAINS
     !Local Variables
     TYPE(BASIS_TYPE), POINTER :: BASIS
     
-    ENTERS("BASIS_COLLAPSED_XI_SET_NUMBER",ERR,ERROR,*999)
+    ENTERS("BASIS_COLLAPSED_XI_SET_NUMBER",err,error,*999)
 
-    CALL BASIS_USER_NUMBER_FIND(USER_NUMBER,BASIS,ERR,ERROR,*999)
-    CALL BASIS_COLLAPSED_XI_SET_PTR(BASIS,COLLAPSED_XI,ERR,ERROR,*999)
+    CALL Basis_UserNumberFind(USER_NUMBER,BASIS,err,error,*999)
+    CALL BASIS_COLLAPSED_XI_SET_PTR(BASIS,COLLAPSED_XI,err,error,*999)
     
     EXITS("BASIS_COLLAPSED_XI_SET_NUMBER")
     RETURN
-999 ERRORSEXITS("BASIS_COLLAPSED_XI_SET_NUMBER",ERR,ERROR)
+999 ERRORSEXITS("BASIS_COLLAPSED_XI_SET_NUMBER",err,error)
     RETURN 1
   END SUBROUTINE BASIS_COLLAPSED_XI_SET_NUMBER
 
@@ -6654,7 +6638,7 @@ CONTAINS
   !
 
   !>Sets/changes the collapsed xi flags for a basis is identified by a a pointer. \see OpenCMISS::Iron::cmfe_BasisCollapsedXiSet
-  SUBROUTINE BASIS_COLLAPSED_XI_SET_PTR(BASIS,COLLAPSED_XI,ERR,ERROR,*)
+  SUBROUTINE BASIS_COLLAPSED_XI_SET_PTR(BASIS,COLLAPSED_XI,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
@@ -6665,11 +6649,11 @@ CONTAINS
     INTEGER(INTG) :: ni1,ni2,ni3,NUMBER_COLLAPSED,COLLAPSED_XI_DIR(3)
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("BASIS_COLLAPSED_XI_SET_PTR",ERR,ERROR,*999)
+    ENTERS("BASIS_COLLAPSED_XI_SET_PTR",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(BASIS%BASIS_FINISHED) THEN
-        CALL FlagError("Basis has been finished",ERR,ERROR,*999)
+        CALL FlagError("Basis has been finished",err,error,*999)
       ELSE
         IF(BASIS%TYPE==BASIS_LAGRANGE_HERMITE_TP_TYPE) THEN
           IF(BASIS%NUMBER_OF_XI>1) THEN
@@ -6683,9 +6667,9 @@ CONTAINS
                 CASE(BASIS_COLLAPSED_AT_XI0,BASIS_COLLAPSED_AT_XI1,BASIS_NOT_COLLAPSED)
                   !Do nothing
                 CASE DEFAULT
-                  LOCAL_ERROR="Collapsed xi value "//TRIM(NUMBER_TO_VSTRING(COLLAPSED_XI(ni1),"*",ERR,ERROR))// &
-                    & " in xi direction "//TRIM(NUMBER_TO_VSTRING(ni1,"*",ERR,ERROR))//" is invalid"
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                  LOCAL_ERROR="Collapsed xi value "//TRIM(NumberToVString(COLLAPSED_XI(ni1),"*",err,error))// &
+                    & " in xi direction "//TRIM(NumberToVString(ni1,"*",err,error))//" is invalid"
+                  CALL FlagError(LOCAL_ERROR,err,error,*999)
                 END SELECT
               ENDDO !ni1
               IF(NUMBER_COLLAPSED>0) THEN
@@ -6702,9 +6686,9 @@ CONTAINS
                         & BASIS%INTERPOLATION_XI(ni2)=BASIS_QUADRATIC2_HERMITE_INTERPOLATION
                     ELSE
                       LOCAL_ERROR="Invalid collapsing of a two dimensional basis. Xi direction "// &
-                        & TRIM(NUMBER_TO_VSTRING(ni1,"*",ERR,ERROR))//" is collapsed so xi direction "// &
-                        & TRIM(NUMBER_TO_VSTRING(ni2,"*",ERR,ERROR))//" must be collapsed at an end"
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                        & TRIM(NumberToVString(ni1,"*",err,error))//" is collapsed so xi direction "// &
+                        & TRIM(NumberToVString(ni2,"*",err,error))//" must be collapsed at an end"
+                      CALL FlagError(LOCAL_ERROR,err,error,*999)
                     ENDIF
                   ELSE
                     !Three dimensional collapsed basis
@@ -6722,10 +6706,10 @@ CONTAINS
                             & BASIS%INTERPOLATION_XI(ni3)=BASIS_QUADRATIC2_HERMITE_INTERPOLATION
                         ELSE
                           LOCAL_ERROR="Invalid collapsing of a three dimensional basis. Xi direction "// &
-                            & TRIM(NUMBER_TO_VSTRING(ni1,"*",ERR,ERROR))//" is collapsed and xi direction "// &
-                            & TRIM(NUMBER_TO_VSTRING(ni2,"*",ERR,ERROR))//" is not collapsed so xi direction "// &
-                            & TRIM(NUMBER_TO_VSTRING(ni3,"*",ERR,ERROR))//" must be collapsed at an end"
-                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                            & TRIM(NumberToVString(ni1,"*",err,error))//" is collapsed and xi direction "// &
+                            & TRIM(NumberToVString(ni2,"*",err,error))//" is not collapsed so xi direction "// &
+                            & TRIM(NumberToVString(ni3,"*",err,error))//" must be collapsed at an end"
+                          CALL FlagError(LOCAL_ERROR,err,error,*999)
                         ENDIF
                       ELSE IF(COLLAPSED_XI(ni3)==BASIS_NOT_COLLAPSED) THEN
                         IF(COLLAPSED_XI(ni2)==BASIS_COLLAPSED_AT_XI0) THEN
@@ -6736,17 +6720,17 @@ CONTAINS
                             & BASIS%INTERPOLATION_XI(ni2)=BASIS_QUADRATIC2_HERMITE_INTERPOLATION
                         ELSE
                           LOCAL_ERROR="Invalid collapsing of a three dimensional basis. Xi direction "// &
-                            & TRIM(NUMBER_TO_VSTRING(ni1,"*",ERR,ERROR))//" is collapsed and xi direction "// &
-                            & TRIM(NUMBER_TO_VSTRING(ni3,"*",ERR,ERROR))//" is not collapsed so xi direction "// &
-                            & TRIM(NUMBER_TO_VSTRING(ni2,"*",ERR,ERROR))//" must be collapsed at an end"
-                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                            & TRIM(NumberToVString(ni1,"*",err,error))//" is collapsed and xi direction "// &
+                            & TRIM(NumberToVString(ni3,"*",err,error))//" is not collapsed so xi direction "// &
+                            & TRIM(NumberToVString(ni2,"*",err,error))//" must be collapsed at an end"
+                          CALL FlagError(LOCAL_ERROR,err,error,*999)
                         ENDIF
                       ELSE
                         LOCAL_ERROR="Invalid collapsing of a three dimensional basis. Xi direction "// &
-                          & TRIM(NUMBER_TO_VSTRING(ni1,"*",ERR,ERROR))//" is collapsed so one of xi directions "// &
-                          & TRIM(NUMBER_TO_VSTRING(ni2,"*",ERR,ERROR))//" or "// &
-                          & TRIM(NUMBER_TO_VSTRING(ni3,"*",ERR,ERROR))//" must be collapsed at an end"
-                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                          & TRIM(NumberToVString(ni1,"*",err,error))//" is collapsed so one of xi directions "// &
+                          & TRIM(NumberToVString(ni2,"*",err,error))//" or "// &
+                          & TRIM(NumberToVString(ni3,"*",err,error))//" must be collapsed at an end"
+                        CALL FlagError(LOCAL_ERROR,err,error,*999)
                       ENDIF
                     ELSE
                       !Two collapses - pyramid element
@@ -6761,19 +6745,19 @@ CONTAINS
                           & BASIS%INTERPOLATION_XI(ni3)=BASIS_QUADRATIC2_HERMITE_INTERPOLATION
                       ELSE
                         LOCAL_ERROR="Invalid collapsing of a three dimensional basis. Xi directions "// &
-                          & TRIM(NUMBER_TO_VSTRING(ni1,"*",ERR,ERROR))//" and "// &
-                          & TRIM(NUMBER_TO_VSTRING(ni2,"*",ERR,ERROR))//" are collapsed so xi direction "// &
-                          & TRIM(NUMBER_TO_VSTRING(ni3,"*",ERR,ERROR))//" must be collapsed at an end"
-                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                          & TRIM(NumberToVString(ni1,"*",err,error))//" and "// &
+                          & TRIM(NumberToVString(ni2,"*",err,error))//" are collapsed so xi direction "// &
+                          & TRIM(NumberToVString(ni3,"*",err,error))//" must be collapsed at an end"
+                        CALL FlagError(LOCAL_ERROR,err,error,*999)
                       ENDIF
                     ENDIF
                   ENDIF
                 ELSE
                   LOCAL_ERROR="Invalid collapsing of basis. The number of collapsed directions ("// &
-                    & TRIM(NUMBER_TO_VSTRING(NUMBER_COLLAPSED,"*",ERR,ERROR))// &
+                    & TRIM(NumberToVString(NUMBER_COLLAPSED,"*",err,error))// &
                     & ") must be less than the number of xi directions ("// &
-                    & TRIM(NUMBER_TO_VSTRING(BASIS%NUMBER_OF_XI,"*",ERR,ERROR))//")"
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                    & TRIM(NumberToVString(BASIS%NUMBER_OF_XI,"*",err,error))//")"
+                  CALL FlagError(LOCAL_ERROR,err,error,*999)
                 ENDIF
               ELSE
                 !No collapses in any xi direction - Reset interpolation_xi if necessary
@@ -6787,25 +6771,25 @@ CONTAINS
               BASIS%COLLAPSED_XI(1:BASIS%NUMBER_OF_XI)=COLLAPSED_XI(1:BASIS%NUMBER_OF_XI)
             ELSE
               LOCAL_ERROR="The size of the xi collapsed array ("// &
-                & TRIM(NUMBER_TO_VSTRING(SIZE(COLLAPSED_XI,1),"*",ERR,ERROR))//") does not match the number of xi directions ("// &
-                & TRIM(NUMBER_TO_VSTRING(BASIS%NUMBER_OF_XI,"*",ERR,ERROR))//") for basis number "// &
-                & TRIM(NUMBER_TO_VSTRING(BASIS%USER_NUMBER,"*",ERR,ERROR))
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                & TRIM(NumberToVString(SIZE(COLLAPSED_XI,1),"*",err,error))//") does not match the number of xi directions ("// &
+                & TRIM(NumberToVString(BASIS%NUMBER_OF_XI,"*",err,error))//") for basis number "// &
+                & TRIM(NumberToVString(BASIS%USER_NUMBER,"*",err,error))
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             ENDIF
           ELSE          
-            CALL FlagError("Can not collapse a basis with only 1 xi direction",ERR,ERROR,*999)
+            CALL FlagError("Can not collapse a basis with only 1 xi direction",err,error,*999)
           ENDIF
         ELSE
-          CALL FlagError("Can only set collapsed xi directions for a Lagrange Hermite tensor product basis type",ERR,ERROR,*999)
+          CALL FlagError("Can only set collapsed xi directions for a Lagrange Hermite tensor product basis type",err,error,*999)
         ENDIF
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated",ERR,ERROR,*999)
+      CALL FlagError("Basis is not associated",err,error,*999)
     ENDIF
     
     EXITS("BASIS_COLLAPSED_XI_SET_PTR")
     RETURN
-999 ERRORSEXITS("BASIS_COLLAPSED_XI_SET_PTR",ERR,ERROR)
+999 ERRORSEXITS("BASIS_COLLAPSED_XI_SET_PTR",err,error)
     RETURN 1
   END SUBROUTINE BASIS_COLLAPSED_XI_SET_PTR
 
@@ -6815,7 +6799,7 @@ CONTAINS
 
   !>This routine calculates the weights and abscissae for a Gauss-Legendre quadrature scheme.
   !>\todo Fix this.
-  SUBROUTINE GAUSS_LEGENDRE(N,ALPHA,BETA,X,W,ERR,ERROR,*)
+  SUBROUTINE GAUSS_LEGENDRE(N,ALPHA,BETA,X,W,err,error,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: N !<The number of of Gauss points required.
@@ -6857,7 +6841,7 @@ CONTAINS
       &      (18.0_DP-SQRT(30.0_DP))/72.0_DP ]
              
     
-    ENTERS("GAUSS_LEGENDRE",ERR,ERROR,*999)
+    ENTERS("GAUSS_LEGENDRE",err,error,*999)
 
     IF(N>=1.AND.N<=4) THEN
       DO i=1,N
@@ -6865,15 +6849,15 @@ CONTAINS
         W(i)=WIG(GAUSS_START(N)+i)
       ENDDO !i
     ELSE
-      CALL FlagError("Invalid number of Gauss points. Not implemented",ERR,ERROR,*999)
+      CALL FlagError("Invalid number of Gauss points. Not implemented",err,error,*999)
     ENDIF      
     
     IF(DIAGNOSTICS1) THEN
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"Number of gauss points = ",N,ERR,ERROR,*999)
-      CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,N,5,5,X,'("Gauss point locations :",5(X,F13.5))','(23X,5(X,F13.5))', &
-        & ERR,ERROR,*999)
-      CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,N,5,5,W,'("Gauss point weights   :",5(X,F13.5))','(23X,5(X,F13.5))', &
-        & ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Number of gauss points = ",N,err,error,*999)
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,N,5,5,X,'("Gauss point locations :",5(X,F13.5))','(23X,5(X,F13.5))', &
+        & err,error,*999)
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,N,5,5,W,'("Gauss point weights   :",5(X,F13.5))','(23X,5(X,F13.5))', &
+        & err,error,*999)
       IF(DIAGNOSTICS2) THEN
         !Check by integrating y=x+1
         T1=0.0_DP !Numerical
@@ -6883,14 +6867,14 @@ CONTAINS
         ENDDO !i
         T2=(BETA**2.0_DP/2.0_DP+BETA)-(ALPHA**2.0_DP/2.0_DP-ALPHA)
         DIFFERENCE=ABS(T2-T1)
-        CALL WRITE_STRING_FMT_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"Numerical Integration Test Difference: ",DIFFERENCE,'(F14.6)', &
-          & ERR,ERROR,*999)
+        CALL WriteStringFmtValue(DIAGNOSTIC_OUTPUT_TYPE,"Numerical Integration Test Difference: ",DIFFERENCE,'(F14.6)', &
+          & err,error,*999)
       ENDIF
     ENDIF
 
     EXITS("GAUSS_LEGENDRE")
     RETURN
-999 ERRORSEXITS("GAUSS_LEGENDRE",ERR,ERROR)
+999 ERRORSEXITS("GAUSS_LEGENDRE",err,error)
     RETURN 1
   END SUBROUTINE GAUSS_LEGENDRE
   
@@ -6903,7 +6887,7 @@ CONTAINS
   !>Reference: Liu, Yen and Vinokur, Marcel. "Exact Integrations of Polynomials and Symmetric Quadrature Formulas
   !> over Arbitrary Polyhedral Grids", Journal of Computational Physics, 140:122-147 (1998).
   !>
-  SUBROUTINE GAUSS_SIMPLEX(ORDER,NUMBER_OF_VERTICES,N,X,W,ERR,ERROR,*)
+  SUBROUTINE GAUSS_SIMPLEX(ORDER,NUMBER_OF_VERTICES,N,X,W,err,error,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: ORDER !<The desired order of the scheme. Currently, the maximum order is 5.
@@ -6919,7 +6903,7 @@ CONTAINS
       & L4_ALPHA_2,L1_BETA,L2_BETA,L3_BETA,L4_BETA,W_C,W_ALPHA_1,W_ALPHA_2,W_BETA,ACOS_ARG
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("GAUSS_SIMPLEX",ERR,ERROR,*999)
+    ENTERS("GAUSS_SIMPLEX",err,error,*999)
     IF(SIZE(X,1)>=(NUMBER_OF_VERTICES)) THEN
       SELECT CASE(NUMBER_OF_VERTICES)
       CASE(2)
@@ -6936,14 +6920,14 @@ CONTAINS
               X(2,1)=L_C
               W(1)=W_C
             ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NUMBER_TO_VSTRING(SIZE(W,1),"*",ERR,ERROR))// &
-                & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
+                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             ENDIF
           ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NUMBER_TO_VSTRING(SIZE(X,2),"*",ERR,ERROR))// &
-              & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
+              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           ENDIF
         CASE(2)
           N=2
@@ -6962,14 +6946,14 @@ CONTAINS
               X(2,2)=L1_ALPHA_1
               W(2)=W_ALPHA_1
             ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NUMBER_TO_VSTRING(SIZE(W,1),"*",ERR,ERROR))// &
-                & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
+                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             ENDIF
           ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NUMBER_TO_VSTRING(SIZE(X,2),"*",ERR,ERROR))// &
-              & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
+              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           ENDIF
         CASE(3)
           N=3
@@ -6996,47 +6980,47 @@ CONTAINS
               X(2,3)=L1_ALPHA_1
               W(3)=W_ALPHA_1
             ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NUMBER_TO_VSTRING(SIZE(W,1),"*",ERR,ERROR))// &
-                & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
+                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             ENDIF
           ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NUMBER_TO_VSTRING(SIZE(X,2),"*",ERR,ERROR))// &
-              & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
+              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           ENDIF
         CASE(4)
-          CALL FlagError("Not implemented",ERR,ERROR,*999)
+          CALL FlagError("Not implemented",err,error,*999)
           IF(SIZE(X,2)>=N) THEN
             IF(SIZE(W,1)>=N) THEN
             ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NUMBER_TO_VSTRING(SIZE(W,1),"*",ERR,ERROR))// &
-                & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
+                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             ENDIF
           ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NUMBER_TO_VSTRING(SIZE(X,2),"*",ERR,ERROR))// &
-              & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
+              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           ENDIF
         CASE(5)
-          CALL FlagError("Not implemented",ERR,ERROR,*999)
+          CALL FlagError("Not implemented",err,error,*999)
           IF(SIZE(X,2)>=N) THEN
             IF(SIZE(W,1)>=N) THEN
             ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NUMBER_TO_VSTRING(SIZE(W,1),"*",ERR,ERROR))// &
-                & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
+                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             ENDIF
           ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NUMBER_TO_VSTRING(SIZE(X,2),"*",ERR,ERROR))// &
-              & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
+              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           ENDIF
         CASE DEFAULT
-          LOCAL_ERROR=TRIM(NUMBER_TO_VSTRING(ORDER,"*",ERR,ERROR))// &
+          LOCAL_ERROR=TRIM(NumberToVString(ORDER,"*",err,error))// &
             & " is an invalid Gauss order. You must have an order between 1 and 5"
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
       CASE(3)
         !Triangle
@@ -7053,14 +7037,14 @@ CONTAINS
               X(3,1)=L_C
               W(1)=W_C/2.0_DP
             ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NUMBER_TO_VSTRING(SIZE(W,1),"*",ERR,ERROR))// &
-                & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
+                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             ENDIF
           ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NUMBER_TO_VSTRING(SIZE(X,2),"*",ERR,ERROR))// &
-              & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
+              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           ENDIF
         CASE(2)
           N=3
@@ -7087,14 +7071,14 @@ CONTAINS
               X(3,3)=L1_ALPHA_1
               W(3)=W_ALPHA_1/2.0_DP
             ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NUMBER_TO_VSTRING(SIZE(W,1),"*",ERR,ERROR))// &
-                & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
+                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             ENDIF
           ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NUMBER_TO_VSTRING(SIZE(X,2),"*",ERR,ERROR))// &
-              & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
+              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           ENDIF
         CASE(3)
           N=4
@@ -7130,14 +7114,14 @@ CONTAINS
               X(3,4)=L1_ALPHA_1
               W(4)=W_ALPHA_1/2.0_DP
             ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NUMBER_TO_VSTRING(SIZE(W,1),"*",ERR,ERROR))// &
-                & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
+                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             ENDIF
           ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NUMBER_TO_VSTRING(SIZE(X,2),"*",ERR,ERROR))// &
-              & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
+              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           ENDIF
         CASE(4)
           N=6
@@ -7184,14 +7168,14 @@ CONTAINS
               X(3,6)=L1_ALPHA_2
               W(6)=W_ALPHA_2/2.0_DP
             ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NUMBER_TO_VSTRING(SIZE(W,1),"*",ERR,ERROR))// &
-                & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
+                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             ENDIF
           ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NUMBER_TO_VSTRING(SIZE(X,2),"*",ERR,ERROR))// &
-              & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
+              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           ENDIF
         CASE(5)
           N=7
@@ -7247,19 +7231,19 @@ CONTAINS
               X(3,7)=L1_ALPHA_2
               W(7)=W_ALPHA_2/2.0_DP
             ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NUMBER_TO_VSTRING(SIZE(W,1),"*",ERR,ERROR))// &
-                & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
+                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             ENDIF
           ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NUMBER_TO_VSTRING(SIZE(X,2),"*",ERR,ERROR))// &
-              & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
+              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           ENDIF
         CASE DEFAULT
-          LOCAL_ERROR=TRIM(NUMBER_TO_VSTRING(ORDER,"*",ERR,ERROR))// &
+          LOCAL_ERROR=TRIM(NumberToVString(ORDER,"*",err,error))// &
             & " is an invalid Gauss order. You must have an order between 1 and 5"
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
       CASE(4)
         !Tetrahedra
@@ -7276,14 +7260,14 @@ CONTAINS
               X(3,1)=L_C
               W(1)=W_C/6.0_DP
             ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NUMBER_TO_VSTRING(SIZE(W,1),"*",ERR,ERROR))// &
-                & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
+                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             ENDIF
           ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NUMBER_TO_VSTRING(SIZE(X,2),"*",ERR,ERROR))// &
-              & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
+              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           ENDIF
         CASE(2)
           N=4
@@ -7320,14 +7304,14 @@ CONTAINS
               X(4,4)=L1_ALPHA_1
               W(4)=W_ALPHA_1/6.0_DP
             ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NUMBER_TO_VSTRING(SIZE(W,1),"*",ERR,ERROR))// &
-                & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
+                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             ENDIF
           ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NUMBER_TO_VSTRING(SIZE(X,2),"*",ERR,ERROR))// &
-              & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
+              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           ENDIF
         CASE(3)
           N=5
@@ -7374,14 +7358,14 @@ CONTAINS
               X(4,5)=L1_ALPHA_1
               W(5)=W_ALPHA_1/6.0_DP
             ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NUMBER_TO_VSTRING(SIZE(W,1),"*",ERR,ERROR))// &
-                & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
+                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             ENDIF
           ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NUMBER_TO_VSTRING(SIZE(X,2),"*",ERR,ERROR))// &
-              & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
+              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           ENDIF
         CASE(4)
           N=11
@@ -7468,14 +7452,14 @@ CONTAINS
               X(4,11)=L2_BETA
               W(11)=W_BETA/6.0_DP
              ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NUMBER_TO_VSTRING(SIZE(W,1),"*",ERR,ERROR))// &
-                & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
+                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             ENDIF
           ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NUMBER_TO_VSTRING(SIZE(X,2),"*",ERR,ERROR))// &
-              & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
+              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           ENDIF
         CASE(5)
           N=14
@@ -7590,41 +7574,41 @@ CONTAINS
               X(4,14)=L2_BETA
               W(14)=W_BETA/6.0_DP
              ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NUMBER_TO_VSTRING(SIZE(W,1),"*",ERR,ERROR))// &
-                & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
+                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             ENDIF
           ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NUMBER_TO_VSTRING(SIZE(X,2),"*",ERR,ERROR))// &
-              & " and it must be >="//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
+              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           ENDIF
         CASE DEFAULT
-          LOCAL_ERROR=TRIM(NUMBER_TO_VSTRING(ORDER,"*",ERR,ERROR))// &
+          LOCAL_ERROR=TRIM(NumberToVString(ORDER,"*",err,error))// &
             & " is an invalid Gauss order. You must have an order between 1 and 5"
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
       CASE DEFAULT
-        LOCAL_ERROR=TRIM(NUMBER_TO_VSTRING(NUMBER_OF_VERTICES,"*",ERR,ERROR))// &
+        LOCAL_ERROR=TRIM(NumberToVString(NUMBER_OF_VERTICES,"*",err,error))// &
           & " is an invalid number of vertices. You must have between 2 and 4 vertices"
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+        CALL FlagError(LOCAL_ERROR,err,error,*999)
       END SELECT
     ELSE
-      LOCAL_ERROR="The first dimension of the X array is "//TRIM(NUMBER_TO_VSTRING(SIZE(X,1),"*",ERR,ERROR))// &
+      LOCAL_ERROR="The first dimension of the X array is "//TRIM(NumberToVString(SIZE(X,1),"*",err,error))// &
         & " and it must be >= the number of vertices"
-      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+      CALL FlagError(LOCAL_ERROR,err,error,*999)
     ENDIF
     
     IF(DIAGNOSTICS1) THEN
-      CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Simplex Gauss quadrature points:",ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of vertices = ",NUMBER_OF_VERTICES,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Order = ",ORDER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of gauss points = ",N,ERR,ERROR,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Simplex Gauss quadrature points:",err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of vertices = ",NUMBER_OF_VERTICES,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Order = ",ORDER,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of gauss points = ",N,err,error,*999)
       DO ng=1,N
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Gauss point ",ng,ERR,ERROR,*999)
-        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,ORDER,4,4,X(:,ng),'("        Location(nic) :",4(X,F13.5))', &
-          & '(23X,4(X,F13.5))',ERR,ERROR,*999)
-        CALL WRITE_STRING_FMT_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Weight        : ",W(ng),"F13.5",ERR,ERROR,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Gauss point ",ng,err,error,*999)
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,ORDER,4,4,X(:,ng),'("        Location(nic) :",4(X,F13.5))', &
+          & '(23X,4(X,F13.5))',err,error,*999)
+        CALL WriteStringFmtValue(DIAGNOSTIC_OUTPUT_TYPE,"        Weight        : ",W(ng),"F13.5",err,error,*999)
       ENDDO !ng
       IF(DIAGNOSTICS2) THEN
 !!TODO: \todo add in integral check
@@ -7633,7 +7617,7 @@ CONTAINS
 
     EXITS("GAUSS_SIMPLEX")
     RETURN
-999 ERRORSEXITS("GAUSS_SIMPLEX",ERR,ERROR)
+999 ERRORSEXITS("GAUSS_SIMPLEX",err,error)
     RETURN 1
   END SUBROUTINE GAUSS_SIMPLEX
   
@@ -7642,7 +7626,7 @@ CONTAINS
   !
 
   !>Evaluates a 1D cubic Hermite basis function.
-  FUNCTION HERMITE_CUBIC_EVALUATE(NODE_INDEX,NODE_DERIVATIVE_INDEX,PARTIAL_DERIVATIVE_INDEX,XI,ERR,ERROR)
+  FUNCTION HERMITE_CUBIC_EVALUATE(NODE_INDEX,NODE_DERIVATIVE_INDEX,PARTIAL_DERIVATIVE_INDEX,XI,err,error)
   
    !Argument variables
     INTEGER(INTG), INTENT(IN) :: NODE_INDEX !<The local node number of the basis. Must be between 1 and 2.
@@ -7655,7 +7639,7 @@ CONTAINS
     REAL(DP) :: HERMITE_CUBIC_EVALUATE !<On exit the evaluated basis function.
     !Local variables
     
-    ENTERS("HERMITE_CUBIC_EVALUATE",ERR,ERROR,*999)
+    ENTERS("HERMITE_CUBIC_EVALUATE",err,error,*999)
 
     HERMITE_CUBIC_EVALUATE=0.0_DP
     SELECT CASE(PARTIAL_DERIVATIVE_INDEX)
@@ -7668,7 +7652,7 @@ CONTAINS
         CASE(2)
           HERMITE_CUBIC_EVALUATE=((XI-2.0_DP)*XI+1.0_DP)*XI ! xi^3-2xi^2+xi
         CASE DEFAULT
-          CALL FlagError("Invalid node derivative index",ERR,ERROR,*999)
+          CALL FlagError("Invalid node derivative index",err,error,*999)
         END SELECT
       CASE(2)
         SELECT CASE(NODE_DERIVATIVE_INDEX)
@@ -7677,10 +7661,10 @@ CONTAINS
         CASE(2)
           HERMITE_CUBIC_EVALUATE=XI*XI*(XI-1.0_DP) ! xi^3-xi^2
         CASE DEFAULT
-          CALL FlagError("Invalid node derivative index",ERR,ERROR,*999)
+          CALL FlagError("Invalid node derivative index",err,error,*999)
         END SELECT
       CASE DEFAULT
-        CALL FlagError("Invalid node index",ERR,ERROR,*999)
+        CALL FlagError("Invalid node index",err,error,*999)
       END SELECT
     CASE(FIRST_PART_DERIV)
       SELECT CASE(NODE_INDEX)
@@ -7691,7 +7675,7 @@ CONTAINS
         CASE(2)
           HERMITE_CUBIC_EVALUATE=(3.0_DP*XI-4.0_DP)*XI+1.0_DP ! 3xi^2-4xi+1
         CASE DEFAULT
-          CALL FlagError("Invalid node derivative index",ERR,ERROR,*999)
+          CALL FlagError("Invalid node derivative index",err,error,*999)
         END SELECT
       CASE(2)
         SELECT CASE(NODE_DERIVATIVE_INDEX)
@@ -7700,10 +7684,10 @@ CONTAINS
         CASE(2)
           HERMITE_CUBIC_EVALUATE=XI*(3.0_DP*XI-2.0_DP) ! 3xi^2-2xi
         CASE DEFAULT
-          CALL FlagError("Invalid node derivative index",ERR,ERROR,*999)
+          CALL FlagError("Invalid node derivative index",err,error,*999)
         END SELECT
       CASE DEFAULT
-        CALL FlagError("Invalid node index",ERR,ERROR,*999)
+        CALL FlagError("Invalid node index",err,error,*999)
       END SELECT
     CASE(SECOND_PART_DERIV)
       SELECT CASE(NODE_INDEX)
@@ -7714,7 +7698,7 @@ CONTAINS
         CASE(2)
           HERMITE_CUBIC_EVALUATE=6.0_DP*XI-4.0_DP ! 6xi-4
         CASE DEFAULT
-          CALL FlagError("Invalid node derivative index",ERR,ERROR,*999)
+          CALL FlagError("Invalid node derivative index",err,error,*999)
         END SELECT
       CASE(2)
         SELECT CASE(NODE_DERIVATIVE_INDEX)
@@ -7723,18 +7707,18 @@ CONTAINS
         CASE(2)
           HERMITE_CUBIC_EVALUATE=6.0_DP*XI-2.0_DP ! 6xi-2
         CASE DEFAULT
-          CALL FlagError("Invalid node derivative index",ERR,ERROR,*999)
+          CALL FlagError("Invalid node derivative index",err,error,*999)
         END SELECT
       CASE DEFAULT
-        CALL FlagError("Invalid node index",ERR,ERROR,*999)
+        CALL FlagError("Invalid node index",err,error,*999)
       END SELECT
     CASE DEFAULT
-      CALL FlagError("Invalid partial derivative index",ERR,ERROR,*999)
+      CALL FlagError("Invalid partial derivative index",err,error,*999)
     END SELECT
 
     EXITS("HERMITE_CUBIC_EVALUATE")
     RETURN
-999 ERRORSEXITS("HERMITE_CUBIC_EVALUATE",ERR,ERROR)
+999 ERRORSEXITS("HERMITE_CUBIC_EVALUATE",err,error)
     RETURN 
   END FUNCTION HERMITE_CUBIC_EVALUATE
  
@@ -7753,7 +7737,7 @@ CONTAINS
   !
 
   !>Evaluates a 1D quadratic Hermite basis function
-  FUNCTION HERMITE_QUADRATIC_EVALUATE(NODE_INDEX,NODE_DERIVATIVE_INDEX,PARTIAL_DERIVATIVE_INDEX,SPECIAL_NODE_INDEX,XI,ERR,ERROR)
+  FUNCTION HERMITE_QUADRATIC_EVALUATE(NODE_INDEX,NODE_DERIVATIVE_INDEX,PARTIAL_DERIVATIVE_INDEX,SPECIAL_NODE_INDEX,XI,err,error)
       
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: NODE_INDEX !<The local node number of the basis. Must be between 1 and 2.
@@ -7767,7 +7751,7 @@ CONTAINS
     REAL(DP) :: HERMITE_QUADRATIC_EVALUATE
     !Local variables
     
-    ENTERS("HERMITE_QUADRATIC_EVALUATE",ERR,ERROR,*999)
+    ENTERS("HERMITE_QUADRATIC_EVALUATE",err,error,*999)
     
     HERMITE_QUADRATIC_EVALUATE=0.0_DP
     SELECT CASE(SPECIAL_NODE_INDEX)
@@ -7782,7 +7766,7 @@ CONTAINS
           CASE(2)
             HERMITE_QUADRATIC_EVALUATE=0.0_DP ! 0
           CASE DEFAULT
-            CALL FlagError("Invalid node derivative index",ERR,ERROR,*999)
+            CALL FlagError("Invalid node derivative index",err,error,*999)
           END SELECT
         CASE(2)
           SELECT CASE(NODE_DERIVATIVE_INDEX)
@@ -7791,10 +7775,10 @@ CONTAINS
           CASE(2)
             HERMITE_QUADRATIC_EVALUATE=(XI-1.0_DP)*XI ! xi^2-xi
           CASE DEFAULT
-            CALL FlagError("Invalid node derivative index",ERR,ERROR,*999)
+            CALL FlagError("Invalid node derivative index",err,error,*999)
           END SELECT
         CASE DEFAULT
-          CALL FlagError("Invalid node index",ERR,ERROR,*999)
+          CALL FlagError("Invalid node index",err,error,*999)
         END SELECT
       CASE(FIRST_PART_DERIV)
         SELECT CASE(NODE_INDEX)
@@ -7805,7 +7789,7 @@ CONTAINS
           CASE(2)
             HERMITE_QUADRATIC_EVALUATE=0.0_DP ! 0
           CASE DEFAULT
-            CALL FlagError("Invalid node derivative index",ERR,ERROR,*999)
+            CALL FlagError("Invalid node derivative index",err,error,*999)
           END SELECT
         CASE(2)
           SELECT CASE(NODE_DERIVATIVE_INDEX)
@@ -7814,10 +7798,10 @@ CONTAINS
           CASE(2)
             HERMITE_QUADRATIC_EVALUATE=2.0_DP*XI-1.0_DP ! 2xi-1
           CASE DEFAULT
-            CALL FlagError("Invalid node derivative index",ERR,ERROR,*999)
+            CALL FlagError("Invalid node derivative index",err,error,*999)
           END SELECT
         CASE DEFAULT
-          CALL FlagError("Invalid node index",ERR,ERROR,*999)
+          CALL FlagError("Invalid node index",err,error,*999)
         END SELECT
       CASE(SECOND_PART_DERIV)
         SELECT CASE(NODE_INDEX)
@@ -7828,7 +7812,7 @@ CONTAINS
           CASE(2)
             HERMITE_QUADRATIC_EVALUATE=0.0_DP ! 0
           CASE DEFAULT
-            CALL FlagError("Invalid node derivative index",ERR,ERROR,*999)
+            CALL FlagError("Invalid node derivative index",err,error,*999)
           END SELECT
         CASE(2)
           SELECT CASE(NODE_DERIVATIVE_INDEX)
@@ -7837,13 +7821,13 @@ CONTAINS
           CASE(2)
             HERMITE_QUADRATIC_EVALUATE=2.0_DP ! 2
           CASE DEFAULT
-            CALL FlagError("Invalid node derivative index",ERR,ERROR,*999)
+            CALL FlagError("Invalid node derivative index",err,error,*999)
           END SELECT
         CASE DEFAULT
-          CALL FlagError("Invalid node index",ERR,ERROR,*999)
+          CALL FlagError("Invalid node index",err,error,*999)
         END SELECT
       CASE DEFAULT
-        CALL FlagError("Invalid partial derivative index",ERR,ERROR,*999)
+        CALL FlagError("Invalid partial derivative index",err,error,*999)
       END SELECT
     CASE(2)
       SELECT CASE(PARTIAL_DERIVATIVE_INDEX)
@@ -7856,7 +7840,7 @@ CONTAINS
           CASE(2)
             HERMITE_QUADRATIC_EVALUATE=XI*(1.0_DP-XI) ! -xi^2+xi
           CASE DEFAULT
-            CALL FlagError("Invalid node derivative index",ERR,ERROR,*999)
+            CALL FlagError("Invalid node derivative index",err,error,*999)
           END SELECT
         CASE(2)
           SELECT CASE(NODE_DERIVATIVE_INDEX)
@@ -7865,10 +7849,10 @@ CONTAINS
           CASE(2)
             HERMITE_QUADRATIC_EVALUATE=0.0_DP ! 0
           CASE DEFAULT
-            CALL FlagError("Invalid node derivative index",ERR,ERROR,*999)
+            CALL FlagError("Invalid node derivative index",err,error,*999)
           END SELECT
         CASE DEFAULT
-          CALL FlagError("Invalid node index",ERR,ERROR,*999)
+          CALL FlagError("Invalid node index",err,error,*999)
         END SELECT
       CASE(FIRST_PART_DERIV)
         SELECT CASE(NODE_INDEX)
@@ -7879,7 +7863,7 @@ CONTAINS
           CASE(2)
             HERMITE_QUADRATIC_EVALUATE=1.0_DP-2.0_DP*XI ! -2xi+1
           CASE DEFAULT
-            CALL FlagError("Invalid node derivative index",ERR,ERROR,*999)
+            CALL FlagError("Invalid node derivative index",err,error,*999)
           END SELECT
         CASE(2)
           SELECT CASE(NODE_DERIVATIVE_INDEX)
@@ -7888,10 +7872,10 @@ CONTAINS
           CASE(2)
             HERMITE_QUADRATIC_EVALUATE=0.0_DP ! 0
           CASE DEFAULT
-            CALL FlagError("Invalid node derivative index",ERR,ERROR,*999)
+            CALL FlagError("Invalid node derivative index",err,error,*999)
           END SELECT
         CASE DEFAULT
-          CALL FlagError("Invalid node index",ERR,ERROR,*999)
+          CALL FlagError("Invalid node index",err,error,*999)
         END SELECT
       CASE(SECOND_PART_DERIV)
         SELECT CASE(NODE_INDEX)
@@ -7902,7 +7886,7 @@ CONTAINS
           CASE(2)
             HERMITE_QUADRATIC_EVALUATE=-2.0_DP ! -2
           CASE DEFAULT
-            CALL FlagError("Invalid node derivative index",ERR,ERROR,*999)
+            CALL FlagError("Invalid node derivative index",err,error,*999)
           END SELECT
         CASE(2)
           SELECT CASE(NODE_DERIVATIVE_INDEX)
@@ -7911,21 +7895,21 @@ CONTAINS
           CASE(2)
             HERMITE_QUADRATIC_EVALUATE=0.0_DP ! 0
           CASE DEFAULT
-            CALL FlagError("Invalid node derivative index",ERR,ERROR,*999)
+            CALL FlagError("Invalid node derivative index",err,error,*999)
           END SELECT
         CASE DEFAULT
-          CALL FlagError("Invalid node index",ERR,ERROR,*999)
+          CALL FlagError("Invalid node index",err,error,*999)
         END SELECT
       CASE DEFAULT
-        CALL FlagError("Invalid partial derivative index",ERR,ERROR,*999)
+        CALL FlagError("Invalid partial derivative index",err,error,*999)
       END SELECT
     CASE DEFAULT
-      CALL FlagError("Invalid special node index",ERR,ERROR,*999)
+      CALL FlagError("Invalid special node index",err,error,*999)
     END SELECT
 
     EXITS("HERMITE_QUADRATIC_EVALUATE")
     RETURN
-999 ERRORSEXITS("HERMITE_QUADRATIC_EVALUATE",ERR,ERROR)
+999 ERRORSEXITS("HERMITE_QUADRATIC_EVALUATE",err,error)
     RETURN 
   END FUNCTION HERMITE_QUADRATIC_EVALUATE
 
@@ -7934,7 +7918,7 @@ CONTAINS
   !
 
   !>Evaluates a 1D cubic Lagrange basis function.
-  FUNCTION LAGRANGE_CUBIC_EVALUATE(NODE_INDEX,PARTIAL_DERIVATIVE_INDEX,XI,ERR,ERROR)
+  FUNCTION LAGRANGE_CUBIC_EVALUATE(NODE_INDEX,PARTIAL_DERIVATIVE_INDEX,XI,err,error)
   
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: NODE_INDEX !<The local node of the basis to evaluate. Must be between 1 and 4.
@@ -7946,7 +7930,7 @@ CONTAINS
     REAL(DP) :: LAGRANGE_CUBIC_EVALUATE !<On exit the evaluated basis function.
     !Local variables
     
-    ENTERS("LAGRANGE_CUBIC_EVALUATE",ERR,ERROR,*999)
+    ENTERS("LAGRANGE_CUBIC_EVALUATE",err,error,*999)
     
     LAGRANGE_CUBIC_EVALUATE=0.0_DP
     SELECT CASE(PARTIAL_DERIVATIVE_INDEX)
@@ -7961,7 +7945,7 @@ CONTAINS
       CASE(4)
         LAGRANGE_CUBIC_EVALUATE=0.5_DP*XI*(3.0_DP*XI-1.0_DP)*(3.0_DP*XI-2.0_DP) !
       CASE DEFAULT
-        CALL FlagError("Invalid node index",ERR,ERROR,*999)
+        CALL FlagError("Invalid node index",err,error,*999)
       END SELECT
     CASE(FIRST_PART_DERIV)
       SELECT CASE(NODE_INDEX)
@@ -7974,7 +7958,7 @@ CONTAINS
       CASE(4)
         LAGRANGE_CUBIC_EVALUATE= 13.5_DP*XI*XI- 9.0_DP*XI+1.0_DP ! 13.5xi^2-9xi+1
       CASE DEFAULT
-        CALL FlagError("Invalid node index",ERR,ERROR,*999)
+        CALL FlagError("Invalid node index",err,error,*999)
       END SELECT
     CASE(SECOND_PART_DERIV)
       SELECT CASE(NODE_INDEX)
@@ -7987,15 +7971,15 @@ CONTAINS
       CASE(4)
         LAGRANGE_CUBIC_EVALUATE=9.0_DP*(3.0_DP*XI-1.0_DP) ! 27xi-9
       CASE DEFAULT
-        CALL FlagError("Invalid node index",ERR,ERROR,*999)
+        CALL FlagError("Invalid node index",err,error,*999)
       END SELECT
     CASE DEFAULT
-      CALL FlagError("Invalid partial derivative index",ERR,ERROR,*999)
+      CALL FlagError("Invalid partial derivative index",err,error,*999)
     END SELECT
 
     EXITS("LAGRANGE_CUBIC_EVALUATE")
     RETURN
-999 ERRORSEXITS("LAGRANGE_CUBIC_EVALUATE",ERR,ERROR)
+999 ERRORSEXITS("LAGRANGE_CUBIC_EVALUATE",err,error)
     RETURN 
   END FUNCTION LAGRANGE_CUBIC_EVALUATE
 
@@ -8004,7 +7988,7 @@ CONTAINS
   !
   
   !> Evaluates a 1D linear Lagrange basis function.
-  FUNCTION LAGRANGE_LINEAR_EVALUATE(NODE_INDEX,PARTIAL_DERIVATIVE_INDEX,XI,ERR,ERROR)
+  FUNCTION LAGRANGE_LINEAR_EVALUATE(NODE_INDEX,PARTIAL_DERIVATIVE_INDEX,XI,err,error)
       
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: NODE_INDEX !<The local node of the basis to evaluate. Must be between 1 and 2.
@@ -8016,7 +8000,7 @@ CONTAINS
     REAL(DP) :: LAGRANGE_LINEAR_EVALUATE !<On exit the evaluated basis function.
     !Local variables
     
-    ENTERS("LAGRANGE_LINEAR_EVALUATE",ERR,ERROR,*999)
+    ENTERS("LAGRANGE_LINEAR_EVALUATE",err,error,*999)
 
     LAGRANGE_LINEAR_EVALUATE=0.0_DP
     SELECT CASE(PARTIAL_DERIVATIVE_INDEX)
@@ -8027,7 +8011,7 @@ CONTAINS
       CASE(2)
         LAGRANGE_LINEAR_EVALUATE=XI !xi
       CASE DEFAULT
-        CALL FlagError("Invalid node index",ERR,ERROR,*999)
+        CALL FlagError("Invalid node index",err,error,*999)
       END SELECT
     CASE(FIRST_PART_DERIV)
       SELECT CASE(NODE_INDEX)
@@ -8036,7 +8020,7 @@ CONTAINS
       CASE(2)
         LAGRANGE_LINEAR_EVALUATE=1.0_DP ! 1
       CASE DEFAULT
-        CALL FlagError("Invalid node index",ERR,ERROR,*999)
+        CALL FlagError("Invalid node index",err,error,*999)
       END SELECT
     CASE(SECOND_PART_DERIV)
       SELECT CASE(NODE_INDEX)
@@ -8045,15 +8029,15 @@ CONTAINS
       CASE(2)
         LAGRANGE_LINEAR_EVALUATE=0.0_DP ! 0
       CASE DEFAULT
-        CALL FlagError("Invalid node index",ERR,ERROR,*999)
+        CALL FlagError("Invalid node index",err,error,*999)
       END SELECT
     CASE DEFAULT
-      CALL FlagError("Invalid partial derivative index",ERR,ERROR,*999)
+      CALL FlagError("Invalid partial derivative index",err,error,*999)
     END SELECT
     
     EXITS("LAGRANGE_LINEAR_EVALUATE")
     RETURN
-999 ERRORSEXITS("LAGRANGE_LINEAR_EVALUATE",ERR,ERROR)
+999 ERRORSEXITS("LAGRANGE_LINEAR_EVALUATE",err,error)
     RETURN 
   END FUNCTION LAGRANGE_LINEAR_EVALUATE
 
@@ -8062,7 +8046,7 @@ CONTAINS
   !
 
   !>Evaluates a 1D quadratic Lagrange basis function.
-  FUNCTION LAGRANGE_QUADRATIC_EVALUATE(NODE_INDEX,PARTIAL_DERIVATIVE_INDEX,XI,ERR,ERROR)
+  FUNCTION LAGRANGE_QUADRATIC_EVALUATE(NODE_INDEX,PARTIAL_DERIVATIVE_INDEX,XI,err,error)
      
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: NODE_INDEX !<The local node of the basis to evaluate. Must be between 1 and 3.
@@ -8074,7 +8058,7 @@ CONTAINS
     REAL(DP) :: LAGRANGE_QUADRATIC_EVALUATE !<On exit the evaluated basis function.
     !Local variables
     
-    ENTERS("LAGRANGE_QUADRATIC_EVALUATE",ERR,ERROR,*999)
+    ENTERS("LAGRANGE_QUADRATIC_EVALUATE",err,error,*999)
 
     LAGRANGE_QUADRATIC_EVALUATE=0.0_DP
     SELECT CASE(PARTIAL_DERIVATIVE_INDEX)
@@ -8087,7 +8071,7 @@ CONTAINS
       CASE(3)
         LAGRANGE_QUADRATIC_EVALUATE=XI*(XI+XI-1.0_DP) ! 2xi^2-xi
       CASE DEFAULT
-        CALL FlagError("Invalid node index",ERR,ERROR,*999)
+        CALL FlagError("Invalid node index",err,error,*999)
       END SELECT
     CASE(FIRST_PART_DERIV)
       SELECT CASE(NODE_INDEX)
@@ -8098,7 +8082,7 @@ CONTAINS
       CASE(3)
         LAGRANGE_QUADRATIC_EVALUATE=4.0_DP*XI-1.0_DP ! 4xi-1
       CASE DEFAULT
-        CALL FlagError("Invalid node index",ERR,ERROR,*999)
+        CALL FlagError("Invalid node index",err,error,*999)
       END SELECT
     CASE(SECOND_PART_DERIV)
       SELECT CASE(NODE_INDEX)
@@ -8109,15 +8093,15 @@ CONTAINS
       CASE(3)
         LAGRANGE_QUADRATIC_EVALUATE=4.0_DP ! 4
       CASE DEFAULT
-        CALL FlagError("Invalid node index",ERR,ERROR,*999)
+        CALL FlagError("Invalid node index",err,error,*999)
       END SELECT
     CASE DEFAULT
-      CALL FlagError("Invalid partial derivative index",ERR,ERROR,*999)
+      CALL FlagError("Invalid partial derivative index",err,error,*999)
     END SELECT
 
     EXITS("LAGRANGE_QUADRATIC_EVALUATE")
     RETURN
-999 ERRORSEXITS("LAGRANGE_QUADRATIC_EVALUATE",ERR,ERROR)
+999 ERRORSEXITS("LAGRANGE_QUADRATIC_EVALUATE",err,error)
     RETURN 
   END FUNCTION LAGRANGE_QUADRATIC_EVALUATE
 
@@ -8127,7 +8111,7 @@ CONTAINS
   
   !>Evaluates a cubic simpelx basis function at a specificed area position and node index and with a given partial derivative index
   !>with respect to area coordinates for double precision arguments
-  FUNCTION SIMPLEX_CUBIC_EVALUATE_DP(NODE_INDEX,PARTIAL_DERIVATIVE_INDEX,XL,ERR,ERROR)
+  FUNCTION SIMPLEX_CUBIC_EVALUATE_DP(NODE_INDEX,PARTIAL_DERIVATIVE_INDEX,XL,err,error)
     
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: NODE_INDEX !<The node index to evaluate
@@ -8139,7 +8123,7 @@ CONTAINS
     REAL(DP) :: SIMPLEX_CUBIC_EVALUATE_DP
     !Local variables
     
-    ENTERS("SIMPLEX_CUBIC_EVALUATE_DP",ERR,ERROR,*999)
+    ENTERS("SIMPLEX_CUBIC_EVALUATE_DP",err,error,*999)
     
     SIMPLEX_CUBIC_EVALUATE_DP=0.0_DP
         
@@ -8155,7 +8139,7 @@ CONTAINS
       CASE(4)
         SIMPLEX_CUBIC_EVALUATE_DP=0.5_DP*XL*(3.0_DP*XL-1.0_DP)*(3.0_DP*XL-2.0_DP) !1/2.L(3L-1)(3L-2)
       CASE DEFAULT
-        CALL FlagError("Invalid node index.",ERR,ERROR,*999)
+        CALL FlagError("Invalid node index.",err,error,*999)
       END SELECT
     CASE(FIRST_PART_DERIV)
       SELECT CASE(NODE_INDEX)
@@ -8168,7 +8152,7 @@ CONTAINS
       CASE(4)
         SIMPLEX_CUBIC_EVALUATE_DP=13.5_DP*XL*XL-9.0_DP*XL+1.0_DP !27/2.L^2-9L+1
       CASE DEFAULT
-        CALL FlagError("Invalid node index.",ERR,ERROR,*999)
+        CALL FlagError("Invalid node index.",err,error,*999)
       END SELECT
     CASE(SECOND_PART_DERIV)
       SELECT CASE(NODE_INDEX)
@@ -8181,7 +8165,7 @@ CONTAINS
       CASE(4)
         SIMPLEX_CUBIC_EVALUATE_DP=2.0_DP*XL-9.0_DP
       CASE DEFAULT
-        CALL FlagError("Invalid node index.",ERR,ERROR,*999)
+        CALL FlagError("Invalid node index.",err,error,*999)
       END SELECT
     CASE(THIRD_PART_DERIV)
       SELECT CASE(NODE_INDEX)
@@ -8194,15 +8178,15 @@ CONTAINS
       CASE(4)
         SIMPLEX_CUBIC_EVALUATE_DP=2.0_DP !2
       CASE DEFAULT
-        CALL FlagError("Invalid node index.",ERR,ERROR,*999)
+        CALL FlagError("Invalid node index.",err,error,*999)
       END SELECT
     CASE DEFAULT
-      CALL FlagError("Invalid partial derivative index.",ERR,ERROR,*999)
+      CALL FlagError("Invalid partial derivative index.",err,error,*999)
     END SELECT
 
     EXITS("SIMPLEX_CUBIC_EVALUATE_DP")
     RETURN
-999 ERRORSEXITS("SIMPLEX_CUBIC_EVALUATE_DP",ERR,ERROR)
+999 ERRORSEXITS("SIMPLEX_CUBIC_EVALUATE_DP",err,error)
     RETURN 
   END FUNCTION SIMPLEX_CUBIC_EVALUATE_DP
 
@@ -8212,7 +8196,7 @@ CONTAINS
   
   !>Evaluates a linear simpelx basis function at a specificed area position and node index and with a given partial derivative index
   !>with respect to area coordinates for double precision arguments
-  FUNCTION SIMPLEX_LINEAR_EVALUATE_DP(NODE_INDEX,PARTIAL_DERIVATIVE_INDEX,XL,ERR,ERROR)
+  FUNCTION SIMPLEX_LINEAR_EVALUATE_DP(NODE_INDEX,PARTIAL_DERIVATIVE_INDEX,XL,err,error)
   
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: NODE_INDEX !<The node index to evaluate
@@ -8224,7 +8208,7 @@ CONTAINS
     REAL(DP) :: SIMPLEX_LINEAR_EVALUATE_DP
     !Local variables
     
-    ENTERS("SIMPLEX_LINEAR_EVALUATE_DP",ERR,ERROR,*999)
+    ENTERS("SIMPLEX_LINEAR_EVALUATE_DP",err,error,*999)
 
     SIMPLEX_LINEAR_EVALUATE_DP=0.0_DP
     SELECT CASE(PARTIAL_DERIVATIVE_INDEX)
@@ -8235,7 +8219,7 @@ CONTAINS
       CASE(2)
         SIMPLEX_LINEAR_EVALUATE_DP=XL  !L
       CASE DEFAULT
-        CALL FlagError("Invalid node index",ERR,ERROR,*999)
+        CALL FlagError("Invalid node index",err,error,*999)
       END SELECT
     CASE(FIRST_PART_DERIV)
       SELECT CASE(NODE_INDEX)
@@ -8244,7 +8228,7 @@ CONTAINS
       CASE(2)
         SIMPLEX_LINEAR_EVALUATE_DP=1.0_DP !1
       CASE DEFAULT
-        CALL FlagError("Invalid node index",ERR,ERROR,*999)
+        CALL FlagError("Invalid node index",err,error,*999)
       END SELECT
     CASE(SECOND_PART_DERIV)
       SELECT CASE(NODE_INDEX)
@@ -8253,7 +8237,7 @@ CONTAINS
       CASE(2)
         SIMPLEX_LINEAR_EVALUATE_DP=0.0_DP !0
       CASE DEFAULT
-        CALL FlagError("Invalid node index",ERR,ERROR,*999)
+        CALL FlagError("Invalid node index",err,error,*999)
       END SELECT
     CASE(THIRD_PART_DERIV)
       SELECT CASE(NODE_INDEX)
@@ -8262,15 +8246,15 @@ CONTAINS
       CASE(2)
         SIMPLEX_LINEAR_EVALUATE_DP=0.0_DP !0
       CASE DEFAULT
-        CALL FlagError("Invalid node index",ERR,ERROR,*999)
+        CALL FlagError("Invalid node index",err,error,*999)
       END SELECT
     CASE DEFAULT
-      CALL FlagError("Invalid partial derivative index",ERR,ERROR,*999)
+      CALL FlagError("Invalid partial derivative index",err,error,*999)
     END SELECT
     
     EXITS("SIMPLEX_LINEAR_EVALUATE_DP")
     RETURN
-999 ERRORSEXITS("SIMPLEX_LINEAR_EVALUATE_DP",ERR,ERROR)
+999 ERRORSEXITS("SIMPLEX_LINEAR_EVALUATE_DP",err,error)
     RETURN 
   END FUNCTION SIMPLEX_LINEAR_EVALUATE_DP
 
@@ -8280,7 +8264,7 @@ CONTAINS
   
   !>Evaluates a quadratic simpelx basis function at a specificed area position and node index and with a given partial derivative index
   !>with respect to area coordinates for double precision arguments.
-   FUNCTION SIMPLEX_QUADRATIC_EVALUATE_DP(NODE_INDEX,PARTIAL_DERIVATIVE_INDEX,XL,ERR,ERROR)
+   FUNCTION SIMPLEX_QUADRATIC_EVALUATE_DP(NODE_INDEX,PARTIAL_DERIVATIVE_INDEX,XL,err,error)
       
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: NODE_INDEX !<The node index to evaluate
@@ -8292,7 +8276,7 @@ CONTAINS
     REAL(DP) :: SIMPLEX_QUADRATIC_EVALUATE_DP
     !Local variables
     
-    ENTERS("SIMPLEX_QUADRATIC_EVALUATE_DP",ERR,ERROR,*999)
+    ENTERS("SIMPLEX_QUADRATIC_EVALUATE_DP",err,error,*999)
 
     SIMPLEX_QUADRATIC_EVALUATE_DP=0.0_DP
     SELECT CASE(PARTIAL_DERIVATIVE_INDEX)
@@ -8305,7 +8289,7 @@ CONTAINS
       CASE(3)
         SIMPLEX_QUADRATIC_EVALUATE_DP=XL*(2.0_DP*XL-1.0_DP) !L(2L-1)
       CASE DEFAULT
-        CALL FlagError("Invalid node index.",ERR,ERROR,*999)
+        CALL FlagError("Invalid node index.",err,error,*999)
       END SELECT
     CASE(FIRST_PART_DERIV)
       SELECT CASE(NODE_INDEX)
@@ -8316,7 +8300,7 @@ CONTAINS
       CASE(3)
         SIMPLEX_QUADRATIC_EVALUATE_DP=4.0_DP*XL-1.0_DP !4L-1
       CASE DEFAULT
-        CALL FlagError("Invalid node index",ERR,ERROR,*999)
+        CALL FlagError("Invalid node index",err,error,*999)
       END SELECT
     CASE(SECOND_PART_DERIV)
       SELECT CASE(NODE_INDEX)
@@ -8327,7 +8311,7 @@ CONTAINS
       CASE(3)
         SIMPLEX_QUADRATIC_EVALUATE_DP=4.0_DP !4
       CASE DEFAULT
-        CALL FlagError("Invalid node index.",ERR,ERROR,*999)
+        CALL FlagError("Invalid node index.",err,error,*999)
       END SELECT
     CASE(THIRD_PART_DERIV)
       SELECT CASE(NODE_INDEX)
@@ -8338,15 +8322,15 @@ CONTAINS
       CASE(3)
         SIMPLEX_QUADRATIC_EVALUATE_DP=0.0_DP !0
       CASE DEFAULT
-        CALL FlagError("Invalid node index.",ERR,ERROR,*999)
+        CALL FlagError("Invalid node index.",err,error,*999)
       END SELECT
     CASE DEFAULT
-      CALL FlagError("Invalid partial derivative index.",ERR,ERROR,*999)
+      CALL FlagError("Invalid partial derivative index.",err,error,*999)
     END SELECT
 
     EXITS("SIMPLEX_QUADRATIC_EVALUATE_DP")
     RETURN
-999 ERRORSEXITS("SIMPLEX_QUADRATIC_EVALUATE_DP",ERR,ERROR)
+999 ERRORSEXITS("SIMPLEX_QUADRATIC_EVALUATE_DP",err,error)
     RETURN 
   END FUNCTION SIMPLEX_QUADRATIC_EVALUATE_DP
 
@@ -8354,5 +8338,5 @@ CONTAINS
   !================================================================================================================================
   !
 
-END MODULE BASIS_ROUTINES
+END MODULE BasisRoutines
 

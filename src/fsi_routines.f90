@@ -45,7 +45,7 @@
 MODULE FSIRoutines
 
   USE BaseRoutines
-  USE BASIS_ROUTINES
+  USE BasisRoutines
   USE CMISS_CELLML
   USE Constants
   USE CONTROL_LOOP_ROUTINES

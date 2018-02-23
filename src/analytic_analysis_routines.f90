@@ -44,7 +44,7 @@
 !>This module handles all analytic analysis routines.
 MODULE ANALYTIC_ANALYSIS_ROUTINES
 
-  USE BASIS_ROUTINES
+  USE BasisRoutines
   USE CmissMPI
   USE ComputationEnvironment
   USE CONSTANTS
