@@ -3396,57 +3396,58 @@ CONTAINS
         CASE(PROBLEM_LINEAR_ELASTICITY_TYPE,PROBLEM_FINITE_ELASTICITY_TYPE,PROBLEM_LINEAR_ELASTICITY_CONTACT_TYPE, &
           & PROBLEM_FINITE_ELASTICITY_CONTACT_TYPE)
 
-          IF(DIAGNOSTICS1) THEN
-            directory="results_iter/"
-            INQUIRE(FILE=CHAR(directory),EXIST=dirExists)
-            IF(.NOT.dirExists) THEN
-              CALL SYSTEM(CHAR("mkdir "//directory))
-            ENDIF
+          !This is not how diagnostics should be used
+          ! IF(DIAGNOSTICS1) THEN          
+          !   directory="results_iter/"
+          !   INQUIRE(FILE=CHAR(directory),EXIST=dirExists)
+          !   IF(.NOT.dirExists) THEN
+          !     CALL SYSTEM(CHAR("mkdir "//directory))
+          !   ENDIF
 
-            ! Find how many times the problem solve command has been issued.
-            max_solve_calls=100
-            coupledMeshIdx=1
-            load_step=1
-            firstIterationNumber=0
-            DO solve_call=1,max_solve_calls
-              fileToCheck=directory// &
-                & "mesh"//TRIM(NUMBER_TO_VSTRING(coupledMeshIdx,"*",err,error))// &
-                & "_solveCall"//TRIM(NUMBER_TO_VSTRING(solve_call,"*",err,error))// &
-                & "_load"//TRIM(NUMBER_TO_VSTRING(load_step,"*",err,error))// &
-                & "_iter"//TRIM(NUMBER_TO_VSTRING(firstIterationNumber,"*",err,error))//".part0.exnode"
-              INQUIRE(FILE=CHAR(fileToCheck),EXIST=fileExists)
-              IF(.NOT.fileExists) THEN
-                EXIT
-              ENDIF
-            ENDDO
+          !   ! Find how many times the problem solve command has been issued.
+          !   max_solve_calls=100
+          !   coupledMeshIdx=1
+          !   load_step=1
+          !   firstIterationNumber=0
+          !   DO solve_call=1,max_solve_calls
+          !     fileToCheck=directory// &
+          !       & "mesh"//TRIM(NUMBER_TO_VSTRING(coupledMeshIdx,"*",err,error))// &
+          !       & "_solveCall"//TRIM(NUMBER_TO_VSTRING(solve_call,"*",err,error))// &
+          !       & "_load"//TRIM(NUMBER_TO_VSTRING(load_step,"*",err,error))// &
+          !       & "_iter"//TRIM(NUMBER_TO_VSTRING(firstIterationNumber,"*",err,error))//".part0.exnode"
+          !     INQUIRE(FILE=CHAR(fileToCheck),EXIST=fileExists)
+          !     IF(.NOT.fileExists) THEN
+          !       EXIT
+          !     ENDIF
+          !   ENDDO
 
-            load_step=solver%SOLVERS%CONTROL_LOOP%LOAD_INCREMENT_LOOP%ITERATION_NUMBER
+          !   load_step=solver%SOLVERS%CONTROL_LOOP%LOAD_INCREMENT_LOOP%ITERATION_NUMBER
 
-            IF((iterationNumber > 0).OR.(load_step > 1))THEN
-              solve_call = solve_call - 1
-            ENDIF
+          !   IF((iterationNumber > 0).OR.(load_step > 1))THEN
+          !     solve_call = solve_call - 1
+          !   ENDIF
 
-            WRITE(*,'(1X,''SolveCall: '',I4)') solve_call
-            WRITE(*,'(1X,''  LoadStep: '',I4)') load_step
-            WRITE(*,'(1X,''    Iteration: '',I4)') iterationNumber
+          !   WRITE(*,'(1X,''SolveCall: '',I4)') solve_call
+          !   WRITE(*,'(1X,''  LoadStep: '',I4)') load_step
+          !   WRITE(*,'(1X,''    Iteration: '',I4)') iterationNumber
 
-            DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
-              region=>solverMapping%EQUATIONS_SETS(equationsSetIdx)%PTR%REGION
-              IF(ASSOCIATED(region))THEN
-                NULLIFY(fields)
-                fields=>region%FIELDS
-                fileName=directory//"mesh"//TRIM(NUMBER_TO_VSTRING(equationsSetIdx,"*",err,error))// &
-                  & "_solveCall"//TRIM(NUMBER_TO_VSTRING(solve_call,"*",err,error))// &
-                  & "_load"//TRIM(NUMBER_TO_VSTRING(load_step,"*",err,error))// &
-                  & "_iter"//TRIM(NUMBER_TO_VSTRING(iterationNumber,"*",err,error))
-                method="FORTRAN"
-                CALL FIELD_IO_ELEMENTS_EXPORT(fields,fileName,method,err,error,*999)
-                CALL FIELD_IO_NODES_EXPORT(fields,fileName,method,err,error,*999)
-              ELSE
-                CALL FlagError("Region is not associated.",err,error,*999)
-              ENDIF
-            ENDDO
-          ENDIF
+          !   DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+          !     region=>solverMapping%EQUATIONS_SETS(equationsSetIdx)%PTR%REGION
+          !     IF(ASSOCIATED(region))THEN
+          !       NULLIFY(fields)
+          !       fields=>region%FIELDS
+          !       fileName=directory//"mesh"//TRIM(NUMBER_TO_VSTRING(equationsSetIdx,"*",err,error))// &
+          !         & "_solveCall"//TRIM(NUMBER_TO_VSTRING(solve_call,"*",err,error))// &
+          !         & "_load"//TRIM(NUMBER_TO_VSTRING(load_step,"*",err,error))// &
+          !         & "_iter"//TRIM(NUMBER_TO_VSTRING(iterationNumber,"*",err,error))
+          !       method="FORTRAN"
+          !       CALL FIELD_IO_ELEMENTS_EXPORT(fields,fileName,method,err,error,*999)
+          !       CALL FIELD_IO_NODES_EXPORT(fields,fileName,method,err,error,*999)
+          !     ELSE
+          !       CALL FlagError("Region is not associated.",err,error,*999)
+          !     ENDIF
+          !   ENDDO
+          ! ENDIF
 
         CASE DEFAULT
           localError="The problem type of "//TRIM(NUMBER_TO_VSTRING(problem%SPECIFICATION(2),"*",err,error))//" &

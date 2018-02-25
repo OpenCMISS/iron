@@ -555,7 +555,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: xiIdx,xiCoordIdx,localNodeIdx,localNodeIdx1,localNodeIdx2,localNodeIdx3,localNodeIdx4,elemParamIdx, &
-      & localLineIdx,localFaceIdx,columnStart,columnStop
+      & localLineIdx,localFaceIdx,columnStart,columnStart2,columnStop,columnStop2
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("Basis_CreateFinish",err,error,*999)
@@ -717,7 +717,7 @@ CONTAINS
           CALL WriteStringFmtValue(DIAGNOSTIC_OUTPUT_TYPE,"      Local face xi normal      : ", &
             & basis%localFaceXiNormal(localFaceIdx),"I2",err,error,*999)
         ENDDO !localFaceIdx
-        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,-basis%NUMBER_OF_XI_COORDINATES,1,basis%NUMBER_OF_XI_COORDINATES,9,9, &
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,2*basis%NUMBER_OF_XI_COORDINATES+1,9,9, &
           & basis%xiNormalLocalFace(-basis%NUMBER_OF_XI_COORDINATES:basis%NUMBER_OF_XI_COORDINATES), &
           & '("    Xi normal local face :",9(X,I2))','(26X,9(X,I2))',err,error,*999)
       ENDIF
@@ -742,15 +742,19 @@ CONTAINS
       ENDDO !localLineIdx
       IF(basis%NUMBER_OF_XI>=2) THEN
         IF(basis%NUMBER_OF_XI==3) THEN
-          columnStart=-basis%NUMBER_OF_XI_COORDINATES
-          columnStop=basis%NUMBER_OF_XI_COORDINATES
+          columnStart=1
+          columnStart2=-basis%NUMBER_OF_XI_COORDINATES
+          columnStop=2*basis%NUMBER_OF_XI_COORDINATES+1
+          columnStop2=basis%NUMBER_OF_XI_COORDINATES
         ELSE
           columnStart=1
+          columnStart2=1
           columnStop=1
+          columnStop2=1
         ENDIF
-        CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,-basis%NUMBER_OF_XI_COORDINATES,1,basis%NUMBER_OF_XI_COORDINATES, &
+        CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,2*basis%NUMBER_OF_XI_COORDINATES+1, &
           & columnStart,1,columnStop,9,9,basis%xiNormalsLocalLine(-basis%NUMBER_OF_XI_COORDINATES:basis%NUMBER_OF_XI_COORDINATES, &
-          & columnStart:columnStop),WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+          & columnStart2:columnStop2),WRITE_STRING_MATRIX_NAME_AND_INDICES, &
           & '("    Xi normal local line','(",I2,",:)',':",9(X,I2))','(31X,9(X,I2))',err,error,*999)
       ENDIF
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of sub-bases = ",basis%numberOfSubBases,err,error,*999)
