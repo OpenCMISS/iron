@@ -523,7 +523,6 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: decomposition_idx,decomposition_position
     LOGICAL :: FOUND    
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
     TYPE(MESH_TYPE), POINTER :: MESH !
     TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
     TYPE(DECOMPOSITION_PTR_TYPE), ALLOCATABLE :: newDecompositions(:)
@@ -9811,12 +9810,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: meshComponentNumber,meshNumber
-    LOGICAL :: nodeExists
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(MeshComponentTopologyType), POINTER :: meshComponentTopology
-    TYPE(VARYING_STRING) :: localError
-
+    INTEGER(INTG) :: meshNumber
+ 
     ENTERS("MeshTopology_NodeOnBoundaryGet",err,error,*999)
 
     IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)

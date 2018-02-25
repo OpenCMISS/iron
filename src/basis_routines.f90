@@ -3409,7 +3409,9 @@ CONTAINS
             IF(basis%INTERPOLATION_XI(faceXi2(1))==basis%INTERPOLATION_XI(faceXi(1)).AND. &
               & basis%INTERPOLATION_XI(faceXi2(2))==basis%INTERPOLATION_XI(faceXi(2)).AND. &
               & basis%QUADRATURE%NUMBER_OF_GAUSS_XI(faceXi2(1))==basis%QUADRATURE%NUMBER_OF_GAUSS_XI(faceXi(1)).AND. &
-              & basis%QUADRATURE%NUMBER_OF_GAUSS_XI(faceXi2(2))==basis%QUADRATURE%NUMBER_OF_GAUSS_XI(faceXi(2))) THEN
+              & basis%QUADRATURE%NUMBER_OF_GAUSS_XI(faceXi2(2))==basis%QUADRATURE%NUMBER_OF_GAUSS_XI(faceXi(2)).AND. &
+              & basis%COLLAPSED_XI(faceXi2(1))==basis%COLLAPSED_XI(faceXi(1)).AND. &
+              & basis%COLLAPSED_XI(faceXi2(2))==basis%COLLAPSED_XI(faceXi(2))) THEN              
               faceBasisDone=.TRUE.
               EXIT
             ENDIF
@@ -3464,7 +3466,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
 
     ENTERS("BASIS_RADIAL_FAMILY_CREATE",err,error,*999)
 

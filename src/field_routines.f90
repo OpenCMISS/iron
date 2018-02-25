@@ -11706,7 +11706,6 @@ CONTAINS
     TYPE(DECOMPOSITION_ELEMENT_TYPE), POINTER :: decompositionElement
     TYPE(DOMAIN_ELEMENT_TYPE), POINTER :: domainElement
     TYPE(VARYING_STRING) :: localError
-    INTEGER(INTG) :: globalLineNumber
     TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
     ENTERS("Field_GeometricParametersElementVolumeGet",err,error,*999)
 
@@ -12810,13 +12809,23 @@ CONTAINS
           IF(ASSOCIATED(field%CREATE_VALUES_CACHE)) THEN
             IF(ALLOCATED(field%CREATE_VALUES_CACHE%NUMBER_OF_COMPONENTS)) THEN
               IF(field%CREATE_VALUES_CACHE%NUMBER_OF_COMPONENTS(variableType)/=numberOfComponents) THEN
-                localError="Invalid number of components. The number components for variable type "// &
-                  & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
-                  & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" is "// &
-                  & TRIM(NumberToVString(fieldVariable%NUMBER_OF_COMPONENTS,"*",err,error))// &
-                  & " which does not correspond to the specified number of components of "// &
-                  & TRIM(NumberToVString(numberOFComponents,"*",err,error))//"."
-                CALL FlagError(localError,err,error,*999)
+                fieldVariable=>field%VARIABLE_TYPE_MAP(variableType)%PTR
+                IF(ASSOCIATED(fieldVariable)) THEN
+                  localError="Invalid number of components. The number components for variable type "// &
+                    & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                    & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" is "// &
+                    & TRIM(NumberToVString(fieldVariable%NUMBER_OF_COMPONENTS,"*",err,error))// &
+                    & " which does not correspond to the specified number of components of "// &
+                    & TRIM(NumberToVString(numberOFComponents,"*",err,error))//"."
+                  CALL FlagError(localError,err,error,*999)
+                ELSE
+                  localError="Invalid number of components. The number components for variable type "// &
+                    & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                    & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))// &
+                    & " does not correspond to the specified number of components of "// &
+                    & TRIM(NumberToVString(numberOFComponents,"*",err,error))//"."
+                  CALL FlagError(localError,err,error,*999)
+                ENDIF
               ENDIF
             ELSE
               localError="The create values cache number of components is not allocated for field number "// &

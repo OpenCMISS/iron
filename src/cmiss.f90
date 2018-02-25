@@ -220,7 +220,7 @@ CONTAINS
     !Finalise computational enviroment
     CALL ComputationalEnvironment_Finalise(err,error,*999)
     !Finalise the base routines
-    CALL BaseRoutinesFinalise(err,error,*999)
+    CALL BaseRoutines_Finalise(err,error,*999)
      
     RETURN
 999 RETURN 1
@@ -246,7 +246,7 @@ CONTAINS
     !Initialise error mode
     cmfe_ErrorHandlingMode = CMFE_OUTPUT_ERROR !Default for now, maybe make CMFE_RETURN_ERROR_CODE the default
     !Initialise the base routines
-    CALL BaseRoutinesInitialise(err,error,*999)
+    CALL BaseRoutines_Initialise(err,error,*999)
     !Intialise the computational environment
     CALL ComputationalEnvironment_Initialise(err,error,*999)
     !Setup signal handling

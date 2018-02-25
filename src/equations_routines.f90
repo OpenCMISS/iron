@@ -1218,7 +1218,6 @@ CONTAINS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(VARYING_STRING) :: localError
     
     ENTERS("Equations_LinearMatrixGet",err,error,*998)
 
@@ -1333,7 +1332,6 @@ CONTAINS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(VARYING_STRING) :: localError
  
     ENTERS("Equations_DynamicMatrixGet",err,error,*999)
 
@@ -1447,7 +1445,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     !Local variables
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
-    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(VARYING_STRING) :: localError

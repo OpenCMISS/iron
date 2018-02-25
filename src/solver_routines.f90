@@ -3992,7 +3992,7 @@ CONTAINS
                   ALLOCATE(STATES_TEMP(0:NUMBER_STATES-1),STAT=ERR)
                   ALLOCATE(RATES_TEMP(0:NUMBER_STATES-1),STAT=ERR)
                   ALLOCATE(ARRAY_INDICES(0:NUMBER_STATES-1),STAT=ERR)
-                  ARRAY_INDICES = (/(array_idx,array_idx=0,(NUMBER_STATES-1))/)
+                  ARRAY_INDICES = [(array_idx,array_idx=0,(NUMBER_STATES-1))]
                   
                   
                   !initialize context for petsc solving.
@@ -5485,9 +5485,9 @@ CONTAINS
     TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD !, INDEPENDENT_FIELD
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: DYNAMIC_VARIABLE,LINEAR_VARIABLE,ResidualVariable
     TYPE(SOLVER_TYPE), POINTER :: SOLVER,LINEAR_SOLVER,NONLINEAR_SOLVER
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: linearSolverEquations,nonlinearSolverEquations,SOLVER_EQUATIONS
+    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
-    TYPE(SOLVER_MATRICES_TYPE), POINTER :: linearSolverMatrices,nonlinearSolverMatrices,SOLVER_MATRICES
+    TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
     ENTERS("SOLVER_DYNAMIC_CREATE_FINISH",ERR,ERROR,*999)
@@ -8093,7 +8093,6 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(VARYING_STRING) :: localError
     
     ENTERS("SolverEquations_SymmetryTypeGet",err,error,*999)
 
@@ -12359,7 +12358,7 @@ CONTAINS
       & LINEAR_VALUE,LINEAR_VALUE_SUM,MASS_MATRIX_COEFFICIENT,RHS_VALUE,row_coupling_coefficient,PREVIOUS_RESIDUAL_VALUE, &
       & SECOND_UPDATE_FACTOR,SOURCE_VALUE,STIFFNESS_MATRIX_COEFFICIENT,VALUE,JACOBIAN_MATRIX_COEFFICIENT,ALPHA_VALUE, &
       & MATRIX_VALUE,DYNAMIC_DISPLACEMENT_FACTOR,DYNAMIC_VELOCITY_FACTOR,DYNAMIC_ACCELERATION_FACTOR,RHS_INTEGRATED_VALUE
-    REAL(DP) :: MatrixCoefficients(2)=(/0.0_DP,0.0_DP/)
+    REAL(DP) :: MatrixCoefficients(2)=[0.0_DP,0.0_DP]
     REAL(DP), POINTER :: FIELD_VALUES_VECTOR(:),PREVIOUS_VALUES_VECTOR(:),PREVIOUS_VELOCITY_VECTOR(:), &
       & PREVIOUS_ACCELERATION_VECTOR(:),RHS_PARAMETERS(:)
     LOGICAL :: HAS_INTEGRATED_VALUES
@@ -14157,7 +14156,7 @@ CONTAINS
                           IF(ASSOCIATED(INTERFACE_TO_SOLVER_MAP)) THEN
                             INTERFACE_MATRIX=>INTERFACE_TO_SOLVER_MAP%INTERFACE_MATRIX
                             IF(ASSOCIATED(INTERFACE_MATRIX)) THEN
-                              CALL SOLVER_MATRIX_INTERFACE_MATRIX_ADD(SOLVER_MATRIX,interface_condition_idx,(/1.0_DP,1.0_DP/), &
+                              CALL SOLVER_MATRIX_INTERFACE_MATRIX_ADD(SOLVER_MATRIX,interface_condition_idx,[1.0_DP,1.0_DP], &
                                 & INTERFACE_MATRIX,ERR,ERROR,*999)
                             ELSE
                               CALL FlagError("The interface matrix is not associated.",ERR,ERROR,*999)
@@ -21284,7 +21283,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
     
     ENTERS("Solver_OptimiserSolver",err,error,*999)
 

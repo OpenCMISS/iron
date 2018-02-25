@@ -244,7 +244,7 @@ MODULE BaseRoutines
   
   PUBLIC outputString
 
-  PUBLIC BaseRoutinesFinalise,BaseRoutinesInitialise
+  PUBLIC BaseRoutines_Finalise,BaseRoutines_Initialise
 
   PUBLIC ComputationalNodeNumbersSet
 
@@ -752,7 +752,7 @@ CONTAINS
   !
 
   !>Finalises the base_routines module and deallocates all memory. \todo Finish this routine and deallocate memory.
-  SUBROUTINE BaseRoutinesFinalise(err,error,*)
+  SUBROUTINE BaseRoutines_Finalise(err,error,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -766,14 +766,14 @@ CONTAINS
     
     RETURN 
 999 RETURN 1
-  END SUBROUTINE BaseRoutinesFinalise
+  END SUBROUTINE BaseRoutines_Finalise
 
   !
   !================================================================================================================================
   !
 
   !>Initialises the variables required for the base_routines module.
-  SUBROUTINE BaseRoutinesInitialise(err,error,*)
+  SUBROUTINE BaseRoutines_Initialise(err,error,*)
     
     !Argument variables
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -846,7 +846,7 @@ CONTAINS
     RETURN 
 999 RETURN 1
     
-  END SUBROUTINE BaseRoutinesInitialise
+  END SUBROUTINE BaseRoutines_Initialise
 
   !
   !================================================================================================================================
