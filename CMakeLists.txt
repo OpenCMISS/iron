@@ -274,7 +274,7 @@ endif()
 add_subdirectory(bindings)
 
 # Install steps
-install(TARGETS iron
+install(TARGETS ${IRON_TARGETS}
     EXPORT iron-config
     RUNTIME DESTINATION bin
     COMPONENT Runtime
