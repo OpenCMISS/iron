@@ -3805,9 +3805,9 @@ CONTAINS
             USER_ELEMENT_NODES(7)=element%USER_ELEMENT_NODES(6)
             USER_ELEMENT_NODES(8)=element%USER_ELEMENT_NODES(8)
             USER_ELEMENT_NODES(9)=element%USER_ELEMENT_NODES(7)
-            !USER_ELEMENT_NODES(10)=element%USER_ELEMENT_NODES(3)
-            USER_ELEMENT_NODES(1:10)=element%USER_ELEMENT_NODES(1:10)
-         CASE DEFAULT
+            USER_ELEMENT_NODES(10)=element%USER_ELEMENT_NODES(3)
+            !USER_ELEMENT_NODES(1:10)=element%USER_ELEMENT_NODES(1:10)
+          CASE DEFAULT
             CALL FlagError("Invalid basis order.",ERR,ERROR,*999)
           END SELECT
         CASE(3)
