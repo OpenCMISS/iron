@@ -42,17 +42,21 @@
 !>
 
 !>This module handles all equations mapping routines.
-MODULE EQUATIONS_MAPPING_ROUTINES
+MODULE EquationsMappingRoutines
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE DOMAIN_MAPPINGS
+  USE EquationsAccessRoutines
+  USE EquationsMappingAccessRoutines
   USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetAccessRoutines
   USE FIELD_ROUTINES
+  USE FieldAccessRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
-  USE KINDS
-  USE STRINGS
-  USE TYPES
+  USE Kinds
+  USE Strings
+  USE Types
 
 #include "macros.h"  
  
@@ -68,1477 +72,1463 @@ MODULE EQUATIONS_MAPPING_ROUTINES
 
   !Interfaces
 
-  INTERFACE EquationsMapping_CreateFinish
-    MODULE PROCEDURE EQUATIONS_MAPPING_CREATE_FINISH
-  END INTERFACE EquationsMapping_CreateFinish
-
-  INTERFACE EquationsMapping_CreateStart
-    MODULE PROCEDURE EQUATIONS_MAPPING_CREATE_START
-  END INTERFACE EquationsMapping_CreateStart
-
-  INTERFACE EquationsMapping_Destroy
-    MODULE PROCEDURE EQUATIONS_MAPPING_DESTROY
-  END INTERFACE EquationsMapping_Destroy
-
-  INTERFACE EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET
-    MODULE PROCEDURE EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET_1
-    MODULE PROCEDURE EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET_2
-  END INTERFACE EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET
-  
   INTERFACE EquationsMapping_DynamicMatricesSet
-    MODULE PROCEDURE EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET_1
-    MODULE PROCEDURE EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET_2
+    MODULE PROCEDURE EquationsMapping_DynamicMatricesSet1
+    MODULE PROCEDURE EquationsMapping_DynamicMatricesSet2
   END INTERFACE EquationsMapping_DynamicMatricesSet
-  
-  INTERFACE EQUATIONS_MAPPING_DYNAMIC_MATRICES_COEFFS_SET
-    MODULE PROCEDURE EquationsMapping_DynamicMatricesCoeffsSet1
-    MODULE PROCEDURE EquationsMapping_DynamicMatricesCoeffsSet2
-  END INTERFACE EQUATIONS_MAPPING_DYNAMIC_MATRICES_COEFFS_SET
   
   INTERFACE EquationsMapping_DynamicMatricesCoeffsSet
     MODULE PROCEDURE EquationsMapping_DynamicMatricesCoeffsSet1
     MODULE PROCEDURE EquationsMapping_DynamicMatricesCoeffsSet2
   END INTERFACE EquationsMapping_DynamicMatricesCoeffsSet
   
-  INTERFACE EquationsMapping_DynamicVariableTypeSet
-    MODULE PROCEDURE EQUATIONS_MAPPING_DYNAMIC_VARIABLE_TYPE_SET
-  END INTERFACE EquationsMapping_DynamicVariableTypeSet
+  PUBLIC EquationsMapping_DynamicMatricesSet
 
-  INTERFACE EquationsMapping_ResidualCoeffSet
-    MODULE PROCEDURE EQUATIONS_MAPPING_RESIDUAL_COEFF_SET
-  END INTERFACE EquationsMapping_ResidualCoeffSet
+  PUBLIC EquationsMapping_DynamicMatricesCoeffsSet
 
-  INTERFACE EquationsMapping_RHSCoeffSet
-    MODULE PROCEDURE EQUATIONS_MAPPING_RHS_COEFF_SET
-  END INTERFACE EquationsMapping_RHSCoeffSet
+  PUBLIC EquationsMapping_DynamicVariableTypeSet
 
-  INTERFACE EquationsMapping_RHSVariableTypeSet
-    MODULE PROCEDURE EQUATIONS_MAPPING_RHS_VARIABLE_TYPE_SET
-  END INTERFACE EquationsMapping_RHSVariableTypeSet
+  PUBLIC EquationsMapping_LinearMatricesCoeffsSet
 
-  INTERFACE EquationsMapping_SourceCoeffSet
-    MODULE PROCEDURE EQUATIONS_MAPPING_SOURCE_COEFF_SET
-  END INTERFACE EquationsMapping_SourceCoeffSet
+  PUBLIC EquationsMapping_LinearMatricesNumberSet
 
-  INTERFACE EquationsMapping_SourceVariableTypeSet
-    MODULE PROCEDURE EQUATIONS_MAPPING_SOURCE_VARIABLE_TYPE_SET
-  END INTERFACE EquationsMapping_SourceVariableTypeSet
-
-  PUBLIC EQUATIONS_MAPPING_CREATE_FINISH,EQUATIONS_MAPPING_CREATE_START
-
-  PUBLIC EquationsMapping_CreateFinish,EquationsMapping_CreateStart
-
-  PUBLIC EQUATIONS_MAPPING_DESTROY
-
-  PUBLIC EquationsMapping_Destroy
+  PUBLIC EquationsMapping_LinearMatricesVariableTypesSet
   
-  PUBLIC EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET,EQUATIONS_MAPPING_DYNAMIC_MATRICES_COEFFS_SET, &
-    & EQUATIONS_MAPPING_DYNAMIC_VARIABLE_TYPE_SET
+  PUBLIC EquationsMapping_ResidualCoeffSet
 
-  PUBLIC EquationsMapping_DynamicMatricesSet,EquationsMapping_DynamicMatricesCoeffsSet,EquationsMapping_DynamicVariableTypeSet
+  PUBLIC EquationsMapping_ResidualVariableTypesSet
 
-  PUBLIC EquationsMapping_LinearMatricesCoeffsSet,EquationsMapping_LinearMatricesNumberSet, &
-    & EquationsMapping_LinearMatricesVariableTypesSet
+  PUBLIC EquationsMapping_ResidualVariablesNumberSet
   
-  PUBLIC EQUATIONS_MAPPING_RESIDUAL_COEFF_SET
+  PUBLIC EquationsMapping_RHSCoeffSet
 
-  PUBLIC EquationsMapping_ResidualCoeffSet,EquationsMapping_ResidualVariableTypesSet,EquationsMapping_ResidualVariablesNumberSet
-  
-  PUBLIC EQUATIONS_MAPPING_RHS_COEFF_SET,EQUATIONS_MAPPING_RHS_VARIABLE_TYPE_SET
+  PUBLIC EquationsMapping_RHSVariableTypeSet
 
-  PUBLIC EquationsMapping_RHSCoeffSet,EquationsMapping_RHSVariableTypeSet
-  
-  PUBLIC EQUATIONS_MAPPING_SOURCE_COEFF_SET,EQUATIONS_MAPPING_SOURCE_VARIABLE_TYPE_SET
+  PUBLIC EquationsMapping_ScalarDestroy
 
-  PUBLIC EquationsMapping_SourceCoeffSet,EquationsMapping_SourceVariableTypeSet
-  
+  PUBLIC EquationsMapping_SourceCoeffSet
+
+  PUBLIC EquationsMapping_SourceVariableTypeSet
+
+  PUBLIC EquationsMapping_VectorCreateFinish,EquationsMapping_VectorCreateStart
+
+  PUBLIC EquationsMapping_VectorDestroy
+
 CONTAINS
 
   !
   !================================================================================================================================
   !
 
-  !>Calculates the equations/dofs mapping.
-  SUBROUTINE EQUATIONS_MAPPING_CALCULATE(EQUATIONS_MAPPING,ERR,ERROR,*)
+  !>Calculates the equations vector mapping.
+  SUBROUTINE EquationsMapping_VectorCalculate(vectorMapping,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping to calculate
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code 
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations vector mapping to calculate
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: column_idx,dof_idx,LINEAR_MATRIX_START,matrix_idx,NUMBER_OF_ROWS,NUMBER_OF_GLOBAL_ROWS,row_idx, &
-      & TOTAL_NUMBER_OF_ROWS,variable_idx,variable_type
-    TYPE(EQUATIONS_MAPPING_CREATE_VALUES_CACHE_TYPE), POINTER :: CREATE_VALUES_CACHE
-    TYPE(EQUATIONS_MAPPING_DYNAMIC_TYPE), POINTER :: DYNAMIC_MAPPING
-    TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: LINEAR_MAPPING
-    TYPE(EQUATIONS_MAPPING_NONLINEAR_TYPE), POINTER :: NONLINEAR_MAPPING
-    TYPE(EQUATIONS_MAPPING_RHS_TYPE), POINTER :: RHS_MAPPING
-    TYPE(EQUATIONS_MAPPING_SOURCE_TYPE), POINTER :: SOURCE_MAPPING
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD,SOURCE_FIELD
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: DEPENDENT_VARIABLE,SOURCE_VARIABLE,ROW_VARIABLE
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: columnIdx,dofIdx,linearMatrixStart,matrixIdx,numberOfRows,numberOfGlobalRows,rowIdx, &
+      & totalNumberOfRows,variableIdx,variableType,variableTypeIdx
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
+    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
+    TYPE(EquationsMappingLinearType), POINTER :: linearMapping
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
+    TYPE(EquationsMappingSourceType), POINTER :: sourceMapping
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(FIELD_TYPE), POINTER :: dependentField,sourceField
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: dependentVariable,sourceVariable,rowVariable
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("EQUATIONS_MAPPING_CALCULATE",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_VectorCalculate",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-      EQUATIONS=>EQUATIONS_MAPPING%EQUATIONS
-      IF(ASSOCIATED(EQUATIONS)) THEN
-        CREATE_VALUES_CACHE=>EQUATIONS_MAPPING%CREATE_VALUES_CACHE
-        IF(ASSOCIATED(CREATE_VALUES_CACHE)) THEN
-          EQUATIONS_SET=>EQUATIONS%EQUATIONS_SET
-          IF(ASSOCIATED(EQUATIONS_SET)) THEN
-            DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
-            IF(ASSOCIATED(DEPENDENT_FIELD)) THEN              
-              IF(CREATE_VALUES_CACHE%SOURCE_VARIABLE_TYPE/=0) THEN
-                IF(ASSOCIATED(EQUATIONS_SET%SOURCE)) THEN
-                  SOURCE_FIELD=>EQUATIONS_SET%SOURCE%SOURCE_FIELD
-                  IF(.NOT.ASSOCIATED(SOURCE_FIELD)) THEN
-                    CALL FlagError("Source field is not associated.",ERR,ERROR,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Equations set source is not associated.",ERR,ERROR,*999)
-                ENDIF
-              ENDIF
-              !Calculate the number of rows in the equations set
-              LINEAR_MATRIX_START=1
-              SELECT CASE(EQUATIONS%TIME_DEPENDENCE)
-              CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC)
-                SELECT CASE(EQUATIONS%LINEARITY)
-                CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
-                  !Static linear equations set
-                  IF(CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES>=1) THEN
-                    LINEAR_MATRIX_START=2
-                    DEPENDENT_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES(1))%PTR
-                  ELSE
-                    CALL FlagError("The number of linear equations matrices must be at least one for a linear equations set.", &
-                      & ERR,ERROR,*999)
-                  ENDIF
-                CASE(EQUATIONS_NONLINEAR)
-                  !Static nonlinear equations set
-                  !Use first listed nonlinear variable
-                  IF(CREATE_VALUES_CACHE%NUMBER_OF_RESIDUAL_VARIABLES>=1) THEN
-                    DEPENDENT_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(CREATE_VALUES_CACHE%RESIDUAL_VARIABLE_TYPES(1))%PTR
-                  ELSE
-                    CALL FlagError("The number of Jacobian matrices must be at least one for a nonlinear equations set.", &
-                      & ERR,ERROR,*999)
-                  ENDIF
-                CASE DEFAULT
-                  LOCAL_ERROR="The equations linearity type of "// &
-                    & TRIM(NumberToVString(EQUATIONS%LINEARITY,"*",ERR,ERROR))//" is invalid."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                END SELECT
-              CASE(EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
-                SELECT CASE(EQUATIONS%LINEARITY)
-                CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
-                  !Dynamic linear equations set
-                  DEPENDENT_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(CREATE_VALUES_CACHE%DYNAMIC_VARIABLE_TYPE)%PTR
-                CASE(EQUATIONS_NONLINEAR)
-                  !Dynamic nonlinear equations set
-                  DEPENDENT_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(CREATE_VALUES_CACHE%RESIDUAL_VARIABLE_TYPES(1))%PTR
-                CASE DEFAULT
-                  LOCAL_ERROR="The equations linearity type of "// &
-                    & TRIM(NumberToVString(EQUATIONS%LINEARITY,"*",ERR,ERROR))//" is invalid."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                END SELECT
-              CASE(EQUATIONS_TIME_STEPPING)
-                !Time stepping DAE equations set
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Equations mapping is not associated.",err,error,*999)
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
+    NULLIFY(equations)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
+    NULLIFY(equationsSet)
+    CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
+    NULLIFY(createValuesCache)
+    CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
+
+    NULLIFY(dependentField)
+    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+    NULLIFY(sourceField)
+    IF(createValuesCache%sourceVariableType/=0) CALL EquationsSet_SourceFieldGet(equationsSet,sourceField,err,error,*999)
+
+    !Calculate the number of rows in the equations set
+    linearMatrixStart=1
+    SELECT CASE(equations%timeDependence)
+    CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC)
+      SELECT CASE(equations%linearity)
+      CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
+        !Static linear equations set
+        IF(createValuesCache%numberOfLinearMatrices>=1) THEN
+          linearMatrixStart=2
+          dependentVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%linearMatrixVariableTypes(1))%ptr
+        ELSE
+          localError="The create values cache number of linear matrices of "// &
+            & TRIM(NumberToVString(createValuesCache%numberOfLinearMatrices,"*",err,error))// &
+            & " is invalid. The number of linear equations matrices must be >= 1 for a linear equations set."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      CASE(EQUATIONS_NONLINEAR)
+        !Static nonlinear equations set
+        !Use first listed nonlinear variable
+        IF(createValuesCache%numberOfResidualVariables>=1) THEN
+          dependentVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%residualVariableTypes(1))%ptr
+        ELSE
+          localError="The create values cache number of residual vectors of "// &
+            & TRIM(NumberToVString(createValuesCache%numberOfResidualVariables,"*",err,error))// &
+            & " is invalid. The number of Jacobian matrices must be >= 1 for a nonlinear equations set."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      CASE DEFAULT
+        localError="The equations linearity type of "//TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
+      SELECT CASE(equations%linearity)
+      CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
+        !Dynamic linear equations set
+        dependentVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%dynamicVariableType)%ptr
+      CASE(EQUATIONS_NONLINEAR)
+        !Dynamic nonlinear equations set
+        dependentVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%residualVariableTypes(1))%ptr
+      CASE DEFAULT
+        localError="The equations linearity type of "//TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(EQUATIONS_TIME_STEPPING)
+      !Time stepping DAE equations set
 !!NOTE: The time stepping variable type doesn't have to come from the dependent field, it could come from, say, the source field.
-                !DEPENDENT_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(CREATE_VALUES_CACHE%TIME_STEPPING_VARIABLE_TYPE)%PTR
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
-              CASE DEFAULT
-                LOCAL_ERROR="The equations time dependence type of "// &
-                  & TRIM(NumberToVString(EQUATIONS%TIME_DEPENDENCE,"*",ERR,ERROR))//" is invalid."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              END SELECT
-              IF(ASSOCIATED(DEPENDENT_VARIABLE)) THEN
-                NUMBER_OF_ROWS=DEPENDENT_VARIABLE%NUMBER_OF_DOFS
-                TOTAL_NUMBER_OF_ROWS=DEPENDENT_VARIABLE%TOTAL_NUMBER_OF_DOFS
-                EQUATIONS_MAPPING%ROW_DOFS_MAPPING=>DEPENDENT_VARIABLE%DOMAIN_MAPPING
-                IF(ASSOCIATED(EQUATIONS_MAPPING%ROW_DOFS_MAPPING)) THEN
-                  NUMBER_OF_GLOBAL_ROWS=EQUATIONS_MAPPING%ROW_DOFS_MAPPING%NUMBER_OF_GLOBAL
-                ELSE
-                  CALL FlagError("Dependent variable domain mapping is not associated.",ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("The dependent variable mapped to the first matrix is not associated.",ERR,ERROR,*999)
-              ENDIF
-              !Check that the number of rows is consistent across the remaining linear matrices
-              DO matrix_idx=LINEAR_MATRIX_START,CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES
-                DEPENDENT_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(CREATE_VALUES_CACHE% &
-                  & LINEAR_MATRIX_VARIABLE_TYPES(matrix_idx))%PTR
-                IF(ASSOCIATED(DEPENDENT_VARIABLE)) THEN
-                  IF(DEPENDENT_VARIABLE%NUMBER_OF_DOFS/=NUMBER_OF_ROWS) THEN
-                    LOCAL_ERROR="Invalid equations set up. The number of rows in the equations set ("// &
-                      & TRIM(NumberToVString(NUMBER_OF_ROWS,"*",ERR,ERROR))// &
-                      & ") does not match the number of rows in equations linear matrix number "// &
-                      & TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))//" ("// &
-                      & TRIM(NumberToVString(DEPENDENT_VARIABLE%NUMBER_OF_DOFS,"*",ERR,ERROR))//")."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  ENDIF
-                  IF(DEPENDENT_VARIABLE%TOTAL_NUMBER_OF_DOFS/=TOTAL_NUMBER_OF_ROWS) THEN
-                    LOCAL_ERROR="Invalid equations set up. The total number of rows in the equations set ("// &
-                      & TRIM(NumberToVString(TOTAL_NUMBER_OF_ROWS,"*",ERR,ERROR))// &
-                      & ") does not match the total number of rows in equations matrix number "// &
-                      & TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))//" ("// &
-                      & TRIM(NumberToVString(DEPENDENT_VARIABLE%TOTAL_NUMBER_OF_DOFS,"*",ERR,ERROR))//")."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  ENDIF
-                ELSE
-                  LOCAL_ERROR="The dependent variable mapped to linear matrix number "// &
-                    & TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))//" is not associated."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ENDIF
-              ENDDO !matrix_idx
-              !Check the Jacobian matrices
-              !Can't check the number of rows now as Jacobian's might not be square so just check variables are associated
-              DO matrix_idx=1,CREATE_VALUES_CACHE%NUMBER_OF_RESIDUAL_VARIABLES
-                DEPENDENT_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(CREATE_VALUES_CACHE% &
-                  & RESIDUAL_VARIABLE_TYPES(matrix_idx))%PTR
-                IF(.NOT.ASSOCIATED(DEPENDENT_VARIABLE)) THEN
-                  LOCAL_ERROR="The dependent variable mapped to Jacobian matrix number "// &
-                    & TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))//" is not associated."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ENDIF
-              ENDDO !matrix_idx
-              !Check that the number of rows are consistent with the RHS vector if it exists
-              IF(CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE/=0) THEN
-                DEPENDENT_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE)%PTR
-                IF(ASSOCIATED(DEPENDENT_VARIABLE)) THEN
-                  IF(DEPENDENT_VARIABLE%NUMBER_OF_DOFS/=NUMBER_OF_ROWS) THEN
-                    LOCAL_ERROR="Invalid equations set up. The number of rows in the equations set ("// &
-                      & TRIM(NumberToVString(NUMBER_OF_ROWS,"*",ERR,ERROR))// &
-                      & ") does not match the number of rows in the RHS vector ("// &
-                      & TRIM(NumberToVString(DEPENDENT_VARIABLE%NUMBER_OF_DOFS,"*",ERR,ERROR))//")."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  ENDIF
-                  IF(DEPENDENT_VARIABLE%TOTAL_NUMBER_OF_DOFS/=TOTAL_NUMBER_OF_ROWS) THEN
-                    LOCAL_ERROR="Invalid equations set up. The total number of rows in the equations set ("// &
-                      & TRIM(NumberToVString(TOTAL_NUMBER_OF_ROWS,"*",ERR,ERROR))// &
-                      & ") does not match the total number of rows in the RHS vector ("// &
-                      & TRIM(NumberToVString(DEPENDENT_VARIABLE%TOTAL_NUMBER_OF_DOFS,"*",ERR,ERROR))//")."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("The dependent variable mapped to the RHS vector is not associated.",ERR,ERROR,*999)
-                ENDIF
-              ENDIF
-              !!Check that the number of rows are consistent with the source vector if it exists
-              !IF(CREATE_VALUES_CACHE%SOURCE_VARIABLE_TYPE/=0) THEN
-              !  SOURCE_VARIABLE=>SOURCE_FIELD%VARIABLE_TYPE_MAP(CREATE_VALUES_CACHE%SOURCE_VARIABLE_TYPE)%PTR
-              !  IF(ASSOCIATED(SOURCE_VARIABLE)) THEN
-              !    IF(SOURCE_VARIABLE%NUMBER_OF_DOFS/=NUMBER_OF_ROWS) THEN
-              !      LOCAL_ERROR="Invalid equations set up. The number of rows in the equations set ("// &
-              !        & TRIM(NumberToVString(NUMBER_OF_ROWS,"*",ERR,ERROR))// &
-              !        & ") does not match the number of rows in the source vector ("// &
-              !        & TRIM(NumberToVString(SOURCE_VARIABLE%NUMBER_OF_DOFS,"*",ERR,ERROR))//")."
-              !      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              !    ENDIF
-              !    IF(SOURCE_VARIABLE%TOTAL_NUMBER_OF_DOFS/=TOTAL_NUMBER_OF_ROWS) THEN
-              !      LOCAL_ERROR="Invalid equations set up. The total number of rows in the equations set ("// &
-              !        & TRIM(NumberToVString(TOTAL_NUMBER_OF_ROWS,"*",ERR,ERROR))// &
-              !        & ") does not match the total number of rows in the source vector ("// &
-              !        & TRIM(NumberToVString(SOURCE_VARIABLE%TOTAL_NUMBER_OF_DOFS,"*",ERR,ERROR))//")."
-              !      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              !    ENDIF
-              !  ELSE
-              !    CALL FlagError("The source variable mapped to the source vector is not associated.",ERR,ERROR,*999)
-              !  ENDIF
-              !ENDIF
-              EQUATIONS_MAPPING%NUMBER_OF_ROWS=NUMBER_OF_ROWS
-              EQUATIONS_MAPPING%TOTAL_NUMBER_OF_ROWS=TOTAL_NUMBER_OF_ROWS
-              EQUATIONS_MAPPING%NUMBER_OF_GLOBAL_ROWS=NUMBER_OF_GLOBAL_ROWS
-              !Calculate dynamic mappings
-              IF(CREATE_VALUES_CACHE%DYNAMIC_VARIABLE_TYPE/=0) THEN
-                CALL EquationsMapping_DynamicMappingInitialise(EQUATIONS_MAPPING,ERR,ERROR,*999)
-                DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING
-                IF(ASSOCIATED(DYNAMIC_MAPPING)) THEN
-                  DYNAMIC_MAPPING%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES=CREATE_VALUES_CACHE%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES
-                  DYNAMIC_MAPPING%STIFFNESS_MATRIX_NUMBER=CREATE_VALUES_CACHE%DYNAMIC_STIFFNESS_MATRIX_NUMBER
-                  DYNAMIC_MAPPING%DAMPING_MATRIX_NUMBER=CREATE_VALUES_CACHE%DYNAMIC_DAMPING_MATRIX_NUMBER
-                  DYNAMIC_MAPPING%MASS_MATRIX_NUMBER=CREATE_VALUES_CACHE%DYNAMIC_MASS_MATRIX_NUMBER
-                  !Initialise the variable type maps
-                  ALLOCATE(DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=ERR)
-                  IF(ERR/=0) CALL FlagError("Could not allocate equations mapping variable to equations map.",ERR,ERROR,*999)
-                  DO variable_type=1,FIELD_NUMBER_OF_VARIABLE_TYPES
-                    CALL EquationsMapping_VarToEquatsMatricesMapInitialise( &
-                      & DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type),ERR,ERROR,*999)
-                    DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%VARIABLE_INDEX=variable_type
-                    DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%VARIABLE_TYPE=variable_type
-                    DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%VARIABLE=>DEPENDENT_FIELD% &
-                      & VARIABLE_TYPE_MAP(variable_type)%PTR
-                  ENDDO !variable_type
-                  DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(CREATE_VALUES_CACHE%DYNAMIC_VARIABLE_TYPE)% &
-                    & NUMBER_OF_EQUATIONS_MATRICES=CREATE_VALUES_CACHE%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES
-                  IF(CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE/=0) DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS( &
-                    & CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE)%NUMBER_OF_EQUATIONS_MATRICES=-1
-                  !Allocate and initialise the variable to equations matrices maps
-                  DO variable_type=1,FIELD_NUMBER_OF_VARIABLE_TYPES
-                    DEPENDENT_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%PTR
-                    IF(ASSOCIATED(DEPENDENT_VARIABLE)) THEN
-                      IF(DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%NUMBER_OF_EQUATIONS_MATRICES==-1) THEN
-!!TODO: check if this can be removed and just allocate those variables that are actually used
-                        ALLOCATE(DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%DOF_TO_ROWS_MAP( &
-                          & DEPENDENT_VARIABLE%TOTAL_NUMBER_OF_DOFS),STAT=ERR)
-                        IF(ERR/=0) CALL FlagError("Could not allocate variable to equations matrices maps dof to rows map.", &
-                          & ERR,ERROR,*999)
-                        DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%DOF_TO_ROWS_MAP=0
-                      ELSE IF(DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%NUMBER_OF_EQUATIONS_MATRICES>0) THEN
-                        ALLOCATE(DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%EQUATIONS_MATRIX_NUMBERS( &
-                          & DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%NUMBER_OF_EQUATIONS_MATRICES),STAT=ERR)
-                        IF(ERR/=0) &
-                          & CALL FlagError("Could not allocate variable to equations matrices maps equations matrix numbers.", &
-                          & ERR,ERROR,*999)
-                        ALLOCATE(DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%DOF_TO_COLUMNS_MAPS( &
-                          & DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%NUMBER_OF_EQUATIONS_MATRICES),STAT=ERR)
-                        IF(ERR/=0) CALL FlagError("Could not allocate variable to equations matrices maps dof to columns map.", &
-                          & ERR,ERROR,*999)                
-                        DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%EQUATIONS_MATRIX_NUMBERS=0
-                        IF(CREATE_VALUES_CACHE%DYNAMIC_VARIABLE_TYPE==variable_type) THEN
-                          IF(CREATE_VALUES_CACHE%DYNAMIC_STIFFNESS_MATRIX_NUMBER/=0) THEN
-                            DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%EQUATIONS_MATRIX_NUMBERS( &
-                            & CREATE_VALUES_CACHE%DYNAMIC_STIFFNESS_MATRIX_NUMBER)=CREATE_VALUES_CACHE% &
-                            & DYNAMIC_STIFFNESS_MATRIX_NUMBER
-                          ENDIF
-                          IF(CREATE_VALUES_CACHE%DYNAMIC_DAMPING_MATRIX_NUMBER/=0) THEN
-                            DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%EQUATIONS_MATRIX_NUMBERS( &
-                            & CREATE_VALUES_CACHE%DYNAMIC_DAMPING_MATRIX_NUMBER)=CREATE_VALUES_CACHE% &
-                            & DYNAMIC_DAMPING_MATRIX_NUMBER
-                          ENDIF
-                          IF(CREATE_VALUES_CACHE%DYNAMIC_MASS_MATRIX_NUMBER/=0) THEN
-                            DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%EQUATIONS_MATRIX_NUMBERS( &
-                            & CREATE_VALUES_CACHE%DYNAMIC_MASS_MATRIX_NUMBER)=CREATE_VALUES_CACHE% &
-                            & DYNAMIC_MASS_MATRIX_NUMBER
-                          ENDIF
-                          DO matrix_idx=1,DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%NUMBER_OF_EQUATIONS_MATRICES
-                            ALLOCATE(DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%DOF_TO_COLUMNS_MAPS( &
-                              & matrix_idx)%COLUMN_DOF(DEPENDENT_VARIABLE%TOTAL_NUMBER_OF_DOFS),STAT=ERR)
-                            IF(ERR/=0) CALL FlagError("Could not allocate variable dof to columns map column dof.", &
-                              & ERR,ERROR,*999)
-                            DO dof_idx=1,DEPENDENT_VARIABLE%TOTAL_NUMBER_OF_DOFS
-                              !1-1 mapping for now
-                              column_idx=DEPENDENT_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(dof_idx)
-                              DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%DOF_TO_COLUMNS_MAPS(matrix_idx)% &
-                                & COLUMN_DOF(dof_idx)=column_idx
-                            ENDDO !dof_idx                          
-                          ENDDO !matrix_idx
-                          ALLOCATE(DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%DOF_TO_ROWS_MAP( &
-                            & DEPENDENT_VARIABLE%TOTAL_NUMBER_OF_DOFS),STAT=ERR)
-                          IF(ERR/=0) CALL FlagError("Could not allocate variable to equations matrices maps dof to rows map.", &
-                            & ERR,ERROR,*999)
-                          DO dof_idx=1,DEPENDENT_VARIABLE%TOTAL_NUMBER_OF_DOFS
-                            !1-1 mappings for now.
-                            row_idx=dof_idx
-                            DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%DOF_TO_ROWS_MAP(dof_idx)=row_idx
-                          ENDDO !dof_idx
-                        ENDIF
-                      ENDIF
-                    ENDIF
-                  ENDDO !variable_type
-                  !Allocate and initialise the equations matrix to variable maps types
-                  ALLOCATE(DYNAMIC_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(DYNAMIC_MAPPING%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES), &
-                    & STAT=ERR)
-                  IF(ERR/=0) CALL FlagError("Could not allocate equations mapping equations matrix to variable maps.", &
-                    & ERR,ERROR,*999)
-                  !Create the individual matrix maps and column maps
-                  variable_type=CREATE_VALUES_CACHE%DYNAMIC_VARIABLE_TYPE
-                  DEPENDENT_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%PTR
-                  DYNAMIC_MAPPING%DYNAMIC_VARIABLE_TYPE=variable_type
-                  DYNAMIC_MAPPING%DYNAMIC_VARIABLE=>DEPENDENT_VARIABLE
-                  DO matrix_idx=1,DYNAMIC_MAPPING%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES
-                    CALL EquationsMapping_EquatsMatrixToVarMapInitialise(DYNAMIC_MAPPING% &
-                      & EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx),ERR,ERROR,*999)
-                    DYNAMIC_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%MATRIX_NUMBER=matrix_idx
-                    DYNAMIC_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%VARIABLE_TYPE=variable_type
-                    DYNAMIC_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%VARIABLE=>DEPENDENT_VARIABLE
-                    DYNAMIC_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%NUMBER_OF_COLUMNS=DEPENDENT_VARIABLE% &
-                      & DOMAIN_MAPPING%NUMBER_OF_GLOBAL
-                    DYNAMIC_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%MATRIX_COEFFICIENT=CREATE_VALUES_CACHE% &
-                      & DYNAMIC_MATRIX_COEFFICIENTS(matrix_idx)
-                    ALLOCATE(DYNAMIC_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%COLUMN_TO_DOF_MAP( &
-                      & DEPENDENT_VARIABLE%DOMAIN_MAPPING%NUMBER_OF_GLOBAL),STAT=ERR)
-                    IF(ERR/=0) CALL FlagError("Could not allocate equation matrix to variable map column to dof map.",&
-                      & ERR,ERROR,*999)
-                    DYNAMIC_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%COLUMN_TO_DOF_MAP=0
-                    DO dof_idx=1,DEPENDENT_VARIABLE%TOTAL_NUMBER_OF_DOFS
-                      !1-1 mapping for now
-                      column_idx=DEPENDENT_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(dof_idx)
-                      DYNAMIC_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%COLUMN_TO_DOF_MAP(column_idx)=dof_idx
-                    ENDDO !dof_idx
-                    DYNAMIC_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%COLUMN_DOFS_MAPPING=> &
-                      & DEPENDENT_VARIABLE%DOMAIN_MAPPING
-                  ENDDO !matrix_idx
-                  !Allocate the row mappings
-                  ALLOCATE(DYNAMIC_MAPPING%EQUATIONS_ROW_TO_VARIABLE_DOF_MAPS(EQUATIONS_MAPPING%TOTAL_NUMBER_OF_ROWS),STAT=ERR)
-                  IF(ERR/=0) CALL FlagError("Could not allocate equations row to variable dof maps.",ERR,ERROR,*999)
-                  !Set up the row mappings
-                  DO row_idx=1,EQUATIONS_MAPPING%TOTAL_NUMBER_OF_ROWS
-                    !1-1 mapping for now
-                    DYNAMIC_MAPPING%EQUATIONS_ROW_TO_VARIABLE_DOF_MAPS(row_idx)=row_idx
-                  ENDDO !row_idx
-                ELSE
-                  CALL FlagError("Dynamic mapping is not associated.",ERR,ERROR,*999)
-                ENDIF
-              ENDIF
-              !Calculate linear mappings
-              IF(CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES>0) THEN                  
-                CALL EQUATIONS_MAPPING_LINEAR_MAPPING_INITIALISE(EQUATIONS_MAPPING,ERR,ERROR,*999)
-                LINEAR_MAPPING=>EQUATIONS_MAPPING%LINEAR_MAPPING
-                IF(ASSOCIATED(LINEAR_MAPPING)) THEN
-                  LINEAR_MAPPING%NUMBER_OF_LINEAR_EQUATIONS_MATRICES=CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES
-                  !Allocate and initialise the variable type maps
-                  ALLOCATE(LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=ERR)
-                  IF(ERR/=0) CALL FlagError("Could not allocate equations mapping variable to equations map.",ERR,ERROR,*999)
-                  DO variable_type=1,FIELD_NUMBER_OF_VARIABLE_TYPES
-                    CALL EquationsMapping_VarToEquatsMatricesMapInitialise( &
-                      & LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type),ERR,ERROR,*999)
-                    LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%VARIABLE_INDEX=variable_type
-                    LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%VARIABLE_TYPE=variable_type
-                    LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%VARIABLE=>DEPENDENT_FIELD% &
-                      & VARIABLE_TYPE_MAP(variable_type)%PTR
-                  ENDDO !variable_type
-                  !Calculate the number of variable type maps and initialise
-                  DO matrix_idx=1,LINEAR_MAPPING%NUMBER_OF_LINEAR_EQUATIONS_MATRICES
-                    variable_type=CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES(matrix_idx)
-                    LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%NUMBER_OF_EQUATIONS_MATRICES= &
-                      & LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%NUMBER_OF_EQUATIONS_MATRICES+1
-                  ENDDO !matrix_idx
-                  IF(CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE/=0) LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS( &
-                    & CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE)%NUMBER_OF_EQUATIONS_MATRICES=-1                    
-                  LINEAR_MAPPING%NUMBER_OF_LINEAR_MATRIX_VARIABLES=0
-                  !Allocate and initialise the variable to equations matrices maps
-                  DO variable_type=1,FIELD_NUMBER_OF_VARIABLE_TYPES
-                    DEPENDENT_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%PTR
-                    IF(ASSOCIATED(DEPENDENT_VARIABLE)) THEN
-                      IF(LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)% &
-                        & NUMBER_OF_EQUATIONS_MATRICES==-1) THEN
-!!TODO: check if this can be removed and just allocate those variables that are actually used
-                        ALLOCATE(LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%DOF_TO_ROWS_MAP( &
-                          & DEPENDENT_VARIABLE%TOTAL_NUMBER_OF_DOFS),STAT=ERR)
-                        IF(ERR/=0) CALL FlagError("Could not allocate variable to equations matrices maps dof to rows map.", &
-                          & ERR,ERROR,*999)
-                        LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%DOF_TO_ROWS_MAP=0
-                        LINEAR_MAPPING%NUMBER_OF_LINEAR_MATRIX_VARIABLES=LINEAR_MAPPING%NUMBER_OF_LINEAR_MATRIX_VARIABLES+1
-                      ELSE IF(LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%NUMBER_OF_EQUATIONS_MATRICES>0) THEN
-                        ALLOCATE(LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%EQUATIONS_MATRIX_NUMBERS( &
-                          & LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%NUMBER_OF_EQUATIONS_MATRICES),STAT=ERR)
-                        IF(ERR/=0) &
-                          & CALL FlagError("Could not allocate variable to equations matrices maps equations matrix numbers.", &
-                          & ERR,ERROR,*999)
-                        ALLOCATE(LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%DOF_TO_COLUMNS_MAPS( &
-                          & LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%NUMBER_OF_EQUATIONS_MATRICES),STAT=ERR)
-                        IF(ERR/=0) CALL FlagError("Could not allocate variable to equations matrices maps dof to columns map.", &
-                          & ERR,ERROR,*999)                
-                        LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%EQUATIONS_MATRIX_NUMBERS=0
-                        LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%NUMBER_OF_EQUATIONS_MATRICES=0
-                        DO matrix_idx=1,LINEAR_MAPPING%NUMBER_OF_LINEAR_EQUATIONS_MATRICES
-                          IF(CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES(matrix_idx)==variable_type) THEN
-                            LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%NUMBER_OF_EQUATIONS_MATRICES= &
-                              & LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%NUMBER_OF_EQUATIONS_MATRICES+1
-                            LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%EQUATIONS_MATRIX_NUMBERS( &
-                              & LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%NUMBER_OF_EQUATIONS_MATRICES)= &
-                              & matrix_idx
-                            ALLOCATE(LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%DOF_TO_COLUMNS_MAPS( &
-                              & LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)% &
-                              & NUMBER_OF_EQUATIONS_MATRICES)%COLUMN_DOF(DEPENDENT_VARIABLE%TOTAL_NUMBER_OF_DOFS),STAT=ERR)
-                            IF(ERR/=0) CALL FlagError("Could not allocate variable dof to columns map column dof.", &
-                              & ERR,ERROR,*999)
-                            DO dof_idx=1,DEPENDENT_VARIABLE%TOTAL_NUMBER_OF_DOFS
-                              !1-1 mapping for now
-                              column_idx=DEPENDENT_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(dof_idx)
-                              LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%DOF_TO_COLUMNS_MAPS( &
-                                & LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)% &
-                                & NUMBER_OF_EQUATIONS_MATRICES)%COLUMN_DOF(dof_idx)=column_idx
-                            ENDDO !dof_idx
-                          ENDIF
-                        ENDDO !matrix_idx
-                        ALLOCATE(LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%DOF_TO_ROWS_MAP( &
-                          & DEPENDENT_VARIABLE%TOTAL_NUMBER_OF_DOFS),STAT=ERR)
-                        IF(ERR/=0) CALL FlagError("Could not allocate variable to equations matrices maps dof to rows map.", &
-                          & ERR,ERROR,*999)
-                        DO dof_idx=1,DEPENDENT_VARIABLE%TOTAL_NUMBER_OF_DOFS
-                          !1-1 mappings for now.
-                          row_idx=dof_idx
-                          LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%DOF_TO_ROWS_MAP(dof_idx)=row_idx
-                        ENDDO !dof_idx
-                        LINEAR_MAPPING%NUMBER_OF_LINEAR_MATRIX_VARIABLES=LINEAR_MAPPING%NUMBER_OF_LINEAR_MATRIX_VARIABLES+1
-                      ENDIF
-                    ENDIF
-                  ENDDO !variable_type
-                  !Allocate and initialise the variable types
-                  ALLOCATE(LINEAR_MAPPING%LINEAR_MATRIX_VARIABLE_TYPES(LINEAR_MAPPING%NUMBER_OF_LINEAR_MATRIX_VARIABLES),STAT=ERR)
-                  IF(ERR/=0) CALL FlagError("Could not allocate equations mapping matrix variable types.",ERR,ERROR,*999)
-                  LINEAR_MAPPING%NUMBER_OF_LINEAR_MATRIX_VARIABLES=0
-                  DO variable_type=1,FIELD_NUMBER_OF_VARIABLE_TYPES
-                    IF(LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%NUMBER_OF_EQUATIONS_MATRICES>0) THEN
-                      LINEAR_MAPPING%NUMBER_OF_LINEAR_MATRIX_VARIABLES=LINEAR_MAPPING%NUMBER_OF_LINEAR_MATRIX_VARIABLES+1
-                      LINEAR_MAPPING%LINEAR_MATRIX_VARIABLE_TYPES(LINEAR_MAPPING%NUMBER_OF_LINEAR_MATRIX_VARIABLES)=variable_type
-                    ENDIF
-                  ENDDO !variable_type
-                  !Allocate and initialise the equations matrix to variable maps types
-                  ALLOCATE(LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(LINEAR_MAPPING%NUMBER_OF_LINEAR_EQUATIONS_MATRICES), &
-                    & STAT=ERR)
-                  IF(ERR/=0) CALL FlagError("Could not allocate equations mapping equations matrix to variable maps.", &
-                    & ERR,ERROR,*999)
-                  !Create the individual matrix maps and column maps
-                  DO matrix_idx=1,LINEAR_MAPPING%NUMBER_OF_LINEAR_EQUATIONS_MATRICES
-                    variable_type=CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES(matrix_idx)
-                    DEPENDENT_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%PTR
-                    CALL EquationsMapping_EquatsMatrixToVarMapInitialise(LINEAR_MAPPING% &
-                      & EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx),ERR,ERROR,*999)
-                    LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%MATRIX_NUMBER=matrix_idx
-                    LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%VARIABLE_TYPE=variable_type
-                    LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%VARIABLE=>DEPENDENT_VARIABLE
-                    LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%NUMBER_OF_COLUMNS=DEPENDENT_VARIABLE% &
-                      & DOMAIN_MAPPING%NUMBER_OF_GLOBAL
-                    LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%MATRIX_COEFFICIENT=EQUATIONS_MAPPING% &
-                      CREATE_VALUES_CACHE%LINEAR_MATRIX_COEFFICIENTS(matrix_idx)
-                    ALLOCATE(LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%COLUMN_TO_DOF_MAP( &
-                      & DEPENDENT_VARIABLE%DOMAIN_MAPPING%NUMBER_OF_GLOBAL),STAT=ERR)                  
-                    IF(ERR/=0) CALL FlagError("Could not allocate equation matrix to variable map column to dof map.",&
-                      & ERR,ERROR,*999)
-                    LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%COLUMN_TO_DOF_MAP=0
-                    DO dof_idx=1,DEPENDENT_VARIABLE%TOTAL_NUMBER_OF_DOFS
-                      !1-1 mapping for now
-                      column_idx=DEPENDENT_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(dof_idx)
-                      LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%COLUMN_TO_DOF_MAP(column_idx)=dof_idx
-                    ENDDO !dof_idx
-                    LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%COLUMN_DOFS_MAPPING=> &
-                      & DEPENDENT_VARIABLE%DOMAIN_MAPPING
-                  ENDDO !matrix_idx
-                  !Allocate the row mappings
-                  ALLOCATE(LINEAR_MAPPING%EQUATIONS_ROW_TO_VARIABLE_DOF_MAPS(EQUATIONS_MAPPING%TOTAL_NUMBER_OF_ROWS, &
-                    & LINEAR_MAPPING%NUMBER_OF_LINEAR_MATRIX_VARIABLES),STAT=ERR)
-                  IF(ERR/=0) CALL FlagError("Could not allocate equations row to variable dof maps.",ERR,ERROR,*999)
-                  !Set up the row mappings
-                  DO variable_idx=1,LINEAR_MAPPING%NUMBER_OF_LINEAR_MATRIX_VARIABLES
-                    DO row_idx=1,EQUATIONS_MAPPING%TOTAL_NUMBER_OF_ROWS
-                      !1-1 mapping for now
-                      LINEAR_MAPPING%EQUATIONS_ROW_TO_VARIABLE_DOF_MAPS(row_idx,variable_idx)=row_idx
-                    ENDDO !row_idx
-                  ENDDO !variable_idx
-                ELSE
-                  CALL FlagError("Linear mapping is not associated.",ERR,ERROR,*999)
-                ENDIF
-              ENDIF
-              !Calculate non-linear mappings
-              IF(CREATE_VALUES_CACHE%NUMBER_OF_RESIDUAL_VARIABLES/=0) THEN
-                CALL EquationsMapping_NonlinearMappingInitialise(EQUATIONS_MAPPING,ERR,ERROR,*999)
-                NONLINEAR_MAPPING=>EQUATIONS_MAPPING%NONLINEAR_MAPPING
-                IF(ASSOCIATED(NONLINEAR_MAPPING)) THEN
-                  NONLINEAR_MAPPING%NUMBER_OF_RESIDUAL_VARIABLES=CREATE_VALUES_CACHE%NUMBER_OF_RESIDUAL_VARIABLES
-                  ALLOCATE(NONLINEAR_MAPPING%VAR_TO_JACOBIAN_MAP(NONLINEAR_MAPPING%NUMBER_OF_RESIDUAL_VARIABLES),STAT=ERR)
-                  IF(ERR/=0) CALL FlagError("Could not allocate variable to Jacobian maps.",ERR,ERROR,*999)
-                  ALLOCATE(NONLINEAR_MAPPING%JACOBIAN_TO_VAR_MAP(NONLINEAR_MAPPING%NUMBER_OF_RESIDUAL_VARIABLES),STAT=ERR)
-                  IF(ERR/=0) CALL FlagError("Could not allocate Jacobian to variable maps.",ERR,ERROR,*999)
-                  ALLOCATE(NONLINEAR_MAPPING%RESIDUAL_VARIABLES(NONLINEAR_MAPPING%NUMBER_OF_RESIDUAL_VARIABLES),STAT=ERR)
-                  IF(ERR/=0) CALL FlagError("Could not allocate nonlinear mapping residual variables.",ERR,ERROR,*999)
-                  DO matrix_idx=1,NONLINEAR_MAPPING%NUMBER_OF_RESIDUAL_VARIABLES
-                    CALL EquationsMapping_VarToEquatsJacobianMapInitialise(NONLINEAR_MAPPING% &
-                      & VAR_TO_JACOBIAN_MAP(matrix_idx),ERR,ERROR,*999)
-                    NONLINEAR_MAPPING%VAR_TO_JACOBIAN_MAP(matrix_idx)%JACOBIAN_NUMBER=matrix_idx
-                    NONLINEAR_MAPPING%VAR_TO_JACOBIAN_MAP(matrix_idx)%VARIABLE_TYPE= &
-                      & CREATE_VALUES_CACHE%RESIDUAL_VARIABLE_TYPES(matrix_idx)
-                    DEPENDENT_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(CREATE_VALUES_CACHE% &
-                      & RESIDUAL_VARIABLE_TYPES(matrix_idx))%PTR
-                    NONLINEAR_MAPPING%VAR_TO_JACOBIAN_MAP(matrix_idx)%VARIABLE=>DEPENDENT_VARIABLE
-                    NONLINEAR_MAPPING%RESIDUAL_VARIABLES(matrix_idx)%PTR=>DEPENDENT_VARIABLE
-                    !Row variable is RHS if set, otherwise first nonlinear variable
-                    IF(CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE/=0) THEN
-                      ROW_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE)%PTR
-                    ELSE
-                      ROW_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(CREATE_VALUES_CACHE%RESIDUAL_VARIABLE_TYPES(1))%PTR
-                    ENDIF
-                    !Allocate and set dof to Jacobian columns map
-                    ALLOCATE(NONLINEAR_MAPPING%VAR_TO_JACOBIAN_MAP(matrix_idx)%DOF_TO_COLUMNS_MAP(DEPENDENT_VARIABLE% &
-                      & TOTAL_NUMBER_OF_DOFS),STAT=ERR)
-                    IF(ERR/=0) CALL FlagError("Could not allocate variable to Jacobian map dof to columns map.",ERR,ERROR,*999)
-                    DO dof_idx=1,DEPENDENT_VARIABLE%TOTAL_NUMBER_OF_DOFS
-                      !1-1 mapping for now
-                      column_idx=DEPENDENT_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(dof_idx)
-                      NONLINEAR_MAPPING%VAR_TO_JACOBIAN_MAP(matrix_idx)%DOF_TO_COLUMNS_MAP(dof_idx)=column_idx
-                    ENDDO !dof_idx
-                    !Allocate and set dof to Jacobian rows map
-                    ALLOCATE(NONLINEAR_MAPPING%VAR_TO_JACOBIAN_MAP(matrix_idx)%DOF_TO_ROWS_MAP(ROW_VARIABLE% &
-                      & TOTAL_NUMBER_OF_DOFS),STAT=ERR)
-                    IF(ERR/=0) CALL FlagError("Could not allocate variable to Jacobian map dof to columns map.",ERR,ERROR,*999)
-                    DO dof_idx=1,ROW_VARIABLE%TOTAL_NUMBER_OF_DOFS
-                      !1-1 mapping for now
-                      row_idx=dof_idx
-                      NONLINEAR_MAPPING%VAR_TO_JACOBIAN_MAP(matrix_idx)%DOF_TO_ROWS_MAP(dof_idx)=row_idx
-                    ENDDO !dof_idx
-                    CALL EquationsMapping_EquatsJacobianToVarMapInitialise(NONLINEAR_MAPPING% &
-                      & JACOBIAN_TO_VAR_MAP(matrix_idx),ERR,ERROR,*999)
-                    NONLINEAR_MAPPING%JACOBIAN_TO_VAR_MAP(matrix_idx)%JACOBIAN_NUMBER=matrix_idx
-                    NONLINEAR_MAPPING%JACOBIAN_TO_VAR_MAP(matrix_idx)%VARIABLE_TYPE=CREATE_VALUES_CACHE% &
-                      & RESIDUAL_VARIABLE_TYPES(matrix_idx)
-                    NONLINEAR_MAPPING%JACOBIAN_TO_VAR_MAP(matrix_idx)%VARIABLE=>DEPENDENT_VARIABLE
-                    NONLINEAR_MAPPING%JACOBIAN_TO_VAR_MAP(matrix_idx)%NUMBER_OF_COLUMNS= &
-                      & DEPENDENT_VARIABLE%DOMAIN_MAPPING%NUMBER_OF_GLOBAL
-                    NONLINEAR_MAPPING%JACOBIAN_TO_VAR_MAP(matrix_idx)%JACOBIAN_COEFFICIENT=CREATE_VALUES_CACHE%RESIDUAL_COEFFICIENT
-                    ALLOCATE(NONLINEAR_MAPPING%JACOBIAN_TO_VAR_MAP(matrix_idx)%EQUATIONS_COLUMN_TO_DOF_VARIABLE_MAP( &
-                      & DEPENDENT_VARIABLE%DOMAIN_MAPPING%NUMBER_OF_GLOBAL),STAT=ERR)
-                    NONLINEAR_MAPPING%JACOBIAN_TO_VAR_MAP(matrix_idx)%EQUATIONS_COLUMN_TO_DOF_VARIABLE_MAP=0
-                    DO dof_idx=1,DEPENDENT_VARIABLE%TOTAL_NUMBER_OF_DOFS
-                      !1-1 mapping for now
-                      column_idx=DEPENDENT_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(dof_idx)
-                      NONLINEAR_MAPPING%JACOBIAN_TO_VAR_MAP(matrix_idx)%EQUATIONS_COLUMN_TO_DOF_VARIABLE_MAP(column_idx)=dof_idx
-                    ENDDO !dof_idx
-                    NONLINEAR_MAPPING%JACOBIAN_TO_VAR_MAP(matrix_idx)%COLUMN_DOFS_MAPPING=>DEPENDENT_VARIABLE%DOMAIN_MAPPING
-                  ENDDO !matrix_idx
-                  !Set up the row mappings
-                  ALLOCATE(NONLINEAR_MAPPING%EQUATIONS_ROW_TO_RESIDUAL_DOF_MAP(TOTAL_NUMBER_OF_ROWS),STAT=ERR)
-                  IF(ERR/=0) CALL FlagError("Could not allocate equations row to residual dof map.",ERR,ERROR,*999)
-                  DO row_idx=1,TOTAL_NUMBER_OF_ROWS
-                    !1-1 mapping for now
-                    dof_idx=row_idx
-                    NONLINEAR_MAPPING%EQUATIONS_ROW_TO_RESIDUAL_DOF_MAP(row_idx)=dof_idx
-                  ENDDO !row_idx
-                ELSE
-                  CALL FlagError("Nonlinear mapping is not associated.",ERR,ERROR,*999)
-                ENDIF
-              ENDIF
-              !Calculate RHS mappings
-              IF(CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE/=0) THEN                  
-                CALL EQUATIONS_MAPPING_RHS_MAPPING_INITIALISE(EQUATIONS_MAPPING,ERR,ERROR,*999)
-                RHS_MAPPING=>EQUATIONS_MAPPING%RHS_MAPPING
-                IF(ASSOCIATED(RHS_MAPPING)) THEN
-                  RHS_MAPPING%RHS_VARIABLE_TYPE=CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE
-                  DEPENDENT_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE)%PTR
-                  RHS_MAPPING%RHS_VARIABLE=>DEPENDENT_VARIABLE
-                  RHS_MAPPING%RHS_VARIABLE_MAPPING=>DEPENDENT_VARIABLE%DOMAIN_MAPPING
-                  RHS_MAPPING%RHS_COEFFICIENT=CREATE_VALUES_CACHE%RHS_COEFFICIENT
-                  !Allocate and set up the row mappings
-                  ALLOCATE(RHS_MAPPING%RHS_DOF_TO_EQUATIONS_ROW_MAP(DEPENDENT_VARIABLE%TOTAL_NUMBER_OF_DOFS),STAT=ERR)
-                  IF(ERR/=0) CALL FlagError("Could not allocate rhs dof to equations row map.",ERR,ERROR,*999)
-                  ALLOCATE(RHS_MAPPING%EQUATIONS_ROW_TO_RHS_DOF_MAP(TOTAL_NUMBER_OF_ROWS),STAT=ERR)
-                  IF(ERR/=0) CALL FlagError("Could not allocate equations row to dof map.",ERR,ERROR,*999)
-                  DO dof_idx=1,DEPENDENT_VARIABLE%TOTAL_NUMBER_OF_DOFS
-                    !1-1 mapping for now
-                    row_idx=dof_idx
-                    RHS_MAPPING%RHS_DOF_TO_EQUATIONS_ROW_MAP(dof_idx)=row_idx
-                  ENDDO !dof_idx
-                  DO row_idx=1,TOTAL_NUMBER_OF_ROWS
-                    !1-1 mapping for now
-                    dof_idx=row_idx
-                    RHS_MAPPING%EQUATIONS_ROW_TO_RHS_DOF_MAP(row_idx)=dof_idx
-                  ENDDO !row_idx
-                ELSE
-                  CALL FlagError("RHS mapping is not associated.",ERR,ERROR,*999)
-                ENDIF
-              ENDIF
-              !Calcuate the source mappings
-              IF(CREATE_VALUES_CACHE%SOURCE_VARIABLE_TYPE/=0) THEN                  
-                CALL EQUATIONS_MAPPING_SOURCE_MAPPING_INITIALISE(EQUATIONS_MAPPING,ERR,ERROR,*999)
-                SOURCE_MAPPING=>EQUATIONS_MAPPING%SOURCE_MAPPING
-                IF(ASSOCIATED(SOURCE_MAPPING)) THEN
-                  SOURCE_MAPPING%SOURCE_VARIABLE_TYPE=CREATE_VALUES_CACHE%SOURCE_VARIABLE_TYPE
-                  SOURCE_VARIABLE=>SOURCE_FIELD%VARIABLE_TYPE_MAP(CREATE_VALUES_CACHE%SOURCE_VARIABLE_TYPE)%PTR
-                  SOURCE_MAPPING%SOURCE_VARIABLE=>SOURCE_VARIABLE
-              !    SOURCE_MAPPING%SOURCE_VARIABLE_MAPPING=>SOURCE_VARIABLE%DOMAIN_MAPPING
-              !    SOURCE_MAPPING%SOURCE_COEFFICIENT=CREATE_VALUES_CACHE%SOURCE_COEFFICIENT
-              !    !Allocate and set up the row mappings
-              !    ALLOCATE(SOURCE_MAPPING%SOURCE_DOF_TO_EQUATIONS_ROW_MAP(SOURCE_VARIABLE%TOTAL_NUMBER_OF_DOFS),STAT=ERR)
-              !    IF(ERR/=0) CALL FlagError("Could not allocate source dof to equations row map.",ERR,ERROR,*999)
-              !    ALLOCATE(SOURCE_MAPPING%EQUATIONS_ROW_TO_SOURCE_DOF_MAP(TOTAL_NUMBER_OF_ROWS),STAT=ERR)
-              !    IF(ERR/=0) CALL FlagError("Could not allocate equations row to source map.",ERR,ERROR,*999)
-              !    DO dof_idx=1,SOURCE_VARIABLE%TOTAL_NUMBER_OF_DOFS
-              !      !1-1 mapping for now
-              !      row_idx=dof_idx
-              !      SOURCE_MAPPING%SOURCE_DOF_TO_EQUATIONS_ROW_MAP(dof_idx)=row_idx
-              !    ENDDO !dof_idx
-              !    DO row_idx=1,TOTAL_NUMBER_OF_ROWS
-              !      !1-1 mapping for now
-              !      dof_idx=row_idx
-              !      SOURCE_MAPPING%EQUATIONS_ROW_TO_SOURCE_DOF_MAP(row_idx)=dof_idx
-              !    ENDDO !row_idx
-                ELSE
-                  CALL FlagError("Source mapping is not associated.",ERR,ERROR,*999)
-                ENDIF
-              ENDIF
-            ELSE
-              CALL FlagError("Equations set dependent field is not associated.",ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Equations equations set is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Equations mapping create values cache is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Equations mapping equations is not associated.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Equations mapping is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    IF(DIAGNOSTICS1) THEN
-      CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Equations mappings:",ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of rows = ",EQUATIONS_MAPPING%NUMBER_OF_ROWS,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Total umber of rows = ",EQUATIONS_MAPPING%TOTAL_NUMBER_OF_ROWS, &
-        & ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of global rows = ",EQUATIONS_MAPPING%NUMBER_OF_GLOBAL_ROWS, &
-        & ERR,ERROR,*999)
-      DYNAMIC_MAPPING=>EQUATIONS_MAPPING%DYNAMIC_MAPPING
-      IF(ASSOCIATED(DYNAMIC_MAPPING)) THEN
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Dynamic mappings:",ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of dynamic equations matrices = ",DYNAMIC_MAPPING% &
-          & NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Dynamic stiffness matrix number = ",DYNAMIC_MAPPING% &
-          & STIFFNESS_MATRIX_NUMBER,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Dynamic damping matrix number = ",DYNAMIC_MAPPING% &
-          & DAMPING_MATRIX_NUMBER,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Dynamic mass matrix number = ",DYNAMIC_MAPPING% &
-          & MASS_MATRIX_NUMBER,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Dynamic variable type = ",DYNAMIC_MAPPING% &
-          & DYNAMIC_VARIABLE_TYPE,ERR,ERROR,*999)
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"    Variable to matrices mappings:",ERR,ERROR,*999)
-        DO variable_type=1,FIELD_NUMBER_OF_VARIABLE_TYPES
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Variable type : ",variable_type,ERR,ERROR,*999)
-          IF(ASSOCIATED(DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%VARIABLE)) THEN
-            CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Total number of DOFs = ",DYNAMIC_MAPPING% &
-              & VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%VARIABLE%TOTAL_NUMBER_OF_DOFS,ERR,ERROR,*999)
-            CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of equations matrices = ",DYNAMIC_MAPPING% &
-              & VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%NUMBER_OF_EQUATIONS_MATRICES,ERR,ERROR,*999)
-            IF(DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%NUMBER_OF_EQUATIONS_MATRICES>0) THEN
-              CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)% &
-                & NUMBER_OF_EQUATIONS_MATRICES,4,4,DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)% &
-                & EQUATIONS_MATRIX_NUMBERS,'("      Matrix numbers :",4(X,I12))','(22X,4(X,I12))',ERR,ERROR,*999) 
-              CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"      DOF to column maps :",ERR,ERROR,*999)
-              DO matrix_idx=1,DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%NUMBER_OF_EQUATIONS_MATRICES
-                CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Matrix number : ",matrix_idx,ERR,ERROR,*999)
-                CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS( &
-                  & variable_type)%VARIABLE%TOTAL_NUMBER_OF_DOFS,5,5,DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS( &
-                  & variable_type)%DOF_TO_COLUMNS_MAPS(matrix_idx)%COLUMN_DOF, &
-                  & '("        Column numbers :",5(X,I13))','(24X,5(X,I13))',ERR,ERROR,*999) 
-              ENDDO !matrix_idx
-              CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)% &
-                & VARIABLE%TOTAL_NUMBER_OF_DOFS,5,5,DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)% &
-                & DOF_TO_ROWS_MAP,'("      DOF to row maps  :",5(X,I13))','(24X,5(X,I13))',ERR,ERROR,*999)
-            ENDIF
-          ENDIF
-        ENDDO !variable_type
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"    Matrix to variable mappings:",ERR,ERROR,*999)
-        DO matrix_idx=1,DYNAMIC_MAPPING%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Matrix number : ",matrix_idx,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Variable type = ",DYNAMIC_MAPPING% &
-            & EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%VARIABLE_TYPE,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Number of columns = ",DYNAMIC_MAPPING% &
-            & EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%NUMBER_OF_COLUMNS,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Matrix coefficient = ",DYNAMIC_MAPPING% &
-            & EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%MATRIX_COEFFICIENT,ERR,ERROR,*999)
-          CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,DYNAMIC_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)% &
-            & NUMBER_OF_COLUMNS,5,5,DYNAMIC_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%COLUMN_TO_DOF_MAP, &
-            & '("        Column to DOF maps :",5(X,I13))','(28X,5(X,I13))',ERR,ERROR,*999) 
-        ENDDO !matrix_idx
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"    Row mappings:",ERR,ERROR,*999)
-        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,EQUATIONS_MAPPING%TOTAL_NUMBER_OF_ROWS,5,5, &
-          & DYNAMIC_MAPPING%EQUATIONS_ROW_TO_VARIABLE_DOF_MAPS,'("    Row to DOF maps :",5(X,I13))','(21X,5(X,I13))', &
-          & ERR,ERROR,*999) 
-      ENDIF
-      LINEAR_MAPPING=>EQUATIONS_MAPPING%LINEAR_MAPPING
-      IF(ASSOCIATED(LINEAR_MAPPING)) THEN
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Linear mappings:",ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of linear equations matrices = ",LINEAR_MAPPING% &
-          & NUMBER_OF_LINEAR_EQUATIONS_MATRICES,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of linear matrix variables = ",LINEAR_MAPPING% &
-          & NUMBER_OF_LINEAR_MATRIX_VARIABLES,ERR,ERROR,*999)
-        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,LINEAR_MAPPING%NUMBER_OF_LINEAR_MATRIX_VARIABLES,4,4, &
-          & LINEAR_MAPPING%LINEAR_MATRIX_VARIABLE_TYPES,'("    Linear matrix variable types :",4(X,I12))','(27X,4(X,I12))', &
-          & ERR,ERROR,*999) 
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"    Variable to matrices mappings:",ERR,ERROR,*999)
-        DO variable_type=1,FIELD_NUMBER_OF_VARIABLE_TYPES
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Variable type : ",variable_type,ERR,ERROR,*999)
-          IF(ASSOCIATED(LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%VARIABLE)) THEN
-            CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Total number of DOFs = ",LINEAR_MAPPING% &
-              & VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%VARIABLE%TOTAL_NUMBER_OF_DOFS,ERR,ERROR,*999)
-            CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of equations matrices = ",LINEAR_MAPPING% &
-              & VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%NUMBER_OF_EQUATIONS_MATRICES,ERR,ERROR,*999)
-            IF(LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%NUMBER_OF_EQUATIONS_MATRICES>0) THEN
-              CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)% &
-                & NUMBER_OF_EQUATIONS_MATRICES,4,4,LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)% &
-                & EQUATIONS_MATRIX_NUMBERS,'("      Matrix numbers :",4(X,I12))','(22X,4(X,I12))',ERR,ERROR,*999) 
-              CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"      DOF to column maps :",ERR,ERROR,*999)
-              DO matrix_idx=1,LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)%NUMBER_OF_EQUATIONS_MATRICES
-                CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Matrix number : ",matrix_idx,ERR,ERROR,*999)
-                CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS( &
-                  & variable_type)%VARIABLE%TOTAL_NUMBER_OF_DOFS,5,5,LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS( &
-                  & variable_type)%DOF_TO_COLUMNS_MAPS(matrix_idx)%COLUMN_DOF, &
-                  & '("        Column numbers :",5(X,I13))','(24X,5(X,I13))',ERR,ERROR,*999) 
-              ENDDO !matrix_idx
-              CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)% &
-                & VARIABLE%TOTAL_NUMBER_OF_DOFS,5,5,LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type)% &
-                & DOF_TO_ROWS_MAP,'("      DOF to row maps  :",5(X,I13))','(24X,5(X,I13))',ERR,ERROR,*999)
-            ENDIF
-          ENDIF
-        ENDDO !variable_type
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"    Matrix to variable mappings:",ERR,ERROR,*999)
-        DO matrix_idx=1,LINEAR_MAPPING%NUMBER_OF_LINEAR_EQUATIONS_MATRICES
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Matrix number : ",matrix_idx,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Variable type = ",LINEAR_MAPPING% &
-            & EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%VARIABLE_TYPE,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Number of columns = ",LINEAR_MAPPING% &
-            & EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%NUMBER_OF_COLUMNS,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Matrix coefficient = ",LINEAR_MAPPING% &
-            & EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%MATRIX_COEFFICIENT,ERR,ERROR,*999)
-          CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)% &
-            & NUMBER_OF_COLUMNS,5,5,LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx)%COLUMN_TO_DOF_MAP, &
-            & '("        Column to DOF maps :",5(X,I13))','(28X,5(X,I13))',ERR,ERROR,*999) 
-        ENDDO !matrix_idx
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"    Row mappings:",ERR,ERROR,*999)
-        DO variable_idx=1,LINEAR_MAPPING%NUMBER_OF_LINEAR_MATRIX_VARIABLES
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Variable number : ",variable_idx,ERR,ERROR,*999)
-          CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,EQUATIONS_MAPPING%TOTAL_NUMBER_OF_ROWS,5,5, &
-            & LINEAR_MAPPING%EQUATIONS_ROW_TO_VARIABLE_DOF_MAPS(:,variable_idx), &
-            & '("    Row to DOF maps :",5(X,I13))','(21X,5(X,I13))',ERR,ERROR,*999) 
-        ENDDO !variable_idx
-      ENDIF
-      NONLINEAR_MAPPING=>EQUATIONS_MAPPING%NONLINEAR_MAPPING
-      IF(ASSOCIATED(NONLINEAR_MAPPING)) THEN
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Nonlinear mappings:",ERR,ERROR,*999)
-        DO matrix_idx=1,NONLINEAR_MAPPING%NUMBER_OF_RESIDUAL_VARIABLES
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Matrix number : ",matrix_idx,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Residual variable type = ",NONLINEAR_MAPPING% &
-            & JACOBIAN_TO_VAR_MAP(matrix_idx)%VARIABLE_TYPE,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Total number of residual DOFs = ",NONLINEAR_MAPPING% &
-            & JACOBIAN_TO_VAR_MAP(matrix_idx)%VARIABLE%TOTAL_NUMBER_OF_DOFS,ERR,ERROR,*999)
-        ENDDO
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Residual coefficient = ",NONLINEAR_MAPPING%RESIDUAL_COEFFICIENT, &
-          & ERR,ERROR,*999)
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"    Residual row mappings:",ERR,ERROR,*999)
-        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,EQUATIONS_MAPPING%TOTAL_NUMBER_OF_ROWS,5,5, &
-          & NONLINEAR_MAPPING%EQUATIONS_ROW_TO_RESIDUAL_DOF_MAP,'("    Row to DOF mappings :",5(X,I13))','(25X,5(X,I13))', &
-          & ERR,ERROR,*999) 
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"    Jacobian mappings:",ERR,ERROR,*999)
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"    Variable to Jacobian mappings:",ERR,ERROR,*999)
-        DO matrix_idx=1,NONLINEAR_MAPPING%NUMBER_OF_RESIDUAL_VARIABLES
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Matrix number : ",matrix_idx,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Jacobian variable type = ",NONLINEAR_MAPPING% &
-            & VAR_TO_JACOBIAN_MAP(matrix_idx)%VARIABLE_TYPE,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Total number of Jacobain DOFs = ",NONLINEAR_MAPPING% &
-            & VAR_TO_JACOBIAN_MAP(matrix_idx)%VARIABLE%TOTAL_NUMBER_OF_DOFS,ERR,ERROR,*999)
-          CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,NONLINEAR_MAPPING%VAR_TO_JACOBIAN_MAP(matrix_idx)%VARIABLE% &
-            & TOTAL_NUMBER_OF_DOFS,5,5,NONLINEAR_MAPPING%VAR_TO_JACOBIAN_MAP(matrix_idx)%DOF_TO_COLUMNS_MAP, &
-            & '("      DOF to column map :",5(X,I13))','(26X,5(X,I13))',ERR,ERROR,*999) 
-          CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,NONLINEAR_MAPPING%VAR_TO_JACOBIAN_MAP(matrix_idx)%VARIABLE% &
-            & TOTAL_NUMBER_OF_DOFS,5,5,NONLINEAR_MAPPING%VAR_TO_JACOBIAN_MAP(matrix_idx)%DOF_TO_ROWS_MAP, &
-            & '("      DOF to row map    :",5(X,I13))','(26X,5(X,I13))',ERR,ERROR,*999) 
-          CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"    Jacobian to variable mappings:",ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Jacobian variable type = ",NONLINEAR_MAPPING% &
-            & JACOBIAN_TO_VAR_MAP(matrix_idx)%VARIABLE_TYPE,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of columns = ",NONLINEAR_MAPPING% &
-            & JACOBIAN_TO_VAR_MAP(matrix_idx)%NUMBER_OF_COLUMNS,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Jacobian coefficient = ",NONLINEAR_MAPPING% &
-            & JACOBIAN_TO_VAR_MAP(matrix_idx)%JACOBIAN_COEFFICIENT,ERR,ERROR,*999)
-          CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,NONLINEAR_MAPPING%JACOBIAN_TO_VAR_MAP(matrix_idx)%NUMBER_OF_COLUMNS, &
-            & 5,5,NONLINEAR_MAPPING%JACOBIAN_TO_VAR_MAP(matrix_idx)%EQUATIONS_COLUMN_TO_DOF_VARIABLE_MAP, &
-            & '("      Column to DOF map :",5(X,I13))','(26X,5(X,I13))',ERR,ERROR,*999) 
-        ENDDO
-      ENDIF
-      RHS_MAPPING=>EQUATIONS_MAPPING%RHS_MAPPING
-      IF(ASSOCIATED(RHS_MAPPING)) THEN
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  RHS mappings:",ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    RHS variable type = ",RHS_MAPPING%RHS_VARIABLE_TYPE,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Total number of RHS DOFs = ",RHS_MAPPING%RHS_VARIABLE% &
-          & TOTAL_NUMBER_OF_DOFS,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    RHS coefficient = ",RHS_MAPPING%RHS_COEFFICIENT,ERR,ERROR,*999)
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"    Row mappings:",ERR,ERROR,*999)
-        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,RHS_MAPPING%RHS_VARIABLE%TOTAL_NUMBER_OF_DOFS,5,5, &
-          & RHS_MAPPING%RHS_DOF_TO_EQUATIONS_ROW_MAP,'("    DOF to row mappings :",5(X,I13))','(25X,5(X,I13))',ERR,ERROR,*999) 
-        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,EQUATIONS_MAPPING%TOTAL_NUMBER_OF_ROWS,5,5, &
-          & RHS_MAPPING%EQUATIONS_ROW_TO_RHS_DOF_MAP,'("    Row to DOF mappings :",5(X,I13))','(25X,5(X,I13))',ERR,ERROR,*999) 
-       ENDIF
-      SOURCE_MAPPING=>EQUATIONS_MAPPING%SOURCE_MAPPING
-      IF(ASSOCIATED(SOURCE_MAPPING)) THEN
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Source mappings:",ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Source variable type = ",SOURCE_MAPPING%SOURCE_VARIABLE_TYPE, &
-          & ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Total number of source DOFs = ",SOURCE_MAPPING%SOURCE_VARIABLE% &
-          & TOTAL_NUMBER_OF_DOFS,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Source coefficient = ",SOURCE_MAPPING%SOURCE_COEFFICIENT,ERR,ERROR,*999)
-        !CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"    Row mappings:",ERR,ERROR,*999)
-        !CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,SOURCE_MAPPING%SOURCE_VARIABLE%TOTAL_NUMBER_OF_DOFS,5,5, &
-        !  & SOURCE_MAPPING%SOURCE_DOF_TO_EQUATIONS_ROW_MAP,'("    DOF to row mappings :",5(X,I13))','(25X,5(X,I13))', &
-        !  & ERR,ERROR,*999) 
-        !CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,EQUATIONS_MAPPING%TOTAL_NUMBER_OF_ROWS,5,5, &
-        !  & SOURCE_MAPPING%EQUATIONS_ROW_TO_SOURCE_DOF_MAP,'("    Row to DOF mappings :",5(X,I13))','(25X,5(X,I13))', &
-        !  & ERR,ERROR,*999) 
-      ENDIF
-    ENDIF
-       
-    EXITS("EQUATIONS_MAPPING_CALCULATE")
-    RETURN
-999 ERRORSEXITS("EQUATIONS_MAPPING_CALCULATE",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE EQUATIONS_MAPPING_CALCULATE
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Finishes the process of creating an equations mapping
-  SUBROUTINE EQUATIONS_MAPPING_CREATE_FINISH(EQUATIONS_MAPPING,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code 
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    INTEGER(INTG) :: matrix_idx
-    LOGICAL :: IS_RESIDUAL_TYPE
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
-    TYPE(EQUATIONS_MAPPING_CREATE_VALUES_CACHE_TYPE), POINTER :: CREATE_VALUES_CACHE
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("EQUATIONS_MAPPING_CREATE_FINISH",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-      IF(EQUATIONS_MAPPING%EQUATIONS_MAPPING_FINISHED) THEN
-        CALL FlagError("Equations mapping has already been finished.",ERR,ERROR,*999)
-      ELSE
-        CREATE_VALUES_CACHE=>EQUATIONS_MAPPING%CREATE_VALUES_CACHE
-        IF(ASSOCIATED(CREATE_VALUES_CACHE)) THEN
-          EQUATIONS=>EQUATIONS_MAPPING%EQUATIONS
-          IF(ASSOCIATED(EQUATIONS)) THEN
-            EQUATIONS_SET=>EQUATIONS%EQUATIONS_SET
-            IF(ASSOCIATED(EQUATIONS_SET)) THEN
-              !Check that all the variables have been mapped properly
-              SELECT CASE(EQUATIONS%TIME_DEPENDENCE)
-              CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC)
-                SELECT CASE(EQUATIONS%LINEARITY)
-                CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
-                  IF(CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE==0.AND.CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES==0) &
-                    & CALL FlagError("Invalid equations mapping. The RHS variable type must be set if there are no "// &
-                    & "linear matrices.",ERR,ERROR,*999)
-                CASE(EQUATIONS_NONLINEAR)
-                  DO matrix_idx=1,CREATE_VALUES_CACHE%NUMBER_OF_RESIDUAL_VARIABLES
-                    IF(CREATE_VALUES_CACHE%RESIDUAL_VARIABLE_TYPES(matrix_idx)==0) THEN
-                      LOCAL_ERROR="Invalid equations mapping. The residual variable type is not set for Jacobian number "// &
-                        & TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))//"."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ENDIF
-                  ENDDO
-                  IF(CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE==0.AND.CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES==0) &
-                    & CALL FlagError("Invalid equations mapping. The RHS variable type must be set if there are no "// &
-                    & "linear matrices.",ERR,ERROR,*999)
-                CASE DEFAULT
-                  LOCAL_ERROR="The equations linearity type of "// &
-                    & TRIM(NumberToVString(EQUATIONS%LINEARITY,"*",ERR,ERROR))//" is invalid."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                END SELECT
-              CASE(EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
-                SELECT CASE(EQUATIONS%LINEARITY)
-                CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
-                  IF(CREATE_VALUES_CACHE%DYNAMIC_VARIABLE_TYPE==0) CALL FlagError("Invalid equations mapping. "// &
-                    & "The dynamic variable type must be set for dynamic equations.", ERR,ERROR,*999)
-                  IF(CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE==0.AND.CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES==0) &
-                    & CALL FlagError("Invalid equations mapping. The RHS variable type must be set if there are no "// &
-                    & "linear matrices.",ERR,ERROR,*999)
-                CASE(EQUATIONS_NONLINEAR)
-! SEBK 19/08/2009 not sure about mapping here
-!|
-                  IF(CREATE_VALUES_CACHE%DYNAMIC_VARIABLE_TYPE==0) CALL FlagError("Invalid equations mapping. "// &
-                    & "The dynamic variable type must be set for dynamic equations.", ERR,ERROR,*999)
-                  IF(CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE==0.AND.CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES==0) &
-                    & CALL FlagError("Invalid equations mapping. The RHS variable type must be set if there are no "// &
-                    & "linear matrices.",ERR,ERROR,*999)
-                  IS_RESIDUAL_TYPE=.FALSE.
-                  DO matrix_idx=1,CREATE_VALUES_CACHE%NUMBER_OF_RESIDUAL_VARIABLES
-                    IF(CREATE_VALUES_CACHE%RESIDUAL_VARIABLE_TYPES(matrix_idx)==0) THEN
-                      LOCAL_ERROR="Invalid equations mapping. The residual variable type is not set for Jacobian number "// &
-                        & TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))//"."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ENDIF
-                    IF(CREATE_VALUES_CACHE%RESIDUAL_VARIABLE_TYPES(matrix_idx)==CREATE_VALUES_CACHE%DYNAMIC_VARIABLE_TYPE) THEN
-                      IS_RESIDUAL_TYPE=.TRUE.
-                    ENDIF
-                  ENDDO
-                  IF(IS_RESIDUAL_TYPE.EQV..FALSE.) THEN
-                    CALL FlagError("Invalid equations mapping. "// "The residual variable type must correspond to the &
-                      & dynamic variable type for nonlinear dynamic equations.", ERR,ERROR,*999)
-                  ENDIF
-!|
-! SEBK 19/08/2009 not sure about mapping here
-                CASE DEFAULT
-                  LOCAL_ERROR="The equations linearity type of "// &
-                    & TRIM(NumberToVString(EQUATIONS%LINEARITY,"*",ERR,ERROR))//" is invalid."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                END SELECT
-              CASE DEFAULT
-                LOCAL_ERROR="The equations time dependence type of "// &
-                  & TRIM(NumberToVString(EQUATIONS%TIME_DEPENDENCE,"*",ERR,ERROR))//" is invalid."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              END SELECT
-              !Check the linear matrices variable types
-              DO matrix_idx=1,CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES
-                IF(CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES(matrix_idx)==0) THEN
-                  LOCAL_ERROR="Invalid equations mapping. The linear matrix variable type is not set for linear matrix number "//&
-                    & TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))//"."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ENDIF
-              ENDDO !matrix_idx
-              !Now calculate the equations mapping and clean up
-              CALL EQUATIONS_MAPPING_CALCULATE(EQUATIONS_MAPPING,ERR,ERROR,*999)
-              CALL EquationsMapping_CreateValuesCacheFinalise(EQUATIONS_MAPPING%CREATE_VALUES_CACHE,ERR,ERROR,*999)
-              EQUATIONS_MAPPING%EQUATIONS_MAPPING_FINISHED=.TRUE.
-            ELSE
-              CALL FlagError("Equations equations set is not associated.",ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Equations mapping equations is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Equations mapping create values cache is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Equations mapping is not associated.",ERR,ERROR,*999)
-    ENDIF
-       
-    EXITS("EQUATIONS_MAPPING_CREATE_FINISH")
-    RETURN
-999 ERRORSEXITS("EQUATIONS_MAPPING_CREATE_FINISH",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE EQUATIONS_MAPPING_CREATE_FINISH
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Finishes the process of creating an equations mapping for a equations set equations
-  SUBROUTINE EQUATIONS_MAPPING_CREATE_START(EQUATIONS,EQUATIONS_MAPPING,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS !<A pointer to the equation to create the equations mapping from.
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<On return, a pointer to the equations mapping. This must not be associated on entry
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code 
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
+      !dependentVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%TIME_STEPPING_VARIABLE_TYPE)%ptr
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The equations time dependence type of "//TRIM(NumberToVString(equations%timeDependence,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    IF(.NOT.ASSOCIATED(dependentVariable)) CALL FlagError("The dependent variable is not associated.",err,error,*999)
+    numberOfRows=dependentVariable%NUMBER_OF_DOFS
+    totalNumberOfRows=dependentVariable%TOTAL_NUMBER_OF_DOFS
+    vectorMapping%rowDofsMapping=>dependentVariable%DOMAIN_MAPPING
+    IF(.NOT.ASSOCIATED(vectorMapping%rowDofsMapping)) &
+      & CALL FlagError("Dependent variable domain mapping is not associated.",err,error,*999)
+    numberOfGlobalRows=vectorMapping%rowDofsMapping%NUMBER_OF_GLOBAL
     
-    ENTERS("EQUATIONS_MAPPING_CREATE_START",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(EQUATIONS)) THEN
-      IF(EQUATIONS%EQUATIONS_FINISHED) THEN
-        IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-          CALL FlagError("Equations mapping is already associated.",ERR,ERROR,*999)
-        ELSE
-          NULLIFY(EQUATIONS_MAPPING)
-          CALL EQUATIONS_MAPPING_INITIALISE(EQUATIONS,ERR,ERROR,*999)
-          EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
+    !Check that the number of rows is consistent across the remaining linear matrices
+    DO matrixIdx=linearMatrixStart,createValuesCache%numberOfLinearMatrices
+      dependentVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%linearMatrixVariableTypes(matrixIdx))%ptr
+      IF(ASSOCIATED(dependentVariable)) THEN
+        IF(dependentVariable%NUMBER_OF_DOFS/=numberOfRows) THEN
+          localError="Invalid equations set up. The number of rows in the equations set ("// &
+            & TRIM(NumberToVString(numberOfRows,"*",err,error))// &
+            & ") does not match the number of rows in equations linear matrix number "// &
+            & TRIM(NumberToVString(matrixIdx,"*",err,error))//" ("// &
+                      & TRIM(NumberToVString(dependentVariable%NUMBER_OF_DOFS,"*",err,error))//")."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        IF(dependentVariable%TOTAL_NUMBER_OF_DOFS/=totalNumberOfRows) THEN
+          localError="Invalid equations set up. The total number of rows in the equations set ("// &
+            & TRIM(NumberToVString(totalNumberOfRows,"*",err,error))// &
+            & ") does not match the total number of rows in equations matrix number "// &
+            & TRIM(NumberToVString(matrixIdx,"*",err,error))//" ("// &
+            & TRIM(NumberToVString(dependentVariable%TOTAL_NUMBER_OF_DOFS,"*",err,error))//")."
+          CALL FlagError(localError,err,error,*999)
         ENDIF
       ELSE
-        CALL FlagError("Equations has not been finished.",ERR,ERROR,*999)
+        localError="The dependent variable mapped to linear matrix number "// &
+          & TRIM(NumberToVString(matrixIdx,"*",err,error))//" is not associated."
+        CALL FlagError(localError,err,error,*999)
       ENDIF
-    ELSE
-      CALL FlagError("Equations is not associated.",ERR,ERROR,*999)
+    ENDDO !matrixIdx
+    !Check the Jacobian matrices
+    !Can't check the number of rows now as Jacobian's might not be square so just check variables are associated
+    DO matrixIdx=1,createValuesCache%numberOfResidualVariables
+      dependentVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%residualVariableTypes(matrixIdx))%ptr
+      IF(.NOT.ASSOCIATED(dependentVariable)) THEN
+        localError="The dependent variable mapped to Jacobian matrix number "// &
+          & TRIM(NumberToVString(matrixIdx,"*",err,error))//" is not associated."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ENDDO !matrixIdx
+    !Check that the number of rows are consistent with the RHS vector if it exists
+    IF(createValuesCache%rhsVariableType/=0) THEN
+      dependentVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%rhsVariableType)%ptr
+      IF(ASSOCIATED(dependentVariable)) THEN
+        IF(dependentVariable%NUMBER_OF_DOFS/=numberOfRows) THEN
+          localError="Invalid equations set up. The number of rows in the equations set ("// &
+            & TRIM(NumberToVString(numberOfRows,"*",err,error))// &
+            & ") does not match the number of rows in the RHS vector ("// &
+            & TRIM(NumberToVString(dependentVariable%NUMBER_OF_DOFS,"*",err,error))//")."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        IF(dependentVariable%TOTAL_NUMBER_OF_DOFS/=totalNumberOfRows) THEN
+          localError="Invalid equations set up. The total number of rows in the equations set ("// &
+            & TRIM(NumberToVString(totalNumberOfRows,"*",err,error))// &
+            & ") does not match the total number of rows in the RHS vector ("// &
+            & TRIM(NumberToVString(dependentVariable%TOTAL_NUMBER_OF_DOFS,"*",err,error))//")."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ELSE
+        CALL FlagError("The dependent variable mapped to the RHS vector is not associated.",err,error,*999)
+      ENDIF
+    ENDIF
+    !Check that the number of rows are consistent with the source vector if it exists
+    !IF(createValuesCache%sourceVariableType/=0) THEN
+    !  sourceVariable=>sourceField%VARIABLE_TYPE_MAP(createValuesCache%sourceVariableType)%ptr
+    !  IF(ASSOCIATED(sourceVariable)) THEN
+    !    IF(sourceVariable%NUMBER_OF_DOFS/=numberOfRows) THEN
+    !      localError="Invalid equations set up. The number of rows in the equations set ("// &
+    !        & TRIM(NumberToVString(numberOfRows,"*",err,error))// &
+    !        & ") does not match the number of rows in the source vector ("// &
+    !        & TRIM(NumberToVString(sourceVariable%NUMBER_OF_DOFS,"*",err,error))//")."
+    !      CALL FlagError(localError,err,error,*999)
+    !    ENDIF
+    !    IF(sourceVariable%TOTAL_NUMBER_OF_DOFS/=totalNumberOfRows) THEN
+    !      localError="Invalid equations set up. The total number of rows in the equations set ("// &
+    !        & TRIM(NumberToVString(totalNumberOfRows,"*",err,error))// &
+    !        & ") does not match the total number of rows in the source vector ("// &
+    !        & TRIM(NumberToVString(sourceVariable%TOTAL_NUMBER_OF_DOFS,"*",err,error))//")."
+    !      CALL FlagError(localError,err,error,*999)
+    !    ENDIF
+    !  ELSE
+    !    CALL FlagError("The source variable mapped to the source vector is not associated.",err,error,*999)
+    !  ENDIF
+    !ENDIF
+    vectorMapping%numberOfRows=numberOfRows
+    vectorMapping%totalNumberOfRows=totalNumberOfRows
+    vectorMapping%numberOfGlobalRows=numberOfGlobalRows
+    !Calculate dynamic mappings
+    IF(createValuesCache%dynamicVariableType/=0) THEN
+      CALL EquationsMapping_DynamicMappingInitialise(vectorMapping,err,error,*999)
+      NULLIFY(dynamicMapping)
+      CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
+      dynamicMapping%numberOfDynamicMatrices=createValuesCache%numberOfDynamicMatrices
+      dynamicMapping%stiffnessMatrixNumber=createValuesCache%dynamicStiffnessMatrixNumber
+      dynamicMapping%dampingMatrixNumber=createValuesCache%dynamicDampingMatrixNumber
+      dynamicMapping%massMatrixNumber=createValuesCache%dynamicMassMatrixNumber
+      !Initialise the variable type maps
+      ALLOCATE(dynamicMapping%varToEquationsMatricesMaps(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate equations mapping variable to equations map.",err,error,*999)
+      DO variableTypeIdx=1,FIELD_NUMBER_OF_VARIABLE_TYPES
+        CALL EquationsMapping_VarToEquatsMatricesMapInitialise(dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx), &
+          & err,error,*999)
+        dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%variableIndex=variableTypeIdx
+        dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%variableType=variableTypeIdx
+        dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%variable=>dependentField%VARIABLE_TYPE_MAP(variableTypeIdx)%ptr
+      ENDDO !variableTypeIdx
+      dynamicMapping%varToEquationsMatricesMaps(createValuesCache%dynamicVariableType)% &
+        & numberOfEquationsMatrices=createValuesCache%numberOfDynamicMatrices
+      IF(createValuesCache%rhsVariableType/=0) &
+        & dynamicMapping%varToEquationsMatricesMaps(createValuesCache%rhsVariableType)%numberOfEquationsMatrices=-1
+      !Allocate and initialise the variable to equations matrices maps
+      DO variableTypeIdx=1,FIELD_NUMBER_OF_VARIABLE_TYPES
+        dependentVariable=>dependentField%VARIABLE_TYPE_MAP(variableTypeIdx)%ptr
+        IF(ASSOCIATED(dependentVariable)) THEN
+          IF(dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices==-1) THEN
+!!TODO: check if this can be removed and just allocate those variables that are actually used
+            ALLOCATE(dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToRowsMap( &
+              & dependentVariable%TOTAL_NUMBER_OF_DOFS),STAT=err)
+            IF(err/=0) CALL FlagError("Could not allocate variable to equations matrices maps dof to rows map.",err,error,*999)
+            dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToRowsMap=0
+          ELSE IF(dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices>0) THEN
+            ALLOCATE(dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%equationsMatrixNumbers( &
+              & dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices),STAT=err)
+            IF(err/=0) CALL FlagError("Could not allocate variable to equations matrices maps equations matrix numbers.", &
+              & err,error,*999)
+            ALLOCATE(dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToColumnsMaps( &
+              & dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices),STAT=err)
+            IF(err/=0) CALL FlagError("Could not allocate variable to equations matrices maps dof to columns map.",err,error,*999)
+            dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%equationsMatrixNumbers=0
+            IF(createValuesCache%dynamicVariableType==variableTypeIdx) THEN
+              IF(createValuesCache%dynamicStiffnessMatrixNumber/=0) &
+                & dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%equationsMatrixNumbers( &
+                & createValuesCache%dynamicStiffnessMatrixNumber)=createValuesCache%dynamicStiffnessMatrixNumber
+              IF(createValuesCache%dynamicDampingMatrixNumber/=0) &
+                & dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%equationsMatrixNumbers( &
+                & createValuesCache%dynamicDampingMatrixNumber)=createValuesCache%dynamicDampingMatrixNumber
+              IF(createValuesCache%dynamicMassMatrixNumber/=0) &
+                & dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%equationsMatrixNumbers( &
+                & createValuesCache%dynamicMassMatrixNumber)=createValuesCache%dynamicMassMatrixNumber
+              DO matrixIdx=1,dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices
+                ALLOCATE(dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToColumnsMaps( &
+                  & matrixIdx)%columnDOF(dependentVariable%TOTAL_NUMBER_OF_DOFS),STAT=err)
+                IF(err/=0) CALL FlagError("Could not allocate variable dof to columns map column dof.",err,error,*999)
+                DO dofIdx=1,dependentVariable%TOTAL_NUMBER_OF_DOFS
+                  !1-1 mapping for now
+                  columnIdx=dependentVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(dofIdx)
+                  dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToColumnsMaps(matrixIdx)%columnDOF(dofIdx)=columnIdx
+                ENDDO !dofIdx                          
+              ENDDO !matrixIdx
+              ALLOCATE(dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToRowsMap( &
+                & dependentVariable%TOTAL_NUMBER_OF_DOFS),STAT=err)
+              IF(err/=0) CALL FlagError("Could not allocate variable to equations matrices maps dof to rows map.",err,error,*999)
+              DO dofIdx=1,dependentVariable%TOTAL_NUMBER_OF_DOFS
+                !1-1 mappings for now.
+                rowIdx=dofIdx
+                dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToRowsMap(dofIdx)=rowIdx
+              ENDDO !dofIdx
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDDO !variableTypeIdx
+      !Allocate and initialise the equations matrix to variable maps types
+      ALLOCATE(dynamicMapping%equationsMatrixToVarMaps(dynamicMapping%numberOfDynamicMatrices),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate equations mapping equations matrix to variable maps.",err,error,*999)
+      !Create the individual matrix maps and column maps
+      variableType=createValuesCache%dynamicVariableType
+      dependentVariable=>dependentField%VARIABLE_TYPE_MAP(variableType)%ptr
+      dynamicMapping%dynamicVariableType=variableType
+      dynamicMapping%dynamicVariable=>dependentVariable
+      DO matrixIdx=1,dynamicMapping%numberOfDynamicMatrices
+        CALL EquationsMapping_EquatsMatrixToVarMapInitialise(dynamicMapping%equationsMatrixToVarMaps(matrixIdx),err,error,*999)
+        dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%matrixNumber=matrixIdx
+        dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%variableType=variableType
+        dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%variable=>dependentVariable
+        dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%numberOfColumns=dependentVariable%DOMAIN_MAPPING%NUMBER_OF_GLOBAL
+        dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%matrixCoefficient=createValuesCache%dynamicMatrixCoefficients(matrixIdx)
+        ALLOCATE(dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%columnToDOFMap(dependentVariable%DOMAIN_MAPPING% &
+          & NUMBER_OF_GLOBAL),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate equation matrix to variable map column to dof map.",err,error,*999)
+        dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%columnToDOFMap=0
+        DO dofIdx=1,dependentVariable%TOTAL_NUMBER_OF_DOFS
+          !1-1 mapping for now
+          columnIdx=dependentVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(dofIdx)
+          dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%columnToDOFMap(columnIdx)=dofIdx
+        ENDDO !dofIdx
+        dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%columnDOFSMapping=>dependentVariable%DOMAIN_MAPPING
+      ENDDO !matrixIdx
+      !Allocate the row mappings
+      ALLOCATE(dynamicMapping%equationsRowToVariableDOFMaps(vectorMapping%totalNumberOfRows),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate equations row to variable dof maps.",err,error,*999)
+      !Set up the row mappings
+      DO rowIdx=1,vectorMapping%totalNumberOfRows
+        !1-1 mapping for now
+        dynamicMapping%equationsRowToVariableDOFMaps(rowIdx)=rowIdx
+      ENDDO !rowIdx
+    ENDIF
+    !Calculate linear mappings
+    IF(createValuesCache%numberOfLinearMatrices>0) THEN                  
+      CALL EquationsMapping_LinearMappingInitialise(vectorMapping,err,error,*999)
+      NULLIFY(linearMapping)
+      CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
+      linearMapping%numberOfLinearMatrices=createValuesCache%numberOfLinearMatrices
+      !Allocate and initialise the variable type maps
+      ALLOCATE(linearMapping%varToEquationsMatricesMaps(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate equations mapping variable to equations map.",err,error,*999)
+      DO variableTypeIdx=1,FIELD_NUMBER_OF_VARIABLE_TYPES
+        CALL EquationsMapping_VarToEquatsMatricesMapInitialise(linearMapping%varToEquationsMatricesMaps(variableTypeIdx), &
+          & err,error,*999)
+        linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%variableIndex=variableTypeIdx
+        linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%variableType=variableTypeIdx
+        linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%variable=>dependentField%VARIABLE_TYPE_MAP(variableTypeIdx)%ptr
+      ENDDO !variableTypeIdx
+      !Calculate the number of variable type maps and initialise
+      DO matrixIdx=1,linearMapping%numberOfLinearMatrices
+        variableType=createValuesCache%linearMatrixVariableTypes(matrixIdx)
+        linearMapping%varToEquationsMatricesMaps(variableType)%numberOfEquationsMatrices= &
+          & linearMapping%varToEquationsMatricesMaps(variableType)%numberOfEquationsMatrices+1
+      ENDDO !matrixIdx
+      IF(createValuesCache%rhsVariableType/=0) &
+        & linearMapping%varToEquationsMatricesMaps(createValuesCache%rhsVariableType)%numberOfEquationsMatrices=-1
+      linearMapping%numberOfLinearMatrixVariables=0
+      !Allocate and initialise the variable to equations matrices maps
+      DO variableTypeIdx=1,FIELD_NUMBER_OF_VARIABLE_TYPES        
+        dependentVariable=>dependentField%VARIABLE_TYPE_MAP(variableTypeIdx)%ptr
+        IF(ASSOCIATED(dependentVariable)) THEN
+          IF(linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices==-1) THEN
+!!TODO: check if this can be removed and just allocate those variables that are actually used
+            ALLOCATE(linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToRowsMap( &
+              & dependentVariable%TOTAL_NUMBER_OF_DOFS),STAT=err)
+            IF(err/=0) CALL FlagError("Could not allocate variable to equations matrices maps dof to rows map.",err,error,*999)
+            linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToRowsMap=0
+            linearMapping%numberOfLinearMatrixVariables=linearMapping%numberOfLinearMatrixVariables+1
+          ELSE IF(linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices>0) THEN
+            ALLOCATE(linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%equationsMatrixNumbers( &
+              & linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices),STAT=err)
+            IF(err/=0) &
+              & CALL FlagError("Could not allocate variable to equations matrices maps equations matrix numbers.",err,error,*999)
+            ALLOCATE(linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToColumnsMaps( &
+              & linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices),STAT=err)
+            IF(err/=0) CALL FlagError("Could not allocate variable to equations matrices maps dof to columns map.",err,error,*999)
+            linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%equationsMatrixNumbers=0
+            linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices=0
+            DO matrixIdx=1,linearMapping%numberOfLinearMatrices
+              IF(createValuesCache%linearMatrixVariableTypes(matrixIdx)==variableTypeIdx) THEN
+                linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices= &
+                  & linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices+1
+                linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%equationsMatrixNumbers( &
+                  & linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices)=matrixIdx
+                ALLOCATE(linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToColumnsMaps( &
+                  & linearMapping%varToEquationsMatricesMaps(variableTypeIdx)% &
+                  & numberOfEquationsMatrices)%columnDOF(dependentVariable%TOTAL_NUMBER_OF_DOFS),STAT=err)
+                IF(err/=0) CALL FlagError("Could not allocate variable dof to columns map column dof.",err,error,*999)
+                DO dofIdx=1,dependentVariable%TOTAL_NUMBER_OF_DOFS
+                  !1-1 mapping for now
+                  columnIdx=dependentVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(dofIdx)
+                  linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToColumnsMaps( &
+                    & linearMapping%varToEquationsMatricesMaps(variableTypeIdx)% &
+                    & numberOfEquationsMatrices)%columnDOF(dofIdx)=columnIdx
+                ENDDO !dofIdx
+              ENDIF
+            ENDDO !matrixIdx
+            ALLOCATE(linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToRowsMap( &
+              & dependentVariable%TOTAL_NUMBER_OF_DOFS),STAT=err)
+            IF(err/=0) CALL FlagError("Could not allocate variable to equations matrices maps dof to rows map.",err,error,*999)
+            DO dofIdx=1,dependentVariable%TOTAL_NUMBER_OF_DOFS
+              !1-1 mappings for now.
+              rowIdx=dofIdx
+              linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToRowsMap(dofIdx)=rowIdx
+            ENDDO !dofIdx
+            linearMapping%numberOfLinearMatrixVariables=linearMapping%numberOfLinearMatrixVariables+1
+          ENDIF
+        ENDIF
+      ENDDO !variableTypeIdx
+      !Allocate and initialise the variable types
+      ALLOCATE(linearMapping%linearMatrixVariableTypes(linearMapping%numberOfLinearMatrixVariables),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate equations mapping matrix variable types.",err,error,*999)
+      linearMapping%numberOfLinearMatrixVariables=0
+      DO variableTypeIdx=1,FIELD_NUMBER_OF_VARIABLE_TYPES
+        IF(linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices>0) THEN
+          linearMapping%numberOfLinearMatrixVariables=linearMapping%numberOfLinearMatrixVariables+1
+          linearMapping%linearMatrixVariableTypes(linearMapping%numberOfLinearMatrixVariables)=variableTypeIdx
+        ENDIF
+      ENDDO !variableTypeIdx
+      !Allocate and initialise the equations matrix to variable maps types
+      ALLOCATE(linearMapping%equationsMatrixToVarMaps(linearMapping%numberOfLinearMatrices),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate equations mapping equations matrix to variable maps.",err,error,*999)
+      !Create the individual matrix maps and column maps
+      DO matrixIdx=1,linearMapping%numberOfLinearMatrices
+        variableType=createValuesCache%linearMatrixVariableTypes(matrixIdx)
+        dependentVariable=>dependentField%VARIABLE_TYPE_MAP(variableType)%ptr
+        CALL EquationsMapping_EquatsMatrixToVarMapInitialise(linearMapping%equationsMatrixToVarMaps(matrixIdx),err,error,*999)
+        linearMapping%equationsMatrixToVarMaps(matrixIdx)%matrixNumber=matrixIdx
+        linearMapping%equationsMatrixToVarMaps(matrixIdx)%variableType=variableType
+        linearMapping%equationsMatrixToVarMaps(matrixIdx)%variable=>dependentVariable
+        linearMapping%equationsMatrixToVarMaps(matrixIdx)%numberOfColumns=dependentVariable%DOMAIN_MAPPING%NUMBER_OF_GLOBAL
+        linearMapping%equationsMatrixToVarMaps(matrixIdx)%matrixCoefficient=vectorMapping% &
+          createValuesCache%linearMatrixCoefficients(matrixIdx)
+        ALLOCATE(linearMapping%equationsMatrixToVarMaps(matrixIdx)%columnToDOFMap( &
+          & dependentVariable%DOMAIN_MAPPING%NUMBER_OF_GLOBAL),STAT=err)                  
+        IF(err/=0) CALL FlagError("Could not allocate equation matrix to variable map column to dof map.",err,error,*999)
+        linearMapping%equationsMatrixToVarMaps(matrixIdx)%columnToDOFMap=0
+        DO dofIdx=1,dependentVariable%TOTAL_NUMBER_OF_DOFS
+          !1-1 mapping for now
+          columnIdx=dependentVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(dofIdx)
+          linearMapping%equationsMatrixToVarMaps(matrixIdx)%columnToDOFMap(columnIdx)=dofIdx
+        ENDDO !dofIdx
+        linearMapping%equationsMatrixToVarMaps(matrixIdx)%columnDOFSMapping=>dependentVariable%DOMAIN_MAPPING
+      ENDDO !matrixIdx
+      !Allocate the row mappings
+      ALLOCATE(linearMapping%equationsRowToVariableDOFMaps(vectorMapping%totalNumberOfRows, &
+        & linearMapping%numberOfLinearMatrixVariables),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate equations row to variable dof maps.",err,error,*999)
+      !Set up the row mappings
+      DO variableIdx=1,linearMapping%numberOfLinearMatrixVariables
+        DO rowIdx=1,vectorMapping%totalNumberOfRows
+          !1-1 mapping for now
+          linearMapping%equationsRowToVariableDOFMaps(rowIdx,variableIdx)=rowIdx
+        ENDDO !rowIdx
+      ENDDO !variableIdx
+    ENDIF
+    !Calculate non-linear mappings
+    IF(createValuesCache%numberOfResidualVariables/=0) THEN
+      CALL EquationsMapping_NonlinearMappingInitialise(vectorMapping,err,error,*999)
+      NULLIFY(nonlinearMapping)
+      CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+      nonlinearMapping%numberOfResidualVariables=createValuesCache%numberOfResidualVariables
+      ALLOCATE(nonlinearMapping%varToJacobianMap(nonlinearMapping%numberOfResidualVariables),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate variable to Jacobian maps.",err,error,*999)
+      ALLOCATE(nonlinearMapping%jacobianToVarMap(nonlinearMapping%numberOfResidualVariables),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate Jacobian to variable maps.",err,error,*999)
+      ALLOCATE(nonlinearMapping%residualVariables(nonlinearMapping%numberOfResidualVariables),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate nonlinear mapping residual variables.",err,error,*999)
+      DO matrixIdx=1,nonlinearMapping%numberOfResidualVariables
+        CALL EquationsMapping_VarToEquatsJacobianMapInitialise(nonlinearMapping%varToJacobianMap(matrixIdx),err,error,*999)
+        nonlinearMapping%varToJacobianMap(matrixIdx)%jacobianNumber=matrixIdx
+        nonlinearMapping%varToJacobianMap(matrixIdx)%variableType=createValuesCache%residualVariableTypes(matrixIdx)
+        dependentVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%residualVariableTypes(matrixIdx))%ptr
+        nonlinearMapping%varToJacobianMap(matrixIdx)%variable=>dependentVariable
+        nonlinearMapping%residualVariables(matrixIdx)%ptr=>dependentVariable
+        !Row variable is RHS if set, otherwise first nonlinear variable
+        IF(createValuesCache%rhsVariableType/=0) THEN
+          rowVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%rhsVariableType)%ptr
+        ELSE
+          rowVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%residualVariableTypes(1))%ptr
+        ENDIF
+        !Allocate and set dof to Jacobian columns map
+        ALLOCATE(nonlinearMapping%varToJacobianMap(matrixIdx)%dofToColumnsMap(dependentVariable%TOTAL_NUMBER_OF_DOFS),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate variable to Jacobian map dof to columns map.",err,error,*999)
+        DO dofIdx=1,dependentVariable%TOTAL_NUMBER_OF_DOFS
+          !1-1 mapping for now
+          columnIdx=dependentVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(dofIdx)
+          nonlinearMapping%varToJacobianMap(matrixIdx)%dofToColumnsMap(dofIdx)=columnIdx
+        ENDDO !dofIdx
+        !Allocate and set dof to Jacobian rows map
+        ALLOCATE(nonlinearMapping%varToJacobianMap(matrixIdx)%dofToRowsMap(rowVariable%TOTAL_NUMBER_OF_DOFS),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate variable to Jacobian map dof to columns map.",err,error,*999)
+        DO dofIdx=1,rowVariable%TOTAL_NUMBER_OF_DOFS
+          !1-1 mapping for now
+          rowIdx=dofIdx
+          nonlinearMapping%varToJacobianMap(matrixIdx)%dofToRowsMap(dofIdx)=rowIdx
+        ENDDO !dofIdx
+        CALL EquationsMapping_EquatsJacobianToVarMapInitialise(nonlinearMapping%jacobianToVarMap(matrixIdx),err,error,*999)
+        nonlinearMapping%jacobianToVarMap(matrixIdx)%jacobianNumber=matrixIdx
+        nonlinearMapping%jacobianToVarMap(matrixIdx)%variableType=createValuesCache%residualVariableTypes(matrixIdx)
+        nonlinearMapping%jacobianToVarMap(matrixIdx)%variable=>dependentVariable
+        nonlinearMapping%jacobianToVarMap(matrixIdx)%numberOfColumns=dependentVariable%DOMAIN_MAPPING%NUMBER_OF_GLOBAL
+        nonlinearMapping%jacobianToVarMap(matrixIdx)%jacobianCoefficient=createValuesCache%residualCoefficient
+        ALLOCATE(nonlinearMapping%jacobianToVarMap(matrixIdx)%equationsColumnToDOFVariableMap( &
+          & dependentVariable%DOMAIN_MAPPING%NUMBER_OF_GLOBAL),STAT=err)
+        nonlinearMapping%jacobianToVarMap(matrixIdx)%equationsColumnToDOFVariableMap=0
+        DO dofIdx=1,dependentVariable%TOTAL_NUMBER_OF_DOFS
+          !1-1 mapping for now
+          columnIdx=dependentVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(dofIdx)
+          nonlinearMapping%jacobianToVarMap(matrixIdx)%equationsColumnToDOFVariableMap(columnIdx)=dofIdx
+        ENDDO !dofIdx
+        nonlinearMapping%jacobianToVarMap(matrixIdx)%columnDOFSMapping=>dependentVariable%DOMAIN_MAPPING
+      ENDDO !matrixIdx
+      !Set up the row mappings
+      ALLOCATE(nonlinearMapping%equationsRowToResidualDOFMap(totalNumberOfRows),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate equations row to residual dof map.",err,error,*999)
+      DO rowIdx=1,totalNumberOfRows
+        !1-1 mapping for now
+        dofIdx=rowIdx
+        nonlinearMapping%equationsRowToResidualDOFMap(rowIdx)=dofIdx
+      ENDDO !rowIdx
+    ENDIF
+    !Calculate RHS mappings
+    IF(createValuesCache%rhsVariableType/=0) THEN                  
+      CALL EquationsMapping_RHSMappingInitialise(vectorMapping,err,error,*999)
+      NULLIFY(rhsMapping)
+      CALL EquationsMappingVector_RHSMappingGet(vectorMapping,rhsMapping,err,error,*999)
+      rhsMapping%rhsVariableType=createValuesCache%rhsVariableType
+      dependentVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%rhsVariableType)%ptr
+      rhsMapping%rhsVariable=>dependentVariable
+      rhsMapping%rhsVariableMapping=>dependentVariable%DOMAIN_MAPPING
+      rhsMapping%rhsCoefficient=createValuesCache%rhsCoefficient
+      !Allocate and set up the row mappings
+      ALLOCATE(rhsMapping%rhsDOFToEquationsRowMap(dependentVariable%TOTAL_NUMBER_OF_DOFS),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate rhs dof to equations row map.",err,error,*999)
+      ALLOCATE(rhsMapping%equationsRowToRHSDOFMap(totalNumberOfRows),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate equations row to dof map.",err,error,*999)
+      DO dofIdx=1,dependentVariable%TOTAL_NUMBER_OF_DOFS
+        !1-1 mapping for now
+        rowIdx=dofIdx
+        rhsMapping%rhsDOFToEquationsRowMap(dofIdx)=rowIdx
+      ENDDO !dofIdx
+      DO rowIdx=1,totalNumberOfRows
+        !1-1 mapping for now
+        dofIdx=rowIdx
+        rhsMapping%equationsRowToRHSDOFMap(rowIdx)=dofIdx
+      ENDDO !rowIdx
+    ENDIF
+    !Calcuate the source mappings
+    IF(createValuesCache%sourceVariableType/=0) THEN                  
+      CALL EquationsMapping_SourceMappingInitialise(vectorMapping,err,error,*999)
+      NULLIFY(sourceMapping)
+      CALL EquationsMappingVector_SourceMappingGet(vectorMapping,sourceMapping,err,error,*999)
+      sourceMapping%sourceVariableType=createValuesCache%sourceVariableType
+      sourceVariable=>sourceField%VARIABLE_TYPE_MAP(createValuesCache%sourceVariableType)%ptr
+      sourceMapping%sourceVariable=>sourceVariable
+      !    sourceMapping%sourceVariableMapping=>sourceVariable%DOMAIN_MAPPING
+      !    sourceMapping%sourceCoefficient=createValuesCache%sourceCoefficient
+      !    !Allocate and set up the row mappings
+      !    ALLOCATE(sourceMapping%sourceDOFToEquationsRowMap(sourceVariable%TOTAL_NUMBER_OF_DOFS),STAT=err)
+      !    IF(err/=0) CALL FlagError("Could not allocate source dof to equations row map.",err,error,*999)
+      !    ALLOCATE(sourceMapping%equationsRowToSourceDOFMap(totalNumberOfRows),STAT=err)
+      !    IF(err/=0) CALL FlagError("Could not allocate equations row to source map.",err,error,*999)
+      !    DO dofIdx=1,sourceVariable%TOTAL_NUMBER_OF_DOFS
+      !      !1-1 mapping for now
+      !      rowIdx=dofIdx
+      !      sourceMapping%sourceDOFToEquationsRowMap(dofIdx)=rowIdx
+      !    ENDDO !dofIdx
+      !    DO rowIdx=1,totalNumberOfRows
+      !      !1-1 mapping for now
+      !      dofIdx=rowIdx
+      !      sourceMapping%equationsRowToSourceDOFMap(rowIdx)=dofIdx
+      !    ENDDO !rowIdx
+    ENDIF
+    
+    IF(diagnostics1) THEN
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Equations vector mappings:",err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of rows = ",vectorMapping%numberOfRows,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Total umber of rows = ",vectorMapping%totalNumberOfRows,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of global rows = ",vectorMapping%numberOfGlobalRows,err,error,*999)
+      dynamicMapping=>vectorMapping%dynamicMapping
+      IF(ASSOCIATED(dynamicMapping)) THEN
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Dynamic mappings:",err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of dynamic equations matrices = ",dynamicMapping% &
+          & numberOfDynamicMatrices,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Dynamic stiffness matrix number = ",dynamicMapping% &
+          & stiffnessMatrixNumber,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Dynamic damping matrix number = ",dynamicMapping% &
+          & dampingMatrixNumber,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Dynamic mass matrix number = ",dynamicMapping% &
+          & massMatrixNumber,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Dynamic variable type = ",dynamicMapping%dynamicVariableType, &
+          & err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Variable to matrices mappings:",err,error,*999)
+        DO variableTypeIdx=1,FIELD_NUMBER_OF_VARIABLE_TYPES
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Variable type : ",variableTypeIdx,err,error,*999)
+          IF(ASSOCIATED(dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%variable)) THEN
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Total number of DOFs = ",dynamicMapping% &
+              & varToEquationsMatricesMaps(variableTypeIdx)%variable%TOTAL_NUMBER_OF_DOFS,err,error,*999)
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of equations matrices = ",dynamicMapping% &
+              & varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices,err,error,*999)
+            IF(dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices>0) THEN
+              CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)% &
+                & numberOfEquationsMatrices,4,4,dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)% &
+                & equationsMatrixNumbers,'("      Matrix numbers :",4(X,I12))','(22X,4(X,I12))',err,error,*999) 
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"      DOF to column maps :",err,error,*999)
+              DO matrixIdx=1,dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Matrix number : ",matrixIdx,err,error,*999)
+                CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,dynamicMapping%varToEquationsMatricesMaps( &
+                  & variableTypeIdx)%variable%TOTAL_NUMBER_OF_DOFS,5,5,dynamicMapping%varToEquationsMatricesMaps( &
+                  & variableTypeIdx)%dofToColumnsMaps(matrixIdx)%columnDOF, &
+                  & '("        Column numbers :",5(X,I13))','(24X,5(X,I13))',err,error,*999) 
+              ENDDO !matrixIdx
+              CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)% &
+                & VARIABLE%TOTAL_NUMBER_OF_DOFS,5,5,dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)% &
+                & dofToRowsMap,'("      DOF to row maps  :",5(X,I13))','(24X,5(X,I13))',err,error,*999)
+            ENDIF
+          ENDIF
+        ENDDO !variableTypeIdx
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Matrix to variable mappings:",err,error,*999)
+        DO matrixIdx=1,dynamicMapping%numberOfDynamicMatrices
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Matrix number : ",matrixIdx,err,error,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Variable type = ",dynamicMapping% &
+            & equationsMatrixToVarMaps(matrixIdx)%variableType,err,error,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Number of columns = ",dynamicMapping% &
+            & equationsMatrixToVarMaps(matrixIdx)%numberOfColumns,err,error,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Matrix coefficient = ",dynamicMapping% &
+            & equationsMatrixToVarMaps(matrixIdx)%matrixCoefficient,err,error,*999)
+          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,dynamicMapping%equationsMatrixToVarMaps(matrixIdx)% &
+            & numberOfColumns,5,5,dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%columnToDOFMap, &
+            & '("        Column to DOF maps :",5(X,I13))','(28X,5(X,I13))',err,error,*999) 
+        ENDDO !matrixIdx
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Row mappings:",err,error,*999)
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,vectorMapping%totalNumberOfRows,5,5, &
+          & dynamicMapping%equationsRowToVariableDOFMaps,'("    Row to DOF maps :",5(X,I13))','(21X,5(X,I13))', &
+          & err,error,*999) 
+      ENDIF
+      linearMapping=>vectorMapping%linearMapping
+      IF(ASSOCIATED(linearMapping)) THEN
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Linear mappings:",err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of linear equations matrices = ",linearMapping% &
+          & numberOfLinearMatrices,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of linear matrix variables = ",linearMapping% &
+          & numberOfLinearMatrixVariables,err,error,*999)
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,linearMapping%numberOfLinearMatrixVariables,4,4, &
+          & linearMapping%linearMatrixVariableTypes,'("    Linear matrix variable types :",4(X,I12))','(27X,4(X,I12))', &
+          & err,error,*999) 
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Variable to matrices mappings:",err,error,*999)
+        DO variableTypeIdx=1,FIELD_NUMBER_OF_VARIABLE_TYPES
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Variable type : ",variableTypeIdx,err,error,*999)
+          IF(ASSOCIATED(linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%variable)) THEN
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Total number of DOFs = ",linearMapping% &
+              & varToEquationsMatricesMaps(variableTypeIdx)%variable%TOTAL_NUMBER_OF_DOFS,err,error,*999)
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of equations matrices = ",linearMapping% &
+              & varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices,err,error,*999)
+            IF(linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices>0) THEN
+              CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,linearMapping%varToEquationsMatricesMaps(variableTypeIdx)% &
+                & numberOfEquationsMatrices,4,4,linearMapping%varToEquationsMatricesMaps(variableTypeIdx)% &
+                & equationsMatrixNumbers,'("      Matrix numbers :",4(X,I12))','(22X,4(X,I12))',err,error,*999) 
+              CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"      DOF to column maps :",err,error,*999)
+              DO matrixIdx=1,linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Matrix number : ",matrixIdx,err,error,*999)
+                CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,linearMapping%varToEquationsMatricesMaps( &
+                  & variableTypeIdx)%variable%TOTAL_NUMBER_OF_DOFS,5,5,linearMapping%varToEquationsMatricesMaps( &
+                  & variableTypeIdx)%dofToColumnsMaps(matrixIdx)%columnDOF, &
+                  & '("        Column numbers :",5(X,I13))','(24X,5(X,I13))',err,error,*999) 
+              ENDDO !matrixIdx
+              CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,linearMapping%varToEquationsMatricesMaps(variableTypeIdx)% &
+                & VARIABLE%TOTAL_NUMBER_OF_DOFS,5,5,linearMapping%varToEquationsMatricesMaps(variableTypeIdx)% &
+                & dofToRowsMap,'("      DOF to row maps  :",5(X,I13))','(24X,5(X,I13))',err,error,*999)
+            ENDIF
+          ENDIF
+        ENDDO !variableTypeIdx
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Matrix to variable mappings:",err,error,*999)
+        DO matrixIdx=1,linearMapping%numberOfLinearMatrices
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Matrix number : ",matrixIdx,err,error,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Variable type = ",linearMapping% &
+            & equationsMatrixToVarMaps(matrixIdx)%variableType,err,error,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Number of columns = ",linearMapping% &
+            & equationsMatrixToVarMaps(matrixIdx)%numberOfColumns,err,error,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Matrix coefficient = ",linearMapping% &
+            & equationsMatrixToVarMaps(matrixIdx)%matrixCoefficient,err,error,*999)
+          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,linearMapping%equationsMatrixToVarMaps(matrixIdx)% &
+            & numberOfColumns,5,5,linearMapping%equationsMatrixToVarMaps(matrixIdx)%columnToDOFMap, &
+            & '("        Column to DOF maps :",5(X,I13))','(28X,5(X,I13))',err,error,*999) 
+        ENDDO !matrixIdx
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Row mappings:",err,error,*999)
+        DO variableIdx=1,linearMapping%numberOfLinearMatrixVariables
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Variable number : ",variableIdx,err,error,*999)
+          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,vectorMapping%totalNumberOfRows,5,5, &
+            & linearMapping%equationsRowToVariableDOFMaps(:,variableIdx), &
+            & '("    Row to DOF maps :",5(X,I13))','(21X,5(X,I13))',err,error,*999) 
+        ENDDO !variableIdx
+      ENDIF
+      nonlinearMapping=>vectorMapping%nonlinearMapping
+      IF(ASSOCIATED(nonlinearMapping)) THEN
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Nonlinear mappings:",err,error,*999)
+        DO matrixIdx=1,nonlinearMapping%numberOfResidualVariables
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Matrix number : ",matrixIdx,err,error,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Residual variable type = ",nonlinearMapping% &
+            & jacobianToVarMap(matrixIdx)%variableType,err,error,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Total number of residual DOFs = ",nonlinearMapping% &
+            & jacobianToVarMap(matrixIdx)%variable%TOTAL_NUMBER_OF_DOFS,err,error,*999)
+        ENDDO
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Residual coefficient = ",nonlinearMapping%residualCoefficient, &
+          & err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Residual row mappings:",err,error,*999)
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,vectorMapping%totalNumberOfRows,5,5, &
+          & nonlinearMapping%equationsRowToResidualDOFMap,'("    Row to DOF mappings :",5(X,I13))','(25X,5(X,I13))', &
+          & err,error,*999) 
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Jacobian mappings:",err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Variable to Jacobian mappings:",err,error,*999)
+        DO matrixIdx=1,nonlinearMapping%numberOfResidualVariables
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Matrix number : ",matrixIdx,err,error,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Jacobian variable type = ",nonlinearMapping% &
+            & varToJacobianMap(matrixIdx)%variableType,err,error,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Total number of Jacobain DOFs = ",nonlinearMapping% &
+            & varToJacobianMap(matrixIdx)%variable%TOTAL_NUMBER_OF_DOFS,err,error,*999)
+          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,nonlinearMapping%varToJacobianMap(matrixIdx)%variable% &
+            & TOTAL_NUMBER_OF_DOFS,5,5,nonlinearMapping%varToJacobianMap(matrixIdx)%dofToColumnsMap, &
+            & '("      DOF to column map :",5(X,I13))','(26X,5(X,I13))',err,error,*999) 
+          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,nonlinearMapping%varToJacobianMap(matrixIdx)%variable% &
+            & TOTAL_NUMBER_OF_DOFS,5,5,nonlinearMapping%varToJacobianMap(matrixIdx)%dofToRowsMap, &
+            & '("      DOF to row map    :",5(X,I13))','(26X,5(X,I13))',err,error,*999) 
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Jacobian to variable mappings:",err,error,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Jacobian variable type = ",nonlinearMapping% &
+            & jacobianToVarMap(matrixIdx)%variableType,err,error,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of columns = ",nonlinearMapping% &
+            & jacobianToVarMap(matrixIdx)%numberOfColumns,err,error,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Jacobian coefficient = ",nonlinearMapping% &
+            & jacobianToVarMap(matrixIdx)%jacobianCoefficient,err,error,*999)
+          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,nonlinearMapping%jacobianToVarMap(matrixIdx)%numberOfColumns, &
+            & 5,5,nonlinearMapping%jacobianToVarMap(matrixIdx)%equationsColumnToDOFVariableMap, &
+            & '("      Column to DOF map :",5(X,I13))','(26X,5(X,I13))',err,error,*999) 
+        ENDDO
+      ENDIF
+      rhsMapping=>vectorMapping%rhsMapping
+      IF(ASSOCIATED(rhsMapping)) THEN
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  RHS mappings:",err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    RHS variable type = ",rhsMapping%rhsVariableType,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Total number of RHS DOFs = ",rhsMapping%rhsVariable% &
+          & TOTAL_NUMBER_OF_DOFS,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    RHS coefficient = ",rhsMapping%rhsCoefficient,err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Row mappings:",err,error,*999)
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,rhsMapping%rhsVariable%TOTAL_NUMBER_OF_DOFS,5,5, &
+          & rhsMapping%rhsDOFToEquationsRowMap,'("    DOF to row mappings :",5(X,I13))','(25X,5(X,I13))',err,error,*999) 
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,vectorMapping%totalNumberOfRows,5,5, &
+          & rhsMapping%equationsRowToRHSDOFMap,'("    Row to DOF mappings :",5(X,I13))','(25X,5(X,I13))',err,error,*999) 
+       ENDIF
+      sourceMapping=>vectorMapping%sourceMapping
+      IF(ASSOCIATED(sourceMapping)) THEN
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Source mappings:",err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Source variable type = ",sourceMapping%sourceVariableType, &
+          & err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Total number of source DOFs = ",sourceMapping%sourceVariable% &
+          & TOTAL_NUMBER_OF_DOFS,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Source coefficient = ",sourceMapping%sourceCoefficient,err,error,*999)
+        !CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Row mappings:",err,error,*999)
+        !CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,sourceMapping%sourceVariable%TOTAL_NUMBER_OF_DOFS,5,5, &
+        !  & sourceMapping%sourceDOFToEquationsRowMap,'("    DOF to row mappings :",5(X,I13))','(25X,5(X,I13))', &
+        !  & err,error,*999) 
+        !CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,vectorMapping%totalNumberOfRows,5,5, &
+        !  & sourceMapping%equationsRowToSourceDOFMap,'("    Row to DOF mappings :",5(X,I13))','(25X,5(X,I13))', &
+        !  & err,error,*999) 
+      ENDIF
     ENDIF
        
-    EXITS("EQUATIONS_MAPPING_CREATE_START")
+    EXITS("EquationsMapping_VectorCalculate")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MAPPING_CREATE_START",ERR,ERROR)
+999 ERRORSEXITS("EquationsMapping_VectorCalculate",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MAPPING_CREATE_START
+    
+  END SUBROUTINE EquationsMapping_VectorCalculate
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finishes the process of creating an equations vector mapping
+  SUBROUTINE EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations vector mapping
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: matrixIdx
+    LOGICAL :: isResidualType
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("EquationsMapping_VectorCreateFinish",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated.",err,error,*999)
+    IF(vectorMapping%vectorMappingFinished) CALL FlagError("Equations mapping has already been finished.",err,error,*999)
+
+    NULLIFY(createValuesCache)
+    CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
+    NULLIFY(equations)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
+    NULLIFY(equationsSet)
+    CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
+
+    !Check that all the variables have been mapped properly
+    SELECT CASE(equations%timeDependence)
+    CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC)
+      SELECT CASE(equations%linearity)
+      CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
+        IF(createValuesCache%rhsVariableType==0.AND.createValuesCache%numberOfLinearMatrices==0) &
+          & CALL FlagError("Invalid equations mapping. The RHS variable type must be set if there are no "// &
+          & "linear matrices.",err,error,*999)
+      CASE(EQUATIONS_NONLINEAR)
+        DO matrixIdx=1,createValuesCache%numberOfResidualVariables
+          IF(createValuesCache%residualVariableTypes(matrixIdx)==0) THEN
+            localError="Invalid equations mapping. The residual variable type is not set for Jacobian number "// &
+              & TRIM(NumberToVString(matrixIdx,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+        ENDDO !matrixIdx
+        IF(createValuesCache%rhsVariableType==0.AND.createValuesCache%numberOfLinearMatrices==0) &
+          & CALL FlagError("Invalid equations mapping. The RHS variable type must be set if there are no "// &
+          & "linear matrices.",err,error,*999)
+      CASE DEFAULT
+        localError="The equations linearity type of "//TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
+      SELECT CASE(equations%linearity)
+      CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
+        IF(createValuesCache%dynamicVariableType==0) CALL FlagError("Invalid equations mapping. "// &
+          & "The dynamic variable type must be set for dynamic equations.", err,error,*999)
+        IF(createValuesCache%rhsVariableType==0.AND.createValuesCache%numberOfLinearMatrices==0) &
+          & CALL FlagError("Invalid equations mapping. The RHS variable type must be set if there are no "// &
+          & "linear matrices.",err,error,*999)
+      CASE(EQUATIONS_NONLINEAR)
+        ! SEBK 19/08/2009 not sure about mapping here
+        !|
+        IF(createValuesCache%dynamicVariableType==0) CALL FlagError("Invalid equations mapping. "// &
+          & "The dynamic variable type must be set for dynamic equations.", err,error,*999)
+        IF(createValuesCache%rhsVariableType==0.AND.createValuesCache%numberOfLinearMatrices==0) &
+          & CALL FlagError("Invalid equations mapping. The RHS variable type must be set if there are no "// &
+          & "linear matrices.",err,error,*999)
+        isResidualType=.FALSE.
+        DO matrixIdx=1,createValuesCache%numberOfResidualVariables
+          IF(createValuesCache%residualVariableTypes(matrixIdx)==0) THEN
+            localError="Invalid equations mapping. The residual variable type is not set for Jacobian number "// &
+              & TRIM(NumberToVString(matrixIdx,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+          IF(createValuesCache%residualVariableTypes(matrixIdx)==createValuesCache%dynamicVariableType) THEN
+            isResidualType=.TRUE.
+          ENDIF
+        ENDDO !matrixIdx
+        IF(.NOT.isResidualType) THEN
+          CALL FlagError("Invalid equations mapping. The residual variable type must correspond to the "// &
+            & "dynamic variable type for nonlinear dynamic equations.", err,error,*999)
+        ENDIF
+      CASE DEFAULT
+        localError="The equations linearity type of "//TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The equations time dependence type of "//TRIM(NumberToVString(equations%timeDependence,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    !Check the linear matrices variable types
+    DO matrixIdx=1,createValuesCache%numberOfLinearMatrices
+      IF(createValuesCache%linearMatrixVariableTypes(matrixIdx)==0) THEN
+        localError="Invalid equations mapping. The linear matrix variable type is not set for linear matrix number "//&
+          & TRIM(NumberToVString(matrixIdx,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ENDDO !matrixIdx
+    !Now calculate the equations mapping and clean up
+    CALL EquationsMapping_VectorCalculate(vectorMapping,err,error,*999)
+    CALL EquationsMapping_VectorCreateValuesCacheFinalise(vectorMapping%createValuesCache,err,error,*999)
+    vectorMapping%vectorMappingFinished=.TRUE.
+       
+    EXITS("EquationsMapping_VectorCreateFinish")
+    RETURN
+999 ERRORSEXITS("EquationsMapping_VectorCreateFinish",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_VectorCreateFinish
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finishes the process of creating an equations vector mapping for an equations
+  SUBROUTINE EquationsMapping_VectorCreateStart(vectorEquations,lhsVariableType,vectorMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsVectorType), POINTER :: vectorEquations !<A pointer to the equations to create the equations vector mapping from.
+    INTEGER(INTG), INTENT(IN) :: lhsVariableType !<The variable type associated with the equations left hand side (LHS). The LHS variable controls the row mappings for vector equations sets. 
+     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<On return, a pointer to the equations vector mapping. This must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: lhsVariable
+    
+    ENTERS("EquationsMapping_VectorCreateStart",err,error,*998)
+
+    IF(ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(vectorEquations)) CALL FlagError("Vector equations is not associated.",err,error,*999)
+    NULLIFY(equations)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
+    NULLIFY(equationsSet)
+    CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
+    NULLIFY(dependentField)
+    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+    IF(.NOT.equations%equationsFinished) CALL FlagError("Vector equations equations has not been finished.",err,error,*999)
+
+    NULLIFY(lhsVariable)
+    CALL Field_VariableGet(dependentField,lhsVariableType,lhsVariable,err,error,*999)
+    IF(.NOT.ASSOCIATED(lhsVariable%DOMAIN_MAPPING))  &
+      & CALL FlagError("LHS variable domain mapping is not associated.",err,error,*999)
+     
+    CALL EquationsMapping_VectorInitialise(vectorEquations,err,error,*999)
+    CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+    NULLIFY(lhsMapping)
+    CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
+    lhsMapping%lhsVariableType=lhsVariableType
+    lhsMapping%lhsVariable=>lhsVariable
+    lhsMapping%rowDofsMapping=>lhsVariable%DOMAIN_MAPPING
+    lhsMapping%numberOfRows=lhsVariable%NUMBER_OF_DOFS
+    lhsMapping%totalNumberOfRows=lhsVariable%TOTAL_NUMBER_OF_DOFS
+    lhsMapping%numberOfGlobalRows=lhsVariable%NUMBER_OF_GLOBAL_DOFS
+   
+    EXITS("EquationsMapping_VectorCreateStart")
+    RETURN
+999 NULLIFY(vectorMapping)
+998 ERRORSEXITS("EquationsMapping_VectorCreateStart",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_VectorCreateStart
 
   !
   !================================================================================================================================
   !
 
   !>Finalises an equations mapping create values cache and deallocates all memory
-  SUBROUTINE EquationsMapping_CreateValuesCacheFinalise(CREATE_VALUES_CACHE,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_VectorCreateValuesCacheFinalise(createValuesCache,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_CREATE_VALUES_CACHE_TYPE), POINTER :: CREATE_VALUES_CACHE !<A pointer to the create values cache to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code 
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache !<A pointer to the create values cache to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("EquationsMapping_CreateValuesCacheFinalise",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_VectorCreateValuesCacheFinalise",err,error,*999)
 
-    IF(ASSOCIATED(CREATE_VALUES_CACHE)) THEN
-      IF(ALLOCATED(CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS)) DEALLOCATE(CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS)
-      IF(ALLOCATED(CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES)) DEALLOCATE(CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES)
-      IF(ALLOCATED(CREATE_VALUES_CACHE%LINEAR_MATRIX_COEFFICIENTS)) DEALLOCATE(CREATE_VALUES_CACHE%LINEAR_MATRIX_COEFFICIENTS)
-      IF(ALLOCATED(CREATE_VALUES_CACHE%RESIDUAL_VARIABLE_TYPES)) DEALLOCATE(CREATE_VALUES_CACHE%RESIDUAL_VARIABLE_TYPES)
-      DEALLOCATE(CREATE_VALUES_CACHE)
+    IF(ASSOCIATED(createValuesCache)) THEN
+      IF(ALLOCATED(createValuesCache%dynamicMatrixCoefficients)) DEALLOCATE(createValuesCache%dynamicMatrixCoefficients)
+      IF(ALLOCATED(createValuesCache%linearMatrixVariableTypes)) DEALLOCATE(createValuesCache%linearMatrixVariableTypes)
+      IF(ALLOCATED(createValuesCache%linearMatrixCoefficients)) DEALLOCATE(createValuesCache%linearMatrixCoefficients)
+      IF(ALLOCATED(createValuesCache%residualVariableTypes)) DEALLOCATE(createValuesCache%residualVariableTypes)
+      DEALLOCATE(createValuesCache)
     ENDIF
        
-    EXITS("EquationsMapping_CreateValuesCacheFinalise")
+    EXITS("EquationsMapping_VectorCreateValuesCacheFinalise")
     RETURN
-999 ERRORSEXITS("EquationsMapping_CreateValuesCacheFinalise",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE EquationsMapping_CreateValuesCacheFinalise
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Initialises an equations mapping create values cache 
-  SUBROUTINE EquationsMapping_CreateValuesCacheInitialise(EQUATIONS_MAPPING,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the create values cache
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code 
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR,matrix_idx,matrix_idx2,VARIABLE_NUMBER
-    LOGICAL :: IS_RESIDUAL_TYPE
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD
-    TYPE(VARYING_STRING) :: DUMMY_ERROR,LOCAL_ERROR
-
-    ENTERS("EquationsMapping_CreateValuesCacheInitialise",ERR,ERROR,*998)
-
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-      IF(ASSOCIATED(EQUATIONS_MAPPING%CREATE_VALUES_CACHE)) THEN
-        CALL FlagError("Equations mapping create values cache is already associated.",ERR,ERROR,*998)
-      ELSE
-        EQUATIONS=>EQUATIONS_MAPPING%EQUATIONS
-        IF(ASSOCIATED(EQUATIONS)) THEN
-          EQUATIONS_SET=>EQUATIONS%EQUATIONS_SET
-          IF(ASSOCIATED(EQUATIONS_SET)) THEN
-            DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
-            IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-              !Allocate and initialise the create values cache
-              ALLOCATE(EQUATIONS_MAPPING%CREATE_VALUES_CACHE,STAT=ERR)
-              IF(ERR/=0) CALL FlagError("Could not allocate equations mapping create values cache.",ERR,ERROR,*999)
-              EQUATIONS_MAPPING%CREATE_VALUES_CACHE%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES=0
-              EQUATIONS_MAPPING%CREATE_VALUES_CACHE%DYNAMIC_VARIABLE_TYPE=0
-              EQUATIONS_MAPPING%CREATE_VALUES_CACHE%DYNAMIC_STIFFNESS_MATRIX_NUMBER=0
-              EQUATIONS_MAPPING%CREATE_VALUES_CACHE%DYNAMIC_DAMPING_MATRIX_NUMBER=0
-              EQUATIONS_MAPPING%CREATE_VALUES_CACHE%DYNAMIC_MASS_MATRIX_NUMBER=0
-              EQUATIONS_MAPPING%CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES=0
-              EQUATIONS_MAPPING%CREATE_VALUES_CACHE%NUMBER_OF_RESIDUAL_VARIABLES=0
-              EQUATIONS_MAPPING%CREATE_VALUES_CACHE%RESIDUAL_COEFFICIENT=1.0_DP
-              EQUATIONS_MAPPING%CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE=0
-              EQUATIONS_MAPPING%CREATE_VALUES_CACHE%RHS_COEFFICIENT=1.0_DP
-              EQUATIONS_MAPPING%CREATE_VALUES_CACHE%SOURCE_VARIABLE_TYPE=0
-              EQUATIONS_MAPPING%CREATE_VALUES_CACHE%SOURCE_COEFFICIENT=1.0_DP
-              !Set the default equations mapping in the create values cache
-              !First calculate how many linear and dynamic matrices we have and set the variable types for the dynamic, residual
-              !and RHS variables
-              IF(DEPENDENT_FIELD%NUMBER_OF_VARIABLES==1) THEN
-                SELECT CASE(EQUATIONS%LINEARITY)
-                CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
-                  CALL FlagError("Dependent field only has one variable which cannot be mapped to both an equations matrix "// &
-                    & "and rhs vector.",ERR,ERROR,*999)
-                CASE(EQUATIONS_NONLINEAR)
-                  CALL FlagError("Dependent field only has one variable which cannot be mapped to both the residual "// &
-                    & "and rhs vector.",ERR,ERROR,*999)
-                CASE DEFAULT
-                  LOCAL_ERROR="The equations linearity type of "// &
-                    & TRIM(NumberToVString(EQUATIONS%LINEARITY,"*",ERR,ERROR))//" is invalid."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                END SELECT
-              ELSE IF(DEPENDENT_FIELD%NUMBER_OF_VARIABLES>1) THEN
-                SELECT CASE(EQUATIONS%TIME_DEPENDENCE)
-                CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC)
-                  SELECT CASE(EQUATIONS%LINEARITY)
-                  CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
-                    EQUATIONS_MAPPING%CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES=DEPENDENT_FIELD%NUMBER_OF_VARIABLES-1
-                    IF(ASSOCIATED(DEPENDENT_FIELD%VARIABLE_TYPE_MAP(FIELD_DELUDELN_VARIABLE_TYPE)%PTR)) THEN
-                      EQUATIONS_MAPPING%CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE=DEPENDENT_FIELD% &
-                        & VARIABLE_TYPE_MAP(FIELD_DELUDELN_VARIABLE_TYPE)%PTR%VARIABLE_TYPE
-                    ELSE
-                      CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                    ENDIF
-                  CASE(EQUATIONS_NONLINEAR)
-                    EQUATIONS_MAPPING%CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES=0
-                    EQUATIONS_MAPPING%CREATE_VALUES_CACHE%NUMBER_OF_RESIDUAL_VARIABLES=1
-                    IF(ASSOCIATED(DEPENDENT_FIELD%VARIABLE_TYPE_MAP(FIELD_DELUDELN_VARIABLE_TYPE)%PTR)) THEN
-                      EQUATIONS_MAPPING%CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE=DEPENDENT_FIELD% &
-                        & VARIABLE_TYPE_MAP(FIELD_DELUDELN_VARIABLE_TYPE)%PTR%VARIABLE_TYPE
-                    ELSE
-                      CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                    ENDIF
-                  CASE DEFAULT
-                    LOCAL_ERROR="The equations linearity type of "// &
-                      & TRIM(NumberToVString(EQUATIONS%LINEARITY,"*",ERR,ERROR))//" is invalid."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  END SELECT
-                CASE(EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
-                  SELECT CASE(EQUATIONS%LINEARITY)
-                  CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
-                    IF(EQUATIONS%TIME_DEPENDENCE==EQUATIONS_FIRST_ORDER_DYNAMIC) THEN
-                      EQUATIONS_MAPPING%CREATE_VALUES_CACHE%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES=2
-                      EQUATIONS_MAPPING%CREATE_VALUES_CACHE%DYNAMIC_STIFFNESS_MATRIX_NUMBER=1
-                      EQUATIONS_MAPPING%CREATE_VALUES_CACHE%DYNAMIC_DAMPING_MATRIX_NUMBER=2
-                    ELSE
-                      EQUATIONS_MAPPING%CREATE_VALUES_CACHE%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES=3
-                      EQUATIONS_MAPPING%CREATE_VALUES_CACHE%DYNAMIC_STIFFNESS_MATRIX_NUMBER=1
-                      EQUATIONS_MAPPING%CREATE_VALUES_CACHE%DYNAMIC_DAMPING_MATRIX_NUMBER=2
-                      EQUATIONS_MAPPING%CREATE_VALUES_CACHE%DYNAMIC_MASS_MATRIX_NUMBER=3
-                    ENDIF
-                    !EQUATIONS_MAPPING%CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES=DEPENDENT_FIELD%NUMBER_OF_VARIABLES-2
-                    EQUATIONS_MAPPING%CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES=0
-                    IF(ASSOCIATED(DEPENDENT_FIELD%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%PTR)) THEN
-                      EQUATIONS_MAPPING%CREATE_VALUES_CACHE%DYNAMIC_VARIABLE_TYPE=DEPENDENT_FIELD% &
-                        & VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%PTR%VARIABLE_TYPE
-                    ELSE
-                      CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                    ENDIF
-                    IF(ASSOCIATED(DEPENDENT_FIELD%VARIABLE_TYPE_MAP(FIELD_DELUDELN_VARIABLE_TYPE)%PTR)) THEN
-                      EQUATIONS_MAPPING%CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE=DEPENDENT_FIELD% &
-                        & VARIABLE_TYPE_MAP(FIELD_DELUDELN_VARIABLE_TYPE)%PTR%VARIABLE_TYPE
-                    ELSE
-                      CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                    ENDIF
-                  CASE(EQUATIONS_NONLINEAR)
-! SEBK 19/08/2009 not sure about mapping here
-!|
-                    IF(EQUATIONS%TIME_DEPENDENCE==EQUATIONS_FIRST_ORDER_DYNAMIC) THEN
-                      EQUATIONS_MAPPING%CREATE_VALUES_CACHE%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES=2
-                      EQUATIONS_MAPPING%CREATE_VALUES_CACHE%DYNAMIC_STIFFNESS_MATRIX_NUMBER=1
-                      EQUATIONS_MAPPING%CREATE_VALUES_CACHE%DYNAMIC_DAMPING_MATRIX_NUMBER=2
-                    ELSE
-                      EQUATIONS_MAPPING%CREATE_VALUES_CACHE%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES=3
-                      EQUATIONS_MAPPING%CREATE_VALUES_CACHE%DYNAMIC_STIFFNESS_MATRIX_NUMBER=1
-                      EQUATIONS_MAPPING%CREATE_VALUES_CACHE%DYNAMIC_DAMPING_MATRIX_NUMBER=2
-                      EQUATIONS_MAPPING%CREATE_VALUES_CACHE%DYNAMIC_MASS_MATRIX_NUMBER=3
-                    ENDIF
-                    EQUATIONS_MAPPING%CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES=0
-                    EQUATIONS_MAPPING%CREATE_VALUES_CACHE%NUMBER_OF_RESIDUAL_VARIABLES=1
-                    IF(ASSOCIATED(DEPENDENT_FIELD%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%PTR)) THEN
-                      EQUATIONS_MAPPING%CREATE_VALUES_CACHE%DYNAMIC_VARIABLE_TYPE=DEPENDENT_FIELD% &
-                        & VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%PTR%VARIABLE_TYPE
-                    ELSE
-                      CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                    ENDIF
-                    IF(ASSOCIATED(DEPENDENT_FIELD%VARIABLE_TYPE_MAP(FIELD_DELUDELN_VARIABLE_TYPE)%PTR)) THEN
-                      EQUATIONS_MAPPING%CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE=DEPENDENT_FIELD% &
-                        & VARIABLE_TYPE_MAP(FIELD_DELUDELN_VARIABLE_TYPE)%PTR%VARIABLE_TYPE
-                    ELSE
-                      CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                    ENDIF
-                  CASE DEFAULT
-                    LOCAL_ERROR="The equations linearity type of "// &
-                      & TRIM(NumberToVString(EQUATIONS%LINEARITY,"*",ERR,ERROR))//" is invalid."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  END SELECT
-!|
-! SEBK 19/08/2009 not sure about mapping here
-                CASE DEFAULT
-                  LOCAL_ERROR="The equations time dependence type of "// &
-                    & TRIM(NumberToVString(EQUATIONS%TIME_DEPENDENCE,"*",ERR,ERROR))//" is invalid."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                END SELECT
-              ELSE
-                LOCAL_ERROR="The number of dependent field variables of "// &
-                  & TRIM(NumberToVString(DEPENDENT_FIELD%NUMBER_OF_VARIABLES,"*",ERR,ERROR))//" is invalid."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              ENDIF
-              !Allocate the dynamic matrix coefficients and set their values
-              IF(EQUATIONS_MAPPING%CREATE_VALUES_CACHE%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES>0) THEN
-                ALLOCATE(EQUATIONS_MAPPING%CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS(EQUATIONS_MAPPING% &
-                  & CREATE_VALUES_CACHE%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES),STAT=ERR)
-                IF(ERR/=0) &
-                  & CALL FlagError("Could not allocate equations mapping create values cache dynamic matrix coefficients.", &
-                  & ERR,ERROR,*999)
-                EQUATIONS_MAPPING%CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS=1.0_DP !Equations matrices are added by default
-              ENDIF
-              !Allocate the residual variable types
-              IF(EQUATIONS_MAPPING%CREATE_VALUES_CACHE%NUMBER_OF_RESIDUAL_VARIABLES>0) THEN
-                ALLOCATE(EQUATIONS_MAPPING%CREATE_VALUES_CACHE%RESIDUAL_VARIABLE_TYPES(EQUATIONS_MAPPING% &
-                  & CREATE_VALUES_CACHE%NUMBER_OF_RESIDUAL_VARIABLES),STAT=ERR)
-                IF(ERR/=0) CALL FlagError("Could not allocate equations mapping create values cache residual variable types.", &
-                    & ERR,ERROR,*999)
-                EQUATIONS_MAPPING%CREATE_VALUES_CACHE%RESIDUAL_VARIABLE_TYPES=0
-                DO matrix_idx=1,EQUATIONS_MAPPING%CREATE_VALUES_CACHE%NUMBER_OF_RESIDUAL_VARIABLES
-                  VARIABLE_NUMBER=1
-                  DO WHILE(EQUATIONS_MAPPING%CREATE_VALUES_CACHE%RESIDUAL_VARIABLE_TYPES(matrix_idx)==0.AND. &
-                    & VARIABLE_NUMBER<=FIELD_NUMBER_OF_VARIABLE_TYPES)
-                    IF(ASSOCIATED(DEPENDENT_FIELD%VARIABLE_TYPE_MAP(VARIABLE_NUMBER)%PTR)) THEN
-                      IF(DEPENDENT_FIELD%VARIABLE_TYPE_MAP(VARIABLE_NUMBER)%PTR%VARIABLE_TYPE/= &
-                        & EQUATIONS_MAPPING%CREATE_VALUES_CACHE%DYNAMIC_VARIABLE_TYPE) THEN
-                        EQUATIONS_MAPPING%CREATE_VALUES_CACHE%RESIDUAL_VARIABLE_TYPES(matrix_idx)= &
-                          & DEPENDENT_FIELD%VARIABLE_TYPE_MAP(VARIABLE_NUMBER)%PTR%VARIABLE_TYPE
-                      ENDIF
-                    ENDIF
-                    VARIABLE_NUMBER=VARIABLE_NUMBER+1
-                  ENDDO
-                ENDDO !matrix_idx
-                IF(EQUATIONS_MAPPING%CREATE_VALUES_CACHE%RESIDUAL_VARIABLE_TYPES(EQUATIONS_MAPPING% &
-                  & CREATE_VALUES_CACHE%NUMBER_OF_RESIDUAL_VARIABLES)==0) &
-                  & CALL FlagError("Invalid setup. All Jacobian matrices do not have a mapped dependent field variable.", &
-                  & ERR,ERROR,*999)
-              ENDIF
-              !Allocate the linear matrix variable types and linear matrix coefficients and set their values
-              IF(EQUATIONS_MAPPING%CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES>0) THEN
-                ALLOCATE(EQUATIONS_MAPPING%CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES(EQUATIONS_MAPPING% &
-                  & CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES),STAT=ERR)
-                IF(ERR/=0) CALL  & 
-                  & FLAG_ERROR("Could not allocate equations mapping create values cache linear matrix variable types.", &
-                  & ERR,ERROR,*999)
-                ALLOCATE(EQUATIONS_MAPPING%CREATE_VALUES_CACHE%LINEAR_MATRIX_COEFFICIENTS(EQUATIONS_MAPPING% &
-                  & CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES),STAT=ERR)
-                IF(ERR/=0) CALL FlagError("Could not allocate equations mapping create values cache linear matrix coefficients.", &
-                  & ERR,ERROR,*999)
-                !Set up the matrices variable types
-                EQUATIONS_MAPPING%CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES=0
-                VARIABLE_NUMBER=1
-                DO matrix_idx=1,EQUATIONS_MAPPING%CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES
-                  DO WHILE(EQUATIONS_MAPPING%CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES(matrix_idx)==0.AND. &
-                    & VARIABLE_NUMBER<=FIELD_NUMBER_OF_VARIABLE_TYPES)
-                    IF(ASSOCIATED(DEPENDENT_FIELD%VARIABLE_TYPE_MAP(VARIABLE_NUMBER)%PTR)) THEN
-                      IF(DEPENDENT_FIELD%VARIABLE_TYPE_MAP(VARIABLE_NUMBER)%PTR%VARIABLE_TYPE/= &
-                        & EQUATIONS_MAPPING%CREATE_VALUES_CACHE%DYNAMIC_VARIABLE_TYPE) THEN
-                        IS_RESIDUAL_TYPE=.FALSE.
-                        DO matrix_idx2=1,EQUATIONS_MAPPING%CREATE_VALUES_CACHE%NUMBER_OF_RESIDUAL_VARIABLES
-                          IF(DEPENDENT_FIELD%VARIABLE_TYPE_MAP(VARIABLE_NUMBER)%PTR%VARIABLE_TYPE== &
-                            & EQUATIONS_MAPPING%CREATE_VALUES_CACHE%RESIDUAL_VARIABLE_TYPES(matrix_idx2)) THEN
-                            IS_RESIDUAL_TYPE=.TRUE.
-                          ENDIF
-                        ENDDO
-                        IF(IS_RESIDUAL_TYPE.EQV..FALSE.) THEN
-                          EQUATIONS_MAPPING%CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES(matrix_idx)= &
-                            & DEPENDENT_FIELD%VARIABLE_TYPE_MAP(VARIABLE_NUMBER)%PTR%VARIABLE_TYPE
-                        ENDIF
-                      ENDIF
-                    ENDIF
-                    VARIABLE_NUMBER=VARIABLE_NUMBER+1
-                  ENDDO
-                ENDDO !matrix_idx
-                IF(EQUATIONS_MAPPING%CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES(EQUATIONS_MAPPING% &
-                  & CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES)==0) &
-                  & CALL FlagError("Invalid setup. All linear matrices do not have a mapped dependent field variable.", &
-                  & ERR,ERROR,*999)
-                EQUATIONS_MAPPING%CREATE_VALUES_CACHE%LINEAR_MATRIX_COEFFICIENTS=1.0_DP !Equations matrices are added by default
-              ENDIF
-            ELSE
-              CALL FlagError("Equations set dependent field is not associated.",ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("The equations equations set is not associated.",ERR,ERROR,*998)
-          ENDIF
-        ELSE
-          CALL FlagError("The equations mapping equations is not associated.",ERR,ERROR,*998)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Equations mapping is not associated.",ERR,ERROR,*998)
-    ENDIF
-       
-    EXITS("EquationsMapping_CreateValuesCacheInitialise")
-    RETURN
-999 CALL EquationsMapping_CreateValuesCacheFinalise(EQUATIONS_MAPPING%CREATE_VALUES_CACHE,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORS("EquationsMapping_CreateValuesCacheInitialise",ERR,ERROR)
-    EXITS("EquationsMapping_CreateValuesCacheInitialise")
+999 ERRORS("EquationsMapping_VectorCreateValuesCacheFinalise",err,error)
+    EXITS("EquationsMapping_VectorCreateValuesCacheFinalise")
     RETURN 1
     
-  END SUBROUTINE EquationsMapping_CreateValuesCacheInitialise
+  END SUBROUTINE EquationsMapping_VectorCreateValuesCacheFinalise
 
   !
   !================================================================================================================================
   !
 
-  !>Destroy an equations mapping.
-  SUBROUTINE EQUATIONS_MAPPING_DESTROY(EQUATIONS_MAPPING,ERR,ERROR,*)
+  !>Initialises a vector equations mapping create values cache 
+  SUBROUTINE EquationsMapping_VectorCreateValuesCacheInitialise(vectorMapping,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer the equations mapping to destroy
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the vector equations mapping to initialise the create values cache for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr,matrixIdx,matrixIdx2,variableNumber
+    LOGICAL :: isResidualType
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(VARYING_STRING) :: dummyError,localError
+
+    ENTERS("EquationsMapping_VectorCreateValuesCacheInitialise",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated.",err,error,*998)
+    IF(ASSOCIATED(vectorMapping%createValuesCache)) &
+      & CALL FlagError("Equations mapping create values cache is already associated.",err,error,*998)
+    
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
+    NULLIFY(equations)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
+    NULLIFY(equationsSet)
+    CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
+    NULLIFY(dependentField)
+    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+    
+    !Allocate and initialise the create values cache
+    ALLOCATE(vectorMapping%createValuesCache,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate equations mapping create values cache.",err,error,*999)
+    vectorMapping%createValuesCache%numberOfDynamicMatrices=0
+    vectorMapping%createValuesCache%dynamicVariableType=0
+    vectorMapping%createValuesCache%dynamicStiffnessMatrixNumber=0
+    vectorMapping%createValuesCache%dynamicDampingMatrixNumber=0
+    vectorMapping%createValuesCache%dynamicMassMatrixNumber=0
+    vectorMapping%createValuesCache%numberOfLinearMatrices=0
+    vectorMapping%createValuesCache%numberOfResidualVariables=0
+    vectorMapping%createValuesCache%residualCoefficient=1.0_DP
+    vectorMapping%createValuesCache%rhsVariableType=0
+    vectorMapping%createValuesCache%rhsCoefficient=1.0_DP
+    vectorMapping%createValuesCache%sourceVariableType=0
+    vectorMapping%createValuesCache%sourceCoefficient=1.0_DP
+    !Set the default equations mapping in the create values cache
+    !First calculate how many linear and dynamic matrices we have and set the variable types for the dynamic, residual
+    !and RHS variables
+    IF(dependentField%NUMBER_OF_VARIABLES==1) THEN
+      SELECT CASE(equations%linearity)
+      CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
+        CALL FlagError("Dependent field only has one variable which cannot be mapped to both an equations matrix and RHS vector.", &
+          & err,error,*999)
+      CASE(EQUATIONS_NONLINEAR)
+        CALL FlagError("Dependent field only has one variable which cannot be mapped to both the residual and RHS vector.", &
+          & err,error,*999)
+      CASE DEFAULT
+        localError="The equations linearity type of "//TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    ELSE IF(dependentField%NUMBER_OF_VARIABLES>1) THEN
+      SELECT CASE(equations%timeDependence)
+      CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC)
+        SELECT CASE(equations%linearity)
+        CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
+          vectorMapping%createValuesCache%numberOfLinearMatrices=dependentField%NUMBER_OF_VARIABLES-1
+          IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(FIELD_DELUDELN_VARIABLE_TYPE)%ptr)) THEN
+            vectorMapping%createValuesCache%rhsVariableType=dependentField%VARIABLE_TYPE_MAP(FIELD_DELUDELN_VARIABLE_TYPE)% &
+              & PTR%VARIABLE_TYPE
+          ELSE
+            CALL FlagError("Not implemented.",err,error,*999)
+          ENDIF
+        CASE(EQUATIONS_NONLINEAR)
+          vectorMapping%createValuesCache%numberOfLinearMatrices=0
+          vectorMapping%createValuesCache%numberOfResidualVariables=1
+          IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(FIELD_DELUDELN_VARIABLE_TYPE)%ptr)) THEN
+            vectorMapping%createValuesCache%rhsVariableType=dependentField%VARIABLE_TYPE_MAP(FIELD_DELUDELN_VARIABLE_TYPE)% &
+              & ptr%VARIABLE_TYPE
+          ELSE
+            CALL FlagError("Not implemented.",err,error,*999)
+          ENDIF
+        CASE DEFAULT
+          localError="The equations linearity type of "//TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
+        SELECT CASE(equations%linearity)
+        CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
+          IF(equations%timeDependence==EQUATIONS_FIRST_ORDER_DYNAMIC) THEN
+            vectorMapping%createValuesCache%numberOfDynamicMatrices=2
+            vectorMapping%createValuesCache%dynamicStiffnessMatrixNumber=1
+            vectorMapping%createValuesCache%dynamicDampingMatrixNumber=2
+          ELSE
+            vectorMapping%createValuesCache%numberOfDynamicMatrices=3
+            vectorMapping%createValuesCache%dynamicStiffnessMatrixNumber=1
+            vectorMapping%createValuesCache%dynamicDampingMatrixNumber=2
+            vectorMapping%createValuesCache%dynamicMassMatrixNumber=3
+          ENDIF
+          !vectorMapping%createValuesCache%numberOfLinearMatrices=dependentField%NUMBER_OF_VARIABLES-2
+          vectorMapping%createValuesCache%numberOfLinearMatrices=0
+          IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr)) THEN
+            vectorMapping%createValuesCache%dynamicVariableType=dependentField% &
+              & VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr%VARIABLE_TYPE
+          ELSE
+            CALL FlagError("Not implemented.",err,error,*999)
+          ENDIF
+          IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(FIELD_DELUDELN_VARIABLE_TYPE)%ptr)) THEN
+            vectorMapping%createValuesCache%rhsVariableType=dependentField% &
+              & VARIABLE_TYPE_MAP(FIELD_DELUDELN_VARIABLE_TYPE)%ptr%VARIABLE_TYPE
+          ELSE
+            CALL FlagError("Not implemented.",err,error,*999)
+          ENDIF
+        CASE(EQUATIONS_NONLINEAR)
+          ! SEBK 19/08/2009 not sure about mapping here
+          !|
+          IF(equations%timeDependence==EQUATIONS_FIRST_ORDER_DYNAMIC) THEN
+            vectorMapping%createValuesCache%numberOfDynamicMatrices=2
+            vectorMapping%createValuesCache%dynamicStiffnessMatrixNumber=1
+            vectorMapping%createValuesCache%dynamicDampingMatrixNumber=2
+          ELSE
+            vectorMapping%createValuesCache%numberOfDynamicMatrices=3
+            vectorMapping%createValuesCache%dynamicStiffnessMatrixNumber=1
+            vectorMapping%createValuesCache%dynamicDampingMatrixNumber=2
+            vectorMapping%createValuesCache%dynamicMassMatrixNumber=3
+          ENDIF
+          vectorMapping%createValuesCache%numberOfLinearMatrices=0
+          vectorMapping%createValuesCache%numberOfResidualVariables=1
+          IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr)) THEN
+            vectorMapping%createValuesCache%dynamicVariableType=dependentField% &
+              & VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr%VARIABLE_TYPE
+          ELSE
+            CALL FlagError("Not implemented.",err,error,*999)
+          ENDIF
+          IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(FIELD_DELUDELN_VARIABLE_TYPE)%ptr)) THEN
+            vectorMapping%createValuesCache%rhsVariableType=dependentField% &
+              & VARIABLE_TYPE_MAP(FIELD_DELUDELN_VARIABLE_TYPE)%ptr%VARIABLE_TYPE
+          ELSE
+            CALL FlagError("Not implemented.",err,error,*999)
+          ENDIF
+        CASE DEFAULT
+          localError="The equations linearity type of "//TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+        !|
+        ! SEBK 19/08/2009 not sure about mapping here
+      CASE DEFAULT
+        localError="The equations time dependence type of "//TRIM(NumberToVString(equations%timeDependence,"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    ELSE
+      localError="The number of dependent field variables of "// &
+        & TRIM(NumberToVString(dependentField%NUMBER_OF_VARIABLES,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    !Allocate the dynamic matrix coefficients and set their values
+    IF(vectorMapping%createValuesCache%numberOfDynamicMatrices>0) THEN
+      ALLOCATE(vectorMapping%createValuesCache%dynamicMatrixCoefficients(vectorMapping% &
+        & createValuesCache%numberOfDynamicMatrices),STAT=err)
+      IF(err/=0) &
+        & CALL FlagError("Could not allocate equations mapping create values cache dynamic matrix coefficients.",err,error,*999)
+      vectorMapping%createValuesCache%dynamicMatrixCoefficients=1.0_DP !Equations matrices are added by default
+    ENDIF
+    !Allocate the residual variable types
+    IF(vectorMapping%createValuesCache%numberOfResidualVariables>0) THEN
+      ALLOCATE(vectorMapping%createValuesCache%residualVariableTypes(vectorMapping% &
+        & createValuesCache%numberOfResidualVariables),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate equations mapping create values cache residual variable types.",err,error,*999)
+      vectorMapping%createValuesCache%residualVariableTypes=0
+      DO matrixIdx=1,vectorMapping%createValuesCache%numberOfResidualVariables
+        variableNumber=1
+        DO WHILE(vectorMapping%createValuesCache%residualVariableTypes(matrixIdx)==0.AND. &
+          & variableNumber<=FIELD_NUMBER_OF_VARIABLE_TYPES)
+          IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(variableNumber)%ptr)) THEN
+            IF(dependentField%VARIABLE_TYPE_MAP(variableNumber)%ptr%VARIABLE_TYPE/= &
+              & vectorMapping%createValuesCache%dynamicVariableType) THEN
+              vectorMapping%createValuesCache%residualVariableTypes(matrixIdx)= &
+                & dependentField%VARIABLE_TYPE_MAP(variableNumber)%ptr%VARIABLE_TYPE
+            ENDIF
+          ENDIF
+          variableNumber=variableNumber+1
+        ENDDO
+      ENDDO !matrixIdx
+      IF(vectorMapping%createValuesCache%residualVariableTypes(vectorMapping%createValuesCache%numberOfResidualVariables)==0) &
+        & CALL FlagError("Invalid setup. All Jacobian matrices do not have a mapped dependent field variable.", &
+        & err,error,*999)
+    ENDIF
+    !Allocate the linear matrix variable types and linear matrix coefficients and set their values
+    IF(vectorMapping%createValuesCache%numberOfLinearMatrices>0) THEN
+      ALLOCATE(vectorMapping%createValuesCache%linearMatrixVariableTypes(vectorMapping% &
+        & createValuesCache%numberOfLinearMatrices),STAT=err)
+      IF(err/=0) CALL  & 
+        & FLAG_ERROR("Could not allocate equations mapping create values cache linear matrix variable types.",err,error,*999)
+      ALLOCATE(vectorMapping%createValuesCache%linearMatrixCoefficients(vectorMapping% &
+        & createValuesCache%numberOfLinearMatrices),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate equations mapping create values cache linear matrix coefficients.", &
+        & err,error,*999)
+      !Set up the matrices variable types
+      vectorMapping%createValuesCache%linearMatrixVariableTypes=0
+      variableNumber=1
+      DO matrixIdx=1,vectorMapping%createValuesCache%numberOfLinearMatrices
+        DO WHILE(vectorMapping%createValuesCache%linearMatrixVariableTypes(matrixIdx)==0.AND. &
+          & variableNumber<=FIELD_NUMBER_OF_VARIABLE_TYPES)
+          IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(variableNumber)%ptr)) THEN
+            IF(dependentField%VARIABLE_TYPE_MAP(variableNumber)%ptr%VARIABLE_TYPE/= &
+              & vectorMapping%createValuesCache%dynamicVariableType) THEN
+              isResidualType=.FALSE.
+              DO matrixIdx2=1,vectorMapping%createValuesCache%numberOfResidualVariables
+                IF(dependentField%VARIABLE_TYPE_MAP(variableNumber)%ptr%VARIABLE_TYPE== &
+                  & vectorMapping%createValuesCache%residualVariableTypes(matrixIdx2)) THEN
+                  isResidualType=.TRUE.
+                ENDIF
+              ENDDO
+              IF(.NOT.isResidualType) THEN
+                vectorMapping%createValuesCache%linearMatrixVariableTypes(matrixIdx)= &
+                  & dependentField%VARIABLE_TYPE_MAP(variableNumber)%ptr%VARIABLE_TYPE
+              ENDIF
+            ENDIF
+          ENDIF
+          variableNumber=variableNumber+1
+        ENDDO
+      ENDDO !matrixIdx
+      IF(vectorMapping%createValuesCache%linearMatrixVariableTypes(vectorMapping% &
+        & createValuesCache%numberOfLinearMatrices)==0) &
+        & CALL FlagError("Invalid setup. All linear matrices do not have a mapped dependent field variable.", &
+        & err,error,*999)
+      vectorMapping%createValuesCache%linearMatrixCoefficients=1.0_DP !Equations matrices are added by default
+    ENDIF
+      
+    EXITS("EquationsMapping_VectorCreateValuesCacheInitialise")
+    RETURN
+999 CALL EquationsMapping_VectorCreateValuesCacheFinalise(vectorMapping%createValuesCache,dummyErr,dummyError,*998)
+998 ERRORS("EquationsMapping_VectorCreateValuesCacheInitialise",err,error)
+    EXITS("EquationsMapping_VectorCreateValuesCacheInitialise")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_VectorCreateValuesCacheInitialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Destroy an vector equations mapping.
+  SUBROUTINE EquationsMapping_VectorDestroy(vectorMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer the vector equations mapping to destroy
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("EQUATIONS_MAPPING_DESTROY",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_VectorDestroy",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-      CALL EQUATIONS_MAPPING_FINALISE(EQUATIONS_MAPPING,ERR,ERROR,*999)
-    ELSE
-      CALL FlagError("Equations mapping is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated.",err,error,*999)
+    
+    CALL EquationsMapping_VectorFinalise(vectorMapping,err,error,*999)
         
-    EXITS("EQUATIONS_MAPPING_DESTROY")
+    EXITS("EquationsMapping_VectorDestroy")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MAPPING_DESTROY",ERR,ERROR)    
+999 ERRORSEXITS("EquationsMapping_VectorDestroy",err,error)    
     RETURN 1
    
-  END SUBROUTINE EQUATIONS_MAPPING_DESTROY
+  END SUBROUTINE EquationsMapping_VectorDestroy
 
   !
   !================================================================================================================================
   !
 
-  !>Finalises the equations mapping dynamic  mapping and deallocates all memory
-  SUBROUTINE EQUATIONS_MAPPING_DYNAMIC_MAPPING_FINALISE(DYNAMIC_MAPPING,ERR,ERROR,*)
+  !>Finalises the scalar equations mapping dot product mapping and deallocates all memory
+  SUBROUTINE EquationsMapping_DotProductMappingFinalise(dotProductMapping,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_DYNAMIC_TYPE), POINTER :: DYNAMIC_MAPPING !<A pointer to the dynamic mapping to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code 
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingDotProductType) :: dotProductMapping !<A pointer to the dot product mapping to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx,variable_type
  
-    ENTERS("EQUATIONS_MAPPING_DYNAMIC_MAPPING_FINALISE",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_DotProductMappingFinalise",err,error,*999)
 
-    IF(ASSOCIATED(DYNAMIC_MAPPING)) THEN
-      IF(ALLOCATED(DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS)) THEN
-        DO variable_type=1,SIZE(DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS,1)
-          CALL EquationsMapping_VarToEquatsMatricesMapFinalise(DYNAMIC_MAPPING% &
-            & VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type),ERR,ERROR,*999)
-        ENDDO !variable_type
-        DEALLOCATE(DYNAMIC_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS)        
-      ENDIF
-      IF(ALLOCATED(DYNAMIC_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS)) THEN
-        DO matrix_idx=1,SIZE(DYNAMIC_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS,1)
-          CALL EquationsMapping_EquationsMatrixToVarMapFinalise(DYNAMIC_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx), &
-            & ERR,ERROR,*999)
-        ENDDO !matrix_idx
-        DEALLOCATE(DYNAMIC_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS)
-      ENDIF
-      IF(ALLOCATED(DYNAMIC_MAPPING%EQUATIONS_ROW_TO_VARIABLE_DOF_MAPS)) &
-        & DEALLOCATE(DYNAMIC_MAPPING%EQUATIONS_ROW_TO_VARIABLE_DOF_MAPS)
-      DEALLOCATE(DYNAMIC_MAPPING)
-    ENDIF
+    dotProductMapping%dotProductNumber=0
+    NULLIFY(dotProductMapping%dotProductVariables(1)%ptr)
+    NULLIFY(dotProductMapping%dotProductVariables(2)%ptr)    
        
-    EXITS("EQUATIONS_MAPPING_DYNAMIC_MAPPING_FINALISE")
+    EXITS("EquationsMapping_DotProductMappingFinalise")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MAPPING_DYNAMIC_MAPPING_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("EquationsMapping_DotProductMappingFinalise",err,error)
     RETURN 1
     
-  END SUBROUTINE EQUATIONS_MAPPING_DYNAMIC_MAPPING_FINALISE
+  END SUBROUTINE EquationsMapping_DotProductMappingFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises the scalar equations mapping dot product mapping
+  SUBROUTINE EquationsMapping_DotProductMappingInitialise(dotProductMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingDotProductType) :: dotProductMapping !<The dot product mapping to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsMapping_DotProductMappingInitialise",err,error,*999)
+
+    dotProductMapping%dotProductNumber=0
+    NULLIFY(dotProductMapping%dotProductVariables(1)%ptr)
+    NULLIFY(dotProductMapping%dotProductVariables(2)%ptr)
+    dotProductMapping%dotProductCoefficient=1.0_DP
+    
+    EXITS("EquationsMapping_DotProductMappingInitialise")
+    RETURN
+999 ERRORS("EquationsMapping_DotProductMappingInitialise",err,error)
+    EXITS("EquationsMapping_DotProductMappingInitialise")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_DotProductMappingInitialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises the scalar equations mapping dot product mappings and deallocates all memory
+  SUBROUTINE EquationsMapping_DotProductMappingsFinalise(dotProductMappings,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingDotProductsType), POINTER :: dotProductMappings !<A pointer to the dot product mappings to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dotProductIdx
+
+    ENTERS("EquationsMapping_DotProductMappingsFinalise",err,error,*999)
+
+    IF(ASSOCIATED(dotProductMappings)) THEN
+      IF(ALLOCATED(dotProductMappings%dotProducts)) THEN
+        DO dotProductIdx=1,SIZE(dotProductMappings%dotProducts,1)
+          CALL EquationsMapping_DotProductMappingFinalise(dotProductMappings%dotProducts(dotProductIdx),err,error,*999)
+        ENDDO !dotProductIdx
+        DEALLOCATE(dotProductMappings%dotProducts)
+      ENDIF
+      DEALLOCATE(dotProductMappings)
+    ENDIF
+       
+    EXITS("EquationsMapping_DotProductMappingsFinalise")
+    RETURN
+999 ERRORS("EquationsMapping_DotProductMappingsFinalise",err,error)
+    EXITS("EquationsMapping_DotProductMappingsFinalise")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_DotProductMappingsFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises the scalar equations mapping dot product mappings
+  SUBROUTINE EquationsMapping_DotProductMappingsInitialise(scalarMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingScalarType), POINTER :: scalarMapping !<A pointer to the scalar equations mapping to initialise the dot product mappings for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
+
+    ENTERS("EquationsMapping_DotProductMappingsInitialise",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(scalarMapping)) CALL FlagError("Scalar equations mapping is not associated.",err,error,*998)
+    IF(ASSOCIATED(scalarMapping%dotProductMappings)) &
+      & CALL FlagError("Scalar equations mapping dot product mappings is already associated.",err,error,*998)
+    
+    ALLOCATE(scalarMapping%dotProductMappings,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate scalar equations mapping dot product mappings.",err,error,*999)
+    scalarMapping%dotProductMappings%scalarMapping=>scalarMapping
+    scalarMapping%dotProductMappings%numberOfDotProducts=0
+    
+    EXITS("EquationsMapping_DotProductMappingsInitialise")
+    RETURN
+999 CALL EquationsMapping_DotProductMappingsFinalise(scalarMapping%dotProductMappings,dummyErr,dummyError,*998)
+998 ERRORS("EquationsMapping_DotProductMappingsInitialise",err,error)
+    EXITS("EquationsMapping_DotProductMappingsInitialise")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_DotProductMappingsInitialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises the equations mapping dynamic mapping and deallocates all memory
+  SUBROUTINE EquationsMapping_DynamicMappingFinalise(dynamicMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping !<A pointer to the dynamic mapping to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: matrixIdx,variableType
+ 
+    ENTERS("EquationsMapping_DynamicMappingFinalise",err,error,*999)
+
+    IF(ASSOCIATED(dynamicMapping)) THEN
+      IF(ALLOCATED(dynamicMapping%varToEquationsMatricesMaps)) THEN
+        DO variableType=1,SIZE(dynamicMapping%varToEquationsMatricesMaps,1)
+          CALL EquationsMapping_VarToEquatsMatricesMapFinalise(dynamicMapping% &
+            & varToEquationsMatricesMaps(variableType),err,error,*999)
+        ENDDO !variableType
+        DEALLOCATE(dynamicMapping%varToEquationsMatricesMaps)        
+      ENDIF
+      IF(ALLOCATED(dynamicMapping%equationsMatrixToVarMaps)) THEN
+        DO matrixIdx=1,SIZE(dynamicMapping%equationsMatrixToVarMaps,1)
+          CALL EquationsMapping_EquationsMatrixToVarMapFinalise(dynamicMapping%equationsMatrixToVarMaps(matrixIdx), &
+            & err,error,*999)
+        ENDDO !matrixIdx
+        DEALLOCATE(dynamicMapping%equationsMatrixToVarMaps)
+      ENDIF
+      IF(ALLOCATED(dynamicMapping%equationsRowToVariableDOFMaps)) &
+        & DEALLOCATE(dynamicMapping%equationsRowToVariableDOFMaps)
+      DEALLOCATE(dynamicMapping)
+    ENDIF
+       
+    EXITS("EquationsMapping_DynamicMappingFinalise")
+    RETURN
+999 ERRORSEXITS("EquationsMapping_DynamicMappingFinalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_DynamicMappingFinalise
 
   !
   !================================================================================================================================
   !
 
   !>Initialises the equations mapping dynamic mapping
-  SUBROUTINE EquationsMapping_DynamicMappingInitialise(EQUATIONS_MAPPING,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_DynamicMappingInitialise(vectorMapping,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping to initialise the dynamic mapping for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code 
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations mapping to initialise the dynamic mapping for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
 
-    ENTERS("EquationsMapping_DynamicMappingInitialise",ERR,ERROR,*998)
+    ENTERS("EquationsMapping_DynamicMappingInitialise",err,error,*998)
 
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-      IF(ASSOCIATED(EQUATIONS_MAPPING%DYNAMIC_MAPPING)) THEN
-        CALL FlagError("Equations mapping dynamic mapping is already associated.",ERR,ERROR,*998)
-      ELSE
-        ALLOCATE(EQUATIONS_MAPPING%DYNAMIC_MAPPING,STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate equations mapping dynamic mapping.",ERR,ERROR,*999)
-        EQUATIONS_MAPPING%DYNAMIC_MAPPING%EQUATIONS_MAPPING=>EQUATIONS_MAPPING
-        EQUATIONS_MAPPING%DYNAMIC_MAPPING%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES=0
-        EQUATIONS_MAPPING%DYNAMIC_MAPPING%STIFFNESS_MATRIX_NUMBER=0
-        EQUATIONS_MAPPING%DYNAMIC_MAPPING%DAMPING_MATRIX_NUMBER=0
-        EQUATIONS_MAPPING%DYNAMIC_MAPPING%MASS_MATRIX_NUMBER=0
-        EQUATIONS_MAPPING%DYNAMIC_MAPPING%DYNAMIC_VARIABLE_TYPE=0
-        NULLIFY(EQUATIONS_MAPPING%DYNAMIC_MAPPING%DYNAMIC_VARIABLE)
-      ENDIF
-    ELSE
-      CALL FlagError("Equations mapping is not associated.",ERR,ERROR,*998)
-    ENDIF
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated.",err,error,*998)
+    IF(ASSOCIATED(vectorMapping%dynamicMapping)) &
+      & CALL FlagError("Equations mapping dynamic mapping is already associated.",err,error,*998)
+    
+    ALLOCATE(vectorMapping%dynamicMapping,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate equations mapping dynamic mapping.",err,error,*999)
+    vectorMapping%dynamicMapping%vectorMapping=>vectorMapping
+    vectorMapping%dynamicMapping%numberOfDynamicMatrices=0
+    vectorMapping%dynamicMapping%stiffnessMatrixNumber=0
+    vectorMapping%dynamicMapping%dampingMatrixNumber=0
+    vectorMapping%dynamicMapping%massMatrixNumber=0
+    vectorMapping%dynamicMapping%dynamicVariableType=0
+    NULLIFY(vectorMapping%dynamicMapping%dynamicVariable)
     
     EXITS("EquationsMapping_DynamicMappingInitialise")
     RETURN
-999 CALL EQUATIONS_MAPPING_DYNAMIC_MAPPING_FINALISE(EQUATIONS_MAPPING%DYNAMIC_MAPPING,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("EquationsMapping_DynamicMappingInitialise",ERR,ERROR)
+999 CALL EquationsMapping_DynamicMappingFinalise(vectorMapping%dynamicMapping,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMapping_DynamicMappingInitialise",err,error)
     RETURN 1
     
   END SUBROUTINE EquationsMapping_DynamicMappingInitialise
@@ -1548,367 +1538,329 @@ CONTAINS
   !
 
   !>Sets/changes the matrices involved in dynamic equations mapping
-  SUBROUTINE EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET_ALL(EQUATIONS_MAPPING,MASS_MATRIX,DAMPING_MATRIX,STIFFNESS_MATRIX, &
-    & ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_DynamicMatricesSetAll(vectorMapping,massMatrix,dampingMatrix,stiffnessMatrix,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping to set the atrices for
-    LOGICAL, INTENT(IN) :: MASS_MATRIX !<Is .TRUE. if the mass matrix is in the equations mapping, .FALSE. if not
-    LOGICAL, INTENT(IN) :: DAMPING_MATRIX !<Is .TRUE. if the damping matrix is in the equations mapping, .FALSE. if not
-    LOGICAL, INTENT(IN) :: STIFFNESS_MATRIX !<Is .TRUE. if the stiffness matrix is in the equations mapping, .FALSE. if not
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code 
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the vector equations mapping to set the atrices for
+    LOGICAL, INTENT(IN) :: massMatrix !<Is .TRUE. if the mass matrix is in the vector equations mapping, .FALSE. if not
+    LOGICAL, INTENT(IN) :: dampingMatrix !<Is .TRUE. if the damping matrix is in the vector equations mapping, .FALSE. if not
+    LOGICAL, INTENT(IN) :: stiffnessMatrix !<Is .TRUE. if the stiffness matrix is in the vector equations mapping, .FALSE. if not
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: NEW_DYNAMIC_DAMPING_MATRIX_NUMBER,NEW_DYNAMIC_MASS_MATRIX_NUMBER,NEW_DYNAMIC_STIFFNESS_MATRIX_NUMBER, &
-      & NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES
-    REAL(DP), ALLOCATABLE :: OLD_DYNAMIC_MATRIX_COEFFICIENTS(:)
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
-    TYPE(EQUATIONS_MAPPING_CREATE_VALUES_CACHE_TYPE), POINTER :: CREATE_VALUES_CACHE
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: newDynamicDampingMatrixNumber,newDynamicMassMatrixNumber,newDynamicStiffnessMatrixNumber, &
+      & numberOfDynamicMatrices
+    REAL(DP), ALLOCATABLE :: oldDynamicMatrixCoefficients(:)
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET_ALL",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_DynamicMatricesSetAll",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-      EQUATIONS=>EQUATIONS_MAPPING%EQUATIONS
-      IF(ASSOCIATED(EQUATIONS)) THEN
-        EQUATIONS_SET=>EQUATIONS%EQUATIONS_SET
-        IF(ASSOCIATED(EQUATIONS_SET)) THEN
-          CREATE_VALUES_CACHE=>EQUATIONS_MAPPING%CREATE_VALUES_CACHE
-          IF(ASSOCIATED(CREATE_VALUES_CACHE)) THEN
-            SELECT CASE(EQUATIONS%LINEARITY)
-            CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
-              NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES=0
-              NEW_DYNAMIC_STIFFNESS_MATRIX_NUMBER=0
-              NEW_DYNAMIC_DAMPING_MATRIX_NUMBER=0
-              NEW_DYNAMIC_MASS_MATRIX_NUMBER=0
-              IF(STIFFNESS_MATRIX) THEN
-                NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES=NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES+1
-                NEW_DYNAMIC_STIFFNESS_MATRIX_NUMBER=NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES
-              ENDIF
-              IF(DAMPING_MATRIX) THEN
-                NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES=NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES+1
-                NEW_DYNAMIC_DAMPING_MATRIX_NUMBER=NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES
-              ENDIF
-              IF(MASS_MATRIX) THEN
-                NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES=NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES+1
-                NEW_DYNAMIC_MASS_MATRIX_NUMBER=NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES
-              ENDIF
-              IF(NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES>0) THEN
-                ALLOCATE(OLD_DYNAMIC_MATRIX_COEFFICIENTS(CREATE_VALUES_CACHE%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES),STAT=ERR)
-                IF(ERR/=0) CALL FlagError("Could not allocate old dynamic matrix coefficients.",ERR,ERROR,*999)
-                OLD_DYNAMIC_MATRIX_COEFFICIENTS(1:CREATE_VALUES_CACHE%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES)= &
-                  & CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS(1:CREATE_VALUES_CACHE%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES)
-                DEALLOCATE(CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS)
-                ALLOCATE(CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS(NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES),STAT=ERR)
-                IF(ERR/=0) CALL FlagError("Could not allocate dynamic matrix coefficients.",ERR,ERROR,*999)
-                IF(NEW_DYNAMIC_STIFFNESS_MATRIX_NUMBER/=0) THEN
-                  IF(CREATE_VALUES_CACHE%DYNAMIC_STIFFNESS_MATRIX_NUMBER==0) THEN
-                    CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS(NEW_DYNAMIC_STIFFNESS_MATRIX_NUMBER)=1.0_DP
-                  ELSE
-                    CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS(NEW_DYNAMIC_STIFFNESS_MATRIX_NUMBER)= &
-                      & OLD_DYNAMIC_MATRIX_COEFFICIENTS(CREATE_VALUES_CACHE%DYNAMIC_STIFFNESS_MATRIX_NUMBER)
-                  ENDIF
-                ENDIF
-                IF(NEW_DYNAMIC_DAMPING_MATRIX_NUMBER/=0) THEN
-                  IF(CREATE_VALUES_CACHE%DYNAMIC_DAMPING_MATRIX_NUMBER==0) THEN
-                    CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS(NEW_DYNAMIC_DAMPING_MATRIX_NUMBER)=1.0_DP
-                  ELSE
-                    CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS(NEW_DYNAMIC_DAMPING_MATRIX_NUMBER)= &
-                      & OLD_DYNAMIC_MATRIX_COEFFICIENTS(CREATE_VALUES_CACHE%DYNAMIC_DAMPING_MATRIX_NUMBER)
-                  ENDIF
-                ENDIF
-                IF(NEW_DYNAMIC_MASS_MATRIX_NUMBER/=0) THEN
-                  IF(CREATE_VALUES_CACHE%DYNAMIC_MASS_MATRIX_NUMBER==0) THEN
-                    CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS(NEW_DYNAMIC_MASS_MATRIX_NUMBER)=1.0_DP
-                  ELSE
-                    CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS(NEW_DYNAMIC_MASS_MATRIX_NUMBER)= &
-                      & OLD_DYNAMIC_MATRIX_COEFFICIENTS(CREATE_VALUES_CACHE%DYNAMIC_MASS_MATRIX_NUMBER)
-                  ENDIF
-                ENDIF
-                CREATE_VALUES_CACHE%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES=NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES
-                CREATE_VALUES_CACHE%DYNAMIC_STIFFNESS_MATRIX_NUMBER=NEW_DYNAMIC_STIFFNESS_MATRIX_NUMBER
-                CREATE_VALUES_CACHE%DYNAMIC_DAMPING_MATRIX_NUMBER=NEW_DYNAMIC_DAMPING_MATRIX_NUMBER
-                CREATE_VALUES_CACHE%DYNAMIC_MASS_MATRIX_NUMBER=NEW_DYNAMIC_MASS_MATRIX_NUMBER
-                IF(ALLOCATED(OLD_DYNAMIC_MATRIX_COEFFICIENTS)) DEALLOCATE(OLD_DYNAMIC_MATRIX_COEFFICIENTS)
-              ELSE
-                CALL FlagError("Invalid dynamic matrices set up. There are no dynamic equations matrices.",ERR,ERROR,*999)
-              ENDIF
-            CASE(EQUATIONS_NONLINEAR)
-! SEBK 19/08/2009 not sure about mapping here
-!|
-              NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES=0
-              NEW_DYNAMIC_STIFFNESS_MATRIX_NUMBER=0
-              NEW_DYNAMIC_DAMPING_MATRIX_NUMBER=0
-              NEW_DYNAMIC_MASS_MATRIX_NUMBER=0
-              IF(STIFFNESS_MATRIX) THEN
-                NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES=NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES+1
-                NEW_DYNAMIC_STIFFNESS_MATRIX_NUMBER=NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES
-              ENDIF
-              IF(DAMPING_MATRIX) THEN
-                NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES=NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES+1
-                NEW_DYNAMIC_DAMPING_MATRIX_NUMBER=NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES
-              ENDIF
-              IF(MASS_MATRIX) THEN
-                NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES=NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES+1
-                NEW_DYNAMIC_MASS_MATRIX_NUMBER=NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES
-              ENDIF
-              IF(NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES>0) THEN
-                ALLOCATE(OLD_DYNAMIC_MATRIX_COEFFICIENTS(CREATE_VALUES_CACHE%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES),STAT=ERR)
-                IF(ERR/=0) CALL FlagError("Could not allocate old dynamic matrix coefficients.",ERR,ERROR,*999)
-                OLD_DYNAMIC_MATRIX_COEFFICIENTS(1:CREATE_VALUES_CACHE%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES)= &
-                  & CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS(1:CREATE_VALUES_CACHE%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES)
-                DEALLOCATE(CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS)
-                ALLOCATE(CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS(NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES),STAT=ERR)
-                IF(ERR/=0) CALL FlagError("Could not allocate dynamic matrix coefficients.",ERR,ERROR,*999)
-                IF(NEW_DYNAMIC_STIFFNESS_MATRIX_NUMBER/=0) THEN
-                  IF(CREATE_VALUES_CACHE%DYNAMIC_STIFFNESS_MATRIX_NUMBER==0) THEN
-                    CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS(NEW_DYNAMIC_STIFFNESS_MATRIX_NUMBER)=1.0_DP
-                  ELSE
-                    CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS(NEW_DYNAMIC_STIFFNESS_MATRIX_NUMBER)= &
-                      & OLD_DYNAMIC_MATRIX_COEFFICIENTS(CREATE_VALUES_CACHE%DYNAMIC_STIFFNESS_MATRIX_NUMBER)
-                  ENDIF
-                ENDIF
-                IF(NEW_DYNAMIC_DAMPING_MATRIX_NUMBER/=0) THEN
-                  IF(CREATE_VALUES_CACHE%DYNAMIC_DAMPING_MATRIX_NUMBER==0) THEN
-                    CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS(NEW_DYNAMIC_DAMPING_MATRIX_NUMBER)=1.0_DP
-                  ELSE
-                    CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS(NEW_DYNAMIC_DAMPING_MATRIX_NUMBER)= &
-                      & OLD_DYNAMIC_MATRIX_COEFFICIENTS(CREATE_VALUES_CACHE%DYNAMIC_DAMPING_MATRIX_NUMBER)
-                  ENDIF
-                ENDIF
-                IF(NEW_DYNAMIC_MASS_MATRIX_NUMBER/=0) THEN
-                  IF(CREATE_VALUES_CACHE%DYNAMIC_MASS_MATRIX_NUMBER==0) THEN
-                    CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS(NEW_DYNAMIC_MASS_MATRIX_NUMBER)=1.0_DP
-                  ELSE
-                    CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS(NEW_DYNAMIC_MASS_MATRIX_NUMBER)= &
-                      & OLD_DYNAMIC_MATRIX_COEFFICIENTS(CREATE_VALUES_CACHE%DYNAMIC_MASS_MATRIX_NUMBER)
-                  ENDIF
-                ENDIF
-                CREATE_VALUES_CACHE%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES=NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES
-                CREATE_VALUES_CACHE%DYNAMIC_STIFFNESS_MATRIX_NUMBER=NEW_DYNAMIC_STIFFNESS_MATRIX_NUMBER
-                CREATE_VALUES_CACHE%DYNAMIC_DAMPING_MATRIX_NUMBER=NEW_DYNAMIC_DAMPING_MATRIX_NUMBER
-                CREATE_VALUES_CACHE%DYNAMIC_MASS_MATRIX_NUMBER=NEW_DYNAMIC_MASS_MATRIX_NUMBER
-                IF(ALLOCATED(OLD_DYNAMIC_MATRIX_COEFFICIENTS)) DEALLOCATE(OLD_DYNAMIC_MATRIX_COEFFICIENTS)
-              ELSE
-                CALL FlagError("Invalid dynamic matrices set up. There are no dynamic equations matrices.",ERR,ERROR,*999)
-              ENDIF
-!|
-! SEBK 19/08/2009 not sure about mapping here
-            CASE DEFAULT
-              LOCAL_ERROR="The equations linearity type of "//TRIM(NumberToVString(EQUATIONS%LINEARITY,"*",ERR,ERROR))// &
-                & " is invalid."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            END SELECT
-          ELSE
-            CALL FlagError("Equations mapping create values cache is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Equations equations set is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Equations mapping equations is not associated.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Equations is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated.",err,error,*999)
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
+    NULLIFY(equations)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
+    NULLIFY(equationsSet)
+    CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
+    NULLIFY(createValuesCache)
+    CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
     
-    EXITS("EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET_ALL_ORDER")
+    SELECT CASE(equations%linearity)
+    CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
+      numberOfDynamicMatrices=0
+      newDynamicStiffnessMatrixNumber=0
+      newDynamicDampingMatrixNumber=0
+      newDynamicMassMatrixNumber=0
+      IF(stiffnessMatrix) THEN
+        numberOfDynamicMatrices=numberOfDynamicMatrices+1
+        newDynamicStiffnessMatrixNumber=numberOfDynamicMatrices
+      ENDIF
+      IF(dampingMatrix) THEN
+        numberOfDynamicMatrices=numberOfDynamicMatrices+1
+        newDynamicDampingMatrixNumber=numberOfDynamicMatrices
+      ENDIF
+      IF(massMatrix) THEN
+        numberOfDynamicMatrices=numberOfDynamicMatrices+1
+        newDynamicMassMatrixNumber=numberOfDynamicMatrices
+      ENDIF
+      IF(numberOfDynamicMatrices>0) THEN
+        ALLOCATE(oldDynamicMatrixCoefficients(createValuesCache%numberOfDynamicMatrices),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate old dynamic matrix coefficients.",err,error,*999)
+        oldDynamicMatrixCoefficients(1:createValuesCache%numberOfDynamicMatrices)= &
+          & createValuesCache%dynamicMatrixCoefficients(1:createValuesCache%numberOfDynamicMatrices)
+        DEALLOCATE(createValuesCache%dynamicMatrixCoefficients)
+        ALLOCATE(createValuesCache%dynamicMatrixCoefficients(numberOfDynamicMatrices),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate dynamic matrix coefficients.",err,error,*999)
+        IF(newDynamicStiffnessMatrixNumber/=0) THEN
+          IF(createValuesCache%dynamicStiffnessMatrixNumber==0) THEN
+            createValuesCache%dynamicMatrixCoefficients(newDynamicStiffnessMatrixNumber)=1.0_DP
+          ELSE
+            createValuesCache%dynamicMatrixCoefficients(newDynamicStiffnessMatrixNumber)= &
+              & oldDynamicMatrixCoefficients(createValuesCache%dynamicStiffnessMatrixNumber)
+          ENDIF
+        ENDIF
+        IF(newDynamicDampingMatrixNumber/=0) THEN
+          IF(createValuesCache%dynamicDampingMatrixNumber==0) THEN
+            createValuesCache%dynamicMatrixCoefficients(newDynamicDampingMatrixNumber)=1.0_DP
+          ELSE
+            createValuesCache%dynamicMatrixCoefficients(newDynamicDampingMatrixNumber)= &
+              & oldDynamicMatrixCoefficients(createValuesCache%dynamicDampingMatrixNumber)
+          ENDIF
+        ENDIF
+        IF(newDynamicMassMatrixNumber/=0) THEN
+          IF(createValuesCache%dynamicMassMatrixNumber==0) THEN
+            createValuesCache%dynamicMatrixCoefficients(newDynamicMassMatrixNumber)=1.0_DP
+          ELSE
+            createValuesCache%dynamicMatrixCoefficients(newDynamicMassMatrixNumber)= &
+              & oldDynamicMatrixCoefficients(createValuesCache%dynamicMassMatrixNumber)
+          ENDIF
+        ENDIF
+        createValuesCache%numberOfDynamicMatrices=numberOfDynamicMatrices
+        createValuesCache%dynamicStiffnessMatrixNumber=newDynamicStiffnessMatrixNumber
+        createValuesCache%dynamicDampingMatrixNumber=newDynamicDampingMatrixNumber
+        createValuesCache%dynamicMassMatrixNumber=newDynamicMassMatrixNumber
+        IF(ALLOCATED(oldDynamicMatrixCoefficients)) DEALLOCATE(oldDynamicMatrixCoefficients)
+      ELSE
+        CALL FlagError("Invalid dynamic matrices set up. There are no dynamic equations matrices.",err,error,*999)
+      ENDIF
+    CASE(EQUATIONS_NONLINEAR)
+      numberOfDynamicMatrices=0
+      newDynamicStiffnessMatrixNumber=0
+      newDynamicDampingMatrixNumber=0
+      newDynamicMassMatrixNumber=0
+      IF(stiffnessMatrix) THEN
+        numberOfDynamicMatrices=numberOfDynamicMatrices+1
+        newDynamicStiffnessMatrixNumber=numberOfDynamicMatrices
+      ENDIF
+      IF(dampingMatrix) THEN
+        numberOfDynamicMatrices=numberOfDynamicMatrices+1
+        newDynamicDampingMatrixNumber=numberOfDynamicMatrices
+      ENDIF
+      IF(massMatrix) THEN
+        numberOfDynamicMatrices=numberOfDynamicMatrices+1
+        newDynamicMassMatrixNumber=numberOfDynamicMatrices
+      ENDIF
+      IF(numberOfDynamicMatrices>0) THEN
+        ALLOCATE(oldDynamicMatrixCoefficients(createValuesCache%numberOfDynamicMatrices),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate old dynamic matrix coefficients.",err,error,*999)
+        oldDynamicMatrixCoefficients(1:createValuesCache%numberOfDynamicMatrices)= &
+          & createValuesCache%dynamicMatrixCoefficients(1:createValuesCache%numberOfDynamicMatrices)
+        DEALLOCATE(createValuesCache%dynamicMatrixCoefficients)
+        ALLOCATE(createValuesCache%dynamicMatrixCoefficients(numberOfDynamicMatrices),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate dynamic matrix coefficients.",err,error,*999)
+        IF(newDynamicStiffnessMatrixNumber/=0) THEN
+          IF(createValuesCache%dynamicStiffnessMatrixNumber==0) THEN
+            createValuesCache%dynamicMatrixCoefficients(newDynamicStiffnessMatrixNumber)=1.0_DP
+          ELSE
+            createValuesCache%dynamicMatrixCoefficients(newDynamicStiffnessMatrixNumber)= &
+              & oldDynamicMatrixCoefficients(createValuesCache%dynamicStiffnessMatrixNumber)
+          ENDIF
+        ENDIF
+        IF(newDynamicDampingMatrixNumber/=0) THEN
+          IF(createValuesCache%dynamicDampingMatrixNumber==0) THEN
+            createValuesCache%dynamicMatrixCoefficients(newDynamicDampingMatrixNumber)=1.0_DP
+          ELSE
+            createValuesCache%dynamicMatrixCoefficients(newDynamicDampingMatrixNumber)= &
+              & oldDynamicMatrixCoefficients(createValuesCache%dynamicDampingMatrixNumber)
+          ENDIF
+        ENDIF
+        IF(newDynamicMassMatrixNumber/=0) THEN
+          IF(createValuesCache%dynamicMassMatrixNumber==0) THEN
+            createValuesCache%dynamicMatrixCoefficients(newDynamicMassMatrixNumber)=1.0_DP
+          ELSE
+            createValuesCache%dynamicMatrixCoefficients(newDynamicMassMatrixNumber)= &
+              & oldDynamicMatrixCoefficients(createValuesCache%dynamicMassMatrixNumber)
+          ENDIF
+        ENDIF
+        createValuesCache%numberOfDynamicMatrices=numberOfDynamicMatrices
+        createValuesCache%dynamicStiffnessMatrixNumber=newDynamicStiffnessMatrixNumber
+        createValuesCache%dynamicDampingMatrixNumber=newDynamicDampingMatrixNumber
+        createValuesCache%dynamicMassMatrixNumber=newDynamicMassMatrixNumber
+        IF(ALLOCATED(oldDynamicMatrixCoefficients)) DEALLOCATE(oldDynamicMatrixCoefficients)
+      ELSE
+        CALL FlagError("Invalid dynamic matrices set up. There are no dynamic equations matrices.",err,error,*999)
+      ENDIF
+    CASE DEFAULT
+      localError="The equations linearity type of "//TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+   
+    EXITS("EquationsMapping_DynamicMatricesSetAll")
     RETURN
-999 IF(ALLOCATED(OLD_DYNAMIC_MATRIX_COEFFICIENTS)) DEALLOCATE(OLD_DYNAMIC_MATRIX_COEFFICIENTS)    
-    ERRORSEXITS("EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET_ALL",ERR,ERROR)
+999 IF(ALLOCATED(oldDynamicMatrixCoefficients)) DEALLOCATE(oldDynamicMatrixCoefficients)    
+    ERRORSEXITS("EquationsMapping_DynamicMatricesSetAll",err,error)
     RETURN 1
     
-  END SUBROUTINE EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET_ALL
+  END SUBROUTINE EquationsMapping_DynamicMatricesSetAll
 
   !
   !================================================================================================================================
   !
 
-  !>Sets/changes the matrices involved in a first order dynamic equations mapping
-  SUBROUTINE EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET_1(EQUATIONS_MAPPING,DAMPING_MATRIX,STIFFNESS_MATRIX,ERR,ERROR,*)
+  !>Sets/changes the matrices involved in a first order dynamic vector equations mapping
+  SUBROUTINE EquationsMapping_DynamicMatricesSet1(vectorMapping,dampingMatrix,stiffnessMatrix,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping to set the first order matrices for
-    LOGICAL, INTENT(IN) :: DAMPING_MATRIX !<Is .TRUE. if the damping matrix is in the equations mapping, .FALSE. if not
-    LOGICAL, INTENT(IN) :: STIFFNESS_MATRIX !<Is .TRUE. if the stiffness matrix is in the equations mapping, .FALSE. if not
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code 
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the vector equations mapping to set the first order matrices for
+    LOGICAL, INTENT(IN) :: dampingMatrix !<Is .TRUE. if the damping matrix is in the vector equations mapping, .FALSE. if not
+    LOGICAL, INTENT(IN) :: stiffnessMatrix !<Is .TRUE. if the stiffness matrix is in the vector equations mapping, .FALSE. if not
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET_1",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_DynamicMatricesSet1",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-      IF(EQUATIONS_MAPPING%EQUATIONS_MAPPING_FINISHED) THEN
-        CALL FlagError("Equations mapping has already been finished.",ERR,ERROR,*999)
-      ELSE
-        EQUATIONS=>EQUATIONS_MAPPING%EQUATIONS
-        IF(ASSOCIATED(EQUATIONS)) THEN
-          SELECT CASE(EQUATIONS%TIME_DEPENDENCE)
-          CASE(EQUATIONS_STATIC)
-            CALL FlagError("Can not set dynamic matrices for static equations.",ERR,ERROR,*999)
-          CASE(EQUATIONS_QUASISTATIC)
-            CALL FlagError("Can not set dynamic matrices for quasi-static equations.",ERR,ERROR,*999)
-          CASE(EQUATIONS_FIRST_ORDER_DYNAMIC)
-            IF(.NOT.DAMPING_MATRIX) CALL FLAG_WARNING("No damping matrix for first order dynamic equations.",ERR,ERROR,*999)
-            CALL EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET_ALL(EQUATIONS_MAPPING,.FALSE.,DAMPING_MATRIX,STIFFNESS_MATRIX, &
-              ERR,ERROR,*999)
-          CASE(EQUATIONS_SECOND_ORDER_DYNAMIC)
-            CALL FlagError("Need to specify three matrices to set for second order dynamic equations.",ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The equations time dependence type of "// &
-              & TRIM(NumberToVString(EQUATIONS%TIME_DEPENDENCE,"*",ERR,ERROR))// &
-              & " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("Equations mapping equations is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Equations is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated.",err,error,*999)
+    IF(vectorMapping%vectorMappingFinished) CALL FlagError("Vector equations mapping has already been finished.",err,error,*999)
     
-    EXITS("EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET_1")
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
+    NULLIFY(equations)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
+
+    SELECT CASE(equations%timeDependence)
+    CASE(EQUATIONS_STATIC)
+      CALL FlagError("Can not set dynamic matrices for static equations.",err,error,*999)
+    CASE(EQUATIONS_QUASISTATIC)
+      CALL FlagError("Can not set dynamic matrices for quasi-static equations.",err,error,*999)
+    CASE(EQUATIONS_FIRST_ORDER_DYNAMIC)
+      IF(.NOT.dampingMatrix) CALL FlagWarning("No damping matrix for first order dynamic equations.",err,error,*999)
+      CALL EquationsMapping_DynamicMatricesSetAll(vectorMapping,.FALSE.,dampingMatrix,stiffnessMatrix,err,error,*999)
+    CASE(EQUATIONS_SECOND_ORDER_DYNAMIC)
+      CALL FlagError("Need to specify three matrices to set for second order dynamic equations.",err,error,*999)
+    CASE DEFAULT
+      localError="The equations time dependence type of "//TRIM(NumberToVString(equations%timeDependence,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("EquationsMapping_DynamicMatricesSet1")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET_1",ERR,ERROR)
+999 ERRORSEXITS("EquationsMapping_DynamicMatricesSet1",err,error)
     RETURN 1
     
-  END SUBROUTINE EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET_1
+  END SUBROUTINE EquationsMapping_DynamicMatricesSet1
 
   !
   !================================================================================================================================
   !
 
   !>Sets/changes the matrices involved in a second order dynamic equations mapping
-  SUBROUTINE EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET_2(EQUATIONS_MAPPING,MASS_MATRIX,DAMPING_MATRIX,STIFFNESS_MATRIX, &
-    & ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_DynamicMatricesSet2(vectorMapping,massMatrix,dampingMatrix,stiffnessMatrix,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping to set the first order matrices for
-    LOGICAL, INTENT(IN) :: MASS_MATRIX !<Is .TRUE. if the mass matrix is in the equations mapping, .FALSE. if not
-    LOGICAL, INTENT(IN) :: DAMPING_MATRIX !<Is .TRUE. if the damping matrix is in the equations mapping, .FALSE. if not
-    LOGICAL, INTENT(IN) :: STIFFNESS_MATRIX !<Is .TRUE. if the stiffness matrix is in the equations mapping, .FALSE. if not
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code 
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the vector equations mapping to set the first order matrices for
+    LOGICAL, INTENT(IN) :: massMatrix !<Is .TRUE. if the mass matrix is in the vector equations mapping, .FALSE. if not
+    LOGICAL, INTENT(IN) :: dampingMatrix !<Is .TRUE. if the damping matrix is in the vector equations mapping, .FALSE. if not
+    LOGICAL, INTENT(IN) :: stiffnessMatrix !<Is .TRUE. if the stiffness matrix is in the vector equations mapping, .FALSE. if not
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET_2",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_DynamicMatricesSet2",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-      IF(EQUATIONS_MAPPING%EQUATIONS_MAPPING_FINISHED) THEN
-        CALL FlagError("Equations mapping has already been finished.",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated.",err,error,*999)
+    IF(vectorMapping%vectorMappingFinished) CALL FlagError("Vector equations mapping has already been finished.",err,error,*999)
+
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
+    NULLIFY(equations)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
+
+    SELECT CASE(equations%timeDependence)
+    CASE(EQUATIONS_STATIC)
+      CALL FlagError("Can not set dynamic matrices for static equations.",err,error,*999)
+    CASE(EQUATIONS_QUASISTATIC)
+      CALL FlagError("Can not set dynamic matrices for quasi-static equations.",err,error,*999)
+    CASE(EQUATIONS_FIRST_ORDER_DYNAMIC)
+      IF(massMatrix) THEN
+        CALL FlagError("The mass matrix cannot be present for first order dynamic equations.",err,error,*999)
       ELSE
-        EQUATIONS=>EQUATIONS_MAPPING%EQUATIONS
-        IF(ASSOCIATED(EQUATIONS)) THEN
-          SELECT CASE(EQUATIONS%TIME_DEPENDENCE)
-          CASE(EQUATIONS_STATIC)
-            CALL FlagError("Can not set dynamic matrices for static equations.",ERR,ERROR,*999)
-          CASE(EQUATIONS_QUASISTATIC)
-            CALL FlagError("Can not set dynamic matrices for quasi-static equations.",ERR,ERROR,*999)
-          CASE(EQUATIONS_FIRST_ORDER_DYNAMIC)
-            IF(MASS_MATRIX) THEN
-              CALL FlagError("The mass matrix cannot be present for first order dynamic equations.",ERR,ERROR,*999)
-            ELSE
-              IF(.NOT.DAMPING_MATRIX) CALL FLAG_WARNING("No damping matrix for a first order dynamic system.",ERR,ERROR,*999)
-              CALL EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET_ALL(EQUATIONS_MAPPING,.FALSE.,DAMPING_MATRIX,STIFFNESS_MATRIX, &
-                ERR,ERROR,*999)
-            ENDIF
-          CASE(EQUATIONS_SECOND_ORDER_DYNAMIC)
-            IF(.NOT.MASS_MATRIX) CALL FLAG_WARNING("No mass matrix for a second order dynamic system.",ERR,ERROR,*999)
-            CALL EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET_ALL(EQUATIONS_MAPPING,MASS_MATRIX,DAMPING_MATRIX, &
-              & STIFFNESS_MATRIX,ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The equations time dependence type of "// &
-              & TRIM(NumberToVString(EQUATIONS%TIME_DEPENDENCE,"*",ERR,ERROR))// &
-              & " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("Equations mapping equations is not associated.",ERR,ERROR,*999)
-        ENDIF
+        IF(.NOT.dampingMatrix) CALL FlagWarning("No damping matrix for a first order dynamic system.",err,error,*999)
+        CALL EquationsMapping_DynamicMatricesSetAll(vectorMapping,.FALSE.,dampingMatrix,stiffnessMatrix,err,error,*999)
       ENDIF
-    ELSE
-      CALL FlagError("Equations is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CASE(EQUATIONS_SECOND_ORDER_DYNAMIC)
+      IF(.NOT.massMatrix) CALL FlagWarning("No mass matrix for a second order dynamic system.",err,error,*999)
+      CALL EquationsMapping_DynamicMatricesSetAll(vectorMapping,massMatrix,dampingMatrix,stiffnessMatrix,err,error,*999)
+    CASE DEFAULT
+      localError="The equations time dependence type of "//TRIM(NumberToVString(equations%timeDependence,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
     
-    EXITS("EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET_2")
+    EXITS("EquationsMapping_DynamicMatricesSet2")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET_2",ERR,ERROR)
+999 ERRORSEXITS("EquationsMapping_DynamicMatricesSet2",err,error)
     RETURN 1
     
-  END SUBROUTINE EQUATIONS_MAPPING_DYNAMIC_MATRICES_SET_2
+  END SUBROUTINE EquationsMapping_DynamicMatricesSet2
 
   !
   !================================================================================================================================
   !
 
   !>Sets/changes the matrix coefficients in a first order dynamic equations mapping
-  SUBROUTINE EquationsMapping_DynamicMatricesCoeffsSet1(EQUATIONS_MAPPING,DAMPING_MATRIX_COEFFICIENT, &
-    & STIFFNESS_MATRIX_COEFFICIENT,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_DynamicMatricesCoeffsSet1(vectorMapping,dampingMatrixCoefficient, &
+    & stiffnessMatrixCoefficient,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping to set 
-    REAL(DP), INTENT(IN) :: DAMPING_MATRIX_COEFFICIENT !<The damping matrix coefficient
-    REAL(DP), INTENT(IN) :: STIFFNESS_MATRIX_COEFFICIENT !<The stiffness matrix coefficient
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code 
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations mapping to set 
+    REAL(DP), INTENT(IN) :: dampingMatrixCoefficient !<The damping matrix coefficient
+    REAL(DP), INTENT(IN) :: stiffnessMatrixCoefficient !<The stiffness matrix coefficient
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
-    TYPE(EQUATIONS_MAPPING_CREATE_VALUES_CACHE_TYPE), POINTER :: CREATE_VALUES_CACHE
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("EquationsMapping_DynamicMatricesCoeffsSet1",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_DynamicMatricesCoeffsSet1",err,error,*999)
     
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-      IF(EQUATIONS_MAPPING%EQUATIONS_MAPPING_FINISHED) THEN
-        CALL FlagError("Equations mapping has already been finished.",ERR,ERROR,*999)
-      ELSE
-        CREATE_VALUES_CACHE=>EQUATIONS_MAPPING%CREATE_VALUES_CACHE
-        IF(ASSOCIATED(CREATE_VALUES_CACHE)) THEN
-          EQUATIONS=>EQUATIONS_MAPPING%EQUATIONS
-          IF(ASSOCIATED(EQUATIONS)) THEN
-            SELECT CASE(EQUATIONS%TIME_DEPENDENCE)
-            CASE(EQUATIONS_STATIC)
-              CALL FlagError("Can not set dynamic matrix coefficients for static equations.",ERR,ERROR,*999)
-            CASE(EQUATIONS_QUASISTATIC)
-              CALL FlagError("Can not set dynamic matrix coefficients for quasi-static equations.",ERR,ERROR,*999)
-            CASE(EQUATIONS_FIRST_ORDER_DYNAMIC)
-              IF(CREATE_VALUES_CACHE%DYNAMIC_STIFFNESS_MATRIX_NUMBER/=0) THEN
-                CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS(CREATE_VALUES_CACHE%DYNAMIC_STIFFNESS_MATRIX_NUMBER)= &
-                  & STIFFNESS_MATRIX_COEFFICIENT
-              ENDIF
-              IF(CREATE_VALUES_CACHE%DYNAMIC_DAMPING_MATRIX_NUMBER/=0) THEN
-                CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS(CREATE_VALUES_CACHE%DYNAMIC_DAMPING_MATRIX_NUMBER)= &
-                  & DAMPING_MATRIX_COEFFICIENT
-              ENDIF
-            CASE(EQUATIONS_SECOND_ORDER_DYNAMIC)
-              CALL FlagError("Need to specify three matrix coefficients for second order dynamic equations.", &
-                & ERR,ERROR,*999)
-            CASE DEFAULT
-              LOCAL_ERROR="The equations time dependence type of "// &
-                & TRIM(NumberToVString(EQUATIONS%TIME_DEPENDENCE,"*",ERR,ERROR))// &
-                & " is invalid."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            END SELECT
-          ELSE
-            CALL FlagError("Equations mapping equations is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Equations mapping create values cache is not associated.",ERR,ERROR,*999)
-        ENDIF
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated.",err,error,*999)
+    IF(vectorMapping%vectorMappingFinished) CALL FlagError("Vector equations mapping has already been finished.",err,error,*999)
+ 
+    NULLIFY(createValuesCache)
+    CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
+    NULLIFY(equations)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
+    
+    SELECT CASE(equations%timeDependence)
+    CASE(EQUATIONS_STATIC)
+      CALL FlagError("Can not set dynamic matrix coefficients for static equations.",err,error,*999)
+    CASE(EQUATIONS_QUASISTATIC)
+      CALL FlagError("Can not set dynamic matrix coefficients for quasi-static equations.",err,error,*999)
+    CASE(EQUATIONS_FIRST_ORDER_DYNAMIC)
+      IF(createValuesCache%dynamicStiffnessMatrixNumber/=0) THEN
+        createValuesCache%dynamicMatrixCoefficients(createValuesCache%dynamicStiffnessMatrixNumber)=stiffnessMatrixCoefficient
       ENDIF
-    ELSE
-      CALL FlagError("Equations is not associated.",ERR,ERROR,*999)
-    ENDIF
+      IF(createValuesCache%dynamicDampingMatrixNumber/=0) THEN
+        createValuesCache%dynamicMatrixCoefficients(createValuesCache%dynamicDampingMatrixNumber)=dampingMatrixCoefficient
+      ENDIF
+    CASE(EQUATIONS_SECOND_ORDER_DYNAMIC)
+      CALL FlagError("Need to specify three matrix coefficients for second order dynamic equations.", &
+        & err,error,*999)
+    CASE DEFAULT
+      localError="The equations time dependence type of "//TRIM(NumberToVString(equations%timeDependence,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
     
     EXITS("EquationsMapping_DynamicMatricesCoeffsSet1")
     RETURN
-999 ERRORSEXITS("EquationsMapping_DynamicMatricesCoeffsSet1",ERR,ERROR)
+999 ERRORSEXITS("EquationsMapping_DynamicMatricesCoeffsSet1",err,error)
     RETURN 1
     
   END SUBROUTINE EquationsMapping_DynamicMatricesCoeffsSet1
@@ -1918,71 +1870,57 @@ CONTAINS
   !
 
   !>Sets/changes the matrix coefficients in a second order dynamic equations mapping
-  SUBROUTINE EquationsMapping_DynamicMatricesCoeffsSet2(EQUATIONS_MAPPING,MASS_MATRIX_COEFFICIENT, &
-    & DAMPING_MATRIX_COEFFICIENT,STIFFNESS_MATRIX_COEFFICIENT,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_DynamicMatricesCoeffsSet2(vectorMapping,massMatrixCoefficient, &
+    & dampingMatrixCoefficient,stiffnessMatrixCoefficient,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping to set 
-    REAL(DP), INTENT(IN) :: MASS_MATRIX_COEFFICIENT !<The mass matrix coefficient
-    REAL(DP), INTENT(IN) :: DAMPING_MATRIX_COEFFICIENT !<The damping matrix coefficient
-    REAL(DP), INTENT(IN) :: STIFFNESS_MATRIX_COEFFICIENT !<The stiffness matrix coefficient
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code 
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations mapping to set 
+    REAL(DP), INTENT(IN) :: massMatrixCoefficient !<The mass matrix coefficient
+    REAL(DP), INTENT(IN) :: dampingMatrixCoefficient !<The damping matrix coefficient
+    REAL(DP), INTENT(IN) :: stiffnessMatrixCoefficient !<The stiffness matrix coefficient
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
-    TYPE(EQUATIONS_MAPPING_CREATE_VALUES_CACHE_TYPE), POINTER :: CREATE_VALUES_CACHE
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("EquationsMapping_DynamicMatricesCoeffsSet2",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_DynamicMatricesCoeffsSet2",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-      IF(EQUATIONS_MAPPING%EQUATIONS_MAPPING_FINISHED) THEN
-        CALL FlagError("Equations mapping has already been finished.",ERR,ERROR,*999)
-      ELSE
-        CREATE_VALUES_CACHE=>EQUATIONS_MAPPING%CREATE_VALUES_CACHE
-        IF(ASSOCIATED(CREATE_VALUES_CACHE)) THEN
-          EQUATIONS=>EQUATIONS_MAPPING%EQUATIONS
-          IF(ASSOCIATED(EQUATIONS)) THEN
-            SELECT CASE(EQUATIONS%TIME_DEPENDENCE)
-            CASE(EQUATIONS_STATIC)
-              CALL FlagError("Can not set dynamic matrices for static equations.",ERR,ERROR,*999)
-            CASE(EQUATIONS_QUASISTATIC)
-              CALL FlagError("Can not set dynamic matrices for quasi-static equations.",ERR,ERROR,*999)
-            CASE(EQUATIONS_FIRST_ORDER_DYNAMIC)
-              CALL FlagError("Need to specify two matrix coefficients for second order dynamic equations.",ERR,ERROR,*999)
-            CASE(EQUATIONS_SECOND_ORDER_DYNAMIC)
-              IF(CREATE_VALUES_CACHE%DYNAMIC_STIFFNESS_MATRIX_NUMBER/=0) THEN
-                CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS(CREATE_VALUES_CACHE%DYNAMIC_STIFFNESS_MATRIX_NUMBER)= &
-                  & STIFFNESS_MATRIX_COEFFICIENT
-              ENDIF
-              IF(CREATE_VALUES_CACHE%DYNAMIC_DAMPING_MATRIX_NUMBER/=0) THEN
-                CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS(CREATE_VALUES_CACHE%DYNAMIC_DAMPING_MATRIX_NUMBER)= &
-                  & DAMPING_MATRIX_COEFFICIENT
-              ENDIF
-              IF(CREATE_VALUES_CACHE%DYNAMIC_MASS_MATRIX_NUMBER/=0) THEN
-                CREATE_VALUES_CACHE%DYNAMIC_MATRIX_COEFFICIENTS(CREATE_VALUES_CACHE%DYNAMIC_MASS_MATRIX_NUMBER)= &
-                  & MASS_MATRIX_COEFFICIENT
-              ENDIF
-            CASE DEFAULT
-              LOCAL_ERROR="The equations time dependence type of "// &
-                & TRIM(NumberToVString(EQUATIONS%TIME_DEPENDENCE,"*",ERR,ERROR))// &
-                & " is invalid."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            END SELECT
-          ELSE
-            CALL FlagError("Equations mapping equations is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Equations mapping create values cache is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Equations is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated.",err,error,*999)
+    IF(vectorMapping%vectorMappingFinished) CALL FlagError("Vector equations mapping has already been finished.",err,error,*999)
+
+    NULLIFY(createValuesCache)
+    CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
+    NULLIFY(equations)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
+    
+    SELECT CASE(equations%timeDependence)
+    CASE(EQUATIONS_STATIC)
+      CALL FlagError("Can not set dynamic matrices for static equations.",err,error,*999)
+    CASE(EQUATIONS_QUASISTATIC)
+      CALL FlagError("Can not set dynamic matrices for quasi-static equations.",err,error,*999)
+    CASE(EQUATIONS_FIRST_ORDER_DYNAMIC)
+      CALL FlagError("Need to specify two matrix coefficients for second order dynamic equations.",err,error,*999)
+    CASE(EQUATIONS_SECOND_ORDER_DYNAMIC)
+      IF(createValuesCache%dynamicStiffnessMatrixNumber/=0) &
+        & createValuesCache%dynamicMatrixCoefficients(createValuesCache%dynamicStiffnessMatrixNumber)=stiffnessMatrixCoefficient
+      IF(createValuesCache%dynamicDampingMatrixNumber/=0) &
+        & createValuesCache%dynamicMatrixCoefficients(createValuesCache%dynamicDampingMatrixNumber)=dampingMatrixCoefficient
+      IF(createValuesCache%dynamicMassMatrixNumber/=0) &
+        & createValuesCache%dynamicMatrixCoefficients(createValuesCache%dynamicMassMatrixNumber)=massMatrixCoefficient
+    CASE DEFAULT
+      localError="The equations time dependence type of "//TRIM(NumberToVString(equations%timeDependence,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
     
     EXITS("EquationsMapping_DynamicMatricesCoeffsSet2")
     RETURN
-999 ERRORSEXITS("EquationsMapping_DynamicMatricesCoeffsSet2",ERR,ERROR)
+999 ERRORSEXITS("EquationsMapping_DynamicMatricesCoeffsSet2",err,error)
     RETURN 1
     
   END SUBROUTINE EquationsMapping_DynamicMatricesCoeffsSet2
@@ -1992,136 +1930,116 @@ CONTAINS
   !
 
   !>Sets the mapping between a dependent field variable and the equations set dynamic matrices
-  SUBROUTINE EQUATIONS_MAPPING_DYNAMIC_VARIABLE_TYPE_SET(EQUATIONS_MAPPING,DYNAMIC_VARIABLE_TYPE,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_DynamicVariableTypeSet(vectorMapping,dynamicVariableType,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping to set
-    INTEGER(INTG), INTENT(IN) :: DYNAMIC_VARIABLE_TYPE !<The variable type associated with the equations set dynamic matrices.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the vector equations mapping to set
+    INTEGER(INTG), INTENT(IN) :: dynamicVariableType !<The variable type associated with the vector equations dynamic matrices.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
-    TYPE(EQUATIONS_MAPPING_CREATE_VALUES_CACHE_TYPE), POINTER :: CREATE_VALUES_CACHE
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-    LOGICAL :: IS_RESIDUAL_TYPE
+    INTEGER(INTG) :: matrixIdx
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(VARYING_STRING) :: localError
+    LOGICAL :: isResidualType
 
-    ENTERS("EQUATIONS_MAPPING_DYNAMIC_VARIABLE_TYPE_SET",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_DynamicVariableTypeSet",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-      IF(EQUATIONS_MAPPING%EQUATIONS_MAPPING_FINISHED) THEN
-        CALL FlagError("Equations mapping have been finished.",ERR,ERROR,*999)
-      ELSE
-        CREATE_VALUES_CACHE=>EQUATIONS_MAPPING%CREATE_VALUES_CACHE
-        IF(ASSOCIATED(CREATE_VALUES_CACHE)) THEN
-          IF(DYNAMIC_VARIABLE_TYPE==0) THEN
-            CREATE_VALUES_CACHE%DYNAMIC_VARIABLE_TYPE=0
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated",err,error,*999)
+    IF(vectorMapping%vectorMappingFinished) CALL FlagError("Vector equations mapping has been finished.",err,error,*999)
+
+    NULLIFY(createValuesCache)
+    CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
+    NULLIFY(equations)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
+    
+    IF(dynamicVariableType==0) THEN
+      createValuesCache%dynamicVariableType=0
+    ELSE
+      IF(equations%timeDependence==EQUATIONS_FIRST_ORDER_DYNAMIC.OR. &
+        equations%timeDependence==EQUATIONS_SECOND_ORDER_DYNAMIC) THEN
+        NULLIFY(equationsSet)
+        CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)      
+        NULLIFY(dependentField)
+        CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+        !Check the dynamic variable type is not being by other equations matrices or vectors
+        IF(equations%linearity==EQUATIONS_NONLINEAR) THEN
+          isResidualType=.FALSE.
+          DO matrixIdx=1,createValuesCache%numberOfResidualVariables
+            IF(createValuesCache%residualVariableTypes(matrixIdx)==dynamicVariableType) isResidualType=.TRUE.
+          ENDDO !matrixIdx
+          IF(.NOT.isResidualType) THEN
+            localError="The specified dynamic variable type of "//TRIM(NumberToVString(dynamicVariableType,"*",err,error))// &
+              & " is not the same as any residual variable type."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+        END IF
+        IF(createValuesCache%rhsVariableType==dynamicVariableType) THEN
+          localError="The specified dynamic variable type of "//TRIM(NumberToVString(dynamicVariableType,"*",err,error))// &
+            & " is the same as the variable type for the RHS vector."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        DO matrixIdx=1,createValuesCache%numberOfLinearMatrices
+          IF(createValuesCache%linearMatrixVariableTypes(matrixIdx)==dynamicVariableType) THEN
+            localError="The specified dynamic variable type of "//TRIM(NumberToVString(dynamicVariableType,"*",err,error))// &
+              & " is the same as the variable type for linear matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+        ENDDO !matrixIdx
+        !Check the dynamic variable type is defined on the dependent field
+        IF(dynamicVariableType>=1.AND.dynamicVariableType<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+          IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(dynamicVariableType)%ptr)) THEN
+            vectorMapping%createValuesCache%dynamicVariableType=dynamicVariableType
           ELSE
-            EQUATIONS=>EQUATIONS_MAPPING%EQUATIONS
-            IF(ASSOCIATED(EQUATIONS)) THEN
-              EQUATIONS_SET=>EQUATIONS%EQUATIONS_SET
-              IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                IF(EQUATIONS%TIME_DEPENDENCE==EQUATIONS_FIRST_ORDER_DYNAMIC.OR. &
-                  EQUATIONS%TIME_DEPENDENCE==EQUATIONS_SECOND_ORDER_DYNAMIC) THEN
-                  DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
-                  IF(ASSOCIATED(DEPENDENT_FIELD)) THEN                 
-                    !Check the dynamic variable type is not being by other equations matrices or vectors
-                    IF(EQUATIONS%LINEARITY==EQUATIONS_NONLINEAR) THEN
-                      IS_RESIDUAL_TYPE=.FALSE.
-                      DO matrix_idx=1,CREATE_VALUES_CACHE%NUMBER_OF_RESIDUAL_VARIABLES
-                        IF(CREATE_VALUES_CACHE%RESIDUAL_VARIABLE_TYPES(matrix_idx)==DYNAMIC_VARIABLE_TYPE) THEN
-                          IS_RESIDUAL_TYPE=.TRUE.
-                        ENDIF
-                      ENDDO
-                      IF(IS_RESIDUAL_TYPE.NEQV..TRUE.) THEN
-                        LOCAL_ERROR="The specified dynamic variable type of "// &
-                          & TRIM(NumberToVString(DYNAMIC_VARIABLE_TYPE,"*",ERR,ERROR))// &
-                          & " is not the same as any residual variable type."
-                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                      ENDIF
-                    END IF
-                    IF(CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE==DYNAMIC_VARIABLE_TYPE) THEN
-                      LOCAL_ERROR="The specified dynamic variable type of "// &
-                        & TRIM(NumberToVString(DYNAMIC_VARIABLE_TYPE,"*",ERR,ERROR))// &
-                        & " is the same as the variable type for the RHS vector."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ENDIF
-                    DO matrix_idx=1,CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES
-                      IF(CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES(matrix_idx)==DYNAMIC_VARIABLE_TYPE) THEN
-                        LOCAL_ERROR="The specified dynamic variable type of "// &
-                          & TRIM(NumberToVString(DYNAMIC_VARIABLE_TYPE,"*",ERR,ERROR))// &
-                          & " is the same as the variable type for linear matrix number "// &
-                          & TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))//"."
-                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                      ENDIF
-                    ENDDO !matrix_idx
-                    !Check the dynamic variable type is defined on the dependent field
-                    IF(DYNAMIC_VARIABLE_TYPE>=1.AND.DYNAMIC_VARIABLE_TYPE<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-                      IF(ASSOCIATED(DEPENDENT_FIELD%VARIABLE_TYPE_MAP(DYNAMIC_VARIABLE_TYPE)%PTR)) THEN
-                        EQUATIONS_MAPPING%CREATE_VALUES_CACHE%DYNAMIC_VARIABLE_TYPE=DYNAMIC_VARIABLE_TYPE
-                      ELSE
-                        LOCAL_ERROR="The specified dynamic variable type of "// &
-                          & TRIM(NumberToVString(DYNAMIC_VARIABLE_TYPE,"*",ERR,ERROR))// &
-                          & " is not defined on the dependent field."
-                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                      ENDIF
-                    ELSE
-                      LOCAL_ERROR="The specified dynamic variable type of "// &
-                        & TRIM(NumberToVString(DYNAMIC_VARIABLE_TYPE,"*",ERR,ERROR))// &
-                        & " is invalid. The number must either be zero or >= 1 and <= "// &
-                        & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",ERR,ERROR))//"."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ENDIF
-                  ELSE
-                    CALL FlagError("Dependent field is not associated",ERR,ERROR,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("The equations are not dynamic equations.",ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Equations equations set is not associated.",ERR,ERROR,*999)
-              ENDIF
-            ELSE
-              CALL FlagError("Equations mapping equations is not associated.",ERR,ERROR,*999)
-            ENDIF
+            localError="The specified dynamic variable type of "//TRIM(NumberToVString(dynamicVariableType,"*",err,error))// &
+              & " is not defined on the dependent field."
+            CALL FlagError(localError,err,error,*999)
           ENDIF
         ELSE
-          CALL FlagError("Equations mapping create values cache is not associated",ERR,ERROR,*999)
+          localError="The specified dynamic variable type of "//TRIM(NumberToVString(dynamicVariableType,"*",err,error))// &
+            & " is invalid. The number must either be zero or >= 1 and <= "// &
+            & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
         ENDIF
+      ELSE
+        CALL FlagError("The equations are not dynamic equations.",err,error,*999)
       ENDIF
-    ELSE
-      CALL FlagError("Equations mapping is not associated",ERR,ERROR,*999)
     ENDIF
     
-    EXITS("EQUATIONS_MAPPING_DYNAMIC_VARIABLE_TYPE_SET")
+    EXITS("EquationsMapping_DynamicVariableTypeSet")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MAPPING_DYNAMIC_VARIABLE_TYPE_SET",ERR,ERROR)
+999 ERRORSEXITS("EquationsMapping_DynamicVariableTypeSet",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MAPPING_DYNAMIC_VARIABLE_TYPE_SET
+    
+  END SUBROUTINE EquationsMapping_DynamicVariableTypeSet
   
   !
   !================================================================================================================================
   !
 
   !>Finalises a variable to equations Jacobian map and deallocates all memory.
-  SUBROUTINE EquationsMapping_EquatsJacobianToVarMapFinalise(EQUATIONS_JACOBIAN_TO_VAR_MAP,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_EquatsJacobianToVarMapFinalise(equationsJacobianToVarMap,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_JACOBIAN_TO_VAR_MAP_TYPE) :: EQUATIONS_JACOBIAN_TO_VAR_MAP !<The equations Jacobian to variable map to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsJacobianToVarMapType) :: equationsJacobianToVarMap !<The equations Jacobian to variable map to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("EquationsMapping_EquatsJacobianToVarMapFinalise",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_EquatsJacobianToVarMapFinalise",err,error,*999)
     
-    IF(ALLOCATED(EQUATIONS_JACOBIAN_TO_VAR_MAP%EQUATIONS_COLUMN_TO_DOF_VARIABLE_MAP)) &
-      & DEALLOCATE(EQUATIONS_JACOBIAN_TO_VAR_MAP%EQUATIONS_COLUMN_TO_DOF_VARIABLE_MAP)
+    IF(ALLOCATED(equationsJacobianToVarMap%equationsColumnToDOFVariableMap)) &
+      & DEALLOCATE(equationsJacobianToVarMap%equationsColumnToDOFVariableMap)
     
     EXITS("EquationsMapping_EquatsJacobianToVarMapFinalise")
     RETURN
-999 ERRORS("EquationsMapping_EquatsJacobianToVarMapFinalise",ERR,ERROR)    
+999 ERRORS("EquationsMapping_EquatsJacobianToVarMapFinalise",err,error)    
     EXITS("EquationsMapping_EquatsJacobianToVarMapFinalise")    
     RETURN 1
    
@@ -2132,26 +2050,26 @@ CONTAINS
   !
 
   !>Initialises a variable to equations Jacobian map.
-  SUBROUTINE EquationsMapping_EquatsJacobianToVarMapInitialise(EQUATIONS_JACOBIAN_TO_VAR_MAP,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_EquatsJacobianToVarMapInitialise(equationsJacobianToVarMap,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_JACOBIAN_TO_VAR_MAP_TYPE) :: EQUATIONS_JACOBIAN_TO_VAR_MAP !<The equations Jacobian to variable map to initialise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsJacobianToVarMapType) :: equationsJacobianToVarMap !<The equations Jacobian to variable map to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("EquationsMapping_EquatsJacobianToVarMapInitialise",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_EquatsJacobianToVarMapInitialise",err,error,*999)
     
-    EQUATIONS_JACOBIAN_TO_VAR_MAP%VARIABLE_TYPE=0
-    NULLIFY(EQUATIONS_JACOBIAN_TO_VAR_MAP%VARIABLE)
-    NULLIFY(EQUATIONS_JACOBIAN_TO_VAR_MAP%JACOBIAN)
-    EQUATIONS_JACOBIAN_TO_VAR_MAP%NUMBER_OF_COLUMNS=0
-    EQUATIONS_JACOBIAN_TO_VAR_MAP%JACOBIAN_COEFFICIENT=0
-    NULLIFY(EQUATIONS_JACOBIAN_TO_VAR_MAP%COLUMN_DOFS_MAPPING)    
+    equationsJacobianToVarMap%variableType=0
+    NULLIFY(equationsJacobianToVarMap%variable)
+    NULLIFY(equationsJacobianToVarMap%jacobian)
+    equationsJacobianToVarMap%numberOfColumns=0
+    equationsJacobianToVarMap%jacobianCoefficient=0
+    NULLIFY(equationsJacobianToVarMap%columnDOFSMapping)    
     
     EXITS("EquationsMapping_EquatsJacobianToVarMapInitialise")
     RETURN
-999 ERRORS("EquationsMapping_EquatsJacobianToVarMapInitialise",ERR,ERROR)    
+999 ERRORS("EquationsMapping_EquatsJacobianToVarMapInitialise",err,error)    
     EXITS("EquationsMapping_EquatsJacobianToVarMapInitialise")    
     RETURN 1
    
@@ -2162,22 +2080,22 @@ CONTAINS
   !
 
   !>Finalise an equations matrix to variable maps and deallocate all memory.
-  SUBROUTINE EquationsMapping_EquationsMatrixToVarMapFinalise(EQUATIONS_MATRIX_TO_VAR_MAP,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_EquationsMatrixToVarMapFinalise(equationsMatrixToVarMap,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRIX_TO_VAR_MAP_TYPE) :: EQUATIONS_MATRIX_TO_VAR_MAP !<The equations matrix to variable map to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatrixToVarMapType) :: equationsMatrixToVarMap !<The equations matrix to variable map to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("EquationsMapping_EquationsMatrixToVarMapFinalise",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_EquationsMatrixToVarMapFinalise",err,error,*999)
 
-    IF(ALLOCATED(EQUATIONS_MATRIX_TO_VAR_MAP%COLUMN_TO_DOF_MAP)) &
-      & DEALLOCATE(EQUATIONS_MATRIX_TO_VAR_MAP%COLUMN_TO_DOF_MAP)
+    IF(ALLOCATED(equationsMatrixToVarMap%columnToDOFMap)) &
+      & DEALLOCATE(equationsMatrixToVarMap%columnToDOFMap)
     
     EXITS("EquationsMapping_EquationsMatrixToVarMapFinalise")
     RETURN
-999 ERRORS("EquationsMapping_EquationsMatrixToVarMapFinalise",ERR,ERROR)    
+999 ERRORS("EquationsMapping_EquationsMatrixToVarMapFinalise",err,error)    
     EXITS("EquationsMapping_EquationsMatrixToVarMapFinalise")    
     RETURN 1
    
@@ -2188,26 +2106,26 @@ CONTAINS
   !
 
   !>Initialise an equations matrix to variable maps.
-  SUBROUTINE EquationsMapping_EquatsMatrixToVarMapInitialise(EQUATIONS_MATRIX_TO_VAR_MAP,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_EquatsMatrixToVarMapInitialise(equationsMatrixToVarMap,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MATRIX_TO_VAR_MAP_TYPE) :: EQUATIONS_MATRIX_TO_VAR_MAP !<The equations matrix to variable map to initialise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMatrixToVarMapType) :: equationsMatrixToVarMap !<The equations matrix to variable map to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("EquationsMapping_EquatsMatrixToVarMapInitialise",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_EquatsMatrixToVarMapInitialise",err,error,*999)
 
-    EQUATIONS_MATRIX_TO_VAR_MAP%MATRIX_NUMBER=0
-    EQUATIONS_MATRIX_TO_VAR_MAP%VARIABLE_TYPE=0
-    NULLIFY(EQUATIONS_MATRIX_TO_VAR_MAP%VARIABLE)
-    EQUATIONS_MATRIX_TO_VAR_MAP%NUMBER_OF_COLUMNS=0
-    EQUATIONS_MATRIX_TO_VAR_MAP%MATRIX_COEFFICIENT=1.0_DP !Matrices in an equation set are added by default
-    NULLIFY(EQUATIONS_MATRIX_TO_VAR_MAP%COLUMN_DOFS_MAPPING)
+    equationsMatrixToVarMap%matrixNumber=0
+    equationsMatrixToVarMap%variableType=0
+    NULLIFY(equationsMatrixToVarMap%variable)
+    equationsMatrixToVarMap%numberOfColumns=0
+    equationsMatrixToVarMap%matrixCoefficient=1.0_DP !Matrices in an equation set are added by default
+    NULLIFY(equationsMatrixToVarMap%columnDOFSMapping)
     
     EXITS("EquationsMapping_EquatsMatrixToVarMapInitialise")
     RETURN
-999 ERRORS("EquationsMapping_EquatsMatrixToVarMapInitialise",ERR,ERROR)    
+999 ERRORS("EquationsMapping_EquatsMatrixToVarMapInitialise",err,error)    
     EXITS("EquationsMapping_EquatsMatrixToVarMapInitialise")    
     RETURN 1
    
@@ -2218,129 +2136,238 @@ CONTAINS
   !
 
   !>Finalises the equations mapping and deallocates all memory.
-  SUBROUTINE EQUATIONS_MAPPING_FINALISE(EQUATIONS_MAPPING,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_VectorFinalise(vectorMapping,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code 
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations mapping to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("EQUATIONS_MAPPING_FINALISE",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_VectorFinalise",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
+    IF(ASSOCIATED(vectorMapping)) THEN
        !Row dofs mappings are linked to the field mapping therefore do not deallocate here
-       NULLIFY(EQUATIONS_MAPPING%ROW_DOFS_MAPPING)
-       CALL EQUATIONS_MAPPING_DYNAMIC_MAPPING_FINALISE(EQUATIONS_MAPPING%DYNAMIC_MAPPING,ERR,ERROR,*999)
-       CALL EQUATIONS_MAPPING_LINEAR_MAPPING_FINALISE(EQUATIONS_MAPPING%LINEAR_MAPPING,ERR,ERROR,*999)
-       CALL EquationsMapping_NonlinearMappingFinalise(EQUATIONS_MAPPING%NONLINEAR_MAPPING,ERR,ERROR,*999)
-       CALL EQUATIONS_MAPPING_RHS_MAPPING_FINALISE(EQUATIONS_MAPPING%RHS_MAPPING,ERR,ERROR,*999)      
-       CALL EQUATIONS_MAPPING_SOURCE_MAPPING_FINALISE(EQUATIONS_MAPPING%SOURCE_MAPPING,ERR,ERROR,*999)      
-       CALL EquationsMapping_CreateValuesCacheFinalise(EQUATIONS_MAPPING%CREATE_VALUES_CACHE,ERR,ERROR,*999)
-       DEALLOCATE(EQUATIONS_MAPPING)
+       NULLIFY(vectorMapping%rowDofsMapping)
+       CALL EquationsMapping_DynamicMappingFinalise(vectorMapping%dynamicMapping,err,error,*999)
+       CALL EquationsMapping_LinearMappingFinalise(vectorMapping%linearMapping,err,error,*999)
+       CALL EquationsMapping_NonlinearMappingFinalise(vectorMapping%nonlinearMapping,err,error,*999)
+       CALL EquationsMapping_RHSMappingFinalise(vectorMapping%rhsMapping,err,error,*999)      
+       CALL EquationsMapping_SourceMappingFinalise(vectorMapping%sourceMapping,err,error,*999)      
+       CALL EquationsMapping_VectorCreateValuesCacheFinalise(vectorMapping%createValuesCache,err,error,*999)
+       DEALLOCATE(vectorMapping)
     ENDIF
        
-    EXITS("EQUATIONS_MAPPING_FINALISE")
+    EXITS("EquationsMapping_VectorFinalise")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MAPPING_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("EquationsMapping_VectorFinalise",err,error)
     RETURN 1
     
-  END SUBROUTINE EQUATIONS_MAPPING_FINALISE
+  END SUBROUTINE EquationsMapping_VectorFinalise
 
   !
   !================================================================================================================================
   !
 
-  !>Initialises the equations mapping and deallocates all memory.
-  SUBROUTINE EQUATIONS_MAPPING_INITIALISE(EQUATIONS,ERR,ERROR,*)
+  !>Initialises the vector equations mapping.
+  SUBROUTINE EquationsMapping_VectorInitialise(vectorEquations,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS !<A pointer to the equations to initialise the equations mapping for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code 
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsVectorType), POINTER :: vectorEquations !<A pointer to the vector equations to initialise the vector equations mapping for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
 
-    ENTERS("EQUATIONS_MAPPING_INITIALISE",ERR,ERROR,*998)
+    ENTERS("EquationsMapping_VectorInitialise",err,error,*998)
 
-    IF(ASSOCIATED(EQUATIONS)) THEN
-      IF(ASSOCIATED(EQUATIONS%EQUATIONS_MAPPING)) THEN
-        CALL FlagError("Equations mapping is already associated.",ERR,ERROR,*998)
-      ELSE
-        ALLOCATE(EQUATIONS%EQUATIONS_MAPPING,STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate equations equations mapping.",ERR,ERROR,*999)
-        EQUATIONS%EQUATIONS_MAPPING%EQUATIONS=>EQUATIONS
-        EQUATIONS%EQUATIONS_MAPPING%EQUATIONS_MAPPING_FINISHED=.FALSE.
-        NULLIFY(EQUATIONS%EQUATIONS_MAPPING%ROW_DOFS_MAPPING)
-        NULLIFY(EQUATIONS%EQUATIONS_MAPPING%DYNAMIC_MAPPING)
-        NULLIFY(EQUATIONS%EQUATIONS_MAPPING%LINEAR_MAPPING)
-        NULLIFY(EQUATIONS%EQUATIONS_MAPPING%NONLINEAR_MAPPING)
-        NULLIFY(EQUATIONS%EQUATIONS_MAPPING%RHS_MAPPING)
-        NULLIFY(EQUATIONS%EQUATIONS_MAPPING%SOURCE_MAPPING)
-        NULLIFY(EQUATIONS%EQUATIONS_MAPPING%CREATE_VALUES_CACHE)
-        CALL EquationsMapping_CreateValuesCacheInitialise(EQUATIONS%EQUATIONS_MAPPING,ERR,ERROR,*999)        
-      ENDIF
-    ELSE
-      CALL FlagError("Equations is not associated.",ERR,ERROR,*998)
-    ENDIF
+    IF(.NOT.ASSOCIATED(vectorEquations)) CALL FlagError("Vector equations is not associated.",err,error,*998)
+    IF(ASSOCIATED(vectorEquations%vectorMapping)) CALL FlagError("Vector equations mapping is already associated.",err,error,*998)
+     
+    ALLOCATE(vectorEquations%vectorMapping,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate vector equations vector mapping.",err,error,*999)
+    vectorEquations%vectorMapping%vectorEquations=>vectorEquations
+    vectorEquations%vectorMapping%vectorMappingFinished=.FALSE.
+    NULLIFY(vectorEquations%vectorMapping%vectorMatrices)
+    NULLIFY(vectorEquations%vectorMapping%lhsMapping)
+    NULLIFY(vectorEquations%vectorMapping%rowDofsMapping)
+    NULLIFY(vectorEquations%vectorMapping%dynamicMapping)
+    NULLIFY(vectorEquations%vectorMapping%linearMapping)
+    NULLIFY(vectorEquations%vectorMapping%nonlinearMapping)
+    NULLIFY(vectorEquations%vectorMapping%rhsMapping)
+    NULLIFY(vectorEquations%vectorMapping%sourceMapping)
+    NULLIFY(vectorEquations%vectorMapping%createValuesCache)
+    CALL EquationsMapping_LHSMappingInitialise(vectorEquations%vectorMapping,err,error,*999)
+    
+    CALL EquationsMapping_VectorCreateValuesCacheInitialise(vectorEquations%vectorMapping,err,error,*999)        
        
-    EXITS("EQUATIONS_MAPPING_INITIALISE")
+    EXITS("EquationsMapping_VectorInitialise")
     RETURN
-999 CALL EQUATIONS_MAPPING_FINALISE(EQUATIONS%EQUATIONS_MAPPING,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("EQUATIONS_MAPPING_INITIALISE",ERR,ERROR)
+999 CALL EquationsMapping_VectorFinalise(vectorEquations%vectorMapping,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMapping_VectorInitialise",err,error)
     RETURN 1
     
-  END SUBROUTINE EQUATIONS_MAPPING_INITIALISE
+  END SUBROUTINE EquationsMapping_VectorInitialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises the scalar equations mapping function mapping and deallocates all memory
+  SUBROUTINE EquationsMapping_FunctionMappingFinalise(functionMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingFunctionType) :: functionMapping !<A pointer to the function mapping to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMapping_FunctionMappingFinalise",err,error,*999)
+
+    functionMapping%functionNumber=0
+       
+    EXITS("EquationsMapping_FunctionMappingFinalise")
+    RETURN
+999 ERRORSEXITS("EquationsMapping_FunctionMappingFinalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_FunctionMappingFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises the scalar equations mapping function mapping
+  SUBROUTINE EquationsMapping_FunctionMappingInitialise(functionMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingFunctionType) :: functionMapping !<The function mapping to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsMapping_FunctionMappingInitialise",err,error,*999)
+
+    functionMapping%functionNumber=0
+    
+    EXITS("EquationsMapping_FunctionMappingInitialise")
+    RETURN
+999 ERRORS("EquationsMapping_FunctionMappingInitialise",err,error)
+    EXITS("EquationsMapping_FunctionMappingInitialise")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_FunctionMappingInitialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises the scalar equations mapping function mappings and deallocates all memory
+  SUBROUTINE EquationsMapping_FunctionMappingsFinalise(functionMappings,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingFunctionsType), POINTER :: functionMappings !<A pointer to the function mappings to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: functionIdx
+
+    ENTERS("EquationsMapping_FunctionMappingsFinalise",err,error,*999)
+
+    IF(ASSOCIATED(functionMappings)) THEN
+      IF(ALLOCATED(functionMappings%functions)) THEN
+        DO functionIdx=1,SIZE(functionMappings%functions,1)
+          CALL EquationsMapping_FunctionMappingFinalise(functionMappings%functions(functionIdx),err,error,*999)
+        ENDDO !functionIdx
+        DEALLOCATE(functionMappings%functions)
+      ENDIF
+      DEALLOCATE(functionMappings)
+    ENDIF
+       
+    EXITS("EquationsMapping_FunctionMappingsFinalise")
+    RETURN
+999 ERRORS("EquationsMapping_FunctionMappingsFinalise",err,error)
+    EXITS("EquationsMapping_FunctionMappingsFinalise")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_FunctionMappingsFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises the scalar equations mapping function mappings
+  SUBROUTINE EquationsMapping_FunctionsMappingsInitialise(scalarMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingScalarType), POINTER :: scalarMapping !<A pointer to the scalar equations mapping to initialise the function mappings for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
+
+    ENTERS("EquationsMapping_FunctionMappingsInitialise",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(scalarMapping)) CALL FlagError("Scalar equations mapping is not associated.",err,error,*998)
+    IF(ASSOCIATED(scalarMapping%functionMappings)) &
+      & CALL FlagError("Scalar equations mapping function mappings is already associated.",err,error,*998)
+    
+    ALLOCATE(scalarMapping%functionMappings,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate scalar equations mapping function mappings.",err,error,*999)
+    scalarMapping%functionMappings%scalarMapping=>scalarMapping
+    scalarMapping%functionMappings%numberOfFunctions=0
+    
+    EXITS("EquationsMapping_FunctionMappingsInitialise")
+    RETURN
+999 CALL EquationsMapping_FunctionMappingsFinalise(scalarMapping%functionMappings,dummyErr,dummyError,*998)
+998 ERRORS("EquationsMapping_FunctionMappingsInitialise",err,error)
+    EXITS("EquationsMapping_FunctionMappingsInitialise")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_FunctionsMappingsInitialise
 
   !
   !================================================================================================================================
   !
 
   !>Sets the mapping between a dependent field variable and the equations set residual vector.
-  SUBROUTINE EquationsMapping_ResidualVariablesNumberSet(EQUATIONS_MAPPING,NUMBER_OF_VARIABLES,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_ResidualVariablesNumberSet(vectorMapping,numberOfVariables,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping to set
-    INTEGER(INTG), INTENT(IN) :: NUMBER_OF_VARIABLES !<The number of residual variables for this equations set.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations mapping to set
+    INTEGER(INTG), INTENT(IN) :: numberOfVariables !<The number of residual variables for this equations set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: PREVIOUS_NUMBER,MIN_NUMBER
-    INTEGER(INTG), ALLOCATABLE :: NEW_RESIDUAL_VARIABLE_TYPES(:)
-    TYPE(EQUATIONS_MAPPING_CREATE_VALUES_CACHE_TYPE), POINTER :: CREATE_VALUES_CACHE
+    INTEGER(INTG) :: previousNumber,minNumber
+    INTEGER(INTG), ALLOCATABLE :: newResidualVariableTypes(:)
+    TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
 
-    ENTERS("EquationsMapping_ResidualVariablesNumberSet",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_ResidualVariablesNumberSet",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-      IF(EQUATIONS_MAPPING%EQUATIONS_MAPPING_FINISHED) THEN
-        CALL FlagError("Equations mapping have been finished.",ERR,ERROR,*999)
-      ELSE
-        CREATE_VALUES_CACHE=>EQUATIONS_MAPPING%CREATE_VALUES_CACHE
-        IF(ASSOCIATED(CREATE_VALUES_CACHE)) THEN
-          PREVIOUS_NUMBER=CREATE_VALUES_CACHE%NUMBER_OF_RESIDUAL_VARIABLES
-          IF(NUMBER_OF_VARIABLES/=PREVIOUS_NUMBER) THEN
-            !Create new residual_variable_types array and copy over previous values
-            MIN_NUMBER=MIN(NUMBER_OF_VARIABLES,PREVIOUS_NUMBER)
-            ALLOCATE(NEW_RESIDUAL_VARIABLE_TYPES(NUMBER_OF_VARIABLES),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate new residual variable types.",ERR,ERROR,*999)
-            NEW_RESIDUAL_VARIABLE_TYPES=0
-            NEW_RESIDUAL_VARIABLE_TYPES(1:MIN_NUMBER)=CREATE_VALUES_CACHE%RESIDUAL_VARIABLE_TYPES(1:MIN_NUMBER)
-            CALL MOVE_ALLOC(NEW_RESIDUAL_VARIABLE_TYPES,CREATE_VALUES_CACHE%RESIDUAL_VARIABLE_TYPES)
-            !Set number of residual variables
-            CREATE_VALUES_CACHE%NUMBER_OF_RESIDUAL_VARIABLES=NUMBER_OF_VARIABLES
-          ENDIF
-        ELSE
-          CALL FlagError("Equations mapping create values cache is not associated",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Equations mapping is not associated",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated",err,error,*999)
+    IF(vectorMapping%vectorMappingFinished) CALL FlagError("Vector equations mapping has been finished.",err,error,*999)
+
+    NULLIFY(createValuesCache)
+    CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
+    previousNumber=createValuesCache%numberOfResidualVariables
+    IF(numberOfVariables/=previousNumber) THEN
+      !Create new residual_variable_types array and copy over previous values
+      minNumber=MIN(numberOfVariables,previousNumber)
+      ALLOCATE(newResidualVariableTypes(numberOfVariables),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate new residual variable types.",err,error,*999)
+      newResidualVariableTypes=0
+      newResidualVariableTypes(1:minNumber)=createValuesCache%residualVariableTypes(1:minNumber)
+      CALL MOVE_ALLOC(newResidualVariableTypes,createValuesCache%residualVariableTypes)
+      !Set number of residual variables
+      createValuesCache%numberOfResidualVariables=numberOfVariables
     ENDIF
 
     EXITS("EquationsMapping_ResidualVariablesNumberSet")
     RETURN
-999 ERRORSEXITS("EquationsMapping_ResidualVariablesNumberSet",ERR,ERROR)
+999 ERRORSEXITS("EquationsMapping_ResidualVariablesNumberSet",err,error)
     RETURN 1
     
   END SUBROUTINE EquationsMapping_ResidualVariablesNumberSet
@@ -2349,128 +2376,183 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finalises the equations mapping linear mapping and deallocates all memory
-  SUBROUTINE EQUATIONS_MAPPING_LINEAR_MAPPING_FINALISE(LINEAR_MAPPING,ERR,ERROR,*)
+  !>Finalises the vector equations mapping LHS mapping and deallocates all memory
+  SUBROUTINE EquationsMapping_LHSMappingFinalise(lhsMapping,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: LINEAR_MAPPING !<A pointer to the linear mapping to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code 
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingLHSType), POINTER :: lhsMapping !<A pointer to the LHS mapping to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx,variable_type
  
-    ENTERS("EQUATIONS_MAPPING_LINEAR_MAPPING_FINALISE",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_LHSMappingFinalise",err,error,*999)
 
-    IF(ASSOCIATED(LINEAR_MAPPING)) THEN
-      IF(ALLOCATED(LINEAR_MAPPING%LINEAR_MATRIX_VARIABLE_TYPES)) DEALLOCATE(LINEAR_MAPPING%LINEAR_MATRIX_VARIABLE_TYPES)
-      IF(ALLOCATED(LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS)) THEN
-        DO variable_type=1,SIZE(LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS,1)
-          CALL EquationsMapping_VarToEquatsMatricesMapFinalise(LINEAR_MAPPING% &
-            & VAR_TO_EQUATIONS_MATRICES_MAPS(variable_type),ERR,ERROR,*999)
-        ENDDO !variable_type
-        DEALLOCATE(LINEAR_MAPPING%VAR_TO_EQUATIONS_MATRICES_MAPS)        
-      ENDIF
-      IF(ALLOCATED(LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS)) THEN
-        DO matrix_idx=1,SIZE(LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS,1)
-          CALL EquationsMapping_EquationsMatrixToVarMapFinalise(LINEAR_MAPPING% &
-            & EQUATIONS_MATRIX_TO_VAR_MAPS(matrix_idx),ERR,ERROR,*999)
-        ENDDO !matrix_idx
-        DEALLOCATE(LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS)
-      ENDIF
-      IF(ALLOCATED(LINEAR_MAPPING%EQUATIONS_ROW_TO_VARIABLE_DOF_MAPS)) DEALLOCATE(LINEAR_MAPPING%EQUATIONS_ROW_TO_VARIABLE_DOF_MAPS)
-      DEALLOCATE(LINEAR_MAPPING)
+    IF(ASSOCIATED(lhsMapping)) THEN
+      IF(ALLOCATED(lhsMapping%lhsDOFToEquationsRowMap)) DEALLOCATE(lhsMapping%lhsDOFToEquationsRowMap)
+      IF(ALLOCATED(lhsMapping%equationsRowToLHSDOFMap)) DEALLOCATE(lhsMapping%equationsRowToLHSDOFMap)
+      DEALLOCATE(lhsMapping)
     ENDIF
        
-    EXITS("EQUATIONS_MAPPING_LINEAR_MAPPING_FINALISE")
+    EXITS("EquationsMapping_LHSMappingFinalise")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MAPPING_LINEAR_MAPPING_INITIALISE",ERR,ERROR)
+999 ERRORSEXITS("EquationsMapping_LHSMappingFinalise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MAPPING_LINEAR_MAPPING_FINALISE
+  END SUBROUTINE EquationsMapping_LHSMappingFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises the equations mapping LHS mapping
+  SUBROUTINE EquationsMapping_LHSMappingInitialise(vectorMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations mapping to initialise the LHS mapping for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
+
+    ENTERS("EquationsMapping_LHSMappingInitialise",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated.",err,error,*998)
+    IF(ASSOCIATED(vectorMapping%lhsMapping)) &
+      & CALL FlagError("Vector equations mapping LHS mapping is already associated.",err,error,*998)
+    
+    ALLOCATE(vectorMapping%lhsMapping,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate equations mapping LHS mapping.",err,error,*999)
+    vectorMapping%lhsMapping%vectorMapping=>vectorMapping        
+    vectorMapping%lhsMapping%lhsVariableType=0
+    NULLIFY(vectorMapping%lhsMapping%lhsVariable)
+    vectorMapping%lhsMapping%numberOfRows=0
+    vectorMapping%lhsMapping%totalNumberOfRows=0
+    vectorMapping%lhsMapping%numberOfGlobalRows=0
+    NULLIFY(vectorMapping%lhsMapping%rowDofsMapping)
+       
+    EXITS("EquationsMapping_LHSMappingInitialise")
+    RETURN
+999 CALL EquationsMapping_LHSMappingFinalise(vectorMapping%lhsMapping,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMapping_LHSMappingInitialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_LHSMappingInitialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises the equations mapping linear mapping and deallocates all memory
+  SUBROUTINE EquationsMapping_LinearMappingFinalise(linearMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingLinearType), POINTER :: linearMapping !<A pointer to the linear mapping to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: matrixIdx,variableTypeIdx
+ 
+    ENTERS("EquationsMapping_LinearMappingFinalise",err,error,*999)
+
+    IF(ASSOCIATED(linearMapping)) THEN
+      IF(ALLOCATED(linearMapping%linearMatrixVariableTypes)) DEALLOCATE(linearMapping%linearMatrixVariableTypes)
+      IF(ALLOCATED(linearMapping%varToEquationsMatricesMaps)) THEN
+        DO variableTypeIdx=1,SIZE(linearMapping%varToEquationsMatricesMaps,1)
+          CALL EquationsMapping_VarToEquatsMatricesMapFinalise(linearMapping%varToEquationsMatricesMaps(variableTypeIdx), &
+            & err,error,*999)
+        ENDDO !variableTypeIdx
+        DEALLOCATE(linearMapping%varToEquationsMatricesMaps)        
+      ENDIF
+      IF(ALLOCATED(linearMapping%equationsMatrixToVarMaps)) THEN
+        DO matrixIdx=1,SIZE(linearMapping%equationsMatrixToVarMaps,1)
+          CALL EquationsMapping_EquationsMatrixToVarMapFinalise(linearMapping% equationsMatrixToVarMaps(matrixIdx), &
+            & err,error,*999)
+        ENDDO !matrixIdx
+        DEALLOCATE(linearMapping%equationsMatrixToVarMaps)
+      ENDIF
+      IF(ALLOCATED(linearMapping%equationsRowToVariableDOFMaps)) DEALLOCATE(linearMapping%equationsRowToVariableDOFMaps)
+      DEALLOCATE(linearMapping)
+    ENDIF
+       
+    EXITS("EquationsMapping_LinearMappingFinalise")
+    RETURN
+999 ERRORSEXITS("EquationsMapping_LinearMappingFinalise",err,error)
+    RETURN 1
+  END SUBROUTINE EquationsMapping_LinearMappingFinalise
 
   !
   !================================================================================================================================
   !
 
   !>Initialises the equations mapping linear mapping
-  SUBROUTINE EQUATIONS_MAPPING_LINEAR_MAPPING_INITIALISE(EQUATIONS_MAPPING,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_LinearMappingInitialise(vectorMapping,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping to initialise the linear mapping for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code 
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations mapping to initialise the linear mapping for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
 
-    ENTERS("EQUATIONS_MAPPING_LINEAR_MAPPING_INITIALISE",ERR,ERROR,*998)
+    ENTERS("EquationsMapping_LinearMappingInitialise",err,error,*998)
 
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-      IF(ASSOCIATED(EQUATIONS_MAPPING%LINEAR_MAPPING)) THEN
-        CALL FlagError("Equations mapping linear mapping is already associated.",ERR,ERROR,*998)
-      ELSE
-        ALLOCATE(EQUATIONS_MAPPING%LINEAR_MAPPING,STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate equations mapping linear mapping.",ERR,ERROR,*999)
-        EQUATIONS_MAPPING%LINEAR_MAPPING%EQUATIONS_MAPPING=>EQUATIONS_MAPPING       
-        EQUATIONS_MAPPING%LINEAR_MAPPING%NUMBER_OF_LINEAR_EQUATIONS_MATRICES=0
-        EQUATIONS_MAPPING%LINEAR_MAPPING%NUMBER_OF_LINEAR_MATRIX_VARIABLES=0
-      ENDIF
-    ELSE
-      CALL FlagError("Equations is not associated.",ERR,ERROR,*998)
-    ENDIF
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated.",err,error,*998)
+    IF(ASSOCIATED(vectorMapping%linearMapping)) &
+      & CALL FlagError("Vector equations mapping linear mapping is already associated.",err,error,*998)
+    
+    ALLOCATE(vectorMapping%linearMapping,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate equations mapping linear mapping.",err,error,*999)
+    vectorMapping%linearMapping%vectorMapping=>vectorMapping       
+    vectorMapping%linearMapping%numberOfLinearMatrices=0
+    vectorMapping%linearMapping%numberOfLinearMatrixVariables=0
        
-    EXITS("EQUATIONS_MAPPING_LINEAR_MAPPING_INITIALISE")
+    EXITS("EquationsMapping_LinearMappingInitialise")
     RETURN
-999 CALL EQUATIONS_MAPPING_LINEAR_MAPPING_FINALISE(EQUATIONS_MAPPING%LINEAR_MAPPING,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("EQUATIONS_MAPPING_LINEAR_MAPPING_INITIALISE",ERR,ERROR)
+999 CALL EquationsMapping_LinearMappingFinalise(vectorMapping%linearMapping,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMapping_LinearMappingInitialise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MAPPING_LINEAR_MAPPING_INITIALISE
+    
+  END SUBROUTINE EquationsMapping_LinearMappingInitialise
 
   !
   !================================================================================================================================
   !
 
   !>Sets the coefficients for the linear equations matrices in an equation set. 
-  SUBROUTINE EquationsMapping_LinearMatricesCoeffsSet(EQUATIONS_MAPPING,LINEAR_MATRIX_COEFFICIENTS,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_LinearMatricesCoeffsSet(vectorMapping,linearMatrixCoefficients,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping.
-    REAL(DP), INTENT(IN) :: LINEAR_MATRIX_COEFFICIENTS(:) !<The linear matrix coefficients
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations mapping.
+    REAL(DP), INTENT(IN) :: linearMatrixCoefficients(:) !<The linear matrix coefficients
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(EQUATIONS_MAPPING_CREATE_VALUES_CACHE_TYPE), POINTER :: CREATE_VALUES_CACHE
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("EquationsMapping_LinearMatricesCoeffsSet",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_LinearMatricesCoeffsSet",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-      IF(EQUATIONS_MAPPING%EQUATIONS_MAPPING_FINISHED) THEN
-        CALL FlagError("Equations mapping is finished.",ERR,ERROR,*999)
-      ELSE
-        CREATE_VALUES_CACHE=>EQUATIONS_MAPPING%CREATE_VALUES_CACHE
-        IF(ASSOCIATED(CREATE_VALUES_CACHE)) THEN          
-          IF(SIZE(LINEAR_MATRIX_COEFFICIENTS,1)==CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES) THEN
-            CREATE_VALUES_CACHE%LINEAR_MATRIX_COEFFICIENTS(1:CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES)= &
-              & LINEAR_MATRIX_COEFFICIENTS(1:CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES)
-          ELSE
-            LOCAL_ERROR="Invalid size of linear matrix coefficeints. The size of the supplied array ("// &
-              & TRIM(NumberToVString(SIZE(LINEAR_MATRIX_COEFFICIENTS,1),"*",ERR,ERROR))// &
-              & ") must match the number of linear equations matrices ("// &
-              & TRIM(NumberToVString(EQUATIONS_MAPPING%CREATE_VALUES_CACHE% &
-              & NUMBER_OF_LINEAR_EQUATIONS_MATRICES,"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Equations mapping create values cache is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated.",err,error,*999)
+    IF(vectorMapping%vectorMappingFinished) CALL FlagError("Vector equations mapping has been finished.",err,error,*999)
+    
+    NULLIFY(createValuesCache)
+    CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
+
+    IF(SIZE(linearMatrixCoefficients,1)==createValuesCache%numberOfLinearMatrices) THEN
+      createValuesCache%linearMatrixCoefficients(1:createValuesCache%numberOfLinearMatrices)= &
+        & linearMatrixCoefficients(1:createValuesCache%numberOfLinearMatrices)
     ELSE
-      CALL FlagError("Equations matrices is not associated.",ERR,ERROR,*999)
+      localError="Invalid size of linear matrix coefficeints. The size of the supplied array ("// &
+        & TRIM(NumberToVString(SIZE(linearMatrixCoefficients,1),"*",err,error))// &
+        & ") must match the number of linear equations matrices ("// &
+        & TRIM(NumberToVString(vectorMapping%createValuesCache%numberOfLinearMatrices,"*",err,error))//")."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     
     EXITS("EquationsMapping_LinearMatricesCoeffsSet")
     RETURN
-999 ERRORSEXITS("EquationsMapping_LinearMatricesCoeffsSet",ERR,ERROR)
+999 ERRORSEXITS("EquationsMapping_LinearMatricesCoeffsSet",err,error)
     RETURN 1
     
   END SUBROUTINE EquationsMapping_LinearMatricesCoeffsSet
@@ -2480,229 +2562,199 @@ CONTAINS
   !
 
   !>Sets/changes the number of linear equations matrices
-  SUBROUTINE EquationsMapping_LinearMatricesNumberSet(EQUATIONS_MAPPING,NUMBER_OF_LINEAR_EQUATIONS_MATRICES,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_LinearMatricesNumberSet(vectorMapping,numberOfLinearMatrices,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping to set the number of matrices for.
-    INTEGER(INTG), INTENT(IN) :: NUMBER_OF_LINEAR_EQUATIONS_MATRICES !<The number of linear equations matrices for the mapping.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations mapping to set the number of matrices for.
+    INTEGER(INTG), INTENT(IN) :: numberOfLinearMatrices !<The number of linear equations matrices for the mapping.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
-    INTEGER(INTG), ALLOCATABLE :: OLD_LINEAR_MATRIX_VARIABLE_TYPES(:)
-    REAL(DP), ALLOCATABLE :: OLD_LINEAR_MATRIX_COEFFICIENTS(:)
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
-    TYPE(EQUATIONS_MAPPING_CREATE_VALUES_CACHE_TYPE), POINTER :: CREATE_VALUES_CACHE
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: matrixIdx
+    INTEGER(INTG), ALLOCATABLE :: oldLinearMatrixVariableTypes(:)
+    REAL(DP), ALLOCATABLE :: oldLinearMatrixCoefficients(:)
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("EquationsMapping_LinearMatricesNumberSet",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_LinearMatricesNumberSet",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-      IF(EQUATIONS_MAPPING%EQUATIONS_MAPPING_FINISHED) THEN
-        CALL FlagError("Equations mapping has been finished",ERR,ERROR,*999)
-      ELSE
-        CREATE_VALUES_CACHE=>EQUATIONS_MAPPING%CREATE_VALUES_CACHE
-        IF(ASSOCIATED(CREATE_VALUES_CACHE)) THEN
-          EQUATIONS=>EQUATIONS_MAPPING%EQUATIONS
-          IF(ASSOCIATED(EQUATIONS)) THEN
-            EQUATIONS_SET=>EQUATIONS%EQUATIONS_SET
-            IF(ASSOCIATED(EQUATIONS_SET)) THEN            
-              !Check number of matrices to create is valid
-              SELECT CASE(EQUATIONS%TIME_DEPENDENCE)
-              CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC)
-                SELECT CASE(EQUATIONS%LINEARITY)
-                CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
-                  IF(CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE==0) THEN                  
-                    IF(NUMBER_OF_LINEAR_EQUATIONS_MATRICES<1) THEN
-                      LOCAL_ERROR="The specified number of linear matrices of "// &
-                        & TRIM(NumberToVString(NUMBER_OF_LINEAR_EQUATIONS_MATRICES,"*",ERR,ERROR))// &
-                        & " is invalid. For non-dynamic linear problems without a equations set RHS the number must be "// &
-                        & ">= 1."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ENDIF
-                  ELSE
-                    IF(NUMBER_OF_LINEAR_EQUATIONS_MATRICES<1) THEN
-                      LOCAL_ERROR="The specified number of linear matrices of "// &
-                        & TRIM(NumberToVString(NUMBER_OF_LINEAR_EQUATIONS_MATRICES,"*",ERR,ERROR))// &
-                        & " is invalid. For non-dynamic linear problems with a equations set RHS the number "// &
-                        & "must be >= 1."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ENDIF
-                  ENDIF
-                CASE(EQUATIONS_NONLINEAR)
-                  IF(NUMBER_OF_LINEAR_EQUATIONS_MATRICES<0.OR. &
-                    & NUMBER_OF_LINEAR_EQUATIONS_MATRICES>FIELD_NUMBER_OF_VARIABLE_TYPES-2) THEN
-                    LOCAL_ERROR="The specified number of linear matrices of "// &
-                      & TRIM(NumberToVString(NUMBER_OF_LINEAR_EQUATIONS_MATRICES,"*",ERR,ERROR))// &
-                      & ") is invalid. For non-dynamic non-linear problems the number must be between >= 0 and <= "// &
-                      & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES-2,"*",ERR,ERROR))
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  ENDIF
-                CASE DEFAULT
-                  LOCAL_ERROR="The equations linearity type of "// &
-                    & TRIM(NumberToVString(EQUATIONS%LINEARITY,"*",ERR,ERROR))//" is invalid."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                END SELECT
-              CASE(EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
-                SELECT CASE(EQUATIONS%LINEARITY)
-                CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
-                  IF(CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE==0) THEN                  
-                    IF(NUMBER_OF_LINEAR_EQUATIONS_MATRICES<1.OR. &
-                      & NUMBER_OF_LINEAR_EQUATIONS_MATRICES>FIELD_NUMBER_OF_VARIABLE_TYPES-1) THEN
-                      LOCAL_ERROR="The specified number of linear matrices of "// &
-                        & TRIM(NumberToVString(NUMBER_OF_LINEAR_EQUATIONS_MATRICES,"*",ERR,ERROR))// &
-                        & " is invalid. For dynamic linear problems without a equations set RHS the number must be "// &
-                        & "between >= 1 and <= "//TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES-1,"*",ERR,ERROR))
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ENDIF
-                  ELSE
-                    IF(NUMBER_OF_LINEAR_EQUATIONS_MATRICES<0) THEN
-                      LOCAL_ERROR="The specified number of linear matrices of "// &
-                        & TRIM(NumberToVString(NUMBER_OF_LINEAR_EQUATIONS_MATRICES,"*",ERR,ERROR))// &
-                        & " is invalid. For dynamic linear problems with a equations set RHS the number "// &
-                        & "must be >= 0."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ENDIF
-                  ENDIF
-                CASE(EQUATIONS_NONLINEAR)
-                  CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                CASE DEFAULT
-                  LOCAL_ERROR="The equations linearity type of "// &
-                    & TRIM(NumberToVString(EQUATIONS%LINEARITY,"*",ERR,ERROR))//" is invalid."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                END SELECT              
-              CASE DEFAULT
-                LOCAL_ERROR="The equations time dependence type of "// &
-                  & TRIM(NumberToVString(EQUATIONS%TIME_DEPENDENCE,"*",ERR,ERROR))//" is invalid."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              END SELECT
-              !If we need to reallocate and reset all the create_values cache arrays and change the number of matrices
-              IF(NUMBER_OF_LINEAR_EQUATIONS_MATRICES/=CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES) THEN
-                IF(CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES>0) THEN                  
-                  ALLOCATE(OLD_LINEAR_MATRIX_VARIABLE_TYPES(CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES),STAT=ERR)
-                  IF(ERR/=0) CALL FlagError("Could not allocate old linear matrix variable types.",ERR,ERROR,*999)
-                  ALLOCATE(OLD_LINEAR_MATRIX_COEFFICIENTS(CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES),STAT=ERR)
-                  IF(ERR/=0) CALL FlagError("Could not allocate old linear matrix coefficients.",ERR,ERROR,*999)
-                  OLD_LINEAR_MATRIX_VARIABLE_TYPES(1:CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES)= &
-                    & CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES(1:CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES)
-                  OLD_LINEAR_MATRIX_COEFFICIENTS(1:CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES)= &
-                    & CREATE_VALUES_CACHE%LINEAR_MATRIX_COEFFICIENTS(1:CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES)
-                ENDIF
-                IF(ALLOCATED(CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES)) &
-                  & DEALLOCATE(CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES)
-                IF(ALLOCATED(CREATE_VALUES_CACHE%LINEAR_MATRIX_COEFFICIENTS)) &
-                  & DEALLOCATE(CREATE_VALUES_CACHE%LINEAR_MATRIX_COEFFICIENTS)
-                ALLOCATE(CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES(NUMBER_OF_LINEAR_EQUATIONS_MATRICES),STAT=ERR)
-                IF(ERR/=0) CALL FlagError("Could not allocate linear matrix variable types.",ERR,ERROR,*999)
-                ALLOCATE(CREATE_VALUES_CACHE%LINEAR_MATRIX_COEFFICIENTS(NUMBER_OF_LINEAR_EQUATIONS_MATRICES),STAT=ERR)
-                IF(ERR/=0) CALL FlagError("Could not allocate linear matrix coefficients.",ERR,ERROR,*999)
-                IF(CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES>0) THEN                  
-                  IF(NUMBER_OF_LINEAR_EQUATIONS_MATRICES>CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES) THEN
-                    CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES(1:CREATE_VALUES_CACHE% &
-                      & NUMBER_OF_LINEAR_EQUATIONS_MATRICES)=OLD_LINEAR_MATRIX_VARIABLE_TYPES
-                    CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES(CREATE_VALUES_CACHE% &
-                      & NUMBER_OF_LINEAR_EQUATIONS_MATRICES+1:NUMBER_OF_LINEAR_EQUATIONS_MATRICES)= &
-                      & OLD_LINEAR_MATRIX_VARIABLE_TYPES(1)
-                    CREATE_VALUES_CACHE%LINEAR_MATRIX_COEFFICIENTS(1:CREATE_VALUES_CACHE% &
-                      & NUMBER_OF_LINEAR_EQUATIONS_MATRICES)=OLD_LINEAR_MATRIX_COEFFICIENTS
-                    CREATE_VALUES_CACHE%LINEAR_MATRIX_COEFFICIENTS(CREATE_VALUES_CACHE% &
-                      & NUMBER_OF_LINEAR_EQUATIONS_MATRICES+1:NUMBER_OF_LINEAR_EQUATIONS_MATRICES)= &
-                      & OLD_LINEAR_MATRIX_COEFFICIENTS(1)
-                  ELSE
-                    CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES(1:NUMBER_OF_LINEAR_EQUATIONS_MATRICES)= &
-                      & OLD_LINEAR_MATRIX_VARIABLE_TYPES(1:NUMBER_OF_LINEAR_EQUATIONS_MATRICES)
-                    CREATE_VALUES_CACHE%LINEAR_MATRIX_COEFFICIENTS(1:NUMBER_OF_LINEAR_EQUATIONS_MATRICES)= &
-                      & OLD_LINEAR_MATRIX_COEFFICIENTS(1:NUMBER_OF_LINEAR_EQUATIONS_MATRICES)
-                  ENDIF
-                ELSE
-                  DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
-                  IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-                    CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES=0
-                    SELECT CASE(EQUATIONS%TIME_DEPENDENCE)
-                    CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC)
-                      SELECT CASE(EQUATIONS%LINEARITY)
-                      CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
-                        IF(ASSOCIATED(DEPENDENT_FIELD%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%PTR)) THEN
-                          CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES(1)=DEPENDENT_FIELD% &
-                            & VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%PTR%VARIABLE_TYPE
-                        ELSE
-                          CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                        ENDIF
-                        DO matrix_idx=2,CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES
-                          IF(ASSOCIATED(DEPENDENT_FIELD%VARIABLE_TYPE_MAP(matrix_idx+1)%PTR)) THEN
-                            CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES(matrix_idx)= &
-                              & DEPENDENT_FIELD%VARIABLE_TYPE_MAP(matrix_idx+1)%PTR%VARIABLE_TYPE
-                          ELSE
-                            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                          ENDIF
-                        ENDDO !matrix_idx
-                      CASE(EQUATIONS_NONLINEAR)
-                        DO matrix_idx=1,CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES
-                          IF(ASSOCIATED(DEPENDENT_FIELD%VARIABLE_TYPE_MAP(matrix_idx+2)%PTR)) THEN
-                            CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES(matrix_idx)= &
-                              & DEPENDENT_FIELD%VARIABLE_TYPE_MAP(matrix_idx+2)%PTR%VARIABLE_TYPE
-                          ELSE
-                            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                          ENDIF
-                        ENDDO !matrix_idx
-                      CASE DEFAULT
-                        LOCAL_ERROR="The equations linearity type of "// &
-                          & TRIM(NumberToVString(EQUATIONS%LINEARITY,"*",ERR,ERROR))//" is invalid."
-                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                      END SELECT
-                    CASE(EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
-                      SELECT CASE(EQUATIONS%LINEARITY)
-                      CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
-                        DO matrix_idx=1,CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES
-                          IF(ASSOCIATED(DEPENDENT_FIELD%VARIABLE_TYPE_MAP(matrix_idx+2)%PTR)) THEN
-                            CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES(matrix_idx)= &
-                              & DEPENDENT_FIELD%VARIABLE_TYPE_MAP(matrix_idx+2)%PTR%VARIABLE_TYPE
-                          ELSE
-                            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                          ENDIF
-                        ENDDO !matrix_idx
-                      CASE(EQUATIONS_NONLINEAR)
-                        CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                      CASE DEFAULT
-                        LOCAL_ERROR="The equations linearity type of "// &
-                          & TRIM(NumberToVString(EQUATIONS%LINEARITY,"*",ERR,ERROR))//" is invalid."
-                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                      END SELECT
-                    CASE DEFAULT
-                      LOCAL_ERROR="The equations time dependence type of "// &
-                        & TRIM(NumberToVString(EQUATIONS%TIME_DEPENDENCE,"*",ERR,ERROR))//" is invalid."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    END SELECT
-                    CREATE_VALUES_CACHE%LINEAR_MATRIX_COEFFICIENTS=1.0_DP !Equations matrices are added by default
-                  ELSE
-                    CALL FlagError("Equations set dependent field is not associated.",ERR,ERROR,*999)
-                  ENDIF
-                ENDIF
-                CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES=NUMBER_OF_LINEAR_EQUATIONS_MATRICES
-                IF(ALLOCATED(OLD_LINEAR_MATRIX_VARIABLE_TYPES)) DEALLOCATE(OLD_LINEAR_MATRIX_VARIABLE_TYPES)
-                IF(ALLOCATED(OLD_LINEAR_MATRIX_COEFFICIENTS)) DEALLOCATE(OLD_LINEAR_MATRIX_COEFFICIENTS)
-              ENDIF
-            ELSE
-              CALL FlagError("Equations equations set is not associated",ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Equations mapping equations is not associated",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated",err,error,*999)
+    IF(vectorMapping%vectorMappingFinished) CALL FlagError("Vector equations mapping has been finished",err,error,*999)
+      
+
+    NULLIFY(createValuesCache)
+    CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
+    NULLIFY(equations)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
+    NULLIFY(equationsSet)
+    CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
+
+    !Check number of matrices to create is valid
+    SELECT CASE(equations%timeDependence)
+    CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC)
+      SELECT CASE(equations%linearity)
+      CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
+        IF(createValuesCache%rhsVariableType==0) THEN                  
+          IF(numberOfLinearMatrices<1) THEN
+            localError="The specified number of linear matrices of "//TRIM(NumberToVString(numberOfLinearMatrices,"*", &
+              & err,error))//" is invalid. For non-dynamic linear problems without a equations set RHS the number must be >= 1."
+            CALL FlagError(localError,err,error,*999)
           ENDIF
         ELSE
-          CALL FlagError("Equations mapping create values cache is not associated",ERR,ERROR,*999)
+          IF(numberOfLinearMatrices<1) THEN
+            localError="The specified number of linear matrices of "//TRIM(NumberToVString(numberOfLinearMatrices,"*", &
+              & err,error))//" is invalid. For non-dynamic linear problems with a equations set RHS the number must be >= 1."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
         ENDIF
+      CASE(EQUATIONS_NONLINEAR)
+        IF(numberOfLinearMatrices<0.OR.numberOfLinearMatrices>FIELD_NUMBER_OF_VARIABLE_TYPES-2) THEN
+          localError="The specified number of linear matrices of "//TRIM(NumberToVString(numberOfLinearMatrices,"*", &
+            & err,error))//" is invalid. For non-dynamic non-linear problems the number must be between >= 0 and <= "// &
+            & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES-2,"*",err,error))
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      CASE DEFAULT
+        localError="The equations linearity type of "//TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
+      SELECT CASE(equations%linearity)
+      CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
+        IF(createValuesCache%rhsVariableType==0) THEN                  
+          IF(numberOfLinearMatrices<1.OR.numberOfLinearMatrices>FIELD_NUMBER_OF_VARIABLE_TYPES-1) THEN
+            localError="The specified number of linear matrices of "//TRIM(NumberToVString(numberOfLinearMatrices,"*", &
+              & err,error))//" is invalid. For dynamic linear problems without a equations set RHS the number must be "// &
+              & "between >= 1 and <= "//TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES-1,"*",err,error))
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+        ELSE
+          IF(numberOfLinearMatrices<0) THEN
+            localError="The specified number of linear matrices of "//TRIM(NumberToVString(numberOfLinearMatrices,"*", &
+              & err,error))//" is invalid. For dynamic linear problems with a equations set RHS the number must be >= 0."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+        ENDIF
+      CASE(EQUATIONS_NONLINEAR)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE DEFAULT
+        localError="The equations linearity type of "//TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The equations time dependence type of "//TRIM(NumberToVString(equations%timeDependence,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    !If we need to reallocate and reset all the create_values cache arrays and change the number of matrices
+    IF(numberOfLinearMatrices/=createValuesCache%numberOfLinearMatrices) THEN
+      IF(createValuesCache%numberOfLinearMatrices>0) THEN                  
+        ALLOCATE(oldLinearMatrixVariableTypes(createValuesCache%numberOfLinearMatrices),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate old linear matrix variable types.",err,error,*999)
+        ALLOCATE(oldLinearMatrixCoefficients(createValuesCache%numberOfLinearMatrices),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate old linear matrix coefficients.",err,error,*999)
+        oldLinearMatrixVariableTypes(1:createValuesCache%numberOfLinearMatrices)= &
+          & createValuesCache%linearMatrixVariableTypes(1:createValuesCache%numberOfLinearMatrices)
+        oldLinearMatrixCoefficients(1:createValuesCache%numberOfLinearMatrices)= &
+          & createValuesCache%linearMatrixCoefficients(1:createValuesCache%numberOfLinearMatrices)
       ENDIF
-    ELSE
-      CALL FlagError("Equations mapping is not associated",ERR,ERROR,*999)
+      IF(ALLOCATED(createValuesCache%linearMatrixVariableTypes)) DEALLOCATE(createValuesCache%linearMatrixVariableTypes)
+      IF(ALLOCATED(createValuesCache%linearMatrixCoefficients)) DEALLOCATE(createValuesCache%linearMatrixCoefficients)
+      ALLOCATE(createValuesCache%linearMatrixVariableTypes(numberOfLinearMatrices),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate linear matrix variable types.",err,error,*999)
+      ALLOCATE(createValuesCache%linearMatrixCoefficients(numberOfLinearMatrices),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate linear matrix coefficients.",err,error,*999)
+      IF(createValuesCache%numberOfLinearMatrices>0) THEN                  
+        IF(numberOfLinearMatrices>createValuesCache%numberOfLinearMatrices) THEN
+          createValuesCache%linearMatrixVariableTypes(1:createValuesCache%numberOfLinearMatrices)= &
+            & oldLinearMatrixVariableTypes
+          createValuesCache%linearMatrixVariableTypes(createValuesCache%numberOfLinearMatrices+1: &
+            & numberOfLinearMatrices)=oldLinearMatrixVariableTypes(1)
+          createValuesCache%linearMatrixCoefficients(1:createValuesCache%numberOfLinearMatrices)= &
+            & oldLinearMatrixCoefficients
+          createValuesCache%linearMatrixCoefficients(createValuesCache%numberOfLinearMatrices+1: &
+            & numberOfLinearMatrices)=oldLinearMatrixCoefficients(1)
+        ELSE
+          createValuesCache%linearMatrixVariableTypes(1:numberOfLinearMatrices)= &
+            & oldLinearMatrixVariableTypes(1:numberOfLinearMatrices)
+          createValuesCache%linearMatrixCoefficients(1:numberOfLinearMatrices)= &
+            & oldLinearMatrixCoefficients(1:numberOfLinearMatrices)
+        ENDIF
+      ELSE
+        NULLIFY(dependentField)
+        CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+        createValuesCache%linearMatrixVariableTypes=0
+        SELECT CASE(equations%timeDependence)
+        CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC)
+          SELECT CASE(equations%linearity)
+          CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
+            IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr)) THEN
+              createValuesCache%linearMatrixVariableTypes(1)=dependentField%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr% &
+                & VARIABLE_TYPE
+            ELSE
+              CALL FlagError("Not implemented.",err,error,*999)
+            ENDIF
+            DO matrixIdx=2,createValuesCache%numberOfLinearMatrices
+              IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(matrixIdx+1)%ptr)) THEN
+                createValuesCache%linearMatrixVariableTypes(matrixIdx)=dependentField%VARIABLE_TYPE_MAP(matrixIdx+1)%ptr% &
+                  & VARIABLE_TYPE
+              ELSE
+                CALL FlagError("Not implemented.",err,error,*999)
+              ENDIF
+            ENDDO !matrixIdx
+          CASE(EQUATIONS_NONLINEAR)
+            DO matrixIdx=1,createValuesCache%numberOfLinearMatrices
+              IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(matrixIdx+2)%ptr)) THEN
+                createValuesCache%linearMatrixVariableTypes(matrixIdx)=dependentField%VARIABLE_TYPE_MAP(matrixIdx+2)%ptr% &
+                  & VARIABLE_TYPE
+              ELSE
+                CALL FlagError("Not implemented.",err,error,*999)
+              ENDIF
+            ENDDO !matrixIdx
+          CASE DEFAULT
+            localError="The equations linearity type of "//TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE(EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
+          SELECT CASE(equations%linearity)
+          CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
+            DO matrixIdx=1,createValuesCache%numberOfLinearMatrices
+              IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(matrixIdx+2)%ptr)) THEN
+                createValuesCache%linearMatrixVariableTypes(matrixIdx)=dependentField%VARIABLE_TYPE_MAP(matrixIdx+2)%ptr% &
+                  & VARIABLE_TYPE
+              ELSE
+                CALL FlagError("Not implemented.",err,error,*999)
+              ENDIF
+            ENDDO !matrixIdx
+          CASE(EQUATIONS_NONLINEAR)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE DEFAULT
+            localError="The equations linearity type of "//TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE DEFAULT
+          localError="The equations time dependence type of "//TRIM(NumberToVString(equations%timeDependence,"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+        createValuesCache%linearMatrixCoefficients=1.0_DP !Equations matrices are added by default
+      ENDIF
+      createValuesCache%numberOfLinearMatrices=numberOfLinearMatrices
+      IF(ALLOCATED(oldLinearMatrixVariableTypes)) DEALLOCATE(oldLinearMatrixVariableTypes)
+      IF(ALLOCATED(oldLinearMatrixCoefficients)) DEALLOCATE(oldLinearMatrixCoefficients)
     ENDIF
     
     EXITS("EquationsMapping_LinearMatricesNumberSet")
     RETURN
-999 IF(ALLOCATED(OLD_LINEAR_MATRIX_VARIABLE_TYPES)) DEALLOCATE(OLD_LINEAR_MATRIX_VARIABLE_TYPES)    
-    IF(ALLOCATED(OLD_LINEAR_MATRIX_COEFFICIENTS)) DEALLOCATE(OLD_LINEAR_MATRIX_COEFFICIENTS)    
-    ERRORSEXITS("EquationsMapping_LinearMatricesNumberSet",ERR,ERROR)
+999 IF(ALLOCATED(oldLinearMatrixVariableTypes)) DEALLOCATE(oldLinearMatrixVariableTypes)    
+    IF(ALLOCATED(oldLinearMatrixCoefficients)) DEALLOCATE(oldLinearMatrixCoefficients)    
+    ERRORSEXITS("EquationsMapping_LinearMatricesNumberSet",err,error)
     RETURN 1
     
   END SUBROUTINE EquationsMapping_LinearMatricesNumberSet
@@ -2712,105 +2764,91 @@ CONTAINS
   !
 
   !>Sets the mapping between the dependent field variable types and the linear equations matrices
-  SUBROUTINE EquationsMapping_LinearMatricesVariableTypesSet(EQUATIONS_MAPPING,LINEAR_MATRIX_VARIABLE_TYPES,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,linearMatrixVariableTypes,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping
-    INTEGER(INTG), INTENT(IN) :: LINEAR_MATRIX_VARIABLE_TYPES(:) !<The matrix variable types to map to each linear equations matrix
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations mapping
+    INTEGER(INTG), INTENT(IN) :: linearMatrixVariableTypes(:) !<The matrix variable types to map to each linear equations matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
-    TYPE(EQUATIONS_MAPPING_CREATE_VALUES_CACHE_TYPE), POINTER :: CREATE_VALUES_CACHE
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: matrixIdx
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("EquationsMapping_LinearMatricesVariableTypesSet",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_LinearMatricesVariableTypesSet",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-      IF(EQUATIONS_MAPPING%EQUATIONS_MAPPING_FINISHED) THEN
-        CALL FlagError("Equations mapping has been finished.",ERR,ERROR,*999)
-      ELSE
-        CREATE_VALUES_CACHE=>EQUATIONS_MAPPING%CREATE_VALUES_CACHE
-        IF(ASSOCIATED(CREATE_VALUES_CACHE)) THEN
-          IF(SIZE(LINEAR_MATRIX_VARIABLE_TYPES,1)==CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES) THEN
-            EQUATIONS=>EQUATIONS_MAPPING%EQUATIONS
-            IF(ASSOCIATED(EQUATIONS)) THEN
-              EQUATIONS_SET=>EQUATIONS%EQUATIONS_SET
-              IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
-                IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-                  !Check input values
-                  DO matrix_idx=1,CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES
-                    IF(LINEAR_MATRIX_VARIABLE_TYPES(matrix_idx)/=0) THEN
-                      !Check the residual variable type is not being by other equations matrices or vectors
-                      !Don't check against the residual variable as we can have linear parts of nonlinear equations
-                      IF(CREATE_VALUES_CACHE%DYNAMIC_VARIABLE_TYPE==LINEAR_MATRIX_VARIABLE_TYPES(matrix_idx)) THEN
-                        LOCAL_ERROR="The specified linear matrix variable type of "// &
-                          & TRIM(NumberToVString(LINEAR_MATRIX_VARIABLE_TYPES(matrix_idx),"*",ERR,ERROR))// &
-                          & " for linear matrix number "//TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))// &
-                          & " is the same as the variable type for the dynamic matrices."
-                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                      ENDIF
-                      IF(CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE==LINEAR_MATRIX_VARIABLE_TYPES(matrix_idx)) THEN
-                        LOCAL_ERROR="The specified linear matrix variable type of "// &
-                          & TRIM(NumberToVString(LINEAR_MATRIX_VARIABLE_TYPES(matrix_idx),"*",ERR,ERROR))// &
-                          & " for linear matrix number "//TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))// &
-                          & " is the same as the variable type for the RHS vector."
-                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                      ENDIF                       
-                      !Check to see if the linear matrix variable numbers are defined on the dependent field
-                      IF(LINEAR_MATRIX_VARIABLE_TYPES(matrix_idx)>=1.OR. &
-                        & LINEAR_MATRIX_VARIABLE_TYPES(matrix_idx)<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-                        IF(.NOT.ASSOCIATED(DEPENDENT_FIELD%VARIABLE_TYPE_MAP(LINEAR_MATRIX_VARIABLE_TYPES(matrix_idx))%PTR)) THEN
-                          LOCAL_ERROR="The linear matrix variable type of "// &
-                            & TRIM(NumberToVString(LINEAR_MATRIX_VARIABLE_TYPES(matrix_idx),"*",ERR,ERROR))// &
-                            & " for linear matrix NUMBER "//TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))// &
-                            & " is not defined on the dependent field."
-                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                        ENDIF
-                      ELSE
-                        LOCAL_ERROR="The linear matrix variable type of "// &
-                          & TRIM(NumberToVString(LINEAR_MATRIX_VARIABLE_TYPES(matrix_idx),"*",ERR,ERROR))// &
-                          & " for linear matrix number "//TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))// &
-                          & " is invalid. The variable types must be either zero or >= 1 and <= "// &
-                          & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",ERR,ERROR))//"."
-                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                      ENDIF
-                    ENDIF
-                  ENDDO !matrix_idx
-                  CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES(1:SIZE(LINEAR_MATRIX_VARIABLE_TYPES))= &
-                    & LINEAR_MATRIX_VARIABLE_TYPES(1:SIZE(LINEAR_MATRIX_VARIABLE_TYPES))
-                ELSE
-                  CALL FlagError("Dependent field is not associated.",ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Equations equations set is not associated.",ERR,ERROR,*999)
-              ENDIF
-            ELSE
-              CALL FlagError("Equations mapping equations is not associated.",ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="Invalid size of linear matrix variable types. The size of the supplied array ("// &
-              & TRIM(NumberToVString(SIZE(LINEAR_MATRIX_VARIABLE_TYPES,1),"*",ERR,ERROR))// &
-              & ") must match the number of linear equations matrices ("// &
-              & TRIM(NumberToVString(EQUATIONS_MAPPING%CREATE_VALUES_CACHE% &
-              & NUMBER_OF_LINEAR_EQUATIONS_MATRICES,"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated.",err,error,*999)
+    IF(vectorMapping%vectorMappingFinished) CALL FlagError("Vector equations mapping has been finished.",err,error,*999)
+
+    NULLIFY(createValuesCache)
+    CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
+    NULLIFY(equations)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
+    NULLIFY(equationsSet)
+    CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
+    NULLIFY(dependentField)
+    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+    
+    !Check input values
+    IF(SIZE(linearMatrixVariableTypes,1)/=createValuesCache%numberOfLinearMatrices) THEN
+      localError="Invalid size of linear matrix variable types. The size of the supplied array ("// &
+        & TRIM(NumberToVString(SIZE(linearMatrixVariableTypes,1),"*",err,error))// &
+        & ") must match the number of linear equations matrices ("// &
+        & TRIM(NumberToVString(vectorMapping%createValuesCache%numberOfLinearMatrices,"*",err,error))//")."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    DO matrixIdx=1,createValuesCache%numberOfLinearMatrices
+      IF(linearMatrixVariableTypes(matrixIdx)/=0) THEN
+        !Check the residual variable type is not being by other equations matrices or vectors
+        !Don't check against the residual variable as we can have linear parts of nonlinear equations
+        IF(createValuesCache%dynamicVariableType==linearMatrixVariableTypes(matrixIdx)) THEN
+          localError="The specified linear matrix variable type of "// &
+            & TRIM(NumberToVString(linearMatrixVariableTypes(matrixIdx),"*",err,error))// &
+            & " for linear matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
+            & " is the same as the variable type for the dynamic matrices."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        IF(createValuesCache%rhsVariableType==linearMatrixVariableTypes(matrixIdx)) THEN
+          localError="The specified linear matrix variable type of "// &
+            & TRIM(NumberToVString(linearMatrixVariableTypes(matrixIdx),"*",err,error))// &
+            & " for linear matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
+            & " is the same as the variable type for the RHS vector."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        !Check to see if the linear matrix variable numbers are defined on the dependent field
+        IF(linearMatrixVariableTypes(matrixIdx)>=1.OR. &
+          & linearMatrixVariableTypes(matrixIdx)<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+          IF(.NOT.ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(linearMatrixVariableTypes(matrixIdx))%ptr)) THEN
+            localError="The linear matrix variable type of "// &
+              & TRIM(NumberToVString(linearMatrixVariableTypes(matrixIdx),"*",err,error))// &
+              & " for linear matrix NUMBER "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
+              & " is not defined on the dependent field."
+            CALL FlagError(localError,err,error,*999)
           ENDIF
         ELSE
-          CALL FlagError("Equations mapping create values cache is not associated.",ERR,ERROR,*999)
+          localError="The linear matrix variable type of "// &
+            & TRIM(NumberToVString(linearMatrixVariableTypes(matrixIdx),"*",err,error))// &
+            & " for linear matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
+            & " is invalid. The variable types must be either zero or >= 1 and <= "// &
+            & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
         ENDIF
       ENDIF
-    ELSE
-      CALL FlagError("Equations mapping is not associated.",ERR,ERROR,*999)
-    ENDIF
+    ENDDO !matrixIdx
+    
+    createValuesCache%linearMatrixVariableTypes(1:SIZE(linearMatrixVariableTypes))= &
+      & linearMatrixVariableTypes(1:SIZE(linearMatrixVariableTypes))
        
     EXITS("EquationsMapping_LinearMatricesVariableTypesSet")
     RETURN
-999 ERRORS("EquationsMapping_LinearMatricesVariableTypesSet",ERR,ERROR)
+999 ERRORS("EquationsMapping_LinearMatricesVariableTypesSet",err,error)
     EXITS("EquationsMapping_LinearMatricesVariableTypesSet")
     RETURN 1
     
@@ -2821,75 +2859,69 @@ CONTAINS
   !
 
   !>Finalises the equations mapping nonlinear mapping and deallocates all memory
-  SUBROUTINE EquationsMapping_NonlinearMappingFinalise(NONLINEAR_MAPPING,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_NonlinearMappingFinalise(nonlinearMapping,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_NONLINEAR_TYPE), POINTER :: NONLINEAR_MAPPING !<A pointer to the nonlinear mapping to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code 
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping !<A pointer to the nonlinear mapping to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) matrix_idx
+    INTEGER(INTG) matrixIdx
  
-    ENTERS("EquationsMapping_NonlinearMappingFinalise",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_NonlinearMappingFinalise",err,error,*999)
 
-    IF(ASSOCIATED(NONLINEAR_MAPPING)) THEN
-      DO matrix_idx=1,NONLINEAR_MAPPING%NUMBER_OF_RESIDUAL_VARIABLES
-        CALL EquationsMapping_VarToEquatsJacobianMapFinalise(NONLINEAR_MAPPING%VAR_TO_JACOBIAN_MAP(matrix_idx),ERR,ERROR,*999)
-        CALL EquationsMapping_EquatsJacobianToVarMapFinalise(NONLINEAR_MAPPING%JACOBIAN_TO_VAR_MAP(matrix_idx),ERR,ERROR,*999)
-      ENDDO
-      IF(ALLOCATED(NONLINEAR_MAPPING%EQUATIONS_ROW_TO_RESIDUAL_DOF_MAP)) &
-        & DEALLOCATE(NONLINEAR_MAPPING%EQUATIONS_ROW_TO_RESIDUAL_DOF_MAP)
-      IF(ALLOCATED(NONLINEAR_MAPPING%RESIDUAL_VARIABLES)) &
-        & DEALLOCATE(NONLINEAR_MAPPING%RESIDUAL_VARIABLES)
-      IF(ALLOCATED(NONLINEAR_MAPPING%VAR_TO_JACOBIAN_MAP)) &
-        & DEALLOCATE(NONLINEAR_MAPPING%VAR_TO_JACOBIAN_MAP)
-      IF(ALLOCATED(NONLINEAR_MAPPING%JACOBIAN_TO_VAR_MAP)) &
-        & DEALLOCATE(NONLINEAR_MAPPING%JACOBIAN_TO_VAR_MAP)
-      DEALLOCATE(NONLINEAR_MAPPING)
+    IF(ASSOCIATED(nonlinearMapping)) THEN
+      DO matrixIdx=1,nonlinearMapping%numberOfResidualVariables
+        CALL EquationsMapping_VarToEquatsJacobianMapFinalise(nonlinearMapping%varToJacobianMap(matrixIdx),err,error,*999)
+        CALL EquationsMapping_EquatsJacobianToVarMapFinalise(nonlinearMapping%jacobianToVarMap(matrixIdx),err,error,*999)
+      ENDDO !matrixIdx
+      IF(ALLOCATED(nonlinearMapping%equationsRowToResidualDOFMap)) &
+        & DEALLOCATE(nonlinearMapping%equationsRowToResidualDOFMap)
+      IF(ALLOCATED(nonlinearMapping%residualVariables)) DEALLOCATE(nonlinearMapping%residualVariables)
+      IF(ALLOCATED(nonlinearMapping%varToJacobianMap)) DEALLOCATE(nonlinearMapping%varToJacobianMap)
+      IF(ALLOCATED(nonlinearMapping%jacobianToVarMap)) DEALLOCATE(nonlinearMapping%jacobianToVarMap)
+      DEALLOCATE(nonlinearMapping)
     ENDIF
-       
+    
     EXITS("EquationsMapping_NonlinearMappingFinalise")
     RETURN
-999 ERRORSEXITS("EquationsMapping_NonlinearMappingFinalise",ERR,ERROR)
+999 ERRORSEXITS("EquationsMapping_NonlinearMappingFinalise",err,error)
     RETURN 1
     
   END SUBROUTINE EquationsMapping_NonlinearMappingFinalise
-
+  
   !
   !================================================================================================================================
   !
 
   !>Initialises the equations mapping nonlinear mapping
-  SUBROUTINE EquationsMapping_NonlinearMappingInitialise(EQUATIONS_MAPPING,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_NonlinearMappingInitialise(vectorMapping,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping to initialise the nonlinear mapping for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations mapping to initialise the nonlinear mapping for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
 
-    ENTERS("EquationsMapping_NonlinearMappingInitialise",ERR,ERROR,*998)
+    ENTERS("EquationsMapping_NonlinearMappingInitialise",err,error,*998)
 
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-      IF(ASSOCIATED(EQUATIONS_MAPPING%NONLINEAR_MAPPING)) THEN
-        CALL FlagError("Equations mapping nonlinear mapping is already associated.",ERR,ERROR,*998)
-      ELSE
-        ALLOCATE(EQUATIONS_MAPPING%NONLINEAR_MAPPING,STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate equations mapping nonlinear mapping.",ERR,ERROR,*999)
-        EQUATIONS_MAPPING%NONLINEAR_MAPPING%EQUATIONS_MAPPING=>EQUATIONS_MAPPING
-        EQUATIONS_MAPPING%NONLINEAR_MAPPING%NUMBER_OF_RESIDUAL_VARIABLES=0
-        EQUATIONS_MAPPING%NONLINEAR_MAPPING%RESIDUAL_COEFFICIENT=1.0_DP
-      ENDIF
-    ELSE
-      CALL FlagError("Equations is not associated.",ERR,ERROR,*998)
-    ENDIF
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated.",err,error,*998)
+    IF(ASSOCIATED(vectorMapping%nonlinearMapping)) &
+      & CALL FlagError("Equations mapping nonlinear mapping is already associated.",err,error,*998)
+     
+    ALLOCATE(vectorMapping%nonlinearMapping,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate equations mapping nonlinear mapping.",err,error,*999)
+    vectorMapping%nonlinearMapping%vectorMapping=>vectorMapping
+    vectorMapping%nonlinearMapping%numberOfResiduals=1
+    vectorMapping%nonlinearMapping%numberOfResidualVariables=0
+    vectorMapping%nonlinearMapping%residualCoefficient=1.0_DP
 
     EXITS("EquationsMapping_NonlinearMappingInitialise")
     RETURN
-999 CALL EquationsMapping_NonlinearMappingFinalise(EQUATIONS_MAPPING%NONLINEAR_MAPPING,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("EquationsMapping_NonlinearMappingInitialise",ERR,ERROR)
+999 CALL EquationsMapping_NonlinearMappingFinalise(vectorMapping%nonlinearMapping,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMapping_NonlinearMappingInitialise",err,error)
     RETURN 1
     
   END SUBROUTINE EquationsMapping_NonlinearMappingInitialise
@@ -2898,158 +2930,372 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the coefficient applied to the equations set residual vector.
-  SUBROUTINE EQUATIONS_MAPPING_RESIDUAL_COEFF_SET(EQUATIONS_MAPPING,RESIDUAL_COEFFICIENT,ERR,ERROR,*)
+  !>Finalises the scalar equations mapping norm mapping and deallocates all memory
+  SUBROUTINE EquationsMapping_NormMappingFinalise(normMapping,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping to set
-    REAL(DP), INTENT(IN) :: RESIDUAL_COEFFICIENT!<The coefficient applied to the equations set residual vector.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingNormType) :: normMapping !<A pointer to the norm mapping to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+ 
+    ENTERS("EquationsMapping_NormMappingFinalise",err,error,*999)
 
-    ENTERS("EQUATIONS_MAPPING_RESIDUAL_COEFF_SET",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-      IF(EQUATIONS_MAPPING%EQUATIONS_MAPPING_FINISHED) THEN
-        CALL FlagError("Equations mapping have been finished.",ERR,ERROR,*999)
-      ELSE
-        IF(ASSOCIATED(EQUATIONS_MAPPING%CREATE_VALUES_CACHE)) THEN
-          EQUATIONS_MAPPING%CREATE_VALUES_CACHE%RESIDUAL_COEFFICIENT=RESIDUAL_COEFFICIENT
-        ELSE
-          CALL FlagError("Equations mapping create values cache is not associated",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Equations mapping is not associated",ERR,ERROR,*999)
-    ENDIF
+    normMapping%normNumber=0
+    NULLIFY(normMapping%normVariable)
        
-    EXITS("EQUATIONS_MAPPING_RESIDUAL_COEFF_SET")
+    EXITS("EquationsMapping_NormMappingFinalise")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MAPPING_RESIDUAL_COEFF_SET",ERR,ERROR)
+999 ERRORSEXITS("EquationsMapping_NormMappingFinalise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MAPPING_RESIDUAL_COEFF_SET
+    
+  END SUBROUTINE EquationsMapping_NormMappingFinalise
 
   !
   !================================================================================================================================
   !
 
-  !>Sets the mapping between a dependent field variable and the equations set residual vector.
-  SUBROUTINE EquationsMapping_ResidualVariableTypesSet(EQUATIONS_MAPPING,RESIDUAL_VARIABLE_TYPES,ERR,ERROR,*)
+  !>Initialises the scalar equations mapping norm mapping
+  SUBROUTINE EquationsMapping_NormMappingInitialise(normMapping,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping to set
-    INTEGER(INTG), INTENT(IN) :: RESIDUAL_VARIABLE_TYPES(:) !<RESIDUAL_VARIABLE_TYPE(variable_idx). The variable_idx'th variable type associated with the equations set residual vector. The first variable type must correspond to the diagonal terms in the full solver Jacobian so that the solver mapping can use boundary conditions on this first variable to decide whether to keep rows.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingNormType) :: normMapping !<The norm mapping to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx,variable_idx,NUMBER_OF_RESIDUAL_VARIABLES,RESIDUAL_VARIABLE_TYPE
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
-    TYPE(EQUATIONS_MAPPING_CREATE_VALUES_CACHE_TYPE), POINTER :: CREATE_VALUES_CACHE
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
 
-    ENTERS("EquationsMapping_ResidualVariableTypesSet",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_NormMappingInitialise",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-      IF(EQUATIONS_MAPPING%EQUATIONS_MAPPING_FINISHED) THEN
-        CALL FlagError("Equations mapping have been finished.",ERR,ERROR,*999)
-      ELSE
-        CREATE_VALUES_CACHE=>EQUATIONS_MAPPING%CREATE_VALUES_CACHE
-        IF(ASSOCIATED(CREATE_VALUES_CACHE)) THEN
-          NUMBER_OF_RESIDUAL_VARIABLES=SIZE(RESIDUAL_VARIABLE_TYPES,1)
-          IF(NUMBER_OF_RESIDUAL_VARIABLES==CREATE_VALUES_CACHE%NUMBER_OF_RESIDUAL_VARIABLES) THEN
-            EQUATIONS=>EQUATIONS_MAPPING%EQUATIONS
-            IF(ASSOCIATED(EQUATIONS)) THEN
-              EQUATIONS_SET=>EQUATIONS%EQUATIONS_SET
-              IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                IF(EQUATIONS%LINEARITY==EQUATIONS_NONLINEAR) THEN
-                  DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
-                  IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-                    !Check the residual variable types are not being used by other equations matrices or vectors
-                    DO variable_idx=1,NUMBER_OF_RESIDUAL_VARIABLES
-                      RESIDUAL_VARIABLE_TYPE=RESIDUAL_VARIABLE_TYPES(variable_idx)
-                      IF(EQUATIONS%TIME_DEPENDENCE==EQUATIONS_STATIC .OR. EQUATIONS%TIME_DEPENDENCE==EQUATIONS_QUASISTATIC) THEN
-                        IF(CREATE_VALUES_CACHE%DYNAMIC_VARIABLE_TYPE==RESIDUAL_VARIABLE_TYPE) THEN
-                          LOCAL_ERROR="The specified residual variable type of "// &
-                            & TRIM(NumberToVString(RESIDUAL_VARIABLE_TYPE,"*",ERR,ERROR))// &
-                            & " is the same as the variable type for the dynamic matrices."
-                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                        ENDIF
-                      ELSE IF(EQUATIONS%TIME_DEPENDENCE==EQUATIONS_FIRST_ORDER_DYNAMIC.OR. & 
-                        & EQUATIONS%TIME_DEPENDENCE==EQUATIONS_SECOND_ORDER_DYNAMIC) THEN
-                        IF(CREATE_VALUES_CACHE%DYNAMIC_VARIABLE_TYPE/=RESIDUAL_VARIABLE_TYPE) THEN
-                          LOCAL_ERROR="The specified residual variable type of "// &
-                            & TRIM(NumberToVString(RESIDUAL_VARIABLE_TYPE,"*",ERR,ERROR))// &
-                            & " is not the same as the variable type for the dynamic matrices."
-                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                        ENDIF
-                      ELSE
-                        CALL FlagError("The equations set time dependence is not set.",ERR,ERROR,*999)
-                      END IF
-                      IF(CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE==RESIDUAL_VARIABLE_TYPE) THEN
-                        LOCAL_ERROR="The specified residual variable type of "// &
-                          & TRIM(NumberToVString(RESIDUAL_VARIABLE_TYPE,"*",ERR,ERROR))// &
-                          & " is the same as the variable type for the RHS vector."
-                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                      ENDIF
-                      DO matrix_idx=1,CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES
-                        IF(CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES(matrix_idx)==RESIDUAL_VARIABLE_TYPE) THEN
-                          LOCAL_ERROR="The specified residual variable type of "// &
-                            & TRIM(NumberToVString(RESIDUAL_VARIABLE_TYPE,"*",ERR,ERROR))// &
-                            & " is the same as the variable type for linear matrix number "// &
-                            & TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))//"."
-                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                        ENDIF
-                      ENDDO !matrix_idx
-                      !Check the residual variable number is defined on the dependent field
-                      IF(RESIDUAL_VARIABLE_TYPE>=1.AND.RESIDUAL_VARIABLE_TYPE<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-                        IF(ASSOCIATED(DEPENDENT_FIELD%VARIABLE_TYPE_MAP(RESIDUAL_VARIABLE_TYPE)%PTR)) THEN
-                          CREATE_VALUES_CACHE%RESIDUAL_VARIABLE_TYPES(variable_idx)=RESIDUAL_VARIABLE_TYPE
-                        ELSE
-                          LOCAL_ERROR="The specified residual variable type of "// &
-                            & TRIM(NumberToVString(RESIDUAL_VARIABLE_TYPE,"*",ERR,ERROR))// &
-                            & " is not defined on the dependent field."
-                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                        ENDIF
-                      ELSE
-                        LOCAL_ERROR="The specified residual variable type of "// &
-                          & TRIM(NumberToVString(RESIDUAL_VARIABLE_TYPE,"*",ERR,ERROR))// &
-                          & " is invalid. The variable type must either be zero or >= 1 and <= "// &
-                          & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",ERR,ERROR))//"."
-                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                      ENDIF
-                    ENDDO !variable_idx
-                  ELSE
-                    CALL FlagError("Dependent field is not associated",ERR,ERROR,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("The equations set is not a nonlinear equations set.",ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Equations equations set is not associated.",ERR,ERROR,*999)
-              ENDIF
-            ELSE
-              CALL FlagError("Equations mapping equations is not associated.",ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="Invalid number of variables. The number of residual variables " &
-              & //TRIM(NumberToVString(NUMBER_OF_RESIDUAL_VARIABLES,"*",ERR,ERROR)) &
-              & //" should be "//TRIM(NumberToVString(CREATE_VALUES_CACHE%NUMBER_OF_RESIDUAL_VARIABLES,"*",ERR,ERROR))
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Equations mapping create values cache is not associated",ERR,ERROR,*999)
-        ENDIF
+    normMapping%normNumber=0
+    NULLIFY(normMapping%normVariable)
+    normMapping%normCoefficient=1.0_DP
+    
+    EXITS("EquationsMapping_NormMappingInitialise")
+    RETURN
+999 ERRORSEXITS("EquationsMapping_NormMappingInitialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_NormMappingInitialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises the scalar equations mapping norm mappings and deallocates all memory
+  SUBROUTINE EquationsMapping_NormMappingsFinalise(normMappings,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingNormsType), POINTER :: normMappings !<A pointer to the norm mappings to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: normIdx
+
+    ENTERS("EquationsMapping_NormMappingsFinalise",err,error,*999)
+
+    IF(ASSOCIATED(normMappings)) THEN
+      IF(ALLOCATED(normMappings%norms)) THEN
+        DO normIdx=1,SIZE(normMappings%norms,1)
+          CALL EquationsMapping_NormMappingFinalise(normMappings%norms(normIdx),err,error,*999)
+        ENDDO !normIdx
+        DEALLOCATE(normMappings%norms)
       ENDIF
-    ELSE
-      CALL FlagError("Equations mapping is not associated",ERR,ERROR,*999)
+      DEALLOCATE(normMappings)
     ENDIF
        
+    EXITS("EquationsMapping_NormMappingsFinalise")
+    RETURN
+999 ERRORSEXITS("EquationsMapping_NormMappingsFinalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_NormMappingsFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises the scalar equations mapping norm mappings
+  SUBROUTINE EquationsMapping_NormMappingsInitialise(scalarMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingScalarType), POINTER :: scalarMapping !<A pointer to the scalar equations mapping to initialise the norm mappings for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
+
+    ENTERS("EquationsMapping_NormMappingsInitialise",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(scalarMapping)) CALL FlagError("Scalar equations mapping is not associated.",err,error,*998)
+    IF(ASSOCIATED(scalarMapping%normMappings)) &
+      & CALL FlagError("Scalar equations mapping norm mappings is already associated.",err,error,*998)
+    
+    ALLOCATE(scalarMapping%normMappings,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate scalar equations mapping norm mappings.",err,error,*999)
+    scalarMapping%normMappings%scalarMapping=>scalarMapping
+    scalarMapping%normMappings%numberOfNorms=0
+    
+    EXITS("EquationsMapping_NormMappingsInitialise")
+    RETURN
+999 CALL EquationsMapping_NormMappingsFinalise(scalarMapping%normMappings,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMapping_NormMappingsInitialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_NormMappingsInitialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises the scalar equations mapping quadratic form mapping and deallocates all memory
+  SUBROUTINE EquationsMapping_QuadraticMappingFinalise(quadraticMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingQuadraticType) :: quadraticMapping !<A pointer to the quadratic mapping to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMapping_QuadraticMappingFinalise",err,error,*999)
+
+    quadraticMapping%quadraticNumber=0
+    NULLIFY(quadraticMapping%quadraticVariables(1)%ptr)
+    NULLIFY(quadraticMapping%quadraticVariables(2)%ptr)
+    quadraticMapping%quadraticCoefficient=1.0_DP
+       
+    EXITS("EquationsMapping_QuadraticMappingFinalise")
+    RETURN
+999 ERRORSEXITS("EquationsMapping_QuadraticMappingFinalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_QuadraticMappingFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises the scalar equations mapping quadratic form mapping
+  SUBROUTINE EquationsMapping_QuadraticMappingInitialise(quadraticMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingQuadraticType) :: quadraticMapping !<The quadratic form mapping to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsMapping_QuadraticMappingInitialise",err,error,*999)
+
+    quadraticMapping%quadraticNumber=0
+    NULLIFY(quadraticMapping%quadraticVariables(1)%ptr)
+    NULLIFY(quadraticMapping%quadraticVariables(2)%ptr)
+    quadraticMapping%quadraticCoefficient=1.0_DP
+    
+    EXITS("EquationsMapping_QauadraticMappingInitialise")
+    RETURN
+999 ERRORSEXITS("EquationsMapping_QuadraticMappingInitialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_QuadraticMappingInitialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises the scalar equations mapping quadratic form mappings and deallocates all memory
+  SUBROUTINE EquationsMapping_QuadraticMappingsFinalise(quadraticMappings,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingQuadraticsType), POINTER :: quadraticMappings !<A pointer to the quadratic forms mappings to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: quadraticIdx
+
+    ENTERS("EquationsMapping_QuadraticMappingsFinalise",err,error,*999)
+
+    IF(ASSOCIATED(quadraticMappings)) THEN
+      IF(ALLOCATED(quadraticMappings%quadratics)) THEN
+        DO quadraticIdx=1,SIZE(quadraticMappings%quadratics,1)
+          CALL EquationsMapping_QuadraticMappingFinalise(quadraticMappings%quadratics(quadraticIdx),err,error,*999)
+        ENDDO !quadraticIdx
+        DEALLOCATE(quadraticMappings%quadratics)
+      ENDIF
+      DEALLOCATE(quadraticMappings)
+    ENDIF
+       
+    EXITS("EquationsMapping_QuadraticMappingsFinalise")
+    RETURN
+999 ERRORSEXITS("EquationsMapping_QuadraticMappingsFinalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_QuadraticMappingsFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises the scalar equations mapping quadratic form mappings
+  SUBROUTINE EquationsMapping_QuadraticMappingsInitialise(scalarMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingScalarType), POINTER :: scalarMapping !<A pointer to the scalar equations mapping to initialise the quadratic form mappings for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
+
+    ENTERS("EquationsMapping_QuadraticMappingsInitialise",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(scalarMapping)) CALL FlagError("Scalar equations mapping is not associated.",err,error,*998)
+    IF(ASSOCIATED(scalarMapping%quadraticMappings)) &
+      & CALL FlagError("Scalar equations mapping quadratic mappings is already associated.",err,error,*998)
+    
+    ALLOCATE(scalarMapping%quadraticMappings,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate scalar equations mapping quadratic mappings.",err,error,*999)
+    scalarMapping%quadraticMappings%scalarMapping=>scalarMapping
+    scalarMapping%quadraticMappings%numberOfQuadratics=0
+    
+    EXITS("EquationsMapping_QuadraticMappingsInitialise")
+    RETURN
+999 CALL EquationsMapping_QuadraticMappingsFinalise(scalarMapping%quadraticMappings,dummyErr,dummyError,*998)
+998 ERRORS("EquationsMapping_QuadraticMappingsInitialise",err,error)
+    EXITS("EquationsMapping_QuadraticMappingsInitialise")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_QuadraticMappingsInitialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the coefficient applied to the equations set residual vector.
+  SUBROUTINE EquationsMapping_ResidualCoeffSet(vectorMapping,residualCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations mapping to set
+    REAL(DP), INTENT(IN) :: residualCoefficient!<The coefficient applied to the equations set residual vector.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
+
+    ENTERS("EquationsMapping_ResidualCoeffSet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated",err,error,*999)
+    IF(vectorMapping%vectorMappingFinished) CALL FlagError("Vector equations mapping has been finished.",err,error,*999)
+
+    NULLIFY(createValuesCache)
+    CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
+
+    createValuesCache%residualCoefficient=residualCoefficient
+      
+    EXITS("EquationsMapping_ResidualCoeffSet")
+    RETURN
+999 ERRORSEXITS("EquationsMapping_ResidualCoeffSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_ResidualCoeffSet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the mapping between a dependent field variable and the equations residual vector.
+  SUBROUTINE EquationsMapping_ResidualVariableTypesSet(vectorMapping,residualVariableTypes,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations mapping to set
+    INTEGER(INTG), INTENT(IN) :: residualVariableTypes(:) !<residualVariableTypes(variableIdx). The variableIdx'th variable type associated with the equations set residual vector. The first variable type must correspond to the diagonal terms in the full solver Jacobian so that the solver mapping can use boundary conditions on this first variable to decide whether to keep rows.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: matrixIdx,variableIdx,numberOfResidualVariables,residualVariableType
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("EquationsMapping_ResidualVariableTypesSet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated",err,error,*999)
+    IF(vectorMapping%vectorMappingFinished) CALL FlagError("Vector equations mapping have been finished.",err,error,*999)
+
+    NULLIFY(createValuesCache)
+    CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
+    NULLIFY(equations)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
+    NULLIFY(equationsSet)
+    CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
+    
+    numberOfResidualVariables=SIZE(residualVariableTypes,1)
+    IF(numberOfResidualVariables/=createValuesCache%numberOfResidualVariables) THEN
+      localError="Invalid number of variables. The number of residual variables " &
+        & //TRIM(NumberToVString(numberOfResidualVariables,"*",err,error))//" should be "// &
+        & TRIM(NumberToVString(createValuesCache%numberOfResidualVariables,"*",err,error))
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(equations%linearity/=EQUATIONS_NONLINEAR) CALL FlagError("The equations are not nonlinear equations.",err,error,*999)
+    NULLIFY(dependentField)
+    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+      
+    !Check the residual variable types are not being used by other equations matrices or vectors
+    DO variableIdx=1,numberOfResidualVariables
+      residualVariableType=residualVariableTypes(variableIdx)
+      SELECT CASE(equations%timeDependence)
+      CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC)
+        IF(createValuesCache%dynamicVariableType==residualVariableType) THEN
+          localError="The specified residual variable type of "//TRIM(NumberToVString(residualVariableType,"*",err,error))// &
+            & " is the same as the variable type for the dynamic matrices."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      CASE(EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
+        IF(createValuesCache%dynamicVariableType/=residualVariableType) THEN
+          localError="The specified residual variable type of "//TRIM(NumberToVString(residualVariableType,"*",err,error))// &
+            & " is not the same as the variable type for the dynamic matrices."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      CASE DEFAULT
+        localError="The equations time dependence type of "//TRIM(NumberToVString(equations%timeDependence,"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+      IF(createValuesCache%rhsVariableType==residualVariableType) THEN
+        localError="The specified residual variable type of "//TRIM(NumberToVString(residualVariableType,"*",err,error))// &
+          & " is the same as the variable type for the RHS vector."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      DO matrixIdx=1,createValuesCache%numberOfLinearMatrices
+        IF(createValuesCache%linearMatrixVariableTypes(matrixIdx)==residualVariableType) THEN
+          localError="The specified residual variable type of "//TRIM(NumberToVString(residualVariableType,"*",err,error))// &
+            & " is the same as the variable type for linear matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ENDDO !matrixIdx
+      !Check the residual variable number is defined on the dependent field
+      IF(residualVariableType<1.OR.residualVariableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+        localError="The specified residual variable type of "//TRIM(NumberToVString(residualVariableType,"*",err,error))// &
+          & " is invalid. The variable type must either be zero or >= 1 and <= "// &
+          & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      IF(.NOT.ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(residualVariableType)%ptr)) THEN
+        localError="The specified residual variable type of "//TRIM(NumberToVString(residualVariableType,"*",err,error))// &
+          & " is not defined on the dependent field."
+        CALL FlagError(localError,err,error,*999)
+      END IF      
+    ENDDO !variableIdx
+    
+    createValuesCache%residualVariableTypes(1:numberOfResidualVariables)=residualVariableTypes(1:numberOfResidualVariables)
+      
     EXITS("EquationsMapping_ResidualVariableTypesSet")
     RETURN
-999 ERRORSEXITS("EquationsMapping_ResidualVariableTypesSet",ERR,ERROR)
+999 ERRORSEXITS("EquationsMapping_ResidualVariableTypesSet",err,error)
     RETURN 1
     
   END SUBROUTINE EquationsMapping_ResidualVariableTypesSet
@@ -3059,416 +3305,465 @@ CONTAINS
   !
 
   !>Sets the coefficient applied to the equations set RHS vector.
-  SUBROUTINE EQUATIONS_MAPPING_RHS_COEFF_SET(EQUATIONS_MAPPING,RHS_COEFFICIENT,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_RHSCoeffSet(vectorMapping,rhsCoefficient,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping to set
-    REAL(DP), INTENT(IN) :: RHS_COEFFICIENT!<The coefficient applied to the equations set RHS vector.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations mapping to set
+    REAL(DP), INTENT(IN) :: rhsCoefficient!<The coefficient applied to the equations set RHS vector.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
 
-    ENTERS("EQUATIONS_MAPPING_RHS_COEFF_SET",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_RHSCoeffSet",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-      IF(EQUATIONS_MAPPING%EQUATIONS_MAPPING_FINISHED) THEN
-        CALL FlagError("Equations mapping has been finished.",ERR,ERROR,*999)
-      ELSE
-        IF(ASSOCIATED(EQUATIONS_MAPPING%CREATE_VALUES_CACHE)) THEN
-          IF(EQUATIONS_MAPPING%CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE/=0) THEN
-            EQUATIONS_MAPPING%CREATE_VALUES_CACHE%RHS_COEFFICIENT=RHS_COEFFICIENT
-          ELSE
-            CALL FlagError("The equations mapping RHS variable type has not been set.",ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Equations mapping create values cache is not associated",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Equations mapping is not associated",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated",err,error,*999)
+    IF(vectorMapping%vectorMappingFinished) CALL FlagError("Vector equations mapping has been finished.",err,error,*999)
+
+    NULLIFY(createValuesCache)
+    CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
+    
+    IF(createValuesCache%rhsVariableType==0) &
+      & CALL FlagError("The equations mapping RHS variable type has not been set.",err,error,*999)
+
+    vectorMapping%createValuesCache%rhsCoefficient=rhsCoefficient
        
-    EXITS("EQUATIONS_MAPPING_RHS_COEFF_SET")
+    EXITS("EquationsMapping_RHSCoeffSet")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MAPPING_RHS_COEFF_SET",ERR,ERROR)
+999 ERRORSEXITS("EquationsMapping_RHSCoeffSet",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MAPPING_RHS_COEFF_SET
+    
+  END SUBROUTINE EquationsMapping_RHSCoeffSet
   
   !
   !================================================================================================================================
   !
 
   !>Finalises the equations mapping RHS mapping and deallocates all memory
-  SUBROUTINE EQUATIONS_MAPPING_RHS_MAPPING_FINALISE(RHS_MAPPING,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_RHSMappingFinalise(rhsMapping,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_RHS_TYPE), POINTER :: RHS_MAPPING !<A pointer to the RHS mapping to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code 
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingRHSType), POINTER :: rhsMapping !<A pointer to the RHS mapping to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("EQUATIONS_MAPPING_RHS_MAPPING_FINALISE",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_RHSMappingFinalise",err,error,*999)
 
-    IF(ASSOCIATED(RHS_MAPPING)) THEN
-      IF(ALLOCATED(RHS_MAPPING%RHS_DOF_TO_EQUATIONS_ROW_MAP)) DEALLOCATE(RHS_MAPPING%RHS_DOF_TO_EQUATIONS_ROW_MAP)
-      IF(ALLOCATED(RHS_MAPPING%EQUATIONS_ROW_TO_RHS_DOF_MAP)) DEALLOCATE(RHS_MAPPING%EQUATIONS_ROW_TO_RHS_DOF_MAP)
-      DEALLOCATE(RHS_MAPPING)
+    IF(ASSOCIATED(rhsMapping)) THEN
+      IF(ALLOCATED(rhsMapping%rhsDOFToEquationsRowMap)) DEALLOCATE(rhsMapping%rhsDOFToEquationsRowMap)
+      IF(ALLOCATED(rhsMapping%equationsRowToRHSDOFMap)) DEALLOCATE(rhsMapping%equationsRowToRHSDOFMap)
+      DEALLOCATE(rhsMapping)
     ENDIF
        
-    EXITS("EQUATIONS_MAPPING_RHS_MAPPING_FINALISE")
+    EXITS("EquationsMapping_RHSMappingFinalise")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MAPPING_RHS_MAPPING_INITIALISE",ERR,ERROR)
+999 ERRORSEXITS("EquationsMapping_RHSMappingFinalise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MAPPING_RHS_MAPPING_FINALISE
+  END SUBROUTINE EquationsMapping_RHSMappingFinalise
 
   !
   !================================================================================================================================
   !
 
   !>Initialises the equations mapping RHS mapping
-  SUBROUTINE EQUATIONS_MAPPING_RHS_MAPPING_INITIALISE(EQUATIONS_MAPPING,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_RHSMappingInitialise(vectorMapping,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping to initialise the RHS mapping for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code 
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations mapping to initialise the RHS mapping for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
 
-    ENTERS("EQUATIONS_MAPPING_RHS_MAPPING_INITIALISE",ERR,ERROR,*998)
+    ENTERS("EquationsMapping_RHSMappingInitialise",err,error,*998)
 
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-      IF(ASSOCIATED(EQUATIONS_MAPPING%RHS_MAPPING)) THEN
-        CALL FlagError("Equations mapping RHS mapping is already associated.",ERR,ERROR,*998)
-      ELSE
-        ALLOCATE(EQUATIONS_MAPPING%RHS_MAPPING,STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate equations mapping RHS mapping.",ERR,ERROR,*999)
-        EQUATIONS_MAPPING%RHS_MAPPING%EQUATIONS_MAPPING=>EQUATIONS_MAPPING        
-        EQUATIONS_MAPPING%RHS_MAPPING%RHS_VARIABLE_TYPE=0
-        NULLIFY(EQUATIONS_MAPPING%RHS_MAPPING%RHS_VARIABLE)
-        NULLIFY(EQUATIONS_MAPPING%RHS_MAPPING%RHS_VARIABLE_MAPPING)
-        EQUATIONS_MAPPING%RHS_MAPPING%RHS_COEFFICIENT=1.0_DP
-      ENDIF
-    ELSE
-      CALL FlagError("Equations mapping is not associated.",ERR,ERROR,*998)
-    ENDIF
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated.",err,error,*998)
+    IF(ASSOCIATED(vectorMapping%rhsMapping)) &
+      & CALL FlagError("Vector equations mapping RHS mapping is already associated.",err,error,*998)
+    
+    ALLOCATE(vectorMapping%rhsMapping,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate equations mapping RHS mapping.",err,error,*999)
+    vectorMapping%rhsMapping%vectorMapping=>vectorMapping        
+    vectorMapping%rhsMapping%rhsVariableType=0
+    NULLIFY(vectorMapping%rhsMapping%rhsVariable)
+    NULLIFY(vectorMapping%rhsMapping%rhsVariableMapping)
+    vectorMapping%rhsMapping%rhsCoefficient=1.0_DP
        
-    EXITS("EQUATIONS_MAPPING_RHS_MAPPING_INITIALISE")
+    EXITS("EquationsMapping_RHSMappingInitialise")
     RETURN
-999 CALL EQUATIONS_MAPPING_RHS_MAPPING_FINALISE(EQUATIONS_MAPPING%RHS_MAPPING,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("EQUATIONS_MAPPING_RHS_MAPPING_INITIALISE",ERR,ERROR)
+999 CALL EquationsMapping_RHSMappingFinalise(vectorMapping%rhsMapping,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMapping_RHSMappingInitialise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MAPPING_RHS_MAPPING_INITIALISE
+    
+  END SUBROUTINE EquationsMapping_RHSMappingInitialise
 
   !
   !================================================================================================================================
   !
 
   !>Sets the mapping between a dependent field variable and the equations set rhs vector.
-  SUBROUTINE EQUATIONS_MAPPING_RHS_VARIABLE_TYPE_SET(EQUATIONS_MAPPING,RHS_VARIABLE_TYPE,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_RHSVariableTypeSet(vectorMapping,rhsVariableType,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping to set
-    INTEGER(INTG), INTENT(IN) :: RHS_VARIABLE_TYPE !<The variable type associated with the equations set rhs vector. If the problem does not have a rhs vector then the variable type on input should be zero.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations mapping to set
+    INTEGER(INTG), INTENT(IN) :: rhsVariableType !<The variable type associated with the equations set rhs vector. If the problem does not have a rhs vector then the variable type on input should be zero.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
-    TYPE(EQUATIONS_MAPPING_CREATE_VALUES_CACHE_TYPE), POINTER :: CREATE_VALUES_CACHE
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: matrixIdx
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("EQUATIONS_MAPPING_RHS_VARIABLE_TYPE_SET",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_RHSVariableTypeSet",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-      IF(EQUATIONS_MAPPING%EQUATIONS_MAPPING_FINISHED) THEN
-        CALL FlagError("Equations mapping has been finished.",ERR,ERROR,*999)
-      ELSE
-        CREATE_VALUES_CACHE=>EQUATIONS_MAPPING%CREATE_VALUES_CACHE
-        IF(ASSOCIATED(CREATE_VALUES_CACHE)) THEN
-          IF(RHS_VARIABLE_TYPE==0) THEN
-            CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE=0
-          ELSE
-            EQUATIONS=>EQUATIONS_MAPPING%EQUATIONS
-            IF(ASSOCIATED(EQUATIONS)) THEN
-              EQUATIONS_SET=>EQUATIONS%EQUATIONS_SET
-              IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
-                IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-                  !Check the RHS variable type is not being by other equations matrices or vectors
-                  IF(CREATE_VALUES_CACHE%DYNAMIC_VARIABLE_TYPE==RHS_VARIABLE_TYPE) THEN
-                    LOCAL_ERROR="The specified RHS variable type of "// &
-                      & TRIM(NumberToVString(RHS_VARIABLE_TYPE,"*",ERR,ERROR))// &
-                        & " is the same as the variable type for the dynamic matrices."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  ENDIF
-                  DO matrix_idx=1,CREATE_VALUES_CACHE%NUMBER_OF_RESIDUAL_VARIABLES
-                    IF(CREATE_VALUES_CACHE%RESIDUAL_VARIABLE_TYPES(matrix_idx)==RHS_VARIABLE_TYPE) THEN
-                      LOCAL_ERROR="The specified RHS variable type of "// &
-                        & TRIM(NumberToVString(RHS_VARIABLE_TYPE,"*",ERR,ERROR))// &
-                        & " is the same as the variable type for the residual vector."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ENDIF
-                  ENDDO
-                  DO matrix_idx=1,CREATE_VALUES_CACHE%NUMBER_OF_LINEAR_EQUATIONS_MATRICES
-                    IF(CREATE_VALUES_CACHE%LINEAR_MATRIX_VARIABLE_TYPES(matrix_idx)==RHS_VARIABLE_TYPE) THEN
-                      LOCAL_ERROR="The specified RHS variable type of "// &
-                        & TRIM(NumberToVString(RHS_VARIABLE_TYPE,"*",ERR,ERROR))// &
-                        & " is the same as the variable type for linear matrix number "// &
-                        & TRIM(NumberToVString(matrix_idx,"*",ERR,ERROR))//"."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ENDIF
-                  ENDDO !matrix_idx
-                  !Check the RHS variable number is defined on the dependent field
-                  IF(RHS_VARIABLE_TYPE>=1.AND.RHS_VARIABLE_TYPE<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-                    IF(ASSOCIATED(DEPENDENT_FIELD%VARIABLE_TYPE_MAP(RHS_VARIABLE_TYPE)%PTR)) THEN
-                      CREATE_VALUES_CACHE%RHS_VARIABLE_TYPE=RHS_VARIABLE_TYPE
-                    ELSE
-                      LOCAL_ERROR="The specified RHS variable type of "// &
-                        & TRIM(NumberToVString(RHS_VARIABLE_TYPE,"*",ERR,ERROR))// &
-                        & " is not defined on the dependent field."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ENDIF
-                  ELSE
-                    LOCAL_ERROR="The specified RHS variable type of "//TRIM(NumberToVString(RHS_VARIABLE_TYPE,"*",ERR,ERROR))// &
-                      & " is invalid. The number must either be zero or >= 1 and <= "// &
-                      & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",ERR,ERROR))//"."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Dependent field is not associated",ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Equations equations set is not associated.",ERR,ERROR,*999)
-              ENDIF
-            ELSE
-              CALL FlagError("Equations mapping equations is not associated.",ERR,ERROR,*999)
-            ENDIF
-          ENDIF
-        ELSE
-          CALL FlagError("Equations mapping create values cache is not associated",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated",err,error,*999)
+    IF(vectorMapping%vectorMappingFinished) CALL FlagError("Vector equations mapping has been finished.",err,error,*999)
+
+    NULLIFY(createValuesCache)
+    CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
+    NULLIFY(equations)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
+    NULLIFY(equationsSet)
+    CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
+
+    IF(rhsVariableType==0) THEN
+      createValuesCache%rhsVariableType=0
     ELSE
-      CALL FlagError("Equations mapping is not associated",ERR,ERROR,*999)
+      NULLIFY(dependentField)
+      CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+      
+      !Check the RHS variable type is not being by other equations matrices or vectors
+      IF(createValuesCache%dynamicVariableType==rhsVariableType) THEN
+        localError="The specified RHS variable type of "//TRIM(NumberToVString(rhsVariableType,"*",err,error))// &
+          & " is the same as the variable type for the dynamic matrices."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      DO matrixIdx=1,createValuesCache%numberOfResidualVariables
+        IF(createValuesCache%residualVariableTypes(matrixIdx)==rhsVariableType) THEN
+          localError="The specified RHS variable type of "//TRIM(NumberToVString(rhsVariableType,"*",err,error))// &
+            & " is the same as the variable type for the residual vector."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ENDDO !matrixIdx
+      DO matrixIdx=1,createValuesCache%numberOfLinearMatrices
+        IF(createValuesCache%linearMatrixVariableTypes(matrixIdx)==rhsVariableType) THEN
+          localError="The specified RHS variable type of "//TRIM(NumberToVString(rhsVariableType,"*",err,error))// &
+            & " is the same as the variable type for linear matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ENDDO !matrixIdx
+      !Check the RHS variable number is defined on the dependent field
+      IF(rhsVariableType<1.OR.rhsVariableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+        localError="The specified RHS variable type of "//TRIM(NumberToVString(rhsVariableType,"*",err,error))// &
+          & " is invalid. The number must either be zero or >= 1 and <= "// &
+          & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      IF(.NOT.ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(rhsVariableType)%ptr)) THEN
+        localError="The specified RHS variable type of "//TRIM(NumberToVString(rhsVariableType,"*",err,error))// &
+          & " is not defined on the dependent field."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+
+      createValuesCache%rhsVariableType=rhsVariableType
+      
     ENDIF
        
-    EXITS("EQUATIONS_MAPPING_RHS_VARIABLE_TYPE_SET")
+    EXITS("EquationsMapping_RHSVariableTypeSet")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MAPPING_RHS_VARIABLE_TYPE_SET",ERR,ERROR)
+999 ERRORSEXITS("EquationsMapping_RHSVariableTypeSet",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MAPPING_RHS_VARIABLE_TYPE_SET
+    
+  END SUBROUTINE EquationsMapping_RHSVariableTypeSet
   
   !
   !================================================================================================================================
   !
 
-  !>Sets the coefficient applied to the equations set source vector.
-  SUBROUTINE EQUATIONS_MAPPING_SOURCE_COEFF_SET(EQUATIONS_MAPPING,SOURCE_COEFFICIENT,ERR,ERROR,*)
+  !>Destroy an scalar equations mapping.
+  SUBROUTINE EquationsMapping_ScalarDestroy(scalarMapping,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping to set
-    REAL(DP), INTENT(IN) :: SOURCE_COEFFICIENT!<The coefficient applied to the equations set source vector.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingScalarType), POINTER :: scalarMapping !<A pointer the scalar equations mapping to destroy
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("EQUATIONS_MAPPING_SOURCE_COEFF_SET",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_ScalarDestroy",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-      IF(EQUATIONS_MAPPING%EQUATIONS_MAPPING_FINISHED) THEN
-        CALL FlagError("Equations mapping has been finished.",ERR,ERROR,*999)
-      ELSE
-        IF(ASSOCIATED(EQUATIONS_MAPPING%CREATE_VALUES_CACHE)) THEN
-          IF(EQUATIONS_MAPPING%CREATE_VALUES_CACHE%SOURCE_VARIABLE_TYPE/=0) THEN
-            EQUATIONS_MAPPING%CREATE_VALUES_CACHE%SOURCE_COEFFICIENT=SOURCE_COEFFICIENT
-          ELSE
-            CALL FlagError("The equations mapping source variable type has not been set.",ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Equations mapping create values cache is not associated",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Equations mapping is not associated",ERR,ERROR,*999)
-    ENDIF
-       
-    EXITS("EQUATIONS_MAPPING_SOURCE_COEFF_SET")
+    IF(.NOT.ASSOCIATED(scalarMapping)) CALL FlagError("Scalar equations mapping is not associated.",err,error,*999)
+    
+    CALL EquationsMapping_ScalarFinalise(scalarMapping,err,error,*999)
+        
+    EXITS("EquationsMapping_ScalarDestroy")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MAPPING_SOURCE_COEFF_SET",ERR,ERROR)
+999 ERRORSEXITS("EquationsMapping_ScalarDestroy",err,error)    
     RETURN 1
-  END SUBROUTINE EQUATIONS_MAPPING_SOURCE_COEFF_SET
+   
+  END SUBROUTINE EquationsMapping_ScalarDestroy
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises the scalar equations mapping and deallocates all memory.
+  SUBROUTINE EquationsMapping_ScalarFinalise(scalarMapping,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingScalarType), POINTER :: scalarMapping !<A pointer to the scalar equations mapping to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsMapping_ScalarFinalise",err,error,*999)
+
+    IF(ASSOCIATED(scalarMapping)) THEN
+      CALL EquationsMapping_FunctionMappingsFinalise(scalarMapping%functionMappings,err,error,*999)
+      CALL EquationsMapping_NormMappingsFinalise(scalarMapping%normMappings,err,error,*999)
+      CALL EquationsMapping_DotProductMappingsFinalise(scalarMapping%dotProductMappings,err,error,*999)
+      CALL EquationsMapping_QuadraticMappingsFinalise(scalarMapping%quadraticMappings,err,error,*999)
+      DEALLOCATE(scalarMapping)
+    ENDIF
+    
+    EXITS("EquationsMapping_ScalarFinalise")
+    RETURN
+999 ERRORSEXITS("EquationsMapping_ScalarFinalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_ScalarFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises the scalar equations mapping.
+  SUBROUTINE EquationsMapping_ScalarInitialise(scalarEquations,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsScalarType), POINTER :: scalarEquations !<A pointer to the scalar equations to initialise the scalar equations mapping for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
+
+    ENTERS("EquationsMapping_ScalarInitialise",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(scalarEquations)) CALL FlagError("Scalar equations is not associated.",err,error,*998)
+    IF(ASSOCIATED(scalarEquations%scalarMapping)) CALL FlagError("Scalar equations mapping is already associated.",err,error,*998)
+     
+    ALLOCATE(scalarEquations%scalarMapping,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate scalar equations scalar mapping.",err,error,*999)
+    scalarEquations%scalarMapping%scalarEquations=>scalarEquations
+    scalarEquations%scalarMapping%scalarMappingFinished=.FALSE.
+    NULLIFY(scalarEquations%scalarMapping%scalarMatrices)
+    NULLIFY(scalarEquations%scalarMapping%functionMappings)
+    NULLIFY(scalarEquations%scalarMapping%normMappings)
+    NULLIFY(scalarEquations%scalarMapping%dotProductMappings)
+    NULLIFY(scalarEquations%scalarMapping%quadraticMappings)
+    NULLIFY(scalarEquations%scalarMapping%createValuesCache)
+    !CALL EquationsMapping_ScalarCreateValuesCacheInitialise(scalarEquations%scalarMapping,err,error,*999)        
+       
+    EXITS("EquationsMapping_ScalarInitialise")
+    RETURN
+999 CALL EquationsMapping_ScalarFinalise(scalarEquations%scalarMapping,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMapping_ScalarInitialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_ScalarInitialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the coefficient applied to the equations set source vectorQ.
+  SUBROUTINE EquationsMapping_SourceCoeffSet(vectorMapping,sourceCoefficient,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations mapping to set
+    REAL(DP), INTENT(IN) :: sourceCoefficient!<The coefficient applied to the equations set source vector.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
+
+    ENTERS("EquationsMapping_SourceCoeffSet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated",err,error,*999)
+    IF(vectorMapping%vectorMappingFinished) CALL FlagError("Vector equations mapping has been finished.",err,error,*999)
+
+    NULLIFY(createValuesCache)
+    CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
+    
+    IF(createValuesCache%sourceVariableType==0) &
+      & CALL FlagError("The equations mapping source variable type has not been set.",err,error,*999)
+    
+    createValuesCache%sourceCoefficient=sourceCoefficient
+       
+    EXITS("EquationsMapping_SourceCoeffSet")
+    RETURN
+999 ERRORSEXITS("EquationsMapping_SourceCoeffSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsMapping_SourceCoeffSet
   
   !
   !================================================================================================================================
   !
 
   !>Finalises the equations mapping source mapping and deallocates all memory
-  SUBROUTINE EQUATIONS_MAPPING_SOURCE_MAPPING_FINALISE(SOURCE_MAPPING,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_SourceMappingFinalise(sourceMapping,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_SOURCE_TYPE), POINTER :: SOURCE_MAPPING !<A pointer to the SOURCE mapping to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code 
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingSourceType), POINTER :: sourceMapping !<A pointer to the SOURCE mapping to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("EQUATIONS_MAPPING_SOURCE_MAPPING_FINALISE",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_SourceMappingFinalise",err,error,*999)
 
-    IF(ASSOCIATED(SOURCE_MAPPING)) THEN
-      IF(ALLOCATED(SOURCE_MAPPING%SOURCE_DOF_TO_EQUATIONS_ROW_MAP)) DEALLOCATE(SOURCE_MAPPING%SOURCE_DOF_TO_EQUATIONS_ROW_MAP)
-      IF(ALLOCATED(SOURCE_MAPPING%EQUATIONS_ROW_TO_SOURCE_DOF_MAP)) DEALLOCATE(SOURCE_MAPPING%EQUATIONS_ROW_TO_SOURCE_DOF_MAP)
-      DEALLOCATE(SOURCE_MAPPING)
+    IF(ASSOCIATED(sourceMapping)) THEN
+      IF(ALLOCATED(sourceMapping%sourceDOFToEquationsRowMap)) DEALLOCATE(sourceMapping%sourceDOFToEquationsRowMap)
+      IF(ALLOCATED(sourceMapping%equationsRowToSourceDOFMap)) DEALLOCATE(sourceMapping%equationsRowToSourceDOFMap)
+      DEALLOCATE(sourceMapping)
     ENDIF
        
-    EXITS("EQUATIONS_MAPPING_SOURCE_MAPPING_FINALISE")
+    EXITS("EquationsMapping_SourceMappingFinalise")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MAPPING_SOURCE_MAPPING_INITIALISE",ERR,ERROR)
+999 ERRORSEXITS("EquationsMapping_SourceMappingFinalise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MAPPING_SOURCE_MAPPING_FINALISE
+    
+  END SUBROUTINE EquationsMapping_SourceMappingFinalise
 
   !
   !================================================================================================================================
   !
 
   !>Initialises the equations mapping source mapping
-  SUBROUTINE EQUATIONS_MAPPING_SOURCE_MAPPING_INITIALISE(EQUATIONS_MAPPING,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_SourceMappingInitialise(vectorMapping,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping to initialise the source mapping for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code 
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations mapping to initialise the source mapping for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code 
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
 
-    ENTERS("EQUATIONS_MAPPING_SOURCE_MAPPING_INITIALISE",ERR,ERROR,*998)
+    ENTERS("EquationsMapping_SourceMappingInitialise",err,error,*998)
 
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-      IF(ASSOCIATED(EQUATIONS_MAPPING%SOURCE_MAPPING)) THEN
-        CALL FlagError("Equations mapping source mapping is already associated.",ERR,ERROR,*998)
-      ELSE
-        ALLOCATE(EQUATIONS_MAPPING%SOURCE_MAPPING,STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate equations mapping source mapping.",ERR,ERROR,*999)
-        EQUATIONS_MAPPING%SOURCE_MAPPING%EQUATIONS_MAPPING=>EQUATIONS_MAPPING        
-        EQUATIONS_MAPPING%SOURCE_MAPPING%SOURCE_VARIABLE_TYPE=0
-        NULLIFY(EQUATIONS_MAPPING%SOURCE_MAPPING%SOURCE_VARIABLE)
-        NULLIFY(EQUATIONS_MAPPING%SOURCE_MAPPING%SOURCE_VARIABLE_MAPPING)
-        EQUATIONS_MAPPING%SOURCE_MAPPING%SOURCE_COEFFICIENT=1.0_DP
-      ENDIF
-    ELSE
-      CALL FlagError("Equations is not associated.",ERR,ERROR,*998)
-    ENDIF
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated.",err,error,*998)
+    IF(ASSOCIATED(vectorMapping%sourceMapping)) &
+      & CALL FlagError("Equations mapping source mapping is already associated.",err,error,*998)
+
+    ALLOCATE(vectorMapping%sourceMapping,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate equations mapping source mapping.",err,error,*999)
+    vectorMapping%sourceMapping%vectorMapping=>vectorMapping        
+    vectorMapping%sourceMapping%sourceVariableType=0
+    NULLIFY(vectorMapping%sourceMapping%sourceVariable)
+    NULLIFY(vectorMapping%sourceMapping%sourceVariableMapping)
+    vectorMapping%sourceMapping%sourceCoefficient=1.0_DP
        
-    EXITS("EQUATIONS_MAPPING_SOURCE_MAPPING_INITIALISE")
+    EXITS("EquationsMapping_SourceMappingInitialise")
     RETURN
-999 CALL EQUATIONS_MAPPING_SOURCE_MAPPING_FINALISE(EQUATIONS_MAPPING%SOURCE_MAPPING,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("EQUATIONS_MAPPING_SOURCE_MAPPING_INITIALISE",ERR,ERROR)
+999 CALL EquationsMapping_SourceMappingFinalise(vectorMapping%sourceMapping,dummyErr,dummyError,*998)
+998 ERRORSEXITS("EquationsMapping_SourceMappingInitialise",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MAPPING_SOURCE_MAPPING_INITIALISE
+    
+  END SUBROUTINE EquationsMapping_SourceMappingInitialise
 
   !
   !================================================================================================================================
   !
 
   !>Sets the mapping between a source field variable and the equations set source vector.
-  SUBROUTINE EQUATIONS_MAPPING_SOURCE_VARIABLE_TYPE_SET(EQUATIONS_MAPPING,SOURCE_VARIABLE_TYPE,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_SourceVariableTypeSet(vectorMapping,sourceVariableType,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING !<A pointer to the equations mapping to set
-    INTEGER(INTG), INTENT(IN) :: SOURCE_VARIABLE_TYPE !<The variable type associated with the equations set source vector. If the problem does not have a source vector then the variable type on input should be zero.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the vector equations mapping to set
+    INTEGER(INTG), INTENT(IN) :: sourceVariableType !<The variable type associated with the equations set source vector. If the problem does not have a source vector then the variable type on input should be zero.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(FIELD_TYPE), POINTER :: SOURCE_FIELD
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(FIELD_TYPE), POINTER :: sourceField
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("EQUATIONS_MAPPING_SOURCE_VARIABLE_TYPE_SET",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_SourceVariableTypeSet",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_MAPPING)) THEN
-      IF(EQUATIONS_MAPPING%EQUATIONS_MAPPING_FINISHED) THEN
-        CALL FlagError("Equations mapping have been finished.",ERR,ERROR,*999)
-      ELSE
-        IF(ASSOCIATED(EQUATIONS_MAPPING%CREATE_VALUES_CACHE)) THEN
-          IF(SOURCE_VARIABLE_TYPE==0) THEN
-            EQUATIONS_MAPPING%CREATE_VALUES_CACHE%SOURCE_VARIABLE_TYPE=0
-          ELSE
-            EQUATIONS=>EQUATIONS_MAPPING%EQUATIONS
-            IF(ASSOCIATED(EQUATIONS)) THEN
-              EQUATIONS_SET=>EQUATIONS%EQUATIONS_SET
-              IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                IF(ASSOCIATED(EQUATIONS_SET%SOURCE)) THEN
-                  SOURCE_FIELD=>EQUATIONS_SET%SOURCE%SOURCE_FIELD
-                  IF(ASSOCIATED(SOURCE_FIELD)) THEN                    
-                    !Check the source variable type is defined on the source field
-                    IF(SOURCE_VARIABLE_TYPE>=1.AND.SOURCE_VARIABLE_TYPE<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-                      IF(ASSOCIATED(SOURCE_FIELD%VARIABLE_TYPE_MAP(SOURCE_VARIABLE_TYPE)%PTR)) THEN
-                        EQUATIONS_MAPPING%CREATE_VALUES_CACHE%SOURCE_VARIABLE_TYPE=SOURCE_VARIABLE_TYPE
-                      ELSE
-                        LOCAL_ERROR="The specified source variable type of "// &
-                          & TRIM(NumberToVString(SOURCE_VARIABLE_TYPE,"*",ERR,ERROR))// &
-                          & " is not defined on the source field."
-                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                      ENDIF
-                    ELSE
-                      LOCAL_ERROR="The specified source variable type of "// &
-                        & TRIM(NumberToVString(SOURCE_VARIABLE_TYPE,"*",ERR,ERROR))// &
-                        & " is invalid. The number must either be zero or >= 1 and <= "// &
-                        & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",ERR,ERROR))//"."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ENDIF
-                  ELSE
-                    CALL FlagError("Source field is not associated",ERR,ERROR,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Equations set source is not associated.",ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Equations equations set is not associated.",ERR,ERROR,*999)
-              ENDIF
-            ELSE
-              CALL FlagError("Equations mapping equations is not associated.",ERR,ERROR,*999)
-            ENDIF
-          ENDIF
-        ELSE
-          CALL FlagError("Equations mapping create values cache is not associated",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
+    IF(.NOT.ASSOCIATED(vectorMapping)) CALL FlagError("Vector equations mapping is not associated.",err,error,*999)
+    IF(vectorMapping%vectorMappingFinished) CALL FlagError("Vector equations mapping has been finished.",err,error,*999)
+
+    NULLIFY(createValuesCache)
+    CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
+    NULLIFY(vectorEquations)
+    CALL EquationsMappingVector_VectorEquationsGet(vectorMapping,vectorEquations,err,error,*999)
+    NULLIFY(equations)
+    CALL EquationsVector_EquationsGet(vectorEquations,equations,err,error,*999)
+    NULLIFY(equationsSet)
+    CALL Equations_EquationsSetGet(equations,equationsSet,err,error,*999)
+
+    IF(sourceVariableType==0) THEN
+      createValuesCache%sourceVariableType=0
     ELSE
-      CALL FlagError("Equations mapping is not associated",ERR,ERROR,*999)
+      NULLIFY(sourceField)
+      CALL EquationsSet_SourceFieldGet(equationsSet,sourceField,err,error,*999)
+      
+      !Check the source variable type is defined on the source field
+      IF(sourceVariableType<1.OR.sourceVariableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+        localError="The specified source variable type of "//TRIM(NumberToVString(sourceVariableType,"*",err,error))// &
+          & " is invalid. The number must either be zero or >= 1 and <= "// &
+          & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      IF(.NOT.ASSOCIATED(sourceField%VARIABLE_TYPE_MAP(sourceVariableType)%ptr)) THEN
+        localError="The specified source variable type of "//TRIM(NumberToVString(sourceVariableType,"*",err,error))// &
+          & " is not defined on the source field."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      
+      createValuesCache%sourceVariableType=sourceVariableType
+      
     ENDIF
     
-    EXITS("EQUATIONS_MAPPING_SOURCE_VARIABLE_TYPE_SET")
+    EXITS("EquationsMapping_SourceVariableTypeSet")
     RETURN
-999 ERRORSEXITS("EQUATIONS_MAPPING_SOURCE_VARIABLE_TYPE_SET",ERR,ERROR)
+999 ERRORSEXITS("EquationsMapping_SourceVariableTypeSet",err,error)
     RETURN 1
-  END SUBROUTINE EQUATIONS_MAPPING_SOURCE_VARIABLE_TYPE_SET
+    
+  END SUBROUTINE EquationsMapping_SourceVariableTypeSet
   
   !
   !================================================================================================================================
   !
-
+!
   !>Finalise an equations mapping equations matrix map.
-  SUBROUTINE EquationsMapping_VarToEquatsColumnMapFinalise(VAR_TO_EQUATIONS_COLUMN_MAP,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_VarToEquatsColumnMapFinalise(varToEquationsColumnMap,err,error,*)
 
     !Argument variables
-    TYPE(VAR_TO_EQUATIONS_COLUMN_MAP_TYPE) :: VAR_TO_EQUATIONS_COLUMN_MAP !<The variable dof to equations column map to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VarToEquationsColumnMapType) :: varToEquationsColumnMap !<The variable dof to equations column map to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("EquationsMapping_VarToEquatsColumnMapFinalise",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_VarToEquatsColumnMapFinalise",err,error,*999)
     
-    IF(ALLOCATED(VAR_TO_EQUATIONS_COLUMN_MAP%COLUMN_DOF)) &
-      & DEALLOCATE(VAR_TO_EQUATIONS_COLUMN_MAP%COLUMN_DOF)
+    IF(ALLOCATED(varToEquationsColumnMap%columnDOF)) DEALLOCATE(varToEquationsColumnMap%columnDOF)
     
     EXITS("EquationsMapping_VarToEquatsColumnMapFinalise")
     RETURN
-999 ERRORS("EquationsMapping_VarToEquatsColumnMapFinalise",ERR,ERROR)    
+999 ERRORS("EquationsMapping_VarToEquatsColumnMapFinalise",err,error)    
     EXITS("EquationsMapping_VarToEquatsColumnMapFinalise")    
     RETURN 1
    
@@ -3479,24 +3774,22 @@ CONTAINS
   !
 
   !>Finalises a variable to equations Jacobian map and deallocates all memory.
-  SUBROUTINE EquationsMapping_VarToEquatsJacobianMapFinalise(VAR_TO_EQUATIONS_JACOBIAN_MAP,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_VarToEquatsJacobianMapFinalise(varToEquationsJacobianMap,err,error,*)
 
     !Argument variables
-    TYPE(VAR_TO_EQUATIONS_JACOBIAN_MAP_TYPE) :: VAR_TO_EQUATIONS_JACOBIAN_MAP !<The variable to equations Jacobian map to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VarToEquationsJacobianMapType) :: varToEquationsJacobianMap !<The variable to equations Jacobian map to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("EquationsMapping_VarToEquatsJacobianMapFinalise",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_VarToEquatsJacobianMapFinalise",err,error,*999)
     
-    IF(ALLOCATED(VAR_TO_EQUATIONS_JACOBIAN_MAP%DOF_TO_COLUMNS_MAP)) &
-      & DEALLOCATE(VAR_TO_EQUATIONS_JACOBIAN_MAP%DOF_TO_COLUMNS_MAP)
-    IF(ALLOCATED(VAR_TO_EQUATIONS_JACOBIAN_MAP%DOF_TO_ROWS_MAP)) &
-      & DEALLOCATE(VAR_TO_EQUATIONS_JACOBIAN_MAP%DOF_TO_ROWS_MAP)
+    IF(ALLOCATED(varToEquationsJacobianMap%dofToColumnsMap)) DEALLOCATE(varToEquationsJacobianMap%dofToColumnsMap)
+    IF(ALLOCATED(varToEquationsJacobianMap%dofToRowsMap)) DEALLOCATE(varToEquationsJacobianMap%dofToRowsMap)
     
     EXITS("EquationsMapping_VarToEquatsJacobianMapFinalise")
     RETURN
-999 ERRORS("EquationsMapping_VarToEquatsJacobianMapFinalise",ERR,ERROR)    
+999 ERRORS("EquationsMapping_VarToEquatsJacobianMapFinalise",err,error)    
     EXITS("EquationsMapping_VarToEquatsJacobianMapFinalise")    
     RETURN 1
    
@@ -3507,22 +3800,22 @@ CONTAINS
   !
 
   !>Initialises a variable to equations Jacobian map
-  SUBROUTINE EquationsMapping_VarToEquatsJacobianMapInitialise(VAR_TO_EQUATIONS_JACOBIAN_MAP,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_VarToEquatsJacobianMapInitialise(varToEquationsJacobianMap,err,error,*)
 
     !Argument variables
-    TYPE(VAR_TO_EQUATIONS_JACOBIAN_MAP_TYPE) :: VAR_TO_EQUATIONS_JACOBIAN_MAP !<The variable to equations Jacobian map to initialise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VarToEquationsJacobianMapType) :: varToEquationsJacobianMap !<The variable to equations Jacobian map to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("EquationsMapping_VarToEquatsJacobianMapInitialise",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_VarToEquatsJacobianMapInitialise",err,error,*999)
     
-    VAR_TO_EQUATIONS_JACOBIAN_MAP%VARIABLE_TYPE=0
-    NULLIFY(VAR_TO_EQUATIONS_JACOBIAN_MAP%VARIABLE)
+    varToEquationsJacobianMap%variableType=0
+    NULLIFY(varToEquationsJacobianMap%variable)
     
     EXITS("EquationsMapping_VarToEquatsJacobianMapInitialise")
     RETURN
-999 ERRORS("EquationsMapping_VarToEquatsJacobianMapInitialise",ERR,ERROR)    
+999 ERRORS("EquationsMapping_VarToEquatsJacobianMapInitialise",err,error)    
     EXITS("EquationsMapping_VarToEquatsJacobianMapInitialise")    
     RETURN 1
    
@@ -3533,32 +3826,29 @@ CONTAINS
   !
 
   !>Finalises a variable to equations matrices map and deallocates all memory.
-  SUBROUTINE EquationsMapping_VarToEquatsMatricesMapFinalise(VAR_TO_EQUATIONS_MATRICES_MAP,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_VarToEquatsMatricesMapFinalise(varToEquationsMatricesMap,err,error,*)
 
     !Argument variables
-    TYPE(VAR_TO_EQUATIONS_MATRICES_MAP_TYPE) :: VAR_TO_EQUATIONS_MATRICES_MAP !<The variable to equations matrices map to initialise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VarToEquationsMatricesMapType) :: varToEquationsMatricesMap !<The variable to equations matrices map to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
+    INTEGER(INTG) :: matrixIdx
 
-    ENTERS("EquationsMapping_VarToEquatsMatricesMapFinalise",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_VarToEquatsMatricesMapFinalise",err,error,*999)
     
-    IF(ALLOCATED(VAR_TO_EQUATIONS_MATRICES_MAP%EQUATIONS_MATRIX_NUMBERS)) &
-      & DEALLOCATE(VAR_TO_EQUATIONS_MATRICES_MAP%EQUATIONS_MATRIX_NUMBERS)
-    IF(ALLOCATED(VAR_TO_EQUATIONS_MATRICES_MAP%DOF_TO_COLUMNS_MAPS)) THEN
-      DO matrix_idx=1,SIZE(VAR_TO_EQUATIONS_MATRICES_MAP%DOF_TO_COLUMNS_MAPS,1)
-        CALL EquationsMapping_VarToEquatsColumnMapFinalise(VAR_TO_EQUATIONS_MATRICES_MAP%DOF_TO_COLUMNS_MAPS( &
-          & matrix_idx),ERR,ERROR,*999)
-      ENDDO !matrix_idx
-      DEALLOCATE(VAR_TO_EQUATIONS_MATRICES_MAP%DOF_TO_COLUMNS_MAPS)
+    IF(ALLOCATED(varToEquationsMatricesMap%equationsMatrixNumbers)) DEALLOCATE(varToEquationsMatricesMap%equationsMatrixNumbers)
+    IF(ALLOCATED(varToEquationsMatricesMap%dofToColumnsMaps)) THEN
+      DO matrixIdx=1,SIZE(varToEquationsMatricesMap%dofToColumnsMaps,1)
+        CALL EquationsMapping_VarToEquatsColumnMapFinalise(varToEquationsMatricesMap%dofToColumnsMaps(matrixIdx),err,error,*999)
+      ENDDO !matrixIdx
+      DEALLOCATE(varToEquationsMatricesMap%dofToColumnsMaps)
     ENDIF
-    IF(ALLOCATED(VAR_TO_EQUATIONS_MATRICES_MAP%DOF_TO_ROWS_MAP)) &
-      & DEALLOCATE(VAR_TO_EQUATIONS_MATRICES_MAP%DOF_TO_ROWS_MAP)
+    IF(ALLOCATED(varToEquationsMatricesMap%dofToRowsMap)) DEALLOCATE(varToEquationsMatricesMap%dofToRowsMap)
     
     EXITS("EquationsMapping_VarToEquatsMatricesMapFinalise")
     RETURN
-999 ERRORS("EquationsMapping_VarToEquatsMatricesMapFinalise",ERR,ERROR)    
+999 ERRORS("EquationsMapping_VarToEquatsMatricesMapFinalise",err,error)    
     EXITS("EquationsMapping_VarToEquatsMatricesMapFinalise")    
     RETURN 1
    
@@ -3569,24 +3859,24 @@ CONTAINS
   !
 
   !>Initialise an equations mapping equations matrix map.
-  SUBROUTINE EquationsMapping_VarToEquatsMatricesMapInitialise(VAR_TO_EQUATIONS_MATRICES_MAP,ERR,ERROR,*)
+  SUBROUTINE EquationsMapping_VarToEquatsMatricesMapInitialise(varToEquationsMatricesMap,err,error,*)
 
     !Argument variables
-    TYPE(VAR_TO_EQUATIONS_MATRICES_MAP_TYPE) :: VAR_TO_EQUATIONS_MATRICES_MAP !<The variable to equations matrices map to initialise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VarToEquationsMatricesMapType) :: varToEquationsMatricesMap !<The variable to equations matrices map to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("EquationsMapping_VarToEquatsMatricesMapInitialise",ERR,ERROR,*999)
+    ENTERS("EquationsMapping_VarToEquatsMatricesMapInitialise",err,error,*999)
 
-    VAR_TO_EQUATIONS_MATRICES_MAP%VARIABLE_INDEX=0
-    VAR_TO_EQUATIONS_MATRICES_MAP%VARIABLE_TYPE=0
-    NULLIFY(VAR_TO_EQUATIONS_MATRICES_MAP%VARIABLE)
-    VAR_TO_EQUATIONS_MATRICES_MAP%NUMBER_OF_EQUATIONS_MATRICES=0
+    varToEquationsMatricesMap%variableIndex=0
+    varToEquationsMatricesMap%variableType=0
+    NULLIFY(varToEquationsMatricesMap%variable)
+    varToEquationsMatricesMap%numberOfEquationsMatrices=0
     
     EXITS("EquationsMapping_VarToEquatsMatricesMapInitialise")
     RETURN
-999 ERRORS("EquationsMapping_VarToEquatsMatricesMapInitialise",ERR,ERROR)    
+999 ERRORS("EquationsMapping_VarToEquatsMatricesMapInitialise",err,error)    
     EXITS("EquationsMapping_VarToEquatsMatricesMapInitialise")    
     RETURN 1
    
@@ -3596,4 +3886,4 @@ CONTAINS
   !================================================================================================================================
   !
   
-END MODULE EQUATIONS_MAPPING_ROUTINES
+END MODULE EquationsMappingRoutines

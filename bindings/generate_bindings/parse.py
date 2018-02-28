@@ -241,7 +241,7 @@ class LibrarySource(object):
         for routine in self.public_subroutines:
             public_objects[routine.line_number] = routine
 
-        for doxygen_grouping in self.lib_source.doxygen_groupings:
+	for doxygen_grouping in self.lib_source.doxygen_groupings:
             public_objects[doxygen_grouping.line_number] = doxygen_grouping
 
         self.ordered_objects = [public_objects[k]

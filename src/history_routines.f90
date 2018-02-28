@@ -44,7 +44,7 @@
 !> This module handles all history file routines.
 MODULE HISTORY_ROUTINES
   
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE ISO_VARYING_STRING
   USE KINDS
   USE PROBLEM_CONSTANTS

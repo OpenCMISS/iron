@@ -95,7 +95,11 @@ MODULE CmissPetscTypes
   TYPE PetscSnesLineSearchType
     SNESLineSearch :: snesLineSearch
   END TYPE PetscSnesLineSearchType
-  
+
+  TYPE PetscTaoType
+    Tao :: tao
+  END TYPE PetscTaoType
+    
   TYPE PetscTSType
     TS :: ts
   END TYPE PetscTSType
@@ -107,6 +111,6 @@ MODULE CmissPetscTypes
   !Interfaces
  
   PUBLIC PetscISType,PetscISLocalToGloabalMappingType,PetscISColoringType,PetscKspType,PetscMatType,PetscMatColoringType, &
-    & PetscMatFDColoringType,PetscPCType,PetscSnesType,PetscSnesLineSearchType,PetscTSType,PetscVecType
+    & PetscMatFDColoringType,PetscPCType,PetscSnesType,PetscSnesLineSearchType,PetscTaoType,PetscTSType,PetscVecType
 
 END MODULE CmissPetscTypes

@@ -41,12 +41,12 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> This module contains all procedures for sorting. NOTE: THE ROUTINES IN THIS MODULE HAVE NOT BEEN TESTED!!!
-MODULE SORTING
+!>This module contains all procedures for sorting. NOTE: THE ROUTINES IN THIS MODULE HAVE NOT BEEN TESTED!!!
+MODULE Sorting
 
-  USE BASE_ROUTINES
-  USE CONSTANTS
-  USE KINDS
+  USE BaseRoutines
+  USE Constants
+  USE Kinds
   USE ISO_VARYING_STRING
 
 #include "macros.h"  
@@ -61,681 +61,616 @@ MODULE SORTING
 
   !Interfaces
 
-  INTERFACE BUBBLE_ISORT
-    MODULE PROCEDURE BUBBLE_ISORT_INTG  
-    MODULE PROCEDURE BUBBLE_ISORT_SP
-    MODULE PROCEDURE BUBBLE_ISORT_DP
-  END INTERFACE !BUBBLE_ISORT
+  !>Sorts a list into assending order using the bubble sort method, returning the sorting index.
+  INTERFACE Sorting_BubbleIndexSort
+    MODULE PROCEDURE Sorting_BubbleIndexSortIntg
+    MODULE PROCEDURE Sorting_BubbleIndexSortSP
+    MODULE PROCEDURE Sorting_BubbleIndexSortDP
+  END INTERFACE Sorting_BubbleIndexSort
 
-  INTERFACE BUBBLE_SORT
-    MODULE PROCEDURE BUBBLE_SORT_INTG
-    MODULE PROCEDURE BUBBLE_SORT_SP
-    MODULE PROCEDURE BUBBLE_SORT_DP
-  END INTERFACE !BUBBLE_SORT
+  !>Sorts a list into assending order using the bubble sort method.
+  INTERFACE Sorting_BubbleSort
+    MODULE PROCEDURE Sorting_BubbleSortIntg
+    MODULE PROCEDURE Sorting_BubbleSortSP
+    MODULE PROCEDURE Sorting_BubbleSortDP
+  END INTERFACE Sorting_BubbleSort
 
-  INTERFACE HEAP_SORT
-    MODULE PROCEDURE HEAP_SORT_INTG
-    MODULE PROCEDURE HEAP_SORT_SP
-    MODULE PROCEDURE HEAP_SORT_DP
-  END INTERFACE !HEAP_SORT
+  !>Sorts a list into assending order using the heap sort method.
+  INTERFACE Sorting_HeapSort
+    MODULE PROCEDURE Sorting_HeapSortIntg
+    MODULE PROCEDURE Sorting_HeapSortSP
+    MODULE PROCEDURE Sorting_HeapSortDP
+  END INTERFACE Sorting_HeapSort
 
-  INTERFACE SHELL_SORT
-    MODULE PROCEDURE SHELL_SORT_INTG
-    MODULE PROCEDURE SHELL_SORT_SP
-    MODULE PROCEDURE SHELL_SORT_DP
-  END INTERFACE !SHELL_SORT
+  !>Sorts a list into assending order using the shell sort method.
+  INTERFACE Sorting_ShellSort
+    MODULE PROCEDURE Sorting_ShellSortIntg
+    MODULE PROCEDURE Sorting_ShellSortSP
+    MODULE PROCEDURE Sorting_ShellSortDP
+  END INTERFACE Sorting_ShellSort
 
-  PUBLIC BUBBLE_ISORT
-  PUBLIC BUBBLE_SORT,HEAP_SORT,SHELL_SORT
+  PUBLIC Sorting_BubbleIndexSort
+
+  PUBLIC Sorting_BubbleSort
+
+  PUBLIC Sorting_HeapSort
+
+  PUBLIC Sorting_ShellSort
 
 CONTAINS
 
   !
   !================================================================================================================================
   !
-  
-  !#### Generic-subroutine: BUBBLE_ISORT
-  !###  Description:
-  !###    Sorts a list into assending order using the bubble sort method, returning sorting index
-  !###  Child-subroutines: BUBBLE_ISORT_INTG,BUBBLE_ISORT_SP,BUBBLE_ISORT_DP
-  
-  !
-  !================================================================================================================================
-  !
 
-  SUBROUTINE BUBBLE_ISORT_INTG(A,IND,ERR,ERROR,*)
+  !>Sorts an integer list into assending order using the bubble sort method, returning the sorting index.
+  SUBROUTINE Sorting_BubbleIndexSortIntg(a,indices,err,error,*)
   
-    !#### Subroutine: BUBBLE_ISORT_INTG
-    !###  Description:
-    !###    BUBBLE_ISORT_INTG performs a bubble sort on an integer list, returning sorting index
-    !###  Parent-function: BUBBLE_ISORT
-    
     !Argument variables
-    INTEGER(INTG), INTENT(INOUT) :: A(:)
-    INTEGER(INTG), INTENT(OUT) :: IND(:)      
-    INTEGER(INTG), INTENT(OUT) :: ERR
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR
+    INTEGER(INTG), INTENT(INOUT) :: a(:) !<a(index). On entry the unsorted list of numbers. On exit, the sorted list of numbers in ascending order. 
+    INTEGER(INTG), INTENT(OUT) :: indices(:) !<indices(index). On exit, the list of sorted indices      
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: FLAG,i,j,k,VALUE,IVALUE
+    INTEGER(INTG) :: flag,i,j,k,value,indexValue
     
-    ENTERS("BUBBLE_ISORT_INTG",ERR,ERROR,*999)
+    ENTERS("Sorting_BubbleIndexSortIntg",err,error,*999)
 
-    IF(SIZE(IND,1)==SIZE(A,1)) THEN
-      IND(1)=1  
-      IF(SIZE(A,1)>1) THEN
-        FLAG=SIZE(A,1)
-        DO i=1,SIZE(A,1)
-          k=FLAG-1
-          FLAG=0
+    IF(SIZE(indices,1)==SIZE(a,1)) THEN
+      indices(1)=1  
+      IF(SIZE(a,1)>1) THEN
+        flag=SIZE(a,1)
+        DO i=1,SIZE(a,1)
+          k=flag-1
+          flag=0
           DO j=1,k
-            IF(i==1) IND(j+1)=j+1          
-            IF(A(j)>A(j+1)) THEN
-              VALUE=A(j)
-              A(j)=A(j+1)
-              A(j+1)=VALUE
-              IVALUE=IND(j)
-              IND(j)=IND(j+1)
-              IND(j+1)=IVALUE              
-              FLAG=j
+            IF(i==1) indices(j+1)=j+1          
+            IF(a(j)>a(j+1)) THEN
+              value=a(j)
+              a(j)=a(j+1)
+              a(j+1)=value
+              indexValue=indices(j)
+              indices(j)=indices(j+1)
+              indices(j+1)=indexValue              
+              flag=j
             ENDIF
-          ENDDO
-          IF(FLAG==0) EXIT
-        ENDDO
+          ENDDO !j
+          IF(flag==0) EXIT
+        ENDDO !i
       ENDIF
     ELSE
-      CALL FlagError("Size of input vectors does not match",ERR,ERROR,*999)
+      CALL FlagError("The size of the list to sort and indices arrays does not match.",err,error,*999)
     ENDIF      
 
-    EXITS("BUBBLE_ISORT_INTG")
+    EXITS("Sorting_BubbleIndexSortIntg")
     RETURN
-999 ERRORSEXITS("BUBBLE_ISORT_INTG",ERR,ERROR)
+999 ERRORSEXITS("Sorting_BubbleIndexSortIntg",err,error)
     RETURN 1
-  END SUBROUTINE BUBBLE_ISORT_INTG
+    
+  END SUBROUTINE Sorting_BubbleIndexSortIntg
   
   !
   !================================================================================================================================
   !
+  !>Sorts a single precision list into assending order using the bubble sort method, returning the sorting index.
+  SUBROUTINE Sorting_BubbleIndexSortSP(a,indices,err,error,*)
   
-  SUBROUTINE BUBBLE_ISORT_SP(A,IND,ERR,ERROR,*)
-  
-    !#### Subroutine: BUBBLE_ISORT_SP
-    !###  Description:
-    !###    BUBBLE_ISORT_SP performs a bubble sort on a single precision list, returning sorting index
-    !###  Parent-function: BUBBLE_ISORT
-    
     !Argument variables
-    REAL(SP), INTENT(INOUT) :: A(:)
-    INTEGER(INTG), INTENT(OUT) :: IND(:)      
-    INTEGER(INTG), INTENT(OUT) :: ERR
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR
+    REAL(SP), INTENT(INOUT) :: a(:) !<a(index). On entry the unsorted list of numbers. On exit, the sorted list of numbers in ascending order. 
+    INTEGER(INTG), INTENT(OUT) :: indices(:) !<indices(index). On exit, the list of sorted indices      
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: FLAG,i,j,k,IVALUE
-    REAL(SP) :: VALUE
+    INTEGER(INTG) :: flag,i,j,k,indexValue
+    REAL(SP) :: value
     
-    ENTERS("BUBBLE_ISORT_SP",ERR,ERROR,*999)
+    ENTERS("Sorting_BubbleIndexSortSP",err,error,*999)
 
-    IF(SIZE(IND,1)==SIZE(A,1)) THEN
-      IND(1)=1  
-      IF(SIZE(A,1)>1) THEN
-        FLAG=SIZE(A,1)
-        DO i=1,SIZE(A,1)
-          k=FLAG-1
-          FLAG=0
+    IF(SIZE(indices,1)==SIZE(a,1)) THEN
+      indices(1)=1  
+      IF(SIZE(a,1)>1) THEN
+        flag=SIZE(a,1)
+        DO i=1,SIZE(a,1)
+          k=flag-1
+          flag=0
           DO j=1,k
-            IF(i==1) IND(j+1)=j+1             
-            IF(A(j)>A(j+1)) THEN
-              VALUE=A(j)
-              A(j)=A(j+1)
-              A(j+1)=VALUE
-              IVALUE=IND(j)
-              IND(j)=IND(j+1)
-              IND(j+1)=IVALUE              
-              FLAG=j
+            IF(i==1) indices(j+1)=j+1          
+            IF(a(j)>a(j+1)) THEN
+              value=a(j)
+              a(j)=a(j+1)
+              a(j+1)=value
+              indexValue=indices(j)
+              indices(j)=indices(j+1)
+              indices(j+1)=indexValue              
+              flag=j
             ENDIF
-          ENDDO
-          IF(FLAG==0) EXIT
-        ENDDO
+          ENDDO !j
+          IF(flag==0) EXIT
+        ENDDO !i
       ENDIF
     ELSE
-      CALL FlagError("Size of input vectors does not match",ERR,ERROR,*999)
+      CALL FlagError("The size of the list to sort and indices arrays does not match.",err,error,*999)
     ENDIF      
 
-    EXITS("BUBBLE_ISORT_SP")
+    EXITS("Sorting_BubbleIndexSortSP")
     RETURN
-999 ERRORSEXITS("BUBBLE_ISORT_SP",ERR,ERROR)
+999 ERRORSEXITS("Sorting_BubbleIndexSortSP",err,error)
     RETURN 1
-  END SUBROUTINE BUBBLE_ISORT_SP
+    
+  END SUBROUTINE Sorting_BubbleIndexSortSP
   
   !
   !================================================================================================================================
   !
-
-  SUBROUTINE BUBBLE_ISORT_DP(A,IND,ERR,ERROR,*)
+  !>Sorts a double precision list into assending order using the bubble sort method, returning the sorting index.
+  SUBROUTINE Sorting_BubbleIndexSortDP(a,indices,err,error,*)
   
-    !#### Subroutine: BUBBLE_ISORT_DP
-    !###  Description:
-    !###    BUBBLE_ISORT_DP performs a bubble sort on a double precision list, returning sorting index
-    !###  Parent-function: BUBBLE_ISORT
-    
     !Argument variables
-    REAL(DP), INTENT(INOUT) :: A(:)
-    INTEGER(INTG), INTENT(OUT) :: IND(:)    
-    INTEGER(INTG), INTENT(OUT) :: ERR
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR
+    REAL(DP), INTENT(INOUT) :: a(:) !<a(index). On entry the unsorted list of numbers. On exit, the sorted list of numbers in ascending order. 
+    INTEGER(INTG), INTENT(OUT) :: indices(:) !<indices(index). On exit, the list of sorted indices      
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: FLAG,i,j,k,IVALUE
+    INTEGER(INTG) :: flag,i,j,k,indexValue
     REAL(DP) :: VALUE
     
-    ENTERS("BUBBLE_ISORT_DP",ERR,ERROR,*999)
-    
-    IF(SIZE(IND,1)==SIZE(A,1)) THEN
-      IND(1)=1
-      IF(SIZE(A,1)>1) THEN
-        FLAG=SIZE(A,1)
-        DO i=1,SIZE(A,1)
-          k=FLAG-1
-          FLAG=0
+    ENTERS("Sorting_BubbleIndexSortDP",err,error,*999)
+
+    IF(SIZE(indices,1)==SIZE(a,1)) THEN
+      indices(1)=1  
+      IF(SIZE(a,1)>1) THEN
+        flag=SIZE(a,1)
+        DO i=1,SIZE(a,1)
+          k=flag-1
+          flag=0
           DO j=1,k
-            IF(i==1) IND(j+1)=j+1          
-            IF(A(j)>A(j+1)) THEN
-              VALUE=A(j)
-              A(j)=A(j+1)
-              A(j+1)=VALUE
-              IVALUE=IND(j)
-              IND(j)=IND(j+1)
-              IND(j+1)=IVALUE
-              FLAG=j
+            IF(i==1) indices(j+1)=j+1          
+            IF(a(j)>a(j+1)) THEN
+              value=a(j)
+              a(j)=a(j+1)
+              a(j+1)=value
+              indexValue=indices(j)
+              indices(j)=indices(j+1)
+              indices(j+1)=indexValue              
+              flag=j
             ENDIF
-          ENDDO
-          IF(FLAG==0) EXIT
-        ENDDO
+          ENDDO !j
+          IF(flag==0) EXIT
+        ENDDO !i
       ENDIF
     ELSE
-      CALL FlagError("Size of input vectors does not match",ERR,ERROR,*999)
-    ENDIF
+      CALL FlagError("The size of the list to sort and indices arrays does not match.",err,error,*999)
+    ENDIF      
 
-    EXITS("BUBBLE_ISORT_DP")
+    EXITS("Sorting_BubbleIndexSortDP")
     RETURN
-999 ERRORSEXITS("BUBBLE_ISORT_DP",ERR,ERROR)
+999 ERRORSEXITS("Sorting_BubbleIndexSortDP",err,error)
     RETURN 1
-  END SUBROUTINE BUBBLE_ISORT_DP
-
-  !
-  !================================================================================================================================
-  !
-  
-  !#### Generic-subroutine: BUBBLE_SORT
-  !###  Description:
-  !###    Sorts a list into assending order using the bubble sort method.
-  !###  Child-subroutines: BUBBLE_SORT_INTG,BUBBLE_SORT_SP,BUBBLE_SORT_DP
-
-  !
-  !================================================================================================================================
-  !
-  
-  SUBROUTINE BUBBLE_SORT_INTG(A,ERR,ERROR,*)
-  
-    !#### Subroutine: BUBBLE_SORT_INTG
-    !###  Description:
-    !###    BUBBLE_SORT_INTG performs a bubble sort on an integer list
-    !###  Parent-function: BUBBLE_SORT
     
+  END SUBROUTINE Sorting_BubbleIndexSortDP
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Sorts an integer list into assending order using the bubble sort method.
+  SUBROUTINE Sorting_BubbleSortIntg(a,err,error,*)
+  
     !Argument variables
-    INTEGER(INTG), INTENT(INOUT) :: A(:)
-    INTEGER(INTG), INTENT(OUT) :: ERR
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR
+    INTEGER(INTG), INTENT(INOUT) :: a(:) !<a(index). On entry the unsorted list of numbers. On exit, the sorted list of numbers in ascending order. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: FLAG,i,j,k,VALUE
+    INTEGER(INTG) :: flag,i,j,k,value
     
-    ENTERS("BUBBLE_SORT_INTG",ERR,ERROR,*999)
+    ENTERS("Sorting_BubbleSortIntg",err,error,*999)
 
-    IF(SIZE(A,1)>1) THEN
-      FLAG=SIZE(A,1)
-      DO i=1,SIZE(A,1)
-        k=FLAG-1
-        FLAG=0
+    IF(SIZE(a,1)>1) THEN
+      flag=SIZE(a,1)
+      DO i=1,SIZE(a,1)
+        k=flag-1
+        flag=0
         DO j=1,k
-          IF(A(j)>A(j+1)) THEN
-            VALUE=A(j)
-            A(j)=A(j+1)
-            A(j+1)=VALUE
-            FLAG=j
+          IF(a(j)>a(j+1)) THEN
+            value=a(j)
+            a(j)=a(j+1)
+            a(j+1)=value
+            flag=j
           ENDIF
-        ENDDO
-        IF(FLAG==0) EXIT
-      ENDDO
+        ENDDO !j
+        IF(flag==0) EXIT
+      ENDDO !i
     ENDIF
 
-    EXITS("BUBBLE_SORT_INTG")
+    EXITS("Sorting_BubbleSortIntg")
     RETURN
-999 ERRORSEXITS("BUBBLE_SORT_INTG",ERR,ERROR)
+999 ERRORSEXITS("Sorting_BubbleSortIntg",err,error)
     RETURN 1
-  END SUBROUTINE BUBBLE_SORT_INTG
+    
+  END SUBROUTINE Sorting_BubbleSortIntg
   
   !
   !================================================================================================================================
   !
-  
-  SUBROUTINE BUBBLE_SORT_SP(A,ERR,ERROR,*)
-  
-    !#### Subroutine: BUBBLE_SORT_SP
-    !###  Description:
-    !###    BUBBLE_SORT_SP performs a bubble sort on a single precision list
-    !###  Parent-function: BUBBLE_SORT
-    
-    !Argument variables
-    REAL(SP), INTENT(INOUT) :: A(:)
-    INTEGER(INTG), INTENT(OUT) :: ERR
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR
-    !Local variables
-    INTEGER(INTG) :: FLAG,i,j,k
-    REAL(SP) :: VALUE
-    
-    ENTERS("BUBBLE_SORT_SP",ERR,ERROR,*999)
 
-    IF(SIZE(A,1)>1) THEN
-      FLAG=SIZE(A,1)
-      DO i=1,SIZE(A,1)
-        k=FLAG-1
-        FLAG=0
+  !>Sorts a single precision list into assending order using the bubble sort method.
+  SUBROUTINE Sorting_BubbleSortSP(a,err,error,*)
+  
+    !Argument variables
+    REAL(SP), INTENT(INOUT) :: a(:) !<a(index). On entry the unsorted list of numbers. On exit, the sorted list of numbers in ascending order. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: flag,i,j,k
+    REAL(SP) :: value
+    
+    ENTERS("Sorting_BubbleSortSP",err,error,*999)
+
+    IF(SIZE(a,1)>1) THEN
+      flag=SIZE(a,1)
+      DO i=1,SIZE(a,1)
+        k=flag-1
+        flag=0
         DO j=1,k
-          IF(A(j)>A(j+1)) THEN
-            VALUE=A(j)
-            A(j)=A(j+1)
-            A(j+1)=VALUE
-            FLAG=j
+          IF(a(j)>a(j+1)) THEN
+            value=a(j)
+            a(j)=a(j+1)
+            a(j+1)=value
+            flag=j
           ENDIF
-        ENDDO
-        IF(FLAG==0) EXIT
-      ENDDO
+        ENDDO !j
+        IF(flag==0) EXIT
+      ENDDO !i
     ENDIF
 
-    EXITS("BUBBLE_SORT_SP")
+    EXITS("Sorting_BubbleSortSP")
     RETURN
-999 ERRORSEXITS("BUBBLE_SORT_SP",ERR,ERROR)
+999 ERRORSEXITS("Sorting_BubbleSortSP",err,error)
     RETURN 1
-  END SUBROUTINE BUBBLE_SORT_SP
+    
+  END SUBROUTINE Sorting_BubbleSortSP
   
   !
   !================================================================================================================================
   !
+
+  !>Sorts a double precision list into assending order using the bubble sort method.
+  SUBROUTINE Sorting_BubbleSortDP(a,err,error,*)
   
-  SUBROUTINE BUBBLE_SORT_DP(A,ERR,ERROR,*)
-  
-    !#### Subroutine: BUBBLE_SORT_DP
-    !###  Description:
-    !###    BUBBLE_SORT_DP performs a bubble sort on a double precision list
-    !###  Parent-function: BUBBLE_SORT
-    
     !Argument variables
-    REAL(DP), INTENT(INOUT) :: A(:)
-    INTEGER(INTG), INTENT(OUT) :: ERR
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR
+    REAL(DP), INTENT(INOUT) :: a(:) !<a(index). On entry the unsorted list of numbers. On exit, the sorted list of numbers in ascending order. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: FLAG,i,j,k
+    INTEGER(INTG) :: flag,i,j,k
     REAL(DP) :: VALUE
     
-    ENTERS("BUBBLE_SORT_DP",ERR,ERROR,*999)
+    ENTERS("Sorting_BubbleSortDP",err,error,*999)
 
-    IF(SIZE(A,1)>1) THEN
-      FLAG=SIZE(A,1)
-      DO i=1,SIZE(A,1)
-        k=FLAG-1
-        FLAG=0
+    IF(SIZE(a,1)>1) THEN
+      flag=SIZE(a,1)
+      DO i=1,SIZE(a,1)
+        k=flag-1
+        flag=0
         DO j=1,k
-          IF(A(j)>A(j+1)) THEN
-            VALUE=A(j)
-            A(j)=A(j+1)
-            A(j+1)=VALUE
-            FLAG=j
+          IF(a(j)>a(j+1)) THEN
+            value=a(j)
+            a(j)=a(j+1)
+            a(j+1)=value
+            flag=j
           ENDIF
-        ENDDO
-        IF(FLAG==0) EXIT
-      ENDDO
+        ENDDO !j
+        IF(flag==0) EXIT
+      ENDDO !i
     ENDIF
 
-    EXITS("BUBBLE_SORT_DP")
+    EXITS("Sorting_BubbleSortDP")
     RETURN
-999 ERRORSEXITS("BUBBLE_SORT_DP",ERR,ERROR)
+999 ERRORSEXITS("Sorting_BubbleSortDP",err,error)
     RETURN 1
-  END SUBROUTINE BUBBLE_SORT_DP
-  
-  !
-  !================================================================================================================================
-  !
-  
-  !#### Generic-subroutine: HEAP_SORT
-  !###  Description:
-  !###    Sorts a list into assending order using the heap sort method.
-  !###  Child-subroutines: HEAP_SORT_INTG,HEAP_SORT_SP,HEAP_SORT_DP
-
-  !
-  !================================================================================================================================
-  !
-  
-  SUBROUTINE HEAP_SORT_INTG(A,ERR,ERROR,*)
-  
-    !#### Subroutine: HEAP_SORT_INTG
-    !###  Description:
-    !###    HEAP_SORT_INTG performs a heap sort on an integer list
-    !###  Parent-function: HEAP_SORT
     
+  END SUBROUTINE Sorting_BubbleSortDP
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Sorts an integer list into assending order using the heap sort method.
+  SUBROUTINE Sorting_HeapSortIntg(a,err,error,*)
+  
     !Argument variables
-    INTEGER(INTG), INTENT(INOUT) :: A(:)
-    INTEGER(INTG), INTENT(OUT) :: ERR
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR
+    INTEGER(INTG), INTENT(INOUT) :: a(:) !<a(index). On entry the unsorted list of numbers. On exit, the sorted list of numbers in ascending order. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: I,IVALUE,J,L,VALUE
+    INTEGER(INTG) :: i,indexValue,j,k,VALUE
     
-    ENTERS("HEAP_SORT_INTG",ERR,ERROR,*999)
+    ENTERS("Sorting_HeapSortIntg",err,error,*999)
 
-    IF(SIZE(A,1)>1) THEN      
-      L=SIZE(A,1)/2+1
-      IVALUE=SIZE(A,1)
+    IF(SIZE(a,1)>1) THEN      
+      k=SIZE(a,1)/2+1
+      indexValue=SIZE(a,1)
       DO 
-        IF(L>1) THEN
-          L=L-1
-          VALUE=A(L)
+        IF(k>1) THEN
+          k=k-1
+          value=a(k)
         ELSE
-          VALUE=A(IVALUE)
-          A(IVALUE)=A(1)
-          IVALUE=IVALUE-1
-          IF(IVALUE==1) THEN
-            A(1)=VALUE
+          value=a(indexValue)
+          a(indexValue)=a(1)
+          indexValue=indexValue-1
+          IF(indexValue==1) THEN
+            a(1)=value
             EXIT
           ENDIF
         ENDIF
-        I=L
-        J=L+L
-        DO WHILE(J<=IVALUE)
-          IF(J<IVALUE) THEN
-            IF(A(J)<A(J+1)) J=J+1
+        i=k
+        j=k+k
+        DO WHILE(j<=indexValue)
+          IF(j<indexValue) THEN
+            IF(a(j)<a(j+1)) j=j+1
           ENDIF
-          IF(VALUE<A(J)) THEN
-            A(I)=A(J)
-            I=J
-            J=J+J
+          IF(value<a(j)) THEN
+            a(i)=a(j)
+            i=j
+            j=j+j
           ELSE
-            J=IVALUE+1
+            j=indexValue+1
           ENDIF
         ENDDO
-        A(I)=VALUE
+        a(i)=value
       ENDDO
     ENDIF
 
-    EXITS("HEAP_SORT_INTG")
+    EXITS("Sorting_HeapSortIntg")
     RETURN
-999 ERRORSEXITS("HEAP_SORT_INTG",ERR,ERROR)
+999 ERRORSEXITS("Sorting_HeapSortIntg",err,error)
     RETURN 1
-  END SUBROUTINE HEAP_SORT_INTG
+    
+  END SUBROUTINE Sorting_HeapSortIntg
   
   !
   !================================================================================================================================
   !
   
-  SUBROUTINE HEAP_SORT_SP(A,ERR,ERROR,*)
+  !>Sorts a single precision list into assending order using the heap sort method.
+  SUBROUTINE Sorting_HeapSortSP(a,err,error,*)
   
-    !#### Subroutine: HEAP_SORT_SP
-    !###  Description:
-    !###    HEAP_SORT_SP performs a heap sort on a single precision list
-    !###  Parent-function: HEAP_SORT
-    
     !Argument variables
-    REAL(SP), INTENT(INOUT) :: A(:)
-    INTEGER(INTG), INTENT(OUT) :: ERR
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR
+    REAL(SP), INTENT(INOUT) :: a(:) !<a(index). On entry the unsorted list of numbers. On exit, the sorted list of numbers in ascending order. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: I,IVALUE,J,L
-    REAL(SP) :: VALUE
+    INTEGER(INTG) :: i,indexValue,j,k
+    REAL(SP) :: value
     
-    ENTERS("HEAP_SORT_SP",ERR,ERROR,*999)
+    ENTERS("Sorting_HeapSortSP",err,error,*999)
 
-    IF(SIZE(A,1)>1) THEN      
-      L=SIZE(A,1)/2+1
-      IVALUE=SIZE(A,1)
+    IF(SIZE(a,1)>1) THEN      
+      k=SIZE(a,1)/2+1
+      indexValue=SIZE(a,1)
       DO 
-        IF(L>1) THEN
-          L=L-1
-          VALUE=A(L)
+        IF(k>1) THEN
+          k=k-1
+          value=a(k)
         ELSE
-          VALUE=A(IVALUE)
-          A(IVALUE)=A(1)
-          IVALUE=IVALUE-1
-          IF(IVALUE==1) THEN
-            A(1)=VALUE
+          value=a(indexValue)
+          a(indexValue)=a(1)
+          indexValue=indexValue-1
+          IF(indexValue==1) THEN
+            a(1)=value
             EXIT
           ENDIF
         ENDIF
-        I=L
-        J=L+L
-        DO WHILE(J<=IVALUE)
-          IF(J<IVALUE) THEN
-            IF(A(J)<A(J+1)) J=J+1
+        i=k
+        j=k+k
+        DO WHILE(j<=indexValue)
+          IF(j<indexValue) THEN
+            IF(a(j)<a(j+1)) j=j+1
           ENDIF
-          IF(VALUE<A(J)) THEN
-            A(I)=A(J)
-            I=J
-            J=J+J
+          IF(value<a(j)) THEN
+            a(i)=a(j)
+            i=j
+            j=j+j
           ELSE
-            J=IVALUE+1
+            j=indexValue+1
           ENDIF
         ENDDO
-        A(I)=VALUE
+        a(i)=value
       ENDDO
     ENDIF
 
-    EXITS("HEAP_SORT_SP")
+    EXITS("Sorting_HeapSortSP")
     RETURN
-999 ERRORSEXITS("HEAP_SORT_SP",ERR,ERROR)
+999 ERRORSEXITS("Sorting_HeapSortSP",err,error)
     RETURN 1
-  END SUBROUTINE HEAP_SORT_SP
+    
+  END SUBROUTINE Sorting_HeapSortSP
   
   !
   !================================================================================================================================
   !
   
-  SUBROUTINE HEAP_SORT_DP(A,ERR,ERROR,*)
+  !>Sorts a double precision list into assending order using the heap sort method.
+  SUBROUTINE Sorting_HeapSortDP(a,err,error,*)
   
-    !#### Subroutine: HEAP_SORT_DP
-    !###  Description:
-    !###    HEAP_SORT_DP performs a heap sort on a double precision list
-    !###  Parent-function: HEAP_SORT
-    
     !Argument variables
-    REAL(DP), INTENT(INOUT) :: A(:)
-    INTEGER(INTG), INTENT(OUT) :: ERR
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR
+    REAL(DP), INTENT(INOUT) :: a(:) !<a(index). On entry the unsorted list of numbers. On exit, the sorted list of numbers in ascending order. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: I,IVALUE,J,L
-    REAL(DP) :: VALUE
+    INTEGER(INTG) :: i,indexValue,j,k
+    REAL(DP) :: value
     
-    ENTERS("HEAP_SORT_DP",ERR,ERROR,*999)
+    ENTERS("Sorting_HeapSortDP",err,error,*999)
 
-    IF(SIZE(A,1)>1) THEN      
-      L=SIZE(A,1)/2+1
-      IVALUE=SIZE(A,1)
+    IF(SIZE(a,1)>1) THEN      
+      k=SIZE(a,1)/2+1
+      indexValue=SIZE(a,1)
       DO 
-        IF(L>1) THEN
-          L=L-1
-          VALUE=A(L)
+        IF(k>1) THEN
+          k=k-1
+          value=a(k)
         ELSE
-          VALUE=A(IVALUE)
-          A(IVALUE)=A(1)
-          IVALUE=IVALUE-1
-          IF(IVALUE==1) THEN
-            A(1)=VALUE
+          value=a(indexValue)
+          a(indexValue)=a(1)
+          indexValue=indexValue-1
+          IF(indexValue==1) THEN
+            a(1)=value
             EXIT
           ENDIF
         ENDIF
-        I=L
-        J=L+L
-        DO WHILE(J<=IVALUE)
-          IF(J<IVALUE) THEN
-            IF(A(J)<A(J+1)) J=J+1
+        i=k
+        j=k+k
+        DO WHILE(j<=indexValue)
+          IF(j<indexValue) THEN
+            IF(a(j)<a(j+1)) j=j+1
           ENDIF
-          IF(VALUE<A(J)) THEN
-            A(I)=A(J)
-            I=J
-            J=J+J
+          IF(value<a(j)) THEN
+            a(i)=a(j)
+            i=j
+            j=j+j
           ELSE
-            J=IVALUE+1
+            j=indexValue+1
           ENDIF
         ENDDO
-        A(I)=VALUE
+        a(i)=value
       ENDDO
     ENDIF
 
-    EXITS("HEAP_SORT_DP")
+    EXITS("Sorting_HeapSortDP")
     RETURN
-999 ERRORSEXITS("HEAP_SORT_DP",ERR,ERROR)
+999 ERRORSEXITS("Sorting_HeapSortDP",err,error)
     RETURN 1
-  END SUBROUTINE HEAP_SORT_DP
-  
-  !
-  !================================================================================================================================
-  !
-  
-  !#### Generic-subroutine: SHELL_SORT
-  !###  Description:
-  !###    Sorts a list into either assending or descending order using the shell sort method.
-  !###  Child-subroutines: SHELL_SORT_INTG,SHELL_SORT_SP,SHELL_SORT_DP
-
-  !
-  !================================================================================================================================
-  !
-  
-  SUBROUTINE SHELL_SORT_INTG(A,ERR,ERROR,*)
-  
-    !#### Subroutine: SHELL_SORT_INTG
-    !###  Description:
-    !###    SHELL_SORT_INTG performs a shell sort on an integer list
-    !###  Parent-function: SHELL_SORT
     
+  END SUBROUTINE Sorting_HeapSortDP
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Sorts an integer list into assending order using the shell sort method.
+  SUBROUTINE Sorting_ShellSortIntg(a,err,error,*)
+  
     !Argument variables
-    INTEGER(INTG), INTENT(INOUT) :: A(:)
-    INTEGER(INTG), INTENT(OUT) :: ERR
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR
+    INTEGER(INTG), INTENT(INOUT) :: a(:) !<a(index). On entry the unsorted list of numbers. On exit, the sorted list of numbers in ascending order. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: I,INC,J,VALUE
+    INTEGER(INTG) :: i,increment,j,value
     
-    ENTERS("SHELL_SORT_INTG",ERR,ERROR,*999)
+    ENTERS("Sorting_ShellSortIntg",err,error,*999)
 
-    INC=4
-    DO WHILE(INC<=SIZE(A,1))
-      INC=3*INC+1
+    increment=4
+    DO WHILE(increment<=SIZE(a,1))
+      increment=3*increment+1
     ENDDO
-    DO WHILE(INC>1)
-      INC=INC/3
-      DO i=INC+1,SIZE(A,1)
-        VALUE=A(i)
-        J=I
-        DO WHILE(A(J-INC)>VALUE)
-          A(J)=A(J-INC)
-          J=J-INC
-          IF(J<=INC) EXIT
+    DO WHILE(increment>1)
+      increment=increment/3
+      DO i=increment+1,SIZE(a,1)
+        value=a(i)
+        j=i
+        DO WHILE(a(j-increment)>value)
+          a(j)=a(j-increment)
+          j=j-increment
+          IF(j<=increment) EXIT
         ENDDO
-        A(J)=VALUE
+        a(j)=value
       ENDDO !i
     ENDDO
 
-    EXITS("SHELL_SORT_INTG")
+    EXITS("Sorting_ShellSortIntg")
     RETURN
-999 ERRORSEXITS("SHELL_SORT_INTG",ERR,ERROR)
+999 ERRORSEXITS("Sorting_ShellSortIntg",err,error)
     RETURN 1
-  END SUBROUTINE SHELL_SORT_INTG
+    
+  END SUBROUTINE Sorting_ShellSortIntg
   
   !
   !================================================================================================================================
   !
-  
-  SUBROUTINE SHELL_SORT_SP(A,ERR,ERROR,*)
-  
-    !#### Subroutine: SHELL_SORT_SP
-    !###  Description:
-    !###    SHELL_SORT_SP performs a shell sort on a single precision list
-    !###  Parent-function: SHELL_SORT
-    
-    !Argument variables
-    REAL(SP), INTENT(INOUT) :: A(:)
-    INTEGER(INTG), INTENT(OUT) :: ERR
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR
-    !Local variables
-    INTEGER(INTG) :: I,INC,J
-    REAL(SP) :: VALUE
-    
-    ENTERS("SHELL_SORT_SP",ERR,ERROR,*999)
 
-    INC=4
-    DO WHILE(INC<=SIZE(A,1))
-      INC=3*INC+1
+  !>Sorts a single precision list into assending order using the shell sort method.
+  SUBROUTINE Sorting_ShellSortSP(a,err,error,*)
+  
+    !Argument variables
+    REAL(SP), INTENT(INOUT) :: a(:) !<a(index). On entry the unsorted list of numbers. On exit, the sorted list of numbers in ascending order. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,increment,j
+    REAL(SP) :: value
+    
+    ENTERS("Sorting_ShellSortSP",err,error,*999)
+
+    increment=4
+    DO WHILE(increment<=SIZE(a,1))
+      increment=3*increment+1
     ENDDO
-    DO WHILE(INC>1)
-      INC=INC/3
-      DO i=INC+1,SIZE(A,1)
-        VALUE=A(i)
-        J=I
-        DO WHILE(A(J-INC)>VALUE)
-          A(J)=A(J-INC)
-          J=J-INC
-          IF(J<=INC) EXIT
+    DO WHILE(increment>1)
+      increment=increment/3
+      DO i=increment+1,SIZE(a,1)
+        value=a(i)
+        j=i
+        DO WHILE(a(j-increment)>value)
+          a(j)=a(j-increment)
+          j=j-increment
+          IF(j<=increment) EXIT
         ENDDO
-        A(J)=VALUE
+        a(j)=value
       ENDDO !i
     ENDDO
 
-    EXITS("SHELL_SORT_SP")
+    EXITS("Sorting_ShellSortSP")
     RETURN
-999 ERRORSEXITS("SHELL_SORT_SP",ERR,ERROR)
+999 ERRORSEXITS("Sorting_ShellSortSP",err,error)
     RETURN 1
-  END SUBROUTINE SHELL_SORT_SP
+    
+  END SUBROUTINE Sorting_ShellSortSP
   
   !
   !================================================================================================================================
   !
-  
-  SUBROUTINE SHELL_SORT_DP(A,ERR,ERROR,*)
-  
-    !#### Subroutine: SHELL_SORT_DP
-    !###  Description:
-    !###    SHELL_SORT_DP performs a shell sort on a double precision list
-    !###  Parent-function: SHELL_SORT
-    
-    !Argument variables
-    REAL(DP), INTENT(INOUT) :: A(:)
-    INTEGER(INTG), INTENT(OUT) :: ERR
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR
-    !Local variables
-    INTEGER(INTG) :: I,INC,J
-    REAL(DP) :: VALUE
-    
-    ENTERS("SHELL_SORT_DP",ERR,ERROR,*999)
 
-    INC=4
-    DO WHILE(INC<=SIZE(A,1))
-      INC=3*INC+1
+  !>Sorts a double precision list into assending order using the shell sort method.
+  SUBROUTINE Sorting_ShellSortDP(a,err,error,*)
+  
+    !Argument variables
+    REAL(DP), INTENT(INOUT) :: a(:) !<a(index). On entry the unsorted list of numbers. On exit, the sorted list of numbers in ascending order. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,increment,j
+    REAL(DP) :: value
+    
+    ENTERS("Sorting_ShellSortDP",err,error,*999)
+
+    increment=4
+    DO WHILE(increment<=SIZE(a,1))
+      increment=3*increment+1
     ENDDO
-    DO WHILE(INC>1)
-      INC=INC/3
-      DO i=INC+1,SIZE(A,1)
-        VALUE=A(i)
-        J=I
-        DO WHILE(A(J-INC)>VALUE)
-          A(J)=A(J-INC)
-          J=J-INC
-          IF(J<=INC) EXIT
+    DO WHILE(increment>1)
+      increment=increment/3
+      DO i=increment+1,SIZE(a,1)
+        value=a(i)
+        j=i
+        DO WHILE(a(j-increment)>value)
+          a(j)=a(j-increment)
+          j=j-increment
+          IF(j<=increment) EXIT
         ENDDO
-        A(J)=VALUE
+        a(j)=value
       ENDDO !i
     ENDDO
 
-    EXITS("SHELL_SORT_DP")
+    EXITS("Sorting_ShellSortDP")
     RETURN
-999 ERRORSEXITS("SHELL_SORT_DP",ERR,ERROR)
+999 ERRORSEXITS("Sorting_ShellSortDP",err,error)
     RETURN 1
-  END SUBROUTINE SHELL_SORT_DP
+    
+  END SUBROUTINE Sorting_ShellSortDP
   
   !
   !================================================================================================================================
   !
   
-END MODULE SORTING
+END MODULE Sorting
