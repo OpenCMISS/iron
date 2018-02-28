@@ -45,6 +45,7 @@
 MODULE INTERFACE_ROUTINES
 
   USE BaseRoutines
+  USE BasisRoutines
   USE DataPointRoutines
   USE DataProjectionRoutines
   USE FIELD_ROUTINES
@@ -1025,78 +1026,150 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    REAL(DP) :: xi,xiDifference
-    INTEGER(INTG) :: constantXiIdx,coupledMeshIdx,interfaceElementIdx,coupledMeshXiIdx,numberOfInterfaceElementNodes, &
-      & numberOfInterfaceMeshXi,localNodeIdx
+    REAL(DP) :: areaCoordinates(4,4),xi,xiCoordinates(4,4),xiDifference
+    INTEGER(INTG) :: constantXiIdx,coupledMeshIdx,coupledMeshXiIdx,interfaceElementIdx,localNodeIdx,numberOfInterfaceElementNodes, &
+      & numberOfInterfaceMeshXi,numberOfMeshXi,numberOfMeshXiCoordinates,xiCoordIdx,zeroXiCoordIdx
     LOGICAL :: differentXi
+    TYPE(BASIS_TYPE), POINTER :: interfaceBasis
     TYPE(INTERFACE_ELEMENT_CONNECTIVITY_TYPE), POINTER :: elementConnectivity
+    TYPE(MESH_TYPE), POINTER :: coupledMesh, interfaceMesh
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("InterfaceMeshConnectivity_ConnectedLinesFacesCalculate",err,error,*999)
 
     IF(.NOT.ASSOCIATED(interfaceMeshConnectivity)) CALL FlagError("Interface mesh connectivity is not associated.",err,error,*999)
+
+    interfaceBasis=>interfaceMeshConnectivity%basis
+    IF(.NOT.ASSOCIATED(interfaceBasis)) CALL FlagError("Interface basis is not associated.",err,error,*999)
+    interfaceMesh=>interfaceMeshConnectivity%INTERFACE_MESH
+    numberOfInterfaceElementNodes=interfaceBasis%NUMBER_OF_NODES
+    numberOfInterfaceMeshXi=interfaceMesh%NUMBER_OF_DIMENSIONS     
     
-    DO coupledMeshIdx=1,interfaceMeshConnectivity%NUMBER_OF_COUPLED_MESHES
-      DO interfaceElementIdx=1,interfaceMeshConnectivity%NUMBER_OF_INTERFACE_ELEMENTS
-        elementConnectivity=>interfaceMeshConnectivity%ELEMENT_CONNECTIVITY(interfaceElementIdx,coupledMeshIdx)
-        numberOfInterfaceElementNodes=interfaceMeshConnectivity%BASIS%NUMBER_OF_NODES
-        numberOfInterfaceMeshXi=interfaceMeshConnectivity%INTERFACE_MESH%NUMBER_OF_DIMENSIONS
-        SELECTCASE(numberOfInterfaceMeshXi)
-        CASE(1) !Lines
-          DO coupledMeshXiIdx=1,interfaceMeshConnectivity%INTERFACE%COUPLED_MESHES(coupledMeshIdx)%PTR%NUMBER_OF_DIMENSIONS
-            ! Calculate difference between first node and last node of an element
-            xiDifference=elementConnectivity%xi(coupledMeshXiIdx,1,1)- &
-              & elementConnectivity%xi(coupledMeshXiIdx,1,numberOfInterfaceElementNodes)
-            IF(ABS(xiDifference)<ZERO_TOLERANCE) THEN
-              IF(ABS(elementConnectivity%xi(coupledMeshXiIdx,1,numberOfInterfaceElementNodes))<ZERO_TOLERANCE) THEN
-                elementConnectivity%CONNECTED_LINE=3-(coupledMeshXiIdx-1)*2
+!!\TODO: We need to check the basis in order to interpret the xi and decided to use area coordinates of normal coordinates. This really should be via the coupled mesh element being considered. For know assume either a LHTP basis or a simplex basis based on the interface basis. 
+    SELECT CASE(interfaceBasis%TYPE)
+    CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
+      DO coupledMeshIdx=1,interfaceMeshConnectivity%NUMBER_OF_COUPLED_MESHES
+        coupledMesh=>interfaceMeshConnectivity%INTERFACE%COUPLED_MESHES(coupledMeshIdx)%ptr
+        IF(.NOT.ASSOCIATED(coupledMesh)) THEN
+          localError="The interface coupled mesh for coupled mesh index "// &
+            & TRIM(NumberToVString(coupledMeshIdx,"*",err,error))//" is not associated."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        numberOfMeshXi=coupledMesh%NUMBER_OF_DIMENSIONS
+        DO interfaceElementIdx=1,interfaceMeshConnectivity%NUMBER_OF_INTERFACE_ELEMENTS
+          elementConnectivity=>interfaceMeshConnectivity%ELEMENT_CONNECTIVITY(interfaceElementIdx,coupledMeshIdx)
+          SELECTCASE(numberOfInterfaceMeshXi)
+          CASE(1) !Lines
+            DO coupledMeshXiIdx=1,numberOfMeshXi
+              ! Calculate difference between first node and last node of an element
+              xiDifference=elementConnectivity%xi(coupledMeshXiIdx,1,1)- &
+                & elementConnectivity%xi(coupledMeshXiIdx,1,numberOfInterfaceElementNodes)              
+              IF(ABS(xiDifference)<ZERO_TOLERANCE) THEN
+                IF(ABS(elementConnectivity%xi(coupledMeshXiIdx,1,numberOfInterfaceElementNodes))<ZERO_TOLERANCE) THEN
+                  elementConnectivity%CONNECTED_LINE=3-(coupledMeshXiIdx-1)*2
+                ELSE
+                  elementConnectivity%CONNECTED_LINE=4-(coupledMeshXiIdx-1)*2
+                ENDIF
+              ENDIF
+            ENDDO
+          CASE(2) !Faces
+            constantXiIdx=0
+            DO coupledMeshXiIdx=1,numberOfMeshXi
+              xi=elementConnectivity%xi(coupledMeshXiIdx,1,1)
+              differentXi=.FALSE.
+              DO localNodeIdx=2,numberOfInterfaceElementNodes
+                IF(ABS(elementConnectivity%xi(coupledMeshXiIdx,1,localNodeIdx)-xi)>ZERO_TOLERANCE) THEN 
+                  differentXi=.TRUE.
+                  EXIT
+                ENDIF
+              ENDDO !localNodeIdx
+              IF(.NOT.differentXi) THEN
+                IF(constantXiIdx==0) THEN
+                  constantXiIdx=coupledMeshXiIdx
+                ELSE
+                  localError="Invalid xi connectivity. Xi directions "//TRIM(NumberToVString(coupledMeshXiIdx,"*",err,error))// &
+                    & " and "//TRIM(NumberToVString(constantXiIdx,"*",err,error))// &
+                    & " are both constant acrosss all interface nodes for coupled mesh number "// &
+                    & TRIM(NumberToVString(coupledMeshIdx,"*",err,error))//"."
+                  CALL FlagError(localError,err,error,*999)
+                ENDIF
+              ENDIF
+            ENDDO !coupledMeshXiIdx
+            IF(constantXiIdx==0) THEN
+              localError="Invalid xi connectivity. There is no xi direction that is constant across all interface nodes "// &
+                & "for coupled mesh number "//TRIM(NumberToVString(coupledMeshIdx,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            ELSE
+              IF(ABS(elementConnectivity%xi(constantXiIdx,1,1))<ZERO_TOLERANCE) THEN
+                elementConnectivity%CONNECTED_FACE=constantXiIdx
               ELSE
-                elementConnectivity%CONNECTED_LINE=4-(coupledMeshXiIdx-1)*2
+                elementConnectivity%CONNECTED_FACE=constantXiIdx+3
               ENDIF
             ENDIF
-          ENDDO
-        CASE(2) !Faces
-          constantXiIdx=0
-          DO coupledMeshXiIdx=1,interfaceMeshConnectivity%INTERFACE%COUPLED_MESHES(coupledMeshIdx)%PTR%NUMBER_OF_DIMENSIONS
-            xi=elementConnectivity%xi(coupledMeshXiIdx,1,1)
-            differentXi=.FALSE.
-            DO localNodeIdx=2,numberOfInterfaceElementNodes
-              IF(ABS(elementConnectivity%xi(coupledMeshXiIdx,1,localNodeIdx)-xi)>ZERO_TOLERANCE) THEN 
-                differentXi=.TRUE.
-                EXIT
-              ENDIF
-            ENDDO !localNodeIdx
-            IF(.NOT.differentXi) THEN
-              IF(constantXiIdx==0) THEN
-                constantXiIdx=coupledMeshXiIdx
+          CASE DEFAULT 
+            localError="The number of interface mesh dimension of "// &
+              & TRIM(NUMBER_TO_VSTRING(numberOfInterfaceMeshXi,"*",err,error))//" is invalid"
+            CALL FlagError(localError,err,error,*999)
+          ENDSELECT
+        ENDDO
+      ENDDO
+    CASE(BASIS_SIMPLEX_TYPE)
+      DO coupledMeshIdx=1,interfaceMeshConnectivity%NUMBER_OF_COUPLED_MESHES
+        coupledMesh=>interfaceMeshConnectivity%INTERFACE%COUPLED_MESHES(coupledMeshIdx)%ptr
+        IF(.NOT.ASSOCIATED(coupledMesh)) THEN
+          localError="The interface coupled mesh for coupled mesh index "// &
+            & TRIM(NumberToVString(coupledMeshIdx,"*",err,error))//" is not associated."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        numberOfMeshXi=coupledMesh%NUMBER_OF_DIMENSIONS
+        numberOfMeshXiCoordinates=numberOfMeshXi+1
+        DO interfaceElementIdx=1,interfaceMeshConnectivity%NUMBER_OF_INTERFACE_ELEMENTS
+          elementConnectivity=>interfaceMeshConnectivity%ELEMENT_CONNECTIVITY(interfaceElementIdx,coupledMeshIdx)
+          zeroXiCoordIdx=0
+          DO localNodeIdx=1,numberOfInterfaceElementNodes
+            xiCoordinates(1:numberOfMeshXi,localNodeIdx)=elementConnectivity%xi(1:numberOfMeshXi,1,localNodeIdx)
+            CALL Basis_XiToAreaCoordinates(xiCoordinates(1:numberOfMeshXi,localNodeIdx), &
+              & areaCoordinates(1:numberOfMeshXiCoordinates,localNodeIdx),err,error,*999)
+          ENDDO !localNodeIdx
+          DO xiCoordIdx=1,numberOfMeshXiCoordinates
+            IF(ALL(areaCoordinates(xiCoordIdx,1:numberOfInterfaceElementNodes)<ZERO_TOLERANCE)) THEN
+              IF(zeroXiCoordIdx==0) THEN
+                zeroXiCoordIdx=xiCoordIdx
               ELSE
-                localError="Invalid xi connectivity. Xi directions "//TRIM(NumberToVString(coupledMeshXiIdx,"*",err,error))// &
-                  & " and "//TRIM(NumberToVString(constantXiIdx,"*",err,error))// &
-                  & " are both constant acrosss all interface nodes for coupled mesh number "// &
+                localError="Invalid xi connectivity. Xi directions "//TRIM(NumberToVString(xiCoordIdx,"*",err,error))// &
+                  & " and "//TRIM(NumberToVString(zeroXiCoordIdx,"*",err,error))// &
+                  & " both have a zero area coordinate all interface nodes for interface element number "// &
+                  & TRIM(NumberToVString(interfaceElementIdx,"*",err,error))//" and coupled mesh number "// &
                   & TRIM(NumberToVString(coupledMeshIdx,"*",err,error))//"."
                 CALL FlagError(localError,err,error,*999)
               ENDIF
             ENDIF
-          ENDDO !coupledMeshXiIdx
-          IF(constantXiIdx==0) THEN
-            localError="Invalid xi connectivity. There is no xi direction that is constant across all interface nodes "// &
-              & "for coupled mesh number "//TRIM(NumberToVString(coupledMeshIdx,"*",err,error))//"."
+          ENDDO !xiCoordIdx
+          IF(zeroXiCoordIdx==0) THEN
+            localError="Invalid xi connectivity. There are no xi directions that have a zero area coordinate "// &
+              & "across all interface nodes for interface element number "// &
+              & TRIM(NumberToVString(interfaceElementIdx,"*",err,error))//" and coupled mesh number "// &
+              & TRIM(NumberToVString(coupledMeshIdx,"*",err,error))//"."
             CALL FlagError(localError,err,error,*999)
-          ELSE
-            IF(ABS(elementConnectivity%xi(constantXiIdx,1,1))<ZERO_TOLERANCE) THEN
-              elementConnectivity%CONNECTED_FACE=constantXiIdx
-            ELSE
-              elementConnectivity%CONNECTED_FACE=constantXiIdx+3
-            ENDIF
           ENDIF
-        CASE DEFAULT 
-          localError="The number of interface mesh dimension of "// &
-            & TRIM(NUMBER_TO_VSTRING(numberOfInterfaceMeshXi,"*",err,error))//" is invalid"
-          CALL FlagError(localError,err,error,*999)
-        ENDSELECT
-      ENDDO
-    ENDDO
-    
+          SELECTCASE(numberOfInterfaceMeshXi)
+          CASE(1) !Lines
+            elementConnectivity%CONNECTED_LINE=zeroXiCoordIdx
+          CASE(2) !Faces
+            elementConnectivity%CONNECTED_FACE=zeroXiCoordIdx
+          CASE DEFAULT
+            localError="The number of interface mesh dimension of "// &
+              & TRIM(NUMBER_TO_VSTRING(numberOfInterfaceMeshXi,"*",err,error))//" is invalid"
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        ENDDO !interfaceElementIdx
+      ENDDO !coupledMeshIdx
+    CASE DEFAULT
+      localError="The interface basis type of "//TRIM(NumberToVString(interfaceBasis%type,"*",err,error))// &
+        & " is invalid or not implemented."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+        
     EXITS("InterfaceMeshConnectivity_ConnectedLinesFacesCalculate")
     RETURN
 999 ERRORS("InterfaceMeshConnectivity_ConnectedLinesFacesCalculate",err,error)

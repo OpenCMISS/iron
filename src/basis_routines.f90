@@ -270,21 +270,13 @@ MODULE BasisRoutines
     MODULE PROCEDURE BASIS_NUMBER_OF_LOCAL_NODES_GET
   END INTERFACE Basis_NumberOfLocalNodesGet
 
-  INTERFACE Basis_NumberOfXiGet
-    MODULE PROCEDURE BASIS_NUMBER_OF_XI_GET
-  END INTERFACE Basis_NumberOfXiGet
+  INTERFACE BASIS_NUMBER_OF_XI_GET
+    MODULE PROCEDURE Basis_NumberOfXiGet
+  END INTERFACE BASIS_NUMBER_OF_XI_GET
   
-  !>Sets/changes the number of Xi directions for a basis
   INTERFACE BASIS_NUMBER_OF_XI_SET
-    MODULE PROCEDURE BASIS_NUMBER_OF_XI_SET_NUMBER
-    MODULE PROCEDURE BASIS_NUMBER_OF_XI_SET_PTR
+    MODULE PROCEDURE Basis_NumberOfXiSet
   END INTERFACE BASIS_NUMBER_OF_XI_SET
-
-  !>Sets/changes the number of Xi directions for a basis
-  INTERFACE Basis_NumberOfXiSet
-    MODULE PROCEDURE BASIS_NUMBER_OF_XI_SET_NUMBER
-    MODULE PROCEDURE BASIS_NUMBER_OF_XI_SET_PTR
-  END INTERFACE Basis_NumberOfXiSet
 
   INTERFACE Basis_QuadratureDestroy
     MODULE PROCEDURE BASIS_QUADRATURE_DESTROY
@@ -399,6 +391,8 @@ MODULE BasisRoutines
 
   PUBLIC BASIS_NO_BOUNDARY_XI,BASIS_LINE_BOUNDARY_XI,BASIS_FACE_BOUNDARY_XI
 
+  PUBLIC Basis_AreaToXiCoordinates
+
   PUBLIC Basis_BoundaryXiToXi,Basis_XiToBoundaryXi
   
   PUBLIC BASIS_COLLAPSED_XI_SET
@@ -488,6 +482,8 @@ MODULE BasisRoutines
 
   PUBLIC Basis_TypeGet
 
+  PUBLIC Basis_XiToAreaCoordinates
+
 CONTAINS
 
   !
@@ -541,6 +537,54 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Bases_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Converts area coordinates to xi coordinates. \see BASIS_ROUTINES::Basis_XiToAreaCoordinates
+  SUBROUTINE Basis_AreaToXiCoordinates(areaCoordinates,xiCoordinates,err,error,*)
+    
+    !Argument variables
+    REAL(DP), INTENT(IN) :: areaCoordinates(:) !<The area coordinates to convert
+    REAL(DP), INTENT(OUT) :: xiCoordinates(:) !<On return, the xi coordinates corresponding to the area coordinates
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("Basis_AreaToXiCoordinates",err,error,*999)
+
+    IF(SIZE(areaCoordinates,1)/=(SIZE(xiCoordinates,1)+1)) THEN
+      localError="Invalid number of coordinates. The number of area coordinates of "// &
+        & TRIM(NumberToVString(SIZE(areaCoordinates,1),"*",err,error))// &
+        & " should be equal to the number of xi coordinates of "// &
+        & TRIM(NumberToVString(SIZE(xiCoordinates,1),"*",err,error))//" plus one."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    SELECT CASE(SIZE(xiCoordinates,1))
+    CASE(1)
+      xiCoordinates(1)=1.0_DP-areaCoordinates(1)
+    CASE(2)
+      xiCoordinates(1)=1.0_DP-areaCoordinates(1)
+      xiCoordinates(2)=1.0_DP-areaCoordinates(2)
+    CASE(3)
+      xiCoordinates(1)=1.0_DP-areaCoordinates(1)
+      xiCoordinates(2)=1.0_DP-areaCoordinates(2)
+      xiCoordinates(3)=1.0_DP-areaCoordinates(3)
+    CASE DEFAULT
+      localError="The number of xi coordiantes of "//TRIM(NumberToVString(SIZE(xiCoordinates,1),"*",err,error))// &
+        & " is invalid. The number must be >= 1 and <=3."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("Basis_AreaToXiCoordinates")
+    RETURN
+999 ERRORSEXITS("Basis_AreaToXiCoordinates",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_AreaToXiCoordinates
 
   !
   !================================================================================================================================
@@ -938,8 +982,7 @@ CONTAINS
           IF(ERR/=0) GOTO 999
         CASE(BASIS_SIMPLEX_TYPE)
           !Create the area coordinates from the xi coordinates
-          XIL(1:SIZE(XI,1))=1.0_DP-XI
-          XIL(SIZE(XI,1)+1)=SUM(XI)-(SIZE(XI,1)-1.0_DP)
+          CALL Basis_XiToAreaCoordinates(XI(1:SIZE(XI,1)),XIL(1:SIZE(XI,1)+1),err,error,*999)
           nn=BASIS%ELEMENT_PARAMETER_INDEX_INV(1,ELEMENT_PARAMETER_INDEX)
           BASIS_EVALUATE_XI_DP=BASIS_SIMPLEX_BASIS_EVALUATE(BASIS,nn,PARTIAL_DERIV_INDEX,XIL,err,error)
           IF(ERR/=0) GOTO 999
@@ -2216,8 +2259,7 @@ CONTAINS
         IF(ERR/=0) GOTO 999
       CASE(BASIS_SIMPLEX_TYPE)
         !Create the area coordinates from the xi coordinates
-        XIL(1:SIZE(XI,1))=1.0_DP-XI
-        XIL(SIZE(XI,1)+1)=SUM(XI)-(SIZE(XI,1)-1.0_DP)
+        CALL Basis_XiToAreaCoordinates(XI(1:SIZE(XI,1)),XIL(1:SIZE(XI,1)+1),err,error,*999)
         ns=0
         DO nn=1,BASIS%NUMBER_OF_NODES
           ns=ns+1
@@ -3593,179 +3635,96 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Gets the number of xi directions for a basis. \see OpenCMISS::Iron::cmfe_BasisNumberOfXiGet
-  SUBROUTINE BASIS_NUMBER_OF_XI_GET(BASIS,NUMBER_OF_XI,err,error,*)
+  !>Gets the number of xi directions for a basis. \see OpenCMISS::Iron::cmfe_Basis_NumberOfXiGet
+  SUBROUTINE Basis_NumberOfXiGet(basis,numberOfXi,err,error,*)
 
     !Argument variables
-    TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis function to change
-    INTEGER(INTG), INTENT(OUT) :: NUMBER_OF_XI !<On return, the number of Xi directions to get.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(BASIS_TYPE), POINTER :: basis !<A pointer to the basis function to get the number of xi for
+    INTEGER(INTG), INTENT(OUT) :: numberOfXi !<On return, the number of Xi directions for the specified basis.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     
-    ENTERS("BASIS_NUMBER_OF_XI_GET",err,error,*999)
+    ENTERS("Basis_NumberOfXiGet",err,error,*999)
 
-    IF(ASSOCIATED(BASIS)) THEN
-      IF(BASIS%BASIS_FINISHED) THEN
-        NUMBER_OF_XI=BASIS%NUMBER_OF_XI
-      ELSE
-        CALL FlagError("Basis has not been finished.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Basis is not associated.",err,error,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(.NOT.basis%BASIS_FINISHED) CALL FlagError("Basis has not been finished.",err,error,*999)
     
-    EXITS("BASIS_NUMBER_OF_XI_GET")
+    numberOfXi=basis%NUMBER_OF_XI
+   
+    EXITS("Basis_NumberOfXiGet")
     RETURN
-999 ERRORSEXITS("BASIS_NUMBER_OF_XI_GET",err,error)
-    RETURN
-  END SUBROUTINE BASIS_NUMBER_OF_XI_GET 
+999 ERRORSEXITS("Basis_NumberOfXiGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_NumberOfXiGet
 
   !
   !================================================================================================================================
   !
 
-  !>Sets/changes the number of xi directions where the basis is identified by user number.
-  SUBROUTINE BASIS_NUMBER_OF_XI_SET_NUMBER(USER_NUMBER,NUMBER_OF_XI,err,error,*)
+  !>Sets/changes the number of xi directions for a basis. \see OpenCMISS::Iron::cmfe_Basis_NumberOfXiSet
+  SUBROUTINE Basis_NumberOfXiSet(basis,numberOfXi,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the basis
-    INTEGER(INTG), INTENT(IN) :: NUMBER_OF_XI !<The number of Xi directions to be set.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(BASIS_TYPE), POINTER :: basis !<A pointer to the basis function to set the number of xi for
+    INTEGER(INTG), INTENT(IN) :: numberOfXi !<The number of Xi directions to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(BASIS_TYPE), POINTER :: BASIS
+    INTEGER(INTG), ALLOCATABLE :: newCollapsedXi(:),newInterpolationXi(:),newNumberOfGaussXi(:)
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("BASIS_NUMBER_OF_XI_SET_NUMBER",err,error,*999)
+    ENTERS("Basis_NumberOfXiSet",err,error,*999)
 
-    CALL Basis_UserNumberFind(USER_NUMBER,BASIS,err,error,*999)
-    CALL BASIS_NUMBER_OF_XI_SET(BASIS,NUMBER_OF_XI,err,error,*999)
-
-    EXITS("BASIS_NUMBER_OF_XI_SET_NUMBER")
-    RETURN
-999 ERRORSEXITS("BASIS_NUMBER_OF_XI_SET_NUMBER",err,error)
-    RETURN 1
-  END SUBROUTINE BASIS_NUMBER_OF_XI_SET_NUMBER
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Sets/changes the number of xi directions for a basis identified by a pointer. \see OpenCMISS::Iron::cmfe_BasisNumberOfXiSet
-  SUBROUTINE BASIS_NUMBER_OF_XI_SET_PTR(BASIS,NUMBER_OF_XI,err,error,*)
-
-    !Argument variables
-    TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis function to change
-    INTEGER(INTG), INTENT(IN) :: NUMBER_OF_XI !<The number of Xi directions to set.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    INTEGER(INTG) :: OLD_INTERPOLATION_XI(3),OLD_NUMBER_OF_GAUSS_XI(3),OLD_COLLAPSED_XI(3)
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-    
-    ENTERS("BASIS_NUMBER_OF_XI_SET_PTR",err,error,*999)
-
-    IF(ASSOCIATED(BASIS)) THEN
-      IF(BASIS%BASIS_FINISHED) THEN
-        CALL FlagError("Basis has been finished",err,error,*999)
-      ELSE
-        SELECT CASE(BASIS%TYPE)
-        CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
-          IF(NUMBER_OF_XI>0.AND.NUMBER_OF_XI<4) THEN
-            IF(BASIS%NUMBER_OF_XI/=NUMBER_OF_XI) THEN
-              !Reallocate the basis information arrays that depend on the number of xi directions
-              OLD_INTERPOLATION_XI=BASIS%INTERPOLATION_XI
-              OLD_COLLAPSED_XI=BASIS%COLLAPSED_XI
-              DEALLOCATE(BASIS%INTERPOLATION_XI)
-              DEALLOCATE(BASIS%COLLAPSED_XI)
-              ALLOCATE(BASIS%INTERPOLATION_XI(NUMBER_OF_XI),STAT=ERR)
-              IF(ERR/=0) CALL FlagError("Could not allocate interpolation type",err,error,*999)
-              ALLOCATE(BASIS%COLLAPSED_XI(NUMBER_OF_XI),STAT=ERR)
-              IF(ERR/=0) CALL FlagError("Could not allocate collapsed xi",err,error,*999)
-              IF(NUMBER_OF_XI>BASIS%NUMBER_OF_XI) THEN
-                BASIS%INTERPOLATION_XI(1:BASIS%NUMBER_OF_XI)=OLD_INTERPOLATION_XI(1:BASIS%NUMBER_OF_XI)
-                BASIS%INTERPOLATION_XI(BASIS%NUMBER_OF_XI+1:NUMBER_OF_XI)=OLD_INTERPOLATION_XI(1)
-                BASIS%COLLAPSED_XI(1:BASIS%NUMBER_OF_XI)=OLD_COLLAPSED_XI(1:BASIS%NUMBER_OF_XI)
-                BASIS%COLLAPSED_XI(BASIS%NUMBER_OF_XI+1:NUMBER_OF_XI)=OLD_COLLAPSED_XI(1)
-              ELSE
-                BASIS%INTERPOLATION_XI(1:NUMBER_OF_XI)=OLD_INTERPOLATION_XI(1:NUMBER_OF_XI)
-                BASIS%COLLAPSED_XI(1:NUMBER_OF_XI)=OLD_COLLAPSED_XI(1:NUMBER_OF_XI)
-              ENDIF
-              
-              IF(ASSOCIATED(BASIS%QUADRATURE%BASIS)) THEN
-                OLD_NUMBER_OF_GAUSS_XI=BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI
-                DEALLOCATE(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI)
-                ALLOCATE(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(NUMBER_OF_XI),STAT=ERR)
-                IF(ERR/=0) CALL FlagError("Could not allocate number of Gauss xi",err,error,*999)
-                IF(NUMBER_OF_XI>BASIS%NUMBER_OF_XI) THEN
-                  BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(1:BASIS%NUMBER_OF_XI)=OLD_NUMBER_OF_GAUSS_XI(1:BASIS%NUMBER_OF_XI)
-                  BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(BASIS%NUMBER_OF_XI+1:NUMBER_OF_XI)=OLD_NUMBER_OF_GAUSS_XI(1)
-                ELSE
-                  BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(1:NUMBER_OF_XI)=OLD_NUMBER_OF_GAUSS_XI(1:NUMBER_OF_XI)
-                ENDIF
-              ENDIF
-              BASIS%NUMBER_OF_XI=NUMBER_OF_XI
-            ENDIF
-          ELSE
-            LOCAL_ERROR="Invalid number of xi directions specified ("// &
-              & TRIM(NumberToVString(NUMBER_OF_XI,"*",err,error))// &
-              & ") for a Lagrange-Hermite basis. You must specify between 1 and 3 xi directions"
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          ENDIF
-        CASE(BASIS_SIMPLEX_TYPE)
-          IF(NUMBER_OF_XI>1.AND.NUMBER_OF_XI<4) THEN
-            IF(BASIS%NUMBER_OF_XI/=NUMBER_OF_XI) THEN
-              !Reallocate the basis information arrays that depend on the number of xi directions
-              OLD_INTERPOLATION_XI=BASIS%INTERPOLATION_XI
-              OLD_COLLAPSED_XI=BASIS%COLLAPSED_XI
-              DEALLOCATE(BASIS%INTERPOLATION_XI)
-              DEALLOCATE(BASIS%COLLAPSED_XI)
-              ALLOCATE(BASIS%INTERPOLATION_XI(NUMBER_OF_XI),STAT=ERR)
-              IF(ERR/=0) CALL FlagError("Could not allocate interpolation type",err,error,*999)
-              ALLOCATE(BASIS%COLLAPSED_XI(NUMBER_OF_XI),STAT=ERR)
-              IF(ERR/=0) CALL FlagError("Could not allocate collapsed xi.",err,error,*999)
-              IF(NUMBER_OF_XI>BASIS%NUMBER_OF_XI) THEN
-                BASIS%INTERPOLATION_XI(1:BASIS%NUMBER_OF_XI)=OLD_INTERPOLATION_XI(1:BASIS%NUMBER_OF_XI)
-                BASIS%INTERPOLATION_XI(BASIS%NUMBER_OF_XI+1:NUMBER_OF_XI)=OLD_INTERPOLATION_XI(1)
-                BASIS%COLLAPSED_XI(1:BASIS%NUMBER_OF_XI)=OLD_COLLAPSED_XI(1:BASIS%NUMBER_OF_XI)
-                BASIS%COLLAPSED_XI(BASIS%NUMBER_OF_XI+1:NUMBER_OF_XI)=OLD_COLLAPSED_XI(1)
-              ELSE
-                BASIS%INTERPOLATION_XI(1:NUMBER_OF_XI)=OLD_INTERPOLATION_XI(1:NUMBER_OF_XI)
-                BASIS%COLLAPSED_XI(1:NUMBER_OF_XI)=OLD_COLLAPSED_XI(1:NUMBER_OF_XI)
-              ENDIF              
-              IF(ASSOCIATED(BASIS%QUADRATURE%BASIS)) THEN
-                OLD_NUMBER_OF_GAUSS_XI=BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI
-                DEALLOCATE(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI)
-                ALLOCATE(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(NUMBER_OF_XI),STAT=ERR)
-                IF(ERR/=0) CALL FlagError("Could not allocate number of Gauss xi",err,error,*999)
-                IF(NUMBER_OF_XI>BASIS%NUMBER_OF_XI) THEN
-                  BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(1:BASIS%NUMBER_OF_XI)=OLD_NUMBER_OF_GAUSS_XI(1:BASIS%NUMBER_OF_XI)
-                  BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(BASIS%NUMBER_OF_XI+1:NUMBER_OF_XI)=OLD_NUMBER_OF_GAUSS_XI(1)
-                ELSE
-                  BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(1:NUMBER_OF_XI)=OLD_NUMBER_OF_GAUSS_XI(1:NUMBER_OF_XI)
-                ENDIF
-              ENDIF
-              BASIS%NUMBER_OF_XI=NUMBER_OF_XI
-            ENDIF
-          ELSE
-            LOCAL_ERROR="Invalid number of xi directions specified ("// &
-              & TRIM(NumberToVString(NUMBER_OF_XI,"*",err,error))// &
-              & ") for a simplex basis. You must specify between 2 and 3 xi directions"
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          ENDIF
-        CASE DEFAULT
-          CALL FlagError("Basis type invalid or not implemented",err,error,*999)
-        END SELECT
-      ENDIF
-    ELSE
-      CALL FlagError("Basis is not associated",err,error,*999)
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(basis%BASIS_FINISHED) CALL FlagError("Basis has already been finished.",err,error,*999)
+    IF(numberOfXi<1.OR.numberOfXi>3) THEN
+      localError="The specified number of xi directions of "//TRIM(NumberToVString(numberOfXi,"*",err,error))// &
+        & " is invalid. The number of xi directions must be >= 1 and <=3."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    EXITS("BASIS_NUMBER_OF_XI_SET_PTR")
+    IF(basis%NUMBER_OF_XI/=numberOfXi) THEN     
+      !Reallocate the basis information arrays that depend on the number of xi directions
+      ALLOCATE(newInterpolationXi(numberOfXi),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate new interpolation xi.",err,error,*999)
+      ALLOCATE(newCollapsedXi(numberOfXi),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate new COLLAPSED xi.",err,error,*999)
+      IF(numberOfXi>basis%NUMBER_OF_XI) THEN
+        newInterpolationXi(1:basis%NUMBER_OF_XI)=basis%INTERPOLATION_XI(1:basis%NUMBER_OF_XI)
+        newInterpolationXi(basis%NUMBER_OF_XI+1:numberOfXi)=basis%INTERPOLATION_XI(1)
+        newCollapsedXi(1:basis%NUMBER_OF_XI)=basis%COLLAPSED_XI(1:basis%NUMBER_OF_XI)
+        newCollapsedXi(basis%NUMBER_OF_XI+1:numberOfXi)=basis%COLLAPSED_XI(1)
+      ELSE
+        newInterpolationXi(1:numberOfXi)=basis%INTERPOLATION_XI(1:numberOfXi)
+        newCollapsedXi(1:numberOfXi)=basis%COLLAPSED_Xi(1:numberOfXi)
+      ENDIF
+      CALL MOVE_ALLOC(newInterpolationXi,basis%INTERPOLATION_XI)
+      CALL MOVE_ALLOC(newCollapsedXi,basis%COLLAPSED_XI)
+      IF(ASSOCIATED(basis%quadrature%basis)) THEN
+        ALLOCATE(newNumberOfGaussXi(numberOfXi),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate new number of Gauss xi.",err,error,*999)
+        IF(numberOfXi>basis%NUMBER_OF_XI) THEN
+          newNumberOfGaussXi(1:basis%NUMBER_OF_XI)=basis%quadrature%NUMBER_OF_GAUSS_XI(1:basis%NUMBER_OF_XI)
+          newNumberOfGaussXi(basis%NUMBER_OF_XI+1:numberOfXi)=basis%quadrature%NUMBER_OF_GAUSS_XI(1)
+        ELSE
+          newNumberOfGaussXi(1:numberOfXi)=basis%quadrature%NUMBER_OF_GAUSS_XI(1:numberOfXi)
+        ENDIF
+        CALL MOVE_ALLOC(newNumberOfGaussXi,basis%quadrature%NUMBER_OF_GAUSS_XI)        
+      ENDIF
+      basis%NUMBER_OF_XI=numberOfXi
+    ENDIF
+    
+    EXITS("Basis_NumberOfXiSet")
     RETURN
-999 ERRORSEXITS("BASIS_NUMBER_OF_XI_SET_PTR",err,error)
+999 IF(ALLOCATED(newInterpolationXi)) DEALLOCATE(newInterpolationXi)
+    IF(ALLOCATED(newCollapsedXi)) DEALLOCATE(newCollapsedXi)
+    IF(ALLOCATED(newNumberOfGaussXi)) DEALLOCATE(newNumberOfGaussXi)
+    ERRORSEXITS("Basis_NumberOfXiSet",err,error)
     RETURN 1
-  END SUBROUTINE BASIS_NUMBER_OF_XI_SET_PTR 
+    
+  END SUBROUTINE Basis_NumberOfXiSet
   
   !
   !================================================================================================================================
@@ -5523,51 +5482,51 @@ CONTAINS
           CASE(BASIS_LINEAR_INTERPOLATION_ORDER)
             !Line 1
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(1)=2
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,1)=1
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,1)=2
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,1)=2
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,1)=3
             !Line 2
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(2)=2
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,2)=1
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,2)=3
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,2)=3
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,2)=1
             !Line 3
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(3)=2
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,3)=2
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,3)=3
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,3)=1
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,3)=2
           CASE(BASIS_QUADRATIC_INTERPOLATION_ORDER)
             !Line 1
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(1)=3
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,1)=1
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,1)=4
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,1)=2
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,1)=2
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,1)=5
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,1)=3
             !Line 2
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(2)=3
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,2)=1
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,2)=3
             BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,2)=6
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,2)=3
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,2)=2
             !Line 3
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(3)=3
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,3)=2
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,3)=5
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,3)=3
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,3)=1
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,3)=4
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,3)=2
           CASE(BASIS_CUBIC_INTERPOLATION_ORDER)
             !Line 1
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(1)=4
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,1)=1
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,1)=4
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,1)=5
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(4,1)=2
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,1)=2
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,1)=6
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,1)=7
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(4,1)=3
             !Line 2
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(2)=4
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,2)=1
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,2)=9
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,2)=8
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(4,2)=3
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,2)=3
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,2)=8
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,2)=9
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(4,2)=1
             !Line 3
             BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(3)=4
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,3)=2
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,3)=6
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,3)=7
-            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(4,3)=3
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(1,3)=1
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(2,3)=4
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(3,3)=5
+            BASIS%NODE_NUMBERS_IN_LOCAL_LINE(4,3)=2
           CASE DEFAULT 
             LOCAL_ERROR="Interpolation order "//TRIM(NumberToVString(BASIS%INTERPOLATION_ORDER(1),"*",err,error))// &
               & " is invalid for a simplex basis type."
@@ -6797,6 +6756,57 @@ CONTAINS
 999 ERRORSEXITS("BASIS_COLLAPSED_XI_SET_PTR",err,error)
     RETURN 1
   END SUBROUTINE BASIS_COLLAPSED_XI_SET_PTR
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Converts xi coordinates to area coordinates. \see BASIS_ROUTINES::Basis_AreaToXiCoordinates
+  SUBROUTINE Basis_XiToAreaCoordinates(xiCoordinates,areaCoordinates,err,error,*)
+    
+    !Argument variables
+    REAL(DP), INTENT(IN) :: xiCoordinates(:) !<The xi coordinates to convert
+    REAL(DP), INTENT(OUT) :: areaCoordinates(:) !<On return, the area coordinates corresponding to the xi coordinates
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("Basis_XiToAreaCoordinates",err,error,*999)
+
+    IF((SIZE(xiCoordinates,1)+1)/=SIZE(areaCoordinates,1)) THEN
+      localError="Invalid number of coordinates. The number of xi coordinates of "// &
+        & TRIM(NumberToVString(SIZE(xiCoordinates,1),"*",err,error))// &
+        & " plus one should be equal to the number of area coordinates of "// &
+        & TRIM(NumberToVString(SIZE(areaCoordinates,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    SELECT CASE(SIZE(xiCoordinates,1))
+    CASE(1)
+      areaCoordinates(1)=1.0_DP-xiCoordinates(1)
+      areaCoordinates(2)=xiCoordinates(1)-1.0_DP
+    CASE(2)
+      areaCoordinates(1)=1.0_DP-xiCoordinates(1)
+      areaCoordinates(2)=1.0_DP-xiCoordinates(2)
+      areaCoordinates(3)=xiCoordinates(1)+xiCoordinates(2)-1.0_DP
+    CASE(3)
+      areaCoordinates(1)=1.0_DP-xiCoordinates(1)
+      areaCoordinates(2)=1.0_DP-xiCoordinates(2)
+      areaCoordinates(3)=1.0_DP-xiCoordinates(3)
+      areaCoordinates(3)=xiCoordinates(1)+xiCoordinates(2)+xiCoordinates(3)-1.0_DP
+    CASE DEFAULT
+      localError="The number of xi coordiantes of "//TRIM(NumberToVString(SIZE(xiCoordinates,1),"*",err,error))// &
+        & " is invalid. The number must be >= 1 and <=3."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("Basis_XiToAreaCoordinates")
+    RETURN
+999 ERRORSEXITS("Basis_XiToAreaCoordinates",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_XiToAreaCoordinates
 
   !
   !================================================================================================================================

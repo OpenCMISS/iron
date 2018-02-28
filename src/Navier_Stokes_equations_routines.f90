@@ -12032,7 +12032,7 @@ CONTAINS
       & pressureInterpolatedPoint,independentInterpolatedPoint
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: pointMetrics
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: quadratureScheme1,quadratureScheme2
-    INTEGER(INTG) :: boundaryIdx, boundaryNumber, xiDirection(3), orientation
+    INTEGER(INTG) :: boundaryIdx, boundaryNumber, xiDirection(4), orientation
     INTEGER(INTG) :: componentIdx, componentIdx2, gaussIdx
     INTEGER(INTG) :: elementBaseDofIdx, nodeIdx, elementNodeIdx
     INTEGER(INTG) :: nodeDerivativeIdx,meshComponentNumber1,globalNodeDerivativeIdx,elementParameterIdx
@@ -12177,14 +12177,16 @@ CONTAINS
             SELECT CASE(dependentBasis1%TYPE)
             CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
               xiDirection(3)=ABS(face%XI_DIRECTION)
+              xiDirection(1)=OTHER_XI_DIRECTIONS3(xiDirection(3),2,1)
+              xiDirection(2)=OTHER_XI_DIRECTIONS3(xiDirection(3),3,1)
+              orientation=SIGN(1,OTHER_XI_ORIENTATIONS3(xiDirection(1),xiDirection(2))*face%XI_DIRECTION)
+            CASE(BASIS_SIMPLEX_TYPE)
+              orientation=1
             CASE DEFAULT
               localError="Face integration for basis type "//TRIM(NUMBER_TO_VSTRING(dependentBasis1%TYPE,"*",ERR,ERROR))// &
                 & " is not yet implemented for Navier-Stokes boundary integration."
               CALL FlagError(localError,ERR,ERROR,*999)
             END SELECT
-            xiDirection(1)=OTHER_XI_DIRECTIONS3(xiDirection(3),2,1)
-            xiDirection(2)=OTHER_XI_DIRECTIONS3(xiDirection(3),3,1)
-            orientation=SIGN(1,OTHER_XI_ORIENTATIONS3(xiDirection(1),xiDirection(2))*face%XI_DIRECTION)
             basis1=>decomposition%DOMAIN(meshComponentNumber1)%PTR%TOPOLOGY%FACES%FACES(boundaryNumber)%BASIS
             basis2=>decomposition%DOMAIN(meshComponentNumber2)%PTR%TOPOLOGY%FACES%FACES(boundaryNumber)%BASIS
             CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
@@ -12211,13 +12213,15 @@ CONTAINS
             SELECT CASE(dependentBasis1%TYPE)
             CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
               xiDirection(2)=ABS(line%XI_DIRECTION)
+              xiDirection(1)=OTHER_XI_DIRECTIONS2(xiDirection(2))
+              orientation=SIGN(1,OTHER_XI_ORIENTATIONS2(xiDirection(1))*line%XI_DIRECTION)
+            CASE(BASIS_SIMPLEX_TYPE)
+              orientation=1
             CASE DEFAULT
               localError="Line integration for basis type "//TRIM(NUMBER_TO_VSTRING(dependentBasis1%TYPE,"*",ERR,ERROR))// &
                 & " is not yet implemented for Navier-Stokes boundary integration."
               CALL FlagError(localError,ERR,ERROR,*999)
             END SELECT
-            xiDirection(1)=OTHER_XI_DIRECTIONS2(xiDirection(2))
-            orientation=SIGN(1,OTHER_XI_ORIENTATIONS2(xiDirection(1))*line%XI_DIRECTION)
             basis1=>decomposition%DOMAIN(meshComponentNumber1)%PTR%TOPOLOGY%LINES%LINES(boundaryNumber)%BASIS
             basis2=>decomposition%DOMAIN(meshComponentNumber2)%PTR%TOPOLOGY%LINES%LINES(boundaryNumber)%BASIS
             CALL FIELD_INTERPOLATION_PARAMETERS_LINE_GET(FIELD_VALUES_SET_TYPE,boundaryNumber, &
