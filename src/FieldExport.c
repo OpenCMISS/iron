@@ -271,22 +271,28 @@ static int FieldExport_File_InterpolationHeader( FileSession *const session, con
     int *linked = malloc( sizeof(int) * numberOfXi );
     int linkCount = 0;
 
-    for( i = 0; i < numberOfXi; i++ )
-    {
-        switch( interpolationXi[i] )
-        {
-        case BASIS_LINEAR_SIMPLEX_INTERPOLATION:
-        case BASIS_QUADRATIC_SIMPLEX_INTERPOLATION:
-        case BASIS_CUBIC_SIMPLEX_INTERPOLATION:
-            linked[i] = 1;
-            linkCount++;
-            break;
-        default:
-            linked[i] = 0;
-            break;
-        }
-    }
-
+    if(numberOfXi > 1 )
+      {
+	if( labelType != FIELD_IO_INTERPOLATION_HEADER_CONSTANT )
+	  {
+	    for( i = 0; i < numberOfXi; i++ )
+	      {
+		switch( interpolationXi[i] )
+		  {
+		  case BASIS_LINEAR_SIMPLEX_INTERPOLATION:
+		  case BASIS_QUADRATIC_SIMPLEX_INTERPOLATION:
+		  case BASIS_CUBIC_SIMPLEX_INTERPOLATION:
+		    linked[i] = 1;
+		    linkCount++;
+		    break;
+		  default:
+		    linked[i] = 0;
+		    break;
+		  }
+	      }
+	  }
+      }
+	
     FieldExport_FPrintf( session, " " );
 
     for( i = 0; i < numberOfXi; i++ )
@@ -326,13 +332,34 @@ static int FieldExport_File_InterpolationHeader( FileSession *const session, con
                 label = "HermiteLagrange";
                 break;
             case BASIS_LINEAR_SIMPLEX_INTERPOLATION:
-                label = "l.simplex";
+	      if( numberOfXi == 1)
+		{
+		  label = "l.Lagrange";
+		}
+	      else
+		{
+		  label = "l.simplex";
+		}
                 break;
             case BASIS_QUADRATIC_SIMPLEX_INTERPOLATION:
-                label = "q.simplex";
+	        if( numberOfXi == 1)
+		  {
+		    label = "q.Lagrange";
+		  }
+	        else
+		  {
+		    label = "q.simplex";
+		  }
                 break;
             case BASIS_CUBIC_SIMPLEX_INTERPOLATION:
-                label = "c.simplex";
+	        if( numberOfXi == 1)
+		  {
+		    label = "c.Lagrange";
+		  }
+	        else
+		  {
+		    label = "c.simplex";
+		  }
                 break;
             default:
                 free( linked );
