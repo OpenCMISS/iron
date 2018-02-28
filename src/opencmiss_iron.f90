@@ -29704,7 +29704,7 @@ CONTAINS
   !>Gets the volume for a given element number by a user number.
   SUBROUTINE cmfe_Field_GeometricParametersElementVolumeGetNumber(regionUserNumber,geometricFieldUserNumber,elementNumber, &
     & elementVolume,err)
-    !DLLEXPORT(cmfe_Field_GeometricParametersElementLineLengthGetNumber)
+    !DLLEXPORT(cmfe_Field_GeometricParametersElementVolumeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to obtain the volume from
@@ -29783,7 +29783,7 @@ CONTAINS
 
   !>Gets the volume for a given element number by an object.
   SUBROUTINE cmfe_Field_GeometricParametersElementVolumeGetObj(geometricField,elementNumber,elementVolume,err)
-    !DLLEXPORT(cmfe_Field_GeometricParametersElementLineLengthGetObj)
+    !DLLEXPORT(cmfe_Field_GeometricParametersElementVolumeGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: geometricField !<The geometric field to obtain the volume from
