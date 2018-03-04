@@ -6403,6 +6403,7 @@ CONTAINS
     DO xiIdx=1,numberOfXi
       newSubBasis%quadrature%NUMBER_OF_GAUSS_XI(xiIdx)=parentBasis%QUADRATURE%NUMBER_OF_GAUSS_XI(xiDirections(xiIdx))
     ENDDO !xiIdx
+    newSubBasis%quadrature%GAUSS_ORDER=parentBasis%quadrature%GAUSS_ORDER
     newSubBasis%BASIS_FINISHED=.TRUE.
     IF(numberOfXi>1) THEN
       ALLOCATE(newSubBasis%lineBases(numberOfXi),STAT=err)
