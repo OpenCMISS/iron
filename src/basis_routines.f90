@@ -1830,7 +1830,7 @@ CONTAINS
         ALLOCATE(gaussWeights(MAX_GAUSS),STAT=ERR)
         IF(ERR/=0) CALL FlagError("Could not allocate weights",err,error,*999)
         DO nj=1,numCoords
-          CALL GAUSS_LEGENDRE(order,0.0_DP,1.0_DP,XICOORDS(1:order,nj),W(1:order,nj),err,error,*999)
+          CALL Gauss_Legendre(order,0.0_DP,1.0_DP,XICOORDS(1:order,nj),W(1:order,nj),err,error,*999)
           IF(err/=0) GOTO 999
         ENDDO
         !Form gauss point array for lagrange hermite type.
@@ -1862,7 +1862,7 @@ CONTAINS
         ALLOCATE(gaussWeights(MAX_GAUSS),STAT=ERR)
         IF(ERR/=0) CALL FlagError("Could not allocate weights",err,error,*999)
 
-        CALL GAUSS_SIMPLEX(order,number_of_vertices,numberGaussPoints,gaussPoints,gaussWeights,err,error,*999)
+        CALL Gauss_Simplex(order,number_of_vertices,numberGaussPoints,gaussPoints,gaussWeights,err,error,*999)
       CASE DEFAULT
         LOCAL_ERROR="Basis type "// &
         & TRIM(NumberToVString(BASIS%TYPE,"*",err,error))// &
@@ -3804,7 +3804,7 @@ CONTAINS
           POSITIONS=0.0_DP
           POSITIONS_MATRIX=0.0_DP
           DO ni=1,BASIS%NUMBER_OF_XI
-            CALL GAUSS_LEGENDRE(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),0.0_DP,1.0_DP, &
+            CALL Gauss_Legendre(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),0.0_DP,1.0_DP, &
               & POSITIONS(1:BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),ni), &
               & WEIGHTS(1:BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),ni),err,error,*999)
           ENDDO !ni
@@ -3945,7 +3945,7 @@ CONTAINS
           ENDDO !scheme_idx
           BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR=>NEW_SCHEME
           !Set up the gauss point arrays
-          CALL GAUSS_SIMPLEX(BASIS%QUADRATURE%GAUSS_ORDER,BASIS%NUMBER_OF_XI_COORDINATES,NEW_SCHEME%NUMBER_OF_GAUSS,GSX,GSW, &
+          CALL Gauss_Simplex(BASIS%QUADRATURE%GAUSS_ORDER,BASIS%NUMBER_OF_XI_COORDINATES,NEW_SCHEME%NUMBER_OF_GAUSS,GSX,GSW, &
             & err,error,*999)
           ALLOCATE(NEW_SCHEME%GAUSS_POSITIONS(BASIS%NUMBER_OF_XI_COORDINATES,NEW_SCHEME%NUMBER_OF_GAUSS),STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate Gauss positions.",err,error,*999)
@@ -4002,7 +4002,7 @@ CONTAINS
                 !The number of face xi coordinates will be 3 for triangular face on a tet
                 numberOfFaceXiCoordinates = BASIS%NUMBER_OF_XI
                 !Set up the gauss point arrays for the face
-                CALL GAUSS_SIMPLEX(BASIS%QUADRATURE%GAUSS_ORDER,numberOfFaceXiCoordinates, &
+                CALL Gauss_Simplex(BASIS%QUADRATURE%GAUSS_ORDER,numberOfFaceXiCoordinates, &
                   & NEW_SCHEME%NUMBER_OF_FACE_GAUSS(face_idx),GSX,GSW,err,error,*999)
                 IF(ERR/=0) CALL FlagError("Could not allocate Gauss basis functions",err,error,*999)
                 NEW_SCHEME%FACE_GAUSS_POSITIONS(1:numberOfFaceXiCoordinates,1:NEW_SCHEME%NUMBER_OF_FACE_GAUSS(face_idx), &
@@ -6815,84 +6815,90 @@ CONTAINS
 
   !>This routine calculates the weights and abscissae for a Gauss-Legendre quadrature scheme.
   !>\todo Fix this.
-  SUBROUTINE GAUSS_LEGENDRE(N,ALPHA,BETA,X,W,err,error,*)
+  SUBROUTINE Gauss_Legendre(n,alpha,beta,x,w,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: N !<The number of of Gauss points required.
-    REAL(DP), INTENT(IN) :: ALPHA !<The lower limit of the integration scheme
-    REAL(DP), INTENT(IN) :: BETA !<The upper limit of the integration scheme
-    REAL(DP), INTENT(OUT) :: X(N) !<X(i). On exit the i'th Gauss point location
-    REAL(DP), INTENT(OUT) :: W(N) !<W(i). On exit the i'th Gauss point weight.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(IN) :: n !<The number of of Gauss points required.
+    REAL(DP), INTENT(IN) :: alpha !<The lower limit of the integration scheme
+    REAL(DP), INTENT(IN) :: beta !<The upper limit of the integration scheme
+    REAL(DP), INTENT(OUT) :: x(:) !<x(gaussPointIdx). On exit the gaussPointIdx'th Gauss point location
+    REAL(DP), INTENT(OUT) :: w(:) !<w(gaussPointIdx). On exit the gaussPointIdx'th Gauss point weight.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: i
-    REAL(DP) :: DIFFERENCE,T1,T2
+    INTEGER(INTG) :: gaussPointIdx
+    REAL(DP) :: difference,t1,t2
+    TYPE(VARYING_STRING) :: localError
 
-    INTEGER(INTG) :: GAUSS_START(4) = [ 0,1,3,6 ]
-    REAL(DP) :: XIG(10),WIG(10)
+    INTEGER(INTG) :: gaussStart(4) = [ 0,1,3,6 ]
+    REAL(DP) :: gaussPointLocations(10),gaussPointWeights(10)
  
-!     XIG = [ 0.500000000000000_DP, &
-!       &      0.211324865405187_DP,0.788675134594813_DP, &
-!       &      0.112701665379258_DP,0.500000000000000_DP,0.887298334620742_DP, &
-!       &      0.06943184420297349_DP,0.330009478207572_DP,0.669990521792428_DP,0.930568155797026_DP ]
-!     WIG = [ 1.000000000000000_DP, &
-!       &      0.500000000000000_DP,0.500000000000000_DP, &
-!       &      0.277777777777778_DP,0.444444444444444_DP,0.277777777777778_DP, &
-!       &      0.173927422568727_DP,0.326072577431273_DP,0.326072577431273_DP,0.173927422568727_DP ]
-
-    XIG = [ 0.500000000000000_DP, &
-      &      (-1.0_DP/sqrt(3.0_DP)+1.0_DP)/2.0_DP,(+1.0_DP/sqrt(3.0_DP)+1.0_DP)/2.0_DP, &
+    gaussPointLocations = [ 0.500000000000000_DP, &
+      &      (-1.0_DP/SQRT(3.0_DP)+1.0_DP)/2.0_DP,(+1.0_DP/SQRT(3.0_DP)+1.0_DP)/2.0_DP, &
       &      (-SQRT(0.6_DP)+1.0_DP)/2.0_DP, 0.5_DP, (+SQRT(0.6_DP)+1.0_DP)/2.0_DP, &
       &      (-SQRT((3.0_DP+2.0_DP*SQRT(6.0_DP/5.0_DP))/7.0_DP)+1.0_DP)/2.0_DP, &      
       &      (-SQRT((3.0_DP-2.0_DP*SQRT(6.0_DP/5.0_DP))/7.0_DP)+1.0_DP)/2.0_DP, &
       &      (+SQRT((3.0_DP-2.0_DP*SQRT(6.0_DP/5.0_DP))/7.0_DP)+1.0_DP)/2.0_DP, &
       &      (+SQRT((3.0_DP+2.0_DP*SQRT(6.0_DP/5.0_DP))/7.0_DP)+1.0_DP)/2.0_DP ]
-    WIG = [ 1.000000000000000_DP, &
+    gaussPointWeights = [ 1.000000000000000_DP, &
       &      0.500000000000000_DP,0.500000000000000_DP, &
       &      2.5_DP/9.0_DP, 4.0_DP/9.0_DP, 2.5_DP/9.0_DP, &
       &      (18.0_DP-SQRT(30.0_DP))/72.0_DP, &
       &      (18.0_DP+SQRT(30.0_DP))/72.0_DP, &
       &      (18.0_DP+SQRT(30.0_DP))/72.0_DP, &
-      &      (18.0_DP-SQRT(30.0_DP))/72.0_DP ]
-             
+      &      (18.0_DP-SQRT(30.0_DP))/72.0_DP ]             
     
-    ENTERS("GAUSS_LEGENDRE",err,error,*999)
+    ENTERS("Gauss_Legendre",err,error,*999)
 
-    IF(N>=1.AND.N<=4) THEN
-      DO i=1,N
-        X(i)=XIG(GAUSS_START(N)+i)
-        W(i)=WIG(GAUSS_START(N)+i)
-      ENDDO !i
-    ELSE
-      CALL FlagError("Invalid number of Gauss points. Not implemented",err,error,*999)
-    ENDIF      
+    IF(n<1.OR.n>4) THEN
+      localError="The specified number of Gauss points of "//TRIM(NumberToVString(n,"*",err,error))// &
+        & " is invalid or not implemented."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(x,1)<n) THEN
+      localError="The size of the x array of "//TRIM(NumberToVString(SIZE(x,1),"*",err,error))// &
+        & " is too small for the specified number of Gauss points. The array needs to be of size "// &
+        & TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(w,1)<n) THEN
+      localError="The size of the w array of "//TRIM(NumberToVString(SIZE(w,1),"*",err,error))// &
+        & " is too small for the specified number of Gauss points. The array needs to be of size "// &
+        & TRIM(NumberToVString(n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
     
-    IF(DIAGNOSTICS1) THEN
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Number of gauss points = ",N,err,error,*999)
-      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,N,5,5,X,'("Gauss point locations :",5(X,F13.5))','(23X,5(X,F13.5))', &
+    DO gaussPointIdx=1,n
+      x(gaussPointIdx)=gaussPointLocations(gaussStart(n)+gaussPointIdx)
+      w(gaussPointIdx)=gaussPointWeights(gaussStart(n)+gaussPointIdx)
+    ENDDO !i
+    
+    IF(diagnostics1) THEN
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Number of gauss points = ",n,err,error,*999)
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,n,5,5,x,'("Gauss point locations :",5(X,F13.5))','(23X,5(X,F13.5))', &
         & err,error,*999)
-      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,N,5,5,W,'("Gauss point weights   :",5(X,F13.5))','(23X,5(X,F13.5))', &
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,n,5,5,w,'("Gauss point weights   :",5(X,F13.5))','(23X,5(X,F13.5))', &
         & err,error,*999)
-      IF(DIAGNOSTICS2) THEN
+      IF(diagnostics2) THEN
         !Check by integrating y=x+1
-        T1=0.0_DP !Numerical
-        T2=0.0_DP !Analytic
-        DO i=1,N
-          T1=T1+((X(i)+1.0_DP)*W(i))
-        ENDDO !i
-        T2=(BETA**2.0_DP/2.0_DP+BETA)-(ALPHA**2.0_DP/2.0_DP-ALPHA)
-        DIFFERENCE=ABS(T2-T1)
-        CALL WriteStringFmtValue(DIAGNOSTIC_OUTPUT_TYPE,"Numerical Integration Test Difference: ",DIFFERENCE,'(F14.6)', &
+        t1=0.0_DP !Numerical
+        t2=0.0_DP !Analytic
+        DO gaussPointIdx=1,n
+          t1=t1+((x(gaussPointIdx)+1.0_DP)*w(gaussPointIdx))
+        ENDDO !gaussPointIdx
+        t2=(beta**2.0_DP/2.0_DP+beta)-(alpha**2.0_DP/2.0_DP-alpha)
+        difference=ABS(t2-t1)
+        CALL WriteStringFmtValue(DIAGNOSTIC_OUTPUT_TYPE,"Numerical Integration Test Difference = ",difference,'(F14.6)', &
           & err,error,*999)
       ENDIF
     ENDIF
 
-    EXITS("GAUSS_LEGENDRE")
+    EXITS("Gauss_Legendre")
     RETURN
-999 ERRORSEXITS("GAUSS_LEGENDRE",err,error)
+999 ERRORSEXITS("Gauss_Legendre",err,error)
     RETURN 1
-  END SUBROUTINE GAUSS_LEGENDRE
+    
+  END SUBROUTINE Gauss_Legendre
   
   !
   !================================================================================================================================
@@ -6903,739 +6909,709 @@ CONTAINS
   !>Reference: Liu, Yen and Vinokur, Marcel. "Exact Integrations of Polynomials and Symmetric Quadrature Formulas
   !> over Arbitrary Polyhedral Grids", Journal of Computational Physics, 140:122-147 (1998).
   !>
-  SUBROUTINE GAUSS_SIMPLEX(ORDER,NUMBER_OF_VERTICES,N,X,W,err,error,*)
+  SUBROUTINE Gauss_Simplex(order,numberOfVertices,n,x,w,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ORDER !<The desired order of the scheme. Currently, the maximum order is 5.
-    INTEGER(INTG), INTENT(IN) :: NUMBER_OF_VERTICES !<The number of vertices. 2, 3 or 4 for lines, triangles or tetrahedra.
-    INTEGER(INTG), INTENT(OUT) :: N !<On exit, the number of Gauss points 
-    REAL(DP), INTENT(OUT) :: X(:,:) !<X(nj,ng). On exit, the returned positions in area coordinates.
-    REAL(DP), INTENT(OUT) :: W(:) !<W(ng). On exit, the returned weights.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(IN) :: order !<The desired order of the scheme. Currently, the maximum order is 5.
+    INTEGER(INTG), INTENT(IN) :: numberOfVertices !<The number of vertices. 2, 3 or 4 for lines, triangles or tetrahedra.
+    INTEGER(INTG), INTENT(OUT) :: n !<On exit, the number of Gauss points 
+    REAL(DP), INTENT(OUT) :: x(:,:) !<X(coordinateIdx,gaussPointIdx). On exit, the returned positions in area coordinates.
+    REAL(DP), INTENT(OUT) :: w(:) !<W(gaussPointIdx). On exit, the returned weights.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: ng
-    REAL(DP) :: ALPHA_1,ALPHA_2,BETA,LAMBDA,L_C,L1_ALPHA_1,L2_ALPHA_1,L3_ALPHA_1,L4_ALPHA_1,L1_ALPHA_2,L2_ALPHA_2,L3_ALPHA_2, &
-      & L4_ALPHA_2,L1_BETA,L2_BETA,L3_BETA,L4_BETA,W_C,W_ALPHA_1,W_ALPHA_2,W_BETA,ACOS_ARG
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: gaussIdx
+    REAL(DP) :: alpha1,alpha2,beta,lambda,lc,l1Alpha1,l2Alpha1,l3Alpha1,l4Alpha1,l1Alpha2,l2Alpha2,l3Alpha2,l4Alpha2,l1Beta, &
+      & l2Beta,l3Beta,l4Beta,wc,wAlpha1,wAlpha2,wBeta,aCosArg
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("GAUSS_SIMPLEX",err,error,*999)
-    IF(SIZE(X,1)>=(NUMBER_OF_VERTICES)) THEN
-      SELECT CASE(NUMBER_OF_VERTICES)
-      CASE(2)
-        !Line
-        SELECT CASE(ORDER)
-        CASE(1)
-          N=1
-          IF(SIZE(X,2)>=N) THEN
-            IF(SIZE(W,1)>=N) THEN
-              L_C=1.0_DP/REAL(NUMBER_OF_VERTICES,DP)
-              W_C=1.0_DP
-              !Gauss point 1
-              X(1,1)=L_C
-              X(2,1)=L_C
-              W(1)=W_C
-            ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
-                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
-              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          ENDIF
-        CASE(2)
-          N=2
-          IF(SIZE(X,2)>=N) THEN
-            IF(SIZE(W,1)>=N) THEN
-              ALPHA_1=1.0_DP/SQRT(REAL(NUMBER_OF_VERTICES,DP)+1.0_DP)
-              W_ALPHA_1=1.0_DP/REAL(NUMBER_OF_VERTICES,DP)
-              L1_ALPHA_1=(1.0_DP+(REAL(NUMBER_OF_VERTICES,DP)-1.0_DP)*ALPHA_1)/REAL(NUMBER_OF_VERTICES,DP)
-              L2_ALPHA_1=1.0_DP-L1_ALPHA_1
-              !Gauss point 1
-              X(1,1)=L1_ALPHA_1
-              X(2,1)=L2_ALPHA_1
-              W(1)=W_ALPHA_1
-              !Gauss point 2
-              X(1,2)=L2_ALPHA_1
-              X(2,2)=L1_ALPHA_1
-              W(2)=W_ALPHA_1
-            ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
-                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
-              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          ENDIF
-        CASE(3)
-          N=3
-          IF(SIZE(X,2)>=N) THEN
-            IF(SIZE(W,1)>=N) THEN
-              L_C=1.0_DP/REAL(NUMBER_OF_VERTICES,DP)
-              W_C=-1.0_DP*REAL(NUMBER_OF_VERTICES,DP)*REAL(NUMBER_OF_VERTICES,DP)/ &
-                & (REAL(NUMBER_OF_VERTICES,DP)*(REAL(NUMBER_OF_VERTICES,DP)+1.0_DP))
-              ALPHA_1=2.0_DP/(REAL(NUMBER_OF_VERTICES,DP)+2.0_DP)
-              W_ALPHA_1=(REAL(NUMBER_OF_VERTICES,DP)+2.0_DP)*(REAL(NUMBER_OF_VERTICES,DP)+2.0_DP)/ &
-                & (4.0_DP*REAL(NUMBER_OF_VERTICES,DP)*(REAL(NUMBER_OF_VERTICES,DP)+1.0_DP))
-              L1_ALPHA_1=(1.0_DP+(REAL(NUMBER_OF_VERTICES,DP)-1.0_DP)*ALPHA_1)/REAL(NUMBER_OF_VERTICES,DP)
-              L2_ALPHA_1=1.0_DP-L1_ALPHA_1
-              !Gauss point 1
-              X(1,1)=L_C
-              X(2,1)=L_C
-              W(1)=W_C
-              !Gauss point 2
-              X(1,2)=L1_ALPHA_1
-              X(2,2)=L2_ALPHA_1
-              W(2)=W_ALPHA_1
-              !Gauss point 3
-              X(1,3)=L2_ALPHA_1
-              X(2,3)=L1_ALPHA_1
-              W(3)=W_ALPHA_1
-            ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
-                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
-              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          ENDIF
-        CASE(4)
-          CALL FlagError("Not implemented",err,error,*999)
-          IF(SIZE(X,2)>=N) THEN
-            IF(SIZE(W,1)>=N) THEN
-            ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
-                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
-              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          ENDIF
-        CASE(5)
-          CALL FlagError("Not implemented",err,error,*999)
-          IF(SIZE(X,2)>=N) THEN
-            IF(SIZE(W,1)>=N) THEN
-            ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
-                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
-              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          ENDIF
-        CASE DEFAULT
-          LOCAL_ERROR=TRIM(NumberToVString(ORDER,"*",err,error))// &
-            & " is an invalid Gauss order. You must have an order between 1 and 5"
-          CALL FlagError(LOCAL_ERROR,err,error,*999)
-        END SELECT
-      CASE(3)
-        !Triangle
-        SELECT CASE(ORDER)
-        CASE(1)
-          N=1
-          IF(SIZE(X,2)>=N) THEN
-            IF(SIZE(W,1)>=N) THEN
-              L_C=1.0_DP/REAL(NUMBER_OF_VERTICES,DP)
-              W_C=1.0_DP
-              !Gauss point 1
-              X(1,1)=L_C
-              X(2,1)=L_C
-              X(3,1)=L_C
-              W(1)=W_C/2.0_DP
-            ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
-                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
-              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          ENDIF
-        CASE(2)
-          N=3
-          IF(SIZE(X,2)>=N) THEN
-            IF(SIZE(W,1)>=N) THEN
-              ALPHA_1=-1.0_DP/SQRT(REAL(NUMBER_OF_VERTICES,DP)+1.0_DP)
-              W_ALPHA_1=1.0_DP/REAL(NUMBER_OF_VERTICES,DP)
-              L1_ALPHA_1=(1.0_DP+(REAL(NUMBER_OF_VERTICES,DP)-1.0_DP)*ALPHA_1)/REAL(NUMBER_OF_VERTICES,DP)
-              L2_ALPHA_1=(1.0_DP-ALPHA_1)/REAL(NUMBER_OF_VERTICES,DP)
-              L3_ALPHA_1=1.0_DP-L1_ALPHA_1-L2_ALPHA_1
-              !Gauss point 1
-              X(1,1)=L1_ALPHA_1
-              X(2,1)=L2_ALPHA_1
-              X(3,1)=L3_ALPHA_1
-              W(1)=W_ALPHA_1/2.0_DP
-              !Gauss point 2
-              X(1,2)=L3_ALPHA_1
-              X(2,2)=L1_ALPHA_1
-              X(3,2)=L2_ALPHA_1
-              W(2)=W_ALPHA_1/2.0_DP
-              !Gauss point 3
-              X(1,3)=L2_ALPHA_1
-              X(2,3)=L3_ALPHA_1
-              X(3,3)=L1_ALPHA_1
-              W(3)=W_ALPHA_1/2.0_DP
-            ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
-                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
-              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          ENDIF
-        CASE(3)
-          N=4
-          IF(SIZE(X,2)>=N) THEN
-            IF(SIZE(W,1)>=N) THEN
-              L_C=1.0_DP/REAL(NUMBER_OF_VERTICES,DP)
-              W_C=-1.0_DP*REAL(NUMBER_OF_VERTICES,DP)*REAL(NUMBER_OF_VERTICES,DP)/ &
-                & (REAL(NUMBER_OF_VERTICES,DP)*(REAL(NUMBER_OF_VERTICES,DP)+1.0_DP))
-              ALPHA_1=2.0_DP/(REAL(NUMBER_OF_VERTICES,DP)+2.0_DP)
-              W_ALPHA_1=(REAL(NUMBER_OF_VERTICES,DP)+2.0_DP)*(REAL(NUMBER_OF_VERTICES,DP)+2.0_DP)/ &
-                & (4.0_DP*REAL(NUMBER_OF_VERTICES,DP)*(REAL(NUMBER_OF_VERTICES,DP)+1.0_DP))
-              L1_ALPHA_1=(1.0_DP+(REAL(NUMBER_OF_VERTICES,DP)-1.0_DP)*ALPHA_1)/REAL(NUMBER_OF_VERTICES,DP)
-              L2_ALPHA_1=(1.0_DP-ALPHA_1)/REAL(NUMBER_OF_VERTICES,DP)
-              L3_ALPHA_1=1.0_DP-L1_ALPHA_1-L2_ALPHA_1
-              !Gauss point 1
-              X(1,1)=L_C
-              X(2,1)=L_C
-              X(3,1)=L_C
-              W(1)=W_C/2.0_DP
-              !Gauss point 2
-              X(1,2)=L1_ALPHA_1
-              X(2,2)=L2_ALPHA_1
-              X(3,2)=L3_ALPHA_1
-              W(2)=W_ALPHA_1/2.0_DP
-              !Gauss point 3
-              X(1,3)=L3_ALPHA_1
-              X(2,3)=L1_ALPHA_1
-              X(3,3)=L2_ALPHA_1
-              W(3)=W_ALPHA_1/2.0_DP
-              !Gauss point 4
-              X(1,4)=L2_ALPHA_1
-              X(2,4)=L3_ALPHA_1
-              X(3,4)=L1_ALPHA_1
-              W(4)=W_ALPHA_1/2.0_DP
-            ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
-                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
-              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          ENDIF
-        CASE(4)
-          N=6
-          IF(SIZE(X,2)>=N) THEN
-            IF(SIZE(W,1)>=N) THEN
-              ALPHA_1=(-10.0_DP+5.0_DP*SQRT(10.0_DP)+SQRT(950.0_DP-220.0_DP*SQRT(10.0_DP)))/30.0_DP
-              ALPHA_2=(-10.0_DP+5.0_DP*SQRT(10.0_DP)-SQRT(950.0_DP-220.0_DP*SQRT(10.0_DP)))/30.0_DP
-              W_ALPHA_1=(5.0_DP*ALPHA_2-2.0_DP)/(60.0_DP*ALPHA_1*ALPHA_1*(ALPHA_2-ALPHA_1))
-              W_ALPHA_2=(5.0_DP*ALPHA_1-2.0_DP)/(60.0_DP*ALPHA_2*ALPHA_2*(ALPHA_1-ALPHA_2))
-              L1_ALPHA_1=(1.0_DP+(REAL(NUMBER_OF_VERTICES,DP)-1.0_DP)*ALPHA_1)/REAL(NUMBER_OF_VERTICES,DP)
-              L2_ALPHA_1=(1.0_DP-ALPHA_1)/REAL(NUMBER_OF_VERTICES,DP)
-              L3_ALPHA_1=1.0_DP-L1_ALPHA_1-L2_ALPHA_1
-              L1_ALPHA_2=(1.0_DP+(REAL(NUMBER_OF_VERTICES,DP)-1.0_DP)*ALPHA_2)/REAL(NUMBER_OF_VERTICES,DP)
-              L2_ALPHA_2=(1.0_DP-ALPHA_2)/REAL(NUMBER_OF_VERTICES,DP)
-              L3_ALPHA_2=1.0_DP-L1_ALPHA_2-L2_ALPHA_2
-              !Gauss point 1
-              X(1,1)=L1_ALPHA_1
-              X(2,1)=L2_ALPHA_1
-              X(3,1)=L3_ALPHA_1
-              W(1)=W_ALPHA_1/2.0_DP
-              !Gauss point 2
-              X(1,2)=L3_ALPHA_1
-              X(2,2)=L1_ALPHA_1
-              X(3,2)=L2_ALPHA_1
-              W(2)=W_ALPHA_1/2.0_DP
-              !Gauss point 3
-              X(1,3)=L2_ALPHA_1
-              X(2,3)=L3_ALPHA_1
-              X(3,3)=L1_ALPHA_1
-              W(3)=W_ALPHA_1/2.0_DP
-              !Gauss point 4
-              X(1,4)=L1_ALPHA_2
-              X(2,4)=L2_ALPHA_2
-              X(3,4)=L3_ALPHA_2
-              W(4)=W_ALPHA_2/2.0_DP
-              !Gauss point 5
-              X(1,5)=L3_ALPHA_2
-              X(2,5)=L1_ALPHA_2
-              X(3,5)=L2_ALPHA_2
-              W(5)=W_ALPHA_2/2.0_DP
-              !Gauss point 6
-              X(1,6)=L2_ALPHA_2
-              X(2,6)=L3_ALPHA_2
-              X(3,6)=L1_ALPHA_2
-              W(6)=W_ALPHA_2/2.0_DP
-            ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
-                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
-              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          ENDIF
-        CASE(5)
-          N=7
-          IF(SIZE(X,2)>=N) THEN
-            IF(SIZE(W,1)>=N) THEN
-              L_C=1.0_DP/REAL(NUMBER_OF_VERTICES,DP)
-              W_C=9.0_DP/40.0_DP
-              ALPHA_1=(1.0_DP+SQRT(15.0_DP))/7.0_DP
-              ALPHA_2=(1.0_DP-SQRT(15.0_DP))/7.0_DP
-              W_ALPHA_1=(155.0_DP-SQRT(15.0_DP))/1200.0_DP
-              W_ALPHA_2=(155.0_DP+SQRT(15.0_DP))/1200.0_DP
-              L1_ALPHA_1=(1.0_DP+(REAL(NUMBER_OF_VERTICES,DP)-1.0_DP)*ALPHA_1)/REAL(NUMBER_OF_VERTICES,DP)
-              L2_ALPHA_1=(1.0_DP-ALPHA_1)/REAL(NUMBER_OF_VERTICES,DP)
-              L3_ALPHA_1=(1.0_DP-ALPHA_1)/REAL(NUMBER_OF_VERTICES,DP)
-              L4_ALPHA_1=1.0_DP-L1_ALPHA_1-L2_ALPHA_1-L3_ALPHA_1
-              L1_ALPHA_2=(1.0_DP+(REAL(NUMBER_OF_VERTICES,DP)-1.0_DP)*ALPHA_2)/REAL(NUMBER_OF_VERTICES,DP)
-              L2_ALPHA_2=(1.0_DP-ALPHA_2)/REAL(NUMBER_OF_VERTICES,DP)
-              L3_ALPHA_2=(1.0_DP-ALPHA_2)/REAL(NUMBER_OF_VERTICES,DP)
-              L4_ALPHA_2=1.0_DP-L1_ALPHA_2-L2_ALPHA_2-L3_ALPHA_2
-              !Gauss point 1
-              X(1,1)=L_C
-              X(2,1)=L_C
-              X(3,1)=L_C
-              W(1)=W_C/2.0_DP
-              !Gauss point 2
-              X(1,2)=L1_ALPHA_1
-              X(2,2)=L2_ALPHA_1
-              X(3,2)=L3_ALPHA_1
-              W(2)=W_ALPHA_1/2.0_DP
-              !Gauss point 3
-              X(1,3)=L3_ALPHA_1
-              X(2,3)=L1_ALPHA_1
-              X(3,3)=L2_ALPHA_1
-              W(3)=W_ALPHA_1/2.0_DP
-              !Gauss point 4
-              X(1,4)=L2_ALPHA_1
-              X(2,4)=L3_ALPHA_1
-              X(3,4)=L1_ALPHA_1
-              W(4)=W_ALPHA_1/2.0_DP
-              !Gauss point 5
-              X(1,5)=L1_ALPHA_2
-              X(2,5)=L2_ALPHA_2
-              X(3,5)=L3_ALPHA_2
-              W(5)=W_ALPHA_2/2.0_DP
-              !Gauss point 6
-              X(1,6)=L3_ALPHA_2
-              X(2,6)=L1_ALPHA_2
-              X(3,6)=L2_ALPHA_2
-              W(6)=W_ALPHA_2/2.0_DP
-              !Gauss point 7
-              X(1,7)=L2_ALPHA_2
-              X(2,7)=L3_ALPHA_2
-              X(3,7)=L1_ALPHA_2
-              W(7)=W_ALPHA_2/2.0_DP
-            ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
-                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
-              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          ENDIF
-        CASE DEFAULT
-          LOCAL_ERROR=TRIM(NumberToVString(ORDER,"*",err,error))// &
-            & " is an invalid Gauss order. You must have an order between 1 and 5"
-          CALL FlagError(LOCAL_ERROR,err,error,*999)
-        END SELECT
-      CASE(4)
-        !Tetrahedra
-        SELECT CASE(ORDER)
-        CASE(1)
-          N=1
-          IF(SIZE(X,2)>=N) THEN
-            IF(SIZE(W,1)>=N) THEN
-              L_C=1.0_DP/REAL(NUMBER_OF_VERTICES,DP)
-              W_C=1.0_DP
-              !Gauss point 1
-              X(1,1)=L_C
-              X(2,1)=L_C
-              X(3,1)=L_C
-              W(1)=W_C/6.0_DP
-            ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
-                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
-              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          ENDIF
-        CASE(2)
-          N=4
-          IF(SIZE(X,2)>=N) THEN
-            IF(SIZE(W,1)>=N) THEN
-              ALPHA_1=1.0_DP/SQRT(REAL(NUMBER_OF_VERTICES,DP)+1.0_DP)
-              W_ALPHA_1=1.0_DP/REAL(NUMBER_OF_VERTICES,DP)
-              L1_ALPHA_1=(1.0_DP+(REAL(NUMBER_OF_VERTICES,DP)-1.0_DP)*ALPHA_1)/REAL(NUMBER_OF_VERTICES,DP)
-              L2_ALPHA_1=(1.0_DP-ALPHA_1)/REAL(NUMBER_OF_VERTICES,DP)
-              L3_ALPHA_1=(1.0_DP-ALPHA_1)/REAL(NUMBER_OF_VERTICES,DP)
-              L4_ALPHA_1=1.0_DP-L1_ALPHA_1-L2_ALPHA_1-L3_ALPHA_1
-              !Gauss point 1
-              X(1,1)=L1_ALPHA_1
-              X(2,1)=L2_ALPHA_1
-              X(3,1)=L3_ALPHA_1
-              X(4,1)=L4_ALPHA_1
-              W(1)=W_ALPHA_1/6.0_DP
-              !Gauss point 2
-              X(1,2)=L4_ALPHA_1
-              X(2,2)=L1_ALPHA_1
-              X(3,2)=L2_ALPHA_1
-              X(4,2)=L3_ALPHA_1
-              W(2)=W_ALPHA_1/6.0_DP
-              !Gauss point 3
-              X(1,3)=L3_ALPHA_1
-              X(2,3)=L4_ALPHA_1
-              X(3,3)=L1_ALPHA_1
-              X(4,3)=L2_ALPHA_1
-              W(3)=W_ALPHA_1/6.0_DP
-              !Gauss point 4
-              X(1,4)=L2_ALPHA_1
-              X(2,4)=L3_ALPHA_1
-              X(3,4)=L4_ALPHA_1
-              X(4,4)=L1_ALPHA_1
-              W(4)=W_ALPHA_1/6.0_DP
-            ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
-                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
-              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          ENDIF
-        CASE(3)
-          N=5
-          IF(SIZE(X,2)>=N) THEN
-            IF(SIZE(W,1)>=N) THEN
-              L_C=1.0_DP/REAL(NUMBER_OF_VERTICES,DP)
-              W_C=-1.0_DP*REAL(NUMBER_OF_VERTICES,DP)*REAL(NUMBER_OF_VERTICES,DP)/ &
-                & (REAL(NUMBER_OF_VERTICES,DP)*(REAL(NUMBER_OF_VERTICES,DP)+1.0_DP))
-              ALPHA_1=2.0_DP/(REAL(NUMBER_OF_VERTICES,DP)+2.0_DP)
-              W_ALPHA_1=(REAL(NUMBER_OF_VERTICES,DP)+2.0_DP)*(REAL(NUMBER_OF_VERTICES,DP)+2.0_DP)/ &
-                & (4.0_DP*REAL(NUMBER_OF_VERTICES,DP)*(REAL(NUMBER_OF_VERTICES,DP)+1.0_DP))
-              L1_ALPHA_1=(1.0_DP+(REAL(NUMBER_OF_VERTICES,DP)-1.0_DP)*ALPHA_1)/REAL(NUMBER_OF_VERTICES,DP)
-              L2_ALPHA_1=(1.0_DP-ALPHA_1)/REAL(NUMBER_OF_VERTICES,DP)
-              L3_ALPHA_1=(1.0_DP-ALPHA_1)/REAL(NUMBER_OF_VERTICES,DP)
-              L4_ALPHA_1=1.0_DP-L1_ALPHA_1-L2_ALPHA_1-L3_ALPHA_1
-              !Gauss point 1
-              X(1,1)=L_C
-              X(2,1)=L_C
-              X(3,1)=L_C
-              X(4,1)=L_C
-              W(1)=W_C/6.0_DP
-              !Gauss point 2
-              X(1,2)=L1_ALPHA_1
-              X(2,2)=L2_ALPHA_1
-              X(3,2)=L3_ALPHA_1
-              X(4,2)=L4_ALPHA_1
-              W(2)=W_ALPHA_1/6.0_DP
-              !Gauss point 3
-              X(1,3)=L4_ALPHA_1
-              X(2,3)=L1_ALPHA_1
-              X(3,3)=L2_ALPHA_1
-              X(4,3)=L3_ALPHA_1
-              W(3)=W_ALPHA_1/6.0_DP
-              !Gauss point 4
-              X(1,4)=L3_ALPHA_1
-              X(2,4)=L4_ALPHA_1
-              X(3,4)=L1_ALPHA_1
-              X(4,4)=L2_ALPHA_1
-              W(4)=W_ALPHA_1/6.0_DP
-              !Gauss point 5
-              X(1,5)=L2_ALPHA_1
-              X(2,5)=L3_ALPHA_1
-              X(3,5)=L4_ALPHA_1
-              X(4,5)=L1_ALPHA_1
-              W(5)=W_ALPHA_1/6.0_DP
-            ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
-                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
-              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          ENDIF
-        CASE(4)
-          N=11
-          IF(SIZE(X,2)>=N) THEN
-            IF(SIZE(W,1)>=N) THEN
-              L_C=1.0_DP/REAL(NUMBER_OF_VERTICES,DP)
-              W_C=-148.0_DP/1875.0_DP
-              ALPHA_1=5.0_DP/7.0_DP
-              BETA=SQRT(70.0_DP)/28.0_DP
-              W_ALPHA_1=343.0_DP/7500.0_DP
-              W_BETA=56.0_DP/375.0_DP
-              L1_ALPHA_1=(1.0_DP+(REAL(NUMBER_OF_VERTICES,DP)-1.0_DP)*ALPHA_1)/REAL(NUMBER_OF_VERTICES,DP)
-              L2_ALPHA_1=(1.0_DP-ALPHA_1)/REAL(NUMBER_OF_VERTICES,DP)
-              L3_ALPHA_1=(1.0_DP-ALPHA_1)/REAL(NUMBER_OF_VERTICES,DP)
-              L4_ALPHA_1=1.0_DP-L1_ALPHA_1-L2_ALPHA_1-L3_ALPHA_1
-              L1_BETA=(1.0_DP+(REAL(NUMBER_OF_VERTICES,DP)-2.0_DP)*BETA)/REAL(NUMBER_OF_VERTICES,DP)
-              L2_BETA=L1_BETA
-              L3_BETA=(1.0_DP-2.0_DP*BETA)/REAL(NUMBER_OF_VERTICES,DP)
-              L4_BETA=1.0_DP-L1_BETA-L2_BETA-L3_BETA
-              !Gauss point 1
-              X(1,1)=L_C
-              X(2,1)=L_C
-              X(3,1)=L_C
-              X(4,1)=L_C
-              W(1)=W_C/6.0_DP
-              !Gauss point 2
-              X(1,2)=L1_ALPHA_1
-              X(2,2)=L2_ALPHA_1
-              X(3,2)=L3_ALPHA_1
-              X(4,2)=L4_ALPHA_1
-              W(2)=W_ALPHA_1/6.0_DP
-              !Gauss point 3
-              X(1,3)=L4_ALPHA_1
-              X(2,3)=L1_ALPHA_1
-              X(3,3)=L2_ALPHA_1
-              X(4,3)=L3_ALPHA_1
-              W(3)=W_ALPHA_1/6.0_DP
-              !Gauss point 4
-              X(1,4)=L3_ALPHA_1
-              X(2,4)=L4_ALPHA_1
-              X(3,4)=L1_ALPHA_1
-              X(4,4)=L2_ALPHA_1
-              W(4)=W_ALPHA_1/6.0_DP
-              !Gauss point 5
-              X(1,5)=L2_ALPHA_1
-              X(2,5)=L3_ALPHA_1
-              X(3,5)=L4_ALPHA_1
-              X(4,5)=L1_ALPHA_1
-              W(5)=W_ALPHA_1/6.0_DP
-              !Gauss point 6
-              X(1,6)=L1_BETA
-              X(2,6)=L2_BETA
-              X(3,6)=L3_BETA
-              X(4,6)=L4_BETA
-              W(6)=W_BETA/6.0_DP
-              !Gauss point 7
-              X(1,7)=L1_BETA
-              X(2,7)=L3_BETA
-              X(3,7)=L2_BETA
-              X(4,7)=L4_BETA
-              W(7)=W_BETA/6.0_DP
-              !Gauss point 8
-              X(1,8)=L1_BETA
-              X(2,8)=L3_BETA
-              X(3,8)=L4_BETA
-              X(4,8)=L2_BETA
-              W(8)=W_BETA/6.0_DP
-              !Gauss point 9
-              X(1,9)=L3_BETA
-              X(2,9)=L1_BETA
-              X(3,9)=L2_BETA
-              X(4,9)=L4_BETA
-              W(9)=W_BETA/6.0_DP
-              !Gauss point 10
-              X(1,10)=L3_BETA
-              X(2,10)=L1_BETA
-              X(3,10)=L4_BETA
-              X(4,10)=L2_BETA
-              W(10)=W_BETA/6.0_DP
-              !Gauss point 11
-              X(1,11)=L3_BETA
-              X(2,11)=L4_BETA
-              X(3,11)=L1_BETA
-              X(4,11)=L2_BETA
-              W(11)=W_BETA/6.0_DP
-             ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
-                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
-              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          ENDIF
-        CASE(5)
-          N=14
-          IF(SIZE(X,2)>=N) THEN
-            IF(SIZE(W,1)>=N) THEN
-              ACOS_ARG=67.0_DP*SQRT(79.0_DP)/24964.0_DP
-              !!todo CHECK THIS!!!
-              LAMBDA=4.0_DP/27.0_DP*(4.0_DP*SQRT(79.0_DP)*COS(((ACOS(ACOS_ARG)+TWOPI)/3.0_DP))+71.0_DP)
-
-              ALPHA_1=(SQRT(9.0_DP*LAMBDA*LAMBDA-248.0_DP*LAMBDA+1680.0_DP)+28.0_DP-3.0_DP*LAMBDA)/ &
-                & (112.0_DP-10.0_DP*LAMBDA)
-              ALPHA_2=(-1.0_DP*SQRT(9.0_DP*LAMBDA*LAMBDA-248.0_DP*LAMBDA+1680.0_DP)+28.0_DP-3.0_DP*LAMBDA)/ &
-                & (112.0_DP-10.0_DP*LAMBDA)
-              BETA=1.0_DP/SQRT(LAMBDA)
-              W_ALPHA_1=((21.0_DP-LAMBDA)*ALPHA_2-7.0_DP)/(420.0_DP*ALPHA_1*ALPHA_1*(ALPHA_2-ALPHA_1))
-              W_ALPHA_2=((21.0_DP-LAMBDA)*ALPHA_1-7.0_DP)/(420.0_DP*ALPHA_2*ALPHA_2*(ALPHA_1-ALPHA_2))
-              W_BETA=LAMBDA*LAMBDA/840.0_DP
-              L1_ALPHA_1=(1.0_DP+(REAL(NUMBER_OF_VERTICES,DP)-1.0_DP)*ALPHA_1)/REAL(NUMBER_OF_VERTICES,DP)
-              L2_ALPHA_1=(1.0_DP-ALPHA_1)/REAL(NUMBER_OF_VERTICES,DP)
-              L3_ALPHA_1=(1.0_DP-ALPHA_1)/REAL(NUMBER_OF_VERTICES,DP)
-              L4_ALPHA_1=1.0_DP-L1_ALPHA_1-L2_ALPHA_1-L3_ALPHA_1
-              L1_ALPHA_2=(1.0_DP+(REAL(NUMBER_OF_VERTICES,DP)-1.0_DP)*ALPHA_2)/REAL(NUMBER_OF_VERTICES,DP)
-              L2_ALPHA_2=(1.0_DP-ALPHA_2)/REAL(NUMBER_OF_VERTICES,DP)
-              L3_ALPHA_2=(1.0_DP-ALPHA_2)/REAL(NUMBER_OF_VERTICES,DP)
-              L4_ALPHA_2=1.0_DP-L1_ALPHA_2-L2_ALPHA_2-L3_ALPHA_2
-              L1_BETA=(1.0_DP+(REAL(NUMBER_OF_VERTICES,DP)-2.0_DP)*BETA)/REAL(NUMBER_OF_VERTICES,DP)
-              L2_BETA=(1.0_DP+(REAL(NUMBER_OF_VERTICES,DP)-2.0_DP)*BETA)/REAL(NUMBER_OF_VERTICES,DP)
-              L3_BETA=(1.0_DP-2.0_DP*BETA)/REAL(NUMBER_OF_VERTICES,DP)
-              L4_BETA=1.0_DP-L1_BETA-L2_BETA-L3_BETA
-              !Gauss point 1
-              X(1,1)=L1_ALPHA_1
-              X(2,1)=L2_ALPHA_1
-              X(3,1)=L3_ALPHA_1
-              X(4,1)=L4_ALPHA_1
-              W(1)=W_ALPHA_1/6.0_DP
-              !Gauss point 2
-              X(1,2)=L4_ALPHA_1
-              X(2,2)=L1_ALPHA_1
-              X(3,2)=L2_ALPHA_1
-              X(4,2)=L3_ALPHA_1
-              W(2)=W_ALPHA_1/6.0_DP
-              !Gauss point 3
-              X(1,3)=L3_ALPHA_1
-              X(2,3)=L4_ALPHA_1
-              X(3,3)=L1_ALPHA_1
-              X(4,3)=L2_ALPHA_1
-              W(3)=W_ALPHA_1/6.0_DP
-              !Gauss point 4
-              X(1,4)=L2_ALPHA_1
-              X(2,4)=L3_ALPHA_1
-              X(3,4)=L4_ALPHA_1
-              X(4,4)=L1_ALPHA_1
-              W(4)=W_ALPHA_1/6.0_DP
-              !Gauss point 5
-              X(1,5)=L1_ALPHA_2
-              X(2,5)=L2_ALPHA_2
-              X(3,5)=L3_ALPHA_2
-              X(4,5)=L4_ALPHA_2
-              W(5)=W_ALPHA_2/6.0_DP
-              !Gauss point 6
-              X(1,6)=L4_ALPHA_2
-              X(2,6)=L1_ALPHA_2
-              X(3,6)=L2_ALPHA_2
-              X(4,6)=L3_ALPHA_2
-              W(6)=W_ALPHA_2/6.0_DP
-              !Gauss point 7
-              X(1,7)=L3_ALPHA_2
-              X(2,7)=L4_ALPHA_2
-              X(3,7)=L1_ALPHA_2
-              X(4,7)=L2_ALPHA_2
-              W(7)=W_ALPHA_2/6.0_DP
-              !Gauss point 8
-              X(1,8)=L2_ALPHA_2
-              X(2,8)=L3_ALPHA_2
-              X(3,8)=L4_ALPHA_2
-              X(4,8)=L1_ALPHA_2
-              W(8)=W_ALPHA_2/6.0_DP
-              !Gauss point 9
-              X(1,9)=L1_BETA
-              X(2,9)=L2_BETA
-              X(3,9)=L3_BETA
-              X(4,9)=L4_BETA
-              W(9)=W_BETA/6.0_DP
-              !Gauss point 10
-              X(1,10)=L1_BETA
-              X(2,10)=L3_BETA
-              X(3,10)=L2_BETA
-              X(4,10)=L4_BETA
-              W(10)=W_BETA/6.0_DP
-              !Gauss point 11
-              X(1,11)=L1_BETA
-              X(2,11)=L3_BETA
-              X(3,11)=L4_BETA
-              X(4,11)=L2_BETA
-              W(11)=W_BETA/6.0_DP
-              !Gauss point 12
-              X(1,12)=L3_BETA
-              X(2,12)=L1_BETA
-              X(3,12)=L2_BETA
-              X(4,12)=L4_BETA
-              W(12)=W_BETA/6.0_DP
-              !Gauss point 13
-              X(1,13)=L3_BETA
-              X(2,13)=L1_BETA
-              X(3,13)=L4_BETA
-              X(4,13)=L2_BETA
-              W(13)=W_BETA/6.0_DP
-              !Gauss point 14
-              X(1,14)=L3_BETA
-              X(2,14)=L4_BETA
-              X(3,14)=L1_BETA
-              X(4,14)=L2_BETA
-              W(14)=W_BETA/6.0_DP
-             ELSE
-              LOCAL_ERROR="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(W,1),"*",err,error))// &
-                & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(X,2),"*",err,error))// &
-              & " and it must be >="//TRIM(NumberToVString(N,"*",err,error))
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          ENDIF
-        CASE DEFAULT
-          LOCAL_ERROR=TRIM(NumberToVString(ORDER,"*",err,error))// &
-            & " is an invalid Gauss order. You must have an order between 1 and 5"
-          CALL FlagError(LOCAL_ERROR,err,error,*999)
-        END SELECT
-      CASE DEFAULT
-        LOCAL_ERROR=TRIM(NumberToVString(NUMBER_OF_VERTICES,"*",err,error))// &
-          & " is an invalid number of vertices. You must have between 2 and 4 vertices"
-        CALL FlagError(LOCAL_ERROR,err,error,*999)
-      END SELECT
-    ELSE
-      LOCAL_ERROR="The first dimension of the X array is "//TRIM(NumberToVString(SIZE(X,1),"*",err,error))// &
-        & " and it must be >= the number of vertices"
-      CALL FlagError(LOCAL_ERROR,err,error,*999)
+    ENTERS("Gauss_Simplex",err,error,*999)
+    
+    IF(SIZE(x,1)<numberOfVertices) THEN
+      localError="The first dimension of the X array is "//TRIM(NumberToVString(SIZE(x,1),"*",err,error))// &
+        & " and it must be >= the number of vertices of "//TRIM(NumberToVString(numberOfVertices,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+
+    SELECT CASE(numberOfVertices)
+    CASE(2)
+      !Line
+      SELECT CASE(order)
+      CASE(1)
+        n=1
+        IF(SIZE(x,2)<n) THEN
+          localError="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(x,2),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        IF(SIZE(w,1)<n) THEN
+          localError="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(w,1),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        !Gauss point 1
+        x(1,1)=1.0_DP/2.0
+        x(2,1)=1.0_DP/2.0_DP
+        w(1)=1.0_DP
+      CASE(2)
+        n=2
+        IF(SIZE(x,2)<n) THEN
+          localError="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(x,2),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        IF(SIZE(w,1)<n) THEN
+          localError="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(w,1),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        !Gauss point 1
+        x(1,1)=(1.0_DP-1.0_DP/sqrt(3.0_DP))/2.0_DP
+        x(2,1)=1.0_DP-x(1,1)
+        w(1)=1.0_DP/2.0_DP
+        !Gauss point 2
+        x(1,2)=(1.0_DP+1.0_DP/SQRT(3.0_DP))/2.0_DP
+        x(2,2)=1.0_DP-x(1,2)
+        w(2)=1.0_DP/2.0_DP
+      CASE(3)
+        n=2
+        IF(SIZE(x,2)<n) THEN
+          localError="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(x,2),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        IF(SIZE(w,1)<n) THEN
+          localError="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(w,1),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        !Gauss point 1
+        x(1,1)=(1.0_DP-1.0_DP/sqrt(3.0_DP))/2.0_DP
+        x(2,1)=1.0_DP-x(1,1)
+        w(1)=1.0_DP/2.0_DP
+        !Gauss point 2
+        x(1,2)=(1.0_DP+1.0_DP/SQRT(3.0_DP))/2.0_DP
+        x(2,2)=1.0_DP-x(1,2)
+        w(2)=1.0_DP/2.0_DP
+      CASE(4)
+        n=3
+        IF(SIZE(x,2)<n) THEN
+          localError="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(x,2),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        IF(SIZE(w,1)<n) THEN
+          localError="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(w,1),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        !Gauss point 1
+        x(1,1)=(1.0_DP-SQRT(0.6_DP))/2.0_DP
+        x(2,1)=1-x(1,1)
+        w(1)=5.0_DP/18.0_DP
+        !Gauss point 2
+        x(1,2)=1.0_DP/2.0_DP
+        x(2,2)=1.0_DP-x(1,2)
+        w(2)=4.0_DP/9.0_DP
+        !Gauss point 3
+        x(1,3)=(1.0_DP+SQRT(0.6_DP))/2.0_DP
+        x(2,3)=1.0_DP-x(1,3)
+        w(3)=5.0_DP/18.0_DP
+      CASE(5)
+        n=3
+        IF(SIZE(x,2)<n) THEN
+          localError="The second dimension of the X array is "//TRIM(NumberToVString(SIZE(x,2),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        IF(SIZE(w,1)<n) THEN
+          localError="The first dimension of the W array is "//TRIM(NumberToVString(SIZE(w,1),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        !Gauss point 1
+        x(1,1)=(1.0_DP-SQRT(0.6_DP))/2.0_DP
+        x(2,1)=1-x(1,1)
+        w(1)=5.0_DP/18.0_DP
+        !Gauss point 2
+        x(1,2)=1.0_DP/2.0_DP
+        x(2,2)=1.0_DP-x(1,2)
+        w(2)=4.0_DP/9.0_DP
+        !Gauss point 3
+        x(1,3)=(1.0_DP+SQRT(0.6_DP))/2.0_DP
+        x(2,3)=1.0_DP-x(1,3)
+        w(3)=5.0_DP/18.0_DP
+      CASE DEFAULT
+        localError="The specified Gauss order of "//TRIM(NumberToVString(order,"*",err,error))// &
+          & " is an invalid. You must specify an order between 1 and 5."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(3)
+      !Triangle
+      SELECT CASE(order)
+      CASE(1)
+        n=1
+        IF(SIZE(x,2)<n) THEN
+          localError="The second dimension of the x array is "//TRIM(NumberToVString(SIZE(x,2),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        IF(SIZE(w,1)<n) THEN
+          localError="The first dimension of the w array is "//TRIM(NumberToVString(SIZE(w,1),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        lC=1.0_DP/3.0_DP
+        wC=1.0_DP
+        !Gauss point 1
+        x(1,1)=lC
+        x(2,1)=lC
+        x(3,1)=lC
+        w(1)=wC/2.0_DP
+      CASE(2)
+        n=3
+        IF(SIZE(x,2)<n) THEN
+          localError="The second dimension of the x array is "//TRIM(NumberToVString(SIZE(x,2),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        IF(SIZE(w,1)<n) THEN
+          localError="The first dimension of the w array is "//TRIM(NumberToVString(SIZE(w,1),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        alpha1=-1.0_DP/2.0_DP
+        wAlpha1=1.0_DP/3.0_DP
+        l1Alpha1=(1.0_DP+2.0_DP*alpha1)/3.0_DP
+        l2Alpha1=(1.0_DP-alpha1)/3.0_DP
+        l3Alpha1=1.0_DP-l1Alpha1-l2Alpha1
+        !Gauss point 1
+        x(1,1)=l1Alpha1
+        x(2,1)=l2Alpha1
+        x(3,1)=l3Alpha1
+        w(1)=wAlpha1/2.0_DP
+        !Gauss point 2
+        x(1,2)=l3Alpha1
+        x(2,2)=l1Alpha1
+        x(3,2)=l2Alpha1
+        w(2)=wAlpha1/2.0_DP
+        !Gauss point 3
+        x(1,3)=l2Alpha1
+        x(2,3)=l3Alpha1
+        x(3,3)=l1Alpha1
+        w(3)=wAlpha1/2.0_DP
+      CASE(3)
+        n=4
+        IF(SIZE(x,2)<n) THEN
+          localError="The second dimension of the x array is "//TRIM(NumberToVString(SIZE(x,2),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        IF(SIZE(w,1)<n) THEN
+          localError="The first dimension of the w array is "//TRIM(NumberToVString(SIZE(w,1),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        lC=1.0_DP/3.0_DP
+        wC=-9.0_DP/16.0
+        alpha1=25.0_DP
+        wAlpha1=25.0_DP/48.0_DP
+        l1Alpha1=(1.0_DP+2.0_DP*alpha1)/3.0_DP
+        l2Alpha1=(1.0_DP-alpha1)/3.0_DP
+        l3Alpha1=1.0_DP-l1Alpha1-l2Alpha1
+        !Gauss point 1
+        x(1,1)=lC
+        x(2,1)=lC
+        x(3,1)=lC
+        w(1)=wC/2.0_DP
+        !Gauss point 2
+        x(1,2)=l1Alpha1
+        x(2,2)=l2Alpha1
+        x(3,2)=l3Alpha1
+        w(2)=wAlpha1/2.0_DP
+        !Gauss point 3
+        x(1,3)=l3Alpha1
+        x(2,3)=l1Alpha1
+        x(3,3)=l2Alpha1
+        w(3)=wAlpha1/2.0_DP
+        !Gauss point 4
+        x(1,4)=l2Alpha1
+        x(2,4)=l3Alpha1
+        x(3,4)=l1Alpha1
+        w(4)=wAlpha1/2.0_DP
+      CASE(4)
+        n=6
+        IF(SIZE(x,2)<n) THEN
+          localError="The second dimension of the x array is "//TRIM(NumberToVString(SIZE(x,2),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        IF(SIZE(w,1)<n) THEN
+          localError="The first dimension of the w array is "//TRIM(NumberToVString(SIZE(w,1),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        alpha1=(-10.0_DP+5.0_DP*SQRT(10.0_DP)+SQRT(950.0_DP-220.0_DP*SQRT(10.0_DP)))/30.0_DP
+        alpha2=(-10.0_DP+5.0_DP*SQRT(10.0_DP)-SQRT(950.0_DP-220.0_DP*SQRT(10.0_DP)))/30.0_DP
+        wAlpha1=(5.0_DP*alpha2-2.0_DP)/(60.0_DP*alpha1*alpha1*(alpha2-alpha1))
+        wAlpha2=(5.0_DP*alpha1-2.0_DP)/(60.0_DP*alpha2*alpha2*(alpha1-alpha2))
+        l1Alpha1=(1.0_DP+2.0_DP*alpha1)/3.0_DP
+        l2Alpha1=(1.0_DP-alpha1)/3.0_DP
+        l3Alpha1=1.0_DP-l1Alpha1-l2Alpha1
+        l1Alpha2=(1.0_DP+2.0_DP*alpha2)/3.0_DP
+        l2Alpha2=(1.0_DP-alpha2)/3.0_DP
+        l3Alpha2=1.0_DP-l1Alpha2-l2Alpha2
+        !Gauss point 1
+        x(1,1)=l1Alpha1
+        x(2,1)=l2Alpha1
+        x(3,1)=l3Alpha1
+        w(1)=wAlpha1/2.0_DP 
+        !Gauss point 2
+        x(1,2)=l3Alpha1
+        x(2,2)=l1Alpha1
+        x(3,2)=l2Alpha1
+        w(2)=wAlpha1/2.0_DP
+        !Gauss point 3
+        x(1,3)=l2Alpha1
+        x(2,3)=l3Alpha1
+        x(3,3)=l1Alpha1
+        w(3)=wAlpha1/2.0_DP
+        !Gauss point 4
+        x(1,4)=l1Alpha2
+        x(2,4)=l2Alpha2
+        x(3,4)=l3Alpha2
+        w(4)=wAlpha2/2.0_DP
+        !Gauss point 5
+        x(1,5)=l3Alpha2
+        x(2,5)=l1Alpha2
+        x(3,5)=l2Alpha2
+        w(5)=wAlpha2/2.0_DP
+        !Gauss point 6
+        x(1,6)=l2Alpha2
+        x(2,6)=l3Alpha2
+        x(3,6)=l1Alpha2
+        w(6)=wAlpha2/2.0_DP
+      CASE(5)
+        n=7
+        IF(SIZE(x,2)<n) THEN
+          localError="The second dimension of the x array is "//TRIM(NumberToVString(SIZE(x,2),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        IF(SIZE(w,1)<n) THEN
+          localError="The first dimension of the w array is "//TRIM(NumberToVString(SIZE(w,1),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        lC=1.0_DP/3.0_DP
+        wC=9.0_DP/40.0_DP
+        alpha1=(1.0_DP+SQRT(15.0_DP))/7.0_DP
+        alpha2=(1.0_DP-SQRT(15.0_DP))/7.0_DP
+        wAlpha1=(155.0_DP-SQRT(15.0_DP))/1200.0_DP
+        wAlpha2=(155.0_DP+SQRT(15.0_DP))/1200.0_DP
+        l1Alpha1=(1.0_DP+2.0_DP*alpha1)/3.0_DP
+        l2Alpha1=(1.0_DP-alpha1)/3.0_DP
+        l3Alpha1=1.0_DP-l1Alpha1-l2Alpha1
+        l1Alpha2=(1.0_DP+2.0_DP*alpha2)/3.0_DP
+        l2Alpha2=(1.0_DP-alpha2)/3.0_DP
+        l3Alpha2=1.0_DP-l1Alpha2-l2Alpha2
+        !Gauss point 1
+        x(1,1)=lC
+        x(2,1)=lC
+        x(3,1)=lC
+        w(1)=wC/2.0_DP
+        !Gauss point 2
+        x(1,2)=l1Alpha1
+        x(2,2)=l2Alpha1
+        x(3,2)=l3Alpha1
+        w(2)=wAlpha1/2.0_DP
+        !Gauss point 3
+        x(1,3)=l3Alpha1
+        x(2,3)=l1Alpha1
+        x(3,3)=l2Alpha1
+        w(3)=wAlpha1/2.0_DP
+        !Gauss point 4
+        x(1,4)=l2Alpha1
+        x(2,4)=l3Alpha1
+        x(3,4)=l1Alpha1
+        w(4)=wAlpha1/2.0_DP
+        !Gauss point 5
+        x(1,5)=l1Alpha2
+        x(2,5)=l2Alpha2
+        x(3,5)=l3Alpha2
+        w(5)=wAlpha2/2.0_DP
+        !Gauss point 6
+        x(1,6)=l3Alpha2
+        x(2,6)=l1Alpha2
+        x(3,6)=l2Alpha2
+        w(6)=wAlpha2/2.0_DP
+        !Gauss point 7
+        x(1,7)=l2Alpha2
+        x(2,7)=l3Alpha2
+        x(3,7)=l1Alpha2
+        w(7)=wAlpha2/2.0_DP
+      CASE DEFAULT
+        localError="The specified order of "//TRIM(NumberToVString(order,"*",err,error))// &
+          & " is an invalid. You must have an order between 1 and 5."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(4)
+      !Tetrahedra
+      SELECT CASE(ORDER)
+      CASE(1)
+        n=1
+        IF(SIZE(x,2)<n) THEN
+          localError="The second dimension of the x array is "//TRIM(NumberToVString(SIZE(x,2),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        IF(SIZE(w,1)<n) THEN
+          localError="The first dimension of the w array is "//TRIM(NumberToVString(SIZE(w,1),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        lC=1.0_DP/4.0_DP
+        wC=1.0_DP
+        !Gauss point 1
+        x(1,1)=lC
+        x(2,1)=lC
+        x(3,1)=lC
+        w(1)=wC/6.0_DP 
+      CASE(2)
+        n=4
+        IF(SIZE(x,2)<n) THEN
+          localError="The second dimension of the x array is "//TRIM(NumberToVString(SIZE(x,2),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        IF(SIZE(w,1)<n) THEN
+          localError="The first dimension of the w array is "//TRIM(NumberToVString(SIZE(w,1),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        alpha1=1.0_DP/SQRT(5.0_DP)
+        wAlpha1=1.0_DP/4.0_DP
+        l1Alpha1=(1.0_DP+3.0_DP*alpha1)/4.0_DP
+        l2Alpha1=(1.0_DP-alpha1)/4.0_DP
+        l3Alpha1=(1.0_DP-alpha1)/4.0_DP
+        l4Alpha1=1.0_DP-l1Alpha1-l2Alpha1-l3Alpha1
+        !Gauss point 1
+        x(1,1)=l1Alpha1
+        x(2,1)=l2Alpha1
+        x(3,1)=l3Alpha1
+        x(4,1)=l4Alpha1
+        w(1)=wAlpha1/6.0_DP 
+        !Gauss point 2
+        x(1,2)=l4Alpha1
+        x(2,2)=l1Alpha1
+        x(3,2)=l2Alpha1
+        x(4,2)=l3Alpha1
+        w(2)=wAlpha1/6.0_DP
+        !Gauss point 3
+        x(1,3)=l3Alpha1
+        x(2,3)=l4Alpha1
+        x(3,3)=l1Alpha1
+        x(4,3)=l2Alpha1
+        w(3)=wAlpha1/6.0_DP
+        !Gauss point 4
+        x(1,4)=l2Alpha1
+        x(2,4)=l3Alpha1
+        x(3,4)=l4Alpha1
+        x(4,4)=l1Alpha1
+        w(4)=wAlpha1/6.0_DP
+      CASE(3)
+        n=5
+        IF(SIZE(x,2)<n) THEN
+          localError="The second dimension of the x array is "//TRIM(NumberToVString(SIZE(x,2),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        IF(SIZE(w,1)<n) THEN
+          localError="The first dimension of the w array is "//TRIM(NumberToVString(SIZE(w,1),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        lC=1.0_DP/4.0_DP
+        wC=-4.0_DP/5.0_DP
+        alpha1=1.0_DP/3.0_DP
+        wAlpha1=9.0_DP/20.0_DP
+        l1Alpha1=(1.0_DP+3.0_DP*alpha1)/4.0_DP
+        l2Alpha1=(1.0_DP-alpha1)/4.0_DP
+        l3Alpha1=(1.0_DP-alpha1)/4.0_DP
+        l4Alpha1=1.0_DP-l1Alpha1-l2Alpha1-l3Alpha1
+        !Gauss point 1
+        x(1,1)=lC
+        x(2,1)=lC
+        x(3,1)=lC
+        x(4,1)=lC
+        w(1)=wC/6.0_DP 
+        !Gauss point 2
+        x(1,2)=l1Alpha1
+        x(2,2)=l2Alpha1
+        x(3,2)=l3Alpha1
+        x(4,2)=l4Alpha1
+        w(2)=wAlpha1/6.0_DP
+        !Gauss point 3
+        x(1,3)=l4Alpha1
+        x(2,3)=l1Alpha1
+        x(3,3)=l2Alpha1
+        x(4,3)=l3Alpha1
+        w(3)=wAlpha1/6.0_DP
+        !Gauss point 4
+        x(1,4)=l3Alpha1
+        x(2,4)=l4Alpha1
+        x(3,4)=l1Alpha1
+        x(4,4)=l2Alpha1
+        w(4)=wAlpha1/6.0_DP
+        !Gauss point 5
+        x(1,5)=l2Alpha1
+        x(2,5)=l3Alpha1
+        x(3,5)=l4Alpha1
+        x(4,5)=l1Alpha1
+        w(5)=wAlpha1/6.0_DP
+      CASE(4)
+        n=11
+        IF(SIZE(x,2)<n) THEN
+          localError="The second dimension of the x array is "//TRIM(NumberToVString(SIZE(x,2),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        IF(SIZE(w,1)<n) THEN
+          localError="The first dimension of the w array is "//TRIM(NumberToVString(SIZE(w,1),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        lC=1.0_DP/4.0_DP
+        wC=-148.0_DP/1875.0_DP
+        alpha1=5.0_DP/7.0_DP
+        beta=SQRT(70.0_DP)/28.0_DP
+        wAlpha1=343.0_DP/7500.0_DP
+        wBeta=56.0_DP/375.0_DP
+        l1Alpha1=(1.0_DP+3.0_DP*alpha1)/4.0_DP
+        l2Alpha1=(1.0_DP-alpha1)/4.0_DP
+        l3Alpha1=(1.0_DP-alpha1)/4.0_DP
+        l4Alpha1=1.0_DP-l1Alpha1-l2Alpha1-l3Alpha1
+        l1Beta=(1.0_DP+2.0_DP*beta)/4.0_DP
+        l2Beta=l1Beta
+        l3Beta=(1.0_DP-2.0_DP*beta)/4.0_DP
+        l4Beta=1.0_DP-l1Beta-l2Beta-l3Beta
+        !Gauss point 1
+        x(1,1)=lC
+        x(2,1)=lC
+        x(3,1)=lC
+        x(4,1)=lC
+        w(1)=wC/6.0_DP
+        !Gauss point 2
+        x(1,2)=l1Alpha1
+        x(2,2)=l2Alpha1
+        x(3,2)=l3Alpha1
+        x(4,2)=l4Alpha1
+        w(2)=wAlpha1/6.0_DP
+        !Gauss point 3
+        x(1,3)=l4Alpha1
+        x(2,3)=l1Alpha1
+        x(3,3)=l2Alpha1
+        x(4,3)=l3Alpha1
+        w(3)=wAlpha1/6.0_DP
+        !Gauss point 4
+        x(1,4)=l3Alpha1
+        x(2,4)=l4Alpha1
+        x(3,4)=l1Alpha1
+        x(4,4)=l2Alpha1        
+        w(4)=wAlpha1/6.0_DP
+        !Gauss point 5
+        x(1,5)=l2Alpha1
+        x(2,5)=l3Alpha1
+        x(3,5)=l4Alpha1
+        x(4,5)=l1Alpha1
+        w(5)=wAlpha1/6.0_DP
+        !Gauss point 6
+        x(1,6)=l1Beta
+        x(2,6)=l2Beta
+        x(3,6)=l3Beta
+        x(4,6)=l4Beta
+        w(6)=wBeta/6.0_DP
+        !Gauss point 7
+        x(1,7)=l1Beta
+        x(2,7)=l3Beta
+        x(3,7)=l2Beta
+        x(4,7)=l4Beta
+        w(7)=wBeta/6.0_DP
+        !Gauss point 8
+        x(1,8)=l1Beta
+        x(2,8)=l3Beta
+        x(3,8)=l4Beta
+        x(4,8)=l2Beta
+        w(8)=wBeta/6.0_DP
+        !Gauss point 9
+        x(1,9)=l3Beta
+        x(2,9)=l1Beta
+        x(3,9)=l2Beta
+        x(4,9)=l4Beta
+        w(9)=wBeta/6.0_DP
+        !Gauss point 10
+        x(1,10)=l3Beta
+        x(2,10)=l1Beta
+        x(3,10)=l4Beta
+        x(4,10)=l2Beta
+        w(10)=wBeta/6.0_DP
+        !Gauss point 11
+        x(1,11)=l3Beta
+        x(2,11)=l4Beta
+        x(3,11)=l1Beta
+        x(4,11)=l2Beta
+        w(11)=wBeta/6.0_DP
+      CASE(5)
+        n=14
+        IF(SIZE(x,2)<n) THEN
+          localError="The second dimension of the x array is "//TRIM(NumberToVString(SIZE(x,2),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        IF(SIZE(w,1)<n) THEN
+          localError="The first dimension of the w array is "//TRIM(NumberToVString(SIZE(w,1),"*",err,error))// &
+            & " and it must be >= "//TRIM(NumberToVString(n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        aCosArg=67.0_DP*SQRT(79.0_DP)/24964.0_DP
+        lambda=4.0_DP/27.0_DP*(4.0_DP*SQRT(79.0_DP)*COS(((ACOS(aCosArg)+TWOPI)/3.0_DP))+71.0_DP)        
+        alpha1=(SQRT(9.0_DP*lambda*lambda-248.0_DP*lambda+1680.0_DP)+28.0_DP-3.0_DP*lambda)/ &
+          & (112.0_DP-10.0_DP*lambda)
+        alpha2=(-1.0_DP*SQRT(9.0_DP*lambda*lambda-248.0_DP*lambda+1680.0_DP)+28.0_DP-3.0_DP*lambda)/ &
+          & (112.0_DP-10.0_DP*lambda)
+        beta=1.0_DP/SQRT(lambda)
+        wAlpha1=((21.0_DP-lambda)*alpha2-7.0_DP)/(420.0_DP*alpha1*alpha1*(alpha2-alpha1))
+        wAlpha2=((21.0_DP-lambda)*alpha1-7.0_DP)/(420.0_DP*alpha2*alpha2*(alpha1-alpha2))
+        wBeta=lambda*lambda/840.0_DP
+        l1Alpha1=(1.0_DP+3.0_DP*alpha1)/4.0_DP
+        l2Alpha1=(1.0_DP-alpha1)/4.0_DP
+        l3Alpha1=(1.0_DP-alpha1)/4.0_DP
+        l4Alpha1=1.0_DP-l1Alpha1-l2Alpha1-l3Alpha1
+        l1Alpha2=(1.0_DP+3.0_DP*alpha2)/4.0_DP
+        l2Alpha2=(1.0_DP-alpha2)/4.0_DP
+        l3Alpha2=(1.0_DP-alpha2)/4.0_DP
+        l4Alpha2=1.0_DP-l1Alpha2-l2Alpha2-l3Alpha2
+        l1Beta=(1.0_DP+2.0_DP*beta)/4.0_DP
+        l2Beta=l1Beta
+        l3Beta=(1.0_DP-2.0_DP*beta)/4.0_DP
+        l4Beta=1.0_DP-l1Beta-l2Beta-l3Beta
+        !Gauss point 1
+        x(1,1)=l1Alpha1
+        x(2,1)=l2Alpha1
+        x(3,1)=l3Alpha1
+        x(4,1)=l4Alpha1
+        w(1)=wAlpha1/6.0_DP
+        !Gauss point 2
+        x(1,2)=l4Alpha1
+        x(2,2)=l1Alpha1
+        x(3,2)=l2Alpha1
+        x(4,2)=l3Alpha1
+        w(2)=wAlpha1/6.0_DP
+        !Gauss point 3
+        x(1,3)=l3Alpha1
+        x(2,3)=l4Alpha1
+        x(3,3)=l1Alpha1
+        x(4,3)=l2Alpha1
+        w(3)=wAlpha1/6.0_DP
+        !Gauss point 4
+        x(1,4)=l2Alpha1
+        x(2,4)=l3Alpha1
+        x(3,4)=l4Alpha1
+        x(4,4)=l1Alpha1
+        w(4)=wAlpha1/6.0_DP
+        !Gauss point 5
+        x(1,5)=l1Alpha2
+        x(2,5)=l2Alpha2
+        x(3,5)=l3Alpha2
+        x(4,5)=l4Alpha2
+        w(5)=wAlpha2/6.0_DP
+        !Gauss point 6
+        x(1,6)=l4Alpha2
+        x(2,6)=l1Alpha2
+        x(3,6)=l2Alpha2
+        x(4,6)=l3Alpha2
+        w(6)=wAlpha2/6.0_DP
+        !Gauss point 7
+        x(1,7)=l3Alpha2
+        x(2,7)=l4Alpha2
+        x(3,7)=l1Alpha2
+        x(4,7)=l2Alpha2
+        w(7)=wAlpha2/6.0_DP
+        !Gauss point 8
+        x(1,8)=l2Alpha2
+        x(2,8)=l3Alpha2
+        x(3,8)=l4Alpha2
+        x(4,8)=l1Alpha2
+        w(8)=wAlpha2/6.0_DP
+        !Gauss point 9
+        x(1,9)=l1Beta
+        x(2,9)=l2Beta
+        x(3,9)=l3Beta
+        x(4,9)=l4Beta
+        w(9)=wBeta/6.0_DP
+        !Gauss point 10
+        x(1,10)=l1Beta
+        x(2,10)=l3Beta
+        x(3,10)=l2Beta
+        x(4,10)=l4Beta
+        w(10)=wBeta/6.0_DP
+        !Gauss point 11
+        x(1,11)=l1Beta
+        x(2,11)=l3Beta
+        x(3,11)=l4Beta
+        x(4,11)=l2Beta
+        w(11)=wBeta/6.0_DP
+        !Gauss point 12
+        x(1,12)=l3Beta
+        x(2,12)=l1Beta
+        x(3,12)=l2Beta
+        x(4,12)=l4Beta
+        w(12)=wBeta/6.0_DP
+        !Gauss point 13
+        x(1,13)=l3Beta
+        x(2,13)=l1Beta
+        x(3,13)=l4Beta
+        x(4,13)=l2Beta
+        w(13)=wBeta/6.0_DP
+        !Gauss point 14
+        x(1,14)=l3Beta
+        x(2,14)=l4Beta
+        x(3,14)=l1Beta
+        x(4,14)=l2Beta
+        w(14)=wBeta/6.0_DP
+      CASE DEFAULT
+        localError="The specified order of "//TRIM(NumberToVString(order,"*",err,error))// &
+          & " is an invalid. You must have an order between 1 and 5."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The specified number of vertices of "//TRIM(NumberToVString(numberOfVertices,"*",err,error))// &
+        & " is an invalid. You must have between 2 and 4 vertices."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
     
-    IF(DIAGNOSTICS1) THEN
+    IF(diagnostics1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Simplex Gauss quadrature points:",err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of vertices = ",NUMBER_OF_VERTICES,err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Order = ",ORDER,err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of gauss points = ",N,err,error,*999)
-      DO ng=1,N
-        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Gauss point ",ng,err,error,*999)
-        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,ORDER,4,4,X(:,ng),'("        Location(nic) :",4(X,F13.5))', &
-          & '(23X,4(X,F13.5))',err,error,*999)
-        CALL WriteStringFmtValue(DIAGNOSTIC_OUTPUT_TYPE,"        Weight        : ",W(ng),"F13.5",err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of vertices = ",numberOfVertices,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Order = ",order,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of gauss points = ",n,err,error,*999)
+      DO gaussIdx=1,n
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Gauss point ",gaussIdx,err,error,*999)
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,order,4,4,x(:,gaussIdx),'("        Location :",4(X,F13.5))', &
+          & '(18X,4(X,F13.5))',err,error,*999)
+        CALL WriteStringFmtValue(DIAGNOSTIC_OUTPUT_TYPE,"        Weight   : ",w(gaussIdx),"F13.5",err,error,*999)
       ENDDO !ng
-      IF(DIAGNOSTICS2) THEN
+      IF(diagnostics2) THEN
 !!TODO: \todo add in integral check
       ENDIF
     ENDIF
 
-    EXITS("GAUSS_SIMPLEX")
+    EXITS("Gauss_Simplex")
     RETURN
-999 ERRORSEXITS("GAUSS_SIMPLEX",err,error)
+999 ERRORSEXITS("Gauss_Simplex",err,error)
     RETURN 1
-  END SUBROUTINE GAUSS_SIMPLEX
+    
+  END SUBROUTINE Gauss_Simplex
   
   !
   !================================================================================================================================
