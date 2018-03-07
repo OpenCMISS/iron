@@ -61,6 +61,7 @@ MODULE FIELD_ROUTINES
   USE MPI
 #endif
   USE MESH_ROUTINES
+  USE MeshAccessRoutines
   USE NODE_ROUTINES
   USE Strings
   USE Types
@@ -11770,182 +11771,123 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr,ng,ne,MAX_GAUSS
-    INTEGER(INTG) :: numberGaussPoints
-    REAL(DP) :: w,elementVolume
-    REAL(DP), ALLOCATABLE :: XIG(:,:),WIG(:),XI(:)
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
-    TYPE(DOMAIN_TYPE), POINTER :: domain
-    TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: topology
-    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompTopology
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(DECOMPOSITION_ELEMENTS_TYPE), POINTER :: decompElements
+    INTEGER(INTG) :: dummyErr,elementIdx,gaussPointIdx,maxNumberOfGauss,numberOfGaussPoints,order
+    
+    REAL(DP) :: elementVolume
+    REAL(DP), ALLOCATABLE :: gaussPoints(:,:),gaussWeights(:)
     TYPE(BASIS_TYPE), POINTER:: basis
     TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
+    TYPE(DOMAIN_TYPE), POINTER :: domain
+    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: domainElements
+    TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology
+    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
+    TYPE(DECOMPOSITION_ELEMENTS_TYPE), POINTER :: decompositionElements
+    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology
+    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: interpolationParameters(:)
     TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: interpolatedPoint(:)
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE), POINTER :: interpolatedPointMetrics(:)
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: interpolationParameters(:)
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: dummyError,localError
 
-
+    ENTERS("Field_GeometricParametersElementVolumesCalculate",err,error,*996)
+    
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*996)
+    IF(.NOT.field%FIELD_FINISHED) THEN
+      localError="Field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" has not been finished."
+      CALL FlagError(localError,err,error,*996)
+    ENDIF
+    IF(field%TYPE/=FIELD_GEOMETRIC_TYPE) THEN
+      localError="Field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" is not a geometric field."
+      CALL FlagError(localError,err,error,*996)
+    ENDIF
+    IF(.NOT.ASSOCIATED(field%GEOMETRIC_FIELD_PARAMETERS)) THEN
+      localError="Geometric parameters are not associated for field number "// &
+        & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*996)
+    ENDIF
+      
+    NULLIFY(coordinateSystem)
+    NULLIFY(interpolationParameters)
     NULLIFY(interpolatedPoint)
     NULLIFY(interpolatedPointMetrics)
-    NULLIFY(interpolationParameters)
-    NULLIFY(fieldVariable)
-
-    ENTERS("Field_GeometricParametersElementVolumesCalculate",err,error,*999)
-    IF(ASSOCIATED(field)) THEN
-      IF(field%FIELD_FINISHED) THEN
-        IF(field%TYPE==FIELD_GEOMETRIC_TYPE) THEN
-          IF(ASSOCIATED(field%GEOMETRIC_FIELD_PARAMETERS)) THEN
-            NULLIFY(coordinateSystem)
-            CALL Field_CoordinateSystemGet(field,coordinateSystem,err,error,*999)
-            IF(coordinateSystem%NUMBER_OF_DIMENSIONS.EQ.3) THEN !only calculate volumes if the object is in 3D
-              CALL Field_InterpolationParametersInitialise(field,interpolationParameters,err,error,*999)
-              CALL Field_InterpolatedPointsInitialise(interpolationParameters,interpolatedPoint,err,error,*999)
-              CALL Field_InterpolatedPointsMetricsInitialise(interpolatedPoint,interpolatedPointMetrics,err,error,*999)
-              !Get basis type for the first component of the mesh defined with this geometric field
-              CALL Field_VariableGet(field,FIELD_U_VARIABLE_TYPE,fieldVariable,err,error,*999)
-              IF(ASSOCIATED(fieldVariable)) THEN
-                domain=>fieldVariable%COMPONENTS(1)%DOMAIN
-                IF(ASSOCIATED(domain))THEN
-                  topology=>domain%TOPOLOGY
-                  IF(ASSOCIATED(topology)) THEN
-                    decomposition=>field%DECOMPOSITION
-                    IF(ASSOCIATED(decomposition)) THEN
-                      decompTopology=>decomposition%TOPOLOGY
-                      IF(ASSOCIATED(decompTopology)) THEN
-                        decompElements=>decompTopology%ELEMENTS
-                        IF(ASSOCIATED(decompElements)) THEN
-                          basis=>topology%ELEMENTS%ELEMENTS(1)%BASIS  
-                          SELECT CASE(basis%TYPE)
-                          CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
-                            MAX_GAUSS=4*4*4
-                            ALLOCATE(XI(3),STAT=ERR)
-                            IF(ERR/=0) CALL FLAG_ERROR("Could not allocate XI matrix",err,error,*999)
-                            ALLOCATE(XIG(3,MAX_GAUSS),STAT=ERR)
-                            IF(ERR/=0) CALL FLAG_ERROR("Could not allocate XIG matrix",err,error,*999)
-                            ALLOCATE(WIG(MAX_GAUSS),STAT=ERR)
-                            IF(ERR/=0) CALL FLAG_ERROR("Could not allocate W matrix",err,error,*999)
-                            CALL BASIS_GAUSS_POINTS_CALCULATE(basis,4,3,numberGaussPoints,XIG,WIG,err,error,*999)
-                          CASE(BASIS_SIMPLEX_TYPE)
-
-                            MAX_GAUSS=4*4*4
-                            ALLOCATE(XI(4),STAT=ERR)
-                            IF(ERR/=0) CALL FLAG_ERROR("Could not allocate XI matrix",err,error,*999)
-                            ALLOCATE(XIG(4,MAX_GAUSS),STAT=ERR)
-                            IF(ERR/=0) CALL FLAG_ERROR("Could not allocate XIG matrix",err,error,*999)
-                            ALLOCATE(WIG(MAX_GAUSS),STAT=ERR)
-                            IF(ERR/=0) CALL FLAG_ERROR("Could not allocate W matrix",err,ERROR,*999)
-                            CALL BASIS_GAUSS_POINTS_CALCULATE(basis,4,3,numberGaussPoints,XIG,WIG,err,error,*999)
-                           CASE DEFAULT
-                            localError="Basis type "//TRIM(NUMBER_TO_VSTRING(BASIS%TYPE,"*",err,error))//" &
-                              & is invalid or not implemented"
-                            CALL FLAG_ERROR(localError,err,error,*999)
-                          END SELECT
-                        ELSE
-                          CALL FLAG_ERROR("Elements are not associated with the decomposition",err,error,*999)
-                        ENDIF
-                      ELSE
-                        CALL FLAG_ERROR("Decomposition topology is not associated",err,error,*999)
-                      ENDIF
-                    ELSE
-                      CALL FLAG_ERROR("Decomposition is not associated",err,error,*999)
-                    ENDIF
-                  ELSE
-                    CALL FLAG_ERROR("Domain topology is not associated",err,error,*999)
-                  ENDIF
-                ELSE
-                  CALL FLAG_ERROR("Domain is not associated with the geometric field component 1",err,error,*999)
-                ENDIF
-              ELSE
-                CALL FLAG_ERROR("Field variable is not associated",err,error,*999)
-              ENDIF
-
-              SELECT CASE(BASIS%TYPE)
-              CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
-                !Loop over the elements  
-                DO ne=1,field%DECOMPOSITION%TOPOLOGY%ELEMENTS%NUMBER_OF_ELEMENTS
-                  CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ne, &
-                    & interpolationParameters(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
-                  elementVolume=0.0_DP
-                  DO ng=1,numberGaussPoints
-                    XI(1:3)=XIG(1:3,ng)
-                    w=WIG(ng)
-                    CALL FIELD_INTERPOLATE_XI(FIRST_PART_DERIV,XI,interpolatedPoint(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
-                    CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(COORDINATE_JACOBIAN_VOLUME_TYPE, &
-                      & interpolatedPointMetrics(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
-                    elementVolume=elementVolume+w*InterpolatedPointMetrics(FIELD_U_VARIABLE_TYPE)%PTR%JACOBIAN
-                  ENDDO !ng
-                  field%GEOMETRIC_FIELD_PARAMETERS%VOLUMES(ne)=elementVolume
-                ENDDO !ne
-              CASE(BASIS_SIMPLEX_TYPE)
-                !Loop over the elements  
-                DO ne=1,field%DECOMPOSITION%TOPOLOGY%ELEMENTS%NUMBER_OF_ELEMENTS
-                  CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ne, &
-                    & interpolationParameters(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
-                  elementVolume=0.0_DP
-                  DO ng=1,numberGaussPoints
-                    XI(1:4)=XIG(1:4,ng)
-                    w=WIG(ng)
-                    CALL FIELD_INTERPOLATE_XI(FIRST_PART_DERIV,XI,interpolatedPoint(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
-                    CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(COORDINATE_JACOBIAN_VOLUME_TYPE, &
-                      & interpolatedPointMetrics(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
-                    elementVolume=elementVolume+w*interpolatedPointMetrics(FIELD_U_VARIABLE_TYPE)%PTR%JACOBIAN
-                  ENDDO !ng
-                  elementVolume = elementVolume
-                  field%GEOMETRIC_FIELD_PARAMETERS%VOLUMES(ne)=elementVolume
-                ENDDO !ne
-              CASE DEFAULT
-                localError="Basis type "//TRIM(NUMBER_TO_VSTRING(BASIS%TYPE,"*",err,error))//" &
-                  & is invalid or not implemented"
-                CALL FLAG_ERROR(localError,err,ERROR,*999)
-              END SELECT
-
-              CALL FIELD_INTERPOLATED_POINT_METRICS_FINALISE(interpolatedPointMetrics(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
-              CALL FIELD_INTERPOLATED_POINTS_FINALISE(interpolatedPoint,err,error,*999)
-              CALL FIELD_INTERPOLATION_PARAMETERS_FINALISE(interpolationParameters,err,error,*999)
-            ENDIF
-          ELSE
-            localError="Geometric parameters are not associated for field number "// &
-              & TRIM(NUMBER_TO_VSTRING(field%USER_NUMBER,"*",err,error))//"."
-            CALL FLAG_ERROR(localError,err,error,*999)
-          ENDIF
-        ELSE
-          localError="Field number "//TRIM(NUMBER_TO_VSTRING(field%USER_NUMBER,"*",err,error))//" is not a geometric field."
-          CALL FLAG_ERROR(localError,err,error,*999)
-        ENDIF
-      ELSE
-        localError="Field number "//TRIM(NUMBER_TO_VSTRING(field%USER_NUMBER,"*",err,error))//" has not been finished."
-        CALL FLAG_ERROR(localError,err,error,*999)
-      ENDIF
-    ELSE
-      CALL FLAG_ERROR("Field is not associated.",err,error,*999)
+    CALL Field_CoordinateSystemGet(field,coordinateSystem,err,error,*999)
+    IF(coordinateSystem%NUMBER_OF_DIMENSIONS==3) THEN !only calculate volumes if the object is in 3D
+      CALL Field_InterpolationParametersInitialise(field,interpolationParameters,err,error,*999)
+      CALL Field_InterpolatedPointsInitialise(interpolationParameters,interpolatedPoint,err,error,*999)
+      CALL Field_InterpolatedPointsMetricsInitialise(interpolatedPoint,interpolatedPointMetrics,err,error,*999)
+      !Get basis type for the first component of the mesh defined with this geometric field
+      NULLIFY(fieldVariable)
+      CALL Field_VariableGet(field,FIELD_U_VARIABLE_TYPE,fieldVariable,err,error,*999)
+      NULLIFY(decomposition)
+      CALL Field_DecompositionGet(field,decomposition,err,error,*999)
+      NULLIFY(decompositionTopology)
+      CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*999)
+      NULLIFY(decompositionElements)
+      CALL DecompositionTopology_ElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+      NULLIFY(domain)
+      CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
+      NULLIFY(domainTopology)
+      CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
+      NULLIFY(domainElements)
+      CALL DomainTopology_ElementsGet(domainTopology,domainElements,err,error,*999)
+      NULLIFY(basis)
+      CALL DomainElements_BasisGet(domainElements,1,basis,err,error,*999)
+      !Allocate Gauss points
+      order=2
+      maxNumberOfGauss=order*order*order
+      ALLOCATE(gaussPoints(3,maxNumberOfGauss),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocated gauss points.",err,error,*999)
+      ALLOCATE(gaussWeights(maxNumberOfGauss),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocated gauss weights.",err,error,*999)
+      !Calculate Gauss points
+      CALL Basis_GaussPointsCalculate(basis,order,3,numberOfGaussPoints,gaussPoints,gaussWeights,err,error,*999)
+      !Loop over the elements      
+      DO elementIdx=1,decompositionElements%NUMBER_OF_ELEMENTS
+        CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
+          & interpolationParameters(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
+        elementVolume=0.0_DP
+        DO gaussPointIdx=1,numberOfGaussPoints
+          CALL Field_InterpolateXi(FIRST_PART_DERIV,gaussPoints(1:3,gaussPointIdx),interpolatedPoint(FIELD_U_VARIABLE_TYPE)%PTR, &
+            & err,error,*999)
+          CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_VOLUME_TYPE, &
+            & interpolatedPointMetrics(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
+          elementVolume=elementVolume+InterpolatedPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%jacobian*gaussWeights(gaussPointIdx)
+        ENDDO !gaussPointIdx
+        field%GEOMETRIC_FIELD_PARAMETERS%volumes(elementIdx)=elementVolume
+      ENDDO !elementIdx
+      !Finalise
+      DEALLOCATE(gaussWeights)
+      DEALLOCATE(gaussPoints)
+      CALL Field_InterpolatedPointsMetricsFinalise(interpolatedPointMetrics,err,error,*999)
+      CALL Field_InterpolatedPointsFinalise(interpolatedPoint,err,error,*999)
+      CALL Field_InterpolationParametersFinalise(interpolationParameters,err,error,*999)
     ENDIF
 
-    IF(DIAGNOSTICS1) THEN
-      CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Element volumes:",err,error,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of elements = ", &
-        & field%DECOMPOSITION%TOPOLOGY%ELEMENTS%NUMBER_OF_ELEMENTS, &
-        & ERR,ERROR,*999)
-      DO ne=1,field%DECOMPOSITION%TOPOLOGY%ELEMENTS%NUMBER_OF_ELEMENTS
-        CALL WRITE_STRING_FMT_TWO_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Element ",ne,"(I8)"," volume = ",field% &
-          & GEOMETRIC_FIELD_PARAMETERS%VOLUMES(ne),"*",err,error,*999)
-      ENDDO !nf
+    IF(diagnostics1) THEN
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Element volumes:",err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of elements = ",decompositionElements%NUMBER_OF_ELEMENTS, &
+        & err,error,*999)
+      DO elementIdx=1,decompositionElements%NUMBER_OF_ELEMENTS
+        CALL WriteStringFmtTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"    Element ",elementIdx,"(I8)"," volume = ",field% &
+          & GEOMETRIC_FIELD_PARAMETERS%VOLUMES(elementIdx),"*",err,error,*999)
+      ENDDO !elementIdx
     ENDIF
-
 
     EXITS("Field_GeometricParametersElementVolumesCalculate")
     RETURN
-999 IF(ASSOCIATED(interpolatedPoint)) CALL FIELD_INTERPOLATED_POINTS_FINALISE(interpolatedPoint,dummyErr,dummyError,*999)
-    IF(ASSOCIATED(interpolationParameters)) CALL FIELD_INTERPOLATION_PARAMETERS_FINALISE(interpolationParameters, &
-      & dummyErr,dummyError,*999)
-    ERRORS("Field_GeometricParametersElementVolumesCalculate",err,error)
+999 IF(ALLOCATED(gaussWeights)) DEALLOCATE(gaussWeights)
+    IF(ALLOCATED(gaussPoints)) DEALLOCATE(gaussPoints)
+    IF(ASSOCIATED(interpolatedPointMetrics)) &
+      & CALL Field_InterpolatedPointsMetricsFinalise(interpolatedPointMetrics,dummyErr,dummyError,*998)
+998 IF(ASSOCIATED(interpolatedPoint)) &
+      & CALL Field_InterpolatedPointsFinalise(interpolatedPoint,dummyErr,dummyError,*997)
+997 IF(ASSOCIATED(interpolationParameters)) &
+      & CALL Field_InterpolationParametersFinalise(interpolationParameters,dummyErr,dummyError,*996)
+996 ERRORS("Field_GeometricParametersElementVolumesCalculate",err,error)
     EXITS("Field_GeometricParametersElementVolumesCalculate")
     RETURN 1
+    
   END SUBROUTINE Field_GeometricParametersElementVolumesCalculate
-
-
 
   !
   !================================================================================================================================

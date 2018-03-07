@@ -206,16 +206,6 @@ MODULE BasisRoutines
     MODULE PROCEDURE BASIS_EVALUATE_XI_DP
   END INTERFACE Basis_EvaluateXi
 
-  !>Evaluates the list of gauss points and weights for a given basis type and order.
-  INTERFACE BASIS_GAUSS_POINTS_CALCULATE
-    MODULE PROCEDURE  BASIS_GAUSS_POINTS_CALCULATE_DP
-  END INTERFACE BASIS_GAUSS_POINTS_CALCULATE
-
-  !>Evaluates the list of gauss points and weights for a given basis type and order.
-  INTERFACE Basis_GaussPointsCalculate
-    MODULE PROCEDURE  BASIS_GAUSS_POINTS_CALCULATE_DP
-  END INTERFACE Basis_GaussPointsCalculate
-
   !>Interpolates the appropriate partial derivative index of the elements parameters for basis function at a Gauss point \see BASIS_ROUTINES
   INTERFACE BASIS_INTERPOLATE_GAUSS
     MODULE PROCEDURE BASIS_INTERPOLATE_GAUSS_DP
@@ -402,8 +392,6 @@ MODULE BasisRoutines
   PUBLIC BASIS_EVALUATE_XI
 
   PUBLIC Basis_EvaluateXi
-
-  PUBLIC BASIS_GAUSS_POINTS_CALCULATE
 
   PUBLIC Basis_GaussPointsCalculate
   
@@ -1771,114 +1759,125 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !> Calculates the gauss points and weights for a basis function of a particular order.
-  SUBROUTINE BASIS_GAUSS_POINTS_CALCULATE_DP(basis,order,numCoords,numberGaussPoints,gaussPoints,gaussWeights,err,error,*)
+  !>Calculates the gauss points and weights for a basis function of a particular order for all xi directions. The gauss points will be with respect to xi coordinates. 
+  SUBROUTINE Basis_GaussPointsCalculate(basis,order,numberOfXi,numberOfGaussPoints,gaussPoints,gaussWeights,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: basis !<A pointer to the basis
-    INTEGER(INTG), INTENT(IN) :: order !<The order (for Simplex) or the number of gauss points in a direction (for LHTP)
-    INTEGER(INTG), INTENT(IN) :: numCoords !<The number of coordinate directions of the system in which to calculate gauss points (1D, 2D, 3D)
-    INTEGER(INTG), INTENT(OUT) :: numberGaussPoints !<on return, the number of gauss points calculated
-    REAL(DP), ALLOCATABLE, INTENT(OUT) :: gaussPoints(:,:) !<On return, the calculated gauss point coordinates gaussPoints(nj,ng)
-    REAL(DP), ALLOCATABLE, INTENT(OUT) :: gaussWeights(:) !<gaussWeights(ng) gauss weight for particular gauss point
+    INTEGER(INTG), INTENT(IN) :: order !<The order of interpolation required
+    INTEGER(INTG), INTENT(IN) :: numberOfXi !<The number of xi directions of the system in which to calculate gauss points (1D, 2D, 3D)
+    INTEGER(INTG), INTENT(OUT) :: numberOfGaussPoints !<On return, the number of gauss points calculated
+    REAL(DP), INTENT(OUT) :: gaussPoints(:,:) !<gaussPoints(xiCoordIdx,gaussPointIdx). On return, the calculated gauss point coordinates . Not these will be with respect to xi coordinates (even for simplex elements).
+    REAL(DP), INTENT(OUT) :: gaussWeights(:) !<gaussWeights(gaussPointIdx). On return, gauss weight for particular gauss point
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: number_of_vertices,nj,ng,i,j,k,NUM_GAUSS_1,NUM_GAUSS_2,NUM_GAUSS_3,MAX_GAUSS
-    REAL(DP), ALLOCATABLE :: XICOORDS(:,:),W(:,:),XI_MATRIX(:,:,:,:),XI(:)
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: gaussPointIdx,i,j,k,maxNumberOfGauss,numberOfGauss1,numberOfGauss2,numberOfGauss3,xiIdx
+    REAL(DP) :: xi(3)
+    REAL(DP), ALLOCATABLE :: x(:,:),w(:,:)
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("BASIS_GAUSS_POINTS_CALCULATE_DP",err,error,*999)
-    number_of_vertices=0
-    IF(ASSOCIATED(basis)) THEN
-        !current code assumes same order in each direction
-      SELECT CASE(numCoords)
-      CASE(1)
-        NUM_GAUSS_1=order
-        NUM_GAUSS_2=1
-        NUM_GAUSS_3=1
-        MAX_GAUSS=order
-      CASE(2)
-        NUM_GAUSS_1=order
-        NUM_GAUSS_2=order
-        NUM_GAUSS_3=1
-        MAX_GAUSS=order*order
-      CASE(3)
-        NUM_GAUSS_1=order
-        NUM_GAUSS_2=order
-        NUM_GAUSS_3=order
-        MAX_GAUSS=order*order*order
-      CASE DEFAULT
-        LOCAL_ERROR="Number of coordinates " &
-        & //TRIM(NumberToVString(numCoords,"*",err,error))//" is invalid or not implemented"
-        CALL FlagError(LOCAL_ERROR,err,ERROR,*999)
-      END SELECT
-      !Allocate arrays
-      ALLOCATE(W(MAX_GAUSS,numCoords),STAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not allocate weights",err,error,*999)
-      ALLOCATE(XI(numCoords),STAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not allocate gauss point coordinates",err,error,*999)
-      ALLOCATE(XICOORDS(MAX_GAUSS,numCoords),STAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not allocate gauss point coordinates",err,error,*999)
-      ALLOCATE(XI_MATRIX(MAX_GAUSS,MAX_GAUSS,MAX_GAUSS,numCoords),STAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not allocate XI matrix",err,error,*999)
+    ENTERS("Basis_GaussPointsCalculate",err,error,*999)
 
-      SELECT CASE(basis%TYPE)
-      CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
-        ALLOCATE(gaussPoints(numCoords,MAX_GAUSS),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate weights",err,error,*999)
-        ALLOCATE(gaussWeights(MAX_GAUSS),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate weights",err,error,*999)
-        DO nj=1,numCoords
-          CALL Gauss_Legendre(order,0.0_DP,1.0_DP,XICOORDS(1:order,nj),W(1:order,nj),err,error,*999)
-          IF(err/=0) GOTO 999
-        ENDDO
-        !Form gauss point array for lagrange hermite type.
-        numberGaussPoints=0
-        DO k=1,NUM_GAUSS_3
-          DO j=1,NUM_GAUSS_2
-            DO i=1,NUM_GAUSS_1
-              XI_MATRIX(i,j,k,1)=XICOORDS(i,1)
-              XI_MATRIX(i,j,k,2)=XICOORDS(j,2)
-              XI_MATRIX(i,j,k,3)=XICOORDS(k,3)
-              XI(1:numCoords)=XI_MATRIX(i,j,k,1:numCoords)
-              ng=i+(j-1+(k-1)*NUM_GAUSS_2)*NUM_GAUSS_1
-              gaussWeights(ng)=W(i,1)*W(j,2)*W(k,3)
-              gaussPoints(1:numCoords,ng)=XI(1:numCoords)
-              numberGaussPoints=numberGaussPoints+1
-            ENDDO
-          ENDDO
-        ENDDO
-      CASE(BASIS_SIMPLEX_TYPE)
-        IF(numCoords==1) THEN
-          number_of_vertices=2
-        ELSEIF(numCoords==2) THEN
-          number_of_vertices=3
-        ELSE
-          number_of_vertices=4
-        ENDIF
-        ALLOCATE(gaussPoints(number_of_vertices,MAX_GAUSS),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate weights",err,error,*999)
-        ALLOCATE(gaussWeights(MAX_GAUSS),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate weights",err,error,*999)
-
-        CALL Gauss_Simplex(order,number_of_vertices,numberGaussPoints,gaussPoints,gaussWeights,err,error,*999)
-      CASE DEFAULT
-        LOCAL_ERROR="Basis type "// &
-        & TRIM(NumberToVString(BASIS%TYPE,"*",err,error))// &
-        & " is invalid or not implemented"
-        CALL FlagError(LOCAL_ERROR,err,ERROR,*999)
-      END SELECT
-    ELSE
-      CALL FlagError("Basis is not associated",err,error,*999)
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(order<1) THEN
+      localError="The specified order of "//TRIM(NumberToVString(order,"*",err,error))// &
+        & " is invalid. The order must be between >= 1."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+    IF(SIZE(gaussPoints,1)<numberOfXi) THEN
+      localError="The size of the first dimension of the specified Gauss points array of "// &
+        & TRIM(NumberToVString(SIZE(gaussPoints,1),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(numberOfXi,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+        
+    !current code assumes same order in each direction
+    numberOfGauss1=MAX(CEILING((order+1.0_DP)/2.0_DP),1)
+    SELECT CASE(numberOfXi)
+    CASE(1)
+      numberOfGauss2=1
+      numberOfGauss3=1
+    CASE(2)
+      numberOfGauss2=numberOfGauss1
+      numberOfGauss3=1
+    CASE(3)
+      numberOfGauss2=numberOfGauss1
+      numberOfGauss3=numberOfGauss1
+    CASE DEFAULT
+      localError="The specified number of xi coordinates of " &
+        & //TRIM(NumberToVString(numberOfXi,"*",err,error))//" is invalid. The number must be between 1 and 3."
+      CALL FlagError(localError,err,error,*999)      
+    END SELECT
+    maxNumberOfGauss=numberOfGauss1*numberOfGauss2*numberOfGauss3
 
-    EXITS("BASIS_GAUSS_POINTS_CALCULATE_DP")
+    SELECT CASE(basis%TYPE)
+    CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
+      IF(SIZE(gaussPoints,2)<maxNumberOfGauss) THEN
+        localError="The size of the second dimension of the specified Gauss points array of "// &
+        & TRIM(NumberToVString(SIZE(gaussPoints,2),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(maxNumberOfGauss,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      IF(SIZE(gaussWeights,1)<maxNumberOfGauss) THEN
+        localError="The size of the second dimension of the specified Gauss weights array of "// &
+        & TRIM(NumberToVString(SIZE(gaussPoints,2),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(maxNumberOfGauss,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      !Allocate arrays    
+      ALLOCATE(w(numberOfGauss1,3),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate Gauss weights.",err,error,*999)
+      ALLOCATE(x(numberOfGauss1,3),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate Gauss point coordinates.",err,error,*999)
+      w=1.0_DP
+      x=0.0_DP
+      !Calculate the one-dimensional Gauss points
+      DO xiIdx=1,numberOfXi
+        CALL Gauss_Legendre(numberOfGauss1,0.0_DP,1.0_DP,x(:,xiIdx),w(:,xiIdx),err,error,*999)
+      ENDDO !xiIdx
+      !Form gauss point array for Lagrange-Hermite tensor product.
+      numberOfGaussPoints=0
+      DO k=1,numberOfGauss3
+        DO j=1,numberOfGauss2
+          DO i=1,numberOfGauss1
+            numberOfGaussPoints=numberOfGaussPoints+1
+            xi=[x(i,1),x(j,2),x(k,3)]
+            gaussPoints(1:numberOfXi,numberOfGaussPoints)=xi(1:numberOfXi)
+            gaussWeights(numberOfGaussPoints)=w(i,1)*w(j,2)*w(k,3)
+          ENDDO !i
+        ENDDO !j
+      ENDDO !k
+      DEALLOCATE(x)
+      DEALLOCATE(w)
+    CASE(BASIS_SIMPLEX_TYPE)      
+      !Allocate arrays    
+      ALLOCATE(w(maxNumberOfGauss,1),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate Gauss weights.",err,error,*999)
+      ALLOCATE(x(numberOfXi+1,maxNumberOfGauss),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate Gauss point coordinates.",err,error,*999)
+      CALL Gauss_Simplex(order,numberOfXi+1,numberOfGaussPoints,x,w(:,1),err,error,*999)
+      DO gaussPointIdx=1,numberOfGaussPoints
+        CALL Basis_AreaToXiCoordinates(x(1:numberOfXi+1,gaussPointIdx),xi,err,error,*999)
+        gaussPoints(1:numberOfXi,gaussPointIdx)=xi(1:numberOfXi)
+        gaussWeights(gaussPointIdx)=w(gaussPointIdx,1)
+      ENDDO !gaussPointIdx
+      DEALLOCATE(x)
+      DEALLOCATE(w)
+    CASE DEFAULT
+      localError="The specified basis type of "//TRIM(NumberToVString(basis%type,"*",err,error))// &
+        & " is invalid or not implemented."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+      
+    EXITS("Basis_GaussPointsCalculate")
     RETURN
-999 ERRORSEXITS("BASIS_GAUSS_POINTS_CALCULATE_DP",err,error)
-    RETURN
+999 IF(ALLOCATED(x)) DEALLOCATE(x)
+    IF(ALLOCATED(w)) DEALLOCATE(w)
+    ERRORSEXITS("Basis_GaussPointsCalculate",err,error)
+    RETURN 1
 
-  END SUBROUTINE BASIS_GAUSS_POINTS_CALCULATE_DP
+  END SUBROUTINE Basis_GaussPointsCalculate
 
   !
   !================================================================================================================================
