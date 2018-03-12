@@ -2978,7 +2978,7 @@ CONTAINS
       localError="Invalid number of Jacobian calculation types. The number of types "// &
         & TRIM(NumberToVString(numberOfJacobians,"*",err,error))//" should be "// &
         & TRIM(NumberToVString(nonlinearMatrices%numberOfJacobians,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
+      CALL FlagError(localError,err,error,*999)      
     ENDIF
      
     DO matrixIdx=1,numberOfJacobians
