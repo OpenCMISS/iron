@@ -1377,6 +1377,7 @@ CONTAINS
     REAL(DP) :: I3
 
     ENTERS("FiniteElasticity_StrainTensor",err,error,*999)
+    
     CALL MatrixTranspose(deformationGradientTensor, deformationGradientTensorT,err,error,*999)
     CALL MatrixProduct(deformationGradientTensorT, deformationGradientTensor, rightCauchyDeformationTensor,err,error,*999)
     !CALL MatrixTransposeProduct(deformationGradientTensor,deformationGradientTensor,rightCauchyDeformationTensor,err,error,*999)
