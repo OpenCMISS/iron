@@ -91,7 +91,7 @@ MODULE LAPLACE_EQUATIONS_ROUTINES
 
   PUBLIC Laplace_EquationsSetSpecificationSet
   
-  PUBLIC LAPLACE_EQUATION_FINITE_ELEMENT_CALCULATE
+  PUBLIC LaplaceEquation_FiniteElementCalculate
 
   PUBLIC LAPLACE_EQUATION_PROBLEM_SETUP
 
@@ -425,33 +425,33 @@ CONTAINS
   !
 
   !>Calculates the element stiffness matrices and RHS for a Laplace equation finite element equations set.
-  SUBROUTINE LAPLACE_EQUATION_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*)
+  SUBROUTINE LaplaceEquation_FiniteElementCalculate(equationsSet,elementNumber,err,error,*)
 
     !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to perform the finite element calculations on
-    INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to calculate
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet   !<A pointer to the equations set to perform the finite element calculations on
+    INTEGER(INTG),        INTENT(IN)  :: elementNumber  !<The element number to calculate
+    INTEGER(INTG),        INTENT(OUT) :: err            !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error          !<The error string
     !Local Variables
-    INTEGER(INTG) FIELD_VAR_TYPE,ng,mh,mhs,mi,ms,nh,nhs,ni,ns,i,k,h
-    REAL(DP) :: CONDUCTIVITY_MATERIAL(3,3),CONDUCTIVITY(3,3),CONDUCTIVITY_TEMP(3,3),RWG,SUM,PGMSI(3),PGNSI(3),K_VALUE(3)
-    TYPE(BASIS_TYPE), POINTER :: DEPENDENT_BASIS,GEOMETRIC_BASIS,INDEPENDENT_BASIS
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
-    TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: LINEAR_MAPPING
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES
-    TYPE(EQUATIONS_MATRICES_LINEAR_TYPE), POINTER :: LINEAR_MATRICES
-    TYPE(EQUATIONS_MATRICES_RHS_TYPE), POINTER :: RHS_VECTOR
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: EQUATIONS_MATRIX
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD,GEOMETRIC_FIELD,INDEPENDENT_FIELD,MATERIALS_FIELD,FIBRE_FIELD
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
-    TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: QUADRATURE_SCHEME
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: GEOMETRIC_INTERPOLATED_POINT,FIBRE_INTERPOLATED_POINT
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: GEOMETRIC_INTERP_POINT_METRICS
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-    
-    INTEGER(INTG) :: NUMBER_OF_DIMENSIONS,NUMBER_OF_XI
-    REAL(DP) :: DNUDXI(3,3),DXIDNU(3,3),dXdNu(3,3),dNudX(3,3)
+    INTEGER(INTG)                                         :: fieldVarType,ng,mh,mhs,mi,ms,nh,nhs,ni,ns,i,k,h
+    REAL(DP)                                              :: conductivityMaterial(3,3),conductivity(3,3),conductivityTemp(3,3)
+    REAL(DP)                                              :: rwg,sum,pgmsi(3),pgnsi(3),kValue(3)
+    TYPE(BASIS_TYPE),                             POINTER :: dependentBasis,geometricBasis
+    TYPE(EQUATIONS_TYPE),                         POINTER :: equations
+    TYPE(EQUATIONS_MAPPING_TYPE),                 POINTER :: equationsMapping
+    TYPE(EQUATIONS_MAPPING_LINEAR_TYPE),          POINTER :: linearMapping
+    TYPE(EQUATIONS_MATRICES_TYPE),                POINTER :: equationsMatrices
+    TYPE(EQUATIONS_MATRICES_LINEAR_TYPE),         POINTER :: linearMatrices
+    TYPE(EQUATIONS_MATRICES_RHS_TYPE),            POINTER :: rhsVector
+    TYPE(EQUATIONS_MATRIX_TYPE),                  POINTER :: equationsMatrix
+    TYPE(FIELD_TYPE),                             POINTER :: dependentField,geometricField
+    TYPE(FIELD_VARIABLE_TYPE),                    POINTER :: fieldVariable
+    TYPE(QUADRATURE_SCHEME_TYPE),                 POINTER :: quadratureScheme
+    TYPE(FIELD_INTERPOLATED_POINT_TYPE),          POINTER :: fibreInterpolatedPoint
+    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE),  POINTER :: geometricInterpPointMetrics
+    TYPE(VARYING_STRING)                                  :: localError
+    INTEGER(INTG)                                         :: numberOfDimensions
+    REAL(DP)                                              :: dNudXi(3,3),dXidNu(3,3),dXdNu(3,3),dNudX(3,3)
     
 #ifdef TAUPROF
     CHARACTER(26) :: CVAR
@@ -459,83 +459,83 @@ CONTAINS
     SAVE GAUSS_POINT_LOOP_PHASE
 #endif
 
-    ENTERS("LAPLACE_EQUATION_FINITE_ELEMENT_CALCULATE",ERR,ERROR,*999)
+    ENTERS("LaplaceEquation_FiniteElementCalculate",err,error,*999)
 
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
+    IF(ASSOCIATED(equationsSet)) THEN
+      IF(.NOT.ALLOCATED(equationsSet%SPECIFICATION)) THEN
         CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-      ELSE IF(SIZE(EQUATIONS_SET%SPECIFICATION,1)/=3) THEN
+      ELSE IF(SIZE(equationsSet%SPECIFICATION,1)/=3) THEN
         CALL FlagError("Equations set specification must have three entries for a Laplace type equations set.", &
           & err,error,*999)
       END IF
-      EQUATIONS=>EQUATIONS_SET%EQUATIONS
-      IF(ASSOCIATED(EQUATIONS)) THEN
-        SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
+      equations=>equationsSet%EQUATIONS
+      IF(ASSOCIATED(equations)) THEN
+        SELECT CASE(equationsSet%SPECIFICATION(3))
         CASE(EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE)
 !!TODO: move these and scale factor adjustment out once generalised Laplace is put in.
           !Store all these in equations matrices/somewhere else?????
-          DEPENDENT_FIELD=>EQUATIONS%INTERPOLATION%DEPENDENT_FIELD
-          GEOMETRIC_FIELD=>EQUATIONS%INTERPOLATION%GEOMETRIC_FIELD
-          EQUATIONS_MATRICES=>EQUATIONS%EQUATIONS_MATRICES
-          LINEAR_MATRICES=>EQUATIONS_MATRICES%LINEAR_MATRICES
-          EQUATIONS_MATRIX=>LINEAR_MATRICES%MATRICES(1)%PTR
-          RHS_VECTOR=>EQUATIONS_MATRICES%RHS_VECTOR
-          EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
-          LINEAR_MAPPING=>EQUATIONS_MAPPING%LINEAR_MAPPING
-          FIELD_VARIABLE=>LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(1)%VARIABLE
-          FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
-          DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(DEPENDENT_FIELD%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR% &
-            & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-          GEOMETRIC_BASIS=>GEOMETRIC_FIELD%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR% &
-            & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-          QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
-          CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,EQUATIONS%INTERPOLATION% &
-            & GEOMETRIC_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
+          dependentField=>equations%INTERPOLATION%DEPENDENT_FIELD
+          geometricField=>equations%INTERPOLATION%GEOMETRIC_FIELD
+          equationsMatrices=>equations%EQUATIONS_MATRICES
+          linearMatrices=>equationsMatrices%LINEAR_MATRICES
+          equationsMatrix=>linearMatrices%MATRICES(1)%PTR
+          rhsVector=>equationsMatrices%RHS_VECTOR
+          equationsMapping=>equations%EQUATIONS_MAPPING
+          linearMapping=>equationsMapping%LINEAR_MAPPING
+          fieldVariable=>linearMapping%EQUATIONS_MATRIX_TO_VAR_MAPS(1)%VARIABLE
+          fieldVarType=fieldVariable%VARIABLE_TYPE
+          dependentBasis=>dependentField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR% &
+            & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
+          geometricBasis=>geometricField%DECOMPOSITION%DOMAIN(geometricField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR% &
+            & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
+          quadratureScheme=>dependentBasis%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
+          CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementNumber,equations%INTERPOLATION% &
+            & GEOMETRIC_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
           !Loop over gauss points
-          DO ng=1,QUADRATURE_SCHEME%NUMBER_OF_GAUSS
+          DO ng=1,quadratureScheme%NUMBER_OF_GAUSS
 #ifdef TAUPROF
               WRITE (CVAR,'(a17,i2)') 'Gauss Point Loop ',ng
               CALL TAU_PHASE_CREATE_DYNAMIC(GAUSS_POINT_LOOP_PHASE,CVAR)
               CALL TAU_PHASE_START(GAUSS_POINT_LOOP_PHASE)
 #endif
-            CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,EQUATIONS%INTERPOLATION% &
-              & GEOMETRIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-            CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%NUMBER_OF_XI,EQUATIONS%INTERPOLATION% &
-              & GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
+            CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%INTERPOLATION% &
+              & GEOMETRIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
+            CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(geometricBasis%NUMBER_OF_XI,equations%INTERPOLATION% &
+              & GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
             !Calculate RWG.
 !!TODO: Think about symmetric problems. 
-            RWG=EQUATIONS%INTERPOLATION%GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR%JACOBIAN* &
-              & QUADRATURE_SCHEME%GAUSS_WEIGHTS(ng)
+            rwg=equations%INTERPOLATION%GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR%JACOBIAN* &
+              & quadratureScheme%GAUSS_WEIGHTS(ng)
             !Loop over field components
             mhs=0          
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,fieldVariable%NUMBER_OF_COMPONENTS
               !Loop over element rows
 !!TODO: CHANGE ELEMENT CALCULATE TO WORK OF ns ???
-              DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+              DO ms=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
                 mhs=mhs+1
                 nhs=0
-                IF(EQUATIONS_MATRIX%UPDATE_MATRIX) THEN
+                IF(equationsMatrix%UPDATE_MATRIX) THEN
                   !Loop over element columns
-                  DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-                    DO ns=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+                  DO nh=1,fieldVariable%NUMBER_OF_COMPONENTS
+                    DO ns=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
                       nhs=nhs+1
-                      DO ni=1,DEPENDENT_BASIS%NUMBER_OF_XI
-                        PGMSI(ni)=QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
-                        PGNSI(ni)=QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
+                      DO ni=1,dependentBasis%NUMBER_OF_XI
+                        pgmsi(ni)=quadratureScheme%GAUSS_BASIS_FNS(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
+                        pgnsi(ni)=quadratureScheme%GAUSS_BASIS_FNS(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
                       ENDDO !ni
-                      SUM=0.0_DP
-                      DO mi=1,DEPENDENT_BASIS%NUMBER_OF_XI
-                        DO ni=1,DEPENDENT_BASIS%NUMBER_OF_XI
-                          SUM=SUM+PGMSI(mi)*PGNSI(ni)*EQUATIONS%INTERPOLATION% &
+                      sum=0.0_DP
+                      DO mi=1,dependentBasis%NUMBER_OF_XI
+                        DO ni=1,dependentBasis%NUMBER_OF_XI
+                          sum=sum+pgmsi(mi)*pgnsi(ni)*equations%INTERPOLATION% &
                             & GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR%GU(mi,ni)
                         ENDDO !ni
                       ENDDO !mi
-                      EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(mhs,nhs)=EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(mhs,nhs)+SUM*RWG
+                      equationsMatrix%ELEMENT_MATRIX%MATRIX(mhs,nhs)=equationsMatrix%ELEMENT_MATRIX%MATRIX(mhs,nhs)+sum*rwg
 
                     ENDDO !ns
                   ENDDO !nh
                 ENDIF
-                IF(RHS_VECTOR%UPDATE_VECTOR) RHS_VECTOR%ELEMENT_VECTOR%VECTOR(mhs)=0.0_DP
+                IF(rhsVector%UPDATE_VECTOR) rhsVector%ELEMENT_VECTOR%VECTOR(mhs)=0.0_DP
               ENDDO !ms
             ENDDO !mh
 #ifdef TAUPROF
@@ -544,153 +544,160 @@ CONTAINS
           ENDDO !ng
           
           !Scale factor adjustment
-          IF(DEPENDENT_FIELD%SCALINGS%SCALING_TYPE/=FIELD_NO_SCALING) THEN
-            CALL Field_InterpolationParametersScaleFactorsElementGet(ELEMENT_NUMBER,EQUATIONS%INTERPOLATION% &
-              & DEPENDENT_INTERP_PARAMETERS(FIELD_VAR_TYPE)%PTR,ERR,ERROR,*999)
+          IF(dependentField%SCALINGS%SCALING_TYPE/=FIELD_NO_SCALING) THEN
+            CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,equations%INTERPOLATION% &
+              & DEPENDENT_INTERP_PARAMETERS(fieldVarType)%PTR,err,error,*999)
             mhs=0          
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,fieldVariable%NUMBER_OF_COMPONENTS
               !Loop over element rows
-              DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+              DO ms=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
                 mhs=mhs+1                    
                 nhs=0
-                IF(EQUATIONS_MATRIX%UPDATE_MATRIX) THEN
+                IF(equationsMatrix%UPDATE_MATRIX) THEN
                   !Loop over element columns
-                  DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-                    DO ns=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+                  DO nh=1,fieldVariable%NUMBER_OF_COMPONENTS
+                    DO ns=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
                       nhs=nhs+1
-                      EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(mhs,nhs)=EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(mhs,nhs)* &
-                        & EQUATIONS%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(FIELD_VAR_TYPE)%PTR%SCALE_FACTORS(ms,mh)* &
-                        & EQUATIONS%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(FIELD_VAR_TYPE)%PTR%SCALE_FACTORS(ns,nh)
+                      equationsMatrix%ELEMENT_MATRIX%MATRIX(mhs,nhs)=equationsMatrix%ELEMENT_MATRIX%MATRIX(mhs,nhs)* &
+                        & equations%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(fieldVarType)%PTR%SCALE_FACTORS(ms,mh)* &
+                        & equations%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(fieldVarType)%PTR%SCALE_FACTORS(ns,nh)
                     ENDDO !ns
                   ENDDO !nh
                 ENDIF
-                IF(RHS_VECTOR%UPDATE_VECTOR) RHS_VECTOR%ELEMENT_VECTOR%VECTOR(mhs)=RHS_VECTOR%ELEMENT_VECTOR%VECTOR(mhs)* &
-                  & EQUATIONS%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(FIELD_VAR_TYPE)%PTR%SCALE_FACTORS(ms,mh)
+                IF(rhsVector%UPDATE_VECTOR) rhsVector%ELEMENT_VECTOR%VECTOR(mhs)=rhsVector%ELEMENT_VECTOR%VECTOR(mhs)* &
+                  & equations%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(fieldVarType)%PTR%SCALE_FACTORS(ms,mh)
               ENDDO !ms
             ENDDO !mh
           ENDIF
           
         CASE(EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE)
 !!TODO: store all these in equations matrices/somewhere else?????
-          DEPENDENT_FIELD=>EQUATIONS%INTERPOLATION%DEPENDENT_FIELD
-          GEOMETRIC_FIELD=>EQUATIONS%INTERPOLATION%GEOMETRIC_FIELD
-          MATERIALS_FIELD=>EQUATIONS%INTERPOLATION%MATERIALS_FIELD
-          FIBRE_FIELD=>EQUATIONS%INTERPOLATION%FIBRE_FIELD
+          dependentField=>equations%INTERPOLATION%DEPENDENT_FIELD
+          geometricField=>equations%INTERPOLATION%GEOMETRIC_FIELD
           
-          EQUATIONS_MATRICES=>EQUATIONS%EQUATIONS_MATRICES
-          LINEAR_MATRICES=>EQUATIONS_MATRICES%LINEAR_MATRICES
-          EQUATIONS_MATRIX=>LINEAR_MATRICES%MATRICES(1)%PTR
-          RHS_VECTOR=>EQUATIONS_MATRICES%RHS_VECTOR
+          equationsMatrices=>equations%EQUATIONS_MATRICES
+          linearMatrices=>equationsMatrices%LINEAR_MATRICES
+          equationsMatrix=>linearMatrices%MATRICES(1)%PTR
+          rhsVector=>equationsMatrices%RHS_VECTOR
           
-          EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
-          LINEAR_MAPPING=>EQUATIONS_MAPPING%LINEAR_MAPPING
-          FIELD_VARIABLE=>LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(1)%VARIABLE
-          FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
+          equationsMapping=>equations%EQUATIONS_MAPPING
+          linearMapping=>equationsMapping%LINEAR_MAPPING
+          fieldVariable=>linearMapping%EQUATIONS_MATRIX_TO_VAR_MAPS(1)%VARIABLE
+          fieldVarType=fieldVariable%VARIABLE_TYPE
           
-          DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(DEPENDENT_FIELD%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR% &
-            & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-          GEOMETRIC_BASIS=>GEOMETRIC_FIELD%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR% &
-            & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
+          dependentBasis=>dependentField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR% &
+            & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
+          geometricBasis=>geometricField%DECOMPOSITION%DOMAIN(geometricField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR% &
+            & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
           
-          QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
+          quadratureScheme=>dependentBasis%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
                   
-          NUMBER_OF_DIMENSIONS=EQUATIONS_SET%REGION%COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS
-          NUMBER_OF_XI=DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(DEPENDENT_FIELD%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR%TOPOLOGY% &
-            & ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS%NUMBER_OF_XI
+          numberOfDimensions=equationsSet%REGION%COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS
                     
-          CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,EQUATIONS%INTERPOLATION% &
-            & GEOMETRIC_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-          CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,EQUATIONS%INTERPOLATION% &
-            & MATERIALS_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-          CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,EQUATIONS%INTERPOLATION% &
-            & FIBRE_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
+          CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementNumber,equations%INTERPOLATION% &
+            & GEOMETRIC_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
+          CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementNumber,equations%INTERPOLATION% &
+            & MATERIALS_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
+          CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementNumber,equations%INTERPOLATION% &
+            & FIBRE_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
             
-          GEOMETRIC_INTERPOLATED_POINT=>EQUATIONS%INTERPOLATION%GEOMETRIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR
-          FIBRE_INTERPOLATED_POINT=>EQUATIONS%INTERPOLATION%FIBRE_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR
-          GEOMETRIC_INTERP_POINT_METRICS=>EQUATIONS%INTERPOLATION%GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR
+          fibreInterpolatedPoint=>equations%INTERPOLATION%FIBRE_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR
+          geometricInterpPointMetrics=>equations%INTERPOLATION%GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR
           
           !Loop over gauss points
-          DO ng=1,QUADRATURE_SCHEME%NUMBER_OF_GAUSS
+          DO ng=1,quadratureScheme%NUMBER_OF_GAUSS
 #ifdef TAUPROF
               WRITE (CVAR,'(a17,i2)') 'Gauss Point Loop ',ng
               CALL TAU_PHASE_CREATE_DYNAMIC(GAUSS_POINT_LOOP_PHASE,CVAR)
               CALL TAU_PHASE_START(GAUSS_POINT_LOOP_PHASE)
 #endif
-            CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,EQUATIONS%INTERPOLATION% &
-              & GEOMETRIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-            CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,EQUATIONS%INTERPOLATION% &
-              & MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-            CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,EQUATIONS%INTERPOLATION% &
-              & FIBRE_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
+            CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%INTERPOLATION% &
+              & GEOMETRIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
+            CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%INTERPOLATION% &
+              & MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
+            CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%INTERPOLATION% &
+              & FIBRE_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
               
-            CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%NUMBER_OF_XI,GEOMETRIC_INTERP_POINT_METRICS, &
-              & ERR,ERROR,*999)
+            CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(geometricBasis%NUMBER_OF_XI,geometricInterpPointMetrics, &
+              & err,error,*999)
               
             !Calculate RWG.
 !!TODO: Think about symmetric problems. 
-            RWG=GEOMETRIC_INTERP_POINT_METRICS%JACOBIAN*QUADRATURE_SCHEME%GAUSS_WEIGHTS(ng)
+            rwg=geometricInterpPointMetrics%JACOBIAN*quadratureScheme%GAUSS_WEIGHTS(ng)
               
             !conductivity in material coordinates 
-            CONDUCTIVITY_MATERIAL=0.0_DP
-            IF(NUMBER_OF_DIMENSIONS==2) THEN
-              CONDUCTIVITY_MATERIAL(1,1)=EQUATIONS%INTERPOLATION%MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(1,1)
-              CONDUCTIVITY_MATERIAL(2,2)=EQUATIONS%INTERPOLATION%MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(2,1)
-              CONDUCTIVITY_MATERIAL(1,2)=EQUATIONS%INTERPOLATION%MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(3,1)
-              CONDUCTIVITY_MATERIAL(2,1)=CONDUCTIVITY_MATERIAL(1,2)
+            conductivityMaterial=0.0_DP
+            IF(numberOfDimensions==2) THEN
+              conductivityMaterial(1,1)=equations%INTERPOLATION%MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(1,1)
+              conductivityMaterial(2,2)=equations%INTERPOLATION%MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(2,1)
+              conductivityMaterial(1,2)=equations%INTERPOLATION%MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(3,1)
+              conductivityMaterial(2,1)=conductivityMaterial(1,2)
             ELSE
-              CONDUCTIVITY_MATERIAL(1,1)=EQUATIONS%INTERPOLATION%MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(1,1)
-              CONDUCTIVITY_MATERIAL(2,2)=EQUATIONS%INTERPOLATION%MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(2,1)
-              CONDUCTIVITY_MATERIAL(3,3)=EQUATIONS%INTERPOLATION%MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(3,1)
-              CONDUCTIVITY_MATERIAL(1,2)=EQUATIONS%INTERPOLATION%MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(4,1)
-              CONDUCTIVITY_MATERIAL(2,1)=CONDUCTIVITY_MATERIAL(1,2)
-              CONDUCTIVITY_MATERIAL(2,3)=EQUATIONS%INTERPOLATION%MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(5,1)
-              CONDUCTIVITY_MATERIAL(3,2)=CONDUCTIVITY_MATERIAL(2,3)
-              CONDUCTIVITY_MATERIAL(1,3)=EQUATIONS%INTERPOLATION%MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(6,1)
-              CONDUCTIVITY_MATERIAL(3,1)=CONDUCTIVITY_MATERIAL(1,3)
+              conductivityMaterial(1,1)=equations%INTERPOLATION%MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(1,1)
+              conductivityMaterial(2,2)=equations%INTERPOLATION%MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(2,1)
+              conductivityMaterial(3,3)=equations%INTERPOLATION%MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(3,1)
+              conductivityMaterial(1,2)=equations%INTERPOLATION%MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(4,1)
+              conductivityMaterial(2,1)=conductivityMaterial(1,2)
+              conductivityMaterial(2,3)=equations%INTERPOLATION%MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(5,1)
+              conductivityMaterial(3,2)=conductivityMaterial(2,3)
+              conductivityMaterial(1,3)=equations%INTERPOLATION%MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(6,1)
+              conductivityMaterial(3,1)=conductivityMaterial(1,3)
             ENDIF
   
             !rotate the conductivity from material coordinates into xi-space to get the effective conductivity
-            CALL Coordinates_MaterialSystemCalculate(GEOMETRIC_INTERP_POINT_METRICS,FIBRE_INTERPOLATED_POINT, &
-              & dNudX,dXdNu,dNudXi,dXidNu,ERR,ERROR,*999)
+            dNudX=0.0_RP
+            dXdNu=0.0_RP
+            dNudXi=0.0_RP
+            dXidNu=0.0_RP
+            CALL Coordinates_MaterialSystemCalculate(geometricInterpPointMetrics,fibreInterpolatedPoint, &
+              & dNudX(1:numberOfDimensions,1:numberOfDimensions),dXdNu(1:numberOfDimensions,1:numberOfDimensions), &
+              & dNudXi(1:numberOfDimensions,1:numberOfDimensions),dXidNu(1:numberOfDimensions,1:numberOfDimensions), &
+              & err,error,*999)
 
-            CALL MATRIX_PRODUCT(DNUDXI,CONDUCTIVITY_MATERIAL,CONDUCTIVITY_TEMP,ERR,ERROR,*999)
-            CALL MATRIX_PRODUCT(CONDUCTIVITY_TEMP,DXIDNU,CONDUCTIVITY,ERR,ERROR,*999)
+            conductivityTemp=0.0_RP
+            conductivity=0.0_RP
+            CALL MATRIX_PRODUCT(dNudXi(1:numberOfDimensions,1:numberOfDimensions), &
+              & conductivityMaterial(1:numberOfDimensions,1:numberOfDimensions), &
+              & conductivityTemp(1:numberOfDimensions,1:numberOfDimensions),err,error,*999)
+            CALL MATRIX_PRODUCT(conductivityTemp(1:numberOfDimensions,1:numberOfDimensions), &
+              & dXidNu(1:numberOfDimensions,1:numberOfDimensions), &
+              & conductivity(1:numberOfDimensions,1:numberOfDimensions),err,error,*999)
             
             !Loop over field components
             mhs=0          
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,fieldVariable%NUMBER_OF_COMPONENTS
               !Loop over element rows
-              DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+              DO ms=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
                 mhs=mhs+1
                 !Loop over field components
                 nhs=0
-                IF(EQUATIONS_MATRIX%UPDATE_MATRIX) THEN
-                  DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                IF(equationsMatrix%UPDATE_MATRIX) THEN
+                  DO nh=1,fieldVariable%NUMBER_OF_COMPONENTS
                     !Loop over element columns
-                    DO ns=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+                    DO ns=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
                       nhs=nhs+1
                       
-                      DO ni=1,DEPENDENT_BASIS%NUMBER_OF_XI
-                        PGMSI(ni)=QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
-                        PGNSI(ni)=QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
+                      DO ni=1,dependentBasis%NUMBER_OF_XI
+                        pgmsi(ni)=quadratureScheme%GAUSS_BASIS_FNS(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
+                        pgnsi(ni)=quadratureScheme%GAUSS_BASIS_FNS(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
                       ENDDO !ni
                       
-                      SUM=0.0_DP
-                      DO i=1,DEPENDENT_BASIS%NUMBER_OF_XI
-                        DO k=1,DEPENDENT_BASIS%NUMBER_OF_XI
-                          DO h=1,DEPENDENT_BASIS%NUMBER_OF_XI
-                            SUM=SUM+CONDUCTIVITY(i,k)*PGNSI(k)*PGMSI(h)*GEOMETRIC_INTERP_POINT_METRICS%GU(i,h)
+                      sum=0.0_DP
+                      DO i=1,dependentBasis%NUMBER_OF_XI
+                        DO k=1,dependentBasis%NUMBER_OF_XI
+                          DO h=1,dependentBasis%NUMBER_OF_XI
+                            sum=sum+conductivity(i,k)*pgnsi(k)*pgmsi(h)*geometricInterpPointMetrics%GU(i,h)
                           ENDDO !h
                         ENDDO !k
                       ENDDO !i
                         
-                      EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(mhs,nhs)=EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(mhs,nhs)+SUM*RWG
+                      equationsMatrix%ELEMENT_MATRIX%MATRIX(mhs,nhs)=equationsMatrix%ELEMENT_MATRIX%MATRIX(mhs,nhs)+sum*rwg
     
                     ENDDO !ns
                   ENDDO !nh
                 ENDIF
                 
-                IF(RHS_VECTOR%UPDATE_VECTOR) RHS_VECTOR%ELEMENT_VECTOR%VECTOR(mhs)=0.0_DP
+                IF(rhsVector%UPDATE_VECTOR) rhsVector%ELEMENT_VECTOR%VECTOR(mhs)=0.0_DP
               
               ENDDO !ms
             ENDDO !mh
@@ -700,28 +707,28 @@ CONTAINS
           ENDDO !ng
           
           !Scale factor adjustment
-          IF(DEPENDENT_FIELD%SCALINGS%SCALING_TYPE/=FIELD_NO_SCALING) THEN
-            CALL Field_InterpolationParametersScaleFactorsElementGet(ELEMENT_NUMBER,EQUATIONS%INTERPOLATION% &
-              & DEPENDENT_INTERP_PARAMETERS(FIELD_VAR_TYPE)%PTR,ERR,ERROR,*999)
+          IF(dependentField%SCALINGS%SCALING_TYPE/=FIELD_NO_SCALING) THEN
+            CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,equations%INTERPOLATION% &
+              & DEPENDENT_INTERP_PARAMETERS(fieldVarType)%PTR,err,error,*999)
             mhs=0          
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,fieldVariable%NUMBER_OF_COMPONENTS
               !Loop over element rows
-              DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+              DO ms=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
                 mhs=mhs+1                    
                 nhs=0
-                IF(EQUATIONS_MATRIX%UPDATE_MATRIX) THEN
+                IF(equationsMatrix%UPDATE_MATRIX) THEN
                   !Loop over element columns
-                  DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-                    DO ns=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+                  DO nh=1,fieldVariable%NUMBER_OF_COMPONENTS
+                    DO ns=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
                       nhs=nhs+1
-                      EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(mhs,nhs)=EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(mhs,nhs)* &
-                        & EQUATIONS%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(FIELD_VAR_TYPE)%PTR%SCALE_FACTORS(ms,mh)* &
-                        & EQUATIONS%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(FIELD_VAR_TYPE)%PTR%SCALE_FACTORS(ns,nh)
+                      equationsMatrix%ELEMENT_MATRIX%MATRIX(mhs,nhs)=equationsMatrix%ELEMENT_MATRIX%MATRIX(mhs,nhs)* &
+                        & equations%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(fieldVarType)%PTR%SCALE_FACTORS(ms,mh)* &
+                        & equations%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(fieldVarType)%PTR%SCALE_FACTORS(ns,nh)
                     ENDDO !ns
                   ENDDO !nh
                 ENDIF
-                IF(RHS_VECTOR%UPDATE_VECTOR) RHS_VECTOR%ELEMENT_VECTOR%VECTOR(mhs)=RHS_VECTOR%ELEMENT_VECTOR%VECTOR(mhs)* &
-                  & EQUATIONS%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(FIELD_VAR_TYPE)%PTR%SCALE_FACTORS(ms,mh)
+                IF(rhsVector%UPDATE_VECTOR) rhsVector%ELEMENT_VECTOR%VECTOR(mhs)=rhsVector%ELEMENT_VECTOR%VECTOR(mhs)* &
+                  & equations%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(fieldVarType)%PTR%SCALE_FACTORS(ms,mh)
               ENDDO !ms
             ENDDO !mh
           ENDIF
@@ -729,130 +736,127 @@ CONTAINS
         CASE(EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE)
 !!TODO: move these and scale factor adjustment out once generalised Laplace is put in.
           !Store all these in equations matrices/somewhere else?????
-          DEPENDENT_FIELD=>EQUATIONS%INTERPOLATION%DEPENDENT_FIELD
-          INDEPENDENT_FIELD=>EQUATIONS%INTERPOLATION%INDEPENDENT_FIELD
-          GEOMETRIC_FIELD=>EQUATIONS%INTERPOLATION%GEOMETRIC_FIELD
-          EQUATIONS_MATRICES=>EQUATIONS%EQUATIONS_MATRICES
-          LINEAR_MATRICES=>EQUATIONS_MATRICES%LINEAR_MATRICES
-          EQUATIONS_MATRIX=>LINEAR_MATRICES%MATRICES(1)%PTR
-          RHS_VECTOR=>EQUATIONS_MATRICES%RHS_VECTOR
-          EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
-          LINEAR_MAPPING=>EQUATIONS_MAPPING%LINEAR_MAPPING
-          FIELD_VARIABLE=>LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(1)%VARIABLE
-          FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
-          INDEPENDENT_BASIS=>INDEPENDENT_FIELD%DECOMPOSITION%DOMAIN(INDEPENDENT_FIELD%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR% &
-            & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-          DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(DEPENDENT_FIELD%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR% &
-            & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-          GEOMETRIC_BASIS=>GEOMETRIC_FIELD%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR% &
-            & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-          QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
-          CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,EQUATIONS%INTERPOLATION% &
-            & GEOMETRIC_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-          CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,EQUATIONS%INTERPOLATION% &
-            & INDEPENDENT_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
+          dependentField=>equations%INTERPOLATION%DEPENDENT_FIELD
+          geometricField=>equations%INTERPOLATION%GEOMETRIC_FIELD
+          equationsMatrices=>equations%EQUATIONS_MATRICES
+          linearMatrices=>equationsMatrices%LINEAR_MATRICES
+          equationsMatrix=>linearMatrices%MATRICES(1)%PTR
+          rhsVector=>equationsMatrices%RHS_VECTOR
+          equationsMapping=>equations%EQUATIONS_MAPPING
+          linearMapping=>equationsMapping%LINEAR_MAPPING
+          fieldVariable=>linearMapping%EQUATIONS_MATRIX_TO_VAR_MAPS(1)%VARIABLE
+          fieldVarType=fieldVariable%VARIABLE_TYPE
+          dependentBasis=>dependentField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR% &
+            & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
+          geometricBasis=>geometricField%DECOMPOSITION%DOMAIN(geometricField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR% &
+            & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
+          quadratureScheme=>dependentBasis%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
+          CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementNumber,equations%INTERPOLATION% &
+            & GEOMETRIC_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
+          CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementNumber,equations%INTERPOLATION% &
+            & INDEPENDENT_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
           !Loop over gauss points
-          DO ng=1,QUADRATURE_SCHEME%NUMBER_OF_GAUSS
-            CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,EQUATIONS%INTERPOLATION% &
-              & GEOMETRIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-            CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%NUMBER_OF_XI,EQUATIONS%INTERPOLATION% &
-              & GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-            CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,EQUATIONS%INTERPOLATION% &
-              & INDEPENDENT_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
+          DO ng=1,quadratureScheme%NUMBER_OF_GAUSS
+            CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%INTERPOLATION% &
+              & GEOMETRIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
+            CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(geometricBasis%NUMBER_OF_XI,equations%INTERPOLATION% &
+              & GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
+            CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%INTERPOLATION% &
+              & INDEPENDENT_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
             !Calculate RWG.
 !!TODO: Think about symmetric problems. 
-            RWG=EQUATIONS%INTERPOLATION%GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR%JACOBIAN* &
-              & QUADRATURE_SCHEME%GAUSS_WEIGHTS(ng)
+            rwg=equations%INTERPOLATION%GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR%JACOBIAN* &
+              & quadratureScheme%GAUSS_WEIGHTS(ng)
 
-            K_VALUE(1)=EQUATIONS%INTERPOLATION%INDEPENDENT_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(1,NO_PART_DERIV)
-            K_VALUE(2)=EQUATIONS%INTERPOLATION%INDEPENDENT_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(2,NO_PART_DERIV)
-            IF(FIELD_VARIABLE%NUMBER_OF_COMPONENTS==3) THEN
-              K_VALUE(3)=EQUATIONS%INTERPOLATION%INDEPENDENT_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(3,NO_PART_DERIV)
+            kValue(1)=equations%INTERPOLATION%INDEPENDENT_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(1,NO_PART_DERIV)
+            kValue(2)=equations%INTERPOLATION%INDEPENDENT_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(2,NO_PART_DERIV)
+            IF(fieldVariable%NUMBER_OF_COMPONENTS==3) THEN
+              kValue(3)=equations%INTERPOLATION%INDEPENDENT_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR%VALUES(3,NO_PART_DERIV)
             END IF 
 
 
             !Loop over field components
             mhs=0          
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,fieldVariable%NUMBER_OF_COMPONENTS
               !Loop over element rows
 !!TODO: CHANGE ELEMENT CALCULATE TO WORK OF ns ???
-              DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+              DO ms=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
                 mhs=mhs+1
                 nhs=0
-                IF(EQUATIONS_MATRIX%UPDATE_MATRIX) THEN
+                IF(equationsMatrix%UPDATE_MATRIX) THEN
                   !Loop over element columns
-                  DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-                    DO ns=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+                  DO nh=1,fieldVariable%NUMBER_OF_COMPONENTS
+                    DO ns=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
                       nhs=nhs+1
-                      DO ni=1,DEPENDENT_BASIS%NUMBER_OF_XI
-                        PGMSI(ni)=QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
-                        PGNSI(ni)=QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
+                      DO ni=1,dependentBasis%NUMBER_OF_XI
+                        pgmsi(ni)=quadratureScheme%GAUSS_BASIS_FNS(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
+                        pgnsi(ni)=quadratureScheme%GAUSS_BASIS_FNS(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
                       ENDDO !ni
 
                       IF(nh==mh) THEN 
-                        SUM=0.0_DP
-                        DO mi=1,DEPENDENT_BASIS%NUMBER_OF_XI
-                          DO ni=1,DEPENDENT_BASIS%NUMBER_OF_XI
-                            SUM=SUM+PGMSI(mi)*PGNSI(ni)*EQUATIONS%INTERPOLATION% &
-                              & GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR%GU(mi,ni)*K_VALUE(mh)
+                        sum=0.0_DP
+                        DO mi=1,dependentBasis%NUMBER_OF_XI
+                          DO ni=1,dependentBasis%NUMBER_OF_XI
+                            sum=sum+pgmsi(mi)*pgnsi(ni)*equations%INTERPOLATION% &
+                              & GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR%GU(mi,ni)*kValue(mh)
                           ENDDO !ni
                         ENDDO !mi
-                        EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(mhs,nhs)=EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(mhs,nhs)+SUM*RWG
+                        equationsMatrix%ELEMENT_MATRIX%MATRIX(mhs,nhs)=equationsMatrix%ELEMENT_MATRIX%MATRIX(mhs,nhs)+sum*rwg
                       ENDIF
 
                     ENDDO !ns
                   ENDDO !nh
                 ENDIF
-                IF(RHS_VECTOR%UPDATE_VECTOR) RHS_VECTOR%ELEMENT_VECTOR%VECTOR(mhs)=0.0_DP
+                IF(rhsVector%UPDATE_VECTOR) rhsVector%ELEMENT_VECTOR%VECTOR(mhs)=0.0_DP
               ENDDO !ms
             ENDDO !mh
           ENDDO !ng
           
           !Scale factor adjustment
-          IF(DEPENDENT_FIELD%SCALINGS%SCALING_TYPE/=FIELD_NO_SCALING) THEN
-            CALL Field_InterpolationParametersScaleFactorsElementGet(ELEMENT_NUMBER,EQUATIONS%INTERPOLATION% &
-              & DEPENDENT_INTERP_PARAMETERS(FIELD_VAR_TYPE)%PTR,ERR,ERROR,*999)
+          IF(dependentField%SCALINGS%SCALING_TYPE/=FIELD_NO_SCALING) THEN
+            CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,equations%INTERPOLATION% &
+              & DEPENDENT_INTERP_PARAMETERS(fieldVarType)%PTR,err,error,*999)
             mhs=0          
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,fieldVariable%NUMBER_OF_COMPONENTS
               !Loop over element rows
-              DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+              DO ms=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
                 mhs=mhs+1                    
                 nhs=0
-                IF(EQUATIONS_MATRIX%UPDATE_MATRIX) THEN
+                IF(equationsMatrix%UPDATE_MATRIX) THEN
                   !Loop over element columns
-                  DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-                    DO ns=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+                  DO nh=1,fieldVariable%NUMBER_OF_COMPONENTS
+                    DO ns=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
                       nhs=nhs+1
-                      EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(mhs,nhs)=EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(mhs,nhs)* &
-                        & EQUATIONS%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(FIELD_VAR_TYPE)%PTR%SCALE_FACTORS(ms,mh)* &
-                        & EQUATIONS%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(FIELD_VAR_TYPE)%PTR%SCALE_FACTORS(ns,nh)
+                      equationsMatrix%ELEMENT_MATRIX%MATRIX(mhs,nhs)=equationsMatrix%ELEMENT_MATRIX%MATRIX(mhs,nhs)* &
+                        & equations%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(fieldVarType)%PTR%SCALE_FACTORS(ms,mh)* &
+                        & equations%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(fieldVarType)%PTR%SCALE_FACTORS(ns,nh)
                     ENDDO !ns
                   ENDDO !nh
                 ENDIF
-                IF(RHS_VECTOR%UPDATE_VECTOR) RHS_VECTOR%ELEMENT_VECTOR%VECTOR(mhs)=RHS_VECTOR%ELEMENT_VECTOR%VECTOR(mhs)* &
-                  & EQUATIONS%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(FIELD_VAR_TYPE)%PTR%SCALE_FACTORS(ms,mh)
+                IF(rhsVector%UPDATE_VECTOR) rhsVector%ELEMENT_VECTOR%VECTOR(mhs)=rhsVector%ELEMENT_VECTOR%VECTOR(mhs)* &
+                  & equations%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(fieldVarType)%PTR%SCALE_FACTORS(ms,mh)
               ENDDO !ms
             ENDDO !mh
           ENDIF
 
         CASE DEFAULT
-          LOCAL_ERROR="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",ERR,ERROR))// &
+          localError="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(equationsSet%SPECIFICATION(3),"*",err,error))// &
             & " is not valid for a Laplace equation type of a classical field equations set class."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(localError,err,error,*999)
         END SELECT
         
       ELSE
-        CALL FlagError("Equations set equations is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Equations set equations is not associated.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",err,error,*999)
     ENDIF
        
-    EXITS("LAPLACE_EQUATION_FINITE_ELEMENT_CALCULATE")
+    EXITS("LaplaceEquation_FiniteElementCalculate")
     RETURN
-999 ERRORSEXITS("LAPLACE_EQUATION_FINITE_ELEMENT_CALCULATE",ERR,ERROR)
+999 ERRORSEXITS("LaplaceEquation_FiniteElementCalculate",err,error)
     RETURN 1
-  END SUBROUTINE LAPLACE_EQUATION_FINITE_ELEMENT_CALCULATE
+  END SUBROUTINE LaplaceEquation_FiniteElementCalculate
 
   !
   !================================================================================================================================
