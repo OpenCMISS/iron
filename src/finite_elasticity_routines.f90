@@ -698,6 +698,8 @@ CONTAINS
 
     SELECT CASE(EQUATIONS_SET%specification(3))
     CASE(EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE,EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE)
+      LOCAL_ERROR="Analytic Jacobian has not been validated for the Mooney-Rivlin equations, please use finite differences instead."
+      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       PRESSURE_COMPONENT=DEPENDENT_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%NUMBER_OF_COMPONENTS
       P=DEPENDENT_INTERPOLATED_POINT%VALUES(PRESSURE_COMPONENT,NO_PART_DERIV)
       !Form of constitutive model is:
@@ -714,6 +716,7 @@ CONTAINS
       STRESS_TENSOR(5)=TEMPTERM1*AZL(3,1)
       STRESS_TENSOR(6)=TEMPTERM1*AZL(3,2)
       IF(EQUATIONS_SET%specification(3)==EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE) THEN
+        
         !add active contraction stress values
         !Be aware for modified DZDNU, should active contraction be added here? Normally should be okay as modified DZDNU and DZDNU
         !converge during the Newton iteration.
@@ -806,9 +809,8 @@ CONTAINS
       CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(HYDRO_ELASTICITY_VOIGT,DZDNU,Jznu,ERR,ERROR,*999)
       CALL FINITE_ELASTICITY_PUSH_ELASTICITY_TENSOR(ELASTICITY_TENSOR,DZDNU,Jznu,ERR,ERROR,*999)
     CASE DEFAULT
-      LOCAL_ERROR="The third equations set specification of "// &
-        & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%specification(3),"*",ERR,ERROR))// &
-        & " is not valid for a finite elasticity type of an elasticity equation set."
+      LOCAL_ERROR="Analytic Jacobian has not been implemented for the third equations set specification of "// &
+        & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%specification(3),"*",ERR,ERROR))
       CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
     END SELECT
 
@@ -1379,7 +1381,7 @@ CONTAINS
     CALL MatrixProduct(deformationGradientTensorT, deformationGradientTensor, rightCauchyDeformationTensor,err,error,*999)
     !CALL MatrixTransposeProduct(deformationGradientTensor,deformationGradientTensor,rightCauchyDeformationTensor,err,error,*999)
     CALL Invert(rightCauchyDeformationTensor,fingerDeformationTensor,I3,err,error,*999)
-    Jacobian=I3**0.5_DP
+    Jacobian=DETERMINANT(deformationGradientTensor,err,error)
 
     greenStrainTensor=0.5_DP*rightCauchyDeformationTensor
     DO i=1,3
@@ -1448,6 +1450,7 @@ CONTAINS
     TYPE(BASIS_TYPE), POINTER :: DEPENDENT_BASIS_1,GEOMETRIC_BASIS
     TYPE(DECOMPOSITION_TYPE), POINTER :: DECOMPOSITION
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: DOMAIN_ELEMENT_MAPPING
+    TYPE(VARYING_STRING) :: LOCAL_ERROR
     LOGICAL :: DARCY_DENSITY,DARCY_DEPENDENT
     INTEGER(INTG) :: component_idx,component_idx2,parameter_idx,gauss_idx,element_dof_idx,FIELD_VAR_TYPE,DARCY_FIELD_VAR_TYPE
     INTEGER(INTG) :: imatrix,Ncompartments
@@ -1850,6 +1853,14 @@ CONTAINS
             !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
             CALL FiniteElasticity_GaussDeformationGradientTensor(DEPENDENT_INTERPOLATED_POINT_METRICS, &
               & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,DZDNU,ERR,ERROR,*999)
+            Jznu=DETERMINANT(DZDNU,ERR,ERROR)
+            IF(Jznu<0.0_DP) THEN
+              LOCAL_ERROR = "Warning: Volume is negative for gauss point "//TRIM(NUMBER_TO_VSTRING(gauss_idx,"*",ERR,ERROR))//&
+                & " element "//TRIM(NUMBER_TO_VSTRING(ELEMENT_NUMBER,"*",ERR,ERROR))
+              CALL FlagWarning(LOCAL_ERROR,ERR,ERROR,*999)  
+              LOCAL_ERROR = "DET(F) = "//TRIM(NUMBER_TO_VSTRING(Jznu,"*",ERR,ERROR))
+              CALL FlagWarning(LOCAL_ERROR,ERR,ERROR,*999) 
+            ENDIF
 
             Jzxi=DEPENDENT_INTERPOLATED_POINT_METRICS%JACOBIAN
             Jxxi=GEOMETRIC_INTERPOLATED_POINT_METRICS%JACOBIAN
@@ -3378,7 +3389,9 @@ CONTAINS
                     & BASES(mh)%PTR%ELEMENT_PARAMETERS_IN_LOCAL_FACE(ms,naf)
                   TEMPVEC2=QUADRATURE_SCHEMES(mh)%PTR%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)
                   JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(mhs,nhs)=JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(mhs,nhs)+ &
-                    DOT_PRODUCT(TEMPVEC1,TEMPVEC2)
+                    & DOT_PRODUCT(TEMPVEC1,TEMPVEC2)* &
+                    & EQUATIONS%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(FIELD_VAR_U_TYPE)%PTR%SCALE_FACTORS(ms,mh)* &
+                    & EQUATIONS%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(FIELD_VAR_U_TYPE)%PTR%SCALE_FACTORS(ns,nh)
                 ENDDO !ms
               ENDDO !ns
             ENDDO !oh
@@ -3399,7 +3412,9 @@ CONTAINS
                     & BASES(nh)%PTR%ELEMENT_PARAMETERS_IN_LOCAL_FACE(ns,naf)
                   TEMPVEC2=QUADRATURE_SCHEMES(nh)%PTR%GAUSS_BASIS_FNS(ns,NO_PART_DERIV,ng)
                   JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(nhs,mhs)=JACOBIAN_MATRIX%ELEMENT_JACOBIAN%MATRIX(nhs,mhs)+ &
-                    DOT_PRODUCT(TEMPVEC1,TEMPVEC2)
+                    & DOT_PRODUCT(TEMPVEC1,TEMPVEC2)* &
+                    & EQUATIONS%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(FIELD_VAR_U_TYPE)%PTR%SCALE_FACTORS(ms,mh)* &
+                    & EQUATIONS%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(FIELD_VAR_U_TYPE)%PTR%SCALE_FACTORS(ns,nh)
                 ENDDO !ns
               ENDDO !ms
             ENDDO !oh
@@ -3704,12 +3719,13 @@ CONTAINS
 
     CALL MATRIX_TRANSPOSE(DZDNU,DZDNUT,ERR,ERROR,*999)
     CALL MATRIX_PRODUCT(DZDNUT,DZDNU,AZL,ERR,ERROR,*999)
+    Jznu = DETERMINANT(DZDNU,ERR,ERROR)
 
     PRESSURE_COMPONENT=DEPENDENT_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%NUMBER_OF_COMPONENTS
     P=DEPENDENT_INTERPOLATED_POINT%VALUES(PRESSURE_COMPONENT,1)
 
     CALL INVERT(AZL,AZU,I3,ERR,ERROR,*999)
-    Jznu=I3**0.5_DP
+    
     E = 0.5_DP*AZL
     DO i=1,3
       E(i,i)=E(i,i)-0.5_DP
@@ -5395,7 +5411,7 @@ CONTAINS
 
     CALL MatrixTransposeProduct(deformationGradientTensor,deformationGradientTensor,rightCauchyDeformationTensor,err,error,*999)
     CALL Invert(rightCauchyDeformationTensor,fingerDeformationTensor,I3,err,error,*999)
-    Jacobian=I3**0.5_DP
+    Jacobian=DETERMINANT(deformationGradientTensor,err,error)
 
     greenStrainTensor=0.5_DP*rightCauchyDeformationTensor
     DO i=1,3
@@ -8292,15 +8308,9 @@ CONTAINS
                     & TRIM(NUMBER_TO_VSTRING(EQUATIONS%SPARSITY_TYPE,"*",ERR,ERROR))//" is invalid."
                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
-              SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
-              CASE(EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE,EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE)
-!                  & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE,EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE)
-                ! Use the analytic Jacobian calculation
-                CALL EquationsMatrices_JacobianTypesSet(EQUATIONS_MATRICES,[EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED], &
+              !Set Jacobian matrices calculation type to default finite difference. 
+              CALL EquationsMatrices_JacobianTypesSet(EQUATIONS_MATRICES,[EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED], &
                   & ERR,ERROR,*999)
-              CASE DEFAULT
-                  ! Do nothing
-              END SELECT
               CALL EQUATIONS_MATRICES_CREATE_FINISH(EQUATIONS_MATRICES,ERR,ERROR,*999)
             CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
               CALL FlagError("Not implemented.",ERR,ERROR,*999)
