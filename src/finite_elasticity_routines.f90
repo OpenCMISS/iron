@@ -1379,7 +1379,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
     LOGICAL :: DARCY_DENSITY,DARCY_DEPENDENT
     INTEGER(INTG) :: component_idx,component_idx2,parameter_idx,gauss_idx,element_dof_idx,FIELD_VAR_TYPE,DARCY_FIELD_VAR_TYPE
-    INTEGER(INTG) :: imatrix,Ncompartments,gaussIdx,rowIdx,columnIdx,componentIdx
+    INTEGER(INTG) :: imatrix,Ncompartments,gaussIdx,rowIdx,columnIdx,componentIdx,elementDofIdx
     INTEGER(INTG) :: numberOfXDimensions,numberOfXiDimensions
     INTEGER(INTG) :: NDOFS,mh,ms,mhs,mi,nh,ns,rowComponentIdx,rowElementParameterIdx,rowElementDofIdx,xiIdx,columnComponentIdx, &
       & columnElementParameterIdx
@@ -2435,14 +2435,15 @@ CONTAINS
             ENDDO !nh
             JGW=Jzxi*DEPENDENT_QUADRATURE_SCHEME%GAUSS_WEIGHTS(gauss_idx)
             !Now add up the residual terms
-            mhs=0
+            elementDofIdx=0
             DO mh=1,numberOfDimensions
               MESH_COMPONENT_NUMBER=FIELD_VARIABLE%COMPONENTS(mh)%MESH_COMPONENT_NUMBER
               DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(MESH_COMPONENT_NUMBER)%ptr% &
                 & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
               DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
-                mhs=mhs+1
-                nonlinearMatrices%elementResidual%vector(mhs)=nonlinearMatrices%elementResidual%vector(mhs)+ &
+                elementDofIdx=elementDofIdx+1
+                nonlinearMatrices%elementResidual%vector(elementDofIdx)= &
+                  & nonlinearMatrices%elementResidual%vector(elementDofIdx)+ &
                   & JGW*DOT_PRODUCT(DPHIDZ(1:numberOfDimensions,ms,mh),cauchyTensor(1:numberOfDimensions,mh))
               ENDDO !ms
             ENDDO !mh
@@ -2474,23 +2475,23 @@ CONTAINS
                 COMPONENT_QUADRATURE_SCHEME=>COMPONENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
                 NUMBER_OF_FIELD_COMPONENT_INTERPOLATION_PARAMETERS=COMPONENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
                 DO parameter_idx=1,NUMBER_OF_FIELD_COMPONENT_INTERPOLATION_PARAMETERS
-                  element_dof_idx=element_dof_idx+1
+                  elementDofIdx=elementDofIdx+1
                   IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
-                    nonlinearMatrices%elementResidual%vector(element_dof_idx)= &
-                      & nonlinearMatrices%elementResidual%vector(element_dof_idx)+ &
+                    nonlinearMatrices%elementResidual%vector(elementDofIdx)= &
+                      & nonlinearMatrices%elementResidual%vector(elementDofIdx)+ &
                       & GAUSS_WEIGHT*Jzxi*COMPONENT_QUADRATURE_SCHEME%GAUSS_BASIS_FNS(parameter_idx,1,gauss_idx)* &
                       & (Je-1.0_DP-DARCY_VOL_INCREASE)
                   ELSE
-                    nonlinearMatrices%elementResidual%vector(element_dof_idx)= &
-                      & nonlinearMatrices%elementResidual%vector(element_dof_idx)+ &
+                    nonlinearMatrices%elementResidual%vector(elementDofIdx)= &
+                      & nonlinearMatrices%elementResidual%vector(elementDofIdx)+ &
                       & GAUSS_WEIGHT*Jzxi*COMPONENT_QUADRATURE_SCHEME%GAUSS_BASIS_FNS(parameter_idx,1,gauss_idx)* &
                       & (Je-1.0_DP)
                   ENDIF
                 ENDDO
-              ELSEIF(DEPENDENT_COMPONENT_INTERPOLATION_TYPE==FIELD_ELEMENT_BASED_INTERPOLATION) THEN !element based
-                mhs=mhs+1
-                nonlinearMatrices%elementResidual%vector(mhs)= &
-                  & nonlinearMatrices%elementResidual%vector(mhs)+TEMPTERM1
+              ELSE IF(DEPENDENT_COMPONENT_INTERPOLATION_TYPE==FIELD_ELEMENT_BASED_INTERPOLATION) THEN !element based
+                elementDofIdx=elementDofIdx+1
+                nonlinearMatrices%elementResidual%vector(elementDofIdx)= &
+                  & nonlinearMatrices%elementResidual%vector(elementDofIdx)+TEMPTERM1
               ENDIF
             ENDIF
           ENDDO !gauss_idx
