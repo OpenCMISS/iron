@@ -46,6 +46,7 @@ MODULE FittingRoutines
 
   USE BaseRoutines
   USE BasisRoutines
+  USE BasisAccessRoutines
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE CONSTANTS
   USE CONTROL_LOOP_ROUTINES

@@ -46,6 +46,7 @@ MODULE REACTION_DIFFUSION_EQUATION_ROUTINES
 
   USE BaseRoutines
   USE BasisRoutines
+  USE BasisAccessRoutines
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE ComputationEnvironment
   USE Constants

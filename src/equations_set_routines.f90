@@ -46,6 +46,7 @@ MODULE EQUATIONS_SET_ROUTINES
 
   USE BaseRoutines
   USE BasisRoutines
+  USE BasisAccessRoutines
   USE BIOELECTRIC_ROUTINES
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE CLASSICAL_FIELD_ROUTINES
@@ -152,6 +153,8 @@ MODULE EQUATIONS_SET_ROUTINES
   PUBLIC EQUATIONS_SET_SOURCE_DESTROY
 
   PUBLIC EquationsSet_SpecificationGet,EquationsSet_SpecificationSizeGet
+
+  PUBLIC EquationsSet_TensorInterpolateGaussPoint
 
   PUBLIC EquationsSet_TensorInterpolateXi
 
@@ -6156,6 +6159,65 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Evaluate a tensor at a given element Gauss point.
+  SUBROUTINE EquationsSet_TensorInterpolateGaussPoint(equationsSet,tensorEvaluateType,gaussPointNumber,userElementNumber,values, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to interpolate the tensor for.
+    INTEGER(INTG), INTENT(IN) :: tensorEvaluateType !<The type of tensor to evaluate.
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number of the field to interpolate.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
+    REAL(DP), INTENT(OUT) :: values(:,:) !<On exit, the interpolated tensor values.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("EquationsSet_TensorInterpolateGaussPoint",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.equationsSet%equations_set_finished) CALL FlagError("Equations set has not been finished.",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<1) CALL FlagError("Equations set specification must have at least one entry.", &
+      & err,error,*999)
+
+    SELECT CASE(equationsSet%specification(1))
+    CASE(EQUATIONS_SET_ELASTICITY_CLASS)
+      CALL Elasticity_TensorInterpolateGaussPoint(equationsSet,tensorEvaluateType,gaussPointNumber,userElementNumber,values, &
+        & err,error,*999)
+    CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_ELECTROMAGNETICS_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_MODAL_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_FITTING_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_OPTIMISATION_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The first equations set specification of "// &
+        & TRIM(NumberToVstring(equationsSet%specification(1),"*",err,error))// &
+        & " is not valid."
+      CALL FlagError(localError,err,error,*999)      
+    END SELECT
+
+    EXITS("EquationsSet_TensorInterpolateGaussPoint")
+    RETURN
+999 ERRORSEXITS("EquationsSet_TensorInterpolateGaussPoint",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_TensorInterpolateGaussPoint
+
+  !
+  !================================================================================================================================
+  !
+
   !>Evaluate a tensor at a given element xi location.
   SUBROUTINE EquationsSet_TensorInterpolateXi(equationsSet,tensorEvaluateType,userElementNumber,xi,values,err,error,*)
 
@@ -6164,23 +6226,17 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: tensorEvaluateType !<The type of tensor to evaluate.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
     REAL(DP), INTENT(IN) :: xi(:) !<The element xi to interpolate the field at.
-    REAL(DP), INTENT(OUT) :: values(3,3) !<The interpolated tensor values.
+    REAL(DP), INTENT(OUT) :: values(:,:) !<On exit, the interpolated tensor values.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
     ENTERS("EquationsSet_TensorInterpolateXi",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) THEN
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    END IF
-    IF(.NOT.equationsSet%equations_set_finished) THEN
-      CALL FlagError("Equations set has not been finished.",err,error,*999)
-    END IF
-    IF(.NOT.ALLOCATED(equationsSet%specification)) THEN
-      CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-    ELSE IF(SIZE(equationsSet%specification,1)<1) THEN
-      CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
-    END IF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.equationsSet%equations_set_finished) CALL FlagError("Equations set has not been finished.",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<1) CALL FlagError("Equations set specification must have at least one entry.", &
+      & err,error,*999)
 
     SELECT CASE(equationsSet%specification(1))
     CASE(EQUATIONS_SET_ELASTICITY_CLASS)

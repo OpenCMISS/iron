@@ -46,6 +46,7 @@ MODULE FIELD_ROUTINES
 
   USE BaseRoutines
   USE BasisRoutines
+  USE BasisAccessRoutines
   USE ComputationEnvironment
   USE COORDINATE_ROUTINES
   USE CmissMPI

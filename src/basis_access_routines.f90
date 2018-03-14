@@ -57,6 +57,18 @@ MODULE BasisAccessRoutines
 
   !Module parameters
 
+
+  !> \addtogroup Basis_QuadratureSchemes Basis::QuadratureSchemes
+  !> \brief Quadrature scheme parameters. NOTE: Quadratures schemes have not been implemented yet. For now you should just use the BASIS_DEFAULT_QUADRATURE_SCHEME.
+  !> \see BasisRoutines,BasisAccessRoutines
+  !>@{
+  INTEGER(INTG), PARAMETER :: BASIS_NUMBER_OF_QUADRATURE_SCHEME_TYPES=4 !<The number of currently defined quadrature schemes \see Basis_QuadratureScheme,BasisRoutines,BasisAccessRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_DEFAULT_QUADRATURE_SCHEME=1 !<Identifier for the default quadrature scheme \see Basis_QuadratureScheme,BasisRoutines,BasisAccessRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_LOW_QUADRATURE_SCHEME=2 !<Identifier for a low order quadrature scheme \see Basis_QuadratureScheme,BasisRoutines,BasisAccessRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_MID_QUADRATURE_SCHEME=3 !<Identifier for a mid order quadrature scheme \see Basis_QuadratureScheme,BasisRoutines,BasisAccessRoutines
+  INTEGER(INTG), PARAMETER :: BASIS_HIGH_QUADRATURE_SCHEME=4 !<Identifier for a high order quadrature scheme \see Basis_QuadratureScheme,BasisRoutines,BasisAccessRoutines
+  !>@}
+  
   !Module types
 
   !Module variables
@@ -73,6 +85,9 @@ MODULE BasisAccessRoutines
     MODULE PROCEDURE Basis_UserNumberFind
   END INTERFACE BASIS_USER_NUMBER_FIND
 
+  PUBLIC BASIS_NUMBER_OF_QUADRATURE_SCHEME_TYPES,BASIS_DEFAULT_QUADRATURE_SCHEME,BASIS_LOW_QUADRATURE_SCHEME, &
+    & BASIS_MID_QUADRATURE_SCHEME,BASIS_HIGH_QUADRATURE_SCHEME
+  
   PUBLIC basisFunctions
 
   PUBLIC Basis_FamilyNumberFind
@@ -84,6 +99,8 @@ MODULE BasisAccessRoutines
   PUBLIC Basis_LocalFaceNumberGet
 
   PUBLIC Basis_LocalLineNumberGet
+
+  PUBLIC Basis_QuadratureSchemeGet
 
   PUBLIC Basis_UserNumberFind
 
@@ -287,6 +304,51 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Basis_LocalLineNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a quadrature scheme for the basis. 
+  SUBROUTINE Basis_QuadratureSchemeGet(basis,quadratureSchemeIdx,quadratureScheme,err,error,*)
+
+    !Argument variables
+    TYPE(BASIS_TYPE), POINTER :: basis !<A pointer to the basis to get the quadrature scheme for
+    INTEGER(INTG), INTENT(IN) :: quadratureSchemeIdx !<The index of the quadrature scheme to get. \see Basis_QuadratureScheme,BasisRoutines,BasisAccessRoutines
+    TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: quadratureScheme !<On exit, the basis quadrature scheme corresponding to the quadrature index. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("Basis_QuadratureSchemeGet",err,error,*998)
+
+    IF(ASSOCIATED(quadratureScheme)) CALL FlagError("Quadrature scheme is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(.NOT.basis%BASIS_FINISHED) CALL FlagError("Basis has not been finished.",err,error,*999)
+    IF(quadratureSchemeIdx<1.OR.quadratureSchemeIdx>BASIS_NUMBER_OF_QUADRATURE_SCHEME_TYPES) THEN
+      localError="The specified quadrature scheme index of "//TRIM(NumberToVString(quadratureSchemeIdx,"*",err,error))// &
+        & " is invalid. The quadrature scheme index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(BASIS_NUMBER_OF_QUADRATURE_SCHEME_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    END IF
+    IF(.NOT.ALLOCATED(basis%quadrature%QUADRATURE_SCHEME_MAP)) &
+      & CALL FlagError("Basis quadrature scheme map has not been allocated.",err,error,*999)
+
+    quadratureScheme=>basis%quadrature%QUADRATURE_SCHEME_MAP(quadratureSchemeIdx)%ptr
+    IF(.NOT.ASSOCIATED(quadratureScheme)) THEN
+      localError="The quadrature scheme for the quadrature scheme index of "// &
+        & TRIM(NumberToVString(quadratureSchemeIdx,"*",err,error))//" is not associated."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+      
+    EXITS("Basis_QuadratureSchemeGet")
+    RETURN
+999 NULLIFY(quadratureScheme)
+998 ERRORSEXITS("Basis_QuadratureSchemeGet",err,error)    
+    RETURN 1
+    
+  END SUBROUTINE Basis_QuadratureSchemeGet
 
   !
   !================================================================================================================================

@@ -46,6 +46,7 @@ MODULE MESH_ROUTINES
 
   USE BaseRoutines
   USE BasisRoutines
+  USE BasisAccessRoutines
   USE CmissMPI
   USE CMISS_PARMETIS
   USE ComputationEnvironment

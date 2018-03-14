@@ -3508,6 +3508,12 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_EquationsSet_DerivedVariableSetObj
   END INTERFACE cmfe_EquationsSet_DerivedVariableSet
   
+  !>Evaluate a tensor at a given element Gauss location.
+  INTERFACE cmfe_EquationsSet_TensorInterpolateGaussPoint
+    MODULE PROCEDURE cmfe_EquationsSet_TensorInterpolateGaussPointNumber
+    MODULE PROCEDURE cmfe_EquationsSet_TensorInterpolateGaussPointObj
+  END INTERFACE cmfe_EquationsSet_TensorInterpolateGaussPoint
+
   !>Evaluate a tensor at a given element xi location.
   INTERFACE cmfe_EquationsSet_TensorInterpolateXi
     MODULE PROCEDURE cmfe_EquationsSet_TensorInterpolateXiNumber
@@ -3583,6 +3589,8 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_EquationsSet_SourceDestroy
 
   PUBLIC cmfe_EquationsSet_SpecificationGet,cmfe_EquationsSet_SpecificationSizeGet
+
+  PUBLIC cmfe_EquationsSet_TensorInterpolateGaussPoint
 
   PUBLIC cmfe_EquationsSet_TensorInterpolateXi
 
@@ -27922,6 +27930,76 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Evaluate a tensor at a given element Gauss point, for an equations set identified by a user number.
+  SUBROUTINE cmfe_EquationsSet_TensorInterpolateGaussPointNumber(regionUserNumber,equationsSetUserNumber,tensorEvaluateType, &
+    & gaussPointNumber,userElementNumber,values,err)
+    !DLLEXPORT(cmfe_EquationsSet_TensorInterpolateGaussPointNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set.
+    INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to evalaute the tensor for.
+    INTEGER(INTG), INTENT(IN) :: tensorEvaluateType !<The type of tensor to evaluate.
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number of the field to interpolate.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
+    REAL(DP), INTENT(OUT) :: values(:,:) !On exit, the interpolated tensor values.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_EquationsSet_TensorInterpolateGaussPointNumber",err,error,*999)
+
+    NULLIFY(equationsSet)
+    NULLIFY(region)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
+    CALL EquationsSet_TensorInterpolateGaussPoint(equationsSet,tensorEvaluateType,gaussPointNumber,userElementNumber,values, &
+      & err,error,*999)
+
+    EXITS("cmfe_EquationsSet_TensorInterpolateGaussPointNumber")
+    RETURN
+999 ERRORS("cmfe_EquationsSet_TensorInterpolateGaussPointNumber",err,error)
+    EXITS("cmfe_EquationsSet_TensorInterpolateGaussPointNumber")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_EquationsSet_TensorInterpolateGaussPointNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Evaluate a tensor at a given element Gauss point, for an equations set identified by an object.
+  SUBROUTINE cmfe_EquationsSet_TensorInterpolateGaussPointObj(equationsSet,tensorEvaluateType,gaussPointNumber,userElementNumber, &
+    & values,err)
+    !DLLEXPORT(cmfe_EquationsSet_TensorInterpolateGaussPointObj)
+
+    !Argument variables
+    TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<A pointer to the equations set to evaluate the tensor for.
+    INTEGER(INTG), INTENT(IN) :: tensorEvaluateType !<The type of tensor to evaluate.
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number of the field to interpolate.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
+    REAL(DP), INTENT(OUT) :: values(:,:) !<On exit, the interpolated tensor values.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+
+    ENTERS("cmfe_EquationsSet_TensorInterpolateGaussPointObj",err,error,*999)
+
+    CALL EquationsSet_TensorInterpolateGaussPoint(equationsSet%equationsSet,tensorEvaluateType,gaussPointNumber,userElementNumber, &
+      & values,err,error,*999)
+
+    EXITS("cmfe_EquationsSet_TensorInterpolateGaussPointObj")
+    RETURN
+999 ERRORS("cmfe_EquationsSet_TensorInterpolateGaussPointObj",err,error)
+    EXITS("cmfe_EquationsSet_TensorInterpolateGaussPointObj")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_EquationsSet_TensorInterpolateGaussPointObj
+
+  !
+  !================================================================================================================================
+  !
+
   !>Evaluate a tensor at a given element xi location, for an equations set identified by a user number.
   SUBROUTINE cmfe_EquationsSet_TensorInterpolateXiNumber(regionUserNumber,equationsSetUserNumber,tensorEvaluateType, &
     & userElementNumber,xi,values,err)
@@ -27968,7 +28046,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: tensorEvaluateType !<The type of tensor to evaluate.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
     REAL(DP), INTENT(IN) :: xi(:) !<The element xi to interpolate the field at.
-    REAL(DP), INTENT(OUT) :: values(:,:) !<The interpolated strain tensor values.
+    REAL(DP), INTENT(OUT) :: values(:,:) !<The interpolated tensor values.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
 
     ENTERS("cmfe_EquationsSet_TensorInterpolateXiObj",err,error,*999)

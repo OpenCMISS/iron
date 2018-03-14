@@ -45,6 +45,7 @@
 MODULE ANALYTIC_ANALYSIS_ROUTINES
 
   USE BasisRoutines
+  USE BasisAccessRoutines
   USE CmissMPI
   USE ComputationEnvironment
   USE CONSTANTS

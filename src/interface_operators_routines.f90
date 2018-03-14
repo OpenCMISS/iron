@@ -46,6 +46,7 @@ MODULE INTERFACE_OPERATORS_ROUTINES
 
   USE BaseRoutines
   USE BasisRoutines
+  USE BasisAccessRoutines
   USE CONSTANTS
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
