@@ -1974,8 +1974,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     LOGICAL :: equationsFinished !<Is .TRUE. if the equations have been finished, .FALSE. if not.
     INTEGER(INTG) :: equationType !<The equations type \see EquationsRoutines_EquationTypes,EquationsRoutines
     INTEGER(INTG) :: equalityType !<The equations equality type \see EquationsRoutines_EquationEqualityTypes,EquationsRoutines
-    INTEGER(INTG) :: linearity !<The equations linearity type \see EQUATIONS_SET_CONSTANTS_LinearityTypes,EQUATIONS_SET_CONSTANTS
-    INTEGER(INTG) :: timeDependence !<The equations time dependence type \see EQUATIONS_SET_CONSTANTS_TimeDependenceTypes,EQUATIONS_SET_CONSTANTS
+    INTEGER(INTG) :: linearity !<The equations linearity type \see EquationsSetConstants_LinearityTypes,EquationsSetConstants
+    INTEGER(INTG) :: timeDependence !<The equations time dependence type \see EquationsSetConstants_TimeDependenceTypes,EquationsSetConstants
     INTEGER(INTG) :: outputType !<The output type for the equations \see EquationsRoutines_EquationsOutputTypes,EquationsRoutines
     INTEGER(INTG) :: sparsityType !<The sparsity type for the equation matrices of the equations \see EquationsRoutines_EquationsSparsityTypes,EquationsRoutines
     INTEGER(INTG) :: lumpingType !<The lumping type for the equation matrices of the equations \see EquationsRoutines_EquationsLumpingTypes,EquationsRoutines
@@ -2103,8 +2103,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains information on the setup information for an equations set
   TYPE EQUATIONS_SET_SETUP_TYPE
-    INTEGER(INTG) :: SETUP_TYPE !<The setup type for the equations set setup \see EQUATIONS_SET_CONSTANTS_SetupTypes,EQUATIONS_SET_CONSTANTS
-    INTEGER(INTG) :: ACTION_TYPE !<The action type for the equations set setup \see EQUATIONS_SET_CONSTANTS_SetupActionTypes,EQUATIONS_SET_CONSTANTS
+    INTEGER(INTG) :: SETUP_TYPE !<The setup type for the equations set setup \see EquationsSetConstants_SetupTypes,EquationsSetConstants
+    INTEGER(INTG) :: ACTION_TYPE !<The action type for the equations set setup \see EquationsSetConstants_SetupActionTypes,EquationsSetConstants
     INTEGER(INTG) :: FIELD_USER_NUMBER !<The user number for the field for the equations set setup.
     TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field for the equations set setup.
     INTEGER(INTG) :: ANALYTIC_FUNCTION_TYPE !<The analytic function type to use.
@@ -2187,7 +2187,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG), ALLOCATABLE :: SPECIFICATION(:) !<The equations set specification array, eg. [class, type, subtype], although there can be more or fewer identifiers. Unused identifiers are set to zero.
     REAL(DP) :: currentTime !<The current time for the equations set
     REAL(DP) :: deltaTime !<The current time increment for the equations set
-    INTEGER(INTG) :: outputType !<The output type for the equations set \see EQUATIONS_SET_CONSTANTS_OutputTypes,EQUATIONS_SET_CONSTANTS
+    INTEGER(INTG) :: outputType !<The output type for the equations set \see EquationsSetConstants_OutputTypes,EquationsSetConstants
     INTEGER(INTG) :: SOLUTION_METHOD !<The solution method for the equations set \see EquationsRoutines_SolutionMethods 
     TYPE(EQUATIONS_SET_GEOMETRY_TYPE) :: GEOMETRY !<The geometry information for the equations set.
     TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: MATERIALS !<A pointer to the materials information for the equations set.

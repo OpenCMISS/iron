@@ -48,7 +48,7 @@ MODULE EquationsMappingRoutines
   USE DOMAIN_MAPPINGS
   USE EquationsAccessRoutines
   USE EquationsMappingAccessRoutines
-  USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FIELD_ROUTINES
   USE FieldAccessRoutines

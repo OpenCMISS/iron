@@ -63,7 +63,7 @@ MODULE EQUATIONS_SET_ROUTINES
   USE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
-  USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetConstants
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
   USE FittingRoutines
@@ -172,7 +172,7 @@ CONTAINS
   !================================================================================================================================
   !
       
-  !>Finish the creation of a analytic solution for equations set. \see OPENCMISS::CMISSEquationsSetAnalyticCreateFinish
+  !>Finish the creation of a analytic solution for equations set. \see OpenCMISS::cmfe_EquationsSet_AnalyticCreateFinish
   SUBROUTINE EQUATIONS_SET_ANALYTIC_CREATE_FINISH(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -223,13 +223,13 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of a analytic solution for a equations set. \see OPENCMISS::CMISSEquationsSetAnalyticCreateStart
+  !>Start the creation of a analytic solution for a equations set. \see OpenCMISS::cmfe_EquationsSet_AnalyticCreateStart
   SUBROUTINE EQUATIONS_SET_ANALYTIC_CREATE_START(EQUATIONS_SET,ANALYTIC_FUNCTION_TYPE,ANALYTIC_FIELD_USER_NUMBER,ANALYTIC_FIELD, &
     & err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to start the creation of an analytic for.
-    INTEGER(INTG), INTENT(IN) :: ANALYTIC_FUNCTION_TYPE !<The analytic function type to setup \see EQUATIONS_SET_CONSTANTS_AnalyticFunctionTypes,EQUATIONS_SET_CONSTANTS
+    INTEGER(INTG), INTENT(IN) :: ANALYTIC_FUNCTION_TYPE !<The analytic function type to setup \see EquationsSetConstants_AnalyticFunctionTypes,EquationsSetConstants
     INTEGER(INTG), INTENT(IN) :: ANALYTIC_FIELD_USER_NUMBER !<The user specified analytic field number
     TYPE(FIELD_TYPE), POINTER :: ANALYTIC_FIELD !<If associated on entry, a pointer to the user created analytic field which has the same user number as the specified analytic field user number. If not associated on entry, on exit, a pointer to the created analytic field for the equations set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -337,7 +337,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroy the analytic solution for an equations set. \see OPENCMISS::CMISSEquationsSetAnalyticDestroy
+  !>Destroy the analytic solution for an equations set. \see OpenCMISS::cmfe_EquationsSet_AnalyticDestroy
   SUBROUTINE EQUATIONS_SET_ANALYTIC_DESTROY(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -368,7 +368,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Evaluates the current analytic solution for an equations set. \see OPENCMISS::CMISSEquationsSetAnalyticEvaluate
+  !>Evaluates the current analytic solution for an equations set. \see OpenCMISS::cmfe_EquationsSet_AnalyticEvaluate
   SUBROUTINE EQUATIONS_SET_ANALYTIC_EVALUATE(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -849,7 +849,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the analytic time for an equations set. \see OPENCMISS::CMISSEquationsSetAnalyticTimeGet
+  !>Returns the analytic time for an equations set. \see OpenCMISS::cmfe_EquationsSet_AnalyticTimeGet
   SUBROUTINE EQUATIONS_SET_ANALYTIC_TIME_GET(EQUATIONS_SET,TIME,err,error,*)
 
     !Argument variables
@@ -882,7 +882,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the analytic time for an equations set. \see OPENCMISS::CMISSEquationsSetAnalyticTimeSet
+  !>Sets/changes the analytic time for an equations set. \see OpenCMISS::cmfe_EquationsSet_AnalyticTimeSet
   SUBROUTINE EQUATIONS_SET_ANALYTIC_TIME_SET(EQUATIONS_SET,TIME,err,error,*)
 
     !Argument variables
@@ -2124,7 +2124,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Set boundary conditions for an equation set according to the analytic equations. \see OPENCMISS::CMISSEquationsSetBoundaryConditionsAnalytic
+  !>Set boundary conditions for an equation set according to the analytic equations. \see OpenCMISS::cmfe_EquationsSet_BoundaryConditionsAnalytic
   SUBROUTINE EQUATIONS_SET_BOUNDARY_CONDITIONS_ANALYTIC(equationsSet,BOUNDARY_CONDITIONS,err,error,*)
 
     !Argument variables
@@ -2189,7 +2189,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the process of creating an equation set on a region. \see OPENCMISS::CMISSEquationsSetCreateStart
+  !>Finishes the process of creating an equation set on a region. \see OpenCMISS::cmfe_EquationsSet_CreateStart
   SUBROUTINE EQUATIONS_SET_CREATE_FINISH(equationsSet,err,error,*)
 
     !Argument variables
@@ -2233,7 +2233,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the process of creating an equations set defined by USER_NUMBER in the region identified by REGION. \see OPENCMISS::CMISSEquationsSetCreateStart
+  !>Starts the process of creating an equations set defined by USER_NUMBER in the region identified by REGION. \see OpenCMISS::cmfe_EquationsSet_CreateStart
   !>Default values set for the EQUATIONS_SET's attributes are:
   !>- LINEARITY: 1 (EQUATIONS_SET_LINEAR)
   !>- TIME_DEPENDENCE: 1 (EQUATIONS_SET_STATIC)
@@ -2436,7 +2436,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys an equations set identified by a user number on the give region and deallocates all memory. \see OPENCMISS::CMISSEquationsSetDestroy
+  !>Destroys an equations set identified by a user number on the give region and deallocates all memory. \see OpenCMISS::cmfe_EquationsSet_Destroy
   SUBROUTINE EQUATIONS_SET_DESTROY_NUMBER(USER_NUMBER,REGION,err,error,*)
 
     !Argument variables
@@ -2519,7 +2519,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys an equations set identified by a pointer and deallocates all memory. \see OPENCMISS::CMISSEquationsSetDestroy
+  !>Destroys an equations set identified by a pointer and deallocates all memory. \see OpenCMISS::cmfe_EquationsSet_Destroy
   SUBROUTINE EQUATIONS_SET_DESTROY(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -3208,7 +3208,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of independent variables for an equations set. \see OPENCMISS::CMISSEquationsSetIndependentCreateFinish
+  !>Finish the creation of independent variables for an equations set. \see OpenCMISS::cmfe_EquationsSet_IndependentCreateFinish
   SUBROUTINE EQUATIONS_SET_INDEPENDENT_CREATE_FINISH(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -3261,7 +3261,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of independent variables for an equations set. \see OPENCMISS::CMISSEquationsSetIndependentCreateStart
+  !>Start the creation of independent variables for an equations set. \see OpenCMISS::cmfe_EquationsSet_IndependentCreateStart
   SUBROUTINE EQUATIONS_SET_INDEPENDENT_CREATE_START(EQUATIONS_SET,INDEPENDENT_FIELD_USER_NUMBER,independentField,err,error,*)
 
     !Argument variables
@@ -3372,7 +3372,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroy the independent field for an equations set. \see OPENCMISS::CMISSEquationsSetIndependentDestroy
+  !>Destroy the independent field for an equations set. \see OpenCMISS::cmfe_EquationsSet_IndependentDestroy
   SUBROUTINE EQUATIONS_SET_INDEPENDENT_DESTROY(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -3571,7 +3571,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of materials for an equations set. \see OPENCMISS::CMISSEquationsSetMaterialsCreateFinish
+  !>Finish the creation of materials for an equations set. \see OpenCMISS::cmfe_EquationsSet_MaterialsCreateFinish
   SUBROUTINE EQUATIONS_SET_MATERIALS_CREATE_FINISH(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -3624,7 +3624,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of materials for a problem. \see OPENCMISS::CMISSEquationsSetMaterialsCreateStart
+  !>Start the creation of materials for a problem. \see OpenCMISS::cmfe_EquationsSet_MaterialsCreateStart
   SUBROUTINE EQUATIONS_SET_MATERIALS_CREATE_START(EQUATIONS_SET,MATERIALS_FIELD_USER_NUMBER,MATERIALS_FIELD,err,error,*)
 
     !Argument variables
@@ -3735,7 +3735,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroy the materials for an equations set. \see OPENCMISS::CMISSEquationsSetMaterialsDestroy
+  !>Destroy the materials for an equations set. \see OpenCMISS::cmfe_EquationsSet_MaterialsDestroy
   SUBROUTINE EQUATIONS_SET_MATERIALS_DESTROY(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -3831,7 +3831,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of a dependent variables for an equations set. \see OPENCMISS::CMISSEquationsSetDependentCreateFinish
+  !>Finish the creation of a dependent variables for an equations set. \see OpenCMISS::cmfe_EquationsSet_DependentCreateFinish
   SUBROUTINE EQUATIONS_SET_DEPENDENT_CREATE_FINISH(EQUATIONS_SET,err,error,*)
     
     !Argument variables
@@ -3880,7 +3880,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of dependent variables for an equations set. \see OPENCMISS::CMISSEquationsSetDependentCreateStart
+  !>Start the creation of dependent variables for an equations set. \see OpenCMISS::cmfe_EquationsSet_DependentCreateStart
   SUBROUTINE EQUATIONS_SET_DEPENDENT_CREATE_START(EQUATIONS_SET,DEPENDENT_FIELD_USER_NUMBER,dependentField,err,error,*)
 
     !Argument variables
@@ -3989,7 +3989,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Destroy the dependent variables for an equations set. \see OPENCMISS::CMISSEquationsSetDependentDestroy
+  !>Destroy the dependent variables for an equations set. \see OpenCMISS::cmfe_EquationsSet_DependentDestroy
   SUBROUTINE EQUATIONS_SET_DEPENDENT_DESTROY(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -4072,7 +4072,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of a derived variables field for an equations set. \see OPENCMISS::CMISSEquationsSet_DerivedCreateFinish
+  !>Finish the creation of a derived variables field for an equations set. \see OpenCMISS::cmfe_EquationsSet_DerivedCreateFinish
   SUBROUTINE EquationsSet_DerivedCreateFinish(equationsSet,err,error,*)
 
     !Argument variables
@@ -4125,7 +4125,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of derived variables field for an equations set. \see OPENCMISS::CMISSEquationsSet_DerivedCreateStart
+  !>Start the creation of derived variables field for an equations set. \see OpenCMISS::cmfe_EquationsSet_DerivedCreateStart
   SUBROUTINE EquationsSet_DerivedCreateStart(equationsSet,derivedFieldUserNumber,derivedField,err,error,*)
 
     !Argument variables
@@ -4233,7 +4233,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroy the derived variables for an equations set. \see OPENCMISS::CMISSEquationsSet_DerivedDestroy
+  !>Destroy the derived variables for an equations set. \see OpenCMISS::cmfe_EquationsSet_DerivedDestroy
   SUBROUTINE EquationsSet_DerivedDestroy(equationsSet,err,error,*)
 
     !Argument variables
@@ -4446,7 +4446,7 @@ CONTAINS
   !================================================================================================================================
   !
 
- !>Finish the creation of equations for the equations set. \see OPENCMISS::CMISSEquationsSetEquationsCreateFinish
+ !>Finish the creation of equations for the equations set. \see OpenCMISS::cmfe_EquationsSet_EquationsCreateFinish
   SUBROUTINE EQUATIONS_SET_EQUATIONS_CREATE_FINISH(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -4534,7 +4534,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroy the equations for an equations set. \see OPENCMISS::CMISSEquationsSetEquationsDestroy
+  !>Destroy the equations for an equations set. \see OpenCMISS::cmfe_EquationsSet_EquationsDestroy
   SUBROUTINE EQUATIONS_SET_EQUATIONS_DESTROY(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -5409,7 +5409,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the output type for
-    INTEGER(INTG), INTENT(OUT) :: outputType !<On exit, the output type of the equations set \see EQUATIONS_SET_CONSTANTS_OutputTypes,EQUATIONS_SET_CONSTANTS
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On exit, the output type of the equations set \see EquationsSetConstants_OutputTypes,EquationsSetConstants
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -5437,7 +5437,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the output type for
-    INTEGER(INTG), INTENT(IN) :: outputType !<The output type to set \see EQUATIONS_SET_CONSTANTS_OutputTypes,EQUATIONS_SET_CONSTANTS
+    INTEGER(INTG), INTENT(IN) :: outputType !<The output type to set \see EquationsSetConstants_OutputTypes,EquationsSetConstants
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -5474,7 +5474,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
-    INTEGER(INTG), INTENT(IN) :: SOLUTION_METHOD !<The equations set solution method to set \see EQUATIONS_SET_CONSTANTS_SolutionMethods,EQUATIONS_SET_CONSTANTS
+    INTEGER(INTG), INTENT(IN) :: SOLUTION_METHOD !<The equations set solution method to set \see EquationsSetConstants_SolutionMethods,EquationsSetConstants
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -5540,7 +5540,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to get the solution method for
-    INTEGER(INTG), INTENT(OUT) :: SOLUTION_METHOD !<On return, the equations set solution method \see EQUATIONS_SET_CONSTANTS_SolutionMethods,EQUATIONS_SET_CONSTANTS
+    INTEGER(INTG), INTENT(OUT) :: SOLUTION_METHOD !<On return, the equations set solution method \see EquationsSetConstants_SolutionMethods,EquationsSetConstants
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -5567,7 +5567,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of a source for an equation set. \see OPENCMISS::CMISSEquationsSetSourceCreateFinish
+  !>Finish the creation of a source for an equation set. \see OpenCMISS::cmfe_EquationsSet_SourceCreateFinish
   SUBROUTINE EQUATIONS_SET_SOURCE_CREATE_FINISH(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -5620,7 +5620,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of a source for an equations set. \see OPENCMISS::CMISSEquationsSetSourceCreateStart
+  !>Start the creation of a source for an equations set. \see OpenCMISS::cmfe_EquationsSet_SourceCreateStart
   SUBROUTINE EQUATIONS_SET_SOURCE_CREATE_START(EQUATIONS_SET,SOURCE_FIELD_USER_NUMBER,SOURCE_FIELD,err,error,*)
 
     !Argument variables
@@ -5731,7 +5731,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroy the source for an equations set. \see OPENCMISS::CMISSEquationsSetSourceDestroy
+  !>Destroy the source for an equations set. \see OpenCMISS::cmfe_EquationsSet_SourceDestroy
   SUBROUTINE EQUATIONS_SET_SOURCE_DESTROY(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -5827,7 +5827,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the equations set specification i.e., equations set class, type and subtype for an equations set. \see OPENCMISS::CMISSEquationsSetSpecificationGet
+  !>Returns the equations set specification i.e., equations set class, type and subtype for an equations set. \see OpenCMISS::cmfe_EquationsSet_SpecificationGet
   SUBROUTINE EquationsSet_SpecificationGet(equationsSet,equationsSetSpecification,err,error,*)
 
     !Argument variables
@@ -5875,7 +5875,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the size of the equations set specification array for a problem identified by a pointer. \see OPENCMISS::cmfe_EquationsSetSpecificationSizeGet
+  !>Gets the size of the equations set specification array for a problem identified by a pointer. \see OpenCMISS::cmfe_EquationsSet_SpecificationSizeGet
   SUBROUTINE EquationsSet_SpecificationSizeGet(equationsSet,specificationSize,err,error,*)
 
     !Argument variables
@@ -5912,7 +5912,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the current times for an equations set. \see OPENCMISS::cmfe_EquationsSet_TimesGet
+  !>Gets the current times for an equations set. \see OpenCMISS::cmfe_EquationsSet_TimesGet
   SUBROUTINE EquationsSet_TimesGet(equationsSet,currentTime,deltaTime,err,error,*)
 
     !Argument variables
@@ -5943,7 +5943,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the current times for an equations set. \see OPENCMISS::cmfe_EquationsSet_TimesSet
+  !>Sets/changes the current times for an equations set. \see OpenCMISS::cmfe_EquationsSet_TimesSet
   SUBROUTINE EquationsSet_TimesSet(equationsSet,currentTime,deltaTime,err,error,*)
 
     !Argument variables
@@ -5978,12 +5978,12 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Calculates a derived variable value for the equations set. \see OPENCMISS::CMISSEquationsSet_DerivedVariableCalculate
+  !>Calculates a derived variable value for the equations set. \see OpenCMISS::cmfe_EquationsSet_DerivedVariableCalculate
   SUBROUTINE EquationsSet_DerivedVariableCalculate(equationsSet,derivedType,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to calculate output for
-    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived value type to calculate. \see EQUATIONS_SET_CONSTANTS_DerivedTypes.
+    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived value type to calculate. \see EquationsSetConstants_DerivedTypes.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
@@ -6035,12 +6035,12 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the field variable type of the derived field to be used to store a derived variable. \see OPENCMISS::CMISSEquationsSet_DerivedVariableSet
+  !>Sets the field variable type of the derived field to be used to store a derived variable. \see OpenCMISS::cmfe_EquationsSet_DerivedVariableSet
   SUBROUTINE EquationsSet_DerivedVariableSet(equationsSet,derivedType,fieldVariableType,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to calculate a derived field for
-    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived value type to calculate. \see EQUATIONS_SET_CONSTANTS_DerivedTypes.
+    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived value type to calculate. \see EquationsSetConstants_DerivedTypes.
     INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type used to store the calculated derived value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -6085,12 +6085,14 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("EquationsSet_DerivedVariableSet",err,error)
     RETURN 1
+    
   END SUBROUTINE EquationsSet_DerivedVariableSet
+  
   !
   !================================================================================================================================
   !
 
-  !>Sets/changes the equations set specification i.e., equations set class, type and subtype for an equations set. \see OPENCMISS::CMISSEquationsSetSpecificationSet
+  !>Sets/changes the equations set specification i.e., equations set class, type and subtype for an equations set. \see OpenCMISS::cmfe_EquationsSet_SpecificationSet
   SUBROUTINE EquationsSet_SpecificationSet(equationsSet,specification,err,error,*)
 
     !Argument variables

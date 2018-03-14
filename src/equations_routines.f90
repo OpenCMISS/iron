@@ -50,7 +50,7 @@ MODULE EquationsRoutines
   USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
-  USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetConstants
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
   USE ISO_VARYING_STRING
@@ -695,7 +695,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsType), POINTER :: equations !<A pointer to the equations to get the linearity for
-    INTEGER(INTG), INTENT(OUT) :: linearityType !<On exit, the linearity type of the equations. \see EQUATIONS_SET_CONSTANTS_LinearityTypes,EQUATIONS_SET_CONSTANTS
+    INTEGER(INTG), INTENT(OUT) :: linearityType !<On exit, the linearity type of the equations. \see EquationsSetConstants_LinearityTypes,EquationsSetConstants
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -723,7 +723,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsType), POINTER :: equations !<A pointer to the equations to set the linearity for
-    INTEGER(INTG), INTENT(IN) :: linearityType !<The linearity type to set \see EQUATIONS_SET_CONSTANTS_LinearityTypes,EQUATIONS_SET_CONSTANTS
+    INTEGER(INTG), INTENT(IN) :: linearityType !<The linearity type to set \see EquationsSetConstants_LinearityTypes,EquationsSetConstants
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1039,7 +1039,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsType), POINTER, INTENT(IN) :: equations !<A pointer to the equations to get the field variable for.
-    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived value type to get the field variable for. \see EQUATIONS_SET_CONSTANTS_DerivedTypes.
+    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived value type to get the field variable for. \see EquationsSetConstants_DerivedTypes.
     TYPE(FIELD_VARIABLE_TYPE), POINTER, INTENT(INOUT) :: fieldVariable !<On return, the field variable for the derived variable type.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1367,7 +1367,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsType), POINTER, INTENT(IN) :: equations !<The equations to get the dynamic matrix for
-    INTEGER(INTG), INTENT(IN) :: matrixType !<The type of the dynamic matrix to get. \see EQUATIONS_SET_CONSTANTS_DynamicMatrixTypes,EQUATIONS_SET_CONSTANTS
+    INTEGER(INTG), INTENT(IN) :: matrixType !<The type of the dynamic matrix to get. \see EquationsSetConstants_DynamicMatrixTypes,EquationsSetConstants
     TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER, INTENT(INOUT) :: matrix !<On return, the requested dynamic matrix
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error message
     INTEGER(INTG), INTENT(OUT) :: err !<The error code

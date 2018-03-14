@@ -51,7 +51,7 @@ MODULE SOLVER_MAPPING_ROUTINES
   USE EquationsAccessRoutines
   USE DOMAIN_MAPPINGS
   USE EquationsMappingAccessRoutines
-  USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FieldAccessRoutines
   USE INPUT_OUTPUT

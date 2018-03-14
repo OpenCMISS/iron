@@ -59,7 +59,7 @@ MODULE STOKES_EQUATIONS_ROUTINES
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
   USE EquationsMatricesRoutines
-  USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FIELD_ROUTINES
   USE FIELD_IO_ROUTINES

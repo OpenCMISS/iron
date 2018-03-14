@@ -60,7 +60,7 @@ MODULE FINITE_ELASTICITY_ROUTINES
   USE EquationsMappingRoutines
   USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
-  USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
@@ -3622,7 +3622,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to calculate the output for
-    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived field type to calculate. \see EQUATIONS_SET_CONSTANTS_DerivedTypes.
+    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived field type to calculate. \see EquationsSetConstants_DerivedTypes.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
@@ -3640,10 +3640,10 @@ CONTAINS
         IF(ASSOCIATED(equationsSet%equations)) THEN
           CALL Equations_DerivedVariableGet(equationsSet%equations,derivedType,derivedVariable,err,error,*999)
           SELECT CASE(derivedType)
-          CASE(EQUATIONS_SET_DERIVED_STRAIN)
+          CASE(EQUATIONS_SET_DERIVED_GREEN_STRAIN)
             CALL FiniteElasticity_StrainCalculate(equationsSet, &
               & derivedVariable%field,derivedVariable%variable_type,err,error,*999)
-          CASE(EQUATIONS_SET_DERIVED_STRESS)
+          CASE(EQUATIONS_SET_DERIVED_CAUCHY_STRESS)
             CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
             CALL FlagError("Equations set derived field type of "//TRIM(NUMBER_TO_VSTRING(derivedType,"*",err,error))// &
@@ -10250,13 +10250,13 @@ CONTAINS
                     CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_SET%derived%derivedField,variableType, &
                       & FIELD_DP_TYPE,err,error,*999)
                     SELECT CASE(derivedidx)
-                    CASE(EQUATIONS_SET_DERIVED_STRAIN)
+                    CASE(EQUATIONS_SET_DERIVED_GREEN_STRAIN)
                       CALL FIELD_DIMENSION_SET_AND_LOCK(EQUATIONS_SET%derived%derivedField,variableType, &
                         & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                       CALL FIELD_VARIABLE_LABEL_SET(EQUATIONS_SET%derived%derivedField,variableType,"Strain",err,error,*999)
                       CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%derived%derivedField,variableType, &
                         & 6,err,error,*999)
-                    CASE(EQUATIONS_SET_DERIVED_STRESS)
+                    CASE(EQUATIONS_SET_DERIVED_CAUCHY_STRESS)
                       CALL FIELD_DIMENSION_SET_AND_LOCK(EQUATIONS_SET%derived%derivedField,variableType, &
                         & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                       CALL FIELD_VARIABLE_LABEL_SET(EQUATIONS_SET%derived%derivedField,variableType,"Stress",err,error,*999)
@@ -10283,12 +10283,12 @@ CONTAINS
                   IF(variableType/=0) THEN
                     CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
                     SELECT CASE(derivedidx)
-                    CASE(EQUATIONS_SET_DERIVED_STRAIN)
+                    CASE(EQUATIONS_SET_DERIVED_GREEN_STRAIN)
                       CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET%derived%derivedField,variableType, &
                         & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                       CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET%derived%derivedField,variableType, &
                         & 6,err,error,*999)
-                    CASE(EQUATIONS_SET_DERIVED_STRESS)
+                    CASE(EQUATIONS_SET_DERIVED_CAUCHY_STRESS)
                       CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET%derived%derivedField,variableType, &
                         & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                       CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET%derived%derivedField,variableType, &

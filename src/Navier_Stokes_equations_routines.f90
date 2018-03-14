@@ -22,7 +22,7 @@ MODULE NAVIER_STOKES_EQUATIONS_ROUTINES
   USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
-  USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FIELD_ROUTINES
   USE FieldAccessRoutines

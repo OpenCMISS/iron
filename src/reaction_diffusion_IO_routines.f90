@@ -48,7 +48,7 @@ MODULE REACTION_DIFFUSION_IO_ROUTINES
 
  USE BaseRoutines
  USE ComputationEnvironment
- USE EQUATIONS_SET_CONSTANTS
+ USE EquationsSetConstants
  USE FIELD_ROUTINES
  USE FieldAccessRoutines
  USE TYPES

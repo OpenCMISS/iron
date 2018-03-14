@@ -52,7 +52,7 @@ MODULE FSIRoutines
   USE ControlLoopAccessRoutines
   USE EquationsRoutines
   USE EquationsAccessRoutines
-  USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FIELD_IO_ROUTINES
   USE FIELD_ROUTINES

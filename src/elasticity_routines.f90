@@ -46,7 +46,7 @@ MODULE ELASTICITY_ROUTINES
 
   USE BaseRoutines
   USE CONTROL_LOOP_ROUTINES
-  USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetConstants
   USE FINITE_ELASTICITY_ROUTINES
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
@@ -465,7 +465,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to calculate the output for
-    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived field type to calculate. \see EQUATIONS_SET_CONSTANTS_DerivedTypes.
+    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived field type to calculate. \see EquationsSetConstants_DerivedTypes.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 

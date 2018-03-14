@@ -56,7 +56,7 @@ MODULE SOLVER_ROUTINES
   USE Constants
   USE DISTRIBUTED_MATRIX_VECTOR
   USE EquationsAccessRoutines
-  USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetConstants
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
   USE Kinds

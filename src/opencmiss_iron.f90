@@ -76,7 +76,7 @@ MODULE OpenCMISS_Iron
   USE DataProjectionAccessRoutines
   USE DISTRIBUTED_MATRIX_VECTOR
   USE EquationsRoutines
-  USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetConstants
   USE EQUATIONS_SET_ROUTINES
   USE EquationsSetAccessRoutines
   USE FIELD_ROUTINES
@@ -574,24 +574,24 @@ MODULE OpenCMISS_Iron
 
   !Module parameters
 
-  !> \addtogroup OPENCMISS_DiagnosticAndTimingConstants OpenCMISS::Iron::DiagnosticAndTiming::Constants
+  !> \addtogroup OpenCMISS_DiagnosticAndTimingConstants OpenCMISS::Iron::DiagnosticAndTiming::Constants
   !> \brief Diagnostic and Timing constants.
   !>@{
-  !> \addtogroup OPENCMISS_DiagnosticTypes OpenCMISS::Iron::DiagnosticAndTiming::DiagnosticTypes
+  !> \addtogroup OpenCMISS_DiagnosticTypes OpenCMISS::Iron::DiagnosticAndTiming::DiagnosticTypes
   !> \brief Diganostic constants.
-  !> \see OpenCMISS::Iron::DiagnosticTypes,OPENCMISS
+  !> \see OpenCMISS::Iron::DiagnosticTypes,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_ALL_DIAG_TYPE = ALL_DIAG_TYPE !<Type for setting diagnostic output in all routines \see OPENCMISS_DiagnosticTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_IN_DIAG_TYPE = IN_DIAG_TYPE !<Type for setting diagnostic output in one routine \see OPENCMISS_DiagnosticTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FROM_DIAG_TYPE = FROM_DIAG_TYPE !<Type for setting diagnostic output in one routine downwards \see OPENCMISS_DiagnosticTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_ALL_DIAG_TYPE = ALL_DIAG_TYPE !<Type for setting diagnostic output in all routines \see OpenCMISS_DiagnosticTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_IN_DIAG_TYPE = IN_DIAG_TYPE !<Type for setting diagnostic output in one routine \see OpenCMISS_DiagnosticTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FROM_DIAG_TYPE = FROM_DIAG_TYPE !<Type for setting diagnostic output in one routine downwards \see OpenCMISS_DiagnosticTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_TimingTypes OpenCMISS::Iron::DiagnosticAndTiming::TimingTypes
+  !> \addtogroup OpenCMISS_TimingTypes OpenCMISS::Iron::DiagnosticAndTiming::TimingTypes
   !> \brief Timing constants.
-  !> \see OpenCMISS::Iron::TimingTypes,OPENCMISS
+  !> \see OpenCMISS::Iron::TimingTypes,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_ALL_TIMING_TYPE = ALL_TIMING_TYPE !<Type for setting timing output in all routines \see OPENCMISS_TimingTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_IN_TIMING_TYPE = IN_TIMING_TYPE !<Type for setting timing output in one routine \see OPENCMISS_TimingTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FROM_TIMING_TYPE = FROM_TIMING_TYPE !<Type for setting timing output from one routine downwards \see OPENCMISS_TimingTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_ALL_TIMING_TYPE = ALL_TIMING_TYPE !<Type for setting timing output in all routines \see OpenCMISS_TimingTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_IN_TIMING_TYPE = IN_TIMING_TYPE !<Type for setting timing output in one routine \see OpenCMISS_TimingTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FROM_TIMING_TYPE = FROM_TIMING_TYPE !<Type for setting timing output from one routine downwards \see OpenCMISS_TimingTypes,OpenCMISS
   !>@}
   !>@}
 
@@ -619,62 +619,62 @@ MODULE OpenCMISS_Iron
 
   !Module parameters
 
-  !> \addtogroup OPENCMISS_BasisConstants OpenCMISS::Iron::Basis::Constants
+  !> \addtogroup OpenCMISS_BasisConstants OpenCMISS::Iron::Basis::Constants
   !> \brief Basis function constants.
   !>@{
-  !> \addtogroup OPENCMISS_BasisTypes OpenCMISS::Iron::Basis::BasisTypes
+  !> \addtogroup OpenCMISS_BasisTypes OpenCMISS::Iron::Basis::BasisTypes
   !> \brief Basis definition type parameters.
-  !> \see OpenCMISS::Iron::BasisConstants,OPENCMISS
+  !> \see OpenCMISS::Iron::BasisConstants,OpenCMISS
   !>@{ symbol 'nodenumber' at (1) has no IMPLICIT type.
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_LAGRANGE_HERMITE_TP_TYPE = BASIS_LAGRANGE_HERMITE_TP_TYPE !<Lagrange-Hermite tensor product basis type \see OPENCMISS_BasisTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_SIMPLEX_TYPE = BASIS_SIMPLEX_TYPE !<Simplex basis type \see OPENCMISS_BasisTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_SERENDIPITY_TYPE = BASIS_SERENDIPITY_TYPE !<Serendipity basis type \see OPENCMISS_BasisTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_AUXILLIARY_TYPE = BASIS_AUXILLIARY_TYPE !<Auxillary basis type \see OPENCMISS_BasisTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_B_SPLINE_TP_TYPE = BASIS_B_SPLINE_TP_TYPE !<B-spline basis type \see OPENCMISS_BasisTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE = BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE !<Fourier-Lagrange tensor product basis type \see OPENCMISS_BasisTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_EXTENDED_LAGRANGE_TP_TYPE = BASIS_EXTENDED_LAGRANGE_TP_TYPE !< Extendend Lagrange tensor product basis type \see OPENCMISS_BasisTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_LAGRANGE_HERMITE_TP_TYPE = BASIS_LAGRANGE_HERMITE_TP_TYPE !<Lagrange-Hermite tensor product basis type \see OpenCMISS_BasisTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_SIMPLEX_TYPE = BASIS_SIMPLEX_TYPE !<Simplex basis type \see OpenCMISS_BasisTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_SERENDIPITY_TYPE = BASIS_SERENDIPITY_TYPE !<Serendipity basis type \see OpenCMISS_BasisTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_AUXILLIARY_TYPE = BASIS_AUXILLIARY_TYPE !<Auxillary basis type \see OpenCMISS_BasisTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_B_SPLINE_TP_TYPE = BASIS_B_SPLINE_TP_TYPE !<B-spline basis type \see OpenCMISS_BasisTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE = BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE !<Fourier-Lagrange tensor product basis type \see OpenCMISS_BasisTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_EXTENDED_LAGRANGE_TP_TYPE = BASIS_EXTENDED_LAGRANGE_TP_TYPE !< Extendend Lagrange tensor product basis type \see OpenCMISS_BasisTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_BasisInterpolationSpecifications OpenCMISS::Iron::Basis::InterpolationSpecifications
+  !> \addtogroup OpenCMISS_BasisInterpolationSpecifications OpenCMISS::Iron::Basis::InterpolationSpecifications
   !> \brief Interpolation specification parameters
-  !> \see OpenCMISS::Iron::BasisConstants,OPENCMISS
+  !> \see OpenCMISS::Iron::BasisConstants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_LINEAR_LAGRANGE_INTERPOLATION = BASIS_LINEAR_LAGRANGE_INTERPOLATION !<Linear Lagrange interpolation specification \see OPENCMISS_BasisInterpolationSpecifications,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_QUADRATIC_LAGRANGE_INTERPOLATION = BASIS_QUADRATIC_LAGRANGE_INTERPOLATION !<Quadratic Lagrange interpolation specification \see OPENCMISS_BasisInterpolationSpecifications,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_CUBIC_LAGRANGE_INTERPOLATION = BASIS_CUBIC_LAGRANGE_INTERPOLATION !<Cubic Lagrange interpolation specification \see OPENCMISS_BasisInterpolationSpecifications,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_CUBIC_HERMITE_INTERPOLATION = BASIS_CUBIC_HERMITE_INTERPOLATION !<Cubic Hermite interpolation specification \see OPENCMISS_BasisInterpolationSpecifications,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_QUADRATIC1_HERMITE_INTERPOLATION = BASIS_QUADRATIC1_HERMITE_INTERPOLATION !<Quadratic Hermite (no derivative at xi=0) interpolation specification \see OPENCMISS_BasisInterpolationSpecifications,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_QUADRATIC2_HERMITE_INTERPOLATION = BASIS_QUADRATIC2_HERMITE_INTERPOLATION !<Quadratic Hermite (no derivative at xi=1) interpolation specification \see OPENCMISS_BasisInterpolationSpecifications,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_LINEAR_SIMPLEX_INTERPOLATION = BASIS_LINEAR_SIMPLEX_INTERPOLATION !<Linear Simplex interpolation specification \see OPENCMISS_BasisInterpolationSpecifications,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_QUADRATIC_SIMPLEX_INTERPOLATION = BASIS_QUADRATIC_SIMPLEX_INTERPOLATION !<Quadratic Simplex interpolation specification \see OPENCMISS_BasisInterpolationSpecifications,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_CUBIC_SIMPLEX_INTERPOLATION = BASIS_CUBIC_SIMPLEX_INTERPOLATION !<Cubic Simplex interpolation specification \see OPENCMISS_BasisInterpolationSpecifications,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_LINEAR_LAGRANGE_INTERPOLATION = BASIS_LINEAR_LAGRANGE_INTERPOLATION !<Linear Lagrange interpolation specification \see OpenCMISS_BasisInterpolationSpecifications,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_QUADRATIC_LAGRANGE_INTERPOLATION = BASIS_QUADRATIC_LAGRANGE_INTERPOLATION !<Quadratic Lagrange interpolation specification \see OpenCMISS_BasisInterpolationSpecifications,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_CUBIC_LAGRANGE_INTERPOLATION = BASIS_CUBIC_LAGRANGE_INTERPOLATION !<Cubic Lagrange interpolation specification \see OpenCMISS_BasisInterpolationSpecifications,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_CUBIC_HERMITE_INTERPOLATION = BASIS_CUBIC_HERMITE_INTERPOLATION !<Cubic Hermite interpolation specification \see OpenCMISS_BasisInterpolationSpecifications,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_QUADRATIC1_HERMITE_INTERPOLATION = BASIS_QUADRATIC1_HERMITE_INTERPOLATION !<Quadratic Hermite (no derivative at xi=0) interpolation specification \see OpenCMISS_BasisInterpolationSpecifications,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_QUADRATIC2_HERMITE_INTERPOLATION = BASIS_QUADRATIC2_HERMITE_INTERPOLATION !<Quadratic Hermite (no derivative at xi=1) interpolation specification \see OpenCMISS_BasisInterpolationSpecifications,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_LINEAR_SIMPLEX_INTERPOLATION = BASIS_LINEAR_SIMPLEX_INTERPOLATION !<Linear Simplex interpolation specification \see OpenCMISS_BasisInterpolationSpecifications,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_QUADRATIC_SIMPLEX_INTERPOLATION = BASIS_QUADRATIC_SIMPLEX_INTERPOLATION !<Quadratic Simplex interpolation specification \see OpenCMISS_BasisInterpolationSpecifications,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_CUBIC_SIMPLEX_INTERPOLATION = BASIS_CUBIC_SIMPLEX_INTERPOLATION !<Cubic Simplex interpolation specification \see OpenCMISS_BasisInterpolationSpecifications,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_BasisQuadratureSchemes OpenCMISS::Iron::Basis::QuadratureSchemes
+  !> \addtogroup OpenCMISS_BasisQuadratureSchemes OpenCMISS::Iron::Basis::QuadratureSchemes
   !> \brief Quadrature scheme parameters
-  !> \see OpenCMISS::Iron::BasisConstants,OPENCMISS
+  !> \see OpenCMISS::Iron::BasisConstants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_DEFAULT_QUADRATURE_SCHEME = BASIS_DEFAULT_QUADRATURE_SCHEME !<Identifier for the default quadrature scheme \see OPENCMISS_BasisQuadratureSchemes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_LOW_QUADRATURE_SCHEME = BASIS_LOW_QUADRATURE_SCHEME !<Identifier for a low order quadrature scheme \see OPENCMISS_BasisQuadratureSchemes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_MID_QUADRATURE_SCHEME = BASIS_MID_QUADRATURE_SCHEME !<Identifier for a mid order quadrature scheme \see OPENCMISS_BasisQuadratureSchemes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_HIGH_QUADRATURE_SCHEME = BASIS_HIGH_QUADRATURE_SCHEME !<Identifier for a high order quadrature scheme \see OPENCMISS_BasisQuadratureSchemes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_DEFAULT_QUADRATURE_SCHEME = BASIS_DEFAULT_QUADRATURE_SCHEME !<Identifier for the default quadrature scheme \see OpenCMISS_BasisQuadratureSchemes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_LOW_QUADRATURE_SCHEME = BASIS_LOW_QUADRATURE_SCHEME !<Identifier for a low order quadrature scheme \see OpenCMISS_BasisQuadratureSchemes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_MID_QUADRATURE_SCHEME = BASIS_MID_QUADRATURE_SCHEME !<Identifier for a mid order quadrature scheme \see OpenCMISS_BasisQuadratureSchemes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_HIGH_QUADRATURE_SCHEME = BASIS_HIGH_QUADRATURE_SCHEME !<Identifier for a high order quadrature scheme \see OpenCMISS_BasisQuadratureSchemes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_BasisQuadratureTypes OpenCMISS::Iron::Basis::QuadratureTypes
+  !> \addtogroup OpenCMISS_BasisQuadratureTypes OpenCMISS::Iron::Basis::QuadratureTypes
   !> \brief Basis quadrature type parameters.
-  !> \see OpenCMISS::Iron::BasisConstants,OPENCMISS
+  !> \see OpenCMISS::Iron::BasisConstants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_GAUSS_LEGENDRE_QUADRATURE = BASIS_GAUSS_LEGENDRE_QUADRATURE !<Gauss-Legendre quadrature \see OPENCMISS_BasisQuadratureTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_GAUSS_LAGUERRE_QUADRATURE = BASIS_GAUSS_LAGUERRE_QUADRATURE !<Gauss-Laguerre quadrature \see OPENCMISS_BasisQuadratureTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_GUASS_HERMITE_QUADRATURE = BASIS_GUASS_HERMITE_QUADRATURE !<Gauss-Hermite quadrature \see OPENCMISS_BasisQuadratureTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_ADAPTIVE_GAUSS_LEGENDRE_QUADRATURE = BASIS_ADAPTIVE_GAUSS_LEGENDRE_QUADRATURE !<Adaptive Gauss-Legendre quadrature \see OPENCMISS_BasisQuadratureTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_GAUSS_SIMPLEX_QUADRATURE = BASIS_GAUSS_SIMPLEX_QUADRATURE !<Gauss-Legendre for Simplex elements quadrature \see OPENCMISS_BasisQuadratureTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_GAUSS_LEGENDRE_QUADRATURE = BASIS_GAUSS_LEGENDRE_QUADRATURE !<Gauss-Legendre quadrature \see OpenCMISS_BasisQuadratureTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_GAUSS_LAGUERRE_QUADRATURE = BASIS_GAUSS_LAGUERRE_QUADRATURE !<Gauss-Laguerre quadrature \see OpenCMISS_BasisQuadratureTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_GUASS_HERMITE_QUADRATURE = BASIS_GUASS_HERMITE_QUADRATURE !<Gauss-Hermite quadrature \see OpenCMISS_BasisQuadratureTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_ADAPTIVE_GAUSS_LEGENDRE_QUADRATURE = BASIS_ADAPTIVE_GAUSS_LEGENDRE_QUADRATURE !<Adaptive Gauss-Legendre quadrature \see OpenCMISS_BasisQuadratureTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_GAUSS_SIMPLEX_QUADRATURE = BASIS_GAUSS_SIMPLEX_QUADRATURE !<Gauss-Legendre for Simplex elements quadrature \see OpenCMISS_BasisQuadratureTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_BasisXiCollapse OpenCMISS::Iron::Basis::XiCollapse
+  !> \addtogroup OpenCMISS_BasisXiCollapse OpenCMISS::Iron::Basis::XiCollapse
   !> \brief Basis Xi collapse parameters.
-  !> \see OpenCMISS::Iron::Basis,OPENCMISS
+  !> \see OpenCMISS::Iron::Basis,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_XI_COLLAPSED = BASIS_XI_COLLAPSED !<The Xi direction is collapsed \see OPENCMISS_BasisXiCollapse,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_COLLAPSED_AT_XI0 = BASIS_COLLAPSED_AT_XI0 !<The Xi direction at the xi=0 end of this Xi direction is collapsed \see OPENCMISS_BasisXiCollapse,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_COLLAPSED_AT_XI1 = BASIS_COLLAPSED_AT_XI1 !<The Xi direction at the xi=1 end of this Xi direction is collapsed \see OPENCMISS_BasisXiCollapse,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_BASIS_NOT_COLLAPSED = BASIS_NOT_COLLAPSED !<The Xi direction is not collapsed \see OPENCMISS_BasisXiCollapse,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_XI_COLLAPSED = BASIS_XI_COLLAPSED !<The Xi direction is collapsed \see OpenCMISS_BasisXiCollapse,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_COLLAPSED_AT_XI0 = BASIS_COLLAPSED_AT_XI0 !<The Xi direction at the xi=0 end of this Xi direction is collapsed \see OpenCMISS_BasisXiCollapse,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_COLLAPSED_AT_XI1 = BASIS_COLLAPSED_AT_XI1 !<The Xi direction at the xi=1 end of this Xi direction is collapsed \see OpenCMISS_BasisXiCollapse,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_BASIS_NOT_COLLAPSED = BASIS_NOT_COLLAPSED !<The Xi direction is not collapsed \see OpenCMISS_BasisXiCollapse,OpenCMISS
   !>@}
   !>@}
 
@@ -852,12 +852,12 @@ MODULE OpenCMISS_Iron
   !Module parameters
 
 
-  !> \addtogroup OPENCMISS_BoundaryConditionsConstants OpenCMISS::Iron::BoundaryConditions::Constants
+  !> \addtogroup OpenCMISS_BoundaryConditionsConstants OpenCMISS::Iron::BoundaryConditions::Constants
   !> \brief Boundary conditions constants.
   !>@{
-  !> \addtogroup OPENCMISS_BoundaryConditionsTypes OpenCMISS::Iron::BoundaryConditions::Types
+  !> \addtogroup OpenCMISS_BoundaryConditionsTypes OpenCMISS::Iron::BoundaryConditions::Types
   !> \brief Specific boundary condition types, which might only be applicable to certain equation sets.
-  !> \see OpenCMISS::Iron::BoundaryConditions,OPENCMISS
+  !> \see OpenCMISS::Iron::BoundaryConditions,OpenCMISS
   !>@{
   INTEGER(INTG), PARAMETER :: CMFE_BOUNDARY_CONDITION_FREE = BOUNDARY_CONDITION_FREE !<The dof is free.
   INTEGER(INTG), PARAMETER :: CMFE_BOUNDARY_CONDITION_FIXED = BOUNDARY_CONDITION_FIXED !<The dof is fixed as a boundary condition.
@@ -889,9 +889,9 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_BOUNDARY_CONDITION_FIXED_CELLML = BOUNDARY_CONDITION_FIXED_CELLML
   INTEGER(INTG), PARAMETER :: CMFE_BOUNDARY_CONDITION_FIXED_STREE = BOUNDARY_CONDITION_FIXED_STREE
   !>@}
-  !> \addtogroup OPENCMISS_BoundaryConditionSparsityTypes OpenCMISS::Iron::BoundaryConditions::SparsityTypes
+  !> \addtogroup OpenCMISS_BoundaryConditionSparsityTypes OpenCMISS::Iron::BoundaryConditions::SparsityTypes
   !> \brief Storage type for matrices used by boundary conditions.
-  !> \see OpenCMISS::Iron::BoundaryConditions,OPENCMISS
+  !> \see OpenCMISS::Iron::BoundaryConditions,OpenCMISS
   !>@{
   INTEGER(INTG), PARAMETER :: CMFE_BOUNDARY_CONDITION_SPARSE_MATRICES = BOUNDARY_CONDITION_SPARSE_MATRICES
   INTEGER(INTG), PARAMETER :: CMFE_BOUNDARY_CONDITION_FULL_MATRICES = BOUNDARY_CONDITION_FULL_MATRICES
@@ -994,16 +994,16 @@ MODULE OpenCMISS_Iron
 !!==================================================================================================================================
 
   !Module parameters
-  !> \addtogroup OPENCMISS_CMISSConstants OpenCMISS::Iron::cmfe_::Constants
+  !> \addtogroup OpenCMISS_CMISSConstants OpenCMISS::Iron::cmfe_::Constants
   !> \brief CMISS constants.
   !>@{
-  !> \addtogroup OPENCMISS_CMISSErrorHandlingModes OpenCMISS::Iron::cmfe_::ErrorHandlingModes
+  !> \addtogroup OpenCMISS_CMISSErrorHandlingModes OpenCMISS::Iron::cmfe_::ErrorHandlingModes
   !> \brief CMISS error handling mode parameters
-  !> \see OpenCMISS::Iron::cmfe_,OPENCMISS
+  !> \see OpenCMISS::Iron::cmfe_,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_ERRORS_RETURN_ERROR_CODE = CMFE_RETURN_ERROR_CODE !<Just return the error code \see OPENCMISS_CMISSErrorHandlingModes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_ERRORS_OUTPUT_ERROR = CMFE_OUTPUT_ERROR !<Output the error traceback and return the error code \see OPENCMISS_CMISSErrorHandlingModes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_ERRORS_TRAP_ERROR = CMFE_TRAP_ERROR!<Trap the error by outputing the error traceback and stopping the program \see OPENCMISS_CMISSErrorHandlingModes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_ERRORS_RETURN_ERROR_CODE = CMFE_RETURN_ERROR_CODE !<Just return the error code \see OpenCMISS_CMISSErrorHandlingModes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_ERRORS_OUTPUT_ERROR = CMFE_OUTPUT_ERROR !<Output the error traceback and return the error code \see OpenCMISS_CMISSErrorHandlingModes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_ERRORS_TRAP_ERROR = CMFE_TRAP_ERROR!<Trap the error by outputing the error traceback and stopping the program \see OpenCMISS_CMISSErrorHandlingModes,OpenCMISS
   !>@}
   !>@}
 
@@ -1053,17 +1053,17 @@ MODULE OpenCMISS_Iron
 
   !Module parameters
 
-  !> \addtogroup OPENCMISS_CellMLConstants OpenCMISS::Iron::CellML::Constants
+  !> \addtogroup OpenCMISS_CellMLConstants OpenCMISS::Iron::CellML::Constants
   !> \brief CellML constants.
   !>@{
-  !> \addtogroup OPENCMISS_CellMLFieldTypes OpenCMISS::Iron::CellML::FieldTypes
+  !> \addtogroup OpenCMISS_CellMLFieldTypes OpenCMISS::Iron::CellML::FieldTypes
   !> \brief CellML field type parameters.
-  !> \see OpenCMISS::Iron::CellML,OPENCMISS
+  !> \see OpenCMISS::Iron::CellML,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_CELLML_MODELS_FIELD = CELLML_MODELS_FIELD !<CellML models field type \see OPENCMISS_CellMLFieldTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_CELLML_STATE_FIELD = CELLML_STATE_FIELD !<CellML state field type \see OPENCMISS_CellMLFieldTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_CELLML_INTERMEDIATE_FIELD = CELLML_INTERMEDIATE_FIELD !<CellML intermediate field type \see OPENCMISS_CellMLFieldTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_CELLML_PARAMETERS_FIELD = CELLML_PARAMETERS_FIELD !<CellML parameters field type \see OPENCMISS_CellMLFieldTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_CELLML_MODELS_FIELD = CELLML_MODELS_FIELD !<CellML models field type \see OpenCMISS_CellMLFieldTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_CELLML_STATE_FIELD = CELLML_STATE_FIELD !<CellML state field type \see OpenCMISS_CellMLFieldTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_CELLML_INTERMEDIATE_FIELD = CELLML_INTERMEDIATE_FIELD !<CellML intermediate field type \see OpenCMISS_CellMLFieldTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_CELLML_PARAMETERS_FIELD = CELLML_PARAMETERS_FIELD !<CellML parameters field type \see OpenCMISS_CellMLFieldTypes,OpenCMISS
   !>@}
   !>@}
 
@@ -1293,50 +1293,50 @@ MODULE OpenCMISS_Iron
 
   !Module parameters
 
-  !> \addtogroup OPENCMISS_Constants OpenCMISS::Iron::Constants
+  !> \addtogroup OpenCMISS_Constants OpenCMISS::Iron::Constants
   !> \brief OpeCMISS constants.
   !>@{
-  !> \addtogroup OPENCMISS_DataTypeConstants OpenCMISS::Iron::Constants::DataTypeConstants
+  !> \addtogroup OpenCMISS_DataTypeConstants OpenCMISS::Iron::Constants::DataTypeConstants
   !> \brief Data type constants for base data types
-  !> \see OPENCMISS_Constants,OPENCMISS
+  !> \see OpenCMISS_Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_INTEGER_TYPE = INTEGER_TYPE !<Integer data type \see OPENCMISS_DataTypeConstants,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SHORT_INTEGER_TYPE = SHORT_INTEGER_TYPE !<Short integer data type \see OPENCMISS_DataTypeConstants,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_LONG_INTEGER_TYPE = LONG_INTEGER_TYPE !<Long integer data type \see OPENCMISS_DataTypeConstants,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SINGLE_REAL_TYPE = SINGLE_REAL_TYPE !<Single precision real data type \see OPENCMISS_DataTypeConstants,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_DOUBLE_REAL_TYPE = DOUBLE_REAL_TYPE !<Double precision real data type \see OPENCMISS_DataTypeConstants,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_QUADRAUPLE_REAL_TYPE = QUADRUPLE_REAL_TYPE !<Quadruple precision real data type \see OPENCMISS_DataTypeConstants,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_CHARACTER_TYPE = CHARACTER_TYPE !<Character data type \see OPENCMISS_DataTypeConstants,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_LOGICAL_TYPE = LOGICAL_TYPE !<Logical data type \see OPENCMISS_DataTypeConstants,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SINGLE_COMPLEX_TYPE = SINGLE_COMPLEX_TYPE !<Single precision complex data type \see OPENCMISS_DataTypeConstants,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_DOUBLE_COMPLEX_TYPE = DOUBLE_COMPLEX_TYPE !<Double precision complex data type \see OPENCMISS_DataTypeConstants,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_QUADRUPLE_COMPLEX_TYPE = QUADRUPLE_COMPLEX_TYPE !<Quadruple precision complex data type \see OPENCMISS_DataTypeConstants,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_INTEGER_TYPE = INTEGER_TYPE !<Integer data type \see OpenCMISS_DataTypeConstants,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SHORT_INTEGER_TYPE = SHORT_INTEGER_TYPE !<Short integer data type \see OpenCMISS_DataTypeConstants,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_LONG_INTEGER_TYPE = LONG_INTEGER_TYPE !<Long integer data type \see OpenCMISS_DataTypeConstants,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SINGLE_REAL_TYPE = SINGLE_REAL_TYPE !<Single precision real data type \see OpenCMISS_DataTypeConstants,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DOUBLE_REAL_TYPE = DOUBLE_REAL_TYPE !<Double precision real data type \see OpenCMISS_DataTypeConstants,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_QUADRAUPLE_REAL_TYPE = QUADRUPLE_REAL_TYPE !<Quadruple precision real data type \see OpenCMISS_DataTypeConstants,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_CHARACTER_TYPE = CHARACTER_TYPE !<Character data type \see OpenCMISS_DataTypeConstants,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_LOGICAL_TYPE = LOGICAL_TYPE !<Logical data type \see OpenCMISS_DataTypeConstants,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SINGLE_COMPLEX_TYPE = SINGLE_COMPLEX_TYPE !<Single precision complex data type \see OpenCMISS_DataTypeConstants,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DOUBLE_COMPLEX_TYPE = DOUBLE_COMPLEX_TYPE !<Double precision complex data type \see OpenCMISS_DataTypeConstants,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_QUADRUPLE_COMPLEX_TYPE = QUADRUPLE_COMPLEX_TYPE !<Quadruple precision complex data type \see OpenCMISS_DataTypeConstants,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_GlobalDerivativeConstants OpenCMISS::Iron::Constants::GlobalDerivativeConstants
+  !> \addtogroup OpenCMISS_GlobalDerivativeConstants OpenCMISS::Iron::Constants::GlobalDerivativeConstants
   !> \brief Global derivative constant identifiers
-  !> \see OPENCMISS_CONSTANTS,OPENCMISS
+  !> \see OpenCMISS_CONSTANTS,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_NO_GLOBAL_DERIV = NO_GLOBAL_DERIV !<No global derivative i.e., u \see OPENCMISS_GlobalDerivativeConstants,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_GLOBAL_DERIV_S1 = GLOBAL_DERIV_S1 !<First global derivative in the s1 direction i.e., du/ds1 \see OPENCMISS_GlobalDerivativeConstants,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_GLOBAL_DERIV_S2 = GLOBAL_DERIV_S2 !<First global derivative in the s2 direction i.e., du/ds2 \see OPENCMISS_GlobalDerivativeConstants,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_GLOBAL_DERIV_S1_S2 = GLOBAL_DERIV_S1_S2 !<Global Cross derivative in the s1 and s2 direction i.e., d^2u/ds1ds2 \see OPENCMISS_GlobalDerivativeConstants,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_GLOBAL_DERIV_S3 = GLOBAL_DERIV_S3 !<First global derivative in the s3 direction i.e., du/ds3 \see OPENCMISS_GlobalDerivativeConstants,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_GLOBAL_DERIV_S1_S3 = GLOBAL_DERIV_S1_S3 !<Global Cross derivative in the s1 and s3 direction i.e., d^2u/ds1ds3 \see OPENCMISS_GlobalDerivativeConstants,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_GLOBAL_DERIV_S2_S3 = GLOBAL_DERIV_S2_S3 !<Global Cross derivative in the s2 and s3 direction i.e., d^2u/ds2ds3 \see OPENCMISS_GlobalDerivativeConstants,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_GLOBAL_DERIV_S1_S2_S3 = GLOBAL_DERIV_S1_S2_S3 !<Cross derivative in the s1, s2 and s3 direction i.e., d^3u/ds1ds2ds3 \see OPENCMISS_GlobalDerivativeConstants,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_NO_GLOBAL_DERIV = NO_GLOBAL_DERIV !<No global derivative i.e., u \see OpenCMISS_GlobalDerivativeConstants,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_GLOBAL_DERIV_S1 = GLOBAL_DERIV_S1 !<First global derivative in the s1 direction i.e., du/ds1 \see OpenCMISS_GlobalDerivativeConstants,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_GLOBAL_DERIV_S2 = GLOBAL_DERIV_S2 !<First global derivative in the s2 direction i.e., du/ds2 \see OpenCMISS_GlobalDerivativeConstants,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_GLOBAL_DERIV_S1_S2 = GLOBAL_DERIV_S1_S2 !<Global Cross derivative in the s1 and s2 direction i.e., d^2u/ds1ds2 \see OpenCMISS_GlobalDerivativeConstants,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_GLOBAL_DERIV_S3 = GLOBAL_DERIV_S3 !<First global derivative in the s3 direction i.e., du/ds3 \see OpenCMISS_GlobalDerivativeConstants,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_GLOBAL_DERIV_S1_S3 = GLOBAL_DERIV_S1_S3 !<Global Cross derivative in the s1 and s3 direction i.e., d^2u/ds1ds3 \see OpenCMISS_GlobalDerivativeConstants,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_GLOBAL_DERIV_S2_S3 = GLOBAL_DERIV_S2_S3 !<Global Cross derivative in the s2 and s3 direction i.e., d^2u/ds2ds3 \see OpenCMISS_GlobalDerivativeConstants,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_GLOBAL_DERIV_S1_S2_S3 = GLOBAL_DERIV_S1_S2_S3 !<Cross derivative in the s1, s2 and s3 direction i.e., d^3u/ds1ds2ds3 \see OpenCMISS_GlobalDerivativeConstants,OpenCMISS
   !>@}
-   !> \addtogroup OPENCMISS_ElementNormalXiDirections OpenCMISS::Iron::Constants::ElementNormalXiDirections
+   !> \addtogroup OpenCMISS_ElementNormalXiDirections OpenCMISS::Iron::Constants::ElementNormalXiDirections
   !> \brief Xi directions normal to element faces and lines.
-  !> \see OPENCMISS_CONSTANTS,OPENCMISS
+  !> \see OpenCMISS_CONSTANTS,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_ELEMENT_NORMAL_MINUS_XI1 = ELEMENT_NORMAL_MINUS_XI1 !<Negative xi 1 element normal direction \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_ELEMENT_NORMAL_MINUS_XI2 = ELEMENT_NORMAL_MINUS_XI2 !<Negative xi 2 element normal direction \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_ELEMENT_NORMAL_MINUS_XI3 = ELEMENT_NORMAL_MINUS_XI3 !<Negative xi 3 element normal direction \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_ELEMENT_NORMAL_MINUS_XI4 = ELEMENT_NORMAL_MINUS_XI4 !<Negative xi 4 element normal direction \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_ELEMENT_NORMAL_PLUS_XI1 = ELEMENT_NORMAL_PLUS_XI1 !<Positive xi 1 element normal direction \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_ELEMENT_NORMAL_PLUS_XI2 = ELEMENT_NORMAL_PLUS_XI2 !<Positive xi 2 element normal direction \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_ELEMENT_NORMAL_PLUS_XI3 = ELEMENT_NORMAL_PLUS_XI3 !<Positive xi 3 element normal direction \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_ELEMENT_NORMAL_PLUS_XI4 = ELEMENT_NORMAL_PLUS_XI4 !<Positive xi 4 element normal direction \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_ELEMENT_NORMAL_MINUS_XI1 = ELEMENT_NORMAL_MINUS_XI1 !<Negative xi 1 element normal direction \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_ELEMENT_NORMAL_MINUS_XI2 = ELEMENT_NORMAL_MINUS_XI2 !<Negative xi 2 element normal direction \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_ELEMENT_NORMAL_MINUS_XI3 = ELEMENT_NORMAL_MINUS_XI3 !<Negative xi 3 element normal direction \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_ELEMENT_NORMAL_MINUS_XI4 = ELEMENT_NORMAL_MINUS_XI4 !<Negative xi 4 element normal direction \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_ELEMENT_NORMAL_PLUS_XI1 = ELEMENT_NORMAL_PLUS_XI1 !<Positive xi 1 element normal direction \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_ELEMENT_NORMAL_PLUS_XI2 = ELEMENT_NORMAL_PLUS_XI2 !<Positive xi 2 element normal direction \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_ELEMENT_NORMAL_PLUS_XI3 = ELEMENT_NORMAL_PLUS_XI3 !<Positive xi 3 element normal direction \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_ELEMENT_NORMAL_PLUS_XI4 = ELEMENT_NORMAL_PLUS_XI4 !<Positive xi 4 element normal direction \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
   !>@}
   !>@}
 
@@ -1364,22 +1364,22 @@ MODULE OpenCMISS_Iron
 
   !Module parameters
 
-  !> \addtogroup OPENCMISS_ControlLoopConstants OpenCMISS::Iron::ControlLoop::Constants
+  !> \addtogroup OpenCMISS_ControlLoopConstants OpenCMISS::Iron::ControlLoop::Constants
   !> \brief Control loops constants.
   !>@{
-  !> \addtogroup OPENCMISS_ControlLoopIdentifiers OpenCMISS::Iron::ControlLoop::Identifiers
+  !> \addtogroup OpenCMISS_ControlLoopIdentifiers OpenCMISS::Iron::ControlLoop::Identifiers
   !> \brief The control loop identification parameters.
-  !> \see OpenCMISS::Iron::ControlLoop,OPENCMISS
+  !> \see OpenCMISS::Iron::ControlLoop,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_CONTROL_LOOP_NODE = CONTROL_LOOP_NODE !<The identifier for a each "leaf" node in a control loop. \see OPENCMISS_ControlLoopIdentifiers,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_CONTROL_LOOP_NODE = CONTROL_LOOP_NODE !<The identifier for a each "leaf" node in a control loop. \see OpenCMISS_ControlLoopIdentifiers,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_ControlLoopOutputTypes OpenCMISS::Iron::ControlLoop::OutputTypes
+  !> \addtogroup OpenCMISS_ControlLoopOutputTypes OpenCMISS::Iron::ControlLoop::OutputTypes
   !> \brief The control loop output types.
-  !> \see OpenCMISS::Iron::ControlLoop,OPENCMISS
+  !> \see OpenCMISS::Iron::ControlLoop,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_CONTROL_LOOP_NO_OUTPUT = CONTROL_LOOP_NO_OUTPUT !<No output from the control loop. \see OPENCMISS_ControlLoopOutputTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_CONTROL_LOOP_PROGRESS_OUTPUT = CONTROL_LOOP_PROGRESS_OUTPUT !<Progress output from the control loop. \see OPENCMISS_ControlLoopOutputTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_CONTROL_LOOP_TIMING_OUTPUT = CONTROL_LOOP_TIMING_OUTPUT !<Timing output from the control loop. \see OPENCMISS_ControlLoopOutputTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_CONTROL_LOOP_NO_OUTPUT = CONTROL_LOOP_NO_OUTPUT !<No output from the control loop. \see OpenCMISS_ControlLoopOutputTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_CONTROL_LOOP_PROGRESS_OUTPUT = CONTROL_LOOP_PROGRESS_OUTPUT !<Progress output from the control loop. \see OpenCMISS_ControlLoopOutputTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_CONTROL_LOOP_TIMING_OUTPUT = CONTROL_LOOP_TIMING_OUTPUT !<Timing output from the control loop. \see OpenCMISS_ControlLoopOutputTypes,OpenCMISS
   !>@}
   !>@}
 
@@ -1570,27 +1570,27 @@ MODULE OpenCMISS_Iron
 
   !Module parameters
 
-  !> \addtogroup OPENCMISS_CoordinateConstants OpenCMISS::Iron::Coordinate::Constants
+  !> \addtogroup OpenCMISS_CoordinateConstants OpenCMISS::Iron::Coordinate::Constants
   !> \brief Coordinate constants.
   !>@{
-  !> \addtogroup OPENCMISS_CoordinateSystemTypes OpenCMISS::Iron::Coordinate::SystemTypes
+  !> \addtogroup OpenCMISS_CoordinateSystemTypes OpenCMISS::Iron::Coordinate::SystemTypes
   !> \brief Coordinate system type parameters.
-  !> \see OpenCMISS::Iron::Coordinate,OPENCMISS
+  !> \see OpenCMISS::Iron::Coordinate,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_COORDINATE_RECTANGULAR_CARTESIAN_TYPE = COORDINATE_RECTANGULAR_CARTESIAN_TYPE !<Rectangular Cartesian coordinate system type \see OPENCMISS_CoordinateSystemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_COORDINATE_CYLINDRICAL_POLAR_TYPE = COORDINATE_CYLINDRICAL_POLAR_TYPE !<Cylindrical polar coordinate system type \see OPENCMISS_CoordinateSystemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_COORDINATE_SPHERICAL_POLAR_TYPE = COORDINATE_SPHERICAL_POLAR_TYPE !<Spherical polar coordinate system type \see OPENCMISS_CoordinateSystemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_COORDINATE_PROLATE_SPHEROIDAL_TYPE = COORDINATE_PROLATE_SPHEROIDAL_TYPE !<Prolate spheroidal coordinate system type \see OPENCMISS_CoordinateSystemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_COORDINATE_OBLATE_SPHEROIDAL_TYPE = COORDINATE_OBLATE_SPHEROIDAL_TYPE !<Oblate spheroidal coordinate system type \see OPENCMISS_CoordinateSystemTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_COORDINATE_RECTANGULAR_CARTESIAN_TYPE = COORDINATE_RECTANGULAR_CARTESIAN_TYPE !<Rectangular Cartesian coordinate system type \see OpenCMISS_CoordinateSystemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_COORDINATE_CYLINDRICAL_POLAR_TYPE = COORDINATE_CYLINDRICAL_POLAR_TYPE !<Cylindrical polar coordinate system type \see OpenCMISS_CoordinateSystemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_COORDINATE_SPHERICAL_POLAR_TYPE = COORDINATE_SPHERICAL_POLAR_TYPE !<Spherical polar coordinate system type \see OpenCMISS_CoordinateSystemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_COORDINATE_PROLATE_SPHEROIDAL_TYPE = COORDINATE_PROLATE_SPHEROIDAL_TYPE !<Prolate spheroidal coordinate system type \see OpenCMISS_CoordinateSystemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_COORDINATE_OBLATE_SPHEROIDAL_TYPE = COORDINATE_OBLATE_SPHEROIDAL_TYPE !<Oblate spheroidal coordinate system type \see OpenCMISS_CoordinateSystemTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_CoordinateRadialInterpolations OpenCMISS::Iron::Coordinate::RadialInterpolations
+  !> \addtogroup OpenCMISS_CoordinateRadialInterpolations OpenCMISS::Iron::Coordinate::RadialInterpolations
   !> \brief The type of radial interpolation for polar coordinate systems
-  !> \see OpenCMISS::Iron::Coordinate,OPENCMISS
+  !> \see OpenCMISS::Iron::Coordinate,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_COORDINATE_NO_RADIAL_INTERPOLATION_TYPE = COORDINATE_NO_RADIAL_INTERPOLATION_TYPE !<No radial interpolation \see OPENCMISS_CoordinateRadialInterpolations,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_COORDINATE_RADIAL_INTERPOLATION_TYPE = COORDINATE_RADIAL_INTERPOLATION_TYPE !<r radial interpolation \see OPENCMISS_CoordinateRadialInterpolations,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_COORDINATE_RADIAL_SQUARED_INTERPOLATION_TYPE = COORDINATE_RADIAL_SQUARED_INTERPOLATION_TYPE !<r^2 radial interpolation \see OPENCMISS_CoordinateRadialInterpolations,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_COORDINATE_RADIAL_CUBED_INTERPOLATION_TYPE = COORDINATE_RADIAL_CUBED_INTERPOLATION_TYPE !<r^3 radial interpolation \see OPENCMISS_CoordinateRadialInterpolations,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_COORDINATE_NO_RADIAL_INTERPOLATION_TYPE = COORDINATE_NO_RADIAL_INTERPOLATION_TYPE !<No radial interpolation \see OpenCMISS_CoordinateRadialInterpolations,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_COORDINATE_RADIAL_INTERPOLATION_TYPE = COORDINATE_RADIAL_INTERPOLATION_TYPE !<r radial interpolation \see OpenCMISS_CoordinateRadialInterpolations,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_COORDINATE_RADIAL_SQUARED_INTERPOLATION_TYPE = COORDINATE_RADIAL_SQUARED_INTERPOLATION_TYPE !<r^2 radial interpolation \see OpenCMISS_CoordinateRadialInterpolations,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_COORDINATE_RADIAL_CUBED_INTERPOLATION_TYPE = COORDINATE_RADIAL_CUBED_INTERPOLATION_TYPE !<r^3 radial interpolation \see OpenCMISS_CoordinateRadialInterpolations,OpenCMISS
   !>@}
   !>@}
 
@@ -1826,35 +1826,35 @@ MODULE OpenCMISS_Iron
 
   !Module parameters
 
-  !> \addtogroup OPENCMISS_DataProjectionConstants OpenCMISS::Iron::DataProjection::Constants
+  !> \addtogroup OpenCMISS_DataProjectionConstants OpenCMISS::Iron::DataProjection::Constants
   !> \brief DataProjection  constants.
   !>@{
-  !> \addtogroup OPENCMISS_DataProjectionProjectionTypes OpenCMISS::Iron::DataProjection::ProjectionTypes
+  !> \addtogroup OpenCMISS_DataProjectionProjectionTypes OpenCMISS::Iron::DataProjection::ProjectionTypes
   !> \brief Data Projection types
-  !> \see OpenCMISS::Iron::DataProjection,OPENCMISS
+  !> \see OpenCMISS::Iron::DataProjection,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE = DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE!<The boundary line projection type for data projection, only projects to boundary lines of the mesh. \see OPENCMISS_DataProjectionProjectionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE = DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE!<The boundary face projection type for data projection, only projects to boundary faces of the mesh. \see OPENCMISS_DataProjectionProjectionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE = DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE !<The element projection type for data projection, projects to all elements in mesh. \see OPENCMISS_DataProjectionProjectionTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE = DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE!<The boundary line projection type for data projection, only projects to boundary lines of the mesh. \see OpenCMISS_DataProjectionProjectionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE = DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE!<The boundary face projection type for data projection, only projects to boundary faces of the mesh. \see OpenCMISS_DataProjectionProjectionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE = DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE !<The element projection type for data projection, projects to all elements in mesh. \see OpenCMISS_DataProjectionProjectionTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_DataProjectionExitTags OpenCMISS::Iron::DataProjection::DataProjectionExitTags
+  !> \addtogroup OpenCMISS_DataProjectionExitTags OpenCMISS::Iron::DataProjection::DataProjectionExitTags
   !> \brief Datapoint projection exit tags
-  !> \see OpenCMISS::Iron::DataProjection,OPENCMISS
+  !> \see OpenCMISS::Iron::DataProjection,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_CANCELLED = DATA_PROJECTION_CANCELLED !<Data projection has been cancelled. \see OPENCMISS_DataProjectionExitTags,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_EXIT_TAG_CONVERGED = DATA_PROJECTION_EXIT_TAG_CONVERGED !<Data projection exited due to it being converged. \see OPENCMISS_DataProjectionExitTags,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_EXIT_TAG_BOUNDS = DATA_PROJECTION_EXIT_TAG_BOUNDS !<Data projection exited due to it hitting the bound and continue to travel out of the element. \see OPENCMISS_DataProjectionExitTags,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_EXIT_TAG_MAX_ITERATION = DATA_PROJECTION_EXIT_TAG_MAX_ITERATION !<Data projection exited due to it attaining maximum number of iteration specified by user. \see OPENCMISS_DataProjectionExitTags,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_EXIT_TAG_NO_ELEMENT = DATA_PROJECTION_EXIT_TAG_NO_ELEMENT !<Data projection exited due to no local element found, this happens when none of the candidate elements are within this computational node, and before MPI communication with other nodes. \see OPENCMISS_DataProjectionExitTags,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_CANCELLED = DATA_PROJECTION_CANCELLED !<Data projection has been cancelled. \see OpenCMISS_DataProjectionExitTags,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_EXIT_TAG_CONVERGED = DATA_PROJECTION_EXIT_TAG_CONVERGED !<Data projection exited due to it being converged. \see OpenCMISS_DataProjectionExitTags,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_EXIT_TAG_BOUNDS = DATA_PROJECTION_EXIT_TAG_BOUNDS !<Data projection exited due to it hitting the bound and continue to travel out of the element. \see OpenCMISS_DataProjectionExitTags,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_EXIT_TAG_MAX_ITERATION = DATA_PROJECTION_EXIT_TAG_MAX_ITERATION !<Data projection exited due to it attaining maximum number of iteration specified by user. \see OpenCMISS_DataProjectionExitTags,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_EXIT_TAG_NO_ELEMENT = DATA_PROJECTION_EXIT_TAG_NO_ELEMENT !<Data projection exited due to no local element found, this happens when none of the candidate elements are within this computational node, and before MPI communication with other nodes. \see OpenCMISS_DataProjectionExitTags,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_DataProjectionDistanceRelations OpenCMISS::Iron::DataProjection::DataProjectionDistanceRelations
+  !> \addtogroup OpenCMISS_DataProjectionDistanceRelations OpenCMISS::Iron::DataProjection::DataProjectionDistanceRelations
   !> \brief Datapoint projection distance relations to select data points based on distance.
-  !> \see OpenCMISS::Iron::DataProjection,OPENCMISS
+  !> \see OpenCMISS::Iron::DataProjection,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_DISTANCE_GREATER = DATA_PROJECTION_DISTANCE_GREATER !<Data projection distance relation is greater than. \see OPENCMISS_DataProjectionDistanceRelations,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_DISTANCE_GREATER_EQUAL = DATA_PROJECTION_DISTANCE_GREATER_EQUAL !<Data projection distance relation is greater than or equal. \see OPENCMISS_DataProjectionDistanceRelations,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_DISTANCE_LESS = DATA_PROJECTION_DISTANCE_LESS !<Data projection distance relation is less than. \see OPENCMISS_DataProjectionDistanceRelations,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_DISTANCE_LESS_EQUAL = DATA_PROJECTION_DISTANCE_LESS_EQUAL !<Data projection distance relation is less than or equal. \see OPENCMISS_DataProjectionDistanceRelations,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_DISTANCE_GREATER = DATA_PROJECTION_DISTANCE_GREATER !<Data projection distance relation is greater than. \see OpenCMISS_DataProjectionDistanceRelations,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_DISTANCE_GREATER_EQUAL = DATA_PROJECTION_DISTANCE_GREATER_EQUAL !<Data projection distance relation is greater than or equal. \see OpenCMISS_DataProjectionDistanceRelations,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_DISTANCE_LESS = DATA_PROJECTION_DISTANCE_LESS !<Data projection distance relation is less than. \see OpenCMISS_DataProjectionDistanceRelations,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_DISTANCE_LESS_EQUAL = DATA_PROJECTION_DISTANCE_LESS_EQUAL !<Data projection distance relation is less than or equal. \see OpenCMISS_DataProjectionDistanceRelations,OpenCMISS
   !>@}
   !>@}
 
@@ -2251,57 +2251,57 @@ MODULE OpenCMISS_Iron
 
   !Module parameters
 
-  !> \addtogroup OPENCMISS_EquationsConstants OpenCMISS::Iron::Equations::Constants
+  !> \addtogroup OpenCMISS_EquationsConstants OpenCMISS::Iron::Equations::Constants
   !> \brief Equations  constants.
   !>@{
-  !> \addtogroup OPENCMISS_EquationsOutputTypes OpenCMISS::Iron::Equations::OutputTypes
+  !> \addtogroup OpenCMISS_EquationsOutputTypes OpenCMISS::Iron::Equations::OutputTypes
   !> \brief Equations output types
-  !> \see OpenCMISS::Iron::Equations,OPENCMISS
+  !> \see OpenCMISS::Iron::Equations,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_NO_OUTPUT = EQUATIONS_NO_OUTPUT!<No output from the equations \see OPENCMISS_EquationsOutputTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_TIMING_OUTPUT = EQUATIONS_TIMING_OUTPUT !<Timing information output. \see OPENCMISS_EquationsOutputTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_MATRIX_OUTPUT = EQUATIONS_MATRIX_OUTPUT !<All below and equation matrices output. \see OPENCMISS_EquationsOutputTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_ELEMENT_MATRIX_OUTPUT = EQUATIONS_ELEMENT_MATRIX_OUTPUT !<All below and element matrices output. \see OPENCMISS_EquationsOutputTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_NODAL_MATRIX_OUTPUT = EQUATIONS_NODAL_MATRIX_OUTPUT !<All below and nodal matrices output. \see OPENCMISS_EquationsOutputTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_NO_OUTPUT = EQUATIONS_NO_OUTPUT!<No output from the equations \see OpenCMISS_EquationsOutputTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_TIMING_OUTPUT = EQUATIONS_TIMING_OUTPUT !<Timing information output. \see OpenCMISS_EquationsOutputTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_MATRIX_OUTPUT = EQUATIONS_MATRIX_OUTPUT !<All below and equation matrices output. \see OpenCMISS_EquationsOutputTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_ELEMENT_MATRIX_OUTPUT = EQUATIONS_ELEMENT_MATRIX_OUTPUT !<All below and element matrices output. \see OpenCMISS_EquationsOutputTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_NODAL_MATRIX_OUTPUT = EQUATIONS_NODAL_MATRIX_OUTPUT !<All below and nodal matrices output. \see OpenCMISS_EquationsOutputTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_EquationsSparsityTypes OpenCMISS::Iron::Equations::SparsityTypes
+  !> \addtogroup OpenCMISS_EquationsSparsityTypes OpenCMISS::Iron::Equations::SparsityTypes
   !> \brief Equations sparsity types
-  !> \see OpenCMISS::Iron::Equations,OPENCMISS
+  !> \see OpenCMISS::Iron::Equations,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SPARSE_MATRICES = EQUATIONS_SPARSE_MATRICES !<Use sparse matrices for the equations. \see OPENCMISS_EquationsSparsityTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_FULL_MATRICES = EQUATIONS_FULL_MATRICES !<Use fully populated matrices for the equations. \see OPENCMISS_EquationsSparsityTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SPARSE_MATRICES = EQUATIONS_SPARSE_MATRICES !<Use sparse matrices for the equations. \see OpenCMISS_EquationsSparsityTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_FULL_MATRICES = EQUATIONS_FULL_MATRICES !<Use fully populated matrices for the equations. \see OpenCMISS_EquationsSparsityTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_EquationsLumpingTypes OpenCMISS::Iron::Equations::LumpingTypes
+  !> \addtogroup OpenCMISS_EquationsLumpingTypes OpenCMISS::Iron::Equations::LumpingTypes
   !> \brief Equations lumping types
-  !> \see OpenCMISS::Iron::Equations,OPENCMISS
+  !> \see OpenCMISS::Iron::Equations,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_UNLUMPED_MATRICES = EQUATIONS_UNLUMPED_MATRICES !<The equations matrices are not lumped. \see OPENCMISS_EquationsLumpingTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_LUMPED_MATRICES = EQUATIONS_LUMPED_MATRICES !<The equations matrices are "mass" lumped. \see OPENCMISS_EquationsLumpingTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_UNLUMPED_MATRICES = EQUATIONS_UNLUMPED_MATRICES !<The equations matrices are not lumped. \see OpenCMISS_EquationsLumpingTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_LUMPED_MATRICES = EQUATIONS_LUMPED_MATRICES !<The equations matrices are "mass" lumped. \see OpenCMISS_EquationsLumpingTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_EquationsLinearityTypes OpenCMISS::Iron::Equations::LinearityTypes
+  !> \addtogroup OpenCMISS_EquationsLinearityTypes OpenCMISS::Iron::Equations::LinearityTypes
   !> \brief The equations linearity types
-  !> \see OpenCMISS::Iron::Equations,OPENCMISS
+  !> \see OpenCMISS::Iron::Equations,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_LINEAR = EQUATIONS_LINEAR !<The equations are linear. \see OPENCMISS_EquationsLinearityTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_NONLINEAR = EQUATIONS_NONLINEAR !<The equations are non-linear. \see \see OPENCMISS_EquationsLinearityTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_NONLINEAR_BCS = EQUATIONS_NONLINEAR_BCS !<The equations have non-linear boundary conditions. \see \see OPENCMISS_EquationsLinearityTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_LINEAR = EQUATIONS_LINEAR !<The equations are linear. \see OpenCMISS_EquationsLinearityTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_NONLINEAR = EQUATIONS_NONLINEAR !<The equations are non-linear. \see \see OpenCMISS_EquationsLinearityTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_NONLINEAR_BCS = EQUATIONS_NONLINEAR_BCS !<The equations have non-linear boundary conditions. \see \see OpenCMISS_EquationsLinearityTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_EquationsTimeDependenceTypes OpenCMISS::Iron::Equations::TimeDependenceTypes
+  !> \addtogroup OpenCMISS_EquationsTimeDependenceTypes OpenCMISS::Iron::Equations::TimeDependenceTypes
   !> \brief The equations time dependence types
-  !> \see OpenCMISS::Iron::Equations,OPENCMISS
+  !> \see OpenCMISS::Iron::Equations,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_STATIC = EQUATIONS_STATIC !<The equations are static and have no time dependence. \see OPENCMISS_EquationsTimeDependenceTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_QUASISTATIC = EQUATIONS_QUASISTATIC !<The equations are quasi-static. \see OPENCMISS_EquationsTimeDependenceTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_FIRST_ORDER_DYNAMIC = EQUATIONS_FIRST_ORDER_DYNAMIC !<The equations are first order dynamic. \see OPENCMISS_EquationsTimeDependenceTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SECOND_ORDER_DYNAMIC = EQUATIONS_SECOND_ORDER_DYNAMIC !<The equations are a second order dynamic. \see OPENCMISS_EquationsTimeDependenceTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_TIME_STEPPING = EQUATIONS_TIME_STEPPING !<The equations are for time stepping. \see OPENCMISS_EquationsTimeDependenceTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_STATIC = EQUATIONS_STATIC !<The equations are static and have no time dependence. \see OpenCMISS_EquationsTimeDependenceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_QUASISTATIC = EQUATIONS_QUASISTATIC !<The equations are quasi-static. \see OpenCMISS_EquationsTimeDependenceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_FIRST_ORDER_DYNAMIC = EQUATIONS_FIRST_ORDER_DYNAMIC !<The equations are first order dynamic. \see OpenCMISS_EquationsTimeDependenceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SECOND_ORDER_DYNAMIC = EQUATIONS_SECOND_ORDER_DYNAMIC !<The equations are a second order dynamic. \see OpenCMISS_EquationsTimeDependenceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_TIME_STEPPING = EQUATIONS_TIME_STEPPING !<The equations are for time stepping. \see OpenCMISS_EquationsTimeDependenceTypes,OpenCMISS
   !>@{
-  !> \addtogroup OPENCMISS_EquationsJacobianCalculated OPENCMISS::Equations::JacobianCalculated
+  !> \addtogroup OpenCMISS_EquationsJacobianCalculated OpenCMISS::Iron::Equations::JacobianCalculated
   !> \brief Equations Jacobian matrices calculation types
-  !> \see OPENCMISS::Equations,OPENCMISS
+  !> \see OpenCMISS::Iron::Equations,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED = EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED!<Evaluate Jacobian matrix using finite differences. \see OPENCMISS_EquationsJacobianCalculated,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED = EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED !<Evaluate Jacobian matrix using analytic expressions. \see OPENCMISS_EquationsJacobianCalculated,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED = EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED!<Evaluate Jacobian matrix using finite differences. \see OpenCMISS_EquationsJacobianCalculated,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED = EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED !<Evaluate Jacobian matrix using analytic expressions. \see OpenCMISS_EquationsJacobianCalculated,OpenCMISS
   !>@}
   !>@}
 
@@ -2422,487 +2422,488 @@ MODULE OpenCMISS_Iron
 
 !!==================================================================================================================================
 !!
-!! EQUATIONS_SET_CONSTANTS
+!! EquationsSetConstants
 !!
 !!==================================================================================================================================
 
   !Module parameters
 
-  !> \addtogroup OPENCMISS_EquationsSetConstants OpenCMISS::Iron::EquationsSet::Constants
+  !> \addtogroup OpenCMISS_EquationsSetConstants OpenCMISS::Iron::EquationsSet::Constants
   !> \brief Equations set constants.
   !>@{
-  !> \addtogroup OPENCMISS_EquationsSetClasses OpenCMISS::Iron::EquationsSet::Classes
+  !> \addtogroup OpenCMISS_EquationsSetClasses OpenCMISS::Iron::EquationsSet::Classes
   !> \brief Equations set classes.
-  !> \see OpenCMISS::Iron::EquationsSet,OPENCMISS
+  !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_CLASS = EQUATIONS_SET_NO_CLASS !<No equations set class \see OPENCMISS_EquationsSetClasses,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ELASTICITY_CLASS = EQUATIONS_SET_ELASTICITY_CLASS !<Elasticity equations set class \see OPENCMISS_EquationsSetClasses,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FLUID_MECHANICS_CLASS = EQUATIONS_SET_FLUID_MECHANICS_CLASS !<Fluid Mechanics equations set class \see OPENCMISS_EquationsSetClasses,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ELECTROMAGNETICS_CLASS = EQUATIONS_SET_ELECTROMAGNETICS_CLASS !<Electromagnetics equations set class \see OPENCMISS_EquationsSetClasses,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CLASSICAL_FIELD_CLASS = EQUATIONS_SET_CLASSICAL_FIELD_CLASS !<Classical Field equations set class \see OPENCMISS_EquationsSetClasses,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BIOELECTRICS_CLASS = EQUATIONS_SET_BIOELECTRICS_CLASS !<Bioelectrics equations set class \see OPENCMISS_EquationsSetClasses,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MODAL_CLASS = EQUATIONS_SET_MODAL_CLASS !<Modal equations set class \see OPENCMISS_EquationsSetClasses,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FITTING_CLASS = EQUATIONS_SET_FITTING_CLASS !<Fitting equations set class \see OPENCMISS_EquationsSetClasses,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_OPTIMISATION_CLASS = EQUATIONS_SET_OPTIMISATION_CLASS !<Optimisation equations set class \see OPENCMISS_EquationsSetClasses,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTI_PHYSICS_CLASS = EQUATIONS_SET_MULTI_PHYSICS_CLASS !<Multi Physics equations set class \see OPENCMISS_EquationsSetClasses,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_CLASS = EQUATIONS_SET_NO_CLASS !<No equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ELASTICITY_CLASS = EQUATIONS_SET_ELASTICITY_CLASS !<Elasticity equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FLUID_MECHANICS_CLASS = EQUATIONS_SET_FLUID_MECHANICS_CLASS !<Fluid Mechanics equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ELECTROMAGNETICS_CLASS = EQUATIONS_SET_ELECTROMAGNETICS_CLASS !<Electromagnetics equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CLASSICAL_FIELD_CLASS = EQUATIONS_SET_CLASSICAL_FIELD_CLASS !<Classical Field equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BIOELECTRICS_CLASS = EQUATIONS_SET_BIOELECTRICS_CLASS !<Bioelectrics equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MODAL_CLASS = EQUATIONS_SET_MODAL_CLASS !<Modal equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FITTING_CLASS = EQUATIONS_SET_FITTING_CLASS !<Fitting equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_OPTIMISATION_CLASS = EQUATIONS_SET_OPTIMISATION_CLASS !<Optimisation equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTI_PHYSICS_CLASS = EQUATIONS_SET_MULTI_PHYSICS_CLASS !<Multi Physics equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_EquationsSetTypes OpenCMISS::Iron::EquationsSet::Types
+  !> \addtogroup OpenCMISS_EquationsSetTypes OpenCMISS::Iron::EquationsSet::Types
   !> \brief Equations set Types.
-  !> \see OpenCMISS::Iron::EquationsSet,OPENCMISS
+  !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_TYPE = EQUATIONS_SET_NO_TYPE !<No equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_TYPE = EQUATIONS_SET_LINEAR_ELASTICITY_TYPE !<Linear elasticity equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FINITE_ELASTICITY_TYPE = EQUATIONS_SET_FINITE_ELASTICITY_TYPE !<Finite elasticity equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_TYPE = EQUATIONS_SET_STOKES_EQUATION_TYPE !<Stokes equation equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE = EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE !<Navier-Stokes equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_TYPE = EQUATIONS_SET_DARCY_EQUATION_TYPE !<Darcy equation equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE = EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE !<Darcy pressure equation equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISEUILLE_EQUATION_TYPE = EQUATIONS_SET_POISEUILLE_EQUATION_TYPE !<Poiseuille equation equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BURGERS_EQUATION_TYPE = EQUATIONS_SET_BURGERS_EQUATION_TYPE !<Burgers equation equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE = EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE !<Characteristic equation equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STREE_EQUATION_TYPE = EQUATIONS_SET_STREE_EQUATION_TYPE !<Characteristic equation equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ELECTROSTATIC_TYPE = EQUATIONS_SET_ELECTROSTATIC_TYPE !<Electrostatic equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MAGNETOSTATIC_TYPE = EQUATIONS_SET_MAGNETOSTATIC_TYPE !<Magnetostatic equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MAXWELLS_EQUATIONS_TYPE = EQUATIONS_SET_MAXWELLS_EQUATIONS_TYPE !<Maxwells equation equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TYPE = EQUATIONS_SET_LAPLACE_EQUATION_TYPE !<Laplace equation equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_TYPE = EQUATIONS_SET_POISSON_EQUATION_TYPE !<Poisson equation equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE = EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE !<Helmholtz equation equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_WAVE_EQUATION_TYPE = EQUATIONS_SET_WAVE_EQUATION_TYPE !<Wave equation equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_TYPE = EQUATIONS_SET_DIFFUSION_EQUATION_TYPE !<Diffusion equation equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ADVECTION_EQUATION_TYPE = EQUATIONS_SET_ADVECTION_EQUATION_TYPE !<Advection-Diffusion equation equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_TYPE = EQUATIONS_SET_NO_TYPE !<No equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_TYPE = EQUATIONS_SET_LINEAR_ELASTICITY_TYPE !<Linear elasticity equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FINITE_ELASTICITY_TYPE = EQUATIONS_SET_FINITE_ELASTICITY_TYPE !<Finite elasticity equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_TYPE = EQUATIONS_SET_STOKES_EQUATION_TYPE !<Stokes equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE = EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE !<Navier-Stokes equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_TYPE = EQUATIONS_SET_DARCY_EQUATION_TYPE !<Darcy equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE = EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE !<Darcy pressure equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISEUILLE_EQUATION_TYPE = EQUATIONS_SET_POISEUILLE_EQUATION_TYPE !<Poiseuille equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BURGERS_EQUATION_TYPE = EQUATIONS_SET_BURGERS_EQUATION_TYPE !<Burgers equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE = EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE !<Characteristic equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STREE_EQUATION_TYPE = EQUATIONS_SET_STREE_EQUATION_TYPE !<Characteristic equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ELECTROSTATIC_TYPE = EQUATIONS_SET_ELECTROSTATIC_TYPE !<Electrostatic equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MAGNETOSTATIC_TYPE = EQUATIONS_SET_MAGNETOSTATIC_TYPE !<Magnetostatic equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MAXWELLS_EQUATIONS_TYPE = EQUATIONS_SET_MAXWELLS_EQUATIONS_TYPE !<Maxwells equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TYPE = EQUATIONS_SET_LAPLACE_EQUATION_TYPE !<Laplace equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_TYPE = EQUATIONS_SET_POISSON_EQUATION_TYPE !<Poisson equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE = EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE !<Helmholtz equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_WAVE_EQUATION_TYPE = EQUATIONS_SET_WAVE_EQUATION_TYPE !<Wave equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_TYPE = EQUATIONS_SET_DIFFUSION_EQUATION_TYPE !<Diffusion equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ADVECTION_EQUATION_TYPE = EQUATIONS_SET_ADVECTION_EQUATION_TYPE !<Advection-Diffusion equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE = &
-    & EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE !<Advection-Diffusion equation equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE = EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE !<Reaction-Diffusion equation equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE = EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE !<Biharmonic equation equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_EQUATION_TYPE = EQUATIONS_SET_MONODOMAIN_EQUATION_TYPE !<Monodomain equation equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BIDOMAIN_EQUATION_TYPE = EQUATIONS_SET_BIDOMAIN_EQUATION_TYPE !<Bidomain equation equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTIC_MODAL_TYPE = EQUATIONS_SET_LINEAR_ELASTIC_MODAL_TYPE !<Linear elasticity modal equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DATA_FITTING_EQUATION_TYPE = EQUATIONS_SET_DATA_FITTING_EQUATION_TYPE !<Data point fitting equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GAUSS_FITTING_EQUATION_TYPE = EQUATIONS_SET_GAUSS_FITTING_EQUATION_TYPE !<Gauss point fitting equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FINITE_ELASTICITY_DARCY_TYPE = EQUATIONS_SET_FINITE_ELASTICITY_DARCY_TYPE !<Finite Elasticity Darcy equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FINITE_ELASTICITY_STOKES_TYPE = EQUATIONS_SET_FINITE_ELASTICITY_STOKES_TYPE !<Finite Elasticity Stokes equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
+    & EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE !<Advection-Diffusion equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE = EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE !<Reaction-Diffusion equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE = EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE !<Biharmonic equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_EQUATION_TYPE = EQUATIONS_SET_MONODOMAIN_EQUATION_TYPE !<Monodomain equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BIDOMAIN_EQUATION_TYPE = EQUATIONS_SET_BIDOMAIN_EQUATION_TYPE !<Bidomain equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTIC_MODAL_TYPE = EQUATIONS_SET_LINEAR_ELASTIC_MODAL_TYPE !<Linear elasticity modal equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DATA_FITTING_EQUATION_TYPE = EQUATIONS_SET_DATA_FITTING_EQUATION_TYPE !<Data point fitting equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GAUSS_FITTING_EQUATION_TYPE = EQUATIONS_SET_GAUSS_FITTING_EQUATION_TYPE !<Gauss point fitting equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FINITE_ELASTICITY_DARCY_TYPE = EQUATIONS_SET_FINITE_ELASTICITY_DARCY_TYPE !<Finite Elasticity Darcy equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FINITE_ELASTICITY_STOKES_TYPE = EQUATIONS_SET_FINITE_ELASTICITY_STOKES_TYPE !<Finite Elasticity Stokes equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FINITE_ELASTICITY_NAVIER_STOKES_TYPE = &
-    & EQUATIONS_SET_FINITE_ELASTICITY_NAVIER_STOKES_TYPE !<Finite Elasticity Navier Stokes equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIFFUSION_DIFFUSION_TYPE = EQUATIONS_SET_DIFFUSION_DIFFUSION_TYPE !<Diffusion Diffusion equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
+    & EQUATIONS_SET_FINITE_ELASTICITY_NAVIER_STOKES_TYPE !<Finite Elasticity Navier Stokes equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIFFUSION_DIFFUSION_TYPE = EQUATIONS_SET_DIFFUSION_DIFFUSION_TYPE !<Diffusion Diffusion equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIFFUSION_ADVECTION_DIFFUSION_TYPE = &
-    & EQUATIONS_SET_DIFFUSION_ADVECTION_DIFFUSION_TYPE !<Diffusion Advection Diffusion equations set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
+    & EQUATIONS_SET_DIFFUSION_ADVECTION_DIFFUSION_TYPE !<Diffusion Advection Diffusion equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE = &
-    & EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE !<Monodomain equation equations Strang Splitting set type \see OPENCMISS_EquationsSetTypes,OPENCMISS
+    & EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE !<Monodomain equation equations Strang Splitting set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
 
   !>@}
-  !> \addtogroup OPENCMISS_EquationsSetSubtypes OpenCMISS::Iron::EquationsSet::Subtypes
+  !> \addtogroup OpenCMISS_EquationsSetSubtypes OpenCMISS::Iron::EquationsSet::Subtypes
   !> \brief Equations set subtypes.
-  !> \see OpenCMISS::Iron::EquationsSet,OPENCMISS
+  !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SUBTYPE = EQUATIONS_SET_NO_SUBTYPE !<No equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_THREE_DIMENSIONAL_SUBTYPE = EQUATIONS_SET_THREE_DIMENSIONAL_SUBTYPE !<Three dimensional linear elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SUBTYPE = EQUATIONS_SET_NO_SUBTYPE !<No equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_THREE_DIMENSIONAL_SUBTYPE = EQUATIONS_SET_THREE_DIMENSIONAL_SUBTYPE !<Three dimensional linear elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE = &
-    & EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE !<Plane stress linear elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE !<Plane stress linear elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE = &
-    & EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE !<Plane strain linear elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE = EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE !<One dimensional linear elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PLATE_SUBTYPE = EQUATIONS_SET_PLATE_SUBTYPE !<Plate linear elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_SHELL_SUBTYPE = EQUATIONS_SET_SHELL_SUBTYPE !<Shell linear elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE = EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE !< Mooney-Rivlin constitutive law for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE !<Plane strain linear elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE = EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE !<One dimensional linear elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PLATE_SUBTYPE = EQUATIONS_SET_PLATE_SUBTYPE !<Plate linear elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_SHELL_SUBTYPE = EQUATIONS_SET_SHELL_SUBTYPE !<Shell linear elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE = EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE !< Mooney-Rivlin constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE = &
-  & EQUATIONS_SET_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE !< Incompressible Mooney-Rivlin constitutive law for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+  & EQUATIONS_SET_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE !< Incompressible Mooney-Rivlin constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE = &
-  & EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE !< Nearly Incompressible Mooney-Rivlin constitutive law for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+  & EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE !< Nearly Incompressible Mooney-Rivlin constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE = &
-    & EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE !< Mooney-Rivlin constitutive law with steady-state active contraction for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE !< Mooney-Rivlin constitutive law with steady-state active contraction for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STVENANT_KIRCHOFF_ACTIVECONTRACTION_SUBTYPE = &
-    & EQUATIONS_SET_STVENANT_KIRCHOFF_ACTIVECONTRACTION_SUBTYPE !< St Venant Kirchoff constitutive law with steady-state active contraction for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_STVENANT_KIRCHOFF_ACTIVECONTRACTION_SUBTYPE !< St Venant Kirchoff constitutive law with steady-state active contraction for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE =&
-    & EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE !< Active contraction/costa-based law with quasistatic time loop for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ISOTROPIC_EXPONENTIAL_SUBTYPE = EQUATIONS_SET_ISOTROPIC_EXPONENTIAL_SUBTYPE !< Isotropic exponential constitutive law for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE !< Active contraction/costa-based law with quasistatic time loop for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ISOTROPIC_EXPONENTIAL_SUBTYPE = EQUATIONS_SET_ISOTROPIC_EXPONENTIAL_SUBTYPE !< Isotropic exponential constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_EXPONENTIAL_SUBTYPE = &
-    & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_EXPONENTIAL_SUBTYPE !< Transverse isotropic exponential constitutive law for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_EXPONENTIAL_SUBTYPE !< Transverse isotropic exponential constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_ACTIVE_SUBTYPE = &
-    & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_ACTIVE_SUBTYPE !< Transverse isotropic, active-contraction constitutive law for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_ACTIVE_SUBTYPE !< Transverse isotropic, active-contraction constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANS_ISOTROPIC_ACTIVE_TRANSITION_SUBTYPE = &
-    & EQUATIONS_SET_TRANS_ISOTROPIC_ACTIVE_TRANSITION_SUBTYPE !< Transverse isotropic, active-contraction material-transition constitutive law for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_TRANS_ISOTROPIC_ACTIVE_TRANSITION_SUBTYPE !< Transverse isotropic, active-contraction material-transition constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE = &
-    & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE !< Orthotropic Costa constitutive law for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE !< Orthotropic Costa constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE= &
-    & EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE !<Compressible version for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE !<Compressible version for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COMPRESSIBLE_ACTIVECONTRACTION_SUBTYPE= &
-    & EQUATIONS_SET_COMPRESSIBLE_ACTIVECONTRACTION_SUBTYPE !<Compressible version for finite elasticity equations set with active contraction subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_COMPRESSIBLE_ACTIVECONTRACTION_SUBTYPE !<Compressible version for finite elasticity equations set with active contraction subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE = &
-    & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE !< Transverse isotropic Guccione constitutive law for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE !< Transverse isotropic Guccione constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ACTIVE_STRAIN_SUBTYPE = &
-    & EQUATIONS_SET_ACTIVE_STRAIN_SUBTYPE !< Isotropic active strain constitutive law based on multiplicative decomposition of the deformation gradient subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_ACTIVE_STRAIN_SUBTYPE !< Isotropic active strain constitutive law based on multiplicative decomposition of the deformation gradient subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTISCALE_ACTIVE_STRAIN_SUBTYPE = &
-    & EQUATIONS_SET_MULTISCALE_ACTIVE_STRAIN_SUBTYPE !< Isotropic active strain constitutive law based on multiplicative decomposition of the deformation gradient and the cellular model of Razumova et al. (2000) subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_MULTISCALE_ACTIVE_STRAIN_SUBTYPE !< Isotropic active strain constitutive law based on multiplicative decomposition of the deformation gradient and the cellular model of Razumova et al. (2000) subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_REFERENCE_STATE_MOONEY_RIVLIN_SUBTYPE = &
-    & EQUATIONS_SET_REFERENCE_STATE_MOONEY_RIVLIN_SUBTYPE !< Determine the reference configuration using Mooney-Rivlin constitutive law for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_REFERENCE_STATE_MOONEY_RIVLIN_SUBTYPE !< Determine the reference configuration using Mooney-Rivlin constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE = &
-    & EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE !< Transverse isotropic Guccione constitutive law for finite elasticity equstions set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE !< Transverse isotropic Guccione constitutive law for finite elasticity equstions set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE = &
-    & EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE !< Transverse isotropic Guccione constitutive law with active contraction subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE !< Transverse isotropic Guccione constitutive law with active contraction subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_INCOMPRESS_FINITE_ELASTICITY_DARCY_SUBTYPE= &
-    & EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE !<Incompressible version for finite elasticity coupled with Darcy equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE !<Incompressible version for finite elasticity coupled with Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE= &
-    & EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE !<INRIA Model for finite elasticity coupled with Darcy equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE !<INRIA Model for finite elasticity coupled with Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ELASTICITY_MULTI_COMP_DARCY_INRIA_SUBTYPE= &
-    & EQUATIONS_SET_ELASTICITY_MULTI_COMPARTMENT_DARCY_INRIA_SUBTYPE !<Multi Compartment Darcy INRIA Model coupled with finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_ELASTICITY_MULTI_COMPARTMENT_DARCY_INRIA_SUBTYPE !<Multi Compartment Darcy INRIA Model coupled with finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_INCOMPRESS_ELASTICITY_DRIVEN_DARCY_SUBTYPE= &
-    & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE !< Incompressible finite elasticity with Darcy flow driven by solid hydrostatic pressure \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE !< Incompressible finite elasticity with Darcy flow driven by solid hydrostatic pressure \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_MR_SUBTYPE= &
-    & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_MR_SUBTYPE !< Incompressible finite elasticity with Darcy flow driven by solid hydrostatic pressure, formulated in terms of modified invariants. \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_MR_SUBTYPE !< Incompressible finite elasticity with Darcy flow driven by solid hydrostatic pressure, formulated in terms of modified invariants. \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_INCOMPRESS_ELAST_MULTI_COMP_DARCY_SUBTYPE= &
     & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MEMBRANE_SUBTYPE = EQUATIONS_SET_MEMBRANE_SUBTYPE !<Compressible version for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MEMBRANE_SUBTYPE = EQUATIONS_SET_MEMBRANE_SUBTYPE !<Compressible version for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ORTHOTROPIC_HOLZAPFEL_OGDEN_SUBTYPE = &
-    & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_HOLZAPFEL_OGDEN_SUBTYPE !< Orthotropic Holzapfel-Ogden constitutive law for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_HOLZAPFEL_OGDEN_SUBTYPE !< Orthotropic Holzapfel-Ogden constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE = &
     & EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE &
-    & !< Orthotropic Holzapfel-Ogden constitutive law with active contraction for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & !< Orthotropic Holzapfel-Ogden constitutive law with active contraction for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ELASTICITY_FLUID_PRES_STATIC_INRIA_SUBTYPE = &
-    & EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_STATIC_INRIA_SUBTYPE !< Static finite elasticity coupled with fluid pressure set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_STATIC_INRIA_SUBTYPE !< Static finite elasticity coupled with fluid pressure set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ELASTICITY_FLUID_PRES_HOLMES_MOW_SUBTYPE= &
-    & EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_HOLMES_MOW_SUBTYPE !<Holmes and Mow's poroelastic constitutive relation subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_HOLMES_MOW_SUBTYPE !<Holmes and Mow's poroelastic constitutive relation subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ELASTI_FLUID_PRES_HOLMES_MOW_ACTIVE_SUBTYPE= &
-    & EQUATIONS_SET_ELASTICITY_FLUID_PRES_HOLMES_MOW_ACTIVE_SUBTYPE !<Holmes and Mow's poroelastic constitutive relation subtype with active contraction \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_ELASTICITY_FLUID_PRES_HOLMES_MOW_ACTIVE_SUBTYPE !<Holmes and Mow's poroelastic constitutive relation subtype with active contraction \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_POLYNOMIAL_SUBTYPE = &
-    & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_POLYNOMIAL_SUBTYPE !<Transverse isotropic constitutive law for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_POLYNOMIAL_SUBTYPE !<Transverse isotropic constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_SUBTYPE = &
-    & EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_SUBTYPE !<Anisotropic polynomial constitutive law for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_SUBTYPE !<Anisotropic polynomial constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_ACTIVE_SUBTYPE = &
-    & EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_ACTIVE_SUBTYPE !<Anisotropic polynomial active constitutive law for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_ACTIVE_SUBTYPE !<Anisotropic polynomial active constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_HUMPHREY_YIN_SUBTYPE= &
-    & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_HUMPHREY_YIN_SUBTYPE !<Humphrey and Yin transversely isotropic constitutive relation subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STATIC_STOKES_SUBTYPE = EQUATIONS_SET_STATIC_STOKES_SUBTYPE !<Static Stokes equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_STOKES_SUBTYPE = EQUATIONS_SET_LAPLACE_STOKES_SUBTYPE !<Laplace type Stokes equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE = EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE !<Transient Stokes equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ALE_STOKES_SUBTYPE = EQUATIONS_SET_ALE_STOKES_SUBTYPE !<ALE Stokes equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PGM_STOKES_SUBTYPE = EQUATIONS_SET_PGM_STOKES_SUBTYPE !<PGM Stokes equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_OPTIMISED_STOKES_SUBTYPE = EQUATIONS_SET_OPTIMISED_STOKES_SUBTYPE !<Optimised Stokes equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STATIC_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_STATIC_NAVIER_STOKES_SUBTYPE !<Static Navier-Stokes equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_LAPLACE_NAVIER_STOKES_SUBTYPE !<Laplace type Navier-Stokes equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE !<Transient Navier-Stokes equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_HUMPHREY_YIN_SUBTYPE !<Humphrey and Yin transversely isotropic constitutive relation subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STATIC_STOKES_SUBTYPE = EQUATIONS_SET_STATIC_STOKES_SUBTYPE !<Static Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_STOKES_SUBTYPE = EQUATIONS_SET_LAPLACE_STOKES_SUBTYPE !<Laplace type Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE = EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE !<Transient Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ALE_STOKES_SUBTYPE = EQUATIONS_SET_ALE_STOKES_SUBTYPE !<ALE Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PGM_STOKES_SUBTYPE = EQUATIONS_SET_PGM_STOKES_SUBTYPE !<PGM Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_OPTIMISED_STOKES_SUBTYPE = EQUATIONS_SET_OPTIMISED_STOKES_SUBTYPE !<Optimised Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STATIC_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_STATIC_NAVIER_STOKES_SUBTYPE !<Static Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_LAPLACE_NAVIER_STOKES_SUBTYPE !<Laplace type Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE !<Transient Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE = &
-    & EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE !<Transient residual-based stabilisation Navier-Stokes equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE !<Transient residual-based stabilisation Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE =  &
-    & EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE !<Transient residual-based stabilisation Navier-Stokes equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE !<Transient residual-based stabilisation Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE = &
-    & EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE !<Transient stabilised 3D Navier-Stokes equations set with coupled multiscale boundaries subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE !<Transient stabilised 3D Navier-Stokes equations set with coupled multiscale boundaries subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE = &
-    & EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE !<Transient stabilised 3D Navier-Stokes equations set with coupled constitutive model for non-Newtonian viscosity \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE !<Transient stabilised 3D Navier-Stokes equations set with coupled constitutive model for non-Newtonian viscosity \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE = &
-    & EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE !<TRANSIENT1D Navier-Stokes equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE !<TRANSIENT1D Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE = &
-    & EQUATIONS_SET_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE !<TRANSIENT1D Navier-Stokes equations set subtype with coupled Advection \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE !<TRANSIENT1D Navier-Stokes equations set subtype with coupled Advection \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CHARACTERISTIC_SUBTYPE = &
-    & EQUATIONS_SET_CHARACTERISTIC_SUBTYPE !<Static Characteristics equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_CHARACTERISTIC_SUBTYPE !<Static Characteristics equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COUPLED1D0D_NAVIER_STOKES_SUBTYPE = &
-    & EQUATIONS_SET_COUPLED1D0D_NAVIER_STOKES_SUBTYPE !<Coupled 1D-0D Navier-Stokes equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_COUPLED1D0D_NAVIER_STOKES_SUBTYPE !<Coupled 1D-0D Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE = &
-    & EQUATIONS_SET_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE !<Coupled 1D-0D Navier-Stokes equations set subtype with coupled Advection \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE !<Coupled 1D-0D Navier-Stokes equations set subtype with coupled Advection \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STREE1D0D_SUBTYPE = &
     & EQUATIONS_SET_STREE1D0D_SUBTYPE !<Coupled 1D-0D Navier-Stokes equations set subtype with coupled Advection \see
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STREE1D0D_ADV_SUBTYPE = &
     & EQUATIONS_SET_STREE1D0D_ADV_SUBTYPE !<Coupled 1D-0D Navier-Stokes equations set subtype with coupled Advection \see
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE !<ALE Navier-Stokes equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE !<ALE with RBS Navier-Stokes equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PGM_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_PGM_NAVIER_STOKES_SUBTYPE !<PGM Navier-Stokes equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_OPTIMISED_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_OPTIMISED_NAVIER_STOKES_SUBTYPE !<Optimised Navier-Stokes equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_DARCY_SUBTYPE = EQUATIONS_SET_STANDARD_DARCY_SUBTYPE !<Standard Darcy equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE = EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE !<Quasistatic Darcy equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ALE_DARCY_SUBTYPE = EQUATIONS_SET_ALE_DARCY_SUBTYPE !<ALE Darcy equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE = EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE !<Transient Darcy equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE = EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE !<Transient ALE Darcy equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE = EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE !<Multi Compartment Darcy equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BURGERS_SUBTYPE = EQUATIONS_SET_BURGERS_SUBTYPE !<Burgers equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_BURGERS_SUBTYPE = EQUATIONS_SET_GENERALISED_BURGERS_SUBTYPE !<Generalised Burgers equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STATIC_BURGERS_SUBTYPE = EQUATIONS_SET_STATIC_BURGERS_SUBTYPE !<Static Burgers equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_INVISCID_BURGERS_SUBTYPE = EQUATIONS_SET_INVISCID_BURGERS_SUBTYPE !<Inviscid Burgers equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE !<ALE Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE !<ALE with RBS Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PGM_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_PGM_NAVIER_STOKES_SUBTYPE !<PGM Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_OPTIMISED_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_OPTIMISED_NAVIER_STOKES_SUBTYPE !<Optimised Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_DARCY_SUBTYPE = EQUATIONS_SET_STANDARD_DARCY_SUBTYPE !<Standard Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE = EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE !<Quasistatic Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ALE_DARCY_SUBTYPE = EQUATIONS_SET_ALE_DARCY_SUBTYPE !<ALE Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE = EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE !<Transient Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE = EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE !<Transient ALE Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE = EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE !<Multi Compartment Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BURGERS_SUBTYPE = EQUATIONS_SET_BURGERS_SUBTYPE !<Burgers equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_BURGERS_SUBTYPE = EQUATIONS_SET_GENERALISED_BURGERS_SUBTYPE !<Generalised Burgers equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STATIC_BURGERS_SUBTYPE = EQUATIONS_SET_STATIC_BURGERS_SUBTYPE !<Static Burgers equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_INVISCID_BURGERS_SUBTYPE = EQUATIONS_SET_INVISCID_BURGERS_SUBTYPE !<Inviscid Burgers equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE = EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE !<Standard Laplace equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE = EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE !<Generalised Laplace equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE = EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE !<Moving mesh Laplace equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STATIC_POISEUILLE_SUBTYPE = EQUATIONS_SET_STATIC_POISEUILLE_SUBTYPE !<Static Poiseuille equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DYNAMIC_POISEUILLE_SUBTYPE = EQUATIONS_SET_DYNAMIC_POISEUILLE_SUBTYPE !<Dynamic Poiseuille equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_PRESSURE_POISSON_SUBTYPE = EQUATIONS_SET_LINEAR_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE = EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE !<Standard Laplace equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE = EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE !<Generalised Laplace equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE = EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE !<Moving mesh Laplace equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STATIC_POISEUILLE_SUBTYPE = EQUATIONS_SET_STATIC_POISEUILLE_SUBTYPE !<Static Poiseuille equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DYNAMIC_POISEUILLE_SUBTYPE = EQUATIONS_SET_DYNAMIC_POISEUILLE_SUBTYPE !<Dynamic Poiseuille equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_PRESSURE_POISSON_SUBTYPE = EQUATIONS_SET_LINEAR_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NONLINEAR_PRESSURE_POISSON_SUBTYPE = &
-    & EQUATIONS_SET_NONLINEAR_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ALE_PRESSURE_POISSON_SUBTYPE = EQUATIONS_SET_ALE_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FITTED_PRESSURE_POISSON_SUBTYPE = EQUATIONS_SET_FITTED_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_POISSON_SUBTYPE = EQUATIONS_SET_CONSTANT_SOURCE_POISSON_SUBTYPE !<Constant source Poisson equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_NONLINEAR_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ALE_PRESSURE_POISSON_SUBTYPE = EQUATIONS_SET_ALE_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FITTED_PRESSURE_POISSON_SUBTYPE = EQUATIONS_SET_FITTED_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_POISSON_SUBTYPE = EQUATIONS_SET_CONSTANT_SOURCE_POISSON_SUBTYPE !<Constant source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE = &
-    & EQUATIONS_SET_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE !<Poisson equations set subtype, that is the extracellular bidomain equation \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_POISSON_SUBTYPE = EQUATIONS_SET_LINEAR_SOURCE_POISSON_SUBTYPE !<Linear source Poisson equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE = EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE !<Quadratic source Poisson equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE !<Poisson equations set subtype, that is the extracellular bidomain equation \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_POISSON_SUBTYPE = EQUATIONS_SET_LINEAR_SOURCE_POISSON_SUBTYPE !<Linear source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE = EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE !<Quadratic source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE = &
-    & EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE !<Exponential source Poisson equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE = EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE !<No source Helmholtz equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE = EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE !<No source Helmholtz equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_DIFFUSION_SUBTYPE = EQUATIONS_SET_NO_SOURCE_DIFFUSION_SUBTYPE !<No source diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE !<Exponential source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE = EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE !<No source Helmholtz equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE = EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE !<No source Helmholtz equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_DIFFUSION_SUBTYPE = EQUATIONS_SET_NO_SOURCE_DIFFUSION_SUBTYPE !<No source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_DIFFUSION_SUBTYPE = &
-    & EQUATIONS_SET_CONSTANT_SOURCE_DIFFUSION_SUBTYPE !<Constant source diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_SUBTYPE = EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_SUBTYPE !<Linear source diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_CONSTANT_SOURCE_DIFFUSION_SUBTYPE !<Constant source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_SUBTYPE = EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_SUBTYPE !<Linear source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_SUBTYPE = &
-    & EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_SUBTYPE !<Quadratic source diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_SUBTYPE !<Quadratic source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_DIFFUSION_SUBTYPE = &
-    & EQUATIONS_SET_EXPONENTIAL_SOURCE_DIFFUSION_SUBTYPE !<Exponential source diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_ALE_DIFFUSION_SUBTYPE = EQUATIONS_SET_NO_SOURCE_ALE_DIFFUSION_SUBTYPE !<No source diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_EXPONENTIAL_SOURCE_DIFFUSION_SUBTYPE !<Exponential source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_ALE_DIFFUSION_SUBTYPE = EQUATIONS_SET_NO_SOURCE_ALE_DIFFUSION_SUBTYPE !<No source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ALE_DIFFUSION_SUBTYPE = &
-    & EQUATIONS_SET_CONSTANT_SOURCE_ALE_DIFFUSION_SUBTYPE !<Constant source diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_CONSTANT_SOURCE_ALE_DIFFUSION_SUBTYPE !<Constant source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE = &
-    & EQUATIONS_SET_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE !<Linear source diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE !<Linear source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_ALE_DIFFUSION_SUBTYPE = &
-    & EQUATIONS_SET_QUADRATIC_SOURCE_ALE_DIFFUSION_SUBTYPE !<Quadratic source diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_QUADRATIC_SOURCE_ALE_DIFFUSION_SUBTYPE !<Quadratic source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_ALE_DIFFUSION_SUBTYPE = &
-    & EQUATIONS_SET_EXPONENTIAL_SOURCE_ALE_DIFFUSION_SUBTYPE !<Exponential source diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_EXPONENTIAL_SOURCE_ALE_DIFFUSION_SUBTYPE !<Exponential source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTI_COMP_TRANSPORT_DIFFUSION_SUBTYPE = &
-    & EQUATIONS_SET_MULTI_COMP_TRANSPORT_DIFFUSION_SUBTYPE !<Multi-compartment transport diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_MULTI_COMP_TRANSPORT_DIFFUSION_SUBTYPE !<Multi-compartment transport diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ADVECTION_SUBTYPE = &
-    & EQUATIONS_SET_ADVECTION_SUBTYPE !<advection equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_ADVECTION_SUBTYPE !<advection equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_ADVECTION_DIFFUSION_SUBTYPE = &
-    & EQUATIONS_SET_NO_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<No source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_NO_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<No source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ADVECTION_DIFFUSION_SUBTYPE = &
-    & EQUATIONS_SET_CONSTANT_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<Constant source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_CONSTANT_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<Constant source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_ADVECTION_DIFFUSION_SUBTYPE = &
-    & EQUATIONS_SET_LINEAR_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<Linear source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_LINEAR_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<Linear source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_ADVEC_DIFF_SUBTYPE = &
-    & EQUATIONS_SET_QUADRATIC_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<Quadratic source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_QUADRATIC_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<Quadratic source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_ADVEC_DIFF_SUBTYPE = &
-    & EQUATIONS_SET_EXPONENTIAL_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<Exponential source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_EXPONENTIAL_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<Exponential source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTITUTIVE_LAW_IN_CELLML_EVALUATE_SUBTYPE = &
-    & EQUATIONS_SET_CONSTITUTIVE_LAW_IN_CELLML_EVALUATE_SUBTYPE !<In CellML evaluated incompressible material law for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE = EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE !<Rubin rate based smooth model for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_CONSTITUTIVE_LAW_IN_CELLML_EVALUATE_SUBTYPE !<In CellML evaluated incompressible material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE = EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE !<Rubin rate based smooth model for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE =  &
-    & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE !<Rubin compressible rate based smooth model for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE !<Rubin compressible rate based smooth model for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE = &
-    & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE !<Rubin rate based growth model for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE !<Rubin rate based growth model for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE = &
-    & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE !<Rubin compressible rate based growth model for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE !<Rubin compressible rate based growth model for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTIT_AND_GROWTH_LAW_IN_CELLML_SUBTYPE = &
-    & EQUATIONS_SET_CONSTITUTIVE_AND_GROWTH_LAW_IN_CELLML_SUBTYPE !<CellML evaluated growth and constituative material law for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_CONSTITUTIVE_AND_GROWTH_LAW_IN_CELLML_SUBTYPE !<CellML evaluated growth and constituative material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE = &
-    & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE !<CellML evaluated growth and Mooney-Rivlin constituative material law for finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE !<CellML evaluated growth and Mooney-Rivlin constituative material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GROWTH_LAW_IN_CELLML_SUBTYPE = EQUATIONS_SET_GROWTH_LAW_IN_CELLML_SUBTYPE !<CellML evaluated growth or finite elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GROWTH_LAW_IN_CELLML_SUBTYPE = EQUATIONS_SET_GROWTH_LAW_IN_CELLML_SUBTYPE !<CellML evaluated growth or finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE = &
-    & EQUATIONS_SET_NO_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<No source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_NO_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<No source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ALE_ADVEC_DIFF_SUBTYPE = &
-    & EQUATIONS_SET_CONSTANT_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<Constant source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_CONSTANT_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<Constant source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVEC_DIFF_SUBTYPE = &
-    & EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<Linear source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<Linear source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_ALE_ADVEC_DIFF_SUBTYPE = &
-    & EQUATIONS_SET_QUADRATIC_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<Quadratic source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_QUADRATIC_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<Quadratic source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXP_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE = &
-    & EQUATIONS_SET_EXP_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<Exponential source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_EXP_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<Exponential source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE = &
-    & EQUATIONS_SET_NO_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE !<No source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_NO_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE !<No source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE = &
-    & EQUATIONS_SET_CONSTANT_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE !<Constant source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_CONSTANT_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE !<Constant source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE = &
-    & EQUATIONS_SET_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE !<Linear source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE !<Linear source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE = &
-    & EQUATIONS_SET_NO_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE !<No source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_NO_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE !<No source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE = &
-    & EQUATIONS_SET_CONSTANT_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE !<Constant source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_CONSTANT_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE !<Constant source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE = &
-    & EQUATIONS_SET_LINEAR_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE !<Linear source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_LINEAR_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE !<Linear source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUAD_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE = &
-    & EQUATIONS_SET_QUAD_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE !<Quadratic source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_QUAD_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE !<Quadratic source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXP_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE = &
-    & EQUATIONS_SET_EXP_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE !<Exponential source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_EXP_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE !<Exponential source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE = &
-    & EQUATIONS_SET_NO_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE !<No source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_NO_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE !<No source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ALE_ADVEC_DIFF_SUPG_SUBTYPE = &
-    & EQUATIONS_SET_CONSTANT_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE !<Constant source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_CONSTANT_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE !<Constant source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVEC_DIFF_SUPG_SUBTYPE = &
-    & EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE !<Linear source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE !<Linear source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUAD_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE = &
-    & EQUATIONS_SET_QUAD_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE !<Quadratic source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_QUAD_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE !<Quadratic source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXP_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE = &
-    & EQUATIONS_SET_EXP_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE !<Exponential source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_EXP_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE !<Exponential source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE = &
-    & EQUATIONS_SET_NO_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE !<No source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_NO_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE !<No source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONST_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE = &
-    & EQUATIONS_SET_CONSTANT_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE !<Constant source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_CONSTANT_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE !<Constant source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LIN_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE = &
-    & EQUATIONS_SET_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE !<Linear source advection diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE !<Linear source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFF_SUBTYPE = &
-    & EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE !<Coupled source diffusion & advection-diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE !<Coupled source diffusion & advection-diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUBTYPE = &
-    & EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUBTYPE !<Multi-component transport advection-diffusion equations set \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUBTYPE !<Multi-component transport advection-diffusion equations set \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULT_COMP_TRANSPORT_ADVEC_DIFF_SUPG_SUBTYPE = &
-    & EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUPG_SUBTYPE !<Multi-component transport advection-diffusion equations set using SUPG scheme \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUPG_SUBTYPE !<Multi-component transport advection-diffusion equations set using SUPG scheme \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE = &
-    & EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE !CellML Reaction Diffusion with order splitting \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE !CellML Reaction Diffusion with order splitting \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE = &
-    & EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE !CellML Reaction Diffusion without order splitting \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE !CellML Reaction Diffusion without order splitting \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE = &
-    & EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE !Standard Reaction Diffusion without order splitting, and constant source \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE !Standard Reaction Diffusion without order splitting, and constant source \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
 
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_BUENOOROVIO_SUBTYPE= EQUATIONS_SET_MONODOMAIN_BUENOOROVIO_SUBTYPE !<First monodomain equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_TENTUSSCHER06_SUBTYPE= EQUATIONS_SET_MONODOMAIN_TENTUSSCHER06_SUBTYPE !<First monodomain equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_BUENOOROVIO_SUBTYPE= EQUATIONS_SET_MONODOMAIN_BUENOOROVIO_SUBTYPE !<First monodomain equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_TENTUSSCHER06_SUBTYPE= EQUATIONS_SET_MONODOMAIN_TENTUSSCHER06_SUBTYPE !<First monodomain equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FIRST_BIDOMAIN_SUBTYPE = EQUATIONS_SET_FIRST_BIDOMAIN_SUBTYPE !<First bidomain equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_SECOND_BIDOMAIN_SUBTYPE = EQUATIONS_SET_SECOND_BIDOMAIN_SUBTYPE !<Second bidomain equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FIRST_BIDOMAIN_SUBTYPE = EQUATIONS_SET_FIRST_BIDOMAIN_SUBTYPE !<First bidomain equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_SECOND_BIDOMAIN_SUBTYPE = EQUATIONS_SET_SECOND_BIDOMAIN_SUBTYPE !<Second bidomain equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DATA_POINT_FITTING_SUBTYPE = &
-    & EQUATIONS_SET_DATA_POINT_FITTING_SUBTYPE !<Data point fitting equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_DATA_POINT_FITTING_SUBTYPE !<Data point fitting equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_DATA_FITTING_SUBTYPE = &
-    & EQUATIONS_SET_GENERALISED_DATA_FITTING_SUBTYPE !<Generalised Galerkin Projection equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_GENERALISED_DATA_FITTING_SUBTYPE !<Generalised Galerkin Projection equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MAT_PROPERTIES_DATA_FITTING_SUBTYPE = &
-    & EQUATIONS_SET_MAT_PROPERTIES_DATA_FITTING_SUBTYPE !<Material Properties Galerkin Projection equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_MAT_PROPERTIES_DATA_FITTING_SUBTYPE !<Material Properties Galerkin Projection equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MAT_PROP_INRIA_MODEL_DATA_FITTING_SUBTYPE = &
-    & EQUATIONS_SET_MAT_PROPERTIES_INRIA_MODEL_DATA_FITTING_SUBTYPE !<Material Properties INRIA Model Galerkin Projection equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_MAT_PROPERTIES_INRIA_MODEL_DATA_FITTING_SUBTYPE !<Material Properties INRIA Model Galerkin Projection equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_VECTOR_DATA_FITTING_SUBTYPE = &
-    & EQUATIONS_SET_VECTOR_DATA_FITTING_SUBTYPE !<Standard Galerkin Projection equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_VECTOR_DATA_FITTING_SUBTYPE !<Standard Galerkin Projection equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIVFREE_VECTOR_DATA_FITTING_SUBTYPE = &
-    & EQUATIONS_SET_DIVFREE_VECTOR_DATA_FITTING_SUBTYPE !<Standard Galerkin Projection equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_DIVFREE_VECTOR_DATA_FITTING_SUBTYPE !<Standard Galerkin Projection equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DATA_POINT_VECTOR_STATIC_FITTING_SUBTYPE = &
-    & EQUATIONS_SET_DATA_POINT_VECTOR_STATIC_FITTING_SUBTYPE !<Standard static Galerkin Projection using data points subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_DATA_POINT_VECTOR_STATIC_FITTING_SUBTYPE !<Standard static Galerkin Projection using data points subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DATA_PT_VECTOR_QUASISTATIC_FITTING_SUBTYPE = &
-    & EQUATIONS_SET_DATA_POINT_VECTOR_QUASISTATIC_FITTING_SUBTYPE !<Standard quasistatic Galerkin Projection using data points subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_DATA_POINT_VECTOR_QUASISTATIC_FITTING_SUBTYPE !<Standard quasistatic Galerkin Projection using data points subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_VECTOR_DATA_PRE_FITTING_SUBTYPE = &
-    & EQUATIONS_SET_VECTOR_DATA_PRE_FITTING_SUBTYPE !<Standard Galerkin Projection equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_VECTOR_DATA_PRE_FITTING_SUBTYPE !<Standard Galerkin Projection equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIVFREE_VECTOR_DATA_PRE_FITTING_SUBTYPE = &
-    & EQUATIONS_SET_DIVFREE_VECTOR_DATA_PRE_FITTING_SUBTYPE !<Standard Galerkin Projection equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_DIVFREE_VECTOR_DATA_PRE_FITTING_SUBTYPE !<Standard Galerkin Projection equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GAUSS_POINT_FITTING_SUBTYPE = &
-    & EQUATIONS_SET_GAUSS_POINT_FITTING_SUBTYPE !<Gauss point fitting equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_GAUSS_POINT_FITTING_SUBTYPE !<Gauss point fitting equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_ELASTICITY_DARCY_SUBTYPE = &
-    & EQUATIONS_SET_STANDARD_ELASTICITY_DARCY_SUBTYPE !<Standard Elasticity Darcy equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_STANDARD_ELASTICITY_DARCY_SUBTYPE !<Standard Elasticity Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_DIFFUSION_SUBTYPE = &
-    & EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_DIFFUSION_SUBTYPE !<Coupled source diffusion-diffusion equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_DIFFUSION_SUBTYPE !<Coupled source diffusion-diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE =  &
-    & EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE !<Standard Monodomain Elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE !<Standard Monodomain Elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE =  &
-    & EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE !<Coupled 1D Monodomain 3D Elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE !<Coupled 1D Monodomain 3D Elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE =  &
-    & EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE !<Coupled 1D Monodomain 3D Elasticity equations set subtype with titin \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE !<Coupled 1D Monodomain 3D Elasticity equations set subtype with titin \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE =  &
-    & EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE !<Coupled 1D Monodomain 3D Elasticity equations set subtype with force-velocity relation \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE !<Coupled 1D Monodomain 3D Elasticity equations set subtype with force-velocity relation \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_1D3D_MONODOMAIN_ACTIVE_STRAIN_SUBTYPE =  &
-    & EQUATIONS_SET_1D3D_MONODOMAIN_ACTIVE_STRAIN_SUBTYPE !<Coupled 1D Monodomain 3D Elasticity equations set subtype \see OPENCMISS_EquationsSetSubtypes,OPENCMISS
+    & EQUATIONS_SET_1D3D_MONODOMAIN_ACTIVE_STRAIN_SUBTYPE !<Coupled 1D Monodomain 3D Elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE = &
-    & EQUATIONS_SET_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE !<Finite Elasticity Navier Stokes ALE equations set subtype \see OPENCMISS_EquationsSetSubtype,OPENCMISS
+    & EQUATIONS_SET_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE !<Finite Elasticity Navier Stokes ALE equations set subtype \see OpenCMISS_EquationsSetSubtype,OpenCMISS
 
   !>@}
-  !> \addtogroup OPENCMISS_EquationsSetFittingSmoothingTypes OpenCMISS::Iron::EquationsSet::Fitting::SmoothingTypes
+  !> \addtogroup OpenCMISS_EquationsSetFittingSmoothingTypes OpenCMISS::Iron::EquationsSet::Fitting::SmoothingTypes
   !> \brief The smoothing types for fitting equations sets.
-  !> \see OpenCMISS::Iron::EquationsSet,OPENCMISS
+  !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
   !>@{
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FITTING_NO_SMOOTHING = &
-    & EQUATIONS_SET_FITTING_NO_SMOOTHING !<No smoothing \see OPENCMISS_EquationsSetFittingSmoothingTypes,OPENCMISS
+    & EQUATIONS_SET_FITTING_NO_SMOOTHING !<No smoothing \see OpenCMISS_EquationsSetFittingSmoothingTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING = &
-    & EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING !<Sobolev smoothing on the value of the dependent field \see OPENCMISS_EquationsSetFittingSmoothingTypes,OPENCMISS
+    & EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING !<Sobolev smoothing on the value of the dependent field \see OpenCMISS_EquationsSetFittingSmoothingTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING = &
-    & EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING !<Sobolev smoothing on the difference between the current and initial value of the dependent field \see OPENCMISS_EquationsSetFittingSmoothingTypes,OPENCMISS
+    & EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING !<Sobolev smoothing on the difference between the current and initial value of the dependent field \see OpenCMISS_EquationsSetFittingSmoothingTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FITTING_STRAIN_ENERGY_SMOOTHING = &
-    & EQUATIONS_SET_FITTING_STRAIN_ENERGY_SMOOTHING !<Sobolev smoothing on the strain energy of the dependent field \see OPENCMISS_EquationsSetFittingSmoothingTypes,OPENCMISS
+    & EQUATIONS_SET_FITTING_STRAIN_ENERGY_SMOOTHING !<Sobolev smoothing on the strain energy of the dependent field \see OpenCMISS_EquationsSetFittingSmoothingTypes,OpenCMISS
   !>@}
 
   !>@}
-  !> \addtogroup OPENCMISS_EquationsSetSolutionMethods OpenCMISS::Iron::EquationsSet::SolutionMethods
+  !> \addtogroup OpenCMISS_EquationsSetSolutionMethods OpenCMISS::Iron::EquationsSet::SolutionMethods
   !> \brief The solution method parameters
-  !> \see OpenCMISS::Iron::EquationsSet,OPENCMISS
+  !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FEM_SOLUTION_METHOD = EQUATIONS_SET_FEM_SOLUTION_METHOD !<Finite Element Method solution method. \see OPENCMISS_EquationsSetSolutionMethods,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BEM_SOLUTION_METHOD = EQUATIONS_SET_BEM_SOLUTION_METHOD !<Boundary Element Method solution method. \see OPENCMISS_EquationsSetSolutionMethods,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FD_SOLUTION_METHOD = EQUATIONS_SET_FD_SOLUTION_METHOD !<Finite Difference solution method. \see OPENCMISS_EquationsSetSolutionMethods,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FV_SOLUTION_METHOD = EQUATIONS_SET_FV_SOLUTION_METHOD !<Finite Volume solution method. \see OPENCMISS_EquationsSetSolutionMethods,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GFEM_SOLUTION_METHOD = EQUATIONS_SET_GFEM_SOLUTION_METHOD !<Grid-based Finite Element Method solution method. \see OPENCMISS_EquationsSetSolutionMethods,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GFD_SOLUTION_METHOD = EQUATIONS_SET_GFD_SOLUTION_METHOD !<Grid-based Finite Difference solution method. \see OPENCMISS_EquationsSetSolutionMethods,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GFV_SOLUTION_METHOD = EQUATIONS_SET_GFV_SOLUTION_METHOD !<Grid-based Finite Volume solution method. \see OPENCMISS_EquationsSetSolutionMethods,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FEM_SOLUTION_METHOD = EQUATIONS_SET_FEM_SOLUTION_METHOD !<Finite Element Method solution method. \see OpenCMISS_EquationsSetSolutionMethods,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BEM_SOLUTION_METHOD = EQUATIONS_SET_BEM_SOLUTION_METHOD !<Boundary Element Method solution method. \see OpenCMISS_EquationsSetSolutionMethods,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FD_SOLUTION_METHOD = EQUATIONS_SET_FD_SOLUTION_METHOD !<Finite Difference solution method. \see OpenCMISS_EquationsSetSolutionMethods,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FV_SOLUTION_METHOD = EQUATIONS_SET_FV_SOLUTION_METHOD !<Finite Volume solution method. \see OpenCMISS_EquationsSetSolutionMethods,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GFEM_SOLUTION_METHOD = EQUATIONS_SET_GFEM_SOLUTION_METHOD !<Grid-based Finite Element Method solution method. \see OpenCMISS_EquationsSetSolutionMethods,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GFD_SOLUTION_METHOD = EQUATIONS_SET_GFD_SOLUTION_METHOD !<Grid-based Finite Difference solution method. \see OpenCMISS_EquationsSetSolutionMethods,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GFV_SOLUTION_METHOD = EQUATIONS_SET_GFV_SOLUTION_METHOD !<Grid-based Finite Volume solution method. \see OpenCMISS_EquationsSetSolutionMethods,OpenCMISS
   !>@}
 
-  !> \addtogroup OPENCMISS_EquationsSetDerivedTypes OPENCMISS::EquationsSet::DerivedTypes
+  !> \addtogroup OpenCMISS_EquationsSetDerivedTypes OpenCMISS::Iron::EquationsSet::DerivedTypes
   !> \brief EquationsSet derived type parameters
-  !> \see OPENCMISS::EquationsSet,OPENCMISS
+  !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_STRAIN = EQUATIONS_SET_DERIVED_STRAIN !<Strain tensor field output. \see OPENCMISS_EquationsSetDerivedTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_STRESS = EQUATIONS_SET_DERIVED_STRESS !<Stress tensor field output. \see OPENCMISS_EquationsSetDerivedTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_GREEN_STRAIN = EQUATIONS_SET_DERIVED_GREEN_STRAIN !<Green strain tensor field output. \see OpenCMISS_EquationsSetDerivedTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_2PK_STRESS = EQUATIONS_SET_DERIVED_2PK_STRESS !<2nd Piola-Kirchoff stress tensor field output. \see OpenCMISS_EquationsSetDerivedTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_CAUCHY_STRESS = EQUATIONS_SET_DERIVED_CAUCHY_STRESS !<Cauchy stress tensor field output. \see OpenCMISS_EquationsSetDerivedTypes,OpenCMISS
   !>@}
 
-  !> \addtogroup OPENCMISS_EquationsSetTensorEvaluateTypes OPENCMISS::EquationsSet::TensorEvaluateTypes
+  !> \addtogroup OpenCMISS_EquationsSetTensorEvaluateTypes OpenCMISS::Iron::EquationsSet::TensorEvaluateTypes
   !> \brief Type of tensor to evaluate from an EquationsSet
-  !> \see OPENCMISS::EquationsSet,OPENCMISS
+  !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
   !>@{
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EVALUATE_DEFORMATION_GRADIENT_TENSOR = &
-    & EQUATIONS_SET_EVALUATE_DEFORMATION_GRADIENT_TENSOR !<Deformation gradient tensor \see OPENCMISS_EquationsSetTensorEvaluateTypes,OPENCMISS
+    & EQUATIONS_SET_EVALUATE_DEFORMATION_GRADIENT_TENSOR !<Deformation gradient tensor \see OpenCMISS_EquationsSetTensorEvaluateTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EVALUATE_R_CAUCHY_GREEN_DEFORMATION_TENSOR = &
-    & EQUATIONS_SET_EVALUATE_R_CAUCHY_GREEN_DEFORMATION_TENSOR !<Right Cauchy-Green deformation field \see OPENCMISS_EquationsSetTensorEvaluateTypes,OPENCMISS
+    & EQUATIONS_SET_EVALUATE_R_CAUCHY_GREEN_DEFORMATION_TENSOR !<Right Cauchy-Green deformation field \see OpenCMISS_EquationsSetTensorEvaluateTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EVALUATE_GREEN_LAGRANGE_STRAIN_TENSOR = &
-    & EQUATIONS_SET_EVALUATE_GREEN_LAGRANGE_STRAIN_TENSOR !<Green-Lagrange strain tensor \see OPENCMISS_EquationsSetTensorEvaluateTypes,OPENCMISS
+    & EQUATIONS_SET_EVALUATE_GREEN_LAGRANGE_STRAIN_TENSOR !<Green-Lagrange strain tensor \see OpenCMISS_EquationsSetTensorEvaluateTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EVALUATE_CAUCHY_STRESS_TENSOR = &
-    & EQUATIONS_SET_EVALUATE_CAUCHY_STRESS_TENSOR !<Cauchy-stress tensor \see OPENCMISS_EquationsSetTensorEvaluateTypes,OPENCMISS
+    & EQUATIONS_SET_EVALUATE_CAUCHY_STRESS_TENSOR !<Cauchy-stress tensor \see OpenCMISS_EquationsSetTensorEvaluateTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EVALUATE_SECOND_PK_STRESS_TENSOR = &
-    & EQUATIONS_SET_EVALUATE_SECOND_PK_STRESS_TENSOR !<Second Piola Kirchhoff-stress tensor \see OPENCMISS_EquationsSetTensorEvaluateTypes,OPENCMISS
+    & EQUATIONS_SET_EVALUATE_SECOND_PK_STRESS_TENSOR !<Second Piola Kirchhoff-stress tensor \see OpenCMISS_EquationsSetTensorEvaluateTypes,OpenCMISS
   !>@}
 
-  !> \addtogroup OPENCMISS_EquationsSetDynamicMatrixTypes OPENCMISS::EquationsSet::DynamicMatrixTypes
+  !> \addtogroup OpenCMISS_EquationsSetDynamicMatrixTypes OpenCMISS::Iron::EquationsSet::DynamicMatrixTypes
   !> \brief Type of matrix in a dynamic equations set
   !>@{
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_MATRIX_STIFFNESS=EQUATIONS_MATRIX_STIFFNESS !<A stiffness matrix (multiplies displacement values)
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_MATRIX_DAMPING=EQUATIONS_MATRIX_DAMPING !<A damping matrix (multiplies velocity values)
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_MATRIX_MASS=EQUATIONS_MATRIX_MASS !<A mass matrix (multiplies acceleration values)
   !>@}
-  !> \addtogroup OPENCMISS_EquationsSetOutputTypes OpenCMISS::Iron::EquationsSet::OutputTypes
+  !> \addtogroup OpenCMISS_EquationsSetOutputTypes OpenCMISS::Iron::EquationsSet::OutputTypes
   !> \brief Equations set output types
-  !> \see OpenCMISS::Iron::EquationsSet,OPENCMISS
+  !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_OUTPUT = EQUATIONS_SET_NO_OUTPUT!<No output from the equations set \see OPENCMISS_EquationsSetOutputTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PROGRESS_OUTPUT = EQUATIONS_SET_PROGRESS_OUTPUT !<Progress information output for the equations set. \see OPENCMISS_EquationsSetOutputTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_OUTPUT = EQUATIONS_SET_NO_OUTPUT!<No output from the equations set \see OpenCMISS_EquationsSetOutputTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PROGRESS_OUTPUT = EQUATIONS_SET_PROGRESS_OUTPUT !<Progress information output for the equations set. \see OpenCMISS_EquationsSetOutputTypes,OpenCMISS
   !>@}
 
-  !> \addtogroup OPENCMISS_EquationsSetAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes
+  !> \addtogroup OpenCMISS_EquationsSetAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes
   !> \brief The analytic function types.
-  !> \see OpenCMISS::Iron::EquationsSet,OPENCMISS
+  !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
   !>@{
-  !> \addtogroup OPENCMISS_EquationsSetLaplaceAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Laplace
+  !> \addtogroup OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Laplace
   !> \brief The analytic function types for a Laplace equation
-  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OPENCMISS
+  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1 = EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1 !<u=x**2+2*x*y-y**2 \see OPENCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2 = EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2 !<u=cos(x)cosh(y) \see OPENCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1 = EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1 !<u=x**2-2*y**2+z**2 \see OPENCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_2 = EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_2 !<u=cos(x)*cosh(y)*z \see OPENCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1 = EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1 !<u=x**2+2*x*y-y**2 \see OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2 = EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2 !<u=cos(x)cosh(y) \see OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1 = EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1 !<u=x**2-2*y**2+z**2 \see OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_2 = EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_2 !<u=cos(x)*cosh(y)*z \see OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_EquationsSetHelmholtzAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Helmholtz
+  !> \addtogroup OpenCMISS_EquationsSetHelmholtzAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Helmholtz
   !> \brief The analytic function types for a Helmholtz equation
-  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OPENCMISS
+  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_HELMHOLTZ_EQUATION_TWO_DIM_1 = EQUATIONS_SET_HELMHOLTZ_EQUATION_TWO_DIM_1 !<u=cos(sqrt(2)*k*x)*sin(sqrt(2)*k*y) \see OPENCMISS_EquationsSetHelmholtzAnalyticFunctionTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_HELMHOLTZ_EQUATION_TWO_DIM_1 = EQUATIONS_SET_HELMHOLTZ_EQUATION_TWO_DIM_1 !<u=cos(sqrt(2)*k*x)*sin(sqrt(2)*k*y) \see OpenCMISS_EquationsSetHelmholtzAnalyticFunctionTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_PoiseuilleAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Poiseuille
+  !> \addtogroup OpenCMISS_PoiseuilleAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Poiseuille
   !> \brief The analytic function types for a Poiseuille equation.
-  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OPENCMISS
+  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISEUILLE_EQUATION_TWO_DIM_1 = EQUATIONS_SET_POISEUILLE_EQUATION_TWO_DIM_1 !<u=ln(4/(x+y+1^2)) \see OPENCMISS_EquationsSetPoiseuilleAnalyticFunctionTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISEUILLE_EQUATION_TWO_DIM_1 = EQUATIONS_SET_POISEUILLE_EQUATION_TWO_DIM_1 !<u=ln(4/(x+y+1^2)) \see OpenCMISS_EquationsSetPoiseuilleAnalyticFunctionTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_PoissonAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Poisson
+  !> \addtogroup OpenCMISS_PoissonAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Poisson
   !> \brief The analytic function types for a Poisson equation.
-  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OPENCMISS
+  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_1 = EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_1 !<u=ln(4/(x+y+1^2)) \see OPENCMISS_EquationsSetPoissonAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_2 = EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_2 !<u=tbd \see OPENCMISS_EquationsSetPoissonAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_3 = EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_3 !<u=tbd \see OPENCMISS_EquationsSetPoissonAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_1 = EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_1 !<u=ln(6/(x+y+z+1^2)) \see OPENCMISS_EquationsSetPoissonAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_2 = EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_2 !<u=tbd \see OPENCMISS_EquationsSetPoissonAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_3 = EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_3 !<u=tbd \see OPENCMISS_EquationsSetPoissonAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_1 = EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_1 !<u=tbd \see OPENCMISS_EquationsSetPoissonAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_2 = EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_2 !<u=tbd \see OPENCMISS_EquationsSetPoissonAnalyticFunctionTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_1 = EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_1 !<u=ln(4/(x+y+1^2)) \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_2 = EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_3 = EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_3 !<u=tbd \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_1 = EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_1 !<u=ln(6/(x+y+z+1^2)) \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_2 = EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_3 = EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_3 !<u=tbd \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_1 = EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_2 = EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_DiffusionAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Diffusion
+  !> \addtogroup OpenCMISS_DiffusionAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Diffusion
   !> \brief The analytic function types for a diffusion equation.
-  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OPENCMISS
+  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_ONE_DIM_1 = EQUATIONS_SET_DIFFUSION_EQUATION_ONE_DIM_1
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_TWO_DIM_1 = EQUATIONS_SET_DIFFUSION_EQUATION_TWO_DIM_1 !<u=exp(-kt)*sin(sqrt(k)*(x*cos(phi)+y*sin(phi))) \see OPENCMISS_EquationsSetDiffusionAnalyticFunctionTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_TWO_DIM_1 = EQUATIONS_SET_DIFFUSION_EQUATION_TWO_DIM_1 !<u=exp(-kt)*sin(sqrt(k)*(x*cos(phi)+y*sin(phi))) \see OpenCMISS_EquationsSetDiffusionAnalyticFunctionTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_THREE_DIM_1 = EQUATIONS_SET_DIFFUSION_EQUATION_THREE_DIM_1 !<
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_THREE_DIM_1 = &
     & EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_EQUATION_THREE_DIM_1
@@ -2920,73 +2921,73 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTI_COMP_DIFFUSION_FOUR_COMP_THREE_DIM = &
     & EQUATIONS_SET_MULTI_COMP_DIFFUSION_FOUR_COMP_THREE_DIM !<Prescribed solution, using a source term to correct for error - 3D with 3 compartments
   !>@}
-  !> \addtogroup OPENCMISS_AdvectionDiffusionAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::AdvectionDiffusion
+  !> \addtogroup OpenCMISS_AdvectionDiffusionAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::AdvectionDiffusion
   !> \brief The analytic function types for an advection-diffusion equation.
-  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OPENCMISS
+  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TWO_DIM_1 = &
-    & EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TWO_DIM_1 !<u=exp(-kt)*sin(sqrt(k)*(x*cos(phi)+y*sin(phi))) \see OPENCMISS_EquationsSetDiffusionAnalyticFunctionTypes,OPENCMISS
-  !> \addtogroup OPENCMISS_StokesAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Stokes
+    & EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TWO_DIM_1 !<u=exp(-kt)*sin(sqrt(k)*(x*cos(phi)+y*sin(phi))) \see OpenCMISS_EquationsSetDiffusionAnalyticFunctionTypes,OpenCMISS
+  !> \addtogroup OpenCMISS_StokesAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Stokes
   !> \brief The analytic function types for a Stokes equation.
-  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OPENCMISS
+  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_1 = EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_1 !<u=tbd \see OPENCMISS_EquationsSetStokesAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_2 = EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_2 !<u=tbd \see OPENCMISS_EquationsSetStokesAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_3 = EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_3 !<u=tbd \see OPENCMISS_EquationsSetStokesAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_4 = EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_4 !<u=tbd \see OPENCMISS_EquationsSetStokesAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_5 = EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_5 !<u=tbd \see OPENCMISS_EquationsSetStokesAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_1 = EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_1 !<u=tbd \see OPENCMISS_EquationsSetStokesAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_2 = EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_2 !<u=tbd \see OPENCMISS_EquationsSetStokesAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_3 = EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_3 !<u=tbd \see OPENCMISS_EquationsSetStokesAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_4 = EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_4 !<u=tbd \see OPENCMISS_EquationsSetStokesAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_5 = EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_5 !<u=tbd \see OPENCMISS_EquationsSetStokesAnalyticFunctionTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_1 = EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_2 = EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_3 = EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_3 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_4 = EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_4 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_5 = EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_5 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_1 = EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_2 = EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_3 = EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_3 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_4 = EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_4 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_5 = EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_5 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_NavierStokesAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::NavierStokes
+  !> \addtogroup OpenCMISS_NavierStokesAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::NavierStokes
   !> \brief The analytic function types for a Navier-Stokes equation.
-  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OPENCMISS
+  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_POISEUILLE= &
-    & EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_POISEUILLE !< fully developed 2D channel flow (parabolic) \see OPENCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OPENCMISS
+    & EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_POISEUILLE !< fully developed 2D channel flow (parabolic) \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_TAYLOR_GREEN= &
-    & EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_TAYLOR_GREEN !< 2D dynamic nonlinear Taylor-Green vortex decay \see OPENCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OPENCMISS
+    & EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_TAYLOR_GREEN !< 2D dynamic nonlinear Taylor-Green vortex decay \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_FLOWRATE_AORTA= &
     & EQUATIONS_SET_NAVIER_STOKES_EQUATION_FLOWRATE_AORTA !< A fourier decomposed flow waveform for boundary conditions
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_SINUSOID= &
     & EQUATIONS_SET_NAVIER_STOKES_EQUATION_SINUSOID !< A sinusoidal flow waveform
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_SPLINT_FROM_FILE= &
     & EQUATIONS_SET_NAVIER_STOKES_EQUATION_SPLINT_FROM_FILE !< Spline integration of dependent values specified in a file
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_1 = EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_1 !<u=tbd \see OPENCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_2 = EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_2 !<u=tbd \see OPENCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_3 = EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_3 !<u=tbd \see OPENCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_4 = EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_4 !<u=tbd \see OPENCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_5 = EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_5 !<u=tbd \see OPENCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_1 = EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_2 = EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_3 = EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_3 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_4 = EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_4 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_5 = EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_5 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_1 = &
-    & EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_1 !<u=tbd \see OPENCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OPENCMISS
+    & EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_2 = &
-    & EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_2 !<u=tbd \see OPENCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OPENCMISS
+    & EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_3 = &
-    & EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_3 !<u=tbd \see OPENCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OPENCMISS
+    & EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_3 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_4 = &
-    & EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_4 !<u=tbd \see OPENCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OPENCMISS
+    & EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_4 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_5 = &
-    & EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_5 !<u=tbd \see OPENCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OPENCMISS
+    & EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_5 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_DarcyAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Darcy
+  !> \addtogroup OpenCMISS_DarcyAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Darcy
   !> \brief The analytic function types for a Darcy equation.
-  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OPENCMISS
+  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_1 = EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_1 !<u=tbd \see OPENCMISS_EquationsSetDarcyAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_2 = EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_2 !<u=tbd \see OPENCMISS_EquationsSetDarcyAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_3 = EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_3 !<u=tbd \see OPENCMISS_EquationsSetDarcyAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_1 = EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_1 !<u=tbd \see OPENCMISS_EquationsSetDarcyAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_2 = EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_2 !<u=tbd \see OPENCMISS_EquationsSetDarcyAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_3 = EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_3 !<u=tbd \see OPENCMISS_EquationsSetDarcyAnalyticFunctionTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_1 = EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetDarcyAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_2 = EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetDarcyAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_3 = EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_3 !<u=tbd \see OpenCMISS_EquationsSetDarcyAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_1 = EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetDarcyAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_2 = EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetDarcyAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_3 = EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_3 !<u=tbd \see OpenCMISS_EquationsSetDarcyAnalyticFunctionTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY = &
     & EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY !<this is a solution where the finite elasticity solve is skipped to allow easy analytic testing of the mass increase & velocity solve step of incompressible poromechanical model
   !>@}
-  !> \addtogroup OPENCMISS_BurgersAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Burgers
+  !> \addtogroup OpenCMISS_BurgersAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Burgers
   !> \brief The analytic function types for a Burgers equation.
-  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OPENCMISS
+  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BURGERS_EQUATION_ONE_DIM_1 = EQUATIONS_SET_BURGERS_EQUATION_ONE_DIM_1
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_BURGERS_EQUATION_ONE_DIM_1 = &
@@ -2997,45 +2998,45 @@ MODULE OpenCMISS_Iron
     & EQUATIONS_SET_STATIC_BURGERS_EQUATION_ONE_DIM_1
   !>@}
 
-  !> \addtogroup OPENCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::LinearElasticity
+  !> \addtogroup OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::LinearElasticity
   !> \brief The analytic function types for a LinearElasticity equation
-  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OPENCMISS
+  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_ONE_DIM_1 = EQUATIONS_SET_LINEAR_ELASTICITY_ONE_DIM_1 !<u=tbd \see OPENCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_1 = EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_1 !<u=tbd \see OPENCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_2 = EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_2 !<u=tbd \see OPENCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_1 = EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_1 !<u=tbd \see OPENCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_2 = EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_2 !<u=tbd \see OPENCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_ONE_DIM_1 = EQUATIONS_SET_LINEAR_ELASTICITY_ONE_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_1 = EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_2 = EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_1 = EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_2 = EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_EquationsSetFiniteElasticityAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::FiniteElasticity
+  !> \addtogroup OpenCMISS_EquationsSetFiniteElasticityAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::FiniteElasticity
   !> \brief The analytic function types for a FiniteElasticity equation
-  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OPENCMISS
+  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FINITE_ELASTICITY_CYLINDER = EQUATIONS_SET_FINITE_ELASTICITY_CYLINDER !<u=tbd \see OPENCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FINITE_ELASTICITY_CYLINDER = EQUATIONS_SET_FINITE_ELASTICITY_CYLINDER !<u=tbd \see OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OpenCMISS
   !>@}
   !>@}
   !>@}
 
-  !> \addtogroup OPENCMISS_AnalyticParamIndices OpenCMISS::Iron::FiniteElasticity::AnalyticParamIndices
+  !> \addtogroup OpenCMISS_AnalyticParamIndices OpenCMISS::Iron::FiniteElasticity::AnalyticParamIndices
   !> \brief Indices for EQUATIONS_SET_ANALYTIC_TYPE%ANALYTIC_USER_PARAMS
-  !> \see OpenCMISS::Iron::FiniteElasticity::AnalyticParamIndices,OPENCMISS
+  !> \see OpenCMISS::Iron::FiniteElasticity::AnalyticParamIndices,OpenCMISS
   !>@{
   INTEGER(INTG), PARAMETER :: CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_PIN_IDX = &
-    & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_PIN_IDX !<Inner pressure parameter index \see OPENCMISS_AnalyticParamIndices,OPENCMISS
+    & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_PIN_IDX !<Inner pressure parameter index \see OpenCMISS_AnalyticParamIndices,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_POUT_IDX = &
-    & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_POUT_IDX !<Outer pressure parameter index \see OPENCMISS_AnalyticParamIndices,OPENCMISS
+    & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_POUT_IDX !<Outer pressure parameter index \see OpenCMISS_AnalyticParamIndices,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_LAMBDA_IDX = &
-    & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_LAMBDA_IDX !<Lambda parameter index \see OPENCMISS_AnalyticParamIndices,OPENCMISS
+    & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_LAMBDA_IDX !<Lambda parameter index \see OpenCMISS_AnalyticParamIndices,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_TSI_IDX = &
-    & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_TSI_IDX !<Tsi parameter index \see OPENCMISS_AnalyticParamIndices,OPENCMISS
+    & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_TSI_IDX !<Tsi parameter index \see OpenCMISS_AnalyticParamIndices,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_RIN_IDX = &
-    & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_RIN_IDX !<Inner radius parameter index \see OPENCMISS_AnalyticParamIndices,OPENCMISS
+    & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_RIN_IDX !<Inner radius parameter index \see OpenCMISS_AnalyticParamIndices,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_ROUT_IDX = &
-    & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_ROUT_IDX !<Outer radius parameter index \see OPENCMISS_AnalyticParamIndices,OPENCMISS
+    & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_ROUT_IDX !<Outer radius parameter index \see OpenCMISS_AnalyticParamIndices,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_C1_IDX = &
-    & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_C1_IDX !<c1 parameter index \see OPENCMISS_AnalyticParamIndices,OPENCMISS
+    & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_C1_IDX !<c1 parameter index \see OpenCMISS_AnalyticParamIndices,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_C2_IDX = &
-    & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_C2_IDX !<c2 parameter index \see OPENCMISS_AnalyticParamIndices,OPENCMISS
+    & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_C2_IDX !<c2 parameter index \see OpenCMISS_AnalyticParamIndices,OpenCMISS
   !>@}
 
   !Module types
@@ -3193,7 +3194,7 @@ MODULE OpenCMISS_Iron
     & CMFE_EQUATIONS_SET_FV_SOLUTION_METHOD,CMFE_EQUATIONS_SET_GFEM_SOLUTION_METHOD,CMFE_EQUATIONS_SET_GFD_SOLUTION_METHOD, &
     & CMFE_EQUATIONS_SET_GFV_SOLUTION_METHOD
 
-  PUBLIC CMFE_EQUATIONS_SET_DERIVED_STRAIN,CMFE_EQUATIONS_SET_DERIVED_STRESS
+  PUBLIC CMFE_EQUATIONS_SET_DERIVED_GREEN_STRAIN,CMFE_EQUATIONS_SET_DERIVED_2PK_STRESS,CMFE_EQUATIONS_SET_DERIVED_CAUCHY_STRESS
 
   PUBLIC CMFE_EQUATIONS_SET_EVALUATE_DEFORMATION_GRADIENT_TENSOR, &
     & CMFE_EQUATIONS_SET_EVALUATE_R_CAUCHY_GREEN_DEFORMATION_TENSOR, &
@@ -3606,152 +3607,152 @@ MODULE OpenCMISS_Iron
 
   !Module parameters
 
-  !> \addtogroup OPENCMISS_FieldConstants OpenCMISS::Iron::Field::Constants
+  !> \addtogroup OpenCMISS_FieldConstants OpenCMISS::Iron::Field::Constants
   !> \brief Field constants.
   !>@{
-  !> \addtogroup OPENCMISS_FieldDependentTypes OpenCMISS::Iron::Field::DependentTypes
+  !> \addtogroup OpenCMISS_FieldDependentTypes OpenCMISS::Iron::Field::DependentTypes
   !> \brief Depedent field parameter types.
-  !> \see OpenCMISS::Iron::Field,OPENCMISS
+  !> \see OpenCMISS::Iron::Field,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_INDEPENDENT_TYPE = FIELD_INDEPENDENT_TYPE !<Independent field type \see OPENCMISS_FieldDependentTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEPENDENT_TYPE = FIELD_DEPENDENT_TYPE !<Dependent field type \see OPENCMISS_FieldDependentTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_INDEPENDENT_TYPE = FIELD_INDEPENDENT_TYPE !<Independent field type \see OpenCMISS_FieldDependentTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEPENDENT_TYPE = FIELD_DEPENDENT_TYPE !<Dependent field type \see OpenCMISS_FieldDependentTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_FieldDimensionTypes OpenCMISS::Iron::Field::DimensionTypes
+  !> \addtogroup OpenCMISS_FieldDimensionTypes OpenCMISS::Iron::Field::DimensionTypes
   !> \brief Field dimension parameter types.
-  !> \see OpenCMISS::Iron::Field,OPENCMISS
+  !> \see OpenCMISS::Iron::Field,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_SCALAR_DIMENSION_TYPE = FIELD_SCALAR_DIMENSION_TYPE !<Scalar field \see OPENCMISS_FieldDimensionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_VECTOR_DIMENSION_TYPE = FIELD_VECTOR_DIMENSION_TYPE !<Vector field \see OPENCMISS_FieldDimensionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_TENSOR_DIMENSION_TYPE = FIELD_TENSOR_DIMENSION_TYPE !<Tensor field \see OPENCMISS_FieldDimensionTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_SCALAR_DIMENSION_TYPE = FIELD_SCALAR_DIMENSION_TYPE !<Scalar field \see OpenCMISS_FieldDimensionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_VECTOR_DIMENSION_TYPE = FIELD_VECTOR_DIMENSION_TYPE !<Vector field \see OpenCMISS_FieldDimensionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_TENSOR_DIMENSION_TYPE = FIELD_TENSOR_DIMENSION_TYPE !<Tensor field \see OpenCMISS_FieldDimensionTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_FieldTypes OpenCMISS::Iron::Field::Types
+  !> \addtogroup OpenCMISS_FieldTypes OpenCMISS::Iron::Field::Types
   !> \brief Field type parameters.
-  !> \see OpenCMISS::Iron::Field,OPENCMISS
+  !> \see OpenCMISS::Iron::Field,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_GEOMETRIC_TYPE = FIELD_GEOMETRIC_TYPE !<Geometric field \see OPENCMISS_FieldTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_FIBRE_TYPE = FIELD_FIBRE_TYPE !<Fibre field \see OPENCMISS_FieldTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_GENERAL_TYPE = FIELD_GENERAL_TYPE !<General field \see OPENCMISS_FieldTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_MATERIAL_TYPE = FIELD_MATERIAL_TYPE !<Material field \see OPENCMISS_FieldTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_GEOMETRIC_GENERAL_TYPE = FIELD_GEOMETRIC_GENERAL_TYPE !<Geometric general field \see OPENCMISS_FieldTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_GEOMETRIC_TYPE = FIELD_GEOMETRIC_TYPE !<Geometric field \see OpenCMISS_FieldTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_FIBRE_TYPE = FIELD_FIBRE_TYPE !<Fibre field \see OpenCMISS_FieldTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_GENERAL_TYPE = FIELD_GENERAL_TYPE !<General field \see OpenCMISS_FieldTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_MATERIAL_TYPE = FIELD_MATERIAL_TYPE !<Material field \see OpenCMISS_FieldTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_GEOMETRIC_GENERAL_TYPE = FIELD_GEOMETRIC_GENERAL_TYPE !<Geometric general field \see OpenCMISS_FieldTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_FieldInterpolationTypes OpenCMISS::Iron::Field::InterpolationTypes
+  !> \addtogroup OpenCMISS_FieldInterpolationTypes OpenCMISS::Iron::Field::InterpolationTypes
   !> \brief Field interpolation parameters.
-  !> \see OpenCMISS::Iron::Field,OPENCMISS
+  !> \see OpenCMISS::Iron::Field,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_CONSTANT_INTERPOLATION = FIELD_CONSTANT_INTERPOLATION !<Constant interpolation. One parameter for the field \see OPENCMISS_FieldInterpolationTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_ELEMENT_BASED_INTERPOLATION = FIELD_ELEMENT_BASED_INTERPOLATION !<Element based interpolation. Parameters are different in each element \see OPENCMISS_FieldInterpolationTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_NODE_BASED_INTERPOLATION = FIELD_NODE_BASED_INTERPOLATION !<Node based interpolation. Parameters are nodal based and a basis function is used \see OPENCMISS_FieldInterpolationTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_GRID_POINT_BASED_INTERPOLATION = FIELD_GRID_POINT_BASED_INTERPOLATION !<Grid point based interpolation. Parameters are different at each grid point \see OPENCMISS_FieldInterpolationTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_GAUSS_POINT_BASED_INTERPOLATION = FIELD_GAUSS_POINT_BASED_INTERPOLATION !<Gauss point based interpolation. Parameters are different at each Gauss point \see OPENCMISS_FieldInterpolationTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DATA_POINT_BASED_INTERPOLATION = FIELD_DATA_POINT_BASED_INTERPOLATION !<Data point based interpolation. Parameters are different at each data point \see OPENCMISS_FieldInterpolationTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_CONSTANT_INTERPOLATION = FIELD_CONSTANT_INTERPOLATION !<Constant interpolation. One parameter for the field \see OpenCMISS_FieldInterpolationTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_ELEMENT_BASED_INTERPOLATION = FIELD_ELEMENT_BASED_INTERPOLATION !<Element based interpolation. Parameters are different in each element \see OpenCMISS_FieldInterpolationTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_NODE_BASED_INTERPOLATION = FIELD_NODE_BASED_INTERPOLATION !<Node based interpolation. Parameters are nodal based and a basis function is used \see OpenCMISS_FieldInterpolationTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_GRID_POINT_BASED_INTERPOLATION = FIELD_GRID_POINT_BASED_INTERPOLATION !<Grid point based interpolation. Parameters are different at each grid point \see OpenCMISS_FieldInterpolationTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_GAUSS_POINT_BASED_INTERPOLATION = FIELD_GAUSS_POINT_BASED_INTERPOLATION !<Gauss point based interpolation. Parameters are different at each Gauss point \see OpenCMISS_FieldInterpolationTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DATA_POINT_BASED_INTERPOLATION = FIELD_DATA_POINT_BASED_INTERPOLATION !<Data point based interpolation. Parameters are different at each data point \see OpenCMISS_FieldInterpolationTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_FieldVariableTypes OpenCMISS::Iron::Field::VariableTypes
+  !> \addtogroup OpenCMISS_FieldVariableTypes OpenCMISS::Iron::Field::VariableTypes
   !> \brief Field variable type parameters.
-  !> \see OpenCMISS::Iron::Field,OPENCMISS
+  !> \see OpenCMISS::Iron::Field,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_NUMBER_OF_VARIABLE_SUBTYPES = FIELD_NUMBER_OF_VARIABLE_SUBTYPES !<The number of subtypes of a variable - i.e., u, du/dn, du/dt, d^2u/dt^2 \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_U_VARIABLE_TYPE = FIELD_U_VARIABLE_TYPE !<Standard variable type i.e., u \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELUDELN_VARIABLE_TYPE = FIELD_DELUDELN_VARIABLE_TYPE !<Normal derivative variable type i.e., du/dn \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELUDELT_VARIABLE_TYPE = FIELD_DELUDELT_VARIABLE_TYPE !<First time derivative variable type i.e., du/dt \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEL2UDELT2_VARIABLE_TYPE = FIELD_DEL2UDELT2_VARIABLE_TYPE !<Second time derivative variable type i.e., d^2u/dt^2 \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_V_VARIABLE_TYPE = FIELD_V_VARIABLE_TYPE !<Second standard variable type i.e., v \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELVDELN_VARIABLE_TYPE = FIELD_DELVDELN_VARIABLE_TYPE !<Second normal derivative variable type i.e., dv/dn \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELVDELT_VARIABLE_TYPE = FIELD_DELVDELT_VARIABLE_TYPE !<Second first time derivative variable type i.e., dv/dt \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEL2VDELT2_VARIABLE_TYPE = FIELD_DEL2VDELT2_VARIABLE_TYPE !<Second second time derivative variable type i.e., d^2v/dt^2 \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_W_VARIABLE_TYPE = FIELD_W_VARIABLE_TYPE !<Third standard variable type i.e., w \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_U1_VARIABLE_TYPE = FIELD_U1_VARIABLE_TYPE !<Standard variable type i.e., u \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU1DELN_VARIABLE_TYPE = FIELD_DELU1DELN_VARIABLE_TYPE !<Normal derivative variable type i.e., du/dn \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU1DELT_VARIABLE_TYPE = FIELD_DELU1DELT_VARIABLE_TYPE !<First time derivative variable type i.e., du/dt \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEL2U1DELT2_VARIABLE_TYPE = FIELD_DEL2U1DELT2_VARIABLE_TYPE !<Second time derivative variable type i.e., d^2u/dt^2 \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_U2_VARIABLE_TYPE = FIELD_U2_VARIABLE_TYPE !<Standard variable type i.e., u \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU2DELN_VARIABLE_TYPE = FIELD_DELU2DELN_VARIABLE_TYPE !<Normal derivative variable type i.e., du/dn \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU2DELT_VARIABLE_TYPE = FIELD_DELU2DELT_VARIABLE_TYPE !<First time derivative variable type i.e., du/dt \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEL2U2DELT2_VARIABLE_TYPE = FIELD_DEL2U2DELT2_VARIABLE_TYPE !<Second time derivative variable type i.e., d^2u/dt^2 \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_U3_VARIABLE_TYPE = FIELD_U3_VARIABLE_TYPE !<Standard variable type i.e., u \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU3DELN_VARIABLE_TYPE = FIELD_DELU3DELN_VARIABLE_TYPE !<Normal derivative variable type i.e., du/dn \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU3DELT_VARIABLE_TYPE = FIELD_DELU3DELT_VARIABLE_TYPE !<First time derivative variable type i.e., du/dt \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEL2U3DELT2_VARIABLE_TYPE = FIELD_DEL2U3DELT2_VARIABLE_TYPE !<Second time derivative variable type i.e., d^2u/dt^2 \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_U4_VARIABLE_TYPE = FIELD_U4_VARIABLE_TYPE !<Standard variable type i.e., u \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU4DELN_VARIABLE_TYPE = FIELD_DELU4DELN_VARIABLE_TYPE !<Normal derivative variable type i.e., du/dn \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU4DELT_VARIABLE_TYPE = FIELD_DELU4DELT_VARIABLE_TYPE !<First time derivative variable type i.e., du/dt \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEL2U4DELT2_VARIABLE_TYPE = FIELD_DEL2U4DELT2_VARIABLE_TYPE !<Second time derivative variable type i.e., d^2u/dt^2 \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_U5_VARIABLE_TYPE = FIELD_U5_VARIABLE_TYPE !<Standard variable type i.e., u \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU5DELN_VARIABLE_TYPE = FIELD_DELU5DELN_VARIABLE_TYPE !<Normal derivative variable type i.e., du/dn \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU5DELT_VARIABLE_TYPE = FIELD_DELU5DELT_VARIABLE_TYPE !<First time derivative variable type i.e., du/dt \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEL2U5DELT2_VARIABLE_TYPE = FIELD_DEL2U5DELT2_VARIABLE_TYPE !<Second time derivative variable type i.e., d^2u/dt^2 \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_U6_VARIABLE_TYPE = FIELD_U6_VARIABLE_TYPE !<Standard variable type i.e., u \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU6DELN_VARIABLE_TYPE = FIELD_DELU6DELN_VARIABLE_TYPE !<Normal derivative variable type i.e., du/dn \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU6DELT_VARIABLE_TYPE = FIELD_DELU6DELT_VARIABLE_TYPE !<First time derivative variable type i.e., du/dt \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEL2U6DELT2_VARIABLE_TYPE = FIELD_DEL2U6DELT2_VARIABLE_TYPE !<Second time derivative variable type i.e., d^2u/dt^2 \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_U7_VARIABLE_TYPE = FIELD_U7_VARIABLE_TYPE !<Standard variable type i.e., u \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU7DELN_VARIABLE_TYPE = FIELD_DELU7DELN_VARIABLE_TYPE !<Normal derivative variable type i.e., du/dn \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU7DELT_VARIABLE_TYPE = FIELD_DELU7DELT_VARIABLE_TYPE !<First time derivative variable type i.e., du/dt \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEL2U7DELT2_VARIABLE_TYPE = FIELD_DEL2U7DELT2_VARIABLE_TYPE !<Second time derivative variable type i.e., d^2u/dt^2 \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_U8_VARIABLE_TYPE = FIELD_U8_VARIABLE_TYPE !<Standard variable type i.e., u \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU8DELN_VARIABLE_TYPE = FIELD_DELU8DELN_VARIABLE_TYPE !<Normal derivative variable type i.e., du/dn \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU8DELT_VARIABLE_TYPE = FIELD_DELU8DELT_VARIABLE_TYPE !<First time derivative variable type i.e., du/dt \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEL2U8DELT2_VARIABLE_TYPE = FIELD_DEL2U8DELT2_VARIABLE_TYPE !<Second time derivative variable type i.e., d^2u/dt^2 \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_U9_VARIABLE_TYPE = FIELD_U9_VARIABLE_TYPE !<Standard variable type i.e., u \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU9DELN_VARIABLE_TYPE = FIELD_DELU9DELN_VARIABLE_TYPE !<Normal derivative variable type i.e., du/dn \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU9DELT_VARIABLE_TYPE = FIELD_DELU9DELT_VARIABLE_TYPE !<First time derivative variable type i.e., du/dt \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEL2U9DELT2_VARIABLE_TYPE = FIELD_DEL2U9DELT2_VARIABLE_TYPE !<Second time derivative variable type i.e., d^2u/dt^2 \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_U10_VARIABLE_TYPE = FIELD_U10_VARIABLE_TYPE !<Standard variable type i.e., u \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU10DELN_VARIABLE_TYPE = FIELD_DELU10DELN_VARIABLE_TYPE !<Normal derivative variable type i.e., du/dn \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU10DELT_VARIABLE_TYPE = FIELD_DELU10DELT_VARIABLE_TYPE !<First time derivative variable type i.e., du/dt \see OPENCMISS_FieldVariableTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEL2U10DELT2_VARIABLE_TYPE = FIELD_DEL2U10DELT2_VARIABLE_TYPE !<Second time derivative variable type i.e., d^2u/dt^2 \see OPENCMISS_FieldVariableTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_NUMBER_OF_VARIABLE_SUBTYPES = FIELD_NUMBER_OF_VARIABLE_SUBTYPES !<The number of subtypes of a variable - i.e., u, du/dn, du/dt, d^2u/dt^2 \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_U_VARIABLE_TYPE = FIELD_U_VARIABLE_TYPE !<Standard variable type i.e., u \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELUDELN_VARIABLE_TYPE = FIELD_DELUDELN_VARIABLE_TYPE !<Normal derivative variable type i.e., du/dn \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELUDELT_VARIABLE_TYPE = FIELD_DELUDELT_VARIABLE_TYPE !<First time derivative variable type i.e., du/dt \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEL2UDELT2_VARIABLE_TYPE = FIELD_DEL2UDELT2_VARIABLE_TYPE !<Second time derivative variable type i.e., d^2u/dt^2 \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_V_VARIABLE_TYPE = FIELD_V_VARIABLE_TYPE !<Second standard variable type i.e., v \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELVDELN_VARIABLE_TYPE = FIELD_DELVDELN_VARIABLE_TYPE !<Second normal derivative variable type i.e., dv/dn \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELVDELT_VARIABLE_TYPE = FIELD_DELVDELT_VARIABLE_TYPE !<Second first time derivative variable type i.e., dv/dt \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEL2VDELT2_VARIABLE_TYPE = FIELD_DEL2VDELT2_VARIABLE_TYPE !<Second second time derivative variable type i.e., d^2v/dt^2 \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_W_VARIABLE_TYPE = FIELD_W_VARIABLE_TYPE !<Third standard variable type i.e., w \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_U1_VARIABLE_TYPE = FIELD_U1_VARIABLE_TYPE !<Standard variable type i.e., u \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU1DELN_VARIABLE_TYPE = FIELD_DELU1DELN_VARIABLE_TYPE !<Normal derivative variable type i.e., du/dn \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU1DELT_VARIABLE_TYPE = FIELD_DELU1DELT_VARIABLE_TYPE !<First time derivative variable type i.e., du/dt \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEL2U1DELT2_VARIABLE_TYPE = FIELD_DEL2U1DELT2_VARIABLE_TYPE !<Second time derivative variable type i.e., d^2u/dt^2 \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_U2_VARIABLE_TYPE = FIELD_U2_VARIABLE_TYPE !<Standard variable type i.e., u \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU2DELN_VARIABLE_TYPE = FIELD_DELU2DELN_VARIABLE_TYPE !<Normal derivative variable type i.e., du/dn \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU2DELT_VARIABLE_TYPE = FIELD_DELU2DELT_VARIABLE_TYPE !<First time derivative variable type i.e., du/dt \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEL2U2DELT2_VARIABLE_TYPE = FIELD_DEL2U2DELT2_VARIABLE_TYPE !<Second time derivative variable type i.e., d^2u/dt^2 \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_U3_VARIABLE_TYPE = FIELD_U3_VARIABLE_TYPE !<Standard variable type i.e., u \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU3DELN_VARIABLE_TYPE = FIELD_DELU3DELN_VARIABLE_TYPE !<Normal derivative variable type i.e., du/dn \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU3DELT_VARIABLE_TYPE = FIELD_DELU3DELT_VARIABLE_TYPE !<First time derivative variable type i.e., du/dt \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEL2U3DELT2_VARIABLE_TYPE = FIELD_DEL2U3DELT2_VARIABLE_TYPE !<Second time derivative variable type i.e., d^2u/dt^2 \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_U4_VARIABLE_TYPE = FIELD_U4_VARIABLE_TYPE !<Standard variable type i.e., u \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU4DELN_VARIABLE_TYPE = FIELD_DELU4DELN_VARIABLE_TYPE !<Normal derivative variable type i.e., du/dn \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU4DELT_VARIABLE_TYPE = FIELD_DELU4DELT_VARIABLE_TYPE !<First time derivative variable type i.e., du/dt \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEL2U4DELT2_VARIABLE_TYPE = FIELD_DEL2U4DELT2_VARIABLE_TYPE !<Second time derivative variable type i.e., d^2u/dt^2 \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_U5_VARIABLE_TYPE = FIELD_U5_VARIABLE_TYPE !<Standard variable type i.e., u \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU5DELN_VARIABLE_TYPE = FIELD_DELU5DELN_VARIABLE_TYPE !<Normal derivative variable type i.e., du/dn \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU5DELT_VARIABLE_TYPE = FIELD_DELU5DELT_VARIABLE_TYPE !<First time derivative variable type i.e., du/dt \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEL2U5DELT2_VARIABLE_TYPE = FIELD_DEL2U5DELT2_VARIABLE_TYPE !<Second time derivative variable type i.e., d^2u/dt^2 \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_U6_VARIABLE_TYPE = FIELD_U6_VARIABLE_TYPE !<Standard variable type i.e., u \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU6DELN_VARIABLE_TYPE = FIELD_DELU6DELN_VARIABLE_TYPE !<Normal derivative variable type i.e., du/dn \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU6DELT_VARIABLE_TYPE = FIELD_DELU6DELT_VARIABLE_TYPE !<First time derivative variable type i.e., du/dt \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEL2U6DELT2_VARIABLE_TYPE = FIELD_DEL2U6DELT2_VARIABLE_TYPE !<Second time derivative variable type i.e., d^2u/dt^2 \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_U7_VARIABLE_TYPE = FIELD_U7_VARIABLE_TYPE !<Standard variable type i.e., u \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU7DELN_VARIABLE_TYPE = FIELD_DELU7DELN_VARIABLE_TYPE !<Normal derivative variable type i.e., du/dn \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU7DELT_VARIABLE_TYPE = FIELD_DELU7DELT_VARIABLE_TYPE !<First time derivative variable type i.e., du/dt \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEL2U7DELT2_VARIABLE_TYPE = FIELD_DEL2U7DELT2_VARIABLE_TYPE !<Second time derivative variable type i.e., d^2u/dt^2 \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_U8_VARIABLE_TYPE = FIELD_U8_VARIABLE_TYPE !<Standard variable type i.e., u \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU8DELN_VARIABLE_TYPE = FIELD_DELU8DELN_VARIABLE_TYPE !<Normal derivative variable type i.e., du/dn \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU8DELT_VARIABLE_TYPE = FIELD_DELU8DELT_VARIABLE_TYPE !<First time derivative variable type i.e., du/dt \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEL2U8DELT2_VARIABLE_TYPE = FIELD_DEL2U8DELT2_VARIABLE_TYPE !<Second time derivative variable type i.e., d^2u/dt^2 \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_U9_VARIABLE_TYPE = FIELD_U9_VARIABLE_TYPE !<Standard variable type i.e., u \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU9DELN_VARIABLE_TYPE = FIELD_DELU9DELN_VARIABLE_TYPE !<Normal derivative variable type i.e., du/dn \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU9DELT_VARIABLE_TYPE = FIELD_DELU9DELT_VARIABLE_TYPE !<First time derivative variable type i.e., du/dt \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEL2U9DELT2_VARIABLE_TYPE = FIELD_DEL2U9DELT2_VARIABLE_TYPE !<Second time derivative variable type i.e., d^2u/dt^2 \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_U10_VARIABLE_TYPE = FIELD_U10_VARIABLE_TYPE !<Standard variable type i.e., u \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU10DELN_VARIABLE_TYPE = FIELD_DELU10DELN_VARIABLE_TYPE !<Normal derivative variable type i.e., du/dn \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DELU10DELT_VARIABLE_TYPE = FIELD_DELU10DELT_VARIABLE_TYPE !<First time derivative variable type i.e., du/dt \see OpenCMISS_FieldVariableTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DEL2U10DELT2_VARIABLE_TYPE = FIELD_DEL2U10DELT2_VARIABLE_TYPE !<Second time derivative variable type i.e., d^2u/dt^2 \see OpenCMISS_FieldVariableTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_FieldDataTypes OpenCMISS::Iron::Field::DataTypes
+  !> \addtogroup OpenCMISS_FieldDataTypes OpenCMISS::Iron::Field::DataTypes
   !> \brief Field data types
-  !> \see OpenCMISS::Iron::Field,OPENCMISS
+  !> \see OpenCMISS::Iron::Field,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_INTG_TYPE = FIELD_INTG_TYPE !<Integer field data type \see OPENCMISS_FieldDataTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_SP_TYPE = FIELD_SP_TYPE !<Single precision real field data type \see OPENCMISS_FieldDataTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DP_TYPE = FIELD_DP_TYPE !<Double precision real field data type \see OPENCMISS_FieldDataTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_L_TYPE = FIELD_L_TYPE !<Logical field data type \see OPENCMISS_FieldDataTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_INTG_TYPE = FIELD_INTG_TYPE !<Integer field data type \see OpenCMISS_FieldDataTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_SP_TYPE = FIELD_SP_TYPE !<Single precision real field data type \see OpenCMISS_FieldDataTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_DP_TYPE = FIELD_DP_TYPE !<Double precision real field data type \see OpenCMISS_FieldDataTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_L_TYPE = FIELD_L_TYPE !<Logical field data type \see OpenCMISS_FieldDataTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_FieldDOFOrderTypes OpenCMISS::Iron::Field::DOFOrderTypes
+  !> \addtogroup OpenCMISS_FieldDOFOrderTypes OpenCMISS::Iron::Field::DOFOrderTypes
   !> \brief Field DOF order types
-  !> \see OpenCMISS::Iron::Field,OPENCMISS
+  !> \see OpenCMISS::Iron::Field,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_SEPARATED_COMPONENT_DOF_ORDER = FIELD_SEPARATED_COMPONENT_DOF_ORDER !<Field variable component dofs are not contiguous \see OPENCMISS_FieldDOFOrderTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER = FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER !<Field variable component dofs are contiguous \see OPENCMISS_FieldDOFOrderTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_SEPARATED_COMPONENT_DOF_ORDER = FIELD_SEPARATED_COMPONENT_DOF_ORDER !<Field variable component dofs are not contiguous \see OpenCMISS_FieldDOFOrderTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER = FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER !<Field variable component dofs are contiguous \see OpenCMISS_FieldDOFOrderTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_FieldParameterSetTypes OpenCMISS::Iron::Field::ParameterSetTypes
+  !> \addtogroup OpenCMISS_FieldParameterSetTypes OpenCMISS::Iron::Field::ParameterSetTypes
   !> \brief Field parameter set type parameters
-  !> \see OpenCMISS::Iron::Field,OPENCMISS
+  !> \see OpenCMISS::Iron::Field,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_VALUES_SET_TYPE = FIELD_VALUES_SET_TYPE !<The parameter set corresponding to the field values (at time T+DT for dynamic problems) \see OPENCMISS_FieldParameterSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_BOUNDARY_CONDITIONS_SET_TYPE = FIELD_BOUNDARY_CONDITIONS_SET_TYPE !<The parameter set corresponding to the field boundary condition values \see OPENCMISS_FieldParameterSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_INITIAL_VALUES_SET_TYPE = FIELD_INITIAL_VALUES_SET_TYPE !<The parameter set corresponding to the field initial values \see OPENCMISS_FieldParameterSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_INCREMENTAL_VALUES_SET_TYPE = FIELD_INCREMENTAL_VALUES_SET_TYPE !<The parameter set corresponding to the field incremental values \see OPENCMISS_FieldParameterSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_ANALYTIC_VALUES_SET_TYPE = FIELD_ANALYTIC_VALUES_SET_TYPE !<The parameter set corresponding to the analytic field values \see OPENCMISS_FieldParameterSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_PREVIOUS_VALUES_SET_TYPE = FIELD_PREVIOUS_VALUES_SET_TYPE !<The parameter set corresponding to the previous field values (at time T) \see OPENCMISS_FieldParameterSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE = FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE !<The parameter set corresponding to the mean predicited avalues (at time T+DT) \see OPENCMISS_FieldParameterSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_VELOCITY_VALUES_SET_TYPE = FIELD_VELOCITY_VALUES_SET_TYPE !<The parameter set corresponding to the velocity values (at time T+DT) \see OPENCMISS_FieldParameterSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_INITIAL_VELOCITY_SET_TYPE = FIELD_INITIAL_VELOCITY_SET_TYPE !<The parameter set corresponding to the initial velocity values for dynamic problems. This is also the previous velocity values \see OPENCMISS_FieldParameterSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_PREVIOUS_VELOCITY_SET_TYPE = FIELD_PREVIOUS_VELOCITY_SET_TYPE !<The parameter set corresponding to the previous velocity values (at time T). This is also the initial velocity values for dynamic problems. \see OPENCMISS_FieldParameterSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE = FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE !<The parameter set corresponding to the mean predicited velocity values (at time T+DT) \see OPENCMISS_FieldParameterSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_ACCELERATION_VALUES_SET_TYPE = FIELD_ACCELERATION_VALUES_SET_TYPE !<The parameter set corresponding to the acceleration values (at time T+DT) \see OPENCMISS_FieldParameterSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_INITIAL_ACCELERATION_SET_TYPE = FIELD_INITIAL_ACCELERATION_SET_TYPE !<The parameter set corresponding to the initial acceleration values for dynamic problems. This is also the previous accelearation values \see OPENCMISS_FieldParameterSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_PREVIOUS_ACCELERATION_SET_TYPE = FIELD_PREVIOUS_ACCELERATION_SET_TYPE !<The parameter set corresponding to the previous acceleration values (at time T).This is also the initial acceleration values for dynamic problems. \see OPENCMISS_FieldParameterSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE = FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE !<The parameter set corresponding to the mean predicited acceleration values (at time T+DT) \see OPENCMISS_FieldParameterSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_PRESSURE_VALUES_SET_TYPE = FIELD_PRESSURE_VALUES_SET_TYPE !<The parameter set corresponding to the surface pressure values. \see OPENCMISS_FieldParameterSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_PREVIOUS_PRESSURE_SET_TYPE = FIELD_PREVIOUS_PRESSURE_SET_TYPE !<The parameter set corresponding to the previous surface pressure values (at time T). \see OPENCMISS_FieldParameterSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_IMPERMEABLE_FLAG_VALUES_SET_TYPE = FIELD_IMPERMEABLE_FLAG_VALUES_SET_TYPE !<The parameter set corresponding to the impermeable flag values. \see OPENCMISS_FieldParameterSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_INTEGRATED_NEUMANN_SET_TYPE = FIELD_INTEGRATED_NEUMANN_SET_TYPE !<Stores integrated Neumann values calculated from Neumann point values. \see OPENCMISS_FieldParameterSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_MESH_DISPLACEMENT_SET_TYPE=FIELD_MESH_DISPLACEMENT_SET_TYPE !<The parameter set corresponding to the mesh displacement values for ALE \see OPENCMISS_FieldParameterSetTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_MESH_VELOCITY_SET_TYPE=FIELD_MESH_VELOCITY_SET_TYPE !<The parameter set corresponding to the mesh velocity values for ALE \see OPENCMISS_FieldParameterSetTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_VALUES_SET_TYPE = FIELD_VALUES_SET_TYPE !<The parameter set corresponding to the field values (at time T+DT for dynamic problems) \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_BOUNDARY_CONDITIONS_SET_TYPE = FIELD_BOUNDARY_CONDITIONS_SET_TYPE !<The parameter set corresponding to the field boundary condition values \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_INITIAL_VALUES_SET_TYPE = FIELD_INITIAL_VALUES_SET_TYPE !<The parameter set corresponding to the field initial values \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_INCREMENTAL_VALUES_SET_TYPE = FIELD_INCREMENTAL_VALUES_SET_TYPE !<The parameter set corresponding to the field incremental values \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_ANALYTIC_VALUES_SET_TYPE = FIELD_ANALYTIC_VALUES_SET_TYPE !<The parameter set corresponding to the analytic field values \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_PREVIOUS_VALUES_SET_TYPE = FIELD_PREVIOUS_VALUES_SET_TYPE !<The parameter set corresponding to the previous field values (at time T) \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE = FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE !<The parameter set corresponding to the mean predicited avalues (at time T+DT) \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_VELOCITY_VALUES_SET_TYPE = FIELD_VELOCITY_VALUES_SET_TYPE !<The parameter set corresponding to the velocity values (at time T+DT) \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_INITIAL_VELOCITY_SET_TYPE = FIELD_INITIAL_VELOCITY_SET_TYPE !<The parameter set corresponding to the initial velocity values for dynamic problems. This is also the previous velocity values \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_PREVIOUS_VELOCITY_SET_TYPE = FIELD_PREVIOUS_VELOCITY_SET_TYPE !<The parameter set corresponding to the previous velocity values (at time T). This is also the initial velocity values for dynamic problems. \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE = FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE !<The parameter set corresponding to the mean predicited velocity values (at time T+DT) \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_ACCELERATION_VALUES_SET_TYPE = FIELD_ACCELERATION_VALUES_SET_TYPE !<The parameter set corresponding to the acceleration values (at time T+DT) \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_INITIAL_ACCELERATION_SET_TYPE = FIELD_INITIAL_ACCELERATION_SET_TYPE !<The parameter set corresponding to the initial acceleration values for dynamic problems. This is also the previous accelearation values \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_PREVIOUS_ACCELERATION_SET_TYPE = FIELD_PREVIOUS_ACCELERATION_SET_TYPE !<The parameter set corresponding to the previous acceleration values (at time T).This is also the initial acceleration values for dynamic problems. \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE = FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE !<The parameter set corresponding to the mean predicited acceleration values (at time T+DT) \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_PRESSURE_VALUES_SET_TYPE = FIELD_PRESSURE_VALUES_SET_TYPE !<The parameter set corresponding to the surface pressure values. \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_PREVIOUS_PRESSURE_SET_TYPE = FIELD_PREVIOUS_PRESSURE_SET_TYPE !<The parameter set corresponding to the previous surface pressure values (at time T). \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_IMPERMEABLE_FLAG_VALUES_SET_TYPE = FIELD_IMPERMEABLE_FLAG_VALUES_SET_TYPE !<The parameter set corresponding to the impermeable flag values. \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_INTEGRATED_NEUMANN_SET_TYPE = FIELD_INTEGRATED_NEUMANN_SET_TYPE !<Stores integrated Neumann values calculated from Neumann point values. \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_MESH_DISPLACEMENT_SET_TYPE=FIELD_MESH_DISPLACEMENT_SET_TYPE !<The parameter set corresponding to the mesh displacement values for ALE \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_MESH_VELOCITY_SET_TYPE=FIELD_MESH_VELOCITY_SET_TYPE !<The parameter set corresponding to the mesh velocity values for ALE \see OpenCMISS_FieldParameterSetTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_FieldScalingTypes OpenCMISS::Iron::Field::ScalingTypes
+  !> \addtogroup OpenCMISS_FieldScalingTypes OpenCMISS::Iron::Field::ScalingTypes
   !> \brief Field scaling type parameters
-  !> \see OpenCMISS::Iron::Field,OPENCMISS
+  !> \see OpenCMISS::Iron::Field,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_NO_SCALING = FIELD_NO_SCALING !<The field is not scaled \see OPENCMISS_FieldScalingTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_UNIT_SCALING = FIELD_UNIT_SCALING !<The field has unit scaling \see OPENCMISS_FieldScalingTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_ARC_LENGTH_SCALING = FIELD_ARC_LENGTH_SCALING !<The field has arc length scaling \see OPENCMISS_FieldScalingTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_ARITHMETIC_MEAN_SCALING = FIELD_ARITHMETIC_MEAN_SCALING !<The field has arithmetic mean of the arc length scaling \see OPENCMISS_FieldScalingTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_GEOMETRIC_MEAN_SCALING = FIELD_GEOMETRIC_MEAN_SCALING !<The field has geometric mean of the arc length scaling \see OPENCMISS_FieldScalingTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_FIELD_HARMONIC_MEAN_SCALING = FIELD_HARMONIC_MEAN_SCALING !<The field has geometric mean of the arc length scaling \see OPENCMISS_FieldScalingTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_NO_SCALING = FIELD_NO_SCALING !<The field is not scaled \see OpenCMISS_FieldScalingTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_UNIT_SCALING = FIELD_UNIT_SCALING !<The field has unit scaling \see OpenCMISS_FieldScalingTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_ARC_LENGTH_SCALING = FIELD_ARC_LENGTH_SCALING !<The field has arc length scaling \see OpenCMISS_FieldScalingTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_ARITHMETIC_MEAN_SCALING = FIELD_ARITHMETIC_MEAN_SCALING !<The field has arithmetic mean of the arc length scaling \see OpenCMISS_FieldScalingTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_GEOMETRIC_MEAN_SCALING = FIELD_GEOMETRIC_MEAN_SCALING !<The field has geometric mean of the arc length scaling \see OpenCMISS_FieldScalingTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FIELD_HARMONIC_MEAN_SCALING = FIELD_HARMONIC_MEAN_SCALING !<The field has geometric mean of the arc length scaling \see OpenCMISS_FieldScalingTypes,OpenCMISS
   !>@}
   !>@}
 
@@ -4477,41 +4478,41 @@ MODULE OpenCMISS_Iron
 
   !Module parameters
 
-  !> \addtogroup OPENCMISS_GeneratedMeshConstants OpenCMISS::Iron::GeneratedMesh::Constants
+  !> \addtogroup OpenCMISS_GeneratedMeshConstants OpenCMISS::Iron::GeneratedMesh::Constants
   !> \brief Generated mesh constants.
   !>@{
-  !> \addtogroup OPENCMISS_GeneratedMeshTypes OpenCMISS::Iron::GeneratedMesh::Types
+  !> \addtogroup OpenCMISS_GeneratedMeshTypes OpenCMISS::Iron::GeneratedMesh::Types
   !> \brief Generated mesh types.
-  !> \see OpenCMISS::Iron::GeneratedMesh,OPENCMISS
+  !> \see OpenCMISS::Iron::GeneratedMesh,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_REGULAR_MESH_TYPE = GENERATED_MESH_REGULAR_MESH_TYPE !<A regular generated mesh. \see OPENCMISS_GeneratedMeshTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_POLAR_MESH_TYPE = GENERATED_MESH_POLAR_MESH_TYPE !<A polar generated mesh. \see OPENCMISS_GeneratedMeshTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_FRACTAL_TREE_MESH_TYPE = GENERATED_MESH_FRACTAL_TREE_MESH_TYPE !<A fractal tree generated mesh. \see OPENCMISS_GeneratedMeshTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_CYLINDER_MESH_TYPE = GENERATED_MESH_CYLINDER_MESH_TYPE !<A cylinder generated mesh. \see OPENCMISS_GeneratedMeshTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_ELLIPSOID_MESH_TYPE = GENERATED_MESH_ELLIPSOID_MESH_TYPE !<An ellipsoid generated mesh. \see OPENCMISS_GeneratedMeshTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_REGULAR_MESH_TYPE = GENERATED_MESH_REGULAR_MESH_TYPE !<A regular generated mesh. \see OpenCMISS_GeneratedMeshTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_POLAR_MESH_TYPE = GENERATED_MESH_POLAR_MESH_TYPE !<A polar generated mesh. \see OpenCMISS_GeneratedMeshTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_FRACTAL_TREE_MESH_TYPE = GENERATED_MESH_FRACTAL_TREE_MESH_TYPE !<A fractal tree generated mesh. \see OpenCMISS_GeneratedMeshTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_CYLINDER_MESH_TYPE = GENERATED_MESH_CYLINDER_MESH_TYPE !<A cylinder generated mesh. \see OpenCMISS_GeneratedMeshTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_ELLIPSOID_MESH_TYPE = GENERATED_MESH_ELLIPSOID_MESH_TYPE !<An ellipsoid generated mesh. \see OpenCMISS_GeneratedMeshTypes,OpenCMISS
   !>@}
   !>@}
 
-  !> \addtogroup OPENCMISS_GeneratedMeshConstants OpenCMISS::Iron::GeneratedMesh::Constants
+  !> \addtogroup OpenCMISS_GeneratedMeshConstants OpenCMISS::Iron::GeneratedMesh::Constants
   !> \brief Generated mesh constants.
   !>@{
-  !> \addtogroup OPENCMISS_GeneratedMeshSurfaceTypes OpenCMISS::Iron::GeneratedMesh::SurfaceTypes
+  !> \addtogroup OpenCMISS_GeneratedMeshSurfaceTypes OpenCMISS::Iron::GeneratedMesh::SurfaceTypes
   !> \brief Generated mesh surface types.
-  !> \see OpenCMISS::Iron::GeneratedMesh,OPENCMISS
+  !> \see OpenCMISS::Iron::GeneratedMesh,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_CYLINDER_INNER_SURFACE = GENERATED_MESH_CYLINDER_INNER_SURFACE !<Cylinder inner surface constant. \see OPENCMISS_GeneratedMeshSurfaceTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_CYLINDER_OUTER_SURFACE = GENERATED_MESH_CYLINDER_OUTER_SURFACE !<Cylinder outer surface. \see OPENCMISS_GeneratedMeshSurfaceTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_CYLINDER_TOP_SURFACE = GENERATED_MESH_CYLINDER_TOP_SURFACE !<Cylinder top surface constant. \see OPENCMISS_GeneratedMeshSurfaceTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_CYLINDER_BOTTOM_SURFACE = GENERATED_MESH_CYLINDER_BOTTOM_SURFACE !<Cylinder bottom surface constant. \see OPENCMISS_GeneratedMeshSurfaceTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_ELLIPSOID_INNER_SURFACE = GENERATED_MESH_ELLIPSOID_INNER_SURFACE !<Ellipsoid inner surface constant. \see OPENCMISS_GeneratedMeshSurfaceTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_ELLIPSOID_OUTER_SURFACE = GENERATED_MESH_ELLIPSOID_OUTER_SURFACE !<Ellipsoid outer surface constant. \see OPENCMISS_GeneratedMeshSurfaceTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_ELLIPSOID_TOP_SURFACE = GENERATED_MESH_ELLIPSOID_TOP_SURFACE !<Ellipsoid top surface constant. \see OPENCMISS_GeneratedMeshSurfaceTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_REGULAR_LEFT_SURFACE = GENERATED_MESH_REGULAR_LEFT_SURFACE !<Regular left surface constant. \see OPENCMISS_GeneratedMeshSurfaceTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_REGULAR_RIGHT_SURFACE = GENERATED_MESH_REGULAR_RIGHT_SURFACE !<Regular right surface constant. \see OPENCMISS_GeneratedMeshSurfaceTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_REGULAR_TOP_SURFACE = GENERATED_MESH_REGULAR_TOP_SURFACE !<Regular top surface constant. \see OPENCMISS_GeneratedMeshSurfaceTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_REGULAR_BOTTOM_SURFACE = GENERATED_MESH_REGULAR_BOTTOM_SURFACE !<Regular bottom surface constant. \see OPENCMISS_GeneratedMeshSurfaceTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_REGULAR_FRONT_SURFACE = GENERATED_MESH_REGULAR_FRONT_SURFACE !<Regular front surface constant. \see OPENCMISS_GeneratedMeshSurfaceTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_REGULAR_BACK_SURFACE = GENERATED_MESH_REGULAR_BACK_SURFACE !<Regular back surface constant. \see OPENCMISS_GeneratedMeshSurfaceTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_CYLINDER_INNER_SURFACE = GENERATED_MESH_CYLINDER_INNER_SURFACE !<Cylinder inner surface constant. \see OpenCMISS_GeneratedMeshSurfaceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_CYLINDER_OUTER_SURFACE = GENERATED_MESH_CYLINDER_OUTER_SURFACE !<Cylinder outer surface. \see OpenCMISS_GeneratedMeshSurfaceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_CYLINDER_TOP_SURFACE = GENERATED_MESH_CYLINDER_TOP_SURFACE !<Cylinder top surface constant. \see OpenCMISS_GeneratedMeshSurfaceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_CYLINDER_BOTTOM_SURFACE = GENERATED_MESH_CYLINDER_BOTTOM_SURFACE !<Cylinder bottom surface constant. \see OpenCMISS_GeneratedMeshSurfaceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_ELLIPSOID_INNER_SURFACE = GENERATED_MESH_ELLIPSOID_INNER_SURFACE !<Ellipsoid inner surface constant. \see OpenCMISS_GeneratedMeshSurfaceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_ELLIPSOID_OUTER_SURFACE = GENERATED_MESH_ELLIPSOID_OUTER_SURFACE !<Ellipsoid outer surface constant. \see OpenCMISS_GeneratedMeshSurfaceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_ELLIPSOID_TOP_SURFACE = GENERATED_MESH_ELLIPSOID_TOP_SURFACE !<Ellipsoid top surface constant. \see OpenCMISS_GeneratedMeshSurfaceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_REGULAR_LEFT_SURFACE = GENERATED_MESH_REGULAR_LEFT_SURFACE !<Regular left surface constant. \see OpenCMISS_GeneratedMeshSurfaceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_REGULAR_RIGHT_SURFACE = GENERATED_MESH_REGULAR_RIGHT_SURFACE !<Regular right surface constant. \see OpenCMISS_GeneratedMeshSurfaceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_REGULAR_TOP_SURFACE = GENERATED_MESH_REGULAR_TOP_SURFACE !<Regular top surface constant. \see OpenCMISS_GeneratedMeshSurfaceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_REGULAR_BOTTOM_SURFACE = GENERATED_MESH_REGULAR_BOTTOM_SURFACE !<Regular bottom surface constant. \see OpenCMISS_GeneratedMeshSurfaceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_REGULAR_FRONT_SURFACE = GENERATED_MESH_REGULAR_FRONT_SURFACE !<Regular front surface constant. \see OpenCMISS_GeneratedMeshSurfaceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_GENERATED_MESH_REGULAR_BACK_SURFACE = GENERATED_MESH_REGULAR_BACK_SURFACE !<Regular back surface constant. \see OpenCMISS_GeneratedMeshSurfaceTypes,OpenCMISS
   !>@}
   !>@}
 
@@ -4899,48 +4900,48 @@ MODULE OpenCMISS_Iron
 
   !Module parameters
 
-  !> \addtogroup OPENCMISS_InterfaceConditionConstants OpenCMISS::Iron::InterfaceConditions::Constants
+  !> \addtogroup OpenCMISS_InterfaceConditionConstants OpenCMISS::Iron::InterfaceConditions::Constants
   !> \brief Interface conditions constants.
   !>@{
-  !> \addtogroup OPENCMISS_InterfaceConditionMethods OpenCMISS::Iron::InterfaceConditions::Methods
+  !> \addtogroup OpenCMISS_InterfaceConditionMethods OpenCMISS::Iron::InterfaceConditions::Methods
   !> \brief Interface condition methods.
-  !> \see OpenCMISS::Iron::InterfaceConditions,OPENCMISS
+  !> \see OpenCMISS::Iron::InterfaceConditions,OpenCMISS
   !>@{
   INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD = &
-    & INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD !<Lagrange multipliers interface condition method. \see OPENCMISS_InterfaceConditionMethods,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD = INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD !<Augmented Lagrange multiplers interface condition method. \see OPENCMISS_InterfaceConditionMethods,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_PENALTY_METHOD = INTERFACE_CONDITION_PENALTY_METHOD !<Penalty interface condition method. \see OPENCMISS_InterfaceConditionMethods,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_POINT_TO_POINT_METHOD = INTERFACE_CONDITION_POINT_TO_POINT_METHOD !<Point to point interface condition method. \see OPENCMISS_InterfaceConditionMethods,OPENCMISS
+    & INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD !<Lagrange multipliers interface condition method. \see OpenCMISS_InterfaceConditionMethods,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD = INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD !<Augmented Lagrange multiplers interface condition method. \see OpenCMISS_InterfaceConditionMethods,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_PENALTY_METHOD = INTERFACE_CONDITION_PENALTY_METHOD !<Penalty interface condition method. \see OpenCMISS_InterfaceConditionMethods,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_POINT_TO_POINT_METHOD = INTERFACE_CONDITION_POINT_TO_POINT_METHOD !<Point to point interface condition method. \see OpenCMISS_InterfaceConditionMethods,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_InterfaceConditionOperators OpenCMISS::Iron::InterfaceConditions::Operators
+  !> \addtogroup OpenCMISS_InterfaceConditionOperators OpenCMISS::Iron::InterfaceConditions::Operators
   !> \brief Interface condition operator types.
-  !> \see OpenCMISS::Iron::InterfaceConditions,OPENCMISS
+  !> \see OpenCMISS::Iron::InterfaceConditions,OpenCMISS
   !>@{
   INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_FIELD_CONTINUITY_OPERATOR = &
-    & INTERFACE_CONDITION_FIELD_CONTINUITY_OPERATOR !<Continuous field operator, i.e., lambda.(u1_gauss-u2_gauss). \see OPENCMISS_InterfaceConditionOperators,OPENCMISS
+    & INTERFACE_CONDITION_FIELD_CONTINUITY_OPERATOR !<Continuous field operator, i.e., lambda.(u1_gauss-u2_gauss). \see OpenCMISS_InterfaceConditionOperators,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_FIELD_NORMAL_CONTINUITY_OPERATOR = &
-    & INTERFACE_CONDITION_FIELD_NORMAL_CONTINUITY_OPERATOR !<Continuous field normal operator, i.e., lambda(u_1.n_1-u_2.n_2). \see OPENCMISS_InterfaceConditionOperators,OPENCMISS
+    & INTERFACE_CONDITION_FIELD_NORMAL_CONTINUITY_OPERATOR !<Continuous field normal operator, i.e., lambda(u_1.n_1-u_2.n_2). \see OpenCMISS_InterfaceConditionOperators,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_FLS_CONTACT_OPERATOR= &
-    & INTERFACE_CONDITION_FLS_CONTACT_OPERATOR !<Frictionless contact operator, i.e., lambda.(x_1.n-x_2.n). \see OPENCMISS_InterfaceConditionOperators,OPENCMISS
+    & INTERFACE_CONDITION_FLS_CONTACT_OPERATOR !<Frictionless contact operator, i.e., lambda.(x_1.n-x_2.n). \see OpenCMISS_InterfaceConditionOperators,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_FLS_CONTACT_REPROJECT_OPERATOR= &
-    & INTERFACE_CONDITION_FLS_CONTACT_REPROJECT_OPERATOR !<Frictionless contact operator, reproject at each newton iteration and has geometric linearisation terms i.e., lambda.(x_1.n-x_2.n). \see OPENCMISS_InterfaceConditionOperators,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_SOLID_FLUID_OPERATOR = INTERFACE_CONDITION_SOLID_FLUID_OPERATOR !<Solid fluid operator, i.e., lambda.(v_f-du_s/dt). \see OPENCMISS_InterfaceConditionOperators,OPENCMISS
+    & INTERFACE_CONDITION_FLS_CONTACT_REPROJECT_OPERATOR !<Frictionless contact operator, reproject at each newton iteration and has geometric linearisation terms i.e., lambda.(x_1.n-x_2.n). \see OpenCMISS_InterfaceConditionOperators,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_SOLID_FLUID_OPERATOR = INTERFACE_CONDITION_SOLID_FLUID_OPERATOR !<Solid fluid operator, i.e., lambda.(v_f-du_s/dt). \see OpenCMISS_InterfaceConditionOperators,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_SOLID_FLUID_NORMAL_OPERATOR = &
-    & INTERFACE_CONDITION_SOLID_FLUID_NORMAL_OPERATOR !<Solid fluid normal operator, i.e., lambda(v_f.n_f-du_s/dt.n_s). \see OPENCMISS_InterfaceConditionOperators,OPENCMISS
+    & INTERFACE_CONDITION_SOLID_FLUID_NORMAL_OPERATOR !<Solid fluid normal operator, i.e., lambda(v_f.n_f-du_s/dt.n_s). \see OpenCMISS_InterfaceConditionOperators,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_InterfaceConditionOutputTypes OpenCMISS::Iron::InterfaceConditions::OutputTypes
+  !> \addtogroup OpenCMISS_InterfaceConditionOutputTypes OpenCMISS::Iron::InterfaceConditions::OutputTypes
   !> \brief Interface conditions output types
-  !> \see OpenCMISS::Iron::InterfaceConditions,OPENCMISS
+  !> \see OpenCMISS::Iron::InterfaceConditions,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_NO_OUTPUT = INTERFACE_CONDITION_NO_OUTPUT!<No output from the interface condition \see OPENCMISS_InterfaceConditionOutputTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_PROGRESS_OUTPUT = INTERFACE_CONDITION_PROGRESS_OUTPUT !<Progress information output for the interface condition \see OPENCMISS_InterfaceConditionOutputTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_NO_OUTPUT = INTERFACE_CONDITION_NO_OUTPUT!<No output from the interface condition \see OpenCMISS_InterfaceConditionOutputTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_PROGRESS_OUTPUT = INTERFACE_CONDITION_PROGRESS_OUTPUT !<Progress information output for the interface condition \see OpenCMISS_InterfaceConditionOutputTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_InterfaceConditionIntegrationTypes OpenCMISS::Iron::InterfaceConditions::IntegrationTypes
+  !> \addtogroup OpenCMISS_InterfaceConditionIntegrationTypes OpenCMISS::Iron::InterfaceConditions::IntegrationTypes
   !> \brief Interface condition integration types.
-  !> \see OpenCMISS::Iron::InterfaceConditions,OPENCMISS
+  !> \see OpenCMISS::Iron::InterfaceConditions,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_GAUSS_INTEGRATION=INTERFACE_CONDITION_GAUSS_INTEGRATION !<Gauss points integration type, i.e. Loop over element Gauss points and sum up their contribution. \see OPENCMISS_InterfaceConditionIntegrationTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_DATA_POINTS_INTEGRATION=INTERFACE_CONDITION_DATA_POINTS_INTEGRATION !< Data points integration type i.e. Loop over data points and  sum up their contribution. \see OPENCMISS_InterfaceConditionIntegrationTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_GAUSS_INTEGRATION=INTERFACE_CONDITION_GAUSS_INTEGRATION !<Gauss points integration type, i.e. Loop over element Gauss points and sum up their contribution. \see OpenCMISS_InterfaceConditionIntegrationTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_DATA_POINTS_INTEGRATION=INTERFACE_CONDITION_DATA_POINTS_INTEGRATION !< Data points integration type i.e. Loop over data points and  sum up their contribution. \see OpenCMISS_InterfaceConditionIntegrationTypes,OpenCMISS
   !>@}
   !>@}
 
@@ -5169,14 +5170,14 @@ MODULE OpenCMISS_Iron
 
   !Module parameters
 
-  !> \addtogroup OPENCMISS_InterfaceMatricesTimeDependenceTypes OpenCMISS::Iron::InterfaceMatrices::TimeDependenceTypes
+  !> \addtogroup OpenCMISS_InterfaceMatricesTimeDependenceTypes OpenCMISS::Iron::InterfaceMatrices::TimeDependenceTypes
   !> \brief Interface matrices time dependency types
-  !> \see OPENCMISS::Iron::InterfaceEquations,OPENCMISS
+  !> \see OpenCMISS::Iron::InterfaceEquations,OpenCMISS
    !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_MATRIX_STATIC=INTERFACE_MATRIX_STATIC !<Interface matrix is of static type \see OPENCMISS_InterfaceMatricesTimeDependenceTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_MATRIX_QUASI_STATIC=INTERFACE_MATRIX_QUASI_STATIC !<Interface matrix is of quasi-static type \see OPENCMISS_InterfaceMatricesTimeDependenceTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC=INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC !<Interface matrix is of first order dynamic type \see OPENCMISS_InterfaceMatricesTimeDependenceTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_MATRIX_SECOND_ORDER_DYNAMIC=INTERFACE_MATRIX_SECOND_ORDER_DYNAMIC !<Interface matrix is of second order dynamic type \see OPENCMISS_InterfaceMatricesTimeDependenceTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_MATRIX_STATIC=INTERFACE_MATRIX_STATIC !<Interface matrix is of static type \see OpenCMISS_InterfaceMatricesTimeDependenceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_MATRIX_QUASI_STATIC=INTERFACE_MATRIX_QUASI_STATIC !<Interface matrix is of quasi-static type \see OpenCMISS_InterfaceMatricesTimeDependenceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC=INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC !<Interface matrix is of first order dynamic type \see OpenCMISS_InterfaceMatricesTimeDependenceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_MATRIX_SECOND_ORDER_DYNAMIC=INTERFACE_MATRIX_SECOND_ORDER_DYNAMIC !<Interface matrix is of second order dynamic type \see OpenCMISS_InterfaceMatricesTimeDependenceTypes,OpenCMISS
   !>@}
 
   !Module types
@@ -5196,23 +5197,23 @@ MODULE OpenCMISS_Iron
 
   !Module parameters
 
-  !> \addtogroup OPENCMISS_MeshConstants OpenCMISS::Iron::Mesh::Constants
+  !> \addtogroup OpenCMISS_MeshConstants OpenCMISS::Iron::Mesh::Constants
   !> \brief Mesh constants.
   !>@{
-  !> \addtogroup OPENCMISS_DecompositionTypes OpenCMISS::Iron::Mesh::DecompositionTypes
+  !> \addtogroup OpenCMISS_DecompositionTypes OpenCMISS::Iron::Mesh::DecompositionTypes
   !> \brief The Decomposition types parameters
-  !> \see OpenCMISS::Iron::Mesh,OPENCMISS
+  !> \see OpenCMISS::Iron::Mesh,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_DECOMPOSITION_ALL_TYPE = DECOMPOSITION_ALL_TYPE !<The decomposition contains all elements. \see OPENCMISS_DecompositionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_DECOMPOSITION_CALCULATED_TYPE = DECOMPOSITION_CALCULATED_TYPE !<The element decomposition is calculated by graph partitioning. \see OPENCMISS_DecompositionTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_DECOMPOSITION_USER_DEFINED_TYPE = DECOMPOSITION_USER_DEFINED_TYPE !<The user will set the element decomposition. \see OPENCMISS_DecompositionTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DECOMPOSITION_ALL_TYPE = DECOMPOSITION_ALL_TYPE !<The decomposition contains all elements. \see OpenCMISS_DecompositionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DECOMPOSITION_CALCULATED_TYPE = DECOMPOSITION_CALCULATED_TYPE !<The element decomposition is calculated by graph partitioning. \see OpenCMISS_DecompositionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DECOMPOSITION_USER_DEFINED_TYPE = DECOMPOSITION_USER_DEFINED_TYPE !<The user will set the element decomposition. \see OpenCMISS_DecompositionTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_MeshBoundaryTypes OpenCMISS::Iron::Mesh::MeshBoundaryTypes
+  !> \addtogroup OpenCMISS_MeshBoundaryTypes OpenCMISS::Iron::Mesh::MeshBoundaryTypes
   !> \brief The boundary type parameters for a mesh domain
-  !> \see OpenCMISS::Iron::Mesh,OPENCMISS
+  !> \see OpenCMISS::Iron::Mesh,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_MESH_OFF_DOMAIN_BOUNDARY = MESH_OFF_DOMAIN_BOUNDARY !<The node/element is not on the mesh domain boundary \see OPENCMISS_MeshBoundaryTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_MESH_ON_DOMAIN_BOUNDARY = MESH_ON_DOMAIN_BOUNDARY !<The node/element is on the mesh domain boundary \see OPENCMISS_MeshBoundaryTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_MESH_OFF_DOMAIN_BOUNDARY = MESH_OFF_DOMAIN_BOUNDARY !<The node/element is not on the mesh domain boundary \see OpenCMISS_MeshBoundaryTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_MESH_ON_DOMAIN_BOUNDARY = MESH_ON_DOMAIN_BOUNDARY !<The node/element is on the mesh domain boundary \see OpenCMISS_MeshBoundaryTypes,OpenCMISS
   !>@}
   !>@}
 
@@ -5596,29 +5597,29 @@ MODULE OpenCMISS_Iron
 !!
 !!==================================================================================================================================
 
-  !> \addtogroup OPENCMISS_MatrixVectorConstants OpenCMISS::Iron::MatrixVector::Constants
+  !> \addtogroup OpenCMISS_MatrixVectorConstants OpenCMISS::Iron::MatrixVector::Constants
   !> \brief Distributed matrix and vector function constants.
   !>@{
-  !> \addtogroup OPENCMISS_MatrixStorageTypes OpenCMISS::Iron::MatrixVector::MatrixStorageTypes
+  !> \addtogroup OpenCMISS_MatrixStorageTypes OpenCMISS::Iron::MatrixVector::MatrixStorageTypes
   !> \brief Type of matrix storage.
-  !> \see OpenCMISS::Iron::MatrixVectorConstants,OPENCMISS
+  !> \see OpenCMISS::Iron::MatrixVectorConstants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_MATRIX_BLOCK_STORAGE_TYPE=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE !<Distributed matrix block storage type \see OPENCMISS_MatrixStorageTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_MATRIX_DIAGONAL_STORAGE_TYPE=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE !<Distributed matrix diagonal storage type \see OPENCMISS_MatrixStorageTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_MATRIX_COLUMN_MAJOR_STORAGE_TYPE=DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE !<Distributed matrix column major storage type \see OPENCMISS_MatrixStorageTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_MATRIX_ROW_MAJOR_STORAGE_TYPE=DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE !<Distributed matrix row major storage type \see OPENCMISS_MatrixStorageTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_MATRIX_COMPRESSED_ROW_STORAGE_TYPE=DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE !<Distributed matrix compressed row storage type \see OPENCMISS_MatrixStorageTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE=DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE !<Distributed matrix compressed column storage type \see OPENCMISS_MatrixStorageTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_MATRIX_ROW_COLUMN_STORAGE_TYPE=DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE !<Distributed matrix row-column storage type \see OPENCMISS_MatrixStorageTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_MATRIX_BLOCK_STORAGE_TYPE=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE !<Distributed matrix block storage type \see OpenCMISS_MatrixStorageTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_MATRIX_DIAGONAL_STORAGE_TYPE=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE !<Distributed matrix diagonal storage type \see OpenCMISS_MatrixStorageTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_MATRIX_COLUMN_MAJOR_STORAGE_TYPE=DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE !<Distributed matrix column major storage type \see OpenCMISS_MatrixStorageTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_MATRIX_ROW_MAJOR_STORAGE_TYPE=DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE !<Distributed matrix row major storage type \see OpenCMISS_MatrixStorageTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_MATRIX_COMPRESSED_ROW_STORAGE_TYPE=DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE !<Distributed matrix compressed row storage type \see OpenCMISS_MatrixStorageTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE=DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE !<Distributed matrix compressed column storage type \see OpenCMISS_MatrixStorageTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_MATRIX_ROW_COLUMN_STORAGE_TYPE=DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE !<Distributed matrix row-column storage type \see OpenCMISS_MatrixStorageTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_MatrixVectorDataTypes OpenCMISS::Iron::MatrixVector::DataTypes
+  !> \addtogroup OpenCMISS_MatrixVectorDataTypes OpenCMISS::Iron::MatrixVector::DataTypes
   !> \brief Type of data stored in matrices and vectors.
-  !> \see OpenCMISS::Iron::MatrixVectorConstants,OPENCMISS
+  !> \see OpenCMISS::Iron::MatrixVectorConstants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_MATRIX_VECTOR_INTG_TYPE=DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE !<Integer distributed matrix-vector data type \see OPENCMISS_MatrixVectorDataTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_MATRIX_VECTOR_SP_TYPE=DISTRIBUTED_MATRIX_VECTOR_SP_TYPE !<Single precision real distributed matrix-vector data type \see OPENCMISS_MatrixVectorDataTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_MATRIX_VECTOR_DP_TYPE=DISTRIBUTED_MATRIX_VECTOR_DP_TYPE !<Double precision real distributed matrix-vector data type \see OPENCMISS_MatrixVectorDataTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_MATRIX_VECTOR_L_TYPE=DISTRIBUTED_MATRIX_VECTOR_L_TYPE !<Logical distributed matrix-vector data type \see OPENCMISS_MatrixVectorDataTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_MATRIX_VECTOR_INTG_TYPE=DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE !<Integer distributed matrix-vector data type \see OpenCMISS_MatrixVectorDataTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_MATRIX_VECTOR_SP_TYPE=DISTRIBUTED_MATRIX_VECTOR_SP_TYPE !<Single precision real distributed matrix-vector data type \see OpenCMISS_MatrixVectorDataTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_MATRIX_VECTOR_DP_TYPE=DISTRIBUTED_MATRIX_VECTOR_DP_TYPE !<Double precision real distributed matrix-vector data type \see OpenCMISS_MatrixVectorDataTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_MATRIX_VECTOR_L_TYPE=DISTRIBUTED_MATRIX_VECTOR_L_TYPE !<Logical distributed matrix-vector data type \see OpenCMISS_MatrixVectorDataTypes,OpenCMISS
   !>@}
   !>@}
 
@@ -5788,233 +5789,233 @@ MODULE OpenCMISS_Iron
 
   !Module parameters
 
-  !> \addtogroup OPENCMISS_ProblemConstants OpenCMISS::Iron::Problem::Constants
+  !> \addtogroup OpenCMISS_ProblemConstants OpenCMISS::Iron::Problem::Constants
   !> \brief Problem constants.
   !>@{
-  !> \addtogroup OPENCMISS_ProblemClasses OpenCMISS::Iron::Problem::Classes
+  !> \addtogroup OpenCMISS_ProblemClasses OpenCMISS::Iron::Problem::Classes
   !> \brief Problem classes.
-  !> \see OpenCMISS::Iron::Problem,OPENCMISS
+  !> \see OpenCMISS::Iron::Problem,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NO_CLASS = PROBLEM_NO_CLASS !<No problem class \see OPENCMISS_ProblemClasses,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_ELASTICITY_CLASS = PROBLEM_ELASTICITY_CLASS !<Elasticity problem class \see OPENCMISS_ProblemClasses,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FLUID_MECHANICS_CLASS = PROBLEM_FLUID_MECHANICS_CLASS !<Fluid mechanics problem class \see OPENCMISS_ProblemClasses,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_ELECTROMAGNETICS_CLASS = PROBLEM_ELECTROMAGNETICS_CLASS !<Electromagnetics problem class \see OPENCMISS_ProblemClasses,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_CLASSICAL_FIELD_CLASS = PROBLEM_CLASSICAL_FIELD_CLASS !<Classical field problem class \see OPENCMISS_ProblemClasses,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_BIOELECTRICS_CLASS = PROBLEM_BIOELECTRICS_CLASS !<Bioelectrics problem class \see OPENCMISS_ProblemClasses,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MODAL_CLASS = PROBLEM_MODAL_CLASS !<Modal problem class \see OPENCMISS_ProblemClasses,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FITTING_CLASS = PROBLEM_FITTING_CLASS !<Fitting problem class \see OPENCMISS_ProblemClasses,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_OPTIMISATION_CLASS = PROBLEM_OPTIMISATION_CLASS !<Optimisation problem class \see OPENCMISS_ProblemClasses,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MULTI_PHYSICS_CLASS = PROBLEM_MULTI_PHYSICS_CLASS !<Multi physics problem class \see OPENCMISS_ProblemClasses,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NO_CLASS = PROBLEM_NO_CLASS !<No problem class \see OpenCMISS_ProblemClasses,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_ELASTICITY_CLASS = PROBLEM_ELASTICITY_CLASS !<Elasticity problem class \see OpenCMISS_ProblemClasses,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FLUID_MECHANICS_CLASS = PROBLEM_FLUID_MECHANICS_CLASS !<Fluid mechanics problem class \see OpenCMISS_ProblemClasses,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_ELECTROMAGNETICS_CLASS = PROBLEM_ELECTROMAGNETICS_CLASS !<Electromagnetics problem class \see OpenCMISS_ProblemClasses,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_CLASSICAL_FIELD_CLASS = PROBLEM_CLASSICAL_FIELD_CLASS !<Classical field problem class \see OpenCMISS_ProblemClasses,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_BIOELECTRICS_CLASS = PROBLEM_BIOELECTRICS_CLASS !<Bioelectrics problem class \see OpenCMISS_ProblemClasses,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MODAL_CLASS = PROBLEM_MODAL_CLASS !<Modal problem class \see OpenCMISS_ProblemClasses,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FITTING_CLASS = PROBLEM_FITTING_CLASS !<Fitting problem class \see OpenCMISS_ProblemClasses,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_OPTIMISATION_CLASS = PROBLEM_OPTIMISATION_CLASS !<Optimisation problem class \see OpenCMISS_ProblemClasses,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MULTI_PHYSICS_CLASS = PROBLEM_MULTI_PHYSICS_CLASS !<Multi physics problem class \see OpenCMISS_ProblemClasses,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_ProblemTypes OpenCMISS::Iron::Problem::Types
+  !> \addtogroup OpenCMISS_ProblemTypes OpenCMISS::Iron::Problem::Types
   !> \brief Problem Types.
-  !> \see OpenCMISS::Iron::Problem,OPENCMISS
+  !> \see OpenCMISS::Iron::Problem,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NO_TYPE = PROBLEM_NO_TYPE !<No problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LINEAR_ELASTICITY_TYPE = PROBLEM_LINEAR_ELASTICITY_TYPE !<Linear elasticity problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_TYPE = PROBLEM_FINITE_ELASTICITY_TYPE !<Finite elasticity problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LINEAR_ELASTICITY_CONTACT_TYPE = PROBLEM_LINEAR_ELASTICITY_CONTACT_TYPE !<Linear elasticity problem subject to contact contstraint type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_CONTACT_TYPE = PROBLEM_FINITE_ELASTICITY_CONTACT_TYPE !<Finite elasticity problem subject to contact constraint type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STOKES_EQUATION_TYPE = PROBLEM_STOKES_EQUATION_TYPE !<Stokes equation problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NAVIER_STOKES_EQUATION_TYPE = PROBLEM_NAVIER_STOKES_EQUATION_TYPE !<Navier-Stokes problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_DARCY_EQUATION_TYPE = PROBLEM_DARCY_EQUATION_TYPE !<Darcy equation problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_POISEUILLE_EQUATION_TYPE = PROBLEM_POISEUILLE_EQUATION_TYPE !<Poiseuille equation problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_BURGERS_EQUATION_TYPE = PROBLEM_BURGERS_EQUATION_TYPE !<Burgers equation problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_ELECTROSTATIC_TYPE = PROBLEM_ELECTROSTATIC_TYPE !<Electrostatic problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MAGNETOSTATIC_TYPE = PROBLEM_MAGNETOSTATIC_TYPE !<Magnetostatic problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MAXWELLS_EQUATIONS_TYPE = PROBLEM_MAXWELLS_EQUATIONS_TYPE !<Maxwell's equations problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LAPLACE_EQUATION_TYPE = PROBLEM_LAPLACE_EQUATION_TYPE !<Laplace problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_POISSON_EQUATION_TYPE = PROBLEM_POISSON_EQUATION_TYPE !<Poisson problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_HELMHOLTZ_EQUATION_TYPE = PROBLEM_HELMHOLTZ_EQUATION_TYPE !<Helmholtz problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_WAVE_EQUATION_TYPE = PROBLEM_WAVE_EQUATION_TYPE !<Wave equation problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_DIFFUSION_EQUATION_TYPE = PROBLEM_DIFFUSION_EQUATION_TYPE !<Diffusion equation problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_ADVECTION_DIFFUSION_EQUATION_TYPE = PROBLEM_ADVECTION_DIFFUSION_EQUATION_TYPE !<Advection-Diffusion equation problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_REACTION_DIFFUSION_EQUATION_TYPE = PROBLEM_REACTION_DIFFUSION_EQUATION_TYPE !<Reaction-Diffusion equation problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_BIHARMONIC_EQUATION_TYPE = PROBLEM_BIHARMONIC_EQUATION_TYPE !<Bi-harmonic equation problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_EQUATION_TYPE = PROBLEM_MONODOMAIN_EQUATION_TYPE !<Monodomain equation problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_BIDOMAIN_EQUATION_TYPE = PROBLEM_BIDOMAIN_EQUATION_TYPE !<Bidomain equation problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LINEAR_ELASTIC_MODAL_TYPE = PROBLEM_LINEAR_ELASTIC_MODAL_TYPE !<Linear elastic modal problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_DATA_FITTING_TYPE = PROBLEM_DATA_FITTING_TYPE !<Galerkin projection problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_DARCY_TYPE = PROBLEM_FINITE_ELASTICITY_DARCY_TYPE !<Finite Elasticity Darcy problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_STOKES_TYPE = PROBLEM_FINITE_ELASTICITY_STOKES_TYPE !<Finite Elasticity Stokes problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_TYPE = PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_TYPE !<Finite Elasticity NavierStokes problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_DIFFUSION_DIFFUSION_TYPE = PROBLEM_DIFFUSION_DIFFUSION_TYPE !<Diffusion Diffusion problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_DIFFUSION_ADVECTION_DIFFUSION_TYPE = PROBLEM_DIFFUSION_ADVECTION_DIFFUSION_TYPE !<Diffusion Advection Diffusion problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MULTI_COMPARTMENT_TRANSPORT_TYPE = PROBLEM_MULTI_COMPARTMENT_TRANSPORT_TYPE !<Multi-compartment transport problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_FLUID_PRESSURE_TYPE = PROBLEM_FINITE_ELASTICITY_FLUID_PRESSURE_TYPE !<Finite elasticity fluid pressure problem type \see OPENCMISS_ProblemTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE = PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE !<Monodomain finite elasticity problem type \see OPENCMISS_ProblemTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NO_TYPE = PROBLEM_NO_TYPE !<No problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LINEAR_ELASTICITY_TYPE = PROBLEM_LINEAR_ELASTICITY_TYPE !<Linear elasticity problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_TYPE = PROBLEM_FINITE_ELASTICITY_TYPE !<Finite elasticity problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LINEAR_ELASTICITY_CONTACT_TYPE = PROBLEM_LINEAR_ELASTICITY_CONTACT_TYPE !<Linear elasticity problem subject to contact contstraint type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_CONTACT_TYPE = PROBLEM_FINITE_ELASTICITY_CONTACT_TYPE !<Finite elasticity problem subject to contact constraint type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STOKES_EQUATION_TYPE = PROBLEM_STOKES_EQUATION_TYPE !<Stokes equation problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NAVIER_STOKES_EQUATION_TYPE = PROBLEM_NAVIER_STOKES_EQUATION_TYPE !<Navier-Stokes problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_DARCY_EQUATION_TYPE = PROBLEM_DARCY_EQUATION_TYPE !<Darcy equation problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_POISEUILLE_EQUATION_TYPE = PROBLEM_POISEUILLE_EQUATION_TYPE !<Poiseuille equation problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_BURGERS_EQUATION_TYPE = PROBLEM_BURGERS_EQUATION_TYPE !<Burgers equation problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_ELECTROSTATIC_TYPE = PROBLEM_ELECTROSTATIC_TYPE !<Electrostatic problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MAGNETOSTATIC_TYPE = PROBLEM_MAGNETOSTATIC_TYPE !<Magnetostatic problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MAXWELLS_EQUATIONS_TYPE = PROBLEM_MAXWELLS_EQUATIONS_TYPE !<Maxwell's equations problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LAPLACE_EQUATION_TYPE = PROBLEM_LAPLACE_EQUATION_TYPE !<Laplace problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_POISSON_EQUATION_TYPE = PROBLEM_POISSON_EQUATION_TYPE !<Poisson problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_HELMHOLTZ_EQUATION_TYPE = PROBLEM_HELMHOLTZ_EQUATION_TYPE !<Helmholtz problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_WAVE_EQUATION_TYPE = PROBLEM_WAVE_EQUATION_TYPE !<Wave equation problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_DIFFUSION_EQUATION_TYPE = PROBLEM_DIFFUSION_EQUATION_TYPE !<Diffusion equation problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_ADVECTION_DIFFUSION_EQUATION_TYPE = PROBLEM_ADVECTION_DIFFUSION_EQUATION_TYPE !<Advection-Diffusion equation problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_REACTION_DIFFUSION_EQUATION_TYPE = PROBLEM_REACTION_DIFFUSION_EQUATION_TYPE !<Reaction-Diffusion equation problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_BIHARMONIC_EQUATION_TYPE = PROBLEM_BIHARMONIC_EQUATION_TYPE !<Bi-harmonic equation problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_EQUATION_TYPE = PROBLEM_MONODOMAIN_EQUATION_TYPE !<Monodomain equation problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_BIDOMAIN_EQUATION_TYPE = PROBLEM_BIDOMAIN_EQUATION_TYPE !<Bidomain equation problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LINEAR_ELASTIC_MODAL_TYPE = PROBLEM_LINEAR_ELASTIC_MODAL_TYPE !<Linear elastic modal problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_DATA_FITTING_TYPE = PROBLEM_DATA_FITTING_TYPE !<Galerkin projection problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_DARCY_TYPE = PROBLEM_FINITE_ELASTICITY_DARCY_TYPE !<Finite Elasticity Darcy problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_STOKES_TYPE = PROBLEM_FINITE_ELASTICITY_STOKES_TYPE !<Finite Elasticity Stokes problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_TYPE = PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_TYPE !<Finite Elasticity NavierStokes problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_DIFFUSION_DIFFUSION_TYPE = PROBLEM_DIFFUSION_DIFFUSION_TYPE !<Diffusion Diffusion problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_DIFFUSION_ADVECTION_DIFFUSION_TYPE = PROBLEM_DIFFUSION_ADVECTION_DIFFUSION_TYPE !<Diffusion Advection Diffusion problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MULTI_COMPARTMENT_TRANSPORT_TYPE = PROBLEM_MULTI_COMPARTMENT_TRANSPORT_TYPE !<Multi-compartment transport problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_FLUID_PRESSURE_TYPE = PROBLEM_FINITE_ELASTICITY_FLUID_PRESSURE_TYPE !<Finite elasticity fluid pressure problem type \see OpenCMISS_ProblemTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE = PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE !<Monodomain finite elasticity problem type \see OpenCMISS_ProblemTypes,OpenCMISS
 
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE = &
-    & PROBLEM_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE !<Monodomain equation problem type \see OPENCMISS_ProblemTypes,OPENCMISS
+    & PROBLEM_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE !<Monodomain equation problem type \see OpenCMISS_ProblemTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_ProblemSubtypes OpenCMISS::Iron::Problem::Subtypes
+  !> \addtogroup OpenCMISS_ProblemSubtypes OpenCMISS::Iron::Problem::Subtypes
   !> \brief Problem Subtypes.
-  !> \see OpenCMISS::Iron::Problem,OPENCMISS
+  !> \see OpenCMISS::Iron::Problem,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NO_SUBTYPE = PROBLEM_NO_SUBTYPE !<No problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STATIC_STOKES_SUBTYPE = PROBLEM_STATIC_STOKES_SUBTYPE !<Static Stokes problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LAPLACE_STOKES_SUBTYPE = PROBLEM_LAPLACE_STOKES_SUBTYPE !<Laplace type Stokes problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_TRANSIENT_STOKES_SUBTYPE = PROBLEM_TRANSIENT_STOKES_SUBTYPE !<Transient Stokes problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_ALE_STOKES_SUBTYPE = PROBLEM_ALE_STOKES_SUBTYPE !<ALE Stokes problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_PGM_STOKES_SUBTYPE = PROBLEM_PGM_STOKES_SUBTYPE !<PGM Stokes problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_OPTIMISED_STOKES_SUBTYPE = PROBLEM_OPTIMISED_STOKES_SUBTYPE !<Optimised Stokes problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STATIC_NAVIER_STOKES_SUBTYPE = PROBLEM_STATIC_NAVIER_STOKES_SUBTYPE !<Static Navier-Stokes problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LAPLACE_NAVIER_STOKES_SUBTYPE = PROBLEM_LAPLACE_NAVIER_STOKES_SUBTYPE !<Laplace type Navier-Stokes problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_TRANSIENT_NAVIER_STOKES_SUBTYPE = PROBLEM_TRANSIENT_NAVIER_STOKES_SUBTYPE !<Transient Navier-Stokes problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE = PROBLEM_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE !<Transient stabilised Navier-Stokes problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NO_SUBTYPE = PROBLEM_NO_SUBTYPE !<No problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STATIC_STOKES_SUBTYPE = PROBLEM_STATIC_STOKES_SUBTYPE !<Static Stokes problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LAPLACE_STOKES_SUBTYPE = PROBLEM_LAPLACE_STOKES_SUBTYPE !<Laplace type Stokes problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_TRANSIENT_STOKES_SUBTYPE = PROBLEM_TRANSIENT_STOKES_SUBTYPE !<Transient Stokes problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_ALE_STOKES_SUBTYPE = PROBLEM_ALE_STOKES_SUBTYPE !<ALE Stokes problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_PGM_STOKES_SUBTYPE = PROBLEM_PGM_STOKES_SUBTYPE !<PGM Stokes problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_OPTIMISED_STOKES_SUBTYPE = PROBLEM_OPTIMISED_STOKES_SUBTYPE !<Optimised Stokes problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STATIC_NAVIER_STOKES_SUBTYPE = PROBLEM_STATIC_NAVIER_STOKES_SUBTYPE !<Static Navier-Stokes problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LAPLACE_NAVIER_STOKES_SUBTYPE = PROBLEM_LAPLACE_NAVIER_STOKES_SUBTYPE !<Laplace type Navier-Stokes problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_TRANSIENT_NAVIER_STOKES_SUBTYPE = PROBLEM_TRANSIENT_NAVIER_STOKES_SUBTYPE !<Transient Navier-Stokes problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE = PROBLEM_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE !<Transient stabilised Navier-Stokes problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MULTISCALE_NAVIER_STOKES_SUBTYPE = &
-    & PROBLEM_MULTISCALE_NAVIER_STOKES_SUBTYPE !<Transient stabilised Navier-Stokes problem with multiscale boundary coupling subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_TRANSIENT1D_NAVIER_STOKES_SUBTYPE = PROBLEM_TRANSIENT1D_NAVIER_STOKES_SUBTYPE !<TRANSIENT1D Navier-Stokes problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_COUPLED1D0D_NAVIER_STOKES_SUBTYPE = PROBLEM_COUPLED1D0D_NAVIER_STOKES_SUBTYPE !<Coupled 1D-DAE Navier-Stokes problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE = PROBLEM_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE !<TRANSIENT1D Navier-Stokes problem subtype with Advection \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE = PROBLEM_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE !<Coupled 1D-DAE Navier-Stokes problem subtype with Advection \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STREE1D0D_SUBTYPE = PROBLEM_STREE1D0D_NAVIER_STOKES_SUBTYPE !<Coupled 1D-DAE Navier-Stokes problem subtype with Advection \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STREE1D0D_ADV_SUBTYPE = PROBLEM_STREE1D0D_ADV_NAVIER_STOKES_SUBTYPE !<Coupled 1D-DAE Navier-Stokes problem subtype with Advection \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_ALE_NAVIER_STOKES_SUBTYPE = PROBLEM_ALE_NAVIER_STOKES_SUBTYPE !<ALE Navier-Stokes problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_PGM_NAVIER_STOKES_SUBTYPE = PROBLEM_PGM_NAVIER_STOKES_SUBTYPE !<PGM Navier-Stokes problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_OPTIMISED_NAVIER_STOKES_SUBTYPE = PROBLEM_OPTIMISED_NAVIER_STOKES_SUBTYPE !<Optimised Navier-Stokes problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STANDARD_DARCY_SUBTYPE = PROBLEM_STANDARD_DARCY_SUBTYPE !<Standard Darcy problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_QUASISTATIC_DARCY_SUBTYPE = PROBLEM_QUASISTATIC_DARCY_SUBTYPE !<Quasistatic Darcy problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_ALE_DARCY_SUBTYPE = PROBLEM_ALE_DARCY_SUBTYPE !<ALE Darcy problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_TRANSIENT_DARCY_SUBTYPE = PROBLEM_TRANSIENT_DARCY_SUBTYPE !<Transient Darcy problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_PGM_DARCY_SUBTYPE = PROBLEM_PGM_DARCY_SUBTYPE !<PGM Darcy problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE = PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE !<PGM Transient Darcy problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STANDARD_LAPLACE_SUBTYPE = PROBLEM_STANDARD_LAPLACE_SUBTYPE !<Standard Laplace problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_GENERALISED_LAPLACE_SUBTYPE = PROBLEM_GENERALISED_LAPLACE_SUBTYPE !<Generalised Laplace problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STATIC_POISEUILLE_SUBTYPE = PROBLEM_STATIC_POISEUILLE_SUBTYPE !<Static Poiseuille problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_DYNAMIC_POISEUILLE_SUBTYPE = PROBLEM_DYNAMIC_POISEUILLE_SUBTYPE !<Static Poiseuille problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE = PROBLEM_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE !<Linear source Poisson problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LINEAR_SOURCE_POISSON_SUBTYPE = PROBLEM_LINEAR_SOURCE_POISSON_SUBTYPE !<Linear source Poisson problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LINEAR_PRESSURE_POISSON_SUBTYPE = PROBLEM_LINEAR_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NONLINEAR_PRESSURE_POISSON_SUBTYPE = PROBLEM_NONLINEAR_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_ALE_PRESSURE_POISSON_SUBTYPE = PROBLEM_ALE_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FITTED_PRESSURE_POISSON_SUBTYPE = PROBLEM_FITTED_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NONLINEAR_SOURCE_POISSON_SUBTYPE = PROBLEM_NONLINEAR_SOURCE_POISSON_SUBTYPE !<Nonlinear source Poisson problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STANDARD_HELMHOLTZ_SUBTYPE = PROBLEM_STANDARD_HELMHOLTZ_SUBTYPE !<No source Helmholtz problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_GENERALISED_HELMHOLTZ_SUBTYPE = PROBLEM_GENERALISED_HELMHOLTZ_SUBTYPE !<No source Helmholtz problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NO_SOURCE_DIFFUSION_SUBTYPE = PROBLEM_NO_SOURCE_DIFFUSION_SUBTYPE !<No source Diffusion problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LINEAR_SOURCE_DIFFUSION_SUBTYPE = PROBLEM_LINEAR_SOURCE_DIFFUSION_SUBTYPE !<Linear source Diffusion problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NONLINEAR_SOURCE_DIFFUSION_SUBTYPE = PROBLEM_NONLINEAR_SOURCE_DIFFUSION_SUBTYPE !<Nonlinear source Diffusion problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NO_SOURCE_ALE_DIFFUSION_SUBTYPE = PROBLEM_NO_SOURCE_ALE_DIFFUSION_SUBTYPE !<No source Diffusion problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE = PROBLEM_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE !<Linear source Diffusion problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_MULTISCALE_NAVIER_STOKES_SUBTYPE !<Transient stabilised Navier-Stokes problem with multiscale boundary coupling subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_TRANSIENT1D_NAVIER_STOKES_SUBTYPE = PROBLEM_TRANSIENT1D_NAVIER_STOKES_SUBTYPE !<TRANSIENT1D Navier-Stokes problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_COUPLED1D0D_NAVIER_STOKES_SUBTYPE = PROBLEM_COUPLED1D0D_NAVIER_STOKES_SUBTYPE !<Coupled 1D-DAE Navier-Stokes problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE = PROBLEM_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE !<TRANSIENT1D Navier-Stokes problem subtype with Advection \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE = PROBLEM_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE !<Coupled 1D-DAE Navier-Stokes problem subtype with Advection \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STREE1D0D_SUBTYPE = PROBLEM_STREE1D0D_NAVIER_STOKES_SUBTYPE !<Coupled 1D-DAE Navier-Stokes problem subtype with Advection \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STREE1D0D_ADV_SUBTYPE = PROBLEM_STREE1D0D_ADV_NAVIER_STOKES_SUBTYPE !<Coupled 1D-DAE Navier-Stokes problem subtype with Advection \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_ALE_NAVIER_STOKES_SUBTYPE = PROBLEM_ALE_NAVIER_STOKES_SUBTYPE !<ALE Navier-Stokes problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_PGM_NAVIER_STOKES_SUBTYPE = PROBLEM_PGM_NAVIER_STOKES_SUBTYPE !<PGM Navier-Stokes problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_OPTIMISED_NAVIER_STOKES_SUBTYPE = PROBLEM_OPTIMISED_NAVIER_STOKES_SUBTYPE !<Optimised Navier-Stokes problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STANDARD_DARCY_SUBTYPE = PROBLEM_STANDARD_DARCY_SUBTYPE !<Standard Darcy problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_QUASISTATIC_DARCY_SUBTYPE = PROBLEM_QUASISTATIC_DARCY_SUBTYPE !<Quasistatic Darcy problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_ALE_DARCY_SUBTYPE = PROBLEM_ALE_DARCY_SUBTYPE !<ALE Darcy problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_TRANSIENT_DARCY_SUBTYPE = PROBLEM_TRANSIENT_DARCY_SUBTYPE !<Transient Darcy problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_PGM_DARCY_SUBTYPE = PROBLEM_PGM_DARCY_SUBTYPE !<PGM Darcy problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE = PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE !<PGM Transient Darcy problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STANDARD_LAPLACE_SUBTYPE = PROBLEM_STANDARD_LAPLACE_SUBTYPE !<Standard Laplace problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_GENERALISED_LAPLACE_SUBTYPE = PROBLEM_GENERALISED_LAPLACE_SUBTYPE !<Generalised Laplace problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STATIC_POISEUILLE_SUBTYPE = PROBLEM_STATIC_POISEUILLE_SUBTYPE !<Static Poiseuille problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_DYNAMIC_POISEUILLE_SUBTYPE = PROBLEM_DYNAMIC_POISEUILLE_SUBTYPE !<Static Poiseuille problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE = PROBLEM_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE !<Linear source Poisson problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LINEAR_SOURCE_POISSON_SUBTYPE = PROBLEM_LINEAR_SOURCE_POISSON_SUBTYPE !<Linear source Poisson problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LINEAR_PRESSURE_POISSON_SUBTYPE = PROBLEM_LINEAR_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NONLINEAR_PRESSURE_POISSON_SUBTYPE = PROBLEM_NONLINEAR_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_ALE_PRESSURE_POISSON_SUBTYPE = PROBLEM_ALE_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FITTED_PRESSURE_POISSON_SUBTYPE = PROBLEM_FITTED_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NONLINEAR_SOURCE_POISSON_SUBTYPE = PROBLEM_NONLINEAR_SOURCE_POISSON_SUBTYPE !<Nonlinear source Poisson problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STANDARD_HELMHOLTZ_SUBTYPE = PROBLEM_STANDARD_HELMHOLTZ_SUBTYPE !<No source Helmholtz problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_GENERALISED_HELMHOLTZ_SUBTYPE = PROBLEM_GENERALISED_HELMHOLTZ_SUBTYPE !<No source Helmholtz problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NO_SOURCE_DIFFUSION_SUBTYPE = PROBLEM_NO_SOURCE_DIFFUSION_SUBTYPE !<No source Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LINEAR_SOURCE_DIFFUSION_SUBTYPE = PROBLEM_LINEAR_SOURCE_DIFFUSION_SUBTYPE !<Linear source Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NONLINEAR_SOURCE_DIFFUSION_SUBTYPE = PROBLEM_NONLINEAR_SOURCE_DIFFUSION_SUBTYPE !<Nonlinear source Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NO_SOURCE_ALE_DIFFUSION_SUBTYPE = PROBLEM_NO_SOURCE_ALE_DIFFUSION_SUBTYPE !<No source Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE = PROBLEM_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE !<Linear source Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NONLINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE = &
-    & PROBLEM_NONLINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE !<Nonlinear source Diffusion problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_NONLINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE !<Nonlinear source Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NO_SOURCE_ADVECTION_DIFFUSION_SUBTYPE = &
-    & PROBLEM_NO_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<No source advection-Diffusion problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_NO_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<No source advection-Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LINEAR_SOURCE_ADVECTION_DIFFUSION_SUBTYPE = &
-    & PROBLEM_LINEAR_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<Linear source advection-Diffusion problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_LINEAR_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<Linear source advection-Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NONLINEAR_SOURCE_ADVECTION_DIFFUSION_SUBTYPE = &
-    & PROBLEM_NONLINEAR_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<Nonlinear source advection-Diffusion problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_NONLINEAR_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<Nonlinear source advection-Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NO_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE = &
-    & PROBLEM_NO_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<No source advection-Diffusion problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_NO_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<No source advection-Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LINEAR_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE = &
-    & PROBLEM_LINEAR_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<Linear source advection-Diffusion problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_LINEAR_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<Linear source advection-Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NONLINEAR_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE = &
-    & PROBLEM_NONLINEAR_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<Nonlinear source advection-Diffusion problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_NONLINEAR_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<Nonlinear source advection-Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
 
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NO_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE = PROBLEM_NO_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE !<No source advection-Diffusion problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NO_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE = PROBLEM_NO_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE !<No source advection-Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE = &
-    & PROBLEM_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE !<Linear source advection-Diffusion problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE !<Linear source advection-Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_NONLINEAR_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE = &
-    & PROBLEM_NONLINEAR_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE !<Nonlinear source advection-Diffusion problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STATIC_BURGERS_SUBTYPE = PROBLEM_STATIC_BURGERS_SUBTYPE !<static Burgers problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_DYNAMIC_BURGERS_SUBTYPE = PROBLEM_DYNAMIC_BURGERS_SUBTYPE !<dynamic Burgers problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_NONLINEAR_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE !<Nonlinear source advection-Diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STATIC_BURGERS_SUBTYPE = PROBLEM_STATIC_BURGERS_SUBTYPE !<static Burgers problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_DYNAMIC_BURGERS_SUBTYPE = PROBLEM_DYNAMIC_BURGERS_SUBTYPE !<dynamic Burgers problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE = &
-    & PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE !CellML reaction integrated strang-split subtype of reaction diffusion \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE !CellML reaction integrated strang-split subtype of reaction diffusion \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE = &
-    & PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE !CellML reaction evaluated no-split subtype of reaction diffusion \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE !CellML reaction evaluated no-split subtype of reaction diffusion \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_CONSTANT_REAC_DIFF_NO_SPLIT_SUBTYPE = &
-    & PROBLEM_CONSTANT_REAC_DIFF_NO_SPLIT_SUBTYPE !Standard constant reaction reaction diffusion problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_CONSTANT_REAC_DIFF_NO_SPLIT_SUBTYPE !Standard constant reaction reaction diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
 
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STATIC_FITTING_SUBTYPE = &
-    & PROBLEM_STATIC_FITTING_SUBTYPE !<Static fitting problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_STATIC_FITTING_SUBTYPE !<Static fitting problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STANDARD_DATA_FITTING_SUBTYPE = &
-    & PROBLEM_STANDARD_DATA_FITTING_SUBTYPE !<Standard Galerkin projection problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_STANDARD_DATA_FITTING_SUBTYPE !<Standard Galerkin projection problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_VECTOR_DATA_FITTING_SUBTYPE = &
-    & PROBLEM_VECTOR_DATA_FITTING_SUBTYPE !<Standard Galerkin projection problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_VECTOR_DATA_FITTING_SUBTYPE !<Standard Galerkin projection problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_DIV_FREE_VECTOR_DATA_FITTING_SUBTYPE = &
-    & PROBLEM_DIV_FREE_VECTOR_DATA_FITTING_SUBTYPE !<Standard Galerkin projection problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_DIV_FREE_VECTOR_DATA_FITTING_SUBTYPE !<Standard Galerkin projection problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_DATA_POINT_VECTOR_STATIC_FITTING_SUBTYPE = &
-    & PROBLEM_DATA_POINT_VECTOR_STATIC_FITTING_SUBTYPE !<Standard static Galerkin projection problem using data points subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_DATA_POINT_VECTOR_STATIC_FITTING_SUBTYPE !<Standard static Galerkin projection problem using data points subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_DATA_PT_VECTOR_QUASISTATIC_FITTING_SUBTYPE = &
-    & PROBLEM_DATA_POINT_VECTOR_QUASISTATIC_FITTING_SUBTYPE !<Standard quasistatic Galerkin projection problem using data points subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_DATA_POINT_VECTOR_QUASISTATIC_FITTING_SUBTYPE !<Standard quasistatic Galerkin projection problem using data points subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_VECTOR_DATA_PRE_FITTING_SUBTYPE = &
-    & PROBLEM_VECTOR_DATA_PRE_FITTING_SUBTYPE !<Standard Galerkin projection problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_VECTOR_DATA_PRE_FITTING_SUBTYPE !<Standard Galerkin projection problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_DIV_FREE_VECTOR_DATA_PRE_FITTING_SUBTYPE = &
-    & PROBLEM_DIV_FREE_VECTOR_DATA_PRE_FITTING_SUBTYPE !<Standard Galerkin projection problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_DIV_FREE_VECTOR_DATA_PRE_FITTING_SUBTYPE !<Standard Galerkin projection problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_GENERALISED_DATA_FITTING_SUBTYPE = &
-    & PROBLEM_GENERALISED_DATA_FITTING_SUBTYPE !<Generalised Galerkin projection problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_GENERALISED_DATA_FITTING_SUBTYPE !<Generalised Galerkin projection problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MAT_PROPERTIES_DATA_FITTING_SUBTYPE = &
-    & PROBLEM_MAT_PROPERTIES_DATA_FITTING_SUBTYPE !<Material Properties Galerkin projection problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_MAT_PROPERTIES_DATA_FITTING_SUBTYPE !<Material Properties Galerkin projection problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
 
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE = PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE !<Standard Elasticity Darcy problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE = PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE !<PGM Elasticity Darcy problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE = PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE !<Standard Elasticity Darcy problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE = PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE !<PGM Elasticity Darcy problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE = &
-    & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE !<Quasistatic Elasticity Transient Darcy problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE !<Quasistatic Elasticity Transient Darcy problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE = &
-    & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE !<Quasistatic Elasticity Transient Darcy Material Solve problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE !<Quasistatic Elasticity Transient Darcy Material Solve problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_COUPLED_SOURCE_DIFFUSION_DIFFUSION_SUBTYPE = &
-    & PROBLEM_COUPLED_SOURCE_DIFFUSION_DIFFUSION_SUBTYPE !<Coupled source diffusion-diffusion problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_COUPLED_SOURCE_DIFFUSION_DIFFUSION_SUBTYPE !<Coupled source diffusion-diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE = &
-    & PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE !<Coupled source diffusion & advection-diffusion problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE !<Coupled source diffusion & advection-diffusion problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STANDARD_MULTI_COMPARTMENT_TRANSPORT_SUBTYPE = &
-    & PROBLEM_STANDARD_MULTI_COMPARTMENT_TRANSPORT_SUBTYPE !<Standard multi-compartment transport problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_STANDARD_MULTI_COMPARTMENT_TRANSPORT_SUBTYPE !<Standard multi-compartment transport problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STANDARD_ELASTICITY_FLUID_PRESSURE_SUBTYPE = &
-    & PROBLEM_STANDARD_ELASTICITY_FLUID_PRESSURE_SUBTYPE !<Standard elasticity fluid pressure problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_STANDARD_ELASTICITY_FLUID_PRESSURE_SUBTYPE !<Standard elasticity fluid pressure problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE = &
-    & PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE !<Transient monodomain simple elasticity problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE !<Transient monodomain simple elasticity problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE = &
-    & PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE !<Transient monodomain simple elasticity problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE !<Transient monodomain simple elasticity problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE = &
-    & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE !<Transient monodomain simple elasticity problem subtype with titin \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE !<Transient monodomain simple elasticity problem subtype with titin \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE = &
-    & PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE !<Transient monodomain simple elasticity problem subtype with force-velocity relation \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE !<Transient monodomain simple elasticity problem subtype with force-velocity relation \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE = &
-    & PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE !<Transient monodomain active strain elasticity problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE !<Transient monodomain active strain elasticity problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE = &
-    & PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE !<Coupled Finite Elasticity Navier Stokes moving mesh subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE !<Coupled Finite Elasticity Navier Stokes moving mesh subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE = &
-    & PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE !<Coupled Finite Elasticity RBS Navier Stokes moving mesh subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE !<Coupled Finite Elasticity RBS Navier Stokes moving mesh subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE = &
-    & PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE !<Coupled Finite Elasticity with growth Navier Stokes moving mesh subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE !<Coupled Finite Elasticity with growth Navier Stokes moving mesh subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_GROWTH_FINITE_ELAST_RBS_NAVIER_STOKES_ALE_SUBTYPE = &
-    & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE !<Coupled Finite Elasticity with growth RBS Navier Stokes moving mesh subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE !<Coupled Finite Elasticity with growth RBS Navier Stokes moving mesh subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
 
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE = PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE !<Static finite elasticity subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE = PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE !<Quasistatic finite elasticity subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE = PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE !<Static finite elasticity subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE = PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE !<Quasistatic finite elasticity subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_QUASISTATIC_FINITE_ELASTICITY_WITH_GROWTH_SUBTYPE = &
-    & PROBLEM_QUASISTATIC_FINITE_ELASTICITY_WITH_GROWTH_SUBTYPE !<Quasistatic finite elasticity with growth subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE = PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE !<Dynamic finite elasticity subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE = PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE !<Quasistatic finite elasticity with active subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE = PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE !<Finite elasticity with CellML subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_QUASISTATIC_FINITE_ELASTICITY_WITH_GROWTH_SUBTYPE !<Quasistatic finite elasticity with growth subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE = PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE !<Dynamic finite elasticity subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE = PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE !<Quasistatic finite elasticity with active subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE = PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE !<Finite elasticity with CellML subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE =  &
-    & PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE !<Finite elasticity with growth and CellML subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+    & PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE !<Finite elasticity with growth and CellML subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
 
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_GUDUNOV_SPLIT_SUBTYPE = PROBLEM_MONODOMAIN_GUDUNOV_SPLIT_SUBTYPE !<Monodomain Gudunov split problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_STRANG_SPLIT_SUBTYPE = PROBLEM_MONODOMAIN_STRANG_SPLIT_SUBTYPE !<Monodomain Gudunov split problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_BIDOMAIN_GUDUNOV_SPLIT_SUBTYPE = PROBLEM_BIDOMAIN_GUDUNOV_SPLIT_SUBTYPE !<Bidomain Gudunov split problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_BIDOMAIN_STRANG_SPLIT_SUBTYPE = PROBLEM_BIDOMAIN_STRANG_SPLIT_SUBTYPE !<Bidomain Gudunov split problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_BUENOOROVIO_SUBTYPE = PROBLEM_MONODOMAIN_BUENOOROVIO_SUBTYPE !<Generalised Laplace problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_TENTUSSCHER06_SUBTYPE = PROBLEM_MONODOMAIN_TENTUSSCHER06_SUBTYPE !<Generalised Laplace problem subtype \see OPENCMISS_ProblemSubtypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_GUDUNOV_SPLIT_SUBTYPE = PROBLEM_MONODOMAIN_GUDUNOV_SPLIT_SUBTYPE !<Monodomain Gudunov split problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_STRANG_SPLIT_SUBTYPE = PROBLEM_MONODOMAIN_STRANG_SPLIT_SUBTYPE !<Monodomain Gudunov split problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_BIDOMAIN_GUDUNOV_SPLIT_SUBTYPE = PROBLEM_BIDOMAIN_GUDUNOV_SPLIT_SUBTYPE !<Bidomain Gudunov split problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_BIDOMAIN_STRANG_SPLIT_SUBTYPE = PROBLEM_BIDOMAIN_STRANG_SPLIT_SUBTYPE !<Bidomain Gudunov split problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_BUENOOROVIO_SUBTYPE = PROBLEM_MONODOMAIN_BUENOOROVIO_SUBTYPE !<Generalised Laplace problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_MONODOMAIN_TENTUSSCHER06_SUBTYPE = PROBLEM_MONODOMAIN_TENTUSSCHER06_SUBTYPE !<Generalised Laplace problem subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
 
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LE_CONTACT_TRANSFORM_REPROJECT_SUBTYPE=PROBLEM_LE_CONTACT_TRANSFORM_REPROJECT_SUBTYPE !<linear elasticity problem subject to contact constraint, transform field at load increments and reproject at Newton iterations \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LE_CONTACT_TRANSFORM_SUBTYPE=PROBLEM_LE_CONTACT_TRANSFORM_SUBTYPE !<linear elasticity problem subject to contact constraint, transform field at load increments \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LE_CONTACT_REPROJECT_SUBTYPE=PROBLEM_LE_CONTACT_REPROJECT_SUBTYPE !<linear elasticity problem subject to contact constraint, reproject at Newton iterations \see OPENCMISS_ProblemSubtypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LE_CONTACT_TRANSFORM_REPROJECT_SUBTYPE=PROBLEM_LE_CONTACT_TRANSFORM_REPROJECT_SUBTYPE !<linear elasticity problem subject to contact constraint, transform field at load increments and reproject at Newton iterations \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LE_CONTACT_TRANSFORM_SUBTYPE=PROBLEM_LE_CONTACT_TRANSFORM_SUBTYPE !<linear elasticity problem subject to contact constraint, transform field at load increments \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_LE_CONTACT_REPROJECT_SUBTYPE=PROBLEM_LE_CONTACT_REPROJECT_SUBTYPE !<linear elasticity problem subject to contact constraint, reproject at Newton iterations \see OpenCMISS_ProblemSubtypes,OpenCMISS
 
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FE_CONTACT_TRANSFORM_REPROJECT_SUBTYPE=PROBLEM_FE_CONTACT_TRANSFORM_REPROJECT_SUBTYPE !<linear elasticity problem subject to contact constraint, transform field at load increments and reproject at Newton iterations \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FE_CONTACT_TRANSFORM_SUBTYPE=PROBLEM_FE_CONTACT_TRANSFORM_SUBTYPE !<finear elasticity problem subject to contact constraint, transform field at load increments \see OPENCMISS_ProblemSubtypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FE_CONTACT_REPROJECT_SUBTYPE=PROBLEM_FE_CONTACT_REPROJECT_SUBTYPE !<finear elasticity problem subject to contact constraint, reproject at Newton iterations \see OPENCMISS_ProblemSubtypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FE_CONTACT_TRANSFORM_REPROJECT_SUBTYPE=PROBLEM_FE_CONTACT_TRANSFORM_REPROJECT_SUBTYPE !<linear elasticity problem subject to contact constraint, transform field at load increments and reproject at Newton iterations \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FE_CONTACT_TRANSFORM_SUBTYPE=PROBLEM_FE_CONTACT_TRANSFORM_SUBTYPE !<finear elasticity problem subject to contact constraint, transform field at load increments \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FE_CONTACT_REPROJECT_SUBTYPE=PROBLEM_FE_CONTACT_REPROJECT_SUBTYPE !<finear elasticity problem subject to contact constraint, reproject at Newton iterations \see OpenCMISS_ProblemSubtypes,OpenCMISS
 
   !>@}
-  !> \addtogroup OPENCMISS_ProblemControlLoopTypes OpenCMISS::Iron::Problem::ControlLoopTypes
+  !> \addtogroup OpenCMISS_ProblemControlLoopTypes OpenCMISS::Iron::Problem::ControlLoopTypes
   !> \brief Problem control loop type parameters
-  !> \see OpenCMISS::Iron::Problem,OPENCMISS
+  !> \see OpenCMISS::Iron::Problem,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_CONTROL_SIMPLE_TYPE = PROBLEM_CONTROL_SIMPLE_TYPE !<Simple, one iteration control loop. \see OPENCMISS_ProblemControlLoopTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_CONTROL_FIXED_LOOP_TYPE = PROBLEM_CONTROL_FIXED_LOOP_TYPE !<Fixed iteration control loop. \see OPENCMISS_ProblemControlLoopTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_CONTROL_TIME_LOOP_TYPE = PROBLEM_CONTROL_TIME_LOOP_TYPE !<Time control loop. \see OPENCMISS_ProblemControlLoopTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_CONTROL_WHILE_LOOP_TYPE = PROBLEM_CONTROL_WHILE_LOOP_TYPE !<While control loop. \see OPENCMISS_ProblemControlLoopTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE = PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE !<Load increment control loop. \see OPENCMISS_ProblemControlLoopTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_CONTROL_SIMPLE_TYPE = PROBLEM_CONTROL_SIMPLE_TYPE !<Simple, one iteration control loop. \see OpenCMISS_ProblemControlLoopTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_CONTROL_FIXED_LOOP_TYPE = PROBLEM_CONTROL_FIXED_LOOP_TYPE !<Fixed iteration control loop. \see OpenCMISS_ProblemControlLoopTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_CONTROL_TIME_LOOP_TYPE = PROBLEM_CONTROL_TIME_LOOP_TYPE !<Time control loop. \see OpenCMISS_ProblemControlLoopTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_CONTROL_WHILE_LOOP_TYPE = PROBLEM_CONTROL_WHILE_LOOP_TYPE !<While control loop. \see OpenCMISS_ProblemControlLoopTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE = PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE !<Load increment control loop. \see OpenCMISS_ProblemControlLoopTypes,OpenCMISS
   !>@}
   !>@}
 
@@ -6421,238 +6422,238 @@ MODULE OpenCMISS_Iron
 
   !Module parameters
 
-  !> \addtogroup OPENCMISS_CellMLEquationsConstants OpenCMISS::Iron::CellMLEquations::Constants
+  !> \addtogroup OpenCMISS_CellMLEquationsConstants OpenCMISS::Iron::CellMLEquations::Constants
   !> \brief CellML equations constants.
   !>@{
-  !> \addtogroup OPENCMISS_CellMLEquationsLinearityTypes OpenCMISS::Iron::CellMLEquations::Constants::LinearityTypes
+  !> \addtogroup OpenCMISS_CellMLEquationsLinearityTypes OpenCMISS::Iron::CellMLEquations::Constants::LinearityTypes
   !> \brief The CellML equations linearity types
-  !> \see OpenCMISS::Iron::CellMLEquations,OPENCMISS
+  !> \see OpenCMISS::Iron::CellMLEquations,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_CELLML_EQUATIONS_LINEAR = CELLML_EQUATIONS_LINEAR !<The CellML equations are linear. \see OPENCMISS_CellMLEquationsLinearityTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_CELLML_EQUATIONS_NONLINEAR = CELLML_EQUATIONS_NONLINEAR !<The CellML equations are non-linear. \see \see OPENCMISS_CellMLEquationsLinearityTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_CELLML_EQUATIONS_LINEAR = CELLML_EQUATIONS_LINEAR !<The CellML equations are linear. \see OpenCMISS_CellMLEquationsLinearityTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_CELLML_EQUATIONS_NONLINEAR = CELLML_EQUATIONS_NONLINEAR !<The CellML equations are non-linear. \see \see OpenCMISS_CellMLEquationsLinearityTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_CellMLEquationsTimeDependenceTypes OpenCMISS::Iron::CellMLEquations::Constants:TimeDependenceTypes
+  !> \addtogroup OpenCMISS_CellMLEquationsTimeDependenceTypes OpenCMISS::Iron::CellMLEquations::Constants:TimeDependenceTypes
   !> \brief The CellML equations time dependence types
-  !> \see OpenCMISS::Iron::CellMLEquations,OPENCMISS
+  !> \see OpenCMISS::Iron::CellMLEquations,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_CELLML_EQUATIONS_STATIC = CELLML_EQUATIONS_STATIC !<The CellML equations are static and have no time dependence. \see OPENCMISS_CellMLEquationsTimeDependenceTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_CELLML_EQUATIONS_QUASISTATIC = CELLML_EQUATIONS_QUASISTATIC !<The CellML equations are quasi-static. \see OPENCMISS_CellMLEquationsTimeDependenceTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_CELLML_EQUATIONS_DYNAMIC = CELLML_EQUATIONS_DYNAMIC !<The equations are dynamic. \see OPENCMISS_CellMLEquationsTimeDependenceTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_CELLML_EQUATIONS_STATIC = CELLML_EQUATIONS_STATIC !<The CellML equations are static and have no time dependence. \see OpenCMISS_CellMLEquationsTimeDependenceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_CELLML_EQUATIONS_QUASISTATIC = CELLML_EQUATIONS_QUASISTATIC !<The CellML equations are quasi-static. \see OpenCMISS_CellMLEquationsTimeDependenceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_CELLML_EQUATIONS_DYNAMIC = CELLML_EQUATIONS_DYNAMIC !<The equations are dynamic. \see OpenCMISS_CellMLEquationsTimeDependenceTypes,OpenCMISS
   !>@}
   !>@}
 
-  !> \addtogroup OPENCMISS_SolverConstants OpenCMISS::Iron::Solver::Constants
+  !> \addtogroup OpenCMISS_SolverConstants OpenCMISS::Iron::Solver::Constants
   !> \brief Solver constants.
   !>@{
-  !> \addtogroup OPENCMISS_SolverTypes OpenCMISS::Iron::Solver::SolverTypes
+  !> \addtogroup OpenCMISS_SolverTypes OpenCMISS::Iron::Solver::SolverTypes
   !> \brief The types of solver
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_LINEAR_TYPE = SOLVER_LINEAR_TYPE !<A linear solver. \see OPENCMISS_SolverTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NONLINEAR_TYPE = SOLVER_NONLINEAR_TYPE !<A nonlinear solver. \see OPENCMISS_SolverTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_TYPE = SOLVER_DYNAMIC_TYPE !<A dynamic solver. \see  OPENCMISS_SolverTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DAE_TYPE = SOLVER_DAE_TYPE !<A differential-algebraic equation solver. \see OPENCMISS_SolverTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_EIGENPROBLEM_TYPE = SOLVER_EIGENPROBLEM_TYPE !<A eigenproblem solver. \see OPENCMISS_SolverTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_OPTIMISER_TYPE = SOLVER_OPTIMISER_TYPE !<An optimiser solver. \see OPENCMISS_SolverTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: cmfe_SolverCellMLEvaluatorType = SOLVER_CELLML_EVALUATOR_TYPE !<A CellML evaluator solver. \see OPENCMISS_SolverTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_LINEAR_TYPE = SOLVER_LINEAR_TYPE !<A linear solver. \see OpenCMISS_SolverTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NONLINEAR_TYPE = SOLVER_NONLINEAR_TYPE !<A nonlinear solver. \see OpenCMISS_SolverTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_TYPE = SOLVER_DYNAMIC_TYPE !<A dynamic solver. \see  OpenCMISS_SolverTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DAE_TYPE = SOLVER_DAE_TYPE !<A differential-algebraic equation solver. \see OpenCMISS_SolverTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_EIGENPROBLEM_TYPE = SOLVER_EIGENPROBLEM_TYPE !<A eigenproblem solver. \see OpenCMISS_SolverTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_OPTIMISER_TYPE = SOLVER_OPTIMISER_TYPE !<An optimiser solver. \see OpenCMISS_SolverTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: cmfe_SolverCellMLEvaluatorType = SOLVER_CELLML_EVALUATOR_TYPE !<A CellML evaluator solver. \see OpenCMISS_SolverTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_SolverLibraries OpenCMISS::Iron::Solver::SolverLibraries
+  !> \addtogroup OpenCMISS_SolverLibraries OpenCMISS::Iron::Solver::SolverLibraries
   !> \brief The types of solver libraries.
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_CMISS_LIBRARY = SOLVER_CMISS_LIBRARY !<CMISS (internal) solver library. \see OPENCMISS_SolverLibraries,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_PETSC_LIBRARY = SOLVER_PETSC_LIBRARY !<PETSc solver library. \see OPENCMISS_SolverLibraries,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_MUMPS_LIBRARY = SOLVER_MUMPS_LIBRARY !<MUMPS solver library. \see OPENCMISS_SolverLibraries,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_SUPERLU_LIBRARY = SOLVER_SUPERLU_LIBRARY !<SuperLU solver library. \see OPENCMISS_SolverLibraries,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_SPOOLES_LIBRARY = SOLVER_SPOOLES_LIBRARY !<SPOOLES solver library. \see OPENCMISS_SolverLibraries,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_UMFPACK_LIBRARY = SOLVER_UMFPACK_LIBRARY !<UMFPACK solver library. \see OPENCMISS_SolverLibraries,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_LUSOL_LIBRARY = SOLVER_LUSOL_LIBRARY !<LUSOL solver library. \see OPENCMISS_SolverLibraries,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ESSL_LIBRARY = SOLVER_ESSL_LIBRARY !<ESSL solver library. \see OPENCMISS_SolverLibraries,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_LAPACK_LIBRARY = SOLVER_LAPACK_LIBRARY !<LAPACK solver library. \see OPENCMISS_SolverLibraries,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_HYPRE_LIBRARY = SOLVER_HYPRE_LIBRARY !<Hypre solver library. \see OPENCMISS_SolverLibraries,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_PASTIX_LIBRARY = SOLVER_PASTIX_LIBRARY !<PaStiX solver library. \see OPENCMISS_SolverLibraries,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_CMISS_LIBRARY = SOLVER_CMISS_LIBRARY !<CMISS (internal) solver library. \see OpenCMISS_SolverLibraries,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_PETSC_LIBRARY = SOLVER_PETSC_LIBRARY !<PETSc solver library. \see OpenCMISS_SolverLibraries,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_MUMPS_LIBRARY = SOLVER_MUMPS_LIBRARY !<MUMPS solver library. \see OpenCMISS_SolverLibraries,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_SUPERLU_LIBRARY = SOLVER_SUPERLU_LIBRARY !<SuperLU solver library. \see OpenCMISS_SolverLibraries,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_SPOOLES_LIBRARY = SOLVER_SPOOLES_LIBRARY !<SPOOLES solver library. \see OpenCMISS_SolverLibraries,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_UMFPACK_LIBRARY = SOLVER_UMFPACK_LIBRARY !<UMFPACK solver library. \see OpenCMISS_SolverLibraries,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_LUSOL_LIBRARY = SOLVER_LUSOL_LIBRARY !<LUSOL solver library. \see OpenCMISS_SolverLibraries,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ESSL_LIBRARY = SOLVER_ESSL_LIBRARY !<ESSL solver library. \see OpenCMISS_SolverLibraries,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_LAPACK_LIBRARY = SOLVER_LAPACK_LIBRARY !<LAPACK solver library. \see OpenCMISS_SolverLibraries,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_HYPRE_LIBRARY = SOLVER_HYPRE_LIBRARY !<Hypre solver library. \see OpenCMISS_SolverLibraries,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_PASTIX_LIBRARY = SOLVER_PASTIX_LIBRARY !<PaStiX solver library. \see OpenCMISS_SolverLibraries,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_LinearSolverTypes OpenCMISS::Iron::Solver::LinearSolverTypes
+  !> \addtogroup OpenCMISS_LinearSolverTypes OpenCMISS::Iron::Solver::LinearSolverTypes
   !> \brief The types of linear solvers.
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_LINEAR_DIRECT_SOLVE_TYPE = SOLVER_LINEAR_DIRECT_SOLVE_TYPE !<Direct linear solver type. \see OPENCMISS_LinearSolverTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_LINEAR_ITERATIVE_SOLVE_TYPE = SOLVER_LINEAR_ITERATIVE_SOLVE_TYPE !<Iterative linear solver type. \see OPENCMISS_LinearSolverTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_LINEAR_DIRECT_SOLVE_TYPE = SOLVER_LINEAR_DIRECT_SOLVE_TYPE !<Direct linear solver type. \see OpenCMISS_LinearSolverTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_LINEAR_ITERATIVE_SOLVE_TYPE = SOLVER_LINEAR_ITERATIVE_SOLVE_TYPE !<Iterative linear solver type. \see OpenCMISS_LinearSolverTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_DirectLinearSolverTypes OpenCMISS::Iron::Solver::DirectLinearSolverTypes
+  !> \addtogroup OpenCMISS_DirectLinearSolverTypes OpenCMISS::Iron::Solver::DirectLinearSolverTypes
   !> \brief The types of direct linear solvers. \todo Move libraries to a more appropriate place.
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DIRECT_LU = SOLVER_DIRECT_LU !<LU direct linear solver. \see OPENCMISS_DirectLinearSolverTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DIRECT_CHOLESKY = SOLVER_DIRECT_CHOLESKY !<Cholesky direct linear solver. \see OPENCMISS_DirectLinearSolverTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DIRECT_SVD = SOLVER_DIRECT_SVD !<SVD direct linear solver. \see OPENCMISS_DirectLinearSolverTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DIRECT_LU = SOLVER_DIRECT_LU !<LU direct linear solver. \see OpenCMISS_DirectLinearSolverTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DIRECT_CHOLESKY = SOLVER_DIRECT_CHOLESKY !<Cholesky direct linear solver. \see OpenCMISS_DirectLinearSolverTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DIRECT_SVD = SOLVER_DIRECT_SVD !<SVD direct linear solver. \see OpenCMISS_DirectLinearSolverTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_IterativeLinearSolverTypes OpenCMISS::Iron::Solver::IterativeLinearSolverTypes
+  !> \addtogroup OpenCMISS_IterativeLinearSolverTypes OpenCMISS::Iron::Solver::IterativeLinearSolverTypes
   !> \brief The types of iterative linear solvers.
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_RICHARDSON = SOLVER_ITERATIVE_RICHARDSON !<Richardson iterative solver type. \see  OPENCMISS_IterativeLinearSolverTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_CHEBYSHEV = SOLVER_ITERATIVE_CHEBYSHEV !<Chebychev iterative solver type. \see OPENCMISS_IterativeLinearSolverTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_CONJUGATE_GRADIENT = SOLVER_ITERATIVE_CONJUGATE_GRADIENT !<Conjugate gradient iterative solver type. \see OPENCMISS_IterativeLinearSolverTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_BICONJUGATE_GRADIENT = SOLVER_ITERATIVE_BICONJUGATE_GRADIENT !<Bi-conjugate gradient iterative solver type. \see OPENCMISS_IterativeLinearSolverTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_GMRES = SOLVER_ITERATIVE_GMRES !<Generalised minimum residual iterative solver type. \see OPENCMISS_IterativeLinearSolverTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_BiCGSTAB = SOLVER_ITERATIVE_BiCGSTAB !<Stabalised bi-conjugate gradient iterative solver type. \see OPENCMISS_IterativeLinearSolverTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_CONJGRAD_SQUARED = SOLVER_ITERATIVE_CONJGRAD_SQUARED !<Conjugate gradient squared iterative solver type. \see OPENCMISS_IterativeLinearSolverTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_RICHARDSON = SOLVER_ITERATIVE_RICHARDSON !<Richardson iterative solver type. \see  OpenCMISS_IterativeLinearSolverTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_CHEBYSHEV = SOLVER_ITERATIVE_CHEBYSHEV !<Chebychev iterative solver type. \see OpenCMISS_IterativeLinearSolverTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_CONJUGATE_GRADIENT = SOLVER_ITERATIVE_CONJUGATE_GRADIENT !<Conjugate gradient iterative solver type. \see OpenCMISS_IterativeLinearSolverTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_BICONJUGATE_GRADIENT = SOLVER_ITERATIVE_BICONJUGATE_GRADIENT !<Bi-conjugate gradient iterative solver type. \see OpenCMISS_IterativeLinearSolverTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_GMRES = SOLVER_ITERATIVE_GMRES !<Generalised minimum residual iterative solver type. \see OpenCMISS_IterativeLinearSolverTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_BiCGSTAB = SOLVER_ITERATIVE_BiCGSTAB !<Stabalised bi-conjugate gradient iterative solver type. \see OpenCMISS_IterativeLinearSolverTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_CONJGRAD_SQUARED = SOLVER_ITERATIVE_CONJGRAD_SQUARED !<Conjugate gradient squared iterative solver type. \see OpenCMISS_IterativeLinearSolverTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_IterativePreconditionerTypes OpenCMISS::Iron::Solver::IterativePreconditionerTypes
+  !> \addtogroup OpenCMISS_IterativePreconditionerTypes OpenCMISS::Iron::Solver::IterativePreconditionerTypes
   !> \brief The types of iterative preconditioners.
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_NO_PRECONDITIONER = SOLVER_ITERATIVE_NO_PRECONDITIONER !<No preconditioner type. \see OPENCMISS_IterativePreconditionerTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_JACOBI_PRECONDITIONER = SOLVER_ITERATIVE_JACOBI_PRECONDITIONER !<Jacobi preconditioner type. \see OPENCMISS_IterativePreconditionerTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_BLOCK_JACOBI_PRECONDITIONER = SOLVER_ITERATIVE_BLOCK_JACOBI_PRECONDITIONER !<Iterative block Jacobi preconditioner type. \see OPENCMISS_IterativePreconditionerTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_SOR_PRECONDITIONER = SOLVER_ITERATIVE_SOR_PRECONDITIONER !<Successive over relaxation preconditioner type. \see OPENCMISS_IterativePreconditionerTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_NO_PRECONDITIONER = SOLVER_ITERATIVE_NO_PRECONDITIONER !<No preconditioner type. \see OpenCMISS_IterativePreconditionerTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_JACOBI_PRECONDITIONER = SOLVER_ITERATIVE_JACOBI_PRECONDITIONER !<Jacobi preconditioner type. \see OpenCMISS_IterativePreconditionerTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_BLOCK_JACOBI_PRECONDITIONER = SOLVER_ITERATIVE_BLOCK_JACOBI_PRECONDITIONER !<Iterative block Jacobi preconditioner type. \see OpenCMISS_IterativePreconditionerTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_SOR_PRECONDITIONER = SOLVER_ITERATIVE_SOR_PRECONDITIONER !<Successive over relaxation preconditioner type. \see OpenCMISS_IterativePreconditionerTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_INCOMPLETE_CHOLESKY_PRECONDITIONER = &
-    & SOLVER_ITERATIVE_INCOMPLETE_CHOLESKY_PRECONDITIONER !<Incomplete Cholesky preconditioner type. \see OPENCMISS_IterativePreconditionerTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_INCOMPLETE_LU_PRECONDITIONER = SOLVER_ITERATIVE_INCOMPLETE_LU_PRECONDITIONER !<Incomplete LU preconditioner type. \see OPENCMISS_IterativePreconditionerTypes,OPENCMISS
+    & SOLVER_ITERATIVE_INCOMPLETE_CHOLESKY_PRECONDITIONER !<Incomplete Cholesky preconditioner type. \see OpenCMISS_IterativePreconditionerTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_INCOMPLETE_LU_PRECONDITIONER = SOLVER_ITERATIVE_INCOMPLETE_LU_PRECONDITIONER !<Incomplete LU preconditioner type. \see OpenCMISS_IterativePreconditionerTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_SOLVER_ITERATIVE_ADDITIVE_SCHWARZ_PRECONDITIONER =  &
-    & SOLVER_ITERATIVE_ADDITIVE_SCHWARZ_PRECONDITIONER !<Additive Schwrz preconditioner type. \see OPENCMISS_IterativePreconditionerTypes,OPENCMISS
+    & SOLVER_ITERATIVE_ADDITIVE_SCHWARZ_PRECONDITIONER !<Additive Schwrz preconditioner type. \see OpenCMISS_IterativePreconditionerTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_NonlinearSolverTypes OpenCMISS::Iron::Solver::NonlinearSolverTypes
+  !> \addtogroup OpenCMISS_NonlinearSolverTypes OpenCMISS::Iron::Solver::NonlinearSolverTypes
   !> \brief The types of nonlinear solvers.
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NONLINEAR_NEWTON = SOLVER_NONLINEAR_NEWTON !<Newton nonlinear solver type. \see OPENCMISS_NonlinearSolverTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NONLINEAR_BFGS_INVERSE = SOLVER_NONLINEAR_BFGS_INVERSE !<BFGS inverse nonlinear solver type. \see OPENCMISS_NonlinearSolverTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NONLINEAR_SQP = SOLVER_NONLINEAR_SQP !<Sequential Quadratic Program nonlinear solver type. \see OPENCMISS_NonlinearSolverTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NONLINEAR_QUASI_NEWTON = SOLVER_NONLINEAR_QUASI_NEWTON !<Quasi-Newton nonlinear solver type. \see OPENCMISS_NonlinearSolverTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NONLINEAR_NEWTON = SOLVER_NONLINEAR_NEWTON !<Newton nonlinear solver type. \see OpenCMISS_NonlinearSolverTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NONLINEAR_BFGS_INVERSE = SOLVER_NONLINEAR_BFGS_INVERSE !<BFGS inverse nonlinear solver type. \see OpenCMISS_NonlinearSolverTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NONLINEAR_SQP = SOLVER_NONLINEAR_SQP !<Sequential Quadratic Program nonlinear solver type. \see OpenCMISS_NonlinearSolverTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NONLINEAR_QUASI_NEWTON = SOLVER_NONLINEAR_QUASI_NEWTON !<Quasi-Newton nonlinear solver type. \see OpenCMISS_NonlinearSolverTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_QuasiNewtonSolverTypes OpenCMISS::Iron::Solver::QuasiNewtonSolverTypes
+  !> \addtogroup OpenCMISS_QuasiNewtonSolverTypes OpenCMISS::Iron::Solver::QuasiNewtonSolverTypes
   !> \brief The types of nonlinear Quasi-Newton solvers
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_LINESEARCH=SOLVER_QUASI_NEWTON_LINESEARCH !<Quasi-Newton line search nonlinear solver type \see OPENCMISS_QuasiNewtonSolverTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_TRUSTREGION=SOLVER_QUASI_NEWTON_TRUSTREGION !<Quasi-Newton trust region nonlinear solver type \see OPENCMISS_QuasiNewtonSolverTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_LINESEARCH=SOLVER_QUASI_NEWTON_LINESEARCH !<Quasi-Newton line search nonlinear solver type \see OpenCMISS_QuasiNewtonSolverTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_TRUSTREGION=SOLVER_QUASI_NEWTON_TRUSTREGION !<Quasi-Newton trust region nonlinear solver type \see OpenCMISS_QuasiNewtonSolverTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_QuasiNewtonTypes OpenCMISS::Iron::Solver::QuasiNewtonTypes
+  !> \addtogroup OpenCMISS_QuasiNewtonTypes OpenCMISS::Iron::Solver::QuasiNewtonTypes
   !> \brief The nonlinear Quasi-Newton types
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_LBFGS=SOLVER_QUASI_NEWTON_LBFGS !<LBFGS Quasi-Newton type \see OPENCMISS_QuasiNewtonTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_GOODBROYDEN=SOLVER_QUASI_NEWTON_GOODBROYDEN !<"Good" Broyden Quasi-Newton type \see OPENCMISS_QuasiNewtonTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_BADBROYDEN=SOLVER_QUASI_NEWTON_BADBROYDEN !<"Bad" Broyden Quasi-Newton type \see OPENCMISS_QuasiNewtonTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_LBFGS=SOLVER_QUASI_NEWTON_LBFGS !<LBFGS Quasi-Newton type \see OpenCMISS_QuasiNewtonTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_GOODBROYDEN=SOLVER_QUASI_NEWTON_GOODBROYDEN !<"Good" Broyden Quasi-Newton type \see OpenCMISS_QuasiNewtonTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_BADBROYDEN=SOLVER_QUASI_NEWTON_BADBROYDEN !<"Bad" Broyden Quasi-Newton type \see OpenCMISS_QuasiNewtonTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_QuasiNewtonLineSearchTypes OpenCMISS::Iron::Solver::NonlinearQuasiNewtonLineSearchTypes
+  !> \addtogroup OpenCMISS_QuasiNewtonLineSearchTypes OpenCMISS::Iron::Solver::NonlinearQuasiNewtonLineSearchTypes
   !> \brief The types of line search techniques for Quasi-Newton line search nonlinear solvers
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_LINESEARCH_BASIC=SOLVER_QUASI_NEWTON_LINESEARCH_BASIC !<Simple damping line search. \see OPENCMISS_QuasiNewtonLineSearchTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_LINESEARCH_L2=SOLVER_QUASI_NEWTON_LINESEARCH_L2 !<Secant line search over the L2 norm of the function \see OPENCMISS_QuasiNewtonLineSearchTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_LINESEARCH_CP=SOLVER_QUASI_NEWTON_LINESEARCH_CP !<Critical point secant line search \see OPENCMISS_QuasiNewtonLineSearchTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_LINESEARCH_BASIC=SOLVER_QUASI_NEWTON_LINESEARCH_BASIC !<Simple damping line search. \see OpenCMISS_QuasiNewtonLineSearchTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_LINESEARCH_L2=SOLVER_QUASI_NEWTON_LINESEARCH_L2 !<Secant line search over the L2 norm of the function \see OpenCMISS_QuasiNewtonLineSearchTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_LINESEARCH_CP=SOLVER_QUASI_NEWTON_LINESEARCH_CP !<Critical point secant line search \see OpenCMISS_QuasiNewtonLineSearchTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_QuasiNewtonRestartTypes OpenCMISS::Iron::Solver::QuasiNewtonRestartTypes
+  !> \addtogroup OpenCMISS_QuasiNewtonRestartTypes OpenCMISS::Iron::Solver::QuasiNewtonRestartTypes
   !> \brief The nonlinear Quasi-Newton restart types
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_RESTART_NONE=SOLVER_QUASI_NEWTON_RESTART_NONE !<Never restart \see OPENCMISS_QuasiNewtonRestartTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_RESTART_POWELL=SOLVER_QUASI_NEWTON_RESTART_POWELL !<Restart based upon descent criteria \see OPENCMISS_QuasiNewtonRestartTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_RESTART_PERIODIC=SOLVER_QUASI_NEWTON_RESTART_PERIODIC !<Restart after a fixed number of iterations \see OPENCMISS_QuasiNewtonRestartTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_RESTART_NONE=SOLVER_QUASI_NEWTON_RESTART_NONE !<Never restart \see OpenCMISS_QuasiNewtonRestartTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_RESTART_POWELL=SOLVER_QUASI_NEWTON_RESTART_POWELL !<Restart based upon descent criteria \see OpenCMISS_QuasiNewtonRestartTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_RESTART_PERIODIC=SOLVER_QUASI_NEWTON_RESTART_PERIODIC !<Restart after a fixed number of iterations \see OpenCMISS_QuasiNewtonRestartTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_QuasiNewtonScaleTypes OpenCMISS::Iron::Solver::QuasiNewtonScaleTypes
+  !> \addtogroup OpenCMISS_QuasiNewtonScaleTypes OpenCMISS::Iron::Solver::QuasiNewtonScaleTypes
   !> \brief The nonlinear Quasi-Newton scale types
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_SCALE_NONE=SOLVER_QUASI_NEWTON_SCALE_NONE !<Don't scale the problem \see OPENCMISS_QuasiNewtonScaleTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_SCALE_SHANNO=SOLVER_QUASI_NEWTON_SCALE_SHANNO !<Use Shanno scaling \see OPENCMISS_QuasiNewtonScaleTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_SCALE_LINESEARCH=SOLVER_QUASI_NEWTON_SCALE_LINESEARCH !<Scale based upon line search lambda \see OPENCMISS_QuasiNewtonScaleTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_SCALE_JACOBIAN=SOLVER_QUASI_NEWTON_SCALE_JACOBIAN !<Scale by inverting a previously computed Jacobian \see OPENCMISS_QuasiNewtonScaleTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_SCALE_NONE=SOLVER_QUASI_NEWTON_SCALE_NONE !<Don't scale the problem \see OpenCMISS_QuasiNewtonScaleTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_SCALE_SHANNO=SOLVER_QUASI_NEWTON_SCALE_SHANNO !<Use Shanno scaling \see OpenCMISS_QuasiNewtonScaleTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_SCALE_LINESEARCH=SOLVER_QUASI_NEWTON_SCALE_LINESEARCH !<Scale based upon line search lambda \see OpenCMISS_QuasiNewtonScaleTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_QUASI_NEWTON_SCALE_JACOBIAN=SOLVER_QUASI_NEWTON_SCALE_JACOBIAN !<Scale by inverting a previously computed Jacobian \see OpenCMISS_QuasiNewtonScaleTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_NewtonSolverTypes OpenCMISS::Iron::Solver::NewtonSolverTypes
+  !> \addtogroup OpenCMISS_NewtonSolverTypes OpenCMISS::Iron::Solver::NewtonSolverTypes
   !> \brief The types of nonlinear Newton solvers.
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_LINESEARCH = SOLVER_NEWTON_LINESEARCH !<Newton line search nonlinear solver type. \see OPENCMISS_NewtonSolverTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_TRUSTREGION = SOLVER_NEWTON_TRUSTREGION !<Newton trust region nonlinear solver type. \see OPENCMISS_NewtonSolverTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_LINESEARCH = SOLVER_NEWTON_LINESEARCH !<Newton line search nonlinear solver type. \see OpenCMISS_NewtonSolverTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_TRUSTREGION = SOLVER_NEWTON_TRUSTREGION !<Newton trust region nonlinear solver type. \see OpenCMISS_NewtonSolverTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_NewtonLineSearchTypes OpenCMISS::Iron::Solver::NewtonLineSearchTypes
+  !> \addtogroup OpenCMISS_NewtonLineSearchTypes OpenCMISS::Iron::Solver::NewtonLineSearchTypes
   !> \brief The types line search techniques for Newton line search nonlinear solvers.
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_LINESEARCH_LINEAR = SOLVER_NEWTON_LINESEARCH_LINEAR !<Linear line search for Newton line search nonlinear solves \see OPENCMISS_NewtonLineSearchTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_LINESEARCH_QUADRATIC = SOLVER_NEWTON_LINESEARCH_QUADRATIC !<Quadratic search for Newton line search nonlinear solves \see OPENCMISS_NewtonLineSearchTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_LINESEARCH_CUBIC = SOLVER_NEWTON_LINESEARCH_CUBIC !<Cubic search for Newton line search nonlinear solves \see OPENCMISS_NewtonLineSearchTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_LINESEARCH_LINEAR = SOLVER_NEWTON_LINESEARCH_LINEAR !<Linear line search for Newton line search nonlinear solves \see OpenCMISS_NewtonLineSearchTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_LINESEARCH_QUADRATIC = SOLVER_NEWTON_LINESEARCH_QUADRATIC !<Quadratic search for Newton line search nonlinear solves \see OpenCMISS_NewtonLineSearchTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_LINESEARCH_CUBIC = SOLVER_NEWTON_LINESEARCH_CUBIC !<Cubic search for Newton line search nonlinear solves \see OpenCMISS_NewtonLineSearchTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_JacobianCalculationTypes OpenCMISS::Iron::Solver::JacobianCalculationTypes
+  !> \addtogroup OpenCMISS_JacobianCalculationTypes OpenCMISS::Iron::Solver::JacobianCalculationTypes
   !> \brief The Jacobian calculation types for a nonlinear solver.
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_JACOBIAN_NOT_CALCULATED = SOLVER_NEWTON_JACOBIAN_NOT_CALCULATED !<The Jacobian values will not be calculated for the nonlinear equations set. \see OPENCMISS_JacobianCalculationTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_JACOBIAN_EQUATIONS_CALCULATED = SOLVER_NEWTON_JACOBIAN_EQUATIONS_CALCULATED !<The Jacobian values will be calculated  analytically for the nonlinear equations set. \see OPENCMISS_JacobianCalculationTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_JACOBIAN_FD_CALCULATED = SOLVER_NEWTON_JACOBIAN_FD_CALCULATED !<The Jacobian values will be calcualted using finite differences for the nonlinear equations set. \see OPENCMISS_JacobianCalculationTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_JACOBIAN_NOT_CALCULATED = SOLVER_NEWTON_JACOBIAN_NOT_CALCULATED !<The Jacobian values will not be calculated for the nonlinear equations set. \see OpenCMISS_JacobianCalculationTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_JACOBIAN_EQUATIONS_CALCULATED = SOLVER_NEWTON_JACOBIAN_EQUATIONS_CALCULATED !<The Jacobian values will be calculated  analytically for the nonlinear equations set. \see OpenCMISS_JacobianCalculationTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_JACOBIAN_FD_CALCULATED = SOLVER_NEWTON_JACOBIAN_FD_CALCULATED !<The Jacobian values will be calcualted using finite differences for the nonlinear equations set. \see OpenCMISS_JacobianCalculationTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_NewtonConvergenceTypes OpenCMISS::Iron::Solver::NewtonConvergenceTypes
+  !> \addtogroup OpenCMISS_NewtonConvergenceTypes OpenCMISS::Iron::Solver::NewtonConvergenceTypes
   !> \brief The convergence test types for a nonlinear newton solver.
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_CONVERGENCE_PETSC_DEFAULT = SOLVER_NEWTON_CONVERGENCE_PETSC_DEFAULT !<Newton solver Petsc default convergence test type. \see OPENCMISS_NewtonConvergenceTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_CONVERGENCE_ENERGY_NORM = SOLVER_NEWTON_CONVERGENCE_ENERGY_NORM !<Newton solver energy norm convergence test type. \see OPENCMISS_NewtonConvergenceTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_CONVERGENCE_DIFFERENTIATED_RATIO = SOLVER_NEWTON_CONVERGENCE_DIFFERENTIATED_RATIO !<Newton solver Sum of differentiated ratios of unconstrained to constrained residuals convergence test type. \see OPENCMISS_NewtonConvergenceTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_CONVERGENCE_PETSC_DEFAULT = SOLVER_NEWTON_CONVERGENCE_PETSC_DEFAULT !<Newton solver Petsc default convergence test type. \see OpenCMISS_NewtonConvergenceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_CONVERGENCE_ENERGY_NORM = SOLVER_NEWTON_CONVERGENCE_ENERGY_NORM !<Newton solver energy norm convergence test type. \see OpenCMISS_NewtonConvergenceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NEWTON_CONVERGENCE_DIFFERENTIATED_RATIO = SOLVER_NEWTON_CONVERGENCE_DIFFERENTIATED_RATIO !<Newton solver Sum of differentiated ratios of unconstrained to constrained residuals convergence test type. \see OpenCMISS_NewtonConvergenceTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_DynamicOrderTypes OpenCMISS::Iron::Solver::DynamicOrderTypes
+  !> \addtogroup OpenCMISS_DynamicOrderTypes OpenCMISS::Iron::Solver::DynamicOrderTypes
   !> \brief The order types for a dynamic solver.
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_FIRST_ORDER = SOLVER_DYNAMIC_FIRST_ORDER !<Dynamic solver has first order terms. \see OPENCMISS_DynamicOrderTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_SECOND_ORDER = SOLVER_DYNAMIC_SECOND_ORDER !<Dynamic solver has second order terms. \see OPENCMISS_DynamicOrderTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_FIRST_ORDER = SOLVER_DYNAMIC_FIRST_ORDER !<Dynamic solver has first order terms. \see OpenCMISS_DynamicOrderTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_SECOND_ORDER = SOLVER_DYNAMIC_SECOND_ORDER !<Dynamic solver has second order terms. \see OpenCMISS_DynamicOrderTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_DynamicLinearityTypes OpenCMISS::Iron::Solver::DynamicLinearityTypes
+  !> \addtogroup OpenCMISS_DynamicLinearityTypes OpenCMISS::Iron::Solver::DynamicLinearityTypes
   !> \brief The time linearity types for a dynamic solver.
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_LINEAR = SOLVER_DYNAMIC_LINEAR !<Dynamic solver has linear terms. \see OPENCMISS_DynamicLinearityTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_NONLINEAR = SOLVER_DYNAMIC_NONLINEAR !<Dynamic solver has nonlinear terms. \see OPENCMISS_DynamicLinearityTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_LINEAR = SOLVER_DYNAMIC_LINEAR !<Dynamic solver has linear terms. \see OpenCMISS_DynamicLinearityTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_NONLINEAR = SOLVER_DYNAMIC_NONLINEAR !<Dynamic solver has nonlinear terms. \see OpenCMISS_DynamicLinearityTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_DynamicDegreeTypes OpenCMISS::Iron::Solver::DynamicDegreeTypes
+  !> \addtogroup OpenCMISS_DynamicDegreeTypes OpenCMISS::Iron::Solver::DynamicDegreeTypes
   !> \brief The time interpolation polynomial degree types for a dynamic solver.
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_FIRST_DEGREE = SOLVER_DYNAMIC_FIRST_DEGREE !<Dynamic solver uses a first degree polynomial for time interpolation. \see OPENCMISS_DynamicDegreeTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_SECOND_DEGREE = SOLVER_DYNAMIC_SECOND_DEGREE !<Dynamic solver uses a second degree polynomial for time interpolation. \see OPENCMISS_DynamicDegreeTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_THIRD_DEGREE = SOLVER_DYNAMIC_THIRD_DEGREE !<Dynamic solver uses a third degree polynomial for time interpolation. \see OPENCMISS_DynamicDegreeTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_FIRST_DEGREE = SOLVER_DYNAMIC_FIRST_DEGREE !<Dynamic solver uses a first degree polynomial for time interpolation. \see OpenCMISS_DynamicDegreeTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_SECOND_DEGREE = SOLVER_DYNAMIC_SECOND_DEGREE !<Dynamic solver uses a second degree polynomial for time interpolation. \see OpenCMISS_DynamicDegreeTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_THIRD_DEGREE = SOLVER_DYNAMIC_THIRD_DEGREE !<Dynamic solver uses a third degree polynomial for time interpolation. \see OpenCMISS_DynamicDegreeTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_DynamicSchemeTypes OpenCMISS::Iron::Solver::DynamicSchemeTypes
+  !> \addtogroup OpenCMISS_DynamicSchemeTypes OpenCMISS::Iron::Solver::DynamicSchemeTypes
   !> \brief The types of dynamic solver scheme.
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_EULER_SCHEME = SOLVER_DYNAMIC_EULER_SCHEME !<Euler (explicit) dynamic solver. \see OPENCMISS_DynamicSchemeTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_BACKWARD_EULER_SCHEME = SOLVER_DYNAMIC_BACKWARD_EULER_SCHEME !<Backward Euler (implicit) dynamic solver. \see OPENCMISS_DynamicSchemeTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME = SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME !<Crank-Nicolson dynamic solver. \see OPENCMISS_DynamicSchemeTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_GALERKIN_SCHEME = SOLVER_DYNAMIC_GALERKIN_SCHEME !<Galerkin dynamic solver. \see OPENCMISS_DynamicSchemeTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_ZLAMAL_SCHEME = SOLVER_DYNAMIC_ZLAMAL_SCHEME !<Zlamal dynamic solver. \see OPENCMISS_DynamicSchemeTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_SECOND_DEGREE_GEAR_SCHEME = SOLVER_DYNAMIC_SECOND_DEGREE_GEAR_SCHEME !<2nd degree Gear dynamic solver. \see OPENCMISS_DynamicSchemeTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_SECOND_DEGREE_LINIGER1_SCHEME = SOLVER_DYNAMIC_SECOND_DEGREE_LINIGER1_SCHEME !<1st 2nd degree Liniger dynamic solver. \see OPENCMISS_DynamicSchemeTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_SECOND_DEGREE_LINIGER2_SCHEME = SOLVER_DYNAMIC_SECOND_DEGREE_LINIGER2_SCHEME !<2nd 2nd degree Liniger dynamic solver. \see OPENCMISS_DynamicSchemeTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_NEWMARK1_SCHEME = SOLVER_DYNAMIC_NEWMARK1_SCHEME !<1st Newmark dynamic solver. \see OPENCMISS_DynamicSchemeTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_NEWMARK2_SCHEME = SOLVER_DYNAMIC_NEWMARK2_SCHEME !<2nd Newmark dynamic solver. \see OPENCMISS_DynamicSchemeTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_NEWMARK3_SCHEME = SOLVER_DYNAMIC_NEWMARK3_SCHEME !<3rd Newmark dynamic solver. \see OPENCMISS_DynamicSchemeTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_THIRD_DEGREE_GEAR_SCHEME = SOLVER_DYNAMIC_THIRD_DEGREE_GEAR_SCHEME !<3rd degree Gear dynamic solver. \see OPENCMISS_DynamicSchemeTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_THIRD_DEGREE_LINIGER1_SCHEME = SOLVER_DYNAMIC_THIRD_DEGREE_LINIGER1_SCHEME !<1st 3rd degree Liniger dynamic solver. \see OPENCMISS_DynamicSchemeTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_THIRD_DEGREE_LINIGER2_SCHEME = SOLVER_DYNAMIC_THIRD_DEGREE_LINIGER2_SCHEME !<2nd 3rd degree Liniger dynamic solver. \see OPENCMISS_DynamicSchemeTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_HOUBOLT_SCHEME = SOLVER_DYNAMIC_HOUBOLT_SCHEME !<Houbolt dynamic solver. \see OPENCMISS_DynamicSchemeTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_WILSON_SCHEME = SOLVER_DYNAMIC_WILSON_SCHEME !<Wilson dynamic solver. \see OPENCMISS_DynamicSchemeTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_BOSSAK_NEWMARK1_SCHEME = SOLVER_DYNAMIC_BOSSAK_NEWMARK1_SCHEME !<1st Bossak-Newmark dynamic solver. \see OPENCMISS_DynamicSchemeTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_BOSSAK_NEWMARK2_SCHEME = SOLVER_DYNAMIC_BOSSAK_NEWMARK2_SCHEME !<2nd Bossak-Newmark dynamic solver. \see OPENCMISS_DynamicSchemeTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_HILBERT_HUGHES_TAYLOR1_SCHEME = SOLVER_DYNAMIC_HILBERT_HUGHES_TAYLOR1_SCHEME !<1st Hilbert-Hughes-Taylor dynamic solver. \see OPENCMISS_DynamicSchemeTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_HILBERT_HUGHES_TAYLOR2_SCHEME = SOLVER_DYNAMIC_HILBERT_HUGHES_TAYLOR2_SCHEME !<1st Hilbert-Hughes-Taylor dynamic solver. \see OPENCMISS_DynamicSchemeTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_USER_DEFINED_SCHEME = SOLVER_DYNAMIC_USER_DEFINED_SCHEME !<User specified degree and theta dynamic solver. \see OPENCMISS_DynamicSchemeTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_EULER_SCHEME = SOLVER_DYNAMIC_EULER_SCHEME !<Euler (explicit) dynamic solver. \see OpenCMISS_DynamicSchemeTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_BACKWARD_EULER_SCHEME = SOLVER_DYNAMIC_BACKWARD_EULER_SCHEME !<Backward Euler (implicit) dynamic solver. \see OpenCMISS_DynamicSchemeTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME = SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME !<Crank-Nicolson dynamic solver. \see OpenCMISS_DynamicSchemeTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_GALERKIN_SCHEME = SOLVER_DYNAMIC_GALERKIN_SCHEME !<Galerkin dynamic solver. \see OpenCMISS_DynamicSchemeTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_ZLAMAL_SCHEME = SOLVER_DYNAMIC_ZLAMAL_SCHEME !<Zlamal dynamic solver. \see OpenCMISS_DynamicSchemeTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_SECOND_DEGREE_GEAR_SCHEME = SOLVER_DYNAMIC_SECOND_DEGREE_GEAR_SCHEME !<2nd degree Gear dynamic solver. \see OpenCMISS_DynamicSchemeTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_SECOND_DEGREE_LINIGER1_SCHEME = SOLVER_DYNAMIC_SECOND_DEGREE_LINIGER1_SCHEME !<1st 2nd degree Liniger dynamic solver. \see OpenCMISS_DynamicSchemeTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_SECOND_DEGREE_LINIGER2_SCHEME = SOLVER_DYNAMIC_SECOND_DEGREE_LINIGER2_SCHEME !<2nd 2nd degree Liniger dynamic solver. \see OpenCMISS_DynamicSchemeTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_NEWMARK1_SCHEME = SOLVER_DYNAMIC_NEWMARK1_SCHEME !<1st Newmark dynamic solver. \see OpenCMISS_DynamicSchemeTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_NEWMARK2_SCHEME = SOLVER_DYNAMIC_NEWMARK2_SCHEME !<2nd Newmark dynamic solver. \see OpenCMISS_DynamicSchemeTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_NEWMARK3_SCHEME = SOLVER_DYNAMIC_NEWMARK3_SCHEME !<3rd Newmark dynamic solver. \see OpenCMISS_DynamicSchemeTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_THIRD_DEGREE_GEAR_SCHEME = SOLVER_DYNAMIC_THIRD_DEGREE_GEAR_SCHEME !<3rd degree Gear dynamic solver. \see OpenCMISS_DynamicSchemeTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_THIRD_DEGREE_LINIGER1_SCHEME = SOLVER_DYNAMIC_THIRD_DEGREE_LINIGER1_SCHEME !<1st 3rd degree Liniger dynamic solver. \see OpenCMISS_DynamicSchemeTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_THIRD_DEGREE_LINIGER2_SCHEME = SOLVER_DYNAMIC_THIRD_DEGREE_LINIGER2_SCHEME !<2nd 3rd degree Liniger dynamic solver. \see OpenCMISS_DynamicSchemeTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_HOUBOLT_SCHEME = SOLVER_DYNAMIC_HOUBOLT_SCHEME !<Houbolt dynamic solver. \see OpenCMISS_DynamicSchemeTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_WILSON_SCHEME = SOLVER_DYNAMIC_WILSON_SCHEME !<Wilson dynamic solver. \see OpenCMISS_DynamicSchemeTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_BOSSAK_NEWMARK1_SCHEME = SOLVER_DYNAMIC_BOSSAK_NEWMARK1_SCHEME !<1st Bossak-Newmark dynamic solver. \see OpenCMISS_DynamicSchemeTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_BOSSAK_NEWMARK2_SCHEME = SOLVER_DYNAMIC_BOSSAK_NEWMARK2_SCHEME !<2nd Bossak-Newmark dynamic solver. \see OpenCMISS_DynamicSchemeTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_HILBERT_HUGHES_TAYLOR1_SCHEME = SOLVER_DYNAMIC_HILBERT_HUGHES_TAYLOR1_SCHEME !<1st Hilbert-Hughes-Taylor dynamic solver. \see OpenCMISS_DynamicSchemeTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_HILBERT_HUGHES_TAYLOR2_SCHEME = SOLVER_DYNAMIC_HILBERT_HUGHES_TAYLOR2_SCHEME !<1st Hilbert-Hughes-Taylor dynamic solver. \see OpenCMISS_DynamicSchemeTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DYNAMIC_USER_DEFINED_SCHEME = SOLVER_DYNAMIC_USER_DEFINED_SCHEME !<User specified degree and theta dynamic solver. \see OpenCMISS_DynamicSchemeTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_DAETypes OpenCMISS::Iron::Solver::DAETypes
+  !> \addtogroup OpenCMISS_DAETypes OpenCMISS::Iron::Solver::DAETypes
   !> \brief The type of differential-algebraic equation.
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DAE_DIFFERENTIAL_ONLY = SOLVER_DAE_DIFFERENTIAL_ONLY !<Differential equations only. \see OPENCMISS_DAETypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DAE_INDEX_1 = SOLVER_DAE_INDEX_1 !<Index 1 differential-algebraic equation. \see OPENCMISS_DAETypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DAE_INDEX_2 = SOLVER_DAE_INDEX_2 !<Index 2 differential-algebraic equation. \see OPENCMISS_DAETypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DAE_INDEX_3 = SOLVER_DAE_INDEX_3 !<Index 3 differential-algebraic equation. \see OPENCMISS_DAETypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DAE_DIFFERENTIAL_ONLY = SOLVER_DAE_DIFFERENTIAL_ONLY !<Differential equations only. \see OpenCMISS_DAETypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DAE_INDEX_1 = SOLVER_DAE_INDEX_1 !<Index 1 differential-algebraic equation. \see OpenCMISS_DAETypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DAE_INDEX_2 = SOLVER_DAE_INDEX_2 !<Index 2 differential-algebraic equation. \see OpenCMISS_DAETypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DAE_INDEX_3 = SOLVER_DAE_INDEX_3 !<Index 3 differential-algebraic equation. \see OpenCMISS_DAETypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_DAESolverTypes OpenCMISS::Iron::Solver::DAESolverTypes
+  !> \addtogroup OpenCMISS_DAESolverTypes OpenCMISS::Iron::Solver::DAESolverTypes
   !> \brief The differential-algebraic equation solver types for a differential-algebraic equation solver.
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
   INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DAE_EULER = SOLVER_DAE_EULER !<Euler differential-algebraic equation solver. \see
   INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DAE_CRANK_NICOLSON = SOLVER_DAE_CRANK_NICOLSON !<Crank-Nicolson differential-algebraic equation solver. \see
@@ -6662,46 +6663,46 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DAE_RUSH_LARSON = SOLVER_DAE_RUSH_LARSON !<Rush-Larson differential-algebraic equation solver. \see
   INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DAE_EXTERNAL = SOLVER_DAE_EXTERNAL !<External (e.g., CellML generated) differential-algebraic equation solver. \see
   !>@}
-  !> \addtogroup OPENCMISS_EulerDAESolverTypes OpenCMISS::Iron::Solver::EulerDAESolverTypes
+  !> \addtogroup OpenCMISS_EulerDAESolverTypes OpenCMISS::Iron::Solver::EulerDAESolverTypes
   !> \brief The Euler solver types for a differential-algebriac equation solver.
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DAE_EULER_FORWARD = SOLVER_DAE_EULER_FORWARD !<Forward Euler differential equation solver. \see OPENCMISS_EulerDAESolverTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DAE_EULER_BACKWARD = SOLVER_DAE_EULER_BACKWARD !<Backward Euler differential equation solver. \see OPENCMISS_EulerDAESolverTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DAE_EULER_IMPROVED = SOLVER_DAE_EULER_IMPROVED !<Improved Euler differential equation solver. \see OPENCMISS_EulerDAESolverTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DAE_EULER_FORWARD = SOLVER_DAE_EULER_FORWARD !<Forward Euler differential equation solver. \see OpenCMISS_EulerDAESolverTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DAE_EULER_BACKWARD = SOLVER_DAE_EULER_BACKWARD !<Backward Euler differential equation solver. \see OpenCMISS_EulerDAESolverTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_DAE_EULER_IMPROVED = SOLVER_DAE_EULER_IMPROVED !<Improved Euler differential equation solver. \see OpenCMISS_EulerDAESolverTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_SolutionInitialiseTypes OpenCMISS::Iron::Solver::SolutionInitialiseTypes
+  !> \addtogroup OpenCMISS_SolutionInitialiseTypes OpenCMISS::Iron::Solver::SolutionInitialiseTypes
   !> \brief The types of solution initialisation.
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_SOLUTION_INITIALISE_ZERO = SOLVER_SOLUTION_INITIALISE_ZERO !<Initialise the solution by zeroing it before a solve. \see OPENCMISS_SolutionInitialiseTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_SOLUTION_INITIALISE_CURRENT_FIELD = SOLVER_SOLUTION_INITIALISE_CURRENT_FIELD !<Initialise the solution by copying in the current dependent field values. \see OPENCMISS_SolutionInitialiseTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_SOLUTION_INITIALISE_NO_CHANGE = SOLVER_SOLUTION_INITIALISE_NO_CHANGE !<Do not change the solution before a solve. \see OPENCMISS_SolutionInitialiseTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_SOLUTION_INITIALISE_ZERO = SOLVER_SOLUTION_INITIALISE_ZERO !<Initialise the solution by zeroing it before a solve. \see OpenCMISS_SolutionInitialiseTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_SOLUTION_INITIALISE_CURRENT_FIELD = SOLVER_SOLUTION_INITIALISE_CURRENT_FIELD !<Initialise the solution by copying in the current dependent field values. \see OpenCMISS_SolutionInitialiseTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_SOLUTION_INITIALISE_NO_CHANGE = SOLVER_SOLUTION_INITIALISE_NO_CHANGE !<Do not change the solution before a solve. \see OpenCMISS_SolutionInitialiseTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_SolverOutputTypes OpenCMISS::Iron::Solver::OutputTypes
+  !> \addtogroup OpenCMISS_SolverOutputTypes OpenCMISS::Iron::Solver::OutputTypes
   !> \brief The types of output.
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NO_OUTPUT = SOLVER_NO_OUTPUT !<No output from the solver routines. \see OPENCMISS_SolverOutputTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_MONITOR_OUTPUT = SOLVER_MONITOR_OUTPUT !<Monitor output from solver routines. \see OPENCMISS_SolverOutputTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_PROGRESS_OUTPUT = SOLVER_PROGRESS_OUTPUT !<Progress output from solver routines. \see OPENCMISS_SolverOutputTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_TIMING_OUTPUT = SOLVER_TIMING_OUTPUT !<Timing output from the solver routines plus below. \see OPENCMISS_SolverOutputTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_SOLVER_OUTPUT = SOLVER_SOLVER_OUTPUT !<Solver specific output from the solver routines plus below. \see OPENCMISS_SolverOutputTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_MATRIX_OUTPUT = SOLVER_MATRIX_OUTPUT !<Solver matrices output from the solver routines plus below. \see OPENCMISS_SolverOutputTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_NO_OUTPUT = SOLVER_NO_OUTPUT !<No output from the solver routines. \see OpenCMISS_SolverOutputTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_MONITOR_OUTPUT = SOLVER_MONITOR_OUTPUT !<Monitor output from solver routines. \see OpenCMISS_SolverOutputTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_PROGRESS_OUTPUT = SOLVER_PROGRESS_OUTPUT !<Progress output from solver routines. \see OpenCMISS_SolverOutputTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_TIMING_OUTPUT = SOLVER_TIMING_OUTPUT !<Timing output from the solver routines plus below. \see OpenCMISS_SolverOutputTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_SOLVER_OUTPUT = SOLVER_SOLVER_OUTPUT !<Solver specific output from the solver routines plus below. \see OpenCMISS_SolverOutputTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_MATRIX_OUTPUT = SOLVER_MATRIX_OUTPUT !<Solver matrices output from the solver routines plus below. \see OpenCMISS_SolverOutputTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_SolverEquationsSparsityTypes OpenCMISS::Iron::SolverEquations::SparsityTypes
+  !> \addtogroup OpenCMISS_SolverEquationsSparsityTypes OpenCMISS::Iron::SolverEquations::SparsityTypes
   !> \brief The types of sparse solver equations matrices.
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_SPARSE_MATRICES = SOLVER_SPARSE_MATRICES !<Use sparse solver matrices. \see OPENCMISS_SolverEquationsSparsityTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_FULL_MATRICES = SOLVER_FULL_MATRICES !<Use fully populated solver matrices. \see OPENCMISS_SolverEquationsSparsityTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_SPARSE_MATRICES = SOLVER_SPARSE_MATRICES !<Use sparse solver matrices. \see OpenCMISS_SolverEquationsSparsityTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_FULL_MATRICES = SOLVER_FULL_MATRICES !<Use fully populated solver matrices. \see OpenCMISS_SolverEquationsSparsityTypes,OpenCMISS
   !>@}
-  !> \addtogroup OPENCMISS_SolverEquationsSymmetryTypes OpenCMISS::Iron::SolverEquations::SymmetryTypes
+  !> \addtogroup OpenCMISS_SolverEquationsSymmetryTypes OpenCMISS::Iron::SolverEquations::SymmetryTypes
   !> \brief The types of symmetry for the solver equations matrices.
-  !> \see OpenCMISS::Iron::Solver::Constants,OPENCMISS
+  !> \see OpenCMISS::Iron::Solver::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_SYMMETRIC_MATRICES = SOLVER_SYMMETRIC_MATRICES !<Use symmetric solver matrices. \see OPENCMISS_SolverEquationsSymmetryTypes,OPENCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_UNSYMMETRIC_MATRICES = SOLVER_UNSYMMETRIC_MATRICES !<Use unsymmetric solver matrices. \see OPENCMISS_SolverEquationsSymmetryTypes,OPENCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_SYMMETRIC_MATRICES = SOLVER_SYMMETRIC_MATRICES !<Use symmetric solver matrices. \see OpenCMISS_SolverEquationsSymmetryTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_SOLVER_UNSYMMETRIC_MATRICES = SOLVER_UNSYMMETRIC_MATRICES !<Use unsymmetric solver matrices. \see OpenCMISS_SolverEquationsSymmetryTypes,OpenCMISS
   !>@}
   !>@}
 
@@ -10909,7 +10910,7 @@ CONTAINS
     !DLLEXPORT(cmfe_DiagnosticsSetOn)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: diagType !<The type of diagnostics to set on \see OPENCMISS_DiagnosticTypes.
+    INTEGER(INTG), INTENT(IN) :: diagType !<The type of diagnostics to set on \see OpenCMISS_DiagnosticTypes.
     INTEGER(INTG), INTENT(IN) :: levelList(:) !<The list of diagnostic levels to set on.
     CHARACTER(LEN=*), INTENT(IN) :: diagFilename !<If present the name of the file to output diagnostic information to. If omitted the diagnostic output is sent to the screen.
     CHARACTER(LEN=*), INTENT(IN) :: routineList(:) !<The list of routines to set diagnostics on in.
@@ -11018,7 +11019,7 @@ CONTAINS
     !DLLEXPORT(cmfe_TimingSetOn)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: timingType !<The type of timing to set on \see OPENCMISS_TimingTypes.
+    INTEGER(INTG), INTENT(IN) :: timingType !<The type of timing to set on \see OpenCMISS_TimingTypes.
     LOGICAL, INTENT(IN) :: timingSummaryFlag !<.TRUE. if the timing information will be output with subsequent OpenCMISS::Iron::cmfe_TimingSummaryOutput calls, .FALSE. if the timing information will be output every time the routine exits.
     CHARACTER(LEN=*), INTENT(IN) :: timingFilename !<If present the name of the file to output timing information to. If omitted the timing output is sent to the screen.
     CHARACTER(LEN=*), INTENT(IN) :: routineList(:) !<The list of routines to set timing on in.
@@ -11080,7 +11081,7 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to get the collapsed Xi flags for.
-    INTEGER(INTG), INTENT(OUT) :: collapsedXi(:) !<collapsedXi(xiIdx). On return, the collapsed Xi parameter for the xiIdx'th Xi direction. \see OPENCMISS_BasisXiCollapse
+    INTEGER(INTG), INTENT(OUT) :: collapsedXi(:) !<collapsedXi(xiIdx). On return, the collapsed Xi parameter for the xiIdx'th Xi direction. \see OpenCMISS_BasisXiCollapse
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(BASIS_TYPE), POINTER :: basis
@@ -11109,7 +11110,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(IN) :: basis !<The basis to get the collapsed Xi flags for.
-    INTEGER(INTG), INTENT(OUT) :: collapsedXi(:) !<collapsedXi(xiIdx). On return, the collapsed Xi parameter for the xiIdx'th Xi direction. \see OPENCMISS_BasisXiCollapse
+    INTEGER(INTG), INTENT(OUT) :: collapsedXi(:) !<collapsedXi(xiIdx). On return, the collapsed Xi parameter for the xiIdx'th Xi direction. \see OpenCMISS_BasisXiCollapse
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -11135,7 +11136,7 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to set the collapsed Xi flags for.
-    INTEGER(INTG), INTENT(IN) :: collapsedXi(:) !<collapsedXi(xiIdx). The collapsed Xi parameter for the xiIdx'th Xi direction to set. \see OPENCMISS_BasisXiCollapse
+    INTEGER(INTG), INTENT(IN) :: collapsedXi(:) !<collapsedXi(xiIdx). The collapsed Xi parameter for the xiIdx'th Xi direction to set. \see OpenCMISS_BasisXiCollapse
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(BASIS_TYPE), POINTER :: basis
@@ -11164,7 +11165,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(INOUT) :: basis !<The basis to set the collapsed Xi flags for.
-    INTEGER(INTG), INTENT(IN) :: collapsedXi(:) !<collapsedXi(xiIdx). The collapsed Xi parameter for the xiIdx'th Xi direction to set. \see OPENCMISS_BasisXiCollapse
+    INTEGER(INTG), INTENT(IN) :: collapsedXi(:) !<collapsedXi(xiIdx). The collapsed Xi parameter for the xiIdx'th Xi direction to set. \see OpenCMISS_BasisXiCollapse
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -11365,7 +11366,7 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to get the interpolation xi for.
-    INTEGER(INTG), INTENT(OUT) :: interpolationXi(:) !<interpolationXi(xiIdx). On return, the interpolation xi parameters for each Xi direction \see OPENCMISS_BasisInterpolationSpecifications.
+    INTEGER(INTG), INTENT(OUT) :: interpolationXi(:) !<interpolationXi(xiIdx). On return, the interpolation xi parameters for each Xi direction \see OpenCMISS_BasisInterpolationSpecifications.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(BASIS_TYPE), POINTER :: basis
@@ -11394,7 +11395,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(IN) :: basis !<The basis to get the interpolation xi for.
-    INTEGER(INTG), INTENT(OUT) :: interpolationXi(:) !<interpolationXi(xiIdx). On return, the interpolation xi parameters for each Xi direction \see OPENCMISS_BasisInterpolationSpecifications.
+    INTEGER(INTG), INTENT(OUT) :: interpolationXi(:) !<interpolationXi(xiIdx). On return, the interpolation xi parameters for each Xi direction \see OpenCMISS_BasisInterpolationSpecifications.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -11420,7 +11421,7 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to get the interpolation xi for.
-    INTEGER(INTG), INTENT(IN) :: interpolationXi(:) !<interpolationXi(xiIdx). The interpolation xi parameters for each Xi direction \see OPENCMISS_BasisInterpolationSpecifications.
+    INTEGER(INTG), INTENT(IN) :: interpolationXi(:) !<interpolationXi(xiIdx). The interpolation xi parameters for each Xi direction \see OpenCMISS_BasisInterpolationSpecifications.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(BASIS_TYPE), POINTER :: basis
@@ -11449,7 +11450,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(IN) :: basis !<The basis to get the interpolation xi for.
-    INTEGER(INTG), INTENT(IN) :: interpolationXi(:) !<interpolationXi(xiIdx). The interpolation xi parameters for each Xi direction \see OPENCMISS_BasisInterpolationSpecifications.
+    INTEGER(INTG), INTENT(IN) :: interpolationXi(:) !<interpolationXi(xiIdx). The interpolation xi parameters for each Xi direction \see OpenCMISS_BasisInterpolationSpecifications.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -11981,7 +11982,7 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to get the quadrature type for.
-    INTEGER(INTG), INTENT(OUT) :: quadratureType !<On return, the type of quadrature in the specified basis. \see OPENCMISS_QuadratureTypes
+    INTEGER(INTG), INTENT(OUT) :: quadratureType !<On return, the type of quadrature in the specified basis. \see OpenCMISS_QuadratureTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(BASIS_TYPE), POINTER :: basis
@@ -12010,7 +12011,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(IN) :: basis !<The basis to get the quadrature order for.
-    INTEGER(INTG), INTENT(OUT) :: quadratureType !<On return, the type of quadrature in the specified basis. \see OPENCMISS_QuadratureTypes
+    INTEGER(INTG), INTENT(OUT) :: quadratureType !<On return, the type of quadrature in the specified basis. \see OpenCMISS_QuadratureTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -12036,7 +12037,7 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to get the quadrature type for.
-    INTEGER(INTG), INTENT(IN) :: quadratureType !<The type of quadrature in the specified basis to set. \see OPENCMISS_QuadratureTypes
+    INTEGER(INTG), INTENT(IN) :: quadratureType !<The type of quadrature in the specified basis to set. \see OpenCMISS_QuadratureTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(BASIS_TYPE), POINTER :: basis
@@ -12065,7 +12066,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(INOUT) :: basis !<The basis to get the quadrature type for.
-    INTEGER(INTG), INTENT(IN) :: quadratureType !<The type of quadrature in the specified basis to set. \see OPENCMISS_QuadratureTypes
+    INTEGER(INTG), INTENT(IN) :: quadratureType !<The type of quadrature in the specified basis to set. \see OpenCMISS_QuadratureTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -12147,7 +12148,7 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to get the type for.
-    INTEGER(INTG), INTENT(OUT) :: basisType !<On return, the type of the specified basis. \see OPENCMISS_BasisTypes
+    INTEGER(INTG), INTENT(OUT) :: basisType !<On return, the type of the specified basis. \see OpenCMISS_BasisTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(BASIS_TYPE), POINTER :: basis
@@ -12176,7 +12177,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(IN) :: basis !<The basis to get the type for.
-    INTEGER(INTG), INTENT(OUT) :: basisType !<On return, the type of the specified basis. \see OPENCMISS_BasisTypes
+    INTEGER(INTG), INTENT(OUT) :: basisType !<On return, the type of the specified basis. \see OpenCMISS_BasisTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -12202,7 +12203,7 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to set the type for.
-    INTEGER(INTG), INTENT(IN) :: basisType !<The type of the specified basis to set. \see OPENCMISS_BasisTypes
+    INTEGER(INTG), INTENT(IN) :: basisType !<The type of the specified basis to set. \see OpenCMISS_BasisTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(BASIS_TYPE), POINTER :: basis
@@ -12231,7 +12232,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(INOUT) :: basis !<The basis to set the type for.
-    INTEGER(INTG), INTENT(IN) :: basisType !<The type of the specified basis to set. \see OPENCMISS_BasisTypes
+    INTEGER(INTG), INTENT(IN) :: basisType !<The type of the specified basis to set. \see OpenCMISS_BasisTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -12362,9 +12363,9 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to get the solver equations boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the solver equations for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the dependent field for the boundary condition.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to add the boundary condition at. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to add the boundary condition at. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the dependent field to add the boundary condition at.
-    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OPENCMISS_BoundaryConditionsTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OpenCMISS_BoundaryConditionsTypes,OpenCMISS
     REAL(DP), INTENT(IN) :: value !<The value of the boundary condition to add.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -12408,9 +12409,9 @@ CONTAINS
     !Argument variables
     TYPE(cmfe_BoundaryConditionsType), INTENT(IN) :: boundaryConditions !<The boundary conditions to add the constant to.
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to set the boundary condition on.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to set the boundary condition at. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to set the boundary condition at. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the dependent field to set the boundary condition at.
-    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OPENCMISS_BoundaryConditionsTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OpenCMISS_BoundaryConditionsTypes,OpenCMISS
     REAL(DP), INTENT(IN) :: value !<The value of the boundary condition to add.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -12444,9 +12445,9 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to get the solver equations boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the solver equations for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the dependent field for the boundary condition.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to set the boundary condition at. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to set the boundary condition at. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the dependent field to set the boundary condition at.
-    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OPENCMISS_BoundaryConditionsTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OpenCMISS_BoundaryConditionsTypes,OpenCMISS
     REAL(DP), INTENT(IN) :: value !<The value of the boundary condition to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -12490,9 +12491,9 @@ CONTAINS
     !Argument variables
     TYPE(cmfe_BoundaryConditionsType), INTENT(IN) :: boundaryConditions !<The boundary conditions to set the constant to.
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to set the boundary condition on.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to set the boundary condition at. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to set the boundary condition at. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the dependent field to set the boundary condition at.
-    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OPENCMISS_BoundaryConditionsTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OpenCMISS_BoundaryConditionsTypes,OpenCMISS
     REAL(DP), INTENT(IN) :: value !<The value of the boundary condition to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -12525,10 +12526,10 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to get the solver equations boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the solver equations for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the dependent field for the boundary condition.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to add the boundary condition at. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to add the boundary condition at. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user number of the element to add the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the dependent field to add the boundary condition at.
-    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OPENCMISS_BoundaryConditionsTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OpenCMISS_BoundaryConditionsTypes,OpenCMISS
     REAL(DP), INTENT(IN) :: value !<The value of the boundary condition to add.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -12573,10 +12574,10 @@ CONTAINS
     !Argument variables
     TYPE(cmfe_BoundaryConditionsType), INTENT(IN) :: boundaryConditions !<The boundary conditions to add the element to.
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to set the boundary condition on.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to add the boundary condition at. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to add the boundary condition at. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user number of the element to add the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the dependent field to set the boundary condition at.
-    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OPENCMISS_BoundaryConditionsTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OpenCMISS_BoundaryConditionsTypes,OpenCMISS
     REAL(DP), INTENT(IN) :: value !<The value of the boundary condition to add.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -12609,10 +12610,10 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to get the solver equations boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the solver equations for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the dependent field for the boundary condition.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to set the boundary condition at. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to set the boundary condition at. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user number of the element to set the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the dependent field to set the boundary condition at.
-    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OPENCMISS_BoundaryConditionsTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OpenCMISS_BoundaryConditionsTypes,OpenCMISS
     REAL(DP), INTENT(IN) :: value !<The value of the boundary condition to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -12657,10 +12658,10 @@ CONTAINS
     !Argument variables
     TYPE(cmfe_BoundaryConditionsType), INTENT(IN) :: boundaryConditions !<The boundary conditions to set the element to.
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to set the boundary condition on.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to set the boundary condition at. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to set the boundary condition at. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user number of the element to set the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the dependent field to set the boundary condition at.
-    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OPENCMISS_BoundaryConditionsTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OpenCMISS_BoundaryConditionsTypes,OpenCMISS
     REAL(DP), INTENT(IN) :: value !<The value of the boundary condition to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -12693,12 +12694,12 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to get the solver equations boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the solver equations for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the dependent field for the boundary condition.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to add the boundary condition at. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to add the boundary condition at. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The user number of the node derivative version to add the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The user number of the node derivative to add the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node to add the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the dependent field to add the boundary condition at.
-    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OPENCMISS_BoundaryConditionsTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OpenCMISS_BoundaryConditionsTypes,OpenCMISS
     REAL(DP), INTENT(IN) :: value !<The value of the boundary condition to add.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -12743,12 +12744,12 @@ CONTAINS
     !Argument variables
     TYPE(cmfe_BoundaryConditionsType), INTENT(IN) :: boundaryConditions !<The boundary conditions to add the node to.
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to set the boundary condition on.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to add the boundary condition at. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to add the boundary condition at. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The user number of the node derivative version to add the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The user number of the node derivative to add the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node to add the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the dependent field to set the boundary condition at.
-    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OPENCMISS_BoundaryConditionsTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OpenCMISS_BoundaryConditionsTypes,OpenCMISS
     REAL(DP), INTENT(IN) :: value !<The value of the boundary condition to add.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -12781,12 +12782,12 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier to get the solver equations boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the solver equations for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the dependent field for the boundary condition.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to set the boundary condition at. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to set the boundary condition at. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The user number of the node derivative version to set the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The user number of the node derivative to set the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node to set the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the dependent field to set the boundary condition at.
-    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OPENCMISS_BoundaryConditionsTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OpenCMISS_BoundaryConditionsTypes,OpenCMISS
     REAL(DP), INTENT(IN) :: value !<The value of the boundary condition to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -12834,12 +12835,12 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to get the solver equations boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the solver equations for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the dependent field for the boundary condition.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to set the boundary condition at. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to set the boundary condition at. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The user number of the node derivative version to set the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The user number of the node derivative to set the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node to set the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the dependent field to set the boundary condition at.
-    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OPENCMISS_BoundaryConditionsTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OpenCMISS_BoundaryConditionsTypes,OpenCMISS
     REAL(DP), INTENT(IN) :: value !<The value of the boundary condition to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -12884,12 +12885,12 @@ CONTAINS
     !Argument variables
     TYPE(cmfe_BoundaryConditionsType), INTENT(IN) :: boundaryConditions !<The boundary conditions to set the node to.
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The dependent field to set the boundary condition on.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to set the boundary condition at. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to set the boundary condition at. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The user number of the node derivative version to set the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The user number of the node derivative to set the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node to set the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the dependent field to set the boundary condition at.
-    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OPENCMISS_BoundaryConditionsTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: condition !<The boundary condition type to set \see OpenCMISS_BoundaryConditionsTypes,OpenCMISS
     REAL(DP), INTENT(IN) :: value !<The value of the boundary condition to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -12920,7 +12921,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem containing the solver equations.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier of the solver equations containing the boundary conditions.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the solver equations boundary conditions for.
-    INTEGER(INTG), INTENT(IN) :: sparsityType !<The sparsity type for the Neumann integration matrices. \see OPENCMISS_BoundaryConditionSparsityTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: sparsityType !<The sparsity type for the Neumann integration matrices. \see OpenCMISS_BoundaryConditionSparsityTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -12959,7 +12960,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem containing the solver equations to destroy the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to get the solver equations boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the solver equations for.
-    INTEGER(INTG), INTENT(IN) :: sparsityType !<The sparsity type for the Neumann integration matrices. \see OPENCMISS_BoundaryConditionSparsityTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: sparsityType !<The sparsity type for the Neumann integration matrices. \see OpenCMISS_BoundaryConditionSparsityTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -12995,7 +12996,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_BoundaryConditionsType), INTENT(INOUT) :: boundaryConditions !<The boundary conditions
-    INTEGER(INTG), INTENT(IN) :: sparsityType !<The sparsity type for the Neumann integration matrices. \see OPENCMISS_BoundaryConditionSparsityTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: sparsityType !<The sparsity type for the Neumann integration matrices. \see OpenCMISS_BoundaryConditionSparsityTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -13027,7 +13028,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier to get the solver equations.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index of the solver equations.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the dependent field containing the DOFs to contrain.
-    INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The variable type of the dependent field containing the DOFs to constrain. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The variable type of the dependent field containing the DOFs to constrain. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The derivative version number.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number.
     INTEGER(INTG), INTENT(IN) :: component !<The field component number of the DOFs to be constrained.
@@ -13077,7 +13078,7 @@ CONTAINS
     !Argument variables
     TYPE(cmfe_BoundaryConditionsType), INTENT(IN) :: boundaryConditions !<The boundary conditions to constrain the DOFs in.
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The equations dependent field containing the field DOFs to be constrained.
-    INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type of the DOFs to be constrained. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type of the DOFs to be constrained. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The derivative version number.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number.
     INTEGER(INTG), INTENT(IN) :: component !<The field component number of the DOFs to be constrained.
@@ -13110,7 +13111,7 @@ CONTAINS
     !DLLEXPORT(cmfe_ErrorHandlingModeGet)
 
     !Argument variables
-    INTEGER(INTG), INTENT(OUT) :: errorHandlingMode !<On return, the error handling mode. \see OPENCMISS_CMISSErrorHandlingModes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: errorHandlingMode !<On return, the error handling mode. \see OpenCMISS_CMISSErrorHandlingModes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -13135,7 +13136,7 @@ CONTAINS
     !DLLEXPORT(cmfe_ErrorHandlingModeSet)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: errorHandlingMode !<The error handling mode to set. \see OPENCMISS_CMISSErrorHandlingModes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: errorHandlingMode !<The error handling mode to set. \see OpenCMISS_CMISSErrorHandlingModes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -15062,7 +15063,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML environment.
     INTEGER(INTG), INTENT(IN) :: cellMLUserNumber !<The user number of the CellML enviroment to get the field component for.
     INTEGER(INTG), INTENT(IN) :: cellMLModelUserNumber !<The user number of the CellML model to map fom.
-    INTEGER(INTG), INTENT(IN) :: cellMLFieldType !<The type of CellML field to get the component for. \see OPENCMISS_CellMLFieldTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: cellMLFieldType !<The type of CellML field to get the component for. \see OpenCMISS_CellMLFieldTypes,OpenCMISS
     CHARACTER(LEN=*), INTENT(IN) :: variableID !<The variable ID to get the corresponding field component for.
     INTEGER(INTG), INTENT(OUT) :: fieldComponent !<On return, the field component corresponding to the ID.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -15106,7 +15107,7 @@ CONTAINS
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(INOUT) :: cellML !<The CellML environment to get the field component for.
     INTEGER(INTG), INTENT(IN) :: cellMLModelUserNumber !<The user number of the CellML model to map from.
-    INTEGER(INTG), INTENT(IN) :: cellMLFieldType !<The type of CellML field to get the component for. \see OPENCMISS_CellMLFieldTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: cellMLFieldType !<The type of CellML field to get the component for. \see OpenCMISS_CellMLFieldTypes,OpenCMISS
     CHARACTER(LEN=*), INTENT(IN) :: variableID !<The ID to get the corresponding field component for.
     INTEGER(INTG), INTENT(OUT) :: fieldComponent !<On return, the field component corresponding to the ID.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -15145,7 +15146,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the CellML environment.
     INTEGER(INTG), INTENT(IN) :: cellMLUserNumber !<The user number of the CellML enviroment to get the field component for.
     INTEGER(INTG), INTENT(IN) :: cellMLModelUserNumber !<The user number of the CellML model to map from.
-    INTEGER(INTG), INTENT(IN) :: cellMLFieldType !<The type of CellML field to get the component for. \see OPENCMISS_CellMLFieldTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: cellMLFieldType !<The type of CellML field to get the component for. \see OpenCMISS_CellMLFieldTypes,OpenCMISS
     TYPE(VARYING_STRING), INTENT(IN) :: variableID !<The ID to get the corresponding field component for.
     INTEGER(INTG), INTENT(OUT) :: fieldComponent !<On return, the field component corresponding to the ID.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -15188,7 +15189,7 @@ CONTAINS
     !Argument variables
     TYPE(cmfe_CellMLType), INTENT(INOUT) :: cellML !<The CellML environment to get the field component for.
     INTEGER(INTG), INTENT(IN) :: cellMLModelUserNumber !<The user number of the CellML model to map from.
-    INTEGER(INTG), INTENT(IN) :: cellMLFieldType !<The type of CellML field to get the component for. \see OPENCMISS_CellMLFieldTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: cellMLFieldType !<The type of CellML field to get the component for. \see OpenCMISS_CellMLFieldTypes,OpenCMISS
     TYPE(VARYING_STRING), INTENT(IN) :: variableID !<The ID to get the corresponding field component for.
     INTEGER(INTG), INTENT(OUT) :: fieldComponent !<On return, the field component corresponding to the ID.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -17415,7 +17416,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the output type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier to get the output type for.
-    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the control loop \see OPENCMISS_ControlLoopOutputTypes
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the control loop \see OpenCMISS_ControlLoopOutputTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
@@ -17448,7 +17449,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to get the output type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<The control loop identifiers to get the output type for.
-    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the control loop \see OPENCMISS_ControlLoopOutputTypes
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the control loop \see OpenCMISS_ControlLoopOutputTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
@@ -17480,7 +17481,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(IN) :: controlLoop !<The control loop to get the output type for.
-    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the control loop \see OPENCMISS_ControlLoopOutputTypes
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the control loop \see OpenCMISS_ControlLoopOutputTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -17507,7 +17508,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the output type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier to set the output type for.
-    INTEGER(INTG), INTENT(IN) :: outputType !<The output type to set \see OPENCMISS_ControlLoopOutputTypes
+    INTEGER(INTG), INTENT(IN) :: outputType !<The output type to set \see OpenCMISS_ControlLoopOutputTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
@@ -17540,7 +17541,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the output type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<The control loop identifiers to set the output type for.
-    INTEGER(INTG), INTENT(IN) :: outputType !<The output type to set \see OPENCMISS_ControlLoopOutputTypes
+    INTEGER(INTG), INTENT(IN) :: outputType !<The output type to set \see OpenCMISS_ControlLoopOutputTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
@@ -17572,7 +17573,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(IN) :: controlLoop !<The control loop to set the output type for.
-    INTEGER(INTG), INTENT(IN) :: outputType !<The output type to set \see OPENCMISS_ControlLoopOutputTypes
+    INTEGER(INTG), INTENT(IN) :: outputType !<The output type to set \see OpenCMISS_ControlLoopOutputTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -17995,7 +17996,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the loop type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier.
-    INTEGER(INTG), INTENT(IN) :: loopType !<The type of control loop to set. \see OPENCMISS_ProblemControlLoopTypes
+    INTEGER(INTG), INTENT(IN) :: loopType !<The type of control loop to set. \see OpenCMISS_ProblemControlLoopTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
@@ -18028,7 +18029,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the loop type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<The control loop identifiers.
-    INTEGER(INTG), INTENT(IN) :: loopType !<The type of control loop to set. \see OPENCMISS_ProblemControlLoopTypes
+    INTEGER(INTG), INTENT(IN) :: loopType !<The type of control loop to set. \see OpenCMISS_ProblemControlLoopTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
@@ -18060,7 +18061,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_ControlLoopType), INTENT(INOUT) :: controlLoop !<The control loop to set the loop type for.
-    INTEGER(INTG), INTENT(IN) :: loopType !<The type of control loop to set. \see OPENCMISS_ProblemControlLoopTypes
+    INTEGER(INTG), INTENT(IN) :: loopType !<The type of control loop to set. \see OpenCMISS_ProblemControlLoopTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -18484,7 +18485,7 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: coordinateSystemUserNumber !<The user number of the coordinate system to get the radial interpolation for.
-    INTEGER(INTG), INTENT(OUT) :: radialInterpolationType !<On return, the radial interpolation type of the coordinate system \see OPENCMISS_CoordinateRadialInterpolations
+    INTEGER(INTG), INTENT(OUT) :: radialInterpolationType !<On return, the radial interpolation type of the coordinate system \see OpenCMISS_CoordinateRadialInterpolations
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
@@ -18514,7 +18515,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_CoordinateSystemType), INTENT(INOUT) :: coordinateSystem !<The coordinate system to get the radial interpolation type for.
-    INTEGER(INTG), INTENT(OUT) :: radialInterpolationType !<On return, the radial interpolation type of the coordinate system. \see OPENCMISS_CoordinateRadialInterpolations
+    INTEGER(INTG), INTENT(OUT) :: radialInterpolationType !<On return, the radial interpolation type of the coordinate system. \see OpenCMISS_CoordinateRadialInterpolations
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -18541,7 +18542,7 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: coordinateSystemUserNumber !<The user number of the coordinate system to set the radial interpolation for.
-    INTEGER(INTG), INTENT(IN) :: radialInterpolationType !<The radial interpolation type of the coordinate system to set.\see OPENCMISS_CoordinateRadialInterpolations
+    INTEGER(INTG), INTENT(IN) :: radialInterpolationType !<The radial interpolation type of the coordinate system to set.\see OpenCMISS_CoordinateRadialInterpolations
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
@@ -18571,7 +18572,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_CoordinateSystemType), INTENT(INOUT)  :: coordinateSystem !<The coordinate system to set the radial interpolation type for.
-    INTEGER(INTG), INTENT(IN) :: radialInterpolationType !<The radial interpolation type of the coordinate system to set. \see OPENCMISS_CoordinateRadialInterpolations
+    INTEGER(INTG), INTENT(IN) :: radialInterpolationType !<The radial interpolation type of the coordinate system to set. \see OpenCMISS_CoordinateRadialInterpolations
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -18598,7 +18599,7 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: coordinateSystemUserNumber !<The user number of the coordinate system to get the type for.
-    INTEGER(INTG), INTENT(OUT) :: coordinateSystemType !<On return, the type of the coordinate system. \see OPENCMISS_CoordinateSystemTypes
+    INTEGER(INTG), INTENT(OUT) :: coordinateSystemType !<On return, the type of the coordinate system. \see OpenCMISS_CoordinateSystemTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
@@ -18627,7 +18628,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_CoordinateSystemType), INTENT(IN) :: coordinateSystem !<The coordinate system to get the type for.
-    INTEGER(INTG), INTENT(OUT) :: coordinateSystemType !<On return, the type of the coordinate system. \see OPENCMISS_CoordinateSystemTypes
+    INTEGER(INTG), INTENT(OUT) :: coordinateSystemType !<On return, the type of the coordinate system. \see OpenCMISS_CoordinateSystemTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -18653,7 +18654,7 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: coordinateSystemUserNumber !<The user number of the coordinate system to set the type for.
-    INTEGER(INTG), INTENT(IN) :: coordinateSystemType !<The type of the coordinate system to set. \see OPENCMISS_CoordinateSystemTypes
+    INTEGER(INTG), INTENT(IN) :: coordinateSystemType !<The type of the coordinate system to set. \see OpenCMISS_CoordinateSystemTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
@@ -18682,7 +18683,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_CoordinateSystemType), INTENT(INOUT) :: coordinateSystem !<The coordinate system to set the type for.
-    INTEGER(INTG), INTENT(IN) :: coordinateSystemType !<The type of the coordinate system to set. \see OPENCMISS_CoordinateSystemTypes
+    INTEGER(INTG), INTENT(IN) :: coordinateSystemType !<The type of the coordinate system to set. \see OpenCMISS_CoordinateSystemTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -20461,7 +20462,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
-    INTEGER(INTG), INTENT(IN) :: distanceRelation !<The distance relation to use to cancel projections \see OPENCMISS_DataProjectionDistanceRelations
+    INTEGER(INTG), INTENT(IN) :: distanceRelation !<The distance relation to use to cancel projections \see OpenCMISS_DataProjectionDistanceRelations
     REAL(DP), INTENT(IN) :: distance !<The distance by which to select the data points to cancel.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -20502,7 +20503,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
-    INTEGER(INTG), INTENT(IN) :: distanceRelation !<The distance relation to use to cancel projections \see OPENCMISS_DataProjectionDistanceRelations
+    INTEGER(INTG), INTENT(IN) :: distanceRelation !<The distance relation to use to cancel projections \see OpenCMISS_DataProjectionDistanceRelations
     REAL(DP), INTENT(IN) :: distance !<The distance by which to select the data points to cancel.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -20542,7 +20543,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
-    INTEGER(INTG), INTENT(IN) :: distanceRelation !<The distance relation to use to cancel projections \see OPENCMISS_DataProjectionDistanceRelations
+    INTEGER(INTG), INTENT(IN) :: distanceRelation !<The distance relation to use to cancel projections \see OpenCMISS_DataProjectionDistanceRelations
     REAL(DP), INTENT(IN) :: distance !<The distance by which to select the data points to cancel.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -20573,7 +20574,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
-    INTEGER(INTG), INTENT(IN) :: exitTag !<The exit tags to use to cancel projections \see OPENCMISS_DataProjectionExitTags
+    INTEGER(INTG), INTENT(IN) :: exitTag !<The exit tags to use to cancel projections \see OpenCMISS_DataProjectionExitTags
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -20604,7 +20605,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
-    INTEGER(INTG), INTENT(IN) :: exitTags(:) !<exitTags(tagIdx). The exit tags to use to cancel projections \see OPENCMISS_DataProjectionExitTags
+    INTEGER(INTG), INTENT(IN) :: exitTags(:) !<exitTags(tagIdx). The exit tags to use to cancel projections \see OpenCMISS_DataProjectionExitTags
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(DataProjectionType), POINTER :: dataProjection
@@ -20644,7 +20645,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
-    INTEGER(INTG), INTENT(IN) :: exitTag !<The exit tags to use to cancel projections \see OPENCMISS_DataProjectionExitTags
+    INTEGER(INTG), INTENT(IN) :: exitTag !<The exit tags to use to cancel projections \see OpenCMISS_DataProjectionExitTags
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -20676,7 +20677,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
-    INTEGER(INTG), INTENT(IN) :: exitTags(:) !<exitTags(tagIdx). The exit tags to use to cancel projections \see OPENCMISS_DataProjectionExitTags
+    INTEGER(INTG), INTENT(IN) :: exitTags(:) !<exitTags(tagIdx). The exit tags to use to cancel projections \see OpenCMISS_DataProjectionExitTags
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(DataProjectionType), POINTER :: dataProjection
@@ -20715,7 +20716,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
-    INTEGER(INTG), INTENT(IN) :: exitTag !<The exit tags to use to cancel projections \see OPENCMISS_DataProjectionExitTags
+    INTEGER(INTG), INTENT(IN) :: exitTag !<The exit tags to use to cancel projections \see OpenCMISS_DataProjectionExitTags
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -20742,7 +20743,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
-    INTEGER(INTG), INTENT(IN) :: exitTags(:) !<exitTags(tagIdx). The exit tags to use to cancel projections \see OPENCMISS_DataProjectionExitTags
+    INTEGER(INTG), INTENT(IN) :: exitTags(:) !<exitTags(tagIdx). The exit tags to use to cancel projections \see OpenCMISS_DataProjectionExitTags
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -21282,7 +21283,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(DataProjectionType), POINTER :: dataProjection
@@ -21323,7 +21324,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection
-    INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(DataProjectionType), POINTER :: dataProjection
@@ -21363,7 +21364,7 @@ CONTAINS
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection
-    INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -21396,7 +21397,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element number
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateFaceNormal !<The xi normal of the candidate face for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormal !<The xi normal of the candidate face for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -21429,7 +21430,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element number
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -21462,7 +21463,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element number
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateFaceNormal !<The xi normal of the candidate face for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormal !<The xi normal of the candidate face for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -21495,7 +21496,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element numbers
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(DataProjectionType), POINTER :: dataProjection
@@ -21538,7 +21539,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element number
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateFaceNormal !<The xi normal of the candidate faces for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormal !<The xi normal of the candidate faces for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -21572,7 +21573,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element numbers
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -21606,7 +21607,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element number
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateFaceNormal !<The xi normal of the candidate faces for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormal !<The xi normal of the candidate faces for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -21640,7 +21641,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element numbers
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(DataProjectionType), POINTER :: dataProjection
@@ -21683,7 +21684,7 @@ CONTAINS
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element number
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateFaceNormal !<The xi normal of the candidate face for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormal !<The xi normal of the candidate face for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -21714,7 +21715,7 @@ CONTAINS
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element numbers
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -21745,7 +21746,7 @@ CONTAINS
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element number
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateFaceNormal !<The xi normal of the candidate face for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormal !<The xi normal of the candidate face for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -21776,7 +21777,7 @@ CONTAINS
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element numbers
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateFaceNormals(:) !<candidateFaceNormals(elementIdx). The xi normals of the candidate faces for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -21808,7 +21809,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(DataProjectionType), POINTER :: dataProjection
@@ -21849,7 +21850,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(DataProjectionType), POINTER :: dataProjection
@@ -21889,7 +21890,7 @@ CONTAINS
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -21922,7 +21923,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element number
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:) !<candidateLineNormals(normalIdx). The xi normals of the candidate line for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:) !<candidateLineNormals(normalIdx). The xi normals of the candidate line for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -21956,7 +21957,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element numbers
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -21989,7 +21990,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element number
      INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:) !<candidateLineNormals(normalIdx). The xi normals of the candidate line for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:) !<candidateLineNormals(normalIdx). The xi normals of the candidate line for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -22023,7 +22024,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element numbers
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(DataProjectionType), POINTER :: dataProjection
@@ -22066,7 +22067,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element number
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:) !<candidateLineNormals(normalIdx). The xi normals of the candidate line for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:) !<candidateLineNormals(normalIdx). The xi normals of the candidate line for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -22101,7 +22102,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element number
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -22135,7 +22136,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element number
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:) !<candidateLineNormals(normalIdx). The xi normals of the candidate line for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:) !<candidateLineNormals(normalIdx). The xi normals of the candidate line for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -22170,7 +22171,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element numbers
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(DataProjectionType), POINTER :: dataProjection
@@ -22213,7 +22214,7 @@ CONTAINS
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element number
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:) !<The xi normals of the candidate line for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:) !<The xi normals of the candidate line for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -22244,7 +22245,7 @@ CONTAINS
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number for the projection candidate user element number
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -22275,7 +22276,7 @@ CONTAINS
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element number
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumber !<The candidate element user number for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:) !<The xi normals of the candidate line for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:) !<The xi normals of the candidate line for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -22306,7 +22307,7 @@ CONTAINS
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
     INTEGER(INTG), INTENT(IN) :: dataPointUserNumbers(:) !<dataPointUserNumbers(dataPointIdx). The data point user numbers for the projection candidate user element numbers
     INTEGER(INTG), INTENT(IN) :: candidateElementUserNumbers(:) !<candidateElementUserNumbers(elementIdx). The candidate element user numbers for the projection.
-    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OPENCMISS_ElementNormalXiDirections,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: candidateLineNormals(:,:) !<candidateLineNormals(normalIdx,elementIdx). The xi normals of the candidate lines for the projection. \see OpenCMISS_ElementNormalXiDirections,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -24594,7 +24595,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations to get the linearity type for.
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to get the linearity type for.
-    INTEGER(INTG), INTENT(OUT) :: linearityType !<On return, the linearity type of the equations \see OPENCMISS_EquationsLinearityTypes
+    INTEGER(INTG), INTENT(OUT) :: linearityType !<On return, the linearity type of the equations \see OpenCMISS_EquationsLinearityTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(EquationsType), POINTER :: equations
@@ -24629,7 +24630,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the linearity type for.
-    INTEGER(INTG), INTENT(OUT) :: linearityType !<On return, the linearity type of the equations \see OPENCMISS_EquationsLinearityTypes
+    INTEGER(INTG), INTENT(OUT) :: linearityType !<On return, the linearity type of the equations \see OpenCMISS_EquationsLinearityTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -24656,7 +24657,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations to get the lumping type for.
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to get the lumping type for.
-    INTEGER(INTG), INTENT(OUT) :: lumpingType !<On return, the lumping type of the equations \see OPENCMISS_EquationsLumpingTypes
+    INTEGER(INTG), INTENT(OUT) :: lumpingType !<On return, the lumping type of the equations \see OpenCMISS_EquationsLumpingTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(EquationsType), POINTER :: equations
@@ -24691,7 +24692,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the lumping type for.
-    INTEGER(INTG), INTENT(OUT) :: lumpingType !<On return, the lumping type of the equations \see OPENCMISS_EquationsLumpingTypes
+    INTEGER(INTG), INTENT(OUT) :: lumpingType !<On return, the lumping type of the equations \see OpenCMISS_EquationsLumpingTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -24718,7 +24719,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations to set the lumping type for.
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to set the lumping type for.
-    INTEGER(INTG), INTENT(IN) :: lumpingType !<The lumping type of the equations to set\see OPENCMISS_EquationsLumpingTypes
+    INTEGER(INTG), INTENT(IN) :: lumpingType !<The lumping type of the equations to set\see OpenCMISS_EquationsLumpingTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(EquationsType), POINTER :: equations
@@ -24753,7 +24754,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(INOUT) :: equations !<The equations to set the lumping type for.
-    INTEGER(INTG), INTENT(IN) :: lumpingType !<The lumping type of the equations to set\see OPENCMISS_EquationsLumpingTypes
+    INTEGER(INTG), INTENT(IN) :: lumpingType !<The lumping type of the equations to set\see OpenCMISS_EquationsLumpingTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -24780,7 +24781,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations to get the output type for.
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to get the output type for.
-    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the equations \see OPENCMISS_EquationsOutputTypes
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the equations \see OpenCMISS_EquationsOutputTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(EquationsType), POINTER :: equations
@@ -24815,7 +24816,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the output type for.
-    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the equations \see OPENCMISS_EquationsOutputTypes
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the equations \see OpenCMISS_EquationsOutputTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -24842,7 +24843,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations to set the output type for.
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to set the output type for.
-    INTEGER(INTG), INTENT(IN) :: outputType !<The output type of the equations to set \see OPENCMISS_EquationsOutputTypes
+    INTEGER(INTG), INTENT(IN) :: outputType !<The output type of the equations to set \see OpenCMISS_EquationsOutputTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(EquationsType), POINTER :: equations
@@ -24877,7 +24878,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(INOUT) :: equations !<The equations to set the output type for.
-    INTEGER(INTG), INTENT(IN) :: outputType !<The output type of the equations to set \see OPENCMISS_EquationsOutputTypes
+    INTEGER(INTG), INTENT(IN) :: outputType !<The output type of the equations to set \see OpenCMISS_EquationsOutputTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -24904,7 +24905,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations to get the sparsity type for.
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to get the sparsity type for.
-    INTEGER(INTG), INTENT(OUT) :: sparsityType !<On return, the sparsity type of the equations \see OPENCMISS_EquationsSparsityTypes
+    INTEGER(INTG), INTENT(OUT) :: sparsityType !<On return, the sparsity type of the equations \see OpenCMISS_EquationsSparsityTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(EquationsType), POINTER :: equations
@@ -24939,7 +24940,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the sparsity type for.
-    INTEGER(INTG), INTENT(OUT) :: sparsityType !<On return, the sparsity type of the equations \see OPENCMISS_EquationsSparsityTypes
+    INTEGER(INTG), INTENT(OUT) :: sparsityType !<On return, the sparsity type of the equations \see OpenCMISS_EquationsSparsityTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -24966,7 +24967,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations to set the sparsity type for.
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to set the sparsity type for.
-    INTEGER(INTG), INTENT(IN) :: sparsityType !<The sparsity type of the equations to set \see OPENCMISS_EquationsSparsityTypes
+    INTEGER(INTG), INTENT(IN) :: sparsityType !<The sparsity type of the equations to set \see OpenCMISS_EquationsSparsityTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(EquationsType), POINTER :: equations
@@ -25001,7 +25002,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(INOUT) :: equations !<The equations to set the sparsity type for.
-    INTEGER(INTG), INTENT(IN) :: sparsityType !<The sparsity type of the equations to set \see OPENCMISS_EquationsSparsityTypes
+    INTEGER(INTG), INTENT(IN) :: sparsityType !<The sparsity type of the equations to set \see OpenCMISS_EquationsSparsityTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -25028,7 +25029,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations to get the time dependence type for.
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to get the time dependence type for.
-    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On return, the time dependence type of the equations \see OPENCMISS_EquationsTimeDependenceTypes
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On return, the time dependence type of the equations \see OpenCMISS_EquationsTimeDependenceTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(EquationsType), POINTER :: equations
@@ -25063,7 +25064,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the time dependence type for.
-    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On return, the time dependence type of the equations \see OPENCMISS_EquationsTimeDependenceTypes
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On return, the time dependence type of the equations \see OpenCMISS_EquationsTimeDependenceTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -25190,7 +25191,7 @@ CONTAINS
     
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to set the Jacobian evaluation type for. 
-    INTEGER(INTG), INTENT(IN) :: jacobianTypes !<The type of Jacobian evaluation. \see OPENCMISS_EquationsJacobianCalculated 
+    INTEGER(INTG), INTENT(IN) :: jacobianTypes !<The type of Jacobian evaluation. \see OpenCMISS_EquationsJacobianCalculated 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     !Local variables
     TYPE(EquationsVectorType), POINTER :: vectorEquations 
@@ -25403,7 +25404,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set.
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to calculate the output for.
-    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived variable type to calculate. \see OPENCMISS_EquationsSetDerivedTypes.
+    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived variable type to calculate. \see OpenCMISS_EquationsSetDerivedTypes.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
@@ -25436,7 +25437,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<The equations set to calculate the output for.
-    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived field type to calculate. \see OPENCMISS_EquationsSetDerivedTypes.
+    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived field type to calculate. \see OpenCMISS_EquationsSetDerivedTypes.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
 
     ENTERS("cmfe_EquationsSet_DerivedVariableCalculateObj",err,error,*999)
@@ -25463,7 +25464,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set.
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to calculate the output for.
-    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived variable type to calculate. \see OPENCMISS_EquationsSetDerivedTypes.
+    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived variable type to calculate. \see OpenCMISS_EquationsSetDerivedTypes.
     INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type to store the calculated values in.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -25496,7 +25497,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<The equations set to calculate the output for.
-    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived field type to calculate. \see OPENCMISS_EquationsSetDerivedTypes.
+    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived field type to calculate. \see OpenCMISS_EquationsSetDerivedTypes.
     INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type to store the calculated values in.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
 
@@ -25523,7 +25524,7 @@ CONTAINS
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the Jacobian matrix for
     INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector to get the Jacobian matrix for
-    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type that the residual is differentiated with respect to for this Jacobian. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type that the residual is differentiated with respect to for this Jacobian. \see OpenCMISS_FieldVariableTypes
     TYPE(cmfe_DistributedMatrixType), INTENT(INOUT) :: matrix !<On return, the requested Jacobian matrix
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
 
@@ -25576,7 +25577,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the dynamic matrix for
-    INTEGER(INTG), INTENT(IN) :: matrixType !<The type of the dynamic matrix to get. \see OPENCMISS_EquationsSetDynamicMatrixTypes
+    INTEGER(INTG), INTENT(IN) :: matrixType !<The type of the dynamic matrix to get. \see OpenCMISS_EquationsSetDynamicMatrixTypes
     TYPE(cmfe_DistributedMatrixType), INTENT(INOUT) :: matrix !<On return, the requested dynamic matrix
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
 
@@ -25603,7 +25604,7 @@ CONTAINS
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the dynamic matrix type from
     INTEGER(INTG), INTENT(IN) :: matrixIndex !<The number of the dynamic matrix to get the type of
-    INTEGER(INTG), INTENT(OUT) :: matrixType !<On return, the dynamic matrix type. \see OPENCMISS_EquationsSetDynamicMatrixTypes
+    INTEGER(INTG), INTENT(OUT) :: matrixType !<On return, the dynamic matrix type. \see OpenCMISS_EquationsSetDynamicMatrixTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
 
     ENTERS("cmfe_Equations_DynamicMatrixTypeGet",err,error,*999)
@@ -25731,7 +25732,7 @@ CONTAINS
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the residual vector variables for
     INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector to get the variables for
-    INTEGER(INTG), INTENT(OUT) :: residualVariables(:) !<residualVariables(varIdx). On return, the field variable type for the varIdx'th residual variable. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(OUT) :: residualVariables(:) !<residualVariables(varIdx). On return, the field variable type for the varIdx'th residual variable. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
 
     ENTERS("cmfe_Equations_ResidualVariablesGet",err,error,*999)
@@ -25818,7 +25819,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to finish.
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to finish the creation of.
-    INTEGER(INTG), INTENT(IN) :: analyticFunctionType !<The analytic function type to use. \see OPENCMISS_EquationsSetAnalyticFunctionTypes
+    INTEGER(INTG), INTENT(IN) :: analyticFunctionType !<The analytic function type to use. \see OpenCMISS_EquationsSetAnalyticFunctionTypes
     INTEGER(INTG), INTENT(IN) :: analyticFieldUserNumber !<The user number of the field for the analytic function
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -25855,7 +25856,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to start the analytic creation on.
-    INTEGER(INTG), INTENT(IN) :: analyticFunctionType !<The analytic function type to use. \see OPENCMISS_EquationsSetAnalyticFunctionTypes
+    INTEGER(INTG), INTENT(IN) :: analyticFunctionType !<The analytic function type to use. \see OpenCMISS_EquationsSetAnalyticFunctionTypes
     INTEGER(INTG), INTENT(IN) :: analyticFieldUserNumber !<The user number of the field for the analytic function
     TYPE(cmfe_FieldType), INTENT(INOUT) :: analyticField !<If associated on entry, the user created analytic field which has the same user number as the specified analytic field user number. If not associated on entry, on return, the created analytic field for the equations set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -27402,7 +27403,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to get the output type for.
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to get the output type for.
-    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the equations set \see OPENCMISS_EquationsSetOutputTypes
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the equations set \see OpenCMISS_EquationsSetOutputTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
@@ -27434,7 +27435,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<The equations set to get the output type for.
-    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the equations set \see OPENCMISS_EquationsSetOutputTypes
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the equations set \see OpenCMISS_EquationsSetOutputTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -27461,7 +27462,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to set the output type for.
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to set the output type for.
-    INTEGER(INTG), INTENT(IN) :: outputType !<The output type of the equations set to set \see OPENCMISS_EquationsSetOutputTypes
+    INTEGER(INTG), INTENT(IN) :: outputType !<The output type of the equations set to set \see OpenCMISS_EquationsSetOutputTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
@@ -27493,7 +27494,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to set the output type for.
-    INTEGER(INTG), INTENT(IN) :: outputType !<The output type of the equations set to set \see OPENCMISS_EquationsSetOutputTypes
+    INTEGER(INTG), INTENT(IN) :: outputType !<The output type of the equations set to set \see OpenCMISS_EquationsSetOutputTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -27520,7 +27521,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to get the solution method for.
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to get the solution method for.
-    INTEGER(INTG), INTENT(OUT) :: solutionMethod !<On return, the solution method. \see OPENCMISS_EquationsSetSolutionMethods
+    INTEGER(INTG), INTENT(OUT) :: solutionMethod !<On return, the solution method. \see OpenCMISS_EquationsSetSolutionMethods
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
@@ -27552,7 +27553,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to get the solution method for.
-    INTEGER(INTG), INTENT(OUT) :: solutionMethod !<On Return, the solution method. \see OPENCMISS_EquationsSetSolutionMethods
+    INTEGER(INTG), INTENT(OUT) :: solutionMethod !<On Return, the solution method. \see OpenCMISS_EquationsSetSolutionMethods
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -27579,7 +27580,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations set to set the solution method for.
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to set the solution method for.
-    INTEGER(INTG), INTENT(IN) :: solutionMethod !<The solution method to set. \see OPENCMISS_EquationsSetSolutionMethods
+    INTEGER(INTG), INTENT(IN) :: solutionMethod !<The solution method to set. \see OpenCMISS_EquationsSetSolutionMethods
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
@@ -27611,7 +27612,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(INOUT) :: equationsSet !<The equations set to set the solution method for.
-    INTEGER(INTG), INTENT(IN) :: solutionMethod !<The solution method to set. \see OPENCMISS_EquationsSetSolutionMethods
+    INTEGER(INTG), INTENT(IN) :: solutionMethod !<The solution method to set. \see OpenCMISS_EquationsSetSolutionMethods
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -28202,9 +28203,9 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the interpolation type for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the interpolation type for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the interpolation type for. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the interpolation type for. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the interpolation type for.
-    INTEGER(INTG), INTENT(OUT) :: interpolationType !<On return, the interpolation type. \see OPENCMISS_FieldInterpolationTypes
+    INTEGER(INTG), INTENT(OUT) :: interpolationType !<On return, the interpolation type. \see OpenCMISS_FieldInterpolationTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(FIELD_TYPE), POINTER :: field
@@ -28236,9 +28237,9 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the interpolation type for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the interpolation type for. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the interpolation type for. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the interpolation type for.
-    INTEGER(INTG), INTENT(OUT) :: interpolationType !<On return, the interpolation type. \see OPENCMISS_FieldInterpolationTypes
+    INTEGER(INTG), INTENT(OUT) :: interpolationType !<On return, the interpolation type. \see OpenCMISS_FieldInterpolationTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -28266,9 +28267,9 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the interpolation type for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to set the interpolation type for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the interpolation type for. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the interpolation type for. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to set the interpolation type for.
-    INTEGER(INTG), INTENT(IN) :: interpolationType !<The interpolation type to set. \see OPENCMISS_FieldInterpolationTypes
+    INTEGER(INTG), INTENT(IN) :: interpolationType !<The interpolation type to set. \see OpenCMISS_FieldInterpolationTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(FIELD_TYPE), POINTER :: field
@@ -28300,9 +28301,9 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the interpolation type for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the interpolation type for. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the interpolation type for. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to set the interpolation type for.
-    INTEGER(INTG), INTENT(IN) :: interpolationType !<The interpolation type to set. \see OPENCMISS_FieldInterpolationTypes
+    INTEGER(INTG), INTENT(IN) :: interpolationType !<The interpolation type to set. \see OpenCMISS_FieldInterpolationTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -28329,7 +28330,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the label for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the label for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the label for. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the label for. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the label for.
     CHARACTER(LEN=*), INTENT(OUT) :: label !<On return, the field variable component label.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -28363,7 +28364,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the label for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the label for. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the label for. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the label for.
     CHARACTER(LEN=*), INTENT(OUT) :: label !<On return, the field variable component label.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -28392,7 +28393,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the label for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the label for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the label for. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the label for. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the label for.
     TYPE(VARYING_STRING), INTENT(OUT) :: label !<On return, the field variable component label.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -28426,7 +28427,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the label for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the label for. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the label for. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the label for.
     TYPE(VARYING_STRING), INTENT(OUT) :: label !<On return, the field variable component label.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -28455,7 +28456,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the label for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to set the label for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the label for. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the label for. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to set the label for.
     CHARACTER(LEN=*), INTENT(IN) :: label !<The field variable component label to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -28489,7 +28490,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the label for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the label for. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the label for. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to set the label for.
     CHARACTER(LEN=*), INTENT(IN) :: label !<The field variable component label to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -28518,7 +28519,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the label for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to set the label for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the label for. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the label for. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to set the label for.
     TYPE(VARYING_STRING), INTENT(IN) :: label !<The field variable component label to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -28552,7 +28553,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the label for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the label for. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the label for. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to set the label for.
     TYPE(VARYING_STRING), INTENT(IN) :: label !<The field variable component label to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -28582,7 +28583,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the mesh component number for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the mesh component number for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the mesh component number for. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the mesh component number for. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the mesh component number for.
     INTEGER(INTG), INTENT(OUT) :: meshComponent !<On return, the mesh component number.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -28616,7 +28617,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the mesh component number for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the mesh component number for. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the mesh component number for. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the mesh component number for.
     INTEGER(INTG), INTENT(OUT) :: meshComponent !<On return, the mesh component number.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -28646,7 +28647,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the mesh component number for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to set the mesh component number for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the mesh component number for. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the mesh component number for. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to set the mesh component number for.
     INTEGER(INTG), INTENT(IN) :: meshComponent !<The mesh component number to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -28680,7 +28681,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the mesh component number for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the mesh component number for. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the mesh component number for. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to set the mesh component number for.
     INTEGER(INTG), INTENT(IN) :: meshComponent !<The mesh component number to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -28710,8 +28711,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to initialise the field variable component for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to initialise the field variable component for for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to initialise the field variable component for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to initialise the field variable component for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to initialise the field variable component for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to initialise the field variable component for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to initialise the field variable component for.
     INTEGER(INTG), INTENT(IN) :: value !<The value to initialise the parameter set for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -28746,8 +28747,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to initialise the field variable component for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to initialise the field variable component for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to initialise the field variable component for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to initialise the field variable component for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to initialise the field variable component for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to initialise the field variable component for.
     INTEGER(INTG), INTENT(IN) :: value !<The value to initialise the parameter set for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -28776,8 +28777,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to initialise the field variable component for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to initialise the field variable component for for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to initialise the field variable component for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to initialise the field variable component for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to initialise the field variable component for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to initialise the field variable component for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to initialise the field variable component for.
     REAL(SP), INTENT(IN) :: value !<The value to initialise the parameter set for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -28812,8 +28813,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to initialise the field variable component for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to initialise the field variable component for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to initialise the field variable component for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to initialise the field variable component for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to initialise the field variable component for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to initialise the field variable component for.
     REAL(SP), INTENT(IN) :: value !<The value to initialise the parameter set for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -28842,8 +28843,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to initialise the field variable component for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to initialise the field variable component for for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to initialise the field variable component for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to initialise the field variable component for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to initialise the field variable component for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to initialise the field variable component for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to initialise the field variable component for.
     REAL(DP), INTENT(IN) :: value !<The value to initialise the parameter set for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -28878,8 +28879,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to initialise the field variable component for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to initialise the field variable component for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to initialise the field variable component for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to initialise the field variable component for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to initialise the field variable component for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to initialise the field variable component for.
     REAL(DP), INTENT(IN) :: value !<The value to initialise the parameter set for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -28908,8 +28909,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to initialise the field variable component for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to initialise the field variable component for for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to initialise the field variable component for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to initialise the field variable component for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to initialise the field variable component for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to initialise the field variable component for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to initialise the field variable component for.
     LOGICAL, INTENT(IN) :: value !<The value to initialise the parameter set for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -28943,8 +28944,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to initialise the field variable component for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to initialise the field variable component for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to initialise the field variable component for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to initialise the field variable component for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to initialise the field variable component for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to initialise the field variable component for.
     LOGICAL, INTENT(IN) :: value !<The value to initialise the parameter set for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -28973,8 +28974,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the data type for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the data type for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data type for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(OUT) :: dataType !<On return, the field variable data type. \see OPENCMISS_FieldDataTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data type for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(OUT) :: dataType !<On return, the field variable data type. \see OpenCMISS_FieldDataTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(FIELD_TYPE), POINTER :: field
@@ -29006,8 +29007,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the data type for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data type for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(OUT) :: dataType !<On return, the field variable data type. \see OPENCMISS_FieldDataTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data type for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(OUT) :: dataType !<On return, the field variable data type. \see OpenCMISS_FieldDataTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -29034,8 +29035,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the data type for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to set the data type for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the data type for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: dataType !<The field variable data type to set. \see OPENCMISS_FieldDataTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the data type for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: dataType !<The field variable data type to set. \see OpenCMISS_FieldDataTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(FIELD_TYPE), POINTER :: field
@@ -29067,8 +29068,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the data type for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the data type for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: dataType !<The field variable data type to set. \see OPENCMISS_FieldDataTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the data type for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: dataType !<The field variable data type to set. \see OpenCMISS_FieldDataTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -29095,8 +29096,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the DOF Order type for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the DOF Order type for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the DOF Order type for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(OUT) :: DOFOrderType !<On return, the field variable DOF Order type. \see OPENCMISS_FieldDOFOrderTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the DOF Order type for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(OUT) :: DOFOrderType !<On return, the field variable DOF Order type. \see OpenCMISS_FieldDOFOrderTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(FIELD_TYPE), POINTER :: field
@@ -29128,8 +29129,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the DOF order type for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the DOF order type for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(OUT) :: DOFOrderType !<On return, the field variable DOF order type. \see OPENCMISS_FieldDOFOrderTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the DOF order type for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(OUT) :: DOFOrderType !<On return, the field variable DOF order type. \see OpenCMISS_FieldDOFOrderTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -29156,8 +29157,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the DOF Order type for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to set the DOF Order type for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the DOF Order type for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: DOFOrderType !<The field variable DOF Order type to set. \see OPENCMISS_FieldDOFOrderTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the DOF Order type for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: DOFOrderType !<The field variable DOF Order type to set. \see OpenCMISS_FieldDOFOrderTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(FIELD_TYPE), POINTER :: field
@@ -29189,8 +29190,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the DOF order type for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the DOF order type for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: DOFOrderType !<The field variable DOF order type to set. \see OPENCMISS_FieldDOFOrderTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the DOF order type for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: DOFOrderType !<The field variable DOF order type to set. \see OpenCMISS_FieldDOFOrderTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -29375,7 +29376,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the dependent type for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the dependent type for.
-    INTEGER(INTG), INTENT(OUT) :: dependentType !<On return, the field dependent type. \see OPENCMISS_FieldDependentTypes
+    INTEGER(INTG), INTENT(OUT) :: dependentType !<On return, the field dependent type. \see OpenCMISS_FieldDependentTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(FIELD_TYPE), POINTER :: field
@@ -29407,7 +29408,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the dependent type for.
-    INTEGER(INTG), INTENT(OUT) :: dependentType !<On return, the field dependent type. \see OPENCMISS_FieldDependentTypes
+    INTEGER(INTG), INTENT(OUT) :: dependentType !<On return, the field dependent type. \see OpenCMISS_FieldDependentTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -29434,7 +29435,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the dependent type for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the dependent type for.
-    INTEGER(INTG), INTENT(IN) :: dependentType !<The field dependent type to set. \see OPENCMISS_FieldDependentTypes
+    INTEGER(INTG), INTENT(IN) :: dependentType !<The field dependent type to set. \see OpenCMISS_FieldDependentTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(FIELD_TYPE), POINTER :: field
@@ -29466,7 +29467,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the dependent type for.
-    INTEGER(INTG), INTENT(IN) :: dependentType !<The field dependent type to set. \see OPENCMISS_FieldDependentTypes
+    INTEGER(INTG), INTENT(IN) :: dependentType !<The field dependent type to set. \see OpenCMISS_FieldDependentTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -29550,8 +29551,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the dimension for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the dimension for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the dimension for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(OUT) :: dimension !<On return, the field dimension. \see OPENCMISS_FieldDimensionTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the dimension for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(OUT) :: dimension !<On return, the field dimension. \see OpenCMISS_FieldDimensionTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(FIELD_TYPE), POINTER :: field
@@ -29583,8 +29584,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the dimension for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the dimension for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(OUT) :: Dimension !<On return, the field dimension. \see OPENCMISS_FieldDimension
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the dimension for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(OUT) :: Dimension !<On return, the field dimension. \see OpenCMISS_FieldDimension
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -29611,8 +29612,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the dimension for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to set the dimension for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the dimension for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: Dimension !<The field dimension to set. \see OPENCMISS_FieldDimensionTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the dimension for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: Dimension !<The field dimension to set. \see OpenCMISS_FieldDimensionTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(FIELD_TYPE), POINTER :: field
@@ -29644,8 +29645,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the dimension for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the dimension for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: dimension !<The field dimension to set. \see OPENCMISS_FieldDimension
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the dimension for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: dimension !<The field dimension to set. \see OpenCMISS_FieldDimension
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -30529,7 +30530,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the interpolation type for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the interpolation type for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the interpolation type for. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the interpolation type for. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the interpolation type for.
     INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number of the field variable to get the data type for.
     REAL(DP), INTENT(OUT) :: position(:),normal(:),tangents(:,:) !<Actual useful outputs
@@ -30567,7 +30568,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the interpolation type for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the interpolation type for. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the interpolation type for. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the data type for.
     INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number of the field variable to get the data type for.
     REAL(DP), INTENT(OUT) :: position(:),normal(:),tangents(:,:) !<Actual useful outputs
@@ -30795,7 +30796,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the number of components for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the number of components for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to get the number of components for. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to get the number of components for. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(OUT) :: numberOfComponents !<On return, the number of components in the field variable.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -30828,7 +30829,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the number of components for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to get the number of components for. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to get the number of components for. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(OUT) :: numberOfComponents !<On return, the number of components in the field variable.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -30856,7 +30857,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the number of components for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to set the number of components for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to set the number of components for. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to set the number of components for. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: numberOfComponents !<The number of components in the field variable to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -30889,7 +30890,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the number of components for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to set the number of components for. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to set the number of components for. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: numberOfComponents !<The number of components in the field variable to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -31036,8 +31037,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the constant to the field parameter set for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to add the constant to the field parameter set for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the constant to the field parameter set for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the constant to the field parameter set for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the constant to the field parameter set for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the constant to the field parameter set for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the constant to the field parameter set for.
     INTEGER(INTG), INTENT(IN) :: value !<The value to add to the field parameter set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -31072,8 +31073,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the constant to the field parameter set for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the constant to the field parameter set for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the constant to the field parameter set for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the constant to the field parameter set for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the constant to the field parameter set for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the constant to the field parameter set for.
     INTEGER(INTG), INTENT(IN) :: value !<The value to add to the field parameter set.
      INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -31103,8 +31104,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the constant to the field parameter set for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to add the constant to the field parameter set for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the constant to the field parameter set for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the constant to the field parameter set for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the constant to the field parameter set for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the constant to the field parameter set for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the constant to the field parameter set for.
     REAL(SP), INTENT(IN) :: value !<The value to add to the field parameter set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -31138,8 +31139,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the constant to the field parameter set for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the constant to the field parameter set for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the constant to the field parameter set for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the constant to the field parameter set for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the constant to the field parameter set for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the constant to the field parameter set for.
     REAL(SP), INTENT(IN) :: value !<The value to add to the field parameter set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -31169,8 +31170,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the constant to the field parameter set for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to add the constant to the field parameter set for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the constant to the field parameter set for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the constant to the field parameter set for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the constant to the field parameter set for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the constant to the field parameter set for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the constant to the field parameter set for.
     REAL(DP), INTENT(IN) :: value !<The value to add to the field parameter set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -31204,8 +31205,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the constant to the field parameter set for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the constant to the field parameter set for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the constant to the field parameter set for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the constant to the field parameter set for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the constant to the field parameter set for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the constant to the field parameter set for.
     REAL(DP), INTENT(IN) :: value !<The value to add to the field parameter set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -31235,8 +31236,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the constant to the field parameter set for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to add the constant to the field parameter set for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the constant to the field parameter set for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the constant to the field parameter set for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the constant to the field parameter set for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the constant to the field parameter set for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the constant to the field parameter set for.
     LOGICAL, INTENT(IN) :: value !<The value to add to the field parameter set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -31270,8 +31271,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the constant to the field parameter set for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the constant to the field parameter set for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the constant to the field parameter set for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the constant to the field parameter set for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the constant to the field parameter set for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the constant to the field parameter set for.
     LOGICAL, INTENT(IN) :: value !<The value to add to the field parameter set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -31301,8 +31302,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the value to the element in the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to add the value to the element in the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to add the value to.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the value to the element to in the field parameter set.
     INTEGER(INTG), INTENT(IN) :: value !<The value to add to the element in the field parameter set.
@@ -31337,8 +31338,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the value to the element in the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: UserElementNumber !<The user element number to add the value to.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the value to the element to in the field parameter set.
     INTEGER(INTG), INTENT(IN) :: value !<The value to add to the element in the field parameter set.
@@ -31370,8 +31371,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the value to the element in the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to add the value to the element in the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to add the value to.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the value to the element to in the field parameter set.
     REAL(SP), INTENT(IN) :: value !<The value to add to the element in the field parameter set.
@@ -31406,8 +31407,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the value to the element in the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to add the value to.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the value to the element to in the field parameter set.
     REAL(SP), INTENT(IN) :: value !<The value to add to the element in the field parameter set.
@@ -31439,8 +31440,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the value to the element in the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to add the value to the element in the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to add the value to.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the value to the element to in the field parameter set.
     REAL(DP), INTENT(IN) :: value !<The value to add to the element in the field parameter set.
@@ -31475,8 +31476,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the value to the element in the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to add the value to.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the value to the element to in the field parameter set.
     REAL(DP), INTENT(IN) :: value !<The value to add to the element in the field parameter set.
@@ -31508,8 +31509,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the value to the element in the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to add the value to the element in the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to add the value to.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the value to the element to in the field parameter set.
     LOGICAL, INTENT(IN) :: value !<The value to add to the element in the field parameter set.
@@ -31544,8 +31545,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the value to the element in the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to add the value to.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the value to the element to in the field parameter set.
     LOGICAL, INTENT(IN) :: value !<The value to add to the element in the field parameter set.
@@ -31577,8 +31578,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the value to the element in the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to add the value to the element in the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The gauss Point number to add the value to.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to add the value to.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the value to the element to in the field parameter set.
@@ -31617,8 +31618,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the value to the element in the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number to add the value to.
     INTEGER(INTG), INTENT(IN) :: UserElementNumber !<The user element number to add the value to.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the value to the element to in the field parameter set.
@@ -31652,8 +31653,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the value to the element in the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to add the value to the element in the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number to add the value to.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to add the value to.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the value to the element to in the field parameter set.
@@ -31692,8 +31693,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the value to the element in the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number to add the value to.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to add the value to.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the value to the element to in the field parameter set.
@@ -31727,8 +31728,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the value to the element in the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to add the value to the element in the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number to add the value to.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to add the value to.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the value to the element to in the field parameter set.
@@ -31767,8 +31768,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the value to the element in the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number to add the value to.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to add the value to.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the value to the element to in the field parameter set.
@@ -31802,8 +31803,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the value to the element in the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to add the value to the element in the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number to add the value to.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to add the value to.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the value to the element to in the field parameter set.
@@ -31842,8 +31843,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the value to the element in the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the element in the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the element. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number to add the value to.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to add the value to.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to add the value to the element to in the field parameter set.
@@ -31877,8 +31878,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the value to the node in the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to add the value to the node in the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the node in the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the node. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the node in the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the node. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The node derivative version number of the node to add the value to.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The node derivative number of the node to add the value to.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to add the value to.
@@ -31917,8 +31918,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the value to the node in the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the node in the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the node. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the node in the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the node. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The node derivative version number of the node to add the value to.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The node derivative number of the node to add the value to.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to add the value to.
@@ -31952,8 +31953,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the value to the node in the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to add the value to the node in the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the node in the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the node. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the node in the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the node. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The node derivative version number of the node to add the value to.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The node derivative number of the node to add the value to.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to add the value to.
@@ -31992,8 +31993,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the value to the node in the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the node in the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the node. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the node in the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the node. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The node derivative version number of the node to add the value to.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The node derivative number of the node to add the value to.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to add the value to.
@@ -32027,8 +32028,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the value to the node in the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to add the value to the node in the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the node in the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the node. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the node in the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the node. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The node derivative version number of the node to add the value to.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The node derivative number of the node to add the value to.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to add the value to.
@@ -32067,8 +32068,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the value to the node in the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the node in the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the node. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the node in the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the node. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The node derivative version number of the node to add the value to.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The node derivative number of the node to add the value to.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to add the value to.
@@ -32102,8 +32103,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to add the value to the node in the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to add the value to the node in the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the node in the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the node. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the node in the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the node. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The node derivative version number of the node to add the value to.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The node derivative number of the node to add the value to.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to add the value to.
@@ -32142,8 +32143,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add the value to the node in the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the node in the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the node. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to add the value to the node in the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to add the value to the node. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The node derivative version number of the node to add the value to.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The node derivative number of the node to add the value to.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to add the value to.
@@ -32176,8 +32177,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to create the parameter set on.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to create the parameter set on.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to create the parameter set on. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to create. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to create the parameter set on. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to create. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(FIELD_TYPE), POINTER :: field
@@ -32209,8 +32210,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to create the field parameter set on.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to create the parameter set on. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to create. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to create the parameter set on. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to create. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -32237,8 +32238,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to destroy the parameter set for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to destroy the parameter set for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to destroy the parameter set for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to destroy. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to destroy the parameter set for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to destroy. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(FIELD_TYPE), POINTER :: field
@@ -32270,8 +32271,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to destroy the field parameter set for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to destroy the parameter set for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to destroy. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to destroy the parameter set for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to destroy. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -32298,8 +32299,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the parameter set data for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the parameter set data for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the parameter set data for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to get. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the parameter set data for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to get. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(OUT), POINTER :: parameters(:) !<On return, a pointer to the parameter set data.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -32332,8 +32333,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the field parameter set data for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the parameter set data for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to get. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the parameter set data for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to get. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(OUT), POINTER :: parameters(:) !<On return, a pointer to the parameter set data.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -32361,8 +32362,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the parameter set data for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the parameter set data for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the parameter set data for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to get. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the parameter set data for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to get. \see OpenCMISS_FieldParameterSetTypes
     REAL(SP), INTENT(OUT), POINTER :: parameters(:) !<On return, a pointer to the parameter set data.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -32395,8 +32396,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the field parameter set data for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the parameter set data for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to get. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the parameter set data for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to get. \see OpenCMISS_FieldParameterSetTypes
     REAL(SP), INTENT(OUT), POINTER :: parameters(:) !<On return, a pointer to the parameter set data.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -32424,8 +32425,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the parameter set data for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the parameter set data for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the parameter set data for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to get. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the parameter set data for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to get. \see OpenCMISS_FieldParameterSetTypes
     REAL(DP), INTENT(OUT), POINTER :: parameters(:) !<On return, a pointer to the parameter set data.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -32458,8 +32459,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the field parameter set data for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the parameter set data for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to get. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the parameter set data for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to get. \see OpenCMISS_FieldParameterSetTypes
     REAL(DP), INTENT(OUT), POINTER :: parameters(:) !<On return, a pointer to the parameter set data.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -32487,8 +32488,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the parameter set data for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the parameter set data for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the parameter set data for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to get. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the parameter set data for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to get. \see OpenCMISS_FieldParameterSetTypes
     LOGICAL, INTENT(OUT), POINTER :: parameters(:) !<On return, a pointer to the parameter set data.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -32521,8 +32522,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the field parameter set data for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the parameter set data for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to get. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the parameter set data for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to get. \see OpenCMISS_FieldParameterSetTypes
     LOGICAL, INTENT(OUT), POINTER :: parameters(:) !<On return, a pointer to the parameter set data.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -32550,8 +32551,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to restore the parameter set data for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to restore the parameter set data for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to restore the parameter set data for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to restore. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to restore the parameter set data for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to restore. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(INOUT), POINTER :: parameters(:) !<A pointer to the parameter set data. On return this pointer is null.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -32585,8 +32586,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to restore the field parameter set data for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to restore the parameter set data for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to restore. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to restore the parameter set data for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to restore. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(INOUT), POINTER :: parameters(:) !<A pointer to the parameter set data to restore. On return this pointer is null.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -32614,8 +32615,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to restore the parameter set data for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to restore the parameter set data for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to restore the parameter set data for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to restore. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to restore the parameter set data for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to restore. \see OpenCMISS_FieldParameterSetTypes
     REAL(SP), INTENT(INOUT), POINTER :: parameters(:) !<A pointer to the parameter set data. On return this pointer is null.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -32648,8 +32649,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to restore the field parameter set data for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to restore the parameter set data for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to restore. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to restore the parameter set data for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to restore. \see OpenCMISS_FieldParameterSetTypes
     REAL(SP), INTENT(INOUT), POINTER :: parameters(:) !<A pointer to the parameter set data to restore.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -32677,8 +32678,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to restore the parameter set data for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to restore the parameter set data for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to restore the parameter set data for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to restore. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to restore the parameter set data for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to restore. \see OpenCMISS_FieldParameterSetTypes
     REAL(DP), INTENT(INOUT), POINTER :: parameters(:) !<A pointer to the parameter set data. On return this pointer is null.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -32711,8 +32712,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to restore the field parameter set data for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to restore the parameter set data for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to restore. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to restore the parameter set data for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to restore. \see OpenCMISS_FieldParameterSetTypes
     REAL(DP), INTENT(INOUT), POINTER :: parameters(:) !<A pointer to the parameter set data to restore. On return this pointer is null.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -32740,8 +32741,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to restore the parameter set data for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to restore the parameter set data for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to restore the parameter set data for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to restore. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to restore the parameter set data for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to restore. \see OpenCMISS_FieldParameterSetTypes
     LOGICAL, INTENT(INOUT), POINTER :: parameters(:) !<A pointer to the parameter set data. On return this pointer is null.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -32774,8 +32775,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to restore the field parameter set data for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to restore the parameter set data for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to restore. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to restore the parameter set data for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the parameter set data to restore. \see OpenCMISS_FieldParameterSetTypes
     LOGICAL, INTENT(INOUT), POINTER :: parameters(:) !<A pointer to the parameter set data to restore. On return this pointer is null.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -32804,8 +32805,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the constant value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the constant value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the constant value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the constant value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the constant value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the constant value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the constant value from the field parameter set.
     INTEGER(INTG), INTENT(OUT) :: value !<On return, the value from the field parameter set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -32840,8 +32841,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the constant value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the constant value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the constant value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the constant value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the constant value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the constant value from the field parameter set.
     INTEGER(INTG), INTENT(OUT) :: value !<On return, the value from the field parameter set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -32871,8 +32872,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the constant value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the constant value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the constant value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the constant value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the constant value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the constant value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the constant value from the field parameter set.
     REAL(SP), INTENT(OUT) :: value !<On return, the value from the field parameter set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -32906,8 +32907,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the constant value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the constant value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the constant value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the constant value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the constant value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the constant value from the field parameter set.
     REAL(SP), INTENT(OUT) :: value !<On return, the value from the field parameter set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -32937,8 +32938,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the constant value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the constant value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the constant value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the constant value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the constant value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the constant value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the constant value from the field parameter set.
     REAL(DP), INTENT(OUT) :: value !<On return, the value from the field parameter set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -32972,8 +32973,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the constant value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the constant value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the constant value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the constant value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the constant value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the constant value from the field parameter set.
     REAL(DP), INTENT(OUT) :: value !<On return, the value from the field parameter set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -33003,8 +33004,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the constant value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the constant value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the constant value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the constant value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the constant value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the constant value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the constant value from the field parameter set.
     LOGICAL, INTENT(OUT) :: value !<On return, the value from the field parameter set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -33038,8 +33039,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the constant value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the constant value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the constant value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the constant value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the constant value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the constant value from the field parameter set.
     LOGICAL, INTENT(OUT) :: value !<On return, the value from the field parameter set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -33070,8 +33071,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region for the interface.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface containing the field to get the data point value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the data point value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data point value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the data point value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data point value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the data point value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber  !<The user data point number to get the value for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the data point value from the field parameter set.
     INTEGER(INTG), INTENT(OUT) :: value !<On return, the value from the field parameter set.
@@ -33113,8 +33114,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the data point value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the data point value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data point value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the data point value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data point value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the data point value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber  !<The user data point number to get the value for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the data point value from the field parameter set.
     INTEGER(INTG), INTENT(OUT) :: value !<On return, the value from the field parameter set.
@@ -33152,8 +33153,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the data point value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data point value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the data point value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data point value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the data point value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber  !<The user data point number to get the value for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the data point value from the field parameter set.
     INTEGER(INTG), INTENT(OUT) :: value !<On return, the value from the field parameter set.
@@ -33186,8 +33187,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region for the interface.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface containing the field to get the data point value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the data point value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data point value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the data point value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data point value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the data point value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber  !<The user data point number to get the value for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the data point value from the field parameter set.
     REAL(SP), INTENT(OUT) :: value !<On return, the value from the field parameter set.
@@ -33229,8 +33230,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the data point value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the data point value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data point value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the data point value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data point value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the data point value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber  !<The user data point number to get the value for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the data point value from the field parameter set.
     REAL(SP), INTENT(OUT) :: value !<On return, the value from the field parameter set.
@@ -33267,8 +33268,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the data point value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data point value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the data point value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data point value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the data point value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber  !<The user data point number to get the value for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the data point value from the field parameter set.
     REAL(SP), INTENT(OUT) :: value !<On return, the value from the field parameter set.
@@ -33301,8 +33302,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region for the interface.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface containing the field to get the data point value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the data point value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data point value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the data point value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data point value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the data point value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber  !<The user data point number to get the value for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the data point value from the field parameter set.
     REAL(DP), INTENT(OUT) :: value !<On return, the value from the field parameter set.
@@ -33344,8 +33345,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the data point value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the data point value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data point value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the data point value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data point value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the data point value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber  !<The user data point number to get the value for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the data point value from the field parameter set.
     REAL(DP), INTENT(OUT) :: value !<On return, the value from the field parameter set.
@@ -33382,8 +33383,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the data point value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data point value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the data point value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data point value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the data point value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber  !<The user data point number to get the value for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the data point value from the field parameter set.
     REAL(DP), INTENT(OUT) :: value !<On return, the value from the field parameter set.
@@ -33416,8 +33417,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region for the interface.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface containing the field to get the data point value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the data point value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data point value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the data point value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data point value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the data point value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber  !<The user data point number to get the value for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the data point value from the field parameter set.
     LOGICAL, INTENT(OUT) :: value !<On return, the value from the field parameter set.
@@ -33458,8 +33459,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the data point value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the data point value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data point value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the data point value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data point value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the data point value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber  !<The user data point number to get the value for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the data point value from the field parameter set.
     LOGICAL, INTENT(OUT) :: value !<On return, the value from the field parameter set.
@@ -33495,8 +33496,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the data point value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data point value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the data point value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the data point value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the data point value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber  !<The user data point number to get the value for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the data point value from the field parameter set.
     LOGICAL, INTENT(OUT) :: value !<On return, the value from the field parameter set.
@@ -33528,8 +33529,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the element value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the element value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the element value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the element value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the element value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the element value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the element value from the field parameter set.
     INTEGER(INTG), INTENT(OUT) :: value !<On return, the value from the field parameter set.
@@ -33564,8 +33565,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the element value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the element value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the element value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the element value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the element value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the element value from the field parameter set.
     INTEGER(INTG), INTENT(OUT) :: value !<On return, the value from the field parameter set.
@@ -33597,8 +33598,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the element value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the element value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the element value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the element value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the element value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the element value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the element value from the field parameter set.
     REAL(SP), INTENT(OUT) :: value !<On return, the value from the field parameter set.
@@ -33633,8 +33634,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the element value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the element value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the element value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the element value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the element value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the element value from the field parameter set.
     REAL(SP), INTENT(OUT) :: value !<On return, the value from the field parameter set.
@@ -33666,8 +33667,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the element value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the element value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the element value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the element value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the element value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the element value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the element value from the field parameter set.
     REAL(DP), INTENT(OUT) :: value !<On return, the value from the field parameter set.
@@ -33702,8 +33703,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the element value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the element value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the element value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the element value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the element value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the element value from the field parameter set.
     REAL(DP), INTENT(OUT) :: value !<On return, the value from the field parameter set.
@@ -33735,8 +33736,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the element value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the element value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the element value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the element value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the element value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the element value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the element value from the field parameter set.
     LOGICAL, INTENT(OUT) :: value !<On return, the value from the field parameter set.
@@ -33771,8 +33772,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the element value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the element value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the element value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the element value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the element value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the element value from the field parameter set.
     LOGICAL, INTENT(OUT) :: value !<On return, the value from the field parameter set.
@@ -33804,8 +33805,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the nodal value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the nodal value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the nodal value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the nodal value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the nodal value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the nodal value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The derivative version number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get the value from the field parameter set.
@@ -33844,8 +33845,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the nodal value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the nodal value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the nodal value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the nodal value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the nodal value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The derivative version number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get the value from the field parameter set.
@@ -33879,8 +33880,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the nodal value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the nodal value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the nodal value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the nodal value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the nodal value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the nodal value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The derivative version number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get the value from the field parameter set.
@@ -33919,8 +33920,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the nodal value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the nodal value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the nodal value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the nodal value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the nodal value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The derivative version number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get the value from the field parameter set.
@@ -33954,8 +33955,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the nodal value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the nodal value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the nodal value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the nodal value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the nodal value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the nodal value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The derivative version number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get the value from the field parameter set.
@@ -33994,8 +33995,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the nodal value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the nodal value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the nodal value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the nodal value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the nodal value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The derivative version number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get the value from the field parameter set.
@@ -34029,8 +34030,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the nodal value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the nodal value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the nodal value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the nodal value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the nodal value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the nodal value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The derivative version number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get the value from the field parameter set.
@@ -34069,8 +34070,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the nodal value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the nodal value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the nodal value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the nodal value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the nodal value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The derivative version number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get the value from the field parameter set.
@@ -34103,8 +34104,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the element value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the element value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the element value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the element value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to get the element value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The gauss point number number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the element value from the field parameter set.
@@ -34137,8 +34138,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the constant value for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to update the constant value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the constant value for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: value !<The value to update the field parameter set to.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -34173,8 +34174,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the constant value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the constant value for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: value !<The value for the field parameter set to update.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -34205,8 +34206,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the constant value for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to update the constant value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the constant value for the field parameter set.
     REAL(SP), INTENT(IN) :: value !<The value to update the field parameter set to.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -34241,8 +34242,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the constant value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the constant value for the field parameter set.
     REAL(SP), INTENT(IN) :: value !<The value for the field parameter set to update.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -34272,8 +34273,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the constant value for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to update the constant value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the constant value for the field parameter set.
     REAL(DP), INTENT(IN) :: value !<The value to update the field parameter set to.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -34308,8 +34309,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the constant value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the constant value for the field parameter set.
     REAL(DP), INTENT(IN) :: value !<The value for the field parameter set to update.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -34339,8 +34340,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the constant value for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to update the constant value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the constant value for the field parameter set.
     LOGICAL, INTENT(IN) :: value !<The value to update the field parameter set to.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -34375,8 +34376,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the constant value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the constant value for the field parameter set.
     LOGICAL, INTENT(IN) :: value !<The value for the field parameter set to update.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
@@ -34407,8 +34408,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region for the interface.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface containing the field to update the data point value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to update the data point value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the data point value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the data point value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the data point value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the data point value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber  !<The user data point number to update the value for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the data point value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: value !<The value for the field parameter set to update
@@ -34450,8 +34451,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the data point value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to update the data point value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the data point value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the data point value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the data point value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the data point value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber  !<The user data point number to update the value for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the data point value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: value !<The value for the field parameter set to update
@@ -34489,8 +34490,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the data point value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the data point value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the data point value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the data point value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the data point value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber  !<The user data point number to update the value for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the data point value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: value !<The value for the field parameter set to update
@@ -34524,8 +34525,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region for the interface.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface containing the field to update the data point value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to update the data point value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the data point value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the data point value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the data point value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the data point value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber  !<The user data point number to update the value for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the data point value from the field parameter set.
     REAL(SP), INTENT(IN) :: value !<The value for the field parameter set to update
@@ -34567,8 +34568,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the data point value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to update the data point value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the data point value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the data point value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the data point value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the data point value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber  !<The user data point number to update the value for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the data point value from the field parameter set.
     REAL(SP), INTENT(IN) :: value !<The value for the field parameter set to update
@@ -34606,8 +34607,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the data point value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the data point value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the data point value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the data point value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the data point value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber  !<The user data point number to update the value for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the data point value from the field parameter set.
     REAL(SP), INTENT(IN) :: value !<The value for the field parameter set to update
@@ -34640,8 +34641,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region for the interface.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface containing the field to update the data point value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to update the data point value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the data point value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the data point value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the data point value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the data point value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber  !<The user data point number to update the value for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the data point value from the field parameter set.
     REAL(DP), INTENT(IN) :: value !<The value for the field parameter set to update
@@ -34683,8 +34684,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the data point value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to update the data point value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the data point value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the data point value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the data point value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the data point value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber  !<The user data point number to update the value for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the data point value from the field parameter set.
     REAL(DP), INTENT(IN) :: value !<The value for the field parameter set to update
@@ -34722,8 +34723,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the data point value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the data point value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the data point value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the data point value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the data point value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber  !<The user data point number to update the value for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the data point value from the field parameter set.
     REAL(DP), INTENT(IN) :: value !<The value for the field parameter set to update
@@ -34756,8 +34757,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The user number of the parent region for the interface.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface containing the field to update the data point value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to update the data point value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the data point value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the data point value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the data point value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the data point value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber  !<The user data point number to update the value for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the data point value from the field parameter set.
     LOGICAL, INTENT(IN) :: value !<The value for the field parameter set to update
@@ -34799,8 +34800,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the data point value from the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to update the data point value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the data point value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the data point value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the data point value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the data point value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber  !<The user data point number to update the value for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the data point value from the field parameter set.
     LOGICAL, INTENT(IN) :: value !<The value for the field parameter set to update
@@ -34838,8 +34839,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the data point value from the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the data point value from the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the data point value from. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the data point value from the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the data point value from. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber  !<The user data point number to update the value for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the data point value from the field parameter set.
     LOGICAL, INTENT(IN) :: value !<The value for the field parameter set to update
@@ -34871,8 +34872,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the element value for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to update the element value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the element value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the element value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the element value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the element value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the element value for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: value !<The value to update the field parameter set to.
@@ -34910,8 +34911,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the constant value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the constant value for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: value !<The value for the field parameter set to update.
@@ -34943,8 +34944,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the element value for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to update the element value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the element value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the element value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the element value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the element value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the element value for the field parameter set.
     REAL(SP), INTENT(IN) :: value !<The value to update the field parameter set to.
@@ -34982,8 +34983,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the constant value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the constant value for the field parameter set.
     REAL(SP), INTENT(IN) :: value !<The value for the field parameter set to update.
@@ -35015,8 +35016,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the element value for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to update the element value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the element value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the element value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the element value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the element value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the element value for the field parameter set.
     REAL(DP), INTENT(IN) :: Value !<The value to update the field parameter set to.
@@ -35054,8 +35055,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the constant value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the constant value for the field parameter set.
     REAL(DP), INTENT(IN) :: VALUE !<The value for the field parameter set to update.
@@ -35087,8 +35088,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the element value for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to update the element value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the element value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the element value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the element value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the element value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the element value for the field parameter set.
     LOGICAL, INTENT(IN) :: value !<The value to update the field parameter set to.
@@ -35125,8 +35126,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the constant value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the constant value for the field parameter set.
     LOGICAL, INTENT(IN) :: value !<The value for the field parameter set to update.
@@ -35157,8 +35158,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the constant value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: elementNumber !<The user element number to update the data point for.
     INTEGER(INTG), INTENT(IN) :: dataPointIndex !<The index of the data point for the data points projected on this element.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the constant value for the field parameter set.
@@ -35191,8 +35192,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to finish the parameter set update for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to finish the parameter set update for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to finish the parameter set update for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type to finish the update for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to finish the parameter set update for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type to finish the update for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(FIELD_TYPE), POINTER :: field
@@ -35224,8 +35225,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to finishe the parameter set update for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to finish the parameter set update for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type to finish the update for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to finish the parameter set update for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type to finish the update for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -35253,8 +35254,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the nodal value for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to update the nodal value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the nodal value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the nodal value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the nodal value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the nodal value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The derivative version number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number of the field variable component to update for the field parameter set.
@@ -35294,8 +35295,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the nodal value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the nodal value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the nodal value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the nodal value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the nodal value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The derivative version number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number of the field variable component to update for the field parameter set.
@@ -35329,8 +35330,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the nodal value for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to update the nodal value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the nodal value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the nodal value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the nodal value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the nodal value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The derivative version number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number of the field variable component to update for the field parameter set.
@@ -35370,8 +35371,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the nodal value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the nodal value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the nodal value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the nodal value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the nodal value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The derivative version number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number of the field variable component to update for the field parameter set.
@@ -35405,8 +35406,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the nodal value for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to update the nodal value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the nodal value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the nodal value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the nodal value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the nodal value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The derivative version number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number of the field variable component to update for the field parameter set.
@@ -35446,8 +35447,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the nodal value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the nodal value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the nodal value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the nodal value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the nodal value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The derivative version number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number of the field variable component to update for the field parameter set.
@@ -35481,8 +35482,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the nodal value for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to update the nodal value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the nodal value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the nodal value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the nodal value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the nodal value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The derivative version number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number of the field variable component to update for the field parameter set.
@@ -35522,8 +35523,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the nodal value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the nodal value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the nodal value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the nodal value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the nodal value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The derivative version number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number of the field variable component to update for the field parameter set.
@@ -35555,8 +35556,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the values for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update values for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update values for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update values for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update values for. \see OpenCMISS_FieldParameterSetTypes
     REAL(DP), INTENT(IN) :: values(:) !<The values to update the field parameter set to.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -35585,8 +35586,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the Gauss point value for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to update the Gauss point value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the Gauss point value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the Gauss point value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the Gauss point value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the Gauss point value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the Gauss point value for the field parameter set.
@@ -35625,8 +35626,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the Gauss point value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the Gauss point value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the Gauss point value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the Gauss point value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the Gauss point value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the Gauss point value for the field parameter set.
@@ -35662,8 +35663,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the Gauss point value for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to update the Gauss point value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the Gauss point value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the Gauss point value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the Gauss point value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the Gauss point value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the Gauss point value for the field parameter set.
@@ -35702,8 +35703,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the Gauss point value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the Gauss point value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the Gauss point value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the Gauss point value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the Gauss point value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the Gauss point value for the field parameter set.
@@ -35739,8 +35740,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the Gauss point value for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to update the Gauss point value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the Gauss point value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the Gauss point value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the Gauss point value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the Gauss point value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the Gauss point value for the field parameter set.
@@ -35779,8 +35780,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the Gauss point value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the Gauss point value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the Gauss point value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the Gauss point value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the Gauss point value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the Gauss point value for the field parameter set.
@@ -35816,8 +35817,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to update the Gauss point value for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to update the Gauss point value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the Gauss point value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the Gauss point value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the Gauss point value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the Gauss point value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the Gauss point value for the field parameter set.
@@ -35858,8 +35859,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the Gauss point value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the Gauss point value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the Gauss point value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the Gauss point value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the Gauss point value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to update the Gauss point value for the field parameter set.
@@ -35892,8 +35893,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field whose parameter set is to be interpolated.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field whose parameter set is to be interpolated.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to interpolate. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to interpolate. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to interpolate. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to interpolate. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the field to interpolate.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
     REAL(DP), INTENT(IN) :: xi(:) !<The element xi to interpolate the field at.
@@ -35932,8 +35933,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field whose parameter set is to be interpolated.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to interpolate. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to interpolate. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to interpolate. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to interpolate. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the field to interpolate.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
     REAL(DP), INTENT(IN) :: xi(:) !<The element xi to interpolate the field at.
@@ -35967,8 +35968,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field whose parameter set is to be interpolated.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field whose parameter set is to be interpolated.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to interpolate. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to interpolate. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to interpolate. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to interpolate. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the field to interpolate.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
     REAL(DP), INTENT(IN) :: xi(:,:) !<The sets of element xi to interpolate the field at.
@@ -36007,8 +36008,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field whose parameter set is to be interpolated.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to interpolate. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to interpolate. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to interpolate. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to interpolate. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the field to interpolate.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
     REAL(DP), INTENT(IN) :: xi(:,:) !<The sets of element xi to interpolate the field at.
@@ -36042,8 +36043,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field whose parameter set is to be interpolated.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field whose parameter set is to be interpolated.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to interpolate. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to interpolate. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to interpolate. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to interpolate. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the field to interpolate.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
     INTEGER(INTG), INTENT(IN) :: quadratureScheme !<The quadrature scheme to interpolate the field for.
@@ -36083,8 +36084,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the constant value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the field to interpolate.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: quadratureScheme !<The quadrature scheme to interpolate the field for.
@@ -36119,8 +36120,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field whose parameter set is to be interpolated.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field whose parameter set is to be interpolated.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to interpolate. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to interpolate. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to interpolate. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to interpolate. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the field to interpolate.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
     INTEGER(INTG), INTENT(IN) :: quadratureScheme !<The quadrature scheme to interpolate the field for.
@@ -36160,8 +36161,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to update the constant value for the field parameter set.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to update the constant value for the field parameter set. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field to update the constant value for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the field to interpolate.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field variable component to update for the field parameter set.
     INTEGER(INTG), INTENT(IN) :: quadratureScheme !<The quadrature scheme to interpolate the field for.
@@ -36195,8 +36196,8 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to start the parameter set update for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to start the parameter set update for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to start the parameter set update for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type to start the update for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to start the parameter set update for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type to start the update for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(FIELD_TYPE), POINTER :: field
@@ -36228,8 +36229,8 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to start the parameter set update for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to start the parameter set update for. \see OPENCMISS_FieldVariableTypes
-    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type to start the update for. \see OPENCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to start the parameter set update for. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type to start the update for. \see OpenCMISS_FieldParameterSetTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -36343,7 +36344,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the scaling type for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the scaling type for.
-    INTEGER(INTG), INTENT(OUT) :: scalingType !<On return, the field scaling type. \see OPENCMISS_FieldScalingTypes
+    INTEGER(INTG), INTENT(OUT) :: scalingType !<On return, the field scaling type. \see OpenCMISS_FieldScalingTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(FIELD_TYPE), POINTER :: field
@@ -36375,7 +36376,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the scaling type for.
-    INTEGER(INTG), INTENT(OUT) :: scalingType !<On return, the field scaling type. \see OPENCMISS_FieldScalingTypes
+    INTEGER(INTG), INTENT(OUT) :: scalingType !<On return, the field scaling type. \see OpenCMISS_FieldScalingTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -36402,7 +36403,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the scaling type for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to set the scaling type for.
-    INTEGER(INTG), INTENT(IN) :: scalingType !<The field scaling type to set. \see OPENCMISS_FieldScalingTypes
+    INTEGER(INTG), INTENT(IN) :: scalingType !<The field scaling type to set. \see OpenCMISS_FieldScalingTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(FIELD_TYPE), POINTER :: field
@@ -36434,7 +36435,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the scaling type for.
-    INTEGER(INTG), INTENT(IN) :: scalingType !<The field scaling type to set. \see OPENCMISS_FieldScalingTypes
+    INTEGER(INTG), INTENT(IN) :: scalingType !<The field scaling type to set. \see OpenCMISS_FieldScalingTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -36461,7 +36462,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the field type for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the field type for.
-    INTEGER(INTG), INTENT(OUT) :: fieldType !<On return, the field type. \see OPENCMISS_FieldTypes
+    INTEGER(INTG), INTENT(OUT) :: fieldType !<On return, the field type. \see OpenCMISS_FieldTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(FIELD_TYPE), POINTER :: field
@@ -36493,7 +36494,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the field type for.
-    INTEGER(INTG), INTENT(OUT) :: fieldType !<On return, the field type. \see OPENCMISS_FieldTypes
+    INTEGER(INTG), INTENT(OUT) :: fieldType !<On return, the field type. \see OpenCMISS_FieldTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -36520,7 +36521,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the field type for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to set the field type for.
-    INTEGER(INTG), INTENT(IN) :: fieldType !<The field type to set. \see OPENCMISS_FieldTypes
+    INTEGER(INTG), INTENT(IN) :: fieldType !<The field type to set. \see OpenCMISS_FieldTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(FIELD_TYPE), POINTER :: field
@@ -36552,7 +36553,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the field type for.
-    INTEGER(INTG), INTENT(IN) :: fieldType !<The field type to set. \see OPENCMISS_FieldTypes
+    INTEGER(INTG), INTENT(IN) :: fieldType !<The field type to set. \see OpenCMISS_FieldTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -36579,7 +36580,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the label for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the label for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the field variable label \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the field variable label \see OpenCMISS_FieldVariableTypes
     CHARACTER(LEN=*), INTENT(OUT) :: label !<On return, the field variable label.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -36612,7 +36613,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the label for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the field variable label \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the field variable label \see OpenCMISS_FieldVariableTypes
     CHARACTER(LEN=*), INTENT(OUT) :: label !<On return, the field variable label.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -36640,7 +36641,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the label for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the label for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the field variable label \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the field variable label \see OpenCMISS_FieldVariableTypes
     TYPE(VARYING_STRING), INTENT(OUT) :: label !<On return, the field variable label.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -36673,7 +36674,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the label for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the field variable label \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the field variable label \see OpenCMISS_FieldVariableTypes
     TYPE(VARYING_STRING), INTENT(OUT) :: label !<On return, the field variable label.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -36701,7 +36702,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the label for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to set the label for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the field variable label \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the field variable label \see OpenCMISS_FieldVariableTypes
     CHARACTER(LEN=*), INTENT(IN) :: label !<The field variable label to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -36734,7 +36735,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the label for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the field variable label \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the field variable label \see OpenCMISS_FieldVariableTypes
     CHARACTER(LEN=*), INTENT(IN) :: label !<The field variable label to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -36762,7 +36763,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the label for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to set the label for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the field variable label \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the field variable label \see OpenCMISS_FieldVariableTypes
     TYPE(VARYING_STRING), INTENT(IN) :: label !<The field variable label to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -36795,7 +36796,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the label for.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the field variable label \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to set the field variable label \see OpenCMISS_FieldVariableTypes
     TYPE(VARYING_STRING), INTENT(IN) :: label !<The field variable label to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -36823,7 +36824,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the field variable types for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the field variable types for.
-    INTEGER(INTG), INTENT(OUT) :: variableTypes(:) !<variableTypes(variable_idx). On return, the field variable types for the variable_idx'th field variable. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(OUT) :: variableTypes(:) !<variableTypes(variable_idx). On return, the field variable types for the variable_idx'th field variable. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(FIELD_TYPE), POINTER :: field
@@ -36855,7 +36856,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the field variable types for.
-    INTEGER(INTG), INTENT(OUT) :: variableTypes(:) !<variableTypes(variable_idx). On return, the field variable types for the variable_idx'th field variable. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(OUT) :: variableTypes(:) !<variableTypes(variable_idx). On return, the field variable types for the variable_idx'th field variable. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -36882,7 +36883,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the field variable types for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to set the field variable types for.
-    INTEGER(INTG), INTENT(IN) :: variableTypes(:) !<variableTypes(variable_idx). The field variable types for the variable_idx'th field variable to set. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableTypes(:) !<variableTypes(variable_idx). The field variable types for the variable_idx'th field variable to set. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(FIELD_TYPE), POINTER :: field
@@ -36914,7 +36915,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the field variable types for.
-    INTEGER(INTG), INTENT(IN) :: variableTypes(:) !<variableTypes(variable_idx). The field variable types for the variable_idx'th field variable to set. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableTypes(:) !<variableTypes(variable_idx). The field variable types for the variable_idx'th field variable to set. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -38088,7 +38089,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the generated mesh to get the type for.
     INTEGER(INTG), INTENT(IN) :: generatedMeshUserNumber !<The user number of the generated mesh to get the type for.
-    INTEGER(INTG), INTENT(OUT) :: generatedMeshType !<On return, the type of the generated mesh. \see OPENCMISS_GeneratedMeshTypes
+    INTEGER(INTG), INTENT(OUT) :: generatedMeshType !<On return, the type of the generated mesh. \see OpenCMISS_GeneratedMeshTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh
@@ -38120,7 +38121,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_GeneratedMeshType), INTENT(IN) :: generatedMesh !<The generated mesh to get the generated mesh type for.
-    INTEGER(INTG), INTENT(OUT) :: generatedMeshType !<On return, the type of the generated mesh. \see OPENCMISS_GeneratedMeshTypes
+    INTEGER(INTG), INTENT(OUT) :: generatedMeshType !<On return, the type of the generated mesh. \see OpenCMISS_GeneratedMeshTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -38147,7 +38148,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the generated mesh to set the type for.
     INTEGER(INTG), INTENT(IN) :: generatedMeshUserNumber !<The user number of the generated mesh to set the type for.
-    INTEGER(INTG), INTENT(IN) :: generatedMeshType !<The type of the generated mesh to set. \see OPENCMISS_GeneratedMeshTypes
+    INTEGER(INTG), INTENT(IN) :: generatedMeshType !<The type of the generated mesh to set. \see OpenCMISS_GeneratedMeshTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh
@@ -38179,7 +38180,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_GeneratedMeshType), INTENT(IN) :: generatedMesh !<The generated mesh to set the generated mesh type for.
-    INTEGER(INTG), INTENT(IN) :: generatedMeshType !<The type of the generated mesh to set. \see OPENCMISS_GeneratedMeshTypes
+    INTEGER(INTG), INTENT(IN) :: generatedMeshType !<The type of the generated mesh to set. \see OpenCMISS_GeneratedMeshTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -40776,7 +40777,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface containing the interface condition to get the method for.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface containing the interface condition to get the method for.
     INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition to get the method for.
-    INTEGER(INTG), INTENT(OUT) :: interfaceConditionIntegrationType !<On return, the interface condition integration type. \see OPENCMISS_InterfaceConditionIntegrationTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: interfaceConditionIntegrationType !<On return, the interface condition integration type. \see OpenCMISS_InterfaceConditionIntegrationTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(INTERFACE_TYPE), POINTER :: interface
@@ -40812,7 +40813,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to get the method for.
-    INTEGER(INTG), INTENT(OUT) :: interfaceConditionIntegrationType !<On return, the interface condition integration type. \see OPENCMISS_InterfaceConditionIntegrationTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: interfaceConditionIntegrationType !<On return, the interface condition integration type. \see OpenCMISS_InterfaceConditionIntegrationTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -40843,7 +40844,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface containing the interface condition to set the method for.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface containing the interface condition to set the method for.
     INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition to set the method for.
-    INTEGER(INTG), INTENT(IN) :: interfaceConditionIntegrationType !<On return, the interface condition integration type. \see OPENCMISS_InterfaceConditionIntegrationTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: interfaceConditionIntegrationType !<On return, the interface condition integration type. \see OpenCMISS_InterfaceConditionIntegrationTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(INTERFACE_TYPE), POINTER :: interface
@@ -40879,7 +40880,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to set the method for.
-    INTEGER(INTG), INTENT(IN) :: interfaceConditionIntegrationType !<On return, the interface condition integration type. \see OPENCMISS_InterfaceConditionIntegrationTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: interfaceConditionIntegrationType !<On return, the interface condition integration type. \see OpenCMISS_InterfaceConditionIntegrationTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -41297,7 +41298,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface to get the output type for.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface containing the interface condition to get the output type for.
     INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition to get the output type for.
-    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the interface condition \see OPENCMISS_InterfaceConditionOutputTypes
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the interface condition \see OpenCMISS_InterfaceConditionOutputTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(INTERFACE_TYPE), POINTER :: interface
@@ -41332,7 +41333,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to get the output type for.
-    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the interface condition \see OPENCMISS_InterfaceConditionOutputTypes
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the interface condition \see OpenCMISS_InterfaceConditionOutputTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -41361,7 +41362,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the interface to set the output type for.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface containing the interface condition to set the output type for.
     INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition to set the output type for.
-    INTEGER(INTG), INTENT(IN) :: outputType !<The output type of the interface condition to set \see OPENCMISS_InterfaceConditionOutputTypes
+    INTEGER(INTG), INTENT(IN) :: outputType !<The output type of the interface condition to set \see OpenCMISS_InterfaceConditionOutputTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(INTERFACE_TYPE), POINTER :: INTERFACE
@@ -41396,7 +41397,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(INOUT) :: interfaceCondition !<The interface condition to set the output type for.
-    INTEGER(INTG), INTENT(IN) :: outputType !<The output type of the interface condition to set \see OPENCMISS_InterfaceConditionOutputTypes
+    INTEGER(INTG), INTENT(IN) :: outputType !<The output type of the interface condition to set \see OpenCMISS_InterfaceConditionOutputTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -41560,7 +41561,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface containing the interface condition to get the method for.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface containing the interface condition to get the method for.
     INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition to get the method for.
-    INTEGER(INTG), INTENT(OUT) :: interfaceConditionMethod !<On return, the interface condition method. \see OPENCMISS_InterfaceConditionMethods,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: interfaceConditionMethod !<On return, the interface condition method. \see OpenCMISS_InterfaceConditionMethods,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(INTERFACE_TYPE), POINTER :: INTERFACE
@@ -41595,7 +41596,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to get the method for.
-    INTEGER(INTG), INTENT(OUT) :: interfaceConditionMethod !<On return, the interface condition method. \see OPENCMISS_InterfaceConditionMethods,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: interfaceConditionMethod !<On return, the interface condition method. \see OpenCMISS_InterfaceConditionMethods,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -41624,7 +41625,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface containing the interface condition to set the method for.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface containing the interface condition to set the method for.
     INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition to set the method for.
-    INTEGER(INTG), INTENT(IN) :: interfaceConditionMethod !<The interface condition method to set. \see OPENCMISS_InterfaceConditionMethods,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: interfaceConditionMethod !<The interface condition method to set. \see OpenCMISS_InterfaceConditionMethods,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(INTERFACE_TYPE), POINTER :: INTERFACE
@@ -41659,7 +41660,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to set the method for.
-    INTEGER(INTG), INTENT(IN) :: interfaceConditionMethod !<The interface condition method to set. \see OPENCMISS_InterfaceConditionMethods,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: interfaceConditionMethod !<The interface condition method to set. \see OpenCMISS_InterfaceConditionMethods,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -41688,7 +41689,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface containing the interface condition to get the operator for.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface containing the interface condition to get the operator for.
     INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition to get the operator for.
-    INTEGER(INTG), INTENT(OUT) :: interfaceConditionOperator !<On return, the interface condition operator. \see OPENCMISS_InterfaceConditionOperators,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: interfaceConditionOperator !<On return, the interface condition operator. \see OpenCMISS_InterfaceConditionOperators,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(INTERFACE_TYPE), POINTER :: INTERFACE
@@ -41723,7 +41724,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to get the operator for.
-    INTEGER(INTG), INTENT(OUT) :: interfaceConditionOperator !<On return, the interface condition operator. \see OPENCMISS_InterfaceConditionOperator,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: interfaceConditionOperator !<On return, the interface condition operator. \see OpenCMISS_InterfaceConditionOperator,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -41753,7 +41754,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface containing the interface condition to set the operator for.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface containing the interface condition to set the operator for.
     INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition to set the operator for.
-    INTEGER(INTG), INTENT(IN) :: interfaceConditionOperator !<The interface condition operator to set. \see OPENCMISS_InterfaceConditionOperators,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: interfaceConditionOperator !<The interface condition operator to set. \see OpenCMISS_InterfaceConditionOperators,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(INTERFACE_TYPE), POINTER :: INTERFACE
@@ -41788,7 +41789,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_InterfaceConditionType), INTENT(IN) :: interfaceCondition !<The interface condition to set the operator for.
-    INTEGER(INTG), INTENT(IN) :: interfaceConditionOperator !<The interface condition operator to set. \see OPENCMISS_InterfaceConditionOperator,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: interfaceConditionOperator !<The interface condition operator to set. \see OpenCMISS_InterfaceConditionOperator,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -41820,7 +41821,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition and interface equation to get the matrix time dependence type for.
     INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix to get the time dependence type for.
     LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix transpose is to be set as well, .FALSE. if not.
-    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On return, the interface matrix time dependence type. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OPENCMISS_InterfaceMatricesTimeDependenceTypes
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On return, the interface matrix time dependence type. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OpenCMISS_InterfaceMatricesTimeDependenceTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     INTEGER(INTG) :: timeDependenceTypes(1)
@@ -41854,7 +41855,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition and interface equation to get the matrix time dependence type for.
     INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix to get the time dependence type for.
     LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix transpose is to be set as well, .FALSE. if not.
-    INTEGER(INTG), INTENT(OUT) :: timeDependenceTypes(:) !<timeDependenceTypes(transposeIdx). On return, the interface matrix time dependence type. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OPENCMISS_InterfaceMatricesTimeDependenceTypes
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceTypes(:) !<timeDependenceTypes(transposeIdx). On return, the interface matrix time dependence type. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OpenCMISS_InterfaceMatricesTimeDependenceTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(INTERFACE_TYPE), POINTER :: interface
@@ -41897,7 +41898,7 @@ CONTAINS
     TYPE(cmfe_InterfaceEquationsType), INTENT(IN) :: interfaceEquations !<The interface equations to get the matrix time dependence type for.
     INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix to get the time dependence type for.
     LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix transpose is to be set as well, .FALSE. if not.
-    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On return, the interface matrix time dependence type. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OPENCMISS_InterfaceMatricesTimeDependenceTypes
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On return, the interface matrix time dependence type. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OpenCMISS_InterfaceMatricesTimeDependenceTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     INTEGER(INTG) :: timeDependenceTypes(1)
@@ -41930,7 +41931,7 @@ CONTAINS
     TYPE(cmfe_InterfaceEquationsType), INTENT(IN) :: interfaceEquations !<The interface equations to get the matrix time dependence type for.
     INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix to get the time dependence type for.
     LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix transpose is to be set as well, .FALSE. if not.
-    INTEGER(INTG), INTENT(OUT) :: timeDependenceTypes(:) !<timeDependenceTypes(transposeIdx). On return, the interface matrix time dependence type. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OPENCMISS_InterfaceMatricesTimeDependenceTypes
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceTypes(:) !<timeDependenceTypes(transposeIdx). On return, the interface matrix time dependence type. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OpenCMISS_InterfaceMatricesTimeDependenceTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -41963,7 +41964,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition and interface equation to set the matrix time dependence type for.
     INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix to set the time dependence type for.
     LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix transpose is to be set as well, .FALSE. if not.
-    INTEGER(INTG), INTENT(IN) :: timeDependenceType !<The interface matrix time dependence type to set. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OPENCMISS_InterfaceMatricesTimeDependenceTypes
+    INTEGER(INTG), INTENT(IN) :: timeDependenceType !<The interface matrix time dependence type to set. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OpenCMISS_InterfaceMatricesTimeDependenceTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -41995,7 +41996,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition and interface equation to set the matrix time dependence type for.
     INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix to set the time dependence type for.
     LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix transpose is to be set as well, .FALSE. if not.
-    INTEGER(INTG), INTENT(IN) :: timeDependenceTypes(:) !<timeDependenceTypes(transposeIdx). The interface matrix time dependence type to set. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OPENCMISS_InterfaceMatricesTimeDependenceTypes
+    INTEGER(INTG), INTENT(IN) :: timeDependenceTypes(:) !<timeDependenceTypes(transposeIdx). The interface matrix time dependence type to set. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OpenCMISS_InterfaceMatricesTimeDependenceTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(INTERFACE_TYPE), POINTER :: interface
@@ -42039,7 +42040,7 @@ CONTAINS
     TYPE(cmfe_InterfaceEquationsType), INTENT(IN) :: interfaceEquations !<The interface equations to set the matrix time dependence type for.
     INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix to set the time dependence type for.
     LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix transpose is to be set as well, .FALSE. if not.
-    INTEGER(INTG), INTENT(IN) :: timeDependenceType !<The interface matrix time dependence type to set. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OPENCMISS_InterfaceMatricesTimeDependenceTypes
+    INTEGER(INTG), INTENT(IN) :: timeDependenceType !<The interface matrix time dependence type to set. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OpenCMISS_InterfaceMatricesTimeDependenceTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -42070,7 +42071,7 @@ CONTAINS
     TYPE(cmfe_InterfaceEquationsType), INTENT(IN) :: interfaceEquations !<The interface equations to set the matrix time dependence type for.
     INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix to set the time dependence type for.
     LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix transpose is to be set as well, .FALSE. if not.
-    INTEGER(INTG), INTENT(IN) :: timeDependenceTypes(:) !<timeDependenceTypes(transposeIdx). The interface matrix time dependence type to set. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OPENCMISS_InterfaceMatricesTimeDependenceTypes
+    INTEGER(INTG), INTENT(IN) :: timeDependenceTypes(:) !<timeDependenceTypes(transposeIdx). The interface matrix time dependence type to set. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see OpenCMISS_InterfaceMatricesTimeDependenceTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -42101,7 +42102,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface, interface condition and interface equations to get the output type for.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface, interface condition and interface equations to get the ouput type for.
     INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition and interface equation to get the output type for.
-    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the interface equations output type. \see OPENCMISS_EquationsOutputType,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the interface equations output type. \see OpenCMISS_EquationsOutputType,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(INTERFACE_TYPE), POINTER :: INTERFACE
@@ -42139,7 +42140,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_InterfaceEquationsType), INTENT(IN) :: interfaceEquations !<The interface equations to get the output type for.
-    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the interface equations output type. \see OPENCMISS_EquationsOutputType,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the interface equations output type. \see OpenCMISS_EquationsOutputType,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -42168,7 +42169,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface, interface condition and interface equations to set the output type for.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface, interface condition and interface equations to set the output type for.
     INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition and interface equations to set the output type for.
-    INTEGER(INTG), INTENT(IN) :: outputType !<The interface equations output type to set. \see OPENCMISS_EquationsOutputTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: outputType !<The interface equations output type to set. \see OpenCMISS_EquationsOutputTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(INTERFACE_TYPE), POINTER :: INTERFACE
@@ -42206,7 +42207,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_InterfaceEquationsType), INTENT(IN) :: interfaceEquations !<The interface equations to set the output type for.
-    INTEGER(INTG), INTENT(IN) :: outputType !<The interface equations output type to set. \see OPENCMISS_EquationsOutputTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: outputType !<The interface equations output type to set. \see OpenCMISS_EquationsOutputTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -42235,7 +42236,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface, interface condition and interface equations to get the sparsity type for.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface, interface condition and interface equations to get the sparsity type for.
     INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition and interface equation to get the sparsity type for.
-    INTEGER(INTG), INTENT(OUT) :: sparsityType !<On return, the interface equations sparsity type. \see OPENCMISS_EquationsSparsityType,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: sparsityType !<On return, the interface equations sparsity type. \see OpenCMISS_EquationsSparsityType,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(INTERFACE_TYPE), POINTER :: INTERFACE
@@ -42273,7 +42274,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_InterfaceEquationsType), INTENT(IN) :: interfaceEquations !<The interface equations to get the sparsity type for.
-    INTEGER(INTG), INTENT(OUT) :: sparsityType !<On return, the interface equations sparsity type. \see OPENCMISS_EquationsSparsityType,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: sparsityType !<On return, the interface equations sparsity type. \see OpenCMISS_EquationsSparsityType,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -42302,7 +42303,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface, interface condition and interface equations to set the sparsity type for.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface, interface condition and interface equations to set the sparsity type for.
     INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition and interface equations to set the sparsity type for.
-    INTEGER(INTG), INTENT(IN) :: sparsityType !<The interface equations sparsity type to set. \see OPENCMISS_EquationsSparsityTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: sparsityType !<The interface equations sparsity type to set. \see OpenCMISS_EquationsSparsityTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(INTERFACE_TYPE), POINTER :: INTERFACE
@@ -42340,7 +42341,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_InterfaceEquationsType), INTENT(IN) :: interfaceEquations !<The interface equations to set the sparsity type for.
-    INTEGER(INTG), INTENT(IN) :: sparsityType !<The interface equations sparsity type to set. \see OPENCMISS_EquationsSparsityTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: sparsityType !<The interface equations sparsity type to set. \see OpenCMISS_EquationsSparsityTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -44497,7 +44498,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh from which to get the boundary type from.
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number from which to get the boundary type from.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the boundary type for.
-    INTEGER(INTG), INTENT(OUT) :: onBoundary !<On return, the boundary type for the specified user element. \see OPENCMISS_MeshBoundaryTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: onBoundary !<On return, the boundary type for the specified user element. \see OpenCMISS_MeshBoundaryTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(MESH_TYPE), POINTER :: mesh
@@ -44534,7 +44535,7 @@ CONTAINS
     !Argument variables
     TYPE(cmfe_MeshElementsType), INTENT(IN) :: meshElements !<The mesh elements from which to get the boundary type for.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the boundary type for.
-    INTEGER(INTG), INTENT(OUT) :: onBoundary !<On return, the boundary type for the specified user element. \see OPENCMISS_MeshBoundaryTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: onBoundary !<On return, the boundary type for the specified user element. \see OpenCMISS_MeshBoundaryTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -45285,7 +45286,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh from which to get the boundary type from.
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number from which to get the boundary type from.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get the boundary type for.
-    INTEGER(INTG), INTENT(OUT) :: onBoundary !<On return, the boundary type for the specified user node. \see OPENCMISS_MeshBoundaryTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: onBoundary !<On return, the boundary type for the specified user node. \see OpenCMISS_MeshBoundaryTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(MESH_TYPE), POINTER :: mesh
@@ -45321,7 +45322,7 @@ CONTAINS
     !Argument variables
     TYPE(cmfe_MeshNodesType), INTENT(IN) :: meshNodes !<The mesh nodes from which to get the boundary type for.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get the boundary type for.
-    INTEGER(INTG), INTENT(OUT) :: onBoundary !<On return, the boundary type for the specified user node. \see OPENCMISS_MeshBoundaryTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: onBoundary !<On return, the boundary type for the specified user node. \see OpenCMISS_MeshBoundaryTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -45612,7 +45613,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_DistributedMatrixType), INTENT(IN) :: matrix !<The matrix to get the storage type for
-    INTEGER(INTG), INTENT(OUT) :: storageType !<On return, the matrix storage type. \see OPENCMISS_MatrixStorageTypes
+    INTEGER(INTG), INTENT(OUT) :: storageType !<On return, the matrix storage type. \see OpenCMISS_MatrixStorageTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
 
     ENTERS("cmfe_DistributedMatrix_StorageTypeGetObj",err,error,*999)
@@ -45638,7 +45639,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_DistributedMatrixType), INTENT(IN) :: matrix !<The matrix to get the data type for
-    INTEGER(INTG), INTENT(OUT) :: dataType !<On return, the matrix data type. \see OPENCMISS_MatrixVectorDataTypes
+    INTEGER(INTG), INTENT(OUT) :: dataType !<On return, the matrix data type. \see OpenCMISS_MatrixVectorDataTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
 
     ENTERS("cmfe_DistributedMatrix_DataTypeGetObj",err,error,*999)
@@ -45927,7 +45928,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_DistributedVectorType), INTENT(IN) :: vector !<The vector to get the data type for
-    INTEGER(INTG), INTENT(OUT) :: dataType !<On return, the vector data type. \see OPENCMISS_MatrixVectorDataTypes
+    INTEGER(INTG), INTENT(OUT) :: dataType !<On return, the vector data type. \see OpenCMISS_MatrixVectorDataTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
 
     ENTERS("cmfe_DistributedVector_DataTypeGetObj",err,error,*999)
@@ -49133,7 +49134,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem with the solver to get the CellML equations linearity type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to get the CellML equations linearity type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get CellML equations linearity type for.
-    INTEGER(INTG), INTENT(OUT) :: linearityType !<On exit, the linearity type of the specified CellML equations. \see OPENCMISS_CellMLEquationsLinearityTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: linearityType !<On exit, the linearity type of the specified CellML equations. \see OpenCMISS_CellMLEquationsLinearityTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations
@@ -49168,7 +49169,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_CellMLEquationsType), INTENT(IN) :: cellMLEquations !<The CellML equations to get the linearity type for.
-    INTEGER(INTG), INTENT(OUT) :: linearityType !<On exit, the linearity type of the specified CellML equations. \see OPENCMISS_CellMLEquationsLinearityTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: linearityType !<On exit, the linearity type of the specified CellML equations. \see OpenCMISS_CellMLEquationsLinearityTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -49196,7 +49197,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem with the solver to set the CellML equations linearity type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to set the CellML equations linearity type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set CellML equations linearity type for.
-    INTEGER(INTG), INTENT(IN) :: linearityType !<The linearity type of the specified CellML equations to set. \see OPENCMISS_CellMLEquationsLinearityTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: linearityType !<The linearity type of the specified CellML equations to set. \see OpenCMISS_CellMLEquationsLinearityTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations
@@ -49231,7 +49232,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_CellMLEquationsType), INTENT(IN) :: cellMLEquations !<The CellML equations to set the linearity type for.
-    INTEGER(INTG), INTENT(IN) :: linearityType !<The linearity type of the specified CellML equations to set. \see OPENCMISS_CellMLEquationsLinearityTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: linearityType !<The linearity type of the specified CellML equations to set. \see OpenCMISS_CellMLEquationsLinearityTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -49260,7 +49261,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem with the solver to get the CellML equations time dependence type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to get the CellML equations time dependence type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get CellML equations time dependence type for.
-    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On exit, the time dependence type of the specified CellML equations. \see OPENCMISS_CellMLEquationsTimeDependenceTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On exit, the time dependence type of the specified CellML equations. \see OpenCMISS_CellMLEquationsTimeDependenceTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations
@@ -49296,7 +49297,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_CellMLEquationsType), INTENT(IN) :: cellMLEquations !<The CellML equations to get the time dependence type for.
-    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On exit, the time dependence type of the specified CellML equations. \see OPENCMISS_CellMLEquationsTimeDependenceTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On exit, the time dependence type of the specified CellML equations. \see OpenCMISS_CellMLEquationsTimeDependenceTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -49326,7 +49327,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem with the solver to set the CellML equations time dependence type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to set the CellML equations time dependence type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set CellML equations time dependence type for.
-    INTEGER(INTG), INTENT(IN) :: timeDependenceType !<The time dependence type of the specified CellML equations to set. \see OPENCMISS_CellMLEquationsTimeDependenceTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: timeDependenceType !<The time dependence type of the specified CellML equations to set. \see OpenCMISS_CellMLEquationsTimeDependenceTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations
@@ -49362,7 +49363,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_CellMLEquationsType), INTENT(IN) :: cellMLEquations !<The CellML equations to set the time dependence type for.
-    INTEGER(INTG), INTENT(IN) :: timeDependenceType !<The time dependence type of the specified CellML equations to set. \see OPENCMISS_CellMLEquationsTimeDependenceTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: timeDependenceType !<The time dependence type of the specified CellML equations to set. \see OpenCMISS_CellMLEquationsTimeDependenceTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -49484,7 +49485,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the DAE Euler solver type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to get the DAE Euler solver type for
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the DAE Euler solver type for
-    INTEGER(INTG), INTENT(OUT) :: DAEEulerSolverType !<On return, the DAE Euler solver type. \see OPENCMISS_EulerDAESolverTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: DAEEulerSolverType !<On return, the DAE Euler solver type. \see OpenCMISS_EulerDAESolverTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -49518,7 +49519,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the DAE Euler solver type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to get the DAE Euler solver type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the DAE Euler solver type for
-    INTEGER(INTG), INTENT(OUT) :: DAEEulerSolverType !<On return, the DAE Euler solver type. \see OPENCMISS_EulerDAESolverTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: DAEEulerSolverType !<On return, the DAE Euler solver type. \see OpenCMISS_EulerDAESolverTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -49550,7 +49551,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to get the DAE Euler solver type for.
-    INTEGER(INTG), INTENT(OUT) :: DAEEulerSolverType !<On return, the DAE Euler solver type. \see OPENCMISS_EulerDAESolverTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: DAEEulerSolverType !<On return, the DAE Euler solver type. \see OpenCMISS_EulerDAESolverTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -49578,7 +49579,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the DAE Euler solver type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to set the DAE Euler solver type for
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the DAE Euler solver type for
-    INTEGER(INTG), INTENT(IN) :: DAEEulerSolverType !<The DAE Euler solver type to set. \see OPENCMISS_EulerDAESolverTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: DAEEulerSolverType !<The DAE Euler solver type to set. \see OpenCMISS_EulerDAESolverTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -49612,7 +49613,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the DAE Euler solver type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to set the DAE Euler solver type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the DAE Euler solver type for
-    INTEGER(INTG), INTENT(IN) :: DAEEulerSolverType !<The DAE Euler solver type to set. \see OPENCMISS_EulerDAESolverTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: DAEEulerSolverType !<The DAE Euler solver type to set. \see OpenCMISS_EulerDAESolverTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -49644,7 +49645,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to set the DAE Euler solver type for.
-    INTEGER(INTG), INTENT(IN) :: DAEEulerSolverType !<The DAE Euler solver type to set. \see OPENCMISS_EulerDAESolverTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: DAEEulerSolverType !<The DAE Euler solver type to set. \see OpenCMISS_EulerDAESolverTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -49672,7 +49673,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the DAE solver type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to get the DAE solver type for
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the DAE solver type for
-    INTEGER(INTG), INTENT(OUT) :: DAESolverType !<On return, the DAE solver type. \see OPENCMISS_DAESolverTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: DAESolverType !<On return, the DAE solver type. \see OpenCMISS_DAESolverTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -49706,7 +49707,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the DAE solver type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to get the DAE solver type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the DAE solver type for
-    INTEGER(INTG), INTENT(OUT) :: DAESolverType !<On return, the DAE solver type. \see OPENCMISS_DAESolverTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: DAESolverType !<On return, the DAE solver type. \see OpenCMISS_DAESolverTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -49738,7 +49739,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to get the DAE solver type for.
-    INTEGER(INTG), INTENT(OUT) :: DAESolverType !<On return, the DAE solver type. \see OPENCMISS_DAESolverTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: DAESolverType !<On return, the DAE solver type. \see OpenCMISS_DAESolverTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -49766,7 +49767,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the DAE solver type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to set the DAE solver type for
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the DAE solver type for
-    INTEGER(INTG), INTENT(IN) :: DAESolverType !<The DAE solver type to set. \see OPENCMISS_DAESolverTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: DAESolverType !<The DAE solver type to set. \see OpenCMISS_DAESolverTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -49800,7 +49801,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the DAE solver type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to set the DAE solver type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the DAE solver type for
-    INTEGER(INTG), INTENT(IN) :: DAESolverType !<The DAE solver type to set. \see OPENCMISS_DAESolverTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: DAESolverType !<The DAE solver type to set. \see OpenCMISS_DAESolverTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -49832,7 +49833,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to set the DAE solver type for.
-    INTEGER(INTG), INTENT(IN) :: DAESolverType !<The DAE solver type to set. \see OPENCMISS_DAESolverTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: DAESolverType !<The DAE solver type to set. \see OpenCMISS_DAESolverTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -50051,7 +50052,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the dynamic degree for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to get the dynamic degree for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the dynamic degree for.
-    INTEGER(INTG), INTENT(OUT) :: degree !<On return, the dynamic degree. \see OPENCMISS_DynamicDegreeTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: degree !<On return, the dynamic degree. \see OpenCMISS_DynamicDegreeTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -50085,7 +50086,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the dynamic degree for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to get the dynamic degree for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the dynamic degree for
-    INTEGER(INTG), INTENT(OUT) :: degree !<On return, the dynamic degree. \see OPENCMISS_DynamicDegreeTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: degree !<On return, the dynamic degree. \see OpenCMISS_DynamicDegreeTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -50117,7 +50118,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to get the dynamic degree for.
-    INTEGER(INTG), INTENT(OUT) :: degree !<On return, the dynamic degree. \see OPENCMISS_DynamicDegreeTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: degree !<On return, the dynamic degree. \see OpenCMISS_DynamicDegreeTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -50145,7 +50146,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the dynamic degree for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to set the dynamic degree for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the dynamic degree for.
-    INTEGER(INTG), INTENT(IN) :: degree !<The dynamic degree to set. \see OPENCMISS_DynamicDegreeTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: degree !<The dynamic degree to set. \see OpenCMISS_DynamicDegreeTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -50179,7 +50180,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the dynamic degree for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to set the dynamic degree for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the dynamic degree for
-    INTEGER(INTG), INTENT(IN) :: degree !<The dynamic degree to set. \see OPENCMISS_DynamicDegreeTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: degree !<The dynamic degree to set. \see OpenCMISS_DynamicDegreeTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -50212,7 +50213,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to set the dynamic degree for.
-    INTEGER(INTG), INTENT(IN) :: degree !<The dynamic degree to set. \see OPENCMISS_DynamicDegreeTypes,OPENCMISS
+    INTEGER(INTG), INTENT(IN) :: degree !<The dynamic degree to set. \see OpenCMISS_DynamicDegreeTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -50240,7 +50241,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the dynamic linearity type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to get the dynamic linearity type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the dynamic linearity type for.
-    INTEGER(INTG), INTENT(OUT) :: linearityType !<On return, the dynamic linearity type. \see OPENCMISS_DynamicLinearityTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: linearityType !<On return, the dynamic linearity type. \see OpenCMISS_DynamicLinearityTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -50274,7 +50275,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the dynamic linearity type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to get the dynamic linearity type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the dynamic linearity type for.
-    INTEGER(INTG), INTENT(OUT) :: linearityType !<On return, the dynamic linearity type. \see OPENCMISS_DynamicLinearityTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: linearityType !<On return, the dynamic linearity type. \see OpenCMISS_DynamicLinearityTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -50306,7 +50307,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to get the dynamic linearity type for.
-    INTEGER(INTG), INTENT(OUT) :: linearityType !<On return, the dynamic linearity type. \see OPENCMISS_DynamicLinearityTypes,OPENCMISS
+    INTEGER(INTG), INTENT(OUT) :: linearityType !<On return, the dynamic linearity type. \see OpenCMISS_DynamicLinearityTypes,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -50541,7 +50542,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the scheme for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to set the scheme for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the scheme for.
-    INTEGER(INTG), INTENT(IN) :: scheme !<The dynamic scheme to set. \see OPENCMISS_DynamicSchemeTypes
+    INTEGER(INTG), INTENT(IN) :: scheme !<The dynamic scheme to set. \see OpenCMISS_DynamicSchemeTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -50575,7 +50576,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the scheme for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to set the scheme for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the scheme for.
-    INTEGER(INTG), INTENT(IN) :: scheme !<The dynamic scheme to set. \see OPENCMISS_DynamicSchemeTypes
+    INTEGER(INTG), INTENT(IN) :: scheme !<The dynamic scheme to set. \see OpenCMISS_DynamicSchemeTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -50606,7 +50607,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to set the scheme for.
-    INTEGER(INTG), INTENT(IN) :: scheme !<The dynamic scheme to set. \see OPENCMISS_DynamicSchemeTypes
+    INTEGER(INTG), INTENT(IN) :: scheme !<The dynamic scheme to set. \see OpenCMISS_DynamicSchemeTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -52007,7 +52008,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the library type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to get the library type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the library type for.
-    INTEGER(INTG), INTENT(OUT) :: libraryType !<On return, the library type for the solver. \see OPENCMISS_SolverLibraries
+    INTEGER(INTG), INTENT(OUT) :: libraryType !<On return, the library type for the solver. \see OpenCMISS_SolverLibraries
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -52041,7 +52042,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the library type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to get the library type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the library type for.
-    INTEGER(INTG), INTENT(OUT) :: libraryType !<On return, the library type for the solver. \see OPENCMISS_SolverLibraries
+    INTEGER(INTG), INTENT(OUT) :: libraryType !<On return, the library type for the solver. \see OpenCMISS_SolverLibraries
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -52072,7 +52073,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to get the library type for.
-    INTEGER(INTG), INTENT(OUT) :: libraryType !<On return, the library type for the solver. \see OPENCMISS_SolverLibraries
+    INTEGER(INTG), INTENT(OUT) :: libraryType !<On return, the library type for the solver. \see OpenCMISS_SolverLibraries
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -52100,7 +52101,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the library type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to set the library type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the library type for.
-    INTEGER(INTG), INTENT(IN) :: libraryType !<The library type for the solver to set. \see OPENCMISS_SolverLibraries
+    INTEGER(INTG), INTENT(IN) :: libraryType !<The library type for the solver to set. \see OpenCMISS_SolverLibraries
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -52134,7 +52135,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the library type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to set the library type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the library type for.
-    INTEGER(INTG), INTENT(IN) :: libraryType !<The library type for the solver to set. \see OPENCMISS_SolverLibraries
+    INTEGER(INTG), INTENT(IN) :: libraryType !<The library type for the solver to set. \see OpenCMISS_SolverLibraries
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -52165,7 +52166,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to set the library type for.
-    INTEGER(INTG), INTENT(IN) :: libraryType !<The library type for the solver to set. \see OPENCMISS_SolverLibraries
+    INTEGER(INTG), INTENT(IN) :: libraryType !<The library type for the solver to set. \see OpenCMISS_SolverLibraries
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -52193,7 +52194,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the direct linear solver to set the direct type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the direct linear solver to set the direct type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the direct type for.
-    INTEGER(INTG), INTENT(IN) :: directSolverType !<The type of the direct linear solver to set. \see OPENCMISS_DirectLinearSolverTypes
+    INTEGER(INTG), INTENT(IN) :: directSolverType !<The type of the direct linear solver to set. \see OpenCMISS_DirectLinearSolverTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -52227,7 +52228,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the direct linear solver to set the direct type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to set the direct type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the direct type for.
-    INTEGER(INTG), INTENT(IN) :: directSolverType !<The type of the direct linear solver to set. \see OPENCMISS_DirectLinearSolverTypes
+    INTEGER(INTG), INTENT(IN) :: directSolverType !<The type of the direct linear solver to set. \see OpenCMISS_DirectLinearSolverTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -52258,7 +52259,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to set the library type for.
-    INTEGER(INTG), INTENT(IN) :: directSolverType !<The type of the direct linear solver to set. \see OPENCMISS_DirectLinearSolverTypes
+    INTEGER(INTG), INTENT(IN) :: directSolverType !<The type of the direct linear solver to set. \see OpenCMISS_DirectLinearSolverTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -52733,7 +52734,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the iterative linear solver to set the preconditioner type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the iterative linear solver to set the preconditioner type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the preconditioner type for.
-    INTEGER(INTG), INTENT(IN) :: preconditionerType !<The preconditioner type to set. \see OPENCMISS_IterativePreconditionerTypes
+    INTEGER(INTG), INTENT(IN) :: preconditionerType !<The preconditioner type to set. \see OpenCMISS_IterativePreconditionerTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -52769,7 +52770,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the iterative linear solver to set the preconditioner type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to set the preconditioner type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the preconditioner type for.
-    INTEGER(INTG), INTENT(IN) :: preconditionerType !<The preconditioner type to set. \see OPENCMISS_IterativePreconditionerTypes
+    INTEGER(INTG), INTENT(IN) :: preconditionerType !<The preconditioner type to set. \see OpenCMISS_IterativePreconditionerTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -52801,7 +52802,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The iterative linear solver to set the preconditioner type for.
-    INTEGER(INTG), INTENT(IN) :: preconditionerType !<The preconditioner type to set. \see OPENCMISS_IterativePreconditionerTypes
+    INTEGER(INTG), INTENT(IN) :: preconditionerType !<The preconditioner type to set. \see OpenCMISS_IterativePreconditionerTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -52928,7 +52929,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the iterative linear solver to set the type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the iterative linear solver to set the type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the type for.
-    INTEGER(INTG), INTENT(IN) :: iterativeSolverType !<The iterative solver type to set. \see OPENCMISS_IterativeLinearSolverTypes
+    INTEGER(INTG), INTENT(IN) :: iterativeSolverType !<The iterative solver type to set. \see OpenCMISS_IterativeLinearSolverTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -52962,7 +52963,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the iterative linear solver to set the type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to set the type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the type for.
-    INTEGER(INTG), INTENT(IN) :: iterativeSolverType !<The iterative solver type to set. \see OPENCMISS_IterativeLinearSolverTypes
+    INTEGER(INTG), INTENT(IN) :: iterativeSolverType !<The iterative solver type to set. \see OpenCMISS_IterativeLinearSolverTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -52993,7 +52994,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The iterative linear solver to set the type for.
-    INTEGER(INTG), INTENT(IN) :: iterativeSolverType !<The iterative solver type to set. \see OPENCMISS_IterativeLinearSolverTypes
+    INTEGER(INTG), INTENT(IN) :: iterativeSolverType !<The iterative solver type to set. \see OpenCMISS_IterativeLinearSolverTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -53021,7 +53022,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the linear solver to set the type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the linear solver to set the type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the type for.
-    INTEGER(INTG), INTENT(IN) :: linearSolverType !<The linear solver type to set. \see OPENCMISS_LinearSolverTypes
+    INTEGER(INTG), INTENT(IN) :: linearSolverType !<The linear solver type to set. \see OpenCMISS_LinearSolverTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -53055,7 +53056,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the linear solver to set the type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to set the type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the type for.
-    INTEGER(INTG), INTENT(IN) :: linearSolverType !<The linear solver type to set. \see OPENCMISS_LinearSolverTypes
+    INTEGER(INTG), INTENT(IN) :: linearSolverType !<The linear solver type to set. \see OpenCMISS_LinearSolverTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -53086,7 +53087,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The linear solver to set the type for.
-    INTEGER(INTG), INTENT(IN) :: linearSolverType !<The linear solver type to set. \see OPENCMISS_LinearSolverTypes
+    INTEGER(INTG), INTENT(IN) :: linearSolverType !<The linear solver type to set. \see OpenCMISS_LinearSolverTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -53310,7 +53311,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton solver to set the Jacobian calculation type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the Newton solver to set the Jacobian calculation type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the Jacobian calculation type for.
-    INTEGER(INTG), INTENT(IN) :: jacobianCalculationType !<The Jacobian calculation type for the Newton solver to set. \see OPENCMISS_JacobianCalculationTypes
+    INTEGER(INTG), INTENT(IN) :: jacobianCalculationType !<The Jacobian calculation type for the Newton solver to set. \see OpenCMISS_JacobianCalculationTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -53346,7 +53347,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton solver to set the Jacobian calculation type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to set the Jacobian calculation type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the Jacobian calculation type for.
-    INTEGER(INTG), INTENT(IN) :: jacobianCalculationType !<The Jacobian calculation type for the Newton solver to set. \see OPENCMISS_JacobianCalculationTypes
+    INTEGER(INTG), INTENT(IN) :: jacobianCalculationType !<The Jacobian calculation type for the Newton solver to set. \see OpenCMISS_JacobianCalculationTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -53378,7 +53379,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Newton solver to set the Jacobian calculation type for.
-    INTEGER(INTG), INTENT(IN) :: jacobianCalculationType !<The Jacobian calculation type for the Newton solver to set. \see OPENCMISS_JacobianCalculationTypes
+    INTEGER(INTG), INTENT(IN) :: jacobianCalculationType !<The Jacobian calculation type for the Newton solver to set. \see OpenCMISS_JacobianCalculationTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -53991,7 +53992,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton line search solver to set the line search type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the Newton line search solver to set the line search type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the line search type for.
-    INTEGER(INTG), INTENT(IN) :: lineSearchType !<The type of line search for the Newton line search solver to set. \see OPENCMISS_NewtonLineSearchTypes
+    INTEGER(INTG), INTENT(IN) :: lineSearchType !<The type of line search for the Newton line search solver to set. \see OpenCMISS_NewtonLineSearchTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -54025,7 +54026,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton line search solver to set the line search type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to set the line search type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the line search type for.
-    INTEGER(INTG), INTENT(IN) :: lineSearchType !<The type of line search for the Newton line search solver to set. \see OPENCMISS_NewtonLineSearchTypes
+    INTEGER(INTG), INTENT(IN) :: lineSearchType !<The type of line search for the Newton line search solver to set. \see OpenCMISS_NewtonLineSearchTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -54056,7 +54057,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Newton line search solver to set the line search type for.
-    INTEGER(INTG), INTENT(IN) :: lineSearchType !<The type of line search for the Newton line search solver to set. \see OPENCMISS_NewtonLineSearchTypes
+    INTEGER(INTG), INTENT(IN) :: lineSearchType !<The type of line search for the Newton line search solver to set. \see OpenCMISS_NewtonLineSearchTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -54665,7 +54666,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton solver to set the type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the Newton solver to set the type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the type for.
-    INTEGER(INTG), INTENT(IN) :: newtonSolveType !<The type of the Newton solver to set. \see OPENCMISS_NewtonSolverTypes
+    INTEGER(INTG), INTENT(IN) :: newtonSolveType !<The type of the Newton solver to set. \see OpenCMISS_NewtonSolverTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -54699,7 +54700,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Newton solver to set the type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to set the type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the type for.
-    INTEGER(INTG), INTENT(IN) :: newtonSolveType !<The type of the Newton solver to set. \see OPENCMISS_NewtonSolverTypes
+    INTEGER(INTG), INTENT(IN) :: newtonSolveType !<The type of the Newton solver to set. \see OpenCMISS_NewtonSolverTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -54730,7 +54731,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Newton solver to set the type for.
-    INTEGER(INTG), INTENT(IN) :: newtonSolveType !<The type of the Newton solver to set. \see OPENCMISS_NewtonSolverTypes
+    INTEGER(INTG), INTENT(IN) :: newtonSolveType !<The type of the Newton solver to set. \see OpenCMISS_NewtonSolverTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -54954,7 +54955,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the Jacobian calculation type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the Quasi-Newton solver to set the Jacobian calculation type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the Jacobian calculation type for.
-    INTEGER(INTG), INTENT(IN) :: jacobianCalculationType !<The Jacobian calculation type for the Quasi-Newton solver to set. \see OPENCMISS_JacobianCalculationTypes
+    INTEGER(INTG), INTENT(IN) :: jacobianCalculationType !<The Jacobian calculation type for the Quasi-Newton solver to set. \see OpenCMISS_JacobianCalculationTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -54990,7 +54991,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the Jacobian calculation type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to set the Jacobian calculation type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the Jacobian calculation type for.
-    INTEGER(INTG), INTENT(IN) :: jacobianCalculationType !<The Jacobian calculation type for the Quasi-Newton solver to set. \see OPENCMISS_JacobianCalculationTypes
+    INTEGER(INTG), INTENT(IN) :: jacobianCalculationType !<The Jacobian calculation type for the Quasi-Newton solver to set. \see OpenCMISS_JacobianCalculationTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -55022,7 +55023,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Quasi-Newton solver to set the Jacobian calculation type for.
-    INTEGER(INTG), INTENT(IN) :: jacobianCalculationType !<The Jacobian calculation type for the Quasi-Newton solver to set. \see OPENCMISS_JacobianCalculationTypes
+    INTEGER(INTG), INTENT(IN) :: jacobianCalculationType !<The Jacobian calculation type for the Quasi-Newton solver to set. \see OpenCMISS_JacobianCalculationTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -55554,7 +55555,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton line search solver to set the line search type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the Quasi-Newton line search solver to set the line search type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the line search type for.
-    INTEGER(INTG), INTENT(IN) :: lineSearchType !<The type of line search for the Quasi-Newton line search solver to set. \see OPENCMISS_QuasiNewtonLineSearchTypes
+    INTEGER(INTG), INTENT(IN) :: lineSearchType !<The type of line search for the Quasi-Newton line search solver to set. \see OpenCMISS_QuasiNewtonLineSearchTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -55590,7 +55591,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton line search solver to set the line search type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to set the line search type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the line search type for.
-    INTEGER(INTG), INTENT(IN) :: lineSearchType !<The type of line search for the Quasi-Newton line search solver to set. \see OPENCMISS_QuasiNewtonLineSearchTypes
+    INTEGER(INTG), INTENT(IN) :: lineSearchType !<The type of line search for the Quasi-Newton line search solver to set. \see OpenCMISS_QuasiNewtonLineSearchTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -55622,7 +55623,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Quasi-Newton line search solver to set the line search type for.
-    INTEGER(INTG), INTENT(IN) :: lineSearchType !<The type of line search for the Quasi-Newton line search solver to set. \see OPENCMISS_QuasiNewtonLineSearchTypes
+    INTEGER(INTG), INTENT(IN) :: lineSearchType !<The type of line search for the Quasi-Newton line search solver to set. \see OpenCMISS_QuasiNewtonLineSearchTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -56333,7 +56334,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the Quasi-Newton solver to set the type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the type for.
-    INTEGER(INTG), INTENT(IN) :: quasiNewtonRestartType !<The restart type of the Quasi-Newton solver to set. \see OPENCMISS_QuasiNewtonRestartTypes
+    INTEGER(INTG), INTENT(IN) :: quasiNewtonRestartType !<The restart type of the Quasi-Newton solver to set. \see OpenCMISS_QuasiNewtonRestartTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -56369,7 +56370,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to set the type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the type for.
-    INTEGER(INTG), INTENT(IN) :: quasiNewtonRestartType !<The restart type of the Quasi-Newton solver to set. \see OPENCMISS_QuasiNewtonRestartTypes
+    INTEGER(INTG), INTENT(IN) :: quasiNewtonRestartType !<The restart type of the Quasi-Newton solver to set. \see OpenCMISS_QuasiNewtonRestartTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -56401,7 +56402,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Quasi-Newton solver to set the type for.
-    INTEGER(INTG), INTENT(IN) :: quasiNewtonRestartType !<The restart type of the Quasi-Newton solver to set. \see OPENCMISS_QuasiNewtonRestartTypes
+    INTEGER(INTG), INTENT(IN) :: quasiNewtonRestartType !<The restart type of the Quasi-Newton solver to set. \see OpenCMISS_QuasiNewtonRestartTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -56430,7 +56431,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the Quasi-Newton solver to set the type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the type for.
-    INTEGER(INTG), INTENT(IN) :: quasiNewtonScaleType !<The scale type of the Quasi-Newton solver to set. \see OPENCMISS_QuasiNewtonScaleTypes
+    INTEGER(INTG), INTENT(IN) :: quasiNewtonScaleType !<The scale type of the Quasi-Newton solver to set. \see OpenCMISS_QuasiNewtonScaleTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -56465,7 +56466,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to set the type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the type for.
-    INTEGER(INTG), INTENT(IN) :: quasiNewtonScaleType !<The scale type of the Quasi-Newton solver to set. \see OPENCMISS_QuasiNewtonScaleTypes
+    INTEGER(INTG), INTENT(IN) :: quasiNewtonScaleType !<The scale type of the Quasi-Newton solver to set. \see OpenCMISS_QuasiNewtonScaleTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -56496,7 +56497,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Quasi-Newton solver to set the type for.
-    INTEGER(INTG), INTENT(IN) :: quasiNewtonScaleType !<The scale type of the Quasi-Newton solver to set. \see OPENCMISS_QuasiNewtonScaleTypes
+    INTEGER(INTG), INTENT(IN) :: quasiNewtonScaleType !<The scale type of the Quasi-Newton solver to set. \see OpenCMISS_QuasiNewtonScaleTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -56525,7 +56526,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the Quasi-Newton solver to set the type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the type for.
-    INTEGER(INTG), INTENT(IN) :: quasiNewtonSolveType !<The type of the Quasi-Newton solver to set. \see OPENCMISS_QuasiNewtonSolverTypes
+    INTEGER(INTG), INTENT(IN) :: quasiNewtonSolveType !<The type of the Quasi-Newton solver to set. \see OpenCMISS_QuasiNewtonSolverTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -56560,7 +56561,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to set the type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the type for.
-    INTEGER(INTG), INTENT(IN) :: quasiNewtonSolveType !<The type of the Quasi-Newton solver to set. \see OPENCMISS_QuasiNewtonSolverTypes
+    INTEGER(INTG), INTENT(IN) :: quasiNewtonSolveType !<The type of the Quasi-Newton solver to set. \see OpenCMISS_QuasiNewtonSolverTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -56592,7 +56593,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Quasi-Newton solver to set the type for.
-    INTEGER(INTG), INTENT(IN) :: quasiNewtonSolveType !<The type of the Quasi-Newton solver to set. \see OPENCMISS_QuasiNewtonSolverTypes
+    INTEGER(INTG), INTENT(IN) :: quasiNewtonSolveType !<The type of the Quasi-Newton solver to set. \see OpenCMISS_QuasiNewtonSolverTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -56621,7 +56622,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the Quasi-Newton solver to set the type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the type for.
-    INTEGER(INTG), INTENT(IN) :: quasiNewtonType !<The Quasi-Newton type to set. \see OPENCMISS_QuasiNewtonTypes
+    INTEGER(INTG), INTENT(IN) :: quasiNewtonType !<The Quasi-Newton type to set. \see OpenCMISS_QuasiNewtonTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -56656,7 +56657,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the Quasi-Newton solver to set the type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to set the type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the type for.
-    INTEGER(INTG), INTENT(IN) :: quasiNewtonType !<The Quasi-Newton type to set. \see OPENCMISS_QuasiNewtonTypes
+    INTEGER(INTG), INTENT(IN) :: quasiNewtonType !<The Quasi-Newton type to set. \see OpenCMISS_QuasiNewtonTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -56687,7 +56688,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The Quasi-Newton solver to set the type for.
-    INTEGER(INTG), INTENT(IN) :: quasiNewtonType !<The Quasi-Newton type to set. \see OPENCMISS_QuasiNewtonTypes
+    INTEGER(INTG), INTENT(IN) :: quasiNewtonType !<The Quasi-Newton type to set. \see OpenCMISS_QuasiNewtonTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -56715,7 +56716,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the nonlinear solver to set the type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the nonlinear solver to set the type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the type for.
-    INTEGER(INTG), INTENT(IN) :: nonlinearSolveType !<The type of the nonlinear solver to set. \see OPENCMISS_NonlinearSolverTypes
+    INTEGER(INTG), INTENT(IN) :: nonlinearSolveType !<The type of the nonlinear solver to set. \see OpenCMISS_NonlinearSolverTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -56749,7 +56750,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the nonlinear solver to set the type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to set the type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the type for.
-    INTEGER(INTG), INTENT(IN) :: nonlinearSolveType !<The type of the nonlinear solver to set. \see OPENCMISS_NonlinearSolverTypes
+    INTEGER(INTG), INTENT(IN) :: nonlinearSolveType !<The type of the nonlinear solver to set. \see OpenCMISS_NonlinearSolverTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -56780,7 +56781,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The nonlinear solver to set the type for.
-    INTEGER(INTG), INTENT(IN) :: nonlinearSolveType !<The type of the nonlinear solver to set. \see OPENCMISS_NonlinearSolverTypes
+    INTEGER(INTG), INTENT(IN) :: nonlinearSolveType !<The type of the nonlinear solver to set. \see OpenCMISS_NonlinearSolverTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -56808,7 +56809,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the output type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to set the output type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the output type for.
-    INTEGER(INTG), INTENT(IN) :: outputType !<The type of solver output to set. \see OPENCMISS_SolverOutputTypes
+    INTEGER(INTG), INTENT(IN) :: outputType !<The type of solver output to set. \see OpenCMISS_SolverOutputTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -56842,7 +56843,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the output type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to set the output type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the output type for.
-    INTEGER(INTG), INTENT(IN) :: outputType !<The type of solver output to set. \see OPENCMISS_SolverOutputTypes
+    INTEGER(INTG), INTENT(IN) :: outputType !<The type of solver output to set. \see OpenCMISS_SolverOutputTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -56873,7 +56874,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverType), INTENT(IN) :: solver !<The solver to set the output type for.
-    INTEGER(INTG), INTENT(IN) :: outputType !<The type of solver output to set. \see OPENCMISS_SolverOutputTypes
+    INTEGER(INTG), INTENT(IN) :: outputType !<The type of solver output to set. \see OpenCMISS_SolverOutputTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -57245,7 +57246,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the sparsity type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to set the sparsity type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the sparsity type for.
-    INTEGER(INTG), INTENT(IN) :: sparsityType !<The sparsity type to set. \see OPENCMISS_SolverEquationsSparsityTypes
+    INTEGER(INTG), INTENT(IN) :: sparsityType !<The sparsity type to set. \see OpenCMISS_SolverEquationsSparsityTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -57282,7 +57283,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the sparsity type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to set the sparsity type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the sparsity type for.
-    INTEGER(INTG), INTENT(IN) :: sparsityType !<The sparsity type to set. \see OPENCMISS_SolverEquationsSparsityTypes
+    INTEGER(INTG), INTENT(IN) :: sparsityType !<The sparsity type to set. \see OpenCMISS_SolverEquationsSparsityTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -57316,7 +57317,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to set the sparsity type for.
-    INTEGER(INTG), INTENT(IN) :: sparsityType !<The sparsity type to set. \see OPENCMISS_SolverEquationsSparsityTypes
+    INTEGER(INTG), INTENT(IN) :: sparsityType !<The sparsity type to set. \see OpenCMISS_SolverEquationsSparsityTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -57344,7 +57345,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the  type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to get the symmetry type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the symmetry type for.
-    INTEGER(INTG), INTENT(OUT) :: symmetryType !<On return, the solver equations symmetry type. \see OPENCMISS_SolverEquationsSymmetryTypes
+    INTEGER(INTG), INTENT(OUT) :: symmetryType !<On return, the solver equations symmetry type. \see OpenCMISS_SolverEquationsSymmetryTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -57381,7 +57382,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to get the symmetry type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to get the symmetry type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the symmetry type for.
-    INTEGER(INTG), INTENT(OUT) :: symmetryType !<On return, the symmetry type. \see OPENCMISS_SolverEquationsSymmetryTypes
+    INTEGER(INTG), INTENT(OUT) :: symmetryType !<On return, the symmetry type. \see OpenCMISS_SolverEquationsSymmetryTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -57415,7 +57416,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to get the symmetry type for.
-    INTEGER(INTG), INTENT(OUT) :: symmetryType !<On return, the symmetry type. \see OPENCMISS_SolverEquationsSymmetryTypes
+    INTEGER(INTG), INTENT(OUT) :: symmetryType !<On return, the symmetry type. \see OpenCMISS_SolverEquationsSymmetryTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -57443,7 +57444,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the  type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier with the solver to set the symmetry type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the symmetry type for.
-    INTEGER(INTG), INTENT(IN) :: symmetryType !<The symmetry type to set. \see OPENCMISS_SolverEquationsSymmetryTypes
+    INTEGER(INTG), INTENT(IN) :: symmetryType !<The symmetry type to set. \see OpenCMISS_SolverEquationsSymmetryTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -57480,7 +57481,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem number with the solver to set the symmetry type for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to set the symmetry type for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to set the symmetry type for.
-    INTEGER(INTG), INTENT(IN) :: symmetryType !<The symmetry type to set. \see OPENCMISS_SolverEquationsSymmetryTypes
+    INTEGER(INTG), INTENT(IN) :: symmetryType !<The symmetry type to set. \see OpenCMISS_SolverEquationsSymmetryTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: problem
@@ -57514,7 +57515,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_SolverEquationsType), INTENT(IN) :: solverEquations !<The solver equations to set the symmetry type for.
-    INTEGER(INTG), INTENT(IN) :: symmetryType !<The symmetry type to set. \see OPENCMISS_SolverEquationsSymmetryTypes
+    INTEGER(INTG), INTENT(IN) :: symmetryType !<The symmetry type to set. \see OpenCMISS_SolverEquationsSymmetryTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 

@@ -50,7 +50,7 @@ MODULE EquationsMatricesRoutines
   USE EquationsMappingAccessRoutines
   USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
-  USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetConstants
   USE FIELD_ROUTINES
   USE ISO_VARYING_STRING
   USE Kinds
