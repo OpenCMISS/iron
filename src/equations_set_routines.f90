@@ -4301,7 +4301,7 @@ CONTAINS
       ELSE
         ALLOCATE(equationsSet%derived,stat=err)
         IF(err/=0) CALL FlagError("Could not allocate equations set derived information.",err,error,*998)
-        ALLOCATE(equationsSet%derived%variableTypes(EQUATIONS_SET_NUMBER_OF_DERIVED_TYPES),stat=err)
+        ALLOCATE(equationsSet%derived%variableTypes(EQUATIONS_SET_NUMBER_OF_TENSOR_TYPES),stat=err)
         IF(err/=0) CALL FlagError("Could not allocate equations set derived variable types.",err,error,*999)
         equationsSet%derived%variableTypes=0
         equationsSet%derived%numberOfVariables=0
@@ -5974,9 +5974,6 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  !
-  !================================================================================================================================
-  !
 
   !>Calculates a derived variable value for the equations set. \see OpenCMISS::cmfe_EquationsSet_DerivedVariableCalculate
   SUBROUTINE EquationsSet_DerivedVariableCalculate(equationsSet,derivedType,err,error,*)
@@ -5986,49 +5983,45 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: derivedType !<The derived value type to calculate. \see EquationsSetConstants_DerivedTypes.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("EquationsSet_DerivedVariableCalculate",err,error,*999)
 
-    IF(ASSOCIATED(equationsSet)) THEN
-      IF(.NOT.equationsSet%EQUATIONS_SET_FINISHED) THEN
-        CALL FlagError("Equations set has not been finished.",err,error,*999)
-      ELSE
-        IF(.NOT.ALLOCATED(equationsSet%specification)) THEN
-          CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-        ELSE IF(SIZE(equationsSet%specification,1)<1) THEN
-          CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
-        END IF
-        SELECT CASE(equationsSet%specification(1))
-        CASE(EQUATIONS_SET_ELASTICITY_CLASS)
-          CALL Elasticity_EquationsSetDerivedVariableCalculate(equationsSet,derivedType,err,error,*999)
-        CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_ELECTROMAGNETICS_CLASS)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_FITTING_CLASS)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_MODAL_CLASS)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE DEFAULT
-          CALL FlagError("The first equations set specification of "// &
-            & TRIM(NumberToVString(equationsSet%specification(1),"*",err,error))// &
-            & " is not valid.",err,error,*999)
-        END SELECT
-      ENDIF
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.equationsSet%EQUATIONS_SET_FINISHED) CALL FlagError("Equations set has not been finished.",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<1) &
+      & CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
+    
+    SELECT CASE(equationsSet%specification(1))  
+    CASE(EQUATIONS_SET_ELASTICITY_CLASS)
+      CALL Elasticity_EquationsSetDerivedVariableCalculate(equationsSet,derivedType,err,error,*999)
+    CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_ELECTROMAGNETICS_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_FITTING_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_MODAL_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The first equations set specification of "//TRIM(NumberToVString(equationsSet%specification(1),"*",err,error))// &
+        & " is not valid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
     EXITS("EquationsSet_DerivedVariableCalculate")
     RETURN
 999 ERRORSEXITS("EquationsSet_DerivedVariableCalculate",err,error)
     RETURN 1
+    
   END SUBROUTINE EquationsSet_DerivedVariableCalculate
 
   !
@@ -6044,42 +6037,31 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type used to store the calculated derived value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(FIELD_TYPE), POINTER :: derivedField
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("EquationsSet_DerivedVariableSet",err,error,*999)
 
     !Check pointers and finished state
-    IF(ASSOCIATED(equationsSet)) THEN
-      IF(equationsSet%EQUATIONS_SET_FINISHED) THEN
-        IF(ASSOCIATED(equationsSet%derived)) THEN
-          IF(equationsSet%derived%derivedFinished) THEN
-            CALL FlagError("Equations set derived information is already finished.",err,error,*999)
-          END IF
-        ELSE
-          CALL FlagError("Equations set derived information is not associated.",err,error,*999)
-        END IF
-      ELSE
-        CALL FlagError("Equations set has not been finished.",err,error,*999)
-      END IF
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.equationsSet%EQUATIONS_SET_FINISHED) CALL FlagError("Equations set has not been finished.",err,error,*999)
+    NULLIFY(derivedField)
+    CALL EquationsSet_DerivedFieldGet(equationsSet,derivedField,err,error,*999)
+    IF(equationsSet%derived%derivedFinished) CALL FlagError("Equations set derived information is already finished.",err,error,*999)
+    IF(derivedType<1.OR.derivedType>EQUATIONS_SET_NUMBER_OF_TENSOR_TYPES) THEN
+      localError="The specified derived variable type of "//TRIM(NumberToVString(derivedType,"*",err,error))// &
+        & " is invalid. It should be between >= 1 and <= "//TRIM(NumberToVString(EQUATIONS_SET_NUMBER_OF_TENSOR_TYPES,"*", &
+        & err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
-
-    IF(derivedType>0.AND.derivedType<=EQUATIONS_SET_NUMBER_OF_DERIVED_TYPES) THEN
-      IF(fieldVariableType>0.AND.fieldVariableType<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-        IF(equationsSet%derived%variableTypes(derivedType)==0) THEN
-          equationsSet%derived%numberOfVariables=equationsSet%derived%numberOfVariables+1
-        END IF
-        equationsSet%derived%variableTypes(derivedType)=fieldVariableType
-      ELSE
-        CALL FlagError("The field variable type of "//TRIM(NumberToVString(fieldVariableType,"*",err,error))// &
-          & " is invalid. It should be between 1 and "//TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*", &
-          & err,error))//" inclusive.",err,error,*999)
-      END IF
-    ELSE
-      CALL FlagError("The derived variable type of "//TRIM(NumberToVString(derivedType,"*",err,error))// &
-        & " is invalid. It should be between 1 and "//TRIM(NumberToVString(EQUATIONS_SET_NUMBER_OF_DERIVED_TYPES,"*", &
-        & err,error))//" inclusive.",err,error,*999)
-    END IF
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(derivedField,fieldVariableType,fieldVariable,err,error,*999)
+    
+    IF(equationsSet%derived%variableTypes(derivedType)==0) &
+      & equationsSet%derived%numberOfVariables=equationsSet%derived%numberOfVariables+1
+    equationsSet%derived%variableTypes(derivedType)=fieldVariableType
 
     EXITS("EquationsSet_DerivedVariableSet")
     RETURN

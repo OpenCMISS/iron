@@ -1418,7 +1418,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(FIELD_TYPE), POINTER :: GEOMETRIC_FIELD !<A pointer to the geometric field that this field uses. If the field itself is a geometric field then this will be a pointer back to itself.
     TYPE(FIELD_GEOMETRIC_PARAMETERS_TYPE), POINTER :: GEOMETRIC_FIELD_PARAMETERS !<If the field is a geometric field the pointer to the geometric parameters (lines, areas, volumes etc.). If the field is not a geometric field the pointer is NULL.
     TYPE(FIELD_CREATE_VALUES_CACHE_TYPE), POINTER :: CREATE_VALUES_CACHE !<The create values cache for the field.
-    TYPE(DataProjectionType), POINTER :: DataProjection !<A pointer to the data projection that this field uses.
+    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection that this field uses.
   END TYPE FIELD_TYPE
 
   !>A buffer type to allow for an array of pointers to a FIELD_TYPE.

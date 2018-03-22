@@ -1056,9 +1056,9 @@ CONTAINS
     !Check pointers
     IF(ASSOCIATED(fieldVariable)) CALL FlagError("Derived field variable is already associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations are not associated.",err,error,*999)
-    IF(derivedType<0.OR.derivedType>EQUATIONS_SET_NUMBER_OF_DERIVED_TYPES)   THEN
+    IF(derivedType<0.OR.derivedType>EQUATIONS_SET_NUMBER_OF_TENSOR_TYPES)   THEN
       localError="The derived variable type of "//TRIM(NumberToVString(derivedType,"*",err,error))// &
-        & " is invalid. It should be >= 1 and <= "//TRIM(NumberToVString(EQUATIONS_SET_NUMBER_OF_DERIVED_TYPES,"*",err,error))//"."
+        & " is invalid. It should be >= 1 and <= "//TRIM(NumberToVString(EQUATIONS_SET_NUMBER_OF_TENSOR_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     NULLIFY(equationsSet)

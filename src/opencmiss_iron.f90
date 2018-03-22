@@ -625,7 +625,7 @@ MODULE OpenCMISS_Iron
   !> \addtogroup OpenCMISS_BasisTypes OpenCMISS::Iron::Basis::BasisTypes
   !> \brief Basis definition type parameters.
   !> \see OpenCMISS::Iron::BasisConstants,OpenCMISS
-  !>@{ symbol 'nodenumber' at (1) has no IMPLICIT type.
+  !>@{ 
   INTEGER(INTG), PARAMETER :: CMFE_BASIS_LAGRANGE_HERMITE_TP_TYPE = BASIS_LAGRANGE_HERMITE_TP_TYPE !<Lagrange-Hermite tensor product basis type \see OpenCMISS_BasisTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_BASIS_SIMPLEX_TYPE = BASIS_SIMPLEX_TYPE !<Simplex basis type \see OpenCMISS_BasisTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_BASIS_SERENDIPITY_TYPE = BASIS_SERENDIPITY_TYPE !<Serendipity basis type \see OpenCMISS_BasisTypes,OpenCMISS
@@ -867,7 +867,6 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_BOUNDARY_CONDITION_MOVED_WALL = BOUNDARY_CONDITION_MOVED_WALL
   INTEGER(INTG), PARAMETER :: CMFE_BOUNDARY_CONDITION_MOVED_WALL_INCREMENTED = BOUNDARY_CONDITION_MOVED_WALL_INCREMENTED
   INTEGER(INTG), PARAMETER :: CMFE_BOUNDARY_CONDITION_FREE_WALL = BOUNDARY_CONDITION_FREE_WALL
-
   INTEGER(INTG), PARAMETER :: CMFE_BOUNDARY_CONDITION_NEUMANN_POINT = BOUNDARY_CONDITION_NEUMANN_POINT !<Specify the normal derivative at a node, which is then integrated to find the nodal load term
   INTEGER(INTG), PARAMETER :: CMFE_BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED = BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED !<Specify the normal derivative at a node, which is then integrated to find the nodal load term. The value is incremented inside a load incremented control loop.
   INTEGER(INTG), PARAMETER :: CMFE_BOUNDARY_CONDITION_NEUMANN_INTEGRATED = BOUNDARY_CONDITION_NEUMANN_INTEGRATED !<Set the integrated right hand side load value directly
@@ -883,7 +882,6 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_BOUNDARY_CONDITION_CORRECTION_MASS_INCREASE = BOUNDARY_CONDITION_CORRECTION_MASS_INCREASE
   INTEGER(INTG), PARAMETER :: CMFE_BOUNDARY_CONDITION_IMPERMEABLE_WALL = BOUNDARY_CONDITION_IMPERMEABLE_WALL
   INTEGER(INTG), PARAMETER :: CMFE_BOUNDARY_CONDITION_NEUMANN_INTEGRATED_ONLY = BOUNDARY_CONDITION_NEUMANN_INTEGRATED_ONLY !<A Neumann integrated boundary condition, and no point values will be integrated over a face or line that includes this dof
-
   INTEGER(INTG), PARAMETER :: CMFE_BOUNDARY_CONDITION_FIXED_FITTED = BOUNDARY_CONDITION_FIXED_FITTED
   INTEGER(INTG), PARAMETER :: CMFE_BOUNDARY_CONDITION_FIXED_NONREFLECTING = BOUNDARY_CONDITION_FIXED_NONREFLECTING
   INTEGER(INTG), PARAMETER :: CMFE_BOUNDARY_CONDITION_FIXED_CELLML = BOUNDARY_CONDITION_FIXED_CELLML
@@ -1325,7 +1323,7 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_GLOBAL_DERIV_S2_S3 = GLOBAL_DERIV_S2_S3 !<Global Cross derivative in the s2 and s3 direction i.e., d^2u/ds2ds3 \see OpenCMISS_GlobalDerivativeConstants,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_GLOBAL_DERIV_S1_S2_S3 = GLOBAL_DERIV_S1_S2_S3 !<Cross derivative in the s1, s2 and s3 direction i.e., d^3u/ds1ds2ds3 \see OpenCMISS_GlobalDerivativeConstants,OpenCMISS
   !>@}
-   !> \addtogroup OpenCMISS_ElementNormalXiDirections OpenCMISS::Iron::Constants::ElementNormalXiDirections
+  !> \addtogroup OpenCMISS_ElementNormalXiDirections OpenCMISS::Iron::Constants::ElementNormalXiDirections
   !> \brief Xi directions normal to element faces and lines.
   !> \see OpenCMISS_CONSTANTS,OpenCMISS
   !>@{
@@ -2295,7 +2293,7 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_FIRST_ORDER_DYNAMIC = EQUATIONS_FIRST_ORDER_DYNAMIC !<The equations are first order dynamic. \see OpenCMISS_EquationsTimeDependenceTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SECOND_ORDER_DYNAMIC = EQUATIONS_SECOND_ORDER_DYNAMIC !<The equations are a second order dynamic. \see OpenCMISS_EquationsTimeDependenceTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_TIME_STEPPING = EQUATIONS_TIME_STEPPING !<The equations are for time stepping. \see OpenCMISS_EquationsTimeDependenceTypes,OpenCMISS
-  !>@{
+  !>@}
   !> \addtogroup OpenCMISS_EquationsJacobianCalculated OpenCMISS::Iron::Equations::JacobianCalculated
   !> \brief Equations Jacobian matrices calculation types
   !> \see OpenCMISS::Iron::Equations,OpenCMISS
@@ -2820,29 +2818,19 @@ MODULE OpenCMISS_Iron
   INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GFV_SOLUTION_METHOD = EQUATIONS_SET_GFV_SOLUTION_METHOD !<Grid-based Finite Volume solution method. \see OpenCMISS_EquationsSetSolutionMethods,OpenCMISS
   !>@}
 
-  !> \addtogroup OpenCMISS_EquationsSetDerivedTypes OpenCMISS::Iron::EquationsSet::DerivedTypes
-  !> \brief EquationsSet derived type parameters
+  !> \addtogroup OpenCMISS_EquationsSetDerivedTensorTypes OpenCMISS::Iron::EquationsSet::DerivedTensorTypes
+  !> \brief EquationsSet derived tensor type parameters
   !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_GREEN_STRAIN = EQUATIONS_SET_DERIVED_GREEN_STRAIN !<Green strain tensor field output. \see OpenCMISS_EquationsSetDerivedTypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_2PK_STRESS = EQUATIONS_SET_DERIVED_2PK_STRESS !<2nd Piola-Kirchoff stress tensor field output. \see OpenCMISS_EquationsSetDerivedTypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_CAUCHY_STRESS = EQUATIONS_SET_DERIVED_CAUCHY_STRESS !<Cauchy stress tensor field output. \see OpenCMISS_EquationsSetDerivedTypes,OpenCMISS
-  !>@}
-
-  !> \addtogroup OpenCMISS_EquationsSetTensorEvaluateTypes OpenCMISS::Iron::EquationsSet::TensorEvaluateTypes
-  !> \brief Type of tensor to evaluate from an EquationsSet
-  !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
-  !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EVALUATE_DEFORMATION_GRADIENT_TENSOR = &
-    & EQUATIONS_SET_EVALUATE_DEFORMATION_GRADIENT_TENSOR !<Deformation gradient tensor \see OpenCMISS_EquationsSetTensorEvaluateTypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EVALUATE_R_CAUCHY_GREEN_DEFORMATION_TENSOR = &
-    & EQUATIONS_SET_EVALUATE_R_CAUCHY_GREEN_DEFORMATION_TENSOR !<Right Cauchy-Green deformation field \see OpenCMISS_EquationsSetTensorEvaluateTypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EVALUATE_GREEN_LAGRANGE_STRAIN_TENSOR = &
-    & EQUATIONS_SET_EVALUATE_GREEN_LAGRANGE_STRAIN_TENSOR !<Green-Lagrange strain tensor \see OpenCMISS_EquationsSetTensorEvaluateTypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EVALUATE_CAUCHY_STRESS_TENSOR = &
-    & EQUATIONS_SET_EVALUATE_CAUCHY_STRESS_TENSOR !<Cauchy-stress tensor \see OpenCMISS_EquationsSetTensorEvaluateTypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EVALUATE_SECOND_PK_STRESS_TENSOR = &
-    & EQUATIONS_SET_EVALUATE_SECOND_PK_STRESS_TENSOR !<Second Piola Kirchhoff-stress tensor \see OpenCMISS_EquationsSetTensorEvaluateTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_DEFORMATION_GRADIENT = EQUATIONS_SET_DEFORMATION_GRADIENT_TENSOR !<Green strain tensor field output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_R_CAUCHY_GREEN_DEFORMATION = &
+    & EQUATIONS_SET_R_CAUCHY_GREEN_DEFORMATION_TENSOR !<Right Cauchy-Green deformation field \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_L_CAUCHY_GREEN_DEFORMATION = &
+    & EQUATIONS_SET_L_CAUCHY_GREEN_DEFORMATION_TENSOR !<Left Cauchy-Green deformation field \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_GREEN_LAGRANGE_STRAIN = EQUATIONS_SET_GREEN_LAGRANGE_STRAIN_TENSOR !<Green strain tensor field output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_CAUCHY_STRESS = EQUATIONS_SET_CAUCHY_STRESS_TENSOR !<Cauchy stress tensor field output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_FIRST_PK_STRESS = EQUATIONS_SET_FIRST_PK_STRESS_TENSOR !<1st Piola-Kirchoff stress tensor field output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_SECOND_PK_STRESS = EQUATIONS_SET_SECOND_PK_STRESS_TENSOR !<2nd Piola-Kirchoff stress tensor field output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
   !>@}
 
   !> \addtogroup OpenCMISS_EquationsSetDynamicMatrixTypes OpenCMISS::Iron::EquationsSet::DynamicMatrixTypes
@@ -3194,14 +3182,11 @@ MODULE OpenCMISS_Iron
     & CMFE_EQUATIONS_SET_FV_SOLUTION_METHOD,CMFE_EQUATIONS_SET_GFEM_SOLUTION_METHOD,CMFE_EQUATIONS_SET_GFD_SOLUTION_METHOD, &
     & CMFE_EQUATIONS_SET_GFV_SOLUTION_METHOD
 
-  PUBLIC CMFE_EQUATIONS_SET_DERIVED_GREEN_STRAIN,CMFE_EQUATIONS_SET_DERIVED_2PK_STRESS,CMFE_EQUATIONS_SET_DERIVED_CAUCHY_STRESS
-
-  PUBLIC CMFE_EQUATIONS_SET_EVALUATE_DEFORMATION_GRADIENT_TENSOR, &
-    & CMFE_EQUATIONS_SET_EVALUATE_R_CAUCHY_GREEN_DEFORMATION_TENSOR, &
-    & CMFE_EQUATIONS_SET_EVALUATE_GREEN_LAGRANGE_STRAIN_TENSOR, &
-    & CMFE_EQUATIONS_SET_EVALUATE_CAUCHY_STRESS_TENSOR, &
-    & CMFE_EQUATIONS_SET_EVALUATE_SECOND_PK_STRESS_TENSOR
-
+  PUBLIC CMFE_EQUATIONS_SET_DERIVED_DEFORMATION_GRADIENT,CMFE_EQUATIONS_SET_DERIVED_R_CAUCHY_GREEN_DEFORMATION, &
+    & CMFE_EQUATIONS_SET_DERIVED_L_CAUCHY_GREEN_DEFORMATION,CMFE_EQUATIONS_SET_DERIVED_GREEN_LAGRANGE_STRAIN, &
+    & CMFE_EQUATIONS_SET_DERIVED_CAUCHY_STRESS,CMFE_EQUATIONS_SET_DERIVED_FIRST_PK_STRESS, &
+    & CMFE_EQUATIONS_SET_DERIVED_SECOND_PK_STRESS
+ 
   PUBLIC CMFE_EQUATIONS_MATRIX_STIFFNESS,CMFE_EQUATIONS_MATRIX_DAMPING,CMFE_EQUATIONS_MATRIX_MASS
 
   PUBLIC CMFE_EQUATIONS_SET_NO_OUTPUT,CMFE_EQUATIONS_SET_PROGRESS_OUTPUT
@@ -25398,13 +25383,13 @@ CONTAINS
   !
 
   !>Calculates a derived field value for the equations set and stores the result in the derived field previously set up
-  SUBROUTINE cmfe_EquationsSet_DerivedVariableCalculateNumber(regionUserNumber,equationsSetUserNumber,derivedType,err)
+  SUBROUTINE cmfe_EquationsSet_DerivedVariableCalculateNumber(regionUserNumber,equationsSetUserNumber,derivedTensorType,err)
     !DLLEXPORT(cmfe_EquationsSet_DerivedVariableCalculateNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set.
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to calculate the output for.
-    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived variable type to calculate. \see OpenCMISS_EquationsSetDerivedTypes.
+    INTEGER(INTG), INTENT(IN) :: derivedTensorType !<The derived variable type to calculate. \see OpenCMISS_EquationsSetDerivedTensorTypes.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
@@ -25416,7 +25401,7 @@ CONTAINS
     NULLIFY(region)
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EquationsSet_DerivedVariableCalculate(equationsSet,derivedType,err,error,*999)
+    CALL EquationsSet_DerivedVariableCalculate(equationsSet,derivedTensorType,err,error,*999)
 
     EXITS("cmfe_EquationsSet_DerivedVariableCalculateNumber")
     RETURN
@@ -25432,17 +25417,17 @@ CONTAINS
   !
 
   !>Calculates a derived field value for the equations set and stores the result in the derived field previously set up
-  SUBROUTINE cmfe_EquationsSet_DerivedVariableCalculateObj(equationsSet,derivedType,err)
+  SUBROUTINE cmfe_EquationsSet_DerivedVariableCalculateObj(equationsSet,derivedTensorType,err)
     !DLLEXPORT(cmfe_EquationsSet_DerivedVariableCalculateObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<The equations set to calculate the output for.
-    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived field type to calculate. \see OpenCMISS_EquationsSetDerivedTypes.
+    INTEGER(INTG), INTENT(IN) :: derivedTensorType !<The derived field tensor type to calculate. \see OpenCMISS_EquationsSetDerivedTensorTypes.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
 
     ENTERS("cmfe_EquationsSet_DerivedVariableCalculateObj",err,error,*999)
 
-    CALL EquationsSet_DerivedVariableCalculate(equationsSet%equationsSet,derivedType,err,error,*999)
+    CALL EquationsSet_DerivedVariableCalculate(equationsSet%equationsSet,derivedTensorType,err,error,*999)
 
     EXITS("cmfe_EquationsSet_DerivedVariableCalculateObj")
     RETURN
@@ -25458,13 +25443,14 @@ CONTAINS
   !
 
   !>Sets the field variable type of the derived field to be used to store a derived variable
-  SUBROUTINE cmfe_EquationsSet_DerivedVariableSetNumber(regionUserNumber,equationsSetUserNumber,derivedType,fieldVariableType,err)
+  SUBROUTINE cmfe_EquationsSet_DerivedVariableSetNumber(regionUserNumber,equationsSetUserNumber,derivedTensorType, &
+    & fieldVariableType,err)
     !DLLEXPORT(cmfe_EquationsSet_DerivedVariableSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set.
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to calculate the output for.
-    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived variable type to calculate. \see OpenCMISS_EquationsSetDerivedTypes.
+    INTEGER(INTG), INTENT(IN) :: derivedTensorType !<The derived variable tensor type to calculate. \see OpenCMISS_EquationsSetDerivedTensorTypes.
     INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type to store the calculated values in.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -25477,7 +25463,7 @@ CONTAINS
     NULLIFY(region)
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EquationsSet_DerivedVariableSet(equationsSet,derivedType,fieldVariableType,err,error,*999)
+    CALL EquationsSet_DerivedVariableSet(equationsSet,derivedTensorType,fieldVariableType,err,error,*999)
 
     EXITS("cmfe_EquationsSet_DerivedVariableSetNumber")
     RETURN
@@ -25492,18 +25478,18 @@ CONTAINS
   !
 
   !>Sets the field variable type of the derived field to be used to store a derived variable
-  SUBROUTINE cmfe_EquationsSet_DerivedVariableSetObj(equationsSet,derivedType,fieldVariableType,err)
+  SUBROUTINE cmfe_EquationsSet_DerivedVariableSetObj(equationsSet,derivedTensorType,fieldVariableType,err)
     !DLLEXPORT(cmfe_EquationsSet_DerivedVariableSetObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<The equations set to calculate the output for.
-    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived field type to calculate. \see OpenCMISS_EquationsSetDerivedTypes.
+    INTEGER(INTG), INTENT(IN) :: derivedTensorType !<The derived field type to calculate. \see OpenCMISS_EquationsSetDerivedTensorTypes.
     INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type to store the calculated values in.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
 
     ENTERS("cmfe_EquationsSet_DerivedVariableSetObj",err,error,*999)
 
-    CALL EquationsSet_DerivedVariableSet(equationsSet%equationsSet,derivedType,fieldVariableType,err,error,*999)
+    CALL EquationsSet_DerivedVariableSet(equationsSet%equationsSet,derivedTensorType,fieldVariableType,err,error,*999)
 
     EXITS("cmfe_EquationsSet_DerivedVariableSetObj")
     RETURN
@@ -27932,14 +27918,14 @@ CONTAINS
   !
 
   !>Evaluate a tensor at a given element Gauss point, for an equations set identified by a user number.
-  SUBROUTINE cmfe_EquationsSet_TensorInterpolateGaussPointNumber(regionUserNumber,equationsSetUserNumber,tensorEvaluateType, &
+  SUBROUTINE cmfe_EquationsSet_TensorInterpolateGaussPointNumber(regionUserNumber,equationsSetUserNumber,derivedTensorType, &
     & gaussPointNumber,userElementNumber,values,err)
     !DLLEXPORT(cmfe_EquationsSet_TensorInterpolateGaussPointNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set.
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to evalaute the tensor for.
-    INTEGER(INTG), INTENT(IN) :: tensorEvaluateType !<The type of tensor to evaluate.
+    INTEGER(INTG), INTENT(IN) :: derivedTensorType !<The type of derived tensor to interpolate. \see OpenCMISS_EquationsSetDerivedTensorTypes
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number of the field to interpolate.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
     REAL(DP), INTENT(OUT) :: values(:,:) !On exit, the interpolated tensor values.
@@ -27954,7 +27940,7 @@ CONTAINS
     NULLIFY(region)
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EquationsSet_TensorInterpolateGaussPoint(equationsSet,tensorEvaluateType,gaussPointNumber,userElementNumber,values, &
+    CALL EquationsSet_TensorInterpolateGaussPoint(equationsSet,derivedTensorType,gaussPointNumber,userElementNumber,values, &
       & err,error,*999)
 
     EXITS("cmfe_EquationsSet_TensorInterpolateGaussPointNumber")
@@ -27971,13 +27957,13 @@ CONTAINS
   !
 
   !>Evaluate a tensor at a given element Gauss point, for an equations set identified by an object.
-  SUBROUTINE cmfe_EquationsSet_TensorInterpolateGaussPointObj(equationsSet,tensorEvaluateType,gaussPointNumber,userElementNumber, &
+  SUBROUTINE cmfe_EquationsSet_TensorInterpolateGaussPointObj(equationsSet,derivedTensorType,gaussPointNumber,userElementNumber, &
     & values,err)
     !DLLEXPORT(cmfe_EquationsSet_TensorInterpolateGaussPointObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<A pointer to the equations set to evaluate the tensor for.
-    INTEGER(INTG), INTENT(IN) :: tensorEvaluateType !<The type of tensor to evaluate.
+    INTEGER(INTG), INTENT(IN) :: derivedTensorType !<The type of derived tensor to interpolate. \see OpenCMISS_EquationsSetDerivedTensorTypes
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number of the field to interpolate.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
     REAL(DP), INTENT(OUT) :: values(:,:) !<On exit, the interpolated tensor values.
@@ -27985,7 +27971,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_TensorInterpolateGaussPointObj",err,error,*999)
 
-    CALL EquationsSet_TensorInterpolateGaussPoint(equationsSet%equationsSet,tensorEvaluateType,gaussPointNumber,userElementNumber, &
+    CALL EquationsSet_TensorInterpolateGaussPoint(equationsSet%equationsSet,derivedTensorType,gaussPointNumber,userElementNumber, &
       & values,err,error,*999)
 
     EXITS("cmfe_EquationsSet_TensorInterpolateGaussPointObj")
@@ -28002,14 +27988,14 @@ CONTAINS
   !
 
   !>Evaluate a tensor at a given element xi location, for an equations set identified by a user number.
-  SUBROUTINE cmfe_EquationsSet_TensorInterpolateXiNumber(regionUserNumber,equationsSetUserNumber,tensorEvaluateType, &
+  SUBROUTINE cmfe_EquationsSet_TensorInterpolateXiNumber(regionUserNumber,equationsSetUserNumber,derivedTensorType, &
     & userElementNumber,xi,values,err)
     !DLLEXPORT(cmfe_EquationsSet_TensorInterpolateXiNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set.
     INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to evalaute the tensor for.
-    INTEGER(INTG), INTENT(IN) :: tensorEvaluateType !<The type of tensor to evaluate.
+    INTEGER(INTG), INTENT(IN) :: derivedTensorType !<The type of derived tensor to interpolate. \see OpenCMISS_EquationsSetDerivedTensorTypes
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
     REAL(DP), INTENT(IN) :: xi(:) !<The element xi to interpolate the field at.
     REAL(DP), INTENT(OUT) :: values(:,:) !<The interpolated tensor values.
@@ -28024,7 +28010,7 @@ CONTAINS
     NULLIFY(region)
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EquationsSet_TensorInterpolateXi(equationsSet,tensorEvaluateType,userElementNumber,xi,values,err,error,*999)
+    CALL EquationsSet_TensorInterpolateXi(equationsSet,derivedTensorType,userElementNumber,xi,values,err,error,*999)
 
     EXITS("cmfe_EquationsSet_TensorInterpolateXiNumber")
     RETURN
@@ -28039,12 +28025,12 @@ CONTAINS
   !
 
   !>Evaluate a tensor at a given element xi location, for an equations set identified by an object.
-  SUBROUTINE cmfe_EquationsSet_TensorInterpolateXiObj(equationsSet,tensorEvaluateType,userElementNumber,xi,values,err)
+  SUBROUTINE cmfe_EquationsSet_TensorInterpolateXiObj(equationsSet,derivedTensorType,userElementNumber,xi,values,err)
     !DLLEXPORT(cmfe_EquationsSet_TensorInterpolateXiObj)
 
     !Argument variables
     TYPE(cmfe_EquationsSetType), INTENT(IN) :: equationsSet !<A pointer to the equations set to evaluate the tensor for.
-    INTEGER(INTG), INTENT(IN) :: tensorEvaluateType !<The type of tensor to evaluate.
+    INTEGER(INTG), INTENT(IN) :: derivedTensorType !<The type of tensor to evaluate. \see OpenCMISS_EquationsSetDerivedTensorTypes
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
     REAL(DP), INTENT(IN) :: xi(:) !<The element xi to interpolate the field at.
     REAL(DP), INTENT(OUT) :: values(:,:) !<The interpolated tensor values.
@@ -28052,7 +28038,7 @@ CONTAINS
 
     ENTERS("cmfe_EquationsSet_TensorInterpolateXiObj",err,error,*999)
 
-    CALL EquationsSet_TensorInterpolateXi(equationsSet%equationsSet,tensorEvaluateType,userElementNumber,xi, &
+    CALL EquationsSet_TensorInterpolateXi(equationsSet%equationsSet,derivedTensorType,userElementNumber,xi, &
       & values,err,error,*999)
 
     EXITS("cmfe_EquationsSet_TensorInterpolateXiObj")
@@ -28217,7 +28203,7 @@ CONTAINS
     NULLIFY(field)
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_COMPONENT_INTERPOLATION_GET(field,variableType,componentNumber,interpolationType,err,error,*999)
+    CALL Field_ComponentInterpolationGet(field,variableType,componentNumber,interpolationType,err,error,*999)
 
     EXITS("cmfe_Field_ComponentInterpolationGetNumber")
     RETURN
@@ -28245,7 +28231,7 @@ CONTAINS
 
     ENTERS("cmfe_Field_ComponentInterpolationGetObj",err,error,*999)
 
-    CALL FIELD_COMPONENT_INTERPOLATION_GET(field%field,variableType,componentNumber,interpolationType,err,error,*999)
+    CALL Field_ComponentInterpolationGet(field%field,variableType,componentNumber,interpolationType,err,error,*999)
 
     EXITS("cmfe_Field_ComponentInterpolationGetObj")
     RETURN

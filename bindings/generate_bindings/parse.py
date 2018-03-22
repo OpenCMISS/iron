@@ -292,9 +292,11 @@ class LibrarySource(object):
         for o in self.ordered_objects:
             if isinstance(o, DoxygenGrouping):
                 if o.type == 'group':
-                    # Strip CMISS prefix from some constant group names
+                    # Strip CMISS/OpenCMISS prefix from some constant group names
                     if o.group.startswith('CMISS'):
                         group_name = o.group[5:]
+                    elif o.group.startswith('OpenCMISS'):
+                        group_name = o.group[9:]
                     else:
                         group_name = o.group
                     if group_name in enum_dict:
@@ -705,7 +707,7 @@ class DoxygenGrouping(object):
         elif line.find(r'\addtogroup') > -1:
             self.type = 'group'
             self.group = line[
-                    line.find('OPENCMISS_') + len('OPENCMISS_'):].split()[0]
+                    line.find('OpenCMISS_') + len('OpenCMISS_'):].split()[0]
         elif line.find(r'\brief') > -1:
             self.type = 'brief'
             self.brief = line[line.find(r'\brief') + len(r'\brief'):].strip()

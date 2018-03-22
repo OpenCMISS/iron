@@ -65,6 +65,8 @@ MODULE EquationsMappingAccessRoutines
 
   PUBLIC EquationsMappingNonlinear_ResidualVariableGet
   
+  PUBLIC EquationsMappingRHS_RHSVariableGet
+  
   PUBLIC EquationsMappingScalar_CreateValuesCacheGet
   
   PUBLIC EquationsMappingScalar_ScalarEquationsGet
@@ -140,6 +142,38 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMappingNonlinear_ResidualVariableGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the specified RHS variable for a rhs mapping.
+  SUBROUTINE EquationsMappingRHS_RHSVariableGet(rhsMapping,rhsVariable,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingRHSType), POINTER :: rhsMapping !<A pointer to the RHS mapping to get the RHS variable for
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: rhsVariable !<On exit, a pointer to the requested RHS field variable. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsMappingRHS_RHSVariableGet",err,error,*998)
+
+    IF(ASSOCIATED(rhsVariable)) CALL FlagError("RHS Field variable is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(rhsMapping)) CALL FlagError("RHS mapping is not associated.",err,error,*999)
+    
+    rhsVariable=>rhsMapping%rhsVariable
+    IF(.NOT.ASSOCIATED(rhsVariable)) CALL FlagError("The RHS field variable is not associated in the RHS mapping.",err,error,*999)
+    
+    EXITS("EquationsMappingRHS_RHSVariableGet")
+    RETURN
+999 NULLIFY(rhsVariable)
+998 ERRORS("EquationsMappingRHS_RHSVariableGet",err,error)
+    EXITS("EquationsMappingRHS_RHSVariableGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingRHS_RHSVariableGet
 
   !
   !================================================================================================================================

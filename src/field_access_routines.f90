@@ -115,13 +115,60 @@ MODULE FieldAccessRoutines
   INTEGER(INTG), PARAMETER :: FIELD_DEL2U10DELT2_VARIABLE_TYPE=49 !<Twelfth time derivative variable type i.e., d^2u/dt^2 \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
   !>@}
   
+  !> \addtogroup FIELD_ROUTINES_ParameterSetTypes FIELD_ROUTINES::ParameterSetTypes
+  !> \brief Field parameter set type parameters \todo make program defined constants negative?
+  !> \see FIELD_ROUTINES,OPENCMISS_FieldParameterSetTypes
+  !>@{
+  INTEGER(INTG), PARAMETER :: FIELD_NUMBER_OF_SET_TYPES=99 !<The maximum number of different parameter sets for a field \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_VALUES_SET_TYPE=1 !<The parameter set corresponding to the field values (at time T+DT for dynamic problems) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_BOUNDARY_CONDITIONS_SET_TYPE=2 !<The parameter set corresponding to the field boundary conditions \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_INITIAL_VALUES_SET_TYPE=3 !<The parameter set corresponding to the field initial values \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_INCREMENTAL_VALUES_SET_TYPE=4 !<The parameter set corresponding to the field incremental values \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_ANALYTIC_VALUES_SET_TYPE=5 !<The parameter set corresponding to the analytic field values \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_PREVIOUS_VALUES_SET_TYPE=6 !<The parameter set corresponding to the previous field values (at time T) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_NEXT_VALUES_SET_TYPE=7 !<The parameter set corresponding to the next field values (at time T+dT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE=8 !<The parameter set corresponding to the mean predicited values (at time T+DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_VELOCITY_VALUES_SET_TYPE=9 !<The parameter set corresponding to the velocity values (at time T+DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_INITIAL_VELOCITY_SET_TYPE=10 !<The parameter set corresponding to the initial velocity values for dynamic problems. This is also the previous velocity values \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_PREVIOUS_VELOCITY_SET_TYPE=10 !<The parameter set corresponding to the previous velocity values (at time T). This is also the initial velocity values for dynamic problems. \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE=11 !<The parameter set corresponding to the mean predicited velocity values (at time T+DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_ACCELERATION_VALUES_SET_TYPE=12 !<The parameter set corresponding to the acceleration values (at time T+DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_INITIAL_ACCELERATION_SET_TYPE=13 !<The parameter set corresponding to the initial acceleration values for dynamic problems. This is also the previous accelearation values \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_PREVIOUS_ACCELERATION_SET_TYPE=13 !<The parameter set corresponding to the previous acceleration values (at time T).This is also the initial acceleration values for dynamic problems. \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE=14 !<The parameter set corresponding to the mean predicted acceleration values (at time T+DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_PREDICTED_DISPLACEMENT_SET_TYPE=15 !<The parameter set corresponding to the predicted values (at time T+DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_PREDICTED_VELOCITY_SET_TYPE=16 !<The parameter set corresponding to the predicted velocity values (at time T+DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_PREDICTED_ACCELERATION_SET_TYPE=17 !<The parameter set corresponding to the predicted acceleration values (at time T+DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_RESIDUAL_SET_TYPE=18 !<The parameter set corresponding to the evaluated residual values (at time T) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_PREVIOUS_RESIDUAL_SET_TYPE=19 !<The parameter set corresponding to the residual values evaluated previously (at time T-DT) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_MESH_DISPLACEMENT_SET_TYPE=20 !<The parameter set corresponding to the mesh displacement values for ALE \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_MESH_VELOCITY_SET_TYPE=21 !<The parameter set corresponding to the mesh velocity values for ALE \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_BOUNDARY_SET_TYPE=22 !<The parameter set corresponding to the mesh velocity values for ALE \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_INPUT_DATA1_SET_TYPE=23 !<The parameter set corresponding to a input field \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_INPUT_DATA2_SET_TYPE=24 !<The parameter set corresponding to a input field \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_INPUT_DATA3_SET_TYPE=25 !<The parameter set corresponding to a input field \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_INPUT_VEL1_SET_TYPE=26 !<The parameter set corresponding to a input field (PPE)\see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_INPUT_VEL2_SET_TYPE=27 !<The parameter set corresponding to a input field (PPE)\see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_INPUT_VEL3_SET_TYPE=28 !<The parameter set corresponding to a input field (PPE)\see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_INPUT_LABEL_SET_TYPE=29 !<The parameter set corresponding to a input field (PPE)\see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_PRESSURE_VALUES_SET_TYPE=30 !<The parameter set corresponding to the surface pressure values (at time T+DT). \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_PREVIOUS_PRESSURE_SET_TYPE=31 !<The parameter set corresponding to the previous surface pressure values (at previous increment step). \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES 
+  INTEGER(INTG), PARAMETER :: FIELD_RELATIVE_VELOCITY_SET_TYPE=32 !<The parameter set corresponding to the relative velocity values for ALE \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_NEGATIVE_MESH_VELOCITY_SET_TYPE=33 !<The parameter set corresponding to the NEGATIVE mesh velocity values for ALE \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE=34 !<The parameter set corresponding to the previous iteration field values (at iteration n) \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_IMPERMEABLE_FLAG_VALUES_SET_TYPE=35 !<The parameter set corresponding to the impermeable flag field values \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_INTEGRATED_NEUMANN_SET_TYPE=36 !<Stores integrated Neumann values calculated from Neumann point values \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_UPWIND_VALUES_SET_TYPE=37 !<Stores upwind values associated with a field. \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_PREVIOUS_UPWIND_VALUES_SET_TYPE=38 !<Stores upwind values associated with a field from previous timestep. \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+  !>@}
+
   !Module types
 
   !Module variables
 
   !Interfaces
-
-  INTERFACE FIELD_COORDINATE_SYSTEM_GET
+  
+  INTERFACE FIELD_COORDINATE_SYSTEM_GET    
     MODULE PROCEDURE Field_CoordinateSystemGet
   END INTERFACE FIELD_COORDINATE_SYSTEM_GET
   
@@ -156,9 +203,26 @@ MODULE FieldAccessRoutines
     & FIELD_U9_VARIABLE_TYPE,FIELD_DELU9DELN_VARIABLE_TYPE,FIELD_DELU9DELT_VARIABLE_TYPE,FIELD_DEL2U9DELT2_VARIABLE_TYPE,&
     & FIELD_U10_VARIABLE_TYPE,FIELD_DELU10DELN_VARIABLE_TYPE,FIELD_DELU10DELT_VARIABLE_TYPE,FIELD_DEL2U10DELT2_VARIABLE_TYPE
 
-  PUBLIC Field_CoordinateSystemGet
+  PUBLIC FIELD_NUMBER_OF_SET_TYPES,FIELD_VALUES_SET_TYPE,FIELD_BOUNDARY_CONDITIONS_SET_TYPE,FIELD_INITIAL_VALUES_SET_TYPE, &
+    & FIELD_INCREMENTAL_VALUES_SET_TYPE,FIELD_ANALYTIC_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_NEXT_VALUES_SET_TYPE, &
+    & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,FIELD_VELOCITY_VALUES_SET_TYPE,FIELD_INITIAL_VELOCITY_SET_TYPE, &
+    & FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,FIELD_ACCELERATION_VALUES_SET_TYPE, &
+    & FIELD_INITIAL_ACCELERATION_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE,FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE, &
+    & FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,FIELD_PREDICTED_VELOCITY_SET_TYPE,FIELD_PREDICTED_ACCELERATION_SET_TYPE, &
+    & FIELD_RESIDUAL_SET_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE,FIELD_MESH_VELOCITY_SET_TYPE, &
+    & FIELD_BOUNDARY_SET_TYPE,FIELD_INPUT_DATA1_SET_TYPE,FIELD_INPUT_DATA2_SET_TYPE,FIELD_INPUT_DATA3_SET_TYPE, &
+    & FIELD_PRESSURE_VALUES_SET_TYPE,FIELD_PREVIOUS_PRESSURE_SET_TYPE,FIELD_RELATIVE_VELOCITY_SET_TYPE, &
+    & FIELD_NEGATIVE_MESH_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,FIELD_INPUT_VEL1_SET_TYPE, &
+    & FIELD_INPUT_VEL2_SET_TYPE,FIELD_INPUT_VEL3_SET_TYPE,FIELD_INPUT_LABEL_SET_TYPE,FIELD_IMPERMEABLE_FLAG_VALUES_SET_TYPE, &
+    & FIELD_INTEGRATED_NEUMANN_SET_TYPE,FIELD_UPWIND_VALUES_SET_TYPE,FIELD_PREVIOUS_UPWIND_VALUES_SET_TYPE
+
+  PUBLIC Field_ComponentInterpolationGet
+ 
+  PUBLIC Field_CoordinateSystemGet  
 
   PUBLIC FIELD_COORDINATE_SYSTEM_GET
+
+  PUBLIC Field_DataProjectionGet
 
   PUBLIC Field_DecompositionGet
 
@@ -172,9 +236,52 @@ MODULE FieldAccessRoutines
 
   PUBLIC Field_VariableGet
 
+  PUBLIC FieldVariable_ComponentInterpolationGet
+
   PUBLIC FieldVariable_DomainGet
 
+  PUBLIC FieldVariable_FieldGet
+
+  PUBLIC FieldVariable_ParameterSetGet
+
 CONTAINS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the interpolation type for a field variable component identified by a pointer. \see OpenCMISS::Iron::cmfe_FieldComponentInterpolationGet
+  SUBROUTINE Field_ComponentInterpolationGet(field,variableType,componentNumber,interpolationType,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to get the interpolation type for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type of the field variable component to get \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field component number of the field variable component to set
+    INTEGER(INTG), INTENT(OUT) :: interpolationType !<On return, the interpolation type of the field variable component \see FIELD_ROUTINES_InterpolationTypes,FIELD_ROUTINES
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Field_ComponentInterpolationGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+    IF(.NOT.field%FIELD_FINISHED) THEN
+      localError="Field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))// &
+        & " has not been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
+    CALL FieldVariable_ComponentInterpolationGet(fieldVariable,componentNumber,interpolationType,err,error,*999)   
+
+    EXITS("Field_ComponentInterpolationGet")
+    RETURN
+999 ERRORSEXITS("Field_ComponentInterpolationGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Field_ComponentInterpolationGet
 
   !
   !================================================================================================================================
@@ -233,6 +340,42 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Field_CoordinateSystemGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a data project from a field.
+  SUBROUTINE Field_DataProjectionGet(field,dataProjection,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_TYPE), POINTER :: field !<The field to get the data projection for.
+    TYPE(DataProjectionType), POINTER :: dataProjection !<On exit, a pointer to the data projection for the field. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Field_DataProjectionGet",err,error,*998)
+
+    !Check input arguments
+    IF(ASSOCIATED(dataProjection)) CALL FlagError("Data projection is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+
+    dataProjection=>field%dataProjection
+    IF(.NOT.ASSOCIATED(dataProjection)) THEN
+      localError="Data projection  is not associated for field "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Field_DataProjectionGet")
+    RETURN
+999 NULLIFY(dataProjection)
+998 ERRORSEXITS("Field_DataProjectionGet",err,error)
+    RETURN 1
+    
+    
+  END SUBROUTINE Field_DataProjectionGet
 
   !
   !================================================================================================================================
@@ -474,6 +617,51 @@ CONTAINS
   END SUBROUTINE Field_VariableGet
 
   !
+  !================================================================================================================================
+  !
+
+  !>Returns the interpolation type of the specified field variable component
+  SUBROUTINE FieldVariable_ComponentInterpolationGet(fieldVariable,componentIdx,interpolationType,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable to get the interpolation type for
+    INTEGER(INTG), INTENT(IN) :: componentIdx !<The component index of the field variable to get the interpolation type for. 
+    INTEGER(INTG), INTENT(OUT) :: interpolationType  !<On exit, the interpolation type for field variable component. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FieldVariable_ComponentInterpolationGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field is not associated.",err,error,*999)
+    IF(componentIdx<1.OR.componentIdx>fieldVariable%NUMBER_OF_COMPONENTS) THEN
+      IF(ASSOCIATED(fieldVariable%field)) THEN
+        localError="The specified component number of "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+          & " is invalid for variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))// &
+          & " of field number "//TRIM(NumberToVString(fieldVariable%field%USER_NUMBER,"*",err,error))// &
+          & ". The field variable component must be >= 1 and <= "// &
+          & TRIM(NumberToVString(fieldVariable%NUMBER_OF_COMPONENTS,"*",err,error))//"."
+      ELSE
+        localError="The specified component number of "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+          & " is invalid for variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))// &
+          & ". The field variable component must be >= 1 and <= "// &
+          & TRIM(NumberToVString(fieldVariable%NUMBER_OF_COMPONENTS,"*",err,error))//"."
+      ENDIF
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable%components)) &
+      & CALL FlagError("Field variable components has not been allocated.",err,error,*999)
+    
+    interpolationType=fieldVariable%components(componentIdx)%INTERPOLATION_TYPE
+
+    EXITS("FieldVariable_ComponentInterpolationGet")
+    RETURN
+999 ERRORSEXITS("FieldVariable_ComponentInterpolationGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_ComponentInterpolationGet
+
   !
   !================================================================================================================================
   !
@@ -533,6 +721,84 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE FieldVariable_DomainGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the field of the specified field variable component
+  SUBROUTINE FieldVariable_FieldGet(fieldVariable,field,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable to get the field for
+    TYPE(FIELD_TYPE), POINTER :: field  !<On exit, a pointer to field for the field variable. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("FieldVariable_FieldGet",err,error,*998)
+
+    IF(ASSOCIATED(field)) CALL FlagError("Field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field is not associated.",err,error,*999)
+    
+    field=>fieldVariable%field
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("The field variable field is not associated.",err,error,*999)
+
+    EXITS("FieldVariable_FieldGet")
+    RETURN
+999 NULLIFY(field)
+998 ERRORSEXITS("FieldVariable_FieldGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_FieldGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to a field parameter set of a specified type
+  SUBROUTINE FieldVariable_ParameterSetGet(fieldVariable,parameterSetType,parameterSet,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable to get the parameter set for.
+    INTEGER(INTG), INTENT(IN) :: parameterSetType !<The type of parameter set to get. \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet !<On exit, a pointer to the field parameter set. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FieldVariable_ParameterSetGet",err,error,*998)
+
+    IF(ASSOCIATED(parameterSet)) CALL FlagError("Field parameter set is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field is not associated.",err,error,*999)
+    IF(parameterSetType<0.OR.parameterSetType>FIELD_NUMBER_OF_SET_TYPES) THEN
+      localError="The specified parameter set type of "//TRIM(NumberToVString(parameterSetType,"*",err,error))// &
+        & " is invalid. The parameter set type must be between 1 and "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_SET_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    parameterSet=>fieldVariable%PARAMETER_SETS%SET_TYPE(parameterSetType)%ptr
+    IF(.NOT.ASSOCIATED(parameterSet)) THEN
+      IF(ASSOCIATED(fieldVariable%field)) THEN
+        localError="The parameter set type of "//TRIM(NumberToVString(parameterSetType,"*",err,error))// &
+          & " has not been defined on field number "//TRIM(NumberToVString(fieldVariable%field%USER_NUMBER, &
+          & "*",err,error))//"."
+      ELSE
+        localError="The parameter set type of "//TRIM(NumberToVString(parameterSetType,"*",err,error))// &
+          & " has not been defined on the field variable."
+      ENDIF
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    EXITS("FieldVariable_ParameterSetGet")
+    RETURN
+999 NULLIFY(parameterSet)
+998 ERRORSEXITS("FieldVariable_ParameterSetGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_ParameterSetGet
 
   !
   !================================================================================================================================

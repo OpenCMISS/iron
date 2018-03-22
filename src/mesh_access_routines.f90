@@ -95,6 +95,8 @@ MODULE MeshAccessRoutines
 
   PUBLIC DECOMPOSITION_USER_NUMBER_FIND
 
+  PUBLIC DecompositionTopology_DataPointsGet
+
   PUBLIC DecompositionTopology_ElementsGet
 
   PUBLIC DecompositionTopology_FacesGet
@@ -304,6 +306,40 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE DecompositionTopology_ElementsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets data points from a decomposition topology.
+  SUBROUTINE DecompositionTopology_DataPointsGet(decompositionTopology,decompositionDataPoints,err,error,*)
+
+    !Argument variables
+    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology !<A pointer to the decomposition topology to get the data points for.
+    TYPE(DecompositionDataPointsType), POINTER :: decompositionDataPoints !<On exit, a pointer to the decomposition topology data points. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("DecompositionTopology_DataPointsGet",err,error,*998)
+
+    !Check input arguments
+    IF(ASSOCIATED(decompositionDataPoints)) CALL FlagError("Decomposition data points is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(decompositionTopology)) CALL FlagError("Decomposition topology is not associated.",err,error,*999)
+
+    !Get the decomposition data points
+    decompositionDataPoints=>decompositionTopology%dataPoints
+    !Check decomposition data points is associated.
+    IF(.NOT.ASSOCIATED(decompositionDataPoints)) &
+      & CALL FlagError("Decomposition topology data points is not associated.",err,error,*999)
+    
+    EXITS("DecompositionTopology_DataPointsGet")
+    RETURN
+999 NULLIFY(decompositionDataPoints)
+998 ERRORSEXITS("DecompositionTopology_DataPointsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DecompositionTopology_DataPointsGet
 
   !
   !================================================================================================================================

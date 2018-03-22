@@ -6781,7 +6781,7 @@ CONTAINS
       areaCoordinates(1)=1.0_DP-xiCoordinates(1)
       areaCoordinates(2)=1.0_DP-xiCoordinates(2)
       areaCoordinates(3)=1.0_DP-xiCoordinates(3)
-      areaCoordinates(3)=xiCoordinates(1)+xiCoordinates(2)+xiCoordinates(3)-1.0_DP
+      areaCoordinates(4)=xiCoordinates(1)+xiCoordinates(2)+xiCoordinates(3)-2.0_DP
     CASE DEFAULT
       localError="The number of xi coordinates of "//TRIM(NumberToVString(SIZE(xiCoordinates,1),"*",err,error))// &
         & " is invalid. The number must be >= 1 and <= 3."
