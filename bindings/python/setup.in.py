@@ -30,7 +30,6 @@ setup(
     url='http://www.opencmiss.org/',
     install_requires=requires,
     packages=['opencmiss', 'opencmiss.iron'],
-    namespace_packages=['opencmiss'],
     package_data=package_data
 )
 #finally:
