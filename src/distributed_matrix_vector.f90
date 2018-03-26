@@ -48,17 +48,18 @@ MODULE DISTRIBUTED_MATRIX_VECTOR
   USE CmissMPI
   USE CmissPetsc
   USE ComputationEnvironment
+  USE DistributedMatrixVectorAccessRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE ISO_C_BINDING
-  USE KINDS
+  USE Kinds
   USE Maths
   USE MATRIX_VECTOR
 #ifndef NOMPIMOD
   USE MPI
 #endif
-  USE STRINGS
-  USE TYPES
+  USE Strings
+  USE Types
   USE LINKEDLIST_ROUTINES
 
 #include "macros.h"
@@ -218,9 +219,9 @@ MODULE DISTRIBUTED_MATRIX_VECTOR
     MODULE PROCEDURE DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_SET
   END INTERFACE DistributedMatrix_NumberNonZerosSet
 
-  INTERFACE DistributedMatrix_Output
-    MODULE PROCEDURE DISTRIBUTED_MATRIX_OUTPUT
-  END INTERFACE DistributedMatrix_Output
+  INTERFACE DISTRIBUTED_MATRIX_OUTPUT
+    MODULE PROCEDURE DistributedMatrix_Output
+  END INTERFACE DISTRIBUTED_MATRIX_OUTPUT
 
   INTERFACE DistributedMatrix_OverrideSetOn
     MODULE PROCEDURE DISTRIBUTED_MATRIX_OVERRIDE_SET_ON
@@ -2499,85 +2500,75 @@ CONTAINS
   !================================================================================================================================
   !
   !>Outputs a distributed matrix.
-  SUBROUTINE DISTRIBUTED_MATRIX_OUTPUT(ID,DISTRIBUTED_MATRIX,ERR,ERROR,*)
+  SUBROUTINE DistributedMatrix_Output(id,distributedMatrix,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: DISTRIBUTED_MATRIX !<A pointer to the distributed matrix
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream
+    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: distributedMatrix !<A pointer to the distributed matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: i,NUMBER_OF_COLUMNS
-    INTEGER(INTG), ALLOCATABLE :: COLUMNS(:)
-    REAL(DP), ALLOCATABLE :: VALUES(:)
-    CHARACTER(LEN=9) :: ROW_STRING
-    CHARACTER(LEN=39) :: INITIAL_STRING
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: globalRow,numberOfColumns,rowIdx
+    INTEGER(INTG), ALLOCATABLE :: columns(:)
+    REAL(DP), ALLOCATABLE :: values(:)
+    CHARACTER(LEN=9) :: rowString
+    CHARACTER(LEN=39) :: initialString
+    TYPE(DISTRIBUTED_MATRIX_CMISS_TYPE), POINTER :: cmissMatrix
+    TYPE(DISTRIBUTED_MATRIX_PETSC_TYPE), POINTER :: petscMatrix
+    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: rowMapping
+    TYPE(VARYING_STRING) :: localError
      
-    ENTERS("DISTRIBUTED_MATRIX_OUTPUT",ERR,ERROR,*999)
+    ENTERS("DistributedMatrix_Output",err,error,*999)
 
-    IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
-      IF(DISTRIBUTED_MATRIX%MATRIX_FINISHED) THEN
-        SELECT CASE(DISTRIBUTED_MATRIX%LIBRARY_TYPE)
-        CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
-          IF(ASSOCIATED(DISTRIBUTED_MATRIX%CMISS)) THEN
-            CALL MATRIX_OUTPUT(ID,DISTRIBUTED_MATRIX%CMISS%MATRIX,ERR,ERROR,*999)
-          ELSE
-            CALL FlagError("Distributed matrix CMISS is not associated.",ERR,ERROR,*999)
-          ENDIF
-        CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-          IF(ASSOCIATED(DISTRIBUTED_MATRIX%PETSC)) THEN
-            !IF(DISTRIBUTED_MATRIX%PETSC%USE_OVERRIDE_MATRIX) THEN 
-            !  CALL Petsc_MatView(DISTRIBUTED_MATRIX%PETSC%OVERRIDE_MATRIX,PETSC_VIEWER_STDOUT_WORLD,ERR,ERROR,*999) 
-            !ELSE 
-            !  CALL Petsc_MatView(DISTRIBUTED_MATRIX%PETSC%MATRIX,PETSC_VIEWER_STDOUT_WORLD,ERR,ERROR,*999) 
-            !ENDIF
-            ALLOCATE(COLUMNS(DISTRIBUTED_MATRIX%PETSC%MAXIMUM_COLUMN_INDICES_PER_ROW),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate columns.",ERR,ERROR,*999)
-            ALLOCATE(VALUES(DISTRIBUTED_MATRIX%PETSC%MAXIMUM_COLUMN_INDICES_PER_ROW),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate values.",ERR,ERROR,*999)
-            DO i=1,DISTRIBUTED_MATRIX%PETSC%M
-              IF(DISTRIBUTED_MATRIX%PETSC%USE_OVERRIDE_MATRIX) THEN
-                CALL Petsc_MatGetRow(DISTRIBUTED_MATRIX%PETSC%OVERRIDE_MATRIX,i-1,NUMBER_OF_COLUMNS,COLUMNS,VALUES, &
-                  & ERR,ERROR,*999)
-              ELSE
-                CALL Petsc_MatGetRow(DISTRIBUTED_MATRIX%PETSC%MATRIX,i-1,NUMBER_OF_COLUMNS,COLUMNS,VALUES,ERR,ERROR,*999)
-              ENDIF
-              ROW_STRING=NUMBER_TO_CHARACTER(i,"I9",ERR,ERROR)
-              INITIAL_STRING='("Matrix('//ROW_STRING//',:):",8(X,E13.6))'
-              CALL WRITE_STRING_VECTOR(ID,1,1,NUMBER_OF_COLUMNS,8,8,VALUES,INITIAL_STRING,'(20X,8(X,E13.6))', &
-                & ERR,ERROR,*999)
-              IF(DISTRIBUTED_MATRIX%PETSC%USE_OVERRIDE_MATRIX) THEN
-                CALL Petsc_MatRestoreRow(DISTRIBUTED_MATRIX%PETSC%OVERRIDE_MATRIX,i-1,NUMBER_OF_COLUMNS,COLUMNS,VALUES, &
-                  & ERR,ERROR,*999)
-              ELSE
-                CALL Petsc_MatRestoreRow(DISTRIBUTED_MATRIX%PETSC%MATRIX,i-1,NUMBER_OF_COLUMNS,COLUMNS,VALUES,ERR,ERROR,*999)
-              ENDIF
-            ENDDO !i
-            IF(ALLOCATED(VALUES)) DEALLOCATE(VALUES)
-            IF(ALLOCATED(COLUMNS)) DEALLOCATE(COLUMNS)
-          ELSE
-            CALL FlagError("Distributed matrix PETSc is not associated.",ERR,ERROR,*999)
-          ENDIF
-        CASE DEFAULT
-          LOCAL_ERROR="The distributed matrix library type of "// &
-            & TRIM(NumberToVString(DISTRIBUTED_MATRIX%LIBRARY_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ELSE
-        CALL FlagError("Distributed matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Distributed matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
+    IF(.NOT.distributedMatrix%MATRIX_FINISHED) CALL FlagError("Distributed matrix has not been finished.",err,error,*999)
     
-    EXITS("DISTRIBUTED_MATRIX_OUTPUT")
+    SELECT CASE(distributedMatrix%LIBRARY_TYPE)
+    CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
+      NULLIFY(cmissMatrix)
+      CALL DistributedMatrix_CMISSMatrixGet(distributedMatrix,cmissMatrix,err,error,*999)
+      CALL Matrix_Output(id,cmissMatrix%matrix,err,error,*999)
+    CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
+      NULLIFY(petscMatrix)
+      CALL DistributedMatrix_PETScMatrixGet(distributedMatrix,petscMatrix,err,error,*999)
+      NULLIFY(rowMapping)
+      CALL DistributedMatrix_RowMappingGet(distributedMatrix,rowMapping,err,error,*999)
+      ALLOCATE(columns(petscMatrix%MAXIMUM_COLUMN_INDICES_PER_ROW),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate columns.",err,error,*999)
+      ALLOCATE(values(petscMatrix%MAXIMUM_COLUMN_INDICES_PER_ROW),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate values.",err,error,*999)
+      DO rowIdx=1,petscMatrix%m
+        globalRow=rowMapping%LOCAL_TO_GLOBAL_MAP(rowIdx)
+        IF(petscMatrix%USE_OVERRIDE_MATRIX) THEN
+          CALL Petsc_MatGetRow(petscMatrix%OVERRIDE_MATRIX,globalRow-1,numberOfColumns,columns,values,err,error,*999)
+        ELSE
+          CALL Petsc_MatGetRow(petscMatrix%matrix,globalRow-1,numberOfColumns,columns,values,err,error,*999)
+        ENDIF
+        rowString=NumberToCharacter(rowIdx,"I9",err,error)
+        initialString='("Matrix('//rowString//',:):",8(X,E13.6))'
+        CALL WriteStringVector(id,1,1,numberOfColumns,8,8,values,initialString,'(20X,8(X,E13.6))',err,error,*999)
+        IF(petscMatrix%USE_OVERRIDE_MATRIX) THEN
+          CALL Petsc_MatRestoreRow(petscMatrix%OVERRIDE_MATRIX,globalRow-1,numberOfColumns,columns,values,err,error,*999)
+        ELSE
+          CALL Petsc_MatRestoreRow(petscMatrix%matrix,globalRow-1,numberOfColumns,columns,values,err,error,*999)
+        ENDIF
+      ENDDO !rowIdx
+      IF(ALLOCATED(values)) DEALLOCATE(values)
+      IF(ALLOCATED(columns)) DEALLOCATE(columns)
+    CASE DEFAULT
+      localError="The distributed matrix library type of "// &
+        & TRIM(NumberToVString(distributedMatrix%LIBRARY_TYPE,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("DistributedMatrix_Output")
     RETURN
-!999 IF(ALLOCATED(VALUES)) DEALLOCATE(VALUES)
-!    IF(ALLOCATED(COLUMNS)) DEALLOCATE(COLUMNS)
-999 ERRORSEXITS("DISTRIBUTED_MATRIX_OUTPUT",ERR,ERROR)
+999 IF(ALLOCATED(values)) DEALLOCATE(values)
+    IF(ALLOCATED(columns)) DEALLOCATE(columns)
+    ERRORSEXITS("DistributedMatrix_Output",err,error)
     RETURN 1
-  END SUBROUTINE DISTRIBUTED_MATRIX_OUTPUT
+    
+  END SUBROUTINE DistributedMatrix_Output
 
   !
   !================================================================================================================================

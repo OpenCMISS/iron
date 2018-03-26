@@ -53,6 +53,7 @@ set(IRON_Fortran_SRC
     diffusion_equation_routines.f90
     distributed_matrix_vector_IO.f90
     distributed_matrix_vector.f90
+    distributed_matrix_vector_access.f90
     domain_mappings.f90
     elasticity_routines.f90
     electromechanics_routines.f90

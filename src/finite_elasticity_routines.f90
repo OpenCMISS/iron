@@ -2326,15 +2326,19 @@ CONTAINS
               CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
                 & FIBRE_INTERPOLATED_POINT,err,error,*999)
             ENDIF
-            CALL Field_ParameterSetGetLocalGaussPoint(dependent_Field,FIELD_U3_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-              & gauss_idx,elementNumber,1,growthValues(1),err,error,*999)
-            IF(numberofDimensions>1) THEN
+            IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_CONSTITUTIVE_AND_GROWTH_LAW_IN_CELLML_SUBTYPE) THEN
               CALL Field_ParameterSetGetLocalGaussPoint(dependent_Field,FIELD_U3_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                & gauss_idx,elementNumber,2,growthValues(2),err,error,*999)
-              IF(numberOfDimensions>2) THEN
+              & gauss_idx,elementNumber,1,growthValues(1),err,error,*999)
+              IF(numberofDimensions>1) THEN
                 CALL Field_ParameterSetGetLocalGaussPoint(dependent_Field,FIELD_U3_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                  & gauss_idx,elementNumber,3,growthValues(3),err,error,*999)
+                  & gauss_idx,elementNumber,2,growthValues(2),err,error,*999)
+                IF(numberOfDimensions>2) THEN
+                  CALL Field_ParameterSetGetLocalGaussPoint(dependent_Field,FIELD_U3_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                    & gauss_idx,elementNumber,3,growthValues(3),err,error,*999)
+                ENDIF
               ENDIF
+            ELSE
+              growthValues=[1.0_DP,1.0_DP,1.0_DP]
             ENDIF
 
             !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
