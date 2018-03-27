@@ -27676,8 +27676,6 @@ CONTAINS
     CALL TAU_STATIC_PHASE_STOP('field Create')
 #endif
 
-! my comment
-
     EXITS("cmfe_Field_CreateFinishObj")
     RETURN
 999 ERRORSEXITS("cmfe_Field_CreateFinishObj",err,error)
