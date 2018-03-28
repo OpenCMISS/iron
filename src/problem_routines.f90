@@ -548,11 +548,23 @@ CONTAINS
           IF(ASSOCIATED(TIME_LOOP)) THEN
             !Set the current time to be the start time. Solvers should use the first time step to do any initialisation.
             TIME_LOOP%CURRENT_TIME=TIME_LOOP%START_TIME
+            
+            !Precompute the number of iterations from total time span and time increment if it was not specified explicitely 
+            IF (TIME_LOOP%NUMBER_OF_ITERATIONS==0) THEN
+              TIME_LOOP%NUMBER_OF_ITERATIONS=CEILING((TIME_LOOP%STOP_TIME-TIME_LOOP%START_TIME)/TIME_LOOP%TIME_INCREMENT)
+            !If number of iterations was specified but does not match TIME_INCREMENT, e.g. TIME_INCREMENT is still at the default value, compute correct TIME_INCREMENT
+            ELSEIF (CEILING((TIME_LOOP%STOP_TIME-TIME_LOOP%START_TIME)/TIME_LOOP%TIME_INCREMENT) &
+              & /= TIME_LOOP%NUMBER_OF_ITERATIONS) THEN
+              TIME_LOOP%TIME_INCREMENT = (TIME_LOOP%STOP_TIME-TIME_LOOP%START_TIME)/TIME_LOOP%NUMBER_OF_ITERATIONS
+            ENDIF
+            
             TIME_LOOP%ITERATION_NUMBER=0
-            DO WHILE(TIME_LOOP%CURRENT_TIME<TIME_LOOP%STOP_TIME)
+            DO WHILE(TIME_LOOP%ITERATION_NUMBER<TIME_LOOP%NUMBER_OF_ITERATIONS)
               IF(CONTROL_LOOP%OUTPUT_TYPE>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
                 CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"",ERR,ERROR,*999)
-                CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Time control loop iteration: ",TIME_LOOP%ITERATION_NUMBER, &
+                CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Time control loop iteration:  ",TIME_LOOP%ITERATION_NUMBER, &
+                  & ERR,ERROR,*999)
+                CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Total number of iterations: ",TIME_LOOP%NUMBER_OF_ITERATIONS, &
                   & ERR,ERROR,*999)
                 CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Current time   = ",TIME_LOOP%CURRENT_TIME, &
                   & ERR,ERROR,*999)

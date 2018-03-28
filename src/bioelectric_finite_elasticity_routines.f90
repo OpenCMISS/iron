@@ -789,7 +789,7 @@ CONTAINS
     INTEGER(INTG) :: DEPENDENT_NUMBER_OF_GAUSS_POINTS
     INTEGER(INTG) :: MESH_COMPONENT_NUMBER,NUMBER_OF_ELEMENTS,FIELD_VAR_TYPE
     INTEGER(INTG) :: equations_set_idx,gauss_idx,dof_idx,element_idx,idx
-    REAL(DP) :: DZDNU(3,3),DZDNUT(3,3),dZdXi(3,3),AZL(3,3)
+    REAL(DP) :: DZDNU(3,3),DZDNUT(3,3),AZL(3,3)
 
     ENTERS("BioelectricFiniteElasticity_ComputeFibreStretch",ERR,ERROR,*999)
 
@@ -932,7 +932,7 @@ CONTAINS
 
               !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
               CALL FiniteElasticity_GaussDeformationGradientTensor(DEPENDENT_INTERPOLATED_POINT_METRICS, &
-                & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,dZdXi,DZDNU,ERR,ERROR,*999)
+                & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,DZDNU,ERR,ERROR,*999)
               
               !compute C=F^T F
               CALL MATRIX_TRANSPOSE(DZDNU,DZDNUT,ERR,ERROR,*999)
