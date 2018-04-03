@@ -2688,7 +2688,7 @@ CONTAINS
                           CALL NavierStokes_PreSolveUpdateBoundaryConditions(SOLVER,ERR,ERROR,*999)
                         ! --- A d v e c t i o n   S o l v e r ---
                         CASE(EQUATIONS_SET_ADVECTION_SUBTYPE)
-                          CALL ADVECTION_PRE_SOLVE(SOLVER,err,error,*999)
+                          CALL Advection_PreSolve(solver,err,error,*999)
                         CASE DEFAULT
                           localError="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*", &
                             & err,error))//" is not valid for a nonlinear Navier-Stokes solver."
@@ -2881,7 +2881,7 @@ CONTAINS
                   END IF
                 ELSE
                   ! --- A d v e c t i o n   S o l v e r ---
-                  CALL ADVECTION_PRE_SOLVE(SOLVER,err,error,*999)
+                  CALL Advection_PreSolve(solver,err,error,*999)
                 END IF
                 ! Update boundary conditions
                 CALL NavierStokes_PreSolveUpdateBoundaryConditions(SOLVER,err,error,*999)

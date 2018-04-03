@@ -108,8 +108,6 @@ MODULE EQUATIONS_SET_ROUTINES
 
   PUBLIC EQUATIONS_SET_ANALYTIC_EVALUATE
 
-  PUBLIC EQUATIONS_SET_ANALYTIC_TIME_GET,EQUATIONS_SET_ANALYTIC_TIME_SET
-  
   PUBLIC EQUATIONS_SET_ASSEMBLE
   
   PUBLIC EQUATIONS_SET_BACKSUBSTITUTE,EQUATIONS_SET_NONLINEAR_RHS_UPDATE
@@ -844,72 +842,6 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EQUATIONS_SET_ANALYTIC_INITIALISE
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns the analytic time for an equations set. \see OpenCMISS::cmfe_EquationsSet_AnalyticTimeGet
-  SUBROUTINE EQUATIONS_SET_ANALYTIC_TIME_GET(EQUATIONS_SET,TIME,err,error,*)
-
-    !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to get the time for.
-    REAL(DP), INTENT(OUT) :: TIME !<On return, the analytic time value .
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-
-    ENTERS("EQUATIONS_SET_ANALYTIC_TIME_GET",err,error,*999)
-
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
-        TIME=EQUATIONS_SET%ANALYTIC%ANALYTIC_TIME
-      ELSE
-        CALL FlagError("Equations set analytic is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    ENDIF
-       
-    EXITS("EQUATIONS_SET_ANALYTIC_TIME_GET")
-    RETURN
-999 ERRORSEXITS("EQUATIONS_SET_ANALYTIC_TIME_GET",err,error)
-    RETURN 1
-    
-  END SUBROUTINE EQUATIONS_SET_ANALYTIC_TIME_GET
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Sets/changes the analytic time for an equations set. \see OpenCMISS::cmfe_EquationsSet_AnalyticTimeSet
-  SUBROUTINE EQUATIONS_SET_ANALYTIC_TIME_SET(EQUATIONS_SET,TIME,err,error,*)
-
-    !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the time for.
-    REAL(DP), INTENT(IN) :: TIME !<The time value to set.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-
-    ENTERS("EQUATIONS_SET_ANALYTIC_TIME_SET",err,error,*999)
-
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
-        EQUATIONS_SET%ANALYTIC%ANALYTIC_TIME=TIME
-      ELSE
-        CALL FlagError("Equations set analytic is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    ENDIF
-       
-    EXITS("EQUATIONS_SET_ANALYTIC_TIME_SET")
-    RETURN
-999 ERRORSEXITS("EQUATIONS_SET_ANALYTIC_TIME_SET",err,error)
-    RETURN 1
-    
-  END SUBROUTINE EQUATIONS_SET_ANALYTIC_TIME_SET
 
   !
   !================================================================================================================================

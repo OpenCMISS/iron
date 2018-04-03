@@ -62,7 +62,15 @@ MODULE EquationsSetAccessRoutines
   !Module variables
 
   !Interfaces
-
+ 
+  INTERFACE EQUATIONS_SET_ANALYTIC_TIME_GET
+    MODULE PROCEDURE EquationsSet_AnalyticTimeGet
+  END INTERFACE EQUATIONS_SET_ANALYTIC_TIME_GET
+  
+  INTERFACE EQUATIONS_SET_ANALYTIC_TIME_SET
+    MODULE PROCEDURE EquationsSet_AnalyticTimeSet
+  END INTERFACE EQUATIONS_SET_ANALYTIC_TIME_SET
+  
   INTERFACE EQUATIONS_SET_EQUATIONS_GET
     MODULE PROCEDURE EquationsSet_EquationsGet
   END INTERFACE EQUATIONS_SET_EQUATIONS_GET
@@ -81,7 +89,19 @@ MODULE EquationsSetAccessRoutines
     MODULE PROCEDURE EquationsSet_UserNumberFind
   END INTERFACE EQUATIONS_SET_USER_NUMBER_FIND
 
+  PUBLIC EquationsSet_AnalyticCreated
+  
+  PUBLIC EquationsSet_AnalyticFieldExists
+  
+  PUBLIC EquationsSet_AnalyticFieldGet
+
+  PUBLIC EquationsSet_AnalyticTimeGet,EquationsSet_AnalyticTimeSet
+
+  PUBLIC EQUATIONS_SET_ANALYTIC_TIME_GET,EQUATIONS_SET_ANALYTIC_TIME_SET
+  
   PUBLIC EquationsSet_CoordinateSystemGet
+
+  PUBLIC EquationsSet_DerivedCreated
   
   PUBLIC EquationsSet_DerivedFieldExists
   
@@ -98,6 +118,8 @@ MODULE EquationsSetAccessRoutines
   PUBLIC EquationsSet_FibreFieldExists
   
   PUBLIC EquationsSet_GeometricFieldGet
+
+  PUBLIC EquationsSet_IndependentCreated
   
   PUBLIC EquationsSet_IndependentFieldExists
   
@@ -105,9 +127,13 @@ MODULE EquationsSetAccessRoutines
   
   PUBLIC EquationsSet_LabelGet,EquationsSet_LabelSet
 
+  PUBLIC EquationsSet_MaterialsCreated
+
   PUBLIC EquationsSet_MaterialsFieldExists
 
   PUBLIC EquationsSet_MaterialsFieldGet
+
+  PUBLIC EquationsSet_SourceCreated
   
   PUBLIC EquationsSet_SourceFieldExists
   
@@ -120,6 +146,166 @@ MODULE EquationsSetAccessRoutines
   PUBLIC EQUATIONS_SET_USER_NUMBER_FIND
 
 CONTAINS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Asserts that analytic has been created for an equations set.
+  SUBROUTINE EquationsSet_AnalyticCreated(equationsSet,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to check that the analytic has been created for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AnalyticCreated",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet%analytic)) THEN
+      localError="Equations set analytic has not been created for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+     
+    EXITS("EquationsSet_AnalyticCreated")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AnalyticCreated",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AnalyticCreated
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the analytic field for an equations set if it exists.
+  SUBROUTINE EquationsSet_AnalyticFieldExists(equationsSet,analyticField,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the analytic field for
+    TYPE(FIELD_TYPE), POINTER :: analyticField !<On exit, a pointer to the analytic field in the specified equations set if it exists. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsSet_AnalyticFieldExists",err,error,*998)
+
+    IF(ASSOCIATED(analyticField)) CALL FlagError("Analytic field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+
+    IF(ASSOCIATED(equationsSet%analytic)) THEN
+      analyticField=>equationsSet%analytic%ANALYTIC_FIELD
+    ELSE
+      NULLIFY(analyticField)
+    ENDIF
+     
+    EXITS("EquationsSet_AnalyticFieldExists")
+    RETURN
+999 NULLIFY(analyticField)
+998 ERRORSEXITS("EquationsSet_AnalyticFieldExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AnalyticFieldExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the analytic field for an equations set.
+  SUBROUTINE EquationsSet_AnalyticFieldGet(equationsSet,analyticField,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the analytic field for
+    TYPE(FIELD_TYPE), POINTER :: analyticField !<On exit, a pointer to the analytic field in the specified equations set. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_AnalyticFieldGet",err,error,*998)
+
+    IF(ASSOCIATED(analyticField)) CALL FlagError("Analytic field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet%analytic)) THEN
+      localError="Analytic information is not associated for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    analyticField=>equationsSet%analytic%ANALYTIC_FIELD
+    IF(.NOT.ASSOCIATED(analyticField)) THEN
+      localError="Analytic field is not associated for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsSet_AnalyticFieldGet")
+    RETURN
+999 NULLIFY(analyticField)
+998 ERRORSEXITS("EquationsSet_AnalyticFieldGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AnalyticFieldGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the analytic time for an equations set. \see OpenCMISS::cmfe_EquationsSet_AnalyticTimeGet
+  SUBROUTINE EquationsSet_AnalyticTimeGet(equationsSet,analyticTime,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the time for.
+    REAL(DP), INTENT(OUT) :: analyticTime !<On return, the analytic time value.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsSet_AnalyticTimeGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)    
+    IF(.NOT.ASSOCIATED(equationsSet%analytic)) CALL FlagError("Equations set analytic is not associated.",err,error,*999)
+
+    analyticTime=equationsSet%analytic%ANALYTIC_TIME
+      
+    EXITS("EquationsSet_AnalyticTimeGet")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AnalyticTimeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AnalyticTimeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the analytic time for an equations set. \see OpenCMISS::cmfe_EquationsSet_AnalyticTimeSet
+  SUBROUTINE EquationsSet_AnalyticTimeSet(equationsSet,analyticTime,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the time for.
+    REAL(DP), INTENT(IN) :: analyticTime !<The analytic time value to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsSet_AnalyticTimeSet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)    
+    IF(.NOT.ASSOCIATED(equationsSet%analytic)) CALL FlagError("Equations set analytic is not associated.",err,error,*999)
+
+    equationsSet%analytic%ANALYTIC_TIME=analyticTime
+      
+    EXITS("EquationsSet_AnalyticTimeSet")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AnalyticTimeSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AnalyticTimeSet
 
   !
   !================================================================================================================================
@@ -163,6 +349,37 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsSet_CoordinateSystemGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Asserts that derived has been created for an equations set.
+  SUBROUTINE EquationsSet_DerivedCreated(equationsSet,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to check that the derived has been created for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_DerivedCreated",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet%derived)) THEN
+      localError="Equations set derived has not been created for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+     
+    EXITS("EquationsSet_DerivedCreated")
+    RETURN
+999 ERRORSEXITS("EquationsSet_DerivedCreated",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_DerivedCreated
 
   !
   !================================================================================================================================
@@ -407,6 +624,37 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Asserts that independent has been created for an equations set.
+  SUBROUTINE EquationsSet_IndependentCreated(equationsSet,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to check that the independent has been created for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_IndependentCreated",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet%independent)) THEN
+      localError="Equations set independent has not been created for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+     
+    EXITS("EquationsSet_IndependentCreated")
+    RETURN
+999 ERRORSEXITS("EquationsSet_IndependentCreated",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_IndependentCreated
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the independent field for an equations set if it exists.
   SUBROUTINE EquationsSet_IndependentFieldExists(equationsSet,independentField,err,error,*)
 
@@ -597,6 +845,37 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Asserts that materials has been created for an equations set.
+  SUBROUTINE EquationsSet_MaterialsCreated(equationsSet,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to check that the materials has been created for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_MaterialsCreated",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet%materials)) THEN
+      localError="Equations set materials has not been created for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+     
+    EXITS("EquationsSet_MaterialsCreated")
+    RETURN
+999 ERRORSEXITS("EquationsSet_MaterialsCreated",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_MaterialsCreated
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the materials field for an equations set if it exists.
   SUBROUTINE EquationsSet_MaterialsFieldExists(equationsSet,materialsField,err,error,*)
 
@@ -700,6 +979,37 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsSet_RegionGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Asserts that source has been created for an equations set.
+  SUBROUTINE EquationsSet_SourceCreated(equationsSet,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to check that the source has been created for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsSet_SourceCreated",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet%source)) THEN
+      localError="Equations set source has not been created for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+     
+    EXITS("EquationsSet_SourceCreated")
+    RETURN
+999 ERRORSEXITS("EquationsSet_SourceCreated",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_SourceCreated
 
   !
   !================================================================================================================================

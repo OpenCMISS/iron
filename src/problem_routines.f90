@@ -358,7 +358,7 @@ CONTAINS
     TYPE(CONTROL_LOOP_LOAD_INCREMENT_TYPE), POINTER :: LOAD_INCREMENT_LOOP
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
     ENTERS("PROBLEM_CONTROL_LOOP_SOLVE",err,error,*999)
 
@@ -397,7 +397,7 @@ CONTAINS
                 DO solver_idx=1,SOLVERS%NUMBER_OF_SOLVERS
                   SOLVER=>SOLVERS%SOLVERS(solver_idx)%PTR
 
-                  CALL PROBLEM_SOLVER_SOLVE(SOLVER,err,error,*999)
+                  CALL Problem_SolverSolve(solver,err,error,*999)
 
                 ENDDO !solver_idx
               ELSE
@@ -435,7 +435,7 @@ CONTAINS
                   DO solver_idx=1,SOLVERS%NUMBER_OF_SOLVERS
                     SOLVER=>SOLVERS%SOLVERS(solver_idx)%PTR
                     
-                    CALL PROBLEM_SOLVER_SOLVE(SOLVER,err,error,*999)
+                    CALL Problem_SolverSolve(solver,err,error,*999)
 
                   ENDDO !solver_idx
                 ELSE
@@ -500,7 +500,7 @@ CONTAINS
                   DO solver_idx=1,SOLVERS%NUMBER_OF_SOLVERS
                     SOLVER=>SOLVERS%SOLVERS(solver_idx)%PTR
                     
-                    CALL PROBLEM_SOLVER_SOLVE(SOLVER,err,error,*999)
+                    CALL Problem_SolverSolve(solver,err,error,*999)
                     
                   ENDDO !solver_idx
                 ELSE
@@ -557,7 +557,7 @@ CONTAINS
                         CALL PROBLEM_SOLVER_LOAD_INCREMENT_APPLY(SOLVER%SOLVER_EQUATIONS,1, &
                           & 1,err,error,*999)
                       ENDIF
-                      CALL PROBLEM_SOLVER_SOLVE(SOLVER,err,error,*999)
+                      CALL Problem_SolverSolve(solver,err,error,*999)
                     ELSE
                       CALL FlagError("Solver is not associated.",err,error,*999)
                     ENDIF
@@ -615,7 +615,7 @@ CONTAINS
                           CALL PROBLEM_SOLVER_LOAD_INCREMENT_APPLY(SOLVER%SOLVER_EQUATIONS,LOAD_INCREMENT_LOOP%ITERATION_NUMBER, &
                             & LOAD_INCREMENT_LOOP%MAXIMUM_NUMBER_OF_ITERATIONS,err,error,*999)
                         ENDIF
-                        CALL PROBLEM_SOLVER_SOLVE(SOLVER,err,error,*999)
+                        CALL Problem_SolverSolve(solver,err,error,*999)
                       ELSE
                         CALL FlagError("Solver is not associated.",err,error,*999)
                       ENDIF
@@ -637,9 +637,9 @@ CONTAINS
             CALL FlagError("Control loop while loop is not associated.",err,error,*999)
           ENDIF
         CASE DEFAULT
-          LOCAL_ERROR="The control loop loop type of "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%LOOP_TYPE,"*",err,error))// &
+          localError="The control loop loop type of "//TRIM(NumberToVString(CONTROL_LOOP%LOOP_TYPE,"*",err,error))// &
             & " is invalid."
-          CALL FlagError(LOCAL_ERROR,err,error,*999)
+          CALL FlagError(localError,err,error,*999)
         END SELECT
       ELSE
         CALL FlagError("Control loop has not been finished.",err,error,*999)
@@ -725,7 +725,7 @@ CONTAINS
     TYPE(PROBLEM_TYPE), POINTER :: NEW_PROBLEM
     TYPE(PROBLEM_PTR_TYPE), POINTER :: NEW_PROBLEMS(:)
     TYPE(PROBLEM_SETUP_TYPE) :: PROBLEM_SETUP_INFO
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
  
     NULLIFY(NEW_PROBLEM)
     NULLIFY(NEW_PROBLEMS)
@@ -738,8 +738,8 @@ CONTAINS
       NULLIFY(PROBLEM)
       CALL PROBLEM_USER_NUMBER_FIND(USER_NUMBER,PROBLEM,err,error,*999)
       IF(ASSOCIATED(PROBLEM)) THEN
-        LOCAL_ERROR="Problem number "//TRIM(NUMBER_TO_VSTRING(USER_NUMBER,"*",err,error))//" has already been created."
-        CALL FlagError(LOCAL_ERROR,err,error,*999)
+        localError="Problem number "//TRIM(NumberToVString(USER_NUMBER,"*",err,error))//" has already been created."
+        CALL FlagError(localError,err,error,*999)
       ELSE
         !Allocate the new problem
         ALLOCATE(NEW_PROBLEM,STAT=ERR)
@@ -1144,7 +1144,7 @@ CONTAINS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
     TYPE(SOLVER_MATRIX_TYPE), POINTER :: SOLVER_MATRIX
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
     ENTERS("PROBLEM_SOLVER_JACOBIAN_EVALUATE",err,error,*999)
 
@@ -1165,9 +1165,9 @@ CONTAINS
                     CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solver matrix : ",solver_matrix_idx,err,error,*999)
                     CALL DISTRIBUTED_VECTOR_OUTPUT(GENERAL_OUTPUT_TYPE,SOLVER_MATRIX%SOLVER_VECTOR,err,error,*999)
                   ELSE
-                    LOCAL_ERROR="Solver matrix is not associated for solver matrix index "// &
-                      & TRIM(NUMBER_TO_VSTRING(solver_matrix_idx,"*",err,error))//"."
-                    CALL FlagError(LOCAL_ERROR,err,error,*999)
+                    localError="Solver matrix is not associated for solver matrix index "// &
+                      & TRIM(NumberToVString(solver_matrix_idx,"*",err,error))//"."
+                    CALL FlagError(localError,err,error,*999)
                   ENDIF
                 ENDDO !solver_matrix_idx
               ELSE
@@ -1276,7 +1276,7 @@ CONTAINS
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
     TYPE(SOLVER_MATRIX_TYPE), POINTER :: SOLVER_MATRIX
     
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
     NULLIFY(CELLML_SOLVER)
     NULLIFY(LINKING_SOLVER)
@@ -1300,9 +1300,9 @@ CONTAINS
                     CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solver matrix : ",solver_matrix_idx,err,error,*999)
                     CALL DISTRIBUTED_VECTOR_OUTPUT(GENERAL_OUTPUT_TYPE,SOLVER_MATRIX%SOLVER_VECTOR,err,error,*999)
                   ELSE
-                    LOCAL_ERROR="Solver matrix is not associated for solver matrix index "// &
-                      & TRIM(NUMBER_TO_VSTRING(solver_matrix_idx,"*",err,error))//"."
-                    CALL FlagError(LOCAL_ERROR,err,error,*999)
+                    localError="Solver matrix is not associated for solver matrix index "// &
+                      & TRIM(NumberToVString(solver_matrix_idx,"*",err,error))//"."
+                    CALL FlagError(localError,err,error,*999)
                   ENDIF
                 ENDDO !solver_matrix_idx
               ELSE
@@ -1327,9 +1327,9 @@ CONTAINS
                   CASE(SOLVER_NONLINEAR_QUASI_NEWTON)
                     CELLML_SOLVER=>SOLVER%NONLINEAR_SOLVER%QUASI_NEWTON_SOLVER%CELLML_EVALUATOR_SOLVER
                   CASE DEFAULT
-                    LOCAL_ERROR="Linked CellML solver is not implemented for nonlinear solver type " &
-                      & //TRIM(NUMBER_TO_VSTRING(SOLVER%NONLINEAR_SOLVER%NONLINEAR_SOLVE_TYPE,"*",err,error))//"."
-                    CALL FlagError(LOCAL_ERROR,err,error,*999)
+                    localError="Linked CellML solver is not implemented for nonlinear solver type " &
+                      & //TRIM(NumberToVString(SOLVER%NONLINEAR_SOLVER%NONLINEAR_SOLVE_TYPE,"*",err,error))//"."
+                    CALL FlagError(localError,err,error,*999)
                   END SELECT
                   IF(ASSOCIATED(CELLML_SOLVER)) CALL SOLVER_SOLVE(CELLML_SOLVER,err,error,*999)
                   !Calculate the residual for each element (M, C, K and g)
@@ -1363,9 +1363,9 @@ CONTAINS
                 CASE(SOLVER_NONLINEAR_QUASI_NEWTON)
                   CELLML_SOLVER=>SOLVER%NONLINEAR_SOLVER%QUASI_NEWTON_SOLVER%CELLML_EVALUATOR_SOLVER
                 CASE DEFAULT
-                  LOCAL_ERROR="Linked CellML solver is not implemented for nonlinear solver type " &
-                    & //TRIM(NUMBER_TO_VSTRING(SOLVER%NONLINEAR_SOLVER%NONLINEAR_SOLVE_TYPE,"*",err,error))//"."
-                  CALL FlagError(LOCAL_ERROR,err,error,*999)
+                  localError="Linked CellML solver is not implemented for nonlinear solver type " &
+                    & //TRIM(NumberToVString(SOLVER%NONLINEAR_SOLVER%NONLINEAR_SOLVE_TYPE,"*",err,error))//"."
+                  CALL FlagError(localError,err,error,*999)
                 END SELECT
                 IF(ASSOCIATED(CELLML_SOLVER)) CALL SOLVER_SOLVE(CELLML_SOLVER,err,error,*999)
                 !Make sure the equations sets are up to date
@@ -1432,7 +1432,7 @@ CONTAINS
     TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("PROBLEM_PRE_RESIDUAL_EVALUATE",err,error,*999)
 
@@ -1481,18 +1481,18 @@ CONTAINS
                           CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
                             !Pre residual evaluate not used
                           CASE DEFAULT
-                            LOCAL_ERROR="The first equations set specification of "// &
+                            localError="The first equations set specification of "// &
                               & TRIM(NumberToVString(EQUATIONS_SET%specification(1),"*",err,error))//" is not valid."
-                            CALL FlagError(LOCAL_ERROR,err,error,*999)
+                            CALL FlagError(localError,err,error,*999)
                           END SELECT !EQUATIONS_SET%SPECIFICATION(1)
                         CASE(EQUATIONS_SET_NODAL_SOLUTION_METHOD)
                           SELECT CASE(EQUATIONS_SET%SPECIFICATION(1))
                           CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
                             !Pre residual evaluate not used
                           CASE DEFAULT
-                            LOCAL_ERROR="The first equations set specification of "// &
+                            localError="The first equations set specification of "// &
                               & TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(1),"*",err,error))//" is not valid."
-                            CALL FLAG_ERROR(LOCAL_ERROR,err,error,*999)
+                            CALL FLAG_ERROR(localError,err,error,*999)
                           END SELECT !EQUATIONS_SET%SPECIFICATION(1)
                         CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
                           CALL FlagError("Not implemented.",err,error,*999)
@@ -1505,26 +1505,26 @@ CONTAINS
                         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                           CALL FlagError("Not implemented.",err,error,*999)
                         CASE DEFAULT
-                          LOCAL_ERROR="The equations set solution method  of "// &
-                            & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
+                          localError="The equations set solution method  of "// &
+                            & TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                             & " is invalid."
-                          CALL FlagError(LOCAL_ERROR,err,error,*999)
+                          CALL FlagError(localError,err,error,*999)
                         END SELECT !EQUATIONS_SET%SOLUTION_METHOD
                       CASE(EQUATIONS_SECOND_ORDER_DYNAMIC)
                         CALL FlagError("Not implemented.",err,error,*999)
                       CASE(EQUATIONS_TIME_STEPPING)
                         CALL FlagError("Not implemented.",err,error,*999)
                       CASE DEFAULT
-                        LOCAL_ERROR="The equations set time dependence type of "// &
-                          & TRIM(NUMBER_TO_VSTRING(EQUATIONS%timeDependence,"*",err,error))//" is invalid."
-                        CALL FlagError(LOCAL_ERROR,err,error,*999)
+                        localError="The equations set time dependence type of "// &
+                          & TRIM(NumberToVString(EQUATIONS%timeDependence,"*",err,error))//" is invalid."
+                        CALL FlagError(localError,err,error,*999)
                       END SELECT
                     CASE(EQUATIONS_NONLINEAR_BCS)
                       CALL FlagError("Not implemented.",err,error,*999)
                     CASE DEFAULT
-                      LOCAL_ERROR="The equations linearity of "// &
-                        & TRIM(NUMBER_TO_VSTRING(EQUATIONS%linearity,"*",err,error))//" is invalid."
-                      CALL FlagError(LOCAL_ERROR,err,error,*999)
+                      localError="The equations linearity of "// &
+                        & TRIM(NumberToVString(EQUATIONS%linearity,"*",err,error))//" is invalid."
+                      CALL FlagError(localError,err,error,*999)
                     END SELECT
                   ELSE
                     CALL FlagError("Equations have not been finished.",err,error,*999)
@@ -1573,7 +1573,7 @@ CONTAINS
     TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("PROBLEM_POST_RESIDUAL_EVALUATE",err,error,*999)
 
@@ -1622,19 +1622,19 @@ CONTAINS
                           CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
                             !Post residual evaluate not used
                           CASE DEFAULT
-                            LOCAL_ERROR="The first equations set specification of "// &
+                            localError="The first equations set specification of "// &
                               & TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(1),"*",err,error))//" is not valid."
-                            CALL FLAG_ERROR(LOCAL_ERROR,err,error,*999)
+                            CALL FLAG_ERROR(localError,err,error,*999)
                           END SELECT !EQUATIONS_SET%SPECIFICATION(1)
                         CASE(EQUATIONS_SET_NODAL_SOLUTION_METHOD)
                           SELECT CASE(EQUATIONS_SET%SPECIFICATION(1))
                           CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
                             !Post residual evaluate not used
                           CASE DEFAULT
-                            LOCAL_ERROR="The first equations set specification of "// &
+                            localError="The first equations set specification of "// &
                               & TRIM(NumberToVString(EQUATIONS_SET%specification(1),"*",err,error))// &
                               & " is not valid with the nodal solution method."
-                            CALL FLAG_ERROR(LOCAL_ERROR,err,error,*999)
+                            CALL FLAG_ERROR(localError,err,error,*999)
                           END SELECT !EQUATIONS_SET%SPECIFICATION(1)
                         CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
                           CALL FlagError("Not implemented.",err,error,*999)
@@ -1647,26 +1647,26 @@ CONTAINS
                         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                           CALL FlagError("Not implemented.",err,error,*999)
                         CASE DEFAULT
-                          LOCAL_ERROR="The equations set solution method  of "// &
-                            & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
+                          localError="The equations set solution method  of "// &
+                            & TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                             & " is invalid."
-                          CALL FlagError(LOCAL_ERROR,err,error,*999)
+                          CALL FlagError(localError,err,error,*999)
                         END SELECT !EQUATIONS_SET%SOLUTION_METHOD
                       CASE(EQUATIONS_SECOND_ORDER_DYNAMIC)
                         CALL FlagError("Not implemented.",err,error,*999)
                       CASE(EQUATIONS_TIME_STEPPING)
                         CALL FlagError("Not implemented.",err,error,*999)
                       CASE DEFAULT
-                        LOCAL_ERROR="The equations set time dependence type of "// &
-                          & TRIM(NUMBER_TO_VSTRING(EQUATIONS%timeDependence,"*",err,error))//" is invalid."
-                        CALL FlagError(LOCAL_ERROR,err,error,*999)
+                        localError="The equations set time dependence type of "// &
+                          & TRIM(NumberToVString(EQUATIONS%timeDependence,"*",err,error))//" is invalid."
+                        CALL FlagError(localError,err,error,*999)
                       END SELECT
                     CASE(EQUATIONS_NONLINEAR_BCS)
                       CALL FlagError("Not implemented.",err,error,*999)
                     CASE DEFAULT
-                      LOCAL_ERROR="The equations linearity of "// &
-                        & TRIM(NUMBER_TO_VSTRING(EQUATIONS%linearity,"*",err,error))//" is invalid."
-                      CALL FlagError(LOCAL_ERROR,err,error,*999)
+                      localError="The equations linearity of "// &
+                        & TRIM(NumberToVString(EQUATIONS%linearity,"*",err,error))//" is invalid."
+                      CALL FlagError(localError,err,error,*999)
                     END SELECT
                   ELSE
                     CALL FlagError("Equations have not been finished.",err,error,*999)
@@ -1861,7 +1861,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("PROBLEM_CONTROL_LOOP_PRE_LOOP",err,error,*999)
 
@@ -1898,9 +1898,9 @@ CONTAINS
         CASE(PROBLEM_MULTI_PHYSICS_CLASS)
           CALL MULTI_PHYSICS_CONTROL_LOOP_PRE_LOOP(CONTROL_LOOP,err,error,*999)
         CASE DEFAULT
-          LOCAL_ERROR="Problem class "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(1),"*",err,error))//" &
+          localError="Problem class "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(1),"*",err,error))//" &
             & is not valid."
-          CALL FlagError(LOCAL_ERROR,err,error,*999)
+          CALL FlagError(localError,err,error,*999)
         END SELECT
       ELSE
         CALL FlagError("Problem is not associated.",err,error,*999)
@@ -1926,7 +1926,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
  
     ENTERS("PROBLEM_CONTROL_LOOP_POST_LOOP",err,error,*999)
 
@@ -1968,10 +1968,10 @@ CONTAINS
         CASE(PROBLEM_MULTI_PHYSICS_CLASS)
           CALL MULTI_PHYSICS_CONTROL_LOOP_POST_LOOP(CONTROL_LOOP,err,error,*999)
         CASE DEFAULT
-          LOCAL_ERROR="The first problem specification of "// &
+          localError="The first problem specification of "// &
             & TRIM(NumberToVString(CONTROL_LOOP%problem%specification(1),"*",err,error))// &
             & " is not valid."
-          CALL FlagError(LOCAL_ERROR,err,error,*999)
+          CALL FlagError(localError,err,error,*999)
         END SELECT
       ELSE
         CALL FlagError("Problem is not associated.",err,error,*999)
@@ -1992,153 +1992,125 @@ CONTAINS
   !
 
   !>Executes pre solver routines for a problem.
-  SUBROUTINE PROBLEM_SOLVER_PRE_SOLVE(SOLVER,err,error,*)
+  SUBROUTINE Problem_SolverPreSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
+    TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("PROBLEM_SOLVER_PRE_SOLVE",err,error,*999)
+    ENTERS("Problem_SolverPreSolve",err,error,*999)
 
-    IF(ASSOCIATED(SOLVER)) THEN
-      IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
-        CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solver pre-solve: ",SOLVER%LABEL,err,error,*999)
-      ENDIF
-      SOLVERS=>SOLVER%SOLVERS
-      IF(ASSOCIATED(SOLVERS)) THEN
-        CONTROL_LOOP=>SOLVERS%CONTROL_LOOP
-        IF(ASSOCIATED(CONTROL_LOOP)) THEN
-          PROBLEM=>CONTROL_LOOP%PROBLEM
-          IF(ASSOCIATED(PROBLEM)) THEN
-            IF(.NOT.ALLOCATED(PROBLEM%SPECIFICATION)) THEN
-              CALL FlagError("Problem specification is not allocated.",err,error,*999)
-            ELSE IF(SIZE(PROBLEM%SPECIFICATION,1)<1) THEN
-              CALL FlagError("Problem specification must have at least one entry.",err,error,*999)
-            END IF
-            SELECT CASE(PROBLEM%SPECIFICATION(1))
-            CASE(PROBLEM_ELASTICITY_CLASS)
-              CALL ELASTICITY_PRE_SOLVE(CONTROL_LOOP,SOLVER,err,error,*999)
-            CASE(PROBLEM_BIOELECTRICS_CLASS)
-              CALL BIOELECTRIC_PRE_SOLVE(SOLVER,err,error,*999)
-            CASE(PROBLEM_FLUID_MECHANICS_CLASS)
-              CALL FLUID_MECHANICS_PRE_SOLVE(CONTROL_LOOP,SOLVER,err,error,*999)
-            CASE(PROBLEM_ELECTROMAGNETICS_CLASS)
-              !Do nothing???
-            CASE(PROBLEM_CLASSICAL_FIELD_CLASS)
-              CALL CLASSICAL_FIELD_PRE_SOLVE(CONTROL_LOOP,SOLVER,err,error,*999)
-            CASE(PROBLEM_FITTING_CLASS)
-              CALL Fitting_PreSolve(solver,err,error,*999)
-            CASE(PROBLEM_MODAL_CLASS)
-              !Do nothing???
-            CASE(PROBLEM_MULTI_PHYSICS_CLASS)
-              CALL MULTI_PHYSICS_PRE_SOLVE(CONTROL_LOOP,SOLVER,err,error,*999)
-            CASE DEFAULT
-              LOCAL_ERROR="The problem class of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(1),"*",err,error))//" &
-                & is invalid."
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            END SELECT
-          ELSE
-            CALL FlagError("Control loop problem is not associated.",err,error,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Solvers control loop is not associated.",err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Solver solvers is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Solver is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    IF(.NOT.ALLOCATED(problem%specification)) CALL FlagError("Problem specification is not allocated.",err,error,*999)
+    IF(SIZE(problem%specification,1)<1) &
+      & CALL FlagError("Problem specification must have at least one entry.",err,error,*999)
+    
+    IF(solver%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
+      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
+      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solver pre-solve: ",solver%label,err,error,*999)
     ENDIF
     
-    EXITS("PROBLEM_SOLVER_PRE_SOLVE")
+    SELECT CASE(problem%specification(1))
+    CASE(PROBLEM_ELASTICITY_CLASS)
+      CALL ELASTICITY_PRE_SOLVE(controlLoop,solver,err,error,*999)
+    CASE(PROBLEM_BIOELECTRICS_CLASS)
+      CALL BIOELECTRIC_PRE_SOLVE(solver,err,error,*999)
+    CASE(PROBLEM_FLUID_MECHANICS_CLASS)
+      CALL FLUID_MECHANICS_PRE_SOLVE(controlLoop,solver,err,error,*999)
+    CASE(PROBLEM_ELECTROMAGNETICS_CLASS)
+      !Do nothing???
+    CASE(PROBLEM_CLASSICAL_FIELD_CLASS)
+      CALL ClassicalField_PreSolve(solver,err,error,*999)
+    CASE(PROBLEM_FITTING_CLASS)
+      CALL Fitting_PreSolve(solver,err,error,*999)
+    CASE(PROBLEM_MODAL_CLASS)
+      !Do nothing???
+    CASE(PROBLEM_MULTI_PHYSICS_CLASS)
+      CALL MULTI_PHYSICS_PRE_SOLVE(controlLoop,solver,err,error,*999)
+    CASE DEFAULT
+      localError="The problem class of "//TRIM(NumberToVString(problem%specification(1),"*",err,error))//" &
+        & is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("Problem_SolverPreSolve")
     RETURN
-999 ERRORSEXITS("PROBLEM_SOLVER_PRE_SOLVE",err,error)
+999 ERRORSEXITS("Problem_SolverPreSolve",err,error)
     RETURN 1
-  END SUBROUTINE PROBLEM_SOLVER_PRE_SOLVE
+    
+  END SUBROUTINE Problem_SolverPreSolve
 
   !
   !================================================================================================================================
   !
 
   !>Executes post solver routines for a problem.
-  SUBROUTINE PROBLEM_SOLVER_POST_SOLVE(SOLVER,err,error,*)
+  SUBROUTINE Problem_SolverPostSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
+    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("PROBLEM_SOLVER_POST_SOLVE",err,error,*999)
+    ENTERS("Problem_SolverPostSolve",err,error,*999)
 
-    IF(ASSOCIATED(SOLVER)) THEN
-      IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
-        CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solver post-solve: ",SOLVER%LABEL,err,error,*999)
-      ENDIF
-      SOLVERS=>SOLVER%SOLVERS
-      IF(ASSOCIATED(SOLVERS)) THEN
-        CONTROL_LOOP=>SOLVERS%CONTROL_LOOP
-        IF(ASSOCIATED(CONTROL_LOOP)) THEN
-          PROBLEM=>CONTROL_LOOP%PROBLEM
-          IF(ASSOCIATED(PROBLEM)) THEN
-            IF(.NOT.ALLOCATED(PROBLEM%SPECIFICATION)) THEN
-              CALL FlagError("Problem specification is not allocated.",err,error,*999)
-            ELSE IF(SIZE(PROBLEM%SPECIFICATION,1)<1) THEN
-              CALL FlagError("Problem specification must have at least one entry.",err,error,*999)
-            END IF
-            SELECT CASE(PROBLEM%SPECIFICATION(1))
-            CASE(PROBLEM_ELASTICITY_CLASS)
-              CALL ELASTICITY_POST_SOLVE(CONTROL_LOOP,SOLVER,err,error,*999)
-            CASE(PROBLEM_BIOELECTRICS_CLASS)
-              CALL BIOELECTRIC_POST_SOLVE(SOLVER,err,error,*999)
-            CASE(PROBLEM_FLUID_MECHANICS_CLASS)
-              CALL FLUID_MECHANICS_POST_SOLVE(CONTROL_LOOP,SOLVER,err,error,*999)
-            CASE(PROBLEM_ELECTROMAGNETICS_CLASS)
-              !Do nothing???
-            CASE(PROBLEM_CLASSICAL_FIELD_CLASS)                
-              CALL CLASSICAL_FIELD_POST_SOLVE(CONTROL_LOOP,SOLVER,err,error,*999)
-            CASE(PROBLEM_FITTING_CLASS)
-              CALL Fitting_PostSolve(solver,err,error,*999)
-            CASE(PROBLEM_MODAL_CLASS)
-              !Do nothing???
-            CASE(PROBLEM_MULTI_PHYSICS_CLASS)
-              CALL MULTI_PHYSICS_POST_SOLVE(CONTROL_LOOP,SOLVER,err,error,*999)
-            CASE DEFAULT
-              LOCAL_ERROR="The problem class of "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(1),"*",err,error))//" &
-                & is invalid."
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            END SELECT
-          ELSE
-            CALL FlagError("Control loop problem is not associated.",err,error,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Solvers control loop is not associated.",err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Solver solvers is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Solver is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    IF(.NOT.ALLOCATED(problem%specification)) CALL FlagError("Problem specification is not allocated.",err,error,*999)
+    IF(SIZE(problem%specification,1)<1) &
+      & CALL FlagError("Problem specification must have at least one entry.",err,error,*999)
+    
+    IF(solver%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
+      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
+      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solver post-solve: ",solver%label,err,error,*999)
     ENDIF
+    
+    SELECT CASE(problem%specification(1))
+    CASE(PROBLEM_ELASTICITY_CLASS)
+      CALL ELASTICITY_POST_SOLVE(controlLoop,solver,err,error,*999)
+    CASE(PROBLEM_BIOELECTRICS_CLASS)
+      CALL BIOELECTRIC_POST_SOLVE(solver,err,error,*999)
+    CASE(PROBLEM_FLUID_MECHANICS_CLASS)
+      CALL FLUID_MECHANICS_POST_SOLVE(controlLoop,solver,err,error,*999)
+    CASE(PROBLEM_ELECTROMAGNETICS_CLASS)
+      !Do nothing???
+    CASE(PROBLEM_CLASSICAL_FIELD_CLASS)                
+      CALL ClassicalField_PostSolve(solver,err,error,*999)
+    CASE(PROBLEM_FITTING_CLASS)
+      CALL Fitting_PostSolve(solver,err,error,*999)
+    CASE(PROBLEM_MODAL_CLASS)
+      !Do nothing???
+    CASE(PROBLEM_MULTI_PHYSICS_CLASS)
+      CALL MULTI_PHYSICS_POST_SOLVE(controlLoop,solver,err,error,*999)
+    CASE DEFAULT
+      localError="The problem class of "//TRIM(NumberToVString(problem%specification(1),"*",err,error))//" &
+        & is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
       
-    EXITS("PROBLEM_SOLVER_POST_SOLVE")
+    EXITS("Problem_SolverPostSolve")
     RETURN
-999 ERRORSEXITS("PROBLEM_SOLVER_POST_SOLVE",err,error)
+999 ERRORSEXITS("Problem_SolverPostSolve",err,error)
     RETURN 1
     
-  END SUBROUTINE PROBLEM_SOLVER_POST_SOLVE
+  END SUBROUTINE Problem_SolverPostSolve
 
   !
   !================================================================================================================================
@@ -2153,7 +2125,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
     ENTERS("PROBLEM_SOLVER_EQUATIONS_SOLVE",err,error,*999)
     
@@ -2173,9 +2145,9 @@ CONTAINS
           CASE(SOLVER_EQUATIONS_NONLINEAR)
             CALL Problem_SolverEquationsStaticNonlinearSolve(SOLVER_EQUATIONS,err,error,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The solver equations linearity of "//TRIM(NUMBER_TO_VSTRING(SOLVER_EQUATIONS%linearity,"*",err,error))// &
+            localError="The solver equations linearity of "//TRIM(NumberToVString(SOLVER_EQUATIONS%linearity,"*",err,error))// &
               & " is invalid."
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE(SOLVER_EQUATIONS_QUASISTATIC)
           SELECT CASE(SOLVER_EQUATIONS%linearity)
@@ -2184,9 +2156,9 @@ CONTAINS
           CASE(SOLVER_EQUATIONS_NONLINEAR)
             CALL Problem_SolverEquationsQuasistaticNonlinearSolve(SOLVER_EQUATIONS,err,error,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The solver equations linearity of "//TRIM(NUMBER_TO_VSTRING(SOLVER_EQUATIONS%linearity,"*",err,error))// &
+            localError="The solver equations linearity of "//TRIM(NumberToVString(SOLVER_EQUATIONS%linearity,"*",err,error))// &
               & " is invalid."
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE(SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,SOLVER_EQUATIONS_SECOND_ORDER_DYNAMIC)
           SELECT CASE(SOLVER_EQUATIONS%linearity)
@@ -2195,14 +2167,14 @@ CONTAINS
           CASE(SOLVER_EQUATIONS_NONLINEAR)
             CALL Problem_SolverEquationsDynamicNonlinearSolve(SOLVER_EQUATIONS,err,error,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The solver equations linearity of "//TRIM(NUMBER_TO_VSTRING(SOLVER_EQUATIONS%linearity,"*",err,error))// &
+            localError="The solver equations linearity of "//TRIM(NumberToVString(SOLVER_EQUATIONS%linearity,"*",err,error))// &
               & " is invalid."
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE DEFAULT
-          LOCAL_ERROR="The solver equations time dependence type of "// &
-            & TRIM(NUMBER_TO_VSTRING(SOLVER_EQUATIONS%timeDependence,"*",err,error))//" is invalid."
-          CALL FlagError(LOCAL_ERROR,err,error,*999)
+          localError="The solver equations time dependence type of "// &
+            & TRIM(NumberToVString(SOLVER_EQUATIONS%timeDependence,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
         END SELECT
       ELSE
         CALL FlagError("Solver equations have not been finished.",err,error,*999)
@@ -2312,7 +2284,7 @@ CONTAINS
     TYPE(DYNAMIC_SOLVER_TYPE), POINTER :: DYNAMIC_SOLVER
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
     ENTERS("Problem_SolverEquationsDynamicNonlinearSolve",err,error,*999)
     
@@ -2347,10 +2319,10 @@ CONTAINS
                       CASE(EQUATIONS_NONLINEAR_BCS)
                         CALL FlagError("Not implemented.",err,error,*999)
                       CASE DEFAULT
-                        LOCAL_ERROR="The equations linearity type of "// &
-                          & TRIM(NUMBER_TO_VSTRING(EQUATIONS%linearity,"*",err,error))// &
+                        localError="The equations linearity type of "// &
+                          & TRIM(NumberToVString(EQUATIONS%linearity,"*",err,error))// &
                           & " is invalid."
-                        CALL FlagError(LOCAL_ERROR,err,error,*999)
+                        CALL FlagError(localError,err,error,*999)
                       END SELECT
                     ELSE
                       CALL FlagError("Equations set equations is not associated.",err,error,*999)
@@ -2737,70 +2709,70 @@ CONTAINS
 
 
   !>Solves a solver for a problem.
-  SUBROUTINE PROBLEM_SOLVER_SOLVE(SOLVER,err,error,*)
+  SUBROUTINE Problem_SolverSolve(solver,err,error,*)
 
    !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver to solve
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver to solve
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     
-    ENTERS("PROBLEM_SOLVER_SOLVE",err,error,*999)
+    ENTERS("Problem_SolverSolve",err,error,*999)
     
-    IF(ASSOCIATED(SOLVER)) THEN
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
 
-      IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
-        CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solver: ",SOLVER%LABEL,err,error,*999)
-        CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Solver index = ",SOLVER%GLOBAL_NUMBER,err,error,*999)
-      ENDIF
-      
-#ifdef TAUPROF
-      CALL TAU_STATIC_PHASE_START('Pre solve')
-#endif
-     CALL PROBLEM_SOLVER_PRE_SOLVE(SOLVER,err,error,*999)
-#ifdef TAUPROF
-      CALL TAU_STATIC_PHASE_STOP('Pre solve')
-      
-      CALL TAU_STATIC_PHASE_START('Solve')
-#endif
-      
-      IF(ASSOCIATED(SOLVER%SOLVER_EQUATIONS)) THEN
-        !A solver with solver equations.
-        CALL PROBLEM_SOLVER_EQUATIONS_SOLVE(SOLVER%SOLVER_EQUATIONS,err,error,*999)
-      ELSE
-        !Check for other equations.
-        IF(ASSOCIATED(SOLVER%CELLML_EQUATIONS)) THEN
-          !A solver with CellML equations.
-          CALL Problem_CellMLEquationsSolve(SOLVER%CELLML_EQUATIONS,err,error,*999)
-        ELSEIF(SOLVER%SOLVE_TYPE==SOLVER_GEOMETRIC_TRANSFORMATION_TYPE) THEN
-          CALL Problem_SolverGeometricTransformationSolve(SOLVER%geometricTransformationSolver,err,error,*999)
-        ELSE
-          !Do nothing now. 
-          !CALL FlagError("Solver does not have any equations associated.",err,error,*999)
-        ENDIF
-      ENDIF
-
-#ifdef TAUPROF
-      CALL TAU_STATIC_PHASE_STOP('Solve')
-      
-      CALL TAU_STATIC_PHASE_START('Post solve')
-#endif
-      CALL PROBLEM_SOLVER_POST_SOLVE(SOLVER,err,error,*999)
-#ifdef TAUPROF
-      CALL TAU_STATIC_PHASE_STOP('Post solve')
-#endif
-      
-    ELSE
-      CALL FlagError("Solver is not associated.",err,error,*999)
+    IF(solver%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
+      CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
+      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solver: ",solver%label,err,error,*999)
+      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Solver index = ",solver%GLOBAL_NUMBER,err,error,*999)
     ENDIF
+      
+#ifdef TAUPROF
+    CALL TAU_STATIC_PHASE_START('Pre solve')
+#endif
+      
+    CALL Problem_SolverPreSolve(solver,err,error,*999)
+      
+#ifdef TAUPROF
+    CALL TAU_STATIC_PHASE_STOP('Pre solve')
     
-    EXITS("PROBLEM_SOLVER_SOLVE")
+    CALL TAU_STATIC_PHASE_START('Solve')
+#endif
+    
+    IF(ASSOCIATED(solver%SOLVER_EQUATIONS)) THEN
+      !A solver with solver equations.
+      CALL PROBLEM_SOLVER_EQUATIONS_SOLVE(solver%SOLVER_EQUATIONS,err,error,*999)
+    ELSE
+      !Check for other equations.
+      IF(ASSOCIATED(solver%CELLML_EQUATIONS)) THEN
+        !A solver with CellML equations.
+        CALL Problem_CellMLEquationsSolve(solver%CELLML_EQUATIONS,err,error,*999)
+      ELSEIF(SOLVER%SOLVE_TYPE==SOLVER_GEOMETRIC_TRANSFORMATION_TYPE) THEN
+        CALL Problem_SolverGeometricTransformationSolve(SOLVER%geometricTransformationSolver,err,error,*999)
+      ELSE
+        !Do nothing now. 
+        !CALL FlagError("Solver does not have any equations associated.",err,error,*999)
+      ENDIF
+    ENDIF
+
+#ifdef TAUPROF
+    CALL TAU_STATIC_PHASE_STOP('Solve')
+      
+    CALL TAU_STATIC_PHASE_START('Post solve')
+#endif
+    
+    CALL Problem_SolverPostSolve(solver,err,error,*999)
+    
+#ifdef TAUPROF
+    CALL TAU_STATIC_PHASE_STOP('Post solve')
+#endif
+      
+    EXITS("Problem_SolverSolve")
     RETURN
-999 ERRORSEXITS("PROBLEM_SOLVER_SOLVE",err,error)
+999 ERRORSEXITS("Problem_SolverSolve",err,error)
     RETURN 1
     
-  END SUBROUTINE PROBLEM_SOLVER_SOLVE
+  END SUBROUTINE Problem_SolverSolve
 
   !
   !================================================================================================================================
@@ -2863,7 +2835,7 @@ CONTAINS
               IF(ASSOCIATED(EQUATIONS_SET)) THEN
                 CALL EQUATIONS_SET_BOUNDARY_CONDITIONS_ANALYTIC(EQUATIONS_SET,BOUNDARY_CONDITIONS,err,error,*999)
               ELSE
-                CALL FlagError("Equations set is not associated for index "//TRIM(NUMBER_TO_VSTRING(equations_set_idx,"*", &
+                CALL FlagError("Equations set is not associated for index "//TRIM(NumberToVString(equations_set_idx,"*", &
                   & err,error))//".",err,error,*999)
               ENDIF
             ENDDO
@@ -3245,7 +3217,7 @@ CONTAINS
                     & PROBLEM_FE_CONTACT_TRANSFORM_REPROJECT_SUBTYPE,PROBLEM_FE_CONTACT_REPROJECT_SUBTYPE)
                   reproject=.TRUE.
                 CASE DEFAULT
-                  localError="The problem subtype of "//TRIM(NUMBER_TO_VSTRING(problem%SPECIFICATION(3),"*",err,error))//" &
+                  localError="The problem subtype of "//TRIM(NumberToVString(problem%SPECIFICATION(3),"*",err,error))//" &
                     & is invalid."
                   CALL FlagError(localError,err,error,*999)
                 END SELECT
@@ -3291,7 +3263,7 @@ CONTAINS
                   ENDIF
                 ENDIF
               CASE DEFAULT
-                localError="The problem type of "//TRIM(NUMBER_TO_VSTRING(problem%SPECIFICATION(2),"*",err,error))//" &
+                localError="The problem type of "//TRIM(NumberToVString(problem%SPECIFICATION(2),"*",err,error))//" &
                   & is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
@@ -3299,7 +3271,7 @@ CONTAINS
                 & PROBLEM_CLASSICAL_FIELD_CLASS,PROBLEM_FITTING_CLASS,PROBLEM_MODAL_CLASS,PROBLEM_MULTI_PHYSICS_CLASS)
               !Do nothing???
             CASE DEFAULT
-              localError="The problem class of "//TRIM(NUMBER_TO_VSTRING(problem%SPECIFICATION(1),"*",err,error))//" &
+              localError="The problem class of "//TRIM(NumberToVString(problem%SPECIFICATION(1),"*",err,error))//" &
                 & is invalid."
               CALL FlagError(localError,err,error,*999)
             END SELECT
@@ -3319,7 +3291,7 @@ CONTAINS
           CALL FlagError("Nonlinear solver is not associated.",err,error,*999)
         ENDIF
       ELSE
-        localError="Invalid solve type. The solve type of "//TRIM(NUMBER_TO_VSTRING(solver%SOLVE_TYPE,"*",err,error))// &
+        localError="Invalid solve type. The solve type of "//TRIM(NumberToVString(solver%SOLVE_TYPE,"*",err,error))// &
           & " does not correspond to a nonlinear solver."
         CALL FlagError(localError,err,error,*999)
       ENDIF
@@ -3411,10 +3383,10 @@ CONTAINS
           !   firstIterationNumber=0
           !   DO solve_call=1,max_solve_calls
           !     fileToCheck=directory// &
-          !       & "mesh"//TRIM(NUMBER_TO_VSTRING(coupledMeshIdx,"*",err,error))// &
-          !       & "_solveCall"//TRIM(NUMBER_TO_VSTRING(solve_call,"*",err,error))// &
-          !       & "_load"//TRIM(NUMBER_TO_VSTRING(load_step,"*",err,error))// &
-          !       & "_iter"//TRIM(NUMBER_TO_VSTRING(firstIterationNumber,"*",err,error))//".part0.exnode"
+          !       & "mesh"//TRIM(NumberToVString(coupledMeshIdx,"*",err,error))// &
+          !       & "_solveCall"//TRIM(NumberToVString(solve_call,"*",err,error))// &
+          !       & "_load"//TRIM(NumberToVString(load_step,"*",err,error))// &
+          !       & "_iter"//TRIM(NumberToVString(firstIterationNumber,"*",err,error))//".part0.exnode"
           !     INQUIRE(FILE=CHAR(fileToCheck),EXIST=fileExists)
           !     IF(.NOT.fileExists) THEN
           !       EXIT
@@ -3436,10 +3408,10 @@ CONTAINS
           !     IF(ASSOCIATED(region))THEN
           !       NULLIFY(fields)
           !       fields=>region%FIELDS
-          !       fileName=directory//"mesh"//TRIM(NUMBER_TO_VSTRING(equationsSetIdx,"*",err,error))// &
-          !         & "_solveCall"//TRIM(NUMBER_TO_VSTRING(solve_call,"*",err,error))// &
-          !         & "_load"//TRIM(NUMBER_TO_VSTRING(load_step,"*",err,error))// &
-          !         & "_iter"//TRIM(NUMBER_TO_VSTRING(iterationNumber,"*",err,error))
+          !       fileName=directory//"mesh"//TRIM(NumberToVString(equationsSetIdx,"*",err,error))// &
+          !         & "_solveCall"//TRIM(NumberToVString(solve_call,"*",err,error))// &
+          !         & "_load"//TRIM(NumberToVString(load_step,"*",err,error))// &
+          !         & "_iter"//TRIM(NumberToVString(iterationNumber,"*",err,error))
           !       method="FORTRAN"
           !       CALL FIELD_IO_ELEMENTS_EXPORT(fields,fileName,method,err,error,*999)
           !       CALL FIELD_IO_NODES_EXPORT(fields,fileName,method,err,error,*999)
@@ -3450,7 +3422,7 @@ CONTAINS
           ! ENDIF
 
         CASE DEFAULT
-          localError="The problem type of "//TRIM(NUMBER_TO_VSTRING(problem%SPECIFICATION(2),"*",err,error))//" &
+          localError="The problem type of "//TRIM(NumberToVString(problem%SPECIFICATION(2),"*",err,error))//" &
             & is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -3458,7 +3430,7 @@ CONTAINS
           & PROBLEM_CLASSICAL_FIELD_CLASS,PROBLEM_FITTING_CLASS,PROBLEM_MODAL_CLASS,PROBLEM_MULTI_PHYSICS_CLASS)
         !Do nothing???
       CASE DEFAULT
-        localError="The problem class of "//TRIM(NUMBER_TO_VSTRING(problem%SPECIFICATION(1),"*",err,error))//" &
+        localError="The problem class of "//TRIM(NumberToVString(problem%SPECIFICATION(1),"*",err,error))//" &
           & is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -3479,12 +3451,12 @@ CONTAINS
               interfaceDatapoints=>pointsConnectivity%dataPoints
               IF(ASSOCIATED(pointsConnectivity)) THEN
                 DO coupledMeshIdx=1,interface%NUMBER_OF_COUPLED_MESHES
-                  filenameOutput=directory//"PointsConnectivity"//TRIM(NUMBER_TO_VSTRING(coupledMeshIdx,"*",err,error))// &
-                    & "_solveCall"//TRIM(NUMBER_TO_VSTRING(solve_call,"*",err,error))// &
-                    & "_load"//TRIM(NUMBER_TO_VSTRING(load_step,"*",err,error))// &
-                    & "_iter"//TRIM(NUMBER_TO_VSTRING(iterationNumber,"*",err,error))//".exdata"
+                  filenameOutput=directory//"PointsConnectivity"//TRIM(NumberToVString(coupledMeshIdx,"*",err,error))// &
+                    & "_solveCall"//TRIM(NumberToVString(solve_call,"*",err,error))// &
+                    & "_load"//TRIM(NumberToVString(load_step,"*",err,error))// &
+                    & "_iter"//TRIM(NumberToVString(iterationNumber,"*",err,error))//".exdata"
                   OPEN(UNIT=IUNIT,FILE=filenameOutput,STATUS="UNKNOWN",ACTION="WRITE",IOSTAT=ERR)
-                  groupname="PointsConnectivity"//TRIM(NUMBER_TO_VSTRING(coupledMeshIdx,"*",err,error))
+                  groupname="PointsConnectivity"//TRIM(NumberToVString(coupledMeshIdx,"*",err,error))
                   WRITE(IUNIT,'( '' Group name: '',A)') groupname
                   WRITE(IUNIT,'(1X,''#Fields=4'')')
                   WRITE(IUNIT,'(1X,''1) coordinates, coordinate, rectangular cartesian, #Components=3'')')
@@ -3549,7 +3521,7 @@ CONTAINS
           ENDIF
 
         CASE DEFAULT
-          localError="The problem type of "//TRIM(NUMBER_TO_VSTRING(problem%SPECIFICATION(2),"*",err,error))//" &
+          localError="The problem type of "//TRIM(NumberToVString(problem%SPECIFICATION(2),"*",err,error))//" &
             & is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -3557,7 +3529,7 @@ CONTAINS
           & PROBLEM_CLASSICAL_FIELD_CLASS,PROBLEM_FITTING_CLASS,PROBLEM_MODAL_CLASS,PROBLEM_MULTI_PHYSICS_CLASS)
         !Do nothing???
       CASE DEFAULT
-        localError="The problem class of "//TRIM(NUMBER_TO_VSTRING(problem%SPECIFICATION(1),"*",err,error))//" &
+        localError="The problem class of "//TRIM(NumberToVString(problem%SPECIFICATION(1),"*",err,error))//" &
           & is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -3603,7 +3575,7 @@ CONTAINS
 
     !SELECT CASE(problem%specification(1))
     !CASE DEFAULT
-    !  localError="The problem class of "//TRIM(NUMBER_TO_VSTRING(problem%specification(1),"*",err,error))//" is invalid."
+    !  localError="The problem class of "//TRIM(NumberToVString(problem%specification(1),"*",err,error))//" is invalid."
     !  CALL FlagError(localError,err,error,*999)
     !END SELECT
 
@@ -4334,7 +4306,7 @@ SUBROUTINE Problem_SolverConvergenceTestPetsc(snes,iterationNumber,xnorm,gnorm,f
           CASE(SOLVER_NEWTON_CONVERGENCE_DIFFERENTIATED_RATIO)
             CALL FlagError("Differentiated ratio convergence test not implemented.",err,error,*999)
           CASE DEFAULT
-            localError="The specified convergence test type of "//TRIM(NUMBER_TO_VSTRING( &
+            localError="The specified convergence test type of "//TRIM(NumberToVString( &
               & newtonSolver%convergenceTestType,"*",err,error))//" is invalid."
             CALL FlagError(localError,err,error,*999)
           END SELECT

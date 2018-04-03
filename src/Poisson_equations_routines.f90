@@ -107,7 +107,7 @@ MODULE POISSON_EQUATIONS_ROUTINES
 
   PUBLIC Poisson_ProblemSpecificationSet
 
-  PUBLIC POISSON_PRE_SOLVE,POISSON_POST_SOLVE
+  PUBLIC Poisson_PreSolve,Poisson_PostSolve
     
 CONTAINS
 
@@ -121,8 +121,8 @@ CONTAINS
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: component_idx,deriv_idx,dim_idx,local_ny,node_idx,NUMBER_OF_DIMENSIONS,variable_idx,variable_type,global_ny
     REAL(DP) :: VALUE,X(3)
@@ -188,7 +188,7 @@ CONTAINS
                                     CASE(GLOBAL_DERIV_S1_S2)
                                       CALL FlagError("Not implemented.",err,error,*999)
                                     CASE DEFAULT
-                                      localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                      localError="The global derivative index of "//TRIM(NumberToVString( &
                                         DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
                                         & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
@@ -205,7 +205,7 @@ CONTAINS
                                     CASE(GLOBAL_DERIV_S1_S2)
                                      CALL FlagError("Not implemented.",err,error,*999)
                                     CASE DEFAULT
-                                      localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                      localError="The global derivative index of "//TRIM(NumberToVString( &
                                         DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
                                         & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
@@ -229,7 +229,7 @@ CONTAINS
                                     CASE(GLOBAL_DERIV_S1_S2)
                                       CALL FlagError("Not implemented.",err,error,*999)
                                     CASE DEFAULT
-                                      localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                      localError="The global derivative index of "//TRIM(NumberToVString( &
                                         DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
                                         & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
@@ -245,13 +245,13 @@ CONTAINS
                                     CASE(GLOBAL_DERIV_S1_S2)
                                       CALL FlagError("Not implemented.",err,error,*999)
                                     CASE DEFAULT
-                                      localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                      localError="The global derivative index of "//TRIM(NumberToVString( &
                                         DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
                                         & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
                                     END SELECT
                                   CASE DEFAULT
-                                    localError="The variable type of "//TRIM(NUMBER_TO_VSTRING(variable_type,"*",err,error))// &
+                                    localError="The variable type of "//TRIM(NumberToVString(variable_type,"*",err,error))// &
                                       & " is invalid."
                                     CALL FlagError(localError,err,error,*999)
                                   END SELECT
@@ -275,7 +275,7 @@ CONTAINS
                                     CASE(GLOBAL_DERIV_S1_S2)
                                       CALL FlagError("Not implemented.",err,error,*999)
                                     CASE DEFAULT
-                                      localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                      localError="The global derivative index of "//TRIM(NumberToVString( &
                                         DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
                                         & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
@@ -291,19 +291,19 @@ CONTAINS
                                     CASE(GLOBAL_DERIV_S1_S2)
                                       CALL FlagError("Not implemented.",err,error,*999)
                                     CASE DEFAULT
-                                      localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                      localError="The global derivative index of "//TRIM(NumberToVString( &
                                         DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
                                         & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
                                     END SELECT
                                   CASE DEFAULT
-                                    localError="The variable type of "//TRIM(NUMBER_TO_VSTRING(variable_type,"*",err,error))// &
+                                    localError="The variable type of "//TRIM(NumberToVString(variable_type,"*",err,error))// &
                                       & " is invalid."
                                     CALL FlagError(localError,err,error,*999)
                                   END SELECT
                                 CASE DEFAULT
                                   localError="The analytic function type of "// &
-                                    & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
+                                    & TRIM(NumberToVString(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                                     & " is invalid."
                                   CALL FlagError(localError,err,error,*999)
                                 END SELECT
@@ -390,8 +390,8 @@ CONTAINS
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup a Poisson equation on.
     TYPE(EQUATIONS_SET_SETUP_TYPE), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: localError
     
@@ -419,7 +419,7 @@ CONTAINS
       CASE(EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE)
         CALL Poisson_EquationsSetNonlinearSourceSetup(EQUATIONS_SET,EQUATIONS_SET_SETUP,err,error,*999)
       CASE DEFAULT
-        localError="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+        localError="Equations set subtype "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
           & " is not valid for a Poisson equation type of a classical field equation set class."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -443,8 +443,8 @@ CONTAINS
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
     INTEGER(INTG), INTENT(IN) :: SOLUTION_METHOD !<The solution method to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: localError
     
@@ -473,7 +473,7 @@ CONTAINS
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The specified solution method of "//TRIM(NUMBER_TO_VSTRING(SOLUTION_METHOD,"*",err,error))//" is invalid."
+          localError="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",err,error))//" is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE(EQUATIONS_SET_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE)        
@@ -491,7 +491,7 @@ CONTAINS
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The specified solution method of "//TRIM(NUMBER_TO_VSTRING(SOLUTION_METHOD,"*",err,error))//" is invalid."
+          localError="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",err,error))//" is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE(EQUATIONS_SET_LINEAR_SOURCE_POISSON_SUBTYPE,EQUATIONS_SET_LINEAR_PRESSURE_POISSON_SUBTYPE, & 
@@ -511,7 +511,7 @@ CONTAINS
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The specified solution method of "//TRIM(NUMBER_TO_VSTRING(SOLUTION_METHOD,"*",err,error))//" is invalid."
+          localError="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",err,error))//" is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE(EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE)        
@@ -529,7 +529,7 @@ CONTAINS
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The specified solution method of "//TRIM(NUMBER_TO_VSTRING(SOLUTION_METHOD,"*",err,error))//" is invalid."
+          localError="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",err,error))//" is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE(EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE)        
@@ -547,11 +547,11 @@ CONTAINS
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The specified solution method of "//TRIM(NUMBER_TO_VSTRING(SOLUTION_METHOD,"*",err,error))//" is invalid."
+          localError="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",err,error))//" is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE DEFAULT
-        localError="Equations set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+        localError="Equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
           & " is not valid for a Poisson equation type of an classical field equations set class."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -636,8 +636,8 @@ CONTAINS
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup
     TYPE(EQUATIONS_SET_SETUP_TYPE), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: component_idx,GEOMETRIC_COMPONENT_NUMBER,GEOMETRIC_SCALING_TYPE,NUMBER_OF_DIMENSIONS, &
       & NUMBER_OF_MATERIALS_COMPONENTS,GEOMETRIC_MESH_COMPONENT,SOURCE_FIELD_NUMBER_OF_COMPONENTS,I, &
@@ -675,8 +675,8 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
 !!TODO: Check valid setup
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a velocity source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -738,7 +738,7 @@ CONTAINS
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
+                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                   & " is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
@@ -773,7 +773,7 @@ CONTAINS
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
+                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                   & " is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
@@ -793,8 +793,8 @@ CONTAINS
                 & FIELD_INPUT_LABEL_SET_TYPE,err,error,*999)
             ENDIF
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a velocity source Poisson equation"
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -912,8 +912,8 @@ CONTAINS
               CALL FlagError("Equations set materials is not associated.",err,error,*999)
             ENDIF
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a velocity source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -984,7 +984,7 @@ CONTAINS
                   !Other solutions not defined yet
                 CASE DEFAULT
                   localError="The solution method of " &
-                    & //TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// " is invalid."
+                    & //TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// " is invalid."
                   CALL FlagError(localError,err,error,*999)
                 END SELECT
               ELSE
@@ -1009,7 +1009,7 @@ CONTAINS
                   CALL FIELD_COMPONENT_INTERPOLATION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1, &
                     & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                 CASE DEFAULT
-                  localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD, &
+                  localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD, &
                     &"*",err,error))//" is invalid."
                   CALL FlagError(localError,err,error,*999)
                 END SELECT
@@ -1029,14 +1029,14 @@ CONTAINS
 !                   & FIELD_BOUNDARY_SET_TYPE,err,error,*999)
               ENDIF
             CASE DEFAULT
-              localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-                & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+              localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+                & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
                 & " is invalid for a standard Navier-Poisson fluid"
               CALL FlagError(localError,err,error,*999)
             END SELECT
           CASE DEFAULT
-            localError="The equation set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The equation set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a Navier-Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -1107,7 +1107,7 @@ CONTAINS
                         !Other solutions not defined yet
                       CASE DEFAULT
                         localError="The solution method of " &
-                          & //TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// " is invalid."
+                          & //TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// " is invalid."
                         CALL FlagError(localError,err,error,*999)
                     END SELECT 
                   ELSE
@@ -1131,7 +1131,7 @@ CONTAINS
                         CALL FIELD_COMPONENT_INTERPOLATION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1, &
                           & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                       CASE DEFAULT
-                        localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD, &
+                        localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD, &
                           &"*",err,error))//" is invalid."
                          CALL FlagError(localError,err,error,*999)
                     END SELECT
@@ -1148,14 +1148,14 @@ CONTAINS
                     & FIELD_BOUNDARY_SET_TYPE,err,error,*999)
                 ENDIF
               CASE DEFAULT
-                localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-                & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+                localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+                & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
                 & " is invalid for a standard PPE fluid"
                 CALL FlagError(localError,err,error,*999)
             END SELECT
           CASE DEFAULT
-            localError="The equation set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The equation set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a PPE equation."
              CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -1195,7 +1195,7 @@ CONTAINS
                     EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_2
                   CASE DEFAULT
                     localError="The specified analytic function type of "// &
-                      & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
+                      & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                       & " is invalid for a velocity source Poisson equation."
                     CALL FlagError(localError,err,error,*999)
                   END SELECT
@@ -1220,8 +1220,8 @@ CONTAINS
               CALL FlagError("Equations set analytic is not associated.",err,error,*999)
             ENDIF
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a velocity source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -1265,7 +1265,7 @@ CONTAINS
                   & err,error,*999)
               CASE DEFAULT
                 localError="The equations matrices sparsity type of "// &
-                  & TRIM(NUMBER_TO_VSTRING(equations%sparsityType,"*",err,error))//" is invalid."
+                  & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
               CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
@@ -1280,23 +1280,23 @@ CONTAINS
             CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
               CALL FlagError("Not implemented.",err,error,*999)
             CASE DEFAULT
-                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
+                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                 & " is invalid."
               CALL FlagError(localError,err,error,*999)
             END SELECT
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a velocity source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE DEFAULT
-          localError="The setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+          localError="The setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
             & " is invalid for a velocity source Poisson equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       ELSE
-        localError="The equations set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+        localError="The equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
           & " is not a velocity source Poisson equation subtype."
         CALL FlagError(localError,err,error,*999)
       ENDIF
@@ -1322,8 +1322,8 @@ CONTAINS
     !Argument variables
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solvers
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(SOLVER_TYPE), POINTER :: SOLVER_ALE_PPE, SOLVER_LAPLACE !<A pointer to the solvers
     TYPE(FIELD_TYPE), POINTER :: INDEPENDENT_FIELD_ALE_PPE
@@ -1456,7 +1456,7 @@ CONTAINS
                 CALL FlagError("Mesh motion calculation not successful for ALE problem.",err,error,*999)
               END IF
             CASE DEFAULT
-              localError="Problem subtype "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",err,error))// &
+              localError="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",err,error))// &
                 & " is not valid for a PPE equation fluid type of a fluid mechanics problem class."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -1485,8 +1485,8 @@ CONTAINS
     !Argument variables
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solvers
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(SOLVER_TYPE), POINTER :: SOLVER_FITTED, SOLVER_PPE !<A pointer to the solvers
     TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD_FITTED,SOURCE_FIELD_PPE
@@ -1571,20 +1571,20 @@ CONTAINS
                 IF(NUMBER_OF_DIMENSIONS_PPE==NUMBER_OF_DIMENSIONS_FITTED) THEN
                   IF(CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER/=1) THEN
                     DO I=1,NUMBER_OF_DIMENSIONS_PPE
-                      CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Save old source field... ",err,error,*999)
+                      CALL WriteString(GENERAL_OUTPUT_TYPE,"Save old source field... ",err,error,*999)
                       CALL Field_ParametersToFieldParametersCopy(SOURCE_FIELD_PPE, & 
                           & FIELD_U_VARIABLE_TYPE,FIELD_INPUT_DATA1_SET_TYPE,I,SOURCE_FIELD_PPE, & 
                           & FIELD_U_VARIABLE_TYPE,FIELD_INPUT_DATA2_SET_TYPE,I,err,error,*999)
                     END DO
                   ENDIF
-                  CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Update new source field... ",err,error,*999)
+                  CALL WriteString(GENERAL_OUTPUT_TYPE,"Update new source field... ",err,error,*999)
                   DO I=1,NUMBER_OF_DIMENSIONS_PPE
                     CALL Field_ParametersToFieldParametersCopy(DEPENDENT_FIELD_FITTED, & 
                         & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,I,SOURCE_FIELD_PPE, & 
                         & FIELD_U_VARIABLE_TYPE,FIELD_INPUT_DATA1_SET_TYPE,I,err,error,*999)
                   END DO
                   IF(CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER==1) THEN
-                    CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Old source field is new source field!... ",err,error,*999)
+                    CALL WriteString(GENERAL_OUTPUT_TYPE,"Old source field is new source field!... ",err,error,*999)
                     DO I=1,NUMBER_OF_DIMENSIONS_PPE
                       CALL Field_ParametersToFieldParametersCopy(SOURCE_FIELD_PPE, & 
                           & FIELD_U_VARIABLE_TYPE,FIELD_INPUT_DATA1_SET_TYPE,I,SOURCE_FIELD_PPE, & 
@@ -1609,7 +1609,7 @@ CONTAINS
                 CALL FlagError("Mesh update is not defined for non-dynamic problems.",err,error,*999)
               END IF
             CASE DEFAULT
-              localError="Problem subtype "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",err,error))// &
+              localError="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",err,error))// &
                 & " is not valid for a PPE equation fluid type of a fluid mechanics problem class."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -1639,8 +1639,8 @@ CONTAINS
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup
     TYPE(EQUATIONS_SET_SETUP_TYPE), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: component_idx,GEOMETRIC_COMPONENT_NUMBER,GEOMETRIC_SCALING_TYPE,NUMBER_OF_DIMENSIONS, &
       & NUMBER_OF_MATERIALS_COMPONENTS, GEOMETRIC_MESH_COMPONENT,SOURCE_FIELD_NUMBER_OF_COMPONENTS,I, &
@@ -1678,8 +1678,8 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
 !!TODO: Check valid setup
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -1741,7 +1741,7 @@ CONTAINS
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
+                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                   & " is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
@@ -1776,7 +1776,7 @@ CONTAINS
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
+                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                   & " is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
@@ -1786,8 +1786,8 @@ CONTAINS
               CALL FIELD_CREATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,err,error,*999)
             ENDIF
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear source Poisson equation"
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -1905,8 +1905,8 @@ CONTAINS
               CALL FlagError("Equations set materials is not associated.",err,error,*999)
             ENDIF
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -1975,7 +1975,7 @@ CONTAINS
                         !Other solutions not defined yet
                       CASE DEFAULT
                         localError="The solution method of " &
-                          & //TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// " is invalid."
+                          & //TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// " is invalid."
                         CALL FlagError(localError,err,error,*999)
                     END SELECT 
                   ELSE
@@ -2000,7 +2000,7 @@ CONTAINS
                         CALL FIELD_COMPONENT_INTERPOLATION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1, &
                           & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                       CASE DEFAULT
-                        localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD, &
+                        localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD, &
                           &"*",err,error))//" is invalid."
                          CALL FlagError(localError,err,error,*999)
                     END SELECT
@@ -2011,14 +2011,14 @@ CONTAINS
                     CALL FIELD_CREATE_FINISH(EQUATIONS_SET%SOURCE%SOURCE_FIELD,err,error,*999)
                   ENDIF
                 CASE DEFAULT
-                  localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-                  & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+                  localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+                  & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
                   & " is invalid for a linear Poisson subtype"
                   CALL FlagError(localError,err,error,*999)
               END SELECT
             CASE DEFAULT
-              localError="The equation set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
-                & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+              localError="The equation set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+                & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
                 & " is invalid for a linear Poisson equation."
                CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -2038,9 +2038,9 @@ CONTAINS
                       !Check that we are in 2D
                       IF(NUMBER_OF_DIMENSIONS/=2) THEN
                         localError="The number of geometric dimensions of "// &
-                          & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                          & TRIM(NumberToVString(NUMBER_OF_DIMENSIONS,"*",err,error))// &
                           & " is invalid. The analytic function type of "// &
-                          & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
+                          & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                           & " requires that there be 2 geometric dimensions."
                         CALL FlagError(localError,err,error,*999)
                       ENDIF
@@ -2049,9 +2049,9 @@ CONTAINS
                       EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_1
                     ELSE
                       localError="The equations set subtype of "// &
-                        & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+                        & TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
-                        & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
+                        & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that the equations set subtype be an exponential source Poisson equation."
                       CALL FlagError(localError,err,error,*999)
                     ENDIF
@@ -2061,9 +2061,9 @@ CONTAINS
                       !Check that we are in 3D
                       IF(NUMBER_OF_DIMENSIONS/=3) THEN
                         localError="The number of geometric dimensions of "// &
-                          & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                          & TRIM(NumberToVString(NUMBER_OF_DIMENSIONS,"*",err,error))// &
                           & " is invalid. The analytic function type of "// &
-                          & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
+                          & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                           & " requires that there be 3 geometric dimensions."
                         CALL FlagError(localError,err,error,*999)
                       ENDIF
@@ -2072,15 +2072,15 @@ CONTAINS
                       EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_1
                     ELSE
                       localError="The equations set subtype of "// &
-                        & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+                        & TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
-                        & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
+                        & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that the equations set subtype be an exponential source Poisson equation."
                       CALL FlagError(localError,err,error,*999)
                     ENDIF
                   CASE DEFAULT
                     localError="The specified analytic function type of "// &
-                      & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
+                      & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                       & " is invalid for a linear source Poisson equation."
                     CALL FlagError(localError,err,error,*999)
                   END SELECT
@@ -2105,8 +2105,8 @@ CONTAINS
               CALL FlagError("Equations set analytic is not associated.",err,error,*999)
             ENDIF
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -2147,7 +2147,7 @@ CONTAINS
                 CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
               CASE DEFAULT
                 localError="The equations matrices sparsity type of "// &
-                  & TRIM(NUMBER_TO_VSTRING(equations%sparsityType,"*",err,error))//" is invalid."
+                  & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
               CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
@@ -2162,23 +2162,23 @@ CONTAINS
             CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
               CALL FlagError("Not implemented.",err,error,*999)
             CASE DEFAULT
-                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
+                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                 & " is invalid."
               CALL FlagError(localError,err,error,*999)
             END SELECT
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE DEFAULT
-          localError="The setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+          localError="The setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
             & " is invalid for a linear source Poisson equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       ELSE
-        localError="The equations set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+        localError="The equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
           & " is not a linear source Poisson equation subtype."
         CALL FlagError(localError,err,error,*999)
       ENDIF
@@ -2204,8 +2204,8 @@ CONTAINS
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup
     TYPE(EQUATIONS_SET_SETUP_TYPE), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: component_idx,GEOMETRIC_COMPONENT_NUMBER,GEOMETRIC_SCALING_TYPE,NUMBER_OF_DIMENSIONS, &
       & NUMBER_OF_MATERIALS_COMPONENTS, GEOMETRIC_MESH_COMPONENT,SOURCE_FIELD_NUMBER_OF_COMPONENTS, &
@@ -2236,8 +2236,8 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
 !!TODO: Check valid setup
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for an extracellular bidomain Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -2316,7 +2316,7 @@ CONTAINS
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
+                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                   & " is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
@@ -2355,7 +2355,7 @@ CONTAINS
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
+                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                   & " is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
@@ -2365,8 +2365,8 @@ CONTAINS
               CALL FIELD_CREATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,err,error,*999)
             ENDIF
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for an extracellular bidomain Poisson equation"
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -2474,8 +2474,8 @@ CONTAINS
               CALL FlagError("Equations set materials is not associated.",err,error,*999)
             ENDIF
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for an extrcellular bidomain Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -2540,7 +2540,7 @@ CONTAINS
                         !Other solutions not defined yet
                       CASE DEFAULT
                         localError="The solution method of " &
-                          & //TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// " is invalid."
+                          & //TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// " is invalid."
                         CALL FlagError(localError,err,error,*999)
                     END SELECT 
                   ELSE
@@ -2561,7 +2561,7 @@ CONTAINS
                         CALL FIELD_COMPONENT_INTERPOLATION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1, &
                           & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                       CASE DEFAULT
-                        localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD, &
+                        localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD, &
                           &"*",err,error))//" is invalid."
                          CALL FlagError(localError,err,error,*999)
                     END SELECT
@@ -2573,14 +2573,14 @@ CONTAINS
                     CALL FIELD_CREATE_FINISH(EQUATIONS_SET%SOURCE%SOURCE_FIELD,err,error,*999)
                   ENDIF
                 CASE DEFAULT
-                  localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-                  & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+                  localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+                  & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
                   & " is invalid for an extracellular bidomain Poisson subtype"
                   CALL FlagError(localError,err,error,*999)
               END SELECT
             CASE DEFAULT
-              localError="The equation set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
-                & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+              localError="The equation set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+                & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
                 & " is invalid for an extracellular bidomain Poisson equation."
                CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -2601,9 +2601,9 @@ CONTAINS
                       !Check that we are in 2D
                       IF(NUMBER_OF_DIMENSIONS/=2) THEN
                         localError="The number of geometric dimensions of "// &
-                          & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                          & TRIM(NumberToVString(NUMBER_OF_DIMENSIONS,"*",err,error))// &
                           & " is invalid. The analytic function type of "// &
-                          & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
+                          & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                           & " requires that there be 2 geometric dimensions."
                         CALL FlagError(localError,err,error,*999)
                       ENDIF
@@ -2612,9 +2612,9 @@ CONTAINS
                       EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_1
                     ELSE
                       localError="The equations set subtype of "// &
-                        & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+                        & TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
-                        & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
+                        & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that the equations set subtype be an exponential source Poisson equation."
                       CALL FlagError(localError,err,error,*999)
                     ENDIF
@@ -2624,9 +2624,9 @@ CONTAINS
                       !Check that we are in 3D
                       IF(NUMBER_OF_DIMENSIONS/=3) THEN
                         localError="The number of geometric dimensions of "// &
-                          & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                          & TRIM(NumberToVString(NUMBER_OF_DIMENSIONS,"*",err,error))// &
                           & " is invalid. The analytic function type of "// &
-                          & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
+                          & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                           & " requires that there be 3 geometric dimensions."
                         CALL FlagError(localError,err,error,*999)
                       ENDIF
@@ -2635,15 +2635,15 @@ CONTAINS
                       EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_1
                     ELSE
                       localError="The equations set subtype of "// &
-                        & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+                        & TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
-                        & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
+                        & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that the equations set subtype be an exponential source Poisson equation."
                       CALL FlagError(localError,err,error,*999)
                     ENDIF
                   CASE DEFAULT
                     localError="The specified analytic function type of "// &
-                      & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
+                      & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                       & " is invalid for a linear source Poisson equation."
                     CALL FlagError(localError,err,error,*999)
                   END SELECT
@@ -2668,8 +2668,8 @@ CONTAINS
               CALL FlagError("Equations set analytic is not associated.",err,error,*999)
             ENDIF
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a extracellular bidomain source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -2704,7 +2704,7 @@ CONTAINS
                 CALL EquationsMapping_SourceVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)             
               ELSE
                 localError="The third equations set specification of "// &
-                  & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))//" is invalid."
+                  & TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))//" is invalid."
                 CALL FlagError(localError,err,error,*999)
               ENDIF    
               CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
@@ -2718,7 +2718,7 @@ CONTAINS
                 CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
               CASE DEFAULT
                 localError="The equations matrices sparsity type of "// &
-                  & TRIM(NUMBER_TO_VSTRING(equations%sparsityType,"*",err,error))//" is invalid."
+                  & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
               CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
@@ -2733,23 +2733,23 @@ CONTAINS
             CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
               CALL FlagError("Not implemented.",err,error,*999)
             CASE DEFAULT
-                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
+                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                 & " is invalid."
               CALL FlagError(localError,err,error,*999)
             END SELECT
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE DEFAULT
-          localError="The setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+          localError="The setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
             & " is invalid for a extracellular bidomain source Poisson equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       ELSE
-        localError="The equations set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+        localError="The equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
           & " is not a extracellular bidomain source Poisson equation subtype."
         CALL FlagError(localError,err,error,*999)
       ENDIF
@@ -2775,8 +2775,8 @@ CONTAINS
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup
     TYPE(EQUATIONS_SET_SETUP_TYPE), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: component_idx,GEOMETRIC_COMPONENT_NUMBER,GEOMETRIC_SCALING_TYPE,NUMBER_OF_DIMENSIONS, &
       & NUMBER_OF_MATERIALS_COMPONENTS
@@ -2813,8 +2813,8 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
 !!TODO: Check valid setup
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a nonlinear source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -2876,7 +2876,7 @@ CONTAINS
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
+                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                   & " is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
@@ -2911,7 +2911,7 @@ CONTAINS
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
+                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                   & " is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
@@ -2921,8 +2921,8 @@ CONTAINS
               CALL FIELD_CREATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,err,error,*999)
             ENDIF
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a nonlinear source Poisson equation"
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -3037,8 +3037,8 @@ CONTAINS
               CALL FlagError("Equations set materials is not associated.",err,error,*999)
             ENDIF
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -3050,8 +3050,8 @@ CONTAINS
             !Do nothing
             !? Maybe set finished flag????
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a nonlinear source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -3071,9 +3071,9 @@ CONTAINS
                       !Check that we are in 2D
                       IF(NUMBER_OF_DIMENSIONS/=2) THEN
                         localError="The number of geometric dimensions of "// &
-                          & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                          & TRIM(NumberToVString(NUMBER_OF_DIMENSIONS,"*",err,error))// &
                           & " is invalid. The analytic function type of "// &
-                          & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
+                          & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                           & " requires that there be 2 geometric dimensions."
                         CALL FlagError(localError,err,error,*999)
                       ENDIF
@@ -3082,9 +3082,9 @@ CONTAINS
                       EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_1
                     ELSE
                       localError="The equations set subtype of "// &
-                        & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+                        & TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
-                        & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
+                        & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that the equations set subtype be an exponential source Poisson equation."
                       CALL FlagError(localError,err,error,*999)
                     ENDIF
@@ -3094,9 +3094,9 @@ CONTAINS
                       !Check that we are in 3D
                       IF(NUMBER_OF_DIMENSIONS/=3) THEN
                         localError="The number of geometric dimensions of "// &
-                          & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                          & TRIM(NumberToVString(NUMBER_OF_DIMENSIONS,"*",err,error))// &
                           & " is invalid. The analytic function type of "// &
-                          & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
+                          & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                           & " requires that there be 3 geometric dimensions."
                         CALL FlagError(localError,err,error,*999)
                       ENDIF
@@ -3105,15 +3105,15 @@ CONTAINS
                       EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_1
                     ELSE
                       localError="The equations set subtype of "// &
-                        & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+                        & TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
-                        & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
+                        & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that the equations set subtype be an exponential source Poisson equation."
                       CALL FlagError(localError,err,error,*999)
                     ENDIF
                   CASE DEFAULT
                     localError="The specified analytic function type of "// &
-                      & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
+                      & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                       & " is invalid for a nonlinear source Poisson equation."
                     CALL FlagError(localError,err,error,*999)
                   END SELECT
@@ -3138,8 +3138,8 @@ CONTAINS
               CALL FlagError("Equations set analytic is not associated.",err,error,*999)
             ENDIF
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a nonlinear source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -3183,7 +3183,7 @@ CONTAINS
                 CALL EquationsMatrices_NonlinearStructureTypeSet(vectorMatrices,EQUATIONS_MATRIX_FEM_STRUCTURE,err,error,*999)
               CASE DEFAULT
                 localError="The equations matrices sparsity type of "// &
-                  & TRIM(NUMBER_TO_VSTRING(equations%sparsityType,"*",err,error))//" is invalid."
+                  & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
               CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
@@ -3198,23 +3198,23 @@ CONTAINS
             CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
               CALL FlagError("Not implemented.",err,error,*999)
             CASE DEFAULT
-                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
+                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                 & " is invalid."
               CALL FlagError(localError,err,error,*999)
             END SELECT
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a nonlinear source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE DEFAULT
-          localError="The setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+          localError="The setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
             & " is invalid for a nonlinear source Poisson equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       ELSE
-        localError="The equations set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+        localError="The equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
           & " is not a nonlinear source Poisson equation subtype."
         CALL FlagError(localError,err,error,*999)
       ENDIF
@@ -3240,8 +3240,8 @@ CONTAINS
     !Argument variables
     TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem set to setup a Poisson equation on.
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: localError
     
@@ -3264,7 +3264,7 @@ CONTAINS
       CASE(PROBLEM_NONLINEAR_SOURCE_POISSON_SUBTYPE)
         CALL Poisson_ProblemNonlinearSourceSetup(PROBLEM,PROBLEM_SETUP,err,error,*999)
       CASE DEFAULT
-        localError="Problem subtype "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",err,error))// &
+        localError="Problem subtype "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
           & " is not valid for a Poisson equation type of a classical field problem class."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -3288,8 +3288,8 @@ CONTAINS
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to perform the finite element calculations on
     INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to calculate
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) FIELD_VAR_TYPE,ng,mh,mhs,mi,ms,nh,nhs,ni,ns,I,J,K,L,H,element_node_identity !,k1sum,k2sum
     REAL(DP) :: RWG,SUM,PGMSI(3),PGNSI(3),SUM2,DXI_DX(3,3),DELTA_T,DXI_DX_DX(3,3),PHINS
@@ -4031,7 +4031,7 @@ CONTAINS
         CASE(EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE)
           CALL FlagError("Can not calculate finite element stiffness matrices for a nonlinear source.",err,error,*999)
         CASE DEFAULT
-          localError="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+          localError="Equations set subtype "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
             & " is not valid for a Poisson equation type of a classical field equations set class."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -4058,8 +4058,8 @@ CONTAINS
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to perform the finite element Jacobian evaluation on
     INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to evaluate the Jacobian for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) FIELD_VAR_TYPE,ng,mh,mhs,ms,nh,nhs,ns
     REAL(DP) :: B_PARAM,C_PARAM,RWG,U_VALUE,VALUE
@@ -4223,7 +4223,7 @@ CONTAINS
             ENDDO !ng
           ENDIF
         CASE DEFAULT
-          localError="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+          localError="Equations set subtype "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
             & " is not valid for a Poisson equation type of a classical field equations set class."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -4252,8 +4252,8 @@ CONTAINS
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to perform the finite element calculations on
     INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to evaluate the residual for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) FIELD_VAR_TYPE,ng,mh,mhs,ms,nj,nh,nhs,ni,ns
     REAL(DP) :: A_PARAM,B_PARAM,C_PARAM,K_PARAM,RWG,SUM1,SUM2,PGMJ(3),PGNJ(3),U_VALUE,WG
@@ -4508,7 +4508,7 @@ CONTAINS
                 & VALUES(1,NO_PART_DERIV)
 !!TODO: Handle floating point exceptions better
               IF((C_PARAM*U_VALUE)>20000.0_DP) THEN
-                localError="The value of "//TRIM(NUMBER_TO_VSTRING(C_PARAM*U_VALUE,"*",err,error))// &
+                localError="The value of "//TRIM(NumberToVString(C_PARAM*U_VALUE,"*",err,error))// &
                   & " is out of range for an exponential function."
                 CALL FlagError(localError,err,error,*999)
               ENDIF
@@ -4524,7 +4524,7 @@ CONTAINS
             ENDIF
           ENDDO !ng
         CASE DEFAULT
-          localError="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+          localError="Equations set subtype "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
             & " is not valid for a Poisson equation type of a classical field equations set class."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -4609,8 +4609,8 @@ CONTAINS
     !Argument variables
     TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem to setup
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
@@ -4639,8 +4639,8 @@ CONTAINS
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Do nothing????
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a extracellular bidomain Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -4655,8 +4655,8 @@ CONTAINS
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)            
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a extracellular bidomain Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -4681,8 +4681,8 @@ CONTAINS
             !Finish the solvers creation
             CALL SOLVERS_CREATE_FINISH(SOLVERS,err,error,*999)
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a extracellular bidomain Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -4711,18 +4711,18 @@ CONTAINS
             !Finish the solver equations creation
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,err,error,*999)             
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a extracellular bidomain Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE DEFAULT
-          localError="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+          localError="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
             & " is invalid for a extracellular bidomain Poisson equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       ELSE
-        localError="The problem subtype of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",err,error))// &
+        localError="The problem subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
           & " does not equal a extracellular bidomain Poisson equation subtype."
         CALL FlagError(localError,err,error,*999)
       ENDIF
@@ -4748,8 +4748,8 @@ CONTAINS
     !Argument variables
     TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem to setup
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
@@ -4778,8 +4778,8 @@ CONTAINS
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Do nothing????
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -4794,8 +4794,8 @@ CONTAINS
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)            
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -4820,8 +4820,8 @@ CONTAINS
             !Finish the solvers creation
             CALL SOLVERS_CREATE_FINISH(SOLVERS,err,error,*999)
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -4850,18 +4850,18 @@ CONTAINS
             !Finish the solver equations creation
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,err,error,*999)             
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE DEFAULT
-          localError="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+          localError="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
             & " is invalid for a linear source Poisson equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       ELSE
-        localError="The problem subtype of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",err,error))// &
+        localError="The problem subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
           & " does not equal a linear source Poisson equation subtype."
         CALL FlagError(localError,err,error,*999)
       ENDIF
@@ -4887,8 +4887,8 @@ CONTAINS
     !Argument variables
     TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem to setup
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT,SUB_LOOP
     TYPE(SOLVER_TYPE), POINTER :: SOLVER,FITTING_SOLVER
@@ -4921,8 +4921,8 @@ CONTAINS
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Do nothing????
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -4946,8 +4946,8 @@ CONTAINS
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)            
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -4976,8 +4976,8 @@ CONTAINS
             !Finish the solvers creation
             CALL SOLVERS_CREATE_FINISH(SOLVERS,err,error,*999)
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -5012,13 +5012,13 @@ CONTAINS
             !Finish the solver equations creation
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,err,error,*999)             
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE DEFAULT
-          localError="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+          localError="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
             & " is invalid for a linear source Poisson equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -5031,8 +5031,8 @@ CONTAINS
               CASE(PROBLEM_SETUP_FINISH_ACTION)
                 !Do nothing????
               CASE DEFAULT
-                localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-                  & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+                localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+                  & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
                   & " is invalid for a fitted PPE problem."
                 CALL FlagError(localError,err,error,*999)
             END SELECT
@@ -5048,8 +5048,8 @@ CONTAINS
                 CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
                 CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)            
               CASE DEFAULT
-                localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-                  & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+                localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+                  & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
                   & " is invalid for a Pressure Poisson problem."
                 CALL FlagError(localError,err,error,*999)
             END SELECT
@@ -5077,8 +5077,8 @@ CONTAINS
                 !Finish the solvers creation
                 CALL SOLVERS_CREATE_FINISH(SOLVERS,err,error,*999)
               CASE DEFAULT
-                localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-                 & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+                localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+                 & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
                  & " is invalid for a fitted PPE problem."
                 CALL FlagError(localError,err,error,*999)
             END SELECT
@@ -5117,18 +5117,18 @@ CONTAINS
                 !Finish the solver equations creation
                 CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,err,error,*999)             
               CASE DEFAULT
-                localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-                  & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+                localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+                  & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
                   & " is invalid for a fitted PPE problem."
                 CALL FlagError(localError,err,error,*999)
             END SELECT
           CASE DEFAULT
-            localError="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a fitted PPE problem."
             CALL FlagError(localError,err,error,*999)
         END SELECT
       ELSE
-        localError="The problem subtype of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",err,error))// &
+        localError="The problem subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
           & " does not equal a linear source Poisson equation subtype."
         CALL FlagError(localError,err,error,*999)
       ENDIF
@@ -5154,8 +5154,8 @@ CONTAINS
     !Argument variables
     TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem to setup
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
@@ -5184,8 +5184,8 @@ CONTAINS
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Do nothing
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a nonlinear source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -5200,8 +5200,8 @@ CONTAINS
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)            
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a nonlinear source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -5225,8 +5225,8 @@ CONTAINS
             !Finish the solvers creation
             CALL SOLVERS_CREATE_FINISH(SOLVERS,err,error,*999)
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a nonlinear source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -5255,18 +5255,18 @@ CONTAINS
             !Finish the solver equations creation
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,err,error,*999)             
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a nonlinear source Poisson equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE DEFAULT
-          localError="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+          localError="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
             & " is invalid for a nonlinear source Poisson equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       ELSE
-        localError="The problem subtype of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",err,error))// &
+        localError="The problem subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
           & " does not equal a nonlinear source Poisson equation subtype."
         CALL FlagError(localError,err,error,*999)
       ENDIF
@@ -5285,204 +5285,194 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets up the Poisson problem post solve.
-  SUBROUTINE POISSON_POST_SOLVE(CONTROL_LOOP,SOLVER,err,error,*)
+  !>Performs post-solve operations for a Poisson problem
+  SUBROUTINE Poisson_PostSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER!<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER2 !<A pointer to the solver
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
+    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(SOLVER_TYPE), POINTER :: solver2
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("POISSON_POST_SOLVE",err,error,*999)
+    ENTERS("oisson_PostSolve",err,error,*999)
+    
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    IF(.NOT.ALLOCATED(problem%specification)) CALL FlagError("Problem specification is not allocated.",err,error,*999)
+    IF(SIZE(problem%specification,1)<3) &
+      & CALL FlagError("Problem specification must have at least three entries for a Poission problem.",err,error,*999)
+    
     NULLIFY(SOLVER2)
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(ASSOCIATED(SOLVER)) THEN
-        IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN 
-          IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
-            CALL FlagError("Problem specification is not allocated.",err,error,*999)
-          ELSE IF(SIZE(CONTROL_LOOP%PROBLEM%SPECIFICATION,1)<3) THEN
-            CALL FlagError("Problem specification must have three entries for a Poisson problem.",err,error,*999)
-          END IF
-          SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-            CASE(PROBLEM_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE)
-              ! do nothing
-            CASE(PROBLEM_LINEAR_SOURCE_POISSON_SUBTYPE)
-              ! do nothing
-            CASE(PROBLEM_NONLINEAR_SOURCE_POISSON_SUBTYPE)
-              ! do nothing
-            CASE(PROBLEM_LINEAR_PRESSURE_POISSON_SUBTYPE,PROBLEM_NONLINEAR_PRESSURE_POISSON_SUBTYPE, &
-              & PROBLEM_ALE_PRESSURE_POISSON_SUBTYPE)
-              CALL POISSON_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,err,error,*999)
-            CASE(PROBLEM_FITTED_PRESSURE_POISSON_SUBTYPE)
-              !Post solve for the linear solver
-              IF(SOLVER%GLOBAL_NUMBER==1) THEN
-                !do nothing for fitting problems
-                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Transferring fitting results to PPE... ",err,error,*999)
-              ELSE IF (SOLVER%GLOBAL_NUMBER==2) THEN
-                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"PPE post solve... ",err,error,*999)
-                CALL POISSON_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,err,error,*999)
-              ENDIF
-            CASE DEFAULT
-              localError="Problem subtype "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",err,error))// &
-                & " is not valid for a Poisson type of a classical field problem class."
-              CALL FlagError(localError,err,error,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("Problem is not associated.",err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Solver is not associated.",err,error,*999)
+    SELECT CASE(problem%specification(3))
+    CASE(PROBLEM_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_LINEAR_SOURCE_POISSON_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_NONLINEAR_SOURCE_POISSON_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_LINEAR_PRESSURE_POISSON_SUBTYPE,PROBLEM_NONLINEAR_PRESSURE_POISSON_SUBTYPE, &
+      & PROBLEM_ALE_PRESSURE_POISSON_SUBTYPE)
+      CALL POISSON_POST_SOLVE_OUTPUT_DATA(controlLoop,solver,err,error,*999)
+    CASE(PROBLEM_FITTED_PRESSURE_POISSON_SUBTYPE)
+      !Post solve for the linear solver
+      IF(solver%GLOBAL_NUMBER==1) THEN
+        !do nothing for fitting problems
+        CALL WriteString(GENERAL_OUTPUT_TYPE,"Transferring fitting results to PPE... ",err,error,*999)
+      ELSE IF (solver%GLOBAL_NUMBER==2) THEN
+        CALL WriteString(GENERAL_OUTPUT_TYPE,"PPE post solve... ",err,error,*999)
+        CALL POISSON_POST_SOLVE_OUTPUT_DATA(controlLoop,solver,err,error,*999)
       ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",err,error,*999)
-    ENDIF
-
-    EXITS("POISSON_POST_SOLVE")
+    CASE DEFAULT
+      localError="Problem subtype "//TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
+        & " is not valid for a Poisson type of a classical field problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+ 
+    EXITS("Poisson_PostSolve")
     RETURN
-999 ERRORSEXITS("POISSON_POST_SOLVE",err,error)
+999 ERRORSEXITS("Poisson_PostSolve",err,error)
     RETURN 1
-  END SUBROUTINE POISSON_POST_SOLVE
+    
+  END SUBROUTINE Poisson_PostSolve
 
   !
   !================================================================================================================================
   !
 
 
-  !>Sets up the Poisson problem pre solve.
-  SUBROUTINE POISSON_PRE_SOLVE(CONTROL_LOOP,SOLVER,err,error,*)
+  !>Performs pre-solver operations for the Poisson problem.
+  SUBROUTINE Poisson_PreSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER2 !<A pointer to the solvers
-    TYPE(VARYING_STRING) :: localError
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop 
     TYPE(EquationsType), POINTER :: EQUATIONS
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
-
-    ENTERS("POISSON_PRE_SOLVE",err,error,*999)
-    NULLIFY(SOLVER2)
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET 
+    TYPE(PROBLEM_TYPE), POINTER :: problem 
+    TYPE(SOLVER_TYPE), POINTER :: solver2 
+    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS 
+    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING 
+    TYPE(VARYING_STRING) :: localError
  
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(ASSOCIATED(SOLVER)) THEN
-        IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-          IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
-            CALL FlagError("Problem specification is not allocated.",err,error,*999)
-          ELSE IF(SIZE(CONTROL_LOOP%PROBLEM%SPECIFICATION,1)<3) THEN
-            CALL FlagError("Problem specification must have three entries for a Poisson problem.",err,error,*999)
-          END IF
-          SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-            CASE(PROBLEM_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE)
-              ! do nothing
-            CASE(PROBLEM_LINEAR_SOURCE_POISSON_SUBTYPE)
-              ! do nothing
-            CASE(PROBLEM_NONLINEAR_SOURCE_POISSON_SUBTYPE)
-              ! do nothing
-            CASE(PROBLEM_LINEAR_PRESSURE_POISSON_SUBTYPE,PROBLEM_NONLINEAR_PRESSURE_POISSON_SUBTYPE)
-              IF(CONTROL_LOOP%WHILE_LOOP%ITERATION_NUMBER==1)THEN
-                SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
-                IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                  SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
-                  EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
-                  IF(ASSOCIATED(EQUATIONS)) THEN
-                    EQUATIONS_SET=>equations%equationsSet
-                    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                      IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
-                        IF(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_2) THEN
-                          !do nothing
-                        ELSE
-                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Read in vector data... ",err,error,*999)
-                          !Update indpendent data fields
-                          CALL POISSON_PRE_SOLVE_UPDATE_INPUT_DATA(CONTROL_LOOP,SOLVER,err,error,*999)
-                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"While loop... ",err,error,*999)
-                        ENDIF
-                      ELSE
-                        CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Read in vector data... ",err,error,*999)
-                        !Update indpendent data fields
-                        CALL POISSON_PRE_SOLVE_UPDATE_INPUT_DATA(CONTROL_LOOP,SOLVER,err,error,*999)
-                        CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"While loop... ",err,error,*999)
-                      ENDIF 
-                    ENDIF
-                  ENDIF
+    ENTERS("Poisson_PreSolve",err,error,*999)
+    
+    NULLIFY(solver2)
+    
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    IF(.NOT.ALLOCATED(problem%specification)) CALL FlagError("Problem specification is not allocated.",err,error,*999)
+    IF(SIZE(problem%specification,1)<3) &
+      & CALL FlagError("Problem specification must have at least three entries for a Poission problem.",err,error,*999)
+  
+    SELECT CASE(problem%specification(3))
+    CASE(PROBLEM_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_LINEAR_SOURCE_POISSON_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_NONLINEAR_SOURCE_POISSON_SUBTYPE)
+      ! do nothing
+    CASE(PROBLEM_LINEAR_PRESSURE_POISSON_SUBTYPE,PROBLEM_NONLINEAR_PRESSURE_POISSON_SUBTYPE)
+      IF(controlLoop%WHILE_LOOP%ITERATION_NUMBER==1)THEN
+        SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+        IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
+          SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
+          EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
+          IF(ASSOCIATED(EQUATIONS)) THEN
+            EQUATIONS_SET=>equations%equationsSet
+            IF(ASSOCIATED(EQUATIONS_SET)) THEN
+              IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
+                IF(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_2) THEN
+                  !do nothing
+                ELSE
+                  CALL WriteString(GENERAL_OUTPUT_TYPE,"Read in vector data... ",err,error,*999)
+                  !Update indpendent data fields
+                  CALL POISSON_PRE_SOLVE_UPDATE_INPUT_DATA(CONTROLLOOP,SOLVER,err,error,*999)
+                  CALL WriteString(GENERAL_OUTPUT_TYPE,"While loop... ",err,error,*999)
                 ENDIF
               ELSE
-                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"While loop... ",err,error,*999)
+                CALL WriteString(GENERAL_OUTPUT_TYPE,"Read in vector data... ",err,error,*999)
+                !Update indpendent data fields
+                CALL POISSON_PRE_SOLVE_UPDATE_INPUT_DATA(controlLoop,SOLVER,err,error,*999)
+                CALL WriteString(GENERAL_OUTPUT_TYPE,"While loop... ",err,error,*999)
               ENDIF
-            CASE(PROBLEM_FITTED_PRESSURE_POISSON_SUBTYPE)
-              !Pre solve for the linear solver: fitting problem
-              IF(SOLVER%GLOBAL_NUMBER==1) THEN
-                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Read in vector data... ",err,error,*999)
-                !Update independent data fields
-                CALL POISSON_PRE_SOLVE_UPDATE_INPUT_DATA(CONTROL_LOOP,SOLVER,err,error,*999)
-                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Solving fitting problem... ",err,error,*999)
-              ELSE IF(SOLVER%GLOBAL_NUMBER==2) THEN
-                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Update source field ... ",err,error,*999)
-                  !First update source field for PPE calculation
-                CALL POISSON_PRE_SOLVE_UPDATE_PPE_SOURCE(CONTROL_LOOP,SOLVER,err,error,*999)
-                  !Read in the lable information
-!                 CALL POISSON_PRE_SOLVE_UPDATE_INPUT_DATA(CONTROL_LOOP,SOLVER,err,error,*999)
-                CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Solving PPE problem... ",err,error,*999)
-              ELSE
-                CALL FlagError("Solver global number not associated for PPE problem.",err,error,*999)
-              ENDIF
-            CASE(PROBLEM_ALE_PRESSURE_POISSON_SUBTYPE)
-              IF(CONTROL_LOOP%WHILE_LOOP%ITERATION_NUMBER==1)THEN
-                SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
-                IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                  SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
-                  EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
-                  IF(ASSOCIATED(EQUATIONS)) THEN
-                    EQUATIONS_SET=>equations%equationsSet
-                    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                      IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
-                        IF(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_2) THEN
-                          !do nothing
-                        ELSE
-                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Read in vector data... ",err,error,*999)
-                          !Update indpendent data fields
-                          CALL POISSON_PRE_SOLVE_UPDATE_INPUT_DATA(CONTROL_LOOP,SOLVER,err,error,*999)
-                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"While loop... ",err,error,*999)
-                        ENDIF
-                      ELSE
-                        CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Read in vector data... ",err,error,*999)
-                        !Update indpendent data fields
-                        CALL POISSON_PRE_SOLVE_UPDATE_INPUT_DATA(CONTROL_LOOP,SOLVER,err,error,*999)
-                        CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"While loop... ",err,error,*999)
-                      ENDIF 
-                    ENDIF
-                  ENDIF
-                ENDIF
-              !Update mesh
-              CALL POISSON_PRE_SOLVE_UPDATE_PPE_MESH(CONTROL_LOOP,SOLVER,err,error,*999)
-              ENDIF
-            CASE DEFAULT
-              localError="Problem subtype "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",err,error))// &
-                & " is not valid for a Poisson type of a classical field problem class."
-              CALL FlagError(localError,err,error,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("Problem is not associated.",err,error,*999)
+            ENDIF
+          ENDIF
         ENDIF
       ELSE
-        CALL FlagError("Solver is not associated.",err,error,*999)
+        CALL WriteString(GENERAL_OUTPUT_TYPE,"While loop... ",err,error,*999)
       ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",err,error,*999)
-    ENDIF
+    CASE(PROBLEM_FITTED_PRESSURE_POISSON_SUBTYPE)
+      !Pre solve for the linear solver: fitting problem
+      IF(solver%GLOBAL_NUMBER==1) THEN
+        CALL WriteString(GENERAL_OUTPUT_TYPE,"Read in vector data... ",err,error,*999)
+        !Update independent data fields
+        CALL POISSON_PRE_SOLVE_UPDATE_INPUT_DATA(controlLoop,solver,err,error,*999)
+        CALL WriteString(GENERAL_OUTPUT_TYPE,"Solving fitting problem... ",err,error,*999)
+      ELSE IF(SOLVER%GLOBAL_NUMBER==2) THEN
+        CALL WriteString(GENERAL_OUTPUT_TYPE,"Update source field ... ",err,error,*999)
+        !First update source field for PPE calculation
+        CALL POISSON_PRE_SOLVE_UPDATE_PPE_SOURCE(CONTROLLOOP,SOLVER,err,error,*999)
+        !Read in the lable information
+        !                 CALL POISSON_PRE_SOLVE_UPDATE_INPUT_DATA(CONTROLLOOP,SOLVER,err,error,*999)
+        CALL WriteString(GENERAL_OUTPUT_TYPE,"Solving PPE problem... ",err,error,*999)
+      ELSE
+        CALL FlagError("Solver global number not associated for PPE problem.",err,error,*999)
+      ENDIF
+    CASE(PROBLEM_ALE_PRESSURE_POISSON_SUBTYPE)
+      IF(CONTROLLOOP%WHILE_LOOP%ITERATION_NUMBER==1)THEN
+        SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+        IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
+          SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
+          EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
+          IF(ASSOCIATED(EQUATIONS)) THEN
+            EQUATIONS_SET=>equations%equationsSet
+            IF(ASSOCIATED(EQUATIONS_SET)) THEN
+              IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
+                IF(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_2) THEN
+                  !do nothing
+                ELSE
+                  CALL WriteString(GENERAL_OUTPUT_TYPE,"Read in vector data... ",err,error,*999)
+                  !Update indpendent data fields
+                  CALL POISSON_PRE_SOLVE_UPDATE_INPUT_DATA(CONTROLLOOP,SOLVER,err,error,*999)
+                  CALL WriteString(GENERAL_OUTPUT_TYPE,"While loop... ",err,error,*999)
+                ENDIF
+              ELSE
+                CALL WriteString(GENERAL_OUTPUT_TYPE,"Read in vector data... ",err,error,*999)
+                !Update indpendent data fields
+                CALL POISSON_PRE_SOLVE_UPDATE_INPUT_DATA(CONTROLLOOP,SOLVER,err,error,*999)
+                CALL WriteString(GENERAL_OUTPUT_TYPE,"While loop... ",err,error,*999)
+              ENDIF
+            ENDIF
+          ENDIF
+        ENDIF
+        !Update mesh
+        CALL POISSON_PRE_SOLVE_UPDATE_PPE_MESH(CONTROLLOOP,SOLVER,err,error,*999)
+      ENDIF
+    CASE DEFAULT
+      localError="Problem subtype "//TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
+        & " is not valid for a Poisson type of a classical field problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
-    EXITS("POISSON_PRE_SOLVE")
+    EXITS("Poisson_PreSolve")
     RETURN
-999 ERRORSEXITS("POISSON_PRE_SOLVE",err,error)
+999 ERRORSEXITS("Poisson_PreSolve",err,error)
     RETURN 1
-  END SUBROUTINE POISSON_PRE_SOLVE
+    
+  END SUBROUTINE Poisson_PreSolve
   !
   !================================================================================================================================
   !
@@ -5494,8 +5484,8 @@ CONTAINS
     !Argument variables
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
@@ -5622,7 +5612,7 @@ CONTAINS
             & PROBLEM_ALE_PRESSURE_POISSON_SUBTYPE)
             CONTROL_TIME_LOOP=>CONTROL_LOOP%PARENT_LOOP
             CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_TIME_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
-            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Read input data... ",err,error,*999)
+            CALL WriteString(GENERAL_OUTPUT_TYPE,"Read input data... ",err,error,*999)
             SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
             IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
               SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
@@ -5693,7 +5683,7 @@ CONTAINS
               CALL FlagError("Solver equations are not associated.",err,error,*999)
             END IF
           CASE DEFAULT
-            localError="Problem subtype "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",err,error))// &
+            localError="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",err,error))// &
               & " is not valid for a Poisson type of a classical field problem class."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -5731,8 +5721,8 @@ CONTAINS
     !Argument variables
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
@@ -5796,12 +5786,12 @@ CONTAINS
                           EXPORT_FIELD=.TRUE.
                           IF(EXPORT_FIELD) THEN          
                             IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER)==0)  THEN   
-                              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
-                              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
+                              CALL WriteString(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                              CALL WriteString(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
                               CALL FLUID_MECHANICS_IO_WRITE_ENCAS_BLOCK(EQUATIONS_SET%REGION,EQUATIONS_SET%GLOBAL_NUMBER, &
                                 & OUTPUT_FILE,err,error,*999)
-                              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,OUTPUT_FILE,err,error,*999)
-                              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                              CALL WriteString(GENERAL_OUTPUT_TYPE,OUTPUT_FILE,err,error,*999)
+                              CALL WriteString(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
                             ENDIF
                           ENDIF 
                         ENDIF 
@@ -5839,12 +5829,12 @@ CONTAINS
                         EXPORT_FIELD=.TRUE.
                         IF(EXPORT_FIELD) THEN          
                           IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER)==0)  THEN   
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
+                            CALL WriteString(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                            CALL WriteString(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
                             CALL FLUID_MECHANICS_IO_WRITE_ENCAS_BLOCK(EQUATIONS_SET%REGION,EQUATIONS_SET%GLOBAL_NUMBER, &
                               & OUTPUT_FILE,err,error,*999)
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,OUTPUT_FILE,err,error,*999)
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                            CALL WriteString(GENERAL_OUTPUT_TYPE,OUTPUT_FILE,err,error,*999)
+                            CALL WriteString(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
                           ENDIF
                         ENDIF 
                       ENDIF 
@@ -5853,7 +5843,7 @@ CONTAINS
                 ENDIF
               ENDIF
             CASE DEFAULT
-              localError="Problem subtype "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",err,error))// &
+              localError="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",err,error))// &
                 & " is not valid for a Poisson equation fluid type of a fluid mechanics problem class."
               CALL FlagError(localError,err,error,*999)
           END SELECT
