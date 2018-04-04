@@ -3294,34 +3294,30 @@ CONTAINS
     ENTERS("EquationsMatrices_JacobianTypesSet",err,error,*999)
 
     IF(ASSOCIATED(equationsMatrices)) THEN
-      IF(equationsMatrices%EQUATIONS_MATRICES_FINISHED) THEN
-        CALL FlagError("Equations matrices have been finished.",err,error,*999)
-      ELSE
-        nonlinearMatrices=>equationsMatrices%NONLINEAR_MATRICES
-        IF(ASSOCIATED(nonlinearMatrices)) THEN
-          numberOfJacobians=SIZE(jacobianTypes,1)
-          IF(numberOfJacobians==nonlinearMatrices%NUMBER_OF_JACOBIANS) THEN
-            DO matrixIdx=1,numberOfJacobians
-              jacobianType=jacobianTypes(matrixIdx)
-              SELECT CASE(jacobianType)
-              CASE(EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED, &
-                  & EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED)
-                nonlinearMatrices%JACOBIANS(matrixIdx)%PTR%JACOBIAN_CALCULATION_TYPE=jacobianType
-              CASE DEFAULT
-                localError="Invalid Jacobian calculation type of " &
-                  & //TRIM(NumberToVString(jacobianType,"*",err,error))//"."
-                CALL FlagError(localError,err,error,*999)
-              END SELECT
-            END DO
-          ELSE
-            localError="Invalid number of Jacobian calculation types. The number of types " &
-              & //TRIM(NumberToVString(numberOfJacobians,"*",err,error)) &
-              & //" should be "//TRIM(NumberToVString(nonlinearMatrices%NUMBER_OF_JACOBIANS,"*",err,error))
-            CALL FlagError(localError,err,error,*999)
-          ENDIF
+      nonlinearMatrices=>equationsMatrices%NONLINEAR_MATRICES
+      IF(ASSOCIATED(nonlinearMatrices)) THEN
+        numberOfJacobians=SIZE(jacobianTypes,1)
+        IF(numberOfJacobians==nonlinearMatrices%NUMBER_OF_JACOBIANS) THEN
+          DO matrixIdx=1,numberOfJacobians
+            jacobianType=jacobianTypes(matrixIdx)
+            SELECT CASE(jacobianType)
+            CASE(EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED, &
+                & EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED)
+              nonlinearMatrices%JACOBIANS(matrixIdx)%PTR%JACOBIAN_CALCULATION_TYPE=jacobianType
+            CASE DEFAULT
+              localError="Invalid Jacobian calculation type of " &
+                & //TRIM(NumberToVString(jacobianType,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
+          END DO
         ELSE
-          CALL FlagError("Equations matrices nonlinear matrices are not associated",err,error,*999)
+          localError="Invalid number of Jacobian calculation types. The number of types " &
+            & //TRIM(NumberToVString(numberOfJacobians,"*",err,error)) &
+            & //" should be "//TRIM(NumberToVString(nonlinearMatrices%NUMBER_OF_JACOBIANS,"*",err,error))
+          CALL FlagError(localError,err,error,*999)
         ENDIF
+      ELSE
+        CALL FlagError("Equations matrices nonlinear matrices are not associated",err,error,*999)
       ENDIF
     ELSE
       CALL FlagError("Equations matrices are not associated",err,error,*999)
