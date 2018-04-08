@@ -54,7 +54,7 @@ MODULE FINITE_ELASTICITY_ROUTINES
   USE ControlLoopAccessRoutines
   USE COORDINATE_ROUTINES  
   USE CoordinateSystemAccessRoutines
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE DistributedMatrixVector
   USE DOMAIN_MAPPINGS
   USE EquationsRoutines
   USE EquationsAccessRoutines
@@ -73,7 +73,7 @@ MODULE FINITE_ELASTICITY_ROUTINES
   USE Kinds
   USE Lapack
   USE Maths 
-  USE MATRIX_VECTOR
+  USE MatrixVector
   USE MESH_ROUTINES
   USE MeshAccessRoutines
 #ifndef NOMPIMOD

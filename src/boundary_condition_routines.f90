@@ -51,7 +51,7 @@ MODULE BOUNDARY_CONDITIONS_ROUTINES
   USE ComputationEnvironment
   USE CONSTANTS
   USE COORDINATE_ROUTINES
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE DistributedMatrixVector
   USE DOMAIN_MAPPINGS
   USE EquationsAccessRoutines
   USE EquationsSetAccessRoutines
@@ -61,15 +61,15 @@ MODULE BOUNDARY_CONDITIONS_ROUTINES
   USE FieldAccessRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
-  USE KINDS
+  USE Kinds
 #ifndef NOMPIMOD
   USE MPI
 #endif
   USE NODE_ROUTINES
-  USE STRINGS
-  USE TIMER
-  USE TYPES
-  USE LISTS
+  USE Strings
+  USE Timer
+  USE Types
+  USE Lists
   USE LINKEDLIST_ROUTINES
 
 #include "macros.h"
@@ -2662,7 +2662,7 @@ CONTAINS
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE), POINTER :: interpolatedPointMetrics(:)
     TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: interpolatedPoints(:)
     TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: interpolationParameters(:), scalingParameters(:)
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: integratedValues
+    TYPE(DistributedVectorType), POINTER :: integratedValues
     TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: topology
     TYPE(DOMAIN_FACES_TYPE), POINTER :: faces
     TYPE(DOMAIN_LINES_TYPE), POINTER :: lines

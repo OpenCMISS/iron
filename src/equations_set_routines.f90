@@ -54,7 +54,7 @@ MODULE EQUATIONS_SET_ROUTINES
   USE ComputationEnvironment
   USE Constants
   USE COORDINATE_ROUTINES
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE DistributedMatrixVector
   USE DOMAIN_MAPPINGS
   USE ELASTICITY_ROUTINES
   USE EquationsRoutines
@@ -72,7 +72,7 @@ MODULE EQUATIONS_SET_ROUTINES
   USE ISO_VARYING_STRING
   USE Kinds
   USE Lists
-  USE MATRIX_VECTOR
+  USE MatrixVector
   USE MONODOMAIN_EQUATIONS_ROUTINES
 #ifndef NOMPIMOD
   USE MPI
@@ -1653,8 +1653,8 @@ CONTAINS
     REAL(DP), POINTER :: DEPENDENT_PARAMETERS(:),equationsMatrixData(:),sourceVectorData(:)
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: RHS_BOUNDARY_CONDITIONS
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: COLUMN_DOMAIN_MAPPING,RHS_DOMAIN_MAPPING
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: EQUATIONS_DISTRIBUTED_MATRIX
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: SOURCE_DISTRIBUTED_VECTOR
+    TYPE(DistributedMatrixType), POINTER :: EQUATIONS_DISTRIBUTED_MATRIX
+    TYPE(DistributedVectorType), POINTER :: SOURCE_DISTRIBUTED_VECTOR
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
@@ -1934,7 +1934,7 @@ CONTAINS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: residualVector
+    TYPE(DistributedVectorType), POINTER :: residualVector
     TYPE(FIELD_TYPE), POINTER :: RHS_FIELD
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: rhsVariable,residualVariable
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: RHS_BOUNDARY_CONDITIONS
@@ -2848,7 +2848,7 @@ CONTAINS
     !Local Variables
     TYPE(BASIS_TYPE), POINTER :: basis
     TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: elementsTopology
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: parameters
+    TYPE(DistributedVectorType), POINTER :: parameters
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping

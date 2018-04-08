@@ -195,17 +195,17 @@ CONTAINS
     DO I = 1,NumberOfNodes
       NODE_GLOBAL_NUMBER = COMPUTATIONAL_DOMAIN%TOPOLOGY%NODES%NODES(I)%GLOBAL_NUMBER
       NodeXValue = REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%geometry%geometric_field%variables(1) &
-        & %parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(I)
+        & %parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(I)
       IF(NumberOfDimensions==2 .OR. NumberOfDimensions==3) THEN
         NodeYValue = REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%geometry%geometric_field%variables(1) &
-          & %parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(I+NumberOfNodes)
+          & %parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(I+NumberOfNodes)
       ENDIF
       IF(NumberOfDimensions==3) THEN
         NodeZValue = REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%geometry%geometric_field%variables(1) &
-          & %parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(I+(2*NumberOfNodes))
+          & %parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(I+(2*NumberOfNodes))
       ENDIF
       NodeUValue=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
-        & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(I)
+        & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(I)
 
       WRITE(myComputationalNodeNumber,*) ' Node: ',NODE_GLOBAL_NUMBER
       WRITE(myComputationalNodeNumber,'("    ", es25.16 )')NodeXValue

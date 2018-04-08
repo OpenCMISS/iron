@@ -53,7 +53,7 @@ MODULE STOKES_EQUATIONS_ROUTINES
   USE Constants
   USE CONTROL_LOOP_ROUTINES
   USE ControlLoopAccessRoutines
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE DistributedMatrixVector
   USE DOMAIN_MAPPINGS
   USE EquationsRoutines
   USE EquationsAccessRoutines
@@ -68,7 +68,7 @@ MODULE STOKES_EQUATIONS_ROUTINES
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE Kinds
-  USE MATRIX_VECTOR
+  USE MatrixVector
   USE NODE_ROUTINES
   USE PROBLEM_CONSTANTS
   USE Strings
@@ -2223,14 +2223,14 @@ CONTAINS
                                                   materialsField=>EQUATIONS_SET%MATERIALS%MATERIALS_FIELD
                                                   !Define MU_PARAM, density=1
                                                   MU_PARAM=materialsField%variables(1)%parameter_sets%parameter_sets(1)%ptr% &
-                                                    & parameters%cmiss%data_dp(1)
+                                                    & parameters%cmiss%dataDP(1)
                                                   !Define RHO_PARAM, density=2
                                                   IF(ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_4.OR. &
                                                     & ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_5.OR. &
                                                     & ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_4.OR. &
                                                     & ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_5) THEN
                                                     RHO_PARAM=materialsField%variables(1)%parameter_sets%parameter_sets(1)%ptr% &
-                                                      & parameters%cmiss%data_dp(2)
+                                                      & parameters%cmiss%dataDP(2)
                                                   ELSE
                                                     RHO_PARAM=0.0_DP
                                                   ENDIF
@@ -3332,14 +3332,14 @@ CONTAINS
                                 materialsField=>EQUATIONS_SET%MATERIALS%MATERIALS_FIELD
                                 !Define MU_PARAM, density=1
                                 MU_PARAM=materialsField%variables(1)%parameter_sets%parameter_sets(1)%ptr% &
-                                  & parameters%cmiss%data_dp(1)
+                                  & parameters%cmiss%dataDP(1)
                                 !Define RHO_PARAM, density=2
                                 IF(ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_4.OR. &
                                   & ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_5.OR. &
                                   & ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_4.OR. &
                                   & ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_5) THEN
                                   RHO_PARAM=materialsField%variables(1)%parameter_sets%parameter_sets(1)%ptr% &
-                                    & parameters%cmiss%data_dp(2)
+                                    & parameters%cmiss%dataDP(2)
                                 ELSE
                                   RHO_PARAM=0.0_DP
                                 ENDIF

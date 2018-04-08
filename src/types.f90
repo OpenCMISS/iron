@@ -788,104 +788,103 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains the information for an adjacent domain for transfering the ghost data of a distributed vector to/from the
   !>current domain.
-  TYPE DISTRIBUTED_VECTOR_TRANSFER_TYPE
-    TYPE(DISTRIBUTED_VECTOR_CMISS_TYPE), POINTER :: CMISS_VECTOR !<The pointer to the CMISS distributed vector object for this transfer information.
-    INTEGER(INTG) :: DATA_TYPE !<The data type of the distributed vector. This is "inherited" from the distributed vector.
-    INTEGER(INTG) :: SEND_BUFFER_SIZE !<The size of the buffer to send distributed vector data from the current domain to the adjacent domain.
-    INTEGER(INTG) :: RECEIVE_BUFFER_SIZE !<The size of the buffer to receive distributed vector data from the adjacent domain to the current domain.
-    INTEGER(INTG) :: SEND_TAG_NUMBER !<The MPI tag number for the data sending from the current domain to the adjacent domain. It is calculated as an offset from the base tag number of the distribued vector.
-    INTEGER(INTG) :: RECEIVE_TAG_NUMBER !<The MPI tag number for the data receiving from the adjacent domain to the current domain. It is calculated as an offset from the base tag number of the distribued vector.
-    INTEGER(INTG) :: MPI_SEND_REQUEST !<The MPI request pointer for sending data from the current domain to the adjacent domain.
-    INTEGER(INTG) :: MPI_RECEIVE_REQUEST !<The MPI request pointer for sending data from the adjacent domain to the current domain.
-    INTEGER(INTG), ALLOCATABLE :: SEND_BUFFER_INTG(:) !<The integer buffer for sending the distributed integer vector data from the current domain to the adjacent domain.
-    REAL(DP), ALLOCATABLE :: SEND_BUFFER_DP(:) !<The double precision real buffer for sending the distributed real vector data from the current domain to the adjacent domain.
-    REAL(SP), ALLOCATABLE :: SEND_BUFFER_SP(:) !<The single precision real buffer for sending the distributed real vector data from the current domain to the adjacent domain.
-    LOGICAL, ALLOCATABLE :: SEND_BUFFER_L(:) !<The logical buffer for sending the distributed logical vector data from the current domain to the adjacent domain.
-    INTEGER(INTG), ALLOCATABLE :: RECEIVE_BUFFER_INTG(:) !<The integer buffer for receiving the distributed integer vector data from the adjacent domain to the current domain.
-    REAL(DP), ALLOCATABLE :: RECEIVE_BUFFER_DP(:) !<The double precision real buffer for receiving the distributed real vector data from the adjacent domain to the current domain.
-    REAL(SP), ALLOCATABLE :: RECEIVE_BUFFER_SP(:) !<The single precision real buffer for receiving the distributed real vector data from the adjacent domain to the current domain.
-    LOGICAL, ALLOCATABLE :: RECEIVE_BUFFER_L(:) !<The logical buffer for receiving the distributed logical vector data from the adjacent domain to the current domain.  
-  END TYPE DISTRIBUTED_VECTOR_TRANSFER_TYPE
+  TYPE DistributedVectorTransferType
+    TYPE(DistributedVectorCMISSType), POINTER :: cmissVector !<The pointer to the CMISS distributed vector object for this transfer information.
+    INTEGER(INTG) :: dataType !<The data type of the distributed vector. This is "inherited" from the distributed vector.
+    INTEGER(INTG) :: sendBufferSize !<The size of the buffer to send distributed vector data from the current domain to the adjacent domain.
+    INTEGER(INTG) :: receiveBufferSize !<The size of the buffer to receive distributed vector data from the adjacent domain to the current domain.
+    INTEGER(INTG) :: sendTagNumber !<The MPI tag number for the data sending from the current domain to the adjacent domain. It is calculated as an offset from the base tag number of the distribued vector.
+    INTEGER(INTG) :: receiveTagNumber !<The MPI tag number for the data receiving from the adjacent domain to the current domain. It is calculated as an offset from the base tag number of the distribued vector.
+    INTEGER(INTG) :: mpiSendRequest !<The MPI request pointer for sending data from the current domain to the adjacent domain.
+    INTEGER(INTG) :: mpiReceiveRequest !<The MPI request pointer for sending data from the adjacent domain to the current domain.
+    INTEGER(INTG), ALLOCATABLE :: sendBufferIntg(:) !<The integer buffer for sending the distributed integer vector data from the current domain to the adjacent domain.
+    REAL(DP), ALLOCATABLE :: sendBufferDP(:) !<The double precision real buffer for sending the distributed real vector data from the current domain to the adjacent domain.
+    REAL(SP), ALLOCATABLE :: sendBufferSP(:) !<The single precision real buffer for sending the distributed real vector data from the current domain to the adjacent domain.
+    LOGICAL, ALLOCATABLE :: sendBufferL(:) !<The logical buffer for sending the distributed logical vector data from the current domain to the adjacent domain.
+    INTEGER(INTG), ALLOCATABLE :: receiveBufferIntg(:) !<The integer buffer for receiving the distributed integer vector data from the adjacent domain to the current domain.
+    REAL(DP), ALLOCATABLE :: receiveBufferDP(:) !<The double precision real buffer for receiving the distributed real vector data from the adjacent domain to the current domain.
+    REAL(SP), ALLOCATABLE :: receiveBufferSP(:) !<The single precision real buffer for receiving the distributed real vector data from the adjacent domain to the current domain.
+    LOGICAL, ALLOCATABLE :: receiveBufferL(:) !<The logical buffer for receiving the distributed logical vector data from the adjacent domain to the current domain.  
+  END TYPE DistributedVectorTransferType
 
   !>Contains information for a CMISS distributed vector
-  TYPE DISTRIBUTED_VECTOR_CMISS_TYPE
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: DISTRIBUTED_VECTOR !<A pointer to the distributed vector
-    INTEGER(INTG) :: BASE_TAG_NUMBER !<The base number for the MPI tag numbers that will be used to communicate the distributed vector data amongst the domains. The base tag number can be thought of as the identification number for the distributed vector object.
-    INTEGER(INTG) :: N !<The size of the distributed vector
-    INTEGER(INTG) :: DATA_SIZE !<The size of the distributed vector that is held locally by the domain.
-    INTEGER(INTG), ALLOCATABLE :: DATA_INTG(:) !<DATA_INTG(i). The integer data for an integer distributed vector. The i'th component contains the data for the i'th local number of distributed vector data on the domain. 
-    REAL(DP), ALLOCATABLE :: DATA_DP(:) !<DATA_DP(i). The real data for a double precision real distributed vector. The i'th component contains the data for the i'th local number of distributed vector data on the domain. 
-    REAL(SP), ALLOCATABLE :: DATA_SP(:) !<DATA_SP(i). The real data for a single precision real distributed vector. The i'th component contains the data for the i'th local number of distributed vector data on the domain. 
-    LOGICAL, ALLOCATABLE :: DATA_L(:) !<DATA_L(i). The logical data for a logical distributed vector. The i'th component contains the data for the i'th local number of distributed vector data on the domain.  
-    TYPE(DISTRIBUTED_VECTOR_TRANSFER_TYPE), ALLOCATABLE :: TRANSFERS(:) !<TRANSFERS(adjacent_domain_idx). The transfer information for the adjacent_domain_idx'th adjacent domain to this domain. 
-  END TYPE DISTRIBUTED_VECTOR_CMISS_TYPE
+  TYPE DistributedVectorCMISSType
+    TYPE(DistributedVectorType), POINTER :: distributedVector !<A pointer to the distributed vector
+    INTEGER(INTG) :: baseTagNumber !<The base number for the MPI tag numbers that will be used to communicate the distributed vector data amongst the domains. The base tag number can be thought of as the identification number for the distributed vector object.
+    INTEGER(INTG) :: n !<The size of the distributed vector
+    INTEGER(INTG) :: dataSize !<The size of the distributed vector that is held locally by the domain.
+    INTEGER(INTG), ALLOCATABLE :: dataIntg(:) !<dataIntg(i). The integer data for an integer distributed vector. The i'th component contains the data for the i'th local number of distributed vector data on the domain. 
+    REAL(DP), ALLOCATABLE :: dataDP(:) !<dataDP(i). The real data for a double precision real distributed vector. The i'th component contains the data for the i'th local number of distributed vector data on the domain. 
+    REAL(SP), ALLOCATABLE :: dataSP(:) !<dataSP(i). The real data for a single precision real distributed vector. The i'th component contains the data for the i'th local number of distributed vector data on the domain. 
+    LOGICAL, ALLOCATABLE :: dataL(:) !<dataL(i). The logical data for a logical distributed vector. The i'th component contains the data for the i'th local number of distributed vector data on the domain.  
+    TYPE(DistributedVectorTransferType), ALLOCATABLE :: transfers(:) !<transfers(adjacentDomainIdx). The transfer information for the adjacentDomainIdx'th adjacent domain to this domain. 
+  END TYPE DistributedVectorCMISSType
 
   !>Contains information for a PETSc distributed vector
-  TYPE DISTRIBUTED_VECTOR_PETSC_TYPE
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: DISTRIBUTED_VECTOR !<A pointer to the distributed vector
-    INTEGER(INTG) :: N !<The number of local components in the vector
-    INTEGER(INTG) :: GLOBAL_N !<The number of global components in the vector
-    INTEGER(INTG) :: DATA_SIZE  !<The size of the distributed vector that is held locally by the domain.
-    INTEGER(INTG), ALLOCATABLE :: GLOBAL_NUMBERS(:) !<GLOBAL_NUMBERS(i). The PETSc global number corresponding to the i'th local number.
-    LOGICAL :: USE_OVERRIDE_VECTOR !<Is .TRUE. if the override vector is used instead of the standard vector
-    TYPE(PetscVecType) :: VECTOR !<The PETSc vector
-    TYPE(PetscVecType) :: OVERRIDE_VECTOR !<The PETSc override vector
-  END TYPE DISTRIBUTED_VECTOR_PETSC_TYPE
+  TYPE DistributedVectorPETScType
+    TYPE(DistributedVectorType), POINTER :: distributedVector !<A pointer to the distributed vector
+    INTEGER(INTG) :: n !<The number of local components in the vector
+    INTEGER(INTG) :: globalN !<The number of global components in the vector
+    INTEGER(INTG) :: dataSize  !<The size of the distributed vector that is held locally by the domain.
+    INTEGER(INTG), ALLOCATABLE :: globalNumbers(:) !<globalNumbers(i). The PETSc global number corresponding to the i'th local number.
+    LOGICAL :: useOverrideVector !<Is .TRUE. if the override vector is used instead of the standard vector
+    TYPE(PetscVecType) :: vector !<The PETSc vector
+    TYPE(PetscVecType) :: overrideVector !<The PETSc override vector
+  END TYPE DistributedVectorPETScType
   
   !>Contains the information for a vector that is distributed across a number of domains.
-  TYPE DISTRIBUTED_VECTOR_TYPE
-    LOGICAL :: VECTOR_FINISHED !<!<Is .TRUE. if the distributed vector has finished being created, .FALSE. if not.
-    INTEGER(INTG) :: LIBRARY_TYPE !<The format of the distributed vector \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
-    INTEGER(INTG) :: GHOSTING_TYPE !<The ghosting type \see DISTRIBUTED_MATRIX_VECTOR_GhostingTypes,DISTRIBUTED_MATRIX_VECTOR
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: DOMAIN_MAPPING !<The pointer for the domain mapping that identifies how the vector is distributed amongst the domains.
-    INTEGER(INTG) :: DATA_TYPE !<The type of data for the distributed vector \see DISTRIBUTED_MATRIX_VECTOR_DataTypes 
-    TYPE(DISTRIBUTED_VECTOR_CMISS_TYPE), POINTER :: CMISS !<A pointer to the CMISS distributed vector information
-    TYPE(DISTRIBUTED_VECTOR_PETSC_TYPE), POINTER :: PETSC !<A pointer to the PETSc distributed vector information
-  END TYPE DISTRIBUTED_VECTOR_TYPE
+  TYPE DistributedVectorType
+    LOGICAL :: vectorFinished !<!<Is .TRUE. if the distributed vector has finished being created, .FALSE. if not.
+    INTEGER(INTG) :: libraryType !<The format of the distributed vector \see DistributedMatrixVector_LibraryTypes,DistributedMatrixVector
+    INTEGER(INTG) :: ghostingType !<The ghosting type \see DistributedMatrixVector_GhostingTypes,DistributedMatrixVector
+    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainMapping !<The pointer for the domain mapping that identifies how the vector is distributed amongst the domains.
+    INTEGER(INTG) :: dataType !<The type of data for the distributed vector \see DistributedMatrixVector_DataTypes 
+    TYPE(DistributedVectorCMISSType), POINTER :: cmiss !<A pointer to the CMISS distributed vector information
+    TYPE(DistributedVectorPETScType), POINTER :: petsc !<A pointer to the PETSc distributed vector information
+  END TYPE DistributedVectorType
 
   !>Contains information for a CMISS distributed matrix
-  TYPE DISTRIBUTED_MATRIX_CMISS_TYPE
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: DISTRIBUTED_MATRIX !<A pointer to the distributed matrix
-    INTEGER(INTG) :: BASE_TAG_NUMBER !<The base number for the MPI tag numbers that will be used to communicate the distributed matrix data amongst the domains. The base tag number can be thought of as the identification number for the distributed matrix object.
+  TYPE DistributedMatrixCMISSType
+    TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix
+    INTEGER(INTG) :: baseTagNumber !<The base number for the MPI tag numbers that will be used to communicate the distributed matrix data amongst the domains. The base tag number can be thought of as the identification number for the distributed matrix object.
     TYPE(MATRIX_TYPE), POINTER :: matrix !<A pointer to the matrix to store the rows corresponding to this domain.
-!   TYPE(LINKEDLIST),POINTER :: LIST(:) !< \todo Comment
-  END TYPE DISTRIBUTED_MATRIX_CMISS_TYPE
+  END TYPE DistributedMatrixCMISSType
 
   !>Contains information for a PETSc distributed matrix
-  TYPE DISTRIBUTED_MATRIX_PETSC_TYPE
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: DISTRIBUTED_MATRIX !<A pointer to the distributed matrix
-    INTEGER(INTG) :: M !<The number of local rows in the PETSc matrix
-    INTEGER(INTG) :: N !<The number of local columns in the PETSc matrix
-    INTEGER(INTG) :: GLOBAL_M !<The number of global rows in the PETSc matrix
-    INTEGER(INTG) :: GLOBAL_N !<The number of global columns in the PETSc matrix
-    INTEGER(INTG) :: STORAGE_TYPE !<The storage type (sparsity) of the PETSc matrix
+  TYPE DistributedMatrixPETScType
+    TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix
+    INTEGER(INTG) :: m !<The number of local rows in the PETSc matrix
+    INTEGER(INTG) :: n !<The number of local columns in the PETSc matrix
+    INTEGER(INTG) :: globalM !<The number of global rows in the PETSc matrix
+    INTEGER(INTG) :: globalN !<The number of global columns in the PETSc matrix
+    INTEGER(INTG) :: storageType !<The storage type (sparsity) of the PETSc matrix
     INTEGER(INTG) :: symmetryType !<The symmetry type of the PETSc matrix
-    INTEGER(INTG) :: NUMBER_NON_ZEROS !<The number of non-zeros in the PETSc matrix
-    INTEGER(INTG) :: DATA_SIZE !<The size of the allocated data in the PETSc matrix
-    INTEGER(INTG) :: MAXIMUM_COLUMN_INDICES_PER_ROW !<The maximum number of column indicies for the rows.
-    INTEGER(INTG), ALLOCATABLE :: DIAGONAL_NUMBER_NON_ZEROS(:) !<DIAGONAL_NUMBER_NON_ZEROS(i). The number of non-zeros in the diagonal part of the the i'th row
-    INTEGER(INTG), ALLOCATABLE :: OFFDIAGONAL_NUMBER_NON_ZEROS(:) !<OFFDIAGONAL_NUMBER_NON_ZEROS(i). The number of non-zeros in the off diagonal part of the the i'th row
-    INTEGER(INTG), ALLOCATABLE :: ROW_INDICES(:) !<ROW_INDICES(i). The row indices for the matrix.
-    INTEGER(INTG), ALLOCATABLE :: COLUMN_INDICES(:) !<COLUMN_INDICES(i). The column indices for the matrix.
-    TYPE(LINKEDLIST),POINTER :: LIST(:) !< \todo Comment
-    INTEGER(INTG), ALLOCATABLE :: GLOBAL_ROW_NUMBERS(:) !<GLOBAL_ROW_NUMBERS(i). The PETSc global row number corresponding to the i'th local row number.
-    REAL(DP), POINTER :: DATA_DP(:) !<DATA_DP(i). The real data for the matrix. \todo Is this used???
-    LOGICAL :: USE_OVERRIDE_MATRIX !<Is .TRUE. if the override matrix is to be used instead of the standard matrix
-    TYPE(PetscMatType) :: MATRIX !<The PETSc matrix
-    TYPE(PetscMatType) :: OVERRIDE_MATRIX !<The PETSc override matrix
-  END TYPE DISTRIBUTED_MATRIX_PETSC_TYPE
+    INTEGER(INTG) :: numberOfNonZeros !<The number of non-zeros in the PETSc matrix
+    INTEGER(INTG) :: dataSize !<The size of the allocated data in the PETSc matrix
+    INTEGER(INTG) :: maximumColumnIndicesPerRow!<The maximum number of column indicies for the rows.
+    INTEGER(INTG), ALLOCATABLE :: diagonalNumberOfNonZeros(:) !<diagonalNumberOfNonZeros(i). The number of non-zeros in the diagonal part of the the i'th row
+    INTEGER(INTG), ALLOCATABLE :: offdiagonalNumberOfNonZeros(:) !<offdiagonalNumberOfNonZeros(i). The number of non-zeros in the off diagonal part of the the i'th row
+    INTEGER(INTG), ALLOCATABLE :: rowIndices(:) !<rowIndices(i). The row indices for the matrix.
+    INTEGER(INTG), ALLOCATABLE :: columnIndices(:) !<columnIndices(i). The column indices for the matrix.
+    TYPE(LINKEDLIST),POINTER :: list(:) !< \todo Comment
+    INTEGER(INTG), ALLOCATABLE :: globalRowNumbers(:) !<globalRowNumbers(i). The PETSc global row number corresponding to the i'th local row number.
+    REAL(DP), POINTER :: dataDP(:) !<dataDP(i). The real data for the matrix. \todo Is this used???
+    LOGICAL :: useOverrideMatrix !<Is .TRUE. if the override matrix is to be used instead of the standard matrix
+    TYPE(PetscMatType) :: matrix !<The PETSc matrix
+    TYPE(PetscMatType) :: overrideMatrix !<The PETSc override matrix
+  END TYPE DistributedMatrixPETScType
   
   !>Contains the information for a matrix that is distributed across a number of domains.
-  TYPE DISTRIBUTED_MATRIX_TYPE
-    LOGICAL :: MATRIX_FINISHED !<Is .TRUE. if the distributed matrix has finished being created, .FALSE. if not.
-    INTEGER(INTG) :: LIBRARY_TYPE !<The library of the distributed matrix \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
-    INTEGER(INTG) :: GHOSTING_TYPE !<The ghosting type \see DISTRIBUTED_MATRIX_VECTOR_GhostingTypes,DISTRIBUTED_MATRIX_VECTOR
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: ROW_DOMAIN_MAPPING !<The pointer for the domain mapping that identifies how the matrix rows are distributed amongst the domains.
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: COLUMN_DOMAIN_MAPPING !<The pointer for the domain mapping that identifies how the matrix columns are distributed amongst the domains.
-    INTEGER(INTG) :: DATA_TYPE !<The type of data for the distributed matrix \see DISTRIBUTED_MATRIX_VECTOR_DataTypes
-    TYPE(DISTRIBUTED_MATRIX_CMISS_TYPE), POINTER :: CMISS !<A pointer to the CMISS distributed matrix information
-    TYPE(DISTRIBUTED_MATRIX_PETSC_TYPE), POINTER :: PETSC !<A pointer to the PETSc distributed matrix information
-  END TYPE DISTRIBUTED_MATRIX_TYPE
+  TYPE DistributedMatrixType
+    LOGICAL :: matrixFinished !<Is .TRUE. if the distributed matrix has finished being created, .FALSE. if not.
+    INTEGER(INTG) :: libraryType !<The library of the distributed matrix \see DistributedMatrixVector_LibraryTypes,DistributedMatrixVector
+    INTEGER(INTG) :: ghostingType !<The ghosting type \see DistributedMatrixVector_GhostingTypes,DistributedMatrixVector
+    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: rowDomainMapping !<The pointer for the domain mapping that identifies how the matrix rows are distributed amongst the domains.
+    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: columnDomainMapping !<The pointer for the domain mapping that identifies how the matrix columns are distributed amongst the domains.
+    INTEGER(INTG) :: dataType !<The type of data for the distributed matrix \see DistributedMatrixVector_DataTypes
+    TYPE(DistributedMatrixCMISSType), POINTER :: cmiss !<A pointer to the CMISS distributed matrix information
+    TYPE(DistributedMatrixPETScType), POINTER :: petsc !<A pointer to the PETSc distributed matrix information
+  END TYPE DistributedMatrixType
 
   !
   !================================================================================================================================
@@ -898,7 +897,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: ID !<The ID of the vector.
     LOGICAL :: VECTOR_FINISHED !<Is .TRUE. if the vector has finished being created, .FALSE. if not.
     INTEGER(INTG) :: N !<The length of the vector
-    INTEGER(INTG) :: DATA_TYPE !<The data type of the vector \see MATRIX_VECTOR_DataTypes 
+    INTEGER(INTG) :: DATA_TYPE !<The data type of the vector \see MatrixVector_DataTypes 
     INTEGER(INTG) :: SIZE !<The size of the data array of the vector
     INTEGER(INTG), ALLOCATABLE :: DATA_INTG(:) !<DATA_INTG(i). The integer data for an integer vector. The i'th component contains the data for the i'th component vector data on the domain. 
     REAL(SP), ALLOCATABLE :: DATA_SP(:) !<DATA_SP(i). The real data for a single precision real vector. The i'th component contains the data for the i'th component vector data on the domain. 
@@ -914,14 +913,14 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: N !<The number of columns in the matrix
     INTEGER(INTG) :: MAX_M !<The maximum number of columns in the matrix storage
     INTEGER(INTG) :: MAX_N !<The maximum number of rows in the matrix storage
-    INTEGER(INTG) :: DATA_TYPE !<The data type of the matrix  \see MATRIX_VECTOR_DataTypes 
-    INTEGER(INTG) :: STORAGE_TYPE !<The storage type of the matrix \see MATRIX_VECTOR_StorageTypes 
-    INTEGER(INTG) :: symmetryType !<The symmetry type of the matrix \see MATRIX_VECTOR_SymmetryTypes 
+    INTEGER(INTG) :: DATA_TYPE !<The data type of the matrix  \see MatrixVector_DataTypes 
+    INTEGER(INTG) :: STORAGE_TYPE !<The storage type of the matrix \see MatrixVector_StorageTypes 
+    INTEGER(INTG) :: symmetryType !<The symmetry type of the matrix \see MatrixVector_SymmetryTypes 
     INTEGER(INTG) :: NUMBER_NON_ZEROS !<The number of non-zero elements in the matrix 
     INTEGER(INTG) :: SIZE !<The size of the data arrays
     INTEGER(INTG) :: MAXIMUM_COLUMN_INDICES_PER_ROW !<The maximum number of column indicies for the rows.
-    INTEGER(INTG), ALLOCATABLE :: ROW_INDICES(:) !<ROW_INDICES(i). The row indices for the matrix storage scheme. \see MATRIX_VECTOR_MatrixStorageStructures
-    INTEGER(INTG), ALLOCATABLE :: COLUMN_INDICES(:) !<COLUMN_INDICES(i). The column indices for the matrix storage scheme. \see MATRIX_VECTOR_MatrixStorageStructures
+    INTEGER(INTG), ALLOCATABLE :: ROW_INDICES(:) !<ROW_INDICES(i). The row indices for the matrix storage scheme. \see MatrixVector_MatrixStorageStructures
+    INTEGER(INTG), ALLOCATABLE :: COLUMN_INDICES(:) !<COLUMN_INDICES(i). The column indices for the matrix storage scheme. \see MatrixVector_MatrixStorageStructures
     TYPE(LINKEDLIST),POINTER :: LIST(:) !\todo Comment
     INTEGER(INTG), ALLOCATABLE :: DATA_INTG(:) !<DATA_INTG(i). The integer data for an integer matrix. The i'th component contains the data for the i'th matrix data stored on the domain.
     REAL(SP), ALLOCATABLE :: DATA_SP(:) !<DATA_SP(i). The real data for a single precision matrix. The i'th component contains the data for the i'th matrix data stored on the domain.
@@ -1226,7 +1225,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: MESH_COMPONENT_NUMBER !<The mesh component number of a field variable component that the scaling factors are associated with.
     INTEGER(INTG) :: MAX_NUMBER_OF_DERIVATIVES !<The maximum number of derivatives in the mesh component. 
     INTEGER(INTG) :: MAX_NUMBER_OF_ELEMENT_PARAMETERS !<The maximum number of element parameters in the mesh component. 
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: SCALE_FACTORS !<SCALE_FACTORS(nk,np). The scale factor that is applied to the nk'th derivative of the np'th node of the mesh component. \todo  Make scale factors nodally based for now. Will have to revert to element based and extended to be a matrix to allow for a global derivative to be mapped onto many different element derivatives at the points that closes meshes or for inconsistent xi directions
+    TYPE(DistributedVectorType), POINTER :: SCALE_FACTORS !<SCALE_FACTORS(nk,np). The scale factor that is applied to the nk'th derivative of the np'th node of the mesh component. \todo  Make scale factors nodally based for now. Will have to revert to element based and extended to be a matrix to allow for a global derivative to be mapped onto many different element derivatives at the points that closes meshes or for inconsistent xi directions
   END TYPE FIELD_SCALING_TYPE
 
   !>A type to hold the field scalings for the field.
@@ -1326,7 +1325,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: SET_INDEX !<The global set index (from 1 to the Types::FIELD_PARAMETER_SETS_TYPE::NUMBER_OF_PARAMETER_SETS) that this parameter set corresponds to.
     INTEGER(INTG) :: SET_TYPE !<The user set type (index) (from 1 to FIELD_ROUTINES::FIELD_NUMBER_OF_SET_TYPES) that this parameter set \see FIELD_ROUTINES_ParameterSetTypes
   !###      corresponds to.
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: PARAMETERS !<A pointer to the distributed vector that contains the field parameters for this field parameter set.
+    TYPE(DistributedVectorType), POINTER :: PARAMETERS !<A pointer to the distributed vector that contains the field parameters for this field parameter set.
   END TYPE FIELD_PARAMETER_SET_TYPE
   
   !>A buffer type to allow for an array of pointers to a FIELD_PARAMETER_SET_TYPE.
@@ -1494,10 +1493,10 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: numberOfColumns !<The number of columns in this equations matrix
     LOGICAL :: updateMatrix !<Is .TRUE. if this equations matrix is to be updated
     LOGICAL :: firstAssembly !<Is .TRUE. if this equations matrix has not been assembled
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: matrix !<A pointer to the distributed equations matrix data
+    TYPE(DistributedMatrixType), POINTER :: matrix !<A pointer to the distributed equations matrix data
     TYPE(ElementMatrixType) :: elementMatrix !<The element matrix for this equations matrix
     TYPE(NodalMatrixType) :: nodalMatrix !<The nodal matrix for this equations matrix
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: tempVector !<Temporary vector used for assembly. 
+    TYPE(DistributedVectorType), POINTER :: tempVector !<Temporary vector used for assembly. 
   END TYPE EquationsMatrixType
 
   !>A buffer type to allow for an array of pointers to a EquationsMatrixType \see Types::EquationsMatrixType.
@@ -1514,7 +1513,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     LOGICAL :: symmetric !<Is .TRUE. if the Jacobian matrix is symmetric
     INTEGER(INTG) :: numberOfColumns !<The number of columns in this global matrix
     LOGICAL :: updateJacobian !<Is .TRUE. if this Jacobian matrix is to be updated
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: jacobian !<A pointer to the distributed jacobian matrix data
+    TYPE(DistributedMatrixType), POINTER :: jacobian !<A pointer to the distributed jacobian matrix data
     LOGICAL :: firstAssembly !<Is .TRUE. if this Jacobian matrix has not been assembled
     TYPE(ElementMatrixType) :: elementJacobian !<The element matrix for this Jacobian matrix. This is not used if the Jacobian is not supplied.
     TYPE(NodalMatrixType) :: nodalJacobian !<The nodal matrix for this Jacobian matrix. This is not used if the Jacobian is not supplied.
@@ -1535,7 +1534,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     LOGICAL :: symmetric !<Is .TRUE. if the Hessian matrix is symmetric
     INTEGER(INTG) :: numberOfColumns !<The number of columns in this global matrix
     LOGICAL :: updateHessian !<Is .TRUE. if this Hessian matrix is to be updated
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: hessian !<A pointer to the distributed Hessian matrix data
+    TYPE(DistributedMatrixType), POINTER :: hessian !<A pointer to the distributed Hessian matrix data
     LOGICAL :: firstAssembly !<Is .TRUE. if this Hessian matrix has not been assembled
     TYPE(ElementMatrixType) :: elementHessian !<The element matrix for this Hessian matrix. This is not used if the Hessian is not supplied.
     INTEGER(INTG) :: hessianCalculationType !<The calculation type (analytic of finite difference) of the Hessian.
@@ -1571,7 +1570,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer back to the vector equations matrices.
     INTEGER(INTG) :: numberOfDynamicMatrices !<The number of dynamic equations matrices defined for the equations set.
     TYPE(EquationsMatrixPtrType), ALLOCATABLE :: matrices(:) !<matrix(matrixIdx)%ptr contains the information on the matrixIdx'th dynamic equations matrix.
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: tempVector !<Temporary vector used for assembly. 
+    TYPE(DistributedVectorType), POINTER :: tempVector !<Temporary vector used for assembly. 
   END TYPE EquationsMatricesDynamicType
 
   !>Contains information of the linear matrices for equations matrices
@@ -1588,7 +1587,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EquationsJacobianPtrType), ALLOCATABLE :: jacobians(:) !<jacobians(matrixIdx)%ptr is a pointer to the matrixIdx'th Jacobian matrix for nonlinear equations
     LOGICAL :: updateResidual !<Is .TRUE. if the equations residual vector is to be updated
     LOGICAL :: firstAssembly !<Is .TRUE. if this residual vector has not been assembled
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: residual !<A pointer to the distributed residual vector for nonlinear equations
+    TYPE(DistributedVectorType), POINTER :: residual !<A pointer to the distributed residual vector for nonlinear equations
     TYPE(ElementVectorType) :: elementResidual !<The element residual information for nonlinear equations. Old CMISS name RE1
     TYPE(NodalVectorType) :: nodalResidual !<The nodal residual information for nonlinear equations.
     INTEGER(INTG) :: nodalResidualCalculated !<The number of the nodal the residual is calculated for, or zero if it isn't calculated
@@ -1602,19 +1601,19 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: numberOfHessians !<The number of Hessian matrices for the equations set.
     TYPE(EquationsHessianPtrType), ALLOCATABLE :: hessians(:) !<hessians(matrixIdx)%ptr is a pointer to the matrixIdx'th Hessian matrix for optimisation equations
     LOGICAL :: updateGradient !<Is .TRUE. if the equations gradient vector is to be updated
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: gradient !<A pointer to the distributed gradient vector for optimisation equations
+    TYPE(DistributedVectorType), POINTER :: gradient !<A pointer to the distributed gradient vector for optimisation equations
     TYPE(ElementVectorType) :: elementGradient !<The element gradient information for optimisation equations.
     LOGICAL :: updateConstraints !<Is .TRUE. if the equations constraints vector is to be updated
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: constraints !<A pointer to the distributed constraints vector for optimisation equations
+    TYPE(DistributedVectorType), POINTER :: constraints !<A pointer to the distributed constraints vector for optimisation equations
     TYPE(ElementVectorType) :: elementConstraints !<The element constraints information for optimisation equations.
     LOGICAL :: updateBounds !<Is .TRUE. if the equations bounds vectors are to be updated
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: lowerBounds !<A pointer to the distributed lower bounds vector for optimisation equations
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: upperBounds !<A pointer to the distributed upper bounds vector for optimisation equations
+    TYPE(DistributedVectorType), POINTER :: lowerBounds !<A pointer to the distributed lower bounds vector for optimisation equations
+    TYPE(DistributedVectorType), POINTER :: upperBounds !<A pointer to the distributed upper bounds vector for optimisation equations
     TYPE(ElementVectorType) :: elementLowerBounds !<The element lower bounds information for optimisation equations.
     TYPE(ElementVectorType) :: elementUpperBounds !<The element upper bounds information for optimisation equations.
     LOGICAL :: updateResidual !<Is .TRUE. if the equations residual vector is to be updated
     LOGICAL :: firstAssembly !<Is .TRUE. if this residual vector has not been assembled
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: residual !<A pointer to the distributed residual vector for optimisation equations
+    TYPE(DistributedVectorType), POINTER :: residual !<A pointer to the distributed residual vector for optimisation equations
     TYPE(ElementVectorType) :: elementResidual !<The element residual information for optimisation equations. Old CMISS name RE1
   END TYPE EquationsMatricesOptimisationType
 
@@ -1623,7 +1622,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer back to the vector equations matrices.
     LOGICAL :: updateVector !<Is .TRUE. if the equations rhs vector is to be updated
     LOGICAL :: firstAssembly !<Is .TRUE. if this rhs vector has not been assembled
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: vector !<A pointer to the distributed global rhs vector data \todo rename this RHS_VECTOR
+    TYPE(DistributedVectorType), POINTER :: vector !<A pointer to the distributed global rhs vector data \todo rename this RHS_VECTOR
     TYPE(ElementVectorType) :: elementVector !<The element rhs information
     TYPE(NodalVectorType) :: nodalVector !<The nodal rhs information
   END TYPE EquationsMatricesRHSType
@@ -1633,7 +1632,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer back to the vector equations matrices.
     LOGICAL :: updateVector !<Is .TRUE. if the equations rhs vector is to be updated
     LOGICAL :: firstAssembly !<Is .TRUE. if this source vector has not been assembled
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: vector !<A pointer to the distributed source vector data \todo rename this SOURCE_VECTOR
+    TYPE(DistributedVectorType), POINTER :: vector !<A pointer to the distributed source vector data \todo rename this SOURCE_VECTOR
     TYPE(ElementVectorType) :: elementVector !<The element source information
     TYPE(NodalVectorType) :: NodalVector !<The nodal source information
   END TYPE EquationsMatricesSourceType
@@ -2046,8 +2045,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>Contains information used to integrate Neumann boundary conditions
   TYPE BoundaryConditionsNeumannType
     INTEGER(INTG), ALLOCATABLE :: setDofs(:) !<setDofs(neumann_idx): the global dof for the neumann_idx'th Neumann condition
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: integrationMatrix !<The N matrix that multiples the point values vector q to give the integrated values f. Number of rows equals number of local dofs, and number of columns equals number of set point DOFs.
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: pointValues !<The vector of set point values q
+    TYPE(DistributedMatrixType), POINTER :: integrationMatrix !<The N matrix that multiples the point values vector q to give the integrated values f. Number of rows equals number of local dofs, and number of columns equals number of set point DOFs.
+    TYPE(DistributedVectorType), POINTER :: pointValues !<The vector of set point values q
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: pointDofMapping !<The domain mapping for DOFs with Neumann point conditions set.
   END TYPE BoundaryConditionsNeumannType
 
@@ -2230,10 +2229,10 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     LOGICAL :: UPDATE_MATRIX !<Is .TRUE. if this interface matrix is to be updated
     LOGICAL :: FIRST_ASSEMBLY !<Is .TRUE. if this interface matrix has not been assembled
     LOGICAL :: HAS_TRANSPOSE !<Is .TRUE. if this interface matrix has has transpose
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the distributed interface matrix data
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: MATRIX_TRANSPOSE !<A pointer to the distributed interface matrix transpose data
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: TEMP_VECTOR !<Temporary vector used for assembly. 
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: TEMP_TRANSPOSE_VECTOR !<Temporary vector used for assembly. 
+    TYPE(DistributedMatrixType), POINTER :: MATRIX !<A pointer to the distributed interface matrix data
+    TYPE(DistributedMatrixType), POINTER :: MATRIX_TRANSPOSE !<A pointer to the distributed interface matrix transpose data
+    TYPE(DistributedVectorType), POINTER :: TEMP_VECTOR !<Temporary vector used for assembly. 
+    TYPE(DistributedVectorType), POINTER :: TEMP_TRANSPOSE_VECTOR !<Temporary vector used for assembly. 
     TYPE(ElementMatrixType) :: ELEMENT_MATRIX !<The element matrix for this interface matrix
   END TYPE INTERFACE_MATRIX_TYPE
 
@@ -2247,7 +2246,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES !<A pointer back to the interface matrices.
     LOGICAL :: UPDATE_VECTOR !<Is .TRUE. if the interface rhs vector is to be updated
     LOGICAL :: FIRST_ASSEMBLY !<Is .TRUE. if this rhs vector has not been assembled
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: RHS_VECTOR !<A pointer to the distributed global rhs vector data 
+    TYPE(DistributedVectorType), POINTER :: RHS_VECTOR !<A pointer to the distributed global rhs vector data 
     TYPE(ElementVectorType) :: ELEMENT_VECTOR !<The element rhs information
   END TYPE INTERFACE_RHS_TYPE
   
@@ -2661,8 +2660,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: STORAGE_TYPE !<The storage type for the solver matrix.
     INTEGER(INTG) :: symmetryType !<The solver matrix symmetry type.
     INTEGER(INTG) :: NUMBER_OF_COLUMNS !<The number of columns in the distributed solver matrix
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: SOLVER_VECTOR !<A pointer to the distributed solver vector associated with the matrix
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the distributed solver matrix data
+    TYPE(DistributedVectorType), POINTER :: SOLVER_VECTOR !<A pointer to the distributed solver vector associated with the matrix
+    TYPE(DistributedMatrixType), POINTER :: MATRIX !<A pointer to the distributed solver matrix data
   END TYPE SOLVER_MATRIX_TYPE
 
   !>A buffer type to allow for an array of pointers to a SOLVER_MATRIX_TYPE \see TYPES:SOLUTION_MATRIX_TYPE
@@ -2678,19 +2677,19 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: NUMBER_OF_ROWS !<The number of (local) rows in the distributed solution matrix for this computational node
     INTEGER(INTG) :: NUMBER_OF_GLOBAL_ROWS !<The number of global rows in the distributed solution matrix
     INTEGER(INTG) :: solverLibraryType !<The library type of the solver for the solver matrices \see SOLVER_ROUTINES_SolverLibraries
-    INTEGER(INTG) :: matrixLibraryType !<The library type for the solver matrices \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes
+    INTEGER(INTG) :: matrixLibraryType !<The library type for the solver matrices \see DistributedMatrixVector_LibraryTypes
     !Linear matrices
     INTEGER(INTG) :: NUMBER_OF_MATRICES !<The number of solver matrices defined for the problem
     TYPE(SOLVER_MATRIX_PTR_TYPE), ALLOCATABLE :: MATRICES(:) !<MATRICES(matrix_idx)%PTR contains the information on the matrix_idx'th solver matrix
     !Nonlinear matrices and vectors
     LOGICAL :: UPDATE_RESIDUAL !<Is .TRUE. if the residual vector is to be updated
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: RESIDUAL !<A pointer to the distributed residual vector for nonlinear problems
+    TYPE(DistributedVectorType), POINTER :: RESIDUAL !<A pointer to the distributed residual vector for nonlinear problems
     !Optimiser matrices and vectors
     LOGICAL :: updateGradient !<Is .TRUE. if the gradient vector is to be updated
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: gradient !<A pointer to the distributed gradient vector for optimisation problems
+    TYPE(DistributedVectorType), POINTER :: gradient !<A pointer to the distributed gradient vector for optimisation problems
     !Right hand side vector
     LOGICAL :: UPDATE_RHS_VECTOR !<Is .TRUE. if the RHS vector is to be updated
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: RHS_VECTOR !<A pointer to the distributed RHS vector for the solver matrices
+    TYPE(DistributedVectorType), POINTER :: RHS_VECTOR !<A pointer to the distributed RHS vector for the solver matrices
   END TYPE SOLVER_MATRICES_TYPE
 
   !

@@ -44,11 +44,11 @@
 !>This module handles test framework routines.
 MODULE TEST_FRAMEWORK_ROUTINES
 
-  USE CONSTANTS
+  USE Constants
   USE ISO_VARYING_STRING
-  USE KINDS
-  USE MATRIX_VECTOR
-  USE STRINGS
+  USE Kinds
+  USE MatrixVector
+  USE Strings
 
 #include "macros.h"
 #include "dllexport.h"

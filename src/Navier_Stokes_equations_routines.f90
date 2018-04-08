@@ -14,7 +14,7 @@ MODULE NAVIER_STOKES_EQUATIONS_ROUTINES
   USE Constants
   USE CONTROL_LOOP_ROUTINES
   USE COORDINATE_ROUTINES
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE DistributedMatrixVector
   USE DOMAIN_MAPPINGS
   USE EquationsRoutines
   USE EquationsAccessRoutines
@@ -33,9 +33,9 @@ MODULE NAVIER_STOKES_EQUATIONS_ROUTINES
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE Kinds
-  USE LAPACK
+  USE Lapack
   USE Maths
-  USE MATRIX_VECTOR
+  USE MatrixVector
   USE MESH_ROUTINES
   USE MeshAccessRoutines
 #ifndef NOMPIMOD
@@ -7334,10 +7334,10 @@ CONTAINS
                                                   materialsField=>EQUATIONS_SET%MATERIALS%MATERIALS_FIELD
                                                   !Define MU_PARAM, density=1
                                                   MU_PARAM=materialsField%variables(1)%parameter_sets%parameter_sets(1)%ptr% &
-                                                    & parameters%cmiss%data_dp(1)
+                                                    & parameters%cmiss%dataDP(1)
                                                   !Define RHO_PARAM, density=2
                                                   RHO_PARAM=materialsField%variables(1)%parameter_sets%parameter_sets(1)%ptr% &
-                                                    & parameters%cmiss%data_dp(2)
+                                                    & parameters%cmiss%dataDP(2)
                                                   CALL NAVIER_STOKES_ANALYTIC_FUNCTIONS_EVALUATE(ANALYTIC_FUNCTION_TYPE,X, &
                                                     & CURRENT_TIME,variable_type,GLOBAL_DERIV_INDEX,componentIdx, &
                                                     & NUMBER_OF_DIMENSIONS,FIELD_VARIABLE%NUMBER_OF_COMPONENTS, &

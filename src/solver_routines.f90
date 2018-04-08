@@ -54,7 +54,7 @@ MODULE SOLVER_ROUTINES
   USE CmissPetscTypes
   USE ComputationEnvironment
   USE Constants
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE DistributedMatrixVector
   USE EquationsAccessRoutines
   USE EquationsSetConstants
   USE FIELD_ROUTINES
@@ -8268,7 +8268,7 @@ CONTAINS
     !Argument variables
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER, INTENT(IN) :: solverEquations !<The solver equations to get the matrix for
     INTEGER(INTG), INTENT(IN) :: matrixIndex !<The solver matrix index to get
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER, INTENT(INOUT) :: matrix !<On return, the requested solver matrix
+    TYPE(DistributedMatrixType), POINTER, INTENT(INOUT) :: matrix !<On return, the requested solver matrix
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
@@ -8320,7 +8320,7 @@ CONTAINS
 
     !Argument variables
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER, INTENT(IN) :: solverEquations !<The solver equations to get the Jacobian matrix for
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER, INTENT(INOUT) :: matrix !<On return, the solver equations Jacobian matrix
+    TYPE(DistributedMatrixType), POINTER, INTENT(INOUT) :: matrix !<On return, the solver equations Jacobian matrix
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
@@ -8353,7 +8353,7 @@ CONTAINS
     !Argument variables
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER, INTENT(IN) :: solverEquations !< The solver equations to get the vector for
     INTEGER(INTG), INTENT(IN) :: matrixIndex !< The solver matrix index to get the vector for
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER, INTENT(INOUT) :: vector !< On return, the requested solver matrix vector
+    TYPE(DistributedVectorType), POINTER, INTENT(INOUT) :: vector !< On return, the requested solver matrix vector
     INTEGER(INTG), INTENT(OUT) :: err !< The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
@@ -8409,7 +8409,7 @@ CONTAINS
 
     !Argument variables
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER, INTENT(IN) :: solverEquations !< The solver equations to get the residual vector for
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER, INTENT(INOUT) :: residualVector !< On return, the solver residual vector
+    TYPE(DistributedVectorType), POINTER, INTENT(INOUT) :: residualVector !< On return, the solver residual vector
     INTEGER(INTG), INTENT(OUT) :: err !< The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
@@ -8452,7 +8452,7 @@ CONTAINS
 
     !Argument variables
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER, INTENT(IN) :: solverEquations !< The solver equations to get the right hand side vector for
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER, INTENT(INOUT) :: rhsVector !< On return, the solver right hand side vector
+    TYPE(DistributedVectorType), POINTER, INTENT(INOUT) :: rhsVector !< On return, the solver right hand side vector
     INTEGER(INTG), INTENT(OUT) :: err !< The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
@@ -9732,7 +9732,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(LINEAR_SOLVER_TYPE), POINTER :: LINEAR_SOLVER
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: SOLVER_MATRIX
+    TYPE(DistributedMatrixType), POINTER :: SOLVER_MATRIX
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
@@ -10193,7 +10193,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(LINEAR_SOLVER_TYPE), POINTER :: linearSolver
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: solverMatrix
+    TYPE(DistributedMatrixType), POINTER :: solverMatrix
     TYPE(LINEAR_DIRECT_SOLVER_TYPE), POINTER :: linearDirectSolver
     TYPE(SOLVER_TYPE), POINTER :: linkingSolver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: linkingSolverEquations,solverEquations
@@ -10312,7 +10312,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(LINEAR_SOLVER_TYPE), POINTER :: linearSolver
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: solverMatrix
+    TYPE(DistributedMatrixType), POINTER :: solverMatrix
     TYPE(LINEAR_DIRECT_SOLVER_TYPE), POINTER :: linearDirectSolver
     TYPE(SOLVER_TYPE), POINTER :: linkingSolver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: linkingSolverEquations,solverEquations
@@ -10421,7 +10421,7 @@ CONTAINS
     INTEGER(INTG) :: global_row,local_row,STORAGE_TYPE
     REAL(DP) :: SOLVER_VALUE,VALUE
     REAL(DP), POINTER :: RHS_DATA(:)
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: rhsVector,SOLVER_VECTOR
+    TYPE(DistributedVectorType), POINTER :: rhsVector,SOLVER_VECTOR
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: ROW_DOFS_MAPPING
     TYPE(LINEAR_SOLVER_TYPE), POINTER :: LINEAR_SOLVER
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
@@ -10923,7 +10923,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: SOLVER_MATRIX
+    TYPE(DistributedMatrixType), POINTER :: SOLVER_MATRIX
     TYPE(LINEAR_SOLVER_TYPE), POINTER :: LINEAR_SOLVER
     TYPE(NEWTON_SOLVER_TYPE), POINTER :: NEWTON_SOLVER
     TYPE(NEWTON_LINESEARCH_SOLVER_TYPE), POINTER :: NEWTON_LINESEARCH_SOLVER
@@ -11780,7 +11780,7 @@ CONTAINS
     INTEGER(INTG) :: CONVERGED_REASON,global_row,local_row,NUMBER_ITERATIONS,STORAGE_TYPE
     REAL(DP) :: RESIDUAL_NORM,SOLVER_VALUE,VALUE
     REAL(DP), POINTER :: RHS_DATA(:)
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: rhsVector,SOLVER_VECTOR
+    TYPE(DistributedVectorType), POINTER :: rhsVector,SOLVER_VECTOR
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: ROW_DOFS_MAPPING
     TYPE(LINEAR_SOLVER_TYPE), POINTER :: LINEAR_SOLVER
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
@@ -12374,8 +12374,8 @@ CONTAINS
     LOGICAL :: HAS_INTEGRATED_VALUES
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: RHS_BOUNDARY_CONDITIONS,DEPENDENT_BOUNDARY_CONDITIONS
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: PREVIOUS_SOLVER_DISTRIBUTED_MATRIX,SOLVER_DISTRIBUTED_MATRIX
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: DEPENDENT_VECTOR,DYNAMIC_TEMP_VECTOR,EQUATIONS_RHS_VECTOR,DISTRIBUTED_SOURCE_VECTOR, &
+    TYPE(DistributedMatrixType), POINTER :: PREVIOUS_SOLVER_DISTRIBUTED_MATRIX,SOLVER_DISTRIBUTED_MATRIX
+    TYPE(DistributedVectorType), POINTER :: DEPENDENT_VECTOR,DYNAMIC_TEMP_VECTOR,EQUATIONS_RHS_VECTOR,DISTRIBUTED_SOURCE_VECTOR, &
       & LINEAR_TEMP_VECTOR,PREDICTED_MEAN_ACCELERATION_VECTOR,PREDICTED_MEAN_DISPLACEMENT_VECTOR,PREDICTED_MEAN_VELOCITY_VECTOR, &
       & SOLVER_RHS_VECTOR, SOLVER_RESIDUAL_VECTOR,RESIDUAL_VECTOR,INCREMENTAL_VECTOR,INTERFACE_TEMP_VECTOR, &
       & LAGRANGE_VECTOR
@@ -14042,8 +14042,8 @@ CONTAINS
     TYPE(REAL_DP_PTR_TYPE), ALLOCATABLE :: DEPENDENT_PARAMETERS(:)
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: DEPENDENT_BOUNDARY_CONDITIONS,RHS_BOUNDARY_CONDITIONS
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: PREVIOUS_SOLVER_DISTRIBUTED_MATRIX,SOLVER_DISTRIBUTED_MATRIX
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: LAGRANGE_VECTOR,DEPENDENT_VECTOR,DISTRIBUTED_SOURCE_VECTOR,EQUATIONS_RHS_VECTOR, &
+    TYPE(DistributedMatrixType), POINTER :: PREVIOUS_SOLVER_DISTRIBUTED_MATRIX,SOLVER_DISTRIBUTED_MATRIX
+    TYPE(DistributedVectorType), POINTER :: LAGRANGE_VECTOR,DEPENDENT_VECTOR,DISTRIBUTED_SOURCE_VECTOR,EQUATIONS_RHS_VECTOR, &
       & LINEAR_TEMP_VECTOR,INTERFACE_TEMP_VECTOR,RESIDUAL_VECTOR,SOLVER_RESIDUAL_VECTOR,SOLVER_RHS_VECTOR
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: RHS_DOMAIN_MAPPING,VARIABLE_DOMAIN_MAPPING
     TYPE(EquationsJacobianType), POINTER :: JACOBIAN_MATRIX
@@ -15718,8 +15718,8 @@ CONTAINS
     EXTERNAL :: Problem_SolverConvergenceTestPetsc
     EXTERNAL :: Problem_SolverNonlinearMonitorPETSC
     INTEGER(INTG) :: equations_matrix_idx,equations_set_idx,interface_condition_idx,interface_matrix_idx
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: JACOBIAN_MATRIX
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: RESIDUAL_VECTOR
+    TYPE(DistributedMatrixType), POINTER :: JACOBIAN_MATRIX
+    TYPE(DistributedVectorType), POINTER :: RESIDUAL_VECTOR
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -16316,7 +16316,7 @@ CONTAINS
     !EXTERNAL :: Problem_SolverResidualEvaluatePetsc
     INTEGER(INTG) :: CONVERGED_REASON,NUMBER_ITERATIONS
     REAL(DP) :: FUNCTION_NORM
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: rhsVector,SOLVER_VECTOR
+    TYPE(DistributedVectorType), POINTER :: rhsVector,SOLVER_VECTOR
     TYPE(QUASI_NEWTON_SOLVER_TYPE), POINTER :: QUASI_NEWTON_SOLVER
     TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: NONLINEAR_SOLVER
     TYPE(PetscVecType) :: FUNCTION_VECTOR
@@ -16959,7 +16959,7 @@ CONTAINS
     !Local Variables
     EXTERNAL :: Problem_SolverResidualEvaluatePetsc
     INTEGER(INTG) :: equations_matrix_idx,equations_set_idx
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: RESIDUAL_VECTOR
+    TYPE(DistributedVectorType), POINTER :: RESIDUAL_VECTOR
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -18492,8 +18492,8 @@ CONTAINS
     EXTERNAL :: Problem_SolverConvergenceTestPetsc
     EXTERNAL :: Problem_SolverNonlinearMonitorPetsc
     INTEGER(INTG) :: equations_matrix_idx,equations_set_idx,interface_condition_idx,interface_matrix_idx
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: JACOBIAN_MATRIX
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: RESIDUAL_VECTOR
+    TYPE(DistributedMatrixType), POINTER :: JACOBIAN_MATRIX
+    TYPE(DistributedVectorType), POINTER :: RESIDUAL_VECTOR
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -19066,7 +19066,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: CONVERGED_REASON,NUMBER_ITERATIONS
     REAL(DP) :: FUNCTION_NORM
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: rhsVector,SOLVER_VECTOR
+    TYPE(DistributedVectorType), POINTER :: rhsVector,SOLVER_VECTOR
     TYPE(NEWTON_SOLVER_TYPE), POINTER :: NEWTON_SOLVER
     TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: NONLINEAR_SOLVER
     TYPE(PetscVecType) :: FUNCTION_VECTOR
@@ -19716,7 +19716,7 @@ CONTAINS
     !Local Variables
     EXTERNAL :: Problem_SolverResidualEvaluatePetsc
     INTEGER(INTG) :: equations_matrix_idx,equations_set_idx
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: RESIDUAL_VECTOR
+    TYPE(DistributedVectorType), POINTER :: RESIDUAL_VECTOR
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -21532,7 +21532,7 @@ CONTAINS
       & interface_condition_idx
     REAL(DP) :: additive_constant,VALUE,coupling_coefficient
     REAL(DP), POINTER :: VARIABLE_DATA(:)
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: SOLVER_VECTOR
+    TYPE(DistributedVectorType), POINTER :: SOLVER_VECTOR
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: DOMAIN_MAPPING
     TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: DEPENDENT_VARIABLE,LAGRANGE_VARIABLE
@@ -21852,7 +21852,7 @@ CONTAINS
     REAL(DP) :: ACCELERATION_VALUE,additive_constant,DELTA_T,DISPLACEMENT_VALUE,PREDICTED_DISPLACEMENT,PREVIOUS_ACCELERATION, &
       & PREVIOUS_DISPLACEMENT,PREVIOUS_VELOCITY,SOLVER_VALUE,variable_coefficient,VELOCITY_VALUE
     REAL(DP), POINTER :: SOLVER_DATA(:)
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: SOLVER_VECTOR
+    TYPE(DistributedVectorType), POINTER :: SOLVER_VECTOR
     TYPE(DYNAMIC_SOLVER_TYPE), POINTER :: DYNAMIC_SOLVER
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
@@ -22484,7 +22484,7 @@ CONTAINS
     REAL(DP) :: ALPHA_VALUE,DYNAMIC_ALPHA_FACTOR, DYNAMIC_U_FACTOR,PREDICTED_DISPLACEMENT
     INTEGER(INTG) :: variable_idx,VARIABLE_TYPE,interface_condition_idx
     REAL(DP), POINTER :: SOLVER_DATA(:)
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: SOLVER_VECTOR
+    TYPE(DistributedVectorType), POINTER :: SOLVER_VECTOR
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
@@ -22820,7 +22820,7 @@ CONTAINS
       & VARIABLE_TYPE
     REAL(DP) :: additive_constant,VALUE,variable_coefficient
     REAL(DP), POINTER :: SOLVER_DATA(:)
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: SOLVER_VECTOR
+    TYPE(DistributedVectorType), POINTER :: SOLVER_VECTOR
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: DEPENDENT_VARIABLE,LAGRANGE_VARIABLE

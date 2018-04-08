@@ -74,7 +74,7 @@ MODULE OpenCMISS_Iron
   USE DataPointAccessRoutines
   USE DataProjectionRoutines
   USE DataProjectionAccessRoutines
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE DistributedMatrixVector
   USE EquationsRoutines
   USE EquationsSetConstants
   USE EQUATIONS_SET_ROUTINES
@@ -252,13 +252,13 @@ MODULE OpenCMISS_Iron
   !>and may use sparse or full storage.
   TYPE cmfe_DistributedMatrixType
     PRIVATE
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: distributedMatrix
+    TYPE(DistributedMatrixType), POINTER :: distributedMatrix
   END TYPE cmfe_DistributedMatrixType
 
   !>A vector that may be distributed across multiple computational nodes
   TYPE cmfe_DistributedVectorType
     PRIVATE
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: distributedVector
+    TYPE(DistributedVectorType), POINTER :: distributedVector
   END TYPE cmfe_DistributedVectorType
 
   !>Contains information on a mesh defined on a region.

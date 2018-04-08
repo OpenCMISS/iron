@@ -49,7 +49,7 @@ MODULE PROBLEM_ROUTINES
   USE CLASSICAL_FIELD_ROUTINES
   USE CONTROL_LOOP_ROUTINES
   USE ControlLoopAccessRoutines
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE DistributedMatrixVector
   USE ELASTICITY_ROUTINES
   USE EquationsRoutines
   USE EquationsSetConstants
@@ -3802,7 +3802,7 @@ SUBROUTINE Problem_SolverJacobianEvaluatePetsc(snes,x,A,B,ctx,err)
 
   USE BaseRoutines
   USE CmissPetscTypes
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE DistributedMatrixVector
   USE ISO_VARYING_STRING
   USE KINDS
   USE PROBLEM_ROUTINES
@@ -3822,7 +3822,7 @@ SUBROUTINE Problem_SolverJacobianEvaluatePetsc(snes,x,A,B,ctx,err)
   INTEGER(INTG), INTENT(INOUT) :: err !<The error code
   !Local Variables
   INTEGER(INTG) :: dummyErr
-  TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: solverVector
+  TYPE(DistributedVectorType), POINTER :: solverVector
   TYPE(NEWTON_SOLVER_TYPE), POINTER :: newtonSolver
   TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: nonlinearSolver
   TYPE(QUASI_NEWTON_SOLVER_TYPE), POINTER :: quasiNewtonSolver
@@ -3910,7 +3910,7 @@ SUBROUTINE Problem_SolverJacobianFDCalculatePetsc(snes,x,A,B,ctx,err)
   USE BaseRoutines
   USE CmissPetsc
   USE CmissPetscTypes
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE DistributedMatrixVector
   USE ISO_VARYING_STRING
   USE KINDS
   USE PROBLEM_ROUTINES
@@ -4041,7 +4041,7 @@ SUBROUTINE Problem_SolverObjectiveEvaluatePetsc(tao,x,f,ctx,err)
 
   USE BaseRoutines
   USE CmissPetscTypes
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE DistributedMatrixVector
   USE ISO_VARYING_STRING
   USE KINDS
   USE PROBLEM_ROUTINES
@@ -4059,7 +4059,7 @@ SUBROUTINE Problem_SolverObjectiveEvaluatePetsc(tao,x,f,ctx,err)
   INTEGER(INTG), INTENT(INOUT) :: err !<The error code
   !Local Variables
   INTEGER(INTG) :: dummyErr
-  TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: solverVector
+  TYPE(DistributedVectorType), POINTER :: solverVector
   TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
   TYPE(SOLVER_MATRICES_TYPE), POINTER :: solverMatrices
   TYPE(SOLVER_MATRIX_TYPE), POINTER :: solverMatrix
@@ -4110,7 +4110,7 @@ SUBROUTINE Problem_SolverResidualEvaluatePetsc(snes,x,f,ctx,err)
 
   USE BaseRoutines
   USE CmissPetscTypes
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE DistributedMatrixVector
   USE ISO_VARYING_STRING
   USE KINDS
   USE PROBLEM_ROUTINES
@@ -4128,7 +4128,7 @@ SUBROUTINE Problem_SolverResidualEvaluatePetsc(snes,x,f,ctx,err)
   INTEGER(INTG), INTENT(INOUT) :: err !<The error code
   !Local Variables
   INTEGER(INTG) :: dummyErr
-  TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: residualVector,solverVector
+  TYPE(DistributedVectorType), POINTER :: residualVector,solverVector
   TYPE(NEWTON_SOLVER_TYPE), POINTER :: newtonSolver
   TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: nonlinearSolver
   TYPE(QUASI_NEWTON_SOLVER_TYPE), POINTER :: quasiNewtonSolver
@@ -4234,7 +4234,7 @@ SUBROUTINE Problem_SolverConvergenceTestPetsc(snes,iterationNumber,xnorm,gnorm,f
   USE BaseRoutines
   USE CmissPetsc
   USE CmissPetscTypes
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE DistributedMatrixVector
   USE INPUT_OUTPUT
   USE KINDS
   USE PROBLEM_ROUTINES
@@ -4456,7 +4456,7 @@ SUBROUTINE Problem_SolverNonlinearMonitorPETSC(snes,iterationNumber,residualNorm
 
   USE BaseRoutines
   USE CmissPetscTypes
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE DistributedMatrixVector
   USE ISO_VARYING_STRING
   USE KINDS
   USE PROBLEM_ROUTINES

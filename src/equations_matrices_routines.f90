@@ -45,7 +45,7 @@
 MODULE EquationsMatricesRoutines
 
   USE BaseRoutines
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE DistributedMatrixVector
   USE EquationsAccessRoutines
   USE EquationsMappingAccessRoutines
   USE EquationsMatricesAccessRoutines
@@ -55,7 +55,7 @@ MODULE EquationsMatricesRoutines
   USE ISO_VARYING_STRING
   USE Kinds
   USE Lists
-  USE MATRIX_VECTOR
+  USE MatrixVector
   USE Strings
   USE Types
   USE LINKEDLIST_ROUTINES
@@ -427,7 +427,7 @@ CONTAINS
           NULLIFY(list)
           CALL EquationsMatrix_StructureCalculate(equationsMatrix,numberOfNonZeros,rowIndices,columnIndices,list,err,error,*999)
           CALL DistributedMatrix_LinkListSet(equationsMatrix%matrix,list,err,error,*999)
-          CALL DistributedMatrix_NumberNonZerosSet(equationsMatrix%matrix,numberOfNonZeros,err,error,*999)
+          CALL DistributedMatrix_NumberOfNonZerosSet(equationsMatrix%matrix,numberOfNonZeros,err,error,*999)
           CALL DistributedMatrix_StorageLocationsSet(equationsMatrix%matrix,rowIndices,columnIndices,err,error,*999)
           IF(ASSOCIATED(rowIndices)) DEALLOCATE(rowIndices)
           IF(ASSOCIATED(columnIndices)) DEALLOCATE(columnIndices)
@@ -461,7 +461,7 @@ CONTAINS
           NULLIFY(list)
           CALL EquationsMatrix_StructureCalculate(equationsMatrix,numberOfNonZeros,rowIndices,columnIndices,list,err,error,*999)
           CALL DistributedMatrix_LinkListSet(equationsMatrix%matrix,LIST,err,error,*999)
-          CALL DistributedMatrix_NumberNonZerosSet(equationsMatrix%matrix,numberOfNonZeros,err,error,*999)
+          CALL DistributedMatrix_NumberOfNonZerosSet(equationsMatrix%matrix,numberOfNonZeros,err,error,*999)
           CALL DistributedMatrix_StorageLocationsSet(equationsMatrix%matrix,rowIndices,columnIndices,err,error,*999)
           IF(ASSOCIATED(rowIndices)) DEALLOCATE(rowIndices)
           IF(ASSOCIATED(columnIndices)) DEALLOCATE(columnIndices)
@@ -493,7 +493,7 @@ CONTAINS
         IF(jacobianMatrix%storageType/=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE.AND. &
           & jacobianMatrix%storageType/=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE) THEN
           CALL JacobianMatrix_StructureCalculate(jacobianMatrix,numberOfNonZeros,rowIndices,columnIndices,err,error,*999)
-          CALL DistributedMatrix_NumberNonZerosSet(jacobianMatrix%jacobian,numberOfNonZeros,err,error,*999)
+          CALL DistributedMatrix_NumberOfNonZerosSet(jacobianMatrix%jacobian,numberOfNonZeros,err,error,*999)
           CALL DistributedMatrix_StorageLocationsSet(jacobianMatrix%jacobian,rowIndices,columnIndices,err,error,*999)
           IF(ASSOCIATED(rowIndices)) DEALLOCATE(rowIndices)
           IF(ASSOCIATED(columnIndices)) DEALLOCATE(columnIndices)

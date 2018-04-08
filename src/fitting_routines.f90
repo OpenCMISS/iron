@@ -52,7 +52,7 @@ MODULE FittingRoutines
   USE CONTROL_LOOP_ROUTINES
   USE ControlLoopAccessRoutines
   USE DARCY_EQUATIONS_ROUTINES, ONLY: idebug1
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE DistributedMatrixVector
   USE DOMAIN_MAPPINGS
   USE EquationsRoutines
   USE EquationsAccessRoutines
@@ -66,7 +66,7 @@ MODULE FittingRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE Kinds
-  USE MATRIX_VECTOR
+  USE MatrixVector
   USE Maths
   USE NODE_ROUTINES
   USE PROBLEM_CONSTANTS
